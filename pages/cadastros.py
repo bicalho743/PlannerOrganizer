@@ -31,12 +31,12 @@ def show():
                         st.session_state.db.add_fornecedor(
                             nome=nome,
                             telefone=telefone,
-                            endereco=endereco or None,
+                            endereco=endereco if endereco else None,
                             categoria=categoria,
                             tipo_conta=tipo_conta,
-                            pix=pix or None,
+                            pix=pix if pix else None,
                             recorrente=recorrente,
-                            observacoes=observacoes or None
+                            observacoes=observacoes if observacoes else None
                         )
                         st.success("Fornecedor cadastrado com sucesso!")
                         st.rerun()
@@ -45,12 +45,11 @@ def show():
                 else:
                     st.warning("Por favor, preencha todos os campos obrigatórios.")
 
-        # Lista de fornecedores
         try:
             st.subheader("Fornecedores Cadastrados")
             fornecedores = st.session_state.db.get_fornecedores()
+
             if not fornecedores.empty:
-                # Converter data de cadastro para exibição
                 fornecedores['data_cadastro'] = pd.to_datetime(fornecedores['data_cadastro'])
                 fornecedores['data_cadastro'] = fornecedores['data_cadastro'].dt.strftime('%d/%m/%Y')
 
@@ -65,7 +64,7 @@ def show():
             else:
                 st.info("Nenhum fornecedor cadastrado.")
         except Exception as e:
-            st.error(f"Erro ao carregar fornecedores: {str(e)}")
+            st.error(f"Erro ao carregar lista de fornecedores: {str(e)}")
 
     with tab2:
         st.subheader("Cadastro de Assistentes")
@@ -85,9 +84,9 @@ def show():
                         st.session_state.db.add_assistente(
                             nome=nome,
                             telefone=telefone,
-                            endereco=endereco or None,
-                            pix=pix or None,
-                            observacoes=observacoes or None
+                            endereco=endereco if endereco else None,
+                            pix=pix if pix else None,
+                            observacoes=observacoes if observacoes else None
                         )
                         st.success("Assistente cadastrado com sucesso!")
                         st.rerun()
@@ -96,12 +95,11 @@ def show():
                 else:
                     st.warning("Por favor, preencha todos os campos obrigatórios.")
 
-        # Lista de assistentes
         try:
             st.subheader("Assistentes Cadastrados")
             assistentes = st.session_state.db.get_assistentes()
+
             if not assistentes.empty:
-                # Converter data de cadastro para exibição
                 assistentes['data_cadastro'] = pd.to_datetime(assistentes['data_cadastro'])
                 assistentes['data_cadastro'] = assistentes['data_cadastro'].dt.strftime('%d/%m/%Y')
 
@@ -115,4 +113,4 @@ def show():
             else:
                 st.info("Nenhum assistente cadastrado.")
         except Exception as e:
-            st.error(f"Erro ao carregar assistentes: {str(e)}")
+            st.error(f"Erro ao carregar lista de assistentes: {str(e)}")
