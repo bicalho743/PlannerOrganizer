@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from datetime import datetime
 
 def show():
     st.title("💰 Gestão Financeira")
@@ -20,7 +21,6 @@ def show():
                 ["receita", "despesa"]
             )
 
-            # Campos específicos para receita
             if tipo == "receita":
                 tipo_receita = st.selectbox(
                     "Tipo de Receita",
@@ -36,15 +36,13 @@ def show():
                 if origem_tipo == "cliente":
                     origens = st.session_state.db.get_clientes()
                     origem_lista = origens['nome'].tolist() if not origens.empty else []
-                else:
-                    # Assumindo que temos uma lista de fornecedores
-                    origem_lista = ["Fornecedor 1", "Fornecedor 2"]  # TODO: Implementar lista de fornecedores
-
-                origem = st.selectbox("Selecione a Origem", origem_lista)
-                if origem_tipo == "cliente":
+                    origem = st.selectbox("Selecione a Origem", origem_lista)
                     origem_id = origens[origens['nome'] == origem]['id'].iloc[0] if origem else None
                 else:
-                    origem_id = None  # TODO: Implementar ID de fornecedores
+                    fornecedores = st.session_state.db.get_fornecedores()
+                    origem_lista = fornecedores['nome'].tolist() if not fornecedores.empty else []
+                    origem = st.selectbox("Selecione a Origem", origem_lista)
+                    origem_id = fornecedores[fornecedores['nome'] == origem]['id'].iloc[0] if origem else None
 
             descricao = st.text_input("Descrição")
             valor = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
@@ -89,13 +87,13 @@ def show():
                 ["Serviço", "Produto", "Fornecedor", "Outros"]
             )
         with col3:
-            data_filtro = st.date_input("Data")
+            data_filtro = st.date_input("Data", value=datetime.now())
 
         # Carregar dados
         financeiro = st.session_state.db.get_financeiro()
         clientes = st.session_state.db.get_clientes()
 
-        # Mesclar com informações do cliente
+        # Mesclar com informações do cliente quando necessário
         if not financeiro.empty and not clientes.empty:
             financeiro = financeiro.merge(
                 clientes[['id', 'nome']],
@@ -113,7 +111,6 @@ def show():
 
         # Exibir extrato
         if not financeiro.empty:
-            # Preparar dados para exibição
             exibir_colunas = ['data', 'tipo', 'descricao', 'valor', 'categoria']
             if 'tipo_receita' in financeiro.columns:
                 exibir_colunas.append('tipo_receita')
@@ -165,7 +162,7 @@ def show():
             )
             st.plotly_chart(fig2, use_container_width=True)
 
-            # Novo gráfico para tipos de receita
+            # Gráfico para tipos de receita
             if 'tipo_receita' in financeiro.columns:
                 receitas = financeiro[financeiro['tipo'] == 'receita']
                 if not receitas.empty:
