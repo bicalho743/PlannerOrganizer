@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-import io
 
 def show():
     st.title("👥 Gestão de Clientes")
@@ -57,40 +56,39 @@ def show():
             clientes = st.session_state.db.get_clientes()
 
             if not clientes.empty:
-                try:
-                    # Converter colunas de data para o formato correto
-                    clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro'], errors='coerce')
-                    clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'], errors='coerce')
+                # Converter data de cadastro
+                clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro'])
+                clientes['data_cadastro'] = clientes['data_cadastro'].dt.strftime('%d/%m/%Y')
 
-                    # Formatar data de cadastro
-                    clientes['data_cadastro'] = clientes['data_cadastro'].apply(
-                        lambda x: x.strftime('%d/%m/%Y') if pd.notnull(x) else ''
-                    )
+                # Formatar data de aniversário para DD/MM
+                def format_aniversario(data):
+                    if pd.isna(data):
+                        return ''
+                    try:
+                        data = pd.to_datetime(data)
+                        return data.strftime('%d/%m')
+                    except:
+                        return ''
 
-                    # Formatar data de aniversário (apenas dia e mês)
-                    clientes['data_aniversario'] = clientes['data_aniversario'].apply(
-                        lambda x: x.strftime('%d/%m') if pd.notnull(x) else ''
-                    )
+                clientes['data_aniversario'] = clientes['data_aniversario'].apply(format_aniversario)
 
-                    if busca:
-                        # Converter todos os campos para string antes da busca
-                        clientes = clientes[
-                            clientes['nome'].astype(str).str.contains(busca, case=False, na=False) |
-                            clientes['email'].astype(str).str.contains(busca, case=False, na=False) |
-                            clientes['cpf'].astype(str).str.contains(busca, case=False, na=False)
-                        ]
+                # Aplicar filtro de busca
+                if busca:
+                    clientes = clientes[
+                        clientes['nome'].str.contains(busca, case=False, na=False) |
+                        clientes['email'].str.contains(busca, case=False, na=False) |
+                        clientes['cpf'].str.contains(busca, case=False, na=False)
+                    ]
 
-                    # Exibir tabela de clientes
-                    st.dataframe(
-                        clientes[[
-                            'nome', 'cpf', 'email', 'telefone', 
-                            'data_aniversario', 'origem_cliente',
-                            'data_cadastro'
-                        ]],
-                        use_container_width=True
-                    )
-                except Exception as e:
-                    st.error(f"Erro ao processar dados dos clientes: {str(e)}")
+                # Exibir tabela de clientes
+                st.dataframe(
+                    clientes[[
+                        'nome', 'cpf', 'email', 'telefone',
+                        'data_aniversario', 'origem_cliente',
+                        'data_cadastro'
+                    ]],
+                    use_container_width=True
+                )
             else:
                 st.info("Nenhum cliente encontrado.")
         except Exception as e:
@@ -99,7 +97,6 @@ def show():
     with tab3:
         st.subheader("Importar Clientes do Excel")
 
-        # Instruções
         st.write("""
         Para importar clientes, seu arquivo Excel deve conter as seguintes colunas:
         - nome (obrigatório)
@@ -111,53 +108,57 @@ def show():
         - origem_cliente
         """)
 
-        # Upload do arquivo
         uploaded_file = st.file_uploader("Escolha o arquivo Excel", type=['xlsx', 'xls'])
 
         if uploaded_file is not None:
             try:
-                # Ler o arquivo Excel
                 df = pd.read_excel(uploaded_file)
 
-                # Verificar se tem a coluna obrigatória
                 if 'nome' not in df.columns:
                     st.error("O arquivo deve conter uma coluna 'nome'")
                 else:
-                    # Mostrar preview dos dados
                     st.write("Preview dos dados:")
 
-                    # Tratar datas com valores nulos e formatar apenas dia/mês
+                    # Formatar data de aniversário no preview
                     if 'data_aniversario' in df.columns:
-                        df['data_aniversario'] = pd.to_datetime(df['data_aniversario'], errors='coerce')
-                        df['data_aniversario'] = df['data_aniversario'].apply(
-                            lambda x: x.strftime('%d/%m') if pd.notnull(x) else ''
-                        )
+                        def format_preview_date(data):
+                            if pd.isna(data):
+                                return ''
+                            try:
+                                if isinstance(data, str):
+                                    partes = data.split('/')
+                                    if len(partes) >= 2:
+                                        return f"{int(partes[0]):02d}/{int(partes[1]):02d}"
+                                else:
+                                    data = pd.to_datetime(data)
+                                    return data.strftime('%d/%m')
+                            except:
+                                return ''
+
+                        df['data_aniversario'] = df['data_aniversario'].apply(format_preview_date)
 
                     st.dataframe(df.head())
 
                     if st.button("Confirmar Importação"):
-                        # Contador de sucesso
                         success_count = 0
                         error_count = 0
 
-                        # Progress bar
                         progress_bar = st.progress(0)
                         status_text = st.empty()
 
-                        # Processar cada linha
                         for index, row in df.iterrows():
                             try:
-                                # Converter data se existir
+                                # Processar data de aniversário
                                 data_aniv = None
-                                if 'data_aniversario' in row and row['data_aniversario']:
+                                if 'data_aniversario' in row and pd.notna(row['data_aniversario']):
                                     try:
-                                        # Tentar diferentes formatos de data
-                                        data = pd.to_datetime(row['data_aniversario'], errors='coerce')
-                                        if pd.notnull(data):
-                                            data_aniv = datetime.now().replace(
-                                                day=data.day,
-                                                month=data.month
-                                            ).date()
+                                        if isinstance(row['data_aniversario'], str):
+                                            partes = row['data_aniversario'].split('/')
+                                            if len(partes) >= 2:
+                                                data_aniv = datetime.now().replace(
+                                                    day=int(partes[0]),
+                                                    month=int(partes[1])
+                                                ).date()
                                     except:
                                         data_aniv = None
 
@@ -176,12 +177,10 @@ def show():
                                 error_count += 1
                                 st.error(f"Erro ao importar linha {index + 1}: {str(e)}")
 
-                            # Atualizar progress bar
                             progress = (index + 1) / len(df)
                             progress_bar.progress(progress)
                             status_text.text(f"Processando... {index + 1} de {len(df)}")
 
-                        # Mostrar resultado final
                         st.success(f"""
                         Importação concluída!
                         - Clientes importados com sucesso: {success_count}
