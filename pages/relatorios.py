@@ -8,7 +8,6 @@ import numpy as np
 def show():
     st.title("📊 Relatórios Avançados")
 
-    # Seleção do tipo de relatório
     tipo_relatorio = st.selectbox(
         "Selecione o Relatório",
         ["Desempenho Financeiro", "Análise de Clientes", "Status de Propostas"]
@@ -17,7 +16,6 @@ def show():
     if tipo_relatorio == "Desempenho Financeiro":
         st.subheader("💰 Análise Financeira Detalhada")
 
-        # Período de análise
         col1, col2 = st.columns(2)
         with col1:
             periodo = st.selectbox(
@@ -51,68 +49,89 @@ def show():
                     st.subheader("Análise de Receitas")
 
                     # Gráfico de receitas por tipo
-                    fig = px.pie(
-                        receitas,
-                        values='valor',
-                        names='tipo_receita',
-                        title='Distribuição de Receitas por Tipo'
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
+                    if 'tipo_receita' in receitas.columns:
+                        fig = px.pie(
+                            receitas,
+                            values='valor',
+                            names='tipo_receita',
+                            title='Distribuição de Receitas por Tipo'
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
 
-                    # Tendência de receitas por tipo
-                    receitas_mensais = receitas.groupby([
-                        receitas['data'].dt.strftime('%Y-%m'),
-                        'tipo_receita'
-                    ])['valor'].sum().reset_index()
+                        # Tendência de receitas por tipo
+                        receitas_mensais = receitas.groupby([
+                            receitas['data'].dt.strftime('%Y-%m'),
+                            'tipo_receita'
+                        ])['valor'].sum().reset_index()
 
-                    fig = px.line(
-                        receitas_mensais,
-                        x='data',
-                        y='valor',
-                        color='tipo_receita',
-                        title='Evolução de Receitas por Tipo'
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
+                        fig = px.line(
+                            receitas_mensais,
+                            x='data',
+                            y='valor',
+                            color='tipo_receita',
+                            title='Evolução de Receitas por Tipo'
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
 
-                # Projeção financeira
-                st.subheader("Projeção Financeira")
-                # Calcular tendência linear simples
-                dias_serie = (financeiro['data'] - financeiro['data'].min()).dt.days
-                valores_serie = financeiro[financeiro['tipo'] == 'receita']['valor']
+                    # Projeção financeira
+                    st.subheader("Projeção Financeira")
+                    # Criar série temporal contínua
+                    receitas_diarias = receitas.groupby('data')['valor'].sum().reset_index()
+                    if len(receitas_diarias) > 1:
+                        # Criar índice contínuo de datas
+                        date_range = pd.date_range(
+                            start=receitas_diarias['data'].min(),
+                            end=receitas_diarias['data'].max(),
+                            freq='D'
+                        )
 
-                if len(dias_serie) > 1:
-                    z = np.polyfit(dias_serie, valores_serie, 1)
-                    p = np.poly1d(z)
+                        # Reindexar com preenchimento de zeros
+                        receitas_diarias = receitas_diarias.set_index('data').reindex(date_range, fill_value=0)
+                        receitas_diarias = receitas_diarias.reset_index()
+                        receitas_diarias.columns = ['data', 'valor']
 
-                    # Criar dados para projeção
-                    dias_futuros = pd.date_range(
-                        start=financeiro['data'].max(),
-                        end=financeiro['data'].max() + timedelta(days=30),
-                        freq='D'
-                    )
+                        # Calcular dias desde o início
+                        dias_serie = (receitas_diarias['data'] - receitas_diarias['data'].min()).dt.days
+                        valores_serie = receitas_diarias['valor']
 
-                    dias_projecao = (dias_futuros - financeiro['data'].min()).days
-                    valores_projecao = p(dias_projecao)
+                        # Calcular tendência
+                        z = np.polyfit(dias_serie, valores_serie, 1)
+                        p = np.poly1d(z)
 
-                    fig = go.Figure()
+                        # Criar dados para projeção
+                        dias_futuros = pd.date_range(
+                            start=receitas_diarias['data'].max(),
+                            end=receitas_diarias['data'].max() + timedelta(days=30),
+                            freq='D'
+                        )
 
-                    # Dados históricos
-                    fig.add_trace(go.Scatter(
-                        x=financeiro['data'],
-                        y=valores_serie,
-                        name='Dados Históricos'
-                    ))
+                        dias_projecao = (dias_futuros - receitas_diarias['data'].min()).dt.days
+                        valores_projecao = p(dias_projecao)
 
-                    # Projeção
-                    fig.add_trace(go.Scatter(
-                        x=dias_futuros,
-                        y=valores_projecao,
-                        name='Projeção',
-                        line=dict(dash='dash')
-                    ))
+                        # Criar gráfico
+                        fig = go.Figure()
 
-                    fig.update_layout(title='Projeção de Receitas (30 dias)')
-                    st.plotly_chart(fig, use_container_width=True)
+                        # Dados históricos
+                        fig.add_trace(go.Scatter(
+                            x=receitas_diarias['data'],
+                            y=receitas_diarias['valor'],
+                            name='Dados Históricos'
+                        ))
+
+                        # Projeção
+                        fig.add_trace(go.Scatter(
+                            x=dias_futuros,
+                            y=valores_projecao,
+                            name='Projeção',
+                            line=dict(dash='dash')
+                        ))
+
+                        fig.update_layout(
+                            title='Projeção de Receitas (30 dias)',
+                            xaxis_title='Data',
+                            yaxis_title='Valor (R$)'
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
             else:
                 st.info("Não há dados financeiros para análise.")
         except Exception as e:
@@ -141,8 +160,8 @@ def show():
                     st.metric("Propostas/Cliente", f"{propostas_por_cliente:.1f}")
 
                 # Análise de origem dos clientes
-                st.subheader("Origem dos Clientes")
                 if 'origem_cliente' in clientes.columns:
+                    st.subheader("Origem dos Clientes")
                     origem_counts = clientes['origem_cliente'].value_counts()
                     fig = px.pie(
                         values=origem_counts.values,
@@ -152,8 +171,8 @@ def show():
                     st.plotly_chart(fig, use_container_width=True)
 
                 # Análise temporal
-                st.subheader("Novos Clientes por Mês")
                 if 'data_cadastro' in clientes.columns:
+                    st.subheader("Novos Clientes por Mês")
                     clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro'])
                     cadastros_mensais = clientes.groupby(
                         clientes['data_cadastro'].dt.strftime('%Y-%m')
@@ -189,8 +208,8 @@ def show():
                 col3.metric("Propostas Fechadas", propostas_fechadas)
 
                 # Análise temporal
-                st.subheader("Evolução Temporal")
                 if 'data_proposta' in propostas.columns and 'status' in propostas.columns:
+                    st.subheader("Evolução Temporal")
                     propostas['data_proposta'] = pd.to_datetime(propostas['data_proposta'])
                     propostas_mensais = propostas.groupby([
                         propostas['data_proposta'].dt.strftime('%Y-%m'),
@@ -207,7 +226,7 @@ def show():
                     st.plotly_chart(fig, use_container_width=True)
 
                 # Análise de valores
-                if 'valor' in propostas.columns:
+                if 'valor' in propostas.columns and 'status' in propostas.columns:
                     st.subheader("Distribuição de Valores")
                     fig = px.box(
                         propostas,
