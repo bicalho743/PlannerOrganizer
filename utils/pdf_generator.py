@@ -48,8 +48,8 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
     story.append(Paragraph(proposta['descricao'], styles["Normal"]))
     story.append(Spacer(1, 12))
 
-    # Separar valores a receber e a pagar
-    story.append(Paragraph("<b>Valores a Receber</b>", styles["Heading3"]))
+    # Separar valores a receber (do cliente) e a pagar (assistentes)
+    story.append(Paragraph("<b>Valores a Receber do Cliente</b>", styles["Heading3"]))
     data_receber = [["Descrição", "Valor", "Status"]]
     data_pagar = [["Descrição", "Valor", "Status"]]
 
@@ -73,22 +73,22 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
 
             valor = float(acrescimo['valor'])
 
-            # Se for organização, vai para valores a receber
-            if acrescimo['tipo'].lower() == 'organização':
-                data_receber.append([
-                    descricao,
-                    f"R$ {valor:.2f}",
-                    acrescimo.get('status_pagamento', 'Pendente')
-                ])
-                total_receber += valor
-            else:
-                # Outros tipos vão para valores a pagar
+            # Se for assistente, vai para valores a pagar pela Organizer
+            if acrescimo['tipo'].lower() == 'assistente':
                 data_pagar.append([
                     descricao,
                     f"R$ {valor:.2f}",
                     acrescimo.get('status_pagamento', 'Pendente')
                 ])
                 total_pagar += valor
+            else:
+                # Todos os outros tipos vão para valores a receber do cliente
+                data_receber.append([
+                    descricao,
+                    f"R$ {valor:.2f}",
+                    acrescimo.get('status_pagamento', 'Pendente')
+                ])
+                total_receber += valor
 
     # Tabela de valores a receber
     table_style = TableStyle([
@@ -111,25 +111,25 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
     table_receber.setStyle(table_style)
     story.append(table_receber)
     story.append(Spacer(1, 12))
-    story.append(Paragraph(f"<b>Total a Receber:</b> R$ {total_receber:.2f}", 
+    story.append(Paragraph(f"<b>Total a Receber do Cliente:</b> R$ {total_receber:.2f}", 
                          ParagraphStyle('Total', parent=styles['Normal'], fontSize=12, alignment=2)))
 
-    # Se houver valores a pagar, adicionar tabela
+    # Se houver valores a pagar para assistentes, adicionar tabela
     if len(data_pagar) > 1:  # Se tiver mais que só o cabeçalho
         story.append(Spacer(1, 20))
-        story.append(Paragraph("<b>Valores a Pagar</b>", styles["Heading3"]))
+        story.append(Paragraph("<b>Valores a Pagar aos Assistentes</b>", styles["Heading3"]))
         table_pagar = Table(data_pagar, colWidths=[4*inch, 1.5*inch, 1*inch])
         table_pagar.setStyle(table_style)
         story.append(table_pagar)
         story.append(Spacer(1, 12))
-        story.append(Paragraph(f"<b>Total a Pagar:</b> R$ {total_pagar:.2f}", 
+        story.append(Paragraph(f"<b>Total a Pagar aos Assistentes:</b> R$ {total_pagar:.2f}", 
                              ParagraphStyle('Total', parent=styles['Normal'], fontSize=12, alignment=2)))
 
     # Resumo final
     story.append(Spacer(1, 30))
     story.append(Paragraph("<b>Resumo Financeiro</b>", styles["Heading3"]))
-    story.append(Paragraph(f"Total a Receber: R$ {total_receber:.2f}", styles["Normal"]))
-    story.append(Paragraph(f"Total a Pagar: R$ {total_pagar:.2f}", styles["Normal"]))
+    story.append(Paragraph(f"Total a Receber do Cliente: R$ {total_receber:.2f}", styles["Normal"]))
+    story.append(Paragraph(f"Total a Pagar aos Assistentes: R$ {total_pagar:.2f}", styles["Normal"]))
     story.append(Paragraph(f"<b>Resultado Final: R$ {(total_receber - total_pagar):.2f}</b>", 
                          ParagraphStyle('Final', parent=styles['Normal'], fontSize=14, alignment=2)))
 
@@ -138,8 +138,8 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
     story.append(Paragraph("Observações:", styles["Heading4"]))
     story.append(Paragraph("1. Este documento representa o fechamento final da proposta.", styles["Normal"]))
     story.append(Paragraph("2. Os valores apresentados incluem todos os custos e acréscimos.", styles["Normal"]))
-    story.append(Paragraph("3. Valores a receber incluem serviços de organização.", styles["Normal"]))
-    story.append(Paragraph("4. Valores a pagar incluem fornecedores e outros custos.", styles["Normal"]))
+    story.append(Paragraph("3. Valores a receber incluem base e todos os custos exceto assistentes.", styles["Normal"]))
+    story.append(Paragraph("4. Valores a pagar incluem apenas pagamentos aos assistentes.", styles["Normal"]))
     story.append(Paragraph("5. Para qualquer esclarecimento adicional, entre em contato.", styles["Normal"]))
 
     # Gerar PDF
