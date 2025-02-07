@@ -196,14 +196,16 @@ class Database:
         propostas = self.session.query(Proposta).all()
         return pd.DataFrame([{
             'id': p.id,
+            'numero': p.numero,
             'cliente_id': p.cliente_id,
             'descricao': p.descricao,
             'valor': p.valor,
             'status': p.status,
             'data_proposta': p.data_proposta,
-            'tipo_proposta': p.tipo_proposta if hasattr(p, 'tipo_proposta') else None,
+            'tipo_proposta': p.tipo_proposta,
             'data_inicio': p.data_inicio,
-            'data_fim': p.data_fim
+            'data_fim': p.data_fim,
+            'prazo_entrega': p.prazo_entrega
         } for p in propostas])
 
     def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, prazo_entrega=None, data_inicio=None, data_fim=None):

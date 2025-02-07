@@ -109,13 +109,16 @@ def show():
                 propostas = propostas[propostas['status'].isin(status_filtro)]
 
             # Exibir tabela de propostas
-            st.dataframe(
-                propostas[[
-                    'nome', 'descricao', 'valor', 'status', 'tipo_proposta',
-                    'data_inicio', 'data_fim', 'data_proposta'
-                ]],
-                use_container_width=True
-            )
+            if not propostas.empty:
+                st.dataframe(
+                    propostas[[
+                        'numero', 'nome', 'descricao', 'valor', 'status', 'tipo_proposta',
+                        'data_inicio', 'data_fim', 'data_proposta'
+                    ]],
+                    use_container_width=True
+                )
+            else:
+                st.info("Nenhuma proposta encontrada.")
         else:
             st.info("Nenhuma proposta encontrada.")
 
