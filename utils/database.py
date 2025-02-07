@@ -156,7 +156,7 @@ class AndamentoProposta(Base):
 class Transacao(Base):
     __tablename__ = 'financeiro'
     id = Column(Integer, primary_key=True)
-    tipo = Column(String)
+    tipo = Column(String)  # 'receita', 'despesa', 'receita_a_receber'
     descricao = Column(String)
     valor = Column(Float)
     data = Column(Date, default=datetime.now().date())
@@ -165,6 +165,8 @@ class Transacao(Base):
     origem_id = Column(Integer)
     origem_tipo = Column(String)
     tipo_conta = Column(String, default='PF')
+    status = Column(String, default='Pendente')  # 'Pendente', 'Recebido', 'Cancelado'
+    data_recebimento = Column(Date, nullable=True)
 
 class AcrescimoProposta(Base):
     __tablename__ = 'acrescimos_proposta'
@@ -294,12 +296,14 @@ class Database:
                 'tipo_receita': t.tipo_receita,
                 'origem_id': t.origem_id,
                 'origem_tipo': t.origem_tipo,
-                'tipo_conta': t.tipo_conta
+                'tipo_conta': t.tipo_conta,
+                'status': t.status,
+                'data_recebimento': t.data_recebimento
             } for t in transacoes])
         return self._safe_query(query)
 
     def add_transacao(self, tipo, descricao, valor, categoria, tipo_receita=None, 
-                     origem_id=None, origem_tipo=None, tipo_conta='PF'):
+                     origem_id=None, origem_tipo=None, tipo_conta='PF', status='Pendente'):
         def query():
             transacao = Transacao(
                 tipo=tipo,
@@ -309,10 +313,42 @@ class Database:
                 tipo_receita=tipo_receita,
                 origem_id=origem_id,
                 origem_tipo=origem_tipo,
-                tipo_conta=tipo_conta
+                tipo_conta=tipo_conta,
+                status=status
             )
             self.session.add(transacao)
             return transacao.id
+        return self._safe_query(query)
+
+    def atualizar_status_transacao(self, transacao_id, status, data_recebimento=None):
+        def query():
+            transacao = self.session.query(Transacao).filter_by(id=transacao_id).first()
+            if transacao:
+                transacao.status = status
+                if status == 'Recebido':
+                    transacao.data_recebimento = data_recebimento or datetime.now().date()
+                return True
+            return False
+        return self._safe_query(query)
+
+    def get_contas_receber(self):
+        def query():
+            contas = self.session.query(Transacao).filter(
+                Transacao.tipo.in_(['receita_a_receber']),
+            ).order_by(Transacao.data.desc()).all()
+
+            return pd.DataFrame([{
+                'id': t.id,
+                'descricao': t.descricao,
+                'valor': t.valor,
+                'data': t.data,
+                'categoria': t.categoria,
+                'tipo_receita': t.tipo_receita,
+                'origem_tipo': t.origem_tipo,
+                'tipo_conta': t.tipo_conta,
+                'status': t.status,
+                'data_recebimento': t.data_recebimento
+            } for t in contas])
         return self._safe_query(query)
 
     def add_fornecedor(self, descricao, contato, categoria, tipo_conta, pix=None, recorrente=False, observacoes=None, valor=None, data_vencimento=None, data_pagamento=None, status=None):

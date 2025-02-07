@@ -6,9 +6,10 @@ from datetime import datetime
 def show():
     st.title("💰 Gestão Financeira")
 
-    tab1, tab2, tab3 = st.tabs([
+    tab1, tab2, tab3, tab4 = st.tabs([
         "Registrar Transação",
         "Extrato",
+        "Contas a Receber",
         "Dashboard Financeiro"
     ])
 
@@ -18,13 +19,13 @@ def show():
         with st.form("registro_transacao", clear_on_submit=True):
             tipo = st.selectbox(
                 "Tipo",
-                ["receita", "despesa"]
+                ["receita", "despesa", "receita_a_receber"]
             )
 
             descricao = st.text_input("Descrição")
             valor = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
 
-            if tipo == "receita":
+            if tipo in ["receita", "receita_a_receber"]:
                 tipo_receita = st.selectbox(
                     "Tipo de Receita",
                     ["organização", "comissão", "venda"]
@@ -91,7 +92,7 @@ def show():
         with col1:
             tipo_filtro = st.multiselect(
                 "Tipo",
-                ["receita", "despesa"]
+                ["receita", "despesa", "receita_a_receber"]
             )
         with col2:
             categoria_filtro = st.multiselect(
@@ -114,7 +115,7 @@ def show():
             st.dataframe(
                 financeiro[[
                     'data', 'tipo', 'descricao', 'valor', 'categoria',
-                    'tipo_receita'
+                    'tipo_receita', 'status'
                 ]].sort_values('data', ascending=False),
                 use_container_width=True
             )
@@ -132,9 +133,74 @@ def show():
             st.info("Nenhuma transação encontrada.")
 
     with tab3:
+        st.subheader("Contas a Receber")
+
+        contas_receber = st.session_state.db.get_contas_receber()
+
+        if not contas_receber.empty:
+            # Adicionar coluna de ações
+            for idx, conta in contas_receber.iterrows():
+                col1, col2, col3 = st.columns([3, 1, 1])
+                with col1:
+                    st.write(f"**{conta['descricao']}**")
+                    st.write(f"Valor: R$ {conta['valor']:.2f}")
+                    st.write(f"Origem: {conta['origem_tipo']}")
+                    st.write(f"Status: {conta['status']}")
+
+                with col2:
+                    if conta['status'] == 'Pendente':
+                        if st.button("✅ Receber", key=f"receber_{conta['id']}"):
+                            st.session_state.db.atualizar_status_transacao(
+                                conta['id'],
+                                'Recebido',
+                                datetime.now().date()
+                            )
+                            st.rerun()
+
+                with col3:
+                    if conta['status'] == 'Pendente':
+                        if st.button("❌ Cancelar", key=f"cancelar_{conta['id']}"):
+                            st.session_state.db.atualizar_status_transacao(
+                                conta['id'],
+                                'Cancelado'
+                            )
+                            st.rerun()
+
+                st.divider()
+
+            # Resumo de contas a receber
+            total_pendente = contas_receber[contas_receber['status'] == 'Pendente']['valor'].sum()
+            total_recebido = contas_receber[contas_receber['status'] == 'Recebido']['valor'].sum()
+
+            col1, col2 = st.columns(2)
+            col1.metric("Total Pendente", f"R$ {total_pendente:.2f}")
+            col2.metric("Total Recebido", f"R$ {total_recebido:.2f}")
+        else:
+            st.info("Nenhuma conta a receber cadastrada.")
+
+    with tab4:
         st.subheader("Dashboard Financeiro")
 
         if not financeiro.empty:
+            # Resumo de Contas a Receber
+            contas_receber = st.session_state.db.get_contas_receber()
+            if not contas_receber.empty:
+                st.subheader("Resumo de Contas a Receber")
+
+                # Agrupar por origem e status
+                resumo_receber = contas_receber.groupby(['origem_tipo', 'status'])['valor'].sum().reset_index()
+
+                # Gráfico de barras empilhadas
+                fig_receber = px.bar(
+                    resumo_receber,
+                    x='origem_tipo',
+                    y='valor',
+                    color='status',
+                    title='Contas a Receber por Origem',
+                    labels={'valor': 'Valor (R$)', 'origem_tipo': 'Origem', 'status': 'Status'}
+                )
+                st.plotly_chart(fig_receber, use_container_width=True)
+
             # Gráfico de Receitas vs Despesas por Categoria
             fig1 = px.bar(
                 financeiro,
@@ -163,7 +229,7 @@ def show():
             st.plotly_chart(fig2, use_container_width=True)
 
             # Distribuição por Tipo de Receita
-            receitas = financeiro[financeiro['tipo'] == 'receita']
+            receitas = financeiro[financeiro['tipo'].isin(['receita', 'receita_a_receber'])]
             if not receitas.empty and 'tipo_receita' in receitas.columns:
                 fig3 = px.pie(
                     receitas,
