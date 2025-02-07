@@ -150,7 +150,8 @@ class Database:
             'descricao': p.descricao,
             'valor': p.valor,
             'status': p.status,
-            'data_proposta': p.data_proposta
+            'data_proposta': p.data_proposta,
+            'tipo_proposta': p.tipo_proposta if hasattr(p, 'tipo_proposta') else None
         } for p in propostas])
 
     def add_proposta(self, cliente_id, descricao, valor, status):
