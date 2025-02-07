@@ -70,10 +70,10 @@ class Fornecedor(Base):
     pix = Column(String)
     recorrente = Column(Boolean, default=False)
     observacoes = Column(String)
-    valor = Column(Float)
-    data_vencimento = Column(Date)
-    data_pagamento = Column(Date)
-    status = Column(String)
+    valor = Column(Float, nullable=True)
+    data_vencimento = Column(Date, nullable=True)
+    data_pagamento = Column(Date, nullable=True)
+    status = Column(String, nullable=True)
 
 
 class Assistente(Base):
@@ -315,7 +315,7 @@ class Database:
             return transacao.id
         return self._safe_query(query)
 
-    def add_fornecedor(self, descricao, contato, categoria, tipo_conta, pix=None, recorrente=False, observacoes=None):
+    def add_fornecedor(self, descricao, contato, categoria, tipo_conta, pix=None, recorrente=False, observacoes=None, valor=None, data_vencimento=None, data_pagamento=None, status=None):
         def query():
             fornecedor = Fornecedor(
                 descricao=descricao,
@@ -324,7 +324,11 @@ class Database:
                 tipo_conta=tipo_conta,
                 pix=pix,
                 recorrente=recorrente,
-                observacoes=observacoes
+                observacoes=observacoes,
+                valor=valor,
+                data_vencimento=data_vencimento,
+                data_pagamento=data_pagamento,
+                status=status
             )
             self.session.add(fornecedor)
             return fornecedor.id
@@ -341,7 +345,11 @@ class Database:
                 'tipo_conta': f.tipo_conta,
                 'pix': f.pix,
                 'recorrente': f.recorrente,
-                'observacoes': f.observacoes
+                'observacoes': f.observacoes,
+                'valor': f.valor,
+                'data_vencimento': f.data_vencimento,
+                'data_pagamento': f.data_pagamento,
+                'status': f.status
             } for f in fornecedores])
         return self._safe_query(query)
 
