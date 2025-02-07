@@ -47,11 +47,19 @@ def show():
         try:
             fornecedores = st.session_state.db.get_fornecedores()
             if not fornecedores.empty:
+                # Update column order and selection based on actual database schema
                 st.dataframe(
                     fornecedores[[
                         'descricao', 'contato', 'categoria',
                         'tipo_conta', 'pix', 'recorrente'
-                    ]],
+                    ]].rename(columns={
+                        'descricao': 'Nome/Descrição',
+                        'contato': 'Contato',
+                        'categoria': 'Categoria',
+                        'tipo_conta': 'Tipo de Conta',
+                        'pix': 'PIX',
+                        'recorrente': 'Recorrente'
+                    }),
                     use_container_width=True
                 )
             else:
@@ -96,7 +104,13 @@ def show():
                     assistentes[[
                         'nome', 'telefone', 'endereco',
                         'pix', 'observacoes'
-                    ]],
+                    ]].rename(columns={
+                        'nome': 'Nome',
+                        'telefone': 'Telefone',
+                        'endereco': 'Endereço',
+                        'pix': 'PIX',
+                        'observacoes': 'Observações'
+                    }),
                     use_container_width=True
                 )
             else:
