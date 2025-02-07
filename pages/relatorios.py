@@ -11,84 +11,10 @@ def show():
     # Seleção do tipo de relatório
     tipo_relatorio = st.selectbox(
         "Selecione o Relatório",
-        ["Dashboard Geral", "Desempenho Financeiro", "Análise de Clientes", "Status de Propostas"]
+        ["Desempenho Financeiro", "Análise de Clientes", "Status de Propostas"]
     )
 
-    if tipo_relatorio == "Dashboard Geral":
-        st.subheader("📈 Dashboard Geral")
-
-        # Carregar dados
-        propostas = st.session_state.db.get_propostas()
-        clientes = st.session_state.db.get_clientes()
-        financeiro = st.session_state.db.get_financeiro()
-
-        # Métricas gerais
-        col1, col2, col3, col4 = st.columns(4)
-
-        with col1:
-            total_clientes = len(clientes) if not clientes.empty else 0
-            st.metric("Total de Clientes", total_clientes)
-
-        with col2:
-            if not propostas.empty:
-                propostas_mes = len(propostas[
-                    pd.to_datetime(propostas['data_proposta']).dt.month == datetime.now().month
-                ])
-            else:
-                propostas_mes = 0
-            st.metric("Propostas este Mês", propostas_mes)
-
-        with col3:
-            if not financeiro.empty:
-                receita_mes = financeiro[
-                    (financeiro['tipo'] == 'receita') & 
-                    (pd.to_datetime(financeiro['data']).dt.month == datetime.now().month)
-                ]['valor'].sum()
-            else:
-                receita_mes = 0
-            st.metric("Receita Mensal", f"R$ {receita_mes:.2f}")
-
-        with col4:
-            if not propostas.empty:
-                taxa_conversao = (
-                    len(propostas[propostas['status'] == 'Fechada']) / 
-                    len(propostas) * 100
-                )
-            else:
-                taxa_conversao = 0
-            st.metric("Taxa de Conversão", f"{taxa_conversao:.1f}%")
-
-        # Gráfico de tendências
-        if not financeiro.empty:
-            st.subheader("Tendência de Receitas vs Despesas")
-            financeiro['data'] = pd.to_datetime(financeiro['data'])
-            dados_mensais = financeiro.groupby([
-                financeiro['data'].dt.strftime('%Y-%m'),
-                'tipo'
-            ])['valor'].sum().reset_index()
-
-            fig = px.line(
-                dados_mensais,
-                x='data',
-                y='valor',
-                color='tipo',
-                title='Evolução Mensal'
-            )
-            st.plotly_chart(fig, use_container_width=True)
-
-        # Análise de origem dos clientes
-        if not clientes.empty:
-            st.subheader("Origem dos Clientes")
-            origem_counts = clientes['origem_cliente'].value_counts()
-
-            fig = px.pie(
-                values=origem_counts.values,
-                names=origem_counts.index,
-                title='Distribuição por Origem'
-            )
-            st.plotly_chart(fig, use_container_width=True)
-
-    elif tipo_relatorio == "Desempenho Financeiro":
+    if tipo_relatorio == "Desempenho Financeiro":
         st.subheader("💰 Análise Financeira Detalhada")
 
         # Período de análise

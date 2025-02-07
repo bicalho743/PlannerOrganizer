@@ -34,7 +34,7 @@ if clientes.empty:
         else:
             st.sidebar.error("Erro ao adicionar dados de teste")
 
-# Dashboard principal
+# Roteamento de páginas
 if pagina == "Dashboard":
     col1, col2 = st.columns(2)
 
@@ -52,7 +52,6 @@ if pagina == "Dashboard":
 
         # Resumo financeiro
         if not financeiro.empty:
-            # Filtrar apenas receitas de organização e produtos
             valores_receber = financeiro[
                 (financeiro['tipo'] == 'receita') & 
                 (financeiro['tipo_receita'].isin(['organização', 'venda']))
@@ -77,6 +76,26 @@ if pagina == "Dashboard":
                     st.write(f"- Proposta #{p['proposta']} - {p['cliente']}: {p['tipo']} - {p['fornecedor']} (R$ {p['valor']:.2f})")
                 else:
                     st.write(f"- Proposta #{p['proposta']} - {p['cliente']}: {p['tipo']} (R$ {p['valor']:.2f})")
+
+    with col2:
+        st.subheader("📋 Propostas em Aberto")
+
+        # Propostas em aberto
+        if not propostas.empty:
+            propostas['data_proposta'] = pd.to_datetime(propostas['data_proposta'])
+            propostas_abertas = propostas[propostas['status'] == 'Aberta'].sort_values('data_proposta', ascending=False)
+
+            if not propostas_abertas.empty:
+                for _, p in propostas_abertas.iterrows():
+                    with st.expander(f"Proposta #{p['numero']} - {p['descricao']}"):
+                        st.write(f"**Valor:** R$ {p['valor']:.2f}")
+                        st.write(f"**Data:** {p['data_proposta'].strftime('%d/%m/%Y')}")
+                        if p['prazo_entrega']:
+                            st.write(f"**Prazo de Entrega:** {p['prazo_entrega'].strftime('%d/%m/%Y')}")
+            else:
+                st.info("Nenhuma proposta em aberto.")
+        else:
+            st.info("Nenhuma proposta cadastrada.")
 
         # Aniversariantes
         if not clientes.empty:
@@ -111,29 +130,6 @@ if pagina == "Dashboard":
                 for _, aniv in aniversariantes_mes.iterrows():
                     data_aniv = aniv['data_aniversario']
                     st.write(f"- Dia {data_aniv.day}: {aniv['nome']}")
-
-
-    with col2:
-        st.subheader("📋 Propostas em Aberto")
-
-        # Propostas em aberto
-        if not propostas.empty:
-            # Converter data_proposta para datetime
-            propostas['data_proposta'] = pd.to_datetime(propostas['data_proposta'])
-            # Filtrar propostas abertas
-            propostas_abertas = propostas[propostas['status'] == 'Aberta'].sort_values('data_proposta', ascending=False)
-
-            if not propostas_abertas.empty:
-                for _, p in propostas_abertas.iterrows():
-                    with st.expander(f"Proposta #{p['numero']} - {p['descricao']}"):
-                        st.write(f"**Valor:** R$ {p['valor']:.2f}")
-                        st.write(f"**Data:** {p['data_proposta'].strftime('%d/%m/%Y')}")
-                        if p['prazo_entrega']:
-                            st.write(f"**Prazo de Entrega:** {p['prazo_entrega'].strftime('%d/%m/%Y')}")
-            else:
-                st.info("Nenhuma proposta em aberto.")
-        else:
-            st.info("Nenhuma proposta cadastrada.")
 
 elif pagina == "Clientes":
     import pages.clientes
