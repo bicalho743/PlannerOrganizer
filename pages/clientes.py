@@ -67,6 +67,7 @@ def show():
                     clientes['data_cadastro'] = clientes['data_cadastro'].apply(
                         lambda x: x.strftime('%d/%m/%Y') if pd.notnull(x) else ''
                     )
+                    # Apenas dia e mês para aniversário
                     clientes['data_aniversario'] = clientes['data_aniversario'].apply(
                         lambda x: x.strftime('%d/%m') if pd.notnull(x) else ''
                     )
@@ -127,6 +128,10 @@ def show():
                     if 'data_aniversario' in df.columns:
                         # Tratar datas com valores nulos
                         df['data_aniversario'] = pd.to_datetime(df['data_aniversario'], errors='coerce')
+                        # Formatar apenas dia e mês
+                        df['data_aniversario'] = df['data_aniversario'].apply(
+                            lambda x: x.strftime('%d/%m') if pd.notnull(x) else ''
+                        )
                     st.dataframe(df.head())
 
                     if st.button("Confirmar Importação"):
@@ -144,7 +149,7 @@ def show():
                                 # Converter data se existir
                                 data_aniv = None
                                 if 'data_aniversario' in row and pd.notnull(row['data_aniversario']):
-                                    data_aniv = row['data_aniversario'].date()
+                                    data_aniv = pd.to_datetime(row['data_aniversario']).date()
 
                                 # Adicionar cliente
                                 st.session_state.db.add_cliente(
