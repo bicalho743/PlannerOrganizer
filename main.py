@@ -20,7 +20,16 @@ st.title("📋 Sistema de Gestão - Personal Organizer")
 st.sidebar.title("Menu Principal")
 pagina = st.sidebar.radio(
     "Navegação",
-    ["Dashboard", "Clientes", "Propostas", "Financeiro", "Contas a Pagar", "Backup", "Relatórios", "Cadastros"]
+    [
+        "Dashboard",
+        "Clientes",
+        "Propostas",
+        "Financeiro",
+        "Contas a Pagar",
+        "Cadastros",
+        "Backup",
+        "Relatórios"
+    ]
 )
 
 # Add test data button in sidebar if database is empty
@@ -101,8 +110,7 @@ if pagina == "Dashboard":
         if not clientes.empty:
             st.write("---")
             st.subheader("🎂 Aniversariantes")
-
-            # Converter a coluna de data_aniversario para datetime
+            # Converter data_aniversario para datetime
             clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'])
             hoje = datetime.now()
 
@@ -119,7 +127,7 @@ if pagina == "Dashboard":
             else:
                 st.write("**🎈 Hoje:** Nenhum aniversariante")
 
-            # Aniversariantes do mês
+            # Próximos aniversariantes do mês
             aniversariantes_mes = clientes[
                 (clientes['data_aniversario'].dt.month == hoje.month) &
                 (clientes['data_aniversario'].dt.day > hoje.day)
