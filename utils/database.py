@@ -56,8 +56,8 @@ class CategoriaDespesa(Base):
     descricao = Column(String)
     tipo_conta = Column(String)  # PF ou PJ
 
-class ContaPagar(Base):
-    __tablename__ = 'contas_pagar'
+class Fornecedor(Base): # Renamed to Fornecedor
+    __tablename__ = 'fornecedores'
 
     id = Column(Integer, primary_key=True)
     descricao = Column(String, nullable=False)
@@ -65,13 +65,13 @@ class ContaPagar(Base):
     data_vencimento = Column(Date, nullable=False)
     data_pagamento = Column(Date)
     status = Column(String, default='Pendente')  # Pendente, Pago, Atrasado
-    categoria_id = Column(Integer, ForeignKey('categorias_despesa.id'))
+    categoria = Column(String)
+    pix = Column(String)
+    contato = Column(String)
     tipo_conta = Column(String, nullable=False)  # PF ou PJ
-    fornecedor = Column(String)
     recorrente = Column(Boolean, default=False)
     observacoes = Column(String)
 
-    categoria = relationship("CategoriaDespesa")
 
 class Transacao(Base):
     __tablename__ = 'financeiro'
@@ -271,36 +271,40 @@ class Database:
             print(f"Erro ao adicionar dados de teste: {str(e)}")
             return False
 
-    def add_conta_pagar(self, descricao, valor, data_vencimento, categoria_id, tipo_conta, fornecedor=None, recorrente=False, observacoes=None):
-        conta = ContaPagar(
+    def add_fornecedor(self, descricao, valor, data_vencimento, categoria, tipo_conta, pix=None, contato=None, recorrente=False, observacoes=None): #Updated method
+        fornecedor = Fornecedor( #Renamed to Fornecedor
             descricao=descricao,
             valor=valor,
             data_vencimento=data_vencimento,
-            categoria_id=categoria_id,
+            categoria=categoria,
             tipo_conta=tipo_conta,
-            fornecedor=fornecedor,
+            pix=pix,
+            contato=contato,
             recorrente=recorrente,
             observacoes=observacoes
         )
-        self.session.add(conta)
+        self.session.add(fornecedor)
         self.session.commit()
-        return conta.id
+        return fornecedor.id
 
-    def get_contas_pagar(self):
-        contas = self.session.query(ContaPagar).all()
+    def get_fornecedores(self): #Added method
+        fornecedores = self.session.query(Fornecedor).all()
         return pd.DataFrame([{
-            'id': c.id,
-            'descricao': c.descricao,
-            'valor': c.valor,
-            'data_vencimento': c.data_vencimento,
-            'data_pagamento': c.data_pagamento,
-            'status': c.status,
-            'categoria_id': c.categoria_id,
-            'tipo_conta': c.tipo_conta,
-            'fornecedor': c.fornecedor,
-            'recorrente': c.recorrente,
-            'observacoes': c.observacoes
-        } for c in contas])
+            'id': f.id,
+            'descricao': f.descricao,
+            'valor': f.valor,
+            'data_vencimento': f.data_vencimento,
+            'data_pagamento': f.data_pagamento,
+            'status': f.status,
+            'categoria': f.categoria,
+            'pix': f.pix,
+            'contato': f.contato,
+            'tipo_conta': f.tipo_conta,
+            'recorrente': f.recorrente,
+            'observacoes': f.observacoes
+        } for f in fornecedores])
+
+
 
     def add_categoria_despesa(self, nome, descricao, tipo_conta):
         categoria = CategoriaDespesa(
