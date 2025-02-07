@@ -192,7 +192,12 @@ def show():
                 # Lista de Produtos
                 st.write("---")
                 st.subheader("Produtos Cadastrados")
-                produtos = st.session_state.db.get_produtos_organizadores(proposta_id)
+
+                @st.cache_data(ttl=60)
+                def load_produtos(pid):
+                    return st.session_state.db.get_produtos_organizadores(pid)
+
+                produtos = load_produtos(proposta_id)
 
                 if not produtos.empty:
                     for idx, produto in produtos.iterrows():

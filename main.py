@@ -100,8 +100,8 @@ if pagina == "Dashboard":
         # Últimas propostas
         st.write("Últimas Propostas:")
         if not propostas.empty:
-            ultimas_propostas = propostas.sort_values('data_proposta', ascending=False).head(5)
-            st.dataframe(ultimas_propostas[['descricao', 'valor', 'status', 'data_proposta']])
+            ultimas_propostas = propostas.nlargest(5, 'data_proposta')[['descricao', 'valor', 'status', 'data_proposta']]
+            st.dataframe(ultimas_propostas)
         else:
             st.info("Nenhuma proposta cadastrada.")
 

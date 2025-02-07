@@ -34,6 +34,10 @@ class Usuario(Base):
 class Cliente(Base):
     __tablename__ = 'clientes'
     id = Column(Integer, primary_key=True)
+    __table_args__ = (
+        Index('idx_cliente_nome', 'nome'),
+        Index('idx_cliente_email', 'email'),
+    )
     nome = Column(String, nullable=False)
     email = Column(String)
     telefone = Column(String)
@@ -215,7 +219,7 @@ class Database:
         return proposta.id
 
     def get_financeiro(self):
-        transacoes = self.session.query(Transacao).all()
+        transacoes = self.session.query(Transacao).order_by(Transacao.data.desc()).limit(1000).all()
         return pd.DataFrame([{
             'id': t.id,
             'tipo': t.tipo,
