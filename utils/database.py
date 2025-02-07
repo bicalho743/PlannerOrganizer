@@ -72,11 +72,10 @@ class ProdutoOrganizador(Base):
     valor = Column(Float)
     quantidade = Column(Integer)
     comodo = Column(String, nullable=False)
-    fornecedor_id = Column(Integer, ForeignKey('fornecedores.id'))
     data_cadastro = Column(Date, default=datetime.now().date())
 
     proposta = relationship("Proposta", back_populates="produtos")
-    fornecedor = relationship("Fornecedor", back_populates="produtos")
+    fornecedores = relationship("ProdutoFornecedor", back_populates="produto")
 
 class Fornecedor(Base):
     __tablename__ = 'fornecedores'
@@ -146,6 +145,20 @@ class Usuario(Base):
 
     def check_senha(self, senha):
         return check_password_hash(self.senha_hash, senha)
+
+class ProdutoFornecedor(Base):
+    __tablename__ = 'produtos_fornecedores'
+
+    id = Column(Integer, primary_key=True)
+    produto_id = Column(Integer, ForeignKey('produtos_organizadores.id'))
+    fornecedor_id = Column(Integer, ForeignKey('fornecedores.id'))
+    valor = Column(Float)
+    data_cotacao = Column(Date, default=datetime.now().date())
+    observacoes = Column(String)
+
+    produto = relationship("ProdutoOrganizador", back_populates="fornecedores")
+    fornecedor = relationship("Fornecedor")
+
 
 class Database:
     def __init__(self):
@@ -363,7 +376,7 @@ class Database:
             )
 
             # Add test produtos organizadores
-            self.add_produto_organizador(
+            produto1_id = self.add_produto_organizador(
                 proposta_id=proposta1_id,
                 nome="Caixa Organizadora Grande",
                 descricao="Caixa transparente com tampa",
@@ -372,6 +385,7 @@ class Database:
                 comodo="Closet",
                 fornecedor_id=fornecedor1_id
             )
+            self.add_produto_fornecedor(produto1_id, fornecedor2_id, 55.00, "Oferta especial")
 
             self.add_produto_organizador(
                 proposta_id=proposta2_id,
@@ -491,7 +505,7 @@ class Database:
             valor=valor,
             quantidade=quantidade,
             comodo=comodo,
-            fornecedor_id=fornecedor_id
+            
         )
         self.session.add(produto)
         self.session.commit()
@@ -509,7 +523,6 @@ class Database:
             'valor': p.valor,
             'quantidade': p.quantidade,
             'comodo': p.comodo,
-            'fornecedor_id': p.fornecedor_id,
             'data_cadastro': p.data_cadastro
         } for p in produtos])
 
@@ -587,3 +600,32 @@ class Database:
         except Exception as e:
             self.session.rollback()
             return False
+
+    def add_produto_fornecedor(self, produto_id, fornecedor_id, valor, observacoes=None):
+        """Adiciona um fornecedor e seu preço para um produto"""
+        try:
+            fornecedor = ProdutoFornecedor(
+                produto_id=produto_id,
+                fornecedor_id=fornecedor_id,
+                valor=valor,
+                observacoes=observacoes
+            )
+            self.session.add(fornecedor)
+            self.session.commit()
+            return True
+        except Exception as e:
+            self.session.rollback()
+            raise e
+
+    def get_produto_fornecedores(self, produto_id):
+        """Retorna todos os fornecedores e preços de um produto"""
+        fornecedores = self.session.query(ProdutoFornecedor).filter_by(produto_id=produto_id).all()
+        return pd.DataFrame([{
+            'id': f.id,
+            'produto_id': f.produto_id,
+            'fornecedor_id': f.fornecedor_id,
+            'fornecedor_nome': f.fornecedor.nome if f.fornecedor else None,
+            'valor': f.valor,
+            'data_cotacao': f.data_cotacao,
+            'observacoes': f.observacoes
+        } for f in fornecedores])

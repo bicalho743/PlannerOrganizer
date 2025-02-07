@@ -179,51 +179,37 @@ def show():
                 st.subheader("Produtos")
 
                 with st.form("cadastro_produto"):
-                    col1, col2, col3 = st.columns(3)
+                    col1, col2 = st.columns(2)
                     with col1:
                         nome_produto = st.text_input("Nome do Produto")
                         comodo = st.text_input("Cômodo")
+                        quantidade = st.number_input("Quantidade", min_value=1, step=1)
                     with col2:
                         descricao_produto = st.text_area("Descrição")
-                        quantidade = st.number_input("Quantidade", min_value=1, step=1)
-                    with col3:
-                        # Comparativo de preços entre lojas
-                        st.write("Valores por Loja")
-                        loja1_valor = st.number_input("Loja 1 (R$)", min_value=0.0, step=0.01)
-                        loja2_valor = st.number_input("Loja 2 (R$)", min_value=0.0, step=0.01)
-                        loja3_valor = st.number_input("Loja 3 (R$)", min_value=0.0, step=0.01)
-
-                    # Determinar o menor valor
-                    valores_lojas = [
-                        (loja1_valor, "Loja 1"),
-                        (loja2_valor, "Loja 2"),
-                        (loja3_valor, "Loja 3")
-                    ]
-                    menor_valor = min((v for v, _ in valores_lojas if v > 0), default=0)
-                    loja_escolhida = next((loja for valor, loja in valores_lojas if valor == menor_valor), None)
 
                     if st.form_submit_button("Adicionar Produto"):
-                        if nome_produto and menor_valor > 0 and comodo:
+                        if nome_produto and comodo:
                             try:
-                                st.session_state.db.add_produto_organizador(
+                                produto_id = st.session_state.db.add_produto_organizador(
                                     proposta_id=proposta_id,
                                     nome=nome_produto,
                                     descricao=descricao_produto,
-                                    valor=menor_valor,
+                                    valor=0,  # Será atualizado com o menor valor dos fornecedores
                                     quantidade=quantidade,
-                                    comodo=comodo,
-                                    fornecedor_id=None  # Será atualizado posteriormente
+                                    comodo=comodo
                                 )
-                                st.success(f"Produto cadastrado com sucesso! Melhor valor: {loja_escolhida} - R$ {menor_valor:.2f}")
+                                st.success("Produto cadastrado com sucesso! Agora você pode adicionar os fornecedores.")
+                                st.session_state.novo_produto_id = produto_id
                             except Exception as e:
                                 st.error(f"Erro ao cadastrar produto: {str(e)}")
                         else:
-                            st.warning("Por favor, preencha todos os campos obrigatórios e informe pelo menos um valor de loja.")
+                            st.warning("Por favor, preencha todos os campos obrigatórios.")
 
                 # Lista de Produtos
                 st.write("---")
                 st.subheader("Produtos Cadastrados")
                 produtos = st.session_state.db.get_produtos_organizadores(proposta_id)
+
                 if not produtos.empty:
                     for idx, produto in produtos.iterrows():
                         with st.expander(f"{produto['nome']} - {produto['comodo']}"):
@@ -231,9 +217,69 @@ def show():
                             with col1:
                                 st.write(f"**Descrição:** {produto['descricao']}")
                                 st.write(f"**Quantidade:** {produto['quantidade']}")
-                            with col2:
-                                st.write(f"**Valor:** R$ {produto['valor']:.2f}")
-                                st.write(f"**Total:** R$ {(produto['valor'] * produto['quantidade']):.2f}")
+
+                            # Seção de fornecedores
+                            st.write("---")
+                            st.write("**Fornecedores:**")
+
+                            # Form para adicionar novo fornecedor
+                            with st.form(f"fornecedor_form_{produto['id']}"):
+                                col1, col2, col3 = st.columns(3)
+                                with col1:
+                                    fornecedores = st.session_state.db.get_fornecedores()
+                                    if not fornecedores.empty:
+                                        fornecedor = st.selectbox(
+                                            "Fornecedor",
+                                            fornecedores['nome'].tolist(),
+                                            key=f"fornecedor_{produto['id']}"
+                                        )
+                                        fornecedor_id = int(fornecedores[fornecedores['nome'] == fornecedor]['id'].iloc[0])
+                                    else:
+                                        st.warning("Nenhum fornecedor cadastrado")
+                                        fornecedor_id = None
+
+                                with col2:
+                                    valor = st.number_input(
+                                        "Valor (R$)",
+                                        min_value=0.0,
+                                        step=0.01,
+                                        key=f"valor_{produto['id']}"
+                                    )
+
+                                with col3:
+                                    observacoes = st.text_input(
+                                        "Observações",
+                                        key=f"obs_{produto['id']}"
+                                    )
+
+                                if st.form_submit_button("Adicionar Fornecedor"):
+                                    if fornecedor_id and valor > 0:
+                                        try:
+                                            st.session_state.db.add_produto_fornecedor(
+                                                produto_id=produto['id'],
+                                                fornecedor_id=fornecedor_id,
+                                                valor=valor,
+                                                observacoes=observacoes
+                                            )
+                                            st.success("Fornecedor adicionado com sucesso!")
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Erro ao adicionar fornecedor: {str(e)}")
+                                    else:
+                                        st.warning("Por favor, selecione um fornecedor e informe o valor.")
+
+                            # Lista de fornecedores do produto
+                            fornecedores_produto = st.session_state.db.get_produto_fornecedores(produto['id'])
+                            if not fornecedores_produto.empty:
+                                for _, forn in fornecedores_produto.iterrows():
+                                    st.write(
+                                        f"• {forn['fornecedor_nome']}: "
+                                        f"R$ {forn['valor']:.2f} "
+                                        f"({forn['data_cotacao'].strftime('%d/%m/%Y')}) "
+                                        f"{f'- {forn['observacoes']}' if forn['observacoes'] else ''}"
+                                    )
+                            else:
+                                st.info("Nenhum fornecedor cadastrado para este produto.")
                 else:
                     st.info("Nenhum produto cadastrado.")
 

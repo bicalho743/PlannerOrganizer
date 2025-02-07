@@ -1,5 +1,7 @@
 import streamlit as st
 from utils.database import Database
+from datetime import datetime
+import pandas as pd
 
 st.set_page_config(
     page_title="Sistema Personal Organizer",
@@ -58,6 +60,40 @@ if pagina == "Dashboard":
 
         st.metric("Saldo Total", f"R$ {saldo:.2f}")
 
+        # Aniversariantes
+        if not clientes.empty:
+            st.write("---")
+            st.subheader("🎂 Aniversariantes")
+
+            # Converter a coluna de data_aniversario para datetime
+            clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'])
+            hoje = datetime.now()
+
+            # Aniversariantes do dia
+            aniversariantes_dia = clientes[
+                (clientes['data_aniversario'].dt.day == hoje.day) & 
+                (clientes['data_aniversario'].dt.month == hoje.month)
+            ]
+
+            if not aniversariantes_dia.empty:
+                st.write("**🎈 Hoje:**")
+                for _, aniv in aniversariantes_dia.iterrows():
+                    st.write(f"- {aniv['nome']}")
+            else:
+                st.write("**🎈 Hoje:** Nenhum aniversariante")
+
+            # Aniversariantes do mês
+            aniversariantes_mes = clientes[
+                (clientes['data_aniversario'].dt.month == hoje.month) &
+                (clientes['data_aniversario'].dt.day > hoje.day)
+            ].sort_values('data_aniversario')
+
+            if not aniversariantes_mes.empty:
+                st.write("**📅 Próximos aniversariantes do mês:**")
+                for _, aniv in aniversariantes_mes.iterrows():
+                    data_aniv = aniv['data_aniversario']
+                    st.write(f"- Dia {data_aniv.day}: {aniv['nome']}")
+
     with col2:
         st.subheader("📅 Atividades Recentes")
 
@@ -100,7 +136,6 @@ elif pagina == "Backup":
 elif pagina == "Relatórios":
     import pages.relatorios
     pages.relatorios.show()
-
 
 # Rodapé
 st.sidebar.markdown("---")
