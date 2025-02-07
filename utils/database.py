@@ -645,6 +645,10 @@ class Database:
 
     def atualizar_status_pagamento_proposta(self, proposta_id, status_pagamento_base, valor_base):
         def query():
+            # Converter ID para int nativo do Python
+            proposta_id = int(proposta_id)
+            valor_base = float(valor_base)
+
             proposta = self.session.query(Proposta).filter_by(id=proposta_id).first()
             if proposta:
                 proposta.status_pagamento_base = status_pagamento_base

@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import os
+from utils.pdf_generator import gerar_pdf_fechamento
 
 def show():
     st.title("📝 Gestão de Propostas")
@@ -271,21 +273,58 @@ def show():
 
                             # Atualizar status de pagamento da proposta base
                             try:
+                                # Converter explicitamente para tipos nativos do Python
+                                proposta_id = int(proposta['id'])
+                                valor_base = float(valor_base)
+
                                 st.session_state.db.atualizar_status_pagamento_proposta(
-                                    proposta['id'],
+                                    proposta_id=proposta_id,
                                     status_pagamento_base=status_base,
                                     valor_base=valor_base
                                 )
+
+                                # Atualizar totais
+                                valor_total = valor_base
+                                if not acrescimos.empty:
+                                    # Converter valores para float antes de somar
+                                    valor_total += float(acrescimos['valor'].astype(float).sum())
+
+                                st.write(f"**Valor Total:** R$ {valor_total:.2f}")
+                                st.write(f"**Valor Pendente:** R$ {valor_pendente:.2f}")
+
+                                # Botão para exportar PDF
+                                if st.button("Exportar Fechamento (PDF)"):
+                                    try:
+                                        # Criar diretório para PDFs se não existir
+                                        os.makedirs("pdfs", exist_ok=True)
+
+                                        # Nome do arquivo
+                                        filename = f"pdfs/proposta_{proposta['numero']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+
+                                        # Gerar PDF
+                                        pdf_path = gerar_pdf_fechamento(
+                                            proposta=proposta,
+                                            cliente={'nome': proposta['nome']},
+                                            acrescimos=acrescimos,
+                                            filename=filename
+                                        )
+
+                                        # Criar link para download
+                                        with open(pdf_path, "rb") as pdf_file:
+                                            pdf_bytes = pdf_file.read()
+                                            st.download_button(
+                                                label="Baixar PDF",
+                                                data=pdf_bytes,
+                                                file_name=os.path.basename(filename),
+                                                mime="application/pdf"
+                                            )
+
+                                        st.success("PDF gerado com sucesso!")
+                                    except Exception as e:
+                                        st.error(f"Erro ao gerar PDF: {str(e)}")
+
                             except Exception as e:
                                 st.error(f"Erro ao atualizar status de pagamento: {str(e)}")
-
-                            # Exibir totais
-                            valor_total = valor_base
-                            if not acrescimos.empty:
-                                valor_total += acrescimos['valor'].sum()
-
-                            st.write(f"**Valor Total:** R$ {valor_total:.2f}")
-                            st.write(f"**Valor Pendente:** R$ {valor_pendente:.2f}")
 
                             # Botão para confirmar e salvar alterações
                             if st.button("Confirmar Alterações"):
