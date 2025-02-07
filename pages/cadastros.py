@@ -43,12 +43,11 @@ def show():
                     except Exception as e:
                         st.error(f"Erro ao cadastrar fornecedor: {str(e)}")
                 else:
-                    st.warning("Por favor, preencha todos os campos obrigatórios.")
+                    st.warning("Por favor, preencha os campos Nome e Telefone.")
 
+        st.subheader("Fornecedores Cadastrados")
         try:
-            st.subheader("Fornecedores Cadastrados")
             fornecedores = st.session_state.db.get_fornecedores()
-
             if not fornecedores.empty:
                 fornecedores['data_cadastro'] = pd.to_datetime(fornecedores['data_cadastro'])
                 fornecedores['data_cadastro'] = fornecedores['data_cadastro'].dt.strftime('%d/%m/%Y')
@@ -56,8 +55,7 @@ def show():
                 st.dataframe(
                     fornecedores[[
                         'nome', 'telefone', 'categoria',
-                        'tipo_conta', 'pix', 'recorrente',
-                        'data_cadastro'
+                        'tipo_conta', 'pix', 'recorrente'
                     ]],
                     use_container_width=True
                 )
@@ -93,12 +91,11 @@ def show():
                     except Exception as e:
                         st.error(f"Erro ao cadastrar assistente: {str(e)}")
                 else:
-                    st.warning("Por favor, preencha todos os campos obrigatórios.")
+                    st.warning("Por favor, preencha os campos Nome e Telefone.")
 
+        st.subheader("Assistentes Cadastrados")
         try:
-            st.subheader("Assistentes Cadastrados")
             assistentes = st.session_state.db.get_assistentes()
-
             if not assistentes.empty:
                 assistentes['data_cadastro'] = pd.to_datetime(assistentes['data_cadastro'])
                 assistentes['data_cadastro'] = assistentes['data_cadastro'].dt.strftime('%d/%m/%Y')
@@ -106,7 +103,7 @@ def show():
                 st.dataframe(
                     assistentes[[
                         'nome', 'telefone', 'endereco',
-                        'pix', 'data_cadastro'
+                        'pix', 'observacoes'
                     ]],
                     use_container_width=True
                 )
