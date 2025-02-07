@@ -29,7 +29,7 @@ st.title("📋 Sistema de Gestão - Personal Organizer")
 st.sidebar.title("Menu Principal")
 pagina = st.sidebar.radio(
     "Navegação",
-    ["Dashboard", "Clientes", "Propostas", "Financeiro", "Produtos", "Relatórios"]
+    ["Dashboard", "Clientes", "Propostas", "Financeiro", "Contas a Pagar", "Relatórios"]
 )
 
 # Dashboard principal
@@ -88,6 +88,10 @@ elif pagina == "Propostas":
 elif pagina == "Financeiro":
     import pages.financeiro
     pages.financeiro.show()
+
+elif pagina == "Contas a Pagar":
+    import pages.contas_pagar
+    pages.contas_pagar.show()
 
 elif pagina == "Relatórios":
     import pages.relatorios

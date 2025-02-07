@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 import pandas as pd
@@ -22,6 +22,9 @@ class Cliente(Base):
     telefone = Column(String)
     endereco = Column(String)
     data_cadastro = Column(Date, default=datetime.now().date())
+    tipo_conta = Column(String, default='PF')  # PF ou PJ
+    cnpj = Column(String)
+    razao_social = Column(String)
 
     propostas = relationship("Proposta", back_populates="cliente")
 
@@ -37,6 +40,31 @@ class Proposta(Base):
 
     cliente = relationship("Cliente", back_populates="propostas")
 
+class CategoriaDespesa(Base):
+    __tablename__ = 'categorias_despesa'
+
+    id = Column(Integer, primary_key=True)
+    nome = Column(String, nullable=False)
+    descricao = Column(String)
+    tipo_conta = Column(String)  # PF ou PJ
+
+class ContaPagar(Base):
+    __tablename__ = 'contas_pagar'
+
+    id = Column(Integer, primary_key=True)
+    descricao = Column(String, nullable=False)
+    valor = Column(Float, nullable=False)
+    data_vencimento = Column(Date, nullable=False)
+    data_pagamento = Column(Date)
+    status = Column(String, default='Pendente')  # Pendente, Pago, Atrasado
+    categoria_id = Column(Integer, ForeignKey('categorias_despesa.id'))
+    tipo_conta = Column(String, nullable=False)  # PF ou PJ
+    fornecedor = Column(String)
+    recorrente = Column(Boolean, default=False)
+    observacoes = Column(String)
+
+    categoria = relationship("CategoriaDespesa")
+
 class Transacao(Base):
     __tablename__ = 'financeiro'
 
@@ -47,6 +75,7 @@ class Transacao(Base):
     data = Column(Date, default=datetime.now().date())
     categoria = Column(String)
     referencia_id = Column(Integer)
+    tipo_conta = Column(String, default='PF')  # PF ou PJ
 
 class Produto(Base):
     __tablename__ = 'produtos'
@@ -61,7 +90,6 @@ class Produto(Base):
 class Database:
     def __init__(self):
         try:
-            # Create tables before initializing session
             Base.metadata.create_all(engine)
             Session = sessionmaker(bind=engine)
             self.session = Session()
@@ -77,15 +105,21 @@ class Database:
             'email': c.email,
             'telefone': c.telefone,
             'endereco': c.endereco,
-            'data_cadastro': c.data_cadastro
+            'data_cadastro': c.data_cadastro,
+            'tipo_conta': c.tipo_conta,
+            'cnpj': c.cnpj,
+            'razao_social': c.razao_social
         } for c in clientes])
 
-    def add_cliente(self, nome, email, telefone, endereco):
+    def add_cliente(self, nome, email, telefone, endereco, tipo_conta='PF', cnpj=None, razao_social=None):
         cliente = Cliente(
             nome=nome,
             email=email,
             telefone=telefone,
-            endereco=endereco
+            endereco=endereco,
+            tipo_conta=tipo_conta,
+            cnpj=cnpj,
+            razao_social=razao_social
         )
         self.session.add(cliente)
         self.session.commit()
@@ -122,16 +156,18 @@ class Database:
             'valor': t.valor,
             'data': t.data,
             'categoria': t.categoria,
-            'referencia_id': t.referencia_id
+            'referencia_id': t.referencia_id,
+            'tipo_conta': t.tipo_conta
         } for t in transacoes])
 
-    def add_transacao(self, tipo, descricao, valor, categoria, referencia_id=None):
+    def add_transacao(self, tipo, descricao, valor, categoria, referencia_id=None, tipo_conta='PF'):
         transacao = Transacao(
             tipo=tipo,
             descricao=descricao,
             valor=valor,
             categoria=categoria,
-            referencia_id=referencia_id
+            referencia_id=referencia_id,
+            tipo_conta=tipo_conta
         )
         self.session.add(transacao)
         self.session.commit()
@@ -212,6 +248,56 @@ class Database:
         except Exception as e:
             print(f"Erro ao adicionar dados de teste: {str(e)}")
             return False
+
+    def add_conta_pagar(self, descricao, valor, data_vencimento, categoria_id, tipo_conta, fornecedor=None, recorrente=False, observacoes=None):
+        conta = ContaPagar(
+            descricao=descricao,
+            valor=valor,
+            data_vencimento=data_vencimento,
+            categoria_id=categoria_id,
+            tipo_conta=tipo_conta,
+            fornecedor=fornecedor,
+            recorrente=recorrente,
+            observacoes=observacoes
+        )
+        self.session.add(conta)
+        self.session.commit()
+        return conta.id
+
+    def get_contas_pagar(self):
+        contas = self.session.query(ContaPagar).all()
+        return pd.DataFrame([{
+            'id': c.id,
+            'descricao': c.descricao,
+            'valor': c.valor,
+            'data_vencimento': c.data_vencimento,
+            'data_pagamento': c.data_pagamento,
+            'status': c.status,
+            'categoria_id': c.categoria_id,
+            'tipo_conta': c.tipo_conta,
+            'fornecedor': c.fornecedor,
+            'recorrente': c.recorrente,
+            'observacoes': c.observacoes
+        } for c in contas])
+
+    def add_categoria_despesa(self, nome, descricao, tipo_conta):
+        categoria = CategoriaDespesa(
+            nome=nome,
+            descricao=descricao,
+            tipo_conta=tipo_conta
+        )
+        self.session.add(categoria)
+        self.session.commit()
+        return categoria.id
+
+    def get_categorias_despesa(self):
+        categorias = self.session.query(CategoriaDespesa).all()
+        return pd.DataFrame([{
+            'id': c.id,
+            'nome': c.nome,
+            'descricao': c.descricao,
+            'tipo_conta': c.tipo_conta
+        } for c in categorias])
 
     def __del__(self):
         if hasattr(self, 'session'):
