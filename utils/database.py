@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, Sequence
+from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, Sequence, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 import pandas as pd
@@ -115,16 +115,6 @@ class Transacao(Base):
     origem_id = Column(Integer)
     origem_tipo = Column(String)
     tipo_conta = Column(String, default='PF')
-
-class Produto(Base):
-    __tablename__ = 'produtos'
-
-    id = Column(Integer, primary_key=True)
-    nome = Column(String)
-    descricao = Column(String)
-    valor = Column(Float)
-    quantidade = Column(Integer)
-    data_cadastro = Column(Date, default=datetime.now().date())
 
 class Usuario(Base):
     __tablename__ = 'usuarios'
@@ -264,27 +254,11 @@ class Database:
         self.session.commit()
         return transacao.id
 
-    def get_produtos(self):
-        produtos = self.session.query(Produto).all()
-        return pd.DataFrame([{
-            'id': p.id,
-            'nome': p.nome,
-            'descricao': p.descricao,
-            'valor': p.valor,
-            'quantidade': p.quantidade,
-            'data_cadastro': p.data_cadastro
-        } for p in produtos])
+    def get_produtos(self): #This function is removed, since Produto class is removed.
+        return pd.DataFrame()
 
-    def add_produto(self, nome, descricao, valor, quantidade):
-        produto = Produto(
-            nome=nome,
-            descricao=descricao,
-            valor=valor,
-            quantidade=quantidade
-        )
-        self.session.add(produto)
-        self.session.commit()
-        return produto.id
+    def add_produto(self, nome, descricao, valor, quantidade): #This function is removed, since Produto class is removed.
+        return 0
 
     def add_test_data(self):
         try:
@@ -593,15 +567,52 @@ class Database:
     def add_produto_fornecedor(self, produto_id, fornecedor_id, valor, observacoes=None):
         """Adiciona um fornecedor e seu preço para um produto"""
         try:
-            fornecedor = ProdutoFornecedor(
+            # Verificar se a combinação produto-fornecedor já existe
+            existente = self.session.query(ProdutoFornecedor).filter_by(
                 produto_id=produto_id,
-                fornecedor_id=fornecedor_id,
-                valor=valor,
-                observacoes=observacoes
-            )
-            self.session.add(fornecedor)
+                fornecedor_id=fornecedor_id
+            ).first()
+
+            if existente:
+                # Atualizar valor e observações
+                existente.valor = valor
+                existente.observacoes = observacoes
+                existente.data_cotacao = datetime.now().date()
+            else:
+                # Criar nova cotação
+                fornecedor = ProdutoFornecedor(
+                    produto_id=produto_id,
+                    fornecedor_id=fornecedor_id,
+                    valor=valor,
+                    observacoes=observacoes
+                )
+                self.session.add(fornecedor)
+
             self.session.commit()
+
+            # Atualizar o valor do produto com o menor valor entre os fornecedores
+            self._atualizar_valor_produto(produto_id)
             return True
+        except Exception as e:
+            self.session.rollback()
+            raise e
+
+    def _atualizar_valor_produto(self, produto_id):
+        """Atualiza o valor do produto com o menor valor entre os fornecedores"""
+        try:
+            # Buscar o menor valor entre os fornecedores
+            menor_valor = self.session.query(func.min(ProdutoFornecedor.valor))\
+                .filter_by(produto_id=produto_id)\
+                .scalar()
+
+            if menor_valor is not None:
+                # Atualizar o valor do produto
+                produto = self.session.query(ProdutoOrganizador)\
+                    .filter_by(id=produto_id)\
+                    .first()
+                if produto:
+                    produto.valor = menor_valor
+                    self.session.commit()
         except Exception as e:
             self.session.rollback()
             raise e
