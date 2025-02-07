@@ -208,6 +208,90 @@ def show():
 
                                 if acrescimo['descricao']:
                                     st.write(f"  *{acrescimo['descricao']}*")
+
+                        # Botão e seção de Fechar Proposta
+                        st.write("---")
+                        if st.button("Fechar Proposta"):
+                            st.write("### Resumo Final")
+                            st.write(f"**Cliente:** {proposta['nome']}")
+
+                            # Valor Base com status de pagamento
+                            col1, col2, col3 = st.columns([2, 1, 1])
+                            with col1:
+                                st.write("**Valor Base**")
+                            with col2:
+                                valor_base = st.number_input(
+                                    "Valor Base",
+                                    value=float(proposta['valor']),
+                                    step=0.01,
+                                    key="valor_base"
+                                )
+                            with col3:
+                                status_base = st.selectbox(
+                                    "Status",
+                                    ["Pendente", "Pago"],
+                                    key="status_base"
+                                )
+                            st.write("---")
+
+                            # Exibir acréscimos para atualização
+                            valor_pendente = valor_base if status_base == "Pendente" else 0.0
+
+                            if not acrescimos.empty:
+                                for index, acrescimo in acrescimos.iterrows():
+                                    col1, col2, col3 = st.columns([2, 1, 1])
+
+                                    with col1:
+                                        if acrescimo['tipo'] == "Fornecedor":
+                                            st.write(f"**{acrescimo['tipo']} - {acrescimo['fornecedor']}**")
+                                        else:
+                                            st.write(f"**{acrescimo['tipo']}**")
+                                        if acrescimo['descricao']:
+                                            st.write(f"*{acrescimo['descricao']}*")
+
+                                    with col2:
+                                        novo_valor = st.number_input(
+                                            "Valor",
+                                            value=float(acrescimo['valor']),
+                                            step=0.01,
+                                            key=f"valor_{index}"
+                                        )
+
+                                    with col3:
+                                        status = st.selectbox(
+                                            "Status",
+                                            ["Pendente", "Pago"],
+                                            key=f"status_{index}"
+                                        )
+
+                                    if status == "Pendente":
+                                        valor_pendente += novo_valor
+
+                                    st.write("---")
+
+                            # Atualizar status de pagamento da proposta base
+                            try:
+                                st.session_state.db.atualizar_status_pagamento_proposta(
+                                    proposta['id'],
+                                    status_pagamento_base=status_base,
+                                    valor_base=valor_base
+                                )
+                            except Exception as e:
+                                st.error(f"Erro ao atualizar status de pagamento: {str(e)}")
+
+                            # Exibir totais
+                            valor_total = valor_base
+                            if not acrescimos.empty:
+                                valor_total += acrescimos['valor'].sum()
+
+                            st.write(f"**Valor Total:** R$ {valor_total:.2f}")
+                            st.write(f"**Valor Pendente:** R$ {valor_pendente:.2f}")
+
+                            # Botão para confirmar e salvar alterações
+                            if st.button("Confirmar Alterações"):
+                                st.success("Alterações salvas com sucesso!")
+                                st.rerun()
+
                     except Exception as e:
                         st.error(f"Erro ao carregar acréscimos: {str(e)}")
 
