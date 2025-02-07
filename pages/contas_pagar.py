@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 def show():
     st.title("💰 Contas a Pagar")
 
-    # Tabs para organizar as operações
     tab1, tab2 = st.tabs(["Nova Conta", "Lista de Contas"])
 
     with tab1:
@@ -54,6 +53,7 @@ def show():
                             observacoes=observacoes
                         )
                         st.success("Conta cadastrada com sucesso!")
+                        st.rerun()
                     except Exception as e:
                         st.error(f"Erro ao cadastrar conta: {str(e)}")
                 else:
@@ -67,54 +67,68 @@ def show():
         with col1:
             status_filtro = st.multiselect(
                 "Status",
-                ["Pendente", "Pago", "Atrasado"]
+                ["Pendente", "Pago", "Atrasado"],
+                default=["Pendente"]
             )
         with col2:
             tipo_filtro = st.multiselect(
                 "Tipo de Conta",
-                ["PF", "PJ"]
+                ["PF", "PJ"],
+                default=["PF", "PJ"]
             )
         with col3:
             data_filtro = st.date_input("Vencimento até")
 
-        # Carregar e filtrar dados
-        contas = st.session_state.db.get_contas_pagar()
-        categorias = st.session_state.db.get_categorias_despesa()
+        try:
+            # Carregar dados
+            contas = st.session_state.db.get_contas_pagar()
+            categorias = st.session_state.db.get_categorias_despesa()
 
-        if not contas.empty:
-            # Merge com categorias
-            contas = contas.merge(
-                categorias[['id', 'nome']],
-                left_on='categoria_id',
-                right_on='id',
-                suffixes=('', '_categoria')
-            )
+            if not contas.empty and not categorias.empty:
+                # Converter datas
+                contas['data_vencimento'] = pd.to_datetime(contas['data_vencimento'])
 
-            # Aplicar filtros
-            if status_filtro:
-                contas = contas[contas['status'].isin(status_filtro)]
-            if tipo_filtro:
-                contas = contas[contas['tipo_conta'].isin(tipo_filtro)]
-            if data_filtro:
-                contas = contas[contas['data_vencimento'] <= data_filtro]
+                # Merge com categorias
+                contas = contas.merge(
+                    categorias[['id', 'nome']],
+                    left_on='categoria_id',
+                    right_on='id',
+                    how='left',
+                    suffixes=('', '_categoria')
+                )
 
-            # Exibir tabela
-            st.dataframe(
-                contas[[
-                    'descricao', 'valor', 'data_vencimento', 'status',
-                    'nome', 'tipo_conta', 'fornecedor', 'recorrente'
-                ]],
-                use_container_width=True
-            )
+                # Aplicar filtros
+                if status_filtro:
+                    contas = contas[contas['status'].isin(status_filtro)]
+                if tipo_filtro:
+                    contas = contas[contas['tipo_conta'].isin(tipo_filtro)]
+                if data_filtro:
+                    contas = contas[contas['data_vencimento'].dt.date <= data_filtro]
 
-            # Resumo
-            total_pendente = contas[contas['status'] == 'Pendente']['valor'].sum()
-            total_pago = contas[contas['status'] == 'Pago']['valor'].sum()
-            total_atrasado = contas[contas['status'] == 'Atrasado']['valor'].sum()
+                # Formatar data para exibição
+                contas['data_vencimento'] = contas['data_vencimento'].dt.strftime('%d/%m/%Y')
 
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Total Pendente", f"R$ {total_pendente:.2f}")
-            col2.metric("Total Pago", f"R$ {total_pago:.2f}")
-            col3.metric("Total Atrasado", f"R$ {total_atrasado:.2f}")
-        else:
-            st.info("Nenhuma conta cadastrada.")
+                # Exibir tabela
+                st.dataframe(
+                    contas[[
+                        'descricao', 'valor', 'data_vencimento', 'status',
+                        'nome', 'tipo_conta', 'fornecedor', 'recorrente'
+                    ]],
+                    use_container_width=True
+                )
+
+                # Resumo financeiro
+                col1, col2, col3 = st.columns(3)
+
+                # Recalcular valor total para cada status
+                total_pendente = contas[contas['status'] == 'Pendente']['valor'].sum()
+                total_pago = contas[contas['status'] == 'Pago']['valor'].sum()
+                total_atrasado = contas[contas['status'] == 'Atrasado']['valor'].sum()
+
+                col1.metric("Total Pendente", f"R$ {total_pendente:.2f}")
+                col2.metric("Total Pago", f"R$ {total_pago:.2f}")
+                col3.metric("Total Atrasado", f"R$ {total_atrasado:.2f}")
+            else:
+                st.info("Nenhuma conta cadastrada.")
+        except Exception as e:
+            st.error(f"Erro ao carregar dados: {str(e)}")
