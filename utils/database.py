@@ -14,6 +14,23 @@ if DATABASE_URL is None:
 engine = create_engine(DATABASE_URL)
 Base = declarative_base()
 
+class Usuario(Base):
+    __tablename__ = 'usuarios'
+    id = Column(Integer, primary_key=True)
+    email = Column(String, unique=True, nullable=False)
+    senha_hash = Column(String, nullable=False)
+    nome = Column(String, nullable=False)
+    empresa = Column(String)
+    tipo = Column(String, default='usuario')
+    ativo = Column(Boolean, default=True)
+    data_cadastro = Column(Date, default=datetime.now().date())
+
+    def set_senha(self, senha):
+        self.senha_hash = generate_password_hash(senha)
+
+    def check_senha(self, senha):
+        return check_password_hash(self.senha_hash, senha)
+
 class Cliente(Base):
     __tablename__ = 'clientes'
     id = Column(Integer, primary_key=True)
@@ -47,6 +64,30 @@ class Fornecedor(Base):
     recorrente = Column(Boolean, default=False)
     observacoes = Column(String)
 
+class CategoriaDespesa(Base):
+    __tablename__ = 'categorias_despesa'
+    id = Column(Integer, primary_key=True)
+    nome = Column(String, nullable=False)
+    descricao = Column(String)
+    tipo_conta = Column(String)
+
+class Proposta(Base):
+    __tablename__ = 'propostas'
+    id = Column(Integer, primary_key=True)
+    numero = Column(Integer, Sequence('proposta_seq'), unique=True, nullable=False)
+    cliente_id = Column(Integer, ForeignKey('clientes.id'))
+    descricao = Column(String)
+    valor = Column(Float)
+    status = Column(String)
+    tipo_proposta = Column(String)
+    data_inicio = Column(Date)
+    data_fim = Column(Date)
+    prazo_entrega = Column(Date)
+    data_proposta = Column(Date, default=datetime.now().date())
+
+    cliente = relationship("Cliente", back_populates="propostas")
+    produtos = relationship("ProdutoOrganizador", back_populates="proposta", cascade="all, delete-orphan")
+
 class ProdutoOrganizador(Base):
     __tablename__ = 'produtos_organizadores'
     id = Column(Integer, primary_key=True)
@@ -73,23 +114,6 @@ class ProdutoFornecedor(Base):
     produto = relationship("ProdutoOrganizador", back_populates="fornecedores")
     fornecedor = relationship("Fornecedor")
 
-class Proposta(Base):
-    __tablename__ = 'propostas'
-    id = Column(Integer, primary_key=True)
-    numero = Column(Integer, Sequence('proposta_seq'), unique=True, nullable=False)
-    cliente_id = Column(Integer, ForeignKey('clientes.id'))
-    descricao = Column(String)
-    valor = Column(Float)
-    status = Column(String)
-    tipo_proposta = Column(String)
-    data_inicio = Column(Date)
-    data_fim = Column(Date)
-    prazo_entrega = Column(Date)
-    data_proposta = Column(Date, default=datetime.now().date())
-
-    cliente = relationship("Cliente", back_populates="propostas")
-    produtos = relationship("ProdutoOrganizador", back_populates="proposta", cascade="all, delete-orphan")
-
 class AndamentoProposta(Base):
     __tablename__ = 'andamento_propostas'
     id = Column(Integer, primary_key=True)
@@ -100,13 +124,6 @@ class AndamentoProposta(Base):
     comodo = Column(String)
 
     proposta = relationship("Proposta")
-
-class CategoriaDespesa(Base):
-    __tablename__ = 'categorias_despesa'
-    id = Column(Integer, primary_key=True)
-    nome = Column(String, nullable=False)
-    descricao = Column(String)
-    tipo_conta = Column(String)
 
 class Transacao(Base):
     __tablename__ = 'financeiro'
@@ -120,23 +137,6 @@ class Transacao(Base):
     origem_id = Column(Integer)
     origem_tipo = Column(String)
     tipo_conta = Column(String, default='PF')
-
-class Usuario(Base):
-    __tablename__ = 'usuarios'
-    id = Column(Integer, primary_key=True)
-    email = Column(String, unique=True, nullable=False)
-    senha_hash = Column(String, nullable=False)
-    nome = Column(String, nullable=False)
-    empresa = Column(String)
-    tipo = Column(String, default='usuario')
-    ativo = Column(Boolean, default=True)
-    data_cadastro = Column(Date, default=datetime.now().date())
-
-    def set_senha(self, senha):
-        self.senha_hash = generate_password_hash(senha)
-
-    def check_senha(self, senha):
-        return check_password_hash(self.senha_hash, senha)
 
 class Database:
     def __init__(self):
@@ -245,34 +245,6 @@ class Database:
         self.session.commit()
         return transacao.id
 
-    def add_produto_organizador(self, proposta_id, nome, descricao, valor, quantidade, comodo):
-        produto = ProdutoOrganizador(
-            proposta_id=proposta_id,
-            nome=nome,
-            descricao=descricao,
-            valor=valor,
-            quantidade=quantidade,
-            comodo=comodo
-        )
-        self.session.add(produto)
-        self.session.commit()
-        return produto.id
-
-    def get_produtos_organizadores(self, proposta_id=None):
-        query = self.session.query(ProdutoOrganizador)
-        if proposta_id:
-            query = query.filter_by(proposta_id=proposta_id)
-        produtos = query.all()
-        return pd.DataFrame([{
-            'id': p.id,
-            'nome': p.nome,
-            'descricao': p.descricao,
-            'valor': p.valor,
-            'quantidade': p.quantidade,
-            'comodo': p.comodo,
-            'data_cadastro': p.data_cadastro
-        } for p in produtos])
-
     def add_fornecedor(self, nome, descricao, valor, data_vencimento, categoria, tipo_conta, pix=None, contato=None, recorrente=False, observacoes=None):
         fornecedor = Fornecedor(
             nome=nome,
@@ -348,6 +320,34 @@ class Database:
             'comodo': a.comodo
         } for a in andamentos])
 
+    def add_produto_organizador(self, proposta_id, nome, descricao, valor, quantidade, comodo):
+        produto = ProdutoOrganizador(
+            proposta_id=proposta_id,
+            nome=nome,
+            descricao=descricao,
+            valor=valor,
+            quantidade=quantidade,
+            comodo=comodo
+        )
+        self.session.add(produto)
+        self.session.commit()
+        return produto.id
+
+    def get_produtos_organizadores(self, proposta_id=None):
+        query = self.session.query(ProdutoOrganizador)
+        if proposta_id:
+            query = query.filter_by(proposta_id=proposta_id)
+        produtos = query.all()
+        return pd.DataFrame([{
+            'id': p.id,
+            'nome': p.nome,
+            'descricao': p.descricao,
+            'valor': p.valor,
+            'quantidade': p.quantidade,
+            'comodo': p.comodo,
+            'data_cadastro': p.data_cadastro
+        } for p in produtos])
+
     def add_produto_fornecedor(self, produto_id, fornecedor_id, valor, observacoes=None):
         """Adiciona um fornecedor e seu preço para um produto"""
         try:
@@ -406,28 +406,6 @@ class Database:
             'data_cotacao': f.data_cotacao,
             'observacoes': f.observacoes
         } for f in fornecedores])
-
-    def get_fornecedores(self):
-        fornecedores = self.session.query(Fornecedor).all()
-        return pd.DataFrame([{
-            'id': f.id,
-            'nome': f.nome,
-            'descricao': f.descricao,
-            'valor': f.valor,
-            'data_vencimento': f.data_vencimento,
-            'data_pagamento': f.data_pagamento,
-            'status': f.status,
-            'categoria': f.categoria,
-            'pix': f.pix,
-            'contato': f.contato,
-            'tipo_conta': f.tipo_conta,
-            'recorrente': f.recorrente,
-            'observacoes': f.observacoes
-        } for f in fornecedores])
-
-    def __del__(self):
-        if hasattr(self, 'session'):
-            self.session.close()
 
     def registrar_usuario(self, email, senha, nome, empresa=None, tipo='usuario'):
         """Registra um novo usuário no sistema"""
@@ -501,7 +479,6 @@ class Database:
 
     def add_test_data(self):
         try:
-            # Add test clients
             client1_id = self.add_cliente(
                 nome="Maria Silva",
                 email="maria@email.com",
@@ -524,18 +501,6 @@ class Database:
                 tipo_conta="PF"
             )
 
-            client3_id = self.add_cliente(
-                nome="Empresa ABC Ltda",
-                email="contato@empresaabc.com",
-                telefone="(11) 3333-3333",
-                endereco="Av. Comercial, 789",
-                cnpj="12.345.678/0001-90",
-                razao_social="ABC Comércio e Serviços Ltda",
-                origem_cliente="Site",
-                tipo_conta="PJ"
-            )
-
-            # Add test fornecedores
             fornecedor1_id = self.add_fornecedor(
                 nome="Organizadores Express",
                 descricao="Fornecedor de produtos organizadores",
@@ -548,19 +513,6 @@ class Database:
                 recorrente=False
             )
 
-            fornecedor2_id = self.add_fornecedor(
-                nome="Móveis Planejados SA",
-                descricao="Fornecedor de móveis planejados",
-                valor=0,
-                data_vencimento=None,
-                categoria="Móveis",
-                tipo_conta="PJ",
-                pix="98765432109",
-                contato="(11) 96666-6666",
-                recorrente=False
-            )
-
-            # Add test propostas
             proposta1_id = self.add_proposta(
                 client1_id,
                 "Organização do closet",
@@ -569,23 +521,6 @@ class Database:
                 tipo_proposta="Organização"
             )
 
-            proposta2_id = self.add_proposta(
-                client2_id,
-                "Organização da cozinha",
-                2000.00,
-                "Fechada",
-                tipo_proposta="Organização"
-            )
-
-            proposta3_id = self.add_proposta(
-                client3_id,
-                "Consultoria para escritório",
-                3500.00,
-                "Aberta",
-                tipo_proposta="Consultoria Online"
-            )
-
-            # Add test produtos organizadores
             produto1_id = self.add_produto_organizador(
                 proposta_id=proposta1_id,
                 nome="Caixa Organizadora Grande",
@@ -595,64 +530,13 @@ class Database:
                 comodo="Closet"
             )
 
-            # Adicionar fornecedores aos produtos
             self.add_produto_fornecedor(produto1_id, fornecedor1_id, 50.00)
-            self.add_produto_fornecedor(produto1_id, fornecedor2_id, 55.00, "Oferta especial")
-
-            # Add test transactions
-            self.add_transacao(
-                tipo="receita",
-                descricao="Pagamento - Organização cozinha",
-                valor=2000.00,
-                categoria="Serviço",
-                tipo_receita="organização",
-                origem_id=client2_id,
-                origem_tipo="cliente"
-            )
-
-            self.add_transacao(
-                tipo="despesa",
-                descricao="Compra de materiais",
-                valor=500.00,
-                categoria="Fornecedor",
-                origem_id=fornecedor1_id,
-                origem_tipo="fornecedor"
-            )
 
             return True
-
         except Exception as e:
             print(f"Erro ao adicionar dados de teste: {str(e)}")
             return False
 
-
-    def get_produto_fornecedores(self, produto_id):
-        """Retorna todos os fornecedores e preços de um produto"""
-        fornecedores = self.session.query(ProdutoFornecedor).filter_by(produto_id=produto_id).all()
-        return pd.DataFrame([{
-            'id': f.id,
-            'produto_id': f.produto_id,
-            'fornecedor_id': f.fornecedor_id,
-            'fornecedor_nome': f.fornecedor.nome if f.fornecedor else None,
-            'valor': f.valor,
-            'data_cotacao': f.data_cotacao,
-            'observacoes': f.observacoes
-        } for f in fornecedores])
-
-    def get_fornecedores(self):
-        fornecedores = self.session.query(Fornecedor).all()
-        return pd.DataFrame([{
-            'id': f.id,
-            'nome': f.nome,
-            'descricao': f.descricao,
-            'valor': f.valor,
-            'data_vencimento': f.data_vencimento,
-            'data_pagamento': f.data_pagamento,
-            'status': f.status,
-            'categoria': f.categoria,
-            'pix': f.pix,
-            'contato': f.contato,
-            'tipo_conta': f.tipo_conta,
-            'recorrente': f.recorrente,
-            'observacoes': f.observacoes
-        } for f in fornecedores])
+    def __del__(self):
+        if hasattr(self, 'session'):
+            self.session.close()
