@@ -21,12 +21,9 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
         fontSize=16,
         spaceAfter=30
     )
-    story.append(Paragraph(f"Fechamento de Proposta #{proposta['numero']}", title_style))
-    story.append(Spacer(1, 12))
-
-    # Informações do Cliente
-    story.append(Paragraph(f"<b>Cliente:</b> {cliente['nome']}", styles["Normal"]))
-    story.append(Paragraph(f"<b>Data:</b> {datetime.now().strftime('%d/%m/%Y')}", styles["Normal"]))
+    story.append(Paragraph(f"Fechamento de Projeto", title_style))
+    story.append(Paragraph(f"Proposta #{proposta['numero']} - {cliente['nome']}", styles["Heading2"]))
+    story.append(Paragraph(f"{datetime.now().strftime('%d/%m/%Y')}", styles["Heading3"]))
     story.append(Spacer(1, 12))
 
     # Informações da Proposta
