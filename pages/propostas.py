@@ -38,6 +38,12 @@ def show():
                 ]
             )
 
+            col1, col2 = st.columns(2)
+            with col1:
+                data_inicio = st.date_input("Data de Início")
+            with col2:
+                data_fim = st.date_input("Data de Fim")
+
             if tipo_proposta in ["Organização", "Organização Mudança"]:
                 prazo_entrega = st.date_input("Prazo de Entrega")
 
@@ -57,7 +63,9 @@ def show():
                             'descricao': descricao,
                             'valor': valor,
                             'status': status,
-                            'tipo_proposta': tipo_proposta
+                            'tipo_proposta': tipo_proposta,
+                            'data_inicio': data_inicio,
+                            'data_fim': data_fim
                         }
 
                         if tipo_proposta in ["Organização", "Organização Mudança"]:
@@ -102,7 +110,10 @@ def show():
 
             # Exibir tabela de propostas
             st.dataframe(
-                propostas[['numero', 'nome', 'descricao', 'valor', 'status', 'tipo_proposta', 'data_proposta']],
+                propostas[[
+                    'nome', 'descricao', 'valor', 'status', 'tipo_proposta',
+                    'data_inicio', 'data_fim', 'data_proposta'
+                ]],
                 use_container_width=True
             )
         else:

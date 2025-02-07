@@ -40,6 +40,8 @@ class Proposta(Base):
     valor = Column(Float)
     status = Column(String)
     tipo_proposta = Column(String)
+    data_inicio = Column(Date)
+    data_fim = Column(Date)
     prazo_entrega = Column(Date)
     data_proposta = Column(Date, default=datetime.now().date())
 
@@ -180,17 +182,21 @@ class Database:
             'valor': p.valor,
             'status': p.status,
             'data_proposta': p.data_proposta,
-            'tipo_proposta': p.tipo_proposta if hasattr(p, 'tipo_proposta') else None
+            'tipo_proposta': p.tipo_proposta if hasattr(p, 'tipo_proposta') else None,
+            'data_inicio': p.data_inicio,
+            'data_fim': p.data_fim
         } for p in propostas])
 
-    def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, prazo_entrega=None):
+    def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, prazo_entrega=None, data_inicio=None, data_fim=None):
         proposta = Proposta(
             cliente_id=cliente_id,
             descricao=descricao,
             valor=valor,
             status=status,
             tipo_proposta=tipo_proposta,
-            prazo_entrega=prazo_entrega
+            prazo_entrega=prazo_entrega,
+            data_inicio=data_inicio,
+            data_fim=data_fim
         )
         self.session.add(proposta)
         self.session.commit()
