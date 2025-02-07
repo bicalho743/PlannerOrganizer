@@ -50,7 +50,8 @@ def show():
                     st.error("É necessário ter pelo menos um cliente cadastrado para criar uma proposta.")
                 elif descricao and valor > 0:
                     try:
-                        cliente_id = clientes[clientes['nome'] == cliente_nome]['id'].iloc[0]
+                        # Converter cliente_id para int padrão do Python
+                        cliente_id = int(clientes[clientes['nome'] == cliente_nome]['id'].iloc[0])
                         dados_proposta = {
                             'cliente_id': cliente_id,
                             'descricao': descricao,
