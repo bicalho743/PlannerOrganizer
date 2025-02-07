@@ -175,9 +175,28 @@ def show():
             if st.button("Fechar Proposta"):
                 st.write("### Resumo Final")
                 st.write(f"**Cliente:** {proposta['nome']}")
-                st.write(f"**Valor Base:** R$ {proposta['valor']:.2f}")
 
-                valor_pendente = 0.0
+                # Valor Base com status de pagamento
+                col1, col2, col3 = st.columns([2, 1, 1])
+                with col1:
+                    st.write("**Valor Base**")
+                with col2:
+                    valor_base = st.number_input(
+                        "Valor Base",
+                        value=float(proposta['valor']),
+                        step=0.01,
+                        key="valor_base"
+                    )
+                    proposta['valor'] = valor_base
+                with col3:
+                    status_base = st.selectbox(
+                        "Status",
+                        ["Pendente", "Pago"],
+                        key="status_base"
+                    )
+                st.write("---")
+
+                valor_pendente = valor_base if status_base == "Pendente" else 0.0
                 for i, acrescimo in enumerate(st.session_state.acrescimos):
                     col1, col2, col3 = st.columns([2, 1, 1])
 
