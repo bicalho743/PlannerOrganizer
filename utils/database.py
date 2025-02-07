@@ -154,12 +154,18 @@ class Database:
             'tipo_proposta': p.tipo_proposta if hasattr(p, 'tipo_proposta') else None
         } for p in propostas])
 
-    def add_proposta(self, cliente_id, descricao, valor, status):
+    def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, 
+                     loja_consignada=None, prazo_consignacao=None, marceneiro=None, prazo_entrega=None):
         proposta = Proposta(
             cliente_id=cliente_id,
             descricao=descricao,
             valor=valor,
-            status=status
+            status=status,
+            tipo_proposta=tipo_proposta,
+            loja_consignada=loja_consignada,
+            prazo_consignacao=prazo_consignacao,
+            marceneiro=marceneiro,
+            prazo_entrega=prazo_entrega
         )
         self.session.add(proposta)
         self.session.commit()
