@@ -149,7 +149,7 @@ def show():
             # Evolução Temporal
             financeiro['data'] = pd.to_datetime(financeiro['data'])
             dados_temporais = financeiro.groupby(
-                [pd.Grouper(key='data', freq='M'), 'tipo']
+                [pd.Grouper(key='data', freq='ME'), 'tipo']
             )['valor'].sum().reset_index()
 
             fig2 = px.line(

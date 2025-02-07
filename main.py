@@ -20,7 +20,7 @@ st.title("📋 Sistema de Gestão - Personal Organizer")
 st.sidebar.title("Menu Principal")
 pagina = st.sidebar.radio(
     "Navegação",
-    ["Dashboard", "Clientes", "Propostas", "Financeiro", "Cadastros", "Contas a Pagar", "Backup", "Relatórios"]
+    ["Dashboard", "Clientes", "Propostas", "Financeiro", "Contas a Pagar", "Backup", "Relatórios", "Cadastros"]
 )
 
 # Add test data button in sidebar if database is empty
