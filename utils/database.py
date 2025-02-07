@@ -561,3 +561,29 @@ class Database:
             'ativo': u.ativo,
             'data_cadastro': u.data_cadastro
         } for u in usuarios])
+
+    def atualizar_status_usuario(self, usuario_id, ativo):
+        """Atualiza o status de ativo/inativo de um usuário"""
+        try:
+            usuario = self.session.query(Usuario).filter_by(id=usuario_id).first()
+            if usuario:
+                usuario.ativo = ativo
+                self.session.commit()
+                return True
+            return False
+        except Exception as e:
+            self.session.rollback()
+            return False
+
+    def atualizar_tipo_usuario(self, usuario_id, tipo):
+        """Atualiza o tipo de um usuário (admin/usuario)"""
+        try:
+            usuario = self.session.query(Usuario).filter_by(id=usuario_id).first()
+            if usuario:
+                usuario.tipo = tipo
+                self.session.commit()
+                return True
+            return False
+        except Exception as e:
+            self.session.rollback()
+            return False

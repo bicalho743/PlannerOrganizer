@@ -21,8 +21,17 @@ if not st.session_state.autenticado:
     import pages.login
     pages.login.show()
 else:
-    # Menu lateral
-    st.sidebar.title("Menu Principal")
+    # Menu lateral com opções condicionais baseadas no tipo de usuário
+    opcoes_menu = ["Dashboard", "Clientes", "Propostas", "Financeiro", "Contas a Pagar", "Backup", "Relatórios"]
+
+    # Adicionar opção de administração apenas para admins
+    if st.session_state.usuario.tipo == 'admin':
+        opcoes_menu.append("Administração")
+
+    pagina = st.sidebar.radio(
+        "Navegação",
+        opcoes_menu
+    )
 
     # Informações do usuário
     st.sidebar.write(f"👤 Usuário: {st.session_state.usuario.nome}")
@@ -30,11 +39,6 @@ else:
         st.session_state.autenticado = False
         st.session_state.usuario = None
         st.rerun()
-
-    pagina = st.sidebar.radio(
-        "Navegação",
-        ["Dashboard", "Clientes", "Propostas", "Financeiro", "Contas a Pagar", "Backup", "Relatórios"]
-    )
 
     # Add test data button in sidebar if database is empty
     clientes = st.session_state.db.get_clientes()
@@ -119,6 +123,10 @@ else:
     elif pagina == "Relatórios":
         import pages.relatorios
         pages.relatorios.show()
+
+    elif pagina == "Administração":
+        import pages.admin
+        pages.admin.show()
 
     # Rodapé
     st.sidebar.markdown("---")
