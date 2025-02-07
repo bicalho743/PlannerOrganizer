@@ -153,5 +153,59 @@ class Database:
         self.session.commit()
         return produto.id
 
+    def add_test_data(self):
+        """Add sample data for testing"""
+        try:
+            # Add test clients
+            client1_id = self.add_cliente(
+                "Maria Silva",
+                "maria@email.com",
+                "(11) 99999-9999",
+                "Rua das Flores, 123"
+            )
+
+            client2_id = self.add_cliente(
+                "João Santos",
+                "joao@email.com",
+                "(11) 88888-8888",
+                "Av. Principal, 456"
+            )
+
+            # Add test proposals
+            self.add_proposta(
+                client1_id,
+                "Organização do closet",
+                1500.00,
+                "Aberta"
+            )
+
+            self.add_proposta(
+                client2_id,
+                "Organização da cozinha",
+                2000.00,
+                "Fechada"
+            )
+
+            # Add test transactions
+            self.add_transacao(
+                "receita",
+                "Pagamento - Organização cozinha",
+                2000.00,
+                "Serviço"
+            )
+
+            self.add_transacao(
+                "despesa",
+                "Compra de materiais",
+                500.00,
+                "Fornecedor"
+            )
+
+            return True
+
+        except Exception as e:
+            print(f"Erro ao adicionar dados de teste: {str(e)}")
+            return False
+
     def __del__(self):
         self.session.close()

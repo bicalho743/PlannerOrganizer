@@ -11,6 +11,17 @@ st.set_page_config(
 if 'db' not in st.session_state:
     st.session_state.db = Database()
 
+# Add test data button in sidebar if database is empty
+clientes = st.session_state.db.get_clientes()
+if clientes.empty:
+    st.sidebar.warning("Banco de dados vazio")
+    if st.sidebar.button("Adicionar Dados de Teste"):
+        if st.session_state.db.add_test_data():
+            st.sidebar.success("Dados de teste adicionados com sucesso!")
+            st.rerun()
+        else:
+            st.sidebar.error("Erro ao adicionar dados de teste")
+
 # Título principal
 st.title("📋 Sistema de Gestão - Personal Organizer")
 
