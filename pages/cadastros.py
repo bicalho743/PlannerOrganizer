@@ -11,27 +11,25 @@ def show():
         st.subheader("Cadastro de Fornecedores")
 
         with st.form("cadastro_fornecedor", clear_on_submit=True):
-            nome = st.text_input("Nome")
-            telefone = st.text_input("Telefone")
-            endereco = st.text_area("Endereço")
-            pix = st.text_input("Chave PIX")
+            descricao = st.text_input("Nome/Descrição")
+            contato = st.text_input("Contato")
             categoria = st.selectbox(
                 "Categoria",
                 ["Produtos", "Serviços", "Marcenaria", "Outro"]
             )
             tipo_conta = st.selectbox("Tipo de Conta", ["PF", "PJ"])
+            pix = st.text_input("Chave PIX")
             recorrente = st.checkbox("Fornecedor Recorrente")
             observacoes = st.text_area("Observações")
 
             submitted = st.form_submit_button("Cadastrar")
 
             if submitted:
-                if nome and telefone:
+                if descricao and contato:
                     try:
                         st.session_state.db.add_fornecedor(
-                            nome=nome,
-                            telefone=telefone,
-                            endereco=endereco if endereco else None,
+                            descricao=descricao,
+                            contato=contato,
                             categoria=categoria,
                             tipo_conta=tipo_conta,
                             pix=pix if pix else None,
@@ -43,18 +41,15 @@ def show():
                     except Exception as e:
                         st.error(f"Erro ao cadastrar fornecedor: {str(e)}")
                 else:
-                    st.warning("Por favor, preencha os campos Nome e Telefone.")
+                    st.warning("Por favor, preencha Nome/Descrição e Contato.")
 
         st.subheader("Fornecedores Cadastrados")
         try:
             fornecedores = st.session_state.db.get_fornecedores()
             if not fornecedores.empty:
-                fornecedores['data_cadastro'] = pd.to_datetime(fornecedores['data_cadastro'])
-                fornecedores['data_cadastro'] = fornecedores['data_cadastro'].dt.strftime('%d/%m/%Y')
-
                 st.dataframe(
                     fornecedores[[
-                        'nome', 'telefone', 'categoria',
+                        'descricao', 'contato', 'categoria',
                         'tipo_conta', 'pix', 'recorrente'
                     ]],
                     use_container_width=True
@@ -97,9 +92,6 @@ def show():
         try:
             assistentes = st.session_state.db.get_assistentes()
             if not assistentes.empty:
-                assistentes['data_cadastro'] = pd.to_datetime(assistentes['data_cadastro'])
-                assistentes['data_cadastro'] = assistentes['data_cadastro'].dt.strftime('%d/%m/%Y')
-
                 st.dataframe(
                     assistentes[[
                         'nome', 'telefone', 'endereco',
