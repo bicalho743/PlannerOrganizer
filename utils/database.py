@@ -21,6 +21,9 @@ class Cliente(Base):
     email = Column(String)
     telefone = Column(String)
     endereco = Column(String)
+    cpf = Column(String)
+    data_aniversario = Column(Date)
+    origem_cliente = Column(String)  # onde conheceu a personal
     data_cadastro = Column(Date, default=datetime.now().date())
     tipo_conta = Column(String, default='PF')  # PF ou PJ
     cnpj = Column(String)
@@ -105,18 +108,25 @@ class Database:
             'email': c.email,
             'telefone': c.telefone,
             'endereco': c.endereco,
+            'cpf': c.cpf,
+            'data_aniversario': c.data_aniversario,
+            'origem_cliente': c.origem_cliente,
             'data_cadastro': c.data_cadastro,
             'tipo_conta': c.tipo_conta,
             'cnpj': c.cnpj,
             'razao_social': c.razao_social
         } for c in clientes])
 
-    def add_cliente(self, nome, email, telefone, endereco, tipo_conta='PF', cnpj=None, razao_social=None):
+    def add_cliente(self, nome, email, telefone, endereco, cpf=None, data_aniversario=None, 
+                    origem_cliente=None, tipo_conta='PF', cnpj=None, razao_social=None):
         cliente = Cliente(
             nome=nome,
             email=email,
             telefone=telefone,
             endereco=endereco,
+            cpf=cpf,
+            data_aniversario=data_aniversario,
+            origem_cliente=origem_cliente,
             tipo_conta=tipo_conta,
             cnpj=cnpj,
             razao_social=razao_social
