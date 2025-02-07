@@ -60,6 +60,33 @@ if pagina == "Dashboard":
 
         st.metric("Saldo Total", f"R$ {saldo:.2f}")
 
+        # Pagamentos Pendentes
+        if "acrescimos" in st.session_state:
+            pendentes = [
+                {
+                    'cliente': p['nome'],
+                    'proposta': p['numero'],
+                    'tipo': a['tipo'],
+                    'fornecedor': a['fornecedor'] if a['tipo'] == 'Fornecedor' else '',
+                    'valor': a['valor']
+                }
+                for p in propostas.to_dict('records')
+                for a in st.session_state.acrescimos
+                if a['status_pagamento'] == 'Pendente'
+            ]
+
+            if pendentes:
+                st.write("---")
+                st.subheader("💰 Pagamentos Pendentes")
+                total_pendente = sum(p['valor'] for p in pendentes)
+                st.metric("Total Pendente", f"R$ {total_pendente:.2f}")
+
+                for p in pendentes:
+                    if p['fornecedor']:
+                        st.write(f"- Proposta #{p['proposta']} - {p['cliente']}: {p['tipo']} - {p['fornecedor']} (R$ {p['valor']:.2f})")
+                    else:
+                        st.write(f"- Proposta #{p['proposta']} - {p['cliente']}: {p['tipo']} (R$ {p['valor']:.2f})")
+
         # Aniversariantes
         if not clientes.empty:
             st.write("---")
@@ -94,28 +121,6 @@ if pagina == "Dashboard":
                     data_aniv = aniv['data_aniversario']
                     st.write(f"- Dia {data_aniv.day}: {aniv['nome']}")
 
-        # Pagamentos Pendentes
-        if "acrescimos" in st.session_state:
-            pendentes = [
-                {
-                    'cliente': p['nome'],
-                    'tipo': a['tipo'],
-                    'fornecedor': a['fornecedor'] if a['tipo'] == 'Fornecedor' else '',
-                    'valor': a['valor']
-                }
-                for p in propostas.to_dict('records')
-                for a in st.session_state.acrescimos
-                if a['status_pagamento'] == 'Pendente'
-            ]
-
-            if pendentes:
-                st.write("---")
-                st.subheader("💰 Pagamentos Pendentes")
-                for p in pendentes:
-                    if p['fornecedor']:
-                        st.write(f"- {p['cliente']}: {p['tipo']} - {p['fornecedor']} (R$ {p['valor']:.2f})")
-                    else:
-                        st.write(f"- {p['cliente']}: {p['tipo']} (R$ {p['valor']:.2f})")
 
     with col2:
         st.subheader("📅 Atividades Recentes")

@@ -183,8 +183,15 @@ def show():
                 st.write(f"**Valor Base:** R$ {proposta['valor']:.2f}")
 
                 valor_pendente = 0.0
-                for acrescimo in st.session_state.acrescimos:
-                    status = acrescimo['status_pagamento']
+                for i, acrescimo in enumerate(st.session_state.acrescimos):
+                    status = st.selectbox(
+                        "Status do Pagamento",
+                        ["Pendente", "Pago"],
+                        key=f"status_pagamento_{i}",
+                        index=0 if acrescimo['status_pagamento'] == "Pendente" else 1
+                    )
+                    acrescimo['status_pagamento'] = status
+
                     if status == "Pendente":
                         valor_pendente += acrescimo['valor']
 
@@ -195,7 +202,11 @@ def show():
 
                 st.write(f"**Valor Total:** R$ {valor_total:.2f}")
                 st.write(f"**Valor Pendente:** R$ {valor_pendente:.2f}")
-                st.session_state.acrescimos = []  # Limpar acréscimos após fechar
+
+                # Botão para confirmar e salvar alterações
+                if st.button("Confirmar Alterações", key="confirmar_alteracoes"):
+                    st.success("Alterações salvas com sucesso!")
+                    st.session_state.acrescimos = []  # Limpar acréscimos após confirmar
 
         except Exception as e:
             st.error(f"Erro ao carregar dados: {str(e)}")
