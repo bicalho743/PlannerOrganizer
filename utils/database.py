@@ -31,55 +31,8 @@ class Cliente(Base):
 
     propostas = relationship("Proposta", back_populates="cliente")
 
-class Proposta(Base):
-    __tablename__ = 'propostas'
-
-    id = Column(Integer, primary_key=True)
-    numero = Column(Integer, Sequence('proposta_seq'), unique=True, nullable=False)
-    cliente_id = Column(Integer, ForeignKey('clientes.id'))
-    descricao = Column(String)
-    valor = Column(Float)
-    status = Column(String)
-    tipo_proposta = Column(String)
-    data_inicio = Column(Date)
-    data_fim = Column(Date)
-    prazo_entrega = Column(Date)
-    data_proposta = Column(Date, default=datetime.now().date())
-
-    cliente = relationship("Cliente", back_populates="propostas")
-    andamentos = relationship("AndamentoProposta", back_populates="proposta")
-    produtos = relationship("ProdutoOrganizador", back_populates="proposta")
-
-class AndamentoProposta(Base):
-    __tablename__ = 'andamento_propostas'
-
-    id = Column(Integer, primary_key=True)
-    proposta_id = Column(Integer, ForeignKey('propostas.id'))
-    data = Column(Date, default=datetime.now().date())
-    status = Column(String)
-    observacao = Column(String)
-    comodo = Column(String)
-
-    proposta = relationship("Proposta", back_populates="andamentos")
-
-class ProdutoOrganizador(Base):
-    __tablename__ = 'produtos_organizadores'
-
-    id = Column(Integer, primary_key=True)
-    proposta_id = Column(Integer, ForeignKey('propostas.id'))
-    nome = Column(String, nullable=False)
-    descricao = Column(String)
-    valor = Column(Float)
-    quantidade = Column(Integer)
-    comodo = Column(String, nullable=False)
-    data_cadastro = Column(Date, default=datetime.now().date())
-
-    proposta = relationship("Proposta", back_populates="produtos")
-    fornecedores = relationship("ProdutoFornecedor", back_populates="produto")
-
 class Fornecedor(Base):
     __tablename__ = 'fornecedores'
-
     id = Column(Integer, primary_key=True)
     nome = Column(String, nullable=False)
     descricao = Column(String)
@@ -94,9 +47,62 @@ class Fornecedor(Base):
     recorrente = Column(Boolean, default=False)
     observacoes = Column(String)
 
+class ProdutoOrganizador(Base):
+    __tablename__ = 'produtos_organizadores'
+    id = Column(Integer, primary_key=True)
+    proposta_id = Column(Integer, ForeignKey('propostas.id'))
+    nome = Column(String, nullable=False)
+    descricao = Column(String)
+    valor = Column(Float)
+    quantidade = Column(Integer)
+    comodo = Column(String, nullable=False)
+    data_cadastro = Column(Date, default=datetime.now().date())
+
+    proposta = relationship("Proposta", back_populates="produtos")
+    fornecedores = relationship("ProdutoFornecedor", back_populates="produto", cascade="all, delete-orphan")
+
+class ProdutoFornecedor(Base):
+    __tablename__ = 'produtos_fornecedores'
+    id = Column(Integer, primary_key=True)
+    produto_id = Column(Integer, ForeignKey('produtos_organizadores.id'))
+    fornecedor_id = Column(Integer, ForeignKey('fornecedores.id'))
+    valor = Column(Float)
+    data_cotacao = Column(Date, default=datetime.now().date())
+    observacoes = Column(String)
+
+    produto = relationship("ProdutoOrganizador", back_populates="fornecedores")
+    fornecedor = relationship("Fornecedor")
+
+class Proposta(Base):
+    __tablename__ = 'propostas'
+    id = Column(Integer, primary_key=True)
+    numero = Column(Integer, Sequence('proposta_seq'), unique=True, nullable=False)
+    cliente_id = Column(Integer, ForeignKey('clientes.id'))
+    descricao = Column(String)
+    valor = Column(Float)
+    status = Column(String)
+    tipo_proposta = Column(String)
+    data_inicio = Column(Date)
+    data_fim = Column(Date)
+    prazo_entrega = Column(Date)
+    data_proposta = Column(Date, default=datetime.now().date())
+
+    cliente = relationship("Cliente", back_populates="propostas")
+    produtos = relationship("ProdutoOrganizador", back_populates="proposta", cascade="all, delete-orphan")
+
+class AndamentoProposta(Base):
+    __tablename__ = 'andamento_propostas'
+    id = Column(Integer, primary_key=True)
+    proposta_id = Column(Integer, ForeignKey('propostas.id'))
+    data = Column(Date, default=datetime.now().date())
+    status = Column(String)
+    observacao = Column(String)
+    comodo = Column(String)
+
+    proposta = relationship("Proposta")
+
 class CategoriaDespesa(Base):
     __tablename__ = 'categorias_despesa'
-
     id = Column(Integer, primary_key=True)
     nome = Column(String, nullable=False)
     descricao = Column(String)
@@ -104,7 +110,6 @@ class CategoriaDespesa(Base):
 
 class Transacao(Base):
     __tablename__ = 'financeiro'
-
     id = Column(Integer, primary_key=True)
     tipo = Column(String)
     descricao = Column(String)
@@ -118,13 +123,12 @@ class Transacao(Base):
 
 class Usuario(Base):
     __tablename__ = 'usuarios'
-
     id = Column(Integer, primary_key=True)
     email = Column(String, unique=True, nullable=False)
     senha_hash = Column(String, nullable=False)
     nome = Column(String, nullable=False)
     empresa = Column(String)
-    tipo = Column(String, default='usuario')  # 'admin' ou 'usuario'
+    tipo = Column(String, default='usuario')
     ativo = Column(Boolean, default=True)
     data_cadastro = Column(Date, default=datetime.now().date())
 
@@ -133,19 +137,6 @@ class Usuario(Base):
 
     def check_senha(self, senha):
         return check_password_hash(self.senha_hash, senha)
-
-class ProdutoFornecedor(Base):
-    __tablename__ = 'produtos_fornecedores'
-
-    id = Column(Integer, primary_key=True)
-    produto_id = Column(Integer, ForeignKey('produtos_organizadores.id'))
-    fornecedor_id = Column(Integer, ForeignKey('fornecedores.id'))
-    valor = Column(Float)
-    data_cotacao = Column(Date, default=datetime.now().date())
-    observacoes = Column(String)
-
-    produto = relationship("ProdutoOrganizador", back_populates="fornecedores")
-    fornecedor = relationship("Fornecedor")
 
 class Database:
     def __init__(self):
@@ -208,16 +199,16 @@ class Database:
             'prazo_entrega': p.prazo_entrega
         } for p in propostas])
 
-    def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, prazo_entrega=None, data_inicio=None, data_fim=None):
+    def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, data_inicio=None, data_fim=None, prazo_entrega=None):
         proposta = Proposta(
             cliente_id=cliente_id,
             descricao=descricao,
             valor=valor,
             status=status,
             tipo_proposta=tipo_proposta,
-            prazo_entrega=prazo_entrega,
             data_inicio=data_inicio,
-            data_fim=data_fim
+            data_fim=data_fim,
+            prazo_entrega=prazo_entrega
         )
         self.session.add(proposta)
         self.session.commit()
@@ -254,11 +245,259 @@ class Database:
         self.session.commit()
         return transacao.id
 
-    def get_produtos(self): #This function is removed, since Produto class is removed.
-        return pd.DataFrame()
+    def add_produto_organizador(self, proposta_id, nome, descricao, valor, quantidade, comodo):
+        produto = ProdutoOrganizador(
+            proposta_id=proposta_id,
+            nome=nome,
+            descricao=descricao,
+            valor=valor,
+            quantidade=quantidade,
+            comodo=comodo
+        )
+        self.session.add(produto)
+        self.session.commit()
+        return produto.id
 
-    def add_produto(self, nome, descricao, valor, quantidade): #This function is removed, since Produto class is removed.
-        return 0
+    def get_produtos_organizadores(self, proposta_id=None):
+        query = self.session.query(ProdutoOrganizador)
+        if proposta_id:
+            query = query.filter_by(proposta_id=proposta_id)
+        produtos = query.all()
+        return pd.DataFrame([{
+            'id': p.id,
+            'nome': p.nome,
+            'descricao': p.descricao,
+            'valor': p.valor,
+            'quantidade': p.quantidade,
+            'comodo': p.comodo,
+            'data_cadastro': p.data_cadastro
+        } for p in produtos])
+
+    def add_fornecedor(self, nome, descricao, valor, data_vencimento, categoria, tipo_conta, pix=None, contato=None, recorrente=False, observacoes=None):
+        fornecedor = Fornecedor(
+            nome=nome,
+            descricao=descricao,
+            valor=valor,
+            data_vencimento=data_vencimento,
+            categoria=categoria,
+            tipo_conta=tipo_conta,
+            pix=pix,
+            contato=contato,
+            recorrente=recorrente,
+            observacoes=observacoes
+        )
+        self.session.add(fornecedor)
+        self.session.commit()
+        return fornecedor.id
+
+    def get_fornecedores(self):
+        fornecedores = self.session.query(Fornecedor).all()
+        return pd.DataFrame([{
+            'id': f.id,
+            'nome': f.nome,
+            'descricao': f.descricao,
+            'valor': f.valor,
+            'data_vencimento': f.data_vencimento,
+            'data_pagamento': f.data_pagamento,
+            'status': f.status,
+            'categoria': f.categoria,
+            'pix': f.pix,
+            'contato': f.contato,
+            'tipo_conta': f.tipo_conta,
+            'recorrente': f.recorrente,
+            'observacoes': f.observacoes
+        } for f in fornecedores])
+
+    def add_categoria_despesa(self, nome, descricao, tipo_conta):
+        categoria = CategoriaDespesa(
+            nome=nome,
+            descricao=descricao,
+            tipo_conta=tipo_conta
+        )
+        self.session.add(categoria)
+        self.session.commit()
+        return categoria.id
+
+    def get_categorias_despesa(self):
+        categorias = self.session.query(CategoriaDespesa).all()
+        return pd.DataFrame([{
+            'id': c.id,
+            'nome': c.nome,
+            'descricao': c.descricao,
+            'tipo_conta': c.tipo_conta
+        } for c in categorias])
+
+    def add_andamento_proposta(self, proposta_id, status, observacao, comodo=None):
+        andamento = AndamentoProposta(
+            proposta_id=proposta_id,
+            status=status,
+            observacao=observacao,
+            comodo=comodo
+        )
+        self.session.add(andamento)
+        self.session.commit()
+        return andamento.id
+
+    def get_andamentos_proposta(self, proposta_id):
+        andamentos = self.session.query(AndamentoProposta).filter_by(proposta_id=proposta_id).all()
+        return pd.DataFrame([{
+            'id': a.id,
+            'data': a.data,
+            'status': a.status,
+            'observacao': a.observacao,
+            'comodo': a.comodo
+        } for a in andamentos])
+
+    def add_produto_fornecedor(self, produto_id, fornecedor_id, valor, observacoes=None):
+        """Adiciona um fornecedor e seu preço para um produto"""
+        try:
+            existente = self.session.query(ProdutoFornecedor).filter_by(
+                produto_id=produto_id,
+                fornecedor_id=fornecedor_id
+            ).first()
+
+            if existente:
+                existente.valor = valor
+                existente.observacoes = observacoes
+                existente.data_cotacao = datetime.now().date()
+            else:
+                fornecedor = ProdutoFornecedor(
+                    produto_id=produto_id,
+                    fornecedor_id=fornecedor_id,
+                    valor=valor,
+                    observacoes=observacoes
+                )
+                self.session.add(fornecedor)
+
+            self.session.commit()
+            self._atualizar_valor_produto(produto_id)
+            return True
+        except Exception as e:
+            self.session.rollback()
+            raise e
+
+    def _atualizar_valor_produto(self, produto_id):
+        """Atualiza o valor do produto com o menor valor entre os fornecedores"""
+        try:
+            menor_valor = self.session.query(func.min(ProdutoFornecedor.valor))\
+                .filter_by(produto_id=produto_id)\
+                .scalar()
+
+            if menor_valor is not None:
+                produto = self.session.query(ProdutoOrganizador)\
+                    .filter_by(id=produto_id)\
+                    .first()
+                if produto:
+                    produto.valor = menor_valor
+                    self.session.commit()
+        except Exception as e:
+            self.session.rollback()
+            raise e
+
+    def get_produto_fornecedores(self, produto_id):
+        """Retorna todos os fornecedores e preços de um produto"""
+        fornecedores = self.session.query(ProdutoFornecedor).filter_by(produto_id=produto_id).all()
+        return pd.DataFrame([{
+            'id': f.id,
+            'produto_id': f.produto_id,
+            'fornecedor_id': f.fornecedor_id,
+            'fornecedor_nome': f.fornecedor.nome if f.fornecedor else None,
+            'valor': f.valor,
+            'data_cotacao': f.data_cotacao,
+            'observacoes': f.observacoes
+        } for f in fornecedores])
+
+    def get_fornecedores(self):
+        fornecedores = self.session.query(Fornecedor).all()
+        return pd.DataFrame([{
+            'id': f.id,
+            'nome': f.nome,
+            'descricao': f.descricao,
+            'valor': f.valor,
+            'data_vencimento': f.data_vencimento,
+            'data_pagamento': f.data_pagamento,
+            'status': f.status,
+            'categoria': f.categoria,
+            'pix': f.pix,
+            'contato': f.contato,
+            'tipo_conta': f.tipo_conta,
+            'recorrente': f.recorrente,
+            'observacoes': f.observacoes
+        } for f in fornecedores])
+
+    def __del__(self):
+        if hasattr(self, 'session'):
+            self.session.close()
+
+    def registrar_usuario(self, email, senha, nome, empresa=None, tipo='usuario'):
+        """Registra um novo usuário no sistema"""
+        try:
+            if self.session.query(Usuario).filter_by(email=email).first():
+                return False, "Email já cadastrado"
+
+            usuario = Usuario(
+                email=email,
+                nome=nome,
+                empresa=empresa,
+                tipo=tipo
+            )
+            usuario.set_senha(senha)
+
+            self.session.add(usuario)
+            self.session.commit()
+            return True, "Usuário cadastrado com sucesso"
+        except Exception as e:
+            self.session.rollback()
+            return False, str(e)
+
+    def autenticar_usuario(self, email, senha):
+        """Autentica um usuário"""
+        try:
+            usuario = self.session.query(Usuario).filter_by(email=email).first()
+            if usuario and usuario.check_senha(senha) and usuario.ativo:
+                return True, usuario
+            return False, None
+        except Exception as e:
+            return False, str(e)
+
+    def get_usuarios(self):
+        """Retorna lista de usuários cadastrados"""
+        usuarios = self.session.query(Usuario).all()
+        return pd.DataFrame([{
+            'id': u.id,
+            'email': u.email,
+            'nome': u.nome,
+            'empresa': u.empresa,
+            'tipo': u.tipo,
+            'ativo': u.ativo,
+            'data_cadastro': u.data_cadastro
+        } for u in usuarios])
+
+    def atualizar_status_usuario(self, usuario_id, ativo):
+        """Atualiza o status de ativo/inativo de um usuário"""
+        try:
+            usuario = self.session.query(Usuario).filter_by(id=usuario_id).first()
+            if usuario:
+                usuario.ativo = ativo
+                self.session.commit()
+                return True
+            return False
+        except Exception as e:
+            self.session.rollback()
+            return False
+
+    def atualizar_tipo_usuario(self, usuario_id, tipo):
+        """Atualiza o tipo de um usuário (admin/usuario)"""
+        try:
+            usuario = self.session.query(Usuario).filter_by(id=usuario_id).first()
+            if usuario:
+                usuario.tipo = tipo
+                self.session.commit()
+                return True
+            return False
+        except Exception as e:
+            self.session.rollback()
+            return False
 
     def add_test_data(self):
         try:
@@ -386,22 +625,19 @@ class Database:
             print(f"Erro ao adicionar dados de teste: {str(e)}")
             return False
 
-    def add_fornecedor(self, nome, descricao, valor, data_vencimento, categoria, tipo_conta, pix=None, contato=None, recorrente=False, observacoes=None):
-        fornecedor = Fornecedor(
-            nome=nome,
-            descricao=descricao,
-            valor=valor,
-            data_vencimento=data_vencimento,
-            categoria=categoria,
-            tipo_conta=tipo_conta,
-            pix=pix,
-            contato=contato,
-            recorrente=recorrente,
-            observacoes=observacoes
-        )
-        self.session.add(fornecedor)
-        self.session.commit()
-        return fornecedor.id
+
+    def get_produto_fornecedores(self, produto_id):
+        """Retorna todos os fornecedores e preços de um produto"""
+        fornecedores = self.session.query(ProdutoFornecedor).filter_by(produto_id=produto_id).all()
+        return pd.DataFrame([{
+            'id': f.id,
+            'produto_id': f.produto_id,
+            'fornecedor_id': f.fornecedor_id,
+            'fornecedor_nome': f.fornecedor.nome if f.fornecedor else None,
+            'valor': f.valor,
+            'data_cotacao': f.data_cotacao,
+            'observacoes': f.observacoes
+        } for f in fornecedores])
 
     def get_fornecedores(self):
         fornecedores = self.session.query(Fornecedor).all()
@@ -418,214 +654,5 @@ class Database:
             'contato': f.contato,
             'tipo_conta': f.tipo_conta,
             'recorrente': f.recorrente,
-            'observacoes': f.observacoes
-        } for f in fornecedores])
-
-    def add_categoria_despesa(self, nome, descricao, tipo_conta):
-        categoria = CategoriaDespesa(
-            nome=nome,
-            descricao=descricao,
-            tipo_conta=tipo_conta
-        )
-        self.session.add(categoria)
-        self.session.commit()
-        return categoria.id
-
-    def get_categorias_despesa(self):
-        categorias = self.session.query(CategoriaDespesa).all()
-        return pd.DataFrame([{
-            'id': c.id,
-            'nome': c.nome,
-            'descricao': c.descricao,
-            'tipo_conta': c.tipo_conta
-        } for c in categorias])
-
-    def add_andamento_proposta(self, proposta_id, status, observacao, comodo=None):
-        andamento = AndamentoProposta(
-            proposta_id=proposta_id,
-            status=status,
-            observacao=observacao,
-            comodo=comodo
-        )
-        self.session.add(andamento)
-        self.session.commit()
-        return andamento.id
-
-    def get_andamentos_proposta(self, proposta_id):
-        andamentos = self.session.query(AndamentoProposta).filter_by(proposta_id=proposta_id).all()
-        return pd.DataFrame([{
-            'id': a.id,
-            'data': a.data,
-            'status': a.status,
-            'observacao': a.observacao,
-            'comodo': a.comodo
-        } for a in andamentos])
-
-    def add_produto_organizador(self, proposta_id, nome, descricao, valor, quantidade, comodo):
-        produto = ProdutoOrganizador(
-            proposta_id=proposta_id,
-            nome=nome,
-            descricao=descricao,
-            valor=valor,
-            quantidade=quantidade,
-            comodo=comodo
-        )
-        self.session.add(produto)
-        self.session.commit()
-        return produto.id
-
-    def get_produtos_organizadores(self, proposta_id=None):
-        query = self.session.query(ProdutoOrganizador)
-        if proposta_id:
-            query = query.filter_by(proposta_id=proposta_id)
-        produtos = query.all()
-        return pd.DataFrame([{
-            'id': p.id,
-            'nome': p.nome,
-            'descricao': p.descricao,
-            'valor': p.valor,
-            'quantidade': p.quantidade,
-            'comodo': p.comodo,
-            'data_cadastro': p.data_cadastro
-        } for p in produtos])
-
-    def __del__(self):
-        if hasattr(self, 'session'):
-            self.session.close()
-
-    def registrar_usuario(self, email, senha, nome, empresa=None, tipo='usuario'):
-        """Registra um novo usuário no sistema"""
-        try:
-            # Verificar se o email já existe
-            if self.session.query(Usuario).filter_by(email=email).first():
-                return False, "Email já cadastrado"
-
-            usuario = Usuario(
-                email=email,
-                nome=nome,
-                empresa=empresa,
-                tipo=tipo
-            )
-            usuario.set_senha(senha)
-
-            self.session.add(usuario)
-            self.session.commit()
-            return True, "Usuário cadastrado com sucesso"
-        except Exception as e:
-            self.session.rollback()
-            return False, str(e)
-
-    def autenticar_usuario(self, email, senha):
-        """Autentica um usuário"""
-        try:
-            usuario = self.session.query(Usuario).filter_by(email=email).first()
-            if usuario and usuario.check_senha(senha) and usuario.ativo:
-                return True, usuario
-            return False, None
-        except Exception as e:
-            return False, str(e)
-
-    def get_usuarios(self):
-        """Retorna lista de usuários cadastrados"""
-        usuarios = self.session.query(Usuario).all()
-        return pd.DataFrame([{
-            'id': u.id,
-            'email': u.email,
-            'nome': u.nome,
-            'empresa': u.empresa,
-            'tipo': u.tipo,
-            'ativo': u.ativo,
-            'data_cadastro': u.data_cadastro
-        } for u in usuarios])
-
-    def atualizar_status_usuario(self, usuario_id, ativo):
-        """Atualiza o status de ativo/inativo de um usuário"""
-        try:
-            usuario = self.session.query(Usuario).filter_by(id=usuario_id).first()
-            if usuario:
-                usuario.ativo = ativo
-                self.session.commit()
-                return True
-            return False
-        except Exception as e:
-            self.session.rollback()
-            return False
-
-    def atualizar_tipo_usuario(self, usuario_id, tipo):
-        """Atualiza o tipo de um usuário (admin/usuario)"""
-        try:
-            usuario = self.session.query(Usuario).filter_by(id=usuario_id).first()
-            if usuario:
-                usuario.tipo = tipo
-                self.session.commit()
-                return True
-            return False
-        except Exception as e:
-            self.session.rollback()
-            return False
-
-    def add_produto_fornecedor(self, produto_id, fornecedor_id, valor, observacoes=None):
-        """Adiciona um fornecedor e seu preço para um produto"""
-        try:
-            # Verificar se a combinação produto-fornecedor já existe
-            existente = self.session.query(ProdutoFornecedor).filter_by(
-                produto_id=produto_id,
-                fornecedor_id=fornecedor_id
-            ).first()
-
-            if existente:
-                # Atualizar valor e observações
-                existente.valor = valor
-                existente.observacoes = observacoes
-                existente.data_cotacao = datetime.now().date()
-            else:
-                # Criar nova cotação
-                fornecedor = ProdutoFornecedor(
-                    produto_id=produto_id,
-                    fornecedor_id=fornecedor_id,
-                    valor=valor,
-                    observacoes=observacoes
-                )
-                self.session.add(fornecedor)
-
-            self.session.commit()
-
-            # Atualizar o valor do produto com o menor valor entre os fornecedores
-            self._atualizar_valor_produto(produto_id)
-            return True
-        except Exception as e:
-            self.session.rollback()
-            raise e
-
-    def _atualizar_valor_produto(self, produto_id):
-        """Atualiza o valor do produto com o menor valor entre os fornecedores"""
-        try:
-            # Buscar o menor valor entre os fornecedores
-            menor_valor = self.session.query(func.min(ProdutoFornecedor.valor))\
-                .filter_by(produto_id=produto_id)\
-                .scalar()
-
-            if menor_valor is not None:
-                # Atualizar o valor do produto
-                produto = self.session.query(ProdutoOrganizador)\
-                    .filter_by(id=produto_id)\
-                    .first()
-                if produto:
-                    produto.valor = menor_valor
-                    self.session.commit()
-        except Exception as e:
-            self.session.rollback()
-            raise e
-
-    def get_produto_fornecedores(self, produto_id):
-        """Retorna todos os fornecedores e preços de um produto"""
-        fornecedores = self.session.query(ProdutoFornecedor).filter_by(produto_id=produto_id).all()
-        return pd.DataFrame([{
-            'id': f.id,
-            'produto_id': f.produto_id,
-            'fornecedor_id': f.fornecedor_id,
-            'fornecedor_nome': f.fornecedor.nome if f.fornecedor else None,
-            'valor': f.valor,
-            'data_cotacao': f.data_cotacao,
             'observacoes': f.observacoes
         } for f in fornecedores])
