@@ -41,7 +41,7 @@ def show():
             if tipo_proposta in ["Organização", "Organização Mudança"]:
                 prazo_entrega = st.date_input("Prazo de Entrega")
 
-            status = st.selectbox("Status", ["Aberta", "Fechada", "Cancelada"])
+            status = st.selectbox("Status", ["Aberta", "Recusada", "Fechada"])
 
             submitted = st.form_submit_button("Cadastrar")
 
@@ -78,7 +78,7 @@ def show():
         with col1:
             status_filtro = st.multiselect(
                 "Filtrar por Status",
-                ["Aberta", "Fechada", "Cancelada"]
+                ["Aberta", "Recusada", "Fechada"]
             )
         with col2:
             data_filtro = st.date_input("Filtrar por Data")
