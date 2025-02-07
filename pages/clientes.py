@@ -58,9 +58,9 @@ def show():
 
                 # Formatar data de aniversário
                 def format_aniversario(data):
-                    if pd.isna(data):
-                        return ''
                     try:
+                        if pd.isna(data):
+                            return ''
                         data = pd.to_datetime(data)
                         return data.strftime('%d/%m')
                     except:
@@ -117,17 +117,8 @@ def show():
 
                     # Formatar data de aniversário no preview
                     if 'data_aniversario' in df.columns:
-                        df['data_aniversario'] = df['data_aniversario'].astype(str)
-                        def format_preview_date(data):
-                            try:
-                                if '/' in data:
-                                    dia, mes = data.split('/')[:2]
-                                    return f"{int(dia):02d}/{int(mes):02d}"
-                            except:
-                                pass
-                            return data
-
-                        df['data_aniversario'] = df['data_aniversario'].apply(format_preview_date)
+                        df['data_aniversario'] = pd.to_datetime(df['data_aniversario'], format='%d/%m/%Y', errors='coerce')
+                        df['data_aniversario'] = df['data_aniversario'].dt.strftime('%d/%m')
 
                     st.dataframe(df.head())
 
@@ -142,14 +133,14 @@ def show():
                             try:
                                 # Processar data de aniversário
                                 data_aniv = None
-                                if 'data_aniversario' in row and str(row['data_aniversario']).strip():
+                                if 'data_aniversario' in row and pd.notna(row['data_aniversario']):
                                     try:
                                         data_str = str(row['data_aniversario'])
                                         if '/' in data_str:
-                                            dia, mes = data_str.split('/')[:2]
+                                            dia, mes = map(int, data_str.split('/')[:2])
                                             data_aniv = datetime.now().replace(
-                                                day=int(dia),
-                                                month=int(mes)
+                                                day=dia,
+                                                month=mes
                                             ).date()
                                     except:
                                         pass
