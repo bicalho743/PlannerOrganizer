@@ -151,7 +151,7 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
     story.append(Paragraph(f"Total a Receber do Cliente: R$ {total_receber:.2f}", styles["Normal"]))
     story.append(Paragraph(f"Total a Pagar a Lojas/Fornecedores: R$ {total_pagar_lojas:.2f}", styles["Normal"]))
     story.append(Paragraph(f"Total a Pagar aos Assistentes: R$ {total_pagar_assistentes:.2f}", styles["Normal"]))
-    story.append(Paragraph(f"<b>Resultado Final: R$ {(total_receber - total_pagar_assistentes - total_pagar_lojas):.2f}</b>", 
+    story.append(Paragraph(f"<b>Resultado Final: R$ {(total_receber - total_pagar_assistentes):.2f}</b>", 
                          ParagraphStyle('Final', parent=styles['Normal'], fontSize=14, alignment=2)))
 
     # Observações Finais
@@ -162,6 +162,7 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
     story.append(Paragraph("3. Valores a receber incluem base e serviços de organização.", styles["Normal"]))
     story.append(Paragraph("4. Valores a pagar aos assistentes são responsabilidade da Organizer.", styles["Normal"]))
     story.append(Paragraph("5. Valores a pagar a lojas/fornecedores são responsabilidade do cliente.", styles["Normal"]))
+    story.append(Paragraph("6. O Resultado Final representa o valor a receber menos os pagamentos aos assistentes.", styles["Normal"]))
 
     # Gerar PDF
     doc.build(story)
