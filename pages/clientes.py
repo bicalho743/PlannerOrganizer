@@ -58,14 +58,19 @@ def show():
 
             if not clientes.empty:
                 # Converter colunas de data para o formato correto
-                clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro']).dt.strftime('%d/%m/%Y')
-                clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario']).dt.strftime('%d/%m')
+                clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro'])
+                clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'])
+
+                # Formatar datas
+                clientes['data_cadastro'] = clientes['data_cadastro'].dt.strftime('%d/%m/%Y')
+                # Apenas dia e mês para aniversário
+                clientes['data_aniversario'] = clientes['data_aniversario'].dt.strftime('%d/%m')
 
                 if busca:
                     clientes = clientes[
-                        clientes['nome'].str.contains(busca, case=False) |
-                        clientes['email'].str.contains(busca, case=False) |
-                        clientes['cpf'].str.contains(busca, case=False)
+                        clientes['nome'].str.contains(busca, case=False, na=False) |
+                        clientes['email'].str.contains(busca, case=False, na=False) |
+                        clientes['cpf'].str.contains(busca, case=False, na=False)
                     ]
 
                 # Exibir tabela de clientes
