@@ -213,27 +213,20 @@ def show():
 
                         # Botão e seção de Fechar Proposta
                         st.write("---")
-                        if st.button("Fechar Proposta"):
-                            st.write("### Resumo Final")
-                            st.write(f"**Cliente:** {proposta['nome']}")
-
-                            # Valor Base com status de pagamento
-                            col1, col2, col3 = st.columns([2, 1, 1])
-                            with col1:
-                                st.write("**Valor Base**")
-                            with col2:
-                                valor_base = st.number_input(
-                                    "Valor Base",
-                                    value=float(proposta['valor']),
-                                    step=0.01,
-                                    key="valor_base"
-                                )
-                            with col3:
-                                status_base = st.selectbox(
-                                    "Status",
-                                    ["Pendente", "Pago"],
-                                    key="status_base"
-                                )
+                        col1, col2, col3 = st.columns([2,1,1])
+                        with col3:
+                            st.write("**Valor Base**")
+                            valor_base = st.number_input(
+                                "Valor Base",
+                                value=float(proposta['valor']),
+                                step=0.01,
+                                key="valor_base"
+                            )
+                            status_base = st.selectbox(
+                                "Status",
+                                ["Pendente", "Pago"],
+                                key="status_base"
+                            )
                             st.write("---")
 
                             # Exibir acréscimos para atualização
@@ -292,37 +285,6 @@ def show():
                                 st.write(f"**Valor Total:** R$ {valor_total:.2f}")
                                 st.write(f"**Valor Pendente:** R$ {valor_pendente:.2f}")
 
-                                # Botão para exportar PDF
-                                if st.button("Exportar Fechamento (PDF)"):
-                                    try:
-                                        # Criar diretório para PDFs se não existir
-                                        os.makedirs("pdfs", exist_ok=True)
-
-                                        # Nome do arquivo
-                                        filename = f"pdfs/proposta_{proposta['numero']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-
-                                        # Gerar PDF
-                                        pdf_path = gerar_pdf_fechamento(
-                                            proposta=proposta,
-                                            cliente={'nome': proposta['nome']},
-                                            acrescimos=acrescimos,
-                                            filename=filename
-                                        )
-
-                                        # Criar link para download
-                                        with open(pdf_path, "rb") as pdf_file:
-                                            pdf_bytes = pdf_file.read()
-                                            st.download_button(
-                                                label="Baixar PDF",
-                                                data=pdf_bytes,
-                                                file_name=os.path.basename(filename),
-                                                mime="application/pdf"
-                                            )
-
-                                        st.success("PDF gerado com sucesso!")
-                                    except Exception as e:
-                                        st.error(f"Erro ao gerar PDF: {str(e)}")
-
                             except Exception as e:
                                 st.error(f"Erro ao atualizar status de pagamento: {str(e)}")
 
@@ -330,6 +292,40 @@ def show():
                             if st.button("Confirmar Alterações"):
                                 st.success("Alterações salvas com sucesso!")
                                 st.rerun()
+
+                        # Botão para exportar PDF movido para fora do bloco de atualização
+                        st.write("---")
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.button("Exportar Resumo Final (PDF)"):
+                                try:
+                                    # Criar diretório para PDFs se não existir
+                                    os.makedirs("pdfs", exist_ok=True)
+
+                                    # Nome do arquivo
+                                    filename = f"pdfs/proposta_{proposta['numero']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+
+                                    # Gerar PDF
+                                    pdf_path = gerar_pdf_fechamento(
+                                        proposta=proposta,
+                                        cliente={'nome': proposta['nome']},
+                                        acrescimos=acrescimos,
+                                        filename=filename
+                                    )
+
+                                    # Criar link para download
+                                    with open(pdf_path, "rb") as pdf_file:
+                                        pdf_bytes = pdf_file.read()
+                                        st.download_button(
+                                            label="Baixar PDF",
+                                            data=pdf_bytes,
+                                            file_name=os.path.basename(filename),
+                                            mime="application/pdf"
+                                        )
+
+                                    st.success("PDF gerado com sucesso!")
+                                except Exception as e:
+                                    st.error(f"Erro ao gerar PDF: {str(e)}")
 
                     except Exception as e:
                         st.error(f"Erro ao carregar acréscimos: {str(e)}")

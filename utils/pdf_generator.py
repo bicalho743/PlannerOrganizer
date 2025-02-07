@@ -29,6 +29,20 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
     story.append(Paragraph(f"<b>Data:</b> {datetime.now().strftime('%d/%m/%Y')}", styles["Normal"]))
     story.append(Spacer(1, 12))
 
+    # Informações da Proposta
+    story.append(Paragraph("<b>Informações da Proposta</b>", styles["Heading3"]))
+    story.append(Paragraph(f"<b>Tipo:</b> {proposta['tipo_proposta']}", styles["Normal"]))
+    story.append(Paragraph(f"<b>Status:</b> {proposta['status']}", styles["Normal"]))
+
+    # Datas
+    if proposta.get('data_inicio'):
+        story.append(Paragraph(f"<b>Data Início:</b> {proposta['data_inicio'].strftime('%d/%m/%Y')}", styles["Normal"]))
+    if proposta.get('data_fim'):
+        story.append(Paragraph(f"<b>Data Fim:</b> {proposta['data_fim'].strftime('%d/%m/%Y')}", styles["Normal"]))
+    if proposta.get('prazo_entrega'):
+        story.append(Paragraph(f"<b>Prazo de Entrega:</b> {proposta['prazo_entrega'].strftime('%d/%m/%Y')}", styles["Normal"]))
+    story.append(Spacer(1, 12))
+
     # Descrição da Proposta
     story.append(Paragraph("<b>Descrição do Serviço:</b>", styles["Heading3"]))
     story.append(Paragraph(proposta['descricao'], styles["Normal"]))
@@ -47,6 +61,8 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
             descricao = f"{acrescimo['tipo']}"
             if acrescimo['fornecedor']:
                 descricao += f" - {acrescimo['fornecedor']}"
+            if acrescimo.get('descricao'):
+                descricao += f"\n{acrescimo['descricao']}"
             data.append([
                 descricao,
                 f"R$ {float(acrescimo['valor']):.2f}",
@@ -76,12 +92,19 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
     valor_total = float(proposta['valor'])
     if not acrescimos.empty:
         valor_total += float(acrescimos['valor'].astype(float).sum())
-    
+
     story.append(Paragraph(f"<b>Valor Total:</b> R$ {valor_total:.2f}", 
                          ParagraphStyle('Total', 
                                       parent=styles['Normal'],
                                       fontSize=14,
                                       alignment=2)))
+
+    # Observações Finais
+    story.append(Spacer(1, 30))
+    story.append(Paragraph("Observações:", styles["Heading4"]))
+    story.append(Paragraph("1. Este documento representa o fechamento final da proposta.", styles["Normal"]))
+    story.append(Paragraph("2. Os valores apresentados incluem todos os custos e acréscimos.", styles["Normal"]))
+    story.append(Paragraph("3. Para qualquer esclarecimento adicional, entre em contato.", styles["Normal"]))
 
     # Gerar PDF
     doc.build(story)
