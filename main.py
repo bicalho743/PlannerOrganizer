@@ -52,13 +52,15 @@ if pagina == "Dashboard":
 
         # Resumo financeiro
         if not financeiro.empty:
-            receitas = financeiro[financeiro['tipo'] == 'receita']['valor'].sum()
-            despesas = financeiro[financeiro['tipo'] == 'despesa']['valor'].sum()
-            saldo = receitas - despesas
+            # Filtrar apenas receitas de organização e produtos
+            valores_receber = financeiro[
+                (financeiro['tipo'] == 'receita') & 
+                (financeiro['tipo_receita'].isin(['organização', 'venda']))
+            ]['valor'].sum()
         else:
-            saldo = 0.0
+            valores_receber = 0.0
 
-        st.metric("Saldo Total", f"R$ {saldo:.2f}")
+        st.metric("Valores a Receber", f"R$ {valores_receber:.2f}")
 
         # Pagamentos Pendentes
         pendentes = st.session_state.db.get_pagamentos_pendentes()
