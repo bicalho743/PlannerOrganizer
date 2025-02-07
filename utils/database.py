@@ -76,6 +76,16 @@ class Fornecedor(Base):
     recorrente = Column(Boolean, default=False)
     observacoes = Column(String)
 
+class Assistente(Base):
+    __tablename__ = 'assistentes'
+    id = Column(Integer, primary_key=True)
+    nome = Column(String, nullable=False)
+    telefone = Column(String)
+    endereco = Column(String)
+    pix = Column(String)
+    data_cadastro = Column(Date, default=datetime.now().date())
+    observacoes = Column(String)
+
 class CategoriaDespesa(Base):
     __tablename__ = 'categorias_despesa'
     id = Column(Integer, primary_key=True)
@@ -587,6 +597,33 @@ class Database:
         except Exception as e:
             print(f"Erro ao adicionar dados de teste: {str(e)}")
             return False
+
+    def add_assistente(self, nome, telefone, endereco, pix=None, observacoes=None):
+        def query():
+            assistente = Assistente(
+                nome=nome,
+                telefone=telefone,
+                endereco=endereco,
+                pix=pix,
+                observacoes=observacoes
+            )
+            self.session.add(assistente)
+            return assistente.id
+        return self._safe_query(query)
+
+    def get_assistentes(self):
+        def query():
+            assistentes = self.session.query(Assistente).all()
+            return pd.DataFrame([{
+                'id': a.id,
+                'nome': a.nome,
+                'telefone': a.telefone,
+                'endereco': a.endereco,
+                'pix': a.pix,
+                'data_cadastro': a.data_cadastro,
+                'observacoes': a.observacoes
+            } for a in assistentes])
+        return self._safe_query(query)
 
     def __del__(self):
         if hasattr(self, 'session'):

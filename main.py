@@ -20,7 +20,7 @@ st.title("📋 Sistema de Gestão - Personal Organizer")
 st.sidebar.title("Menu Principal")
 pagina = st.sidebar.radio(
     "Navegação",
-    ["Dashboard", "Clientes", "Propostas", "Financeiro", "Contas a Pagar", "Backup", "Relatórios"]
+    ["Dashboard", "Clientes", "Propostas", "Financeiro", "Cadastros", "Contas a Pagar", "Backup", "Relatórios"]
 )
 
 # Add test data button in sidebar if database is empty
@@ -157,6 +157,10 @@ elif pagina == "Propostas":
 elif pagina == "Financeiro":
     import pages.financeiro
     pages.financeiro.show()
+
+elif pagina == "Cadastros":
+    import pages.cadastros
+    pages.cadastros.show()
 
 elif pagina == "Contas a Pagar":
     import pages.contas_pagar
