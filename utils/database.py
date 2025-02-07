@@ -94,8 +94,6 @@ class Fornecedor(Base):
     recorrente = Column(Boolean, default=False)
     observacoes = Column(String)
 
-    produtos = relationship("ProdutoOrganizador", back_populates="fornecedor")
-
 class CategoriaDespesa(Base):
     __tablename__ = 'categorias_despesa'
 
@@ -158,7 +156,6 @@ class ProdutoFornecedor(Base):
 
     produto = relationship("ProdutoOrganizador", back_populates="fornecedores")
     fornecedor = relationship("Fornecedor")
-
 
 class Database:
     def __init__(self):
@@ -382,20 +379,12 @@ class Database:
                 descricao="Caixa transparente com tampa",
                 valor=50.00,
                 quantidade=5,
-                comodo="Closet",
-                fornecedor_id=fornecedor1_id
+                comodo="Closet"
             )
-            self.add_produto_fornecedor(produto1_id, fornecedor2_id, 55.00, "Oferta especial")
 
-            self.add_produto_organizador(
-                proposta_id=proposta2_id,
-                nome="Divisor de Gavetas",
-                descricao="Kit com 6 divisores",
-                valor=80.00,
-                quantidade=2,
-                comodo="Cozinha",
-                fornecedor_id=fornecedor1_id
-            )
+            # Adicionar fornecedores aos produtos
+            self.add_produto_fornecedor(produto1_id, fornecedor1_id, 50.00)
+            self.add_produto_fornecedor(produto1_id, fornecedor2_id, 55.00, "Oferta especial")
 
             # Add test transactions
             self.add_transacao(
@@ -444,6 +433,7 @@ class Database:
         fornecedores = self.session.query(Fornecedor).all()
         return pd.DataFrame([{
             'id': f.id,
+            'nome': f.nome,
             'descricao': f.descricao,
             'valor': f.valor,
             'data_vencimento': f.data_vencimento,
@@ -497,15 +487,14 @@ class Database:
             'comodo': a.comodo
         } for a in andamentos])
 
-    def add_produto_organizador(self, proposta_id, nome, descricao, valor, quantidade, comodo, fornecedor_id):
+    def add_produto_organizador(self, proposta_id, nome, descricao, valor, quantidade, comodo):
         produto = ProdutoOrganizador(
             proposta_id=proposta_id,
             nome=nome,
             descricao=descricao,
             valor=valor,
             quantidade=quantidade,
-            comodo=comodo,
-            
+            comodo=comodo
         )
         self.session.add(produto)
         self.session.commit()
