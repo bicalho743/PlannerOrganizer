@@ -77,7 +77,9 @@ class Transacao(Base):
     valor = Column(Float)
     data = Column(Date, default=datetime.now().date())
     categoria = Column(String)
-    referencia_id = Column(Integer)
+    tipo_receita = Column(String)  # organização, comissão, venda
+    origem_id = Column(Integer)  # ID do cliente ou fornecedor
+    origem_tipo = Column(String)  # cliente ou fornecedor
     tipo_conta = Column(String, default='PF')  # PF ou PJ
 
 class Produto(Base):
@@ -166,17 +168,22 @@ class Database:
             'valor': t.valor,
             'data': t.data,
             'categoria': t.categoria,
-            'referencia_id': t.referencia_id,
+            'tipo_receita': t.tipo_receita,
+            'origem_id': t.origem_id,
+            'origem_tipo': t.origem_tipo,
             'tipo_conta': t.tipo_conta
         } for t in transacoes])
 
-    def add_transacao(self, tipo, descricao, valor, categoria, referencia_id=None, tipo_conta='PF'):
+    def add_transacao(self, tipo, descricao, valor, categoria, tipo_receita=None, 
+                     origem_id=None, origem_tipo=None, tipo_conta='PF'):
         transacao = Transacao(
             tipo=tipo,
             descricao=descricao,
             valor=valor,
             categoria=categoria,
-            referencia_id=referencia_id,
+            tipo_receita=tipo_receita,
+            origem_id=origem_id,
+            origem_tipo=origem_tipo,
             tipo_conta=tipo_conta
         )
         self.session.add(transacao)
