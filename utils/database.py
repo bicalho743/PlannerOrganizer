@@ -39,6 +39,11 @@ class Proposta(Base):
     descricao = Column(String)
     valor = Column(Float)
     status = Column(String)
+    tipo_proposta = Column(String, default='Serviço Regular')
+    loja_consignada = Column(String)
+    prazo_consignacao = Column(Integer)
+    marceneiro = Column(String)
+    prazo_entrega = Column(Date)
     data_proposta = Column(Date, default=datetime.now().date())
 
     cliente = relationship("Cliente", back_populates="propostas")
