@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, Sequence, func
+from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, Sequence, func, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 import pandas as pd

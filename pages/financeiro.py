@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from datetime import datetime
 
 def show():
     st.title("💰 Gestão Financeira")
@@ -14,13 +15,15 @@ def show():
     with tab1:
         st.subheader("Nova Transação")
 
-        with st.form("registro_transacao"):
+        with st.form("registro_transacao", clear_on_submit=True):
             tipo = st.selectbox(
                 "Tipo",
                 ["receita", "despesa"]
             )
 
-            # Campos específicos para receita
+            descricao = st.text_input("Descrição")
+            valor = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
+
             if tipo == "receita":
                 tipo_receita = st.selectbox(
                     "Tipo de Receita",
@@ -32,22 +35,28 @@ def show():
                     ["cliente", "fornecedor"]
                 )
 
-                # Carregar lista de clientes ou fornecedores
+                # Carregar origens
                 if origem_tipo == "cliente":
                     origens = st.session_state.db.get_clientes()
-                    origem_lista = origens['nome'].tolist() if not origens.empty else []
-                else:
-                    # Assumindo que temos uma lista de fornecedores
-                    origem_lista = ["Fornecedor 1", "Fornecedor 2"]  # TODO: Implementar lista de fornecedores
+                    if not origens.empty:
+                        origem = st.selectbox("Selecione o Cliente", origens['nome'].tolist())
+                        origem_id = origens[origens['nome'] == origem]['id'].iloc[0]
+                    else:
+                        st.warning("Nenhum cliente cadastrado")
+                        origem_id = None
+                else:  # fornecedor
+                    fornecedores = st.session_state.db.get_fornecedores()
+                    if not fornecedores.empty:
+                        origem = st.selectbox("Selecione o Fornecedor", fornecedores['nome'].tolist())
+                        origem_id = fornecedores[fornecedores['nome'] == origem]['id'].iloc[0]
+                    else:
+                        st.warning("Nenhum fornecedor cadastrado")
+                        origem_id = None
+            else:
+                tipo_receita = None
+                origem_tipo = None
+                origem_id = None
 
-                origem = st.selectbox("Selecione a Origem", origem_lista)
-                if origem_tipo == "cliente":
-                    origem_id = origens[origens['nome'] == origem]['id'].iloc[0] if origem else None
-                else:
-                    origem_id = None  # TODO: Implementar ID de fornecedores
-
-            descricao = st.text_input("Descrição")
-            valor = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
             categoria = st.selectbox(
                 "Categoria",
                 ["Serviço", "Produto", "Fornecedor", "Outros"]
@@ -63,11 +72,12 @@ def show():
                             descricao=descricao,
                             valor=valor,
                             categoria=categoria,
-                            tipo_receita=tipo_receita if tipo == "receita" else None,
-                            origem_id=origem_id if tipo == "receita" else None,
-                            origem_tipo=origem_tipo if tipo == "receita" else None
+                            tipo_receita=tipo_receita,
+                            origem_id=origem_id,
+                            origem_tipo=origem_tipo
                         )
                         st.success("Transação registrada com sucesso!")
+                        st.rerun()
                     except Exception as e:
                         st.error(f"Erro ao registrar transação: {str(e)}")
                 else:
@@ -91,24 +101,9 @@ def show():
         with col3:
             data_filtro = st.date_input("Data")
 
-        # Carregar dados
-        @st.cache_data(ttl=300)
-        def load_data():
-            return st.session_state.db.get_financeiro(), st.session_state.db.get_clientes()
+        # Carregar e filtrar dados
+        financeiro = st.session_state.db.get_financeiro()
 
-        financeiro, clientes = load_data()
-
-        # Mesclar com informações do cliente
-        if not financeiro.empty and not clientes.empty:
-            financeiro = financeiro.merge(
-                clientes[['id', 'nome']],
-                left_on='origem_id',
-                right_on='id',
-                how='left',
-                suffixes=('', '_cliente')
-            )
-
-        # Aplicar filtros
         if tipo_filtro:
             financeiro = financeiro[financeiro['tipo'].isin(tipo_filtro)]
         if categoria_filtro:
@@ -116,16 +111,15 @@ def show():
 
         # Exibir extrato
         if not financeiro.empty:
-            # Preparar dados para exibição
-            exibir_colunas = ['data', 'tipo', 'descricao', 'valor', 'categoria']
-            if 'tipo_receita' in financeiro.columns:
-                exibir_colunas.append('tipo_receita')
-            if 'nome' in financeiro.columns:
-                exibir_colunas.append('nome')
+            st.dataframe(
+                financeiro[[
+                    'data', 'tipo', 'descricao', 'valor', 'categoria',
+                    'tipo_receita'
+                ]].sort_values('data', ascending=False),
+                use_container_width=True
+            )
 
-            st.dataframe(financeiro[exibir_colunas], use_container_width=True)
-
-            # Resumo
+            # Resumo financeiro
             receitas = financeiro[financeiro['tipo'] == 'receita']['valor'].sum()
             despesas = financeiro[financeiro['tipo'] == 'despesa']['valor'].sum()
             saldo = receitas - despesas
@@ -140,23 +134,22 @@ def show():
     with tab3:
         st.subheader("Dashboard Financeiro")
 
-        financeiro = st.session_state.db.get_financeiro()
-
         if not financeiro.empty:
-            # Gráfico de barras por categoria
+            # Gráfico de Receitas vs Despesas por Categoria
             fig1 = px.bar(
                 financeiro,
                 x='categoria',
                 y='valor',
                 color='tipo',
-                title='Transações por Categoria'
+                title='Transações por Categoria',
+                labels={'valor': 'Valor (R$)', 'categoria': 'Categoria'}
             )
             st.plotly_chart(fig1, use_container_width=True)
 
-            # Gráfico de linha temporal
+            # Evolução Temporal
             financeiro['data'] = pd.to_datetime(financeiro['data'])
             dados_temporais = financeiro.groupby(
-                ['data', 'tipo']
+                [pd.Grouper(key='data', freq='M'), 'tipo']
             )['valor'].sum().reset_index()
 
             fig2 = px.line(
@@ -164,20 +157,20 @@ def show():
                 x='data',
                 y='valor',
                 color='tipo',
-                title='Evolução Temporal'
+                title='Evolução Temporal',
+                labels={'valor': 'Valor (R$)', 'data': 'Data'}
             )
             st.plotly_chart(fig2, use_container_width=True)
 
-            # Novo gráfico para tipos de receita
-            if 'tipo_receita' in financeiro.columns:
-                receitas = financeiro[financeiro['tipo'] == 'receita']
-                if not receitas.empty:
-                    fig3 = px.pie(
-                        receitas,
-                        values='valor',
-                        names='tipo_receita',
-                        title='Distribuição por Tipo de Receita'
-                    )
-                    st.plotly_chart(fig3, use_container_width=True)
+            # Distribuição por Tipo de Receita
+            receitas = financeiro[financeiro['tipo'] == 'receita']
+            if not receitas.empty and 'tipo_receita' in receitas.columns:
+                fig3 = px.pie(
+                    receitas,
+                    values='valor',
+                    names='tipo_receita',
+                    title='Distribuição por Tipo de Receita'
+                )
+                st.plotly_chart(fig3, use_container_width=True)
         else:
             st.info("Não há dados suficientes para gerar o dashboard.")
