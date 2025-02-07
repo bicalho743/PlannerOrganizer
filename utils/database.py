@@ -669,13 +669,16 @@ class Database:
 
     def get_acrescimos_proposta(self, proposta_id):
         def query():
+            # Converter proposta_id para int nativo do Python
+            proposta_id = int(proposta_id) if proposta_id is not None else None
+
             acrescimos = self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).all()
             return pd.DataFrame([{
-                'id': a.id,
+                'id': int(a.id),  # Garantir que todos os IDs sejam int nativos
                 'tipo': a.tipo,
                 'fornecedor': a.fornecedor,
                 'descricao': a.descricao,
-                'valor': a.valor,
+                'valor': float(a.valor) if a.valor is not None else None,  # Converter para float nativo
                 'status_pagamento': a.status_pagamento,
                 'data_cadastro': a.data_cadastro
             } for a in acrescimos])
