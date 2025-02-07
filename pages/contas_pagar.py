@@ -115,6 +115,7 @@ def show():
             col1, col2, col3 = st.columns(3)
             col1.metric("Total Pendente", f"R$ {total_pendente:.2f}")
             col2.metric("Total Pago", f"R$ {total_pago:.2f}")
+            col3.metric("Total Atrasado", f"R$ {total_atrasado:.2f}")l_pago:.2f}")
             col3.metric("Total Atrasado", f"R$ {total_atrasado:.2f}")
         else:
             st.info("Nenhuma conta cadastrada.")
