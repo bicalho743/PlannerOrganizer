@@ -63,11 +63,12 @@ def show():
                     clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro'], errors='coerce')
                     clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'], errors='coerce')
 
-                    # Formatar datas com tratamento para valores nulos
+                    # Formatar data de cadastro
                     clientes['data_cadastro'] = clientes['data_cadastro'].apply(
                         lambda x: x.strftime('%d/%m/%Y') if pd.notnull(x) else ''
                     )
-                    # Apenas dia e mês para aniversário
+
+                    # Formatar data de aniversário (apenas dia e mês)
                     clientes['data_aniversario'] = clientes['data_aniversario'].apply(
                         lambda x: x.strftime('%d/%m') if pd.notnull(x) else ''
                     )
@@ -125,13 +126,14 @@ def show():
                 else:
                     # Mostrar preview dos dados
                     st.write("Preview dos dados:")
+
+                    # Tratar datas com valores nulos e formatar apenas dia/mês
                     if 'data_aniversario' in df.columns:
-                        # Tratar datas com valores nulos
                         df['data_aniversario'] = pd.to_datetime(df['data_aniversario'], errors='coerce')
-                        # Formatar apenas dia e mês
                         df['data_aniversario'] = df['data_aniversario'].apply(
-                            lambda x: x.strftime('%d/%m') if pd.notnull(x) else ''
+                            lambda x: f"{x.day:02d}/{x.month:02d}" if pd.notnull(x) else ''
                         )
+
                     st.dataframe(df.head())
 
                     if st.button("Confirmar Importação"):
@@ -146,10 +148,14 @@ def show():
                         # Processar cada linha
                         for index, row in df.iterrows():
                             try:
-                                # Converter data se existir
+                                # Converter data se existir, mantendo apenas dia e mês
                                 data_aniv = None
-                                if 'data_aniversario' in row and pd.notnull(row['data_aniversario']):
-                                    data_aniv = pd.to_datetime(row['data_aniversario']).date()
+                                if 'data_aniversario' in row and row['data_aniversario']:
+                                    try:
+                                        dia, mes = row['data_aniversario'].split('/')
+                                        data_aniv = datetime.now().replace(day=int(dia), month=int(mes)).date()
+                                    except:
+                                        data_aniv = None
 
                                 # Adicionar cliente
                                 st.session_state.db.add_cliente(
