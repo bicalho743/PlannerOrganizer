@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, func, Index
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 import pandas as pd
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -13,6 +13,10 @@ if DATABASE_URL is None:
 
 engine = create_engine(DATABASE_URL)
 Base = declarative_base()
+
+# Create scoped session
+session_factory = sessionmaker(bind=engine)
+Session = scoped_session(session_factory)
 
 class Usuario(Base):
     __tablename__ = 'usuarios'
@@ -150,65 +154,83 @@ class Database:
     def __init__(self):
         try:
             Base.metadata.create_all(engine)
-            Session = sessionmaker(bind=engine)
             self.session = Session()
         except Exception as e:
             print(f"Erro ao inicializar banco de dados: {str(e)}")
+            if hasattr(self, 'session'):
+                self.session.rollback()
+                self.session.close()
+            raise e
+
+    def _safe_query(self, query_func):
+        """Wrapper para executar queries com tratamento de erro"""
+        try:
+            result = query_func()
+            self.session.commit()
+            return result
+        except Exception as e:
+            self.session.rollback()
             raise e
 
     def get_clientes(self):
-        clientes = self.session.query(Cliente).all()
-        return pd.DataFrame([{
-            'id': c.id,
-            'nome': c.nome,
-            'email': c.email,
-            'telefone': c.telefone,
-            'endereco': c.endereco,
-            'cpf': c.cpf,
-            'data_aniversario': c.data_aniversario,
-            'origem_cliente': c.origem_cliente,
-            'data_cadastro': c.data_cadastro,
-            'tipo_conta': c.tipo_conta,
-            'cnpj': c.cnpj,
-            'razao_social': c.razao_social
-        } for c in clientes])
+        def query():
+            clientes = self.session.query(Cliente).all()
+            return pd.DataFrame([{
+                'id': c.id,
+                'nome': c.nome,
+                'email': c.email,
+                'telefone': c.telefone,
+                'endereco': c.endereco,
+                'cpf': c.cpf,
+                'data_aniversario': c.data_aniversario,
+                'origem_cliente': c.origem_cliente,
+                'data_cadastro': c.data_cadastro,
+                'tipo_conta': c.tipo_conta,
+                'cnpj': c.cnpj,
+                'razao_social': c.razao_social
+            } for c in clientes])
+        return self._safe_query(query)
 
     def add_cliente(self, nome, email, telefone, endereco, cpf=None, data_aniversario=None, 
                     origem_cliente=None, tipo_conta='PF', cnpj=None, razao_social=None):
-        cliente = Cliente(
-            nome=nome,
-            email=email,
-            telefone=telefone,
-            endereco=endereco,
-            cpf=cpf,
-            data_aniversario=data_aniversario,
-            origem_cliente=origem_cliente,
-            tipo_conta=tipo_conta,
-            cnpj=cnpj,
-            razao_social=razao_social
-        )
-        self.session.add(cliente)
-        self.session.commit()
-        return cliente.id
+        def query():
+            cliente = Cliente(
+                nome=nome,
+                email=email,
+                telefone=telefone,
+                endereco=endereco,
+                cpf=cpf,
+                data_aniversario=data_aniversario,
+                origem_cliente=origem_cliente,
+                tipo_conta=tipo_conta,
+                cnpj=cnpj,
+                razao_social=razao_social
+            )
+            self.session.add(cliente)
+            return cliente.id
+        return self._safe_query(query)
 
     def get_propostas(self):
-        propostas = self.session.query(Proposta).all()
-        return pd.DataFrame([{
-            'id': p.id,
-            'numero': p.numero,
-            'cliente_id': p.cliente_id,
-            'descricao': p.descricao,
-            'valor': p.valor,
-            'status': p.status,
-            'data_proposta': p.data_proposta,
-            'tipo_proposta': p.tipo_proposta,
-            'data_inicio': p.data_inicio,
-            'data_fim': p.data_fim,
-            'prazo_entrega': p.prazo_entrega
-        } for p in propostas])
+        def query():
+            propostas = self.session.query(Proposta).all()
+            return pd.DataFrame([{
+                'id': p.id,
+                'numero': p.numero,
+                'cliente_id': p.cliente_id,
+                'descricao': p.descricao,
+                'valor': p.valor,
+                'status': p.status,
+                'tipo_proposta': p.tipo_proposta,
+                'data_inicio': p.data_inicio,
+                'data_fim': p.data_fim,
+                'prazo_entrega': p.prazo_entrega,
+                'data_proposta': p.data_proposta
+            } for p in propostas])
+        return self._safe_query(query)
 
-    def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, data_inicio=None, data_fim=None, prazo_entrega=None):
-        try:
+    def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, 
+                    data_inicio=None, data_fim=None, prazo_entrega=None):
+        def query():
             # Gerar próximo número de proposta
             ultimo_numero = self.session.query(func.max(Proposta.numero)).scalar()
             proximo_numero = 1 if ultimo_numero is None else ultimo_numero + 1
@@ -225,149 +247,161 @@ class Database:
                 prazo_entrega=prazo_entrega
             )
             self.session.add(proposta)
-            self.session.commit()
             return proposta.id
-        except Exception as e:
-            self.session.rollback()
-            raise Exception(f"Erro ao adicionar proposta: {str(e)}")
+        return self._safe_query(query)
 
     def get_financeiro(self):
-        transacoes = self.session.query(Transacao).order_by(Transacao.data.desc()).limit(1000).all()
-        return pd.DataFrame([{
-            'id': t.id,
-            'tipo': t.tipo,
-            'descricao': t.descricao,
-            'valor': t.valor,
-            'data': t.data,
-            'categoria': t.categoria,
-            'tipo_receita': t.tipo_receita,
-            'origem_id': t.origem_id,
-            'origem_tipo': t.origem_tipo,
-            'tipo_conta': t.tipo_conta
-        } for t in transacoes])
+        def query():
+            transacoes = self.session.query(Transacao).order_by(Transacao.data.desc()).limit(1000).all()
+            return pd.DataFrame([{
+                'id': t.id,
+                'tipo': t.tipo,
+                'descricao': t.descricao,
+                'valor': t.valor,
+                'data': t.data,
+                'categoria': t.categoria,
+                'tipo_receita': t.tipo_receita,
+                'origem_id': t.origem_id,
+                'origem_tipo': t.origem_tipo,
+                'tipo_conta': t.tipo_conta
+            } for t in transacoes])
+        return self._safe_query(query)
 
     def add_transacao(self, tipo, descricao, valor, categoria, tipo_receita=None, 
                      origem_id=None, origem_tipo=None, tipo_conta='PF'):
-        transacao = Transacao(
-            tipo=tipo,
-            descricao=descricao,
-            valor=valor,
-            categoria=categoria,
-            tipo_receita=tipo_receita,
-            origem_id=origem_id,
-            origem_tipo=origem_tipo,
-            tipo_conta=tipo_conta
-        )
-        self.session.add(transacao)
-        self.session.commit()
-        return transacao.id
+        def query():
+            transacao = Transacao(
+                tipo=tipo,
+                descricao=descricao,
+                valor=valor,
+                categoria=categoria,
+                tipo_receita=tipo_receita,
+                origem_id=origem_id,
+                origem_tipo=origem_tipo,
+                tipo_conta=tipo_conta
+            )
+            self.session.add(transacao)
+            return transacao.id
+        return self._safe_query(query)
 
     def add_fornecedor(self, nome, descricao, valor, data_vencimento, categoria, tipo_conta, pix=None, contato=None, recorrente=False, observacoes=None):
-        fornecedor = Fornecedor(
-            nome=nome,
-            descricao=descricao,
-            valor=valor,
-            data_vencimento=data_vencimento,
-            categoria=categoria,
-            tipo_conta=tipo_conta,
-            pix=pix,
-            contato=contato,
-            recorrente=recorrente,
-            observacoes=observacoes
-        )
-        self.session.add(fornecedor)
-        self.session.commit()
-        return fornecedor.id
+        def query():
+            fornecedor = Fornecedor(
+                nome=nome,
+                descricao=descricao,
+                valor=valor,
+                data_vencimento=data_vencimento,
+                categoria=categoria,
+                tipo_conta=tipo_conta,
+                pix=pix,
+                contato=contato,
+                recorrente=recorrente,
+                observacoes=observacoes
+            )
+            self.session.add(fornecedor)
+            return fornecedor.id
+        return self._safe_query(query)
 
     def get_fornecedores(self):
-        fornecedores = self.session.query(Fornecedor).all()
-        return pd.DataFrame([{
-            'id': f.id,
-            'nome': f.nome,
-            'descricao': f.descricao,
-            'valor': f.valor,
-            'data_vencimento': f.data_vencimento,
-            'data_pagamento': f.data_pagamento,
-            'status': f.status,
-            'categoria': f.categoria,
-            'pix': f.pix,
-            'contato': f.contato,
-            'tipo_conta': f.tipo_conta,
-            'recorrente': f.recorrente,
-            'observacoes': f.observacoes
-        } for f in fornecedores])
+        def query():
+            fornecedores = self.session.query(Fornecedor).all()
+            return pd.DataFrame([{
+                'id': f.id,
+                'nome': f.nome,
+                'descricao': f.descricao,
+                'valor': f.valor,
+                'data_vencimento': f.data_vencimento,
+                'data_pagamento': f.data_pagamento,
+                'status': f.status,
+                'categoria': f.categoria,
+                'pix': f.pix,
+                'contato': f.contato,
+                'tipo_conta': f.tipo_conta,
+                'recorrente': f.recorrente,
+                'observacoes': f.observacoes
+            } for f in fornecedores])
+        return self._safe_query(query)
 
     def add_categoria_despesa(self, nome, descricao, tipo_conta):
-        categoria = CategoriaDespesa(
-            nome=nome,
-            descricao=descricao,
-            tipo_conta=tipo_conta
-        )
-        self.session.add(categoria)
-        self.session.commit()
-        return categoria.id
+        def query():
+            categoria = CategoriaDespesa(
+                nome=nome,
+                descricao=descricao,
+                tipo_conta=tipo_conta
+            )
+            self.session.add(categoria)
+            return categoria.id
+        return self._safe_query(query)
 
     def get_categorias_despesa(self):
-        categorias = self.session.query(CategoriaDespesa).all()
-        return pd.DataFrame([{
-            'id': c.id,
-            'nome': c.nome,
-            'descricao': c.descricao,
-            'tipo_conta': c.tipo_conta
-        } for c in categorias])
+        def query():
+            categorias = self.session.query(CategoriaDespesa).all()
+            return pd.DataFrame([{
+                'id': c.id,
+                'nome': c.nome,
+                'descricao': c.descricao,
+                'tipo_conta': c.tipo_conta
+            } for c in categorias])
+        return self._safe_query(query)
 
     def add_andamento_proposta(self, proposta_id, status, observacao, comodo=None):
-        andamento = AndamentoProposta(
-            proposta_id=proposta_id,
-            status=status,
-            observacao=observacao,
-            comodo=comodo
-        )
-        self.session.add(andamento)
-        self.session.commit()
-        return andamento.id
+        def query():
+            andamento = AndamentoProposta(
+                proposta_id=proposta_id,
+                status=status,
+                observacao=observacao,
+                comodo=comodo
+            )
+            self.session.add(andamento)
+            return andamento.id
+        return self._safe_query(query)
 
     def get_andamentos_proposta(self, proposta_id):
-        andamentos = self.session.query(AndamentoProposta).filter_by(proposta_id=proposta_id).all()
-        return pd.DataFrame([{
-            'id': a.id,
-            'data': a.data,
-            'status': a.status,
-            'observacao': a.observacao,
-            'comodo': a.comodo
-        } for a in andamentos])
+        def query():
+            andamentos = self.session.query(AndamentoProposta).filter_by(proposta_id=proposta_id).all()
+            return pd.DataFrame([{
+                'id': a.id,
+                'data': a.data,
+                'status': a.status,
+                'observacao': a.observacao,
+                'comodo': a.comodo
+            } for a in andamentos])
+        return self._safe_query(query)
 
     def add_produto_organizador(self, proposta_id, nome, descricao, valor, quantidade, comodo):
-        produto = ProdutoOrganizador(
-            proposta_id=proposta_id,
-            nome=nome,
-            descricao=descricao,
-            valor=valor,
-            quantidade=quantidade,
-            comodo=comodo
-        )
-        self.session.add(produto)
-        self.session.commit()
-        return produto.id
+        def query():
+            produto = ProdutoOrganizador(
+                proposta_id=proposta_id,
+                nome=nome,
+                descricao=descricao,
+                valor=valor,
+                quantidade=quantidade,
+                comodo=comodo
+            )
+            self.session.add(produto)
+            return produto.id
+        return self._safe_query(query)
 
     def get_produtos_organizadores(self, proposta_id=None):
-        query = self.session.query(ProdutoOrganizador)
-        if proposta_id:
-            query = query.filter_by(proposta_id=proposta_id)
-        produtos = query.all()
-        return pd.DataFrame([{
-            'id': p.id,
-            'nome': p.nome,
-            'descricao': p.descricao,
-            'valor': p.valor,
-            'quantidade': p.quantidade,
-            'comodo': p.comodo,
-            'data_cadastro': p.data_cadastro
-        } for p in produtos])
+        def query():
+            query = self.session.query(ProdutoOrganizador)
+            if proposta_id:
+                query = query.filter_by(proposta_id=proposta_id)
+            produtos = query.all()
+            return pd.DataFrame([{
+                'id': p.id,
+                'nome': p.nome,
+                'descricao': p.descricao,
+                'valor': p.valor,
+                'quantidade': p.quantidade,
+                'comodo': p.comodo,
+                'data_cadastro': p.data_cadastro
+            } for p in produtos])
+        return self._safe_query(query)
 
     def add_produto_fornecedor(self, produto_id, fornecedor_id, valor, observacoes=None):
         """Adiciona um fornecedor e seu preço para um produto"""
-        try:
+        def query():
             existente = self.session.query(ProdutoFornecedor).filter_by(
                 produto_id=produto_id,
                 fornecedor_id=fornecedor_id
@@ -386,16 +420,14 @@ class Database:
                 )
                 self.session.add(fornecedor)
 
-            self.session.commit()
             self._atualizar_valor_produto(produto_id)
             return True
-        except Exception as e:
-            self.session.rollback()
-            raise e
+        return self._safe_query(query)
+
 
     def _atualizar_valor_produto(self, produto_id):
         """Atualiza o valor do produto com o menor valor entre os fornecedores"""
-        try:
+        def query():
             menor_valor = self.session.query(func.min(ProdutoFornecedor.valor))\
                 .filter_by(produto_id=produto_id)\
                 .scalar()
@@ -406,27 +438,30 @@ class Database:
                     .first()
                 if produto:
                     produto.valor = menor_valor
-                    self.session.commit()
-        except Exception as e:
-            self.session.rollback()
-            raise e
+                    return True
+            return False
+        return self._safe_query(query)
+
 
     def get_produto_fornecedores(self, produto_id):
         """Retorna todos os fornecedores e preços de um produto"""
-        fornecedores = self.session.query(ProdutoFornecedor).filter_by(produto_id=produto_id).all()
-        return pd.DataFrame([{
-            'id': f.id,
-            'produto_id': f.produto_id,
-            'fornecedor_id': f.fornecedor_id,
-            'fornecedor_nome': f.fornecedor.nome if f.fornecedor else None,
-            'valor': f.valor,
-            'data_cotacao': f.data_cotacao,
-            'observacoes': f.observacoes
-        } for f in fornecedores])
+        def query():
+            fornecedores = self.session.query(ProdutoFornecedor).filter_by(produto_id=produto_id).all()
+            return pd.DataFrame([{
+                'id': f.id,
+                'produto_id': f.produto_id,
+                'fornecedor_id': f.fornecedor_id,
+                'fornecedor_nome': f.fornecedor.nome if f.fornecedor else None,
+                'valor': f.valor,
+                'data_cotacao': f.data_cotacao,
+                'observacoes': f.observacoes
+            } for f in fornecedores])
+        return self._safe_query(query)
+
 
     def registrar_usuario(self, email, senha, nome, empresa=None, tipo='usuario'):
         """Registra um novo usuário no sistema"""
-        try:
+        def query():
             if self.session.query(Usuario).filter_by(email=email).first():
                 return False, "Email já cadastrado"
 
@@ -439,63 +474,56 @@ class Database:
             usuario.set_senha(senha)
 
             self.session.add(usuario)
-            self.session.commit()
             return True, "Usuário cadastrado com sucesso"
-        except Exception as e:
-            self.session.rollback()
-            return False, str(e)
+        return self._safe_query(query)
+
 
     def autenticar_usuario(self, email, senha):
         """Autentica um usuário"""
-        try:
+        def query():
             usuario = self.session.query(Usuario).filter_by(email=email).first()
             if usuario and usuario.check_senha(senha) and usuario.ativo:
                 return True, usuario
             return False, None
-        except Exception as e:
-            return False, str(e)
+        return self._safe_query(query)
 
     def get_usuarios(self):
         """Retorna lista de usuários cadastrados"""
-        usuarios = self.session.query(Usuario).all()
-        return pd.DataFrame([{
-            'id': u.id,
-            'email': u.email,
-            'nome': u.nome,
-            'empresa': u.empresa,
-            'tipo': u.tipo,
-            'ativo': u.ativo,
-            'data_cadastro': u.data_cadastro
-        } for u in usuarios])
+        def query():
+            usuarios = self.session.query(Usuario).all()
+            return pd.DataFrame([{
+                'id': u.id,
+                'email': u.email,
+                'nome': u.nome,
+                'empresa': u.empresa,
+                'tipo': u.tipo,
+                'ativo': u.ativo,
+                'data_cadastro': u.data_cadastro
+            } for u in usuarios])
+        return self._safe_query(query)
 
     def atualizar_status_usuario(self, usuario_id, ativo):
         """Atualiza o status de ativo/inativo de um usuário"""
-        try:
+        def query():
             usuario = self.session.query(Usuario).filter_by(id=usuario_id).first()
             if usuario:
                 usuario.ativo = ativo
-                self.session.commit()
                 return True
             return False
-        except Exception as e:
-            self.session.rollback()
-            return False
+        return self._safe_query(query)
 
     def atualizar_tipo_usuario(self, usuario_id, tipo):
         """Atualiza o tipo de um usuário (admin/usuario)"""
-        try:
+        def query():
             usuario = self.session.query(Usuario).filter_by(id=usuario_id).first()
             if usuario:
                 usuario.tipo = tipo
-                self.session.commit()
                 return True
             return False
-        except Exception as e:
-            self.session.rollback()
-            return False
+        return self._safe_query(query)
 
     def add_test_data(self):
-        try:
+        def query():
             client1_id = self.add_cliente(
                 nome="Maria Silva",
                 email="maria@email.com",
@@ -550,6 +578,8 @@ class Database:
             self.add_produto_fornecedor(produto1_id, fornecedor1_id, 50.00)
 
             return True
+        try:
+            return self._safe_query(query)
         except Exception as e:
             print(f"Erro ao adicionar dados de teste: {str(e)}")
             return False
@@ -557,3 +587,4 @@ class Database:
     def __del__(self):
         if hasattr(self, 'session'):
             self.session.close()
+            Session.remove()
