@@ -24,38 +24,47 @@ pagina = st.sidebar.radio(
 # Dashboard principal
 if pagina == "Dashboard":
     col1, col2 = st.columns(2)
-    
+
     with col1:
         st.subheader("📊 Resumo")
-        
+
         # Estatísticas básicas
         clientes = st.session_state.db.get_clientes()
         propostas = st.session_state.db.get_propostas()
         financeiro = st.session_state.db.get_financeiro()
-        
-        st.metric("Total de Clientes", len(clientes))
-        st.metric("Propostas Ativas", 
-                 len(propostas[propostas['status'] == 'Aberta']))
-        
+
+        st.metric("Total de Clientes", len(clientes) if not clientes.empty else 0)
+        propostas_ativas = len(propostas[propostas['status'] == 'Aberta']) if not propostas.empty else 0
+        st.metric("Propostas Ativas", propostas_ativas)
+
         # Resumo financeiro
-        receitas = financeiro[financeiro['tipo'] == 'receita']['valor'].sum()
-        despesas = financeiro[financeiro['tipo'] == 'despesa']['valor'].sum()
-        saldo = receitas - despesas
-        
+        if not financeiro.empty:
+            receitas = financeiro[financeiro['tipo'] == 'receita']['valor'].sum()
+            despesas = financeiro[financeiro['tipo'] == 'despesa']['valor'].sum()
+            saldo = receitas - despesas
+        else:
+            saldo = 0.0
+
         st.metric("Saldo Total", f"R$ {saldo:.2f}")
-    
+
     with col2:
         st.subheader("📅 Atividades Recentes")
-        
+
         # Últimas propostas
         st.write("Últimas Propostas:")
-        ultimas_propostas = propostas.sort_values('data_proposta', ascending=False).head(5)
-        st.dataframe(ultimas_propostas[['descricao', 'valor', 'status', 'data_proposta']])
-        
+        if not propostas.empty:
+            ultimas_propostas = propostas.sort_values('data_proposta', ascending=False).head(5)
+            st.dataframe(ultimas_propostas[['descricao', 'valor', 'status', 'data_proposta']])
+        else:
+            st.info("Nenhuma proposta cadastrada.")
+
         # Últimas transações
         st.write("Últimas Transações:")
-        ultimas_transacoes = financeiro.sort_values('data', ascending=False).head(5)
-        st.dataframe(ultimas_transacoes[['descricao', 'valor', 'tipo', 'data']])
+        if not financeiro.empty:
+            ultimas_transacoes = financeiro.sort_values('data', ascending=False).head(5)
+            st.dataframe(ultimas_transacoes[['descricao', 'valor', 'tipo', 'data']])
+        else:
+            st.info("Nenhuma transação registrada.")
 
 elif pagina == "Clientes":
     import pages.clientes

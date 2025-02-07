@@ -1,111 +1,157 @@
-import pandas as pd
-from datetime import datetime
 import os
+from datetime import datetime
+from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
+import pandas as pd
+
+# Get database URL from environment variable
+DATABASE_URL = os.getenv('DATABASE_URL')
+engine = create_engine(DATABASE_URL)
+Base = declarative_base()
+Session = sessionmaker(bind=engine)
+
+class Cliente(Base):
+    __tablename__ = 'clientes'
+
+    id = Column(Integer, primary_key=True)
+    nome = Column(String, nullable=False)
+    email = Column(String)
+    telefone = Column(String)
+    endereco = Column(String)
+    data_cadastro = Column(Date, default=datetime.now().date())
+
+    propostas = relationship("Proposta", back_populates="cliente")
+
+class Proposta(Base):
+    __tablename__ = 'propostas'
+
+    id = Column(Integer, primary_key=True)
+    cliente_id = Column(Integer, ForeignKey('clientes.id'))
+    descricao = Column(String)
+    valor = Column(Float)
+    status = Column(String)
+    data_proposta = Column(Date, default=datetime.now().date())
+
+    cliente = relationship("Cliente", back_populates="propostas")
+
+class Transacao(Base):
+    __tablename__ = 'financeiro'
+
+    id = Column(Integer, primary_key=True)
+    tipo = Column(String)  # receita/despesa
+    descricao = Column(String)
+    valor = Column(Float)
+    data = Column(Date, default=datetime.now().date())
+    categoria = Column(String)
+    referencia_id = Column(Integer)
+
+class Produto(Base):
+    __tablename__ = 'produtos'
+
+    id = Column(Integer, primary_key=True)
+    nome = Column(String)
+    descricao = Column(String)
+    valor = Column(Float)
+    quantidade = Column(Integer)
+    data_cadastro = Column(Date, default=datetime.now().date())
+
+# Create tables
+Base.metadata.create_all(engine)
 
 class Database:
     def __init__(self):
-        self.clientes_file = 'clientes.csv'
-        self.propostas_file = 'propostas.csv'
-        self.financeiro_file = 'financeiro.csv'
-        self.produtos_file = 'produtos.csv'
-        
-        # Criar arquivos se não existirem
-        self._create_if_not_exists()
-    
-    def _create_if_not_exists(self):
-        if not os.path.exists(self.clientes_file):
-            pd.DataFrame(columns=[
-                'id', 'nome', 'email', 'telefone', 'endereco', 
-                'data_cadastro'
-            ]).to_csv(self.clientes_file, index=False)
-            
-        if not os.path.exists(self.propostas_file):
-            pd.DataFrame(columns=[
-                'id', 'cliente_id', 'descricao', 'valor', 
-                'status', 'data_proposta'
-            ]).to_csv(self.propostas_file, index=False)
-            
-        if not os.path.exists(self.financeiro_file):
-            pd.DataFrame(columns=[
-                'id', 'tipo', 'descricao', 'valor', 'data',
-                'categoria', 'referencia_id'
-            ]).to_csv(self.financeiro_file, index=False)
-            
-        if not os.path.exists(self.produtos_file):
-            pd.DataFrame(columns=[
-                'id', 'nome', 'descricao', 'valor', 'quantidade',
-                'data_cadastro'
-            ]).to_csv(self.produtos_file, index=False)
+        self.session = Session()
 
     def get_clientes(self):
-        return pd.read_csv(self.clientes_file)
-    
+        clientes = self.session.query(Cliente).all()
+        return pd.DataFrame([{
+            'id': c.id,
+            'nome': c.nome,
+            'email': c.email,
+            'telefone': c.telefone,
+            'endereco': c.endereco,
+            'data_cadastro': c.data_cadastro
+        } for c in clientes])
+
     def add_cliente(self, nome, email, telefone, endereco):
-        df = self.get_clientes()
-        novo_id = len(df) + 1
-        novo_cliente = pd.DataFrame([{
-            'id': novo_id,
-            'nome': nome,
-            'email': email,
-            'telefone': telefone,
-            'endereco': endereco,
-            'data_cadastro': datetime.now().strftime('%Y-%m-%d')
-        }])
-        df = pd.concat([df, novo_cliente], ignore_index=True)
-        df.to_csv(self.clientes_file, index=False)
-        return novo_id
+        cliente = Cliente(
+            nome=nome,
+            email=email,
+            telefone=telefone,
+            endereco=endereco
+        )
+        self.session.add(cliente)
+        self.session.commit()
+        return cliente.id
 
     def get_propostas(self):
-        return pd.read_csv(self.propostas_file)
-    
+        propostas = self.session.query(Proposta).all()
+        return pd.DataFrame([{
+            'id': p.id,
+            'cliente_id': p.cliente_id,
+            'descricao': p.descricao,
+            'valor': p.valor,
+            'status': p.status,
+            'data_proposta': p.data_proposta
+        } for p in propostas])
+
     def add_proposta(self, cliente_id, descricao, valor, status):
-        df = self.get_propostas()
-        novo_id = len(df) + 1
-        nova_proposta = pd.DataFrame([{
-            'id': novo_id,
-            'cliente_id': cliente_id,
-            'descricao': descricao,
-            'valor': valor,
-            'status': status,
-            'data_proposta': datetime.now().strftime('%Y-%m-%d')
-        }])
-        df = pd.concat([df, nova_proposta], ignore_index=True)
-        df.to_csv(self.propostas_file, index=False)
-        return novo_id
+        proposta = Proposta(
+            cliente_id=cliente_id,
+            descricao=descricao,
+            valor=valor,
+            status=status
+        )
+        self.session.add(proposta)
+        self.session.commit()
+        return proposta.id
 
     def get_financeiro(self):
-        return pd.read_csv(self.financeiro_file)
-    
+        transacoes = self.session.query(Transacao).all()
+        return pd.DataFrame([{
+            'id': t.id,
+            'tipo': t.tipo,
+            'descricao': t.descricao,
+            'valor': t.valor,
+            'data': t.data,
+            'categoria': t.categoria,
+            'referencia_id': t.referencia_id
+        } for t in transacoes])
+
     def add_transacao(self, tipo, descricao, valor, categoria, referencia_id=None):
-        df = self.get_financeiro()
-        novo_id = len(df) + 1
-        nova_transacao = pd.DataFrame([{
-            'id': novo_id,
-            'tipo': tipo,
-            'descricao': descricao,
-            'valor': valor,
-            'data': datetime.now().strftime('%Y-%m-%d'),
-            'categoria': categoria,
-            'referencia_id': referencia_id
-        }])
-        df = pd.concat([df, nova_transacao], ignore_index=True)
-        df.to_csv(self.financeiro_file, index=False)
-        return novo_id
+        transacao = Transacao(
+            tipo=tipo,
+            descricao=descricao,
+            valor=valor,
+            categoria=categoria,
+            referencia_id=referencia_id
+        )
+        self.session.add(transacao)
+        self.session.commit()
+        return transacao.id
 
     def get_produtos(self):
-        return pd.read_csv(self.produtos_file)
-    
+        produtos = self.session.query(Produto).all()
+        return pd.DataFrame([{
+            'id': p.id,
+            'nome': p.nome,
+            'descricao': p.descricao,
+            'valor': p.valor,
+            'quantidade': p.quantidade,
+            'data_cadastro': p.data_cadastro
+        } for p in produtos])
+
     def add_produto(self, nome, descricao, valor, quantidade):
-        df = self.get_produtos()
-        novo_id = len(df) + 1
-        novo_produto = pd.DataFrame([{
-            'id': novo_id,
-            'nome': nome,
-            'descricao': descricao,
-            'valor': valor,
-            'quantidade': quantidade,
-            'data_cadastro': datetime.now().strftime('%Y-%m-%d')
-        }])
-        df = pd.concat([df, novo_produto], ignore_index=True)
-        df.to_csv(self.produtos_file, index=False)
-        return novo_id
+        produto = Produto(
+            nome=nome,
+            descricao=descricao,
+            valor=valor,
+            quantidade=quantidade
+        )
+        self.session.add(produto)
+        self.session.commit()
+        return produto.id
+
+    def __del__(self):
+        self.session.close()
