@@ -10,7 +10,6 @@ def show():
     with tab1:
         st.subheader("Cadastro de Fornecedores")
 
-        # Formulário de cadastro de fornecedor
         with st.form("cadastro_fornecedor", clear_on_submit=True):
             nome = st.text_input("Nome")
             telefone = st.text_input("Telefone")
@@ -32,12 +31,12 @@ def show():
                         st.session_state.db.add_fornecedor(
                             nome=nome,
                             telefone=telefone,
-                            endereco=endereco,
+                            endereco=endereco or None,
                             categoria=categoria,
                             tipo_conta=tipo_conta,
-                            pix=pix,
+                            pix=pix or None,
                             recorrente=recorrente,
-                            observacoes=observacoes
+                            observacoes=observacoes or None
                         )
                         st.success("Fornecedor cadastrado com sucesso!")
                         st.rerun()
@@ -47,24 +46,30 @@ def show():
                     st.warning("Por favor, preencha todos os campos obrigatórios.")
 
         # Lista de fornecedores
-        st.subheader("Fornecedores Cadastrados")
-        fornecedores = st.session_state.db.get_fornecedores()
-        if not fornecedores.empty:
-            st.dataframe(
-                fornecedores[[
-                    'nome', 'telefone', 'categoria',
-                    'tipo_conta', 'pix', 'recorrente',
-                    'data_cadastro'
-                ]],
-                use_container_width=True
-            )
-        else:
-            st.info("Nenhum fornecedor cadastrado.")
+        try:
+            st.subheader("Fornecedores Cadastrados")
+            fornecedores = st.session_state.db.get_fornecedores()
+            if not fornecedores.empty:
+                # Converter data de cadastro para exibição
+                fornecedores['data_cadastro'] = pd.to_datetime(fornecedores['data_cadastro'])
+                fornecedores['data_cadastro'] = fornecedores['data_cadastro'].dt.strftime('%d/%m/%Y')
+
+                st.dataframe(
+                    fornecedores[[
+                        'nome', 'telefone', 'categoria',
+                        'tipo_conta', 'pix', 'recorrente',
+                        'data_cadastro'
+                    ]],
+                    use_container_width=True
+                )
+            else:
+                st.info("Nenhum fornecedor cadastrado.")
+        except Exception as e:
+            st.error(f"Erro ao carregar fornecedores: {str(e)}")
 
     with tab2:
         st.subheader("Cadastro de Assistentes")
 
-        # Formulário de cadastro de assistente
         with st.form("cadastro_assistente", clear_on_submit=True):
             nome = st.text_input("Nome")
             telefone = st.text_input("Telefone")
@@ -80,9 +85,9 @@ def show():
                         st.session_state.db.add_assistente(
                             nome=nome,
                             telefone=telefone,
-                            endereco=endereco,
-                            pix=pix,
-                            observacoes=observacoes
+                            endereco=endereco or None,
+                            pix=pix or None,
+                            observacoes=observacoes or None
                         )
                         st.success("Assistente cadastrado com sucesso!")
                         st.rerun()
@@ -92,15 +97,22 @@ def show():
                     st.warning("Por favor, preencha todos os campos obrigatórios.")
 
         # Lista de assistentes
-        st.subheader("Assistentes Cadastrados")
-        assistentes = st.session_state.db.get_assistentes()
-        if not assistentes.empty:
-            st.dataframe(
-                assistentes[[
-                    'nome', 'telefone', 'endereco',
-                    'pix', 'data_cadastro'
-                ]],
-                use_container_width=True
-            )
-        else:
-            st.info("Nenhum assistente cadastrado.")
+        try:
+            st.subheader("Assistentes Cadastrados")
+            assistentes = st.session_state.db.get_assistentes()
+            if not assistentes.empty:
+                # Converter data de cadastro para exibição
+                assistentes['data_cadastro'] = pd.to_datetime(assistentes['data_cadastro'])
+                assistentes['data_cadastro'] = assistentes['data_cadastro'].dt.strftime('%d/%m/%Y')
+
+                st.dataframe(
+                    assistentes[[
+                        'nome', 'telefone', 'endereco',
+                        'pix', 'data_cadastro'
+                    ]],
+                    use_container_width=True
+                )
+            else:
+                st.info("Nenhum assistente cadastrado.")
+        except Exception as e:
+            st.error(f"Erro ao carregar assistentes: {str(e)}")
