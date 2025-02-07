@@ -13,7 +13,7 @@ def show():
         st.subheader("Novo Cliente")
 
         # Formulário de cadastro
-        with st.form("cadastro_cliente"):
+        with st.form("cadastro_cliente", clear_on_submit=True):
             nome = st.text_input("Nome completo")
             cpf = st.text_input("CPF")
             email = st.text_input("E-mail")
@@ -40,6 +40,7 @@ def show():
                             origem_cliente=origem_cliente
                         )
                         st.success("Cliente cadastrado com sucesso!")
+                        st.rerun()
                     except Exception as e:
                         st.error(f"Erro ao cadastrar cliente: {str(e)}")
                 else:
@@ -55,7 +56,7 @@ def show():
         clientes = st.session_state.db.get_clientes()
 
         if not clientes.empty:
-            # Converter a coluna data_aniversario para datetime e formatar como dia/mês
+            # Converter a coluna data_aniversario para datetime
             clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'])
             clientes['data_aniversario'] = clientes['data_aniversario'].dt.strftime('%d/%m')
 
@@ -107,6 +108,9 @@ def show():
                 else:
                     # Mostrar preview dos dados
                     st.write("Preview dos dados:")
+                    if 'data_aniversario' in df.columns:
+                        df['data_aniversario'] = pd.to_datetime(df['data_aniversario'])
+                        df['data_aniversario'] = df['data_aniversario'].dt.strftime('%d/%m')
                     st.dataframe(df.head())
 
                     if st.button("Confirmar Importação"):
