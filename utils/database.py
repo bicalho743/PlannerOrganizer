@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, Column, Integer, String, Float, Date, Fore
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 import pandas as pd
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Get database URL from environment variable
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -127,6 +128,24 @@ class Produto(Base):
     valor = Column(Float)
     quantidade = Column(Integer)
     data_cadastro = Column(Date, default=datetime.now().date())
+
+class Usuario(Base):
+    __tablename__ = 'usuarios'
+
+    id = Column(Integer, primary_key=True)
+    email = Column(String, unique=True, nullable=False)
+    senha_hash = Column(String, nullable=False)
+    nome = Column(String, nullable=False)
+    empresa = Column(String)
+    tipo = Column(String, default='usuario')  # 'admin' ou 'usuario'
+    ativo = Column(Boolean, default=True)
+    data_cadastro = Column(Date, default=datetime.now().date())
+
+    def set_senha(self, senha):
+        self.senha_hash = generate_password_hash(senha)
+
+    def check_senha(self, senha):
+        return check_password_hash(self.senha_hash, senha)
 
 class Database:
     def __init__(self):
@@ -495,3 +514,48 @@ class Database:
     def __del__(self):
         if hasattr(self, 'session'):
             self.session.close()
+
+    def registrar_usuario(self, email, senha, nome, empresa=None, tipo='usuario'):
+        """Registra um novo usuário no sistema"""
+        try:
+            # Verificar se o email já existe
+            if self.session.query(Usuario).filter_by(email=email).first():
+                return False, "Email já cadastrado"
+
+            usuario = Usuario(
+                email=email,
+                nome=nome,
+                empresa=empresa,
+                tipo=tipo
+            )
+            usuario.set_senha(senha)
+
+            self.session.add(usuario)
+            self.session.commit()
+            return True, "Usuário cadastrado com sucesso"
+        except Exception as e:
+            self.session.rollback()
+            return False, str(e)
+
+    def autenticar_usuario(self, email, senha):
+        """Autentica um usuário"""
+        try:
+            usuario = self.session.query(Usuario).filter_by(email=email).first()
+            if usuario and usuario.check_senha(senha) and usuario.ativo:
+                return True, usuario
+            return False, None
+        except Exception as e:
+            return False, str(e)
+
+    def get_usuarios(self):
+        """Retorna lista de usuários cadastrados"""
+        usuarios = self.session.query(Usuario).all()
+        return pd.DataFrame([{
+            'id': u.id,
+            'email': u.email,
+            'nome': u.nome,
+            'empresa': u.empresa,
+            'tipo': u.tipo,
+            'ativo': u.ativo,
+            'data_cadastro': u.data_cadastro
+        } for u in usuarios])
