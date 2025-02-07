@@ -61,31 +61,20 @@ if pagina == "Dashboard":
         st.metric("Saldo Total", f"R$ {saldo:.2f}")
 
         # Pagamentos Pendentes
-        if "acrescimos" in st.session_state:
-            pendentes = [
-                {
-                    'cliente': p['nome'],
-                    'proposta': p['numero'],
-                    'tipo': a['tipo'],
-                    'fornecedor': a['fornecedor'] if a['tipo'] == 'Fornecedor' else '',
-                    'valor': a['valor']
-                }
-                for p in propostas.to_dict('records')
-                for a in st.session_state.acrescimos
-                if a['status_pagamento'] == 'Pendente'
-            ]
+        pendentes = st.session_state.db.get_pagamentos_pendentes()
+        if not pendentes.empty:
+            st.write("---")
+            st.subheader("💰 Pagamentos Pendentes")
+            total_pendente = pendentes['valor'].sum()
+            st.metric("Total Pendente", f"R$ {total_pendente:.2f}")
 
-            if pendentes:
-                st.write("---")
-                st.subheader("💰 Pagamentos Pendentes")
-                total_pendente = sum(p['valor'] for p in pendentes)
-                st.metric("Total Pendente", f"R$ {total_pendente:.2f}")
-
-                for p in pendentes:
-                    if p['fornecedor']:
-                        st.write(f"- Proposta #{p['proposta']} - {p['cliente']}: {p['tipo']} - {p['fornecedor']} (R$ {p['valor']:.2f})")
-                    else:
-                        st.write(f"- Proposta #{p['proposta']} - {p['cliente']}: {p['tipo']} (R$ {p['valor']:.2f})")
+            for _, p in pendentes.iterrows():
+                if p['tipo'] == 'Valor Base':
+                    st.write(f"- Proposta #{p['proposta']} - {p['cliente']}: Valor Base (R$ {p['valor']:.2f})")
+                elif p['fornecedor']:
+                    st.write(f"- Proposta #{p['proposta']} - {p['cliente']}: {p['tipo']} - {p['fornecedor']} (R$ {p['valor']:.2f})")
+                else:
+                    st.write(f"- Proposta #{p['proposta']} - {p['cliente']}: {p['tipo']} (R$ {p['valor']:.2f})")
 
         # Aniversariantes
         if not clientes.empty:

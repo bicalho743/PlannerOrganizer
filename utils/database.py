@@ -103,9 +103,11 @@ class Proposta(Base):
     data_fim = Column(Date)
     prazo_entrega = Column(Date)
     data_proposta = Column(Date, default=datetime.now().date())
+    status_pagamento_base = Column(String, default='Pendente')  # New column
 
     cliente = relationship("Cliente", back_populates="propostas")
     produtos = relationship("ProdutoOrganizador", back_populates="proposta", cascade="all, delete-orphan")
+    acrescimos = relationship("AcrescimoProposta", back_populates="proposta", cascade="all, delete-orphan")
 
     __table_args__ = (
         Index('idx_proposta_numero', 'numero', unique=True),
@@ -160,6 +162,20 @@ class Transacao(Base):
     origem_id = Column(Integer)
     origem_tipo = Column(String)
     tipo_conta = Column(String, default='PF')
+
+class AcrescimoProposta(Base):
+    __tablename__ = 'acrescimos_proposta'
+    id = Column(Integer, primary_key=True)
+    proposta_id = Column(Integer, ForeignKey('propostas.id'))
+    tipo = Column(String, nullable=False)
+    fornecedor = Column(String)
+    descricao = Column(String)
+    valor = Column(Float, nullable=False)
+    status_pagamento = Column(String, default='Pendente')
+    data_cadastro = Column(Date, default=datetime.now().date())
+
+    proposta = relationship("Proposta", back_populates="acrescimos")
+
 
 class Database:
     def __init__(self):
@@ -235,7 +251,8 @@ class Database:
                 'data_inicio': p.data_inicio,
                 'data_fim': p.data_fim,
                 'prazo_entrega': p.prazo_entrega,
-                'data_proposta': p.data_proposta
+                'data_proposta': p.data_proposta,
+                'status_pagamento_base': p.status_pagamento_base
             } for p in propostas])
         return self._safe_query(query)
 
@@ -618,3 +635,71 @@ class Database:
         if hasattr(self, 'session'):
             self.session.close()
             Session.remove()
+
+    def atualizar_status_pagamento_proposta(self, proposta_id, status_pagamento_base, valor_base):
+        def query():
+            proposta = self.session.query(Proposta).filter_by(id=proposta_id).first()
+            if proposta:
+                proposta.status_pagamento_base = status_pagamento_base
+                proposta.valor = valor_base
+                return True
+            return False
+        return self._safe_query(query)
+
+    def add_acrescimo_proposta(self, proposta_id, tipo, valor, descricao=None, fornecedor=None, status_pagamento='Pendente'):
+        def query():
+            acrescimo = AcrescimoProposta(
+                proposta_id=proposta_id,
+                tipo=tipo,
+                fornecedor=fornecedor,
+                descricao=descricao,
+                valor=valor,
+                status_pagamento=status_pagamento
+            )
+            self.session.add(acrescimo)
+            return acrescimo.id
+        return self._safe_query(query)
+
+    def get_acrescimos_proposta(self, proposta_id):
+        def query():
+            acrescimos = self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).all()
+            return pd.DataFrame([{
+                'id': a.id,
+                'tipo': a.tipo,
+                'fornecedor': a.fornecedor,
+                'descricao': a.descricao,
+                'valor': a.valor,
+                'status_pagamento': a.status_pagamento,
+                'data_cadastro': a.data_cadastro
+            } for a in acrescimos])
+        return self._safe_query(query)
+
+    def get_pagamentos_pendentes(self):
+        def query():
+            # Get propostas with pending base payments
+            propostas = self.session.query(Proposta).filter_by(status_pagamento_base='Pendente').all()
+            pendentes = []
+
+            # Add pending base values
+            for p in propostas:
+                pendentes.append({
+                    'cliente': p.cliente.nome,
+                    'proposta': p.numero,
+                    'tipo': 'Valor Base',
+                    'valor': p.valor,
+                    'fornecedor': None
+                })
+
+            # Add pending acrescimos
+            acrescimos = self.session.query(AcrescimoProposta).filter_by(status_pagamento='Pendente').all()
+            for a in acrescimos:
+                pendentes.append({
+                    'cliente': a.proposta.cliente.nome,
+                    'proposta': a.proposta.numero,
+                    'tipo': a.tipo,
+                    'valor': a.valor,
+                    'fornecedor': a.fornecedor
+                })
+
+            return pd.DataFrame(pendentes)
+        return self._safe_query(query)

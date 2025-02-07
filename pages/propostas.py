@@ -171,7 +171,6 @@ def show():
                     if acrescimo['descricao']:
                         st.write(f"  *{acrescimo['descricao']}*")
 
-            # Botão para fechar e mostrar total
             if st.button("Fechar Proposta"):
                 st.write("### Resumo Final")
                 st.write(f"**Cliente:** {proposta['nome']}")
@@ -187,7 +186,6 @@ def show():
                         step=0.01,
                         key="valor_base"
                     )
-                    proposta['valor'] = valor_base
                 with col3:
                     status_base = st.selectbox(
                         "Status",
@@ -196,8 +194,11 @@ def show():
                     )
                 st.write("---")
 
+                # Acréscimos
+                acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
                 valor_pendente = valor_base if status_base == "Pendente" else 0.0
-                for i, acrescimo in enumerate(st.session_state.acrescimos):
+
+                for index, acrescimo in acrescimos.iterrows():
                     col1, col2, col3 = st.columns([2, 1, 1])
 
                     with col1:
@@ -213,25 +214,37 @@ def show():
                             "Valor",
                             value=float(acrescimo['valor']),
                             step=0.01,
-                            key=f"valor_{i}"
+                            key=f"valor_{index}"
                         )
-                        acrescimo['valor'] = novo_valor
 
                     with col3:
                         status = st.selectbox(
                             "Status",
                             ["Pendente", "Pago"],
-                            key=f"status_pagamento_{i}",
+                            key=f"status_pagamento_{index}",
                             index=0 if acrescimo['status_pagamento'] == "Pendente" else 1
                         )
-                        acrescimo['status_pagamento'] = status
 
                     if status == "Pendente":
                         valor_pendente += novo_valor
 
+                    # Update acrescimo in database
+                    st.session_state.db.update_acrescimo_proposta(
+                        acrescimo['id'],
+                        valor=novo_valor,
+                        status_pagamento=status
+                    )
+
                     st.write("---")
 
-                valor_total = proposta['valor'] + sum(a['valor'] for a in st.session_state.acrescimos)
+                # Update proposta base value and payment status
+                st.session_state.db.atualizar_status_pagamento_proposta(
+                    proposta['id'],
+                    status_pagamento_base=status_base,
+                    valor_base=valor_base
+                )
+
+                valor_total = valor_base + acrescimos['valor'].sum()
                 st.write(f"**Valor Total:** R$ {valor_total:.2f}")
                 st.write(f"**Valor Pendente:** R$ {valor_pendente:.2f}")
 
