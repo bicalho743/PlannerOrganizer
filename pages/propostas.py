@@ -129,92 +129,116 @@ def show():
         try:
             # Selecionar proposta
             propostas = st.session_state.db.get_propostas()
-            if not propostas.empty:
+            clientes = st.session_state.db.get_clientes()
+
+            if not propostas.empty and not clientes.empty:
+                # Merge com dados do cliente
+                propostas = propostas.merge(
+                    clientes[['id', 'nome']],
+                    left_on='cliente_id',
+                    right_on='id',
+                    suffixes=('', '_cliente')
+                )
+
+                # Seleção da proposta
                 proposta_numero = st.selectbox(
-                    "Selecione o Número da Proposta",
+                    "Número da Proposta",
                     propostas['numero'].tolist()
                 )
 
-                # Converter para int padrão do Python
+                # Obter dados da proposta selecionada
                 proposta = propostas[propostas['numero'] == proposta_numero].iloc[0]
                 proposta_id = int(proposta['id'])
 
-                # Tabs para organizar o andamento
-                andamento_tab1, andamento_tab2 = st.tabs(["Registrar Andamento", "Produtos Organizadores"])
+                # Informações principais
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.write(f"**Cliente:** {proposta['nome']}")
+                with col2:
+                    st.write(f"**Valor Total:** R$ {proposta['valor']:.2f}")
 
-                with andamento_tab1:
-                    with st.form("registro_andamento"):
-                        status = st.selectbox(
-                            "Status do Andamento",
-                            ["Em Análise", "Em Execução", "Parado", "Concluído"]
-                        )
-                        comodo = st.text_input("Cômodo (opcional)")
-                        observacao = st.text_area("Observações")
+                # Descrição e Vale Acrescendo
+                st.write("---")
+                col1, col2 = st.columns(2)
+                with col1:
+                    vale_acrescendo = st.number_input(
+                        "Vale Acrescendo (R$)",
+                        min_value=0.0,
+                        step=0.01,
+                        value=0.0
+                    )
+                with col2:
+                    st.text_area(
+                        "Descrição do Serviço",
+                        value=proposta['descricao'],
+                        disabled=True
+                    )
 
-                        if st.form_submit_button("Registrar Andamento"):
-                            try:
-                                st.session_state.db.add_andamento_proposta(
-                                    proposta_id=proposta_id,
-                                    status=status,
-                                    observacao=observacao,
-                                    comodo=comodo
-                                )
-                                st.success("Andamento registrado com sucesso!")
-                            except Exception as e:
-                                st.error(f"Erro ao registrar andamento: {str(e)}")
+                # Produtos
+                st.write("---")
+                st.subheader("Produtos")
 
-                    # Exibir histórico de andamentos
-                    andamentos = st.session_state.db.get_andamentos_proposta(proposta_id)
-                    if not andamentos.empty:
-                        st.dataframe(andamentos, use_container_width=True)
-                    else:
-                        st.info("Nenhum andamento registrado.")
-
-                with andamento_tab2:
-                    with st.form("cadastro_produto"):
+                with st.form("cadastro_produto"):
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
                         nome_produto = st.text_input("Nome do Produto")
-                        descricao_produto = st.text_area("Descrição do Produto")
-                        valor_produto = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
-                        quantidade = st.number_input("Quantidade", min_value=1, step=1)
                         comodo = st.text_input("Cômodo")
+                    with col2:
+                        descricao_produto = st.text_area("Descrição")
+                        quantidade = st.number_input("Quantidade", min_value=1, step=1)
+                    with col3:
+                        # Comparativo de preços entre lojas
+                        st.write("Valores por Loja")
+                        loja1_valor = st.number_input("Loja 1 (R$)", min_value=0.0, step=0.01)
+                        loja2_valor = st.number_input("Loja 2 (R$)", min_value=0.0, step=0.01)
+                        loja3_valor = st.number_input("Loja 3 (R$)", min_value=0.0, step=0.01)
 
-                        # Carregar fornecedores
-                        fornecedores = st.session_state.db.get_fornecedores()
-                        if not fornecedores.empty:
-                            fornecedor = st.selectbox(
-                                "Fornecedor",
-                                fornecedores['nome'].tolist()
-                            )
-                            fornecedor_id = int(fornecedores[fornecedores['nome'] == fornecedor]['id'].iloc[0])
+                    # Determinar o menor valor
+                    valores_lojas = [
+                        (loja1_valor, "Loja 1"),
+                        (loja2_valor, "Loja 2"),
+                        (loja3_valor, "Loja 3")
+                    ]
+                    menor_valor = min((v for v, _ in valores_lojas if v > 0), default=0)
+                    loja_escolhida = next((loja for valor, loja in valores_lojas if valor == menor_valor), None)
+
+                    if st.form_submit_button("Adicionar Produto"):
+                        if nome_produto and menor_valor > 0 and comodo:
+                            try:
+                                st.session_state.db.add_produto_organizador(
+                                    proposta_id=proposta_id,
+                                    nome=nome_produto,
+                                    descricao=descricao_produto,
+                                    valor=menor_valor,
+                                    quantidade=quantidade,
+                                    comodo=comodo,
+                                    fornecedor_id=None  # Será atualizado posteriormente
+                                )
+                                st.success(f"Produto cadastrado com sucesso! Melhor valor: {loja_escolhida} - R$ {menor_valor:.2f}")
+                            except Exception as e:
+                                st.error(f"Erro ao cadastrar produto: {str(e)}")
                         else:
-                            st.warning("Nenhum fornecedor cadastrado.")
-                            fornecedor_id = None
+                            st.warning("Por favor, preencha todos os campos obrigatórios e informe pelo menos um valor de loja.")
 
-                        if st.form_submit_button("Cadastrar Produto"):
-                            if nome_produto and valor_produto > 0 and comodo and fornecedor_id:
-                                try:
-                                    st.session_state.db.add_produto_organizador(
-                                        proposta_id=proposta_id,
-                                        nome=nome_produto,
-                                        descricao=descricao_produto,
-                                        valor=valor_produto,
-                                        quantidade=quantidade,
-                                        comodo=comodo,
-                                        fornecedor_id=fornecedor_id
-                                    )
-                                    st.success("Produto cadastrado com sucesso!")
-                                except Exception as e:
-                                    st.error(f"Erro ao cadastrar produto: {str(e)}")
-                            else:
-                                st.warning("Por favor, preencha todos os campos obrigatórios.")
+                # Lista de Produtos
+                st.write("---")
+                st.subheader("Produtos Cadastrados")
+                produtos = st.session_state.db.get_produtos_organizadores(proposta_id)
+                if not produtos.empty:
+                    for idx, produto in produtos.iterrows():
+                        with st.expander(f"{produto['nome']} - {produto['comodo']}"):
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.write(f"**Descrição:** {produto['descricao']}")
+                                st.write(f"**Quantidade:** {produto['quantidade']}")
+                            with col2:
+                                st.write(f"**Valor:** R$ {produto['valor']:.2f}")
+                                st.write(f"**Total:** R$ {(produto['valor'] * produto['quantidade']):.2f}")
+                else:
+                    st.info("Nenhum produto cadastrado.")
 
-                    # Exibir produtos cadastrados
-                    produtos = st.session_state.db.get_produtos_organizadores(proposta_id)
-                    if not produtos.empty:
-                        st.dataframe(produtos, use_container_width=True)
-                    else:
-                        st.info("Nenhum produto cadastrado.")
             else:
-                st.warning("Nenhuma proposta cadastrada.")
+                st.warning("Nenhuma proposta cadastrada ou nenhum cliente encontrado.")
+
         except Exception as e:
             st.error(f"Erro ao carregar dados do andamento: {str(e)}")
