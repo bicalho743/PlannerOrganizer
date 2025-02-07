@@ -11,7 +11,6 @@ def show():
     with tab1:
         st.subheader("Novo Cliente")
 
-        # Formulário de cadastro
         with st.form("cadastro_cliente", clear_on_submit=True):
             nome = st.text_input("Nome completo")
             cpf = st.text_input("CPF")
@@ -47,20 +46,17 @@ def show():
 
     with tab2:
         st.subheader("Clientes Cadastrados")
-
-        # Filtro de busca
         busca = st.text_input("🔍 Buscar cliente", "")
 
-        # Carregar e filtrar dados
         try:
             clientes = st.session_state.db.get_clientes()
 
             if not clientes.empty:
-                # Converter data de cadastro
+                # Formatar data de cadastro
                 clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro'])
                 clientes['data_cadastro'] = clientes['data_cadastro'].dt.strftime('%d/%m/%Y')
 
-                # Formatar data de aniversário para DD/MM
+                # Formatar data de aniversário
                 def format_aniversario(data):
                     if pd.isna(data):
                         return ''
@@ -121,19 +117,15 @@ def show():
 
                     # Formatar data de aniversário no preview
                     if 'data_aniversario' in df.columns:
+                        df['data_aniversario'] = df['data_aniversario'].astype(str)
                         def format_preview_date(data):
-                            if pd.isna(data):
-                                return ''
                             try:
-                                if isinstance(data, str):
-                                    partes = data.split('/')
-                                    if len(partes) >= 2:
-                                        return f"{int(partes[0]):02d}/{int(partes[1]):02d}"
-                                else:
-                                    data = pd.to_datetime(data)
-                                    return data.strftime('%d/%m')
+                                if '/' in data:
+                                    dia, mes = data.split('/')[:2]
+                                    return f"{int(dia):02d}/{int(mes):02d}"
                             except:
-                                return ''
+                                pass
+                            return data
 
                         df['data_aniversario'] = df['data_aniversario'].apply(format_preview_date)
 
@@ -150,17 +142,17 @@ def show():
                             try:
                                 # Processar data de aniversário
                                 data_aniv = None
-                                if 'data_aniversario' in row and pd.notna(row['data_aniversario']):
+                                if 'data_aniversario' in row and str(row['data_aniversario']).strip():
                                     try:
-                                        if isinstance(row['data_aniversario'], str):
-                                            partes = row['data_aniversario'].split('/')
-                                            if len(partes) >= 2:
-                                                data_aniv = datetime.now().replace(
-                                                    day=int(partes[0]),
-                                                    month=int(partes[1])
-                                                ).date()
+                                        data_str = str(row['data_aniversario'])
+                                        if '/' in data_str:
+                                            dia, mes = data_str.split('/')[:2]
+                                            data_aniv = datetime.now().replace(
+                                                day=int(dia),
+                                                month=int(mes)
+                                            ).date()
                                     except:
-                                        data_aniv = None
+                                        pass
 
                                 # Adicionar cliente
                                 st.session_state.db.add_cliente(
