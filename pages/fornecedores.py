@@ -16,7 +16,7 @@ with st.form("cadastro_form"):
     endereco = st.text_input("Endereço")
     categoria = st.selectbox(
                 "Categoria",
-                ["Marcenaria", "Materiais", "Consignado", "Outros"]
+                ["Transportadora", "Colmeias", "Gabaritos", "Lojas de Organizadores", "Marcenaria", "Bandejas"]
             )
     pix = st.text_input("Chave PIX")
     contato = st.text_input("Nome do Contato")
