@@ -54,15 +54,19 @@ def show():
         # Carregar e filtrar dados
         clientes = st.session_state.db.get_clientes()
 
-        if busca:
-            clientes = clientes[
-                clientes['nome'].str.contains(busca, case=False) |
-                clientes['email'].str.contains(busca, case=False) |
-                clientes['cpf'].str.contains(busca, case=False)
-            ]
-
-        # Exibir tabela de clientes
         if not clientes.empty:
+            # Converter a coluna data_aniversario para datetime e formatar como dia/mês
+            clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'])
+            clientes['data_aniversario'] = clientes['data_aniversario'].dt.strftime('%d/%m')
+
+            if busca:
+                clientes = clientes[
+                    clientes['nome'].str.contains(busca, case=False) |
+                    clientes['email'].str.contains(busca, case=False) |
+                    clientes['cpf'].str.contains(busca, case=False)
+                ]
+
+            # Exibir tabela de clientes
             st.dataframe(
                 clientes[[
                     'nome', 'cpf', 'email', 'telefone', 
