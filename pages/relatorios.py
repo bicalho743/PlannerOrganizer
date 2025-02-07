@@ -5,14 +5,69 @@ from datetime import datetime, timedelta
 
 def show():
     st.title("📊 Relatórios")
-    
+
     # Seleção do tipo de relatório
     tipo_relatorio = st.selectbox(
         "Selecione o Relatório",
         ["Desempenho Financeiro", "Análise de Clientes", "Status de Propostas"]
     )
-    
-    if tipo_relatorio == "Desempenho Financeiro":
+
+    if tipo_relatorio == "Status de Propostas":
+        st.subheader("Status de Propostas")
+
+        propostas = st.session_state.db.get_propostas()
+
+        if not propostas.empty:
+            # Cálculos estatísticos
+            total_propostas = len(propostas)
+            propostas_abertas = len(propostas[propostas['status'] == 'Aberta'])
+            propostas_fechadas = len(propostas[propostas['status'] == 'Fechada'])
+            percentual_fechadas = (propostas_fechadas / total_propostas * 100) if total_propostas > 0 else 0
+
+            # Métricas principais
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Propostas em Aberto", propostas_abertas)
+            col2.metric("Propostas Fechadas", propostas_fechadas)
+            col3.metric("% Fechadas", f"{percentual_fechadas:.1f}%")
+
+            # Gráfico de pizza
+            fig = px.pie(
+                propostas,
+                names='status',
+                title='Distribuição de Propostas por Status',
+                color='status',
+                color_discrete_map={
+                    'Aberta': '#FFA500',  # Laranja
+                    'Fechada': '#32CD32',  # Verde
+                    'Cancelada': '#FF0000'  # Vermelho
+                }
+            )
+            st.plotly_chart(fig)
+
+            # Tabela de resumo
+            st.write("Resumo por Status:")
+            resumo_status = propostas.groupby('status').agg({
+                'valor': ['count', 'sum', 'mean']
+            }).round(2)
+            resumo_status.columns = ['Quantidade', 'Valor Total', 'Valor Médio']
+            st.dataframe(resumo_status)
+
+            # Evolução temporal das propostas
+            propostas['data_proposta'] = pd.to_datetime(propostas['data_proposta'])
+            evolucao_temporal = propostas.groupby(['data_proposta', 'status']).size().reset_index(name='count')
+
+            fig2 = px.line(
+                evolucao_temporal,
+                x='data_proposta',
+                y='count',
+                color='status',
+                title='Evolução de Propostas por Status ao Longo do Tempo'
+            )
+            st.plotly_chart(fig2)
+        else:
+            st.info("Não há propostas cadastradas.")
+
+    elif tipo_relatorio == "Desempenho Financeiro":
         st.subheader("Desempenho Financeiro")
         
         # Período de análise
@@ -67,6 +122,7 @@ def show():
         else:
             st.info("Não há dados para o período selecionado.")
     
+
     elif tipo_relatorio == "Análise de Clientes":
         st.subheader("Análise de Clientes")
         
@@ -104,29 +160,6 @@ def show():
         else:
             st.info("Não há dados suficientes para análise.")
     
-    else:  # Status de Propostas
-        st.subheader("Status de Propostas")
-        
-        propostas = st.session_state.db.get_propostas()
-        
-        if not propostas.empty:
-            # Análise por status
-            status_count = propostas['status'].value_counts()
-            
-            # Gráfico de pizza
-            fig = px.pie(
-                values=status_count.values,
-                names=status_count.index,
-                title='Distribuição de Propostas por Status'
-            )
-            st.plotly_chart(fig)
-            
-            # Tabela de resumo
-            st.write("Resumo por Status:")
-            resumo_status = propostas.groupby('status').agg({
-                'valor': ['count', 'sum', 'mean']
-            }).round(2)
-            resumo_status.columns = ['Quantidade', 'Valor Total', 'Valor Médio']
-            st.dataframe(resumo_status)
-        else:
-            st.info("Não há propostas cadastradas.")
+
+    else:  # Status de Propostas - This part is now handled above
+        pass
