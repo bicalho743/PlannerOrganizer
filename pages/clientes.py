@@ -53,31 +53,34 @@ def show():
         busca = st.text_input("🔍 Buscar cliente", "")
 
         # Carregar e filtrar dados
-        clientes = st.session_state.db.get_clientes()
+        try:
+            clientes = st.session_state.db.get_clientes()
 
-        if not clientes.empty:
-            # Converter a coluna data_aniversario para datetime
-            clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'])
-            clientes['data_aniversario'] = clientes['data_aniversario'].dt.strftime('%d/%m')
+            if not clientes.empty:
+                # Converter a coluna data_aniversario para datetime e formatar como dia/mês
+                clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'])
+                clientes['data_aniversario'] = clientes['data_aniversario'].dt.strftime('%d/%m')
 
-            if busca:
-                clientes = clientes[
-                    clientes['nome'].str.contains(busca, case=False) |
-                    clientes['email'].str.contains(busca, case=False) |
-                    clientes['cpf'].str.contains(busca, case=False)
-                ]
+                if busca:
+                    clientes = clientes[
+                        clientes['nome'].str.contains(busca, case=False) |
+                        clientes['email'].str.contains(busca, case=False) |
+                        clientes['cpf'].str.contains(busca, case=False)
+                    ]
 
-            # Exibir tabela de clientes
-            st.dataframe(
-                clientes[[
-                    'nome', 'cpf', 'email', 'telefone', 
-                    'data_aniversario', 'origem_cliente',
-                    'data_cadastro'
-                ]],
-                use_container_width=True
-            )
-        else:
-            st.info("Nenhum cliente encontrado.")
+                # Exibir tabela de clientes
+                st.dataframe(
+                    clientes[[
+                        'nome', 'cpf', 'email', 'telefone', 
+                        'data_aniversario', 'origem_cliente',
+                        'data_cadastro'
+                    ]],
+                    use_container_width=True
+                )
+            else:
+                st.info("Nenhum cliente encontrado.")
+        except Exception as e:
+            st.error(f"Erro ao carregar clientes: {str(e)}")
 
     with tab3:
         st.subheader("Importar Clientes do Excel")
@@ -110,7 +113,6 @@ def show():
                     st.write("Preview dos dados:")
                     if 'data_aniversario' in df.columns:
                         df['data_aniversario'] = pd.to_datetime(df['data_aniversario'])
-                        df['data_aniversario'] = df['data_aniversario'].dt.strftime('%d/%m')
                     st.dataframe(df.head())
 
                     if st.button("Confirmar Importação"):
@@ -159,6 +161,7 @@ def show():
                         - Clientes importados com sucesso: {success_count}
                         - Erros de importação: {error_count}
                         """)
+                        st.rerun()
 
             except Exception as e:
                 st.error(f"Erro ao ler o arquivo: {str(e)}")
