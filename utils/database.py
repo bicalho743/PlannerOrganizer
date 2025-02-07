@@ -668,10 +668,10 @@ class Database:
         return self._safe_query(query)
 
     def get_acrescimos_proposta(self, proposta_id):
-        def query():
-            # Converter proposta_id para int nativo do Python
-            proposta_id = int(proposta_id) if proposta_id is not None else None
+        # Converter proposta_id para int nativo do Python antes da função query
+        proposta_id = int(proposta_id) if proposta_id is not None else None
 
+        def query():
             acrescimos = self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).all()
             return pd.DataFrame([{
                 'id': int(a.id),  # Garantir que todos os IDs sejam int nativos
