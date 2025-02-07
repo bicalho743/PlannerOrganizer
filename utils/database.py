@@ -11,6 +11,10 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 if DATABASE_URL is None:
     raise ValueError("DATABASE_URL environment variable is not set")
 
+# Ensure proper SSL configuration for PostgreSQL
+if 'postgresql' in DATABASE_URL and '?' not in DATABASE_URL:
+    DATABASE_URL = f"{DATABASE_URL}?sslmode=require"
+
 engine = create_engine(DATABASE_URL)
 Base = declarative_base()
 
