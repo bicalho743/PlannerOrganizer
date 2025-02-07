@@ -57,9 +57,9 @@ def show():
             clientes = st.session_state.db.get_clientes()
 
             if not clientes.empty:
-                # Converter a coluna data_aniversario para datetime e formatar como dia/mês
-                clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'])
-                clientes['data_aniversario'] = clientes['data_aniversario'].dt.strftime('%d/%m')
+                # Converter colunas de data para o formato correto
+                clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro']).dt.strftime('%d/%m/%Y')
+                clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario']).dt.strftime('%d/%m')
 
                 if busca:
                     clientes = clientes[
@@ -130,10 +130,7 @@ def show():
                                 # Converter data se existir
                                 data_aniv = None
                                 if 'data_aniversario' in row and pd.notna(row['data_aniversario']):
-                                    if isinstance(row['data_aniversario'], str):
-                                        data_aniv = datetime.strptime(row['data_aniversario'], '%d/%m/%Y').date()
-                                    else:
-                                        data_aniv = row['data_aniversario'].date()
+                                    data_aniv = row['data_aniversario'].date()
 
                                 # Adicionar cliente
                                 st.session_state.db.add_cliente(

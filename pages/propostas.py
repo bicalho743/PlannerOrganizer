@@ -90,38 +90,75 @@ def show():
                 st.warning("Nenhuma proposta cadastrada.")
                 st.stop()
 
-            # Selecionar proposta
-            proposta_numero = st.selectbox(
-                "Número da Proposta",
-                propostas['numero'].tolist()
+            # Juntar dados de propostas com clientes para exibir o nome do cliente
+            clientes = st.session_state.db.get_clientes()
+            propostas = propostas.merge(clientes[['id', 'nome']], 
+                                      left_on='cliente_id', 
+                                      right_on='id', 
+                                      suffixes=('', '_cliente'))
+
+            # Selecionar proposta mostrando número e cliente
+            proposta_display = propostas.apply(
+                lambda x: f"Proposta #{x['numero']} - {x['nome']}", axis=1
+            ).tolist()
+
+            proposta_selecionada = st.selectbox(
+                "Selecione a Proposta",
+                proposta_display
             )
 
-            proposta = propostas[propostas['numero'] == proposta_numero].iloc[0]
+            # Extrair número da proposta do texto selecionado
+            numero_proposta = int(proposta_selecionada.split('#')[1].split(' -')[0])
+            proposta = propostas[propostas['numero'] == numero_proposta].iloc[0]
             proposta_id = int(proposta['id'])
 
-            # Mostrar detalhes da proposta
+            # Exibir detalhes da proposta
+            st.write(f"**Cliente:** {proposta['nome']}")
             st.write(f"**Descrição:** {proposta['descricao']}")
             st.write(f"**Valor Total:** R$ {proposta['valor']:.2f}")
             st.write(f"**Status:** {proposta['status']}")
 
-            # Adicionar produto
+            # Adicionar produto com fornecedor
             st.subheader("Adicionar Produto")
             with st.form("cadastro_produto", clear_on_submit=True):
                 nome_produto = st.text_input("Nome do Produto")
                 descricao_produto = st.text_area("Descrição")
+                valor_produto = st.number_input("Valor do Produto (R$)", min_value=0.0, step=0.01)
                 quantidade = st.number_input("Quantidade", min_value=1, value=1)
                 comodo = st.text_input("Cômodo")
 
+                # Seleção de fornecedor
+                fornecedores = st.session_state.db.get_fornecedores()
+                if not fornecedores.empty:
+                    fornecedor = st.selectbox(
+                        "Fornecedor",
+                        fornecedores['nome'].tolist()
+                    )
+                    fornecedor_id = int(fornecedores[fornecedores['nome'] == fornecedor]['id'].iloc[0])
+                else:
+                    st.warning("Nenhum fornecedor cadastrado")
+                    fornecedor_id = None
+
                 if st.form_submit_button("Adicionar") and nome_produto and comodo:
                     try:
-                        st.session_state.db.add_produto_organizador(
+                        # Adicionar produto
+                        produto_id = st.session_state.db.add_produto_organizador(
                             proposta_id=proposta_id,
                             nome=nome_produto,
                             descricao=descricao_produto,
-                            valor=0,
+                            valor=valor_produto,
                             quantidade=quantidade,
                             comodo=comodo
                         )
+
+                        # Se fornecedor foi selecionado, vincular ao produto
+                        if fornecedor_id:
+                            st.session_state.db.add_produto_fornecedor(
+                                produto_id=produto_id,
+                                fornecedor_id=fornecedor_id,
+                                valor=valor_produto
+                            )
+
                         st.success("Produto adicionado com sucesso!")
                         st.rerun()
                     except Exception as e:
@@ -137,34 +174,6 @@ def show():
                         st.write(f"**Quantidade:** {produto['quantidade']}")
                         st.write(f"**Valor Atual:** R$ {produto['valor']:.2f}")
 
-                        # Adicionar fornecedor
-                        fornecedores = st.session_state.db.get_fornecedores()
-                        if not fornecedores.empty:
-                            with st.form(f"add_fornecedor_{produto['id']}", clear_on_submit=True):
-                                fornecedor = st.selectbox(
-                                    "Fornecedor",
-                                    fornecedores['nome'].tolist(),
-                                    key=f"fornecedor_{produto['id']}"
-                                )
-                                fornecedor_id = int(fornecedores[fornecedores['nome'] == fornecedor]['id'].iloc[0])
-                                valor = st.number_input(
-                                    "Valor (R$)",
-                                    min_value=0.01,
-                                    step=0.01,
-                                    key=f"valor_{produto['id']}"
-                                )
-
-                                if st.form_submit_button("Adicionar Fornecedor"):
-                                    try:
-                                        st.session_state.db.add_produto_fornecedor(
-                                            produto_id=produto['id'],
-                                            fornecedor_id=fornecedor_id,
-                                            valor=valor
-                                        )
-                                        st.success("Fornecedor adicionado com sucesso!")
-                                        st.rerun()
-                                    except Exception as e:
-                                        st.error(f"Erro ao adicionar fornecedor: {str(e)}")
             else:
                 st.info("Nenhum produto cadastrado para esta proposta.")
 
