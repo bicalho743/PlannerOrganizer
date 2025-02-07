@@ -5,7 +5,6 @@ from datetime import datetime
 def show():
     st.title("👥 Gestão de Clientes")
 
-    # Tabs para organizar as operações
     tab1, tab2, tab3 = st.tabs(["Cadastrar Cliente", "Lista de Clientes", "Importar Clientes"])
 
     with tab1:
@@ -52,29 +51,22 @@ def show():
             clientes = st.session_state.db.get_clientes()
 
             if not clientes.empty:
-                # Formatar data de cadastro
+                # Converter datas para datetime
                 clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro'])
+                clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'], errors='coerce')
+
+                # Formatar datas para exibição
                 clientes['data_cadastro'] = clientes['data_cadastro'].dt.strftime('%d/%m/%Y')
-
-                # Formatar data de aniversário
-                def format_aniversario(data):
-                    try:
-                        if pd.isna(data):
-                            return ''
-                        data = pd.to_datetime(data)
-                        return data.strftime('%d/%m')
-                    except:
-                        return ''
-
-                clientes['data_aniversario'] = clientes['data_aniversario'].apply(format_aniversario)
+                clientes['data_aniversario'] = clientes['data_aniversario'].dt.strftime('%d/%m')
 
                 # Aplicar filtro de busca
                 if busca:
-                    clientes = clientes[
+                    mask = (
                         clientes['nome'].str.contains(busca, case=False, na=False) |
                         clientes['email'].str.contains(busca, case=False, na=False) |
                         clientes['cpf'].str.contains(busca, case=False, na=False)
-                    ]
+                    )
+                    clientes = clientes[mask]
 
                 # Exibir tabela de clientes
                 st.dataframe(
@@ -86,7 +78,8 @@ def show():
                     use_container_width=True
                 )
             else:
-                st.info("Nenhum cliente encontrado.")
+                st.info("Nenhum cliente cadastrado.")
+
         except Exception as e:
             st.error(f"Erro ao carregar clientes: {str(e)}")
 
@@ -114,12 +107,6 @@ def show():
                     st.error("O arquivo deve conter uma coluna 'nome'")
                 else:
                     st.write("Preview dos dados:")
-
-                    # Formatar data de aniversário no preview
-                    if 'data_aniversario' in df.columns:
-                        df['data_aniversario'] = pd.to_datetime(df['data_aniversario'], format='%d/%m/%Y', errors='coerce')
-                        df['data_aniversario'] = df['data_aniversario'].dt.strftime('%d/%m')
-
                     st.dataframe(df.head())
 
                     if st.button("Confirmar Importação"):
@@ -131,21 +118,17 @@ def show():
 
                         for index, row in df.iterrows():
                             try:
-                                # Processar data de aniversário
                                 data_aniv = None
                                 if 'data_aniversario' in row and pd.notna(row['data_aniversario']):
                                     try:
-                                        data_str = str(row['data_aniversario'])
-                                        if '/' in data_str:
-                                            dia, mes = map(int, data_str.split('/')[:2])
-                                            data_aniv = datetime.now().replace(
-                                                day=dia,
-                                                month=mes
-                                            ).date()
+                                        data = pd.to_datetime(row['data_aniversario'])
+                                        data_aniv = datetime.now().replace(
+                                            day=data.day,
+                                            month=data.month
+                                        ).date()
                                     except:
                                         pass
 
-                                # Adicionar cliente
                                 st.session_state.db.add_cliente(
                                     nome=str(row['nome']),
                                     email=str(row.get('email', '')),

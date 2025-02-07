@@ -85,16 +85,16 @@ def show():
             categorias = st.session_state.db.get_categorias_despesa()
 
             if not contas.empty and not categorias.empty:
-                # Converter datas
+                # Converter datas para datetime
                 contas['data_vencimento'] = pd.to_datetime(contas['data_vencimento'])
 
                 # Merge com categorias
-                contas = contas.merge(
+                contas = pd.merge(
+                    contas,
                     categorias[['id', 'nome']],
                     left_on='categoria_id',
                     right_on='id',
-                    how='left',
-                    suffixes=('', '_categoria')
+                    how='left'
                 )
 
                 # Aplicar filtros
@@ -120,7 +120,7 @@ def show():
                 # Resumo financeiro
                 col1, col2, col3 = st.columns(3)
 
-                # Recalcular valor total para cada status
+                # Calcular totais
                 total_pendente = contas[contas['status'] == 'Pendente']['valor'].sum()
                 total_pago = contas[contas['status'] == 'Pago']['valor'].sum()
                 total_atrasado = contas[contas['status'] == 'Atrasado']['valor'].sum()
