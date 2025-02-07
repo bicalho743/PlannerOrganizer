@@ -22,15 +22,21 @@ def show():
 
             descricao = st.text_area("Descrição do Serviço")
             valor = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
-            tipo_proposta = st.selectbox("Tipo de Proposta", ["Serviço Regular", "Consignado", "Marcenaria"])
-            
-            if tipo_proposta == "Consignado":
-                loja_consignada = st.text_input("Nome da Loja")
-                prazo_consignacao = st.number_input("Prazo de Consignação (dias)", min_value=1, value=30)
-            elif tipo_proposta == "Marcenaria":
-                marceneiro = st.text_input("Nome do Marceneiro")
+            tipo_proposta = st.selectbox(
+                "Tipo de Proposta",
+                [
+                    "Organização",
+                    "Organização Mudança",
+                    "Treinamento Funcionários",
+                    "Consultoria Online",
+                    "Consultoria Enxoval"
+                ]
+            )
+
+            if tipo_proposta in ["Organização", "Organização Mudança"]:
+                marceneiro = st.text_input("Nome do Marceneiro (opcional)")
                 prazo_entrega = st.date_input("Prazo de Entrega")
-                
+
             status = st.selectbox("Status", ["Aberta", "Fechada", "Cancelada"])
 
             submitted = st.form_submit_button("Cadastrar Proposta")
@@ -48,18 +54,13 @@ def show():
                             'status': status,
                             'tipo_proposta': tipo_proposta
                         }
-                        
-                        if tipo_proposta == "Consignado":
+
+                        if tipo_proposta in ["Organização", "Organização Mudança"]:
                             dados_proposta.update({
-                                'loja_consignada': loja_consignada,
-                                'prazo_consignacao': prazo_consignacao
+                                'marceneiro': marceneiro if 'marceneiro' in locals() else None,
+                                'prazo_entrega': prazo_entrega if 'prazo_entrega' in locals() else None
                             })
-                        elif tipo_proposta == "Marcenaria":
-                            dados_proposta.update({
-                                'marceneiro': marceneiro,
-                                'prazo_entrega': prazo_entrega
-                            })
-                            
+
                         st.session_state.db.add_proposta(**dados_proposta)
                         st.success("Proposta cadastrada com sucesso!")
                     except Exception as e:
@@ -99,7 +100,7 @@ def show():
 
             # Exibir tabela de propostas
             st.dataframe(
-                propostas[['nome', 'descricao', 'valor', 'status', 'data_proposta']],
+                propostas[['nome', 'descricao', 'valor', 'status', 'tipo_proposta', 'data_proposta']],
                 use_container_width=True
             )
         else:
