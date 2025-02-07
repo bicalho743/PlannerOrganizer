@@ -100,14 +100,19 @@ if pagina == "Dashboard":
         # Últimas propostas
         st.write("Últimas Propostas:")
         if not propostas.empty:
-            ultimas_propostas = propostas.nlargest(5, 'data_proposta')[['descricao', 'valor', 'status', 'data_proposta']]
-            st.dataframe(ultimas_propostas)
+            # Converter data_proposta para datetime
+            propostas['data_proposta'] = pd.to_datetime(propostas['data_proposta'])
+            # Ordenar por data mais recente
+            ultimas_propostas = propostas.sort_values('data_proposta', ascending=False).head(5)
+            st.dataframe(ultimas_propostas[['descricao', 'valor', 'status', 'data_proposta']])
         else:
             st.info("Nenhuma proposta cadastrada.")
 
         # Últimas transações
         st.write("Últimas Transações:")
         if not financeiro.empty:
+            # Converter data para datetime
+            financeiro['data'] = pd.to_datetime(financeiro['data'])
             ultimas_transacoes = financeiro.sort_values('data', ascending=False).head(5)
             st.dataframe(ultimas_transacoes[['descricao', 'valor', 'tipo', 'data']])
         else:
