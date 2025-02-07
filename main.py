@@ -71,7 +71,7 @@ if pagina == "Dashboard":
 
             # Aniversariantes do dia
             aniversariantes_dia = clientes[
-                (clientes['data_aniversario'].dt.day == hoje.day) & 
+                (clientes['data_aniversario'].dt.day == hoje.day) &
                 (clientes['data_aniversario'].dt.month == hoje.month)
             ]
 
@@ -93,6 +93,29 @@ if pagina == "Dashboard":
                 for _, aniv in aniversariantes_mes.iterrows():
                     data_aniv = aniv['data_aniversario']
                     st.write(f"- Dia {data_aniv.day}: {aniv['nome']}")
+
+        # Pagamentos Pendentes
+        if "acrescimos" in st.session_state:
+            pendentes = [
+                {
+                    'cliente': p['nome'],
+                    'tipo': a['tipo'],
+                    'fornecedor': a['fornecedor'] if a['tipo'] == 'Fornecedor' else '',
+                    'valor': a['valor']
+                }
+                for p in propostas.to_dict('records')
+                for a in st.session_state.acrescimos
+                if a['status_pagamento'] == 'Pendente'
+            ]
+
+            if pendentes:
+                st.write("---")
+                st.subheader("💰 Pagamentos Pendentes")
+                for p in pendentes:
+                    if p['fornecedor']:
+                        st.write(f"- {p['cliente']}: {p['tipo']} - {p['fornecedor']} (R$ {p['valor']:.2f})")
+                    else:
+                        st.write(f"- {p['cliente']}: {p['tipo']} (R$ {p['valor']:.2f})")
 
     with col2:
         st.subheader("📅 Atividades Recentes")

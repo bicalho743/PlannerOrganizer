@@ -93,9 +93,9 @@ def show():
             # Juntar dados de propostas com clientes para exibir o nome do cliente
             clientes = st.session_state.db.get_clientes()
             propostas = propostas.merge(clientes[['id', 'nome']], 
-                                    left_on='cliente_id', 
-                                    right_on='id', 
-                                    suffixes=('', '_cliente'))
+                                        left_on='cliente_id', 
+                                        right_on='id', 
+                                        suffixes=('', '_cliente'))
 
             # Selecionar proposta mostrando número e cliente
             proposta_display = propostas.apply(
@@ -145,6 +145,11 @@ def show():
 
                 descricao_acrescimo = st.text_input("Descrição")
                 valor_acrescimo = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
+                status_pagamento = st.selectbox(
+                    "Status do Pagamento",
+                    ["Pendente", "Pago"],
+                    key=f"status_pagamento_novo"
+                )
 
                 if st.form_submit_button("Adicionar"):
                     if valor_acrescimo > 0:
@@ -152,7 +157,8 @@ def show():
                             'tipo': tipo_acrescimo,
                             'fornecedor': fornecedor,
                             'descricao': descricao_acrescimo,
-                            'valor': valor_acrescimo
+                            'valor': valor_acrescimo,
+                            'status_pagamento': status_pagamento
                         }
                         st.session_state.acrescimos.append(acrescimo)
                         st.success("Acréscimo adicionado!")
@@ -164,9 +170,9 @@ def show():
                 for i, acrescimo in enumerate(st.session_state.acrescimos):
                     valor_total += acrescimo['valor']
                     if acrescimo['tipo'] == "Fornecedor":
-                        st.write(f"- {acrescimo['tipo']} - {acrescimo['fornecedor']}: R$ {acrescimo['valor']:.2f}")
+                        st.write(f"- {acrescimo['tipo']} - {acrescimo['fornecedor']}: R$ {acrescimo['valor']:.2f} ({acrescimo['status_pagamento']})")
                     else:
-                        st.write(f"- {acrescimo['tipo']}: R$ {acrescimo['valor']:.2f}")
+                        st.write(f"- {acrescimo['tipo']}: R$ {acrescimo['valor']:.2f} ({acrescimo['status_pagamento']})")
                     if acrescimo['descricao']:
                         st.write(f"  *{acrescimo['descricao']}*")
 
@@ -176,13 +182,19 @@ def show():
                 st.write(f"**Cliente:** {proposta['nome']}")
                 st.write(f"**Valor Base:** R$ {proposta['valor']:.2f}")
 
+                valor_pendente = 0.0
                 for acrescimo in st.session_state.acrescimos:
+                    status = acrescimo['status_pagamento']
+                    if status == "Pendente":
+                        valor_pendente += acrescimo['valor']
+
                     if acrescimo['tipo'] == "Fornecedor":
-                        st.write(f"**{acrescimo['tipo']} - {acrescimo['fornecedor']}:** R$ {acrescimo['valor']:.2f}")
+                        st.write(f"**{acrescimo['tipo']} - {acrescimo['fornecedor']}:** R$ {acrescimo['valor']:.2f} - {status}")
                     else:
-                        st.write(f"**{acrescimo['tipo']}:** R$ {acrescimo['valor']:.2f}")
+                        st.write(f"**{acrescimo['tipo']}:** R$ {acrescimo['valor']:.2f} - {status}")
 
                 st.write(f"**Valor Total:** R$ {valor_total:.2f}")
+                st.write(f"**Valor Pendente:** R$ {valor_pendente:.2f}")
                 st.session_state.acrescimos = []  # Limpar acréscimos após fechar
 
         except Exception as e:
