@@ -40,7 +40,6 @@ class Proposta(Base):
     valor = Column(Float)
     status = Column(String)
     tipo_proposta = Column(String)
-    marceneiro = Column(String)
     prazo_entrega = Column(Date)
     data_proposta = Column(Date, default=datetime.now().date())
 
@@ -184,15 +183,13 @@ class Database:
             'tipo_proposta': p.tipo_proposta if hasattr(p, 'tipo_proposta') else None
         } for p in propostas])
 
-    def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, 
-                     loja_consignada=None, prazo_consignacao=None, marceneiro=None, prazo_entrega=None):
+    def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, prazo_entrega=None):
         proposta = Proposta(
             cliente_id=cliente_id,
             descricao=descricao,
             valor=valor,
             status=status,
             tipo_proposta=tipo_proposta,
-            marceneiro=marceneiro,
             prazo_entrega=prazo_entrega
         )
         self.session.add(proposta)
@@ -254,46 +251,129 @@ class Database:
 
     def add_test_data(self):
         try:
+            # Add test clients
             client1_id = self.add_cliente(
-                "Maria Silva",
-                "maria@email.com",
-                "(11) 99999-9999",
-                "Rua das Flores, 123"
+                nome="Maria Silva",
+                email="maria@email.com",
+                telefone="(11) 99999-9999",
+                endereco="Rua das Flores, 123",
+                cpf="123.456.789-00",
+                data_aniversario=datetime.now().date(),
+                origem_cliente="Indicação",
+                tipo_conta="PF"
             )
 
             client2_id = self.add_cliente(
-                "João Santos",
-                "joao@email.com",
-                "(11) 88888-8888",
-                "Av. Principal, 456"
+                nome="João Santos",
+                email="joao@email.com",
+                telefone="(11) 88888-8888",
+                endereco="Av. Principal, 456",
+                cpf="987.654.321-00",
+                data_aniversario=datetime.now().date(),
+                origem_cliente="Redes Sociais",
+                tipo_conta="PF"
             )
 
-            self.add_proposta(
+            client3_id = self.add_cliente(
+                nome="Empresa ABC Ltda",
+                email="contato@empresaabc.com",
+                telefone="(11) 3333-3333",
+                endereco="Av. Comercial, 789",
+                cnpj="12.345.678/0001-90",
+                razao_social="ABC Comércio e Serviços Ltda",
+                origem_cliente="Site",
+                tipo_conta="PJ"
+            )
+
+            # Add test fornecedores
+            fornecedor1_id = self.add_fornecedor(
+                nome="Organizadores Express",
+                descricao="Fornecedor de produtos organizadores",
+                valor=0,
+                data_vencimento=None,
+                categoria="Produtos",
+                tipo_conta="PJ",
+                pix="12345678901",
+                contato="(11) 97777-7777",
+                recorrente=False
+            )
+
+            fornecedor2_id = self.add_fornecedor(
+                nome="Móveis Planejados SA",
+                descricao="Fornecedor de móveis planejados",
+                valor=0,
+                data_vencimento=None,
+                categoria="Móveis",
+                tipo_conta="PJ",
+                pix="98765432109",
+                contato="(11) 96666-6666",
+                recorrente=False
+            )
+
+            # Add test propostas
+            proposta1_id = self.add_proposta(
                 client1_id,
                 "Organização do closet",
                 1500.00,
-                "Aberta"
+                "Aberta",
+                tipo_proposta="Organização"
             )
 
-            self.add_proposta(
+            proposta2_id = self.add_proposta(
                 client2_id,
                 "Organização da cozinha",
                 2000.00,
-                "Fechada"
+                "Fechada",
+                tipo_proposta="Organização"
+            )
+
+            proposta3_id = self.add_proposta(
+                client3_id,
+                "Consultoria para escritório",
+                3500.00,
+                "Aberta",
+                tipo_proposta="Consultoria Online"
+            )
+
+            # Add test produtos organizadores
+            self.add_produto_organizador(
+                proposta_id=proposta1_id,
+                nome="Caixa Organizadora Grande",
+                descricao="Caixa transparente com tampa",
+                valor=50.00,
+                quantidade=5,
+                comodo="Closet",
+                fornecedor_id=fornecedor1_id
+            )
+
+            self.add_produto_organizador(
+                proposta_id=proposta2_id,
+                nome="Divisor de Gavetas",
+                descricao="Kit com 6 divisores",
+                valor=80.00,
+                quantidade=2,
+                comodo="Cozinha",
+                fornecedor_id=fornecedor1_id
+            )
+
+            # Add test transactions
+            self.add_transacao(
+                tipo="receita",
+                descricao="Pagamento - Organização cozinha",
+                valor=2000.00,
+                categoria="Serviço",
+                tipo_receita="organização",
+                origem_id=client2_id,
+                origem_tipo="cliente"
             )
 
             self.add_transacao(
-                "receita",
-                "Pagamento - Organização cozinha",
-                2000.00,
-                "Serviço"
-            )
-
-            self.add_transacao(
-                "despesa",
-                "Compra de materiais",
-                500.00,
-                "Fornecedor"
+                tipo="despesa",
+                descricao="Compra de materiais",
+                valor=500.00,
+                categoria="Fornecedor",
+                origem_id=fornecedor1_id,
+                origem_tipo="fornecedor"
             )
 
             return True
@@ -302,8 +382,9 @@ class Database:
             print(f"Erro ao adicionar dados de teste: {str(e)}")
             return False
 
-    def add_fornecedor(self, descricao, valor, data_vencimento, categoria, tipo_conta, pix=None, contato=None, recorrente=False, observacoes=None):
+    def add_fornecedor(self, nome, descricao, valor, data_vencimento, categoria, tipo_conta, pix=None, contato=None, recorrente=False, observacoes=None):
         fornecedor = Fornecedor(
+            nome=nome,
             descricao=descricao,
             valor=valor,
             data_vencimento=data_vencimento,
