@@ -11,123 +11,97 @@ st.set_page_config(
 if 'db' not in st.session_state:
     st.session_state.db = Database()
 
-# Verificar autenticação
-if "autenticado" not in st.session_state:
-    st.session_state.autenticado = False
-    st.session_state.usuario = None
+# Título principal
+st.title("📋 Sistema de Gestão - Personal Organizer")
 
-# Se não estiver autenticado, mostrar página de login
-if not st.session_state.autenticado:
-    import pages.login
-    pages.login.show()
-else:
-    # Menu lateral com opções condicionais baseadas no tipo de usuário
-    opcoes_menu = ["Dashboard", "Clientes", "Propostas", "Financeiro", "Contas a Pagar", "Backup", "Relatórios"]
+# Menu lateral
+st.sidebar.title("Menu Principal")
+pagina = st.sidebar.radio(
+    "Navegação",
+    ["Dashboard", "Clientes", "Propostas", "Financeiro", "Contas a Pagar", "Backup", "Relatórios"]
+)
 
-    # Adicionar opção de administração apenas para admins
-    if st.session_state.usuario.tipo == 'admin':
-        opcoes_menu.append("Administração")
+# Add test data button in sidebar if database is empty
+clientes = st.session_state.db.get_clientes()
+if clientes.empty:
+    st.sidebar.warning("Banco de dados vazio")
+    if st.sidebar.button("Adicionar Dados de Teste"):
+        if st.session_state.db.add_test_data():
+            st.sidebar.success("Dados de teste adicionados com sucesso!")
+            st.rerun()
+        else:
+            st.sidebar.error("Erro ao adicionar dados de teste")
 
-    pagina = st.sidebar.radio(
-        "Navegação",
-        opcoes_menu
-    )
+# Dashboard principal
+if pagina == "Dashboard":
+    col1, col2 = st.columns(2)
 
-    # Informações do usuário
-    st.sidebar.write(f"👤 Usuário: {st.session_state.usuario.nome}")
-    if st.sidebar.button("Sair"):
-        st.session_state.autenticado = False
-        st.session_state.usuario = None
-        st.rerun()
+    with col1:
+        st.subheader("📊 Resumo")
 
-    # Add test data button in sidebar if database is empty
-    clientes = st.session_state.db.get_clientes()
-    if clientes.empty:
-        st.sidebar.warning("Banco de dados vazio")
-        if st.sidebar.button("Adicionar Dados de Teste"):
-            if st.session_state.db.add_test_data():
-                st.sidebar.success("Dados de teste adicionados com sucesso!")
-                st.rerun()
-            else:
-                st.sidebar.error("Erro ao adicionar dados de teste")
+        # Estatísticas básicas
+        clientes = st.session_state.db.get_clientes()
+        propostas = st.session_state.db.get_propostas()
+        financeiro = st.session_state.db.get_financeiro()
 
-    # Título principal
-    st.title("📋 Sistema de Gestão - Personal Organizer")
+        st.metric("Total de Clientes", len(clientes) if not clientes.empty else 0)
+        propostas_ativas = len(propostas[propostas['status'] == 'Aberta']) if not propostas.empty else 0
+        st.metric("Propostas Ativas", propostas_ativas)
+
+        # Resumo financeiro
+        if not financeiro.empty:
+            receitas = financeiro[financeiro['tipo'] == 'receita']['valor'].sum()
+            despesas = financeiro[financeiro['tipo'] == 'despesa']['valor'].sum()
+            saldo = receitas - despesas
+        else:
+            saldo = 0.0
+
+        st.metric("Saldo Total", f"R$ {saldo:.2f}")
+
+    with col2:
+        st.subheader("📅 Atividades Recentes")
+
+        # Últimas propostas
+        st.write("Últimas Propostas:")
+        if not propostas.empty:
+            ultimas_propostas = propostas.sort_values('data_proposta', ascending=False).head(5)
+            st.dataframe(ultimas_propostas[['descricao', 'valor', 'status', 'data_proposta']])
+        else:
+            st.info("Nenhuma proposta cadastrada.")
+
+        # Últimas transações
+        st.write("Últimas Transações:")
+        if not financeiro.empty:
+            ultimas_transacoes = financeiro.sort_values('data', ascending=False).head(5)
+            st.dataframe(ultimas_transacoes[['descricao', 'valor', 'tipo', 'data']])
+        else:
+            st.info("Nenhuma transação registrada.")
+
+elif pagina == "Clientes":
+    import pages.clientes
+    pages.clientes.show()
+
+elif pagina == "Propostas":
+    import pages.propostas
+    pages.propostas.show()
+
+elif pagina == "Financeiro":
+    import pages.financeiro
+    pages.financeiro.show()
+
+elif pagina == "Contas a Pagar":
+    import pages.contas_pagar
+    pages.contas_pagar.show()
+
+elif pagina == "Backup":
+    import pages.backup
+    pages.backup.show()
+
+elif pagina == "Relatórios":
+    import pages.relatorios
+    pages.relatorios.show()
 
 
-    # Dashboard principal
-    if pagina == "Dashboard":
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.subheader("📊 Resumo")
-
-            # Estatísticas básicas
-            clientes = st.session_state.db.get_clientes()
-            propostas = st.session_state.db.get_propostas()
-            financeiro = st.session_state.db.get_financeiro()
-
-            st.metric("Total de Clientes", len(clientes) if not clientes.empty else 0)
-            propostas_ativas = len(propostas[propostas['status'] == 'Aberta']) if not propostas.empty else 0
-            st.metric("Propostas Ativas", propostas_ativas)
-
-            # Resumo financeiro
-            if not financeiro.empty:
-                receitas = financeiro[financeiro['tipo'] == 'receita']['valor'].sum()
-                despesas = financeiro[financeiro['tipo'] == 'despesa']['valor'].sum()
-                saldo = receitas - despesas
-            else:
-                saldo = 0.0
-
-            st.metric("Saldo Total", f"R$ {saldo:.2f}")
-
-        with col2:
-            st.subheader("📅 Atividades Recentes")
-
-            # Últimas propostas
-            st.write("Últimas Propostas:")
-            if not propostas.empty:
-                ultimas_propostas = propostas.sort_values('data_proposta', ascending=False).head(5)
-                st.dataframe(ultimas_propostas[['descricao', 'valor', 'status', 'data_proposta']])
-            else:
-                st.info("Nenhuma proposta cadastrada.")
-
-            # Últimas transações
-            st.write("Últimas Transações:")
-            if not financeiro.empty:
-                ultimas_transacoes = financeiro.sort_values('data', ascending=False).head(5)
-                st.dataframe(ultimas_transacoes[['descricao', 'valor', 'tipo', 'data']])
-            else:
-                st.info("Nenhuma transação registrada.")
-
-    elif pagina == "Clientes":
-        import pages.clientes
-        pages.clientes.show()
-
-    elif pagina == "Propostas":
-        import pages.propostas
-        pages.propostas.show()
-
-    elif pagina == "Financeiro":
-        import pages.financeiro
-        pages.financeiro.show()
-
-    elif pagina == "Contas a Pagar":
-        import pages.contas_pagar
-        pages.contas_pagar.show()
-
-    elif pagina == "Backup":
-        import pages.backup
-        pages.backup.show()
-
-    elif pagina == "Relatórios":
-        import pages.relatorios
-        pages.relatorios.show()
-
-    elif pagina == "Administração":
-        import pages.admin
-        pages.admin.show()
-
-    # Rodapé
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("### Desenvolvido com ❤️ usando Streamlit")
+# Rodapé
+st.sidebar.markdown("---")
+st.sidebar.markdown("### Desenvolvido com ❤️ usando Streamlit")
