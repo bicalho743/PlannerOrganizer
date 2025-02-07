@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean
+from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, Sequence
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 import pandas as pd
@@ -15,7 +15,6 @@ Base = declarative_base()
 
 class Cliente(Base):
     __tablename__ = 'clientes'
-
     id = Column(Integer, primary_key=True)
     nome = Column(String, nullable=False)
     email = Column(String)
@@ -23,9 +22,9 @@ class Cliente(Base):
     endereco = Column(String)
     cpf = Column(String)
     data_aniversario = Column(Date)
-    origem_cliente = Column(String)  # onde conheceu a personal
+    origem_cliente = Column(String)
     data_cadastro = Column(Date, default=datetime.now().date())
-    tipo_conta = Column(String, default='PF')  # PF ou PJ
+    tipo_conta = Column(String, default='PF')
     cnpj = Column(String)
     razao_social = Column(String)
 
@@ -35,18 +34,66 @@ class Proposta(Base):
     __tablename__ = 'propostas'
 
     id = Column(Integer, primary_key=True)
+    numero = Column(Integer, Sequence('proposta_seq'), unique=True, nullable=False)
     cliente_id = Column(Integer, ForeignKey('clientes.id'))
     descricao = Column(String)
     valor = Column(Float)
     status = Column(String)
-    tipo_proposta = Column(String, default='Serviço Regular')
-    loja_consignada = Column(String)
-    prazo_consignacao = Column(Integer)
+    tipo_proposta = Column(String)
     marceneiro = Column(String)
     prazo_entrega = Column(Date)
     data_proposta = Column(Date, default=datetime.now().date())
 
     cliente = relationship("Cliente", back_populates="propostas")
+    andamentos = relationship("AndamentoProposta", back_populates="proposta")
+    produtos = relationship("ProdutoOrganizador", back_populates="proposta")
+
+class AndamentoProposta(Base):
+    __tablename__ = 'andamento_propostas'
+
+    id = Column(Integer, primary_key=True)
+    proposta_id = Column(Integer, ForeignKey('propostas.id'))
+    data = Column(Date, default=datetime.now().date())
+    status = Column(String)
+    observacao = Column(String)
+    comodo = Column(String)
+
+    proposta = relationship("Proposta", back_populates="andamentos")
+
+class ProdutoOrganizador(Base):
+    __tablename__ = 'produtos_organizadores'
+
+    id = Column(Integer, primary_key=True)
+    proposta_id = Column(Integer, ForeignKey('propostas.id'))
+    nome = Column(String, nullable=False)
+    descricao = Column(String)
+    valor = Column(Float)
+    quantidade = Column(Integer)
+    comodo = Column(String, nullable=False)
+    fornecedor_id = Column(Integer, ForeignKey('fornecedores.id'))
+    data_cadastro = Column(Date, default=datetime.now().date())
+
+    proposta = relationship("Proposta", back_populates="produtos")
+    fornecedor = relationship("Fornecedor", back_populates="produtos")
+
+class Fornecedor(Base):
+    __tablename__ = 'fornecedores'
+
+    id = Column(Integer, primary_key=True)
+    nome = Column(String, nullable=False)
+    descricao = Column(String)
+    valor = Column(Float)
+    data_vencimento = Column(Date)
+    data_pagamento = Column(Date)
+    status = Column(String, default='Pendente')
+    categoria = Column(String)
+    pix = Column(String)
+    contato = Column(String)
+    tipo_conta = Column(String, nullable=False)
+    recorrente = Column(Boolean, default=False)
+    observacoes = Column(String)
+
+    produtos = relationship("ProdutoOrganizador", back_populates="fornecedor")
 
 class CategoriaDespesa(Base):
     __tablename__ = 'categorias_despesa'
@@ -54,38 +101,21 @@ class CategoriaDespesa(Base):
     id = Column(Integer, primary_key=True)
     nome = Column(String, nullable=False)
     descricao = Column(String)
-    tipo_conta = Column(String)  # PF ou PJ
-
-class Fornecedor(Base): # Renamed to Fornecedor
-    __tablename__ = 'fornecedores'
-
-    id = Column(Integer, primary_key=True)
-    descricao = Column(String, nullable=False)
-    valor = Column(Float, nullable=False)
-    data_vencimento = Column(Date, nullable=False)
-    data_pagamento = Column(Date)
-    status = Column(String, default='Pendente')  # Pendente, Pago, Atrasado
-    categoria = Column(String)
-    pix = Column(String)
-    contato = Column(String)
-    tipo_conta = Column(String, nullable=False)  # PF ou PJ
-    recorrente = Column(Boolean, default=False)
-    observacoes = Column(String)
-
+    tipo_conta = Column(String)
 
 class Transacao(Base):
     __tablename__ = 'financeiro'
 
     id = Column(Integer, primary_key=True)
-    tipo = Column(String)  # receita/despesa
+    tipo = Column(String)
     descricao = Column(String)
     valor = Column(Float)
     data = Column(Date, default=datetime.now().date())
     categoria = Column(String)
-    tipo_receita = Column(String)  # organização, comissão, venda
-    origem_id = Column(Integer)  # ID do cliente ou fornecedor
-    origem_tipo = Column(String)  # cliente ou fornecedor
-    tipo_conta = Column(String, default='PF')  # PF ou PJ
+    tipo_receita = Column(String)
+    origem_id = Column(Integer)
+    origem_tipo = Column(String)
+    tipo_conta = Column(String, default='PF')
 
 class Produto(Base):
     __tablename__ = 'produtos'
@@ -162,8 +192,6 @@ class Database:
             valor=valor,
             status=status,
             tipo_proposta=tipo_proposta,
-            loja_consignada=loja_consignada,
-            prazo_consignacao=prazo_consignacao,
             marceneiro=marceneiro,
             prazo_entrega=prazo_entrega
         )
@@ -225,9 +253,7 @@ class Database:
         return produto.id
 
     def add_test_data(self):
-        """Add sample data for testing"""
         try:
-            # Add test clients
             client1_id = self.add_cliente(
                 "Maria Silva",
                 "maria@email.com",
@@ -242,7 +268,6 @@ class Database:
                 "Av. Principal, 456"
             )
 
-            # Add test proposals
             self.add_proposta(
                 client1_id,
                 "Organização do closet",
@@ -257,7 +282,6 @@ class Database:
                 "Fechada"
             )
 
-            # Add test transactions
             self.add_transacao(
                 "receita",
                 "Pagamento - Organização cozinha",
@@ -278,8 +302,8 @@ class Database:
             print(f"Erro ao adicionar dados de teste: {str(e)}")
             return False
 
-    def add_fornecedor(self, descricao, valor, data_vencimento, categoria, tipo_conta, pix=None, contato=None, recorrente=False, observacoes=None): #Updated method
-        fornecedor = Fornecedor( #Renamed to Fornecedor
+    def add_fornecedor(self, descricao, valor, data_vencimento, categoria, tipo_conta, pix=None, contato=None, recorrente=False, observacoes=None):
+        fornecedor = Fornecedor(
             descricao=descricao,
             valor=valor,
             data_vencimento=data_vencimento,
@@ -294,7 +318,7 @@ class Database:
         self.session.commit()
         return fornecedor.id
 
-    def get_fornecedores(self): #Added method
+    def get_fornecedores(self):
         fornecedores = self.session.query(Fornecedor).all()
         return pd.DataFrame([{
             'id': f.id,
@@ -310,8 +334,6 @@ class Database:
             'recorrente': f.recorrente,
             'observacoes': f.observacoes
         } for f in fornecedores])
-
-
 
     def add_categoria_despesa(self, nome, descricao, tipo_conta):
         categoria = CategoriaDespesa(
@@ -331,6 +353,57 @@ class Database:
             'descricao': c.descricao,
             'tipo_conta': c.tipo_conta
         } for c in categorias])
+
+    def add_andamento_proposta(self, proposta_id, status, observacao, comodo=None):
+        andamento = AndamentoProposta(
+            proposta_id=proposta_id,
+            status=status,
+            observacao=observacao,
+            comodo=comodo
+        )
+        self.session.add(andamento)
+        self.session.commit()
+        return andamento.id
+
+    def get_andamentos_proposta(self, proposta_id):
+        andamentos = self.session.query(AndamentoProposta).filter_by(proposta_id=proposta_id).all()
+        return pd.DataFrame([{
+            'id': a.id,
+            'data': a.data,
+            'status': a.status,
+            'observacao': a.observacao,
+            'comodo': a.comodo
+        } for a in andamentos])
+
+    def add_produto_organizador(self, proposta_id, nome, descricao, valor, quantidade, comodo, fornecedor_id):
+        produto = ProdutoOrganizador(
+            proposta_id=proposta_id,
+            nome=nome,
+            descricao=descricao,
+            valor=valor,
+            quantidade=quantidade,
+            comodo=comodo,
+            fornecedor_id=fornecedor_id
+        )
+        self.session.add(produto)
+        self.session.commit()
+        return produto.id
+
+    def get_produtos_organizadores(self, proposta_id=None):
+        query = self.session.query(ProdutoOrganizador)
+        if proposta_id:
+            query = query.filter_by(proposta_id=proposta_id)
+        produtos = query.all()
+        return pd.DataFrame([{
+            'id': p.id,
+            'nome': p.nome,
+            'descricao': p.descricao,
+            'valor': p.valor,
+            'quantidade': p.quantidade,
+            'comodo': p.comodo,
+            'fornecedor_id': p.fornecedor_id,
+            'data_cadastro': p.data_cadastro
+        } for p in produtos])
 
     def __del__(self):
         if hasattr(self, 'session'):
