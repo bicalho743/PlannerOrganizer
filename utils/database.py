@@ -7,9 +7,11 @@ import pandas as pd
 
 # Get database URL from environment variable
 DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL is None:
+    raise ValueError("DATABASE_URL environment variable is not set")
+
 engine = create_engine(DATABASE_URL)
 Base = declarative_base()
-Session = sessionmaker(bind=engine)
 
 class Cliente(Base):
     __tablename__ = 'clientes'
@@ -56,12 +58,16 @@ class Produto(Base):
     quantidade = Column(Integer)
     data_cadastro = Column(Date, default=datetime.now().date())
 
-# Create tables
-Base.metadata.create_all(engine)
-
 class Database:
     def __init__(self):
-        self.session = Session()
+        try:
+            # Create tables before initializing session
+            Base.metadata.create_all(engine)
+            Session = sessionmaker(bind=engine)
+            self.session = Session()
+        except Exception as e:
+            print(f"Erro ao inicializar banco de dados: {str(e)}")
+            raise e
 
     def get_clientes(self):
         clientes = self.session.query(Cliente).all()
@@ -208,4 +214,5 @@ class Database:
             return False
 
     def __del__(self):
-        self.session.close()
+        if hasattr(self, 'session'):
+            self.session.close()
