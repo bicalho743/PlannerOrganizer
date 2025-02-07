@@ -64,17 +64,14 @@ class Fornecedor(Base):
     __tablename__ = 'fornecedores'
     id = Column(Integer, primary_key=True)
     nome = Column(String, nullable=False)
-    descricao = Column(String)
-    valor = Column(Float)
-    data_vencimento = Column(Date)
-    data_pagamento = Column(Date)
-    status = Column(String, default='Pendente')
-    categoria = Column(String)
+    telefone = Column(String)
+    endereco = Column(String)
     pix = Column(String)
-    contato = Column(String)
+    categoria = Column(String)
     tipo_conta = Column(String, nullable=False)
     recorrente = Column(Boolean, default=False)
     observacoes = Column(String)
+    data_cadastro = Column(Date, default=datetime.now().date())
 
 class Assistente(Base):
     __tablename__ = 'assistentes'
@@ -298,17 +295,15 @@ class Database:
             return transacao.id
         return self._safe_query(query)
 
-    def add_fornecedor(self, nome, descricao, valor, data_vencimento, categoria, tipo_conta, pix=None, contato=None, recorrente=False, observacoes=None):
+    def add_fornecedor(self, nome, telefone, endereco, categoria, tipo_conta, pix=None, recorrente=False, observacoes=None):
         def query():
             fornecedor = Fornecedor(
                 nome=nome,
-                descricao=descricao,
-                valor=valor,
-                data_vencimento=data_vencimento,
+                telefone=telefone,
+                endereco=endereco,
                 categoria=categoria,
                 tipo_conta=tipo_conta,
                 pix=pix,
-                contato=contato,
                 recorrente=recorrente,
                 observacoes=observacoes
             )
@@ -322,17 +317,14 @@ class Database:
             return pd.DataFrame([{
                 'id': f.id,
                 'nome': f.nome,
-                'descricao': f.descricao,
-                'valor': f.valor,
-                'data_vencimento': f.data_vencimento,
-                'data_pagamento': f.data_pagamento,
-                'status': f.status,
+                'telefone': f.telefone,
+                'endereco': f.endereco,
                 'categoria': f.categoria,
-                'pix': f.pix,
-                'contato': f.contato,
                 'tipo_conta': f.tipo_conta,
+                'pix': f.pix,
                 'recorrente': f.recorrente,
-                'observacoes': f.observacoes
+                'observacoes': f.observacoes,
+                'data_cadastro': f.data_cadastro
             } for f in fornecedores])
         return self._safe_query(query)
 
@@ -456,7 +448,6 @@ class Database:
             return False
         return self._safe_query(query)
 
-
     def get_produto_fornecedores(self, produto_id):
         """Retorna todos os fornecedores e preços de um produto"""
         def query():
@@ -562,13 +553,11 @@ class Database:
 
             fornecedor1_id = self.add_fornecedor(
                 nome="Organizadores Express",
-                descricao="Fornecedor de produtos organizadores",
-                valor=0,
-                data_vencimento=None,
+                telefone="(11) 97777-7777",
+                endereco="Av. Teste, 100",
                 categoria="Produtos",
                 tipo_conta="PJ",
                 pix="12345678901",
-                contato="(11) 97777-7777",
                 recorrente=False
             )
 

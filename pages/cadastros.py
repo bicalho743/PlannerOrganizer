@@ -31,13 +31,11 @@ def show():
                     try:
                         st.session_state.db.add_fornecedor(
                             nome=nome,
-                            descricao=observacoes,
-                            valor=0,  # Valor inicial
-                            data_vencimento=None,
+                            telefone=telefone,
+                            endereco=endereco,
                             categoria=categoria,
                             tipo_conta=tipo_conta,
                             pix=pix,
-                            contato=telefone,
                             recorrente=recorrente,
                             observacoes=observacoes
                         )
@@ -54,8 +52,9 @@ def show():
         if not fornecedores.empty:
             st.dataframe(
                 fornecedores[[
-                    'nome', 'contato', 'categoria',
-                    'tipo_conta', 'pix', 'recorrente'
+                    'nome', 'telefone', 'categoria',
+                    'tipo_conta', 'pix', 'recorrente',
+                    'data_cadastro'
                 ]],
                 use_container_width=True
             )
