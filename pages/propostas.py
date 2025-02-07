@@ -93,9 +93,9 @@ def show():
             # Juntar dados de propostas com clientes para exibir o nome do cliente
             clientes = st.session_state.db.get_clientes()
             propostas = propostas.merge(clientes[['id', 'nome']], 
-                                      left_on='cliente_id', 
-                                      right_on='id', 
-                                      suffixes=('', '_cliente'))
+                                    left_on='cliente_id', 
+                                    right_on='id', 
+                                    suffixes=('', '_cliente'))
 
             # Selecionar proposta mostrando número e cliente
             proposta_display = propostas.apply(
@@ -110,72 +110,80 @@ def show():
             # Extrair número da proposta do texto selecionado
             numero_proposta = int(proposta_selecionada.split('#')[1].split(' -')[0])
             proposta = propostas[propostas['numero'] == numero_proposta].iloc[0]
-            proposta_id = int(proposta['id'])
 
             # Exibir detalhes da proposta
             st.write(f"**Cliente:** {proposta['nome']}")
             st.write(f"**Descrição:** {proposta['descricao']}")
-            st.write(f"**Valor Total:** R$ {proposta['valor']:.2f}")
-            st.write(f"**Status:** {proposta['status']}")
+            valor_total = proposta['valor']
+            st.write(f"**Valor Base:** R$ {valor_total:.2f}")
 
-            # Adicionar produto com fornecedor
-            st.subheader("Adicionar Produto")
-            with st.form("cadastro_produto", clear_on_submit=True):
-                nome_produto = st.text_input("Nome do Produto")
-                descricao_produto = st.text_area("Descrição")
-                valor_produto = st.number_input("Valor do Produto (R$)", min_value=0.0, step=0.01)
-                quantidade = st.number_input("Quantidade", min_value=1, value=1)
-                comodo = st.text_input("Cômodo")
+            # Adicionar acréscimos
+            st.subheader("Adicionar Acréscimos")
 
-                # Seleção de fornecedor
-                fornecedores = st.session_state.db.get_fornecedores()
-                if not fornecedores.empty:
-                    fornecedor = st.selectbox(
-                        "Fornecedor",
-                        fornecedores['nome'].tolist()
+            # Lista para armazenar os acréscimos
+            if "acrescimos" not in st.session_state:
+                st.session_state.acrescimos = []
+
+            # Formulário para adicionar acréscimo
+            with st.form("adicionar_acrescimo"):
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    tipo_acrescimo = st.selectbox(
+                        "Tipo de Acréscimo",
+                        ["Organização", "Fornecedor", "Marcenaria", "Produto"]
                     )
-                    fornecedor_id = int(fornecedores[fornecedores['nome'] == fornecedor]['id'].iloc[0])
-                else:
-                    st.warning("Nenhum fornecedor cadastrado")
-                    fornecedor_id = None
 
-                if st.form_submit_button("Adicionar") and nome_produto and comodo:
-                    try:
-                        # Adicionar produto
-                        produto_id = st.session_state.db.add_produto_organizador(
-                            proposta_id=proposta_id,
-                            nome=nome_produto,
-                            descricao=descricao_produto,
-                            valor=valor_produto,
-                            quantidade=quantidade,
-                            comodo=comodo
+                with col2:
+                    if tipo_acrescimo == "Fornecedor":
+                        fornecedor = st.selectbox(
+                            "Fornecedor",
+                            ["La Luc", "Multicoisas", "Organizatta", "Outro"]
                         )
+                    else:
+                        fornecedor = None
 
-                        # Se fornecedor foi selecionado, vincular ao produto
-                        if fornecedor_id:
-                            st.session_state.db.add_produto_fornecedor(
-                                produto_id=produto_id,
-                                fornecedor_id=fornecedor_id,
-                                valor=valor_produto
-                            )
+                descricao_acrescimo = st.text_input("Descrição")
+                valor_acrescimo = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
 
-                        st.success("Produto adicionado com sucesso!")
+                if st.form_submit_button("Adicionar"):
+                    if valor_acrescimo > 0:
+                        acrescimo = {
+                            'tipo': tipo_acrescimo,
+                            'fornecedor': fornecedor,
+                            'descricao': descricao_acrescimo,
+                            'valor': valor_acrescimo
+                        }
+                        st.session_state.acrescimos.append(acrescimo)
+                        st.success("Acréscimo adicionado!")
                         st.rerun()
-                    except Exception as e:
-                        st.error(f"Erro ao adicionar produto: {str(e)}")
 
-            # Listar produtos
-            produtos = st.session_state.db.get_produtos_organizadores(proposta_id)
-            if not produtos.empty:
-                st.subheader("Produtos da Proposta")
-                for _, produto in produtos.iterrows():
-                    with st.expander(f"{produto['nome']} - {produto['comodo']}"):
-                        st.write(f"**Descrição:** {produto['descricao']}")
-                        st.write(f"**Quantidade:** {produto['quantidade']}")
-                        st.write(f"**Valor Atual:** R$ {produto['valor']:.2f}")
+            # Exibir acréscimos
+            if st.session_state.acrescimos:
+                st.write("### Acréscimos Adicionados")
+                for i, acrescimo in enumerate(st.session_state.acrescimos):
+                    valor_total += acrescimo['valor']
+                    if acrescimo['tipo'] == "Fornecedor":
+                        st.write(f"- {acrescimo['tipo']} - {acrescimo['fornecedor']}: R$ {acrescimo['valor']:.2f}")
+                    else:
+                        st.write(f"- {acrescimo['tipo']}: R$ {acrescimo['valor']:.2f}")
+                    if acrescimo['descricao']:
+                        st.write(f"  *{acrescimo['descricao']}*")
 
-            else:
-                st.info("Nenhum produto cadastrado para esta proposta.")
+            # Botão para fechar e mostrar total
+            if st.button("Fechar Proposta"):
+                st.write("### Resumo Final")
+                st.write(f"**Cliente:** {proposta['nome']}")
+                st.write(f"**Valor Base:** R$ {proposta['valor']:.2f}")
+
+                for acrescimo in st.session_state.acrescimos:
+                    if acrescimo['tipo'] == "Fornecedor":
+                        st.write(f"**{acrescimo['tipo']} - {acrescimo['fornecedor']}:** R$ {acrescimo['valor']:.2f}")
+                    else:
+                        st.write(f"**{acrescimo['tipo']}:** R$ {acrescimo['valor']:.2f}")
+
+                st.write(f"**Valor Total:** R$ {valor_total:.2f}")
+                st.session_state.acrescimos = []  # Limpar acréscimos após fechar
 
         except Exception as e:
             st.error(f"Erro ao carregar dados: {str(e)}")
