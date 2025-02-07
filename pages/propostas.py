@@ -39,7 +39,6 @@ def show():
             )
 
             if tipo_proposta in ["Organização", "Organização Mudança"]:
-                marceneiro = st.text_input("Nome do Marceneiro (opcional)")
                 prazo_entrega = st.date_input("Prazo de Entrega")
 
             status = st.selectbox("Status", ["Aberta", "Fechada", "Cancelada"])
@@ -61,10 +60,7 @@ def show():
                         }
 
                         if tipo_proposta in ["Organização", "Organização Mudança"]:
-                            dados_proposta.update({
-                                'marceneiro': marceneiro if 'marceneiro' in locals() else None,
-                                'prazo_entrega': prazo_entrega if 'prazo_entrega' in locals() else None
-                            })
+                            dados_proposta['prazo_entrega'] = prazo_entrega if 'prazo_entrega' in locals() else None
 
                         proposta_id = st.session_state.db.add_proposta(**dados_proposta)
                         st.success(f"Proposta cadastrada com sucesso! Número: {proposta_id}")
