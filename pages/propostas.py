@@ -145,11 +145,6 @@ def show():
 
                 descricao_acrescimo = st.text_input("Descrição")
                 valor_acrescimo = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
-                status_pagamento = st.selectbox(
-                    "Status do Pagamento",
-                    ["Pendente", "Pago"],
-                    key=f"status_pagamento_novo"
-                )
 
                 if st.form_submit_button("Adicionar"):
                     if valor_acrescimo > 0:
@@ -158,7 +153,7 @@ def show():
                             'fornecedor': fornecedor,
                             'descricao': descricao_acrescimo,
                             'valor': valor_acrescimo,
-                            'status_pagamento': status_pagamento
+                            'status_pagamento': 'Pendente'  # Default status
                         }
                         st.session_state.acrescimos.append(acrescimo)
                         st.success("Acréscimo adicionado!")
@@ -170,9 +165,9 @@ def show():
                 for i, acrescimo in enumerate(st.session_state.acrescimos):
                     valor_total += acrescimo['valor']
                     if acrescimo['tipo'] == "Fornecedor":
-                        st.write(f"- {acrescimo['tipo']} - {acrescimo['fornecedor']}: R$ {acrescimo['valor']:.2f} ({acrescimo['status_pagamento']})")
+                        st.write(f"- {acrescimo['tipo']} - {acrescimo['fornecedor']}: R$ {acrescimo['valor']:.2f}")
                     else:
-                        st.write(f"- {acrescimo['tipo']}: R$ {acrescimo['valor']:.2f} ({acrescimo['status_pagamento']})")
+                        st.write(f"- {acrescimo['tipo']}: R$ {acrescimo['valor']:.2f}")
                     if acrescimo['descricao']:
                         st.write(f"  *{acrescimo['descricao']}*")
 
