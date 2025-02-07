@@ -112,28 +112,26 @@ if pagina == "Dashboard":
 
 
     with col2:
-        st.subheader("📅 Atividades Recentes")
+        st.subheader("📋 Propostas em Aberto")
 
-        # Últimas propostas
-        st.write("Últimas Propostas:")
+        # Propostas em aberto
         if not propostas.empty:
             # Converter data_proposta para datetime
             propostas['data_proposta'] = pd.to_datetime(propostas['data_proposta'])
-            # Ordenar por data mais recente
-            ultimas_propostas = propostas.sort_values('data_proposta', ascending=False).head(5)
-            st.dataframe(ultimas_propostas[['descricao', 'valor', 'status', 'data_proposta']])
+            # Filtrar propostas abertas
+            propostas_abertas = propostas[propostas['status'] == 'Aberta'].sort_values('data_proposta', ascending=False)
+
+            if not propostas_abertas.empty:
+                for _, p in propostas_abertas.iterrows():
+                    with st.expander(f"Proposta #{p['numero']} - {p['descricao']}"):
+                        st.write(f"**Valor:** R$ {p['valor']:.2f}")
+                        st.write(f"**Data:** {p['data_proposta'].strftime('%d/%m/%Y')}")
+                        if p['prazo_entrega']:
+                            st.write(f"**Prazo de Entrega:** {p['prazo_entrega'].strftime('%d/%m/%Y')}")
+            else:
+                st.info("Nenhuma proposta em aberto.")
         else:
             st.info("Nenhuma proposta cadastrada.")
-
-        # Últimas transações
-        st.write("Últimas Transações:")
-        if not financeiro.empty:
-            # Converter data para datetime
-            financeiro['data'] = pd.to_datetime(financeiro['data'])
-            ultimas_transacoes = financeiro.sort_values('data', ascending=False).head(5)
-            st.dataframe(ultimas_transacoes[['descricao', 'valor', 'tipo', 'data']])
-        else:
-            st.info("Nenhuma transação registrada.")
 
 elif pagina == "Clientes":
     import pages.clientes

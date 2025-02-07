@@ -57,31 +57,39 @@ def show():
             clientes = st.session_state.db.get_clientes()
 
             if not clientes.empty:
-                # Converter colunas de data para o formato correto
-                clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro'])
-                clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'])
+                try:
+                    # Converter colunas de data para o formato correto
+                    # Tratamento especial para datas nulas
+                    clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro'], errors='coerce')
+                    clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'], errors='coerce')
 
-                # Formatar datas
-                clientes['data_cadastro'] = clientes['data_cadastro'].dt.strftime('%d/%m/%Y')
-                # Apenas dia e mês para aniversário
-                clientes['data_aniversario'] = clientes['data_aniversario'].dt.strftime('%d/%m')
+                    # Formatar datas com tratamento para valores nulos
+                    clientes['data_cadastro'] = clientes['data_cadastro'].apply(
+                        lambda x: x.strftime('%d/%m/%Y') if pd.notnull(x) else ''
+                    )
+                    clientes['data_aniversario'] = clientes['data_aniversario'].apply(
+                        lambda x: x.strftime('%d/%m') if pd.notnull(x) else ''
+                    )
 
-                if busca:
-                    clientes = clientes[
-                        clientes['nome'].str.contains(busca, case=False, na=False) |
-                        clientes['email'].str.contains(busca, case=False, na=False) |
-                        clientes['cpf'].str.contains(busca, case=False, na=False)
-                    ]
+                    if busca:
+                        # Converter todos os campos para string antes da busca
+                        clientes = clientes[
+                            clientes['nome'].astype(str).str.contains(busca, case=False, na=False) |
+                            clientes['email'].astype(str).str.contains(busca, case=False, na=False) |
+                            clientes['cpf'].astype(str).str.contains(busca, case=False, na=False)
+                        ]
 
-                # Exibir tabela de clientes
-                st.dataframe(
-                    clientes[[
-                        'nome', 'cpf', 'email', 'telefone', 
-                        'data_aniversario', 'origem_cliente',
-                        'data_cadastro'
-                    ]],
-                    use_container_width=True
-                )
+                    # Exibir tabela de clientes
+                    st.dataframe(
+                        clientes[[
+                            'nome', 'cpf', 'email', 'telefone', 
+                            'data_aniversario', 'origem_cliente',
+                            'data_cadastro'
+                        ]],
+                        use_container_width=True
+                    )
+                except Exception as e:
+                    st.error(f"Erro ao processar dados dos clientes: {str(e)}")
             else:
                 st.info("Nenhum cliente encontrado.")
         except Exception as e:
@@ -117,7 +125,8 @@ def show():
                     # Mostrar preview dos dados
                     st.write("Preview dos dados:")
                     if 'data_aniversario' in df.columns:
-                        df['data_aniversario'] = pd.to_datetime(df['data_aniversario'])
+                        # Tratar datas com valores nulos
+                        df['data_aniversario'] = pd.to_datetime(df['data_aniversario'], errors='coerce')
                     st.dataframe(df.head())
 
                     if st.button("Confirmar Importação"):
@@ -134,18 +143,18 @@ def show():
                             try:
                                 # Converter data se existir
                                 data_aniv = None
-                                if 'data_aniversario' in row and pd.notna(row['data_aniversario']):
+                                if 'data_aniversario' in row and pd.notnull(row['data_aniversario']):
                                     data_aniv = row['data_aniversario'].date()
 
                                 # Adicionar cliente
                                 st.session_state.db.add_cliente(
                                     nome=row['nome'],
-                                    email=row.get('email', ''),
-                                    telefone=row.get('telefone', ''),
-                                    endereco=row.get('endereco', ''),
-                                    cpf=row.get('cpf', ''),
+                                    email=str(row.get('email', '')),
+                                    telefone=str(row.get('telefone', '')),
+                                    endereco=str(row.get('endereco', '')),
+                                    cpf=str(row.get('cpf', '')),
                                     data_aniversario=data_aniv,
-                                    origem_cliente=row.get('origem_cliente', 'Importação')
+                                    origem_cliente=str(row.get('origem_cliente', 'Importação'))
                                 )
                                 success_count += 1
                             except Exception as e:
