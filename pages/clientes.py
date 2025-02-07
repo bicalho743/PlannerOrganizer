@@ -59,7 +59,6 @@ def show():
             if not clientes.empty:
                 try:
                     # Converter colunas de data para o formato correto
-                    # Tratamento especial para datas nulas
                     clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro'], errors='coerce')
                     clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'], errors='coerce')
 
@@ -107,7 +106,7 @@ def show():
         - cpf
         - email
         - telefone
-        - data_aniversario (formato: DD/MM/YYYY)
+        - data_aniversario (formato: DD/MM)
         - endereco
         - origem_cliente
         """)
@@ -131,7 +130,7 @@ def show():
                     if 'data_aniversario' in df.columns:
                         df['data_aniversario'] = pd.to_datetime(df['data_aniversario'], errors='coerce')
                         df['data_aniversario'] = df['data_aniversario'].apply(
-                            lambda x: f"{x.day:02d}/{x.month:02d}" if pd.notnull(x) else ''
+                            lambda x: x.strftime('%d/%m') if pd.notnull(x) else ''
                         )
 
                     st.dataframe(df.head())
@@ -148,18 +147,23 @@ def show():
                         # Processar cada linha
                         for index, row in df.iterrows():
                             try:
-                                # Converter data se existir, mantendo apenas dia e mês
+                                # Converter data se existir
                                 data_aniv = None
                                 if 'data_aniversario' in row and row['data_aniversario']:
                                     try:
-                                        dia, mes = row['data_aniversario'].split('/')
-                                        data_aniv = datetime.now().replace(day=int(dia), month=int(mes)).date()
+                                        # Tentar diferentes formatos de data
+                                        data = pd.to_datetime(row['data_aniversario'], errors='coerce')
+                                        if pd.notnull(data):
+                                            data_aniv = datetime.now().replace(
+                                                day=data.day,
+                                                month=data.month
+                                            ).date()
                                     except:
                                         data_aniv = None
 
                                 # Adicionar cliente
                                 st.session_state.db.add_cliente(
-                                    nome=row['nome'],
+                                    nome=str(row['nome']),
                                     email=str(row.get('email', '')),
                                     telefone=str(row.get('telefone', '')),
                                     endereco=str(row.get('endereco', '')),
