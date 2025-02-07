@@ -131,7 +131,7 @@ def show():
                 with col1:
                     tipo_acrescimo = st.selectbox(
                         "Tipo de Acréscimo",
-                        ["Organização", "Fornecedor", "Marcenaria", "Produto"]
+                        ["Organização", "Assistente", "Fornecedor", "Marcenaria", "Produto"]
                     )
 
                 with col2:
@@ -140,17 +140,30 @@ def show():
                             "Fornecedor",
                             ["La Luc", "Multicoisas", "Organizatta", "Outro"]
                         )
+                        fornecedor_nome = fornecedor
+                    elif tipo_acrescimo == "Assistente":
+                        # Carregar assistentes cadastrados
+                        assistentes = st.session_state.db.get_assistentes()
+                        if not assistentes.empty:
+                            assistente = st.selectbox(
+                                "Assistente",
+                                assistentes['nome'].tolist()
+                            )
+                            fornecedor_nome = assistente
+                        else:
+                            st.warning("Nenhum assistente cadastrado. Por favor, cadastre um assistente primeiro.")
+                            fornecedor_nome = None
                     else:
-                        fornecedor = None
+                        fornecedor_nome = None
 
                 descricao_acrescimo = st.text_input("Descrição")
                 valor_acrescimo = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
 
                 if st.form_submit_button("Adicionar"):
-                    if valor_acrescimo > 0:
+                    if valor_acrescimo > 0 and (tipo_acrescimo != "Assistente" or fornecedor_nome):
                         acrescimo = {
                             'tipo': tipo_acrescimo,
-                            'fornecedor': fornecedor,
+                            'fornecedor': fornecedor_nome,
                             'descricao': descricao_acrescimo,
                             'valor': valor_acrescimo,
                             'status_pagamento': 'Pendente'  # Default status
@@ -158,6 +171,10 @@ def show():
                         st.session_state.acrescimos.append(acrescimo)
                         st.success("Acréscimo adicionado!")
                         st.rerun()
+                    elif tipo_acrescimo == "Assistente" and not fornecedor_nome:
+                        st.error("Por favor, selecione um assistente.")
+                    else:
+                        st.error("Por favor, insira um valor válido.")
 
             # Exibir acréscimos
             if st.session_state.acrescimos:
