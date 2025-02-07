@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, Sequence, func, Index
+from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, func, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 import pandas as pd
@@ -78,7 +78,7 @@ class CategoriaDespesa(Base):
 class Proposta(Base):
     __tablename__ = 'propostas'
     id = Column(Integer, primary_key=True)
-    numero = Column(Integer, Sequence('proposta_seq'), unique=True, nullable=False)
+    numero = Column(Integer, nullable=False)
     cliente_id = Column(Integer, ForeignKey('clientes.id'))
     descricao = Column(String)
     valor = Column(Float)
@@ -91,6 +91,10 @@ class Proposta(Base):
 
     cliente = relationship("Cliente", back_populates="propostas")
     produtos = relationship("ProdutoOrganizador", back_populates="proposta", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index('idx_proposta_numero', 'numero', unique=True),
+    )
 
 class ProdutoOrganizador(Base):
     __tablename__ = 'produtos_organizadores'
@@ -204,19 +208,28 @@ class Database:
         } for p in propostas])
 
     def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, data_inicio=None, data_fim=None, prazo_entrega=None):
-        proposta = Proposta(
-            cliente_id=cliente_id,
-            descricao=descricao,
-            valor=valor,
-            status=status,
-            tipo_proposta=tipo_proposta,
-            data_inicio=data_inicio,
-            data_fim=data_fim,
-            prazo_entrega=prazo_entrega
-        )
-        self.session.add(proposta)
-        self.session.commit()
-        return proposta.id
+        try:
+            # Gerar próximo número de proposta
+            ultimo_numero = self.session.query(func.max(Proposta.numero)).scalar()
+            proximo_numero = 1 if ultimo_numero is None else ultimo_numero + 1
+
+            proposta = Proposta(
+                numero=proximo_numero,
+                cliente_id=cliente_id,
+                descricao=descricao,
+                valor=valor,
+                status=status,
+                tipo_proposta=tipo_proposta,
+                data_inicio=data_inicio,
+                data_fim=data_fim,
+                prazo_entrega=prazo_entrega
+            )
+            self.session.add(proposta)
+            self.session.commit()
+            return proposta.id
+        except Exception as e:
+            self.session.rollback()
+            raise Exception(f"Erro ao adicionar proposta: {str(e)}")
 
     def get_financeiro(self):
         transacoes = self.session.query(Transacao).order_by(Transacao.data.desc()).limit(1000).all()
