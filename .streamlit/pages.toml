@@ -1,0 +1,18 @@
+[pages]
+# Lista apenas as páginas que queremos mostrar
+order = [
+    "clientes.py",
+    "propostas.py",
+    "financeiro.py",
+    "contas_pagar.py",
+    "cadastros.py",
+    "backup.py",
+    "relatorios.py"
+]
+
+# Oculta as páginas que não queremos mostrar
+visibility = """
+login.py = false
+admin.py = false
+mais.py = false
+"""
