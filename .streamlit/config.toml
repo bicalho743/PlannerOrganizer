@@ -14,5 +14,4 @@ font = "sans serif"
 gatherUsageStats = false
 
 [client]
-toolbarMode = "hidden"
 showErrorDetails = false
