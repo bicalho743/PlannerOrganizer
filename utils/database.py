@@ -14,13 +14,15 @@ if DATABASE_URL is None:
 # Ensure proper SSL configuration for PostgreSQL
 engine = create_engine(
     DATABASE_URL,
-    connect_args={'sslmode': 'require'} if 'postgresql' in DATABASE_URL else {}
+    connect_args={'sslmode': 'require'} if 'postgresql' in DATABASE_URL else {},
+    pool_pre_ping=True,
+    pool_recycle=3600
 )
 
 Base = declarative_base()
 
 # Create scoped session
-session_factory = sessionmaker(bind=engine)
+session_factory = sessionmaker(bind=engine, expire_on_commit=False)
 Session = scoped_session(session_factory)
 
 class Usuario(Base):
@@ -190,20 +192,23 @@ class Database:
             self.session = Session()
         except Exception as e:
             print(f"Erro ao inicializar banco de dados: {str(e)}")
-            if hasattr(self, 'session'):
-                self.session.rollback()
-                self.session.close()
             raise e
 
     def _safe_query(self, query_func):
         """Wrapper para executar queries com tratamento de erro"""
         try:
+            if not self.session.is_active:
+                self.session = Session()
             result = query_func()
             self.session.commit()
             return result
         except Exception as e:
-            self.session.rollback()
+            if self.session.is_active:
+                self.session.rollback()
             raise e
+        finally:
+            self.session.close()
+            Session.remove()
 
     def get_clientes(self):
         def query():
