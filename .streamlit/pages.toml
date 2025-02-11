@@ -10,7 +10,7 @@ order = [
     "relatorios.py"
 ]
 
-# Oculta as páginas que não queremos mostrar
+# Oculta páginas que não queremos mostrar
 visibility = """
 login.py = false
 admin.py = false
