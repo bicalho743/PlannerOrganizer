@@ -16,7 +16,7 @@ base = "dark"
 
 [browser]
 gatherUsageStats = false
-serverAddress = "plannerorganiza.com.br"
+serverAddress = "tamaraorganiza.com.br"
 
 [client]
 showErrorDetails = false
