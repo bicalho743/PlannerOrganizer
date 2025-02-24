@@ -1,21 +1,8 @@
 import streamlit as st
-from utils.pagamentos import GerenciadorPagamentos
 from datetime import datetime
 
 def show():
     st.title("💳 Pagamentos")
-
-    if 'STRIPE_SECRET_KEY' not in st.secrets:
-        st.error("Configure as chaves do Stripe nas secrets do Replit")
-        return
-
-    # Inicializar gerenciador de pagamentos
-    gerenciador = GerenciadorPagamentos(st.session_state.db)
-
-    # Adicionar script do Stripe
-    st.markdown("""
-        <script src="https://js.stripe.com/v3/"></script>
-    """, unsafe_allow_html=True)
 
     # Mostrar pagamentos pendentes
     st.subheader("Pagamentos Pendentes")
@@ -29,59 +16,63 @@ def show():
                 if pagamento['fornecedor']:
                     st.write(f"**Fornecedor:** {pagamento['fornecedor']}")
 
-                # Botão para processar pagamento
-                if st.button("Processar Pagamento", key=f"pay_{pagamento['proposta']}_{pagamento['tipo']}"):
-                    try:
-                        # Criar intenção de pagamento
-                        payment_info = gerenciador.criar_pagamento(
-                            proposta_id=pagamento['proposta'],
-                            valor=pagamento['valor'],
-                            descricao=f"Pagamento {pagamento['tipo']} - Proposta #{pagamento['proposta']}"
-                        )
+                # Botões de ação
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    data_recebimento = st.date_input(
+                        "Data de Recebimento",
+                        value=datetime.now().date(),
+                        key=f"date_{pagamento['proposta']}_{pagamento['tipo']}"
+                    )
+                with col2:
+                    if st.button("✅ Marcar como Recebido", key=f"rec_{pagamento['proposta']}_{pagamento['tipo']}"):
+                        try:
+                            if pagamento['tipo'] == 'Valor Base':
+                                # Atualizar status de pagamento da proposta
+                                st.session_state.db.atualizar_status_pagamento_proposta(
+                                    proposta_id=pagamento['proposta'],
+                                    status_pagamento_base='Recebido',
+                                    valor_base=pagamento['valor']
+                                )
+                            else:
+                                # Atualizar status do acréscimo
+                                st.session_state.db.atualizar_status_pagamento_acrescimo(
+                                    proposta_id=pagamento['proposta'],
+                                    tipo=pagamento['tipo'],
+                                    status='Recebido'
+                                )
 
-                        # Configurar Stripe Elements
-                        st.markdown(f"""
-                        <div id="payment-form">
-                            <div id="payment-element"></div>
-                            <button id="submit">Pagar R$ {pagamento['valor']:.2f}</button>
-                        </div>
-
-                        <script>
-                            const stripe = Stripe('{payment_info['publishableKey']}');
-                            const elements = stripe.elements({{
-                                clientSecret: '{payment_info['clientSecret']}'
-                            }});
-
-                            const paymentElement = elements.create('payment');
-                            paymentElement.mount('#payment-element');
-
-                            const form = document.getElementById('payment-form');
-                            form.addEventListener('submit', async (event) => {{
-                                event.preventDefault();
-
-                                const {{error}} = await stripe.confirmPayment({{
-                                    elements,
-                                    confirmParams: {{
-                                        return_url: window.location.origin + '/pagamento_concluido',
-                                    }}
-                                }});
-
-                                if (error) {{
-                                    const messageDiv = document.createElement('div');
-                                    messageDiv.textContent = error.message;
-                                    form.appendChild(messageDiv);
-                                }}
-                            }});
-                        </script>
-                        """, unsafe_allow_html=True)
-
-                    except Exception as e:
-                        st.error(f"Erro ao processar pagamento: {str(e)}")
+                            # Registrar transação
+                            st.session_state.db.add_transacao(
+                                tipo='receita',
+                                descricao=f"Recebimento {pagamento['tipo']} - Proposta #{pagamento['proposta']}",
+                                valor=pagamento['valor'],
+                                categoria='Recebimento Proposta',
+                                origem_id=pagamento['proposta'],
+                                origem_tipo='proposta',
+                                status='Recebido',
+                                data_recebimento=data_recebimento
+                            )
+                            st.success("Pagamento registrado com sucesso!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Erro ao registrar pagamento: {str(e)}")
     else:
         st.info("Não há pagamentos pendentes.")
 
     # Histórico de Pagamentos
     st.subheader("Histórico de Pagamentos")
     with st.expander("Ver histórico"):
-        # TODO: Implementar visualização do histórico de pagamentos
-        st.info("Em desenvolvimento")
+        try:
+            historico = st.session_state.db.get_historico_pagamentos()
+            if not historico.empty:
+                for _, pagamento in historico.iterrows():
+                    st.write(f"**Proposta #{pagamento['proposta']} - {pagamento['cliente']}**")
+                    st.write(f"**Tipo:** {pagamento['tipo']}")
+                    st.write(f"**Valor:** R$ {pagamento['valor']:.2f}")
+                    st.write(f"**Data de Recebimento:** {pagamento['data_recebimento'].strftime('%d/%m/%Y')}")
+                    st.write("---")
+            else:
+                st.info("Nenhum pagamento registrado no histórico.")
+        except Exception as e:
+            st.error(f"Erro ao carregar histórico: {str(e)}")

@@ -202,7 +202,6 @@ class AcrescimoProposta(Base):
 
     proposta = relationship("Proposta", back_populates="acrescimos")
 
-
 class Database:
     def __init__(self):
         try:
@@ -823,7 +822,7 @@ class Database:
                     'cliente': p.cliente.nome,
                     'proposta': p.numero,
                     'tipo': 'Valor Base',
-                    'valor': p.p.valor,
+                    'valor': p.valor,  # Corrigido# Corrigido: removido p.p.valor
                     'fornecedor': None
                 })
 
@@ -870,4 +869,48 @@ class Database:
                 self.session.delete(proposta)
                 return True, "Proposta excluída com sucesso"
             return False, "Proposta não encontrada"
+        return self._safe_query(query)
+
+    def atualizar_status_pagamento_acrescimo(self, proposta_id, tipo, status):
+        """Atualiza o status de pagamento de um acréscimo"""
+        def query():
+            acrescimo = self.session.query(AcrescimoProposta).filter_by(
+                proposta_id=proposta_id,
+                tipo=tipo
+            ).first()
+            if acrescimo:
+                acrescimo.status_pagamento = status
+                return True
+            return False
+        return self._safe_query(query)
+
+    def get_historico_pagamentos(self):
+        """Retorna o histórico de pagamentos recebidos"""
+        def query():
+            # Buscar pagamentos de propostas
+            propostas = self.session.query(Proposta).filter_by(status_pagamento_base='Recebido').all()
+            historico = []
+
+            # Adicionar valores base recebidos
+            for p in propostas:
+                historico.append({
+                    'proposta': p.numero,
+                    'cliente': p.cliente.nome,
+                    'tipo': 'Valor Base',
+                    'valor': p.valor,
+                    'data_recebimento': p.data_proposta
+                })
+
+            # Adicionar acréscimos recebidos
+            acrescimos = self.session.query(AcrescimoProposta).filter_by(status_pagamento='Recebido').all()
+            for a in acrescimos:
+                historico.append({
+                    'proposta': a.proposta.numero,
+                    'cliente': a.proposta.cliente.nome,
+                    'tipo': a.tipo,
+                    'valor': a.valor,
+                    'data_recebimento': a.data_cadastro
+                })
+
+            return pd.DataFrame(historico)
         return self._safe_query(query)
