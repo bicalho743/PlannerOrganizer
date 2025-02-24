@@ -87,8 +87,10 @@ class Assistente(Base):
     __tablename__ = 'assistentes'
     id = Column(Integer, primary_key=True)
     nome = Column(String, nullable=False)
+    email = Column(String)  # Novo campo
     telefone = Column(String)
     endereco = Column(String)
+    disponibilidade = Column(String)  # Novo campo
     pix = Column(String)
     data_cadastro = Column(Date, default=datetime.now().date())
     observacoes = Column(String)
@@ -691,14 +693,16 @@ class Database:
             print(f"Erro ao adicionar dados de teste: {str(e)}")
             return False
 
-    def add_assistente(self, nome, telefone, endereco, pix=None, observacoes=None):
+    def add_assistente(self, nome, telefone, endereco, pix=None, observacoes=None, email=None, disponibilidade=None):
         def query():
             assistente = Assistente(
                 nome=nome,
                 telefone=telefone,
                 endereco=endereco,
                 pix=pix,
-                observacoes=observacoes
+                observacoes=observacoes,
+                email=email,
+                disponibilidade=disponibilidade
             )
             self.session.add(assistente)
             return assistente.id
@@ -710,8 +714,10 @@ class Database:
             return pd.DataFrame([{
                 'id': a.id,
                 'nome': a.nome,
+                'email': a.email if hasattr(a, 'email') else None,
                 'telefone': a.telefone,
                 'endereco': a.endereco,
+                'disponibilidade': a.disponibilidade if hasattr(a, 'disponibilidade') else None,
                 'pix': a.pix,
                 'data_cadastro': a.data_cadastro,
                 'observacoes': a.observacoes
@@ -817,7 +823,7 @@ class Database:
                     'cliente': p.cliente.nome,
                     'proposta': p.numero,
                     'tipo': 'Valor Base',
-                    'valor': p.valor,
+                    'valor': p.p.valor,
                     'fornecedor': None
                 })
 
