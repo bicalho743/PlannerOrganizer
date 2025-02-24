@@ -1,18 +1,19 @@
 [pages]
-# Lista apenas as páginas que queremos mostrar
+# Lista apenas as páginas que queremos mostrar na barra lateral
 order = [
-    "clientes.py",
     "propostas.py",
+    "clientes.py",
     "financeiro.py",
-    "contas_pagar.py",
     "cadastros.py",
-    "backup.py",
     "relatorios.py"
 ]
 
-# Oculta páginas que não queremos mostrar
+# Oculta todas as outras páginas
 visibility = """
+main.py = false
 login.py = false
 admin.py = false
 mais.py = false
+backup.py = false
+contas_pagar.py = false
 """
