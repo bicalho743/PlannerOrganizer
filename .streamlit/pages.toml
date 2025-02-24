@@ -8,6 +8,15 @@ order = [
     "relatorios.py"
 ]
 
+# Oculta todas as outras páginas
 visibility = """
-hidden = []
+hidden = [
+    "main.py",
+    "admin.py",
+    "backup.py",
+    "contas_pagar.py",
+    "fornecedores.py",
+    "login.py",
+    "mais.py"
+]
 """
