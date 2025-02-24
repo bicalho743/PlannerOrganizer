@@ -70,13 +70,13 @@ class Cliente(Base):
 class Fornecedor(Base):
     __tablename__ = 'fornecedores'
     id = Column(Integer, primary_key=True)
-    nome = Column(String, nullable=False)  # Alterado de descricao para nome
+    descricao = Column(String, nullable=False)
     contato = Column(String)
     categoria = Column(String)
     tipo_conta = Column(String, nullable=False)
-    estado = Column(String)
-    cidade = Column(String)
-    bairro = Column(String)
+    estado = Column(String)  # Novo campo
+    cidade = Column(String)  # Novo campo
+    bairro = Column(String)  # Novo campo
     endereco = Column(String)
     pix = Column(String)
     recorrente = Column(Boolean, default=False)
@@ -85,6 +85,7 @@ class Fornecedor(Base):
     data_vencimento = Column(Date, nullable=True)
     data_pagamento = Column(Date, nullable=True)
     status = Column(String, nullable=True)
+
 
 class Assistente(Base):
     __tablename__ = 'assistentes'
@@ -234,8 +235,7 @@ class Database:
                 self.session.rollback()
             raise e
         finally:
-            if self.session.is_active:
-                self.session.close()
+            self.session.close()
             Session.remove()
 
     def get_clientes(self):
@@ -391,13 +391,12 @@ class Database:
             } for t in contas])
         return self._safe_query(query)
 
-    def add_fornecedor(self, nome, contato, categoria, tipo_conta, estado=None, cidade=None, 
+    def add_fornecedor(self, descricao, contato, categoria, tipo_conta, estado=None, cidade=None, 
                   bairro=None, endereco=None, pix=None, recorrente=False, observacoes=None, 
                   valor=None, data_vencimento=None, data_pagamento=None, status=None):
-        """Adiciona um novo fornecedor"""
         def query():
             fornecedor = Fornecedor(
-                nome=nome,
+                descricao=descricao,
                 contato=contato,
                 categoria=categoria,
                 tipo_conta=tipo_conta,
@@ -418,12 +417,11 @@ class Database:
         return self._safe_query(query)
 
     def get_fornecedores(self):
-        """Retorna lista de fornecedores"""
         def query():
             fornecedores = self.session.query(Fornecedor).all()
             return pd.DataFrame([{
                 'id': f.id,
-                'nome': f.nome,  # Atualizado de descricao para nome
+                'descricao': f.descricao,
                 'contato': f.contato,
                 'categoria': f.categoria,
                 'tipo_conta': f.tipo_conta,
@@ -569,12 +567,13 @@ class Database:
                 'id': f.id,
                 'produto_id': f.produto_id,
                 'fornecedor_id': f.fornecedor_id,
-                'fornecedor_nome': f.fornecedor.nome if f.fornecedor else None, #Updated to use nome instead of descricao
+                'fornecedor_nome': f.fornecedor.descricao if f.fornecedor else None,
                 'valor': f.valor,
                 'data_cotacao': f.data_cotacao,
                 'observacoes': f.observacoes
             } for f in fornecedores])
         return self._safe_query(query)
+
 
     def registrar_usuario(self, email, senha, nome, telefone=None, empresa=None, tipo='usuario'):
         """Registra um novo usuário no sistema"""
@@ -680,7 +679,7 @@ class Database:
             )
 
             fornecedor1_id = self.add_fornecedor(
-                nome="Organizadores Express", # Changed to nome
+                descricao="Organizadores Express",
                 contato="(11) 97777-7777",
                 categoria="Produtos",
                 tipo_conta="PJ",
@@ -798,11 +797,9 @@ class Database:
         return self._safe_query(query)
 
     def __del__(self):
-        """
-        Limpeza quando o objeto é destruído.
-        Não fechamos a sessão aqui pois ela já é gerenciada por _safe_query
-        """
-        Session.remove()
+        if hasattr(self, 'session'):
+            self.session.close()
+            Session.remove()
 
     def atualizar_status_pagamento_proposta(self, proposta_id, status_pagamento_base, valor_base):
         """Atualiza o status de pagamento e valor base de uma proposta"""
@@ -883,6 +880,18 @@ class Database:
             return pd.DataFrame(pendentes)
         return self._safe_query(query)
 
+    def atualizar_cliente(self, cliente_id, **kwargs):
+        """Atualiza os dados de um cliente"""
+        def query():
+            cliente = self.session.query(Cliente).filter_by(id=cliente_id).first()
+            if cliente:
+                for key, value in kwargs.items():
+                    if hasattr(cliente, key):
+                        setattr(cliente, key, value)
+                return True
+            return False
+        return self._safe_query(query)
+
     def excluir_cliente(self, cliente_id):
         """Exclui um cliente se ele não tiver propostas vinculadas"""
         def query():
@@ -956,88 +965,4 @@ class Database:
                 })
 
             return pd.DataFrame(historico)
-        return self._safe_query(query)
-
-    def update_cliente(self, cliente_id, **dados):
-        """Atualiza os dados de um cliente"""
-        def query():
-            cliente = self.session.query(Cliente).filter_by(id=cliente_id).first()
-            if cliente:
-                for campo, valor in dados.items():
-                    setattr(cliente, campo, valor)
-                return True
-            return False
-        return self._safe_query(query)
-
-    def delete_cliente(self, cliente_id):
-        """Remove um cliente do sistema"""
-        def query():
-            cliente = self.session.query(Cliente).filter_by(id=cliente_id).first()
-            if cliente:
-                self.session.delete(cliente)
-                return True
-            return False
-        return self._safe_query(query)
-
-    def update_fornecedor(self, fornecedor_id, **dados):
-        """Atualiza os dados de um fornecedor"""
-        def query():
-            fornecedor = self.session.query(Fornecedor).filter_by(id=fornecedor_id).first()
-            if fornecedor:
-                for campo, valor in dados.items():
-                    setattr(fornecedor, campo, valor)
-                return True
-            return False
-        return self._safe_query(query)
-
-    def delete_fornecedor(self, fornecedor_id):
-        """Remove um fornecedor do sistema"""
-        def query():
-            fornecedor = self.session.query(Fornecedor).filter_by(id=fornecedor_id).first()
-            if fornecedor:
-                self.session.delete(fornecedor)
-                return True
-            return False
-        return self._safe_query(query)
-
-    def update_assistente(self, assistente_id, **dados):
-        """Atualiza os dados de um assistente"""
-        def query():
-            assistente = self.session.query(Assistente).filter_by(id=assistente_id).first()
-            if assistente:
-                for campo, valor in dados.items():
-                    setattr(assistente, campo, valor)
-                return True
-            return False
-        return self._safe_query(query)
-
-    def delete_assistente(self, assistente_id):
-        """Remove um assistente do sistema"""
-        def query():
-            assistente = self.session.query(Assistente).filter_by(id=assistente_id).first()
-            if assistente:
-                self.session.delete(assistente)
-                return True
-            return False
-        return self._safe_query(query)
-
-    def update_parceiro(self, parceiro_id, **dados):
-        """Atualiza os dados de um parceiro"""
-        def query():
-            parceiro = self.session.query(Parceiro).filter_by(id=parceiro_id).first()
-            if parceiro:
-                for campo, valor in dados.items():
-                    setattr(parceiro, campo, valor)
-                return True
-            return False
-        return self._safe_query(query)
-
-    def delete_parceiro(self, parceiro_id):
-        """Remove um parceiro do sistema"""
-        def query():
-            parceiro = self.session.query(Parceiro).filter_by(id=parceiro_id).first()
-            if parceiro:
-                self.session.delete(parceiro)
-                return True
-            return False
         return self._safe_query(query)

@@ -136,13 +136,65 @@ def show():
                                 st.markdown(", ".join(endereco_partes))
 
                         with col2:
-                            if st.button("🗑️ Excluir", key=f"del_cliente_{cliente['id']}"):
-                                sucesso, msg = st.session_state.db.excluir_cliente(cliente['id'])
-                                if sucesso:
-                                    st.success(msg)
+                            col_edit, col_del = st.columns(2)
+                            
+                            with col_edit:
+                                if st.button("✏️ Editar", key=f"edit_cliente_{cliente['id']}"):
+                                    st.session_state.editing_client = cliente
                                     st.rerun()
-                                else:
-                                    st.error(msg)
+                            
+                            with col_del:
+                                if st.button("🗑️ Excluir", key=f"del_cliente_{cliente['id']}"):
+                                    if st.session_state.get('confirm_delete') == cliente['id']:
+                                        sucesso, msg = st.session_state.db.excluir_cliente(cliente['id'])
+                                        if sucesso:
+                                            st.success(msg)
+                                            if 'confirm_delete' in st.session_state:
+                                                del st.session_state.confirm_delete
+                                            st.rerun()
+                                        else:
+                                            st.error(msg)
+                                    else:
+                                        st.session_state.confirm_delete = cliente['id']
+                                        st.warning("Clique novamente para confirmar a exclusão")
+
+                        if st.session_state.get('confirm_delete') == cliente['id']:
+                            st.info("⚠️ Esta ação não pode ser desfeita!")
+                            
+                        # Formulário de edição
+                        if st.session_state.get('editing_client', {}).get('id') == cliente['id']:
+                            with st.form(f"edit_form_{cliente['id']}", clear_on_submit=True):
+                                novo_nome = st.text_input("Nome", value=cliente['nome'])
+                                novo_email = st.text_input("Email", value=cliente['email'] or '')
+                                novo_telefone = st.text_input("Telefone", value=cliente['telefone'] or '')
+                                novo_endereco = st.text_input("Endereço", value=cliente['endereco'] or '')
+                                
+                                col1, col2 = st.columns(2)
+                                with col1:
+                                    novo_estado = st.text_input("Estado", value=cliente['estado'] or '')
+                                    nova_cidade = st.text_input("Cidade", value=cliente['cidade'] or '')
+                                with col2:
+                                    novo_bairro = st.text_input("Bairro", value=cliente['bairro'] or '')
+                                    nova_data = st.date_input("Data Aniversário", value=pd.to_datetime(cliente['data_aniversario']).date() if pd.notna(cliente['data_aniversario']) else None)
+
+                                if st.form_submit_button("Salvar Alterações"):
+                                    try:
+                                        st.session_state.db.atualizar_cliente(
+                                            cliente['id'],
+                                            nome=novo_nome,
+                                            email=novo_email,
+                                            telefone=novo_telefone,
+                                            endereco=novo_endereco,
+                                            estado=novo_estado,
+                                            cidade=nova_cidade,
+                                            bairro=novo_bairro,
+                                            data_aniversario=nova_data
+                                        )
+                                        del st.session_state.editing_client
+                                        st.success("Cliente atualizado com sucesso!")
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error(f"Erro ao atualizar cliente: {str(e)}")
 
                         st.markdown("---")
             else:
