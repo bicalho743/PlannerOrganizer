@@ -12,30 +12,6 @@ sys.path.append(str(Path(__file__).parent))
 from utils.database import Database
 
 # Configuração da página
-
-# Adicionar botão WhatsApp flutuante
-st.markdown("""
-    <a href="https://wa.me/5511999999999" target="_blank" style="
-        position: fixed;
-        width: 60px;
-        height: 60px;
-        bottom: 40px;
-        right: 40px;
-        background-color: #25d366;
-        color: #FFF;
-        border-radius: 50px;
-        text-align: center;
-        font-size: 30px;
-        box-shadow: 1px 1px 2px #888;
-        z-index: 1000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        text-decoration: none;">
-        <i class="fab fa-whatsapp" style="margin-top: 16px">💬</i>
-    </a>
-    """, unsafe_allow_html=True)
-
 st.set_page_config(
     page_title="Sistema Personal Organizer",
     page_icon="📋",
@@ -76,7 +52,7 @@ if pagina == "Dashboard":
                 st.sidebar.error("Erro ao adicionar dados de teste")
 
     # Dashboard content
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns([2, 2, 1])
 
     with col1:
         st.subheader("📊 Resumo")
@@ -115,6 +91,58 @@ if pagina == "Dashboard":
                 st.info("Nenhuma proposta em aberto.")
         else:
             st.info("Nenhuma proposta cadastrada.")
+
+    with col3:
+        st.subheader("🎂 Aniversariantes")
+        hoje = datetime.now().date()
+
+        if not clientes.empty and 'data_aniversario' in clientes.columns:
+            try:
+                # Converter data_aniversario para datetime explicitamente
+                clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'], errors='coerce')
+
+                # Filtrar aniversariantes do dia
+                aniversariantes_hoje = clientes[
+                    (clientes['data_aniversario'].notna()) & 
+                    (clientes['data_aniversario'].dt.month == hoje.month) & 
+                    (clientes['data_aniversario'].dt.day == hoje.day)
+                ]
+
+                # Mostrar aniversariantes de hoje
+                st.write("**Hoje:**")
+                if not aniversariantes_hoje.empty:
+                    for _, aniversariante in aniversariantes_hoje.iterrows():
+                        with st.container():
+                            st.write(f"🎈 **{aniversariante['nome']}**")
+                            if aniversariante['telefone']:
+                                st.write(f"📱 {aniversariante['telefone']}")
+                else:
+                    st.info("Nenhum aniversariante hoje!")
+
+                # Mostrar próximos aniversariantes (próximos 7 dias)
+                st.write("\n**Próximos 7 dias:**")
+                proximos_aniversariantes = clientes[
+                    (clientes['data_aniversario'].notna()) &
+                    (((clientes['data_aniversario'].dt.month == hoje.month) & 
+                      (clientes['data_aniversario'].dt.day > hoje.day) & 
+                      (clientes['data_aniversario'].dt.day <= hoje.day + 7)) |
+                     ((clientes['data_aniversario'].dt.month == (hoje.month % 12 + 1)) & 
+                      (clientes['data_aniversario'].dt.day <= (hoje.day + 7) % 31)))
+                ]
+
+                if not proximos_aniversariantes.empty:
+                    for _, aniversariante in proximos_aniversariantes.iterrows():
+                        with st.container():
+                            data_aniv = aniversariante['data_aniversario'].strftime('%d/%m')
+                            st.write(f"🎂 **{aniversariante['nome']}** ({data_aniv})")
+                            if aniversariante['telefone']:
+                                st.write(f"📱 {aniversariante['telefone']}")
+                else:
+                    st.info("Nenhum aniversariante nos próximos dias.")
+            except Exception as e:
+                st.error(f"Erro ao processar datas de aniversário: {str(e)}")
+        else:
+            st.info("Nenhum cliente cadastrado com data de aniversário.")
 
 elif pagina == "Cadastros":
     import pages.cadastros as cadastros

@@ -1,4 +1,3 @@
-
 [server]
 headless = true
 address = "0.0.0.0"
@@ -12,12 +11,7 @@ backgroundColor = "#1C1C1C"
 secondaryBackgroundColor = "#2A2A2A"
 textColor = "#F5F5F5"
 font = "sans serif"
-
-[browser]
-gatherUsageStats = false
-
-[theme]
-base="dark"
+base = "dark"
 
 [browser]
 gatherUsageStats = false
