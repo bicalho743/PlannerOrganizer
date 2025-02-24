@@ -82,10 +82,9 @@ def show():
         st.subheader("Propostas Cadastradas")
         try:
             propostas = st.session_state.db.get_propostas()
-            clientes = st.session_state.db.get_clientes()
-
             if not propostas.empty:
                 # Juntar propostas com informações dos clientes
+                clientes = st.session_state.db.get_clientes()
                 propostas = propostas.merge(
                     clientes[['id', 'nome']],
                     left_on='cliente_id',
@@ -97,40 +96,81 @@ def show():
                 # Ordenar por data de proposta, mais recentes primeiro
                 propostas = propostas.sort_values('data_proposta', ascending=False)
 
-                # Exibir cada proposta com botões de ação
-                for _, proposta in propostas.iterrows():
-                    with st.expander(f"Proposta #{proposta['numero']} - {proposta['nome']}"):
-                        col1, col2 = st.columns([4, 1])
+                # Criar DataFrame para exibição
+                df_display = propostas[['numero', 'nome', 'descricao', 'valor', 'status', 'data_proposta']].copy()
+                df_display.columns = ['Número', 'Cliente', 'Descrição', 'Valor (R$)', 'Status', 'Data']
 
-                        with col1:
-                            st.markdown(f"**Proposta #{proposta['numero']} - {proposta['nome']}**")
-                            st.markdown(f"**Descrição:** {proposta['descricao']}")
-                            st.markdown(f"**Valor:** R$ {float(proposta['valor']):.2f}")
-                            st.markdown(f"**Status:** {proposta['status']}")
-                            st.markdown(f"**Tipo:** {proposta['tipo_proposta']}")
-                            if proposta['data_inicio']:
-                                st.markdown(f"**Data Início:** {proposta['data_inicio'].strftime('%d/%m/%Y')}")
-                            if proposta['data_fim']:
-                                st.markdown(f"**Data Fim:** {proposta['data_fim'].strftime('%d/%m/%Y')}")
+                # Formatar valores
+                df_display['Valor (R$)'] = df_display['Valor (R$)'].apply(lambda x: f'R$ {float(x):.2f}')
+                df_display['Data'] = pd.to_datetime(df_display['Data']).dt.strftime('%d/%m/%Y')
 
-                        with col2:
-                            with st.form(f"excluir_proposta_{proposta['id']}"):
-                                if st.form_submit_button("🗑️ Excluir"):
-                                    if st.session_state.get(f'confirm_delete_proposta_{proposta["id"]}', False):
-                                        sucesso, msg = st.session_state.db.excluir_proposta(proposta['id'])
-                                        if sucesso:
-                                            st.success(msg)
-                                            st.rerun()
-                                        else:
-                                            st.error(msg)
-                                    else:
-                                        st.session_state[f'confirm_delete_proposta_{proposta["id"]}'] = True
-                                        st.warning("Confirma a exclusão desta proposta?")
-                                        st.rerun()
+                # Exibir tabela
+                st.dataframe(df_display, hide_index=True)
 
-                        st.markdown("---")
+                # Seleção de proposta para ação
+                col1, col2 = st.columns(2)
+                with col1:
+                    proposta_num = st.number_input("Número da proposta para ação:", 
+                                                 min_value=int(propostas['numero'].min()),
+                                                 max_value=int(propostas['numero'].max()),
+                                                 step=1)
+                with col2:
+                    acao = st.selectbox("Ação:", ["Excluir", "Exportar PDF"])
+
+                # Formulário de ação
+                with st.form("acao_proposta"):
+                    if st.form_submit_button(f"Confirmar {acao}"):
+                        proposta = propostas[propostas['numero'] == proposta_num].iloc[0]
+
+                        if acao == "Excluir":
+                            if st.session_state.get(f'confirm_delete_proposta_{proposta["id"]}', False):
+                                sucesso, msg = st.session_state.db.excluir_proposta(proposta['id'])
+                                if sucesso:
+                                    st.success(msg)
+                                    st.rerun()
+                                else:
+                                    st.error(msg)
+                            else:
+                                st.session_state[f'confirm_delete_proposta_{proposta["id"]}'] = True
+                                st.warning("Confirma a exclusão desta proposta?")
+                                st.rerun()
+
+                        elif acao == "Exportar PDF":
+                            try:
+                                # Criar diretório para PDFs se não existir
+                                os.makedirs("pdfs", exist_ok=True)
+
+                                # Nome do arquivo
+                                filename = f"pdfs/proposta_{proposta['numero']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+
+                                # Buscar acréscimos da proposta
+                                acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
+
+                                # Gerar PDF
+                                pdf_path = gerar_pdf_fechamento(
+                                    proposta=proposta,
+                                    cliente={'nome': proposta['nome']},
+                                    acrescimos=acrescimos,
+                                    filename=filename
+                                )
+
+                                # Criar link para download
+                                with open(pdf_path, "rb") as pdf_file:
+                                    pdf_bytes = pdf_file.read()
+                                    st.download_button(
+                                        label="Baixar PDF",
+                                        data=pdf_bytes,
+                                        file_name=os.path.basename(filename),
+                                        mime="application/pdf"
+                                    )
+
+                                st.success("PDF gerado com sucesso!")
+                            except Exception as e:
+                                st.error(f"Erro ao gerar PDF: {str(e)}")
+
             else:
                 st.info("Nenhuma proposta encontrada.")
+
         except Exception as e:
             st.error(f"Erro ao carregar propostas: {str(e)}")
 
@@ -164,7 +204,7 @@ def show():
                 )
                 submited = st.form_submit_button("Selecionar")
 
-            if proposta_selecionada:
+            if proposta_selecionada and submited:
                 try:
                     # Extrair número da proposta
                     numero_proposta = int(proposta_selecionada.split('#')[1].split(' -')[0])
@@ -222,7 +262,6 @@ def show():
                                 return
 
                             try:
-                                # Adicionar acréscimo
                                 st.session_state.db.add_acrescimo_proposta(
                                     proposta_id=int(proposta['id']),
                                     tipo=tipo_acrescimo,
@@ -235,99 +274,25 @@ def show():
                             except Exception as e:
                                 st.error(f"Erro ao adicionar acréscimo: {str(e)}")
 
-                    # Exibir acréscimos existentes e formulário de atualização
+                    # Exibir acréscimos existentes
                     try:
                         acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
                         if not acrescimos.empty:
                             st.write("### Acréscimos Adicionados")
-                            for _, acrescimo in acrescimos.iterrows():
-                                with st.form(f"acrescimo_{acrescimo['id']}"):
-                                    valor = float(acrescimo['valor'])
-                                    if acrescimo['tipo'] == "Fornecedor":
-                                        st.write(f"- {acrescimo['tipo']} - {acrescimo['fornecedor']}: R$ {valor:.2f}")
-                                    else:
-                                        st.write(f"- {acrescimo['tipo']}: R$ {valor:.2f}")
 
-                                    if acrescimo['descricao']:
-                                        st.write(f"  *{acrescimo['descricao']}*")
+                            # Criar DataFrame para exibição
+                            df_acrescimos = acrescimos[['tipo', 'fornecedor', 'valor', 'descricao']].copy()
+                            df_acrescimos.columns = ['Tipo', 'Fornecedor', 'Valor (R$)', 'Descrição']
 
-                                    status = st.selectbox(
-                                        "Status",
-                                        ["Pendente", "Pago"],
-                                        key=f"status_{acrescimo['id']}"
-                                    )
+                            # Formatar valores
+                            df_acrescimos['Valor (R$)'] = df_acrescimos['Valor (R$)'].apply(lambda x: f'R$ {float(x):.2f}')
 
-                                    if st.form_submit_button("Atualizar Status"):
-                                        try:
-                                            st.session_state.db.atualizar_status_acrescimo(
-                                                acrescimo['id'],
-                                                status
-                                            )
-                                            st.success("Status atualizado com sucesso!")
-                                            st.rerun()
-                                        except Exception as e:
-                                            st.error(f"Erro ao atualizar status: {str(e)}")
+                            # Exibir tabela
+                            st.dataframe(df_acrescimos, hide_index=True)
 
-                        # Botão e seção de Fechar Proposta
-                        st.write("---")
-                        with st.form("atualizar_proposta"):
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                valor_base = st.number_input(
-                                    "Valor Base",
-                                    value=float(proposta['valor']),
-                                    step=0.01
-                                )
-                            with col2:
-                                status_base = st.selectbox(
-                                    "Status do Pagamento Base",
-                                    ["Pendente", "Pago"]
-                                )
-
-                            if st.form_submit_button("Atualizar Proposta"):
-                                try:
-                                    st.session_state.db.atualizar_status_pagamento_proposta(
-                                        proposta_id=int(proposta['id']),
-                                        status_pagamento_base=status_base,
-                                        valor_base=valor_base
-                                    )
-                                    st.success("Proposta atualizada com sucesso!")
-                                    st.rerun()
-                                except Exception as e:
-                                    st.error(f"Erro ao atualizar proposta: {str(e)}")
-
-                        # Botão para exportar PDF
-                        st.write("---")
-                        with st.form("exportar_pdf"):
-                            if st.form_submit_button("Exportar Resumo Final (PDF)"):
-                                try:
-                                    # Criar diretório para PDFs se não existir
-                                    os.makedirs("pdfs", exist_ok=True)
-
-                                    # Nome do arquivo
-                                    filename = f"pdfs/proposta_{proposta['numero']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-
-                                    # Gerar PDF
-                                    pdf_path = gerar_pdf_fechamento(
-                                        proposta=proposta,
-                                        cliente={'nome': proposta['nome']},
-                                        acrescimos=acrescimos,
-                                        filename=filename
-                                    )
-
-                                    # Criar link para download
-                                    with open(pdf_path, "rb") as pdf_file:
-                                        pdf_bytes = pdf_file.read()
-                                        st.download_button(
-                                            label="Baixar PDF",
-                                            data=pdf_bytes,
-                                            file_name=os.path.basename(filename),
-                                            mime="application/pdf"
-                                        )
-
-                                    st.success("PDF gerado com sucesso!")
-                                except Exception as e:
-                                    st.error(f"Erro ao gerar PDF: {str(e)}")
+                            # Status e valor total
+                            valor_total = float(proposta['valor']) + acrescimos['valor'].sum()
+                            st.write(f"**Valor Total da Proposta:** R$ {valor_total:.2f}")
 
                     except Exception as e:
                         st.error(f"Erro ao carregar acréscimos: {str(e)}")
