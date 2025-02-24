@@ -4,27 +4,6 @@ import jwt
 import datetime
 
 def show():
-    # CSS para esconder o menu lateral e customizar a aparência
-    st.markdown("""
-        <style>
-        /* Esconde o menu lateral na tela de login */
-        [data-testid="stSidebar"] {
-            display: none;
-        }
-        /* Estilo para o título principal */
-        h1 {
-            color: #B8860B;
-            font-family: sans-serif;
-            font-weight: bold;
-        }
-        /* Centraliza o conteúdo */
-        .block-container {
-            padding-top: 2rem;
-            max-width: 1000px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
     # Criar três colunas para centralização
     col1, col2, col3 = st.columns([1, 2, 1])
 
@@ -54,6 +33,7 @@ def show():
                 del st.session_state.token
 
         # Formulário de login centralizado
+        st.markdown("<br>", unsafe_allow_html=True)  # Espaço entre título e formulário
         with st.form("login_form"):
             email = st.text_input("Email")
             senha = st.text_input("Senha", type="password")
