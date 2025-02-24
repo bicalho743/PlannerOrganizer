@@ -73,7 +73,7 @@ def show():
         with col2:
             pix = st.text_input("Chave PIX")
 
-        # Botão de submissão (dentro do form)
+        # Botão de submissão
         submitted = st.form_submit_button("Cadastrar")
 
     # Processamento do formulário (fora do form)
@@ -200,7 +200,7 @@ def show():
             for idx, registro in registros.iterrows():
                 with st.expander(f"{registro['nome']} ({registro['telefone'] if 'telefone' in registro else registro.get('contato', '')})"):
                     # Exibir informações do registro
-                    col1, col2, col3 = st.columns([3, 1, 1])
+                    col1, col2 = st.columns([3, 1])
                     with col1:
                         for col in colunas:
                             if col in registro and registro[col]:
@@ -208,34 +208,37 @@ def show():
 
                     # Botões de ação
                     with col2:
-                        if st.button("✏️ Editar", key=f"edit_{tipo_cadastro}_{registro['id']}"):
-                            st.session_state[f'editing_{tipo_cadastro}_{registro["id"]}'] = True
-                            st.rerun()
+                        edit_key = f"edit_{tipo_cadastro}_{registro['id']}"
+                        delete_key = f"delete_{tipo_cadastro}_{registro['id']}"
 
-                    with col3:
-                        if st.button("🗑️ Excluir", key=f"delete_{tipo_cadastro}_{registro['id']}"):
-                            if st.session_state.get(f'confirm_delete_{tipo_cadastro}_{registro["id"]}', False):
-                                # Executar exclusão
-                                try:
-                                    if tipo_cadastro == "Cliente":
-                                        st.session_state.db.delete_cliente(registro['id'])
-                                    elif tipo_cadastro == "Fornecedor":
-                                        st.session_state.db.delete_fornecedor(registro['id'])
-                                    elif tipo_cadastro == "Assistente":
-                                        st.session_state.db.delete_assistente(registro['id'])
-                                    elif tipo_cadastro == "Parceiro":
-                                        st.session_state.db.delete_parceiro(registro['id'])
-                                    st.success(f"{tipo_cadastro} excluído com sucesso!")
-                                    st.rerun()
-                                except Exception as e:
-                                    st.error(f"Erro ao excluir {tipo_cadastro}: {str(e)}")
-                            else:
-                                st.session_state[f'confirm_delete_{tipo_cadastro}_{registro["id"]}'] = True
-                                st.warning(f"Confirma a exclusão de {registro['nome']}?")
+                        with st.form(f"actions_{edit_key}"):
+                            if st.form_submit_button("✏️ Editar"):
+                                st.session_state[edit_key] = True
                                 st.rerun()
 
+                        with st.form(f"actions_{delete_key}"):
+                            if st.form_submit_button("🗑️ Excluir"):
+                                if st.session_state.get(f'confirm_delete_{tipo_cadastro}_{registro["id"]}', False):
+                                    try:
+                                        if tipo_cadastro == "Cliente":
+                                            st.session_state.db.delete_cliente(registro['id'])
+                                        elif tipo_cadastro == "Fornecedor":
+                                            st.session_state.db.delete_fornecedor(registro['id'])
+                                        elif tipo_cadastro == "Assistente":
+                                            st.session_state.db.delete_assistente(registro['id'])
+                                        elif tipo_cadastro == "Parceiro":
+                                            st.session_state.db.delete_parceiro(registro['id'])
+                                        st.success(f"{tipo_cadastro} excluído com sucesso!")
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error(f"Erro ao excluir {tipo_cadastro}: {str(e)}")
+                                else:
+                                    st.session_state[f'confirm_delete_{tipo_cadastro}_{registro["id"]}'] = True
+                                    st.warning(f"Confirma a exclusão de {registro['nome']}?")
+                                    st.rerun()
+
                     # Formulário de edição
-                    if st.session_state.get(f'editing_{tipo_cadastro}_{registro["id"]}', False):
+                    if st.session_state.get(edit_key, False):
                         with st.form(f"edit_form_{tipo_cadastro}_{registro['id']}"):
                             st.subheader("Editar Registro")
                             edited_data = {}
@@ -282,7 +285,6 @@ def show():
                             edited_data['bairro'] = st.text_input("Bairro", value=registro.get('bairro', ''))
                             edited_data['endereco'] = st.text_input("Endereço", value=registro.get('endereco', ''))
 
-                            # Botões de ação
                             col1, col2 = st.columns(2)
                             with col1:
                                 if st.form_submit_button("Salvar"):
@@ -298,7 +300,7 @@ def show():
                                         elif tipo_cadastro == "Parceiro":
                                             st.session_state.db.update_parceiro(registro['id'], **edited_data)
 
-                                        st.session_state[f'editing_{tipo_cadastro}_{registro["id"]}'] = False
+                                        st.session_state[edit_key] = False
                                         st.success("Registro atualizado com sucesso!")
                                         st.rerun()
                                     except Exception as e:
@@ -306,8 +308,9 @@ def show():
 
                             with col2:
                                 if st.form_submit_button("Cancelar"):
-                                    st.session_state[f'editing_{tipo_cadastro}_{registro["id"]}'] = False
+                                    st.session_state[edit_key] = False
                                     st.rerun()
+
         else:
             st.info(f"Nenhum {tipo_cadastro.lower()} cadastrado.")
 
