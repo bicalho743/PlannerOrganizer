@@ -569,7 +569,16 @@ class Database:
         def query():
             usuario = self.session.query(Usuario).filter_by(email=email).first()
             if usuario and usuario.check_senha(senha) and usuario.ativo:
-                return True, usuario
+                # Converter o objeto Usuario para dicionário antes de retornar
+                usuario_dict = {
+                    'id': usuario.id,
+                    'nome': usuario.nome,
+                    'email': usuario.email,
+                    'tipo': usuario.tipo,
+                    'empresa': usuario.empresa,
+                    'ativo': usuario.ativo
+                }
+                return True, usuario_dict
             return False, None
         return self._safe_query(query)
 

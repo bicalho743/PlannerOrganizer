@@ -48,21 +48,16 @@ def show():
                     sucesso, usuario = st.session_state.db.autenticar_usuario(email, senha)
 
                     if sucesso:
-                        # Converter objeto Usuario para dicionário
-                        st.session_state.usuario = {
-                            'id': usuario.id,
-                            'nome': usuario.nome,
-                            'email': usuario.email,
-                            'tipo': usuario.tipo
-                        }
+                        # O usuario já é um dicionário agora
+                        st.session_state.usuario = usuario
 
                         # Se o usuário marcou "lembrar", criar um token JWT
                         if lembrar:
                             token = jwt.encode({
-                                'id': usuario.id,
-                                'nome': usuario.nome,
-                                'email': usuario.email,
-                                'tipo': usuario.tipo,
+                                'id': usuario['id'],
+                                'nome': usuario['nome'],
+                                'email': usuario['email'],
+                                'tipo': usuario['tipo'],
                                 'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30)
                             }, st.secrets["JWT_SECRET"], algorithm="HS256")
                             st.session_state.token = token
