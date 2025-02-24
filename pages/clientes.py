@@ -26,26 +26,14 @@ def show():
                 cnpj = st.text_input("CNPJ")
                 razao_social = st.text_input("Razão Social")
 
-            col1, col2 = st.columns(2)
-            with col1:
-                email = st.text_input("E-mail")
-                data_aniversario = st.date_input("Data de Aniversário", format="DD/MM/YYYY")
-            with col2:
-                telefone = st.text_input("Telefone")
-                origem_cliente = st.selectbox(
-                    "Onde conheceu a Personal Organizer?",
-                    ["Indicação", "Redes Sociais", "Site", "Evento", "Outro"]
-                )
-
-            # Campos de endereço
-            st.subheader("Endereço")
-            col1, col2 = st.columns(2)
-            with col1:
-                estado = st.text_input("Estado")
-                bairro = st.text_input("Bairro")
-            with col2:
-                cidade = st.text_input("Cidade")
-                endereco = st.text_input("Endereço (Rua, número, complemento)")
+            email = st.text_input("E-mail")
+            telefone = st.text_input("Telefone")
+            data_aniversario = st.date_input("Data de Aniversário", format="DD/MM/YYYY")
+            endereco = st.text_area("Endereço")
+            origem_cliente = st.selectbox(
+                "Onde conheceu a Personal Organizer?",
+                ["Indicação", "Redes Sociais", "Site", "Evento", "Outro"]
+            )
 
             submitted = st.form_submit_button("Cadastrar")
 
@@ -59,9 +47,6 @@ def show():
                             nome=nome,
                             email=email,
                             telefone=telefone,
-                            estado=estado,
-                            cidade=cidade,
-                            bairro=bairro,
                             endereco=endereco,
                             cpf=cpf,
                             data_aniversario=data_aniversario,
@@ -85,7 +70,7 @@ def show():
             clientes = st.session_state.db.get_clientes()
 
             if not clientes.empty:
-                # Converter datas para datetime
+                # Converter datas para datetime de forma segura
                 clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro'], errors='coerce')
                 clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'], errors='coerce')
 
@@ -116,20 +101,6 @@ def show():
                             else:
                                 st.markdown(f"CNPJ: {cliente['cnpj']}")
                                 st.markdown(f"Razão Social: {cliente['razao_social']}")
-
-                            # Exibir informações de endereço
-                            endereco_completo = []
-                            if cliente['endereco']:
-                                endereco_completo.append(cliente['endereco'])
-                            if cliente['bairro']:
-                                endereco_completo.append(cliente['bairro'])
-                            if cliente['cidade']:
-                                endereco_completo.append(cliente['cidade'])
-                            if cliente['estado']:
-                                endereco_completo.append(cliente['estado'])
-
-                            if endereco_completo:
-                                st.markdown(f"Endereço: {' - '.join(endereco_completo)}")
 
                         with col2:
                             if st.button("🗑️ Excluir", key=f"del_cliente_{cliente['id']}"):
