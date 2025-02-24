@@ -819,3 +819,34 @@ class Database:
 
             return pd.DataFrame(pendentes)
         return self._safe_query(query)
+
+    def excluir_cliente(self, cliente_id):
+        """Exclui um cliente se ele não tiver propostas vinculadas"""
+        def query():
+            # Verificar se existem propostas vinculadas
+            propostas = self.session.query(Proposta).filter_by(cliente_id=cliente_id).first()
+            if propostas:
+                return False, "Não é possível excluir o cliente pois existem propostas vinculadas"
+
+            cliente = self.session.query(Cliente).filter_by(id=cliente_id).first()
+            if cliente:
+                self.session.delete(cliente)
+                return True, "Cliente excluído com sucesso"
+            return False, "Cliente não encontrado"
+        return self._safe_query(query)
+
+    def excluir_proposta(self, proposta_id):
+        """Exclui uma proposta e seus registros relacionados"""
+        def query():
+            proposta = self.session.query(Proposta).filter_by(id=proposta_id).first()
+            if proposta:
+                # Excluir registros relacionados
+                self.session.query(AndamentoProposta).filter_by(proposta_id=proposta_id).delete()
+                self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id).delete()
+                self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).delete()
+
+                # Excluir a proposta
+                self.session.delete(proposta)
+                return True, "Proposta excluída com sucesso"
+            return False, "Proposta não encontrada"
+        return self._safe_query(query)

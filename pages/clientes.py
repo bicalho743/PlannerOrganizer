@@ -87,14 +87,31 @@ def show():
                     ), axis=1)
                     clientes = clientes[mask]
 
-                # Exibir tabela de clientes
-                st.dataframe(
-                    clientes[[
-                        'nome', 'tipo_conta', 'cpf', 'cnpj', 'email', 'telefone',
-                        'data_aniversario', 'origem_cliente', 'data_cadastro'
-                    ]],
-                    use_container_width=True
-                )
+                # Para cada cliente, mostrar os dados e botões de ação
+                for _, cliente in clientes.iterrows():
+                    with st.container():
+                        col1, col2 = st.columns([4, 1])
+
+                        with col1:
+                            st.markdown(f"**{cliente['nome']}**")
+                            st.markdown(f"Email: {cliente['email']}")
+                            st.markdown(f"Telefone: {cliente['telefone']}")
+                            if cliente['tipo_conta'] == 'PF':
+                                st.markdown(f"CPF: {cliente['cpf']}")
+                            else:
+                                st.markdown(f"CNPJ: {cliente['cnpj']}")
+                                st.markdown(f"Razão Social: {cliente['razao_social']}")
+
+                        with col2:
+                            if st.button("🗑️ Excluir", key=f"del_cliente_{cliente['id']}"):
+                                sucesso, msg = st.session_state.db.excluir_cliente(cliente['id'])
+                                if sucesso:
+                                    st.success(msg)
+                                    st.rerun()
+                                else:
+                                    st.error(msg)
+
+                        st.markdown("---")
             else:
                 st.info("Nenhum cliente cadastrado.")
 
