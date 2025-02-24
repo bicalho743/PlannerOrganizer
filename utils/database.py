@@ -74,6 +74,10 @@ class Fornecedor(Base):
     contato = Column(String)
     categoria = Column(String)
     tipo_conta = Column(String, nullable=False)
+    estado = Column(String)  # Novo campo
+    cidade = Column(String)  # Novo campo
+    bairro = Column(String)  # Novo campo
+    endereco = Column(String)
     pix = Column(String)
     recorrente = Column(Boolean, default=False)
     observacoes = Column(String)
@@ -87,10 +91,13 @@ class Assistente(Base):
     __tablename__ = 'assistentes'
     id = Column(Integer, primary_key=True)
     nome = Column(String, nullable=False)
-    email = Column(String)  # Novo campo
+    email = Column(String)
     telefone = Column(String)
+    estado = Column(String)  # Novo campo
+    cidade = Column(String)  # Novo campo
+    bairro = Column(String)  # Novo campo
     endereco = Column(String)
-    disponibilidade = Column(String)  # Novo campo
+    disponibilidade = Column(String)
     pix = Column(String)
     data_cadastro = Column(Date, default=datetime.now().date())
     observacoes = Column(String)
@@ -101,6 +108,10 @@ class Parceiro(Base):
     nome = Column(String, nullable=False)
     telefone = Column(String)
     email = Column(String)
+    estado = Column(String)  # Novo campo
+    cidade = Column(String)  # Novo campo
+    bairro = Column(String)  # Novo campo
+    endereco = Column(String)
     area_atuacao = Column(String)
     tipo_parceria = Column(String)
     pix = Column(String)
@@ -380,13 +391,19 @@ class Database:
             } for t in contas])
         return self._safe_query(query)
 
-    def add_fornecedor(self, descricao, contato, categoria, tipo_conta, pix=None, recorrente=False, observacoes=None, valor=None, data_vencimento=None, data_pagamento=None, status=None):
+    def add_fornecedor(self, descricao, contato, categoria, tipo_conta, estado=None, cidade=None, 
+                  bairro=None, endereco=None, pix=None, recorrente=False, observacoes=None, 
+                  valor=None, data_vencimento=None, data_pagamento=None, status=None):
         def query():
             fornecedor = Fornecedor(
                 descricao=descricao,
                 contato=contato,
                 categoria=categoria,
                 tipo_conta=tipo_conta,
+                estado=estado,
+                cidade=cidade,
+                bairro=bairro,
+                endereco=endereco,
                 pix=pix,
                 recorrente=recorrente,
                 observacoes=observacoes,
@@ -408,6 +425,10 @@ class Database:
                 'contato': f.contato,
                 'categoria': f.categoria,
                 'tipo_conta': f.tipo_conta,
+                'estado': f.estado,
+                'cidade': f.cidade,
+                'bairro': f.bairro,
+                'endereco': f.endereco,
                 'pix': f.pix,
                 'recorrente': f.recorrente,
                 'observacoes': f.observacoes,
@@ -663,7 +684,11 @@ class Database:
                 categoria="Produtos",
                 tipo_conta="PJ",
                 pix="12345678901",
-                recorrente=False
+                recorrente=False,
+                estado="SP",
+                cidade="São Paulo",
+                bairro="Pinheiros",
+                endereco="Rua Augusta, 100"
             )
 
             proposta1_id = self.add_proposta(
@@ -692,11 +717,15 @@ class Database:
             print(f"Erro ao adicionar dados de teste: {str(e)}")
             return False
 
-    def add_assistente(self, nome, telefone, endereco, pix=None, observacoes=None, email=None, disponibilidade=None):
+    def add_assistente(self, nome, telefone, estado=None, cidade=None, bairro=None, 
+                  endereco=None, pix=None, observacoes=None, email=None, disponibilidade=None):
         def query():
             assistente = Assistente(
                 nome=nome,
                 telefone=telefone,
+                estado=estado,
+                cidade=cidade,
+                bairro=bairro,
                 endereco=endereco,
                 pix=pix,
                 observacoes=observacoes,
@@ -713,23 +742,31 @@ class Database:
             return pd.DataFrame([{
                 'id': a.id,
                 'nome': a.nome,
-                'email': a.email if hasattr(a, 'email') else None,
+                'email': a.email,
                 'telefone': a.telefone,
+                'estado': a.estado,
+                'cidade': a.cidade,
+                'bairro': a.bairro,
                 'endereco': a.endereco,
-                'disponibilidade': a.disponibilidade if hasattr(a, 'disponibilidade') else None,
+                'disponibilidade': a.disponibilidade,
                 'pix': a.pix,
                 'data_cadastro': a.data_cadastro,
                 'observacoes': a.observacoes
             } for a in assistentes])
         return self._safe_query(query)
 
-    def add_parceiro(self, nome, telefone, email, area_atuacao, tipo_parceria, pix=None, observacoes=None):
-        """Adiciona um novo parceiro"""
+    def add_parceiro(self, nome, telefone, email, area_atuacao, tipo_parceria, 
+                estado=None, cidade=None, bairro=None, endereco=None, 
+                pix=None, observacoes=None):
         def query():
             parceiro = Parceiro(
                 nome=nome,
                 telefone=telefone,
                 email=email,
+                estado=estado,
+                cidade=cidade,
+                bairro=bairro,
+                endereco=endereco,
                 area_atuacao=area_atuacao,
                 tipo_parceria=tipo_parceria,
                 pix=pix,
@@ -740,7 +777,6 @@ class Database:
         return self._safe_query(query)
 
     def get_parceiros(self):
-        """Retorna lista de parceiros cadastrados"""
         def query():
             parceiros = self.session.query(Parceiro).all()
             return pd.DataFrame([{
@@ -748,6 +784,10 @@ class Database:
                 'nome': p.nome,
                 'telefone': p.telefone,
                 'email': p.email,
+                'estado': p.estado,
+                'cidade': p.cidade,
+                'bairro': p.bairro,
+                'endereco': p.endereco,
                 'area_atuacao': p.area_atuacao,
                 'tipo_parceria': p.tipo_parceria,
                 'pix': p.pix,
