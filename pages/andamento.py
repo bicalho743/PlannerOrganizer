@@ -4,30 +4,48 @@ from datetime import datetime
 def show():
     st.title("📋 Andamento do Trabalho")
 
-    # CSS para garantir alinhamento à esquerda e consistência visual
+    # CSS mais específico para garantir alinhamento à esquerda
     st.markdown("""
         <style>
-        .element-container {
+        /* Reset geral para containers */
+        div.stContainer, div[class^="stContainer"] {
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+            max-width: 100% !important;
             width: 100% !important;
         }
-        /* Força alinhamento à esquerda para todos os elementos de texto */
-        .stMarkdown, .stText, div[data-testid="stText"], p {
+
+        /* Força alinhamento para todos os elementos de texto */
+        .stMarkdown p, 
+        div[data-testid="stMarkdown"] p,
+        div[data-testid="stText"] p,
+        div[data-testid="stText"] {
             text-align: left !important;
+            margin-left: 0 !important;
+            padding-left: 0 !important;
             width: 100% !important;
             display: block !important;
-            margin-left: 0 !important;
-            padding-left: 0 !important;
         }
-        /* Remove margens e padding indesejados */
-        .stColumn, div[data-testid="column"] {
+
+        /* Ajusta containers de colunas */
+        div[data-testid="column"] {
             padding-left: 0 !important;
             margin-left: 0 !important;
-        }
-        /* Ajusta containers para manter alinhamento */
-        .stContainer, div[class^="stContainer"] {
-            margin-left: 0 !important;
-            padding-left: 0 !important;
             width: 100% !important;
+        }
+
+        /* Ajusta elementos dentro do resumo financeiro */
+        div[data-testid="stVerticalBlock"] > div {
+            width: 100% !important;
+            text-align: left !important;
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+        }
+
+        /* Remove margens extras */
+        .block-container {
+            padding-left: 0 !important;
+            margin-left: 0 !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -39,14 +57,13 @@ def show():
         return
 
     # Container principal com informações da proposta
-    with st.container():
-        st.markdown(f"### Proposta #{proposta['numero']} - {proposta['cliente_nome']}")
+    st.container().markdown(f"### Proposta #{proposta['numero']} - {proposta['cliente_nome']}")
 
-        # Informações básicas em um único container
-        with st.container():
-            st.markdown(f"**Cliente:** {proposta['cliente_nome']}")
-            st.markdown(f"**Descrição:** {proposta.get('descricao', 'Não especificada')}")
-            st.markdown(f"**Valor Base:** R$ {proposta['valor_base']:.2f}")
+    # Informações básicas
+    with st.container():
+        st.markdown(f"**Cliente:** {proposta['cliente_nome']}")
+        st.markdown(f"**Descrição:** {proposta.get('descricao', 'Não especificada')}")
+        st.markdown(f"**Valor Base:** R$ {proposta['valor_base']:.2f}")
 
     # Seção de Acréscimos
     st.markdown("### Adicionar Acréscimos")
@@ -58,10 +75,8 @@ def show():
         st.markdown("**Descrição**")
         descricao = st.text_input("", label_visibility="collapsed")
 
-        col1, col2 = st.columns([2, 1])
-        with col1:
-            st.markdown("**Valor (R$)**")
-            valor = st.number_input("", value=0.0, format="%.2f", label_visibility="collapsed")
+        st.markdown("**Valor (R$)**")
+        valor = st.number_input("", value=0.0, format="%.2f", label_visibility="collapsed")
 
         st.form_submit_button("Adicionar")
 
@@ -72,6 +87,7 @@ def show():
     valor_total = proposta['valor_base']
     valor_pendente = 0.0
 
+    # Container para acréscimos
     for acrescimo in acrescimos:
         with st.container():
             st.markdown(f"**{acrescimo['tipo']}:** R$ {acrescimo['valor']:.2f}")
@@ -80,17 +96,22 @@ def show():
             if acrescimo['status'] == 'Pendente':
                 valor_pendente += acrescimo['valor']
 
-    # Resumo financeiro
+    # Resumo financeiro em containers aninhados
+    st.markdown("### Resumo Financeiro")
+
     with st.container():
-        st.markdown("### Resumo Financeiro")
-        st.markdown(f"**Valor Base:** R$ {proposta['valor_base']:.2f}")
-        st.markdown(f"**Status:** {proposta.get('status_pagamento_base', 'Pendente')}")
+        with st.container():
+            st.markdown(f"**Valor Base:** R$ {proposta['valor_base']:.2f}")
+            st.markdown(f"**Status:** {proposta.get('status_pagamento_base', 'Pendente')}")
 
         for acrescimo in acrescimos:
-            st.markdown(f"**{acrescimo['tipo']}:** {acrescimo['descricao']}")
-            st.markdown(f"**Valor:** R$ {acrescimo['valor']:.2f}")
-            st.markdown(f"**Status:** {acrescimo['status']}")
+            with st.container():
+                st.markdown(f"**{acrescimo['tipo']}:** {acrescimo['descricao']}")
+                st.markdown(f"**Valor:** R$ {acrescimo['valor']:.2f}")
+                st.markdown(f"**Status:** {acrescimo['status']}")
 
         st.markdown("---")
-        st.markdown(f"**Valor Total:** R$ {valor_total:.2f}")
-        st.markdown(f"**Valor Pendente:** R$ {valor_pendente:.2f}")
+
+        with st.container():
+            st.markdown(f"**Valor Total:** R$ {valor_total:.2f}")
+            st.markdown(f"**Valor Pendente:** R$ {valor_pendente:.2f}")
