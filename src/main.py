@@ -4,8 +4,11 @@ from datetime import datetime
 import sys
 from pathlib import Path
 
-# Adicionar o diretório src ao path para importar utils
+# Adicionar diretórios ao path para importar módulos
+root_dir = Path(__file__).parent.parent
+sys.path.append(str(root_dir))
 sys.path.append(str(Path(__file__).parent))
+
 from utils.database import Database
 
 # Configuração da página
@@ -22,9 +25,15 @@ if 'db' not in st.session_state:
 
 # Menu lateral personalizado
 st.sidebar.title("Menu Principal")
-pagina = st.sidebar.selectbox(
-    "Navegação",
-    ["Dashboard", "Propostas", "Clientes", "Financeiro", "Cadastros", "Relatórios"]
+pagina = st.sidebar.radio(
+    "",  # Label vazio para não mostrar título do radio
+    ["Dashboard", "Propostas", "Clientes", "Financeiro", "Cadastros", "Relatórios"],
+    format_func=lambda x: f"📊 {x}" if x == "Dashboard"
+                    else f"📝 {x}" if x == "Propostas"
+                    else f"👥 {x}" if x == "Clientes"
+                    else f"💰 {x}" if x == "Financeiro"
+                    else f"📁 {x}" if x == "Cadastros"
+                    else f"📈 {x}"  # Relatórios
 )
 
 # Dashboard - Página Principal
@@ -47,7 +56,7 @@ if pagina == "Dashboard":
 
     with col1:
         st.subheader("📊 Resumo")
-        
+
         # Estatísticas básicas
         clientes = st.session_state.db.get_clientes()
         propostas = st.session_state.db.get_propostas()
