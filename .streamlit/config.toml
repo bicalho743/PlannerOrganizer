@@ -1,4 +1,3 @@
-
 [server]
 headless = true
 address = "0.0.0.0"
@@ -8,10 +7,10 @@ enableXsrfProtection = false
 baseUrlPath = ""
 
 [theme]
-primaryColor = "#BFA980"
-backgroundColor = "#4A4A4A"
-secondaryBackgroundColor = "#5A5A5A"
-textColor = "#F2EFE6"
+primaryColor = "#B8860B"
+backgroundColor = "#1C1C1C"
+secondaryBackgroundColor = "#2A2A2A"
+textColor = "#F5F5F5"
 font = "sans serif"
 base = "dark"
 
