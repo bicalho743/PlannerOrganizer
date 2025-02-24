@@ -954,3 +954,87 @@ class Database:
 
             return pd.DataFrame(historico)
         return self._safe_query(query)
+
+    def update_cliente(self, cliente_id, **dados):
+        """Atualiza os dados de um cliente"""
+        def query():
+            cliente = self.session.query(Cliente).filter_by(id=cliente_id).first()
+            if cliente:
+                for campo, valor in dados.items():
+                    setattr(cliente, campo, valor)
+                return True
+            return False
+        return self._safe_query(query)
+
+    def delete_cliente(self, cliente_id):
+        """Remove um cliente do sistema"""
+        def query():
+            cliente = self.session.query(Cliente).filter_by(id=cliente_id).first()
+            if cliente:
+                self.session.delete(cliente)
+                return True
+            return False
+        return self._safe_query(query)
+
+    def update_fornecedor(self, fornecedor_id, **dados):
+        """Atualiza os dados de um fornecedor"""
+        def query():
+            fornecedor = self.session.query(Fornecedor).filter_by(id=fornecedor_id).first()
+            if fornecedor:
+                for campo, valor in dados.items():
+                    setattr(fornecedor, campo, valor)
+                return True
+            return False
+        return self._safe_query(query)
+
+    def delete_fornecedor(self, fornecedor_id):
+        """Remove um fornecedor do sistema"""
+        def query():
+            fornecedor = self.session.query(Fornecedor).filter_by(id=fornecedor_id).first()
+            if fornecedor:
+                self.session.delete(fornecedor)
+                return True
+            return False
+        return self._safe_query(query)
+
+    def update_assistente(self, assistente_id, **dados):
+        """Atualiza os dados de um assistente"""
+        def query():
+            assistente = self.session.query(Assistente).filter_by(id=assistente_id).first()
+            if assistente:
+                for campo, valor in dados.items():
+                    setattr(assistente, campo, valor)
+                return True
+            return False
+        return self._safe_query(query)
+
+    def delete_assistente(self, assistente_id):
+        """Remove um assistente do sistema"""
+        def query():
+            assistente = self.session.query(Assistente).filter_by(id=assistente_id).first()
+            if assistente:
+                self.session.delete(assistente)
+                return True
+            return False
+        return self._safe_query(query)
+
+    def update_parceiro(self, parceiro_id, **dados):
+        """Atualiza os dados de um parceiro"""
+        def query():
+            parceiro = self.session.query(Parceiro).filter_by(id=parceiro_id).first()
+            if parceiro:
+                for campo, valor in dados.items():
+                    setattr(parceiro, campo, valor)
+                return True
+            return False
+        return self._safe_query(query)
+
+    def delete_parceiro(self, parceiro_id):
+        """Remove um parceiro do sistema"""
+        def query():
+            parceiro = self.session.query(Parceiro).filter_by(id=parceiro_id).first()
+            if parceiro:
+                self.session.delete(parceiro)
+                return True
+            return False
+        return self._safe_query(query)
