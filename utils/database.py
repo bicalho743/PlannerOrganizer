@@ -53,6 +53,9 @@ class Cliente(Base):
     nome = Column(String, nullable=False)
     email = Column(String)
     telefone = Column(String)
+    estado = Column(String)  # Novo campo
+    cidade = Column(String)  # Novo campo
+    bairro = Column(String)  # Novo campo
     endereco = Column(String)
     cpf = Column(String)
     data_aniversario = Column(Date)
@@ -231,6 +234,9 @@ class Database:
                 'nome': c.nome,
                 'email': c.email,
                 'telefone': c.telefone,
+                'estado': c.estado,
+                'cidade': c.cidade,
+                'bairro': c.bairro,
                 'endereco': c.endereco,
                 'cpf': c.cpf,
                 'data_aniversario': c.data_aniversario,
@@ -242,13 +248,16 @@ class Database:
             } for c in clientes])
         return self._safe_query(query)
 
-    def add_cliente(self, nome, email, telefone, endereco, cpf=None, data_aniversario=None, 
-                    origem_cliente=None, tipo_conta='PF', cnpj=None, razao_social=None):
+    def add_cliente(self, nome, email, telefone, estado=None, cidade=None, bairro=None, endereco=None, cpf=None, 
+                    data_aniversario=None, origem_cliente=None, tipo_conta='PF', cnpj=None, razao_social=None):
         def query():
             cliente = Cliente(
                 nome=nome,
                 email=email,
                 telefone=telefone,
+                estado=estado,
+                cidade=cidade,
+                bairro=bairro,
                 endereco=endereco,
                 cpf=cpf,
                 data_aniversario=data_aniversario,
@@ -624,6 +633,9 @@ class Database:
                 email="maria@email.com",
                 telefone="(11) 99999-9999",
                 endereco="Rua das Flores, 123",
+                estado="SP",
+                cidade="São Paulo",
+                bairro="Vila Madalena",
                 cpf="123.456.789-00",
                 data_aniversario=datetime.now().date(),
                 origem_cliente="Indicação",
@@ -635,6 +647,9 @@ class Database:
                 email="joao@email.com",
                 telefone="(11) 88888-8888",
                 endereco="Av. Principal, 456",
+                estado="RJ",
+                cidade="Rio de Janeiro",
+                bairro="Copacabana",
                 cpf="987.654.321-00",
                 data_aniversario=datetime.now().date(),
                 origem_cliente="Redes Sociais",
