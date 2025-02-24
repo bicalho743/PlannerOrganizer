@@ -8,12 +8,6 @@ order = [
     "relatorios.py"
 ]
 
-# Oculta todas as outras páginas
 visibility = """
-main.py = false
-login.py = false
-admin.py = false
-mais.py = false
-backup.py = false
-contas_pagar.py = false
+hidden = []
 """
