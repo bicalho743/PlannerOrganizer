@@ -27,15 +27,16 @@ if 'db' not in st.session_state:
 st.sidebar.title("Menu Principal")
 pagina = st.sidebar.radio(
     "",  # Label vazio para não mostrar título do radio
-    ["Dashboard", "Cadastros", "Propostas", "Financeiro", "Relatórios"],
+    ["Dashboard", "Cadastros", "Propostas", "Financeiro", "Relatórios", "Importação"],
     format_func=lambda x: f"📊 {x}" if x == "Dashboard"
                     else f"👥 {x}" if x == "Cadastros"
                     else f"📝 {x}" if x == "Propostas"
                     else f"💰 {x}" if x == "Financeiro"
-                    else f"📈 {x}"  # Relatórios
+                    else f"📈 {x}" if x == "Relatórios"
+                    else f"📥 {x}"  # Importação
 )
 
-# Dashboard - Página Principal
+# Lógica de navegação
 if pagina == "Dashboard":
     st.title("📋 Sistema de Gestão - Personal Organizer")
 
@@ -106,6 +107,10 @@ elif pagina == "Financeiro":
 elif pagina == "Relatórios":
     import pages.relatorios as relatorios
     relatorios.show()
+
+elif pagina == "Importação":
+    import pages.importacao as importacao
+    importacao.show()
 
 # Rodapé
 st.sidebar.markdown("---")
