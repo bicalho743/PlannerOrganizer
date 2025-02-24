@@ -37,6 +37,14 @@ else:
     # Mostrar informações do usuário
     with st.sidebar:
         st.write(f"👤 Olá, {st.session_state.usuario['nome']}")
+        
+        # Mostrar mais detalhes do usuário
+        with st.expander("Ver meus dados"):
+            st.write("**Seus dados:**")
+            st.write(f"ID: {st.session_state.usuario['id']}")
+            st.write(f"Nome: {st.session_state.usuario['nome']}")
+            st.write(f"Email: {st.session_state.usuario['email']}")
+            st.write(f"Tipo de usuário: {st.session_state.usuario['tipo']}")
         if st.button("📤 Sair"):
             st.session_state.autenticado = False
             st.session_state.usuario = None
