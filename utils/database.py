@@ -89,6 +89,18 @@ class Assistente(Base):
     data_cadastro = Column(Date, default=datetime.now().date())
     observacoes = Column(String)
 
+class Parceiro(Base):
+    __tablename__ = 'parceiros'
+    id = Column(Integer, primary_key=True)
+    nome = Column(String, nullable=False)
+    telefone = Column(String)
+    email = Column(String)
+    area_atuacao = Column(String)
+    tipo_parceria = Column(String)
+    pix = Column(String)
+    observacoes = Column(String)
+    data_cadastro = Column(Date, default=datetime.now().date())
+
 class CategoriaDespesa(Base):
     __tablename__ = 'categorias_despesa'
     id = Column(Integer, primary_key=True)
@@ -678,6 +690,39 @@ class Database:
                 'data_cadastro': a.data_cadastro,
                 'observacoes': a.observacoes
             } for a in assistentes])
+        return self._safe_query(query)
+
+    def add_parceiro(self, nome, telefone, email, area_atuacao, tipo_parceria, pix=None, observacoes=None):
+        """Adiciona um novo parceiro"""
+        def query():
+            parceiro = Parceiro(
+                nome=nome,
+                telefone=telefone,
+                email=email,
+                area_atuacao=area_atuacao,
+                tipo_parceria=tipo_parceria,
+                pix=pix,
+                observacoes=observacoes
+            )
+            self.session.add(parceiro)
+            return parceiro.id
+        return self._safe_query(query)
+
+    def get_parceiros(self):
+        """Retorna lista de parceiros cadastrados"""
+        def query():
+            parceiros = self.session.query(Parceiro).all()
+            return pd.DataFrame([{
+                'id': p.id,
+                'nome': p.nome,
+                'telefone': p.telefone,
+                'email': p.email,
+                'area_atuacao': p.area_atuacao,
+                'tipo_parceria': p.tipo_parceria,
+                'pix': p.pix,
+                'observacoes': p.observacoes,
+                'data_cadastro': p.data_cadastro
+            } for p in parceiros])
         return self._safe_query(query)
 
     def __del__(self):
