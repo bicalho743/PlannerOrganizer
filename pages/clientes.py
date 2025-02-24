@@ -26,14 +26,27 @@ def show():
                 cnpj = st.text_input("CNPJ")
                 razao_social = st.text_input("Razão Social")
 
-            email = st.text_input("E-mail")
-            telefone = st.text_input("Telefone")
-            data_aniversario = st.date_input("Data de Aniversário", format="DD/MM/YYYY")
-            endereco = st.text_area("Endereço")
-            origem_cliente = st.selectbox(
-                "Onde conheceu a Personal Organizer?",
-                ["Indicação", "Redes Sociais", "Site", "Evento", "Outro"]
-            )
+            col1, col2 = st.columns(2)
+            with col1:
+                email = st.text_input("E-mail")
+                telefone = st.text_input("Telefone")
+            with col2:
+                data_aniversario = st.date_input("Data de Aniversário", format="DD/MM/YYYY")
+                origem_cliente = st.selectbox(
+                    "Onde conheceu a Personal Organizer?",
+                    ["Indicação", "Redes Sociais", "Site", "Evento", "Outro"]
+                )
+
+            # Seção de Endereço
+            st.write("---")
+            st.subheader("Endereço")
+            col1, col2 = st.columns(2)
+            with col1:
+                estado = st.text_input("Estado (UF)")
+                cidade = st.text_input("Cidade")
+            with col2:
+                bairro = st.text_input("Bairro")
+                endereco = st.text_input("Endereço completo (Rua, número, complemento)")
 
             submitted = st.form_submit_button("Cadastrar")
 
@@ -47,6 +60,9 @@ def show():
                             nome=nome,
                             email=email,
                             telefone=telefone,
+                            estado=estado,
+                            cidade=cidade,
+                            bairro=bairro,
                             endereco=endereco,
                             cpf=cpf,
                             data_aniversario=data_aniversario,
@@ -70,7 +86,7 @@ def show():
             clientes = st.session_state.db.get_clientes()
 
             if not clientes.empty:
-                # Converter datas para datetime de forma segura
+                # Converter datas para datetime
                 clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro'], errors='coerce')
                 clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'], errors='coerce')
 
@@ -102,6 +118,23 @@ def show():
                                 st.markdown(f"CNPJ: {cliente['cnpj']}")
                                 st.markdown(f"Razão Social: {cliente['razao_social']}")
 
+                            # Exibir endereço completo
+                            endereco_partes = []
+                            if cliente['endereco']:
+                                endereco_partes.append(cliente['endereco'])
+                            if cliente['bairro']:
+                                endereco_partes.append(cliente['bairro'])
+                            if cliente['cidade'] and cliente['estado']:
+                                endereco_partes.append(f"{cliente['cidade']} - {cliente['estado']}")
+                            elif cliente['cidade']:
+                                endereco_partes.append(cliente['cidade'])
+                            elif cliente['estado']:
+                                endereco_partes.append(cliente['estado'])
+
+                            if endereco_partes:
+                                st.markdown("**Endereço:**")
+                                st.markdown(", ".join(endereco_partes))
+
                         with col2:
                             if st.button("🗑️ Excluir", key=f"del_cliente_{cliente['id']}"):
                                 sucesso, msg = st.session_state.db.excluir_cliente(cliente['id'])
@@ -130,8 +163,11 @@ def show():
         - razao_social (para PJ)
         - email
         - telefone
-        - data_aniversario (formato: DD/MM)
+        - estado
+        - cidade
+        - bairro
         - endereco
+        - data_aniversario (formato: DD/MM)
         - origem_cliente
         """)
 
@@ -156,6 +192,7 @@ def show():
 
                         for index, row in df.iterrows():
                             try:
+                                # Processar data de aniversário
                                 data_aniv = None
                                 if 'data_aniversario' in row and pd.notna(row['data_aniversario']):
                                     try:
@@ -179,6 +216,9 @@ def show():
                                     tipo_conta=tipo_conta,
                                     email=str(row.get('email', '')),
                                     telefone=str(row.get('telefone', '')),
+                                    estado=str(row.get('estado', '')),
+                                    cidade=str(row.get('cidade', '')),
+                                    bairro=str(row.get('bairro', '')),
                                     endereco=str(row.get('endereco', '')),
                                     cpf=str(row.get('cpf', '')) if tipo_conta == 'PF' else None,
                                     cnpj=str(row.get('cnpj', '')) if tipo_conta == 'PJ' else None,
