@@ -731,17 +731,21 @@ class Database:
             Session.remove()
 
     def atualizar_status_pagamento_proposta(self, proposta_id, status_pagamento_base, valor_base):
+        """Atualiza o status de pagamento e valor base de uma proposta"""
         def query():
-            # Converter ID para int nativo do Python
-            proposta_id = int(proposta_id)
-            valor_base = float(valor_base)
+            try:
+                # Converter ID para int nativo do Python
+                proposta_id_int = int(proposta_id)
+                valor_base_float = float(valor_base)
 
-            proposta = self.session.query(Proposta).filter_by(id=proposta_id).first()
-            if proposta:
-                proposta.status_pagamento_base = status_pagamento_base
-                proposta.valor = valor_base
-                return True
-            return False
+                proposta = self.session.query(Proposta).filter_by(id=proposta_id_int).first()
+                if proposta:
+                    proposta.status_pagamento_base = status_pagamento_base
+                    proposta.valor = valor_base_float
+                    return True
+                return False
+            except (ValueError, TypeError) as e:
+                raise Exception(f"Erro ao converter valores: {str(e)}")
         return self._safe_query(query)
 
     def add_acrescimo_proposta(self, proposta_id, tipo, valor, descricao=None, fornecedor=None, status_pagamento='Pendente'):
