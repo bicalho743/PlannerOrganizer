@@ -70,13 +70,13 @@ class Cliente(Base):
 class Fornecedor(Base):
     __tablename__ = 'fornecedores'
     id = Column(Integer, primary_key=True)
-    descricao = Column(String, nullable=False)
+    nome = Column(String, nullable=False)  # Alterado de descricao para nome
     contato = Column(String)
     categoria = Column(String)
     tipo_conta = Column(String, nullable=False)
-    estado = Column(String)  # Novo campo
-    cidade = Column(String)  # Novo campo
-    bairro = Column(String)  # Novo campo
+    estado = Column(String)
+    cidade = Column(String)
+    bairro = Column(String)
     endereco = Column(String)
     pix = Column(String)
     recorrente = Column(Boolean, default=False)
@@ -85,7 +85,6 @@ class Fornecedor(Base):
     data_vencimento = Column(Date, nullable=True)
     data_pagamento = Column(Date, nullable=True)
     status = Column(String, nullable=True)
-
 
 class Assistente(Base):
     __tablename__ = 'assistentes'
@@ -391,12 +390,13 @@ class Database:
             } for t in contas])
         return self._safe_query(query)
 
-    def add_fornecedor(self, descricao, contato, categoria, tipo_conta, estado=None, cidade=None, 
+    def add_fornecedor(self, nome, contato, categoria, tipo_conta, estado=None, cidade=None, 
                   bairro=None, endereco=None, pix=None, recorrente=False, observacoes=None, 
                   valor=None, data_vencimento=None, data_pagamento=None, status=None):
+        """Adiciona um novo fornecedor"""
         def query():
             fornecedor = Fornecedor(
-                descricao=descricao,
+                nome=nome,
                 contato=contato,
                 categoria=categoria,
                 tipo_conta=tipo_conta,
@@ -417,11 +417,12 @@ class Database:
         return self._safe_query(query)
 
     def get_fornecedores(self):
+        """Retorna lista de fornecedores"""
         def query():
             fornecedores = self.session.query(Fornecedor).all()
             return pd.DataFrame([{
                 'id': f.id,
-                'descricao': f.descricao,
+                'nome': f.nome,  # Atualizado de descricao para nome
                 'contato': f.contato,
                 'categoria': f.categoria,
                 'tipo_conta': f.tipo_conta,
@@ -567,13 +568,12 @@ class Database:
                 'id': f.id,
                 'produto_id': f.produto_id,
                 'fornecedor_id': f.fornecedor_id,
-                'fornecedor_nome': f.fornecedor.descricao if f.fornecedor else None,
+                'fornecedor_nome': f.fornecedor.nome if f.fornecedor else None, #Updated to use nome instead of descricao
                 'valor': f.valor,
                 'data_cotacao': f.data_cotacao,
                 'observacoes': f.observacoes
             } for f in fornecedores])
         return self._safe_query(query)
-
 
     def registrar_usuario(self, email, senha, nome, telefone=None, empresa=None, tipo='usuario'):
         """Registra um novo usuário no sistema"""
@@ -679,7 +679,7 @@ class Database:
             )
 
             fornecedor1_id = self.add_fornecedor(
-                descricao="Organizadores Express",
+                nome="Organizadores Express", # Changed to nome
                 contato="(11) 97777-7777",
                 categoria="Produtos",
                 tipo_conta="PJ",
