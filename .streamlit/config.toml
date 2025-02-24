@@ -2,6 +2,8 @@
 headless = true
 address = "0.0.0.0"
 port = 5000
+enableCORS = false
+enableXsrfProtection = false
 
 [theme]
 primaryColor = "#FF4B4B"
@@ -12,12 +14,13 @@ font = "sans serif"
 
 [browser]
 gatherUsageStats = false
+serverAddress = "0.0.0.0"
 
 [client]
 showErrorDetails = false
+toolbarMode = "minimal"
 
 [runner]
-# Hide login, admin and mais pages from sidebar
 fastReruns = true
 
 [ui]
