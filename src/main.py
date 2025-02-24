@@ -14,7 +14,7 @@ import pages.login as login
 
 # Configuração da página
 st.set_page_config(
-    page_title="Sistema Personal Organizer",
+    page_title="Planner Organizer",
     page_icon="📋",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -37,7 +37,7 @@ else:
     # Mostrar informações do usuário
     with st.sidebar:
         st.write(f"👤 Olá, {st.session_state.usuario['nome']}")
-        
+
         # Mostrar mais detalhes do usuário
         with st.expander("Ver meus dados"):
             st.write("**Seus dados:**")
@@ -65,7 +65,7 @@ else:
 
     # Lógica de navegação
     if pagina == "Dashboard":
-        st.title("📋 Sistema de Gestão - Personal Organizer")
+        st.title("📋 Planner Organizer")
 
         # Add test data button in sidebar if database is empty
         clientes = st.session_state.db.get_clientes()
