@@ -27,10 +27,10 @@ if 'db' not in st.session_state:
 st.sidebar.title("Menu Principal")
 pagina = st.sidebar.radio(
     "",  # Label vazio para não mostrar título do radio
-    ["Dashboard", "Propostas", "Cadastros", "Financeiro", "Relatórios"],
+    ["Dashboard", "Cadastros", "Propostas", "Financeiro", "Relatórios"],
     format_func=lambda x: f"📊 {x}" if x == "Dashboard"
-                    else f"📝 {x}" if x == "Propostas"
                     else f"👥 {x}" if x == "Cadastros"
+                    else f"📝 {x}" if x == "Propostas"
                     else f"💰 {x}" if x == "Financeiro"
                     else f"📈 {x}"  # Relatórios
 )
