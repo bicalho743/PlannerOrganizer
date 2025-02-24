@@ -48,7 +48,7 @@ def show():
                     sucesso, usuario = st.session_state.db.autenticar_usuario(email, senha)
 
                     if sucesso:
-                        # Guardar informações do usuário na sessão
+                        # Converter objeto Usuario para dicionário
                         st.session_state.usuario = {
                             'id': usuario.id,
                             'nome': usuario.nome,
