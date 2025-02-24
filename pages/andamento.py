@@ -4,17 +4,29 @@ from datetime import datetime
 def show():
     st.title("📋 Andamento do Trabalho")
 
-    # CSS customizado para garantir alinhamento à esquerda
+    # CSS para garantir alinhamento à esquerda e consistência visual
     st.markdown("""
         <style>
         .element-container {
             width: 100% !important;
         }
-        .stMarkdown, .stText {
+        /* Força alinhamento à esquerda para todos os elementos de texto */
+        .stMarkdown, .stText, div[data-testid="stText"], p {
             text-align: left !important;
+            width: 100% !important;
+            display: block !important;
+            margin-left: 0 !important;
+            padding-left: 0 !important;
         }
-        div[data-testid="stText"] {
-            text-align: left !important;
+        /* Remove margens e padding indesejados */
+        .stColumn, div[data-testid="column"] {
+            padding-left: 0 !important;
+            margin-left: 0 !important;
+        }
+        /* Ajusta containers para manter alinhamento */
+        .stContainer, div[class^="stContainer"] {
+            margin-left: 0 !important;
+            padding-left: 0 !important;
             width: 100% !important;
         }
         </style>
@@ -26,72 +38,59 @@ def show():
         st.warning("Selecione uma proposta primeiro")
         return
 
-    # Container principal com informações básicas da proposta
+    # Container principal com informações da proposta
     with st.container():
-        col1, col2 = st.columns(2)
+        st.markdown(f"### Proposta #{proposta['numero']} - {proposta['cliente_nome']}")
 
-        with col1:
-            st.markdown(f"### Proposta #{proposta['numero']}")
+        # Informações básicas em um único container
+        with st.container():
             st.markdown(f"**Cliente:** {proposta['cliente_nome']}")
+            st.markdown(f"**Descrição:** {proposta.get('descricao', 'Não especificada')}")
             st.markdown(f"**Valor Base:** R$ {proposta['valor_base']:.2f}")
 
-        with col2:
-            st.markdown(f"**Status:** {proposta['status']}")
-            st.markdown(f"**Data Início:** {proposta['data_inicio'].strftime('%d/%m/%Y')}")
-            if proposta['data_fim']:
-                st.markdown(f"**Data Conclusão:** {proposta['data_fim'].strftime('%d/%m/%Y')}")
+    # Seção de Acréscimos
+    st.markdown("### Adicionar Acréscimos")
 
-    # Seção de Assistentes
-    st.markdown("### 👥 Assistentes")
-    for assistente in proposta.get('assistentes', []):
+    with st.form("novo_acrescimo"):
+        st.markdown("**Tipo de Acréscimo**")
+        tipo = st.selectbox("", ["Organização", "Assistente", "Fornecedor"], label_visibility="collapsed")
+
+        st.markdown("**Descrição**")
+        descricao = st.text_input("", label_visibility="collapsed")
+
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            st.markdown("**Valor (R$)**")
+            valor = st.number_input("", value=0.0, format="%.2f", label_visibility="collapsed")
+
+        st.form_submit_button("Adicionar")
+
+    # Acréscimos Adicionados
+    st.markdown("### Acréscimos Adicionados")
+
+    acrescimos = proposta.get('acrescimos', [])
+    valor_total = proposta['valor_base']
+    valor_pendente = 0.0
+
+    for acrescimo in acrescimos:
         with st.container():
-            st.markdown(f"**Nome:** {assistente['nome']}")
-            st.markdown(f"**Função:** {assistente['funcao']}")
-            st.markdown(f"**Valor:** R$ {assistente['valor']:.2f}")
-            st.markdown("---")
+            st.markdown(f"**{acrescimo['tipo']}:** R$ {acrescimo['valor']:.2f}")
+            st.markdown(f"{acrescimo['descricao']}")
+            valor_total += acrescimo['valor']
+            if acrescimo['status'] == 'Pendente':
+                valor_pendente += acrescimo['valor']
 
-    # Seção de Fornecedores
-    st.markdown("### 🏢 Fornecedores")
-    for fornecedor in proposta.get('fornecedores', []):
-        with st.container():
-            st.markdown(f"**Nome:** {fornecedor['nome']}")
-            st.markdown(f"**Produto/Serviço:** {fornecedor['descricao']}")
-            st.markdown(f"**Valor:** R$ {fornecedor['valor']:.2f}")
-            st.markdown(f"**Status:** {fornecedor['status']}")
-            st.markdown("---")
+    # Resumo financeiro
+    with st.container():
+        st.markdown("### Resumo Financeiro")
+        st.markdown(f"**Valor Base:** R$ {proposta['valor_base']:.2f}")
+        st.markdown(f"**Status:** {proposta.get('status_pagamento_base', 'Pendente')}")
 
-    # Seção de Etapas
-    st.markdown("### 📝 Etapas")
-    etapas = st.session_state.db.get_andamentos_proposta(proposta['id'])
-    if not etapas.empty:
-        for _, etapa in etapas.iterrows():
-            with st.container():
-                st.markdown(f"**Status:** {etapa['status']}")
-                if etapa['observacao']:
-                    st.markdown(f"**Observação:** {etapa['observacao']}")
-                st.markdown(f"**Data:** {etapa['data'].strftime('%d/%m/%Y')}")
-                if etapa['comodo']:
-                    st.markdown(f"**Cômodo:** {etapa['comodo']}")
-                st.markdown("---")
-    else:
-        st.info("Nenhuma etapa registrada ainda")
+        for acrescimo in acrescimos:
+            st.markdown(f"**{acrescimo['tipo']}:** {acrescimo['descricao']}")
+            st.markdown(f"**Valor:** R$ {acrescimo['valor']:.2f}")
+            st.markdown(f"**Status:** {acrescimo['status']}")
 
-    # Adicionar nova etapa
-    st.markdown("### ➕ Adicionar Etapa")
-    with st.form("nova_etapa"):
-        status = st.selectbox("Status", ["Em Andamento", "Concluído", "Pausado", "Cancelado"])
-        comodo = st.text_input("Cômodo")
-        observacao = st.text_area("Observação")
-
-        if st.form_submit_button("Adicionar"):
-            try:
-                st.session_state.db.add_andamento_proposta(
-                    proposta_id=proposta['id'],
-                    status=status,
-                    comodo=comodo,
-                    observacao=observacao
-                )
-                st.success("Etapa adicionada com sucesso!")
-                st.experimental_rerun()
-            except Exception as e:
-                st.error(f"Erro ao adicionar etapa: {str(e)}")
+        st.markdown("---")
+        st.markdown(f"**Valor Total:** R$ {valor_total:.2f}")
+        st.markdown(f"**Valor Pendente:** R$ {valor_pendente:.2f}")
