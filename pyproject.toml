@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
     "anthropic>=0.45.2",
     "humanize>=4.11.0",
+    "mercadopago>=2.2.3",
     "numpy>=2.2.2",
     "openai>=1.61.1",
     "openpyxl>=3.1.5",
