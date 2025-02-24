@@ -132,6 +132,43 @@ else:
     # Lógica de navegação
     if pagina == "Dashboard":
         st.title("📋 Planner Organizer")
+        
+        # Texto explicativo das funcionalidades
+        st.markdown("""
+        ### 👋 Bem-vindo ao seu assistente de organização!
+        
+        **Aqui você encontra:**
+        
+        📊 **Dashboard**
+        - Visão geral do seu negócio
+        - Aniversariantes do dia e da semana
+        - Propostas em andamento
+        
+        👥 **Cadastros**
+        - Gerencie clientes, fornecedores e assistentes
+        - Mantenha todos os contatos organizados
+        - Controle de aniversários e dados importantes
+        
+        📝 **Propostas**
+        - Crie e gerencie propostas
+        - Acompanhe status e prazos
+        - Gere PDFs profissionais
+        
+        💰 **Financeiro**
+        - Controle de receitas e despesas
+        - Gestão de contas a receber
+        - Relatórios financeiros detalhados
+        
+        💳 **Pagamentos**
+        - Integração com Mercado Pago
+        - Receba pagamentos online
+        - Acompanhe status das transações
+        
+        📊 **Relatórios**
+        - Análise de desempenho
+        - Gráficos e métricas importantes
+        - Tome decisões baseadas em dados
+        """)
 
         # Add test data button in sidebar if database is empty
         clientes = st.session_state.db.get_clientes()
