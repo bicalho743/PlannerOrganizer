@@ -15,6 +15,12 @@ font = "sans serif"
 
 [browser]
 gatherUsageStats = false
+
+[theme]
+base="dark"
+
+[browser]
+gatherUsageStats = false
 serverAddress = "0.0.0.0"
 
 [client]

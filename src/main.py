@@ -12,6 +12,30 @@ sys.path.append(str(Path(__file__).parent))
 from utils.database import Database
 
 # Configuração da página
+
+# Adicionar botão WhatsApp flutuante
+st.markdown("""
+    <a href="https://wa.me/5511999999999" target="_blank" style="
+        position: fixed;
+        width: 60px;
+        height: 60px;
+        bottom: 40px;
+        right: 40px;
+        background-color: #25d366;
+        color: #FFF;
+        border-radius: 50px;
+        text-align: center;
+        font-size: 30px;
+        box-shadow: 1px 1px 2px #888;
+        z-index: 1000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-decoration: none;">
+        <i class="fab fa-whatsapp" style="margin-top: 16px">💬</i>
+    </a>
+    """, unsafe_allow_html=True)
+
 st.set_page_config(
     page_title="Sistema Personal Organizer",
     page_icon="📋",
