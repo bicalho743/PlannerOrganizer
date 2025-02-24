@@ -3,117 +3,155 @@ import pandas as pd
 from datetime import datetime
 
 def show():
-    st.title("📝 Cadastros")
+    st.title("👥 Cadastros")
 
-    tab1, tab2 = st.tabs(["Fornecedores", "Assistentes"])
+    # Seletor de tipo de cadastro
+    tipo_cadastro = st.selectbox(
+        "Tipo de Cadastro",
+        ["Cliente", "Fornecedor", "Assistente", "Parceiro"]
+    )
 
-    with tab1:
-        st.subheader("Cadastro de Fornecedores")
+    # Formulário específico para cada tipo
+    with st.form(f"cadastro_{tipo_cadastro.lower()}", clear_on_submit=True):
+        # Campos comuns
+        nome = st.text_input("Nome")
+        telefone = st.text_input("Telefone")
+        email = st.text_input("Email")
 
-        with st.form("cadastro_fornecedor", clear_on_submit=True):
-            descricao = st.text_input("Nome/Descrição")
-            contato = st.text_input("Contato")
+        # Campos específicos por tipo
+        if tipo_cadastro == "Cliente":
+            data_aniversario = st.date_input("Data de Aniversário")
+            origem_cliente = st.selectbox(
+                "Como conheceu?",
+                ["Indicação", "Instagram", "Facebook", "Google", "Outro"]
+            )
+            tipo_cliente = st.selectbox("Tipo", ["PF", "PJ"])
+
+        elif tipo_cadastro == "Fornecedor":
             categoria = st.selectbox(
                 "Categoria",
                 ["Produtos", "Serviços", "Marcenaria", "Outro"]
             )
             tipo_conta = st.selectbox("Tipo de Conta", ["PF", "PJ"])
-            pix = st.text_input("Chave PIX")
             recorrente = st.checkbox("Fornecedor Recorrente")
-            observacoes = st.text_area("Observações")
 
-            submitted = st.form_submit_button("Cadastrar")
-
-            if submitted:
-                if descricao and contato:
-                    try:
-                        st.session_state.db.add_fornecedor(
-                            descricao=descricao,
-                            contato=contato,
-                            categoria=categoria,
-                            tipo_conta=tipo_conta,
-                            pix=pix if pix else None,
-                            recorrente=recorrente,
-                            observacoes=observacoes if observacoes else None
-                        )
-                        st.success("Fornecedor cadastrado com sucesso!")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Erro ao cadastrar fornecedor: {str(e)}")
-                else:
-                    st.warning("Por favor, preencha Nome/Descrição e Contato.")
-
-        st.subheader("Fornecedores Cadastrados")
-        try:
-            fornecedores = st.session_state.db.get_fornecedores()
-            if not fornecedores.empty:
-                # Update column order and selection based on actual database schema
-                st.dataframe(
-                    fornecedores[[
-                        'descricao', 'contato', 'categoria',
-                        'tipo_conta', 'pix', 'recorrente'
-                    ]].rename(columns={
-                        'descricao': 'Nome/Descrição',
-                        'contato': 'Contato',
-                        'categoria': 'Categoria',
-                        'tipo_conta': 'Tipo de Conta',
-                        'pix': 'PIX',
-                        'recorrente': 'Recorrente'
-                    }),
-                    use_container_width=True
-                )
-            else:
-                st.info("Nenhum fornecedor cadastrado.")
-        except Exception as e:
-            st.error(f"Erro ao carregar lista de fornecedores: {str(e)}")
-
-    with tab2:
-        st.subheader("Cadastro de Assistentes")
-
-        with st.form("cadastro_assistente", clear_on_submit=True):
-            nome = st.text_input("Nome")
-            telefone = st.text_input("Telefone")
+        elif tipo_cadastro == "Assistente":
             endereco = st.text_area("Endereço")
-            pix = st.text_input("Chave PIX")
-            observacoes = st.text_area("Observações")
+            disponibilidade = st.multiselect(
+                "Disponibilidade",
+                ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"]
+            )
 
-            submitted = st.form_submit_button("Cadastrar")
+        elif tipo_cadastro == "Parceiro":
+            area_atuacao = st.text_input("Área de Atuação")
+            tipo_parceria = st.selectbox(
+                "Tipo de Parceria",
+                ["Indicação", "Colaboração", "Projeto Conjunto"]
+            )
 
-            if submitted:
-                if nome and telefone:
-                    try:
-                        st.session_state.db.add_assistente(
-                            nome=nome,
-                            telefone=telefone,
-                            endereco=endereco if endereco else None,
-                            pix=pix if pix else None,
-                            observacoes=observacoes if observacoes else None
-                        )
-                        st.success("Assistente cadastrado com sucesso!")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Erro ao cadastrar assistente: {str(e)}")
-                else:
-                    st.warning("Por favor, preencha os campos Nome e Telefone.")
+        # Campo comum de observações
+        observacoes = st.text_area("Observações")
+        pix = st.text_input("Chave PIX")
 
-        st.subheader("Assistentes Cadastrados")
-        try:
-            assistentes = st.session_state.db.get_assistentes()
-            if not assistentes.empty:
-                st.dataframe(
-                    assistentes[[
-                        'nome', 'telefone', 'endereco',
-                        'pix', 'observacoes'
-                    ]].rename(columns={
-                        'nome': 'Nome',
-                        'telefone': 'Telefone',
-                        'endereco': 'Endereço',
-                        'pix': 'PIX',
-                        'observacoes': 'Observações'
-                    }),
-                    use_container_width=True
-                )
-            else:
-                st.info("Nenhum assistente cadastrado.")
-        except Exception as e:
-            st.error(f"Erro ao carregar lista de assistentes: {str(e)}")
+        submitted = st.form_submit_button("Cadastrar")
+
+        if submitted:
+            try:
+                dados_cadastro = {
+                    "nome": nome,
+                    "telefone": telefone,
+                    "email": email,
+                    "observacoes": observacoes if observacoes else None,
+                    "pix": pix if pix else None,
+                    "tipo_cadastro": tipo_cadastro
+                }
+
+                if tipo_cadastro == "Cliente":
+                    dados_cadastro.update({
+                        "data_aniversario": data_aniversario,
+                        "origem_cliente": origem_cliente,
+                        "tipo_cliente": tipo_cliente
+                    })
+                    st.session_state.db.add_cliente(**dados_cadastro)
+
+                elif tipo_cadastro == "Fornecedor":
+                    dados_cadastro.update({
+                        "categoria": categoria,
+                        "tipo_conta": tipo_conta,
+                        "recorrente": recorrente
+                    })
+                    st.session_state.db.add_fornecedor(**dados_cadastro)
+
+                elif tipo_cadastro == "Assistente":
+                    dados_cadastro.update({
+                        "endereco": endereco,
+                        "disponibilidade": ",".join(disponibilidade) if disponibilidade else None
+                    })
+                    st.session_state.db.add_assistente(**dados_cadastro)
+
+                elif tipo_cadastro == "Parceiro":
+                    dados_cadastro.update({
+                        "area_atuacao": area_atuacao,
+                        "tipo_parceria": tipo_parceria
+                    })
+                    st.session_state.db.add_parceiro(**dados_cadastro)
+
+                st.success(f"{tipo_cadastro} cadastrado com sucesso!")
+                st.rerun()
+
+            except Exception as e:
+                st.error(f"Erro ao cadastrar {tipo_cadastro.lower()}: {str(e)}")
+
+    # Lista de cadastros do tipo selecionado
+    st.subheader(f"Lista de {tipo_cadastro}s")
+    try:
+        if tipo_cadastro == "Cliente":
+            registros = st.session_state.db.get_clientes()
+            colunas = ['nome', 'telefone', 'email', 'data_aniversario', 'origem_cliente']
+            rename = {
+                'nome': 'Nome',
+                'telefone': 'Telefone',
+                'email': 'Email',
+                'data_aniversario': 'Aniversário',
+                'origem_cliente': 'Origem'
+            }
+        elif tipo_cadastro == "Fornecedor":
+            registros = st.session_state.db.get_fornecedores()
+            colunas = ['nome', 'telefone', 'categoria', 'tipo_conta', 'recorrente']
+            rename = {
+                'nome': 'Nome',
+                'telefone': 'Telefone',
+                'categoria': 'Categoria',
+                'tipo_conta': 'Tipo de Conta',
+                'recorrente': 'Recorrente'
+            }
+        elif tipo_cadastro == "Assistente":
+            registros = st.session_state.db.get_assistentes()
+            colunas = ['nome', 'telefone', 'email', 'endereco', 'disponibilidade']
+            rename = {
+                'nome': 'Nome',
+                'telefone': 'Telefone',
+                'email': 'Email',
+                'endereco': 'Endereço',
+                'disponibilidade': 'Disponibilidade'
+            }
+        elif tipo_cadastro == "Parceiro":
+            registros = st.session_state.db.get_parceiros()
+            colunas = ['nome', 'telefone', 'area_atuacao', 'tipo_parceria']
+            rename = {
+                'nome': 'Nome',
+                'telefone': 'Telefone',
+                'area_atuacao': 'Área de Atuação',
+                'tipo_parceria': 'Tipo de Parceria'
+            }
+
+        if not registros.empty:
+            st.dataframe(
+                registros[colunas].rename(columns=rename),
+                use_container_width=True
+            )
+        else:
+            st.info(f"Nenhum {tipo_cadastro.lower()} cadastrado.")
+
+    except Exception as e:
+        st.error(f"Erro ao carregar lista de {tipo_cadastro.lower()}s: {str(e)}")

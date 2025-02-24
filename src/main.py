@@ -27,12 +27,11 @@ if 'db' not in st.session_state:
 st.sidebar.title("Menu Principal")
 pagina = st.sidebar.radio(
     "",  # Label vazio para não mostrar título do radio
-    ["Dashboard", "Propostas", "Clientes", "Financeiro", "Cadastros", "Relatórios"],
+    ["Dashboard", "Propostas", "Cadastros", "Financeiro", "Relatórios"],
     format_func=lambda x: f"📊 {x}" if x == "Dashboard"
                     else f"📝 {x}" if x == "Propostas"
-                    else f"👥 {x}" if x == "Clientes"
+                    else f"👥 {x}" if x == "Cadastros"
                     else f"💰 {x}" if x == "Financeiro"
-                    else f"📁 {x}" if x == "Cadastros"
                     else f"📈 {x}"  # Relatórios
 )
 
@@ -96,17 +95,13 @@ elif pagina == "Propostas":
     import pages.propostas as propostas
     propostas.show()
 
-elif pagina == "Clientes":
-    import pages.clientes as clientes
-    clientes.show()
+elif pagina == "Cadastros":
+    import pages.cadastros as cadastros
+    cadastros.show()
 
 elif pagina == "Financeiro":
     import pages.financeiro as financeiro
     financeiro.show()
-
-elif pagina == "Cadastros":
-    import pages.cadastros as cadastros
-    cadastros.show()
 
 elif pagina == "Relatórios":
     import pages.relatorios as relatorios
