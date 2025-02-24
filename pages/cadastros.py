@@ -73,58 +73,59 @@ def show():
         with col2:
             pix = st.text_input("Chave PIX")
 
-        # Botão de submissão
+        # Botão de submissão (dentro do form)
         submitted = st.form_submit_button("Cadastrar")
 
-        if submitted:
-            try:
-                dados_cadastro = {
-                    "nome": nome,
-                    "telefone": telefone,
-                    "email": email,
-                    "estado": estado,
-                    "cidade": cidade,
-                    "bairro": bairro,
-                    "endereco": endereco,
-                    "observacoes": observacoes if observacoes else None,
-                    "pix": pix if pix else None,
-                    "tipo_cadastro": tipo_cadastro
-                }
+    # Processamento do formulário (fora do form)
+    if submitted:
+        try:
+            dados_cadastro = {
+                "nome": nome,
+                "telefone": telefone,
+                "email": email,
+                "estado": estado,
+                "cidade": cidade,
+                "bairro": bairro,
+                "endereco": endereco,
+                "pix": pix if pix else None,
+                "observacoes": observacoes if observacoes else None,
+                "tipo_cadastro": tipo_cadastro
+            }
 
-                if tipo_cadastro == "Cliente":
-                    dados_cadastro.update({
-                        "data_aniversario": data_aniversario,
-                        "origem_cliente": origem_cliente,
-                        "tipo_cliente": tipo_cliente
-                    })
-                    st.session_state.db.add_cliente(**dados_cadastro)
+            if tipo_cadastro == "Cliente":
+                dados_cadastro.update({
+                    "data_aniversario": data_aniversario,
+                    "origem_cliente": origem_cliente,
+                    "tipo_cliente": tipo_cliente
+                })
+                st.session_state.db.add_cliente(**dados_cadastro)
 
-                elif tipo_cadastro == "Fornecedor":
-                    dados_cadastro.update({
-                        "categoria": categoria,
-                        "tipo_conta": tipo_conta,
-                        "recorrente": recorrente
-                    })
-                    st.session_state.db.add_fornecedor(**dados_cadastro)
+            elif tipo_cadastro == "Fornecedor":
+                dados_cadastro.update({
+                    "categoria": categoria,
+                    "tipo_conta": tipo_conta,
+                    "recorrente": recorrente
+                })
+                st.session_state.db.add_fornecedor(**dados_cadastro)
 
-                elif tipo_cadastro == "Assistente":
-                    dados_cadastro.update({
-                        "disponibilidade": ",".join(disponibilidade) if disponibilidade else None
-                    })
-                    st.session_state.db.add_assistente(**dados_cadastro)
+            elif tipo_cadastro == "Assistente":
+                dados_cadastro.update({
+                    "disponibilidade": ",".join(disponibilidade) if disponibilidade else None
+                })
+                st.session_state.db.add_assistente(**dados_cadastro)
 
-                elif tipo_cadastro == "Parceiro":
-                    dados_cadastro.update({
-                        "area_atuacao": area_atuacao,
-                        "tipo_parceria": tipo_parceria
-                    })
-                    st.session_state.db.add_parceiro(**dados_cadastro)
+            elif tipo_cadastro == "Parceiro":
+                dados_cadastro.update({
+                    "area_atuacao": area_atuacao,
+                    "tipo_parceria": tipo_parceria
+                })
+                st.session_state.db.add_parceiro(**dados_cadastro)
 
-                st.success(f"{tipo_cadastro} cadastrado com sucesso!")
-                st.rerun()
+            st.success(f"{tipo_cadastro} cadastrado com sucesso!")
+            st.rerun()
 
-            except Exception as e:
-                st.error(f"Erro ao cadastrar {tipo_cadastro.lower()}: {str(e)}")
+        except Exception as e:
+            st.error(f"Erro ao cadastrar {tipo_cadastro.lower()}: {str(e)}")
 
     # Lista de cadastros do tipo selecionado
     st.subheader(f"Lista de {tipo_cadastro}s")
