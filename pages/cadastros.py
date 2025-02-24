@@ -53,6 +53,7 @@ def show():
         observacoes = st.text_area("Observações")
         pix = st.text_input("Chave PIX")
 
+        # Botão de submissão DENTRO do formulário
         submitted = st.form_submit_button("Cadastrar")
 
         if submitted:
@@ -102,7 +103,7 @@ def show():
             except Exception as e:
                 st.error(f"Erro ao cadastrar {tipo_cadastro.lower()}: {str(e)}")
 
-    # Lista de cadastros do tipo selecionado
+    # Lista de cadastros do tipo selecionado (fora do formulário)
     st.subheader(f"Lista de {tipo_cadastro}s")
     try:
         if tipo_cadastro == "Cliente":
