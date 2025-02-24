@@ -3,14 +3,26 @@ import pandas as pd
 from datetime import datetime
 import sys
 from pathlib import Path
+import logging
+
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Adicionar diretórios ao path para importar módulos
 root_dir = Path(__file__).parent.parent
 sys.path.append(str(root_dir))
 sys.path.append(str(Path(__file__).parent))
 
-from utils.database import Database
-import pages.login as login
+logger.info("Iniciando aplicação...")
+
+try:
+    from utils.database import Database
+    import pages.login as login
+    logger.info("Módulos importados com sucesso")
+except Exception as e:
+    logger.error(f"Erro ao importar módulos: {str(e)}")
+    raise e
 
 # Configuração da página
 st.set_page_config(
@@ -22,7 +34,14 @@ st.set_page_config(
 
 # Inicialização da base de dados
 if 'db' not in st.session_state:
-    st.session_state.db = Database()
+    try:
+        logger.info("Inicializando conexão com o banco de dados...")
+        st.session_state.db = Database()
+        logger.info("Conexão com o banco de dados estabelecida com sucesso")
+    except Exception as e:
+        logger.error(f"Erro ao conectar com o banco de dados: {str(e)}")
+        st.error("Erro ao conectar com o banco de dados. Por favor, tente novamente mais tarde.")
+        raise e
 
 # Verificar autenticação
 if 'autenticado' not in st.session_state:
@@ -59,7 +78,13 @@ if not st.session_state.autenticado:
         }
         </style>
     """, unsafe_allow_html=True)
-    login.show()
+    try:
+        logger.info("Exibindo página de login...")
+        login.show()
+    except Exception as e:
+        logger.error(f"Erro ao exibir página de login: {str(e)}")
+        st.error("Erro ao carregar a página de login. Por favor, tente novamente mais tarde.")
+        raise e
 else:
     # Menu lateral personalizado
     st.sidebar.title("Menu Principal")
