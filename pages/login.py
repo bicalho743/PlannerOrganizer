@@ -4,9 +4,6 @@ import jwt
 import datetime
 
 def show():
-    # Remover o título padrão do Streamlit
-    st.set_page_config(page_title="Planner Organizer", page_icon="📋")
-
     # CSS para esconder o menu lateral e customizar a aparência
     st.markdown("""
         <style>
@@ -33,7 +30,7 @@ def show():
 
     with col2:
         # Título centralizado com estilo
-        st.markdown("<h1 style='text-align: center; margin-bottom: 2rem;'>PLANNER ORGANIZER</h1>", unsafe_allow_html=True)
+        st.markdown("<h1>PLANNER ORGANIZER</h1>", unsafe_allow_html=True)
 
         # Verificar se já existe um token de autenticação
         if 'token' in st.session_state:

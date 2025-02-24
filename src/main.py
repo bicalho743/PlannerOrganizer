@@ -29,6 +29,36 @@ if 'autenticado' not in st.session_state:
     st.session_state.autenticado = False
 
 if not st.session_state.autenticado:
+    # CSS para esconder o menu lateral na tela de login
+    st.markdown("""
+        <style>
+        [data-testid="stSidebar"] {
+            display: none;
+        }
+        div[data-testid="stToolbar"] {
+            display: none;
+        }
+        #MainMenu {
+            display: none;
+        }
+        footer {
+            display: none;
+        }
+        /* Estilo para o título principal */
+        h1 {
+            color: #B8860B !important;
+            font-family: sans-serif !important;
+            font-weight: bold !important;
+            text-align: center !important;
+            margin-bottom: 2rem !important;
+        }
+        /* Centraliza o conteúdo */
+        .block-container {
+            padding-top: 2rem;
+            max-width: 1000px;
+        }
+        </style>
+    """, unsafe_allow_html=True)
     login.show()
 else:
     # Menu lateral personalizado
