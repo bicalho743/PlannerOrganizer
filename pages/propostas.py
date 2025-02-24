@@ -15,65 +15,68 @@ def show():
 
     with tab1:
         st.subheader("Cadastrar Nova Proposta")
-        try:
-            # Carregar lista de clientes para seleção
-            clientes = st.session_state.db.get_clientes()
-            if clientes.empty:
-                st.warning("Não há clientes cadastrados. Por favor, cadastre um cliente primeiro.")
-                st.stop()
 
-            # Campos do formulário
-            cliente_nome = st.selectbox("Cliente", clientes['nome'].tolist())
-            cliente_id = int(clientes[clientes['nome'] == cliente_nome]['id'].iloc[0])
-
-            descricao = st.text_area("Descrição do Serviço")
-            valor = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
-
-            tipo_proposta = st.selectbox(
-                "Tipo de Proposta",
-                ["Organização", "Organização Mudança", "Treinamento Funcionários", 
-                 "Consultoria Online", "Consultoria Enxoval"]
-            )
-
-            col1, col2 = st.columns(2)
-            with col1:
-                data_inicio = st.date_input("Data de Início")
-            with col2:
-                data_fim = st.date_input("Data de Fim")
-
-            prazo_entrega = st.date_input("Prazo de Entrega") if tipo_proposta in ["Organização", "Organização Mudança"] else None
-            status = st.selectbox("Status", ["Aberta", "Recusada", "Fechada"])
-
-            # Botão de submissão
-            submitted = st.form_submit_button("Cadastrar")
-
-            if submitted:
-                if not descricao:
-                    st.error("Por favor, preencha a descrição da proposta.")
-                    return
-                if valor <= 0:
-                    st.error("Por favor, insira um valor válido maior que zero.")
+        with st.form("nova_proposta", clear_on_submit=True):
+            try:
+                # Carregar lista de clientes para seleção
+                clientes = st.session_state.db.get_clientes()
+                if clientes.empty:
+                    st.warning("Não há clientes cadastrados. Por favor, cadastre um cliente primeiro.")
+                    st.form_submit_button("OK", disabled=True)
                     return
 
-                try:
-                    # Adicionar proposta ao banco de dados
-                    proposta_id = st.session_state.db.add_proposta(
-                        cliente_id=cliente_id,
-                        descricao=descricao,
-                        valor=float(valor),
-                        status=status,
-                        tipo_proposta=tipo_proposta,
-                        data_inicio=data_inicio,
-                        data_fim=data_fim,
-                        prazo_entrega=prazo_entrega
-                    )
-                    st.success("Proposta cadastrada com sucesso!")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Erro ao cadastrar proposta: {str(e)}")
+                # Campos do formulário
+                cliente_nome = st.selectbox("Cliente", clientes['nome'].tolist())
+                cliente_id = int(clientes[clientes['nome'] == cliente_nome]['id'].iloc[0])
 
-        except Exception as e:
-            st.error(f"Erro ao carregar dados de clientes: {str(e)}")
+                descricao = st.text_area("Descrição do Serviço")
+                valor = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
+
+                tipo_proposta = st.selectbox(
+                    "Tipo de Proposta",
+                    ["Organização", "Organização Mudança", "Treinamento Funcionários", 
+                     "Consultoria Online", "Consultoria Enxoval"]
+                )
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    data_inicio = st.date_input("Data de Início")
+                with col2:
+                    data_fim = st.date_input("Data de Fim")
+
+                prazo_entrega = st.date_input("Prazo de Entrega") if tipo_proposta in ["Organização", "Organização Mudança"] else None
+                status = st.selectbox("Status", ["Aberta", "Recusada", "Fechada"])
+
+                # Botão de submissão
+                submitted = st.form_submit_button("Cadastrar")
+
+                if submitted:
+                    if not descricao:
+                        st.error("Por favor, preencha a descrição da proposta.")
+                        return
+                    if valor <= 0:
+                        st.error("Por favor, insira um valor válido maior que zero.")
+                        return
+
+                    try:
+                        # Adicionar proposta ao banco de dados
+                        proposta_id = st.session_state.db.add_proposta(
+                            cliente_id=cliente_id,
+                            descricao=descricao,
+                            valor=float(valor),
+                            status=status,
+                            tipo_proposta=tipo_proposta,
+                            data_inicio=data_inicio,
+                            data_fim=data_fim,
+                            prazo_entrega=prazo_entrega
+                        )
+                        st.success("Proposta cadastrada com sucesso!")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Erro ao cadastrar proposta: {str(e)}")
+
+            except Exception as e:
+                st.error(f"Erro ao carregar dados de clientes: {str(e)}")
 
     with tab2:
         st.subheader("Propostas Cadastradas")
@@ -94,9 +97,9 @@ def show():
                 # Ordenar por data de proposta, mais recentes primeiro
                 propostas = propostas.sort_values('data_proposta', ascending=False)
 
-                # Exibir cada proposta com botão de exclusão
+                # Exibir cada proposta com botões de ação
                 for _, proposta in propostas.iterrows():
-                    with st.container():
+                    with st.expander(f"Proposta #{proposta['numero']} - {proposta['nome']}"):
                         col1, col2 = st.columns([4, 1])
 
                         with col1:
@@ -111,13 +114,19 @@ def show():
                                 st.markdown(f"**Data Fim:** {proposta['data_fim'].strftime('%d/%m/%Y')}")
 
                         with col2:
-                            if st.button("🗑️ Excluir", key=f"del_proposta_{proposta['id']}"):
-                                sucesso, msg = st.session_state.db.excluir_proposta(proposta['id'])
-                                if sucesso:
-                                    st.success(msg)
-                                    st.rerun()
-                                else:
-                                    st.error(msg)
+                            with st.form(f"excluir_proposta_{proposta['id']}"):
+                                if st.form_submit_button("🗑️ Excluir"):
+                                    if st.session_state.get(f'confirm_delete_proposta_{proposta["id"]}', False):
+                                        sucesso, msg = st.session_state.db.excluir_proposta(proposta['id'])
+                                        if sucesso:
+                                            st.success(msg)
+                                            st.rerun()
+                                        else:
+                                            st.error(msg)
+                                    else:
+                                        st.session_state[f'confirm_delete_proposta_{proposta["id"]}'] = True
+                                        st.warning("Confirma a exclusão desta proposta?")
+                                        st.rerun()
 
                         st.markdown("---")
             else:
@@ -148,10 +157,12 @@ def show():
                 for _, p in propostas.iterrows()
             ]
 
-            proposta_selecionada = st.selectbox(
-                "Selecione a Proposta",
-                proposta_display
-            )
+            with st.form("selecionar_proposta"):
+                proposta_selecionada = st.selectbox(
+                    "Selecione a Proposta",
+                    proposta_display
+                )
+                submited = st.form_submit_button("Selecionar")
 
             if proposta_selecionada:
                 try:
@@ -224,108 +235,71 @@ def show():
                             except Exception as e:
                                 st.error(f"Erro ao adicionar acréscimo: {str(e)}")
 
-                    # Exibir acréscimos existentes
+                    # Exibir acréscimos existentes e formulário de atualização
                     try:
                         acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
                         if not acrescimos.empty:
                             st.write("### Acréscimos Adicionados")
                             for _, acrescimo in acrescimos.iterrows():
-                                valor = float(acrescimo['valor'])
-                                if acrescimo['tipo'] == "Fornecedor":
-                                    st.write(f"- {acrescimo['tipo']} - {acrescimo['fornecedor']}: R$ {valor:.2f}")
-                                else:
-                                    st.write(f"- {acrescimo['tipo']}: R$ {valor:.2f}")
+                                with st.form(f"acrescimo_{acrescimo['id']}"):
+                                    valor = float(acrescimo['valor'])
+                                    if acrescimo['tipo'] == "Fornecedor":
+                                        st.write(f"- {acrescimo['tipo']} - {acrescimo['fornecedor']}: R$ {valor:.2f}")
+                                    else:
+                                        st.write(f"- {acrescimo['tipo']}: R$ {valor:.2f}")
 
-                                if acrescimo['descricao']:
-                                    st.write(f"  *{acrescimo['descricao']}*")
+                                    if acrescimo['descricao']:
+                                        st.write(f"  *{acrescimo['descricao']}*")
+
+                                    status = st.selectbox(
+                                        "Status",
+                                        ["Pendente", "Pago"],
+                                        key=f"status_{acrescimo['id']}"
+                                    )
+
+                                    if st.form_submit_button("Atualizar Status"):
+                                        try:
+                                            st.session_state.db.atualizar_status_acrescimo(
+                                                acrescimo['id'],
+                                                status
+                                            )
+                                            st.success("Status atualizado com sucesso!")
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Erro ao atualizar status: {str(e)}")
 
                         # Botão e seção de Fechar Proposta
                         st.write("---")
-                        col1, col2, col3 = st.columns([2,1,1])
-                        with col3:
-                            st.write("**Valor Base**")
-                            valor_base = st.number_input(
-                                "Valor Base",
-                                value=float(proposta['valor']),
-                                step=0.01,
-                                key="valor_base"
-                            )
-                            status_base = st.selectbox(
-                                "Status",
-                                ["Pendente", "Pago"],
-                                key="status_base"
-                            )
-                            st.write("---")
-
-                            # Exibir acréscimos para atualização
-                            valor_pendente = valor_base if status_base == "Pendente" else 0.0
-
-                            if not acrescimos.empty:
-                                for index, acrescimo in acrescimos.iterrows():
-                                    col1, col2, col3 = st.columns([2, 1, 1])
-
-                                    with col1:
-                                        if acrescimo['tipo'] == "Fornecedor":
-                                            st.write(f"**{acrescimo['tipo']} - {acrescimo['fornecedor']}**")
-                                        else:
-                                            st.write(f"**{acrescimo['tipo']}**")
-                                        if acrescimo['descricao']:
-                                            st.write(f"*{acrescimo['descricao']}*")
-
-                                    with col2:
-                                        novo_valor = st.number_input(
-                                            "Valor",
-                                            value=float(acrescimo['valor']),
-                                            step=0.01,
-                                            key=f"valor_{index}"
-                                        )
-
-                                    with col3:
-                                        status = st.selectbox(
-                                            "Status",
-                                            ["Pendente", "Pago"],
-                                            key=f"status_{index}"
-                                        )
-
-                                    if status == "Pendente":
-                                        valor_pendente += novo_valor
-
-                                    st.write("---")
-
-                            # Atualizar status de pagamento da proposta base
-                            try:
-                                # Converter explicitamente para tipos nativos do Python
-                                proposta_id = int(proposta['id'])
-                                valor_base = float(valor_base)
-
-                                st.session_state.db.atualizar_status_pagamento_proposta(
-                                    proposta_id=proposta_id,
-                                    status_pagamento_base=status_base,
-                                    valor_base=valor_base
+                        with st.form("atualizar_proposta"):
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                valor_base = st.number_input(
+                                    "Valor Base",
+                                    value=float(proposta['valor']),
+                                    step=0.01
+                                )
+                            with col2:
+                                status_base = st.selectbox(
+                                    "Status do Pagamento Base",
+                                    ["Pendente", "Pago"]
                                 )
 
-                                # Atualizar totais
-                                valor_total = valor_base
-                                if not acrescimos.empty:
-                                    # Converter valores para float antes de somar
-                                    valor_total += float(acrescimos['valor'].astype(float).sum())
+                            if st.form_submit_button("Atualizar Proposta"):
+                                try:
+                                    st.session_state.db.atualizar_status_pagamento_proposta(
+                                        proposta_id=int(proposta['id']),
+                                        status_pagamento_base=status_base,
+                                        valor_base=valor_base
+                                    )
+                                    st.success("Proposta atualizada com sucesso!")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Erro ao atualizar proposta: {str(e)}")
 
-                                st.write(f"**Valor Total:** R$ {valor_total:.2f}")
-                                st.write(f"**Valor Pendente:** R$ {valor_pendente:.2f}")
-
-                            except Exception as e:
-                                st.error(f"Erro ao atualizar status de pagamento: {str(e)}")
-
-                            # Botão para confirmar e salvar alterações
-                            if st.button("Confirmar Alterações"):
-                                st.success("Alterações salvas com sucesso!")
-                                st.rerun()
-
-                        # Botão para exportar PDF movido para fora do bloco de atualização
+                        # Botão para exportar PDF
                         st.write("---")
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            if st.button("Exportar Resumo Final (PDF)"):
+                        with st.form("exportar_pdf"):
+                            if st.form_submit_button("Exportar Resumo Final (PDF)"):
                                 try:
                                     # Criar diretório para PDFs se não existir
                                     os.makedirs("pdfs", exist_ok=True)
