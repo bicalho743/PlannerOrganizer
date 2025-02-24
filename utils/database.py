@@ -234,7 +234,8 @@ class Database:
                 self.session.rollback()
             raise e
         finally:
-            self.session.close()
+            if self.session.is_active:
+                self.session.close()
             Session.remove()
 
     def get_clientes(self):
@@ -797,9 +798,11 @@ class Database:
         return self._safe_query(query)
 
     def __del__(self):
-        if hasattr(self, 'session'):
-            self.session.close()
-            Session.remove()
+        """
+        Limpeza quando o objeto é destruído.
+        Não fechamos a sessão aqui pois ela já é gerenciada por _safe_query
+        """
+        Session.remove()
 
     def atualizar_status_pagamento_proposta(self, proposta_id, status_pagamento_base, valor_base):
         """Atualiza o status de pagamento e valor base de uma proposta"""
