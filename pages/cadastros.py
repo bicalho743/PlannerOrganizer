@@ -81,19 +81,18 @@ def show():
         try:
             dados_cadastro = {
                 "nome": nome,
-                "telefone": telefone,
                 "email": email,
                 "estado": estado,
                 "cidade": cidade,
                 "bairro": bairro,
                 "endereco": endereco,
                 "pix": pix if pix else None,
-                "observacoes": observacoes if observacoes else None,
-                "tipo_cadastro": tipo_cadastro
+                "observacoes": observacoes if observacoes else None
             }
 
             if tipo_cadastro == "Cliente":
                 dados_cadastro.update({
+                    "telefone": telefone,
                     "data_aniversario": data_aniversario,
                     "origem_cliente": origem_cliente,
                     "tipo_cliente": tipo_cliente
@@ -101,22 +100,32 @@ def show():
                 st.session_state.db.add_cliente(**dados_cadastro)
 
             elif tipo_cadastro == "Fornecedor":
-                dados_cadastro.update({
+                # Remove campos que não são usados no add_fornecedor
+                fornecedor_data = {
+                    "nome": nome,
+                    "contato": telefone,  # Usar telefone como contato
                     "categoria": categoria,
                     "tipo_conta": tipo_conta,
+                    "estado": estado,
+                    "cidade": cidade,
+                    "bairro": bairro,
+                    "endereco": endereco,
+                    "pix": pix if pix else None,
                     "recorrente": recorrente,
-                    "contato": telefone  # Usar telefone como contato
-                })
-                st.session_state.db.add_fornecedor(**dados_cadastro)
+                    "observacoes": observacoes if observacoes else None
+                }
+                st.session_state.db.add_fornecedor(**fornecedor_data)
 
             elif tipo_cadastro == "Assistente":
                 dados_cadastro.update({
+                    "telefone": telefone,
                     "disponibilidade": ",".join(disponibilidade) if disponibilidade else None
                 })
                 st.session_state.db.add_assistente(**dados_cadastro)
 
             elif tipo_cadastro == "Parceiro":
                 dados_cadastro.update({
+                    "telefone": telefone,
                     "area_atuacao": area_atuacao,
                     "tipo_parceria": tipo_parceria
                 })
@@ -147,10 +156,10 @@ def show():
             }
         elif tipo_cadastro == "Fornecedor":
             registros = st.session_state.db.get_fornecedores()
-            colunas = ['nome', 'telefone', 'categoria', 'tipo_conta', 'recorrente', 'estado', 'cidade', 'bairro', 'endereco']
+            colunas = ['nome', 'contato', 'categoria', 'tipo_conta', 'recorrente', 'estado', 'cidade', 'bairro', 'endereco']
             rename = {
                 'nome': 'Nome',
-                'telefone': 'Telefone',
+                'contato': 'Telefone',
                 'categoria': 'Categoria',
                 'tipo_conta': 'Tipo de Conta',
                 'recorrente': 'Recorrente',
@@ -189,7 +198,7 @@ def show():
         if not registros.empty:
             # Exibir registros com botões de ação
             for idx, registro in registros.iterrows():
-                with st.expander(f"{registro['nome']} ({registro['telefone'] if 'telefone' in registro else ''})"):
+                with st.expander(f"{registro['nome']} ({registro['telefone'] if 'telefone' in registro else registro.get('contato', '')})"):
                     # Exibir informações do registro
                     col1, col2, col3 = st.columns([3, 1, 1])
                     with col1:
@@ -233,7 +242,13 @@ def show():
 
                             # Campos comuns
                             edited_data['nome'] = st.text_input("Nome", value=registro['nome'])
-                            edited_data['telefone'] = st.text_input("Telefone", value=registro.get('telefone', ''))
+
+                            # Campo de telefone/contato
+                            if tipo_cadastro == "Fornecedor":
+                                edited_data['contato'] = st.text_input("Telefone", value=registro.get('contato', ''))
+                            else:
+                                edited_data['telefone'] = st.text_input("Telefone", value=registro.get('telefone', ''))
+
                             edited_data['email'] = st.text_input("Email", value=registro.get('email', ''))
 
                             # Campos específicos
