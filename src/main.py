@@ -24,6 +24,10 @@ try:
     utils_dir = os.path.join(root_dir, "utils")
     logger.info(f"Conteúdo do diretório utils: {os.listdir(utils_dir) if os.path.exists(utils_dir) else 'Diretório não encontrado'}")
 
+    # Force specific port
+    import os
+    os.environ['STREAMLIT_SERVER_PORT'] = '8501'
+
     # Configuração da página
     st.set_page_config(
         page_title="Planner Organizer",
