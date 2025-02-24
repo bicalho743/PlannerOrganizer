@@ -104,7 +104,8 @@ def show():
                 dados_cadastro.update({
                     "categoria": categoria,
                     "tipo_conta": tipo_conta,
-                    "recorrente": recorrente
+                    "recorrente": recorrente,
+                    "contato": telefone  # Usar telefone como contato
                 })
                 st.session_state.db.add_fornecedor(**dados_cadastro)
 
