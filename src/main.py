@@ -4,10 +4,21 @@ from datetime import datetime
 import sys
 from pathlib import Path
 import logging
+import os
 
 # Configurar logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
+
+# Verificar variáveis de ambiente críticas
+required_env_vars = ['DATABASE_URL', 'JWT_SECRET']
+missing_vars = [var for var in required_env_vars if not os.getenv(var)]
+if missing_vars:
+    logger.error(f"Variáveis de ambiente ausentes: {', '.join(missing_vars)}")
+    raise ValueError(f"Configuração incompleta. Faltam variáveis: {', '.join(missing_vars)}")
 
 # Adicionar diretórios ao path para importar módulos
 root_dir = Path(__file__).parent.parent
@@ -41,7 +52,7 @@ if 'db' not in st.session_state:
     except Exception as e:
         logger.error(f"Erro ao conectar com o banco de dados: {str(e)}")
         st.error("Erro ao conectar com o banco de dados. Por favor, tente novamente mais tarde.")
-        raise e
+        sys.exit(1)
 
 # Verificar autenticação
 if 'autenticado' not in st.session_state:

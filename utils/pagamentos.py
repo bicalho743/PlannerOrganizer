@@ -70,23 +70,6 @@ class GerenciadorPagamentos:
         except Exception as e:
             raise Exception(f"Erro ao atualizar status do pagamento: {str(e)}")
 
-    def get_pagamentos_proposta(self, proposta_id):
-        """
-        Retorna todos os pagamentos de uma proposta
-        """
-        try:
-            result = self.db._safe_query(lambda: self.db.session.execute(
-                """
-                SELECT * FROM pagamentos 
-                WHERE proposta_id = :proposta_id
-                ORDER BY data_criacao DESC
-                """,
-                {'proposta_id': proposta_id}
-            ))
-            return [dict(row) for row in result]
-        except Exception as e:
-            raise Exception(f"Erro ao buscar pagamentos: {str(e)}")
-
     def webhook_handler(self, event):
         """
         Processa webhooks do Stripe
