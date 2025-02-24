@@ -31,6 +31,7 @@ class Usuario(Base):
     email = Column(String, unique=True, nullable=False)
     senha_hash = Column(String, nullable=False)
     nome = Column(String, nullable=False)
+    telefone = Column(String)  # Novo campo
     empresa = Column(String)
     tipo = Column(String, default='usuario')
     ativo = Column(Boolean, default=True)
@@ -543,7 +544,7 @@ class Database:
         return self._safe_query(query)
 
 
-    def registrar_usuario(self, email, senha, nome, empresa=None, tipo='usuario'):
+    def registrar_usuario(self, email, senha, nome, telefone=None, empresa=None, tipo='usuario'):
         """Registra um novo usuário no sistema"""
         def query():
             if self.session.query(Usuario).filter_by(email=email).first():
@@ -552,6 +553,7 @@ class Database:
             usuario = Usuario(
                 email=email,
                 nome=nome,
+                telefone=telefone,  # Novo campo
                 empresa=empresa,
                 tipo=tipo
             )

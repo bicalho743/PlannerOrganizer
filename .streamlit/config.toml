@@ -4,6 +4,7 @@ address = "0.0.0.0"
 port = 5000
 enableCORS = false
 enableXsrfProtection = false
+baseUrlPath = ""
 
 [theme]
 primaryColor = "#B8860B"
@@ -15,7 +16,7 @@ base = "dark"
 
 [browser]
 gatherUsageStats = false
-serverAddress = "0.0.0.0"
+serverAddress = "plannerorganiza.com.br"
 
 [client]
 showErrorDetails = false
