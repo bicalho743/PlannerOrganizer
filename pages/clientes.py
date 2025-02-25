@@ -146,14 +146,17 @@ def show():
                             with col_del:
                                 if st.button("🗑️ Excluir", key=f"del_cliente_{cliente['id']}"):
                                     if st.session_state.get('confirm_delete') == cliente['id']:
-                                        sucesso, msg = st.session_state.db.excluir_cliente(cliente['id'])
-                                        if sucesso:
-                                            st.success(msg)
-                                            if 'confirm_delete' in st.session_state:
-                                                del st.session_state.confirm_delete
-                                            st.rerun()
-                                        else:
-                                            st.error(msg)
+                                        try:
+                                            sucesso, msg = st.session_state.db.excluir_cliente(cliente['id'])
+                                            if sucesso:
+                                                st.success(msg)
+                                                if 'confirm_delete' in st.session_state:
+                                                    del st.session_state.confirm_delete
+                                                st.rerun()
+                                            else:
+                                                st.error(msg)
+                                        except Exception as e:
+                                            st.error(f"Erro ao excluir cliente: {str(e)}")
                                     else:
                                         st.session_state.confirm_delete = cliente['id']
                                         st.warning("Clique novamente para confirmar a exclusão")
