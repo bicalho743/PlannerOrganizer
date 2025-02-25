@@ -27,7 +27,8 @@ try:
 
     # Forçar porta específica
     os.environ['STREAMLIT_SERVER_PORT'] = '5000'
-    logger.info("Porta do servidor configurada para 5000")
+    os.environ['STREAMLIT_SERVER_ADDRESS'] = '0.0.0.0'
+    logger.info("Configuração do servidor: Porta 5000, Endereço 0.0.0.0")
 
     # Configuração da página
     st.set_page_config(
