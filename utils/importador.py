@@ -8,7 +8,11 @@ def validar_data(data_str):
     if pd.isna(data_str):
         return None
     try:
-        return datetime.strptime(str(data_str), '%d/%m/%Y').date()
+        if isinstance(data_str, str):
+            return datetime.strptime(data_str, '%d/%m/%Y').date()
+        elif isinstance(data_str, datetime):
+            return data_str.date()
+        return None
     except ValueError:
         try:
             return datetime.strptime(str(data_str), '%Y-%m-%d').date()
@@ -16,10 +20,15 @@ def validar_data(data_str):
             return None
 
 def importar_cadastros(arquivo, tipo_cadastro, db):
-    """Importa cadastros de um arquivo CSV"""
+    """Importa cadastros de um arquivo Excel ou CSV"""
     try:
-        df = pd.read_csv(arquivo, encoding='utf-8')
-        
+        # Detecta o tipo de arquivo pela extensão
+        nome_arquivo = arquivo.name.lower()
+        if nome_arquivo.endswith('.xlsx') or nome_arquivo.endswith('.xls'):
+            df = pd.read_excel(arquivo)
+        else:
+            df = pd.read_csv(arquivo, encoding='utf-8')
+
         # Validar colunas obrigatórias
         colunas_base = ['nome', 'telefone', 'email']
         for col in colunas_base:
@@ -28,44 +37,44 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
 
         sucessos = 0
         erros = []
-        
+
         for _, row in df.iterrows():
             try:
                 dados = {
-                    'nome': row['nome'],
-                    'telefone': row['telefone'] if not pd.isna(row['telefone']) else None,
-                    'email': row['email'] if not pd.isna(row['email']) else None,
-                    'observacoes': row.get('observacoes', None),
-                    'pix': row.get('pix', None)
+                    'nome': str(row['nome']),
+                    'telefone': str(row['telefone']) if not pd.isna(row['telefone']) else None,
+                    'email': str(row['email']) if not pd.isna(row['email']) else None,
+                    'observacoes': str(row.get('observacoes', '')),
+                    'pix': str(row.get('pix', ''))
                 }
 
                 if tipo_cadastro == "Cliente":
                     dados.update({
                         'data_aniversario': validar_data(row.get('data_aniversario')),
-                        'origem_cliente': row.get('origem_cliente'),
-                        'tipo_cliente': row.get('tipo_cliente', 'PF')
+                        'origem_cliente': str(row.get('origem_cliente', '')),
+                        'tipo_cliente': str(row.get('tipo_cliente', 'PF'))
                     })
                     db.add_cliente(**dados)
 
                 elif tipo_cadastro == "Fornecedor":
                     dados.update({
-                        'categoria': row.get('categoria'),
-                        'tipo_conta': row.get('tipo_conta', 'PF'),
+                        'categoria': str(row.get('categoria', '')),
+                        'tipo_conta': str(row.get('tipo_conta', 'PF')),
                         'recorrente': bool(row.get('recorrente', False))
                     })
                     db.add_fornecedor(**dados)
 
                 elif tipo_cadastro == "Assistente":
                     dados.update({
-                        'endereco': row.get('endereco'),
-                        'disponibilidade': row.get('disponibilidade')
+                        'endereco': str(row.get('endereco', '')),
+                        'disponibilidade': str(row.get('disponibilidade', ''))
                     })
                     db.add_assistente(**dados)
 
                 elif tipo_cadastro == "Parceiro":
                     dados.update({
-                        'area_atuacao': row.get('area_atuacao'),
-                        'tipo_parceria': row.get('tipo_parceria')
+                        'area_atuacao': str(row.get('area_atuacao', '')),
+                        'tipo_parceria': str(row.get('tipo_parceria', ''))
                     })
                     db.add_parceiro(**dados)
 
@@ -79,6 +88,41 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
     except Exception as e:
         return False, f"Erro ao processar arquivo: {str(e)}"
 
+def gerar_template_excel(tipo):
+    """Gera um arquivo Excel template baseado no tipo de importação"""
+    if tipo == "Cliente":
+        df = pd.DataFrame(columns=[
+            'nome', 'telefone', 'email', 'data_aniversario', 
+            'origem_cliente', 'tipo_cliente', 'observacoes', 'pix'
+        ])
+    elif tipo == "Fornecedor":
+        df = pd.DataFrame(columns=[
+            'nome', 'telefone', 'email', 'categoria',
+            'tipo_conta', 'recorrente', 'observacoes', 'pix'
+        ])
+    elif tipo == "Assistente":
+        df = pd.DataFrame(columns=[
+            'nome', 'telefone', 'email', 'endereco',
+            'disponibilidade', 'observacoes', 'pix'
+        ])
+    elif tipo == "Parceiro":
+        df = pd.DataFrame(columns=[
+            'nome', 'telefone', 'email', 'area_atuacao',
+            'tipo_parceria', 'observacoes', 'pix'
+        ])
+    elif tipo == "Proposta":
+        df = pd.DataFrame(columns=[
+            'cliente_id', 'descricao', 'valor', 'status',
+            'tipo_proposta', 'data_inicio', 'data_fim', 'prazo_entrega'
+        ])
+    else:
+        return None
+
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False)
+    return buffer.getvalue()
+
 def importar_propostas(arquivo, db):
     """Importa propostas de um arquivo CSV"""
     try:
@@ -89,7 +133,7 @@ def importar_propostas(arquivo, db):
         for col in colunas_obrigatorias:
             if col not in df.columns:
                 return False, f"Coluna obrigatória '{col}' não encontrada no arquivo"
-
+        
         sucessos = 0
         erros = []
         
@@ -99,7 +143,7 @@ def importar_propostas(arquivo, db):
                 data_inicio = validar_data(row.get('data_inicio'))
                 data_fim = validar_data(row.get('data_fim'))
                 prazo_entrega = validar_data(row.get('prazo_entrega'))
-
+                
                 db.add_proposta(
                     cliente_id=int(row['cliente_id']),
                     descricao=row['descricao'],
@@ -111,12 +155,12 @@ def importar_propostas(arquivo, db):
                     prazo_entrega=prazo_entrega
                 )
                 sucessos += 1
-
+                
             except Exception as e:
                 erros.append(f"Erro na linha {_ + 2}: {str(e)}")
-
+                
         return True, f"Importação concluída: {sucessos} propostas importadas com sucesso. {len(erros)} erros." + (f"\nErros:\n" + "\n".join(erros) if erros else "")
-
+        
     except Exception as e:
         return False, f"Erro ao processar arquivo: {str(e)}"
 
@@ -149,5 +193,5 @@ def gerar_template_csv(tipo):
         ])
     else:
         return None
-
+    
     return df.to_csv(index=False).encode('utf-8')
