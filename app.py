@@ -66,7 +66,7 @@ if not st.session_state.autenticado:
                 if sucesso:
                     st.session_state.autenticado = True
                     st.session_state.usuario = usuario
-                    st.experimental_rerun()
+                    st.rerun()  # Substituído experimental_rerun por rerun
                 else:
                     st.error("Email ou senha inválidos")
 else:
@@ -83,7 +83,7 @@ else:
         if st.button("📤 Sair"):
             st.session_state.autenticado = False
             st.session_state.usuario = None
-            st.experimental_rerun()
+            st.rerun()  # Substituído experimental_rerun por rerun
 
     # Seleção de página
     pagina = st.sidebar.radio(
