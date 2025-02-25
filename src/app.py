@@ -1,15 +1,15 @@
 import os
 import sys
+import streamlit as st
+import pandas as pd
+from datetime import datetime
 
 # Adicionar diretório raiz ao path
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if root_dir not in sys.path:
     sys.path.append(root_dir)
 
-import streamlit as st
 from utils.database import Database
-from datetime import datetime
-import pandas as pd
 
 # Configuração da página
 st.set_page_config(
@@ -23,56 +23,53 @@ st.set_page_config(
 if 'db' not in st.session_state:
     st.session_state.db = Database()
 
-# Configuração do menu lateral com ícones para melhor visualização
+# Lista personalizada de páginas visíveis para o usuário
+PAGINAS_VISIVEIS = {
+    "📊 Visão Geral": "dashboard",
+    "👥 Clientes": "clientes",
+    "📝 Propostas": "propostas",
+    "💰 Financeiro": "financeiro",
+    "📋 Cadastros": "cadastros",
+    "💳 Contas": "contas_pagar",
+    "📈 Relatórios": "relatorios"
+}
+
+# Configuração do menu lateral com ícones
 st.sidebar.title("🏠 Menu Principal")
+
 pagina = st.sidebar.selectbox(
     "Navegação",
-    [
-        "📊 Visão Geral",
-        "👥 Clientes",
-        "📝 Propostas",
-        "💰 Financeiro",
-        "📋 Cadastros",
-        "💳 Contas",
-        "📦 Backup",
-        "📈 Relatórios"
-    ]
+    list(PAGINAS_VISIVEIS.keys())
 )
 
-# Função para extrair o título sem o ícone
-def get_page_name(pagina_com_icone):
-    return pagina_com_icone.split(" ", 1)[1]
+# Extrair o nome da página sem o ícone
+page_name = PAGINAS_VISIVEIS[pagina]
 
-# Roteamento de páginas de forma mais limpa
-page_name = get_page_name(pagina)
-
-if page_name == "Visão Geral":
-    import pages.dashboard
-    pages.dashboard.show()
-elif page_name == "Clientes":
-    import pages.clientes
-    pages.clientes.show()
-elif page_name == "Propostas":
-    import pages.propostas
-    pages.propostas.show()
-elif page_name == "Financeiro":
-    import pages.financeiro
-    pages.financeiro.show()
-elif page_name == "Cadastros":
-    import pages.cadastros
-    pages.cadastros.show()
-elif page_name == "Contas":
+# Roteamento de páginas
+if page_name == "dashboard":
+    from pages import dashboard
+    dashboard.show()
+elif page_name == "clientes":
+    from pages import clientes
+    clientes.show()
+elif page_name == "propostas":
+    from pages import propostas
+    propostas.show()
+elif page_name == "financeiro":
+    from pages import financeiro
+    financeiro.show()
+elif page_name == "cadastros":
+    from pages import cadastros
+    cadastros.show()
+elif page_name == "contas_pagar":
     from src.hidden_pages import contas_pagar
     contas_pagar.show()
-elif page_name == "Backup":
-    import pages.backup
-    pages.backup.show()
-elif page_name == "Relatórios":
-    import pages.relatorios
-    pages.relatorios.show()
+elif page_name == "relatorios":
+    from pages import relatorios
+    relatorios.show()
 
 # Dashboard - Página Principal
-if page_name == "Visão Geral":
+if page_name == "dashboard":
     st.title("📋 Sistema de Gestão - Personal Organizer")
 
     # Add test data button in sidebar if database is empty
@@ -104,7 +101,7 @@ if page_name == "Visão Geral":
         # Resumo financeiro
         if not financeiro.empty:
             valores_receber = financeiro[
-                (financeiro['tipo'] == 'receita') & 
+                (financeiro['tipo'] == 'receita') &
                 (financeiro['tipo_receita'].isin(['organização', 'venda']))
             ]['valor'].sum()
         else:
@@ -168,7 +165,6 @@ if page_name == "Visão Geral":
                     st.write(f"- {aniv['nome']}")
             else:
                 st.write("**🎈 Hoje:** Nenhum aniversariante")
-
 
 # Rodapé mais discreto
 st.sidebar.markdown("---")
