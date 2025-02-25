@@ -39,33 +39,25 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Debug do estado da sessão
-def log_session_state():
-    logger.info("=== Estado da Sessão ===")
-    for key, value in st.session_state.items():
-        if key not in ['senha', 'token']:  # Não logar dados sensíveis
-            logger.info(f"{key}: {value}")
-
-# Inicialização da base de dados
+# Inicialização da base de dados (apenas se não existir)
 if 'db' not in st.session_state:
     try:
-        logger.info("Inicializando conexão com o banco de dados...")
+        logger.info("Inicializando conexão com banco de dados...")
         st.session_state.db = Database()
-        logger.info("Conexão com o banco de dados estabelecida com sucesso")
+        logger.info("Conexão com banco de dados estabelecida com sucesso")
     except Exception as e:
-        logger.error(f"Erro ao conectar com o banco de dados: {str(e)}")
-        st.error("Erro ao conectar com o banco de dados. Por favor, tente novamente mais tarde.")
+        logger.error(f"Erro ao conectar com banco de dados: {str(e)}")
+        st.error("Erro ao conectar com banco de dados. Por favor, tente novamente mais tarde.")
         st.exception(e)
         st.stop()
 
-# Verificar autenticação
+# Verificar autenticação (apenas se não existir)
 if 'autenticado' not in st.session_state:
     logger.info("Inicializando estado de autenticação")
     st.session_state.autenticado = False
     st.session_state.usuario = None
 
-log_session_state()
-
+# Página de login
 if not st.session_state.autenticado:
     logger.info("Usuário não autenticado, mostrando página de login")
     st.title("Login")
@@ -74,7 +66,9 @@ if not st.session_state.autenticado:
     with st.form("login_form", clear_on_submit=False):
         email = st.text_input("Email")
         senha = st.text_input("Senha", type="password")
-        if st.form_submit_button("Entrar", key="login_button"):
+        submitted = st.form_submit_button("Entrar")
+
+        if submitted:
             if st.session_state.db:
                 logger.info(f"Tentativa de login para o email: {email}")
                 sucesso, usuario = st.session_state.db.autenticar_usuario(email, senha)
@@ -83,7 +77,6 @@ if not st.session_state.autenticado:
                     st.session_state.autenticado = True
                     st.session_state.usuario = usuario
                     st.success("Login realizado com sucesso!")
-                    st.rerun()
                 else:
                     logger.warning("Falha na autenticação")
                     st.error("Email ou senha inválidos")
@@ -100,15 +93,16 @@ else:
             st.write("👤 Olá, Usuário")
 
         # Botão de logout com key única
-        logout_key = "logout_" + datetime.now().strftime("%Y%m%d_%H%M%S")
+        logout_key = f"logout_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         if st.button("📤 Sair", key=logout_key):
             logger.info("Usuário realizou logout")
-            st.session_state.clear()
+            # Limpar apenas as informações de autenticação
+            st.session_state.autenticado = False
+            st.session_state.usuario = None
             st.success("Logout realizado com sucesso!")
-            st.rerun()
 
     # Seleção de página com key única
-    menu_key = "menu_" + datetime.now().strftime("%Y%m%d_%H%M%S")
+    menu_key = f"menu_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     pagina = st.sidebar.radio(
         "Menu",
         ["Dashboard", "Cadastros", "Propostas", "Financeiro", "Relatórios", "Teste de Importação"],
