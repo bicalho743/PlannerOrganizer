@@ -25,21 +25,26 @@ def show():
             st.subheader("Cadastro de Fornecedores")
             # Form de cadastro de fornecedor
             with st.form("cadastro_fornecedor", clear_on_submit=True):
-                nome = st.text_input("Nome/Razão Social")
+                nome = st.text_input("Nome/Razão Social", key="novo_fornecedor_nome")
                 col1, col2 = st.columns(2)
                 with col1:
-                    contato = st.text_input("Telefone")
-                    email = st.text_input("Email")
+                    contato = st.text_input("Telefone", key="novo_fornecedor_telefone")
+                    email = st.text_input("Email", key="novo_fornecedor_email")
                     categoria = st.selectbox(
                         "Categoria",
-                        ["Produtos", "Serviços", "Marcenaria", "Outro"]
+                        ["Produtos", "Serviços", "Marcenaria", "Outro"],
+                        key="novo_fornecedor_categoria"
                     )
                 with col2:
-                    tipo_conta = st.selectbox("Tipo de Conta", ["PF", "PJ"])
-                    pix = st.text_input("Chave PIX")
-                    recorrente = st.checkbox("Fornecedor Recorrente")
+                    tipo_conta = st.selectbox(
+                        "Tipo de Conta", 
+                        ["PF", "PJ"],
+                        key="novo_fornecedor_tipo_conta"
+                    )
+                    pix = st.text_input("Chave PIX", key="novo_fornecedor_pix")
+                    recorrente = st.checkbox("Fornecedor Recorrente", key="novo_fornecedor_recorrente")
 
-                observacoes = st.text_area("Observações")
+                observacoes = st.text_area("Observações", key="novo_fornecedor_obs")
                 submitted = st.form_submit_button("Cadastrar Fornecedor")
 
                 if submitted:
@@ -59,29 +64,17 @@ def show():
                     except Exception as e:
                         st.error(f"Erro ao cadastrar fornecedor: {str(e)}")
 
-            # Lista de cadastros do tipo selecionado
+            # Lista de cadastros
             st.subheader(f"Lista de Fornecedores")
             try:
                 registros = st.session_state.db.get_fornecedores()
-                # Certificar que temos registros antes de tentar acessar
-                if not isinstance(registros, pd.DataFrame):
-                    st.error("Erro ao carregar fornecedores: dados inválidos")
-                    return
 
                 if registros.empty:
                     st.info("Nenhum fornecedor cadastrado.")
                     return
 
-                # Definir apenas as colunas que sabemos que existem
+                # Definir colunas para exibição
                 colunas = ['nome', 'contato', 'categoria', 'tipo_conta', 'recorrente']
-                colunas_display = []
-
-                # Verificar quais colunas existem no DataFrame
-                for col in colunas:
-                    if col in registros.columns:
-                        colunas_display.append(col)
-
-                # Criar dicionário de renomeação apenas para colunas existentes
                 rename = {
                     'nome': 'Nome',
                     'contato': 'Telefone',
@@ -90,23 +83,30 @@ def show():
                     'recorrente': 'Recorrente'
                 }
 
-                # Criar uma cópia do DataFrame apenas com as colunas existentes
-                df_display = registros[colunas_display].copy()
-
-                # Renomear colunas para exibição
-                df_display.columns = [rename[col] for col in colunas_display]
+                # Criar DataFrame para exibição
+                df_display = registros[colunas].copy()
+                df_display.columns = [rename[col] for col in colunas]
 
                 # Exibir tabela
                 st.dataframe(df_display, hide_index=True)
 
-                # Botões de ação abaixo da tabela
+                # Botões de ação
                 col1, col2 = st.columns(2)
                 with col1:
-                    registro_id = st.number_input("ID do registro para ação:", min_value=1, 
-                                                  max_value=len(registros), step=1)
+                    registro_id = st.number_input(
+                        "ID do registro para ação:", 
+                        min_value=1, 
+                        max_value=len(registros), 
+                        step=1,
+                        key="fornecedor_id_input"
+                    )
 
                 with col2:
-                    acao = st.selectbox("Ação:", ["Editar", "Excluir"])
+                    acao = st.selectbox(
+                        "Ação:", 
+                        ["Editar", "Excluir"],
+                        key="fornecedor_acao_select"
+                    )
 
                 # Formulário de ação
                 with st.form(f"acao_registro_fornecedor"):
@@ -130,26 +130,36 @@ def show():
                     with st.form(f"edit_form_{registro_id}"):
                         st.subheader("Editar Registro")
                         edited_data = {}
-                        registro = registros[registros['id'] == registro_id].iloc[0]
 
                         # Campos comuns
-                        edited_data['nome'] = st.text_input("Nome", value=registro['nome'])
-                        edited_data['email'] = st.text_input("Email", value=registro.get('email', ''))
-                        edited_data['contato'] = st.text_input("Telefone", value=registro.get('contato', ''))
+                        edited_data['nome'] = st.text_input(
+                            "Nome", 
+                            value=registro['nome'],
+                            key=f"edit_nome_{registro_id}"
+                        )
+                        edited_data['email'] = st.text_input(
+                            "Email", 
+                            value=registro.get('email', ''),
+                            key=f"edit_email_{registro_id}"
+                        )
+                        edited_data['contato'] = st.text_input(
+                            "Telefone", 
+                            value=registro.get('contato', ''),
+                            key=f"edit_contato_{registro_id}"
+                        )
 
                         # Campos específicos
                         edited_data['categoria'] = st.selectbox(
                             "Categoria",
                             ["Produtos", "Serviços", "Marcenaria", "Outro"],
-                            index=["Produtos", "Serviços", "Marcenaria", "Outro"].index(registro.get('categoria', 'Outro'))
+                            index=["Produtos", "Serviços", "Marcenaria", "Outro"].index(registro.get('categoria', 'Outro')),
+                            key=f"edit_categoria_{registro_id}"
                         )
-                        edited_data['recorrente'] = st.checkbox("Fornecedor Recorrente", value=registro.get('recorrente', False))
-
-                        # Campos de endereço
-                        edited_data['estado'] = st.text_input("Estado (UF)", value=registro.get('estado', ''))
-                        edited_data['cidade'] = st.text_input("Cidade", value=registro.get('cidade', ''))
-                        edited_data['bairro'] = st.text_input("Bairro", value=registro.get('bairro', ''))
-                        edited_data['endereco'] = st.text_input("Endereço", value=registro.get('endereco', ''))
+                        edited_data['recorrente'] = st.checkbox(
+                            "Fornecedor Recorrente", 
+                            value=registro.get('recorrente', False),
+                            key=f"edit_recorrente_{registro_id}"
+                        )
 
                         # Botões do formulário
                         col1, col2 = st.columns(2)
@@ -204,19 +214,20 @@ def show():
             st.subheader("Cadastro de Parceiros")
             # Form de cadastro de parceiro
             with st.form("cadastro_parceiro", clear_on_submit=True):
-                nome = st.text_input("Nome")
+                nome = st.text_input("Nome", key="novo_parceiro_nome")
                 col1, col2 = st.columns(2)
                 with col1:
-                    telefone = st.text_input("Telefone")
-                    email = st.text_input("Email")
+                    telefone = st.text_input("Telefone", key="novo_parceiro_telefone")
+                    email = st.text_input("Email", key="novo_parceiro_email")
                 with col2:
-                    area_atuacao = st.text_input("Área de Atuação")
+                    area_atuacao = st.text_input("Área de Atuação", key="novo_parceiro_area")
                     tipo_parceria = st.selectbox(
                         "Tipo de Parceria",
-                        ["Indicação", "Colaboração", "Projeto Conjunto"]
+                        ["Indicação", "Colaboração", "Projeto Conjunto"],
+                        key="novo_parceiro_tipo"
                     )
 
-                observacoes = st.text_area("Observações")
+                observacoes = st.text_area("Observações", key="novo_parceiro_obs")
                 submitted = st.form_submit_button("Cadastrar Parceiro")
 
                 if submitted:
@@ -234,105 +245,117 @@ def show():
                     except Exception as e:
                         st.error(f"Erro ao cadastrar parceiro: {str(e)}")
 
-            # Lista de cadastros do tipo selecionado
+            # Lista de cadastros
             st.subheader(f"Lista de Parceiros")
             try:
                 registros = st.session_state.db.get_parceiros()
-                colunas = ['nome', 'telefone', 'area_atuacao', 'tipo_parceria', 'estado', 'cidade', 'bairro', 'endereco']
+                if registros.empty:
+                    st.info("Nenhum parceiro cadastrado.")
+                    return
+
+                # Definir colunas para exibição
+                colunas = ['nome', 'telefone', 'area_atuacao', 'tipo_parceria']
                 rename = {
                     'nome': 'Nome',
                     'telefone': 'Telefone',
                     'area_atuacao': 'Área de Atuação',
-                    'tipo_parceria': 'Tipo de Parceria',
-                    'estado': 'Estado',
-                    'cidade': 'Cidade',
-                    'bairro': 'Bairro',
-                    'endereco': 'Endereço'
+                    'tipo_parceria': 'Tipo de Parceria'
                 }
-                if not registros.empty:
-                    # Criar uma cópia do DataFrame original
-                    df_display = registros[colunas].copy()
 
-                    # Renomear colunas para exibição
-                    df_display.columns = [rename[col] for col in colunas]
+                # Criar DataFrame para exibição
+                df_display = registros[colunas].copy()
+                df_display.columns = [rename[col] for col in colunas]
 
-                    # Adicionar colunas de ação
-                    df_display['Ações'] = ''
+                # Exibir tabela
+                st.dataframe(df_display, hide_index=True)
 
-                    # Exibir tabela
-                    st.dataframe(df_display, hide_index=True)
+                # Botões de ação
+                col1, col2 = st.columns(2)
+                with col1:
+                    registro_id = st.number_input(
+                        "ID do registro para ação:",
+                        min_value=1, 
+                        max_value=len(registros),
+                        step=1,
+                        key="parceiro_id_input"
+                    )
 
-                    # Botões de ação abaixo da tabela
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        registro_id = st.number_input("ID do registro para ação:", min_value=1, 
-                                                   max_value=len(registros), step=1)
+                with col2:
+                    acao = st.selectbox(
+                        "Ação:",
+                        ["Editar", "Excluir"],
+                        key="parceiro_acao_select"
+                    )
 
-                    with col2:
-                        acao = st.selectbox("Ação:", ["Editar", "Excluir"])
+                # Formulário de ação
+                with st.form(f"acao_registro_parceiro"):
+                    if st.form_submit_button(f"Confirmar {acao}"):
+                        registro = registros[registros['id'] == registro_id].iloc[0]
 
-                    # Formulário de ação
-                    with st.form(f"acao_registro_parceiro"):
-                        if st.form_submit_button(f"Confirmar {acao}"):
-                            registro = registros[registros['id'] == registro_id].iloc[0]
+                        if acao == "Excluir":
+                            try:
+                                st.session_state.db.delete_parceiro(registro_id)
+                                st.success(f"Parceiro excluído com sucesso!")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Erro ao excluir Parceiro: {str(e)}")
 
-                            if acao == "Excluir":
+                        elif acao == "Editar":
+                            st.session_state[f'editing_{registro_id}'] = True
+                            st.rerun()
+
+                # Formulário de edição
+                if st.session_state.get(f'editing_{registro_id}', False):
+                    with st.form(f"edit_form_{registro_id}"):
+                        st.subheader("Editar Registro")
+                        edited_data = {}
+
+                        # Campos comuns
+                        edited_data['nome'] = st.text_input(
+                            "Nome",
+                            value=registro['nome'],
+                            key=f"edit_nome_{registro_id}"
+                        )
+                        edited_data['email'] = st.text_input(
+                            "Email",
+                            value=registro.get('email', ''),
+                            key=f"edit_email_{registro_id}"
+                        )
+                        edited_data['telefone'] = st.text_input(
+                            "Telefone",
+                            value=registro.get('telefone', ''),
+                            key=f"edit_telefone_{registro_id}"
+                        )
+
+                        # Campos específicos
+                        edited_data['area_atuacao'] = st.text_input(
+                            "Área de Atuação",
+                            value=registro.get('area_atuacao', ''),
+                            key=f"edit_area_{registro_id}"
+                        )
+                        edited_data['tipo_parceria'] = st.selectbox(
+                            "Tipo de Parceria",
+                            ["Indicação", "Colaboração", "Projeto Conjunto"],
+                            index=["Indicação", "Colaboração", "Projeto Conjunto"].index(registro.get('tipo_parceria', 'Indicação')),
+                            key=f"edit_tipo_parceria_{registro_id}"
+                        )
+
+                        # Botões do formulário
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.form_submit_button("Salvar"):
                                 try:
-                                    st.session_state.db.delete_parceiro(registro_id)
-                                    st.success(f"Parceiro excluído com sucesso!")
+                                    st.session_state.db.update_parceiro(registro_id, **edited_data)
+                                    st.session_state[f'editing_{registro_id}'] = False
+                                    st.success("Registro atualizado com sucesso!")
                                     st.rerun()
                                 except Exception as e:
-                                    st.error(f"Erro ao excluir Parceiro: {str(e)}")
+                                    st.error(f"Erro ao atualizar registro: {str(e)}")
 
-                            elif acao == "Editar":
-                                st.session_state[f'editing_{registro_id}'] = True
+                        with col2:
+                            if st.form_submit_button("Cancelar"):
+                                st.session_state[f'editing_{registro_id}'] = False
                                 st.rerun()
-
-                    # Formulário de edição
-                    if st.session_state.get(f'editing_{registro_id}', False):
-                        with st.form(f"edit_form_{registro_id}"):
-                            st.subheader("Editar Registro")
-                            edited_data = {}
-                            registro = registros[registros['id'] == registro_id].iloc[0]
-
-                            # Campos comuns
-                            edited_data['nome'] = st.text_input("Nome", value=registro['nome'])
-                            edited_data['email'] = st.text_input("Email", value=registro.get('email', ''))
-                            edited_data['telefone'] = st.text_input("Telefone", value=registro.get('telefone', ''))
-
-                            # Campos específicos
-                            edited_data['area_atuacao'] = st.text_input("Área de Atuação", value=registro.get('area_atuacao', ''))
-                            edited_data['tipo_parceria'] = st.selectbox(
-                                "Tipo de Parceria",
-                                ["Indicação", "Colaboração", "Projeto Conjunto"],
-                                index=["Indicação", "Colaboração", "Projeto Conjunto"].index(registro.get('tipo_parceria', 'Indicação'))
-                            )
-
-                            # Campos de endereço
-                            edited_data['estado'] = st.text_input("Estado (UF)", value=registro.get('estado', ''))
-                            edited_data['cidade'] = st.text_input("Cidade", value=registro.get('cidade', ''))
-                            edited_data['bairro'] = st.text_input("Bairro", value=registro.get('bairro', ''))
-                            edited_data['endereco'] = st.text_input("Endereço", value=registro.get('endereco', ''))
-
-                            # Botões do formulário
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                if st.form_submit_button("Salvar"):
-                                    try:
-                                        st.session_state.db.update_parceiro(registro_id, **edited_data)
-                                        st.session_state[f'editing_{registro_id}'] = False
-                                        st.success("Registro atualizado com sucesso!")
-                                        st.rerun()
-                                    except Exception as e:
-                                        st.error(f"Erro ao atualizar registro: {str(e)}")
-
-                            with col2:
-                                if st.form_submit_button("Cancelar"):
-                                    st.session_state[f'editing_{registro_id}'] = False
-                                    st.rerun()
-
-                else:
-                    st.info(f"Nenhum parceiro cadastrado.")
 
             except Exception as e:
                 st.error(f"Erro ao carregar lista de parceiros: {str(e)}")
@@ -362,6 +385,7 @@ def show():
                         else:
                             st.error(mensagem)
 
+
     with tab_assistente:
         assistente_tab1, assistente_tab2 = st.tabs(["Cadastrar/Listar", "Importar"])
 
@@ -369,19 +393,20 @@ def show():
             st.subheader("Cadastro de Assistentes")
             # Form de cadastro de assistente
             with st.form("cadastro_assistente", clear_on_submit=True):
-                nome = st.text_input("Nome")
+                nome = st.text_input("Nome", key="novo_assistente_nome")
                 col1, col2 = st.columns(2)
                 with col1:
-                    telefone = st.text_input("Telefone")
-                    email = st.text_input("Email")
+                    telefone = st.text_input("Telefone", key="novo_assistente_telefone")
+                    email = st.text_input("Email", key="novo_assistente_email")
                 with col2:
                     disponibilidade = st.multiselect(
                         "Disponibilidade",
-                        ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"]
+                        ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"],
+                        key="novo_assistente_disponibilidade"
                     )
-                    pix = st.text_input("Chave PIX")
+                    pix = st.text_input("Chave PIX", key="novo_assistente_pix")
 
-                observacoes = st.text_area("Observações")
+                observacoes = st.text_area("Observações", key="novo_assistente_obs")
                 submitted = st.form_submit_button("Cadastrar Assistente")
 
                 if submitted:
@@ -403,16 +428,12 @@ def show():
             st.subheader(f"Lista de Assistentes")
             try:
                 registros = st.session_state.db.get_assistentes()
-                colunas = ['nome', 'telefone', 'email', 'disponibilidade', 'estado', 'cidade', 'bairro', 'endereco']
+                colunas = ['nome', 'telefone', 'email', 'disponibilidade']
                 rename = {
                     'nome': 'Nome',
                     'telefone': 'Telefone',
                     'email': 'Email',
-                    'disponibilidade': 'Disponibilidade',
-                    'estado': 'Estado',
-                    'cidade': 'Cidade',
-                    'bairro': 'Bairro',
-                    'endereco': 'Endereço'
+                    'disponibilidade': 'Disponibilidade'
                 }
                 if not registros.empty:
                     # Criar uma cópia do DataFrame original
@@ -421,20 +442,26 @@ def show():
                     # Renomear colunas para exibição
                     df_display.columns = [rename[col] for col in colunas]
 
-                    # Adicionar colunas de ação
-                    df_display['Ações'] = ''
-
                     # Exibir tabela
                     st.dataframe(df_display, hide_index=True)
 
                     # Botões de ação abaixo da tabela
                     col1, col2 = st.columns(2)
                     with col1:
-                        registro_id = st.number_input("ID do registro para ação:", min_value=1, 
-                                                   max_value=len(registros), step=1)
+                        registro_id = st.number_input(
+                            "ID do registro para ação:",
+                            min_value=1, 
+                            max_value=len(registros),
+                            step=1,
+                            key="assistente_id_input"
+                        )
 
                     with col2:
-                        acao = st.selectbox("Ação:", ["Editar", "Excluir"])
+                        acao = st.selectbox(
+                            "Ação:",
+                            ["Editar", "Excluir"],
+                            key="assistente_acao_select"
+                        )
 
                     # Formulário de ação
                     with st.form(f"acao_registro_assistente"):
@@ -461,23 +488,30 @@ def show():
                             registro = registros[registros['id'] == registro_id].iloc[0]
 
                             # Campos comuns
-                            edited_data['nome'] = st.text_input("Nome", value=registro['nome'])
-                            edited_data['email'] = st.text_input("Email", value=registro.get('email', ''))
-                            edited_data['telefone'] = st.text_input("Telefone", value=registro.get('telefone', ''))
+                            edited_data['nome'] = st.text_input(
+                                "Nome",
+                                value=registro['nome'],
+                                key=f"edit_nome_{registro_id}"
+                            )
+                            edited_data['email'] = st.text_input(
+                                "Email",
+                                value=registro.get('email', ''),
+                                key=f"edit_email_{registro_id}"
+                            )
+                            edited_data['telefone'] = st.text_input(
+                                "Telefone",
+                                value=registro.get('telefone', ''),
+                                key=f"edit_telefone_{registro_id}"
+                            )
 
                             # Campos específicos
                             disponibilidade_atual = registro.get('disponibilidade', '').split(',') if registro.get('disponibilidade') else []
                             edited_data['disponibilidade'] = st.multiselect(
                                 "Disponibilidade",
                                 ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"],
-                                default=disponibilidade_atual
+                                default=disponibilidade_atual,
+                                key=f"edit_disponibilidade_{registro_id}"
                             )
-
-                            # Campos de endereço
-                            edited_data['estado'] = st.text_input("Estado (UF)", value=registro.get('estado', ''))
-                            edited_data['cidade'] = st.text_input("Cidade", value=registro.get('cidade', ''))
-                            edited_data['bairro'] = st.text_input("Bairro", value=registro.get('bairro', ''))
-                            edited_data['endereco'] = st.text_input("Endereço", value=registro.get('endereco', ''))
 
                             # Botões do formulário
                             col1, col2 = st.columns(2)
@@ -518,10 +552,14 @@ def show():
             )
 
             # Upload do arquivo
-            arquivo = st.file_uploader("Selecione o arquivo CSV de Assistentes", type=['csv'])
+            arquivo = st.file_uploader(
+                "Selecione o arquivo CSV de Assistentes",
+                type=['csv'],
+                key="assistente_file_upload"
+            )
 
             if arquivo:
-                if st.button("Importar Assistentes"):
+                if st.button("Importar Assistentes", key="assistente_import_button"):
                     with st.spinner("Importando dados..."):
                         sucesso, mensagem = importar_cadastros(arquivo, "Assistente", st.session_state.db)
                         if sucesso:
