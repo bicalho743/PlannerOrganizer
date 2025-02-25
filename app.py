@@ -39,62 +39,89 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Debug do estado da sessão
+def log_session_state():
+    logger.info("=== Estado da Sessão ===")
+    for key, value in st.session_state.items():
+        if key not in ['senha', 'token']:  # Não logar dados sensíveis
+            logger.info(f"{key}: {value}")
+
 # Inicialização da base de dados
 if 'db' not in st.session_state:
     try:
+        logger.info("Inicializando conexão com o banco de dados...")
         st.session_state.db = Database()
+        logger.info("Conexão com o banco de dados estabelecida com sucesso")
     except Exception as e:
+        logger.error(f"Erro ao conectar com o banco de dados: {str(e)}")
         st.error("Erro ao conectar com o banco de dados. Por favor, tente novamente mais tarde.")
         st.exception(e)
         st.stop()
 
 # Verificar autenticação
 if 'autenticado' not in st.session_state:
+    logger.info("Inicializando estado de autenticação")
     st.session_state.autenticado = False
     st.session_state.usuario = None
 
+log_session_state()
+
 if not st.session_state.autenticado:
+    logger.info("Usuário não autenticado, mostrando página de login")
     st.title("Login")
     st.write("Por favor, faça login para continuar.")
 
-    with st.form("login_form"):
+    with st.form("login_form", clear_on_submit=False):
         email = st.text_input("Email")
         senha = st.text_input("Senha", type="password")
-        if st.form_submit_button("Entrar"):
+        if st.form_submit_button("Entrar", key="login_button"):
             if st.session_state.db:
+                logger.info(f"Tentativa de login para o email: {email}")
                 sucesso, usuario = st.session_state.db.autenticar_usuario(email, senha)
                 if sucesso:
+                    logger.info("Login realizado com sucesso")
                     st.session_state.autenticado = True
                     st.session_state.usuario = usuario
-                    st.rerun()  # Substituído experimental_rerun por rerun
+                    st.success("Login realizado com sucesso!")
+                    st.rerun()
                 else:
+                    logger.warning("Falha na autenticação")
                     st.error("Email ou senha inválidos")
 else:
+    logger.info("Usuário autenticado, mostrando dashboard")
     # Menu lateral personalizado
     st.sidebar.title("Menu Principal")
 
-    # Mostrar informações do usuário de forma segura
+    # Mostrar informações do usuário
     with st.sidebar:
         if st.session_state.usuario and isinstance(st.session_state.usuario, dict):
             st.write(f"👤 Olá, {st.session_state.usuario.get('nome', 'Usuário')}")
         else:
             st.write("👤 Olá, Usuário")
 
-        if st.button("📤 Sair"):
-            st.session_state.autenticado = False
-            st.session_state.usuario = None
-            st.rerun()  # Substituído experimental_rerun por rerun
+        # Botão de logout com key única
+        logout_key = "logout_" + datetime.now().strftime("%Y%m%d_%H%M%S")
+        if st.button("📤 Sair", key=logout_key):
+            logger.info("Usuário realizou logout")
+            st.session_state.clear()
+            st.success("Logout realizado com sucesso!")
+            st.rerun()
 
-    # Seleção de página
+    # Seleção de página com key única
+    menu_key = "menu_" + datetime.now().strftime("%Y%m%d_%H%M%S")
     pagina = st.sidebar.radio(
         "Menu",
-        ["Dashboard", "Cadastros", "Propostas", "Financeiro", "Relatórios"],
+        ["Dashboard", "Cadastros", "Propostas", "Financeiro", "Relatórios", "Teste de Importação"],
+        key=menu_key,
         format_func=lambda x: f"📊 {x}" if x == "Dashboard"
                         else f"👥 {x}" if x == "Cadastros"
                         else f"📝 {x}" if x == "Propostas"
                         else f"💰 {x}" if x == "Financeiro"
-                        else f"📈 {x}"  # Relatórios
+                        else f"📈 {x}" if x == "Relatórios"
+                        else f"🔄 {x}"  # Teste de Importação
     )
+
+    logger.info(f"Página selecionada: {pagina}")
 
     # Roteamento de páginas com tratamento de erro
     try:
@@ -113,12 +140,16 @@ else:
         elif pagina == "Relatórios":
             import pages.relatorios as relatorios
             relatorios.show()
+        elif pagina == "Teste de Importação":
+            import pages.teste_importacao as teste_importacao
+            teste_importacao.show()
     except ImportError as e:
-        st.error(f"Erro ao carregar a página {pagina}. Módulo não encontrado.")
         logger.error(f"Erro ao importar módulo da página {pagina}: {str(e)}")
+        st.error(f"Erro ao carregar a página {pagina}. Módulo não encontrado.")
     except Exception as e:
-        st.error(f"Erro ao carregar a página {pagina}.")
         logger.error(f"Erro ao carregar página {pagina}: {str(e)}")
+        st.error(f"Erro ao carregar a página {pagina}.")
+        logger.exception(e)
 
     # Rodapé
     st.sidebar.markdown("---")
