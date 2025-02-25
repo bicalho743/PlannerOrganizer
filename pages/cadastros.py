@@ -69,12 +69,28 @@ def show():
             try:
                 registros = st.session_state.db.get_fornecedores()
 
+                # Validar se temos um DataFrame válido
+                if not isinstance(registros, pd.DataFrame):
+                    st.error("Erro ao carregar fornecedores: dados inválidos")
+                    return
+
                 if registros.empty:
                     st.info("Nenhum fornecedor cadastrado.")
                     return
 
-                # Definir colunas para exibição
-                colunas = ['nome', 'contato', 'categoria', 'tipo_conta', 'recorrente']
+                # Verificar quais colunas estão disponíveis
+                colunas_disponiveis = registros.columns.tolist()
+                st.write("Debug - Colunas disponíveis:", colunas_disponiveis)
+
+                # Definir colunas que queremos exibir
+                colunas_desejadas = ['nome', 'contato', 'categoria', 'tipo_conta', 'recorrente']
+                colunas_display = [col for col in colunas_desejadas if col in colunas_disponiveis]
+
+                if not colunas_display:
+                    st.error("Erro: nenhuma coluna válida encontrada")
+                    return
+
+                # Criar dicionário de renomeação apenas para colunas existentes
                 rename = {
                     'nome': 'Nome',
                     'contato': 'Telefone',
@@ -83,9 +99,9 @@ def show():
                     'recorrente': 'Recorrente'
                 }
 
-                # Criar DataFrame para exibição
-                df_display = registros[colunas].copy()
-                df_display.columns = [rename[col] for col in colunas]
+                # Criar DataFrame para exibição apenas com colunas existentes
+                df_display = registros[colunas_display].copy()
+                df_display.columns = [rename.get(col, col) for col in colunas_display]
 
                 # Exibir tabela
                 st.dataframe(df_display, hide_index=True)
@@ -96,7 +112,7 @@ def show():
                     registro_id = st.number_input(
                         "ID do registro para ação:", 
                         min_value=1, 
-                        max_value=len(registros), 
+                        max_value=len(registros),
                         step=1,
                         key="fornecedor_id_input"
                     )
@@ -111,7 +127,11 @@ def show():
                 # Formulário de ação
                 with st.form(f"acao_registro_fornecedor"):
                     if st.form_submit_button(f"Confirmar {acao}"):
-                        registro = registros[registros['id'] == registro_id].iloc[0]
+                        try:
+                            registro = registros[registros['id'] == registro_id].iloc[0]
+                        except (KeyError, IndexError):
+                            st.error("Registro não encontrado")
+                            return
 
                         if acao == "Excluir":
                             try:
@@ -130,36 +150,46 @@ def show():
                     with st.form(f"edit_form_{registro_id}"):
                         st.subheader("Editar Registro")
                         edited_data = {}
+                        try:
+                            registro = registros[registros['id'] == registro_id].iloc[0]
+                        except (KeyError, IndexError):
+                            st.error("Registro não encontrado")
+                            return
 
-                        # Campos comuns
+                        # Campos do formulário
                         edited_data['nome'] = st.text_input(
                             "Nome", 
-                            value=registro['nome'],
+                            value=registro.get('nome', ''),
                             key=f"edit_nome_{registro_id}"
-                        )
-                        edited_data['email'] = st.text_input(
-                            "Email", 
-                            value=registro.get('email', ''),
-                            key=f"edit_email_{registro_id}"
                         )
                         edited_data['contato'] = st.text_input(
                             "Telefone", 
                             value=registro.get('contato', ''),
                             key=f"edit_contato_{registro_id}"
                         )
-
-                        # Campos específicos
+                        edited_data['email'] = st.text_input(
+                            "Email", 
+                            value=registro.get('email', ''),
+                            key=f"edit_email_{registro_id}"
+                        )
                         edited_data['categoria'] = st.selectbox(
                             "Categoria",
                             ["Produtos", "Serviços", "Marcenaria", "Outro"],
                             index=["Produtos", "Serviços", "Marcenaria", "Outro"].index(registro.get('categoria', 'Outro')),
                             key=f"edit_categoria_{registro_id}"
                         )
+                        edited_data['tipo_conta'] = st.selectbox(
+                            "Tipo de Conta",
+                            ["PF", "PJ"],
+                            index=["PF", "PJ"].index(registro.get('tipo_conta', 'PF')),
+                            key=f"edit_tipo_conta_{registro_id}"
+                        )
                         edited_data['recorrente'] = st.checkbox(
                             "Fornecedor Recorrente", 
                             value=registro.get('recorrente', False),
                             key=f"edit_recorrente_{registro_id}"
                         )
+
 
                         # Botões do formulário
                         col1, col2 = st.columns(2)
