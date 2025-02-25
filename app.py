@@ -58,7 +58,7 @@ if 'autenticado' not in st.session_state:
     st.session_state.usuario = None
 
 # Página de login
-if not st.session_state.autenticado:
+if not st.session_state.get('autenticado', False):
     logger.info("Usuário não autenticado, mostrando página de login")
     st.title("Login")
     st.write("Por favor, faça login para continuar.")
@@ -77,9 +77,12 @@ if not st.session_state.autenticado:
                     st.session_state.autenticado = True
                     st.session_state.usuario = usuario
                     st.success("Login realizado com sucesso!")
+                    st.experimental_rerun()
                 else:
                     logger.warning("Falha na autenticação")
                     st.error("Email ou senha inválidos")
+    st.stop()  # Impede a renderização do resto da página se não estiver autenticado
+
 else:
     logger.info("Usuário autenticado, mostrando dashboard")
     # Menu lateral personalizado
@@ -96,10 +99,10 @@ else:
         logout_key = f"logout_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         if st.button("📤 Sair", key=logout_key):
             logger.info("Usuário realizou logout")
-            # Limpar apenas as informações de autenticação
             st.session_state.autenticado = False
             st.session_state.usuario = None
             st.success("Logout realizado com sucesso!")
+            st.experimental_rerun()
 
     # Seleção de página com key única
     menu_key = f"menu_{datetime.now().strftime('%Y%m%d_%H%M%S')}"

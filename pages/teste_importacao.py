@@ -7,6 +7,12 @@ import traceback
 logger = logging.getLogger(__name__)
 
 def show():
+    # Verificar autenticação primeiro
+    if not st.session_state.get('autenticado', False):
+        st.error("Acesso negado. Por favor, faça login primeiro.")
+        st.stop()
+        return
+
     # Log do estado da sessão no início
     logger.info("=== Estado da Sessão ===")
     for key, value in st.session_state.items():
@@ -16,10 +22,6 @@ def show():
     st.title("🧪 Teste de Importação")
 
     # Verificar estado da sessão
-    if not st.session_state.get('autenticado', False):
-        st.error("Acesso negado. Por favor, faça login primeiro.")
-        return
-
     if 'db' not in st.session_state:
         st.error("Erro: Conexão com banco de dados não inicializada")
         return
