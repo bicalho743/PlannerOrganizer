@@ -1,22 +1,40 @@
-[pages]
-# Lista apenas as páginas que queremos mostrar na barra lateral
-order = [
-    "propostas.py",
-    "clientes.py",
-    "financeiro.py",
-    "cadastros.py",
-    "relatorios.py"
-]
 
-# Oculta todas as outras páginas
-visibility = """
-hidden = [
-    "main.py",
-    "admin.py",
-    "backup.py",
-    "contas_pagar.py",
-    "fornecedores.py",
-    "login.py",
-    "mais.py"
-]
-"""
+[[pages]]
+path = "pages/dashboard.py"
+name = "Dashboard"
+icon = "📊"
+
+[[pages]]
+path = "pages/cadastros.py"
+name = "Cadastros"
+icon = "👥"
+
+[[pages]]
+path = "pages/propostas.py"
+name = "Propostas"
+icon = "📝"
+
+[[pages]]
+path = "pages/andamento.py"
+name = "Andamento"
+icon = "📋"
+
+[[pages]]
+path = "pages/financeiro.py"
+name = "Financeiro"
+icon = "💰"
+
+[[pages]]
+path = "pages/importacao.py"
+name = "Importação"
+icon = "📥"
+
+[[pages]]
+path = "pages/pagamentos.py"
+name = "Pagamentos"
+icon = "💳"
+
+[[pages]]
+path = "pages/relatorios.py"
+name = "Relatórios"
+icon = "📈"
