@@ -15,15 +15,11 @@ textColor = "#F5F5F5"
 font = "sans serif"
 base = "dark"
 
-[global]
-developmentMode = false
-showErrorDetails = false
-
 [browser]
 gatherUsageStats = false
 
 [client]
-showErrorDetails = false
+showErrorDetails = true
 toolbarMode = "minimal"
 
 [runner]
