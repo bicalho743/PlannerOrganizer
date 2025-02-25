@@ -37,39 +37,61 @@ PAGINAS_VISIVEIS = {
 # Configuração do menu lateral com ícones
 st.sidebar.title("🏠 Menu Principal")
 
-pagina = st.sidebar.selectbox(
-    "Navegação",
-    list(PAGINAS_VISIVEIS.keys())
-)
+# Estilo CSS para os botões do menu
+st.markdown("""
+    <style>
+    div.stButton > button {
+        width: 100%;
+        text-align: left;
+        padding: 0.75rem 1rem;
+        background-color: transparent;
+        border: none;
+        color: #FFFFFF;
+    }
+    div.stButton > button:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    div.stButton > button:active {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-# Extrair o nome da página sem o ícone
-page_name = PAGINAS_VISIVEIS[pagina]
+# Criar botões fixos para cada página
+selected_page = None
+for titulo, pagina in PAGINAS_VISIVEIS.items():
+    if st.sidebar.button(titulo):
+        selected_page = pagina
+
+# Se nenhuma página foi selecionada, mostrar dashboard
+if selected_page is None:
+    selected_page = "dashboard"
 
 # Roteamento de páginas
-if page_name == "dashboard":
+if selected_page == "dashboard":
     from pages import dashboard
     dashboard.show()
-elif page_name == "clientes":
+elif selected_page == "clientes":
     from pages import clientes
     clientes.show()
-elif page_name == "propostas":
+elif selected_page == "propostas":
     from pages import propostas
     propostas.show()
-elif page_name == "financeiro":
+elif selected_page == "financeiro":
     from pages import financeiro
     financeiro.show()
-elif page_name == "cadastros":
+elif selected_page == "cadastros":
     from pages import cadastros
     cadastros.show()
-elif page_name == "contas_pagar":
+elif selected_page == "contas_pagar":
     from src.hidden_pages import contas_pagar
     contas_pagar.show()
-elif page_name == "relatorios":
+elif selected_page == "relatorios":
     from pages import relatorios
     relatorios.show()
 
 # Dashboard - Página Principal
-if page_name == "dashboard":
+if selected_page == "dashboard":
     st.title("📋 Sistema de Gestão - Personal Organizer")
 
     # Add test data button in sidebar if database is empty
@@ -165,6 +187,7 @@ if page_name == "dashboard":
                     st.write(f"- {aniv['nome']}")
             else:
                 st.write("**🎈 Hoje:** Nenhum aniversariante")
+
 
 # Rodapé mais discreto
 st.sidebar.markdown("---")
