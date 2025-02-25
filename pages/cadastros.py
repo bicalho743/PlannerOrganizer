@@ -63,102 +63,110 @@ def show():
             st.subheader(f"Lista de Fornecedores")
             try:
                 registros = st.session_state.db.get_fornecedores()
-                colunas = ['nome', 'contato', 'categoria', 'tipo_conta', 'recorrente', 'estado', 'cidade', 'bairro', 'endereco']
+                # Certificar que temos registros antes de tentar acessar
+                if not isinstance(registros, pd.DataFrame):
+                    st.error("Erro ao carregar fornecedores: dados inválidos")
+                    return
+
+                if registros.empty:
+                    st.info("Nenhum fornecedor cadastrado.")
+                    return
+
+                # Definir apenas as colunas que sabemos que existem
+                colunas = ['nome', 'contato', 'categoria', 'tipo_conta', 'recorrente']
+                colunas_display = []
+
+                # Verificar quais colunas existem no DataFrame
+                for col in colunas:
+                    if col in registros.columns:
+                        colunas_display.append(col)
+
+                # Criar dicionário de renomeação apenas para colunas existentes
                 rename = {
                     'nome': 'Nome',
                     'contato': 'Telefone',
                     'categoria': 'Categoria',
                     'tipo_conta': 'Tipo de Conta',
-                    'recorrente': 'Recorrente',
-                    'estado': 'Estado',
-                    'cidade': 'Cidade',
-                    'bairro': 'Bairro',
-                    'endereco': 'Endereço'
+                    'recorrente': 'Recorrente'
                 }
-                if not registros.empty:
-                    # Criar uma cópia do DataFrame original
-                    df_display = registros[colunas].copy()
 
-                    # Renomear colunas para exibição
-                    df_display.columns = [rename[col] for col in colunas]
+                # Criar uma cópia do DataFrame apenas com as colunas existentes
+                df_display = registros[colunas_display].copy()
 
-                    # Adicionar colunas de ação
-                    df_display['Ações'] = ''
+                # Renomear colunas para exibição
+                df_display.columns = [rename[col] for col in colunas_display]
 
-                    # Exibir tabela
-                    st.dataframe(df_display, hide_index=True)
+                # Exibir tabela
+                st.dataframe(df_display, hide_index=True)
 
-                    # Botões de ação abaixo da tabela
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        registro_id = st.number_input("ID do registro para ação:", min_value=1, 
-                                                   max_value=len(registros), step=1)
+                # Botões de ação abaixo da tabela
+                col1, col2 = st.columns(2)
+                with col1:
+                    registro_id = st.number_input("ID do registro para ação:", min_value=1, 
+                                                  max_value=len(registros), step=1)
 
-                    with col2:
-                        acao = st.selectbox("Ação:", ["Editar", "Excluir"])
+                with col2:
+                    acao = st.selectbox("Ação:", ["Editar", "Excluir"])
 
-                    # Formulário de ação
-                    with st.form(f"acao_registro_fornecedor"):
-                        if st.form_submit_button(f"Confirmar {acao}"):
-                            registro = registros[registros['id'] == registro_id].iloc[0]
+                # Formulário de ação
+                with st.form(f"acao_registro_fornecedor"):
+                    if st.form_submit_button(f"Confirmar {acao}"):
+                        registro = registros[registros['id'] == registro_id].iloc[0]
 
-                            if acao == "Excluir":
+                        if acao == "Excluir":
+                            try:
+                                st.session_state.db.delete_fornecedor(registro_id)
+                                st.success(f"Fornecedor excluído com sucesso!")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Erro ao excluir Fornecedor: {str(e)}")
+
+                        elif acao == "Editar":
+                            st.session_state[f'editing_{registro_id}'] = True
+                            st.rerun()
+
+                # Formulário de edição
+                if st.session_state.get(f'editing_{registro_id}', False):
+                    with st.form(f"edit_form_{registro_id}"):
+                        st.subheader("Editar Registro")
+                        edited_data = {}
+                        registro = registros[registros['id'] == registro_id].iloc[0]
+
+                        # Campos comuns
+                        edited_data['nome'] = st.text_input("Nome", value=registro['nome'])
+                        edited_data['email'] = st.text_input("Email", value=registro.get('email', ''))
+                        edited_data['contato'] = st.text_input("Telefone", value=registro.get('contato', ''))
+
+                        # Campos específicos
+                        edited_data['categoria'] = st.selectbox(
+                            "Categoria",
+                            ["Produtos", "Serviços", "Marcenaria", "Outro"],
+                            index=["Produtos", "Serviços", "Marcenaria", "Outro"].index(registro.get('categoria', 'Outro'))
+                        )
+                        edited_data['recorrente'] = st.checkbox("Fornecedor Recorrente", value=registro.get('recorrente', False))
+
+                        # Campos de endereço
+                        edited_data['estado'] = st.text_input("Estado (UF)", value=registro.get('estado', ''))
+                        edited_data['cidade'] = st.text_input("Cidade", value=registro.get('cidade', ''))
+                        edited_data['bairro'] = st.text_input("Bairro", value=registro.get('bairro', ''))
+                        edited_data['endereco'] = st.text_input("Endereço", value=registro.get('endereco', ''))
+
+                        # Botões do formulário
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.form_submit_button("Salvar"):
                                 try:
-                                    st.session_state.db.delete_fornecedor(registro_id)
-                                    st.success(f"Fornecedor excluído com sucesso!")
+                                    st.session_state.db.update_fornecedor(registro_id, **edited_data)
+                                    st.session_state[f'editing_{registro_id}'] = False
+                                    st.success("Registro atualizado com sucesso!")
                                     st.rerun()
                                 except Exception as e:
-                                    st.error(f"Erro ao excluir Fornecedor: {str(e)}")
+                                    st.error(f"Erro ao atualizar registro: {str(e)}")
 
-                            elif acao == "Editar":
-                                st.session_state[f'editing_{registro_id}'] = True
+                        with col2:
+                            if st.form_submit_button("Cancelar"):
+                                st.session_state[f'editing_{registro_id}'] = False
                                 st.rerun()
-
-                    # Formulário de edição
-                    if st.session_state.get(f'editing_{registro_id}', False):
-                        with st.form(f"edit_form_{registro_id}"):
-                            st.subheader("Editar Registro")
-                            edited_data = {}
-                            registro = registros[registros['id'] == registro_id].iloc[0]
-
-                            # Campos comuns
-                            edited_data['nome'] = st.text_input("Nome", value=registro['nome'])
-                            edited_data['email'] = st.text_input("Email", value=registro.get('email', ''))
-                            edited_data['contato'] = st.text_input("Telefone", value=registro.get('contato', ''))
-
-                            # Campos específicos
-                            edited_data['categoria'] = st.selectbox(
-                                "Categoria",
-                                ["Produtos", "Serviços", "Marcenaria", "Outro"],
-                                index=["Produtos", "Serviços", "Marcenaria", "Outro"].index(registro.get('categoria', 'Outro'))
-                            )
-                            edited_data['recorrente'] = st.checkbox("Fornecedor Recorrente", value=registro.get('recorrente', False))
-
-                            # Campos de endereço
-                            edited_data['estado'] = st.text_input("Estado (UF)", value=registro.get('estado', ''))
-                            edited_data['cidade'] = st.text_input("Cidade", value=registro.get('cidade', ''))
-                            edited_data['bairro'] = st.text_input("Bairro", value=registro.get('bairro', ''))
-                            edited_data['endereco'] = st.text_input("Endereço", value=registro.get('endereco', ''))
-
-                            # Botões do formulário
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                if st.form_submit_button("Salvar"):
-                                    try:
-                                        st.session_state.db.update_fornecedor(registro_id, **edited_data)
-                                        st.session_state[f'editing_{registro_id}'] = False
-                                        st.success("Registro atualizado com sucesso!")
-                                        st.rerun()
-                                    except Exception as e:
-                                        st.error(f"Erro ao atualizar registro: {str(e)}")
-
-                            with col2:
-                                if st.form_submit_button("Cancelar"):
-                                    st.session_state[f'editing_{registro_id}'] = False
-                                    st.rerun()
-
-                else:
-                    st.info(f"Nenhum fornecedor cadastrado.")
 
             except Exception as e:
                 st.error(f"Erro ao carregar lista de fornecedores: {str(e)}")

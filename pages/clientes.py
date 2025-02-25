@@ -9,7 +9,6 @@ def show():
 
     with tab1:
         st.subheader("Novo Cliente")
-
         with st.form("cadastro_cliente", clear_on_submit=True):
             nome = st.text_input("Nome completo")
             tipo_conta = st.selectbox(
@@ -85,123 +84,116 @@ def show():
         try:
             clientes = st.session_state.db.get_clientes()
 
-            if not clientes.empty:
-                # Converter datas para datetime
-                clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro'], errors='coerce')
-                clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'], errors='coerce')
-
-                # Formatar datas para exibição
-                clientes['data_cadastro'] = clientes['data_cadastro'].dt.strftime('%d/%m/%Y')
-                clientes['data_aniversario'] = clientes['data_aniversario'].dt.strftime('%d/%m')
-
-                # Aplicar filtro de busca
-                if busca:
-                    mask = clientes.apply(lambda row: any(
-                        str(value).lower().find(busca.lower()) != -1
-                        for value in [row['nome'], row['email'], row['cpf'], row['cnpj']]
-                        if pd.notna(value)
-                    ), axis=1)
-                    clientes = clientes[mask]
-
-                # Para cada cliente, mostrar os dados e botões de ação
-                for _, cliente in clientes.iterrows():
-                    with st.container():
-                        col1, col2 = st.columns([4, 1])
-
-                        with col1:
-                            st.markdown(f"**{cliente['nome']}**")
-                            st.markdown(f"Email: {cliente['email']}")
-                            st.markdown(f"Telefone: {cliente['telefone']}")
-                            if cliente['tipo_conta'] == 'PF':
-                                st.markdown(f"CPF: {cliente['cpf']}")
-                            else:
-                                st.markdown(f"CNPJ: {cliente['cnpj']}")
-                                st.markdown(f"Razão Social: {cliente['razao_social']}")
-
-                            # Exibir endereço completo
-                            endereco_partes = []
-                            if cliente['endereco']:
-                                endereco_partes.append(cliente['endereco'])
-                            if cliente['bairro']:
-                                endereco_partes.append(cliente['bairro'])
-                            if cliente['cidade'] and cliente['estado']:
-                                endereco_partes.append(f"{cliente['cidade']} - {cliente['estado']}")
-                            elif cliente['cidade']:
-                                endereco_partes.append(cliente['cidade'])
-                            elif cliente['estado']:
-                                endereco_partes.append(cliente['estado'])
-
-                            if endereco_partes:
-                                st.markdown("**Endereço:**")
-                                st.markdown(", ".join(endereco_partes))
-
-                        with col2:
-                            col_edit, col_del = st.columns(2)
-                            
-                            with col_edit:
-                                if st.button("✏️ Editar", key=f"edit_cliente_{cliente['id']}"):
-                                    st.session_state.editing_client = cliente
-                                    st.rerun()
-                            
-                            with col_del:
-                                if st.button("🗑️ Excluir", key=f"del_cliente_{cliente['id']}"):
-                                    if st.session_state.get('confirm_delete') == cliente['id']:
-                                        try:
-                                            sucesso, msg = st.session_state.db.excluir_cliente(cliente['id'])
-                                            if sucesso:
-                                                st.success(msg)
-                                                if 'confirm_delete' in st.session_state:
-                                                    del st.session_state.confirm_delete
-                                                st.rerun()
-                                            else:
-                                                st.error(msg)
-                                        except Exception as e:
-                                            st.error(f"Erro ao excluir cliente: {str(e)}")
-                                    else:
-                                        st.session_state.confirm_delete = cliente['id']
-                                        st.warning("Clique novamente para confirmar a exclusão")
-
-                        if st.session_state.get('confirm_delete') == cliente['id']:
-                            st.info("⚠️ Esta ação não pode ser desfeita!")
-                            
-                        # Formulário de edição
-                        if st.session_state.get('editing_client', {}).get('id') == cliente['id']:
-                            with st.form(f"edit_form_{cliente['id']}", clear_on_submit=True):
-                                novo_nome = st.text_input("Nome", value=cliente['nome'])
-                                novo_email = st.text_input("Email", value=cliente['email'] or '')
-                                novo_telefone = st.text_input("Telefone", value=cliente['telefone'] or '')
-                                novo_endereco = st.text_input("Endereço", value=cliente['endereco'] or '')
-                                
-                                col1, col2 = st.columns(2)
-                                with col1:
-                                    novo_estado = st.text_input("Estado", value=cliente['estado'] or '')
-                                    nova_cidade = st.text_input("Cidade", value=cliente['cidade'] or '')
-                                with col2:
-                                    novo_bairro = st.text_input("Bairro", value=cliente['bairro'] or '')
-                                    nova_data = st.date_input("Data Aniversário", value=pd.to_datetime(cliente['data_aniversario']).date() if pd.notna(cliente['data_aniversario']) else None)
-
-                                if st.form_submit_button("Salvar Alterações"):
-                                    try:
-                                        st.session_state.db.atualizar_cliente(
-                                            cliente['id'],
-                                            nome=novo_nome,
-                                            email=novo_email,
-                                            telefone=novo_telefone,
-                                            endereco=novo_endereco,
-                                            estado=novo_estado,
-                                            cidade=nova_cidade,
-                                            bairro=novo_bairro,
-                                            data_aniversario=nova_data
-                                        )
-                                        del st.session_state.editing_client
-                                        st.success("Cliente atualizado com sucesso!")
-                                        st.rerun()
-                                    except Exception as e:
-                                        st.error(f"Erro ao atualizar cliente: {str(e)}")
-
-                        st.markdown("---")
-            else:
+            if clientes.empty:
                 st.info("Nenhum cliente cadastrado.")
+                return
+
+            # Converter datas para datetime
+            clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro'], errors='coerce')
+            clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'], errors='coerce')
+
+            # Formatar datas para exibição
+            clientes['data_cadastro'] = clientes['data_cadastro'].dt.strftime('%d/%m/%Y')
+            clientes['data_aniversario'] = clientes['data_aniversario'].dt.strftime('%d/%m')
+
+            # Aplicar filtro de busca
+            if busca:
+                mask = clientes.apply(lambda row: any(
+                    str(value).lower().find(busca.lower()) != -1
+                    for value in [row['nome'], row['email'], row['cpf'], row['cnpj']]
+                    if pd.notna(value)
+                ), axis=1)
+                clientes = clientes[mask]
+
+            # Definir colunas para exibição
+            colunas = ['nome', 'email', 'telefone', 'tipo_conta', 'data_aniversario']
+            rename = {
+                'nome': 'Nome',
+                'email': 'Email',
+                'telefone': 'Telefone',
+                'tipo_conta': 'Tipo de Conta',
+                'data_aniversario': 'Aniversário'
+            }
+
+            # Criar DataFrame para exibição
+            df_display = clientes[colunas].copy()
+            df_display.columns = [rename[col] for col in colunas]
+
+            # Exibir tabela
+            st.dataframe(df_display, hide_index=True)
+
+            # Botões de ação
+            col1, col2 = st.columns(2)
+            with col1:
+                registro_id = st.number_input(
+                    "ID do cliente para ação:",
+                    min_value=1,
+                    max_value=len(clientes),
+                    step=1
+                )
+
+            with col2:
+                acao = st.selectbox("Ação:", ["Editar", "Excluir"])
+
+            # Formulário de ação
+            with st.form(f"acao_cliente"):
+                if st.form_submit_button(f"Confirmar {acao}"):
+                    cliente = clientes[clientes['id'] == registro_id].iloc[0]
+
+                    if acao == "Excluir":
+                        try:
+                            sucesso, msg = st.session_state.db.excluir_cliente(registro_id)
+                            if sucesso:
+                                st.success(msg)
+                                st.rerun()
+                            else:
+                                st.error(msg)
+                        except Exception as e:
+                            st.error(f"Erro ao excluir cliente: {str(e)}")
+                    elif acao == "Editar":
+                        st.session_state[f'editing_{registro_id}'] = True
+                        st.rerun()
+
+            # Formulário de edição
+            if st.session_state.get(f'editing_{registro_id}', False):
+                with st.form(f"edit_form_{registro_id}"):
+                    cliente = clientes[clientes['id'] == registro_id].iloc[0]
+
+                    edited_data = {}
+                    edited_data['nome'] = st.text_input("Nome", value=cliente['nome'])
+                    edited_data['email'] = st.text_input("Email", value=cliente['email'] or '')
+                    edited_data['telefone'] = st.text_input("Telefone", value=cliente['telefone'] or '')
+                    edited_data['endereco'] = st.text_input("Endereço", value=cliente['endereco'] or '')
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        edited_data['estado'] = st.text_input("Estado", value=cliente['estado'] or '')
+                        edited_data['cidade'] = st.text_input("Cidade", value=cliente['cidade'] or '')
+                    with col2:
+                        edited_data['bairro'] = st.text_input("Bairro", value=cliente['bairro'] or '')
+                        edited_data['data_aniversario'] = st.date_input(
+                            "Data Aniversário",
+                            value=pd.to_datetime(cliente['data_aniversario']).date() if pd.notna(cliente['data_aniversario']) else None
+                        )
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.form_submit_button("Salvar Alterações"):
+                            try:
+                                st.session_state.db.atualizar_cliente(
+                                    cliente['id'],
+                                    **edited_data
+                                )
+                                del st.session_state[f'editing_{registro_id}']
+                                st.success("Cliente atualizado com sucesso!")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Erro ao atualizar cliente: {str(e)}")
+
+                    with col2:
+                        if st.form_submit_button("Cancelar"):
+                            del st.session_state[f'editing_{registro_id}']
+                            st.rerun()
 
         except Exception as e:
             st.error(f"Erro ao carregar clientes: {str(e)}")
