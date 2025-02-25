@@ -71,7 +71,7 @@ def show():
                             razao_social=razao_social
                         )
                         st.success("Cliente cadastrado com sucesso!")
-                        st.rerun()
+                        st.session_state['update_clientes'] = True
                     except Exception as e:
                         st.error(f"Erro ao cadastrar cliente: {str(e)}")
                 else:
@@ -82,7 +82,17 @@ def show():
         busca = st.text_input("🔍 Buscar cliente", "")
 
         try:
-            clientes = st.session_state.db.get_clientes()
+            @st.cache_data(ttl=60)
+            def load_clientes():
+                return st.session_state.db.get_clientes()
+
+            if 'update_clientes' in st.session_state and st.session_state['update_clientes']:
+                st.session_state['clientes'] = load_clientes()
+                st.session_state['update_clientes'] = False
+            elif 'clientes' not in st.session_state:
+                st.session_state['clientes'] = load_clientes()
+
+            clientes = st.session_state['clientes']
 
             if clientes.empty:
                 st.info("Nenhum cliente cadastrado.")
@@ -145,14 +155,13 @@ def show():
                             sucesso, msg = st.session_state.db.excluir_cliente(registro_id)
                             if sucesso:
                                 st.success(msg)
-                                st.rerun()
+                                st.session_state['update_clientes'] = True
                             else:
                                 st.error(msg)
                         except Exception as e:
                             st.error(f"Erro ao excluir cliente: {str(e)}")
                     elif acao == "Editar":
                         st.session_state[f'editing_{registro_id}'] = True
-                        st.rerun()
 
             # Formulário de edição
             if st.session_state.get(f'editing_{registro_id}', False):
@@ -186,14 +195,13 @@ def show():
                                 )
                                 del st.session_state[f'editing_{registro_id}']
                                 st.success("Cliente atualizado com sucesso!")
-                                st.rerun()
+                                st.session_state['update_clientes'] = True
                             except Exception as e:
                                 st.error(f"Erro ao atualizar cliente: {str(e)}")
 
                     with col2:
                         if st.form_submit_button("Cancelar"):
                             del st.session_state[f'editing_{registro_id}']
-                            st.rerun()
 
         except Exception as e:
             st.error(f"Erro ao carregar clientes: {str(e)}")
@@ -218,7 +226,7 @@ def show():
         - origem_cliente
         """)
 
-        uploaded_file = st.file_uploader("Escolha o arquivo Excel", type=['xlsx', 'xls'])
+        uploaded_file = st.file_uploader("Escolha o arquivo Excel", type=['xlsx', 'xls'], key="cliente_file_upload")
 
         if uploaded_file is not None:
             try:
@@ -230,7 +238,7 @@ def show():
                     st.write("Preview dos dados:")
                     st.dataframe(df.head())
 
-                    if st.button("Confirmar Importação"):
+                    if st.button("Confirmar Importação", key="confirmar_importacao_cliente"):
                         success_count = 0
                         error_count = 0
 
@@ -287,7 +295,8 @@ def show():
                         - Clientes importados com sucesso: {success_count}
                         - Erros de importação: {error_count}
                         """)
-                        st.rerun()
+                        st.session_state['update_clientes'] = True
+                        st.session_state['cliente_file_upload'] = None
 
             except Exception as e:
                 st.error(f"Erro ao ler o arquivo: {str(e)}")

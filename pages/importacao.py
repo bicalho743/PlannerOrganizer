@@ -114,6 +114,8 @@ def show():
                         sucesso, mensagem = importar_cadastros(arquivo, tipo_cadastro, st.session_state.db)
                         if sucesso:
                             st.success(mensagem)
+                            # Atualizar a lista do tipo correspondente
+                            st.session_state[f'update_{tipo_cadastro.lower()}s'] = True
                             # Limpar o arquivo do estado da sessão
                             st.session_state[f"upload_file_{tipo_cadastro.lower()}"] = None
                         else:
