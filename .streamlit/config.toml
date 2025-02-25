@@ -4,6 +4,8 @@ address = "0.0.0.0"
 port = 5000
 enableCORS = true
 enableXsrfProtection = false
+maxMessageSize = 200
+maxUploadSize = 200
 
 [theme]
 primaryColor = "#B8860B"
@@ -12,6 +14,10 @@ secondaryBackgroundColor = "#2A2A2A"
 textColor = "#F5F5F5"
 font = "sans serif"
 base = "dark"
+
+[global]
+developmentMode = false
+showErrorDetails = false
 
 [browser]
 gatherUsageStats = false
