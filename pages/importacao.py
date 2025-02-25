@@ -17,16 +17,47 @@ def show():
             ["Cliente", "Fornecedor", "Assistente", "Parceiro"]
         )
 
-        # Instruções de importação
-        st.write("""
-        ### Instruções para importação:
-        1. Primeiro, baixe o template Excel clicando no botão abaixo
-        2. Preencha o arquivo seguindo as instruções:
-           - Campos obrigatórios: nome, telefone, email
-           - Data de aniversário deve estar no formato DD/MM/YYYY
-           - Não altere o nome das colunas
-        3. Salve o arquivo e faça o upload
-        """)
+        if tipo_cadastro == "Cliente":
+            st.write("""
+            ### Instruções para importação de Clientes:
+            1. Primeiro, baixe o template Excel clicando no botão abaixo
+            2. Preencha o arquivo com os dados dos clientes:
+               - **Campos obrigatórios**: nome, telefone, email
+               - **Tipo de conta**: deve ser 'PF' ou 'PJ' (em maiúsculas)
+               - Para clientes PF:
+                 * Preencha o campo CPF
+               - Para clientes PJ:
+                 * Preencha os campos CNPJ e Razão Social
+               - **Data de aniversário**: formato DD/MM/YYYY
+            3. **IMPORTANTE**: Não altere o nome das colunas no arquivo
+            4. Salve o arquivo e faça o upload abaixo
+
+            ### Exemplo de preenchimento:
+            Para cliente PF:
+            - nome: João Silva
+            - telefone: (11) 98765-4321
+            - email: joao@email.com
+            - tipo_conta: PF
+            - cpf: 123.456.789-00
+            - data_aniversario: 15/03/1980
+
+            Para cliente PJ:
+            - nome: Empresa XYZ
+            - telefone: (11) 3456-7890
+            - email: contato@xyz.com
+            - tipo_conta: PJ
+            - cnpj: 12.345.678/0001-90
+            - razao_social: XYZ Comércio Ltda
+            """)
+        else:
+            st.write("""
+            ### Instruções para importação:
+            1. Primeiro, baixe o template Excel clicando no botão abaixo
+            2. Preencha o arquivo seguindo as instruções:
+               - Campos obrigatórios: nome, telefone, email
+               - Não altere o nome das colunas
+            3. Salve o arquivo e faça o upload
+            """)
 
         # Botão para baixar template
         template = gerar_template_excel(tipo_cadastro)
@@ -39,6 +70,7 @@ def show():
         )
 
         # Upload do arquivo
+        st.write("### Upload do Arquivo")
         arquivo = st.file_uploader(
             f"Selecione o arquivo Excel de {tipo_cadastro}s",
             type=['xlsx', 'xls', 'csv'],
@@ -46,15 +78,21 @@ def show():
         )
 
         if arquivo:
-            # Mostrar preview dos dados
             try:
+                # Mostrar preview dos dados
                 if arquivo.name.endswith(('.xlsx', '.xls')):
                     preview = pd.read_excel(arquivo)
                 else:
                     preview = pd.read_csv(arquivo)
 
                 st.write("### Preview dos dados:")
+                st.info("Verifique se os dados estão corretos antes de confirmar a importação:")
                 st.dataframe(preview.head())
+
+                # Mostrar colunas encontradas
+                st.write("### Colunas encontradas no arquivo:")
+                colunas = preview.columns.tolist()
+                st.write(", ".join(colunas))
 
                 if st.button(f"Confirmar Importação de {tipo_cadastro}s"):
                     with st.spinner("Importando dados..."):
@@ -77,6 +115,7 @@ def show():
            - cliente_id: ID do cliente (número)
            - valor: valor da proposta (número)
            - datas: formato DD/MM/YYYY
+        3. Não altere o nome das colunas
         """)
 
         # Botão para baixar template

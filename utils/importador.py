@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 from datetime import datetime
 import io
+import traceback
 
 def validar_data(data_str):
     """Converte string de data para objeto datetime"""
@@ -16,8 +17,11 @@ def validar_data(data_str):
                     return datetime.strptime(data_str, '%Y-%m-%d').date()
                 except ValueError:
                     try:
-                        return datetime.strptime(data_str, '%d/%m').date()
+                        # Tenta converter apenas mês e dia
+                        data = datetime.strptime(data_str, '%d/%m')
+                        return datetime.now().replace(month=data.month, day=data.day).date()
                     except ValueError:
+                        st.warning(f"Data inválida: {data_str}")
                         return None
         elif isinstance(data_str, datetime):
             return data_str.date()
@@ -26,9 +30,58 @@ def validar_data(data_str):
         st.warning(f"Erro ao processar data: {data_str}. Erro: {str(e)}")
         return None
 
+def testar_conexao_db(db):
+    """Testa a conexão com o banco de dados tentando inserir um cliente de teste"""
+    try:
+        st.info("Testando conexão com o banco de dados...")
+
+        # Dados de teste
+        cliente_teste = {
+            'nome': 'Cliente Teste',
+            'telefone': '(00) 00000-0000',
+            'email': 'teste@teste.com',
+            'tipo_conta': 'PF',
+            'data_aniversario': datetime.now().date(),
+            'origem_cliente': 'Teste',
+            'observacoes': 'Cliente de teste - será removido'
+        }
+
+        # Tentar inserir
+        db.add_cliente(**cliente_teste)
+        st.success("Teste de conexão com o banco de dados bem sucedido!")
+        return True
+    except Exception as e:
+        traceback_str = traceback.format_exc()
+        erro = f"Erro ao testar conexão com o banco de dados:\n{str(e)}\nTraceback:\n{traceback_str}"
+        st.error(erro)
+        return False
+
 def importar_cadastros(arquivo, tipo_cadastro, db):
     """Importa cadastros de um arquivo Excel ou CSV"""
     try:
+        # Verificar se o db está inicializado
+        if not db:
+            st.error("Erro: Conexão com banco de dados não inicializada")
+            return False, "Erro: Conexão com banco de dados não inicializada"
+
+        # Verificar se os métodos necessários existem
+        metodos_necessarios = {
+            'Cliente': 'add_cliente',
+            'Fornecedor': 'add_fornecedor',
+            'Assistente': 'add_assistente',
+            'Parceiro': 'add_parceiro'
+        }
+
+        metodo = metodos_necessarios.get(tipo_cadastro)
+        if not metodo or not hasattr(db, metodo):
+            erro = f"Erro: Método {metodo} não encontrado no banco de dados"
+            st.error(erro)
+            return False, erro
+
+        # Testar conexão com o banco de dados
+        if not testar_conexao_db(db):
+            return False, "Erro ao testar conexão com o banco de dados"
+
         # Detecta o tipo de arquivo pela extensão
         nome_arquivo = arquivo.name.lower()
         st.info(f"Processando arquivo: {nome_arquivo}")
@@ -39,30 +92,43 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
             else:
                 df = pd.read_csv(arquivo, encoding='utf-8')
 
-            st.info(f"Colunas encontradas: {', '.join(df.columns.tolist())}")
+            st.info(f"Colunas encontradas no arquivo: {', '.join(df.columns.tolist())}")
 
         except Exception as e:
+            st.error(f"Erro ao ler arquivo: {str(e)}")
             return False, f"Erro ao ler arquivo: {str(e)}"
+
+        # Limpar dados
+        df = df.replace({pd.NA: None, 'nan': None, 'NaN': None, '': None})
 
         # Validar colunas obrigatórias
         colunas_base = ['nome', 'telefone', 'email']
         colunas_faltantes = [col for col in colunas_base if col not in df.columns]
         if colunas_faltantes:
+            st.error(f"Colunas obrigatórias não encontradas: {', '.join(colunas_faltantes)}")
             return False, f"Colunas obrigatórias não encontradas: {', '.join(colunas_faltantes)}"
-
-        # Limpar dados
-        df = df.replace({pd.NA: None, 'nan': None, 'NaN': None, '': None})
 
         sucessos = 0
         erros = []
 
+        # Barra de progresso
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+
+        total_rows = len(df)
         for idx, row in df.iterrows():
             try:
+                # Atualizar progresso
+                progress = (idx + 1) / total_rows
+                progress_bar.progress(progress)
+                status_text.text(f"Processando registro {idx + 1} de {total_rows}")
+
                 # Validar nome (obrigatório)
                 if pd.isna(row['nome']) or str(row['nome']).strip() == '':
                     erros.append(f"Linha {idx + 2}: Nome é obrigatório")
                     continue
 
+                # Preparar dados base
                 dados = {
                     'nome': str(row['nome']).strip(),
                     'telefone': str(row['telefone']).strip() if not pd.isna(row['telefone']) else None,
@@ -71,7 +137,10 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                     'pix': str(row.get('pix', '')).strip() if not pd.isna(row.get('pix')) else None
                 }
 
+                # Processar dados específicos por tipo
                 if tipo_cadastro == "Cliente":
+                    st.info(f"Processando cliente: {dados['nome']}")
+
                     # Processar data de aniversário
                     data_aniv = None
                     if 'data_aniversario' in row and not pd.isna(row['data_aniversario']):
@@ -79,17 +148,45 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                         if not data_aniv:
                             st.warning(f"Data de aniversário inválida na linha {idx + 2}: {row['data_aniversario']}")
 
+                    # Determinar tipo de conta e validar campos necessários
+                    tipo_conta = str(row.get('tipo_conta', 'PF')).strip().upper()
+                    if tipo_conta not in ['PF', 'PJ']:
+                        st.warning(f"Tipo de conta inválido na linha {idx + 2}, usando 'PF' como padrão")
+                        tipo_conta = 'PF'
+
+                    # Validar campos específicos por tipo de conta
+                    cpf = None
+                    cnpj = None
+                    razao_social = None
+
+                    if tipo_conta == 'PF':
+                        if 'cpf' in row and not pd.isna(row['cpf']):
+                            cpf = str(row['cpf']).strip()
+                    else:  # PJ
+                        if 'cnpj' in row and not pd.isna(row['cnpj']):
+                            cnpj = str(row['cnpj']).strip()
+                        if 'razao_social' in row and not pd.isna(row['razao_social']):
+                            razao_social = str(row['razao_social']).strip()
+
                     dados.update({
                         'data_aniversario': data_aniv,
                         'origem_cliente': str(row.get('origem_cliente', '')).strip() if not pd.isna(row.get('origem_cliente')) else None,
-                        'tipo_conta': str(row.get('tipo_conta', 'PF')).strip().upper()
+                        'tipo_conta': tipo_conta,
+                        'cpf': cpf,
+                        'cnpj': cnpj,
+                        'razao_social': razao_social
                     })
 
-                    # Validar tipo_conta
-                    if dados['tipo_conta'] not in ['PF', 'PJ']:
-                        dados['tipo_conta'] = 'PF'
-
-                    db.add_cliente(**dados)
+                    st.info(f"Tentando adicionar cliente com dados: {dados}")
+                    try:
+                        db.add_cliente(**dados)
+                        st.success(f"Cliente {dados['nome']} adicionado com sucesso!")
+                    except Exception as e:
+                        traceback_str = traceback.format_exc()
+                        erro_msg = f"Erro ao adicionar cliente {dados['nome']}: {str(e)}\nTraceback:\n{traceback_str}"
+                        st.error(erro_msg)
+                        erros.append(erro_msg)
+                        continue
 
                 elif tipo_cadastro == "Fornecedor":
                     dados.update({
@@ -116,8 +213,16 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                 sucessos += 1
 
             except Exception as e:
-                erros.append(f"Erro na linha {idx + 2}: {str(e)}")
+                traceback_str = traceback.format_exc()
+                erro_msg = f"Erro na linha {idx + 2}: {str(e)}\nTraceback:\n{traceback_str}"
+                st.error(erro_msg)
+                erros.append(erro_msg)
 
+        # Remover barra de progresso e status
+        progress_bar.empty()
+        status_text.empty()
+
+        # Preparar mensagem de retorno
         mensagem = f"Importação concluída:\n- Registros importados com sucesso: {sucessos}"
         if erros:
             mensagem += f"\n- Erros encontrados: {len(erros)}\n"
@@ -127,14 +232,18 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
         return sucessos > 0, mensagem
 
     except Exception as e:
-        return False, f"Erro ao processar arquivo: {str(e)}"
+        traceback_str = traceback.format_exc()
+        erro_msg = f"Erro ao processar arquivo: {str(e)}\nTraceback:\n{traceback_str}"
+        st.error(erro_msg)
+        return False, erro_msg
 
 def gerar_template_excel(tipo):
     """Gera um arquivo Excel template baseado no tipo de importação"""
     if tipo == "Cliente":
         df = pd.DataFrame(columns=[
             'nome', 'telefone', 'email', 'data_aniversario', 
-            'origem_cliente', 'tipo_conta', 'observacoes', 'pix'
+            'origem_cliente', 'tipo_conta', 'cpf', 'cnpj', 
+            'razao_social', 'observacoes', 'pix'
         ])
     elif tipo == "Fornecedor":
         df = pd.DataFrame(columns=[
@@ -151,11 +260,6 @@ def gerar_template_excel(tipo):
             'nome', 'telefone', 'email', 'area_atuacao',
             'tipo_parceria', 'observacoes', 'pix'
         ])
-    elif tipo == "Proposta":
-        df = pd.DataFrame(columns=[
-            'cliente_id', 'descricao', 'valor', 'status',
-            'tipo_proposta', 'data_inicio', 'data_fim', 'prazo_entrega'
-        ])
     else:
         return None
 
@@ -164,27 +268,55 @@ def gerar_template_excel(tipo):
         df.to_excel(writer, index=False)
     return buffer.getvalue()
 
+def gerar_template_csv(tipo):
+    """Gera um arquivo CSV template baseado no tipo de importação"""
+    if tipo == "Cliente":
+        df = pd.DataFrame(columns=[
+            'nome', 'telefone', 'email', 'data_aniversario', 
+            'origem_cliente', 'tipo_conta', 'cpf', 'cnpj', 
+            'razao_social', 'observacoes', 'pix'
+        ])
+    elif tipo == "Fornecedor":
+        df = pd.DataFrame(columns=[
+            'nome', 'telefone', 'email', 'categoria',
+            'tipo_conta', 'recorrente', 'observacoes', 'pix'
+        ])
+    elif tipo == "Assistente":
+        df = pd.DataFrame(columns=[
+            'nome', 'telefone', 'email', 'endereco',
+            'disponibilidade', 'observacoes', 'pix'
+        ])
+    elif tipo == "Parceiro":
+        df = pd.DataFrame(columns=[
+            'nome', 'telefone', 'email', 'area_atuacao',
+            'tipo_parceria', 'observacoes', 'pix'
+        ])
+    else:
+        return None
+
+    return df.to_csv(index=False).encode('utf-8')
+
 def importar_propostas(arquivo, db):
     """Importa propostas de um arquivo CSV"""
     try:
         df = pd.read_csv(arquivo, encoding='utf-8')
-        
+
         # Validar colunas obrigatórias
         colunas_obrigatorias = ['cliente_id', 'descricao', 'valor', 'status']
         for col in colunas_obrigatorias:
             if col not in df.columns:
                 return False, f"Coluna obrigatória '{col}' não encontrada no arquivo"
-        
+
         sucessos = 0
         erros = []
-        
+
         for _, row in df.iterrows():
             try:
                 # Validar e converter datas
                 data_inicio = validar_data(row.get('data_inicio'))
                 data_fim = validar_data(row.get('data_fim'))
                 prazo_entrega = validar_data(row.get('prazo_entrega'))
-                
+
                 db.add_proposta(
                     cliente_id=int(row['cliente_id']),
                     descricao=row['descricao'],
@@ -196,43 +328,11 @@ def importar_propostas(arquivo, db):
                     prazo_entrega=prazo_entrega
                 )
                 sucessos += 1
-                
+
             except Exception as e:
                 erros.append(f"Erro na linha {_ + 2}: {str(e)}")
-                
+
         return True, f"Importação concluída: {sucessos} propostas importadas com sucesso. {len(erros)} erros." + (f"\nErros:\n" + "\n".join(erros) if erros else "")
-        
+
     except Exception as e:
         return False, f"Erro ao processar arquivo: {str(e)}"
-
-def gerar_template_csv(tipo):
-    """Gera um arquivo CSV template baseado no tipo de importação"""
-    if tipo == "Cliente":
-        df = pd.DataFrame(columns=[
-            'nome', 'telefone', 'email', 'data_aniversario', 
-            'origem_cliente', 'tipo_conta', 'observacoes', 'pix'
-        ])
-    elif tipo == "Fornecedor":
-        df = pd.DataFrame(columns=[
-            'nome', 'telefone', 'email', 'categoria',
-            'tipo_conta', 'recorrente', 'observacoes', 'pix'
-        ])
-    elif tipo == "Assistente":
-        df = pd.DataFrame(columns=[
-            'nome', 'telefone', 'email', 'endereco',
-            'disponibilidade', 'observacoes', 'pix'
-        ])
-    elif tipo == "Parceiro":
-        df = pd.DataFrame(columns=[
-            'nome', 'telefone', 'email', 'area_atuacao',
-            'tipo_parceria', 'observacoes', 'pix'
-        ])
-    elif tipo == "Proposta":
-        df = pd.DataFrame(columns=[
-            'cliente_id', 'descricao', 'valor', 'status',
-            'tipo_proposta', 'data_inicio', 'data_fim', 'prazo_entrega'
-        ])
-    else:
-        return None
-    
-    return df.to_csv(index=False).encode('utf-8')
