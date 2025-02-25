@@ -24,18 +24,14 @@ if 'db' not in st.session_state:
     st.session_state.db = Database()
 
 # Lista personalizada de páginas visíveis para o usuário
-PAGINAS_VISIVEIS = {
-    "📊 Visão Geral": "dashboard",
-    "👥 Clientes": "clientes",
-    "📝 Propostas": "propostas",
-    "💰 Financeiro": "financeiro",
-    "📋 Cadastros": "cadastros",
-    "💳 Contas": "contas_pagar",
-    "📈 Relatórios": "relatorios"
-}
-
-# Configuração do menu lateral com ícones
-st.sidebar.title("🏠 Menu Principal")
+PAGINAS_VISIVEIS = [
+    ("📊 Visão Geral", "dashboard"),
+    ("📋 Cadastros", "cadastros"),
+    ("📝 Propostas", "propostas"),
+    ("💰 Financeiro", "financeiro"),
+    ("💳 Contas", "contas_pagar"),
+    ("📈 Relatórios", "relatorios")
+]
 
 # Estilo CSS para os botões do menu
 st.markdown("""
@@ -47,21 +43,36 @@ st.markdown("""
         background-color: transparent;
         border: none;
         color: #FFFFFF;
+        margin-bottom: 0.25rem;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: background-color 0.2s;
     }
     div.stButton > button:hover {
         background-color: rgba(255, 255, 255, 0.1);
+        color: #FFFFFF;
     }
     div.stButton > button:active {
         background-color: rgba(255, 255, 255, 0.2);
     }
+    section[data-testid="stSidebar"] {
+        background-color: #262730;
+    }
     </style>
 """, unsafe_allow_html=True)
 
+# Configuração do menu lateral com ícones
+st.sidebar.title("🏠 Menu Principal")
+
+# Container fixo para os botões do menu
+menu_container = st.sidebar.container()
+
 # Criar botões fixos para cada página
 selected_page = None
-for titulo, pagina in PAGINAS_VISIVEIS.items():
-    if st.sidebar.button(titulo):
-        selected_page = pagina
+with menu_container:
+    for titulo, pagina in PAGINAS_VISIVEIS:
+        if st.button(titulo, key=f"menu_{pagina}"):
+            selected_page = pagina
 
 # Se nenhuma página foi selecionada, mostrar dashboard
 if selected_page is None:
@@ -71,18 +82,15 @@ if selected_page is None:
 if selected_page == "dashboard":
     from pages import dashboard
     dashboard.show()
-elif selected_page == "clientes":
-    from pages import clientes
-    clientes.show()
+elif selected_page == "cadastros":
+    from pages import cadastros
+    cadastros.show()
 elif selected_page == "propostas":
     from pages import propostas
     propostas.show()
 elif selected_page == "financeiro":
     from pages import financeiro
     financeiro.show()
-elif selected_page == "cadastros":
-    from pages import cadastros
-    cadastros.show()
 elif selected_page == "contas_pagar":
     from src.hidden_pages import contas_pagar
     contas_pagar.show()
@@ -187,7 +195,6 @@ if selected_page == "dashboard":
                     st.write(f"- {aniv['nome']}")
             else:
                 st.write("**🎈 Hoje:** Nenhum aniversariante")
-
 
 # Rodapé mais discreto
 st.sidebar.markdown("---")
