@@ -17,6 +17,17 @@ def show():
             ["Cliente", "Fornecedor", "Assistente", "Parceiro"]
         )
 
+        # Instruções de importação
+        st.write("""
+        ### Instruções para importação:
+        1. Primeiro, baixe o template Excel clicando no botão abaixo
+        2. Preencha o arquivo seguindo as instruções:
+           - Campos obrigatórios: nome, telefone, email
+           - Data de aniversário deve estar no formato DD/MM/YYYY
+           - Não altere o nome das colunas
+        3. Salve o arquivo e faça o upload
+        """)
+
         # Botão para baixar template
         template = gerar_template_excel(tipo_cadastro)
         st.download_button(
@@ -35,16 +46,38 @@ def show():
         )
 
         if arquivo:
-            if st.button(f"Importar {tipo_cadastro}s"):
-                with st.spinner("Importando dados..."):
-                    sucesso, mensagem = importar_cadastros(arquivo, tipo_cadastro, st.session_state.db)
-                    if sucesso:
-                        st.success(mensagem)
-                    else:
-                        st.error(mensagem)
+            # Mostrar preview dos dados
+            try:
+                if arquivo.name.endswith(('.xlsx', '.xls')):
+                    preview = pd.read_excel(arquivo)
+                else:
+                    preview = pd.read_csv(arquivo)
+
+                st.write("### Preview dos dados:")
+                st.dataframe(preview.head())
+
+                if st.button(f"Confirmar Importação de {tipo_cadastro}s"):
+                    with st.spinner("Importando dados..."):
+                        sucesso, mensagem = importar_cadastros(arquivo, tipo_cadastro, st.session_state.db)
+                        if sucesso:
+                            st.success(mensagem)
+                            st.rerun()
+                        else:
+                            st.error(mensagem)
+            except Exception as e:
+                st.error(f"Erro ao ler o arquivo: {str(e)}")
 
     with tab2:
         st.subheader("Importar Propostas")
+
+        st.write("""
+        ### Instruções para importação de propostas:
+        1. Baixe o template Excel
+        2. Preencha os dados seguindo o formato:
+           - cliente_id: ID do cliente (número)
+           - valor: valor da proposta (número)
+           - datas: formato DD/MM/YYYY
+        """)
 
         # Botão para baixar template
         template = gerar_template_excel("Proposta")
@@ -64,10 +97,22 @@ def show():
         )
 
         if arquivo:
-            if st.button("Importar Propostas"):
-                with st.spinner("Importando dados..."):
-                    sucesso, mensagem = importar_propostas(arquivo, st.session_state.db)
-                    if sucesso:
-                        st.success(mensagem)
-                    else:
-                        st.error(mensagem)
+            try:
+                if arquivo.name.endswith(('.xlsx', '.xls')):
+                    preview = pd.read_excel(arquivo)
+                else:
+                    preview = pd.read_csv(arquivo)
+
+                st.write("### Preview dos dados:")
+                st.dataframe(preview.head())
+
+                if st.button("Confirmar Importação de Propostas"):
+                    with st.spinner("Importando dados..."):
+                        sucesso, mensagem = importar_propostas(arquivo, st.session_state.db)
+                        if sucesso:
+                            st.success(mensagem)
+                            st.rerun()
+                        else:
+                            st.error(mensagem)
+            except Exception as e:
+                st.error(f"Erro ao ler o arquivo: {str(e)}")
