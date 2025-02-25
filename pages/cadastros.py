@@ -80,7 +80,6 @@ def show():
 
                 # Verificar quais colunas estão disponíveis
                 colunas_disponiveis = registros.columns.tolist()
-                st.write("Debug - Colunas disponíveis:", colunas_disponiveis)
 
                 # Definir colunas que queremos exibir
                 colunas_desejadas = ['nome', 'contato', 'categoria', 'tipo_conta', 'recorrente']
