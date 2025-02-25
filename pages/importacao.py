@@ -1,9 +1,19 @@
 import streamlit as st
 import pandas as pd
-from utils.importador import importar_cadastros, importar_propostas, gerar_template_excel
+from utils.importador import importar_cadastros, gerar_template_excel, testar_conexao_db
 
 def show():
+    # Verificar se o db está na sessão
+    if 'db' not in st.session_state:
+        st.error("Erro: Conexão com banco de dados não inicializada")
+        return
+
     st.title("📥 Importação de Dados")
+
+    # Testar conexão com o banco de dados
+    if not testar_conexao_db(st.session_state.db):
+        st.error("Erro de conexão com o banco de dados. Por favor, verifique se o banco está disponível.")
+        return
 
     # Abas para diferentes tipos de importação
     tab1, tab2 = st.tabs(["Importar Cadastros", "Importar Propostas"])
@@ -14,7 +24,8 @@ def show():
         # Seletor de tipo de cadastro
         tipo_cadastro = st.selectbox(
             "Tipo de Cadastro",
-            ["Cliente", "Fornecedor", "Assistente", "Parceiro"]
+            ["Cliente", "Fornecedor", "Assistente", "Parceiro"],
+            key="tipo_cadastro_import"
         )
 
         if tipo_cadastro == "Cliente":
@@ -66,7 +77,8 @@ def show():
             template,
             f"template_{tipo_cadastro.lower()}.xlsx",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            help=f"Baixe este template Excel, preencha com seus dados e faça upload para importar {tipo_cadastro}s"
+            help=f"Baixe este template Excel, preencha com seus dados e faça upload para importar {tipo_cadastro}s",
+            key=f"download_template_{tipo_cadastro.lower()}"
         )
 
         # Upload do arquivo
@@ -74,7 +86,8 @@ def show():
         arquivo = st.file_uploader(
             f"Selecione o arquivo Excel de {tipo_cadastro}s",
             type=['xlsx', 'xls', 'csv'],
-            help="Você pode fazer upload de arquivos Excel (.xlsx, .xls) ou CSV"
+            help="Você pode fazer upload de arquivos Excel (.xlsx, .xls) ou CSV",
+            key=f"upload_file_{tipo_cadastro.lower()}"
         )
 
         if arquivo:
@@ -94,64 +107,21 @@ def show():
                 colunas = preview.columns.tolist()
                 st.write(", ".join(colunas))
 
-                if st.button(f"Confirmar Importação de {tipo_cadastro}s"):
+                # Usar um prefixo único para cada botão
+                button_key = f"confirmar_importacao_{tipo_cadastro.lower()}"
+                if st.button(f"Confirmar Importação de {tipo_cadastro}s", key=button_key):
                     with st.spinner("Importando dados..."):
                         sucesso, mensagem = importar_cadastros(arquivo, tipo_cadastro, st.session_state.db)
                         if sucesso:
                             st.success(mensagem)
-                            st.rerun()
+                            # Limpar o arquivo do estado da sessão
+                            st.session_state[f"upload_file_{tipo_cadastro.lower()}"] = None
                         else:
                             st.error(mensagem)
+
             except Exception as e:
                 st.error(f"Erro ao ler o arquivo: {str(e)}")
 
     with tab2:
         st.subheader("Importar Propostas")
-
-        st.write("""
-        ### Instruções para importação de propostas:
-        1. Baixe o template Excel
-        2. Preencha os dados seguindo o formato:
-           - cliente_id: ID do cliente (número)
-           - valor: valor da proposta (número)
-           - datas: formato DD/MM/YYYY
-        3. Não altere o nome das colunas
-        """)
-
-        # Botão para baixar template
-        template = gerar_template_excel("Proposta")
-        st.download_button(
-            "📝 Baixar Template Proposta",
-            template,
-            "template_proposta.xlsx",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            help="Baixe este template Excel, preencha com seus dados e faça upload para importar propostas"
-        )
-
-        # Upload do arquivo
-        arquivo = st.file_uploader(
-            "Selecione o arquivo Excel de Propostas",
-            type=['xlsx', 'xls', 'csv'],
-            help="Você pode fazer upload de arquivos Excel (.xlsx, .xls) ou CSV"
-        )
-
-        if arquivo:
-            try:
-                if arquivo.name.endswith(('.xlsx', '.xls')):
-                    preview = pd.read_excel(arquivo)
-                else:
-                    preview = pd.read_csv(arquivo)
-
-                st.write("### Preview dos dados:")
-                st.dataframe(preview.head())
-
-                if st.button("Confirmar Importação de Propostas"):
-                    with st.spinner("Importando dados..."):
-                        sucesso, mensagem = importar_propostas(arquivo, st.session_state.db)
-                        if sucesso:
-                            st.success(mensagem)
-                            st.rerun()
-                        else:
-                            st.error(mensagem)
-            except Exception as e:
-                st.error(f"Erro ao ler o arquivo: {str(e)}")
+        st.info("Funcionalidade em desenvolvimento")

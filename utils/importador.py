@@ -174,7 +174,11 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                         'tipo_conta': tipo_conta,
                         'cpf': cpf,
                         'cnpj': cnpj,
-                        'razao_social': razao_social
+                        'razao_social': razao_social,
+                        'estado': str(row.get('estado', '')).strip() if not pd.isna(row.get('estado')) else None,
+                        'cidade': str(row.get('cidade', '')).strip() if not pd.isna(row.get('cidade')) else None,
+                        'bairro': str(row.get('bairro', '')).strip() if not pd.isna(row.get('bairro')) else None,
+                        'endereco': str(row.get('endereco', '')).strip() if not pd.isna(row.get('endereco')) else None
                     })
 
                     st.info(f"Tentando adicionar cliente com dados: {dados}")
@@ -182,8 +186,7 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                         db.add_cliente(**dados)
                         st.success(f"Cliente {dados['nome']} adicionado com sucesso!")
                     except Exception as e:
-                        traceback_str = traceback.format_exc()
-                        erro_msg = f"Erro ao adicionar cliente {dados['nome']}: {str(e)}\nTraceback:\n{traceback_str}"
+                        erro_msg = f"Erro ao adicionar cliente {dados['nome']}: {str(e)}"
                         st.error(erro_msg)
                         erros.append(erro_msg)
                         continue
@@ -229,6 +232,7 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
             for erro in erros:
                 mensagem += f"\n  • {erro}"
 
+        # Não usar st.rerun() aqui, apenas retornar o resultado
         return sucessos > 0, mensagem
 
     except Exception as e:
@@ -243,7 +247,8 @@ def gerar_template_excel(tipo):
         df = pd.DataFrame(columns=[
             'nome', 'telefone', 'email', 'data_aniversario', 
             'origem_cliente', 'tipo_conta', 'cpf', 'cnpj', 
-            'razao_social', 'observacoes', 'pix'
+            'razao_social', 'observacoes', 'pix', 'estado',
+            'cidade', 'bairro', 'endereco'
         ])
     elif tipo == "Fornecedor":
         df = pd.DataFrame(columns=[
