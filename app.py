@@ -25,7 +25,6 @@ if missing_vars:
     st.stop()
 
 try:
-    # Tentar importar Database com tratamento detalhado de erro
     from utils.database import Database
 except ImportError as e:
     st.error(f"Erro ao importar módulo de banco de dados: {str(e)}")
@@ -55,15 +54,32 @@ if 'autenticado' not in st.session_state:
     st.session_state.usuario = None
 
 if not st.session_state.autenticado:
-    import pages.login as login
-    login.show()
+    st.title("Login")
+    st.write("Por favor, faça login para continuar.")
+
+    with st.form("login_form"):
+        email = st.text_input("Email")
+        senha = st.text_input("Senha", type="password")
+        if st.form_submit_button("Entrar"):
+            if st.session_state.db:
+                sucesso, usuario = st.session_state.db.autenticar_usuario(email, senha)
+                if sucesso:
+                    st.session_state.autenticado = True
+                    st.session_state.usuario = usuario
+                    st.experimental_rerun()
+                else:
+                    st.error("Email ou senha inválidos")
 else:
     # Menu lateral personalizado
     st.sidebar.title("Menu Principal")
 
-    # Mostrar informações do usuário
+    # Mostrar informações do usuário de forma segura
     with st.sidebar:
-        st.write(f"👤 Olá, {st.session_state.usuario['nome']}")
+        if st.session_state.usuario and isinstance(st.session_state.usuario, dict):
+            st.write(f"👤 Olá, {st.session_state.usuario.get('nome', 'Usuário')}")
+        else:
+            st.write("👤 Olá, Usuário")
+
         if st.button("📤 Sair"):
             st.session_state.autenticado = False
             st.session_state.usuario = None
@@ -80,22 +96,29 @@ else:
                         else f"📈 {x}"  # Relatórios
     )
 
-    # Roteamento de páginas
-    if pagina == "Dashboard":
-        import pages.dashboard as dashboard
-        dashboard.show()
-    elif pagina == "Cadastros":
-        import pages.cadastros as cadastros
-        cadastros.show()
-    elif pagina == "Propostas":
-        import pages.propostas as propostas
-        propostas.show()
-    elif pagina == "Financeiro":
-        import pages.financeiro as financeiro
-        financeiro.show()
-    elif pagina == "Relatórios":
-        import pages.relatorios as relatorios
-        relatorios.show()
+    # Roteamento de páginas com tratamento de erro
+    try:
+        if pagina == "Dashboard":
+            import pages.dashboard as dashboard
+            dashboard.show()
+        elif pagina == "Cadastros":
+            import pages.cadastros as cadastros
+            cadastros.show()
+        elif pagina == "Propostas":
+            import pages.propostas as propostas
+            propostas.show()
+        elif pagina == "Financeiro":
+            import pages.financeiro as financeiro
+            financeiro.show()
+        elif pagina == "Relatórios":
+            import pages.relatorios as relatorios
+            relatorios.show()
+    except ImportError as e:
+        st.error(f"Erro ao carregar a página {pagina}. Módulo não encontrado.")
+        logger.error(f"Erro ao importar módulo da página {pagina}: {str(e)}")
+    except Exception as e:
+        st.error(f"Erro ao carregar a página {pagina}.")
+        logger.error(f"Erro ao carregar página {pagina}: {str(e)}")
 
     # Rodapé
     st.sidebar.markdown("---")
