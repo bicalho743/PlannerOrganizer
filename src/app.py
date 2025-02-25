@@ -1,3 +1,11 @@
+import os
+import sys
+
+# Adicionar diretório raiz ao path
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if root_dir not in sys.path:
+    sys.path.append(root_dir)
+
 import streamlit as st
 from utils.database import Database
 from datetime import datetime
