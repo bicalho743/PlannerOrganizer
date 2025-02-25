@@ -23,15 +23,56 @@ st.set_page_config(
 if 'db' not in st.session_state:
     st.session_state.db = Database()
 
-# Configuração do menu lateral
-st.sidebar.title("Menu")
+# Configuração do menu lateral com ícones para melhor visualização
+st.sidebar.title("🏠 Menu Principal")
 pagina = st.sidebar.selectbox(
     "Navegação",
-    ["Dashboard", "Clientes", "Propostas", "Financeiro", "Cadastros", "Contas a Pagar", "Backup", "Relatórios"]
+    [
+        "📊 Visão Geral",
+        "👥 Clientes",
+        "📝 Propostas",
+        "💰 Financeiro",
+        "📋 Cadastros",
+        "💳 Contas",
+        "📦 Backup",
+        "📈 Relatórios"
+    ]
 )
 
+# Função para extrair o título sem o ícone
+def get_page_name(pagina_com_icone):
+    return pagina_com_icone.split(" ", 1)[1]
+
+# Roteamento de páginas de forma mais limpa
+page_name = get_page_name(pagina)
+
+if page_name == "Visão Geral":
+    import pages.dashboard
+    pages.dashboard.show()
+elif page_name == "Clientes":
+    import pages.clientes
+    pages.clientes.show()
+elif page_name == "Propostas":
+    import pages.propostas
+    pages.propostas.show()
+elif page_name == "Financeiro":
+    import pages.financeiro
+    pages.financeiro.show()
+elif page_name == "Cadastros":
+    import pages.cadastros
+    pages.cadastros.show()
+elif page_name == "Contas":
+    from src.hidden_pages import contas_pagar
+    contas_pagar.show()
+elif page_name == "Backup":
+    import pages.backup
+    pages.backup.show()
+elif page_name == "Relatórios":
+    import pages.relatorios
+    pages.relatorios.show()
+
 # Dashboard - Página Principal
-if pagina == "Dashboard":
+if page_name == "Visão Geral":
     st.title("📋 Sistema de Gestão - Personal Organizer")
 
     # Add test data button in sidebar if database is empty
@@ -128,31 +169,7 @@ if pagina == "Dashboard":
             else:
                 st.write("**🎈 Hoje:** Nenhum aniversariante")
 
-# Rodapé
-st.sidebar.markdown("---")
-st.sidebar.markdown("### Desenvolvido com ❤️ usando Streamlit")
 
-# Roteamento de páginas
-if pagina == "Dashboard":
-    pass  # Dashboard already displayed above
-elif pagina == "Clientes":
-    import pages.clientes
-    pages.clientes.show()
-elif pagina == "Propostas":
-    import pages.propostas
-    pages.propostas.show()
-elif pagina == "Financeiro":
-    import pages.financeiro
-    pages.financeiro.show()
-elif pagina == "Cadastros":
-    import pages.cadastros
-    pages.cadastros.show()
-elif pagina == "Contas a Pagar":
-    from src.hidden_pages import contas_pagar
-    contas_pagar.show()
-elif pagina == "Backup":
-    import pages.backup
-    pages.backup.show()
-elif pagina == "Relatórios":
-    import pages.relatorios
-    pages.relatorios.show()
+# Rodapé mais discreto
+st.sidebar.markdown("---")
+st.sidebar.markdown("<div style='text-align: center; color: #888888; font-size: 0.8em;'>Sistema Personal Organizer</div>", unsafe_allow_html=True)
