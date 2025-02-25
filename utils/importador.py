@@ -56,9 +56,33 @@ def testar_conexao_db(db):
         st.error(erro)
         return False
 
+def validar_dataframe(df, tipo_cadastro):
+    """Valida o DataFrame antes da importação"""
+    st.info("Validando estrutura dos dados...")
+
+    # Validar colunas obrigatórias
+    colunas_base = ['nome', 'telefone', 'email']
+    colunas_faltantes = [col for col in colunas_base if col not in df.columns]
+
+    if colunas_faltantes:
+        erro = f"Colunas obrigatórias não encontradas: {', '.join(colunas_faltantes)}"
+        st.error(erro)
+        return False, erro
+
+    # Validar se há pelo menos uma linha de dados
+    if len(df) == 0:
+        erro = "O arquivo não contém dados para importação"
+        st.error(erro)
+        return False, erro
+
+    return True, "Validação OK"
+
 def importar_cadastros(arquivo, tipo_cadastro, db):
     """Importa cadastros de um arquivo Excel ou CSV"""
     try:
+        st.write("### Log de Importação")
+        st.info(f"Iniciando importação de {tipo_cadastro}")
+
         # Verificar se o db está inicializado
         if not db:
             st.error("Erro: Conexão com banco de dados não inicializada")
@@ -79,6 +103,7 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
             return False, erro
 
         # Testar conexão com o banco de dados
+        st.info("Verificando conexão com o banco de dados...")
         if not testar_conexao_db(db):
             return False, "Erro ao testar conexão com o banco de dados"
 
@@ -87,35 +112,44 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
         st.info(f"Processando arquivo: {nome_arquivo}")
 
         try:
+            st.info("Lendo arquivo...")
             if nome_arquivo.endswith(('.xlsx', '.xls')):
+                st.info("Detectado arquivo Excel")
                 df = pd.read_excel(arquivo)
             else:
-                df = pd.read_csv(arquivo, encoding='utf-8')
+                st.info("Detectado arquivo CSV")
+                df = pd.read_csv(arquivo)
 
-            st.info(f"Colunas encontradas no arquivo: {', '.join(df.columns.tolist())}")
+            st.success(f"Arquivo lido com sucesso. Dimensões: {df.shape}")
+            st.info(f"Colunas encontradas: {', '.join(df.columns.tolist())}")
 
         except Exception as e:
-            st.error(f"Erro ao ler arquivo: {str(e)}")
-            return False, f"Erro ao ler arquivo: {str(e)}"
+            erro = f"Erro ao ler arquivo: {str(e)}\n{traceback.format_exc()}"
+            st.error(erro)
+            return False, erro
 
         # Limpar dados
+        st.info("Limpando e validando dados...")
         df = df.replace({pd.NA: None, 'nan': None, 'NaN': None, '': None})
 
         # Validar colunas obrigatórias
         colunas_base = ['nome', 'telefone', 'email']
         colunas_faltantes = [col for col in colunas_base if col not in df.columns]
         if colunas_faltantes:
-            st.error(f"Colunas obrigatórias não encontradas: {', '.join(colunas_faltantes)}")
-            return False, f"Colunas obrigatórias não encontradas: {', '.join(colunas_faltantes)}"
+            erro = f"Colunas obrigatórias não encontradas: {', '.join(colunas_faltantes)}"
+            st.error(erro)
+            return False, erro
 
         sucessos = 0
         erros = []
+
+        total_rows = len(df)
+        st.info(f"Iniciando importação de {total_rows} registros...")
 
         # Barra de progresso
         progress_bar = st.progress(0)
         status_text = st.empty()
 
-        total_rows = len(df)
         for idx, row in df.iterrows():
             try:
                 # Atualizar progresso
@@ -123,97 +157,61 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                 progress_bar.progress(progress)
                 status_text.text(f"Processando registro {idx + 1} de {total_rows}")
 
-                # Validar nome (obrigatório)
-                if pd.isna(row['nome']) or str(row['nome']).strip() == '':
-                    erros.append(f"Linha {idx + 2}: Nome é obrigatório")
-                    continue
-
-                # Preparar dados base
+                # Dados base para todos os tipos
                 dados = {
                     'nome': str(row['nome']).strip(),
                     'telefone': str(row['telefone']).strip() if not pd.isna(row['telefone']) else None,
                     'email': str(row['email']).strip() if not pd.isna(row['email']) else None,
-                    'observacoes': str(row.get('observacoes', '')).strip() if not pd.isna(row.get('observacoes')) else None,
-                    'pix': str(row.get('pix', '')).strip() if not pd.isna(row.get('pix')) else None
+                    'observacoes': str(row.get('observacoes', '')).strip() if not pd.isna(row.get('observacoes')) else None
                 }
 
-                # Processar dados específicos por tipo
-                if tipo_cadastro == "Cliente":
-                    st.info(f"Processando cliente: {dados['nome']}")
+                st.info(f"Processando registro: {dados['nome']}")
 
-                    # Processar data de aniversário
-                    data_aniv = None
-                    if 'data_aniversario' in row and not pd.isna(row['data_aniversario']):
-                        data_aniv = validar_data(row['data_aniversario'])
-                        if not data_aniv:
-                            st.warning(f"Data de aniversário inválida na linha {idx + 2}: {row['data_aniversario']}")
-
-                    # Determinar tipo de conta e validar campos necessários
-                    tipo_conta = str(row.get('tipo_conta', 'PF')).strip().upper()
-                    if tipo_conta not in ['PF', 'PJ']:
-                        st.warning(f"Tipo de conta inválido na linha {idx + 2}, usando 'PF' como padrão")
-                        tipo_conta = 'PF'
-
-                    # Validar campos específicos por tipo de conta
-                    cpf = None
-                    cnpj = None
-                    razao_social = None
-
-                    if tipo_conta == 'PF':
-                        if 'cpf' in row and not pd.isna(row['cpf']):
-                            cpf = str(row['cpf']).strip()
-                    else:  # PJ
-                        if 'cnpj' in row and not pd.isna(row['cnpj']):
-                            cnpj = str(row['cnpj']).strip()
-                        if 'razao_social' in row and not pd.isna(row['razao_social']):
-                            razao_social = str(row['razao_social']).strip()
-
-                    dados.update({
-                        'data_aniversario': data_aniv,
-                        'origem_cliente': str(row.get('origem_cliente', '')).strip() if not pd.isna(row.get('origem_cliente')) else None,
-                        'tipo_conta': tipo_conta,
-                        'cpf': cpf,
-                        'cnpj': cnpj,
-                        'razao_social': razao_social,
-                        'estado': str(row.get('estado', '')).strip() if not pd.isna(row.get('estado')) else None,
-                        'cidade': str(row.get('cidade', '')).strip() if not pd.isna(row.get('cidade')) else None,
-                        'bairro': str(row.get('bairro', '')).strip() if not pd.isna(row.get('bairro')) else None,
-                        'endereco': str(row.get('endereco', '')).strip() if not pd.isna(row.get('endereco')) else None
-                    })
-
-                    st.info(f"Tentando adicionar cliente com dados: {dados}")
-                    try:
-                        db.add_cliente(**dados)
+                try:
+                    if tipo_cadastro == "Cliente":
+                        tipo_conta = str(row.get('tipo_conta', 'PF')).strip().upper()
+                        dados.update({
+                            'tipo_conta': tipo_conta,
+                            'cpf': str(row.get('cpf', '')).strip() if tipo_conta == 'PF' and not pd.isna(row.get('cpf')) else None,
+                            'cnpj': str(row.get('cnpj', '')).strip() if tipo_conta == 'PJ' and not pd.isna(row.get('cnpj')) else None,
+                            'razao_social': str(row.get('razao_social', '')).strip() if tipo_conta == 'PJ' and not pd.isna(row.get('razao_social')) else None,
+                            'data_aniversario': pd.to_datetime(row.get('data_aniversario')).date() if not pd.isna(row.get('data_aniversario')) else None,
+                            'origem_cliente': str(row.get('origem_cliente', '')).strip() if not pd.isna(row.get('origem_cliente')) else None,
+                        })
+                        st.info(f"Tentando adicionar cliente: {dados['nome']}")
+                        getattr(db, metodo)(**dados)
                         st.success(f"Cliente {dados['nome']} adicionado com sucesso!")
-                    except Exception as e:
-                        erro_msg = f"Erro ao adicionar cliente {dados['nome']}: {str(e)}"
-                        st.error(erro_msg)
-                        erros.append(erro_msg)
-                        continue
+                        sucessos += 1
 
-                elif tipo_cadastro == "Fornecedor":
-                    dados.update({
-                        'categoria': str(row.get('categoria', '')).strip() if not pd.isna(row.get('categoria')) else None,
-                        'tipo_conta': str(row.get('tipo_conta', 'PF')).strip().upper(),
-                        'recorrente': bool(row.get('recorrente', False))
-                    })
-                    db.add_fornecedor(**dados)
+                    elif tipo_cadastro == "Fornecedor":
+                        dados.update({
+                            'categoria': str(row.get('categoria', '')).strip() if not pd.isna(row.get('categoria')) else None,
+                            'tipo_conta': str(row.get('tipo_conta', 'PF')).strip().upper(),
+                            'recorrente': bool(row.get('recorrente', False))
+                        })
+                        getattr(db, metodo)(**dados)
+                        sucessos += 1
 
-                elif tipo_cadastro == "Assistente":
-                    dados.update({
-                        'endereco': str(row.get('endereco', '')).strip() if not pd.isna(row.get('endereco')) else None,
-                        'disponibilidade': str(row.get('disponibilidade', '')).strip() if not pd.isna(row.get('disponibilidade')) else None
-                    })
-                    db.add_assistente(**dados)
+                    elif tipo_cadastro == "Assistente":
+                        dados.update({
+                            'disponibilidade': str(row.get('disponibilidade', '')).strip() if not pd.isna(row.get('disponibilidade')) else None,
+                        })
+                        getattr(db, metodo)(**dados)
+                        sucessos += 1
 
-                elif tipo_cadastro == "Parceiro":
-                    dados.update({
-                        'area_atuacao': str(row.get('area_atuacao', '')).strip() if not pd.isna(row.get('area_atuacao')) else None,
-                        'tipo_parceria': str(row.get('tipo_parceria', '')).strip() if not pd.isna(row.get('tipo_parceria')) else None
-                    })
-                    db.add_parceiro(**dados)
+                    elif tipo_cadastro == "Parceiro":
+                        dados.update({
+                            'area_atuacao': str(row.get('area_atuacao', '')).strip() if not pd.isna(row.get('area_atuacao')) else None,
+                            'tipo_parceria': str(row.get('tipo_parceria', '')).strip() if not pd.isna(row.get('tipo_parceria')) else None,
+                        })
+                        getattr(db, metodo)(**dados)
+                        sucessos += 1
 
-                sucessos += 1
+                except Exception as e:
+                    erro_msg = f"Erro ao adicionar {tipo_cadastro} {dados['nome']}: {str(e)}\n{traceback.format_exc()}"
+                    st.error(erro_msg)
+                    erros.append(erro_msg)
+                    continue
 
             except Exception as e:
                 traceback_str = traceback.format_exc()
@@ -226,13 +224,13 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
         status_text.empty()
 
         # Preparar mensagem de retorno
+        st.info(f"Importação finalizada. Sucessos: {sucessos}, Erros: {len(erros)}")
         mensagem = f"Importação concluída:\n- Registros importados com sucesso: {sucessos}"
         if erros:
             mensagem += f"\n- Erros encontrados: {len(erros)}\n"
             for erro in erros:
                 mensagem += f"\n  • {erro}"
 
-        # Não usar st.rerun() aqui, apenas retornar o resultado
         return sucessos > 0, mensagem
 
     except Exception as e:
@@ -247,23 +245,22 @@ def gerar_template_excel(tipo):
         df = pd.DataFrame(columns=[
             'nome', 'telefone', 'email', 'data_aniversario', 
             'origem_cliente', 'tipo_conta', 'cpf', 'cnpj', 
-            'razao_social', 'observacoes', 'pix', 'estado',
-            'cidade', 'bairro', 'endereco'
+            'razao_social', 'observacoes'
         ])
     elif tipo == "Fornecedor":
         df = pd.DataFrame(columns=[
             'nome', 'telefone', 'email', 'categoria',
-            'tipo_conta', 'recorrente', 'observacoes', 'pix'
+            'tipo_conta', 'recorrente', 'observacoes'
         ])
     elif tipo == "Assistente":
         df = pd.DataFrame(columns=[
-            'nome', 'telefone', 'email', 'endereco',
-            'disponibilidade', 'observacoes', 'pix'
+            'nome', 'telefone', 'email',
+            'disponibilidade', 'observacoes'
         ])
     elif tipo == "Parceiro":
         df = pd.DataFrame(columns=[
             'nome', 'telefone', 'email', 'area_atuacao',
-            'tipo_parceria', 'observacoes', 'pix'
+            'tipo_parceria', 'observacoes'
         ])
     else:
         return None
@@ -279,22 +276,22 @@ def gerar_template_csv(tipo):
         df = pd.DataFrame(columns=[
             'nome', 'telefone', 'email', 'data_aniversario', 
             'origem_cliente', 'tipo_conta', 'cpf', 'cnpj', 
-            'razao_social', 'observacoes', 'pix'
+            'razao_social', 'observacoes'
         ])
     elif tipo == "Fornecedor":
         df = pd.DataFrame(columns=[
             'nome', 'telefone', 'email', 'categoria',
-            'tipo_conta', 'recorrente', 'observacoes', 'pix'
+            'tipo_conta', 'recorrente', 'observacoes'
         ])
     elif tipo == "Assistente":
         df = pd.DataFrame(columns=[
             'nome', 'telefone', 'email', 'endereco',
-            'disponibilidade', 'observacoes', 'pix'
+            'disponibilidade', 'observacoes'
         ])
     elif tipo == "Parceiro":
         df = pd.DataFrame(columns=[
             'nome', 'telefone', 'email', 'area_atuacao',
-            'tipo_parceria', 'observacoes', 'pix'
+            'tipo_parceria', 'observacoes'
         ])
     else:
         return None
