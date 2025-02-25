@@ -12,6 +12,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Log inicial para debug de conexão
+logger.info("Iniciando aplicação Streamlit")
+logger.info(f"Endereço do servidor: 0.0.0.0")
+logger.info(f"Porta: 5000")
+
 try:
     # Adicionar diretório raiz ao path
     root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -20,13 +25,9 @@ try:
         sys.path.append(root_dir)
         logger.info(f"Adicionado ao sys.path: {root_dir}")
 
-    # Listar conteúdo do diretório utils para debug
-    utils_dir = os.path.join(root_dir, "utils")
-    logger.info(f"Conteúdo do diretório utils: {os.listdir(utils_dir) if os.path.exists(utils_dir) else 'Diretório não encontrado'}")
-
-    # Force specific port
-    import os
-    os.environ['STREAMLIT_SERVER_PORT'] = '8501'
+    # Forçar porta específica
+    os.environ['STREAMLIT_SERVER_PORT'] = '5000'
+    logger.info("Porta do servidor configurada para 5000")
 
     # Configuração da página
     st.set_page_config(
@@ -35,6 +36,7 @@ try:
         layout="wide",
         initial_sidebar_state="expanded"
     )
+    logger.info("Configuração da página concluída")
 
     # Verificar variáveis de ambiente críticas
     required_env_vars = ['DATABASE_URL', 'JWT_SECRET']
