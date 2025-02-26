@@ -26,62 +26,6 @@ def normalizar_data(data_str):
     except:
         return None
 
-def preprocessar_csv(file_content, encoding='utf-8'):
-    """
-    Pré-processa o conteúdo do arquivo CSV para corrigir problemas comuns
-    """
-    try:
-        # Decodificar conteúdo do arquivo
-        content = file_content.decode(encoding)
-
-        # Dividir em linhas
-        lines = content.split('\n')
-
-        # Processar cabeçalho
-        header = lines[0].strip()
-        header_cols = header.split(';')
-        num_cols = len(header_cols)
-
-        # Normalizar nomes das colunas
-        header_cols = [col.strip().lower() for col in header_cols]
-        if 'tipo_conta' in header_cols:
-            header_cols[header_cols.index('tipo_conta')] = 'tipo_conta'
-
-        # Processar linhas de dados
-        processed_lines = [';'.join(header_cols)]
-        current_line = []
-
-        for line in lines[1:]:
-            if not line.strip():  # Pular linhas vazias
-                continue
-
-            fields = line.strip().split(';')
-
-            # Se a linha atual não tem campos suficientes, acumular
-            if len(current_line) + len(fields) <= num_cols:
-                current_line.extend(fields)
-            else:
-                # Se já temos uma linha completa, salvá-la
-                if current_line:
-                    # Colocar campos com vírgulas entre aspas
-                    quoted_fields = [f'"{field}"' if ',' in field else field for field in current_line]
-                    processed_lines.append(';'.join(quoted_fields))
-                current_line = fields
-
-        # Processar última linha se existir
-        if current_line:
-            quoted_fields = [f'"{field}"' if ',' in field else field for field in current_line]
-            processed_lines.append(';'.join(quoted_fields))
-
-        # Juntar linhas processadas
-        processed_content = '\n'.join(processed_lines)
-        return io.StringIO(processed_content)
-
-    except Exception as e:
-        logger.error(f"Erro ao pré-processar arquivo: {str(e)}")
-        logger.error(f"Stack trace: {traceback.format_exc()}")
-        raise e
-
 def show():
     st.title("👥 Gestão de Clientes")
 
@@ -91,33 +35,20 @@ def show():
         st.subheader("Novo Cliente")
         with st.form("cadastro_cliente", clear_on_submit=True):
             nome = st.text_input("Nome completo")
-            tipo_conta = st.selectbox(
-                "Tipo de Conta",
-                ["PF", "PJ"]
-            )
 
             telefone = st.text_input("Telefone")
             if telefone:
-                # Remover pontuação e espaços
                 telefone = ''.join(filter(str.isdigit, telefone))
                 if len(telefone) != 11:
                     st.error("Telefone deve ter 11 dígitos")
                     return
 
-            if tipo_conta == "PF":
-                cpf = st.text_input("CPF")
-                if cpf:
-                    # Remover pontuação e espaços
-                    cpf = ''.join(filter(str.isdigit, cpf))
-                    if len(cpf) != 11:
-                        st.error("CPF deve ter 11 dígitos")
-                        return
-                cnpj = None
-                razao_social = None
-            else:
-                cpf = None
-                cnpj = st.text_input("CNPJ")
-                razao_social = st.text_input("Razão Social")
+            cpf = st.text_input("CPF")
+            if cpf:
+                cpf = ''.join(filter(str.isdigit, cpf))
+                if len(cpf) != 11:
+                    st.error("CPF deve ter 11 dígitos")
+                    return
 
             col1, col2 = st.columns(2)
             with col1:
@@ -143,10 +74,7 @@ def show():
             submitted = st.form_submit_button("Cadastrar")
 
             if submitted:
-                if nome and telefone and (
-                    (tipo_conta == "PF" and cpf) or 
-                    (tipo_conta == "PJ" and cnpj and razao_social)
-                ):
+                if nome and telefone and cpf:
                     try:
                         st.session_state.db.add_cliente(
                             nome=nome,
@@ -158,10 +86,7 @@ def show():
                             endereco=endereco,
                             cpf=cpf,
                             data_aniversario=data_aniversario,
-                            origem_cliente=origem_cliente,
-                            tipo_conta=tipo_conta,
-                            cnpj=cnpj,
-                            razao_social=razao_social
+                            origem_cliente=origem_cliente
                         )
                         st.success("Cliente cadastrado com sucesso!")
                     except Exception as e:
@@ -179,33 +104,95 @@ def show():
                 st.info("Nenhum cliente cadastrado.")
                 return
 
-            df_display = clientes.copy()
+            # Adicionar botões de edição e exclusão para cada cliente
+            for index, cliente in clientes.iterrows():
+                with st.expander(f"{cliente['nome']} - CPF: {cliente['cpf']}"):
+                    col1, col2, col3 = st.columns([3, 1, 1])
 
-            # Formatar datas para exibição
-            if 'data_cadastro' in df_display.columns:
-                df_display['data_cadastro'] = pd.to_datetime(df_display['data_cadastro']).dt.strftime('%d/%m/%Y')
-            if 'data_aniversario' in df_display.columns:
-                df_display['data_aniversario'] = pd.to_datetime(df_display['data_aniversario']).dt.strftime('%d/%m')
+                    with col1:
+                        st.write(f"**Email:** {cliente['email']}")
+                        st.write(f"**Telefone:** {cliente['telefone']}")
+                        if cliente['data_aniversario']:
+                            st.write(f"**Aniversário:** {cliente['data_aniversario'].strftime('%d/%m')}")
+                        st.write(f"**Endereço:** {cliente['endereco']}")
 
-            # Exibir tabela com todos os dados
-            st.dataframe(
-                df_display,
-                hide_index=True,
-                use_container_width=True
-            )
+                    with col2:
+                        if st.button("✏️ Editar", key=f"edit_{cliente['id']}"):
+                            st.session_state.cliente_em_edicao = cliente
+                            st.rerun()
+
+                    with col3:
+                        if st.button("🗑️ Excluir", key=f"del_{cliente['id']}"):
+                            if st.session_state.db.delete_cliente(cliente['id']):
+                                st.success("Cliente excluído com sucesso!")
+                                st.rerun()
+                            else:
+                                st.error("Erro ao excluir cliente.")
+
+            # Modal de edição
+            if 'cliente_em_edicao' in st.session_state:
+                cliente = st.session_state.cliente_em_edicao
+                st.write("---")
+                st.subheader("Editar Cliente")
+
+                with st.form("edicao_cliente"):
+                    nome = st.text_input("Nome", value=cliente['nome'])
+                    email = st.text_input("Email", value=cliente['email'] if cliente['email'] else "")
+                    telefone = st.text_input("Telefone", value=cliente['telefone'] if cliente['telefone'] else "")
+                    cpf = st.text_input("CPF", value=cliente['cpf'] if cliente['cpf'] else "")
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        data_aniversario = st.date_input(
+                            "Data de Aniversário",
+                            value=cliente['data_aniversario'] if cliente['data_aniversario'] else None,
+                            format="DD/MM/YYYY"
+                        )
+                    with col2:
+                        origem_cliente = st.selectbox(
+                            "Origem do Cliente",
+                            ["Indicação", "Redes Sociais", "Site", "Evento", "Outro"],
+                            index=["Indicação", "Redes Sociais", "Site", "Evento", "Outro"].index(cliente['origem_cliente']) if cliente['origem_cliente'] else 0
+                        )
+
+                    estado = st.text_input("Estado", value=cliente['estado'] if cliente['estado'] else "")
+                    cidade = st.text_input("Cidade", value=cliente['cidade'] if cliente['cidade'] else "")
+                    bairro = st.text_input("Bairro", value=cliente['bairro'] if cliente['bairro'] else "")
+                    endereco = st.text_input("Endereço", value=cliente['endereco'] if cliente['endereco'] else "")
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.form_submit_button("Salvar"):
+                            try:
+                                st.session_state.db.update_cliente(
+                                    cliente['id'],
+                                    nome=nome,
+                                    email=email,
+                                    telefone=telefone,
+                                    cpf=cpf,
+                                    data_aniversario=data_aniversario,
+                                    origem_cliente=origem_cliente,
+                                    estado=estado,
+                                    cidade=cidade,
+                                    bairro=bairro,
+                                    endereco=endereco
+                                )
+                                del st.session_state.cliente_em_edicao
+                                st.success("Cliente atualizado com sucesso!")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Erro ao atualizar cliente: {str(e)}")
+
+                    with col2:
+                        if st.form_submit_button("Cancelar"):
+                            del st.session_state.cliente_em_edicao
+                            st.rerun()
 
         except Exception as e:
             st.error(f"Erro ao carregar clientes: {str(e)}")
 
     with tab3:
-        st.subheader("🧪 Teste de Importação")
-
-        # Log do estado da sessão
-        logger.info("=== Estado da Sessão ===")
-        for key, value in st.session_state.items():
-            if key not in ['senha', 'token']:
-                logger.info(f"{key}: {value}")
-
+        st.subheader("Importar Clientes")
         st.write("""
         Para importar clientes, seu arquivo deve ter o seguinte formato:
         - O arquivo pode usar vírgula (,) ou ponto e vírgula (;) como separador
@@ -215,92 +202,20 @@ def show():
           - nome (obrigatório)
           - email
           - telefone
-          - tipo_conta (PF ou PJ)
-          - cpf (para PF)
+          - cpf
           - estado
           - cidade
           - bairro
           - endereco
           - data_aniversario (formato: DD/MM ou DD/MMM)
-
-        Exemplo com ponto e vírgula (;):
-        nome;email;telefone;tipo_conta;cpf;estado;cidade;endereco
-        "João Silva";joao@email.com;11999999999;PF;12345678900;SP;"São Paulo";"Rua das Flores, 123"
         """)
 
         uploaded_file = st.file_uploader("Escolha o arquivo", type=['csv'])
 
         if uploaded_file is not None:
             try:
-                # Tentar diferentes codificações
-                encodings = ['utf-8', 'latin1', 'iso-8859-1']
-                df = None
-                encoding_used = None
-
-                for encoding in encodings:
-                    try:
-                        # Pré-processar o arquivo
-                        file_content = uploaded_file.getvalue()
-                        processed_file = preprocessar_csv(file_content, encoding)
-
-                        # Exibir preview do arquivo processado
-                        preview = processed_file.getvalue().splitlines()[:5]
-                        logger.info(f"Preview do arquivo processado (primeiras 5 linhas):")
-                        for line in preview:
-                            logger.info(line)
-
-                        # Detectar separador
-                        first_line = preview[0].lower()
-                        separator = ',' if ',' in first_line else ';' if ';' in first_line else None
-
-                        if not separator:
-                            raise ValueError("Não foi possível detectar o separador (vírgula ou ponto e vírgula)")
-
-                        # Tentar ler o arquivo processado
-                        processed_file.seek(0)  # Voltar ao início do arquivo
-                        df = pd.read_csv(
-                            processed_file,
-                            encoding=encoding,
-                            sep=separator,
-                            skipinitialspace=True,
-                            na_values=['', 'NA', 'null'],
-                            engine='python',
-                            on_bad_lines='warn',
-                            quotechar='"',
-                            quoting=1
-                        )
-
-                        # Normalizar nomes das colunas
-                        df.columns = [col.strip().lower() for col in df.columns]
-                        if 'tipo_conta' in df.columns:
-                            df.rename(columns={'tipo_conta': 'tipo_conta'}, inplace=True)
-
-                        encoding_used = encoding
-                        break
-                    except UnicodeDecodeError:
-                        continue
-                    except Exception as e:
-                        logger.error(f"Erro ao tentar ler o arquivo com codificação {encoding}: {str(e)}")
-                        logger.error(f"Stack trace: {traceback.format_exc()}")
-                        continue
-
-                if df is None:
-                    st.error(f"""
-                    Não foi possível ler o arquivo. Por favor, verifique se:
-                    1. O arquivo está usando vírgula (,) ou ponto e vírgula (;) como separador
-                    2. As colunas estão nomeadas corretamente
-                    3. Campos com separadores estão entre aspas duplas (")
-                    4. O arquivo foi salvo com codificação adequada (UTF-8 ou Latin1)
-
-                    Formato detectado:
-                    Separador: {separator}
-                    Primeiras linhas do arquivo:
-                    {chr(10).join(preview[:3])}
-                    """)
-                    return
-
-                logger.info(f"Arquivo carregado com sucesso usando codificação {encoding_used}")
-                logger.info(f"Colunas encontradas: {df.columns.tolist()}")
+                file_content = uploaded_file.getvalue()
+                df = pd.read_csv(io.StringIO(file_content.decode('utf-8')), sep=';')
 
                 if 'nome' not in df.columns:
                     st.error("O arquivo deve conter uma coluna 'nome'")
@@ -309,39 +224,24 @@ def show():
                     st.dataframe(df.head())
 
                     if st.button("Confirmar Importação"):
-                        success_count = 0
-                        error_count = 0
-
                         progress_bar = st.progress(0)
-                        status_text = st.empty()
-
                         for index, row in df.iterrows():
                             try:
-                                # Processar dados
                                 nome = str(row['nome']).strip() if pd.notna(row.get('nome')) else None
                                 if not nome:
-                                    raise ValueError("Nome é obrigatório")
-
-                                # Log dos dados antes do processamento
-                                logger.info(f"Processando linha {index + 2}:")
-                                logger.info(f"CPF original: {row.get('cpf')}")
-                                logger.info(f"Tipo conta: {row.get('tipo_conta')}")
-
-                                # Processar telefone
-                                telefone = str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None
-                                if telefone:
-                                    telefone = ''.join(filter(str.isdigit, telefone))
-
-                                # Processar tipo de conta
-                                tipo_conta = str(row.get('tipo_conta', 'PF')).upper().strip()
+                                    continue
 
                                 # Processar CPF
                                 cpf = None
-                                if tipo_conta == 'PF':
-                                    if pd.notna(row.get('cpf')):
-                                        cpf = str(row['cpf']).strip()
-                                        cpf = ''.join(filter(str.isdigit, cpf))
-                                        logger.info(f"CPF processado: {cpf}")
+                                if pd.notna(row.get('cpf')):
+                                    cpf = str(row['cpf']).strip()
+                                    cpf = ''.join(filter(str.isdigit, cpf))
+
+                                # Processar telefone
+                                telefone = None
+                                if pd.notna(row.get('telefone')):
+                                    telefone = str(row['telefone']).strip()
+                                    telefone = ''.join(filter(str.isdigit, telefone))
 
                                 # Processar data de aniversário
                                 data_aniv = None
@@ -357,46 +257,27 @@ def show():
                                         except Exception as e:
                                             logger.warning(f"Erro ao processar data de aniversário na linha {index + 2}: {str(e)}")
 
-                                # Log antes de adicionar ao banco
-                                logger.info(f"Dados processados para adicionar ao banco:")
-                                logger.info(f"Nome: {nome}")
-                                logger.info(f"CPF final: {cpf}")
-                                logger.info(f"Tipo conta final: {tipo_conta}")
-
-                                # Adicionar cliente ao banco
-                                cliente_id = st.session_state.db.add_cliente(
+                                st.session_state.db.add_cliente(
                                     nome=nome,
                                     email=str(row.get('email', '')).strip() if pd.notna(row.get('email')) else None,
                                     telefone=telefone,
+                                    cpf=cpf,
                                     estado=str(row.get('estado', '')).strip() if pd.notna(row.get('estado')) else None,
                                     cidade=str(row.get('cidade', '')).strip() if pd.notna(row.get('cidade')) else None,
                                     bairro=str(row.get('bairro', '')).strip() if pd.notna(row.get('bairro')) else None,
                                     endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
-                                    cpf=cpf,
                                     data_aniversario=data_aniv,
-                                    origem_cliente=str(row.get('origem_cliente', 'Importação')).strip() if pd.notna(row.get('origem_cliente')) else 'Importação',
-                                    tipo_conta=tipo_conta
+                                    origem_cliente='Importação'
                                 )
-                                logger.info(f"Cliente adicionado com sucesso. ID: {cliente_id}")
-                                success_count += 1
+
                             except Exception as e:
-                                error_count += 1
-                                error_msg = f"Erro ao importar linha {index + 2}: {str(e)}"
-                                logger.error(error_msg)
-                                logger.error(f"Stack trace: {traceback.format_exc()}")
-                                st.error(error_msg)
+                                st.error(f"Erro ao importar linha {index + 2}: {str(e)}")
+                                continue
 
                             progress = (index + 1) / len(df)
                             progress_bar.progress(progress)
-                            status_text.text(f"Processando... {index + 1} de {len(df)}")
 
-                        st.success(f"""
-                        Importação concluída!
-                        - Clientes importados com sucesso: {success_count}
-                        - Erros de importação: {error_count}
-                        """)
+                        st.success("Importação concluída!")
 
             except Exception as e:
                 st.error(f"Erro ao ler o arquivo: {str(e)}")
-                logger.error(f"Erro ao ler arquivo CSV: {str(e)}")
-                logger.error(f"Stack trace: {traceback.format_exc()}")
