@@ -314,15 +314,23 @@ def importar_propostas(arquivo, db):
 
         for _, row in df.iterrows():
             try:
+                # Validar e converter tipos numéricos
+                try:
+                    cliente_id = int(row['cliente_id'])
+                    valor = float(row['valor'])
+                except (ValueError, TypeError) as e:
+                    erros.append(f"Erro na linha {_ + 2}: Valor inválido para cliente_id ou valor - {str(e)}")
+                    continue
+
                 # Validar e converter datas
                 data_inicio = validar_data(row.get('data_inicio'))
                 data_fim = validar_data(row.get('data_fim'))
                 prazo_entrega = validar_data(row.get('prazo_entrega'))
 
                 db.add_proposta(
-                    cliente_id=int(row['cliente_id']),
+                    cliente_id=cliente_id,
                     descricao=row['descricao'],
-                    valor=float(row['valor']),
+                    valor=valor,
                     status=row['status'],
                     tipo_proposta=row.get('tipo_proposta'),
                     data_inicio=data_inicio,

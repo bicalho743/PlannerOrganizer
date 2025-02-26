@@ -1,4 +1,5 @@
 import os
+import numpy as np
 from datetime import datetime
 from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, func, Index
 from sqlalchemy.ext.declarative import declarative_base
@@ -229,6 +230,17 @@ class Database:
                 self.session = Session()
             result = query_func()
             self.session.commit()
+
+            # Se o resultado for um DataFrame, converter tipos numéricos
+            if isinstance(result, pd.DataFrame):
+                # Converter colunas numéricas para tipos nativos Python
+                for col in result.select_dtypes(include=['int64', 'float64', 'Int64']).columns:
+                    result[col] = result[col].astype(object).where(pd.notnull(result[col]), None)
+
+            # Se o resultado for um número, garantir que seja tipo nativo Python
+            elif isinstance(result, (np.int64, np.float64)):
+                result = result.item()
+
             return result
         except Exception as e:
             if self.session.is_active:
@@ -286,11 +298,11 @@ class Database:
         def query():
             propostas = self.session.query(Proposta).all()
             return pd.DataFrame([{
-                'id': p.id,
-                'numero': p.numero,
-                'cliente_id': p.cliente_id,
+                'id': int(p.id),  # Converter para int nativo
+                'numero': int(p.numero),  # Converter para int nativo
+                'cliente_id': int(p.cliente_id) if p.cliente_id else None,  # Converter para int nativo
                 'descricao': p.descricao,
-                'valor': p.valor,
+                'valor': float(p.valor) if p.valor is not None else None,  # Converter para float nativo
                 'status': p.status,
                 'tipo_proposta': p.tipo_proposta,
                 'data_inicio': p.data_inicio,
@@ -304,9 +316,13 @@ class Database:
     def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, 
                     data_inicio=None, data_fim=None, prazo_entrega=None):
         def query():
+            # Converter tipos para formato nativo Python
+            cliente_id = int(cliente_id)
+            valor = float(valor) if valor is not None else None
+
             # Gerar próximo número de proposta
             ultimo_numero = self.session.query(func.max(Proposta.numero)).scalar()
-            proximo_numero = 1 if ultimo_numero is None else ultimo_numero + 1
+            proximo_numero = 1 if ultimo_numero is None else int(ultimo_numero) + 1
 
             proposta = Proposta(
                 numero=proximo_numero,
@@ -320,7 +336,7 @@ class Database:
                 prazo_entrega=prazo_entrega
             )
             self.session.add(proposta)
-            return proposta.id
+            return int(proposta.id)  # Converter para int nativo
         return self._safe_query(query)
 
     def get_financeiro(self):
@@ -821,6 +837,10 @@ class Database:
 
     def add_acrescimo_proposta(self, proposta_id, tipo, valor, descricao=None, fornecedor=None, status_pagamento='Pendente'):
         def query():
+            # Converter proposta_id e valor para tipos nativos Python
+            proposta_id = int(proposta_id)
+            valor = float(valor) if valor is not None else None
+
             acrescimo = AcrescimoProposta(
                 proposta_id=proposta_id,
                 tipo=tipo,
@@ -830,7 +850,7 @@ class Database:
                 status_pagamento=status_pagamento
             )
             self.session.add(acrescimo)
-            return acrescimo.id
+            return int(acrescimo.id)  # Converter para int nativo
         return self._safe_query(query)
 
     def get_acrescimos_proposta(self, proposta_id):
@@ -862,7 +882,7 @@ class Database:
                     'cliente': p.cliente.nome,
                     'proposta': p.numero,
                     'tipo': 'Valor Base',
-                    'valor': p.valor,  # Corrigido# Corrigido: removido p.p.valor
+                    'valor': p.valor,
                     'fornecedor': None
                 })
 
