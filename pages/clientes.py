@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime
 import logging
 import traceback
+import io
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,62 @@ def normalizar_data(data_str):
         return f"{dia.zfill(2)}/{mes.zfill(2)}"
     except:
         return None
+
+def preprocessar_csv(file_content, encoding='utf-8'):
+    """
+    Pré-processa o conteúdo do arquivo CSV para corrigir problemas comuns
+    """
+    try:
+        # Decodificar conteúdo do arquivo
+        content = file_content.decode(encoding)
+
+        # Dividir em linhas
+        lines = content.split('\n')
+
+        # Processar cabeçalho
+        header = lines[0].strip()
+        header_cols = header.split(';')
+        num_cols = len(header_cols)
+
+        # Normalizar nomes das colunas
+        header_cols = [col.strip().lower() for col in header_cols]
+        if 'tipo_conta' in header_cols:
+            header_cols[header_cols.index('tipo_conta')] = 'tipo_conta'
+
+        # Processar linhas de dados
+        processed_lines = [';'.join(header_cols)]
+        current_line = []
+
+        for line in lines[1:]:
+            if not line.strip():  # Pular linhas vazias
+                continue
+
+            fields = line.strip().split(';')
+
+            # Se a linha atual não tem campos suficientes, acumular
+            if len(current_line) + len(fields) <= num_cols:
+                current_line.extend(fields)
+            else:
+                # Se já temos uma linha completa, salvá-la
+                if current_line:
+                    # Colocar campos com vírgulas entre aspas
+                    quoted_fields = [f'"{field}"' if ',' in field else field for field in current_line]
+                    processed_lines.append(';'.join(quoted_fields))
+                current_line = fields
+
+        # Processar última linha se existir
+        if current_line:
+            quoted_fields = [f'"{field}"' if ',' in field else field for field in current_line]
+            processed_lines.append(';'.join(quoted_fields))
+
+        # Juntar linhas processadas
+        processed_content = '\n'.join(processed_lines)
+        return io.StringIO(processed_content)
+
+    except Exception as e:
+        logger.error(f"Erro ao pré-processar arquivo: {str(e)}")
+        logger.error(f"Stack trace: {traceback.format_exc()}")
+        raise e
 
 def show():
     st.title("👥 Gestão de Clientes")
@@ -169,10 +226,6 @@ def show():
         Exemplo com ponto e vírgula (;):
         nome;email;telefone;tipo_conta;cpf;estado;cidade;endereco
         "João Silva";joao@email.com;11999999999;PF;12345678900;SP;"São Paulo";"Rua das Flores, 123"
-
-        Exemplo com vírgula (,):
-        nome,email,telefone,tipo_conta,cpf,estado,cidade,endereco
-        "João Silva",joao@email.com,11999999999,PF,12345678900,SP,"São Paulo","Rua das Flores, 123"
         """)
 
         uploaded_file = st.file_uploader("Escolha o arquivo", type=['csv'])
@@ -186,30 +239,35 @@ def show():
 
                 for encoding in encodings:
                     try:
-                        # Exibir preview do arquivo antes de processar
-                        file_preview = uploaded_file.getvalue().decode(encoding, errors='replace').splitlines()[:5]
-                        logger.info(f"Preview do arquivo (primeiras 5 linhas):")
-                        for line in file_preview:
+                        # Pré-processar o arquivo
+                        file_content = uploaded_file.getvalue()
+                        processed_file = preprocessar_csv(file_content, encoding)
+
+                        # Exibir preview do arquivo processado
+                        preview = processed_file.getvalue().splitlines()[:5]
+                        logger.info(f"Preview do arquivo processado (primeiras 5 linhas):")
+                        for line in preview:
                             logger.info(line)
 
                         # Detectar separador
-                        first_line = file_preview[0].lower()
+                        first_line = preview[0].lower()
                         separator = ',' if ',' in first_line else ';' if ';' in first_line else None
 
                         if not separator:
                             raise ValueError("Não foi possível detectar o separador (vírgula ou ponto e vírgula)")
 
-                        # Tentar ler o arquivo
+                        # Tentar ler o arquivo processado
+                        processed_file.seek(0)  # Voltar ao início do arquivo
                         df = pd.read_csv(
-                            uploaded_file, 
+                            processed_file,
                             encoding=encoding,
-                            sep=separator,  # Usar separador detectado
-                            skipinitialspace=True,  # Ignorar espaços após o separador
-                            na_values=['', 'NA', 'null'],  # Valores a serem tratados como NA
-                            engine='python',  # Usar engine python para melhor tratamento de erros
-                            on_bad_lines='warn',  # Avisar sobre linhas problemáticas ao invés de falhar
-                            quotechar='"',  # Usar aspas duplas para campos com separador
-                            quoting=1  # Permitir aspas em campos com separador
+                            sep=separator,
+                            skipinitialspace=True,
+                            na_values=['', 'NA', 'null'],
+                            engine='python',
+                            on_bad_lines='warn',
+                            quotechar='"',
+                            quoting=1
                         )
 
                         # Normalizar nomes das colunas
@@ -237,7 +295,7 @@ def show():
                     Formato detectado:
                     Separador: {separator}
                     Primeiras linhas do arquivo:
-                    {chr(10).join(file_preview[:3])}
+                    {chr(10).join(preview[:3])}
                     """)
                     return
 
