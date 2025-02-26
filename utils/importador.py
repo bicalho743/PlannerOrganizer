@@ -128,7 +128,7 @@ def gerar_template_csv(tipo):
     return df.to_csv(index=False, sep=';').encode('utf-8')
 
 def importar_cadastros(arquivo, tipo_cadastro, db):
-    """Importa cadastros de um arquivo CSV"""
+    """Importa cadastros de um arquivo CSV ou Excel"""
     try:
         st.write("### Log de Importação")
         st.info(f"Iniciando importação de {tipo_cadastro}")
@@ -140,7 +140,10 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
         # Detecta o tipo de arquivo e lê
         st.info("Lendo arquivo...")
         try:
-            df = pd.read_csv(arquivo, sep=';', encoding='utf-8')
+            if arquivo.name.endswith('.csv'):
+                df = pd.read_csv(arquivo, sep=';', encoding='utf-8')
+            else:
+                df = pd.read_excel(arquivo)
             st.success(f"Arquivo lido com sucesso. Dimensões: {df.shape}")
         except Exception as e:
             st.error(f"Erro ao ler arquivo: {str(e)}")
@@ -164,6 +167,7 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                     # Processar dados do cliente
                     nome = str(row['nome']).strip() if pd.notna(row.get('nome')) else None
                     if not nome:
+                        erros.append(f"Nome vazio na linha {idx + 2}")
                         continue
 
                     telefone = str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None
@@ -173,28 +177,31 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                     # Processamento do CPF
                     cpf = str(row.get('cpf', '')).strip() if pd.notna(row.get('cpf')) else None
                     if cpf:
-                        # Remove caracteres não numéricos do CPF
                         cpf = ''.join(filter(str.isdigit, cpf))
-                        # Formata o CPF se tiver 11 dígitos
                         if len(cpf) == 11:
                             cpf = f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
 
                     data_aniv = validar_data(row.get('data_aniversario'))
 
-                    db.add_cliente(
-                        nome=nome,
-                        telefone=telefone,
-                        cpf=cpf,
-                        email=str(row.get('email', '')).strip() if pd.notna(row.get('email')) else None,
-                        estado=str(row.get('estado', '')).strip() if pd.notna(row.get('estado')) else None,
-                        cidade=str(row.get('cidade', '')).strip() if pd.notna(row.get('cidade')) else None,
-                        bairro=str(row.get('bairro', '')).strip() if pd.notna(row.get('bairro')) else None,
-                        endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
-                        data_aniversario=data_aniv,
-                        origem_cliente=str(row.get('origem_cliente', 'Importação')).strip() if pd.notna(row.get('origem_cliente')) else 'Importação',
-                        observacoes=str(row.get('observacoes', '')).strip() if pd.notna(row.get('observacoes')) else None
-                    )
-                    sucessos += 1
+                    try:
+                        db.add_cliente(
+                            nome=nome,
+                            telefone=telefone,
+                            cpf=cpf,
+                            email=str(row.get('email', '')).strip() if pd.notna(row.get('email')) else None,
+                            estado=str(row.get('estado', '')).strip() if pd.notna(row.get('estado')) else None,
+                            cidade=str(row.get('cidade', '')).strip() if pd.notna(row.get('cidade')) else None,
+                            bairro=str(row.get('bairro', '')).strip() if pd.notna(row.get('bairro')) else None,
+                            endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
+                            data_aniversario=data_aniv,
+                            origem_cliente=str(row.get('origem_cliente', 'Importação')).strip() if pd.notna(row.get('origem_cliente')) else 'Importação',
+                            observacoes=str(row.get('observacoes', '')).strip() if pd.notna(row.get('observacoes')) else None
+                        )
+                        sucessos += 1
+                    except Exception as e:
+                        erro_msg = f"Erro ao adicionar cliente na linha {idx + 2}: {str(e)}"
+                        erros.append(erro_msg)
+                        continue
 
                 elif tipo_cadastro == "Fornecedor":
                     descricao = str(row['descricao']).strip() if pd.notna(row.get('descricao')) else None
@@ -264,25 +271,54 @@ def gerar_template_excel(tipo):
     """Gera um arquivo Excel template baseado no tipo de importação"""
     if tipo == "Cliente":
         df = pd.DataFrame(columns=[
-            'nome', 'telefone', 'cpf', 'data_aniversario', 
-            'origem_cliente', 'observacoes', 'estado', 'cidade',
-            'bairro', 'endereco'
+            'nome',  # Obrigatório
+            'telefone',
+            'cpf',
+            'estado',
+            'cidade',
+            'bairro',
+            'endereco',
+            'data_aniversario',  # Formato: DD/MMM (ex: 25/Jan)
+            'origem_cliente',
+            'observacoes'
         ])
+        # Adicionar uma linha de exemplo
+        df.loc[0] = [
+            'Nome do Cliente',  # nome
+            '(11) 99999-9999',  # telefone
+            '123.456.789-00',   # cpf
+            'SP',               # estado
+            'São Paulo',        # cidade
+            'Centro',           # bairro
+            'Rua Principal, 123', # endereco
+            '25/Jan',           # data_aniversario
+            'Site',             # origem_cliente
+            'Observações aqui'  # observacoes
+        ]
     elif tipo == "Fornecedor":
         df = pd.DataFrame(columns=[
-            'descricao', 'contato', 'categoria',
-            'estado', 'cidade', 'bairro', 'endereco',
-            'pix', 'recorrente', 'observacoes'
+            'descricao',  # Razão Social
+            'telefone',   
+            'endereco',   
+            'categoria',  
+            'pix',       
+            'observacao'  
         ])
     elif tipo == "Assistente":
         df = pd.DataFrame(columns=[
-            'nome', 'telefone', 'endereco',
-            'pix', 'observacoes'
+            'nome',      
+            'telefone',  
+            'endereco',  
+            'pix',      
+            'observacao' 
         ])
     elif tipo == "Parceiro":
         df = pd.DataFrame(columns=[
-            'nome', 'telefone', 'area_atuacao',
-            'tipo_parceria', 'observacoes'
+            'nome',          
+            'telefone',      
+            'area_atuacao',  
+            'tipo_parceria', 
+            'observacao'     
         ])
     elif tipo == "Proposta":
         df = pd.DataFrame(columns=[
