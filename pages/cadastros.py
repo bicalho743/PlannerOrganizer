@@ -76,7 +76,7 @@ def show():
 
             if not registros.empty:
                 # Definir colunas para exibição
-                colunas = ['id', 'nome', 'telefone', 'cpf', 'estado', 'cidade', 'bairro', 
+                colunas = ['id', 'nome', 'telefone', 'cpf', 'estado', 'cidade', 'bairro',
                           'endereco', 'data_aniversario', 'origem_cliente', 'observacoes']
                 rename = {
                     'id': 'ID',
@@ -221,7 +221,7 @@ def show():
 
                             with col1:
                                 st.write(f"**Contato:** {fornecedor['contato']}")
-                                st.write(f"**Email:** {fornecedor['email']}")
+                                st.write(f"**Categoria:** {fornecedor['categoria']}")
                                 st.write(f"**PIX:** {fornecedor['pix']}")
                                 st.write(f"**Recorrente:** {'Sim' if fornecedor['recorrente'] else 'Não'}")
                                 if fornecedor['observacoes']:
@@ -247,18 +247,17 @@ def show():
                         st.subheader("Editar Fornecedor")
                         with st.form("edit_fornecedor_form"):
                             fornecedor = registros[registros['id'] == st.session_state['editing_fornecedor_id']].iloc[0]
-
-                            nome = st.text_input("Nome/Razão Social", value=fornecedor['descricao'])
-                            contato = st.text_input("Telefone", value=fornecedor['contato'])
-                            email = st.text_input("Email", value=fornecedor['email'])
-                            categoria = st.selectbox(
+                            edited_data = {}
+                            edited_data['descricao'] = st.text_input("Nome/Razão Social", value=fornecedor['descricao'])
+                            edited_data['contato'] = st.text_input("Telefone", value=fornecedor['contato'])
+                            edited_data['categoria'] = st.selectbox(
                                 "Categoria",
                                 ["Produtos", "Serviços", "Marcenaria", "Outro"],
                                 index=["Produtos", "Serviços", "Marcenaria", "Outro"].index(fornecedor['categoria'])
                             )
-                            pix = st.text_input("PIX", value=fornecedor['pix'])
-                            recorrente = st.checkbox("Recorrente", value=fornecedor['recorrente'])
-                            observacoes = st.text_area("Observações", value=fornecedor['observacoes'])
+                            edited_data['pix'] = st.text_input("PIX", value=fornecedor['pix'])
+                            edited_data['recorrente'] = st.checkbox("Recorrente", value=fornecedor['recorrente'])
+                            edited_data['observacoes'] = st.text_area("Observações", value=fornecedor['observacoes'])
 
                             col1, col2 = st.columns(2)
                             with col1:
@@ -266,13 +265,7 @@ def show():
                                     try:
                                         st.session_state.db.update_fornecedor(
                                             st.session_state['editing_fornecedor_id'],
-                                            descricao=nome,
-                                            contato=contato,
-                                            email=email,
-                                            categoria=categoria,
-                                            pix=pix,
-                                            recorrente=recorrente,
-                                            observacoes=observacoes
+                                            **edited_data
                                         )
                                         del st.session_state['editing_fornecedor_id']
                                         st.session_state['update_fornecedores'] = True
