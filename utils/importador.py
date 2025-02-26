@@ -3,6 +3,7 @@ import streamlit as st
 from datetime import datetime
 import io
 import logging
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -89,23 +90,33 @@ def gerar_template_csv(tipo):
         ])
     elif tipo == "Fornecedor":
         df = pd.DataFrame(columns=[
-            'descricao', 'contato', 'email', 'categoria',
-            'recorrente', 'pix', 'observacoes'
+            'descricao',  # Razão Social
+            'telefone',   
+            'endereco',   
+            'categoria',  
+            'pix',       
+            'observacao'  
         ])
     elif tipo == "Assistente":
         df = pd.DataFrame(columns=[
-            'nome', 'telefone', 'email', 'endereco',
-            'disponibilidade', 'observacoes'
+            'nome',      
+            'telefone',  
+            'endereco',  
+            'pix',      
+            'observacao' 
         ])
     elif tipo == "Parceiro":
         df = pd.DataFrame(columns=[
-            'nome', 'telefone', 'email', 'area_atuacao',
-            'tipo_parceria', 'observacoes'
+            'nome',          
+            'telefone',      
+            'area_atuacao',  
+            'tipo_parceria', 
+            'observacao'     
         ])
     else:
         return None
 
-    return df.to_csv(index=False).encode('utf-8')
+    return df.to_csv(index=False, sep=';').encode('utf-8')
 
 def importar_cadastros(arquivo, tipo_cadastro, db):
     """Importa cadastros de um arquivo CSV"""
@@ -113,7 +124,6 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
         st.write("### Log de Importação")
         st.info(f"Iniciando importação de {tipo_cadastro}")
 
-        # Verificar se o db está inicializado
         if not db:
             st.error("Erro: Conexão com banco de dados não inicializada")
             return False, "Erro: Conexão com banco de dados não inicializada"
@@ -121,7 +131,7 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
         # Detecta o tipo de arquivo e lê
         st.info("Lendo arquivo...")
         try:
-            df = pd.read_csv(arquivo)
+            df = pd.read_csv(arquivo, sep=';', encoding='utf-8')
             st.success(f"Arquivo lido com sucesso. Dimensões: {df.shape}")
         except Exception as e:
             st.error(f"Erro ao ler arquivo: {str(e)}")
@@ -147,17 +157,14 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                     if not nome:
                         continue
 
-                    # Processar telefone
                     telefone = str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None
                     if telefone:
                         telefone = ''.join(filter(str.isdigit, telefone))
 
-                    # Processar CPF
                     cpf = None
                     if pd.notna(row.get('cpf')):
                         cpf = ''.join(filter(str.isdigit, str(row['cpf'])))
 
-                    # Processar data de aniversário
                     data_aniv = validar_data(row.get('data_aniversario'))
 
                     db.add_cliente(
@@ -170,7 +177,8 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                         endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
                         cpf=cpf,
                         data_aniversario=data_aniv,
-                        origem_cliente=str(row.get('origem_cliente', 'Importação')).strip() if pd.notna(row.get('origem_cliente')) else 'Importação'
+                        origem_cliente=str(row.get('origem_cliente', 'Importação')).strip() if pd.notna(row.get('origem_cliente')) else 'Importação',
+                        observacoes=str(row.get('observacoes', '')).strip() if pd.notna(row.get('observacoes')) else None
                     )
                     sucessos += 1
 
@@ -181,12 +189,39 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
 
                     db.add_fornecedor(
                         descricao=descricao,
-                        contato=str(row.get('contato', '')).strip() if pd.notna(row.get('contato')) else None,
-                        email=str(row.get('email', '')).strip() if pd.notna(row.get('email')) else None,
+                        contato=str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None,
+                        endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
                         categoria=str(row.get('categoria', '')).strip() if pd.notna(row.get('categoria')) else None,
                         pix=str(row.get('pix', '')).strip() if pd.notna(row.get('pix')) else None,
-                        recorrente=bool(row.get('recorrente', False)),
-                        observacoes=str(row.get('observacoes', '')).strip() if pd.notna(row.get('observacoes')) else None
+                        observacoes=str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None
+                    )
+                    sucessos += 1
+
+                elif tipo_cadastro == "Parceiro":
+                    nome = str(row['nome']).strip() if pd.notna(row.get('nome')) else None
+                    if not nome:
+                        continue
+
+                    db.add_parceiro(
+                        nome=nome,
+                        telefone=str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None,
+                        area_atuacao=str(row.get('area_atuacao', '')).strip() if pd.notna(row.get('area_atuacao')) else None,
+                        tipo_parceria=str(row.get('tipo_parceria', '')).strip() if pd.notna(row.get('tipo_parceria')) else None,
+                        observacoes=str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None
+                    )
+                    sucessos += 1
+
+                elif tipo_cadastro == "Assistente":
+                    nome = str(row['nome']).strip() if pd.notna(row.get('nome')) else None
+                    if not nome:
+                        continue
+
+                    db.add_assistente(
+                        nome=nome,
+                        telefone=str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None,
+                        endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
+                        pix=str(row.get('pix', '')).strip() if pd.notna(row.get('pix')) else None,
+                        observacoes=str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None
                     )
                     sucessos += 1
 

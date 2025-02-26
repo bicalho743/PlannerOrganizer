@@ -32,19 +32,18 @@ def show():
 
             # Form de cadastro de fornecedor
             with st.form("cadastro_fornecedor", clear_on_submit=True):
-                nome = st.text_input("Nome/Razão Social")
+                nome = st.text_input("Razão Social")
                 col1, col2 = st.columns(2)
                 with col1:
-                    contato = st.text_input("Telefone")
-                    email = st.text_input("Email")
+                    telefone = st.text_input("Telefone")
                     categoria = st.selectbox(
                         "Categoria",
                         ["Produtos", "Serviços", "Marcenaria", "Outro"]
                     )
                 with col2:
                     pix = st.text_input("Chave PIX")
-                    recorrente = st.checkbox("Fornecedor Recorrente")
 
+                endereco = st.text_input("Endereço")
                 observacoes = st.text_area("Observações")
                 submitted = st.form_submit_button("Cadastrar")
 
@@ -52,11 +51,10 @@ def show():
                     try:
                         st.session_state.db.add_fornecedor(
                             descricao=nome,
-                            contato=contato,
-                            email=email,
+                            contato=telefone,
                             categoria=categoria,
+                            endereco=endereco,
                             pix=pix,
-                            recorrente=recorrente,
                             observacoes=observacoes
                         )
                         st.success("Fornecedor cadastrado com sucesso!")
@@ -196,23 +194,21 @@ def show():
                 col1, col2 = st.columns(2)
                 with col1:
                     telefone = st.text_input("Telefone")
-                    email = st.text_input("Email")
-                with col2:
                     area_atuacao = st.text_input("Área de Atuação")
+                with col2:
                     tipo_parceria = st.selectbox(
                         "Tipo de Parceria",
                         ["Indicação", "Colaboração", "Projeto Conjunto"]
                     )
 
                 observacoes = st.text_area("Observações")
-                submitted = st.form_submit_button("Cadastrar Parceiro")
+                submitted = st.form_submit_button("Cadastrar")
 
                 if submitted:
                     try:
                         st.session_state.db.add_parceiro(
                             nome=nome,
                             telefone=telefone,
-                            email=email,
                             area_atuacao=area_atuacao,
                             tipo_parceria=tipo_parceria,
                             observacoes=observacoes
@@ -359,24 +355,19 @@ def show():
                 col1, col2 = st.columns(2)
                 with col1:
                     telefone = st.text_input("Telefone")
-                    email = st.text_input("Email")
+                    endereco = st.text_input("Endereço")
                 with col2:
-                    disponibilidade = st.multiselect(
-                        "Disponibilidade",
-                        ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"]
-                    )
                     pix = st.text_input("Chave PIX")
 
                 observacoes = st.text_area("Observações")
-                submitted = st.form_submit_button("Cadastrar Assistente")
+                submitted = st.form_submit_button("Cadastrar")
 
                 if submitted:
                     try:
                         st.session_state.db.add_assistente(
                             nome=nome,
                             telefone=telefone,
-                            email=email,
-                            disponibilidade=",".join(disponibilidade) if disponibilidade else None,
+                            endereco=endereco,
                             pix=pix,
                             observacoes=observacoes
                         )
