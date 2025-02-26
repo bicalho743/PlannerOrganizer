@@ -214,74 +214,113 @@ def show():
                 registros = st.session_state['fornecedores']
 
                 if not registros.empty:
-                    # Exibir os fornecedores em cards
-                    for idx, fornecedor in registros.iterrows():
-                        with st.expander(f"{fornecedor['descricao']} - {fornecedor['categoria']}"):
-                            col1, col2 = st.columns([3, 1])
+                    # Definir colunas para exibição
+                    colunas = ['id', 'descricao', 'contato', 'categoria', 'endereco', 'pix', 'recorrente', 'observacoes']
+                    rename = {
+                        'id': 'ID',
+                        'descricao': 'Nome/Razão Social',
+                        'contato': 'Contato',
+                        'categoria': 'Categoria',
+                        'endereco': 'Endereço',
+                        'pix': 'PIX',
+                        'recorrente': 'Recorrente',
+                        'observacoes': 'Observações'
+                    }
 
-                            with col1:
-                                st.write(f"**Contato:** {fornecedor['contato']}")
-                                st.write(f"**Categoria:** {fornecedor['categoria']}")
-                                st.write(f"**PIX:** {fornecedor['pix']}")
-                                st.write(f"**Recorrente:** {'Sim' if fornecedor['recorrente'] else 'Não'}")
-                                if fornecedor['observacoes']:
-                                    st.write(f"**Observações:** {fornecedor['observacoes']}")
+                    # Criar DataFrame para exibição
+                    df_display = registros[colunas].copy()
+                    df_display.columns = [rename[col] for col in colunas]
 
-                            with col2:
-                                if st.button("🗑️ Excluir", key=f"del_forn_{fornecedor['id']}"):
-                                    try:
-                                        st.session_state.db.delete_fornecedor(fornecedor['id'])
-                                        st.success("Fornecedor excluído com sucesso!")
-                                        st.session_state['update_fornecedores'] = True
-                                        st.rerun()
-                                    except Exception as e:
-                                        st.error(f"Erro ao excluir fornecedor: {str(e)}")
+                    # Exibir tabela editável
+                    edited_df = st.data_editor(
+                        df_display,
+                        num_rows="dynamic",
+                        use_container_width=True,
+                        hide_index=True
+                    )
 
-                                if st.button("✏️ Editar", key=f"edit_forn_{fornecedor['id']}"):
-                                    st.session_state['editing_fornecedor_id'] = fornecedor['id']
+                    # Botões de ação para cada linha
+                    for idx, row in edited_df.iterrows():
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.button(f"🗑️ Excluir", key=f"del_forn_{row['ID']}"):
+                                try:
+                                    st.session_state.db.delete_fornecedor(row['ID'])
+                                    st.success("Fornecedor excluído com sucesso!")
+                                    st.session_state['update_fornecedores'] = True
                                     st.rerun()
+                                except Exception as e:
+                                    st.error(f"Erro ao excluir fornecedor: {str(e)}")
 
-                    # Formulário de edição
-                    if 'editing_fornecedor_id' in st.session_state:
-                        st.write("---")
-                        st.subheader("Editar Fornecedor")
-                        with st.form("edit_fornecedor_form"):
-                            fornecedor = registros[registros['id'] == st.session_state['editing_fornecedor_id']].iloc[0]
-                            edited_data = {}
-                            edited_data['descricao'] = st.text_input("Nome/Razão Social", value=fornecedor['descricao'])
-                            edited_data['contato'] = st.text_input("Telefone", value=fornecedor['contato'])
-                            edited_data['categoria'] = st.selectbox(
-                                "Categoria",
-                                ["Produtos", "Serviços", "Marcenaria", "Outro"],
-                                index=["Produtos", "Serviços", "Marcenaria", "Outro"].index(fornecedor['categoria'])
-                            )
-                            edited_data['pix'] = st.text_input("PIX", value=fornecedor['pix'])
-                            edited_data['recorrente'] = st.checkbox("Recorrente", value=fornecedor['recorrente'])
-                            edited_data['observacoes'] = st.text_area("Observações", value=fornecedor['observacoes'])
+                        with col2:
+                            if st.button(f"✏️ Editar", key=f"edit_forn_{row['ID']}"):
+                                st.session_state['editing_fornecedor_id'] = row['ID']
+                                st.rerun()
 
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                if st.form_submit_button("Salvar"):
-                                    try:
-                                        st.session_state.db.update_fornecedor(
-                                            st.session_state['editing_fornecedor_id'],
-                                            **edited_data
-                                        )
-                                        del st.session_state['editing_fornecedor_id']
-                                        st.session_state['update_fornecedores'] = True
-                                        st.success("Fornecedor atualizado com sucesso!")
-                                        st.rerun()
-                                    except Exception as e:
-                                        st.error(f"Erro ao atualizar fornecedor: {str(e)}")
-                            with col2:
-                                if st.form_submit_button("Cancelar"):
-                                    del st.session_state['editing_fornecedor_id']
-                                    st.rerun()
+                    # Verificar mudanças na edição
+                    if edited_df is not None and not edited_df.equals(df_display):
+                        for index, row in edited_df.iterrows():
+                            original_row = df_display.iloc[index]
+                            if not row.equals(original_row):
+                                try:
+                                    fornecedor_id = int(row['ID'])
+                                    update_data = {
+                                        'descricao': row['Nome/Razão Social'],
+                                        'contato': row['Contato'],
+                                        'categoria': row['Categoria'],
+                                        'endereco': row['Endereço'],
+                                        'pix': row['PIX'],
+                                        'recorrente': row['Recorrente'],
+                                        'observacoes': row['Observações']
+                                    }
+                                    st.session_state.db.update_fornecedor(fornecedor_id, **update_data)
+                                    st.success(f"Fornecedor {fornecedor_id} atualizado com sucesso!")
+                                    st.session_state['update_fornecedores'] = True
+                                except Exception as e:
+                                    st.error(f"Erro ao atualizar fornecedor {fornecedor_id}: {str(e)}")
                 else:
                     st.info("Nenhum fornecedor cadastrado.")
 
             except Exception as e:
                 st.error(f"Erro ao carregar lista de fornecedores: {str(e)}")
+
+        # Seção de edição do fornecedor (mantido separado para melhor organização)
+        if 'editing_fornecedor_id' in st.session_state:
+            st.write("---")
+            st.subheader("Editar Fornecedor")
+            with st.form("edit_fornecedor_form"):
+                fornecedor = registros[registros['id'] == st.session_state['editing_fornecedor_id']].iloc[0]
+                edited_data = {}
+                edited_data['descricao'] = st.text_input("Nome/Razão Social", value=fornecedor['descricao'])
+                edited_data['contato'] = st.text_input("Telefone", value=fornecedor['contato'])
+                edited_data['categoria'] = st.selectbox(
+                    "Categoria",
+                    ["Produtos", "Serviços", "Marcenaria", "Outro"],
+                    index=["Produtos", "Serviços", "Marcenaria", "Outro"].index(fornecedor['categoria'])
+                )
+                edited_data['pix'] = st.text_input("PIX", value=fornecedor['pix'])
+                edited_data['recorrente'] = st.checkbox("Recorrente", value=fornecedor['recorrente'])
+                edited_data['observacoes'] = st.text_area("Observações", value=fornecedor['observacoes'])
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.form_submit_button("Salvar"):
+                        try:
+                            st.session_state.db.update_fornecedor(
+                                st.session_state['editing_fornecedor_id'],
+                                **edited_data
+                            )
+                            del st.session_state['editing_fornecedor_id']
+                            st.session_state['update_fornecedores'] = True
+                            st.success("Fornecedor atualizado com sucesso!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Erro ao atualizar fornecedor: {str(e)}")
+
+                with col2:
+                    if st.form_submit_button("Cancelar"):
+                        del st.session_state['editing_fornecedor_id']
+                        st.rerun()
 
         with fornecedor_tab2:
             st.subheader("Importar Fornecedores")
@@ -330,6 +369,7 @@ def show():
                         ["Indicação", "Colaboração", "Projeto Conjunto"]
                     )
 
+                pix = st.text_input("PIX") # Added PIX field
                 observacoes = st.text_area("Observações")
                 submitted = st.form_submit_button("Cadastrar")
 
@@ -340,6 +380,7 @@ def show():
                             telefone=telefone,
                             area_atuacao=area_atuacao,
                             tipo_parceria=tipo_parceria,
+                            pix=pix, # Added pix to add_parceiro
                             observacoes=observacoes
                         )
                         st.success("Parceiro cadastrado com sucesso!")
@@ -347,8 +388,8 @@ def show():
                     except Exception as e:
                         st.error(f"Erro ao cadastrar parceiro: {str(e)}")
 
-            # Lista de cadastros
-            st.subheader(f"Lista de Parceiros")
+            # Lista de parceiros
+            st.subheader("Lista de Parceiros")
             try:
                 @st.cache_data(ttl=60)
                 def load_parceiros():
@@ -360,88 +401,113 @@ def show():
                 elif 'parceiros' not in st.session_state:
                     st.session_state['parceiros'] = load_parceiros()
 
-
                 registros = st.session_state['parceiros']
                 if not registros.empty:
                     # Definir colunas para exibição
-                    colunas = ['nome', 'telefone', 'area_atuacao', 'tipo_parceria']
+                    colunas = ['id', 'nome', 'telefone', 'area_atuacao', 'tipo_parceria', 'pix', 'observacoes']
                     rename = {
+                        'id': 'ID',
                         'nome': 'Nome',
                         'telefone': 'Telefone',
                         'area_atuacao': 'Área de Atuação',
-                        'tipo_parceria': 'Tipo de Parceria'
+                        'tipo_parceria': 'Tipo de Parceria',
+                        'pix': 'PIX',
+                        'observacoes': 'Observações'
                     }
 
                     # Criar DataFrame para exibição
                     df_display = registros[colunas].copy()
                     df_display.columns = [rename[col] for col in colunas]
 
-                    # Exibir tabela
-                    st.dataframe(df_display, hide_index=True)
+                    # Exibir tabela editável
+                    edited_df = st.data_editor(
+                        df_display,
+                        num_rows="dynamic",
+                        use_container_width=True,
+                        hide_index=True
+                    )
 
-                    # Botões de ação
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        registro_id = st.number_input(
-                            "ID do registro para ação:",
-                            min_value=1,
-                            max_value=len(registros),
-                            step=1
-                        )
-
-                    with col2:
-                        acao = st.selectbox(
-                            "Ação:",
-                            ["Editar", "Excluir"]
-                        )
-
-                    # Formulário de ação
-                    with st.form(f"acao_registro_parceiro"):
-                        if st.form_submit_button(f"Confirmar {acao}"):
-                            if acao == "Excluir":
+                    # Botões de ação para cada linha
+                    for idx, row in edited_df.iterrows():
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.button(f"🗑️ Excluir", key=f"del_parc_{row['ID']}"):
                                 try:
-                                    st.session_state.db.delete_parceiro(registro_id)
-                                    st.success(f"Parceiro excluído com sucesso!")
+                                    st.session_state.db.delete_parceiro(row['ID'])
+                                    st.success("Parceiro excluído com sucesso!")
+                                    st.session_state['update_parceiros'] = True
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Erro ao excluir parceiro: {str(e)}")
+
+                        with col2:
+                            if st.button(f"✏️ Editar", key=f"edit_parc_{row['ID']}"):
+                                st.session_state['editing_parceiro_id'] = row['ID']
+                                st.rerun()
+
+                    # Verificar mudanças na edição
+                    if edited_df is not None and not edited_df.equals(df_display):
+                        for index, row in edited_df.iterrows():
+                            original_row = df_display.iloc[index]
+                            if not row.equals(original_row):
+                                try:
+                                    parceiro_id = int(row['ID'])
+                                    update_data = {
+                                        'nome': row['Nome'],
+                                        'telefone': row['Telefone'],
+                                        'area_atuacao': row['Área de Atuação'],
+                                        'tipo_parceria': row['Tipo de Parceria'],
+                                        'pix': row['PIX'],
+                                        'observacoes': row['Observações']
+                                    }
+                                    st.session_state.db.update_parceiro(parceiro_id, **update_data)
+                                    st.success(f"Parceiro {parceiro_id} atualizado com sucesso!")
                                     st.session_state['update_parceiros'] = True
                                 except Exception as e:
-                                    st.error(f"Erro ao excluir Parceiro: {str(e)}")
-                            elif acao == "Editar":
-                                st.session_state['editing_parceiro_id'] = registro_id
-
-                    # Formulário de edição
-                    if 'editing_parceiro_id' in st.session_state:
-                        with st.form(f"edit_form_{registro_id}"):
-                            registro = registros[registros['id'] == st.session_state['editing_parceiro_id']].iloc[0]
-                            edited_data = {}
-                            edited_data['nome'] = st.text_input("Nome", value=registro['nome'])
-                            edited_data['email'] = st.text_input("Email", value=registro.get('email', ''))
-                            edited_data['telefone'] = st.text_input("Telefone", value=registro.get('telefone', ''))
-                            edited_data['area_atuacao'] = st.text_input("Área de Atuação", value=registro.get('area_atuacao', ''))
-                            edited_data['tipo_parceria'] = st.selectbox(
-                                "Tipo de Parceria",
-                                ["Indicação", "Colaboração", "Projeto Conjunto"],
-                                index=["Indicação", "Colaboração", "Projeto Conjunto"].index(registro.get('tipo_parceria', 'Indicação'))
-                            )
-
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                if st.form_submit_button("Salvar"):
-                                    try:
-                                        st.session_state.db.update_parceiro(st.session_state['editing_parceiro_id'], **edited_data)
-                                        del st.session_state['editing_parceiro_id']
-                                        st.session_state['update_parceiros'] = True
-                                        st.success("Registro atualizado com sucesso!")
-                                    except Exception as e:
-                                        st.error(f"Erro ao atualizar registro: {str(e)}")
-
-                            with col2:
-                                if st.form_submit_button("Cancelar"):
-                                    del st.session_state['editing_parceiro_id']
+                                    st.error(f"Erro ao atualizar parceiro {parceiro_id}: {str(e)}")
                 else:
                     st.info("Nenhum parceiro cadastrado.")
 
             except Exception as e:
                 st.error(f"Erro ao carregar lista de parceiros: {str(e)}")
+
+        # Seção de edição do parceiro (mantido separado para melhor organização)
+        if 'editing_parceiro_id' in st.session_state:
+            st.write("---")
+            st.subheader("Editar Parceiro")
+            with st.form("edit_parceiro_form"):
+                parceiro = registros[registros['id'] == st.session_state['editing_parceiro_id']].iloc[0]
+                edited_data = {}
+                edited_data['nome'] = st.text_input("Nome", value=parceiro['nome'])
+                edited_data['telefone'] = st.text_input("Telefone", value=parceiro['telefone'])
+                edited_data['area_atuacao'] = st.text_input("Área de Atuação", value=parceiro['area_atuacao'])
+                edited_data['tipo_parceria'] = st.selectbox(
+                    "Tipo de Parceria",
+                    ["Indicação", "Colaboração", "Projeto Conjunto"],
+                    index=["Indicação", "Colaboração", "Projeto Conjunto"].index(parceiro['tipo_parceria'])
+                )
+                edited_data['pix'] = st.text_input("PIX", value=parceiro['pix'])
+                edited_data['observacoes'] = st.text_area("Observações", value=parceiro['observacoes'])
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.form_submit_button("Salvar"):
+                        try:
+                            st.session_state.db.update_parceiro(
+                                st.session_state['editing_parceiro_id'],
+                                **edited_data
+                            )
+                            del st.session_state['editing_parceiro_id']
+                            st.session_state['update_parceiros'] = True
+                            st.success("Parceiro atualizado com sucesso!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Erro ao atualizar parceiro: {str(e)}")
+
+                with col2:
+                    if st.form_submit_button("Cancelar"):
+                        del st.session_state['editing_parceiro_id']
+                        st.rerun()
 
         with parceiro_tab2:
             st.subheader("Importar Parceiros")
@@ -515,8 +581,9 @@ def show():
                     st.session_state['assistentes'] = load_assistentes()
 
                 registros = st.session_state['assistentes']
-                colunas = ['nome', 'telefone', 'endereco', 'pix', 'observacoes']
+                colunas = ['id','nome', 'telefone', 'endereco', 'pix', 'observacoes']
                 rename = {
+                    'id': 'ID',
                     'nome': 'Nome',
                     'telefone': 'Telefone',
                     'endereco': 'Endereço',
@@ -530,63 +597,51 @@ def show():
                     # Renomear colunas para exibição
                     df_display.columns = [rename[col] for col in colunas]
 
-                    # Exibir tabela
-                    st.dataframe(df_display, hide_index=True)
+                    # Exibir tabela editável
+                    edited_df = st.data_editor(
+                        df_display,
+                        num_rows="dynamic",
+                        use_container_width=True,
+                        hide_index=True
+                    )
 
-                    # Botões de ação abaixo da tabela
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        registro_id = st.number_input(
-                            "ID do registro para ação:",
-                            min_value=1,
-                            max_value=len(registros),
-                            step=1
-                        )
-
-                    with col2:
-                        acao = st.selectbox(
-                            "Ação:",
-                            ["Editar", "Excluir"]
-                        )
-
-                    # Formulário de ação
-                    with st.form(f"acao_registro_assistente"):
-                        if st.form_submit_button(f"Confirmar {acao}"):
-                            if acao == "Excluir":
+                    # Botões de ação para cada linha
+                    for index, row in edited_df.iterrows():
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.button(f"🗑️ Excluir", key=f"del_assis_{row['ID']}"):
                                 try:
-                                    st.session_state.db.delete_assistente(registro_id)
-                                    st.success(f"Assistente excluído com sucesso!")
+                                    st.session_state.db.delete_assistente(row['ID'])
+                                    st.success("Assistente excluído com sucesso!")
+                                    st.session_state['update_assistentes'] = True
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Erro ao excluir assistente: {str(e)}")
+
+                        with col2:
+                            if st.button(f"✏️ Editar", key=f"edit_assis_{row['ID']}"):
+                                st.session_state['editing_assistente_id'] = row['ID']
+                                st.rerun()
+
+                    # Verificar mudanças na edição
+                    if edited_df is not None and not edited_df.equals(df_display):
+                        for index, row in edited_df.iterrows():
+                            original_row = df_display.iloc[index]
+                            if not row.equals(original_row):
+                                try:
+                                    assistente_id = int(row['ID'])
+                                    update_data = {
+                                        'nome': row['Nome'],
+                                        'telefone': row['Telefone'],
+                                        'endereco': row['Endereço'],
+                                        'pix': row['PIX'],
+                                        'observacoes': row['Observação']
+                                    }
+                                    st.session_state.db.update_assistente(assistente_id, **update_data)
+                                    st.success(f"Assistente {assistente_id} atualizado com sucesso!")
                                     st.session_state['update_assistentes'] = True
                                 except Exception as e:
-                                    st.error(f"Erro ao excluir Assistente: {str(e)}")
-                            elif acao == "Editar":
-                                st.session_state['editing_assistente_id'] = registro_id
-
-                    # Formulário de edição
-                    if 'editing_assistente_id' in st.session_state:
-                        with st.form(f"edit_form_{registro_id}"):
-                            registro = registros[registros['id'] == st.session_state['editing_assistente_id']].iloc[0]
-                            edited_data = {}
-                            edited_data['nome'] = st.text_input("Nome", value=registro['nome'])
-                            edited_data['telefone'] = st.text_input("Telefone", value=registro['telefone'])
-                            edited_data['endereco'] = st.text_input("Endereço", value=registro['endereco'])
-                            edited_data['pix'] = st.text_input("PIX", value=registro['pix'])
-                            edited_data['observacoes'] = st.text_area("Observação", value=registro['observacoes'])
-
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                if st.form_submit_button("Salvar"):
-                                    try:
-                                        st.session_state.db.update_assistente(st.session_state['editing_assistente_id'], **edited_data)
-                                        del st.session_state['editing_assistente_id']
-                                        st.session_state['update_assistentes'] = True
-                                        st.success("Registro atualizado com sucesso!")
-                                    except Exception as e:
-                                        st.error(f"Erro ao atualizar registro: {str(e)}")
-
-                            with col2:
-                                if st.form_submit_button("Cancelar"):
-                                    del st.session_state['editing_assistente_id']
+                                    st.error(f"Erro ao atualizar assistente {assistente_id}: {str(e)}")
                 else:
                     st.info(f"Nenhum assistente cadastrado.")
 
