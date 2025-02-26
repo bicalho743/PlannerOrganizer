@@ -743,7 +743,7 @@ class Database:
                 pix=pix,
                 observacoes=observacoes,
                 email=email,
-                disponibilidade=disponibilidade
+                disponibilidade=disponilidade
             )
             self.session.add(assistente)
             return assistente.id
@@ -897,130 +897,49 @@ class Database:
             return pd.DataFrame(pendentes)
         return self._safe_query(query)
 
-    def atualizar_cliente(self, cliente_id, **kwargs):
+    def update_cliente(self, cliente_id, nome=None, email=None, telefone=None, estado=None, 
+                      cidade=None, bairro=None, endereco=None, cpf=None, 
+                      data_aniversario=None, origem_cliente=None, observacoes=None):
         """Atualiza os dados de um cliente"""
         def query():
             cliente = self.session.query(Cliente).filter_by(id=cliente_id).first()
-            if cliente:
-                for key, value in kwargs.items():
-                    if hasattr(cliente, key):
-                        setattr(cliente, key, value)
-                return True
-            return False
+            if not cliente:
+                return False
+
+            if nome is not None:
+                cliente.nome = nome
+            if email is not None:
+                cliente.email = email
+            if telefone is not None:
+                cliente.telefone = telefone
+            if estado is not None:
+                cliente.estado = estado
+            if cidade is not None:
+                cliente.cidade = cidade
+            if bairro is not None:
+                cliente.bairro = bairro
+            if endereco is not None:
+                cliente.endereco = endereco
+            if cpf is not None:
+                cliente.cpf = cpf
+            if data_aniversario is not None:
+                cliente.data_aniversario = data_aniversario
+            if origem_cliente is not None:
+                cliente.origem_cliente = origem_cliente
+            if observacoes is not None:
+                cliente.observacoes = observacoes
+
+            return True
         return self._safe_query(query)
 
-    def excluir_cliente(self, cliente_id):
-        """Exclui um cliente e reordena os IDs"""
-        def query():
-            try:
-                # Excluir o cliente
-                cliente = self.session.query(Cliente).filter_by(id=cliente_id).first()
-                if not cliente:
-                    return False, "Cliente não encontrado"
-
-                self.session.delete(cliente)
-
-                # Reordenar IDs dos clientes restantes
-                clientes = self.session.query(Cliente).order_by(Cliente.data_cadastro).all()
-                for novo_id, cliente in enumerate(clientes, 1):
-                    cliente.id = novo_id
-
-                return True, "Cliente excluído com sucesso"
-            except Exception as e:
-                return False, f"Erro ao excluir cliente: {str(e)}"
-        return self._safe_query(query)
-
-    def excluir_proposta(self, proposta_id):
-        """Exclui uma proposta e seus registros relacionados"""
-        def query():
-            proposta = self.session.query(Proposta).filter_by(id=proposta_id).first()
-            if proposta:
-                # Excluir registros relacionados
-                self.session.query(AndamentoProposta).filter_by(proposta_id=proposta_id).delete()
-                self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id).delete()
-                self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).delete()
-
-                # Excluir a proposta
-                self.session.delete(proposta)
-                return True, "Proposta excluída com sucesso"
-            return False, "Proposta não encontrada"
-        return self._safe_query(query)
-
-    def atualizar_status_pagamento_acrescimo(self, proposta_id, tipo, status):
-        """Atualiza o status de pagamento de um acréscimo"""
-        def query():
-            acrescimo = self.session.query(AcrescimoProposta).filter_by(
-                proposta_id=proposta_id,
-                tipo=tipo
-            ).first()
-            if acrescimo:
-                acrescimo.status_pagamento = status
-                return True
-            return False
-        return self._safe_query(query)
-
-    def get_historico_pagamentos(self):
-        """Retorna o histórico de pagamentos recebidos"""
-        def query():
-            # Buscar pagamentos de propostas
-            propostas = self.session.query(Proposta).filter_by(status_pagamento_base='Recebido').all()
-            historico = []
-
-            # Adicionar valores base recebidos
-            for p in propostas:
-                historico.append({
-                    'proposta': p.numero,
-                    'cliente': p.cliente.nome,
-                    'tipo': 'Valor Base',
-                    'valor': p.valor,
-                    'data_recebimento': p.data_proposta
-                })
-
-            # Adicionar acréscimos recebidos
-            acrescimos = self.session.query(AcrescimoProposta).filter_by(status_pagamento='Recebido').all()
-            for a in acrescimos:
-                historico.append({
-                    'proposta': a.proposta.numero,
-                    'cliente': a.proposta.cliente.nome,
-                    'tipo': a.tipo,
-                    'valor': a.valor,
-                    'data_recebimento': a.data_cadastro
-                })
-
-            return pd.DataFrame(historico)
-        return self._safe_query(query)
-
-    def atualizar_cliente(self, cliente_id, **kwargs):
-        """Atualiza os dados de um cliente"""
+    def delete_cliente(self, cliente_id):
+        """Exclui um cliente do banco de dados"""
         def query():
             cliente = self.session.query(Cliente).filter_by(id=cliente_id).first()
             if cliente:
-                for key, value in kwargs.items():
-                    if hasattr(cliente, key):
-                        setattr(cliente, key, value)
+                self.session.delete(cliente)
                 return True
             return False
-        return self._safe_query(query)
-
-    def excluir_cliente(self, cliente_id):
-        """Exclui um cliente e reordena os IDs"""
-        def query():
-            try:
-                # Excluir o cliente
-                cliente = self.session.query(Cliente).filter_by(id=cliente_id).first()
-                if not cliente:
-                    return False, "Cliente não encontrado"
-
-                self.session.delete(cliente)
-
-                # Reordenar IDs dos clientes restantes
-                clientes = self.session.query(Cliente).order_by(Cliente.data_cadastro).all()
-                for novo_id, cliente in enumerate(clientes, 1):
-                    cliente.id = novo_id
-
-                return True, "Cliente excluído com sucesso"
-            except Exception as e:
-                return False, f"Erro ao excluir cliente: {str(e)}"
         return self._safe_query(query)
 
     def excluir_proposta(self, proposta_id):

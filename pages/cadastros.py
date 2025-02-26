@@ -21,8 +21,108 @@ def show():
     ])
 
     with tab_cliente:
-        from pages import clientes
-        clientes.show()
+        st.subheader("Lista de Clientes")
+        try:
+            @st.cache_data(ttl=60)
+            def load_clientes():
+                return st.session_state.db.get_clientes()
+
+            if 'update_clientes' in st.session_state and st.session_state['update_clientes']:
+                st.session_state['clientes'] = load_clientes()
+                st.session_state['update_clientes'] = False
+            elif 'clientes' not in st.session_state:
+                st.session_state['clientes'] = load_clientes()
+
+            registros = st.session_state['clientes']
+
+            if not registros.empty:
+                # Definir colunas para exibição
+                colunas = ['id', 'nome', 'telefone', 'email', 'cpf', 'estado', 'cidade', 'bairro', 
+                          'endereco', 'data_aniversario', 'origem_cliente', 'observacoes']
+                rename = {
+                    'id': 'ID',
+                    'nome': 'Nome',
+                    'telefone': 'Telefone',
+                    'email': 'Email',
+                    'cpf': 'CPF',
+                    'estado': 'Estado',
+                    'cidade': 'Cidade',
+                    'bairro': 'Bairro',
+                    'endereco': 'Endereço',
+                    'data_aniversario': 'Data Aniversário',
+                    'origem_cliente': 'Origem',
+                    'observacoes': 'Observações'
+                }
+
+                # Criar DataFrame para exibição
+                df_display = registros[colunas].copy()
+                df_display.columns = [rename[col] for col in colunas]
+
+                # Exibir tabela editável
+                edited_df = st.data_editor(
+                    df_display,
+                    num_rows="dynamic",
+                    use_container_width=True,
+                    hide_index=True
+                )
+
+                # Botões de ação
+                col1, col2 = st.columns(2)
+                with col1:
+                    cliente_id = st.number_input(
+                        "ID do cliente para ação:",
+                        min_value=1,
+                        max_value=len(registros) if not registros.empty else 1,
+                        step=1
+                    )
+
+                with col2:
+                    acao = st.selectbox(
+                        "Ação:",
+                        ["Excluir"]
+                    )
+
+                # Botão de confirmação
+                if st.button(f"Confirmar {acao}"):
+                    if acao == "Excluir":
+                        try:
+                            st.session_state.db.delete_cliente(cliente_id)
+                            st.success(f"Cliente excluído com sucesso!")
+                            st.session_state['update_clientes'] = True
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Erro ao excluir cliente: {str(e)}")
+
+                # Verificar mudanças na edição
+                if edited_df is not None and not edited_df.equals(df_display):
+                    for index, row in edited_df.iterrows():
+                        original_row = df_display.iloc[index]
+                        if not row.equals(original_row):
+                            try:
+                                cliente_id = int(row['ID'])
+                                update_data = {
+                                    'nome': row['Nome'],
+                                    'telefone': row['Telefone'],
+                                    'email': row['Email'],
+                                    'cpf': row['CPF'],
+                                    'estado': row['Estado'],
+                                    'cidade': row['Cidade'],
+                                    'bairro': row['Bairro'],
+                                    'endereco': row['Endereço'],
+                                    'data_aniversario': row['Data Aniversário'],
+                                    'origem_cliente': row['Origem'],
+                                    'observacoes': row['Observações']
+                                }
+                                st.session_state.db.update_cliente(cliente_id, **update_data)
+                                st.success(f"Cliente {cliente_id} atualizado com sucesso!")
+                                st.session_state['update_clientes'] = True
+                            except Exception as e:
+                                st.error(f"Erro ao atualizar cliente {cliente_id}: {str(e)}")
+            else:
+                st.info("Nenhum cliente cadastrado.")
+
+        except Exception as e:
+            st.error(f"Erro ao carregar clientes: {str(e)}")
 
     with tab_fornecedor:
         fornecedor_tab1, fornecedor_tab2 = st.tabs(["Cadastrar/Listar", "Importar"])
