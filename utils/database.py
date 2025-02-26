@@ -82,6 +82,7 @@ class Fornecedor(Base):
     data_vencimento = Column(Date, nullable=True)
     data_pagamento = Column(Date, nullable=True)
     status = Column(String, nullable=True)
+    email = Column(String) # Added email field
 
 
 class Assistente(Base):
@@ -407,7 +408,7 @@ class Database:
 
     def add_fornecedor(self, descricao, contato, categoria, estado=None, cidade=None, 
                   bairro=None, endereco=None, pix=None, recorrente=False, observacoes=None, 
-                  valor=None, data_vencimento=None, data_pagamento=None, status=None):
+                  valor=None, data_vencimento=None, data_pagamento=None, status=None, email=None):
         def query():
             fornecedor = Fornecedor(
                 descricao=descricao,
@@ -423,7 +424,8 @@ class Database:
                 valor=valor,
                 data_vencimento=data_vencimento,
                 data_pagamento=data_pagamento,
-                status=status
+                status=status,
+                email=email
             )
             self.session.add(fornecedor)
             return fornecedor.id
@@ -436,6 +438,7 @@ class Database:
                 'id': f.id,
                 'descricao': f.descricao,
                 'contato': f.contato,
+                'email': f.email,
                 'categoria': f.categoria,
                 'estado': f.estado,
                 'cidade': f.cidade,
@@ -695,7 +698,8 @@ class Database:
                 estado="SP",
                 cidade="São Paulo",
                 bairro="Pinheiros",
-                endereco="Rua Augusta, 100"
+                endereco="Rua Augusta, 100",
+                email="organizador@email.com"
             )
 
             proposta1_id = self.add_proposta(
@@ -823,7 +827,7 @@ class Database:
                     return True
                 return False
             except (ValueError, TypeError) as e:
-                raise Exception(f"Erro ao converter valores: {str(e)}")
+                raise Exception(f"Erro ao converter valores:: {str(e)}")
         return self._safe_query(query)
 
     def add_acrescimo_proposta(self, proposta_id, tipo, valor, descricao=None, fornecedor=None, status_pagamento='Pendente'):

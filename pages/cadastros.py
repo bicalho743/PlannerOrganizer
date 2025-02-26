@@ -12,11 +12,12 @@ def show():
     st.title("📋 Cadastros")
 
     # Tabs para diferentes tipos de cadastro
-    tab_cliente, tab_fornecedor, tab_parceiro, tab_assistente = st.tabs([
+    tab_cliente, tab_fornecedor, tab_parceiro, tab_assistente, tab3 = st.tabs([
         "👥 Clientes",
         "🏢 Fornecedores",
         "🤝 Parceiros",
-        "👨‍💼 Assistentes"
+        "👨‍💼 Assistentes",
+        "Importar Clientes"
     ])
 
     with tab_cliente:
@@ -503,3 +504,51 @@ def show():
                             st.session_state['update_assistentes'] = True
                         else:
                             st.error(mensagem)
+
+    with tab3:
+        st.subheader("Importar Clientes")
+        st.write("""
+        Para importar clientes, seu arquivo deve ter o seguinte formato:
+        - Arquivo CSV com separador ponto e vírgula (;)
+        - Colunas disponíveis:
+            - nome (obrigatório)
+            - telefone
+            - email
+            - cpf
+            - estado
+            - cidade
+            - bairro
+            - endereco
+            - data_aniversario (formato: DD/MM/YYYY)
+            - origem_cliente
+        """)
+
+        # Download do template
+        template = gerar_template_csv("Cliente")
+        st.download_button(
+            "📝 Baixar Template",
+            template,
+            "template_cliente.csv",
+            "text/csv",
+            help="Baixe este template, preencha com seus dados e faça upload para importar"
+        )
+
+        # Upload e importação
+        arquivo = st.file_uploader("Selecione o arquivo CSV", type=['csv'])
+        if arquivo:
+            try:
+                # Ler primeiras linhas para preview
+                df_preview = pd.read_csv(arquivo, sep=';', nrows=5)
+                st.write("Preview dos dados:")
+                st.dataframe(df_preview)
+
+                if st.button("Importar Clientes"):
+                    arquivo.seek(0)  # Voltar ao início do arquivo
+                    with st.spinner("Importando dados..."):
+                        sucesso, mensagem = importar_cadastros(arquivo, "Cliente", st.session_state.db)
+                        if sucesso:
+                            st.success(mensagem)
+                        else:
+                            st.error(mensagem)
+            except Exception as e:
+                st.error(f"Erro ao processar arquivo: {str(e)}")
