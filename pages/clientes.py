@@ -124,25 +124,40 @@ def show():
                 ), axis=1)
                 clientes = clientes[mask]
 
-            # Definir colunas para exibição
-            colunas = ['id', 'nome', 'email', 'telefone', 'tipo_conta', 'cpf', 'cnpj', 
-                      'razao_social', 'data_aniversario', 'origem_cliente', 'estado', 
-                      'cidade', 'bairro', 'endereco', 'data_cadastro']
+            # Definir colunas para exibição na ordem da planilha de importação
+            colunas = [
+                'id',           # ID sempre primeiro
+                'nome',         # Dados básicos
+                'tipo_conta',
+                'cpf',         # Documentos
+                'cnpj',
+                'razao_social',
+                'email',
+                'telefone',
+                'estado',      # Endereço
+                'cidade',
+                'bairro',
+                'endereco',
+                'data_aniversario',
+                'origem_cliente',
+                'data_cadastro'
+            ]
+
             rename = {
                 'id': 'ID',
                 'nome': 'Nome',
-                'email': 'Email',
-                'telefone': 'Telefone',
                 'tipo_conta': 'Tipo de Conta',
                 'cpf': 'CPF',
                 'cnpj': 'CNPJ',
                 'razao_social': 'Razão Social',
-                'data_aniversario': 'Aniversário',
-                'origem_cliente': 'Origem',
+                'email': 'Email',
+                'telefone': 'Telefone',
                 'estado': 'Estado',
                 'cidade': 'Cidade',
                 'bairro': 'Bairro',
                 'endereco': 'Endereço',
+                'data_aniversario': 'Aniversário',
+                'origem_cliente': 'Origem',
                 'data_cadastro': 'Data Cadastro'
             }
 

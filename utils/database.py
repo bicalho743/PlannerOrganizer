@@ -52,19 +52,19 @@ class Cliente(Base):
         Index('idx_cliente_email', 'email'),
     )
     nome = Column(String, nullable=False)
-    email = Column(String)
     telefone = Column(String)
-    estado = Column(String)  # Novo campo
-    cidade = Column(String)  # Novo campo
-    bairro = Column(String)  # Novo campo
-    endereco = Column(String)
+    tipo_conta = Column(String, default='PF')
     cpf = Column(String)
+    cnpj = Column(String)
+    razao_social = Column(String)
+    email = Column(String)
+    estado = Column(String)
+    cidade = Column(String)
+    bairro = Column(String)
+    endereco = Column(String)
     data_aniversario = Column(Date)
     origem_cliente = Column(String)
     data_cadastro = Column(Date, default=datetime.now().date())
-    tipo_conta = Column(String, default='PF')
-    cnpj = Column(String)
-    razao_social = Column(String)
 
     propostas = relationship("Proposta", back_populates="cliente")
 
@@ -913,18 +913,24 @@ class Database:
         return self._safe_query(query)
 
     def excluir_cliente(self, cliente_id):
-        """Exclui um cliente se ele não tiver propostas vinculadas"""
+        """Exclui um cliente e reordena os IDs"""
         def query():
-            # Verificar se existem propostas vinculadas
-            propostas = self.session.query(Proposta).filter_by(cliente_id=cliente_id).first()
-            if propostas:
-                return False, "Não é possível excluir o cliente pois existem propostas vinculadas"
+            try:
+                # Excluir o cliente
+                cliente = self.session.query(Cliente).filter_by(id=cliente_id).first()
+                if not cliente:
+                    return False, "Cliente não encontrado"
 
-            cliente = self.session.query(Cliente).filter_by(id=cliente_id).first()
-            if cliente:
                 self.session.delete(cliente)
+
+                # Reordenar IDs dos clientes restantes
+                clientes = self.session.query(Cliente).order_by(Cliente.data_cadastro).all()
+                for novo_id, cliente in enumerate(clientes, 1):
+                    cliente.id = novo_id
+
                 return True, "Cliente excluído com sucesso"
-            return False, "Cliente não encontrado"
+            except Exception as e:
+                return False, f"Erro ao excluir cliente: {str(e)}"
         return self._safe_query(query)
 
     def excluir_proposta(self, proposta_id):
