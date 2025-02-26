@@ -188,8 +188,33 @@ def show():
 
         if uploaded_file is not None:
             try:
-                df = pd.read_csv(uploaded_file, encoding='utf-8')
-                logger.info(f"Arquivo carregado com sucesso. Colunas encontradas: {df.columns.tolist()}")
+                # Tentar diferentes codificações
+                encodings = ['utf-8', 'latin1', 'iso-8859-1']
+                df = None
+                encoding_used = None
+
+                for encoding in encodings:
+                    try:
+                        df = pd.read_csv(uploaded_file, encoding=encoding)
+                        encoding_used = encoding
+                        break
+                    except UnicodeDecodeError:
+                        continue
+                    except Exception as e:
+                        st.error(f"Erro ao tentar ler o arquivo com codificação {encoding}: {str(e)}")
+                        continue
+
+                if df is None:
+                    st.error("""
+                    Não foi possível ler o arquivo CSV. Por favor, verifique se:
+                    1. O arquivo está no formato CSV correto
+                    2. O arquivo não está corrompido
+                    3. O arquivo foi salvo com codificação adequada (UTF-8 ou Latin1)
+                    """)
+                    return
+
+                logger.info(f"Arquivo carregado com sucesso usando codificação {encoding_used}")
+                logger.info(f"Colunas encontradas: {df.columns.tolist()}")
 
                 if 'nome' not in df.columns:
                     st.error("O arquivo deve conter uma coluna 'nome'")
@@ -232,10 +257,12 @@ def show():
                                 if tipo_conta == 'PF':
                                     if pd.notna(row.get('cpf')):
                                         cpf = str(row['cpf']).strip()
+                                        cpf = ''.join(filter(str.isdigit, cpf))
                                         logger.info(f"CPF processado: {cpf}")
                                 elif tipo_conta == 'PJ':
                                     if pd.notna(row.get('cnpj')):
                                         cnpj = str(row['cnpj']).strip()
+                                        cnpj = ''.join(filter(str.isdigit, cnpj))
                                     if pd.notna(row.get('razao_social')):
                                         razao_social = str(row['razao_social']).strip()
 
