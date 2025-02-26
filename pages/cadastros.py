@@ -41,43 +41,35 @@ def show():
                         ["Produtos", "Serviços", "Marcenaria", "Outro"]
                     )
                 with col2:
-                    tipo_conta = st.selectbox(
-                        "Tipo de Conta", 
-                        ["PF", "PJ"]
-                    )
                     pix = st.text_input("Chave PIX")
                     recorrente = st.checkbox("Fornecedor Recorrente")
 
                 observacoes = st.text_area("Observações")
-                submitted = st.form_submit_button("Cadastrar Fornecedor")
+                submitted = st.form_submit_button("Cadastrar")
 
                 if submitted:
                     try:
                         st.session_state.db.add_fornecedor(
-                            nome=nome,
+                            descricao=nome,
                             contato=contato,
                             email=email,
                             categoria=categoria,
-                            tipo_conta=tipo_conta,
                             pix=pix,
                             recorrente=recorrente,
                             observacoes=observacoes
                         )
                         st.success("Fornecedor cadastrado com sucesso!")
-                        # Atualizar lista de fornecedores na sessão
                         st.session_state['update_fornecedores'] = True
                     except Exception as e:
                         st.error(f"Erro ao cadastrar fornecedor: {str(e)}")
 
-            # Lista de cadastros
+            # Lista de fornecedores
             st.subheader("Lista de Fornecedores")
             try:
-                # Usar cache do Streamlit para evitar consultas desnecessárias
                 @st.cache_data(ttl=60)
                 def load_fornecedores():
                     return st.session_state.db.get_fornecedores()
 
-                # Carregar fornecedores apenas se necessário
                 if 'update_fornecedores' in st.session_state and st.session_state['update_fornecedores']:
                     st.session_state['fornecedores'] = load_fornecedores()
                     st.session_state['update_fornecedores'] = False
@@ -87,76 +79,51 @@ def show():
                 registros = st.session_state['fornecedores']
 
                 if not registros.empty:
-                    # Definir colunas para exibição
-                    colunas = ['nome', 'contato', 'categoria', 'tipo_conta', 'recorrente']
-                    rename = {
-                        'nome': 'Nome',
-                        'contato': 'Telefone',
-                        'categoria': 'Categoria',
-                        'tipo_conta': 'Tipo de Conta',
-                        'recorrente': 'Recorrente'
-                    }
+                    # Exibir os fornecedores em cards
+                    for idx, fornecedor in registros.iterrows():
+                        with st.expander(f"{fornecedor['descricao']} - {fornecedor['categoria']}"):
+                            col1, col2 = st.columns([3, 1])
 
-                    # Criar DataFrame para exibição
-                    df_display = registros[colunas].copy()
-                    df_display.columns = [rename[col] for col in colunas]
+                            with col1:
+                                st.write(f"**Contato:** {fornecedor['contato']}")
+                                st.write(f"**Email:** {fornecedor['email']}")
+                                st.write(f"**PIX:** {fornecedor['pix']}")
+                                st.write(f"**Recorrente:** {'Sim' if fornecedor['recorrente'] else 'Não'}")
+                                if fornecedor['observacoes']:
+                                    st.write(f"**Observações:** {fornecedor['observacoes']}")
 
-                    # Exibir tabela
-                    st.dataframe(df_display, hide_index=True)
+                            with col2:
+                                if st.button("🗑️ Excluir", key=f"del_forn_{fornecedor['id']}"):
+                                    try:
+                                        st.session_state.db.delete_fornecedor(fornecedor['id'])
+                                        st.success("Fornecedor excluído com sucesso!")
+                                        st.session_state['update_fornecedores'] = True
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error(f"Erro ao excluir fornecedor: {str(e)}")
 
-                    # Ações (editar/excluir)
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        registro_id = st.number_input(
-                            "ID do registro para ação:",
-                            min_value=1,
-                            max_value=len(registros),
-                            step=1
-                        )
-
-                    with col2:
-                        acao = st.selectbox(
-                            "Ação:",
-                            ["Editar", "Excluir"]
-                        )
-
-                    # Formulário de ação
-                    with st.form(f"acao_registro"):
-                        if st.form_submit_button(f"Confirmar {acao}"):
-                            if acao == "Excluir":
-                                try:
-                                    st.session_state.db.delete_fornecedor(registro_id)
-                                    st.success("Fornecedor excluído com sucesso!")
-                                    st.session_state['update_fornecedores'] = True
-                                except Exception as e:
-                                    st.error(f"Erro ao excluir fornecedor: {str(e)}")
-                            elif acao == "Editar":
-                                st.session_state['editing_fornecedor_id'] = registro_id
+                                if st.button("✏️ Editar", key=f"edit_forn_{fornecedor['id']}"):
+                                    st.session_state['editing_fornecedor_id'] = fornecedor['id']
+                                    st.rerun()
 
                     # Formulário de edição
                     if 'editing_fornecedor_id' in st.session_state:
-                        with st.form("edit_form"):
-                            registro = registros[registros['id'] == st.session_state['editing_fornecedor_id']].iloc[0]
+                        st.write("---")
+                        st.subheader("Editar Fornecedor")
+                        with st.form("edit_fornecedor_form"):
+                            fornecedor = registros[registros['id'] == st.session_state['editing_fornecedor_id']].iloc[0]
 
-                            edited_data = {
-                                'nome': st.text_input("Nome", value=registro['nome']),
-                                'contato': st.text_input("Telefone", value=registro.get('contato', '')),
-                                'email': st.text_input("Email", value=registro.get('email', '')),
-                                'categoria': st.selectbox(
-                                    "Categoria",
-                                    ["Produtos", "Serviços", "Marcenaria", "Outro"],
-                                    index=["Produtos", "Serviços", "Marcenaria", "Outro"].index(registro.get('categoria', 'Outro'))
-                                ),
-                                'tipo_conta': st.selectbox(
-                                    "Tipo de Conta",
-                                    ["PF", "PJ"],
-                                    index=["PF", "PJ"].index(registro.get('tipo_conta', 'PF'))
-                                ),
-                                'recorrente': st.checkbox(
-                                    "Fornecedor Recorrente",
-                                    value=registro.get('recorrente', False)
-                                )
-                            }
+                            nome = st.text_input("Nome/Razão Social", value=fornecedor['descricao'])
+                            contato = st.text_input("Telefone", value=fornecedor['contato'])
+                            email = st.text_input("Email", value=fornecedor['email'])
+                            categoria = st.selectbox(
+                                "Categoria",
+                                ["Produtos", "Serviços", "Marcenaria", "Outro"],
+                                index=["Produtos", "Serviços", "Marcenaria", "Outro"].index(fornecedor['categoria'])
+                            )
+                            pix = st.text_input("PIX", value=fornecedor['pix'])
+                            recorrente = st.checkbox("Recorrente", value=fornecedor['recorrente'])
+                            observacoes = st.text_area("Observações", value=fornecedor['observacoes'])
 
                             col1, col2 = st.columns(2)
                             with col1:
@@ -164,18 +131,24 @@ def show():
                                     try:
                                         st.session_state.db.update_fornecedor(
                                             st.session_state['editing_fornecedor_id'],
-                                            **edited_data
+                                            descricao=nome,
+                                            contato=contato,
+                                            email=email,
+                                            categoria=categoria,
+                                            pix=pix,
+                                            recorrente=recorrente,
+                                            observacoes=observacoes
                                         )
                                         del st.session_state['editing_fornecedor_id']
                                         st.session_state['update_fornecedores'] = True
                                         st.success("Fornecedor atualizado com sucesso!")
+                                        st.rerun()
                                     except Exception as e:
                                         st.error(f"Erro ao atualizar fornecedor: {str(e)}")
-
                             with col2:
                                 if st.form_submit_button("Cancelar"):
                                     del st.session_state['editing_fornecedor_id']
-
+                                    st.rerun()
                 else:
                     st.info("Nenhum fornecedor cadastrado.")
 
@@ -185,7 +158,7 @@ def show():
         with fornecedor_tab2:
             st.subheader("Importar Fornecedores")
 
-            # Botão para baixar template
+            # Download do template
             template = gerar_template_csv("Fornecedor")
             st.download_button(
                 "📝 Baixar Template",
@@ -195,9 +168,8 @@ def show():
                 help="Baixe este template, preencha com seus dados e faça upload para importar"
             )
 
-            # Upload do arquivo
+            # Upload e importação
             arquivo = st.file_uploader("Selecione o arquivo CSV", type=['csv'])
-
             if arquivo:
                 if st.button("Importar Fornecedores"):
                     with st.spinner("Importando dados..."):
