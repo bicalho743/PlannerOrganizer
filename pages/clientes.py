@@ -168,7 +168,7 @@ def show():
         st.subheader("Importar Clientes")
 
         st.write("""
-        Para importar clientes, seu arquivo Excel deve conter as seguintes colunas:
+        Para importar clientes, seu arquivo CSV deve conter as seguintes colunas:
         - nome (obrigatório)
         - tipo_conta (PF ou PJ)
         - cpf (para PF)
@@ -184,11 +184,11 @@ def show():
         - origem_cliente
         """)
 
-        uploaded_file = st.file_uploader("Escolha o arquivo Excel", type=['xlsx', 'xls'])
+        uploaded_file = st.file_uploader("Escolha o arquivo CSV", type=['csv'])
 
         if uploaded_file is not None:
             try:
-                df = pd.read_excel(uploaded_file)
+                df = pd.read_csv(uploaded_file, encoding='utf-8')
                 logger.info(f"Arquivo carregado com sucesso. Colunas encontradas: {df.columns.tolist()}")
 
                 if 'nome' not in df.columns:
@@ -296,4 +296,4 @@ def show():
 
             except Exception as e:
                 st.error(f"Erro ao ler o arquivo: {str(e)}")
-                logger.error(f"Erro ao ler arquivo Excel: {str(e)}")
+                logger.error(f"Erro ao ler arquivo CSV: {str(e)}")
