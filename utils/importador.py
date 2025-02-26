@@ -7,27 +7,33 @@ import traceback
 
 logger = logging.getLogger(__name__)
 
+# Mapeamento de meses em português para validação
+MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+
 def validar_data(data_str):
-    """Converte string de data para objeto datetime"""
+    """Valida e mantém o formato DD/MMM para datas de aniversário"""
     if pd.isna(data_str):
         return None
     try:
         if isinstance(data_str, str):
+            # Formato DD/MMM
             try:
-                return datetime.strptime(data_str, '%d/%m/%Y').date()
-            except ValueError:
-                try:
-                    return datetime.strptime(data_str, '%Y-%m-%d').date()
-                except ValueError:
-                    try:
-                        # Tenta converter apenas mês e dia
-                        data = datetime.strptime(data_str, '%d/%m')
-                        return datetime.now().replace(month=data.month, day=data.day).date()
-                    except ValueError:
-                        st.warning(f"Data inválida: {data_str}")
-                        return None
-        elif isinstance(data_str, datetime):
-            return data_str.date()
+                dia, mes = data_str.strip().lower().split('/')
+                # Validar dia (1-31)
+                dia_num = int(dia)
+                if dia_num < 1 or dia_num > 31:
+                    st.warning(f"Dia inválido em: {data_str}")
+                    return None
+                # Validar mês abreviado
+                if mes not in MESES:
+                    st.warning(f"Mês inválido em: {data_str}")
+                    return None
+                # Retornar a data original no formato DD/MMM
+                return f"{dia.zfill(2)}/{mes}"
+            except (ValueError, TypeError):
+                # Se não conseguir separar em dia/mês, retorna None
+                st.warning(f"Formato de data inválido: {data_str}")
+                return None
         return None
     except Exception as e:
         st.warning(f"Erro ao processar data: {data_str}. Erro: {str(e)}")

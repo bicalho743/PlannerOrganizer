@@ -59,7 +59,7 @@ class Cliente(Base):
     cidade = Column(String)
     bairro = Column(String)
     endereco = Column(String)
-    data_aniversario = Column(Date)
+    data_aniversario = Column(String)  # Alterado de Date para String para aceitar formato DD/MMM
     origem_cliente = Column(String)
     data_cadastro = Column(Date, default=datetime.now().date())
     observacoes = Column(String)  # Adicionado campo observacoes
