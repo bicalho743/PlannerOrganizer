@@ -239,23 +239,32 @@ def show():
                         hide_index=True
                     )
 
-                    # Botões de ação para cada linha
-                    for idx, row in edited_df.iterrows():
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            if st.button(f"🗑️ Excluir", key=f"del_forn_{row['ID']}"):
-                                try:
-                                    st.session_state.db.delete_fornecedor(row['ID'])
-                                    st.success("Fornecedor excluído com sucesso!")
-                                    st.session_state['update_fornecedores'] = True
-                                    st.rerun()
-                                except Exception as e:
-                                    st.error(f"Erro ao excluir fornecedor: {str(e)}")
+                    # Botões de ação
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        fornecedor_id = st.number_input(
+                            "ID do fornecedor para ação:",
+                            min_value=1,
+                            max_value=len(registros) if not registros.empty else 1,
+                            step=1
+                        )
 
-                        with col2:
-                            if st.button(f"✏️ Editar", key=f"edit_forn_{row['ID']}"):
-                                st.session_state['editing_fornecedor_id'] = row['ID']
+                    with col2:
+                        acao = st.selectbox(
+                            "Ação:",
+                            ["Excluir"]
+                        )
+
+                    # Botão de confirmação
+                    if st.button(f"Confirmar {acao}"):
+                        if acao == "Excluir":
+                            try:
+                                st.session_state.db.delete_fornecedor(fornecedor_id)
+                                st.success(f"Fornecedor excluído com sucesso!")
+                                st.session_state['update_fornecedores'] = True
                                 st.rerun()
+                            except Exception as e:
+                                st.error(f"Erro ao excluir fornecedor: {str(e)}")
 
                     # Verificar mudanças na edição
                     if edited_df is not None and not edited_df.equals(df_display):
@@ -427,23 +436,33 @@ def show():
                         hide_index=True
                     )
 
-                    # Botões de ação para cada linha
-                    for idx, row in edited_df.iterrows():
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            if st.button(f"🗑️ Excluir", key=f"del_parc_{row['ID']}"):
-                                try:
-                                    st.session_state.db.delete_parceiro(row['ID'])
-                                    st.success("Parceiro excluído com sucesso!")
-                                    st.session_state['update_parceiros'] = True
-                                    st.rerun()
-                                except Exception as e:
-                                    st.error(f"Erro ao excluir parceiro: {str(e)}")
+                    # Botões de ação
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        parceiro_id = st.number_input(
+                            "ID do parceiro para ação:",
+                            min_value=1,
+                            max_value=len(registros) if not registros.empty else 1,
+                            step=1
+                        )
 
-                        with col2:
-                            if st.button(f"✏️ Editar", key=f"edit_parc_{row['ID']}"):
-                                st.session_state['editing_parceiro_id'] = row['ID']
+                    with col2:
+                        acao = st.selectbox(
+                            "Ação:",
+                            ["Excluir"],
+                            key="acao_parceiro"
+                        )
+
+                    # Botão de confirmação
+                    if st.button(f"Confirmar {acao}", key="confirmar_parceiro"):
+                        if acao == "Excluir":
+                            try:
+                                st.session_state.db.delete_parceiro(parceiro_id)
+                                st.success(f"Parceiro excluído com sucesso!")
+                                st.session_state['update_parceiros'] = True
                                 st.rerun()
+                            except Exception as e:
+                                st.error(f"Erro ao excluir parceiro: {str(e)}")
 
                     # Verificar mudanças na edição
                     if edited_df is not None and not edited_df.equals(df_display):
@@ -588,7 +607,7 @@ def show():
                     'telefone': 'Telefone',
                     'endereco': 'Endereço',
                     'pix': 'PIX',
-                    'observacoes': 'Observação'
+                    'observacoes': 'Observações'
                 }
                 if not registros.empty:
                     # Criar uma cópia do DataFrame original com apenas as colunas desejadas
@@ -605,23 +624,33 @@ def show():
                         hide_index=True
                     )
 
-                    # Botões de ação para cada linha
-                    for index, row in edited_df.iterrows():
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            if st.button(f"🗑️ Excluir", key=f"del_assis_{row['ID']}"):
-                                try:
-                                    st.session_state.db.delete_assistente(row['ID'])
-                                    st.success("Assistente excluído com sucesso!")
-                                    st.session_state['update_assistentes'] = True
-                                    st.rerun()
-                                except Exception as e:
-                                    st.error(f"Erro ao excluir assistente: {str(e)}")
+                    # Botões de ação
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        assistente_id = st.number_input(
+                            "ID do assistente para ação:",
+                            min_value=1,
+                            max_value=len(registros) if not registros.empty else 1,
+                            step=1
+                        )
 
-                        with col2:
-                            if st.button(f"✏️ Editar", key=f"edit_assis_{row['ID']}"):
-                                st.session_state['editing_assistente_id'] = row['ID']
+                    with col2:
+                        acao = st.selectbox(
+                            "Ação:",
+                            ["Excluir"],
+                            key="acao_assistente"
+                        )
+
+                    # Botão de confirmação
+                    if st.button(f"Confirmar {acao}", key="confirmar_assistente"):
+                        if acao == "Excluir":
+                            try:
+                                st.session_state.db.delete_assistente(assistente_id)
+                                st.success(f"Assistente excluído com sucesso!")
+                                st.session_state['update_assistentes'] = True
                                 st.rerun()
+                            except Exception as e:
+                                st.error(f"Erro ao excluir assistente: {str(e)}")
 
                     # Verificar mudanças na edição
                     if edited_df is not None and not edited_df.equals(df_display):
@@ -635,7 +664,7 @@ def show():
                                         'telefone': row['Telefone'],
                                         'endereco': row['Endereço'],
                                         'pix': row['PIX'],
-                                        'observacoes': row['Observação']
+                                        'observacoes': row['Observações']
                                     }
                                     st.session_state.db.update_assistente(assistente_id, **update_data)
                                     st.success(f"Assistente {assistente_id} atualizado com sucesso!")
