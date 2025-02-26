@@ -43,7 +43,7 @@ def show():
 
                             st.session_state.autenticado = True
                             st.success("Login realizado com sucesso!")
-                            st.experimental_rerun()
+                            st.rerun()
                         else:
                             st.error("Email ou senha incorretos.")
 
@@ -68,7 +68,7 @@ def show():
                             )
                             if sucesso:
                                 st.success(msg)
-                                st.experimental_rerun()
+                                st.rerun()
                             else:
                                 st.error(msg)
                         else:
