@@ -90,11 +90,7 @@ class Assistente(Base):
     __tablename__ = 'assistentes'
     id = Column(Integer, primary_key=True)
     nome = Column(String, nullable=False)
-    email = Column(String)
     telefone = Column(String)
-    estado = Column(String)  # Novo campo
-    cidade = Column(String)  # Novo campo
-    bairro = Column(String)  # Novo campo
     endereco = Column(String)
     disponibilidade = Column(String)
     pix = Column(String)
@@ -730,20 +726,14 @@ class Database:
             print(f"Erro ao adicionar dados de teste: {str(e)}")
             return False
 
-    def add_assistente(self, nome, telefone, estado=None, cidade=None, bairro=None, 
-                  endereco=None, pix=None, observacoes=None, email=None, disponibilidade=None):
+    def add_assistente(self, nome, telefone, endereco=None, pix=None, observacoes=None):
         def query():
             assistente = Assistente(
                 nome=nome,
                 telefone=telefone,
-                estado=estado,
-                cidade=cidade,
-                bairro=bairro,
                 endereco=endereco,
                 pix=pix,
-                observacoes=observacoes,
-                email=email,
-                disponibilidade=disponilidade
+                observacoes=observacoes
             )
             self.session.add(assistente)
             return assistente.id
@@ -755,15 +745,9 @@ class Database:
             return pd.DataFrame([{
                 'id': a.id,
                 'nome': a.nome,
-                'email': a.email,
                 'telefone': a.telefone,
-                'estado': a.estado,
-                'cidade': a.cidade,
-                'bairro': a.bairro,
                 'endereco': a.endereco,
-                'disponibilidade': a.disponibilidade,
                 'pix': a.pix,
-                'data_cadastro': a.data_cadastro,
                 'observacoes': a.observacoes
             } for a in assistentes])
         return self._safe_query(query)

@@ -452,13 +452,9 @@ def show():
             # Form de cadastro de assistente
             with st.form("cadastro_assistente", clear_on_submit=True):
                 nome = st.text_input("Nome")
-                col1, col2 = st.columns(2)
-                with col1:
-                    telefone = st.text_input("Telefone")
-                    endereco = st.text_input("Endereço")
-                with col2:
-                    pix = st.text_input("Chave PIX")
-
+                telefone = st.text_input("Telefone")
+                endereco = st.text_input("Endereço")
+                pix = st.text_input("Chave PIX")
                 observacoes = st.text_area("Observações")
                 submitted = st.form_submit_button("Cadastrar")
 
@@ -476,7 +472,7 @@ def show():
                     except Exception as e:
                         st.error(f"Erro ao cadastrar assistente: {str(e)}")
 
-            # Lista de cadastros do tipo selecionado
+            # Lista de cadastros
             st.subheader(f"Lista de Assistentes")
             try:
                 @st.cache_data(ttl=60)
@@ -490,15 +486,16 @@ def show():
                     st.session_state['assistentes'] = load_assistentes()
 
                 registros = st.session_state['assistentes']
-                colunas = ['nome', 'telefone', 'email', 'disponibilidade']
+                colunas = ['nome', 'telefone', 'endereco', 'pix', 'observacoes']
                 rename = {
                     'nome': 'Nome',
                     'telefone': 'Telefone',
-                    'email': 'Email',
-                    'disponibilidade': 'Disponibilidade'
+                    'endereco': 'Endereço',
+                    'pix': 'PIX',
+                    'observacoes': 'Observação'
                 }
                 if not registros.empty:
-                    # Criar uma cópia do DataFrame original
+                    # Criar uma cópia do DataFrame original com apenas as colunas desejadas
                     df_display = registros[colunas].copy()
 
                     # Renomear colunas para exibição
@@ -542,21 +539,15 @@ def show():
                             registro = registros[registros['id'] == st.session_state['editing_assistente_id']].iloc[0]
                             edited_data = {}
                             edited_data['nome'] = st.text_input("Nome", value=registro['nome'])
-                            edited_data['email'] = st.text_input("Email", value=registro.get('email', ''))
-                            edited_data['telefone'] = st.text_input("Telefone", value=registro.get('telefone', ''))
-                            disponibilidade_atual = registro.get('disponibilidade', '').split(',') if registro.get('disponibilidade') else []
-                            edited_data['disponibilidade'] = st.multiselect(
-                                "Disponibilidade",
-                                ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"],
-                                default=disponibilidade_atual
-                            )
+                            edited_data['telefone'] = st.text_input("Telefone", value=registro['telefone'])
+                            edited_data['endereco'] = st.text_input("Endereço", value=registro['endereco'])
+                            edited_data['pix'] = st.text_input("PIX", value=registro['pix'])
+                            edited_data['observacoes'] = st.text_area("Observação", value=registro['observacoes'])
 
                             col1, col2 = st.columns(2)
                             with col1:
                                 if st.form_submit_button("Salvar"):
                                     try:
-                                        if 'disponibilidade' in edited_data and edited_data['disponibilidade']:
-                                            edited_data['disponibilidade'] = ','.join(edited_data['disponibilidade'])
                                         st.session_state.db.update_assistente(st.session_state['editing_assistente_id'], **edited_data)
                                         del st.session_state['editing_assistente_id']
                                         st.session_state['update_assistentes'] = True
