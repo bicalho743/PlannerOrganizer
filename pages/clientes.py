@@ -84,7 +84,6 @@ def show():
                             razao_social=razao_social
                         )
                         st.success("Cliente cadastrado com sucesso!")
-                        st.session_state['update_clientes'] = True
                     except Exception as e:
                         st.error(f"Erro ao cadastrar cliente: {str(e)}")
                 else:
