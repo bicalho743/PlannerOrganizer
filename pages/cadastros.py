@@ -252,11 +252,12 @@ def show():
                     with col2:
                         acao = st.selectbox(
                             "Ação:",
-                            ["Excluir"]
+                            ["Excluir"],
+                            key="acao_fornecedor_selectbox"  # Chave única para fornecedor
                         )
 
                     # Botão de confirmação
-                    if st.button(f"Confirmar {acao}"):
+                    if st.button(f"Confirmar {acao}", key="confirmar_fornecedor"):
                         if acao == "Excluir":
                             try:
                                 st.session_state.db.delete_fornecedor(fornecedor_id)
@@ -450,11 +451,11 @@ def show():
                         acao = st.selectbox(
                             "Ação:",
                             ["Excluir"],
-                            key="acao_parceiro"
+                            key="acao_parceiro_selectbox"  # Chave única para parceiro
                         )
 
                     # Botão de confirmação
-                    if st.button(f"Confirmar {acao}", key="confirmar_parceiro"):
+                    if st.button(f"Confirmar {acao}", key="confirmar_parceiro_button"):  # Chave única para o botão
                         if acao == "Excluir":
                             try:
                                 st.session_state.db.delete_parceiro(parceiro_id)
@@ -638,11 +639,11 @@ def show():
                         acao = st.selectbox(
                             "Ação:",
                             ["Excluir"],
-                            key="acao_assistente"
+                            key="acao_assistente_selectbox"  # Chave única para assistente
                         )
 
                     # Botão de confirmação
-                    if st.button(f"Confirmar {acao}", key="confirmar_assistente"):
+                    if st.button(f"Confirmar {acao}", key="confirmar_assistente_button"):  # Chave única para o botão
                         if acao == "Excluir":
                             try:
                                 st.session_state.db.delete_assistente(assistente_id)
