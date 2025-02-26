@@ -71,7 +71,6 @@ class Fornecedor(Base):
     descricao = Column(String, nullable=False)
     contato = Column(String)
     categoria = Column(String)
-    tipo_conta = Column(String, nullable=False)
     estado = Column(String)  # Novo campo
     cidade = Column(String)  # Novo campo
     bairro = Column(String)  # Novo campo
@@ -121,7 +120,6 @@ class CategoriaDespesa(Base):
     id = Column(Integer, primary_key=True)
     nome = Column(String, nullable=False)
     descricao = Column(String)
-    tipo_conta = Column(String)
 
 class Proposta(Base):
     __tablename__ = 'propostas'
@@ -406,7 +404,7 @@ class Database:
             } for t in contas])
         return self._safe_query(query)
 
-    def add_fornecedor(self, descricao, contato, categoria, tipo_conta, estado=None, cidade=None, 
+    def add_fornecedor(self, descricao, contato, categoria, estado=None, cidade=None, 
                   bairro=None, endereco=None, pix=None, recorrente=False, observacoes=None, 
                   valor=None, data_vencimento=None, data_pagamento=None, status=None):
         def query():
@@ -414,7 +412,6 @@ class Database:
                 descricao=descricao,
                 contato=contato,
                 categoria=categoria,
-                tipo_conta=tipo_conta,
                 estado=estado,
                 cidade=cidade,
                 bairro=bairro,
@@ -439,7 +436,6 @@ class Database:
                 'descricao': f.descricao,
                 'contato': f.contato,
                 'categoria': f.categoria,
-                'tipo_conta': f.tipo_conta,
                 'estado': f.estado,
                 'cidade': f.cidade,
                 'bairro': f.bairro,
@@ -454,12 +450,11 @@ class Database:
             } for f in fornecedores])
         return self._safe_query(query)
 
-    def add_categoria_despesa(self, nome, descricao, tipo_conta):
+    def add_categoria_despesa(self, nome, descricao):
         def query():
             categoria = CategoriaDespesa(
                 nome=nome,
-                descricao=descricao,
-                tipo_conta=tipo_conta
+                descricao=descricao
             )
             self.session.add(categoria)
             return categoria.id
@@ -471,8 +466,7 @@ class Database:
             return pd.DataFrame([{
                 'id': c.id,
                 'nome': c.nome,
-                'descricao': c.descricao,
-                'tipo_conta': c.tipo_conta
+                'descricao': c.descricao
             } for c in categorias])
         return self._safe_query(query)
 
@@ -695,7 +689,6 @@ class Database:
                 descricao="Organizadores Express",
                 contato="(11) 97777-7777",
                 categoria="Produtos",
-                tipo_conta="PJ",
                 pix="12345678901",
                 recorrente=False,
                 estado="SP",
@@ -827,7 +820,8 @@ class Database:
                     proposta.status_pagamento_base = status_pagamento_base
                     proposta.valor = valor_base_float
                     return True
-                return False            except (ValueError, TypeError) as e:
+                return False
+            except (ValueError, TypeError) as e:
                 raise Exception(f"Erro ao converter valores: {str(e)}")
         return self._safe_query(query)
 
