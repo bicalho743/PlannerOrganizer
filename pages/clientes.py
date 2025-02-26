@@ -162,7 +162,7 @@ def show():
             st.error(f"Erro ao carregar clientes: {str(e)}")
 
     with tab3:
-        st.subheader("Importar Clientes do Excel")
+        st.subheader("Importar Clientes")
 
         st.write("""
         Para importar clientes, seu arquivo Excel deve conter as seguintes colunas:
