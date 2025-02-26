@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from utils.importador import importar_cadastros, gerar_template_excel, testar_conexao_db
+from utils.importador import importar_cadastros, gerar_template_excel, testar_conexao_db, importar_propostas
 
 def show():
     # Verificar se o db está na sessão
@@ -80,4 +80,51 @@ def show():
 
     with tab2:
         st.subheader("Importar Propostas")
-        st.info("Funcionalidade em desenvolvimento")
+
+        # Botão para baixar template de propostas
+        template = gerar_template_excel("Proposta")
+        st.download_button(
+            "📝 Baixar Template de Propostas",
+            template,
+            "template_propostas.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            help="Baixe este template Excel, preencha com seus dados e faça upload para importar propostas",
+            key="download_template_propostas"
+        )
+
+        # Upload do arquivo de propostas
+        st.write("### Upload do Arquivo")
+        arquivo = st.file_uploader(
+            "Selecione o arquivo Excel de Propostas",
+            type=['xlsx', 'xls'],
+            help="Você pode fazer upload de arquivos Excel (.xlsx, .xls)",
+            key="upload_file_propostas"
+        )
+
+        if arquivo:
+            try:
+                preview = pd.read_excel(arquivo)
+                st.write("### Preview dos dados:")
+                st.info("Verifique se os dados estão corretos antes de confirmar a importação:")
+                st.dataframe(preview.head())
+
+                # Mostrar colunas encontradas
+                st.write("### Colunas encontradas no arquivo:")
+                colunas = preview.columns.tolist()
+                st.write(", ".join(colunas))
+
+                # Botão de importação
+                if st.button("Confirmar Importação de Propostas", key="confirmar_importacao_propostas"):
+                    with st.spinner("Importando propostas..."):
+                        sucesso, mensagem = importar_propostas(arquivo, st.session_state.db)
+                        if sucesso:
+                            st.success(mensagem)
+                            # Atualizar a lista de propostas
+                            st.session_state['update_propostas'] = True
+                            # Limpar o arquivo do estado da sessão
+                            st.session_state['upload_file_propostas'] = None
+                        else:
+                            st.error(mensagem)
+
+            except Exception as e:
+                st.error(f"Erro ao processar arquivo: {str(e)}")

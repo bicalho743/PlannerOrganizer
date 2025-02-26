@@ -101,13 +101,12 @@ class Parceiro(Base):
     id = Column(Integer, primary_key=True)
     nome = Column(String, nullable=False)
     telefone = Column(String)
-    email = Column(String)
+    area_atuacao = Column(String)
+    tipo_parceria = Column(String)
     estado = Column(String)  # Novo campo
     cidade = Column(String)  # Novo campo
     bairro = Column(String)  # Novo campo
     endereco = Column(String)
-    area_atuacao = Column(String)
-    tipo_parceria = Column(String)
     pix = Column(String)
     observacoes = Column(String)
     data_cadastro = Column(Date, default=datetime.now().date())
@@ -748,20 +747,19 @@ class Database:
             } for a in assistentes])
         return self._safe_query(query)
 
-    def add_parceiro(self, nome, telefone, email, area_atuacao, tipo_parceria, 
+    def add_parceiro(self, nome, telefone, area_atuacao, tipo_parceria, 
                 estado=None, cidade=None, bairro=None, endereco=None, 
                 pix=None, observacoes=None):
         def query():
             parceiro = Parceiro(
                 nome=nome,
                 telefone=telefone,
-                email=email,
+                area_atuacao=area_atuacao,
+                tipo_parceria=tipo_parceria,
                 estado=estado,
                 cidade=cidade,
                 bairro=bairro,
                 endereco=endereco,
-                area_atuacao=area_atuacao,
-                tipo_parceria=tipo_parceria,
                 pix=pix,
                 observacoes=observacoes
             )
@@ -776,13 +774,12 @@ class Database:
                 'id': p.id,
                 'nome': p.nome,
                 'telefone': p.telefone,
-                'email': p.email,
+                'area_atuacao': p.area_atuacao,
+                'tipo_parceria': p.tipo_parceria,
                 'estado': p.estado,
                 'cidade': p.cidade,
                 'bairro': p.bairro,
                 'endereco': p.endereco,
-                'area_atuacao': p.area_atuacao,
-                'tipo_parceria': p.tipo_parceria,
                 'pix': p.pix,
                 'observacoes': p.observacoes,
                 'data_cadastro': p.data_cadastro
@@ -824,7 +821,7 @@ class Database:
                 fornecedor=fornecedor,
                 descricao=descricao,
                 valor=valor,
-                status_pagamento=statuspagamento
+                status_pagamento=status_pagamento
             )
             self.session.add(acrescimo)
             return int(acrescimo.id)  # Converter para int nativo

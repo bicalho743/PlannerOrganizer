@@ -261,24 +261,36 @@ def gerar_template_excel(tipo):
     """Gera um arquivo Excel template baseado no tipo de importação"""
     if tipo == "Cliente":
         df = pd.DataFrame(columns=[
-            'nome', 'telefone', 'email', 'data_aniversario', 
-            'origem_cliente', 'tipo_conta', 'cpf', 'cnpj', 
-            'razao_social', 'observacoes'
+            'nome', 'telefone', 'cpf', 'data_aniversario', 
+            'origem_cliente', 'observacoes', 'estado', 'cidade',
+            'bairro', 'endereco'
         ])
     elif tipo == "Fornecedor":
         df = pd.DataFrame(columns=[
-            'nome', 'telefone', 'email', 'categoria',
-            'tipo_conta', 'recorrente', 'observacoes'
+            'descricao', 'contato', 'categoria',
+            'estado', 'cidade', 'bairro', 'endereco',
+            'pix', 'recorrente', 'observacoes'
         ])
     elif tipo == "Assistente":
         df = pd.DataFrame(columns=[
-            'nome', 'telefone', 'email',
-            'disponibilidade', 'observacoes'
+            'nome', 'telefone', 'endereco',
+            'pix', 'observacoes'
         ])
     elif tipo == "Parceiro":
         df = pd.DataFrame(columns=[
-            'nome', 'telefone', 'email', 'area_atuacao',
+            'nome', 'telefone', 'area_atuacao',
             'tipo_parceria', 'observacoes'
+        ])
+    elif tipo == "Proposta":
+        df = pd.DataFrame(columns=[
+            'cliente_nome',  # Nome do cliente para buscar o ID
+            'descricao',    # Descrição do serviço
+            'valor',        # Valor da proposta
+            'tipo_proposta',# Tipo (Organização, Consultoria, etc)
+            'status',       # Status (Aberta, Fechada, Recusada)
+            'data_inicio',  # Data de início (DD/MM/YYYY)
+            'data_fim',     # Data de fim (DD/MM/YYYY)
+            'prazo_entrega' # Prazo de entrega (DD/MM/YYYY)
         ])
     else:
         return None
@@ -290,40 +302,99 @@ def gerar_template_excel(tipo):
 
 
 def importar_propostas(arquivo, db):
-    """Importa propostas de um arquivo CSV"""
+    """Importa propostas de um arquivo Excel"""
     try:
-        df = pd.read_csv(arquivo, encoding='utf-8')
+        st.write("### Log de Importação de Propostas")
+        st.info("Iniciando importação de propostas...")
+
+        if not db:
+            st.error("Erro: Conexão com banco de dados não inicializada")
+            return False, "Erro: Conexão com banco de dados não inicializada"
+
+        # Ler arquivo Excel
+        try:
+            df = pd.read_excel(arquivo)
+            st.success(f"Arquivo lido com sucesso. Dimensões: {df.shape}")
+        except Exception as e:
+            st.error(f"Erro ao ler arquivo: {str(e)}")
+            return False, f"Erro ao ler arquivo: {str(e)}"
 
         # Validar colunas obrigatórias
-        colunas_obrigatorias = ['cliente_id', 'descricao', 'valor', 'status']
-        for col in colunas_obrigatorias:
-            if col not in df.columns:
-                return False, f"Coluna obrigatória '{col}' não encontrada no arquivo"
+        colunas_obrigatorias = ['cliente_nome', 'descricao', 'valor', 'tipo_proposta', 'status']
+        colunas_faltantes = [col for col in colunas_obrigatorias if col not in df.columns]
+        if colunas_faltantes:
+            erro = f"Colunas obrigatórias não encontradas: {', '.join(colunas_faltantes)}"
+            st.error(erro)
+            return False, erro
+
+        # Limpar dados
+        df = df.replace({pd.NA: None, 'nan': None, 'NaN': None, '': None})
+
+        # Carregar clientes para mapear nomes para IDs
+        clientes = db.get_clientes()
+        if clientes.empty:
+            return False, "Não há clientes cadastrados no sistema"
+
+        # Criar dicionário de nome para ID
+        clientes_dict = dict(zip(clientes['nome'], clientes['id']))
 
         sucessos = 0
         erros = []
+        total_rows = len(df)
+        progress_bar = st.progress(0)
 
-        for _, row in df.iterrows():
+        for idx, row in df.iterrows():
             try:
-                # Validar e converter tipos numéricos
-                try:
-                    cliente_id = int(row['cliente_id'])
-                    valor = float(row['valor'])
-                except (ValueError, TypeError) as e:
-                    erros.append(f"Erro na linha {_ + 2}: Valor inválido para cliente_id ou valor - {str(e)}")
+                progress = (idx + 1) / total_rows
+                progress_bar.progress(progress)
+
+                # Buscar ID do cliente
+                cliente_nome = str(row['cliente_nome']).strip()
+                if cliente_nome not in clientes_dict:
+                    erro_msg = f"Cliente não encontrado: {cliente_nome}"
+                    erros.append(erro_msg)
                     continue
 
-                # Validar e converter datas
-                data_inicio = validar_data(row.get('data_inicio'))
-                data_fim = validar_data(row.get('data_fim'))
-                prazo_entrega = validar_data(row.get('prazo_entrega'))
+                cliente_id = clientes_dict[cliente_nome]
 
+                # Processar valor
+                try:
+                    valor = float(row['valor'])
+                except (ValueError, TypeError):
+                    erro_msg = f"Valor inválido na linha {idx + 2}"
+                    erros.append(erro_msg)
+                    continue
+
+                # Processar datas
+                data_inicio = None
+                data_fim = None
+                prazo_entrega = None
+
+                if pd.notna(row.get('data_inicio')):
+                    try:
+                        data_inicio = pd.to_datetime(row['data_inicio']).date()
+                    except:
+                        st.warning(f"Data de início inválida na linha {idx + 2}")
+
+                if pd.notna(row.get('data_fim')):
+                    try:
+                        data_fim = pd.to_datetime(row['data_fim']).date()
+                    except:
+                        st.warning(f"Data de fim inválida na linha {idx + 2}")
+
+                if pd.notna(row.get('prazo_entrega')):
+                    try:
+                        prazo_entrega = pd.to_datetime(row['prazo_entrega']).date()
+                    except:
+                        st.warning(f"Prazo de entrega inválido na linha {idx + 2}")
+
+                # Adicionar proposta
                 db.add_proposta(
                     cliente_id=cliente_id,
-                    descricao=row['descricao'],
+                    descricao=str(row['descricao']).strip(),
                     valor=valor,
-                    status=row['status'],
-                    tipo_proposta=row.get('tipo_proposta'),
+                    status=str(row['status']).strip(),
+                    tipo_proposta=str(row['tipo_proposta']).strip() if pd.notna(row.get('tipo_proposta')) else None,
                     data_inicio=data_inicio,
                     data_fim=data_fim,
                     prazo_entrega=prazo_entrega
@@ -331,9 +402,22 @@ def importar_propostas(arquivo, db):
                 sucessos += 1
 
             except Exception as e:
-                erros.append(f"Erro na linha {_ + 2}: {str(e)}")
+                erro_msg = f"Erro na linha {idx + 2}: {str(e)}"
+                st.error(erro_msg)
+                erros.append(erro_msg)
+                continue
 
-        return True, f"Importação concluída: {sucessos} propostas importadas com sucesso. {len(erros)} erros." + (f"\nErros:\n" + "\n".join(erros) if erros else "")
+        progress_bar.empty()
+
+        mensagem = f"Importação concluída. {sucessos} propostas importadas com sucesso."
+        if erros:
+            mensagem += f"\nErros encontrados: {len(erros)}"
+            for erro in erros[:5]:  # Mostrar apenas os 5 primeiros erros
+                mensagem += f"\n- {erro}"
+
+        return sucessos > 0, mensagem
 
     except Exception as e:
-        return False, f"Erro ao processar arquivo: {str(e)}"
+        erro_msg = f"Erro ao processar arquivo: {str(e)}"
+        st.error(erro_msg)
+        return False, erro_msg
