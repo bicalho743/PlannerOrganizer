@@ -21,6 +21,45 @@ def show():
     ])
 
     with tab_cliente:
+        st.subheader("Cadastro de Clientes")
+        # Form de cadastro de cliente
+        with st.form("cadastro_cliente", clear_on_submit=True):
+            nome = st.text_input("Nome")
+            col1, col2 = st.columns(2)
+            with col1:
+                telefone = st.text_input("Telefone")
+                cpf = st.text_input("CPF")
+                estado = st.text_input("Estado")
+                cidade = st.text_input("Cidade")
+            with col2:
+                bairro = st.text_input("Bairro")
+                endereco = st.text_input("Endereço")
+                data_aniversario = st.text_input("Data Aniversário (DD/MMM)")
+                origem_cliente = st.text_input("Origem do Cliente")
+
+            observacoes = st.text_area("Observações")
+            submitted = st.form_submit_button("Cadastrar")
+
+            if submitted:
+                try:
+                    st.session_state.db.add_cliente(
+                        nome=nome,
+                        telefone=telefone,
+                        cpf=cpf,
+                        estado=estado,
+                        cidade=cidade,
+                        bairro=bairro,
+                        endereco=endereco,
+                        data_aniversario=data_aniversario,
+                        origem_cliente=origem_cliente,
+                        observacoes=observacoes
+                    )
+                    st.success("Cliente cadastrado com sucesso!")
+                    st.session_state['update_clientes'] = True
+                except Exception as e:
+                    st.error(f"Erro ao cadastrar cliente: {str(e)}")
+
+        # Lista de clientes
         st.subheader("Lista de Clientes")
         try:
             @st.cache_data(ttl=60)
@@ -37,13 +76,12 @@ def show():
 
             if not registros.empty:
                 # Definir colunas para exibição
-                colunas = ['id', 'nome', 'telefone', 'email', 'cpf', 'estado', 'cidade', 'bairro', 
+                colunas = ['id', 'nome', 'telefone', 'cpf', 'estado', 'cidade', 'bairro', 
                           'endereco', 'data_aniversario', 'origem_cliente', 'observacoes']
                 rename = {
                     'id': 'ID',
                     'nome': 'Nome',
                     'telefone': 'Telefone',
-                    'email': 'Email',
                     'cpf': 'CPF',
                     'estado': 'Estado',
                     'cidade': 'Cidade',
@@ -103,7 +141,6 @@ def show():
                                 update_data = {
                                     'nome': row['Nome'],
                                     'telefone': row['Telefone'],
-                                    'email': row['Email'],
                                     'cpf': row['CPF'],
                                     'estado': row['Estado'],
                                     'cidade': row['Cidade'],
@@ -129,7 +166,6 @@ def show():
 
         with fornecedor_tab1:
             st.subheader("Cadastro de Fornecedores")
-
             # Form de cadastro de fornecedor
             with st.form("cadastro_fornecedor", clear_on_submit=True):
                 nome = st.text_input("Razão Social")
