@@ -265,7 +265,7 @@ class Database:
         return self._safe_query(query)
 
     def add_cliente(self, nome, email, telefone, estado=None, cidade=None, bairro=None, 
-                   endereco=None, cpf=None, data_aniversario=None, origem_cliente=None):
+                   endereco=None, cpf=None, data_aniversario=None, origem_cliente=None, tipo_conta='PF'):
         def query():
             # Obter o maior ID atual
             max_id = self.session.query(func.max(Cliente.id)).scalar()
@@ -285,7 +285,8 @@ class Database:
                 endereco=endereco,
                 cpf=cpf,
                 data_aniversario=data_aniversario,
-                origem_cliente=origem_cliente
+                origem_cliente=origem_cliente,
+                tipo_conta=tipo_conta
             )
             self.session.add(cliente)
             return cliente.id
