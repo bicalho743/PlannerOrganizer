@@ -103,10 +103,6 @@ def show():
                 st.info("Nenhum cliente cadastrado.")
                 return
 
-            # Converter datas para datetime
-            clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro'], errors='coerce')
-            clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'], errors='coerce')
-
             df_display = clientes.copy()
 
             # Formatar datas para exibição
@@ -135,8 +131,8 @@ def show():
                 logger.info(f"{key}: {value}")
 
         st.write("""
-        Para importar clientes, seu arquivo CSV deve ter o seguinte formato:
-        - Usar vírgula (,) como separador
+        Para importar clientes, seu arquivo deve ter o seguinte formato:
+        - O arquivo pode usar vírgula (,) ou ponto e vírgula (;) como separador
         - Uma linha por cliente
         - As seguintes colunas são esperadas:
           - nome (obrigatório)
@@ -150,12 +146,16 @@ def show():
           - endereco
           - data_aniversario (formato: DD/MM)
 
-        Exemplo:
+        Exemplo com ponto e vírgula (;):
+        nome;telefone;email;tipo_conta;cpf
+        João Silva;11999999999;joao@email.com;PF;12345678900
+
+        Exemplo com vírgula (,):
         nome,telefone,email,tipo_conta,cpf
         João Silva,11999999999,joao@email.com,PF,12345678900
         """)
 
-        uploaded_file = st.file_uploader("Escolha o arquivo CSV", type=['csv'])
+        uploaded_file = st.file_uploader("Escolha o arquivo", type=['csv'])
 
         if uploaded_file is not None:
             try:
@@ -172,16 +172,29 @@ def show():
                         for line in file_preview:
                             logger.info(line)
 
-                        # Usar sep=',' explicitamente
+                        # Detectar separador
+                        first_line = file_preview[0].lower()
+                        separator = ',' if ',' in first_line else ';' if ';' in first_line else None
+
+                        if not separator:
+                            raise ValueError("Não foi possível detectar o separador (vírgula ou ponto e vírgula)")
+
+                        # Tentar ler o arquivo
                         df = pd.read_csv(
                             uploaded_file, 
                             encoding=encoding,
-                            sep=',',  # Forçar uso de vírgula como separador
-                            skipinitialspace=True,  # Ignorar espaços após a vírgula
+                            sep=separator,  # Usar separador detectado
+                            skipinitialspace=True,  # Ignorar espaços após o separador
                             na_values=['', 'NA', 'null'],  # Valores a serem tratados como NA
                             engine='python',  # Usar engine python para melhor tratamento de erros
                             on_bad_lines='warn'  # Avisar sobre linhas problemáticas ao invés de falhar
                         )
+
+                        # Normalizar nomes das colunas
+                        df.columns = [col.strip().lower() for col in df.columns]
+                        if 'tipo_conta' in df.columns:
+                            df.rename(columns={'tipo_conta': 'tipo_conta'}, inplace=True)
+
                         encoding_used = encoding
                         break
                     except UnicodeDecodeError:
@@ -192,12 +205,16 @@ def show():
                         continue
 
                 if df is None:
-                    st.error("""
-                    Não foi possível ler o arquivo CSV. Por favor, verifique se:
-                    1. O arquivo está usando vírgula (,) como separador
-                    2. As colunas estão corretas e separadas por vírgula
-                    3. Não há vírgulas dentro dos campos de texto
-                    4. O arquivo foi salvo com codificação adequada (UTF-8 ou Latin1)
+                    st.error(f"""
+                    Não foi possível ler o arquivo. Por favor, verifique se:
+                    1. O arquivo está usando vírgula (,) ou ponto e vírgula (;) como separador
+                    2. As colunas estão nomeadas corretamente
+                    3. O arquivo foi salvo com codificação adequada (UTF-8 ou Latin1)
+
+                    Formato detectado:
+                    Separador: {separator}
+                    Primeiras linhas do arquivo:
+                    {chr(10).join(file_preview[:3])}
                     """)
                     return
 
