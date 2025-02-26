@@ -170,7 +170,11 @@ def show():
             )
 
             # Upload e importação
-            arquivo = st.file_uploader("Selecione o arquivo CSV", type=['csv'])
+            arquivo = st.file_uploader(
+                "Selecione o arquivo CSV",
+                type=['csv'],
+                key="fornecedor_file_uploader"
+            )
             if arquivo:
                 if st.button("Importar Fornecedores"):
                     with st.spinner("Importando dados..."):
@@ -328,7 +332,11 @@ def show():
             )
 
             # Upload do arquivo
-            arquivo = st.file_uploader("Selecione o arquivo CSV de Parceiros", type=['csv'])
+            arquivo = st.file_uploader(
+                "Selecione o arquivo CSV de Parceiros",
+                type=['csv'],
+                key="parceiro_file_uploader"
+            )
 
             if arquivo:
                 if st.button("Importar Parceiros"):
@@ -339,7 +347,6 @@ def show():
                             st.session_state['update_parceiros'] = True
                         else:
                             st.error(mensagem)
-
 
     with tab_assistente:
         assistente_tab1, assistente_tab2 = st.tabs(["Cadastrar/Listar", "Importar"])
@@ -492,7 +499,7 @@ def show():
             arquivo = st.file_uploader(
                 "Selecione o arquivo CSV de Assistentes",
                 type=['csv'],
-                key="assistente_file_upload"
+                key="assistente_file_uploader"
             )
 
             if arquivo:
@@ -534,7 +541,11 @@ def show():
         )
 
         # Upload e importação
-        arquivo = st.file_uploader("Selecione o arquivo CSV", type=['csv'])
+        arquivo = st.file_uploader(
+            "Selecione o arquivo CSV",
+            type=['csv'],
+            key="cliente_file_uploader"
+        )
         if arquivo:
             try:
                 # Ler primeiras linhas para preview
@@ -542,7 +553,7 @@ def show():
                 st.write("Preview dos dados:")
                 st.dataframe(df_preview)
 
-                if st.button("Importar Clientes"):
+                if st.button("Importar Clientes", key="cliente_import_button"):
                     arquivo.seek(0)  # Voltar ao início do arquivo
                     with st.spinner("Importando dados..."):
                         sucesso, mensagem = importar_cadastros(arquivo, "Cliente", st.session_state.db)
