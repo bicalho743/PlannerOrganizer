@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import logging
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -106,52 +107,13 @@ def show():
             clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro'], errors='coerce')
             clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'], errors='coerce')
 
-            # Definir colunas para exibição na ordem da planilha de importação
-            colunas = [
-                'id',           # ID sempre primeiro
-                'nome',         # Dados básicos
-                'tipo_conta',
-                'cpf',         # Documentos
-                'cnpj',
-                'razao_social',
-                'email',
-                'telefone',
-                'estado',      # Endereço
-                'cidade',
-                'bairro',
-                'endereco',
-                'data_aniversario',
-                'origem_cliente',
-                'data_cadastro'
-            ]
-
-            rename = {
-                'id': 'ID',
-                'nome': 'Nome',
-                'tipo_conta': 'Tipo de Conta',
-                'cpf': 'CPF',
-                'cnpj': 'CNPJ',
-                'razao_social': 'Razão Social',
-                'email': 'Email',
-                'telefone': 'Telefone',
-                'estado': 'Estado',
-                'cidade': 'Cidade',
-                'bairro': 'Bairro',
-                'endereco': 'Endereço',
-                'data_aniversario': 'Aniversário',
-                'origem_cliente': 'Origem',
-                'data_cadastro': 'Data Cadastro'
-            }
-
-            # Criar DataFrame para exibição
-            df_display = clientes[colunas].copy()
-            df_display.columns = [rename[col] for col in colunas]
+            df_display = clientes.copy()
 
             # Formatar datas para exibição
-            if 'Data Cadastro' in df_display.columns:
-                df_display['Data Cadastro'] = pd.to_datetime(df_display['Data Cadastro']).dt.strftime('%d/%m/%Y')
-            if 'Aniversário' in df_display.columns:
-                df_display['Aniversário'] = pd.to_datetime(df_display['Aniversário']).dt.strftime('%d/%m')
+            if 'data_cadastro' in df_display.columns:
+                df_display['data_cadastro'] = pd.to_datetime(df_display['data_cadastro']).dt.strftime('%d/%m/%Y')
+            if 'data_aniversario' in df_display.columns:
+                df_display['data_aniversario'] = pd.to_datetime(df_display['data_aniversario']).dt.strftime('%d/%m')
 
             # Exibir tabela com todos os dados
             st.dataframe(
@@ -164,7 +126,13 @@ def show():
             st.error(f"Erro ao carregar clientes: {str(e)}")
 
     with tab3:
-        st.subheader("Importar Clientes")
+        st.subheader("🧪 Teste de Importação")
+
+        # Log do estado da sessão
+        logger.info("=== Estado da Sessão ===")
+        for key, value in st.session_state.items():
+            if key not in ['senha', 'token']:
+                logger.info(f"{key}: {value}")
 
         st.write("""
         Para importar clientes, seu arquivo CSV deve ter o seguinte formato:
@@ -172,22 +140,19 @@ def show():
         - Uma linha por cliente
         - As seguintes colunas são esperadas:
           - nome (obrigatório)
-          - tipo_conta (PF ou PJ)
-          - cpf (para PF)
-          - cnpj (para PJ)
-          - razao_social (para PJ)
           - email
           - telefone
+          - tipo_conta (PF ou PJ)
+          - cpf (para PF)
           - estado
           - cidade
           - bairro
           - endereco
           - data_aniversario (formato: DD/MM)
-          - origem_cliente
 
-        Exemplo de linha do CSV:
-        nome,tipo_conta,cpf,email,telefone
-        João Silva,PF,12345678900,joao@email.com,11999999999
+        Exemplo:
+        nome,telefone,email,tipo_conta,cpf
+        João Silva,11999999999,joao@email.com,PF,12345678900
         """)
 
         uploaded_file = st.file_uploader("Escolha o arquivo CSV", type=['csv'])
@@ -201,6 +166,12 @@ def show():
 
                 for encoding in encodings:
                     try:
+                        # Exibir preview do arquivo antes de processar
+                        file_preview = uploaded_file.getvalue().decode(encoding, errors='replace').splitlines()[:5]
+                        logger.info(f"Preview do arquivo (primeiras 5 linhas):")
+                        for line in file_preview:
+                            logger.info(line)
+
                         # Usar sep=',' explicitamente
                         df = pd.read_csv(
                             uploaded_file, 
@@ -208,6 +179,8 @@ def show():
                             sep=',',  # Forçar uso de vírgula como separador
                             skipinitialspace=True,  # Ignorar espaços após a vírgula
                             na_values=['', 'NA', 'null'],  # Valores a serem tratados como NA
+                            engine='python',  # Usar engine python para melhor tratamento de erros
+                            on_bad_lines='warn'  # Avisar sobre linhas problemáticas ao invés de falhar
                         )
                         encoding_used = encoding
                         break
@@ -215,6 +188,7 @@ def show():
                         continue
                     except Exception as e:
                         logger.error(f"Erro ao tentar ler o arquivo com codificação {encoding}: {str(e)}")
+                        logger.error(f"Stack trace: {traceback.format_exc()}")
                         continue
 
                 if df is None:
@@ -263,22 +237,13 @@ def show():
                                 # Processar tipo de conta e documentos
                                 tipo_conta = str(row.get('tipo_conta', 'PF')).upper().strip()
 
-                                # Processar CPF/CNPJ
+                                # Processar CPF
                                 cpf = None
-                                cnpj = None
-                                razao_social = None
-
                                 if tipo_conta == 'PF':
                                     if pd.notna(row.get('cpf')):
                                         cpf = str(row['cpf']).strip()
                                         cpf = ''.join(filter(str.isdigit, cpf))
                                         logger.info(f"CPF processado: {cpf}")
-                                elif tipo_conta == 'PJ':
-                                    if pd.notna(row.get('cnpj')):
-                                        cnpj = str(row['cnpj']).strip()
-                                        cnpj = ''.join(filter(str.isdigit, cnpj))
-                                    if pd.notna(row.get('razao_social')):
-                                        razao_social = str(row['razao_social']).strip()
 
                                 # Processar data de aniversário
                                 data_aniv = None
@@ -311,11 +276,9 @@ def show():
                                     bairro=str(row.get('bairro', '')).strip() if pd.notna(row.get('bairro')) else None,
                                     endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
                                     cpf=cpf,
-                                    tipo_conta=tipo_conta,
-                                    cnpj=cnpj,
-                                    razao_social=razao_social,
                                     data_aniversario=data_aniv,
-                                    origem_cliente=str(row.get('origem_cliente', 'Importação')).strip() if pd.notna(row.get('origem_cliente')) else 'Importação'
+                                    origem_cliente=str(row.get('origem_cliente', 'Importação')).strip() if pd.notna(row.get('origem_cliente')) else 'Importação',
+                                    tipo_conta=tipo_conta
                                 )
                                 logger.info(f"Cliente adicionado com sucesso. ID: {cliente_id}")
                                 success_count += 1
@@ -323,6 +286,7 @@ def show():
                                 error_count += 1
                                 error_msg = f"Erro ao importar linha {index + 2}: {str(e)}"
                                 logger.error(error_msg)
+                                logger.error(f"Stack trace: {traceback.format_exc()}")
                                 st.error(error_msg)
 
                             progress = (index + 1) / len(df)
@@ -338,3 +302,4 @@ def show():
             except Exception as e:
                 st.error(f"Erro ao ler o arquivo: {str(e)}")
                 logger.error(f"Erro ao ler arquivo CSV: {str(e)}")
+                logger.error(f"Stack trace: {traceback.format_exc()}")
