@@ -48,9 +48,12 @@ def testar_conexao_db(db):
         cliente_teste = {
             'nome': 'Cliente Teste',
             'telefone': '(00) 00000-0000',
-            'email': 'teste@teste.com',
-            'tipo_conta': 'PF',
-            'data_aniversario': datetime.now().date(),
+            'cpf': '000.000.000-00',
+            'estado': 'Teste',
+            'cidade': 'Teste',
+            'bairro': 'Teste',
+            'endereco': 'Rua de Teste',
+            'data_aniversario': '01/jan',
             'origem_cliente': 'Teste',
             'observacoes': 'Cliente de teste - será removido'
         }
