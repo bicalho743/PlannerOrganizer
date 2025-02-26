@@ -39,8 +39,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Inicialização da base de dados (apenas se não existir)
-if 'db' not in st.session_state:
+# Inicialização da sessão
+if 'initialized' not in st.session_state:
+    st.session_state.initialized = True
+    st.session_state.autenticado = False
+    st.session_state.usuario = None
     try:
         logger.info("Inicializando conexão com banco de dados...")
         st.session_state.db = Database()
@@ -51,15 +54,8 @@ if 'db' not in st.session_state:
         st.exception(e)
         st.stop()
 
-# Verificar autenticação (apenas se não existir)
-if 'autenticado' not in st.session_state:
-    logger.info("Inicializando estado de autenticação")
-    st.session_state.autenticado = False
-    st.session_state.usuario = None
-
-# Página de login
-if not st.session_state.get('autenticado', False):
-    logger.info("Usuário não autenticado, mostrando página de login")
+# Verificação de autenticação - impede acesso a qualquer página se não estiver autenticado
+if not st.session_state.autenticado:
     st.title("Login")
     st.write("Por favor, faça login para continuar.")
 
@@ -81,73 +77,71 @@ if not st.session_state.get('autenticado', False):
                 else:
                     logger.warning("Falha na autenticação")
                     st.error("Email ou senha inválidos")
-    st.stop()  # Impede a renderização do resto da página se não estiver autenticado
+    st.stop()
 
-else:
-    logger.info("Usuário autenticado, mostrando dashboard")
-    # Menu lateral personalizado
-    st.sidebar.title("Menu Principal")
+# Se chegou aqui, está autenticado - mostrar interface principal
+logger.info("Usuário autenticado, mostrando dashboard")
 
-    # Mostrar informações do usuário
-    with st.sidebar:
-        if st.session_state.usuario and isinstance(st.session_state.usuario, dict):
-            st.write(f"👤 Olá, {st.session_state.usuario.get('nome', 'Usuário')}")
-        else:
-            st.write("👤 Olá, Usuário")
+# Menu lateral
+st.sidebar.title("Menu Principal")
 
-        # Botão de logout com key única
-        logout_key = f"logout_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        if st.button("📤 Sair", key=logout_key):
-            logger.info("Usuário realizou logout")
-            st.session_state.autenticado = False
-            st.session_state.usuario = None
-            st.success("Logout realizado com sucesso!")
-            st.experimental_rerun()
+# Informações do usuário
+with st.sidebar:
+    if st.session_state.usuario and isinstance(st.session_state.usuario, dict):
+        st.write(f"👤 Olá, {st.session_state.usuario.get('nome', 'Usuário')}")
+    else:
+        st.write("👤 Olá, Usuário")
 
-    # Seleção de página com key única
-    menu_key = f"menu_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    pagina = st.sidebar.radio(
-        "Menu",
-        ["Dashboard", "Cadastros", "Propostas", "Financeiro", "Relatórios", "Teste de Importação"],
-        key=menu_key,
-        format_func=lambda x: f"📊 {x}" if x == "Dashboard"
-                        else f"👥 {x}" if x == "Cadastros"
-                        else f"📝 {x}" if x == "Propostas"
-                        else f"💰 {x}" if x == "Financeiro"
-                        else f"📈 {x}" if x == "Relatórios"
-                        else f"🔄 {x}"  # Teste de Importação
-    )
+    # Botão de logout
+    if st.button("📤 Sair", key="logout_button"):
+        logger.info("Usuário realizou logout")
+        st.session_state.autenticado = False
+        st.session_state.usuario = None
+        st.success("Logout realizado com sucesso!")
+        st.experimental_rerun()
 
-    logger.info(f"Página selecionada: {pagina}")
+# Menu de navegação
+pagina = st.sidebar.radio(
+    "Menu",
+    ["Dashboard", "Cadastros", "Propostas", "Financeiro", "Relatórios", "Teste de Importação"],
+    format_func=lambda x: f"📊 {x}" if x == "Dashboard"
+                    else f"👥 {x}" if x == "Cadastros"
+                    else f"📝 {x}" if x == "Propostas"
+                    else f"💰 {x}" if x == "Financeiro"
+                    else f"📈 {x}" if x == "Relatórios"
+                    else f"🔄 {x}"  # Teste de Importação
+)
 
-    # Roteamento de páginas com tratamento de erro
-    try:
-        if pagina == "Dashboard":
-            import pages.dashboard as dashboard
-            dashboard.show()
-        elif pagina == "Cadastros":
-            import pages.cadastros as cadastros
-            cadastros.show()
-        elif pagina == "Propostas":
-            import pages.propostas as propostas
-            propostas.show()
-        elif pagina == "Financeiro":
-            import pages.financeiro as financeiro
-            financeiro.show()
-        elif pagina == "Relatórios":
-            import pages.relatorios as relatorios
-            relatorios.show()
-        elif pagina == "Teste de Importação":
-            import pages.teste_importacao as teste_importacao
-            teste_importacao.show()
-    except ImportError as e:
-        logger.error(f"Erro ao importar módulo da página {pagina}: {str(e)}")
-        st.error(f"Erro ao carregar a página {pagina}. Módulo não encontrado.")
-    except Exception as e:
-        logger.error(f"Erro ao carregar página {pagina}: {str(e)}")
-        st.error(f"Erro ao carregar a página {pagina}.")
-        logger.exception(e)
+logger.info(f"Página selecionada: {pagina}")
 
-    # Rodapé
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("### Desenvolvido com ❤️ usando Streamlit")
+# Roteamento de páginas
+try:
+    if pagina == "Dashboard":
+        import pages.dashboard as dashboard
+        dashboard.show()
+    elif pagina == "Cadastros":
+        import pages.cadastros as cadastros
+        cadastros.show()
+    elif pagina == "Propostas":
+        import pages.propostas as propostas
+        propostas.show()
+    elif pagina == "Financeiro":
+        import pages.financeiro as financeiro
+        financeiro.show()
+    elif pagina == "Relatórios":
+        import pages.relatorios as relatorios
+        relatorios.show()
+    elif pagina == "Teste de Importação":
+        import pages.teste_importacao as teste_importacao
+        teste_importacao.show()
+except ImportError as e:
+    logger.error(f"Erro ao importar módulo da página {pagina}: {str(e)}")
+    st.error(f"Erro ao carregar a página {pagina}. Módulo não encontrado.")
+except Exception as e:
+    logger.error(f"Erro ao carregar página {pagina}: {str(e)}")
+    st.error(f"Erro ao carregar a página {pagina}.")
+    logger.exception(e)
+
+# Rodapé
+st.sidebar.markdown("---")
+st.sidebar.markdown("### Desenvolvido com ❤️ usando Streamlit")

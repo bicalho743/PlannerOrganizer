@@ -7,13 +7,7 @@ import traceback
 logger = logging.getLogger(__name__)
 
 def show():
-    # Verificar autenticação primeiro
-    if not st.session_state.get('autenticado', False):
-        st.error("Acesso negado. Por favor, faça login primeiro.")
-        st.stop()
-        return
-
-    # Log do estado da sessão no início
+    # Log do estado da sessão
     logger.info("=== Estado da Sessão ===")
     for key, value in st.session_state.items():
         if key not in ['senha', 'token']:
@@ -21,7 +15,7 @@ def show():
 
     st.title("🧪 Teste de Importação")
 
-    # Verificar estado da sessão
+    # Verificar conexão com banco de dados
     if 'db' not in st.session_state:
         st.error("Erro: Conexão com banco de dados não inicializada")
         return
@@ -42,9 +36,8 @@ def show():
     st.write("Preview dos dados:")
     st.dataframe(df_teste)
 
-    # Botão para testar importação com key única
-    key_teste = f"teste_importacao_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    if st.button("Testar Importação", key=key_teste):
+    # Botão para testar importação
+    if st.button("Testar Importação"):
         try:
             logger.info("Iniciando teste de importação")
 
