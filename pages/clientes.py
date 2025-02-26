@@ -95,7 +95,6 @@ def show():
     with tab2:
         st.subheader("Clientes Cadastrados")
 
-        # Atualizar lista de clientes
         try:
             clientes = st.session_state.db.get_clientes()
 
@@ -168,20 +167,27 @@ def show():
         st.subheader("Importar Clientes")
 
         st.write("""
-        Para importar clientes, seu arquivo CSV deve conter as seguintes colunas:
-        - nome (obrigatório)
-        - tipo_conta (PF ou PJ)
-        - cpf (para PF)
-        - cnpj (para PJ)
-        - razao_social (para PJ)
-        - email
-        - telefone
-        - estado
-        - cidade
-        - bairro
-        - endereco
-        - data_aniversario (formato: DD/MM)
-        - origem_cliente
+        Para importar clientes, seu arquivo CSV deve ter o seguinte formato:
+        - Usar vírgula (,) como separador
+        - Uma linha por cliente
+        - As seguintes colunas são esperadas:
+          - nome (obrigatório)
+          - tipo_conta (PF ou PJ)
+          - cpf (para PF)
+          - cnpj (para PJ)
+          - razao_social (para PJ)
+          - email
+          - telefone
+          - estado
+          - cidade
+          - bairro
+          - endereco
+          - data_aniversario (formato: DD/MM)
+          - origem_cliente
+
+        Exemplo de linha do CSV:
+        nome,tipo_conta,cpf,email,telefone
+        João Silva,PF,12345678900,joao@email.com,11999999999
         """)
 
         uploaded_file = st.file_uploader("Escolha o arquivo CSV", type=['csv'])
@@ -195,21 +201,29 @@ def show():
 
                 for encoding in encodings:
                     try:
-                        df = pd.read_csv(uploaded_file, encoding=encoding)
+                        # Usar sep=',' explicitamente
+                        df = pd.read_csv(
+                            uploaded_file, 
+                            encoding=encoding,
+                            sep=',',  # Forçar uso de vírgula como separador
+                            skipinitialspace=True,  # Ignorar espaços após a vírgula
+                            na_values=['', 'NA', 'null'],  # Valores a serem tratados como NA
+                        )
                         encoding_used = encoding
                         break
                     except UnicodeDecodeError:
                         continue
                     except Exception as e:
-                        st.error(f"Erro ao tentar ler o arquivo com codificação {encoding}: {str(e)}")
+                        logger.error(f"Erro ao tentar ler o arquivo com codificação {encoding}: {str(e)}")
                         continue
 
                 if df is None:
                     st.error("""
                     Não foi possível ler o arquivo CSV. Por favor, verifique se:
-                    1. O arquivo está no formato CSV correto
-                    2. O arquivo não está corrompido
-                    3. O arquivo foi salvo com codificação adequada (UTF-8 ou Latin1)
+                    1. O arquivo está usando vírgula (,) como separador
+                    2. As colunas estão corretas e separadas por vírgula
+                    3. Não há vírgulas dentro dos campos de texto
+                    4. O arquivo foi salvo com codificação adequada (UTF-8 ou Latin1)
                     """)
                     return
 
