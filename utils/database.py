@@ -62,6 +62,7 @@ class Cliente(Base):
     data_aniversario = Column(Date)
     origem_cliente = Column(String)
     data_cadastro = Column(Date, default=datetime.now().date())
+    observacoes = Column(String)  # Adicionado campo observacoes
 
     propostas = relationship("Proposta", back_populates="cliente")
 
@@ -261,12 +262,13 @@ class Database:
                 'cpf': c.cpf,
                 'data_aniversario': c.data_aniversario,
                 'origem_cliente': c.origem_cliente,
-                'data_cadastro': c.data_cadastro
+                'data_cadastro': c.data_cadastro,
+                'observacoes': c.observacoes # Added observations to get_clientes
             } for c in clientes])
         return self._safe_query(query)
 
-    def add_cliente(self, nome, email, telefone, estado=None, cidade=None, bairro=None, 
-                   endereco=None, cpf=None, data_aniversario=None, origem_cliente=None, tipo_conta='PF'):
+    def add_cliente(self, nome, email=None, telefone=None, estado=None, cidade=None, bairro=None, 
+                   endereco=None, cpf=None, data_aniversario=None, origem_cliente=None, observacoes=None):
         def query():
             # Obter o maior ID atual
             max_id = self.session.query(func.max(Cliente.id)).scalar()
@@ -287,7 +289,7 @@ class Database:
                 cpf=cpf,
                 data_aniversario=data_aniversario,
                 origem_cliente=origem_cliente,
-                tipo_conta=tipo_conta
+                observacoes=observacoes
             )
             self.session.add(cliente)
             return cliente.id
@@ -827,7 +829,7 @@ class Database:
                     return True
                 return False
             except (ValueError, TypeError) as e:
-                raise Exception(f"Erro ao converter valores:: {str(e)}")
+                raise Exception(f"Erro ao converter valores: {str(e)}")
         return self._safe_query(query)
 
     def add_acrescimo_proposta(self, proposta_id, tipo, valor, descricao=None, fornecedor=None, status_pagamento='Pendente'):
