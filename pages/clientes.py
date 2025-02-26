@@ -6,6 +6,25 @@ import traceback
 
 logger = logging.getLogger(__name__)
 
+def normalizar_data(data_str):
+    """Converte uma data no formato DD/MMM para DD/MM"""
+    if not data_str or pd.isna(data_str):
+        return None
+
+    meses = {
+        'jan': '01', 'fev': '02', 'mar': '03', 'abr': '04',
+        'mai': '05', 'jun': '06', 'jul': '07', 'ago': '08',
+        'set': '09', 'out': '10', 'nov': '11', 'dez': '12'
+    }
+
+    try:
+        dia, mes = data_str.lower().strip().split('/')
+        if mes in meses:
+            mes = meses[mes]
+        return f"{dia.zfill(2)}/{mes.zfill(2)}"
+    except:
+        return None
+
 def show():
     st.title("👥 Gestão de Clientes")
 
@@ -133,6 +152,7 @@ def show():
         st.write("""
         Para importar clientes, seu arquivo deve ter o seguinte formato:
         - O arquivo pode usar vírgula (,) ou ponto e vírgula (;) como separador
+        - Se houver separadores dentro de um campo, ele deve estar entre aspas duplas
         - Uma linha por cliente
         - As seguintes colunas são esperadas:
           - nome (obrigatório)
@@ -144,15 +164,15 @@ def show():
           - cidade
           - bairro
           - endereco
-          - data_aniversario (formato: DD/MM)
+          - data_aniversario (formato: DD/MM ou DD/MMM)
 
         Exemplo com ponto e vírgula (;):
-        nome;telefone;email;tipo_conta;cpf
-        João Silva;11999999999;joao@email.com;PF;12345678900
+        nome;email;telefone;tipo_conta;cpf;estado;cidade;endereco
+        "João Silva";joao@email.com;11999999999;PF;12345678900;SP;"São Paulo";"Rua das Flores, 123"
 
         Exemplo com vírgula (,):
-        nome,telefone,email,tipo_conta,cpf
-        João Silva,11999999999,joao@email.com,PF,12345678900
+        nome,email,telefone,tipo_conta,cpf,estado,cidade,endereco
+        "João Silva",joao@email.com,11999999999,PF,12345678900,SP,"São Paulo","Rua das Flores, 123"
         """)
 
         uploaded_file = st.file_uploader("Escolha o arquivo", type=['csv'])
@@ -187,7 +207,9 @@ def show():
                             skipinitialspace=True,  # Ignorar espaços após o separador
                             na_values=['', 'NA', 'null'],  # Valores a serem tratados como NA
                             engine='python',  # Usar engine python para melhor tratamento de erros
-                            on_bad_lines='warn'  # Avisar sobre linhas problemáticas ao invés de falhar
+                            on_bad_lines='warn',  # Avisar sobre linhas problemáticas ao invés de falhar
+                            quotechar='"',  # Usar aspas duplas para campos com separador
+                            quoting=1  # Permitir aspas em campos com separador
                         )
 
                         # Normalizar nomes das colunas
@@ -209,7 +231,8 @@ def show():
                     Não foi possível ler o arquivo. Por favor, verifique se:
                     1. O arquivo está usando vírgula (,) ou ponto e vírgula (;) como separador
                     2. As colunas estão nomeadas corretamente
-                    3. O arquivo foi salvo com codificação adequada (UTF-8 ou Latin1)
+                    3. Campos com separadores estão entre aspas duplas (")
+                    4. O arquivo foi salvo com codificação adequada (UTF-8 ou Latin1)
 
                     Formato detectado:
                     Separador: {separator}
@@ -251,7 +274,7 @@ def show():
                                 if telefone:
                                     telefone = ''.join(filter(str.isdigit, telefone))
 
-                                # Processar tipo de conta e documentos
+                                # Processar tipo de conta
                                 tipo_conta = str(row.get('tipo_conta', 'PF')).upper().strip()
 
                                 # Processar CPF
@@ -265,17 +288,16 @@ def show():
                                 # Processar data de aniversário
                                 data_aniv = None
                                 if pd.notna(row.get('data_aniversario')):
-                                    try:
-                                        if isinstance(row['data_aniversario'], str):
-                                            data = datetime.strptime(row['data_aniversario'], '%d/%m')
-                                        else:
-                                            data = pd.to_datetime(row['data_aniversario'])
-                                        data_aniv = datetime.now().replace(
-                                            month=data.month,
-                                            day=data.day
-                                        ).date()
-                                    except Exception as e:
-                                        logger.warning(f"Erro ao processar data de aniversário na linha {index + 2}: {str(e)}")
+                                    data_str = normalizar_data(str(row['data_aniversario']))
+                                    if data_str:
+                                        try:
+                                            data = datetime.strptime(data_str, '%d/%m')
+                                            data_aniv = datetime.now().replace(
+                                                month=data.month,
+                                                day=data.day
+                                            ).date()
+                                        except Exception as e:
+                                            logger.warning(f"Erro ao processar data de aniversário na linha {index + 2}: {str(e)}")
 
                                 # Log antes de adicionar ao banco
                                 logger.info(f"Dados processados para adicionar ao banco:")
