@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 def show():
     st.title("👥 Gestão de Clientes")
@@ -186,6 +189,7 @@ def show():
         if uploaded_file is not None:
             try:
                 df = pd.read_excel(uploaded_file)
+                logger.info(f"Arquivo carregado com sucesso. Colunas encontradas: {df.columns.tolist()}")
 
                 if 'nome' not in df.columns:
                     st.error("O arquivo deve conter uma coluna 'nome'")
@@ -202,19 +206,33 @@ def show():
 
                         for index, row in df.iterrows():
                             try:
+                                # Processar dados
+                                nome = str(row['nome']).strip() if pd.notna(row.get('nome')) else None
+                                if not nome:
+                                    raise ValueError("Nome é obrigatório")
+
+                                # Log dos dados antes do processamento
+                                logger.info(f"Processando linha {index + 2}:")
+                                logger.info(f"CPF original: {row.get('cpf')}")
+                                logger.info(f"Tipo conta: {row.get('tipo_conta')}")
+
                                 # Processar telefone
-                                telefone = str(row.get('telefone', '')) if pd.notna(row.get('telefone')) else None
+                                telefone = str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None
                                 if telefone:
                                     telefone = ''.join(filter(str.isdigit, telefone))
 
+                                # Processar tipo de conta e documentos
+                                tipo_conta = str(row.get('tipo_conta', 'PF')).upper().strip()
+
                                 # Processar CPF/CNPJ
-                                tipo_conta = str(row.get('tipo_conta', 'PF')).upper()
                                 cpf = None
                                 cnpj = None
                                 razao_social = None
 
-                                if tipo_conta == 'PF' and pd.notna(row.get('cpf')):
-                                    cpf = str(row['cpf']).strip()
+                                if tipo_conta == 'PF':
+                                    if pd.notna(row.get('cpf')):
+                                        cpf = str(row['cpf']).strip()
+                                        logger.info(f"CPF processado: {cpf}")
                                 elif tipo_conta == 'PJ':
                                     if pd.notna(row.get('cnpj')):
                                         cnpj = str(row['cnpj']).strip()
@@ -234,10 +252,17 @@ def show():
                                             day=data.day
                                         ).date()
                                     except Exception as e:
-                                        st.warning(f"Data de aniversário inválida na linha {index + 2}")
+                                        logger.warning(f"Erro ao processar data de aniversário na linha {index + 2}: {str(e)}")
 
-                                st.session_state.db.add_cliente(
-                                    nome=str(row['nome']).strip(),
+                                # Log antes de adicionar ao banco
+                                logger.info(f"Dados processados para adicionar ao banco:")
+                                logger.info(f"Nome: {nome}")
+                                logger.info(f"CPF final: {cpf}")
+                                logger.info(f"Tipo conta final: {tipo_conta}")
+
+                                # Adicionar cliente ao banco
+                                cliente_id = st.session_state.db.add_cliente(
+                                    nome=nome,
                                     email=str(row.get('email', '')).strip() if pd.notna(row.get('email')) else None,
                                     telefone=telefone,
                                     estado=str(row.get('estado', '')).strip() if pd.notna(row.get('estado')) else None,
@@ -251,10 +276,13 @@ def show():
                                     data_aniversario=data_aniv,
                                     origem_cliente=str(row.get('origem_cliente', 'Importação')).strip() if pd.notna(row.get('origem_cliente')) else 'Importação'
                                 )
+                                logger.info(f"Cliente adicionado com sucesso. ID: {cliente_id}")
                                 success_count += 1
                             except Exception as e:
                                 error_count += 1
-                                st.error(f"Erro ao importar linha {index + 2}: {str(e)}")
+                                error_msg = f"Erro ao importar linha {index + 2}: {str(e)}"
+                                logger.error(error_msg)
+                                st.error(error_msg)
 
                             progress = (index + 1) / len(df)
                             progress_bar.progress(progress)
@@ -268,3 +296,4 @@ def show():
 
             except Exception as e:
                 st.error(f"Erro ao ler o arquivo: {str(e)}")
+                logger.error(f"Erro ao ler arquivo Excel: {str(e)}")
