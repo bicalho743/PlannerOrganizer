@@ -26,14 +26,13 @@ st.set_page_config(
 )
 
 # Verificar variáveis de ambiente críticas
-required_env_vars = ['DATABASE_URL', 'JWT_SECRET']
+required_env_vars = ['DATABASE_URL']
 missing_vars = [var for var in required_env_vars if not os.getenv(var)]
 if missing_vars:
     st.error(f"Configuração incompleta. Faltam variáveis: {', '.join(missing_vars)}")
     st.stop()
 
 try:
-    # Tentar importar Database com tratamento detalhado de erro
     from utils.database import Database
 except ImportError as e:
     st.error(f"Erro ao importar módulo de banco de dados: {str(e)}")
@@ -49,88 +48,41 @@ if 'db' not in st.session_state:
         st.exception(e)
         st.stop()
 
-# Verificar autenticação
-if 'autenticado' not in st.session_state:
-    st.session_state.autenticado = False
-    st.session_state.usuario = None
+# Menu lateral simplificado
+st.sidebar.title("Menu Principal")
 
-if not st.session_state.autenticado:
-    # CSS para esconder o menu lateral na tela de login
-    st.markdown("""
-        <style>
-        [data-testid="stSidebar"] {
-            display: none;
-        }
-        div[data-testid="stToolbar"] {
-            display: none;
-        }
-        #MainMenu {
-            display: none;
-        }
-        footer {
-            display: none;
-        }
-        /* Estilo para o título principal */
-        h1 {
-            color: #B8860B !important;
-            font-family: sans-serif !important;
-            font-weight: bold !important;
-            text-align: center !important;
-            margin-bottom: 2rem !important;
-        }
-        /* Centraliza o conteúdo */
-        .block-container {
-            padding-top: 2rem;
-            max-width: 1000px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-    import pages.login as login
-    login.show()
-else:
-    # Menu lateral simplificado
-    st.sidebar.title("Menu Principal")
-    
-    # Mostrar apenas nome do usuário
-    st.sidebar.write(f"👤 Olá, {st.session_state.usuario['nome']}")
+# Seleção de página
+pagina = st.sidebar.radio(
+    "",  # Label vazio para não mostrar título do radio
+    ["Dashboard", "Cadastros", "Propostas", "Financeiro", "Relatórios"],
+    format_func=lambda x: f"📊 {x}" if x == "Dashboard"
+                    else f"👥 {x}" if x == "Cadastros"
+                    else f"📝 {x}" if x == "Propostas"
+                    else f"💰 {x}" if x == "Financeiro"
+                    else f"📈 {x}" if x == "Relatórios"
+                    else f"📥 {x}"  # Importação
+)
 
-        if st.button("📤 Sair"):
-            st.session_state.autenticado = False
-            st.session_state.usuario = None
-            st.experimental_rerun()
+# Roteamento de páginas
+if pagina == "Dashboard":
+    import pages.dashboard as dashboard
+    dashboard.show()
+elif pagina == "Cadastros":
+    import pages.cadastros as cadastros
+    cadastros.show()
+elif pagina == "Propostas":
+    import pages.propostas as propostas
+    propostas.show()
+elif pagina == "Financeiro":
+    import pages.financeiro as financeiro
+    financeiro.show()
+elif pagina == "Relatórios":
+    import pages.relatorios as relatorios
+    relatorios.show()
+elif pagina == "Importação":
+    import pages.importacao as importacao
+    importacao.show()
 
-    # Seleção de página
-    pagina = st.sidebar.radio(
-        "",  # Label vazio para não mostrar título do radio
-        ["Dashboard", "Cadastros", "Propostas", "Financeiro", "Relatórios"],
-        format_func=lambda x: f"📊 {x}" if x == "Dashboard"
-                        else f"👥 {x}" if x == "Cadastros"
-                        else f"📝 {x}" if x == "Propostas"
-                        else f"💰 {x}" if x == "Financeiro"
-                        else f"📈 {x}" if x == "Relatórios"
-                        else f"📥 {x}"  # Importação
-    )
-
-    # Roteamento de páginas
-    if pagina == "Dashboard":
-        import pages.dashboard as dashboard
-        dashboard.show()
-    elif pagina == "Cadastros":
-        import pages.cadastros as cadastros
-        cadastros.show()
-    elif pagina == "Propostas":
-        import pages.propostas as propostas
-        propostas.show()
-    elif pagina == "Financeiro":
-        import pages.financeiro as financeiro
-        financeiro.show()
-    elif pagina == "Relatórios":
-        import pages.relatorios as relatorios
-        relatorios.show()
-    elif pagina == "Importação":
-        import pages.importacao as importacao
-        importacao.show()
-
-    # Rodapé
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("### Desenvolvido com ❤️ usando Streamlit")
+# Rodapé
+st.sidebar.markdown("---")
+st.sidebar.markdown("### Desenvolvido com ❤️ usando Streamlit")
