@@ -339,7 +339,7 @@ def importar_propostas(arquivo, db):
             return False, "Não há clientes cadastrados no sistema"
 
         # Criar dicionário de nome para ID
-        clientes_dict = dict(zip(clientes['nome'], clientes['id']))
+        clientes_dict = dict(zip(clientes['nome'].str.strip().str.lower(), clientes['id']))
 
         sucessos = 0
         erros = []
@@ -351,10 +351,16 @@ def importar_propostas(arquivo, db):
                 progress = (idx + 1) / total_rows
                 progress_bar.progress(progress)
 
+                # Processar dados da linha
+                cliente_nome = str(row['cliente_nome']).strip().lower()
+                if not cliente_nome:
+                    erro_msg = f"Nome do cliente vazio na linha {idx + 2}"
+                    erros.append(erro_msg)
+                    continue
+
                 # Buscar ID do cliente
-                cliente_nome = str(row['cliente_nome']).strip()
                 if cliente_nome not in clientes_dict:
-                    erro_msg = f"Cliente não encontrado: {cliente_nome}"
+                    erro_msg = f"Cliente não encontrado: {row['cliente_nome']}"
                     erros.append(erro_msg)
                     continue
 
@@ -392,17 +398,23 @@ def importar_propostas(arquivo, db):
                         st.warning(f"Prazo de entrega inválido na linha {idx + 2}")
 
                 # Adicionar proposta
-                db.add_proposta(
-                    cliente_id=cliente_id,
-                    descricao=str(row['descricao']).strip(),
-                    valor=valor,
-                    status=str(row['status']).strip(),
-                    tipo_proposta=str(row['tipo_proposta']).strip() if pd.notna(row.get('tipo_proposta')) else None,
-                    data_inicio=data_inicio,
-                    data_fim=data_fim,
-                    prazo_entrega=prazo_entrega
-                )
-                sucessos += 1
+                try:
+                    db.add_proposta(
+                        cliente_id=cliente_id,
+                        descricao=str(row['descricao']).strip(),
+                        valor=valor,
+                        status=str(row['status']).strip(),
+                        tipo_proposta=str(row['tipo_proposta']).strip() if pd.notna(row.get('tipo_proposta')) else None,
+                        data_inicio=data_inicio,
+                        data_fim=data_fim,
+                        prazo_entrega=prazo_entrega
+                    )
+                    sucessos += 1
+                except Exception as e:
+                    erro_msg = f"Erro ao adicionar proposta na linha {idx + 2}: {str(e)}"
+                    erros.append(erro_msg)
+                    st.error(erro_msg)
+                    continue
 
             except Exception as e:
                 erro_msg = f"Erro na linha {idx + 2}: {str(e)}"
