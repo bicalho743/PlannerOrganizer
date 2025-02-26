@@ -167,21 +167,26 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                     if telefone:
                         telefone = ''.join(filter(str.isdigit, telefone))
 
-                    cpf = None
-                    if pd.notna(row.get('cpf')):
-                        cpf = ''.join(filter(str.isdigit, str(row['cpf'])))
+                    # Processamento do CPF
+                    cpf = str(row.get('cpf', '')).strip() if pd.notna(row.get('cpf')) else None
+                    if cpf:
+                        # Remove caracteres não numéricos do CPF
+                        cpf = ''.join(filter(str.isdigit, cpf))
+                        # Formata o CPF se tiver 11 dígitos
+                        if len(cpf) == 11:
+                            cpf = f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
 
                     data_aniv = validar_data(row.get('data_aniversario'))
 
                     db.add_cliente(
                         nome=nome,
-                        email=str(row.get('email', '')).strip() if pd.notna(row.get('email')) else None,
                         telefone=telefone,
+                        cpf=cpf,
+                        email=str(row.get('email', '')).strip() if pd.notna(row.get('email')) else None,
                         estado=str(row.get('estado', '')).strip() if pd.notna(row.get('estado')) else None,
                         cidade=str(row.get('cidade', '')).strip() if pd.notna(row.get('cidade')) else None,
                         bairro=str(row.get('bairro', '')).strip() if pd.notna(row.get('bairro')) else None,
                         endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
-                        cpf=cpf,
                         data_aniversario=data_aniv,
                         origem_cliente=str(row.get('origem_cliente', 'Importação')).strip() if pd.notna(row.get('origem_cliente')) else 'Importação',
                         observacoes=str(row.get('observacoes', '')).strip() if pd.notna(row.get('observacoes')) else None

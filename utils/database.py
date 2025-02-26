@@ -83,7 +83,6 @@ class Fornecedor(Base):
     data_vencimento = Column(Date, nullable=True)
     data_pagamento = Column(Date, nullable=True)
     status = Column(String, nullable=True)
-    email = Column(String) # Added email field
 
 
 class Assistente(Base):
@@ -406,7 +405,7 @@ class Database:
 
     def add_fornecedor(self, descricao, contato, categoria, estado=None, cidade=None, 
                   bairro=None, endereco=None, pix=None, recorrente=False, observacoes=None, 
-                  valor=None, data_vencimento=None, data_pagamento=None, status=None, email=None):
+                  valor=None, data_vencimento=None, data_pagamento=None, status=None):
         def query():
             fornecedor = Fornecedor(
                 descricao=descricao,
@@ -422,8 +421,7 @@ class Database:
                 valor=valor,
                 data_vencimento=data_vencimento,
                 data_pagamento=data_pagamento,
-                status=status,
-                email=email
+                status=status
             )
             self.session.add(fornecedor)
             return fornecedor.id
@@ -436,7 +434,6 @@ class Database:
                 'id': f.id,
                 'descricao': f.descricao,
                 'contato': f.contato,
-                'email': f.email,
                 'categoria': f.categoria,
                 'estado': f.estado,
                 'cidade': f.cidade,
@@ -696,8 +693,7 @@ class Database:
                 estado="SP",
                 cidade="São Paulo",
                 bairro="Pinheiros",
-                endereco="Rua Augusta, 100",
-                email="organizador@email.com"
+                endereco="Rua Augusta, 100"
             )
 
             proposta1_id = self.add_proposta(
@@ -828,7 +824,7 @@ class Database:
                 fornecedor=fornecedor,
                 descricao=descricao,
                 valor=valor,
-                status_pagamento=status_pagamento
+                status_pagamento=statuspagamento
             )
             self.session.add(acrescimo)
             return int(acrescimo.id)  # Converter para int nativo
