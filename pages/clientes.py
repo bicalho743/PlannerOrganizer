@@ -115,10 +115,6 @@ def show():
             clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro'], errors='coerce')
             clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'], errors='coerce')
 
-            # Formatar datas para exibição
-            clientes['data_cadastro'] = clientes['data_cadastro'].dt.strftime('%d/%m/%Y')
-            clientes['data_aniversario'] = clientes['data_aniversario'].dt.strftime('%d/%m')
-
             # Aplicar filtro de busca
             if busca:
                 mask = clientes.apply(lambda row: any(
@@ -129,21 +125,43 @@ def show():
                 clientes = clientes[mask]
 
             # Definir colunas para exibição
-            colunas = ['nome', 'email', 'telefone', 'tipo_conta', 'data_aniversario']
+            colunas = ['id', 'nome', 'email', 'telefone', 'tipo_conta', 'cpf', 'cnpj', 
+                      'razao_social', 'data_aniversario', 'origem_cliente', 'estado', 
+                      'cidade', 'bairro', 'endereco', 'data_cadastro']
             rename = {
+                'id': 'ID',
                 'nome': 'Nome',
                 'email': 'Email',
                 'telefone': 'Telefone',
                 'tipo_conta': 'Tipo de Conta',
-                'data_aniversario': 'Aniversário'
+                'cpf': 'CPF',
+                'cnpj': 'CNPJ',
+                'razao_social': 'Razão Social',
+                'data_aniversario': 'Aniversário',
+                'origem_cliente': 'Origem',
+                'estado': 'Estado',
+                'cidade': 'Cidade',
+                'bairro': 'Bairro',
+                'endereco': 'Endereço',
+                'data_cadastro': 'Data Cadastro'
             }
 
             # Criar DataFrame para exibição
             df_display = clientes[colunas].copy()
             df_display.columns = [rename[col] for col in colunas]
 
-            # Exibir tabela
-            st.dataframe(df_display, hide_index=True)
+            # Formatar datas para exibição
+            if 'Data Cadastro' in df_display.columns:
+                df_display['Data Cadastro'] = pd.to_datetime(df_display['Data Cadastro']).dt.strftime('%d/%m/%Y')
+            if 'Aniversário' in df_display.columns:
+                df_display['Aniversário'] = pd.to_datetime(df_display['Aniversário']).dt.strftime('%d/%m')
+
+            # Exibir tabela com todos os dados
+            st.dataframe(
+                df_display,
+                hide_index=True,
+                use_container_width=True
+            )
 
             # Botões de ação
             col1, col2 = st.columns(2)
@@ -151,7 +169,7 @@ def show():
                 registro_id = st.number_input(
                     "ID do cliente para ação:",
                     min_value=1,
-                    max_value=len(clientes),
+                    max_value=len(clientes) if not clientes.empty else 1,
                     step=1
                 )
 
