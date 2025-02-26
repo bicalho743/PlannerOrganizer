@@ -204,21 +204,27 @@ def show():
                         for index, row in df.iterrows():
                             try:
                                 # Processar telefone
-                                telefone = str(row.get('telefone', ''))
-                                telefone = ''.join(filter(str.isdigit, telefone)) if telefone else None
+                                telefone = str(row.get('telefone', '')) if pd.notna(row.get('telefone')) else None
+                                if telefone:
+                                    telefone = ''.join(filter(str.isdigit, telefone))
 
-                                # Processar CPF
+                                # Processar CPF/CNPJ
                                 tipo_conta = str(row.get('tipo_conta', 'PF')).upper()
                                 cpf = None
+                                cnpj = None
+                                razao_social = None
+
                                 if tipo_conta == 'PF' and pd.notna(row.get('cpf')):
-                                    cpf = str(row['cpf'])
-                                    # Remover pontuação apenas se necessário
-                                    if not cpf.isdigit():
-                                        cpf = ''.join(filter(str.isdigit, cpf))
+                                    cpf = str(row['cpf']).strip()
+                                elif tipo_conta == 'PJ':
+                                    if pd.notna(row.get('cnpj')):
+                                        cnpj = str(row['cnpj']).strip()
+                                    if pd.notna(row.get('razao_social')):
+                                        razao_social = str(row['razao_social']).strip()
 
                                 # Processar data de aniversário
                                 data_aniv = None
-                                if 'data_aniversario' in row and pd.notna(row['data_aniversario']):
+                                if pd.notna(row.get('data_aniversario')):
                                     try:
                                         if isinstance(row['data_aniversario'], str):
                                             data = datetime.strptime(row['data_aniversario'], '%d/%m')
@@ -228,28 +234,28 @@ def show():
                                             month=data.month,
                                             day=data.day
                                         ).date()
-                                    except Exception:
-                                        st.warning(f"Data de aniversário inválida na linha {index + 1}")
+                                    except Exception as e:
+                                        st.warning(f"Data de aniversário inválida na linha {index + 2}")
 
                                 st.session_state.db.add_cliente(
-                                    nome=str(row['nome']),
-                                    tipo_conta=tipo_conta,
-                                    email=str(row.get('email', '')),
+                                    nome=str(row['nome']).strip(),
+                                    email=str(row.get('email', '')).strip() if pd.notna(row.get('email')) else None,
                                     telefone=telefone,
-                                    estado=str(row.get('estado', '')),
-                                    cidade=str(row.get('cidade', '')),
-                                    bairro=str(row.get('bairro', '')),
-                                    endereco=str(row.get('endereco', '')),
+                                    estado=str(row.get('estado', '')).strip() if pd.notna(row.get('estado')) else None,
+                                    cidade=str(row.get('cidade', '')).strip() if pd.notna(row.get('cidade')) else None,
+                                    bairro=str(row.get('bairro', '')).strip() if pd.notna(row.get('bairro')) else None,
+                                    endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
                                     cpf=cpf,
-                                    cnpj=str(row.get('cnpj', '')) if tipo_conta == 'PJ' else None,
-                                    razao_social=str(row.get('razao_social', '')) if tipo_conta == 'PJ' else None,
+                                    tipo_conta=tipo_conta,
+                                    cnpj=cnpj,
+                                    razao_social=razao_social,
                                     data_aniversario=data_aniv,
-                                    origem_cliente=str(row.get('origem_cliente', 'Importação'))
+                                    origem_cliente=str(row.get('origem_cliente', 'Importação')).strip() if pd.notna(row.get('origem_cliente')) else 'Importação'
                                 )
                                 success_count += 1
                             except Exception as e:
                                 error_count += 1
-                                st.error(f"Erro ao importar linha {index + 1}: {str(e)}")
+                                st.error(f"Erro ao importar linha {index + 2}: {str(e)}")
 
                             progress = (index + 1) / len(df)
                             progress_bar.progress(progress)

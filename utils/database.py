@@ -275,7 +275,15 @@ class Database:
     def add_cliente(self, nome, email, telefone, estado=None, cidade=None, bairro=None, endereco=None, cpf=None, 
                     data_aniversario=None, origem_cliente=None, tipo_conta='PF', cnpj=None, razao_social=None):
         def query():
+            # Obter o maior ID atual
+            max_id = self.session.query(func.max(Cliente.id)).scalar()
+
+            # Se não houver clientes, começar do 1
+            # Se houver, usar o próximo número na sequência
+            next_id = 1 if max_id is None else max_id + 1
+
             cliente = Cliente(
+                id=next_id,  # Definir ID explicitamente
                 nome=nome,
                 email=email,
                 telefone=telefone,
