@@ -73,7 +73,7 @@ if not st.session_state.autenticado:
                     st.session_state.autenticado = True
                     st.session_state.usuario = usuario
                     st.success("Login realizado com sucesso!")
-                    st.experimental_rerun()
+                    st.rerun()  # Alterado de experimental_rerun para rerun
                 else:
                     logger.warning("Falha na autenticação")
                     st.error("Email ou senha inválidos")
@@ -98,7 +98,7 @@ with st.sidebar:
         st.session_state.autenticado = False
         st.session_state.usuario = None
         st.success("Logout realizado com sucesso!")
-        st.experimental_rerun()
+        st.rerun()  # Alterado de experimental_rerun para rerun
 
 # Menu de navegação
 pagina = st.sidebar.radio(
