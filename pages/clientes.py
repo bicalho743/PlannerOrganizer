@@ -16,8 +16,22 @@ def show():
                 ["PF", "PJ"]
             )
 
+            telefone = st.text_input("Telefone")
+            if telefone:
+                # Remover pontuação e espaços
+                telefone = ''.join(filter(str.isdigit, telefone))
+                if len(telefone) != 11:
+                    st.error("Telefone deve ter 11 dígitos")
+                    return
+
             if tipo_conta == "PF":
                 cpf = st.text_input("CPF")
+                if cpf:
+                    # Remover pontuação e espaços
+                    cpf = ''.join(filter(str.isdigit, cpf))
+                    if len(cpf) != 11:
+                        st.error("CPF deve ter 11 dígitos")
+                        return
                 cnpj = None
                 razao_social = None
             else:
@@ -28,7 +42,6 @@ def show():
             col1, col2 = st.columns(2)
             with col1:
                 email = st.text_input("E-mail")
-                telefone = st.text_input("Telefone")
             with col2:
                 data_aniversario = st.date_input("Data de Aniversário", format="DD/MM/YYYY")
                 origem_cliente = st.selectbox(
@@ -226,7 +239,7 @@ def show():
         - origem_cliente
         """)
 
-        uploaded_file = st.file_uploader("Escolha o arquivo Excel", type=['xlsx', 'xls'], key="cliente_file_upload")
+        uploaded_file = st.file_uploader("Escolha o arquivo Excel", type=['xlsx', 'xls'])
 
         if uploaded_file is not None:
             try:
@@ -238,7 +251,7 @@ def show():
                     st.write("Preview dos dados:")
                     st.dataframe(df.head())
 
-                    if st.button("Confirmar Importação", key="confirmar_importacao_cliente"):
+                    if st.button("Confirmar Importação"):
                         success_count = 0
                         error_count = 0
 
@@ -247,6 +260,22 @@ def show():
 
                         for index, row in df.iterrows():
                             try:
+                                # Processar telefone
+                                telefone = str(row.get('telefone', ''))
+                                telefone = ''.join(filter(str.isdigit, telefone))
+                                if len(telefone) != 11:
+                                    st.warning(f"Telefone inválido na linha {index + 1}")
+                                    continue
+
+                                # Processar CPF
+                                tipo_conta = str(row.get('tipo_conta', 'PF')).upper()
+                                if tipo_conta == 'PF':
+                                    cpf = str(row.get('cpf', ''))
+                                    cpf = ''.join(filter(str.isdigit, cpf))
+                                    if len(cpf) != 11:
+                                        st.warning(f"CPF inválido na linha {index + 1}")
+                                        continue
+
                                 # Processar data de aniversário
                                 data_aniv = None
                                 if 'data_aniversario' in row and pd.notna(row['data_aniversario']):
@@ -262,20 +291,16 @@ def show():
                                     except Exception:
                                         st.warning(f"Data de aniversário inválida na linha {index + 1}")
 
-                                tipo_conta = str(row.get('tipo_conta', 'PF')).upper()
-                                if tipo_conta not in ['PF', 'PJ']:
-                                    tipo_conta = 'PF'
-
                                 st.session_state.db.add_cliente(
                                     nome=str(row['nome']),
                                     tipo_conta=tipo_conta,
                                     email=str(row.get('email', '')),
-                                    telefone=str(row.get('telefone', '')),
+                                    telefone=telefone,
                                     estado=str(row.get('estado', '')),
                                     cidade=str(row.get('cidade', '')),
                                     bairro=str(row.get('bairro', '')),
                                     endereco=str(row.get('endereco', '')),
-                                    cpf=str(row.get('cpf', '')) if tipo_conta == 'PF' else None,
+                                    cpf=cpf if tipo_conta == 'PF' else None,
                                     cnpj=str(row.get('cnpj', '')) if tipo_conta == 'PJ' else None,
                                     razao_social=str(row.get('razao_social', '')) if tipo_conta == 'PJ' else None,
                                     data_aniversario=data_aniv,
@@ -295,8 +320,6 @@ def show():
                         - Clientes importados com sucesso: {success_count}
                         - Erros de importação: {error_count}
                         """)
-                        st.session_state['update_clientes'] = True
-                        st.session_state['cliente_file_upload'] = None
 
             except Exception as e:
                 st.error(f"Erro ao ler o arquivo: {str(e)}")

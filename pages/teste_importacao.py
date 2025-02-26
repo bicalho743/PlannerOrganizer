@@ -23,13 +23,13 @@ def show():
         st.success("Conexão com banco de dados presente na sessão")
         logger.info("Conexão com banco de dados encontrada")
 
-    # Criar DataFrame de teste mínimo
+    # Criar DataFrame de teste mínimo com dados formatados corretamente
     dados_teste = {
         'nome': ['Cliente Teste'],
-        'telefone': ['(11) 99999-9999'],
+        'telefone': ['11999999999'],  # Já formatado sem pontuação
         'email': ['teste@email.com'],
         'tipo_conta': ['PF'],
-        'cpf': ['123.456.789-00']
+        'cpf': ['12345678900']  # Já formatado sem pontuação
     }
 
     df_teste = pd.DataFrame(dados_teste)
@@ -41,13 +41,13 @@ def show():
         try:
             logger.info("Iniciando teste de importação")
 
-            # Tentar adicionar cliente diretamente
+            # Tentar adicionar cliente diretamente com dados já formatados
             st.session_state.db.add_cliente(
                 nome=dados_teste['nome'][0],
-                telefone=dados_teste['telefone'][0],
+                telefone=dados_teste['telefone'][0],  # Já formatado
                 email=dados_teste['email'][0],
                 tipo_conta=dados_teste['tipo_conta'][0],
-                cpf=dados_teste['cpf'][0]
+                cpf=dados_teste['cpf'][0]  # Já formatado
             )
 
             st.success("Cliente teste adicionado com sucesso!")
