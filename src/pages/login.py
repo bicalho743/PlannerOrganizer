@@ -1,7 +1,6 @@
 import streamlit as st
 import datetime
 import jwt
-import os
 
 def show():
     # Criar três colunas para centralização
@@ -33,19 +32,14 @@ def show():
 
                             # Se o usuário marcou "lembrar", criar um token JWT
                             if lembrar:
-                                try:
-                                    jwt_secret = st.secrets.get("JWT_SECRET") or os.getenv("JWT_SECRET")
-                                    if jwt_secret:
-                                        token = jwt.encode({
-                                            'id': usuario['id'],
-                                            'nome': usuario['nome'],
-                                            'email': usuario['email'],
-                                            'tipo': usuario['tipo'],
-                                            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30)
-                                        }, jwt_secret, algorithm="HS256")
-                                        st.session_state.token = token
-                                except Exception as e:
-                                    st.warning("Não foi possível criar o token de 'lembrar-me'. O login ainda funcionará, mas você precisará fazer login novamente ao fechar o navegador.")
+                                token = jwt.encode({
+                                    'id': usuario['id'],
+                                    'nome': usuario['nome'],
+                                    'email': usuario['email'],
+                                    'tipo': usuario['tipo'],
+                                    'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30)
+                                }, st.secrets["JWT_SECRET"], algorithm="HS256")
+                                st.session_state.token = token
 
                             st.session_state.autenticado = True
                             st.success("Login realizado com sucesso!")
