@@ -102,7 +102,7 @@ else:
     # Seleção de página
     pagina = st.sidebar.radio(
         "",  # Label vazio para não mostrar título do radio
-        ["Dashboard", "Cadastros", "Propostas", "Financeiro", "Relatórios", "Importação"],
+        ["Dashboard", "Cadastros", "Propostas", "Financeiro", "Relatórios"],
         format_func=lambda x: f"📊 {x}" if x == "Dashboard"
                         else f"👥 {x}" if x == "Cadastros"
                         else f"📝 {x}" if x == "Propostas"
