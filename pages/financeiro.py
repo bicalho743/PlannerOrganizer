@@ -112,13 +112,90 @@ def show():
 
         # Exibir extrato
         if not financeiro.empty:
-            st.dataframe(
-                financeiro[[
-                    'data', 'tipo', 'descricao', 'valor', 'categoria',
-                    'tipo_receita', 'status'
-                ]].sort_values('data', ascending=False),
-                use_container_width=True
-            )
+            # Adicionar botões de edição e exclusão para cada transação
+            for idx, transacao in financeiro.iterrows():
+                with st.expander(f"{transacao['descricao']} - R$ {transacao['valor']:.2f}"):
+                    col1, col2, col3 = st.columns([3, 1, 1])
+
+                    with col1:
+                        st.write(f"**Data:** {transacao['data'].strftime('%d/%m/%Y')}")
+                        st.write(f"**Tipo:** {transacao['tipo'].title()}")
+                        st.write(f"**Categoria:** {transacao['categoria']}")
+                        if 'tipo_receita' in transacao and pd.notna(transacao['tipo_receita']):
+                            st.write(f"**Tipo de Receita:** {transacao['tipo_receita']}")
+                        st.write(f"**Status:** {transacao['status']}")
+
+                    with col2:
+                        if st.button("✏️ Editar", key=f"edit_{transacao['id']}"):
+                            st.session_state.transacao_em_edicao = transacao
+                            st.rerun()
+
+                    with col3:
+                        if st.button("🗑️ Excluir", key=f"del_{transacao['id']}"):
+                            try:
+                                if st.session_state.db.delete_transacao(transacao['id']):
+                                    st.success("Transação excluída com sucesso!")
+                                    st.rerun()
+                                else:
+                                    st.error("Erro ao excluir transação.")
+                            except Exception as e:
+                                st.error(f"Erro ao excluir transação: {str(e)}")
+
+            # Modal de edição
+            if 'transacao_em_edicao' in st.session_state:
+                transacao = st.session_state.transacao_em_edicao
+                st.write("---")
+                st.subheader("Editar Transação")
+
+                with st.form("edicao_transacao"):
+                    tipo = st.selectbox(
+                        "Tipo",
+                        ["receita", "despesa", "receita_a_receber"],
+                        index=["receita", "despesa", "receita_a_receber"].index(transacao['tipo'])
+                    )
+
+                    descricao = st.text_input("Descrição", value=transacao['descricao'])
+                    valor = st.number_input("Valor (R$)", value=float(transacao['valor']), min_value=0.0, step=0.01)
+
+                    if tipo in ["receita", "receita_a_receber"]:
+                        tipo_receita = st.selectbox(
+                            "Tipo de Receita",
+                            ["organização", "comissão", "venda"],
+                            index=["organização", "comissão", "venda"].index(
+                                transacao['tipo_receita'] if pd.notna(transacao.get('tipo_receita')) else "organização"
+                            )
+                        )
+                    else:
+                        tipo_receita = None
+
+                    categoria = st.selectbox(
+                        "Categoria",
+                        ["Serviço", "Produto", "Fornecedor", "Outros"],
+                        index=["Serviço", "Produto", "Fornecedor", "Outros"].index(transacao['categoria'])
+                    )
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.form_submit_button("Salvar"):
+                            try:
+                                st.session_state.db.update_transacao(
+                                    transacao['id'],
+                                    tipo=tipo,
+                                    descricao=descricao,
+                                    valor=valor,
+                                    categoria=categoria,
+                                    tipo_receita=tipo_receita
+                                )
+                                del st.session_state.transacao_em_edicao
+                                st.success("Transação atualizada com sucesso!")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Erro ao atualizar transação: {str(e)}")
+
+                    with col2:
+                        if st.form_submit_button("Cancelar"):
+                            del st.session_state.transacao_em_edicao
+                            st.rerun()
 
             # Resumo financeiro
             receitas = financeiro[financeiro['tipo'] == 'receita']['valor'].sum()

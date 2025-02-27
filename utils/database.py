@@ -382,6 +382,30 @@ class Database:
             return False
         return self._safe_query(query)
 
+    def update_transacao(self, transacao_id, tipo, descricao, valor, categoria, tipo_receita=None):
+        """Atualiza uma transação existente"""
+        def query():
+            transacao = self.session.query(Transacao).filter_by(id=transacao_id).first()
+            if transacao:
+                transacao.tipo = tipo
+                transacao.descricao = descricao
+                transacao.valor = valor
+                transacao.categoria = categoria
+                transacao.tipo_receita = tipo_receita
+                return True
+            return False
+        return self._safe_query(query)
+
+    def delete_transacao(self, transacao_id):
+        """Exclui uma transação"""
+        def query():
+            transacao = self.session.query(Transacao).filter_by(id=transacao_id).first()
+            if transacao:
+                self.session.delete(transacao)
+                return True
+            return False
+        return self._safe_query(query)
+
     def get_contas_receber(self):
         def query():
             contas = self.session.query(Transacao).filter(
