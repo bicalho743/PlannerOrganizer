@@ -48,8 +48,8 @@ def show():
                 else:  # fornecedor
                     fornecedores = st.session_state.db.get_fornecedores()
                     if not fornecedores.empty:
-                        origem = st.selectbox("Selecione o Fornecedor", fornecedores['nome'].tolist())
-                        origem_id = fornecedores[fornecedores['nome'] == origem]['id'].iloc[0]
+                        origem = st.selectbox("Selecione o Fornecedor", fornecedores['descricao'].tolist())
+                        origem_id = fornecedores[fornecedores['descricao'] == origem]['id'].iloc[0]
                     else:
                         st.warning("Nenhum fornecedor cadastrado")
                         origem_id = None
@@ -120,27 +120,31 @@ def show():
             df_display['data'] = df_display['data'].dt.strftime('%d/%m/%Y')
             df_display['valor'] = df_display['valor'].apply(lambda x: f"R$ {x:.2f}")
             df_display['tipo'] = df_display['tipo'].apply(lambda x: x.title())
-            df_display['ações'] = None  # Coluna para os botões
 
-            # Criar dataframe para exibição
-            cols_display = ['data', 'tipo', 'descricao', 'valor', 'categoria', 'status']
+            # Exibir tabela
             st.dataframe(
-                df_display[cols_display],
+                df_display[['data', 'tipo', 'descricao', 'valor', 'categoria', 'status']],
                 use_container_width=True,
                 hide_index=True
             )
 
-            # Adicionar botões abaixo da tabela
-            for idx, row in df_display.iterrows():
-                col1, col2 = st.columns([1, 1])
+            # Seleção e ações para transação
+            if len(financeiro) > 0:
+                transacoes_display = [f"{row['descricao']} - R$ {row['valor']:.2f} ({row['data'].strftime('%d/%m/%Y')})" 
+                                    for idx, row in financeiro.iterrows()]
+                selected_idx = st.selectbox("Selecione uma transação", 
+                                          range(len(transacoes_display)),
+                                          format_func=lambda x: transacoes_display[x])
+
+                col1, col2 = st.columns(2)
                 with col1:
-                    if st.button("✏️ Editar", key=f"edit_{idx}"):
-                        st.session_state.transacao_em_edicao = financeiro.loc[idx]
+                    if st.button("✏️ Editar Selecionado"):
+                        st.session_state.transacao_em_edicao = financeiro.iloc[selected_idx]
                         st.rerun()
                 with col2:
-                    if st.button("🗑️ Excluir", key=f"del_{idx}"):
+                    if st.button("🗑️ Excluir Selecionado"):
                         try:
-                            if st.session_state.db.delete_transacao(row['id']):
+                            if st.session_state.db.delete_transacao(financeiro.iloc[selected_idx]['id']):
                                 st.success("Transação excluída com sucesso!")
                                 st.rerun()
                             else:
@@ -205,8 +209,8 @@ def show():
                         st.rerun()
 
         # Resumo financeiro
-        receitas = financeiro[financeiro['tipo'] == 'receita']['valor'].sum()
-        despesas = financeiro[financeiro['tipo'] == 'despesa']['valor'].sum()
+        receitas = financeiro[financeiro['tipo'] == 'receita']['valor'].sum() if not financeiro.empty else 0
+        despesas = financeiro[financeiro['tipo'] == 'despesa']['valor'].sum() if not financeiro.empty else 0
         saldo = receitas - despesas
 
         col1, col2, col3 = st.columns(3)
