@@ -105,13 +105,16 @@ def show():
         # Carregar e filtrar dados
         financeiro = st.session_state.db.get_financeiro()
 
-        if tipo_filtro:
-            financeiro = financeiro[financeiro['tipo'].isin(tipo_filtro)]
-        if categoria_filtro:
-            financeiro = financeiro[financeiro['categoria'].isin(categoria_filtro)]
-
-        # Exibir extrato
         if not financeiro.empty:
+            # Converter a coluna 'data' para datetime
+            financeiro['data'] = pd.to_datetime(financeiro['data'])
+
+            # Aplicar filtros
+            if tipo_filtro:
+                financeiro = financeiro[financeiro['tipo'].isin(tipo_filtro)]
+            if categoria_filtro:
+                financeiro = financeiro[financeiro['categoria'].isin(categoria_filtro)]
+
             # Preparar dados para exibição
             df_display = financeiro.copy()
             df_display['data'] = df_display['data'].dt.strftime('%d/%m/%Y')
