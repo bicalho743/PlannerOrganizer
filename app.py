@@ -73,26 +73,51 @@ try:
             st.error(f"Erro ao conectar com banco de dados: {str(e)}")
             st.stop()
 
-    # Menu lateral
-    logger.info("Criando menu lateral")
+    # Menu na parte superior
+    logger.info("Criando menu horizontal")
+    st.title("Menu Principal")
+    
+    # Seleção de página com layout horizontal
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
+    
+    with col1:
+        dashboard_btn = st.button("📊 Dashboard", use_container_width=True)
+    with col2:
+        cadastros_btn = st.button("👥 Cadastros", use_container_width=True)
+    with col3:
+        propostas_btn = st.button("📝 Propostas", use_container_width=True)
+    with col4:
+        financeiro_btn = st.button("💰 Financeiro", use_container_width=True)
+    with col5:
+        relatorios_btn = st.button("📈 Relatórios", use_container_width=True)
+    with col6:
+        importacao_btn = st.button("📥 Importação", use_container_width=True)
+    
+    # Determinar a página selecionada com base nos botões
+    if 'current_page' not in st.session_state:
+        st.session_state.current_page = "Dashboard"  # Página padrão
+    
+    if dashboard_btn:
+        st.session_state.current_page = "Dashboard"
+    elif cadastros_btn:
+        st.session_state.current_page = "Cadastros"
+    elif propostas_btn:
+        st.session_state.current_page = "Propostas"
+    elif financeiro_btn:
+        st.session_state.current_page = "Financeiro"
+    elif relatorios_btn:
+        st.session_state.current_page = "Relatórios"
+    elif importacao_btn:
+        st.session_state.current_page = "Importação"
+    
+    pagina = st.session_state.current_page
+    logger.info(f"Página selecionada: {pagina}")
+    
+    # Adicionar separador visual após o menu
+    st.markdown("---")
+    
+    # Rodapé movido para a barra lateral
     with st.sidebar:
-        st.title("Menu Principal")
-
-        # Seleção de página
-        pagina = st.radio(
-            "Menu",
-            ["Dashboard", "Cadastros", "Propostas", "Financeiro", "Relatórios", "Importação"],
-            format_func=lambda x: f"📊 {x}" if x == "Dashboard"
-                            else f"👥 {x}" if x == "Cadastros"
-                            else f"📝 {x}" if x == "Propostas"
-                            else f"💰 {x}" if x == "Financeiro"
-                            else f"📈 {x}" if x == "Relatórios"
-                            else f"📥 {x}"  # Importação
-        )
-        logger.info(f"Página selecionada: {pagina}")
-
-        # Rodapé
-        st.markdown("---")
         st.markdown("### Desenvolvido com ❤️ usando Streamlit")
 
     # Roteamento de páginas
