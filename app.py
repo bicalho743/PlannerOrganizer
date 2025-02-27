@@ -64,21 +64,41 @@ if 'current_page' not in st.session_state:
     st.session_state.current_page = "Dashboard"
 
 # Definição do menu principal
-menu_items = {
+MENU_PRINCIPAL = {
     "📊 Dashboard": "Dashboard",
     "👥 Cadastros": "Cadastros",
     "📝 Propostas": "Propostas",
-    "💰 Financeiro": "Financeiro", 
+    "💰 Financeiro": "Financeiro",
     "📈 Relatórios": "Relatórios"
 }
 
 # Criação dos botões do menu principal
-for label, page in menu_items.items():
+for label, page in MENU_PRINCIPAL.items():
     if st.sidebar.button(label, key=f"main_menu_{page.lower()}", use_container_width=True):
         st.session_state.current_page = page
         st.rerun()
 
 st.sidebar.markdown('</div>', unsafe_allow_html=True)
+
+# Roteamento de páginas
+try:
+    if st.session_state.current_page == "Dashboard":
+        from pages.dashboard import show
+        show()
+    elif st.session_state.current_page == "Cadastros":
+        from pages.cadastros import show
+        show()
+    elif st.session_state.current_page == "Propostas":
+        from pages.propostas import show
+        show()
+    elif st.session_state.current_page == "Financeiro":
+        from pages.financeiro import show
+        show()
+    elif st.session_state.current_page == "Relatórios":
+        from pages.relatorios import show
+        show()
+except Exception as e:
+    st.error(f"Erro ao carregar página: {str(e)}")
 
 # Informações do sistema no final
 st.sidebar.markdown("---")
