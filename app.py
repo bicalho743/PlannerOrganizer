@@ -1,4 +1,6 @@
+import os
 import streamlit as st
+from utils.database import Database
 
 # Configuração da página
 st.set_page_config(
@@ -7,6 +9,15 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Inicialização do banco de dados
+if 'db' not in st.session_state:
+    try:
+        st.session_state.db = Database()
+    except Exception as e:
+        st.error("Erro ao conectar com o banco de dados. Por favor, tente novamente mais tarde.")
+        st.exception(e)
+        st.stop()
 
 # Estilo CSS customizado para garantir o menu no topo
 st.markdown("""
