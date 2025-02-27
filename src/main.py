@@ -74,33 +74,49 @@ with st.sidebar:
 # Se a apresentação estiver ativa, mostrar na área principal
 if 'mostrar_apresentacao' in st.session_state and st.session_state.mostrar_apresentacao:
     st.title("👋 Bem-vindo ao seu assistente de organização!")
+
+    # Texto explicativo das funcionalidades
     st.markdown("""
-    **Aqui você encontra:**
+    O **Sistema Planner Organizer** é uma ferramenta completa para o gerenciamento eficiente 
+    do seu negócio de Personal Organizer. Com ele, você pode:
 
-    📊 **Dashboard**
-    - Visão geral do seu negócio
-    - Aniversariantes do dia e da semana
-    - Propostas em andamento
+    ### 📊 Funcionalidades Principais
 
-    👥 **Cadastros**
-    - Gerencie clientes, fornecedores e assistentes
-    - Mantenha todos os contatos organizados
-    - Controle de aniversários e dados importantes
+    **👥 Gestão de Clientes**
+    - Cadastro completo de clientes
+    - Controle de aniversários
+    - Histórico de atendimentos
+    - Importação de dados em massa
 
-    📝 **Propostas**
-    - Crie e gerencie propostas
-    - Acompanhe status e prazos
-    - Gere PDFs profissionais
+    **📝 Gestão de Propostas**
+    - Criação e acompanhamento de propostas
+    - Cálculo automático de valores
+    - Geração de PDFs profissionais
+    - Controle de status e prazos
 
-    💰 **Financeiro**
+    **💰 Gestão Financeira**
     - Controle de receitas e despesas
     - Gestão de contas a receber
     - Relatórios financeiros detalhados
+    - Dashboard com indicadores
 
-    📊 **Relatórios**
+    **📈 Relatórios e Análises**
+    - Visão geral do negócio
     - Análise de desempenho
-    - Gráficos e métricas importantes
+    - Gráficos e estatísticas
+    - Exportação de dados
+
+    ### 🔍 Recursos Adicionais
+    - Interface intuitiva e amigável
+    - Backup automático de dados
+    - Controle de acesso seguro
+    - Suporte a múltiplos usuários
+
+    ### 📱 Benefícios
+    - Aumente sua produtividade
+    - Mantenha seus dados organizados
     - Tome decisões baseadas em dados
+    - Profissionalize seu negócio
     """)
 
     if st.button("Fechar Apresentação"):
