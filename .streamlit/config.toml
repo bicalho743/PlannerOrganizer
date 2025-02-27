@@ -1,12 +1,9 @@
-
 [server]
 headless = true
 address = "0.0.0.0"
 port = 5000
-enableCORS = true
+enableCORS = false
 enableXsrfProtection = false
-maxMessageSize = 200
-maxUploadSize = 200
 
 [theme]
 primaryColor = "#F1A208"
