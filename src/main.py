@@ -51,12 +51,22 @@ if 'db' not in st.session_state:
         st.exception(e)
         st.stop()
 
+# Inicializar variáveis de sessão se não existirem
+if 'mostrar_apresentacao' not in st.session_state:
+    st.session_state.mostrar_apresentacao = False
+
 # Menu lateral
 st.sidebar.title("Menu Principal")
 
-# Botão de apresentação na barra lateral
-if st.sidebar.button("📌 Sobre o Sistema"):
+# Separador
+st.sidebar.markdown("---")
+
+# Botão de apresentação com estilo personalizado
+if st.sidebar.button("📌 Sobre o Sistema", key="btn_sobre", use_container_width=True):
     st.session_state.mostrar_apresentacao = True
+
+# Separador após o botão
+st.sidebar.markdown("---")
 
 # Seleção de página
 pagina = st.sidebar.radio(
@@ -71,7 +81,7 @@ pagina = st.sidebar.radio(
 )
 
 # Se a apresentação estiver ativa, mostrar na área principal
-if 'mostrar_apresentacao' in st.session_state and st.session_state.mostrar_apresentacao:
+if st.session_state.mostrar_apresentacao:
     st.title("👋 Bem-vindo ao seu assistente de organização!")
 
     # Texto explicativo das funcionalidades
@@ -148,4 +158,4 @@ else:
 
 # Rodapé
 st.sidebar.markdown("---")
-st.sidebar.markdown("### Desenvolvido com ❤️ usando Streamlit")
+st.sidebar.markdown("<div style='text-align: center; color: #888888; font-size: 0.8em;'>Sistema Personal Organizer</div>", unsafe_allow_html=True)
