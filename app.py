@@ -27,10 +27,8 @@ st.markdown("""
         text-align: left;
         padding: 0.75rem 1rem;
         margin-bottom: 0.5rem;
-        font-size: 1rem;
-        border: none;
-        border-radius: 4px;
     }
+
     div.stButton > button:hover {
         background-color: #ffc107 !important;
     }
@@ -81,6 +79,19 @@ elif financeiro_btn:
 elif relatorios_btn:
     st.session_state.current_page = "Relatórios"
 
-# Conteúdo principal (temporário)
-st.title(f"{st.session_state.current_page}")
-st.write("Carregando módulo...")
+# Conteúdo principal da página atual
+if st.session_state.current_page == "Dashboard":
+    from pages.dashboard import show
+    show()
+elif st.session_state.current_page == "Cadastros":
+    from pages.cadastros import show
+    show()
+elif st.session_state.current_page == "Propostas":
+    from pages.propostas import show
+    show()
+elif st.session_state.current_page == "Financeiro":
+    from pages.financeiro import show
+    show()
+elif st.session_state.current_page == "Relatórios":
+    from pages.relatorios import show
+    show()
