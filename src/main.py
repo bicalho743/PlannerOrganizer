@@ -52,24 +52,23 @@ if 'db' not in st.session_state:
         st.stop()
 
 # Menu lateral
-with st.sidebar:
-    st.title("Menu Principal")
+st.sidebar.title("Menu Principal")
 
-    # Botão de apresentação
-    if st.button("📌 Sobre o Sistema"):
-        st.session_state.mostrar_apresentacao = True
+# Botão de apresentação na barra lateral
+if st.sidebar.button("📌 Sobre o Sistema"):
+    st.session_state.mostrar_apresentacao = True
 
-    # Seleção de página
-    pagina = st.radio(
-        "",  # Label vazio para não mostrar título do radio
-        ["Dashboard", "Cadastros", "Propostas", "Financeiro", "Relatórios"],
-        format_func=lambda x: f"📊 {x}" if x == "Dashboard"
-                    else f"👥 {x}" if x == "Cadastros"
-                    else f"📝 {x}" if x == "Propostas"
-                    else f"💰 {x}" if x == "Financeiro"
-                    else f"📈 {x}" if x == "Relatórios"
-                    else f"📥 {x}"  # Importação
-    )
+# Seleção de página
+pagina = st.sidebar.radio(
+    "",  # Label vazio para não mostrar título do radio
+    ["Dashboard", "Cadastros", "Propostas", "Financeiro", "Relatórios"],
+    format_func=lambda x: f"📊 {x}" if x == "Dashboard"
+                else f"👥 {x}" if x == "Cadastros"
+                else f"📝 {x}" if x == "Propostas"
+                else f"💰 {x}" if x == "Financeiro"
+                else f"📈 {x}" if x == "Relatórios"
+                else f"📥 {x}"  # Importação
+)
 
 # Se a apresentação estiver ativa, mostrar na área principal
 if 'mostrar_apresentacao' in st.session_state and st.session_state.mostrar_apresentacao:
