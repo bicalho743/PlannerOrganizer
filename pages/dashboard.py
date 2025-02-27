@@ -16,42 +16,43 @@ def show():
             else:
                 st.sidebar.error("Erro ao adicionar dados de teste")
 
-    # Dashboard content
+    # Dashboard layout
     col1, col2, col3 = st.columns([2, 2, 1])
 
     with col1:
         st.subheader("📊 Resumo")
 
         # Estatísticas básicas
-        clientes = st.session_state.db.get_clientes()
-        propostas = st.session_state.db.get_propostas()
-        financeiro = st.session_state.db.get_financeiro()
+        total_clientes = len(clientes) if not clientes.empty else 0
+        st.metric("Total de Clientes", total_clientes)
 
-        st.metric("Total de Clientes", len(clientes) if not clientes.empty else 0)
+        # Propostas
+        propostas = st.session_state.db.get_propostas()
         propostas_ativas = len(propostas[propostas['status'] == 'Aberta']) if not propostas.empty else 0
         st.metric("Propostas Ativas", propostas_ativas)
 
-        # Resumo financeiro
+        # Financeiro
+        financeiro = st.session_state.db.get_financeiro()
         if not financeiro.empty:
             valores_receber = financeiro[
                 (financeiro['tipo'] == 'receita') & 
-                (financeiro['tipo_receita'].isin(['organização', 'venda']))
+                (financeiro['status'] == 'pendente')
             ]['valor'].sum()
         else:
             valores_receber = 0.0
-
-        st.metric("Valores a Receber", f"R$ {valores_receber:.2f}")
+        st.metric("Valores a Receber", f"R$ {valores_receber:,.2f}")
 
     with col2:
         st.subheader("📋 Propostas em Aberto")
         if not propostas.empty:
-            propostas_abertas = propostas[propostas['status'] == 'Aberta']
+            propostas_abertas = propostas[propostas['status'] == 'Aberta'].sort_values('data_inicio', ascending=False)
             if not propostas_abertas.empty:
-                for _, p in propostas_abertas.iterrows():
-                    with st.expander(f"Proposta #{p['numero']} - {p['descricao']}"):
-                        st.write(f"**Valor:** R$ {p['valor']:.2f}")
-                        if 'prazo_entrega' in p and p['prazo_entrega']:
-                            st.write(f"**Prazo de Entrega:** {p['prazo_entrega']}")
+                for _, proposta in propostas_abertas.head(5).iterrows():
+                    with st.expander(f"Proposta #{proposta['id']} - {proposta['descricao'][:50]}..."):
+                        st.write(f"**Cliente:** {proposta['cliente_nome']}")
+                        st.write(f"**Valor:** R$ {proposta['valor']:,.2f}")
+                        if proposta.get('prazo_entrega'):
+                            st.write(f"**Prazo:** {proposta['prazo_entrega'].strftime('%d/%m/%Y')}")
             else:
                 st.info("Nenhuma proposta em aberto.")
         else:
@@ -59,52 +60,40 @@ def show():
 
     with col3:
         st.subheader("🎂 Aniversariantes")
-        hoje = datetime.now().date()
+        hoje = datetime.now()
 
         if not clientes.empty and 'data_aniversario' in clientes.columns:
-            try:
-                # Converter data_aniversario para datetime explicitamente
-                clientes['data_aniversario'] = pd.to_datetime(clientes['data_aniversario'], errors='coerce')
+            # Aniversariantes do dia
+            aniversariantes_hoje = clientes[
+                (clientes['data_aniversario'].notna()) &
+                (clientes['data_aniversario'].str.lower() == hoje.strftime('%d/%b').lower())
+            ]
 
-                # Filtrar aniversariantes do dia
-                aniversariantes_hoje = clientes[
-                    (clientes['data_aniversario'].notna()) & 
-                    (clientes['data_aniversario'].dt.month == hoje.month) & 
-                    (clientes['data_aniversario'].dt.day == hoje.day)
-                ]
+            st.write("**Hoje:**")
+            if not aniversariantes_hoje.empty:
+                for _, aniversariante in aniversariantes_hoje.iterrows():
+                    st.write(f"🎈 {aniversariante['nome']}")
+                    if aniversariante['telefone']:
+                        st.write(f"📱 {aniversariante['telefone']}")
+            else:
+                st.info("Nenhum aniversariante hoje!")
 
-                # Mostrar aniversariantes de hoje
-                st.write("**Hoje:**")
-                if not aniversariantes_hoje.empty:
-                    for _, aniversariante in aniversariantes_hoje.iterrows():
-                        with st.container():
-                            st.write(f"🎈 **{aniversariante['nome']}**")
-                            if aniversariante['telefone']:
-                                st.write(f"📱 {aniversariante['telefone']}")
-                else:
-                    st.info("Nenhum aniversariante hoje!")
+            # Próximos aniversariantes
+            st.write("\n**Próximos 7 dias:**")
+            proximos_dias = pd.date_range(hoje, periods=7, freq='D')
+            datas_proximas = [d.strftime('%d/%b').lower() for d in proximos_dias]
 
-                # Mostrar próximos aniversariantes (próximos 7 dias)
-                st.write("\n**Próximos 7 dias:**")
-                proximos_aniversariantes = clientes[
-                    (clientes['data_aniversario'].notna()) &
-                    (((clientes['data_aniversario'].dt.month == hoje.month) & 
-                      (clientes['data_aniversario'].dt.day > hoje.day) & 
-                      (clientes['data_aniversario'].dt.day <= hoje.day + 7)) |
-                     ((clientes['data_aniversario'].dt.month == (hoje.month % 12 + 1)) & 
-                      (clientes['data_aniversario'].dt.day <= (hoje.day + 7) % 31)))
-                ]
+            proximos = clientes[
+                (clientes['data_aniversario'].notna()) &
+                (clientes['data_aniversario'].str.lower().isin(datas_proximas))
+            ]
 
-                if not proximos_aniversariantes.empty:
-                    for _, aniversariante in proximos_aniversariantes.iterrows():
-                        with st.container():
-                            data_aniv = aniversariante['data_aniversario'].strftime('%d/%m')
-                            st.write(f"🎂 **{aniversariante['nome']}** ({data_aniv})")
-                            if aniversariante['telefone']:
-                                st.write(f"📱 {aniversariante['telefone']}")
-                else:
-                    st.info("Nenhum aniversariante nos próximos dias.")
-            except Exception as e:
-                st.error(f"Erro ao processar datas de aniversário: {str(e)}")
+            if not proximos.empty:
+                for _, proximo in proximos.iterrows():
+                    st.write(f"🎂 {proximo['nome']} ({proximo['data_aniversario']})")
+                    if proximo['telefone']:
+                        st.write(f"📱 {proximo['telefone']}")
+            else:
+                st.info("Nenhum aniversariante nos próximos dias.")
         else:
             st.info("Nenhum cliente cadastrado com data de aniversário.")
