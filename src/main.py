@@ -82,11 +82,47 @@ cadastros_btn = st.sidebar.button("👥 Cadastros", use_container_width=True)
 propostas_btn = st.sidebar.button("📝 Propostas", use_container_width=True)
 financeiro_btn = st.sidebar.button("💰 Financeiro", use_container_width=True)
 relatorios_btn = st.sidebar.button("📈 Relatórios", use_container_width=True)
+importar_btn = st.sidebar.button("📥 Importar Dados", use_container_width=True)
 
 st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
 # Informações do sistema no final
 st.sidebar.markdown("---")
+
+# Sobre o Sistema
+with st.sidebar.expander("📌 Sobre o Sistema", expanded=False):
+    st.markdown("""
+    O **Sistema Planner Organizer** é uma ferramenta completa para o gerenciamento 
+    eficiente do seu negócio de Personal Organizer. Com ele, você pode:
+
+    ### 📊 Funcionalidades Principais
+
+    **👥 Gestão de Clientes**
+    - Cadastro completo de clientes
+    - Controle de aniversários
+    - Histórico de atendimentos
+    - Importação de dados em massa
+
+    **📝 Gestão de Propostas**
+    - Criação e acompanhamento de propostas
+    - Cálculo automático de valores
+    - Geração de PDFs profissionais
+    - Controle de status e prazos
+
+    **💰 Gestão Financeira**
+    - Controle de receitas e despesas
+    - Gestão de contas a receber
+    - Relatórios financeiros detalhados
+    - Dashboard com indicadores
+
+    **📈 Relatórios e Análises**
+    - Visão geral do negócio
+    - Análise de desempenho
+    - Gráficos e estatísticas
+    - Exportação de dados
+    """)
+
+# Informações da versão
 with st.sidebar.expander("ℹ️ Informações do Sistema", expanded=False):
     st.markdown("""
     ### Sistema Personal Organizer
@@ -107,11 +143,6 @@ with st.sidebar.expander("ℹ️ Informações do Sistema", expanded=False):
     Desenvolvido com ❤️ usando Streamlit
     """)
 
-    # Botão de importação de propostas
-    if st.button("📥 Importar Propostas", use_container_width=True):
-        st.session_state.current_page = "Importar"
-        st.rerun()
-
 # Verificar se há uma celebração pendente
 if st.session_state.get('show_celebration', False):
     show_celebration(
@@ -130,6 +161,8 @@ else:
         st.session_state.current_page = "Financeiro"
     elif relatorios_btn:
         st.session_state.current_page = "Relatórios"
+    elif importar_btn:
+        st.session_state.current_page = "Importar"
 
     # Roteamento de páginas
     try:
@@ -151,7 +184,24 @@ else:
             from pages.relatorios import show
             show()
         elif st.session_state.current_page == "Importar":
-            st.write("Página de Importação de Propostas - Em desenvolvimento")
+            st.title("📥 Importação de Dados")
+            st.write("### Selecione o tipo de dados para importar:")
+
+            import_type = st.selectbox(
+                "Tipo de Importação",
+                ["Clientes", "Propostas", "Fornecedores", "Assistentes", "Parceiros"]
+            )
+
+            st.info(f"A importação de {import_type} permite carregar dados em massa através de arquivos CSV ou Excel.")
+
+            uploaded_file = st.file_uploader(
+                "Escolha um arquivo para importar",
+                type=["csv", "xlsx"]
+            )
+
+            if uploaded_file:
+                st.warning("Funcionalidade em desenvolvimento. Em breve você poderá importar seus dados aqui!")
+
     except ImportError as e:
         logger.error(f"Erro ao importar módulo da página {st.session_state.current_page}: {str(e)}")
         st.error(f"Erro ao carregar página {st.session_state.current_page}: {str(e)}")
