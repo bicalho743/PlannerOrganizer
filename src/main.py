@@ -167,10 +167,8 @@ else:
     # Roteamento de páginas
     try:
         if st.session_state.current_page == "Dashboard":
-            # Criar um dashboard temporário enquanto o módulo não existe
-            st.title("📊 Dashboard")
-            st.write("Bem-vindo ao Sistema Personal Organizer!")
-            st.info("O dashboard está em desenvolvimento. Em breve você terá acesso a todas as métricas importantes do seu negócio aqui.")
+            from pages.dashboard import show
+            show()
         elif st.session_state.current_page == "Cadastros":
             from pages.cadastros import show
             show()
