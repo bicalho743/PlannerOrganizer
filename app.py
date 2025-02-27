@@ -69,13 +69,12 @@ try:
     with st.sidebar:
         st.title("Menu Principal")
 
-        # Seleção de página
+        # Seleção de página em ordem correta
         dashboard_btn = st.button("📊 Dashboard", use_container_width=True)
         cadastros_btn = st.button("👥 Cadastros", use_container_width=True)
         propostas_btn = st.button("📝 Propostas", use_container_width=True)
         financeiro_btn = st.button("💰 Financeiro", use_container_width=True)
         relatorios_btn = st.button("📈 Relatórios", use_container_width=True)
-        importacao_btn = st.button("📥 Importação", use_container_width=True)
 
         # Separador antes das informações do sistema
         st.markdown("---")
@@ -101,8 +100,6 @@ try:
         st.session_state.current_page = "Financeiro"
     elif relatorios_btn:
         st.session_state.current_page = "Relatórios"
-    elif importacao_btn:
-        st.session_state.current_page = "Importação"
 
     pagina = st.session_state.current_page
     logger.info(f"Página selecionada: {pagina}")
@@ -175,9 +172,6 @@ try:
                 show()
             elif pagina == "Relatórios":
                 from pages.relatorios import show
-                show()
-            elif pagina == "Importação":
-                from pages.importacao import show
                 show()
             logger.info(f"Página {pagina} carregada com sucesso")
         except ImportError as e:
