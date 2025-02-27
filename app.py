@@ -4,12 +4,6 @@ import streamlit as st
 import logging
 from datetime import datetime
 
-# Adicionar diretório src ao path para importar utils
-root_dir = os.path.dirname(os.path.abspath(__file__))
-src_dir = os.path.join(root_dir, "src")
-if src_dir not in sys.path:
-    sys.path.append(src_dir)
-
 # Configurar logging
 logging.basicConfig(
     level=logging.INFO,
@@ -75,11 +69,6 @@ try:
     with st.sidebar:
         st.title("Menu Principal")
 
-        # Botão de apresentação
-        st.button("📌 Sobre o Sistema", key="btn_sobre", on_click=lambda: setattr(st.session_state, 'mostrar_apresentacao', True))
-
-        st.markdown("---")
-
         # Seleção de página
         dashboard_btn = st.button("📊 Dashboard", use_container_width=True)
         cadastros_btn = st.button("👥 Cadastros", use_container_width=True)
@@ -88,9 +77,15 @@ try:
         relatorios_btn = st.button("📈 Relatórios", use_container_width=True)
         importacao_btn = st.button("📥 Importação", use_container_width=True)
 
-        # Separador antes do rodapé
+        # Separador antes das informações do sistema
         st.markdown("---")
-        st.markdown("### Desenvolvido com ❤️ usando Streamlit")
+
+        # Expander para informações do sistema
+        with st.expander("ℹ️ Informações do Sistema"):
+            if st.button("📌 Sobre o Sistema"):
+                st.session_state.mostrar_apresentacao = True
+            st.markdown("Versão 1.0")
+            st.markdown("Desenvolvido com ❤️ usando Streamlit")
 
     # Determinar a página selecionada com base nos botões
     if 'current_page' not in st.session_state:
