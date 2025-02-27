@@ -4,38 +4,44 @@ import pandas as pd
 
 def show():
     st.title("📋 Planner Organizer")
+    
+    # Tabs para separar Apresentação e Dashboard
+    tab1, tab2 = st.tabs(["📌 Apresentação", "📊 Dashboard"])
+    
+    with tab1:
+        # Texto explicativo das funcionalidades
+        st.markdown("""
+        ### 👋 Bem-vindo ao seu assistente de organização!
 
-    # Texto explicativo das funcionalidades
-    st.markdown("""
-    ### 👋 Bem-vindo ao seu assistente de organização!
+        **Aqui você encontra:**
 
-    **Aqui você encontra:**
+        📊 **Dashboard**
+        - Visão geral do seu negócio
+        - Aniversariantes do dia e da semana
+        - Propostas em andamento
 
-    📊 **Dashboard**
-    - Visão geral do seu negócio
-    - Aniversariantes do dia e da semana
-    - Propostas em andamento
+        👥 **Cadastros**
+        - Gerencie clientes, fornecedores e assistentes
+        - Mantenha todos os contatos organizados
+        - Controle de aniversários e dados importantes
 
-    👥 **Cadastros**
-    - Gerencie clientes, fornecedores e assistentes
-    - Mantenha todos os contatos organizados
-    - Controle de aniversários e dados importantes
+        📝 **Propostas**
+        - Crie e gerencie propostas
+        - Acompanhe status e prazos
+        - Gere PDFs profissionais
 
-    📝 **Propostas**
-    - Crie e gerencie propostas
-    - Acompanhe status e prazos
-    - Gere PDFs profissionais
+        💰 **Financeiro**
+        - Controle de receitas e despesas
+        - Gestão de contas a receber
+        - Relatórios financeiros detalhados
 
-    💰 **Financeiro**
-    - Controle de receitas e despesas
-    - Gestão de contas a receber
-    - Relatórios financeiros detalhados
-
-    📊 **Relatórios**
-    - Análise de desempenho
-    - Gráficos e métricas importantes
-    - Tome decisões baseadas em dados
-    """)
+        📊 **Relatórios**
+        - Análise de desempenho
+        - Gráficos e métricas importantes
+        - Tome decisões baseadas em dados
+        """)
+    
+    with tab2:
 
     # Add test data button in sidebar if database is empty
     clientes = st.session_state.db.get_clientes()
@@ -48,10 +54,10 @@ def show():
             else:
                 st.sidebar.error("Erro ao adicionar dados de teste")
 
-    # Dashboard content
-    col1, col2, col3 = st.columns([2, 2, 1])
-
-    with col1:
+        # Dashboard content
+        col1, col2, col3 = st.columns([2, 2, 1])
+        
+        with col1:
         st.subheader("📊 Resumo")
 
         # Estatísticas básicas
