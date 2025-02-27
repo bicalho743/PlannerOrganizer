@@ -159,19 +159,9 @@ if st.session_state.get('show_celebration', False):
         custom_message=st.session_state.get('celebration_message')
     )
 else:
-    # Controle de navegação
-    if dashboard_btn:
-        st.session_state.current_page = "Dashboard"
-    elif cadastros_btn:
-        st.session_state.current_page = "Cadastros"
-    elif propostas_btn:
-        st.session_state.current_page = "Propostas"
-    elif financeiro_btn:
-        st.session_state.current_page = "Financeiro"
-    elif relatorios_btn:
-        st.session_state.current_page = "Relatórios"
-    elif importar_btn:
-        st.session_state.current_page = "Importar"
+    # A navegação agora é controlada pelos botões do menu principal
+    # Não é mais necessário verificar os botões aqui, pois eles já
+    # atualizam st.session_state.current_page e fazem rerun()
 
     # Roteamento de páginas
     try:
