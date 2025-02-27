@@ -112,28 +112,42 @@ def show():
 
         # Exibir extrato
         if not financeiro.empty:
-            # Adicionar botões de edição e exclusão para cada transação
-            for idx, transacao in financeiro.iterrows():
-                with st.expander(f"{transacao['descricao']} - R$ {transacao['valor']:.2f}"):
-                    col1, col2, col3 = st.columns([3, 1, 1])
+            # Preparar dados para exibição
+            df_display = financeiro.copy()
+            df_display['data'] = df_display['data'].dt.strftime('%d/%m/%Y')
+            df_display['valor'] = df_display['valor'].apply(lambda x: f"R$ {x:.2f}")
+            df_display['tipo'] = df_display['tipo'].apply(lambda x: x.title())
 
-                    with col1:
-                        st.write(f"**Data:** {transacao['data'].strftime('%d/%m/%Y')}")
-                        st.write(f"**Tipo:** {transacao['tipo'].title()}")
-                        st.write(f"**Categoria:** {transacao['categoria']}")
-                        if 'tipo_receita' in transacao and pd.notna(transacao['tipo_receita']):
-                            st.write(f"**Tipo de Receita:** {transacao['tipo_receita']}")
-                        st.write(f"**Status:** {transacao['status']}")
+            # Criar colunas de ações
+            for idx, row in df_display.iterrows():
+                col1, col2 = st.columns([6, 1])
 
-                    with col2:
-                        if st.button("✏️ Editar", key=f"edit_{transacao['id']}"):
-                            st.session_state.transacao_em_edicao = transacao
+                with col1:
+                    if idx == 0:  # Mostrar cabeçalho apenas na primeira linha
+                        st.write("### Lista de Transações")
+
+                    # Exibir informações em formato de tabela
+                    cols = ['data', 'tipo', 'descricao', 'valor', 'categoria', 'status']
+                    st.dataframe(
+                        df_display[cols].iloc[[idx]],
+                        use_container_width=True,
+                        hide_index=True
+                    )
+
+                with col2:
+                    if idx == 0:  # Espaço para alinhar com o cabeçalho
+                        st.write("### Ações")
+
+                    # Botões de ação
+                    col_edit, col_del = st.columns(2)
+                    with col_edit:
+                        if st.button("✏️", key=f"edit_{row.name}"):
+                            st.session_state.transacao_em_edicao = financeiro.loc[row.name]
                             st.rerun()
-
-                    with col3:
-                        if st.button("🗑️ Excluir", key=f"del_{transacao['id']}"):
+                    with col_del:
+                        if st.button("🗑️", key=f"del_{row.name}"):
                             try:
-                                if st.session_state.db.delete_transacao(transacao['id']):
+                                if st.session_state.db.delete_transacao(row.name):
                                     st.success("Transação excluída com sucesso!")
                                     st.rerun()
                                 else:
