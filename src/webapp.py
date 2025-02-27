@@ -7,11 +7,21 @@ from utils.custom_styles import load_custom_styles
 load_custom_styles()
 
 def show():
-    # Menu na parte superior
-    st.title("Menu Principal")
-    
-    # Informações do usuário na barra lateral
+    # Menu e informações do usuário na barra lateral
     with st.sidebar:
+        st.title("Menu Principal")
+        
+        # Menu de navegação
+        dashboard_btn = st.button("📊 Dashboard", use_container_width=True)
+        cadastros_btn = st.button("👥 Cadastros", use_container_width=True)
+        propostas_btn = st.button("📝 Propostas", use_container_width=True)
+        financeiro_btn = st.button("💰 Financeiro", use_container_width=True)
+        relatorios_btn = st.button("📈 Relatórios", use_container_width=True)
+        teste_importacao_btn = st.button("🔄 Teste de Importação", use_container_width=True)
+        
+        st.markdown("---")
+        
+        # Informações do usuário
         if st.session_state.usuario and isinstance(st.session_state.usuario, dict):
             st.write(f"👤 Olá, {st.session_state.usuario.get('nome', 'Usuário')}")
         else:
@@ -22,22 +32,6 @@ def show():
             st.session_state.autenticado = False
             st.session_state.usuario = None
             st.rerun()
-    
-    # Menu de navegação horizontal
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
-    
-    with col1:
-        dashboard_btn = st.button("📊 Dashboard", use_container_width=True)
-    with col2:
-        cadastros_btn = st.button("👥 Cadastros", use_container_width=True)
-    with col3:
-        propostas_btn = st.button("📝 Propostas", use_container_width=True)
-    with col4:
-        financeiro_btn = st.button("💰 Financeiro", use_container_width=True)
-    with col5:
-        relatorios_btn = st.button("📈 Relatórios", use_container_width=True)
-    with col6:
-        teste_importacao_btn = st.button("🔄 Teste de Importação", use_container_width=True)
     
     # Determinar a página selecionada com base nos botões
     if 'current_page' not in st.session_state:
@@ -57,9 +51,6 @@ def show():
         st.session_state.current_page = "Teste de Importação"
     
     pagina = st.session_state.current_page
-    
-    # Adicionar separador visual após o menu
-    st.markdown("---")
 
     # Roteamento de páginas
     if pagina == "Dashboard":

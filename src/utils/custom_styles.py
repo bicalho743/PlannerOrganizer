@@ -14,6 +14,7 @@ def load_custom_styles():
             border: 1px solid #4F8BF9;
             border-radius: 5px;
             transition: all 0.3s;
+            margin-bottom: 0.5rem;
         }
         
         .stButton > button:hover {
@@ -22,22 +23,24 @@ def load_custom_styles():
             border: 1px solid #4F8BF9;
         }
         
-        /* Espaçamento para o menu superior */
-        div.block-container {
-            padding-top: 1rem;
-        }
-        
-        /* Título do menu */
-        h1 {
-            font-size: 1.8rem !important;
+        /* Título do menu na barra lateral */
+        [data-testid="stSidebar"] h1 {
+            font-size: 1.5rem !important;
             text-align: center;
             margin-bottom: 1rem !important;
+            color: white;
         }
         
-        /* Separador após o menu */
+        /* Separador */
         hr {
-            margin-top: 0.5rem;
-            margin-bottom: 1.5rem;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Ajuste da barra lateral */
+        section[data-testid="stSidebar"] {
+            background-color: #262730;
+            padding-top: 1rem;
         }
     </style>
     """, unsafe_allow_html=True)

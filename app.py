@@ -73,25 +73,22 @@ try:
             st.error(f"Erro ao conectar com banco de dados: {str(e)}")
             st.stop()
 
-    # Menu na parte superior
-    logger.info("Criando menu horizontal")
-    st.title("Menu Principal")
-    
-    # Seleção de página com layout horizontal
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
-    
-    with col1:
+    # Menu na barra lateral
+    logger.info("Criando menu na barra lateral")
+    with st.sidebar:
+        st.title("Menu Principal")
+        
+        # Seleção de página
         dashboard_btn = st.button("📊 Dashboard", use_container_width=True)
-    with col2:
         cadastros_btn = st.button("👥 Cadastros", use_container_width=True)
-    with col3:
         propostas_btn = st.button("📝 Propostas", use_container_width=True)
-    with col4:
         financeiro_btn = st.button("💰 Financeiro", use_container_width=True)
-    with col5:
         relatorios_btn = st.button("📈 Relatórios", use_container_width=True)
-    with col6:
         importacao_btn = st.button("📥 Importação", use_container_width=True)
+        
+        # Separador antes do rodapé
+        st.markdown("---")
+        st.markdown("### Desenvolvido com ❤️ usando Streamlit")
     
     # Determinar a página selecionada com base nos botões
     if 'current_page' not in st.session_state:
@@ -112,13 +109,6 @@ try:
     
     pagina = st.session_state.current_page
     logger.info(f"Página selecionada: {pagina}")
-    
-    # Adicionar separador visual após o menu
-    st.markdown("---")
-    
-    # Rodapé movido para a barra lateral
-    with st.sidebar:
-        st.markdown("### Desenvolvido com ❤️ usando Streamlit")
 
     # Roteamento de páginas
     try:
