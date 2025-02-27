@@ -8,54 +8,68 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Estilo CSS personalizado
+# Estilo CSS customizado para garantir o menu no topo
 st.markdown("""
     <style>
+    section[data-testid="stSidebar"] {
+        background-color: #262730;
+    }
+
+    div.block-container {
+        padding-top: 0;
+    }
+
     div.stButton > button {
         width: 100%;
+        background-color: #F1A208 !important;
+        color: #262730 !important;
+        font-weight: 500;
         text-align: left;
         padding: 0.75rem 1rem;
-        background-color: transparent;
-        border: none;
-        color: #FFFFFF;
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.5rem;
         font-size: 1rem;
-        font-weight: 500;
-        transition: background-color 0.2s;
+        border: none;
+        border-radius: 4px;
     }
     div.stButton > button:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-        color: #FFFFFF;
+        background-color: #ffc107 !important;
     }
-    div.stButton > button:active {
-        background-color: rgba(255, 255, 255, 0.2);
+
+    /* Container escuro para os botões */
+    div.nav-buttons {
+        background-color: #262730;
+        padding: 1rem;
+        margin: 0 -1rem;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Barra lateral com Menu Principal no topo
-with st.sidebar:
-    st.title("Menu Principal")
+# Menu principal (deve aparecer no topo)
+st.sidebar.title("Menu Principal")
 
-    # Botões de navegação no topo
-    dashboard_btn = st.button("📊 Dashboard", use_container_width=True)
-    cadastros_btn = st.button("👥 Cadastros", use_container_width=True)
-    propostas_btn = st.button("📝 Propostas", use_container_width=True)
-    financeiro_btn = st.button("💰 Financeiro", use_container_width=True)
-    relatorios_btn = st.button("📈 Relatórios", use_container_width=True)
+# Container dos botões com fundo escuro
+st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
 
-    # Separador antes das informações do sistema
-    st.markdown("---")
-
-    # Informações do sistema no final
-    with st.expander("ℹ️ Informações do Sistema", expanded=False):
-        st.write("Versão 1.0")
-        st.write("Desenvolvido com ❤️ usando Streamlit")
-
-# Determinar a página selecionada
+# Botões de navegação
 if 'current_page' not in st.session_state:
     st.session_state.current_page = "Dashboard"
 
+# Criação dos botões
+dashboard_btn = st.sidebar.button("📊 Dashboard", use_container_width=True)
+cadastros_btn = st.sidebar.button("👥 Cadastros", use_container_width=True)
+propostas_btn = st.sidebar.button("📝 Propostas", use_container_width=True)
+financeiro_btn = st.sidebar.button("💰 Financeiro", use_container_width=True)
+relatorios_btn = st.sidebar.button("📈 Relatórios", use_container_width=True)
+
+st.sidebar.markdown('</div>', unsafe_allow_html=True)
+
+# Informações do sistema no final
+st.sidebar.markdown("---")
+with st.sidebar.expander("ℹ️ Informações do Sistema", expanded=False):
+    st.write("Versão 1.0")
+    st.write("Desenvolvido com ❤️ usando Streamlit")
+
+# Controle de navegação
 if dashboard_btn:
     st.session_state.current_page = "Dashboard"
 elif cadastros_btn:
