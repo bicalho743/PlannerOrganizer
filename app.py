@@ -69,7 +69,8 @@ MENU_PRINCIPAL = {
     "👥 Cadastros": "Cadastros",
     "📝 Propostas": "Propostas",
     "💰 Financeiro": "Financeiro",
-    "📈 Relatórios": "Relatórios"
+    "📈 Relatórios": "Relatórios",
+    "📥 Importação": "Importar"
 }
 
 # Criação dos botões do menu principal
@@ -127,17 +128,8 @@ with st.sidebar.expander("ℹ️ Informações do Sistema", expanded=False):
         st.session_state.current_page = "Importar"
         st.rerun()
 
-# Controle de navegação
-if dashboard_btn:
-    st.session_state.current_page = "Dashboard"
-elif cadastros_btn:
-    st.session_state.current_page = "Cadastros"
-elif propostas_btn:
-    st.session_state.current_page = "Propostas"
-elif financeiro_btn:
-    st.session_state.current_page = "Financeiro"
-elif relatorios_btn:
-    st.session_state.current_page = "Relatórios"
+# A navegação é controlada pelos botões do menu principal
+# Os botões já atualizam st.session_state.current_page
 
 # Conteúdo principal da página atual
 if st.session_state.current_page == "Dashboard":
@@ -156,4 +148,20 @@ elif st.session_state.current_page == "Relatórios":
     from pages.relatorios import show
     show()
 elif st.session_state.current_page == "Importar":
-    st.write("Página de Importação de Propostas") # Placeholder - needs actual implementation
+    st.title("📥 Importação de Dados")
+    st.write("### Selecione o tipo de dados para importar:")
+
+    import_type = st.selectbox(
+        "Tipo de Importação",
+        ["Clientes", "Propostas", "Fornecedores", "Assistentes", "Parceiros"]
+    )
+
+    st.info(f"A importação de {import_type} permite carregar dados em massa através de arquivos CSV ou Excel.")
+
+    uploaded_file = st.file_uploader(
+        "Escolha um arquivo para importar",
+        type=["csv", "xlsx"]
+    )
+
+    if uploaded_file:
+        st.warning("Funcionalidade em desenvolvimento. Em breve você poderá importar seus dados aqui!")
