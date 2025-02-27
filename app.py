@@ -20,13 +20,6 @@ logger = logging.getLogger(__name__)
 # Log de início da aplicação
 logger.info("Iniciando aplicação Planner Organizer")
 
-# Adicionar diretório src ao path
-root_dir = os.path.dirname(os.path.abspath(__file__))
-src_dir = os.path.join(root_dir, "src")
-if src_dir not in sys.path:
-    sys.path.append(src_dir)
-    logger.info(f"Adicionado diretório src ao path: {src_dir}")
-
 # Configuração da página
 try:
     logger.info("Configurando página Streamlit")
@@ -36,11 +29,11 @@ try:
         layout="wide",
         initial_sidebar_state="expanded"
     )
-    
+
     # Importar e carregar estilos personalizados
     from src.utils.custom_styles import load_custom_styles
     load_custom_styles()
-    
+
     logger.info("Página configurada com sucesso")
 except Exception as e:
     logger.error(f"Erro na configuração da página: {str(e)}")
@@ -73,11 +66,20 @@ try:
             st.error(f"Erro ao conectar com banco de dados: {str(e)}")
             st.stop()
 
+    # Inicializar variável de controle da apresentação
+    if 'mostrar_apresentacao' not in st.session_state:
+        st.session_state.mostrar_apresentacao = False
+
     # Menu na barra lateral
     logger.info("Criando menu na barra lateral")
     with st.sidebar:
         st.title("Menu Principal")
-        
+
+        # Botão de apresentação
+        st.button("📌 Sobre o Sistema", key="btn_sobre", on_click=lambda: setattr(st.session_state, 'mostrar_apresentacao', True))
+
+        st.markdown("---")
+
         # Seleção de página
         dashboard_btn = st.button("📊 Dashboard", use_container_width=True)
         cadastros_btn = st.button("👥 Cadastros", use_container_width=True)
@@ -85,15 +87,15 @@ try:
         financeiro_btn = st.button("💰 Financeiro", use_container_width=True)
         relatorios_btn = st.button("📈 Relatórios", use_container_width=True)
         importacao_btn = st.button("📥 Importação", use_container_width=True)
-        
+
         # Separador antes do rodapé
         st.markdown("---")
         st.markdown("### Desenvolvido com ❤️ usando Streamlit")
-    
+
     # Determinar a página selecionada com base nos botões
     if 'current_page' not in st.session_state:
         st.session_state.current_page = "Dashboard"  # Página padrão
-    
+
     if dashboard_btn:
         st.session_state.current_page = "Dashboard"
     elif cadastros_btn:
@@ -106,38 +108,89 @@ try:
         st.session_state.current_page = "Relatórios"
     elif importacao_btn:
         st.session_state.current_page = "Importação"
-    
+
     pagina = st.session_state.current_page
     logger.info(f"Página selecionada: {pagina}")
 
-    # Roteamento de páginas
-    try:
-        logger.info(f"Tentando carregar página: {pagina}")
-        if pagina == "Dashboard":
-            from pages.dashboard import show
-            show()
-        elif pagina == "Cadastros":
-            from pages.cadastros import show
-            show()
-        elif pagina == "Propostas":
-            from pages.propostas import show
-            show()
-        elif pagina == "Financeiro":
-            from pages.financeiro import show
-            show()
-        elif pagina == "Relatórios":
-            from pages.relatorios import show
-            show()
-        elif pagina == "Importação":
-            from pages.importacao import show
-            show()
-        logger.info(f"Página {pagina} carregada com sucesso")
-    except ImportError as e:
-        logger.error(f"Erro ao importar módulo da página {pagina}: {str(e)}")
-        st.error(f"Erro ao carregar página {pagina}: {str(e)}")
-    except Exception as e:
-        logger.error(f"Erro ao exibir página {pagina}: {str(e)}")
-        st.error(f"Erro ao exibir página {pagina}: {str(e)}")
+    # Se a apresentação estiver ativa, mostrar na área principal
+    if st.session_state.mostrar_apresentacao:
+        st.title("👋 Bem-vindo ao seu assistente de organização!")
+
+        st.markdown("""
+        O **Sistema Planner Organizer** é uma ferramenta completa para o gerenciamento eficiente 
+        do seu negócio de Personal Organizer. Com ele, você pode:
+
+        ### 📊 Funcionalidades Principais
+
+        **👥 Gestão de Clientes**
+        - Cadastro completo de clientes
+        - Controle de aniversários
+        - Histórico de atendimentos
+        - Importação de dados em massa
+
+        **📝 Gestão de Propostas**
+        - Criação e acompanhamento de propostas
+        - Cálculo automático de valores
+        - Geração de PDFs profissionais
+        - Controle de status e prazos
+
+        **💰 Gestão Financeira**
+        - Controle de receitas e despesas
+        - Gestão de contas a receber
+        - Relatórios financeiros detalhados
+        - Dashboard com indicadores
+
+        **📈 Relatórios e Análises**
+        - Visão geral do negócio
+        - Análise de desempenho
+        - Gráficos e estatísticas
+        - Exportação de dados
+
+        ### 🔍 Recursos Adicionais
+        - Interface intuitiva e amigável
+        - Backup automático de dados
+        - Controle de acesso seguro
+        - Suporte a múltiplos usuários
+
+        ### 📱 Benefícios
+        - Aumente sua produtividade
+        - Mantenha seus dados organizados
+        - Tome decisões baseadas em dados
+        - Profissionalize seu negócio
+        """)
+
+        if st.button("Fechar Apresentação"):
+            st.session_state.mostrar_apresentacao = False
+            st.rerun()
+    else:
+        # Roteamento de páginas
+        try:
+            logger.info(f"Tentando carregar página: {pagina}")
+            if pagina == "Dashboard":
+                from pages.dashboard import show
+                show()
+            elif pagina == "Cadastros":
+                from pages.cadastros import show
+                show()
+            elif pagina == "Propostas":
+                from pages.propostas import show
+                show()
+            elif pagina == "Financeiro":
+                from pages.financeiro import show
+                show()
+            elif pagina == "Relatórios":
+                from pages.relatorios import show
+                show()
+            elif pagina == "Importação":
+                from pages.importacao import show
+                show()
+            logger.info(f"Página {pagina} carregada com sucesso")
+        except ImportError as e:
+            logger.error(f"Erro ao importar módulo da página {pagina}: {str(e)}")
+            st.error(f"Erro ao carregar página {pagina}: {str(e)}")
+        except Exception as e:
+            logger.error(f"Erro ao exibir página {pagina}: {str(e)}")
+            st.error(f"Erro ao exibir página {pagina}: {str(e)}")
 
     logger.info("Aplicação carregada com sucesso")
 
