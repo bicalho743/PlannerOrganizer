@@ -1,6 +1,10 @@
 # Renomeado de app.py para webapp.py para evitar conflitos
 import streamlit as st
 from pages import dashboard, cadastros, propostas, financeiro, relatorios, teste_importacao
+from utils.custom_styles import load_custom_styles
+
+# Carregar estilos personalizados
+load_custom_styles()
 
 def show():
     # Menu lateral

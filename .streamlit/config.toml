@@ -1,3 +1,4 @@
+
 [server]
 headless = true
 address = "0.0.0.0"
@@ -8,9 +9,9 @@ maxMessageSize = 200
 maxUploadSize = 200
 
 [theme]
-primaryColor = "#B8860B"
+primaryColor = "#F1A208"
 backgroundColor = "#1C1C1C"
-secondaryBackgroundColor = "#2A2A2A"
+secondaryBackgroundColor = "#2E2E2E"
 textColor = "#F5F5F5"
 font = "sans serif"
 base = "dark"

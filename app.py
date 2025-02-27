@@ -4,6 +4,12 @@ import streamlit as st
 import logging
 from datetime import datetime
 
+# Adicionar diretório src ao path para importar utils
+root_dir = os.path.dirname(os.path.abspath(__file__))
+src_dir = os.path.join(root_dir, "src")
+if src_dir not in sys.path:
+    sys.path.append(src_dir)
+
 # Configurar logging
 logging.basicConfig(
     level=logging.INFO,
@@ -30,6 +36,11 @@ try:
         layout="wide",
         initial_sidebar_state="expanded"
     )
+    
+    # Importar e carregar estilos personalizados
+    from src.utils.custom_styles import load_custom_styles
+    load_custom_styles()
+    
     logger.info("Página configurada com sucesso")
 except Exception as e:
     logger.error(f"Erro na configuração da página: {str(e)}")
