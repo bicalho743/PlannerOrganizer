@@ -75,8 +75,29 @@ st.sidebar.markdown('</div>', unsafe_allow_html=True)
 # Informações do sistema no final
 st.sidebar.markdown("---")
 with st.sidebar.expander("ℹ️ Informações do Sistema", expanded=False):
-    st.write("Versão 1.0")
-    st.write("Desenvolvido com ❤️ usando Streamlit")
+    st.markdown("""
+    ### Sistema Personal Organizer
+    **Versão:** 1.0.2
+
+    **Recursos Disponíveis:**
+    - ✅ Gestão de Clientes
+    - ✅ Controle de Propostas
+    - ✅ Gestão Financeira
+    - ✅ Relatórios e Análises
+    - ✅ Importação de Dados
+
+    **Novidades:**
+    - 🎉 Telas de celebração
+    - 📊 Dashboard aprimorado
+    - 📱 Interface responsiva
+
+    Desenvolvido com ❤️ usando Streamlit
+    """)
+
+    # Botão de importação de propostas
+    if st.button("📥 Importar Propostas", use_container_width=True):
+        st.session_state.current_page = "Importar"
+        st.rerun()
 
 # Controle de navegação
 if dashboard_btn:
@@ -106,3 +127,5 @@ elif st.session_state.current_page == "Financeiro":
 elif st.session_state.current_page == "Relatórios":
     from pages.relatorios import show
     show()
+elif st.session_state.current_page == "Importar":
+    st.write("Página de Importação de Propostas") # Placeholder - needs actual implementation

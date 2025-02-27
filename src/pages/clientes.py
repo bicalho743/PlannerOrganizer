@@ -4,6 +4,7 @@ from datetime import datetime
 import logging
 import traceback
 import io
+from utils.celebration import toggle_celebration, show_celebration
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +89,12 @@ def show():
                             data_aniversario=data_aniversario,
                             origem_cliente=origem_cliente
                         )
-                        st.success("Cliente cadastrado com sucesso!")
+                        # Activate celebration screen
+                        toggle_celebration(
+                            task_name="Novo Cliente Cadastrado",
+                            custom_message=f"🌟 Cliente {nome} cadastrado com sucesso!"
+                        )
+                        st.rerun()
                     except Exception as e:
                         st.error(f"Erro ao cadastrar cliente: {str(e)}")
                 else:
