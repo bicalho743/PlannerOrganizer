@@ -11,13 +11,19 @@ def show():
     with st.sidebar:
         st.title("Menu Principal")
         
-        # Menu de navegação
-        dashboard_btn = st.button("📊 Dashboard", use_container_width=True)
-        cadastros_btn = st.button("👥 Cadastros", use_container_width=True)
-        propostas_btn = st.button("📝 Propostas", use_container_width=True)
-        financeiro_btn = st.button("💰 Financeiro", use_container_width=True)
-        relatorios_btn = st.button("📈 Relatórios", use_container_width=True)
-        teste_importacao_btn = st.button("🔄 Teste de Importação", use_container_width=True)
+        # Menu de navegação - menu principal definido
+        menu_options = {
+            "📊 Dashboard": "Dashboard",
+            "👥 Cadastros": "Cadastros",
+            "📝 Propostas": "Propostas",
+            "💰 Financeiro": "Financeiro",
+            "📈 Relatórios": "Relatórios"
+        }
+
+        for label, page in menu_options.items():
+            if st.button(label, key=f"menu_{page}", use_container_width=True):
+                st.session_state.current_page = page
+                st.rerun()
         
         st.markdown("---")
         

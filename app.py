@@ -63,12 +63,20 @@ st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
 if 'current_page' not in st.session_state:
     st.session_state.current_page = "Dashboard"
 
-# Criação dos botões
-dashboard_btn = st.sidebar.button("📊 Dashboard", use_container_width=True)
-cadastros_btn = st.sidebar.button("👥 Cadastros", use_container_width=True)
-propostas_btn = st.sidebar.button("📝 Propostas", use_container_width=True)
-financeiro_btn = st.sidebar.button("💰 Financeiro", use_container_width=True)
-relatorios_btn = st.sidebar.button("📈 Relatórios", use_container_width=True)
+# Definição do menu principal
+menu_items = {
+    "📊 Dashboard": "Dashboard",
+    "👥 Cadastros": "Cadastros",
+    "📝 Propostas": "Propostas",
+    "💰 Financeiro": "Financeiro", 
+    "📈 Relatórios": "Relatórios"
+}
+
+# Criação dos botões do menu principal
+for label, page in menu_items.items():
+    if st.sidebar.button(label, key=f"main_menu_{page.lower()}", use_container_width=True):
+        st.session_state.current_page = page
+        st.rerun()
 
 st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
