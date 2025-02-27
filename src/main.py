@@ -12,6 +12,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Log de início da aplicação
+logger.info("Iniciando aplicação Planner Organizer")
+
 # Adicionar diretório raiz ao path
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if root_dir not in sys.path:
@@ -48,40 +51,85 @@ if 'db' not in st.session_state:
         st.exception(e)
         st.stop()
 
-# Menu lateral simplificado
-st.sidebar.title("Menu Principal")
+# Menu lateral
+with st.sidebar:
+    st.title("Menu Principal")
 
-# Seleção de página
-pagina = st.sidebar.radio(
-    "",  # Label vazio para não mostrar título do radio
-    ["Dashboard", "Cadastros", "Propostas", "Financeiro", "Relatórios"],
-    format_func=lambda x: f"📊 {x}" if x == "Dashboard"
+    # Botão de apresentação
+    if st.button("📌 Sobre o Sistema"):
+        st.session_state.mostrar_apresentacao = True
+
+    # Seleção de página
+    pagina = st.radio(
+        "",  # Label vazio para não mostrar título do radio
+        ["Dashboard", "Cadastros", "Propostas", "Financeiro", "Relatórios"],
+        format_func=lambda x: f"📊 {x}" if x == "Dashboard"
                     else f"👥 {x}" if x == "Cadastros"
                     else f"📝 {x}" if x == "Propostas"
                     else f"💰 {x}" if x == "Financeiro"
                     else f"📈 {x}" if x == "Relatórios"
                     else f"📥 {x}"  # Importação
-)
+    )
 
-# Roteamento de páginas
-if pagina == "Dashboard":
-    import pages.dashboard as dashboard
-    dashboard.show()
-elif pagina == "Cadastros":
-    import pages.cadastros as cadastros
-    cadastros.show()
-elif pagina == "Propostas":
-    import pages.propostas as propostas
-    propostas.show()
-elif pagina == "Financeiro":
-    import pages.financeiro as financeiro
-    financeiro.show()
-elif pagina == "Relatórios":
-    import pages.relatorios as relatorios
-    relatorios.show()
-elif pagina == "Importação":
-    import pages.importacao as importacao
-    importacao.show()
+# Se a apresentação estiver ativa, mostrar na área principal
+if 'mostrar_apresentacao' in st.session_state and st.session_state.mostrar_apresentacao:
+    st.title("👋 Bem-vindo ao seu assistente de organização!")
+    st.markdown("""
+    **Aqui você encontra:**
+
+    📊 **Dashboard**
+    - Visão geral do seu negócio
+    - Aniversariantes do dia e da semana
+    - Propostas em andamento
+
+    👥 **Cadastros**
+    - Gerencie clientes, fornecedores e assistentes
+    - Mantenha todos os contatos organizados
+    - Controle de aniversários e dados importantes
+
+    📝 **Propostas**
+    - Crie e gerencie propostas
+    - Acompanhe status e prazos
+    - Gere PDFs profissionais
+
+    💰 **Financeiro**
+    - Controle de receitas e despesas
+    - Gestão de contas a receber
+    - Relatórios financeiros detalhados
+
+    📊 **Relatórios**
+    - Análise de desempenho
+    - Gráficos e métricas importantes
+    - Tome decisões baseadas em dados
+    """)
+
+    if st.button("Fechar Apresentação"):
+        st.session_state.mostrar_apresentacao = False
+        st.rerun()
+else:
+    # Roteamento de páginas
+    try:
+        if pagina == "Dashboard":
+            from pages.dashboard import show
+            show()
+        elif pagina == "Cadastros":
+            from pages.cadastros import show
+            show()
+        elif pagina == "Propostas":
+            from pages.propostas import show
+            show()
+        elif pagina == "Financeiro":
+            from pages.financeiro import show
+            show()
+        elif pagina == "Relatórios":
+            from pages.relatorios import show
+            show()
+    except ImportError as e:
+        logger.error(f"Erro ao importar módulo da página {pagina}: {str(e)}")
+        st.error(f"Erro ao carregar página {pagina}: {str(e)}")
+    except Exception as e:
+        logger.error(f"Erro ao exibir página {pagina}: {str(e)}")
+        st.error(f"Erro ao exibir página {pagina}: {str(e)}")
 
 # Rodapé
 st.sidebar.markdown("---")
