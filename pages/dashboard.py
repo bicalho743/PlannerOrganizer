@@ -9,7 +9,7 @@ def show():
     clientes = st.session_state.db.get_clientes()
     if clientes.empty:
         st.sidebar.warning("Banco de dados vazio")
-        if st.sidebar.button("Adicionar Dados de Teste"):
+        if st.sidebar.button("Adicionar Dados de Teste", key="btn_add_test_data_dashboard"):
             if st.session_state.db.add_test_data():
                 st.sidebar.success("Dados de teste adicionados com sucesso!")
                 st.rerun()

@@ -124,7 +124,7 @@ with st.sidebar.expander("ℹ️ Informações do Sistema", expanded=False):
     """)
 
     # Botão de importação de propostas
-    if st.button("📥 Importar Propostas", use_container_width=True):
+    if st.button("📥 Importar Propostas", key="btn_import_propostas_sidebar", use_container_width=True):
         st.session_state.current_page = "Importar"
         st.rerun()
 
