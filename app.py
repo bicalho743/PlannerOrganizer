@@ -14,9 +14,25 @@ st.set_page_config(
 if 'db' not in st.session_state:
     try:
         st.session_state.db = Database()
+        st.success("Conexão com o banco de dados estabelecida com sucesso!")
     except Exception as e:
-        st.error("Erro ao conectar com o banco de dados. Por favor, tente novamente mais tarde.")
-        st.exception(e)
+        st.error("Erro ao conectar com o banco de dados. O endpoint pode estar desabilitado.")
+        st.warning("Se você estiver usando Neon PostgreSQL ou outro banco de dados serverless, você precisa reativar o endpoint.")
+        
+        # Mostrar informação sobre o DATABASE_URL (sem mostrar credenciais)
+        db_url = os.getenv('DATABASE_URL', 'Não definido')
+        if db_url:
+            # Esconder credenciais na mensagem
+            safe_url = db_url.split('@')
+            if len(safe_url) > 1:
+                host_part = safe_url[1]
+                st.info(f"Sua conexão de banco de dados aponta para: ...@{host_part}")
+            else:
+                st.info("DATABASE_URL está definido, mas não está no formato esperado.")
+        else:
+            st.info("A variável de ambiente DATABASE_URL não está definida.")
+        
+        st.error(f"Detalhes do erro: {str(e)}")
         st.stop()
 
 # Estilo CSS customizado para garantir o menu no topo

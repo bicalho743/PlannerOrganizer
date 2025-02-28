@@ -13,12 +13,22 @@ if DATABASE_URL is None:
     raise ValueError("DATABASE_URL environment variable is not set")
 
 # Ensure proper SSL configuration for PostgreSQL
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={'sslmode': 'require'} if 'postgresql' in DATABASE_URL else {},
-    pool_pre_ping=True,
-    pool_recycle=3600
-)
+try:
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={
+            'sslmode': 'require',
+            'connect_timeout': 10
+        } if 'postgresql' in DATABASE_URL else {},
+        pool_pre_ping=True,
+        pool_recycle=3600,
+        pool_timeout=30,
+        max_overflow=10,
+        pool_size=5
+    )
+except Exception as e:
+    print(f"Error creating database engine: {str(e)}")
+    raise
 
 Base = declarative_base()
 
