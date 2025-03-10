@@ -11,11 +11,21 @@ logger = logging.getLogger(__name__)
 MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 
 def try_read_csv(arquivo, encodings=['utf-8', 'latin1', 'iso-8859-1', 'cp1252']):
-    """Try reading CSV with different encodings"""
+    """Try reading CSV with different encodings and handling binary streams"""
     for encoding in encodings:
         try:
-            return pd.read_csv(arquivo, sep=';', encoding=encoding)
-        except UnicodeDecodeError:
+            # Reset file pointer to beginning
+            arquivo.seek(0)
+            # Read the file content as bytes first
+            content = arquivo.read()
+            # Try to decode with current encoding
+            decoded_content = content.decode(encoding)
+            # Create a string buffer
+            buffer = io.StringIO(decoded_content)
+            # Read CSV from buffer
+            return pd.read_csv(buffer, sep=';')
+        except UnicodeDecodeError as e:
+            logger.warning(f"Failed to decode with {encoding}: {str(e)}")
             continue
         except Exception as e:
             logger.error(f"Error reading CSV with encoding {encoding}: {str(e)}")
@@ -36,14 +46,21 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
         st.info("Lendo arquivo...")
         try:
             if arquivo.name.endswith('.csv'):
+                arquivo.seek(0)  # Reset file pointer
                 df = try_read_csv(arquivo)
             else:
+                arquivo.seek(0)  # Reset file pointer
                 df = pd.read_excel(arquivo)
 
             if df is None:
                 return False, "Erro ao ler arquivo: formato não suportado"
 
             st.success(f"Arquivo lido com sucesso. Dimensões: {df.shape}")
+
+            # Debug info
+            st.info(f"Colunas encontradas: {', '.join(df.columns)}")
+            st.info(f"Primeiras linhas:\n{df.head().to_string()}")
+
         except Exception as e:
             logger.error(f"Erro ao ler arquivo: {str(e)}\n{traceback.format_exc()}")
             return False, f"Erro ao ler arquivo: {str(e)}"
@@ -363,6 +380,7 @@ def importar_propostas(arquivo, db):
 
         # Ler arquivo Excel
         try:
+            arquivo.seek(0) # Reset file pointer
             df = pd.read_excel(arquivo)
             st.success(f"Arquivo lido com sucesso. Dimensões: {df.shape}")
         except Exception as e:
