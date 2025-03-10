@@ -10,6 +10,157 @@ logger = logging.getLogger(__name__)
 # Mapeamento de meses em português para validação
 MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 
+def try_read_csv(arquivo, encodings=['utf-8', 'latin1', 'iso-8859-1', 'cp1252']):
+    """Try reading CSV with different encodings"""
+    for encoding in encodings:
+        try:
+            return pd.read_csv(arquivo, sep=';', encoding=encoding)
+        except UnicodeDecodeError:
+            continue
+        except Exception as e:
+            logger.error(f"Error reading CSV with encoding {encoding}: {str(e)}")
+            continue
+    raise ValueError("Não foi possível ler o arquivo com nenhuma das codificações suportadas")
+
+def importar_cadastros(arquivo, tipo_cadastro, db):
+    """Importa cadastros de um arquivo CSV ou Excel"""
+    try:
+        st.write("### Log de Importação")
+        st.info(f"Iniciando importação de {tipo_cadastro}")
+
+        if not db:
+            st.error("Erro: Conexão com banco de dados não inicializada")
+            return False, "Erro: Conexão com banco de dados não inicializada"
+
+        # Detecta o tipo de arquivo e lê
+        st.info("Lendo arquivo...")
+        try:
+            if arquivo.name.endswith('.csv'):
+                df = try_read_csv(arquivo)
+            else:
+                df = pd.read_excel(arquivo)
+
+            if df is None:
+                return False, "Erro ao ler arquivo: formato não suportado"
+
+            st.success(f"Arquivo lido com sucesso. Dimensões: {df.shape}")
+        except Exception as e:
+            logger.error(f"Erro ao ler arquivo: {str(e)}\n{traceback.format_exc()}")
+            return False, f"Erro ao ler arquivo: {str(e)}"
+
+        # Limpar dados
+        df = df.replace({pd.NA: None, 'nan': None, 'NaN': None, '': None})
+        df = df.fillna('')  # Replace NaN with empty string to avoid encoding issues
+
+        sucessos = 0
+        erros = []
+
+        total_rows = len(df)
+        progress_bar = st.progress(0)
+
+        for idx, row in df.iterrows():
+            try:
+                progress = (idx + 1) / total_rows
+                progress_bar.progress(progress)
+
+                if tipo_cadastro == "Cliente":
+                    # Process client data with better error handling
+                    try:
+                        nome = str(row['nome']).strip() if row.get('nome') else None
+                        if not nome:
+                            erros.append(f"Nome vazio na linha {idx + 2}")
+                            continue
+
+                        cliente_data = {
+                            'nome': nome,
+                            'telefone': str(row.get('telefone', '')).strip(),
+                            'cpf': str(row.get('cpf', '')).strip(),
+                            'email': str(row.get('email', '')).strip(),
+                            'estado': str(row.get('estado', '')).strip(),
+                            'cidade': str(row.get('cidade', '')).strip(),
+                            'bairro': str(row.get('bairro', '')).strip(),
+                            'endereco': str(row.get('endereco', '')).strip(),
+                            'data_aniversario': str(row.get('data_aniversario', '')).strip(),
+                            'origem_cliente': str(row.get('origem_cliente', 'Importação')).strip(),
+                            'observacoes': str(row.get('observacoes', '')).strip()
+                        }
+
+                        # Clean up empty strings
+                        cliente_data = {k: v for k, v in cliente_data.items() if v}
+
+                        db.add_cliente(**cliente_data)
+                        sucessos += 1
+                    except Exception as e:
+                        erro_msg = f"Erro ao processar cliente na linha {idx + 2}: {str(e)}"
+                        erros.append(erro_msg)
+                        logger.error(erro_msg)
+                        continue
+
+                elif tipo_cadastro == "Fornecedor":
+                    descricao = str(row['descricao']).strip() if pd.notna(row.get('descricao')) else None
+                    if not descricao:
+                        continue
+
+                    db.add_fornecedor(
+                        descricao=descricao,
+                        contato=str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None,
+                        endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
+                        categoria=str(row.get('categoria', '')).strip() if pd.notna(row.get('categoria')) else None,
+                        pix=str(row.get('pix', '')).strip() if pd.notna(row.get('pix')) else None,
+                        observacoes=str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None
+                    )
+                    sucessos += 1
+
+                elif tipo_cadastro == "Parceiro":
+                    nome = str(row['nome']).strip() if pd.notna(row.get('nome')) else None
+                    if not nome:
+                        continue
+
+                    db.add_parceiro(
+                        nome=nome,
+                        telefone=str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None,
+                        area_atuacao=str(row.get('area_atuacao', '')).strip() if pd.notna(row.get('area_atuacao')) else None,
+                        tipo_parceria=str(row.get('tipo_parceria', '')).strip() if pd.notna(row.get('tipo_parceria')) else None,
+                        observacoes=str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None
+                    )
+                    sucessos += 1
+
+                elif tipo_cadastro == "Assistente":
+                    nome = str(row['nome']).strip() if pd.notna(row.get('nome')) else None
+                    if not nome:
+                        continue
+
+                    db.add_assistente(
+                        nome=nome,
+                        telefone=str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None,
+                        endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
+                        pix=str(row.get('pix', '')).strip() if pd.notna(row.get('pix')) else None,
+                        observacoes=str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None
+                    )
+                    sucessos += 1
+
+            except Exception as e:
+                erro_msg = f"Erro na linha {idx + 2}: {str(e)}"
+                erros.append(erro_msg)
+                logger.error(f"{erro_msg}\n{traceback.format_exc()}")
+                continue
+
+        progress_bar.empty()
+
+        mensagem = f"Importação concluída. {sucessos} registros importados com sucesso."
+        if erros:
+            mensagem += f"\nErros encontrados: {len(erros)}"
+            for erro in erros[:5]:  # Show only first 5 errors
+                mensagem += f"\n- {erro}"
+            logger.error(f"Erros na importação:\n{chr(10).join(erros)}")
+
+        return sucessos > 0, mensagem
+
+    except Exception as e:
+        erro_msg = f"Erro ao processar arquivo: {str(e)}\n{traceback.format_exc()}"
+        logger.error(erro_msg)
+        return False, f"Erro ao processar arquivo: {str(e)}"
+
 def validar_data(data_str):
     """Valida e mantém o formato DD/MMM para datas de aniversário"""
     if pd.isna(data_str):
@@ -126,146 +277,6 @@ def gerar_template_csv(tipo):
         return None
 
     return df.to_csv(index=False, sep=';').encode('utf-8')
-
-def importar_cadastros(arquivo, tipo_cadastro, db):
-    """Importa cadastros de um arquivo CSV ou Excel"""
-    try:
-        st.write("### Log de Importação")
-        st.info(f"Iniciando importação de {tipo_cadastro}")
-
-        if not db:
-            st.error("Erro: Conexão com banco de dados não inicializada")
-            return False, "Erro: Conexão com banco de dados não inicializada"
-
-        # Detecta o tipo de arquivo e lê
-        st.info("Lendo arquivo...")
-        try:
-            if arquivo.name.endswith('.csv'):
-                df = pd.read_csv(arquivo, sep=';', encoding='utf-8')
-            else:
-                df = pd.read_excel(arquivo)
-            st.success(f"Arquivo lido com sucesso. Dimensões: {df.shape}")
-        except Exception as e:
-            st.error(f"Erro ao ler arquivo: {str(e)}")
-            return False, f"Erro ao ler arquivo: {str(e)}"
-
-        # Limpar dados
-        df = df.replace({pd.NA: None, 'nan': None, 'NaN': None, '': None})
-
-        sucessos = 0
-        erros = []
-
-        total_rows = len(df)
-        progress_bar = st.progress(0)
-
-        for idx, row in df.iterrows():
-            try:
-                progress = (idx + 1) / total_rows
-                progress_bar.progress(progress)
-
-                if tipo_cadastro == "Cliente":
-                    # Processar dados do cliente
-                    nome = str(row['nome']).strip() if pd.notna(row.get('nome')) else None
-                    if not nome:
-                        erros.append(f"Nome vazio na linha {idx + 2}")
-                        continue
-
-                    telefone = str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None
-                    if telefone:
-                        telefone = ''.join(filter(str.isdigit, telefone))
-
-                    # Processamento do CPF
-                    cpf = str(row.get('cpf', '')).strip() if pd.notna(row.get('cpf')) else None
-                    if cpf:
-                        cpf = ''.join(filter(str.isdigit, cpf))
-                        if len(cpf) == 11:
-                            cpf = f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
-
-                    data_aniv = validar_data(row.get('data_aniversario'))
-
-                    try:
-                        db.add_cliente(
-                            nome=nome,
-                            telefone=telefone,
-                            cpf=cpf,
-                            email=str(row.get('email', '')).strip() if pd.notna(row.get('email')) else None,
-                            estado=str(row.get('estado', '')).strip() if pd.notna(row.get('estado')) else None,
-                            cidade=str(row.get('cidade', '')).strip() if pd.notna(row.get('cidade')) else None,
-                            bairro=str(row.get('bairro', '')).strip() if pd.notna(row.get('bairro')) else None,
-                            endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
-                            data_aniversario=data_aniv,
-                            origem_cliente=str(row.get('origem_cliente', 'Importação')).strip() if pd.notna(row.get('origem_cliente')) else 'Importação',
-                            observacoes=str(row.get('observacoes', '')).strip() if pd.notna(row.get('observacoes')) else None
-                        )
-                        sucessos += 1
-                    except Exception as e:
-                        erro_msg = f"Erro ao adicionar cliente na linha {idx + 2}: {str(e)}"
-                        erros.append(erro_msg)
-                        continue
-
-                elif tipo_cadastro == "Fornecedor":
-                    descricao = str(row['descricao']).strip() if pd.notna(row.get('descricao')) else None
-                    if not descricao:
-                        continue
-
-                    db.add_fornecedor(
-                        descricao=descricao,
-                        contato=str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None,
-                        endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
-                        categoria=str(row.get('categoria', '')).strip() if pd.notna(row.get('categoria')) else None,
-                        pix=str(row.get('pix', '')).strip() if pd.notna(row.get('pix')) else None,
-                        observacoes=str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None
-                    )
-                    sucessos += 1
-
-                elif tipo_cadastro == "Parceiro":
-                    nome = str(row['nome']).strip() if pd.notna(row.get('nome')) else None
-                    if not nome:
-                        continue
-
-                    db.add_parceiro(
-                        nome=nome,
-                        telefone=str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None,
-                        area_atuacao=str(row.get('area_atuacao', '')).strip() if pd.notna(row.get('area_atuacao')) else None,
-                        tipo_parceria=str(row.get('tipo_parceria', '')).strip() if pd.notna(row.get('tipo_parceria')) else None,
-                        observacoes=str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None
-                    )
-                    sucessos += 1
-
-                elif tipo_cadastro == "Assistente":
-                    nome = str(row['nome']).strip() if pd.notna(row.get('nome')) else None
-                    if not nome:
-                        continue
-
-                    db.add_assistente(
-                        nome=nome,
-                        telefone=str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None,
-                        endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
-                        pix=str(row.get('pix', '')).strip() if pd.notna(row.get('pix')) else None,
-                        observacoes=str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None
-                    )
-                    sucessos += 1
-
-            except Exception as e:
-                erro_msg = f"Erro na linha {idx + 2}: {str(e)}"
-                st.error(erro_msg)
-                erros.append(erro_msg)
-                continue
-
-        progress_bar.empty()
-
-        mensagem = f"Importação concluída. {sucessos} registros importados com sucesso."
-        if erros:
-            mensagem += f"\nErros encontrados: {len(erros)}"
-            for erro in erros[:5]:  # Mostrar apenas os 5 primeiros erros
-                mensagem += f"\n- {erro}"
-
-        return sucessos > 0, mensagem
-
-    except Exception as e:
-        erro_msg = f"Erro ao processar arquivo: {str(e)}"
-        st.error(erro_msg)
-        return False, erro_msg
 
 def gerar_template_excel(tipo):
     """Gera um arquivo Excel template baseado no tipo de importação"""
