@@ -16,12 +16,17 @@ logger = logging.getLogger(__name__)
 logger.info("Iniciando aplicação Planner Organizer")
 
 # Adicionar diretório raiz ao path
-root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if root_dir not in sys.path:
-    sys.path.append(root_dir)
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if project_root not in sys.path:
+    sys.path.append(project_root)
 
-from utils.database import Database
-from utils.celebration import toggle_celebration, show_celebration
+try:
+    from utils.database import Database
+    from utils.celebration import toggle_celebration, show_celebration
+except ImportError as e:
+    logger.error(f"Erro ao importar módulos: {str(e)}")
+    st.error("Erro ao carregar módulos necessários. Por favor, tente novamente.")
+    st.stop()
 
 # Configuração da página
 st.set_page_config(
