@@ -34,6 +34,30 @@ class Cliente(Base):
     data_cadastro = Column(Date, default=datetime.now().date)
     ativo = Column(Boolean, default=True)
 
+class Proposta(Base):
+    __tablename__ = 'propostas'
+
+    id = Column(Integer, primary_key=True)
+    cliente_id = Column(Integer, ForeignKey('clientes.id'))
+    descricao = Column(String)
+    valor = Column(Float)
+    status = Column(String)  # Aberta, Fechada, Recusada
+    tipo_proposta = Column(String)
+    data_inicio = Column(Date)
+    data_fim = Column(Date)
+    prazo_entrega = Column(Date)
+    cliente = relationship("Cliente")
+
+class Financeiro(Base):
+    __tablename__ = 'financeiro'
+
+    id = Column(Integer, primary_key=True)
+    tipo = Column(String)  # receita, despesa
+    valor = Column(Float)
+    status = Column(String)  # pendente, pago, cancelado
+    data_vencimento = Column(Date)
+    data_pagamento = Column(Date)
+
 class Database:
     def __init__(self):
         """Initialize database connection and create tables"""
@@ -79,24 +103,59 @@ class Database:
         query = self.session.query(Cliente).filter(Cliente.ativo == ativo)
         return pd.read_sql(query.statement, self.engine)
 
-    def get_cliente(self, cliente_id):
-        """Get a specific client by ID"""
-        return self.session.query(Cliente).filter(Cliente.id == cliente_id).first()
+    def get_propostas(self):
+        """Get all proposals with client information"""
+        query = self.session.query(
+            Proposta, Cliente.nome.label('cliente_nome')
+        ).join(Cliente)
+        df = pd.read_sql(query.statement, self.engine)
+        return df if not df.empty else pd.DataFrame()
 
-    def update_cliente(self, cliente_id, **kwargs):
-        """Update client information"""
-        def update():
-            cliente = self.get_cliente(cliente_id)
-            if cliente:
-                for key, value in kwargs.items():
-                    if hasattr(cliente, key):
-                        setattr(cliente, key, value)
-            return cliente
-        return self._safe_query(update)
+    def get_financeiro(self):
+        """Get all financial records"""
+        query = self.session.query(Financeiro)
+        return pd.read_sql(query.statement, self.engine)
 
-    def delete_cliente(self, cliente_id):
-        """Soft delete a client by setting ativo=False"""
-        return self.update_cliente(cliente_id, ativo=False)
+    def add_test_data(self):
+        """Add test data to the database"""
+        try:
+            # Add test client
+            cliente = Cliente(
+                nome="Cliente Teste",
+                telefone="(11) 99999-9999",
+                email="teste@email.com",
+                data_aniversario=datetime.now().strftime('%d/%b'),
+                origem_cliente="Teste"
+            )
+            self.session.add(cliente)
+            self.session.flush()
+
+            # Add test proposal
+            proposta = Proposta(
+                cliente_id=cliente.id,
+                descricao="Proposta de teste",
+                valor=1000.0,
+                status="Aberta",
+                tipo_proposta="Organização",
+                data_inicio=datetime.now().date()
+            )
+            self.session.add(proposta)
+
+            # Add test financial record
+            financeiro = Financeiro(
+                tipo="receita",
+                valor=1000.0,
+                status="pendente",
+                data_vencimento=datetime.now().date()
+            )
+            self.session.add(financeiro)
+
+            self.session.commit()
+            return True
+        except Exception as e:
+            self.session.rollback()
+            print(f"Error adding test data: {str(e)}")
+            return False
 
     def __del__(self):
         """Cleanup database connection"""

@@ -6,6 +6,10 @@ def show():
     st.title("📊 Dashboard")
 
     # Add test data button in sidebar if database is empty
+    if 'db' not in st.session_state:
+        st.error("Database connection not initialized")
+        return
+
     clientes = st.session_state.db.get_clientes()
     if clientes.empty:
         st.sidebar.warning("Banco de dados vazio")
@@ -27,20 +31,27 @@ def show():
         st.metric("Total de Clientes", total_clientes)
 
         # Propostas
-        propostas = st.session_state.db.get_propostas()
-        propostas_ativas = len(propostas[propostas['status'] == 'Aberta']) if not propostas.empty else 0
-        st.metric("Propostas Ativas", propostas_ativas)
+        try:
+            propostas = st.session_state.db.get_propostas()
+            propostas_ativas = len(propostas[propostas['status'] == 'Aberta']) if not propostas.empty else 0
+            st.metric("Propostas Ativas", propostas_ativas)
+        except Exception as e:
+            st.warning("Erro ao carregar propostas")
+            propostas = pd.DataFrame()
 
         # Financeiro
-        financeiro = st.session_state.db.get_financeiro()
-        if not financeiro.empty:
-            valores_receber = financeiro[
-                (financeiro['tipo'] == 'receita') & 
-                (financeiro['status'] == 'pendente')
-            ]['valor'].sum()
-        else:
-            valores_receber = 0.0
-        st.metric("Valores a Receber", f"R$ {valores_receber:,.2f}")
+        try:
+            financeiro = st.session_state.db.get_financeiro()
+            if not financeiro.empty:
+                valores_receber = financeiro[
+                    (financeiro['tipo'] == 'receita') & 
+                    (financeiro['status'] == 'pendente')
+                ]['valor'].sum()
+            else:
+                valores_receber = 0.0
+            st.metric("Valores a Receber", f"R$ {valores_receber:,.2f}")
+        except Exception as e:
+            st.warning("Erro ao carregar dados financeiros")
 
     with col2:
         st.subheader("📋 Propostas em Aberto")
