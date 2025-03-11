@@ -16,21 +16,29 @@ def try_read_csv(arquivo, encodings=['utf-8', 'latin1', 'iso-8859-1', 'cp1252'])
         try:
             # Reset file pointer to beginning
             arquivo.seek(0)
-            # Read the file content as bytes first
-            content = arquivo.read()
+            # Create a bytes buffer to store the content
+            bytes_buffer = io.BytesIO(arquivo.read())
             # Try to decode with current encoding
-            decoded_content = content.decode(encoding)
-            # Create a string buffer
-            buffer = io.StringIO(decoded_content)
-            # Read CSV from buffer
-            return pd.read_csv(buffer, sep=';')
+            text_content = bytes_buffer.getvalue().decode(encoding)
+            # Create a string buffer and read as CSV
+            string_buffer = io.StringIO(text_content)
+            df = pd.read_csv(string_buffer, sep=';')
+            # If successful, return the DataFrame
+            return df
         except UnicodeDecodeError as e:
             logger.warning(f"Failed to decode with {encoding}: {str(e)}")
             continue
-        except Exception as e:
-            logger.error(f"Error reading CSV with encoding {encoding}: {str(e)}")
+        except pd.errors.EmptyDataError:
+            logger.warning(f"Empty data with encoding {encoding}")
             continue
-    raise ValueError("Não foi possível ler o arquivo com nenhuma das codificações suportadas")
+        except Exception as e:
+            logger.error(f"Error reading CSV with encoding {encoding}: {str(e)}\n{traceback.format_exc()}")
+            continue
+
+    # If we get here, none of the encodings worked
+    error_msg = "Não foi possível ler o arquivo com nenhuma das codificações suportadas"
+    logger.error(error_msg)
+    raise ValueError(error_msg)
 
 def importar_cadastros(arquivo, tipo_cadastro, db):
     """Importa cadastros de um arquivo CSV ou Excel"""
@@ -45,24 +53,29 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
         # Detecta o tipo de arquivo e lê
         st.info("Lendo arquivo...")
         try:
-            if arquivo.name.endswith('.csv'):
-                arquivo.seek(0)  # Reset file pointer
+            arquivo_nome = getattr(arquivo, 'name', '')
+            st.info(f"Tipo de arquivo: {arquivo_nome}")
+
+            if arquivo_nome.endswith('.csv'):
                 df = try_read_csv(arquivo)
             else:
-                arquivo.seek(0)  # Reset file pointer
-                df = pd.read_excel(arquivo)
+                # For Excel files, use a different approach
+                arquivo.seek(0)
+                bytes_buffer = io.BytesIO(arquivo.read())
+                df = pd.read_excel(bytes_buffer)
 
-            if df is None:
-                return False, "Erro ao ler arquivo: formato não suportado"
-
-            st.success(f"Arquivo lido com sucesso. Dimensões: {df.shape}")
+            if df is None or df.empty:
+                return False, "Erro ao ler arquivo: arquivo vazio ou formato não suportado"
 
             # Debug info
+            st.success(f"Arquivo lido com sucesso. Dimensões: {df.shape}")
             st.info(f"Colunas encontradas: {', '.join(df.columns)}")
             st.info(f"Primeiras linhas:\n{df.head().to_string()}")
 
         except Exception as e:
-            logger.error(f"Erro ao ler arquivo: {str(e)}\n{traceback.format_exc()}")
+            error_msg = f"Erro ao ler arquivo: {str(e)}\n{traceback.format_exc()}"
+            logger.error(error_msg)
+            st.error(error_msg)
             return False, f"Erro ao ler arquivo: {str(e)}"
 
         # Limpar dados
@@ -381,7 +394,8 @@ def importar_propostas(arquivo, db):
         # Ler arquivo Excel
         try:
             arquivo.seek(0) # Reset file pointer
-            df = pd.read_excel(arquivo)
+            bytes_buffer = io.BytesIO(arquivo.read())
+            df = pd.read_excel(bytes_buffer)
             st.success(f"Arquivo lido com sucesso. Dimensões: {df.shape}")
         except Exception as e:
             st.error(f"Erro ao ler arquivo: {str(e)}")
