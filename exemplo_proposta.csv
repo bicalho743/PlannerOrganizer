@@ -1,0 +1,3 @@
+cliente_nome;descricao;valor;status;tipo_proposta;data_inicio;data_fim;prazo_entrega
+Fulano da Silva;Organização de armários;1500.00;Aberta;Organização;01/06/2025;10/06/2025;15/06/2025
+Ciclano dos Santos;Consultoria de decoração;2000.00;Aberta;Consultoria;15/05/2025;20/05/2025;30/05/2025
