@@ -686,6 +686,26 @@ def gerar_template_excel(tipo):
             'Organização',            # categoria
             10                        # estoque
         ]
+    elif tipo == "Proposta" or tipo == "Propostas":
+        df = pd.DataFrame(columns=[
+            'cliente_nome',     # Nome do cliente (obrigatório)
+            'descricao',        # Descrição da proposta (obrigatório)
+            'valor',            # Valor da proposta (obrigatório)
+            'status',           # Status: Aberta, Fechada, Recusada
+            'tipo_proposta',    # Tipo de proposta
+            'data_inicio',      # Data de início (DD/MM/AAAA)
+            'data_fim'          # Data de fim (DD/MM/AAAA)
+        ])
+        # Adicionar uma linha de exemplo
+        df.loc[0] = [
+            'Nome do Cliente',     # cliente_nome
+            'Proposta de Organização Residencial', # descricao
+            1500.00,               # valor
+            'Aberta',              # status
+            'Residencial',         # tipo_proposta
+            '01/05/2025',          # data_inicio
+            '15/05/2025'           # data_fim
+        ]
     else:
         # Retornar um template genérico em vez de None para evitar erros
         df = pd.DataFrame(columns=['nome', 'descricao'])

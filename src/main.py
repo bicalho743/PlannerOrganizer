@@ -166,6 +166,7 @@ MENU_PRINCIPAL = {
     "📊 Dashboard": "Dashboard",
     "👥 Cadastros": "Cadastros",
     "📝 Propostas": "Propostas",
+    "📥 Importar Propostas": "ImportarPropostas",
     "🛒 Vendas": "Vendas",
     "💰 Financeiro": "Financeiro",
     "📈 Relatórios": "Relatórios"
@@ -315,6 +316,9 @@ else:
             show()
         elif st.session_state.current_page == "Relatórios":
             from pages.relatorios import show
+            show()
+        elif st.session_state.current_page == "ImportarPropostas":
+            from pages.importar_propostas import show
             show()
         elif st.session_state.current_page == "Importar":
             st.title("📥 Importação de Dados")
