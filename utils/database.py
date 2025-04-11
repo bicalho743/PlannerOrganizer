@@ -216,6 +216,47 @@ class AcrescimoProposta(Base):
 
     proposta = relationship("Proposta", back_populates="acrescimos")
 
+class Produto(Base):
+    __tablename__ = 'produtos'
+    id = Column(Integer, primary_key=True)
+    nome = Column(String, nullable=False)
+    descricao = Column(String)
+    preco_custo = Column(Float, nullable=False)
+    preco_venda = Column(Float, nullable=False)
+    categoria = Column(String)
+    estoque = Column(Integer, default=0)
+    data_cadastro = Column(Date, default=datetime.now().date())
+    
+    # Relacionamento com vendas
+    vendas_itens = relationship("ItemVenda", back_populates="produto", cascade="all, delete-orphan")
+
+class Venda(Base):
+    __tablename__ = 'vendas'
+    id = Column(Integer, primary_key=True)
+    cliente_id = Column(Integer, ForeignKey('clientes.id'))
+    data_venda = Column(Date, default=datetime.now().date())
+    valor_total = Column(Float, nullable=False)
+    status = Column(String, default='Concluída')  # Concluída, Cancelada, Pendente
+    forma_pagamento = Column(String)
+    observacoes = Column(String)
+    
+    # Relacionamentos
+    cliente = relationship("Cliente")
+    itens = relationship("ItemVenda", back_populates="venda", cascade="all, delete-orphan")
+
+class ItemVenda(Base):
+    __tablename__ = 'itens_venda'
+    id = Column(Integer, primary_key=True)
+    venda_id = Column(Integer, ForeignKey('vendas.id'))
+    produto_id = Column(Integer, ForeignKey('produtos.id'))
+    quantidade = Column(Integer, nullable=False)
+    preco_unitario = Column(Float, nullable=False)
+    subtotal = Column(Float, nullable=False)
+    
+    # Relacionamentos
+    venda = relationship("Venda", back_populates="itens")
+    produto = relationship("Produto", back_populates="vendas_itens")
+
 class Database:
     def __init__(self):
         try:
@@ -1013,4 +1054,213 @@ class Database:
                 })
 
             return pd.DataFrame(historico)
+        return self._safe_query(query)
+        
+    # Métodos para gerenciamento de produtos
+    def add_produto(self, nome, preco_custo, preco_venda, descricao=None, categoria=None, estoque=0):
+        """Adiciona um novo produto ao catálogo"""
+        def query():
+            produto = Produto(
+                nome=nome,
+                descricao=descricao,
+                preco_custo=float(preco_custo),
+                preco_venda=float(preco_venda),
+                categoria=categoria,
+                estoque=int(estoque)
+            )
+            self.session.add(produto)
+            return produto.id
+        return self._safe_query(query)
+        
+    def get_produtos(self):
+        """Retorna todos os produtos cadastrados"""
+        def query():
+            produtos = self.session.query(Produto).all()
+            return pd.DataFrame([{
+                'id': p.id,
+                'nome': p.nome,
+                'descricao': p.descricao,
+                'preco_custo': p.preco_custo,
+                'preco_venda': p.preco_venda,
+                'categoria': p.categoria,
+                'estoque': p.estoque,
+                'data_cadastro': p.data_cadastro
+            } for p in produtos])
+        return self._safe_query(query)
+        
+    def update_produto(self, produto_id, nome=None, preco_custo=None, preco_venda=None, 
+                      descricao=None, categoria=None, estoque=None):
+        """Atualiza os dados de um produto"""
+        def query():
+            produto = self.session.query(Produto).filter_by(id=produto_id).first()
+            if not produto:
+                return False
+                
+            if nome is not None:
+                produto.nome = nome
+            if preco_custo is not None:
+                produto.preco_custo = float(preco_custo)
+            if preco_venda is not None:
+                produto.preco_venda = float(preco_venda)
+            if descricao is not None:
+                produto.descricao = descricao
+            if categoria is not None:
+                produto.categoria = categoria
+            if estoque is not None:
+                produto.estoque = int(estoque)
+                
+            return True
+        return self._safe_query(query)
+        
+    def delete_produto(self, produto_id):
+        """Remove um produto do catálogo"""
+        def query():
+            produto = self.session.query(Produto).filter_by(id=produto_id).first()
+            if produto:
+                self.session.delete(produto)
+                return True
+            return False
+        return self._safe_query(query)
+        
+    def atualizar_estoque(self, produto_id, quantidade):
+        """Atualiza o estoque de um produto"""
+        def query():
+            produto = self.session.query(Produto).filter_by(id=produto_id).first()
+            if produto:
+                produto.estoque += quantidade
+                return produto.estoque
+            return None
+        return self._safe_query(query)
+        
+    # Métodos para gerenciamento de vendas
+    def add_venda(self, cliente_id, itens, forma_pagamento=None, observacoes=None):
+        """
+        Adiciona uma nova venda
+        
+        Args:
+            cliente_id: ID do cliente
+            itens: Lista de dicionários com produto_id, quantidade e preco_unitario
+            forma_pagamento: Forma de pagamento
+            observacoes: Observações sobre a venda
+            
+        Returns:
+            ID da venda criada
+        """
+        def query():
+            # Calcular valor total
+            valor_total = 0
+            
+            venda = Venda(
+                cliente_id=cliente_id,
+                valor_total=0,  # Será atualizado após adicionar os itens
+                forma_pagamento=forma_pagamento,
+                observacoes=observacoes
+            )
+            self.session.add(venda)
+            self.session.flush()  # Para obter o ID da venda
+            
+            # Adicionar itens
+            for item in itens:
+                produto_id = item['produto_id']
+                quantidade = item['quantidade']
+                
+                # Obter produto e verificar estoque
+                produto = self.session.query(Produto).filter_by(id=produto_id).first()
+                if not produto:
+                    raise Exception(f"Produto com ID {produto_id} não encontrado")
+                
+                if produto.estoque < quantidade:
+                    raise Exception(f"Estoque insuficiente para o produto {produto.nome}")
+                
+                # Atualizar estoque
+                produto.estoque -= quantidade
+                
+                # Adicionar item
+                preco_unitario = item.get('preco_unitario', produto.preco_venda)
+                subtotal = preco_unitario * quantidade
+                
+                item_venda = ItemVenda(
+                    venda_id=venda.id,
+                    produto_id=produto_id,
+                    quantidade=quantidade,
+                    preco_unitario=preco_unitario,
+                    subtotal=subtotal
+                )
+                self.session.add(item_venda)
+                
+                # Atualizar valor total
+                valor_total += subtotal
+            
+            # Atualizar valor total da venda
+            venda.valor_total = valor_total
+            
+            # Registrar transação financeira
+            cliente = self.session.query(Cliente).filter_by(id=cliente_id).first()
+            descricao = f"Venda para {cliente.nome}" if cliente else "Venda"
+            
+            self.add_transacao(
+                tipo="receita",
+                descricao=descricao,
+                valor=valor_total,
+                categoria="Vendas",
+                origem_id=venda.id,
+                origem_tipo="venda"
+            )
+            
+            return venda.id
+        return self._safe_query(query)
+        
+    def get_vendas(self):
+        """Retorna todas as vendas realizadas"""
+        def query():
+            vendas = self.session.query(Venda).order_by(Venda.data_venda.desc()).all()
+            return pd.DataFrame([{
+                'id': v.id,
+                'cliente_nome': v.cliente.nome if v.cliente else "Cliente não encontrado",
+                'valor_total': v.valor_total,
+                'data_venda': v.data_venda,
+                'status': v.status,
+                'forma_pagamento': v.forma_pagamento,
+                'observacoes': v.observacoes
+            } for v in vendas])
+        return self._safe_query(query)
+        
+    def get_itens_venda(self, venda_id):
+        """Retorna os itens de uma venda específica"""
+        def query():
+            itens = self.session.query(ItemVenda).filter_by(venda_id=venda_id).all()
+            return pd.DataFrame([{
+                'id': i.id,
+                'produto_nome': i.produto.nome if i.produto else "Produto não encontrado",
+                'quantidade': i.quantidade,
+                'preco_unitario': i.preco_unitario,
+                'subtotal': i.subtotal
+            } for i in itens])
+        return self._safe_query(query)
+        
+    def cancelar_venda(self, venda_id):
+        """Cancela uma venda e estorna os produtos para o estoque"""
+        def query():
+            venda = self.session.query(Venda).filter_by(id=venda_id).first()
+            if not venda or venda.status == 'Cancelada':
+                return False
+                
+            venda.status = 'Cancelada'
+            
+            # Estornar produtos para o estoque
+            for item in venda.itens:
+                produto = item.produto
+                if produto:
+                    produto.estoque += item.quantidade
+            
+            # Cancelar transação financeira relacionada
+            transacao = self.session.query(Transacao).filter_by(
+                origem_id=venda_id,
+                origem_tipo='venda'
+            ).first()
+            
+            if transacao:
+                transacao.status = 'Cancelado'
+            
+            return True
         return self._safe_query(query)

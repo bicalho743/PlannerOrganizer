@@ -164,6 +164,7 @@ MENU_PRINCIPAL = {
     "📊 Dashboard": "Dashboard",
     "👥 Cadastros": "Cadastros",
     "📝 Propostas": "Propostas",
+    "🛒 Vendas": "Vendas",
     "💰 Financeiro": "Financeiro",
     "📈 Relatórios": "Relatórios",
     "📥 Importação": "Importar"
@@ -223,6 +224,12 @@ with st.sidebar.expander("📌 Sobre o Sistema", expanded=False):
     - Cálculo automático de valores
     - Geração de PDFs profissionais
     - Controle de status e prazos
+    
+    **🛒 Gestão de Vendas**
+    - Cadastro de produtos
+    - Controle de estoque
+    - Registro de vendas
+    - Histórico de transações
 
     **💰 Gestão Financeira**
     - Controle de receitas e despesas
@@ -256,16 +263,18 @@ st.sidebar.markdown("""
 with st.sidebar.expander("ℹ️ Informações do Sistema", expanded=False):
     st.markdown("""
     ### Sistema Personal Organizer
-    **Versão:** 1.0.2
+    **Versão:** 1.1.0
 
     **Recursos Disponíveis:**
     - ✅ Gestão de Clientes
     - ✅ Controle de Propostas
+    - ✅ Gestão de Vendas e Produtos
     - ✅ Gestão Financeira
     - ✅ Relatórios e Análises
     - ✅ Importação de Dados
 
     **Novidades:**
+    - 🛒 Sistema de vendas e controle de estoque
     - 🎉 Telas de celebração
     - 📊 Dashboard aprimorado
     - 📱 Interface responsiva
@@ -296,6 +305,9 @@ else:
             show()
         elif st.session_state.current_page == "Propostas":
             from pages.propostas import show
+            show()
+        elif st.session_state.current_page == "Vendas":
+            from pages.vendas import show
             show()
         elif st.session_state.current_page == "Financeiro":
             from pages.financeiro import show
