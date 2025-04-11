@@ -12,33 +12,35 @@ def show():
     st.title("📋 Cadastros")
 
     # Tabs para diferentes tipos de cadastro
-    tab_cliente, tab_fornecedor, tab_parceiro, tab_assistente, tab3 = st.tabs([
+    tab_cliente, tab_fornecedor, tab_parceiro, tab_assistente = st.tabs([
         "👥 Clientes",
         "🏢 Fornecedores",
         "🤝 Parceiros",
-        "👨‍💼 Assistentes",
-        "Importar Clientes"
+        "👨‍💼 Assistentes"
     ])
 
     with tab_cliente:
-        st.subheader("Cadastro de Clientes")
-        # Form de cadastro de cliente
-        with st.form("cadastro_cliente", clear_on_submit=True):
-            nome = st.text_input("Nome")
-            col1, col2 = st.columns(2)
-            with col1:
-                telefone = st.text_input("Telefone")
-                cpf = st.text_input("CPF")
-                estado = st.text_input("Estado")
-                cidade = st.text_input("Cidade")
-            with col2:
-                bairro = st.text_input("Bairro")
-                endereco = st.text_input("Endereço")
-                data_aniversario = st.text_input("Data Aniversário (DD/MMM)")
-                origem_cliente = st.text_input("Origem do Cliente")
+        cliente_tab1, cliente_tab2 = st.tabs(["Cadastrar/Listar", "Importar"])
+        
+        with cliente_tab1:
+            st.subheader("Cadastro de Clientes")
+            # Form de cadastro de cliente
+            with st.form("cadastro_cliente", clear_on_submit=True):
+                nome = st.text_input("Nome")
+                col1, col2 = st.columns(2)
+                with col1:
+                    telefone = st.text_input("Telefone")
+                    cpf = st.text_input("CPF")
+                    estado = st.text_input("Estado")
+                    cidade = st.text_input("Cidade")
+                with col2:
+                    bairro = st.text_input("Bairro")
+                    endereco = st.text_input("Endereço")
+                    data_aniversario = st.text_input("Data Aniversário (DD/MMM)")
+                    origem_cliente = st.text_input("Origem do Cliente")
 
-            observacoes = st.text_area("Observações")
-            submitted = st.form_submit_button("Cadastrar")
+                observacoes = st.text_area("Observações")
+                submitted = st.form_submit_button("Cadastrar")
 
             if submitted:
                 try:
@@ -59,9 +61,9 @@ def show():
                 except Exception as e:
                     st.error(f"Erro ao cadastrar cliente: {str(e)}")
 
-        # Lista de clientes
-        st.subheader("Lista de Clientes")
-        try:
+            # Lista de clientes
+            st.subheader("Lista de Clientes")
+            try:
             @st.cache_data(ttl=60)
             def load_clientes():
                 return st.session_state.db.get_clientes()
@@ -159,7 +161,37 @@ def show():
                 st.info("Nenhum cliente cadastrado.")
 
         except Exception as e:
-            st.error(f"Erro ao carregar clientes: {str(e)}")
+                st.error(f"Erro ao carregar clientes: {str(e)}")
+                
+        with cliente_tab2:
+            st.subheader("Importar Clientes")
+            
+            # Botão para baixar template
+            template = gerar_template_csv("Cliente")
+            st.download_button(
+                "📝 Baixar Template Cliente",
+                template,
+                "template_cliente.csv",
+                "text/csv",
+                help="Baixe este template, preencha com seus dados e faça upload para importar clientes"
+            )
+            
+            # Upload do arquivo
+            arquivo = st.file_uploader(
+                "Selecione o arquivo CSV de Clientes",
+                type=['csv'],
+                key="cliente_file_uploader"
+            )
+            
+            if arquivo:
+                if st.button("Importar Clientes"):
+                    with st.spinner("Importando dados..."):
+                        sucesso, mensagem = importar_cadastros(arquivo, "Cliente", st.session_state.db)
+                        if sucesso:
+                            st.success(mensagem)
+                            st.session_state['update_clientes'] = True
+                        else:
+                            st.error(mensagem)
 
     with tab_fornecedor:
         fornecedor_tab1, fornecedor_tab2 = st.tabs(["Cadastrar/Listar", "Importar"])

@@ -168,8 +168,7 @@ MENU_PRINCIPAL = {
     "📝 Propostas": "Propostas",
     "🛒 Vendas": "Vendas",
     "💰 Financeiro": "Financeiro",
-    "📈 Relatórios": "Relatórios",
-    "📥 Importação": "Importar"
+    "📈 Relatórios": "Relatórios"
 }
 
 # Criar botões para cada página
