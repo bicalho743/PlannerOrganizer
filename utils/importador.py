@@ -208,6 +208,39 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                         observacoes=str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None
                     )
                     sucessos += 1
+                    
+                elif tipo_cadastro == "Produto":
+                    nome = str(row['nome']).strip() if pd.notna(row.get('nome')) else None
+                    if not nome:
+                        erros.append(f"Nome vazio na linha {idx + 2}")
+                        continue
+                    
+                    try:
+                        # Converter valores
+                        preco_custo = float(row.get('preco_custo', 0)) if pd.notna(row.get('preco_custo')) else 0
+                        preco_venda = float(row.get('preco_venda', 0)) if pd.notna(row.get('preco_venda')) else 0
+                        estoque = int(row.get('estoque', 0)) if pd.notna(row.get('estoque')) else 0
+                        
+                        # Validar valores
+                        if preco_venda <= 0:
+                            erros.append(f"Preço de venda inválido na linha {idx + 2}")
+                            continue
+                            
+                        # Adicionar produto
+                        db.add_produto(
+                            nome=nome,
+                            descricao=str(row.get('descricao', '')).strip() if pd.notna(row.get('descricao')) else None,
+                            preco_custo=preco_custo,
+                            preco_venda=preco_venda,
+                            categoria=str(row.get('categoria', '')).strip() if pd.notna(row.get('categoria')) else None,
+                            estoque=estoque
+                        )
+                        sucessos += 1
+                    except Exception as e:
+                        erro_msg = f"Erro ao processar produto na linha {idx + 2}: {str(e)}"
+                        erros.append(erro_msg)
+                        logger.error(erro_msg)
+                        continue
 
             except Exception as e:
                 erro_msg = f"Erro na linha {idx + 2}: {str(e)}"
@@ -293,8 +326,12 @@ def validar_dataframe(df, tipo_cadastro):
     """Valida o DataFrame antes da importação"""
     st.info("Validando estrutura dos dados...")
 
-    # Validar colunas obrigatórias
-    colunas_base = ['nome', 'telefone', 'email']
+    # Definir colunas obrigatórias baseadas no tipo de cadastro
+    if tipo_cadastro == "Produto":
+        colunas_base = ['nome', 'preco_venda']
+    else:
+        colunas_base = ['nome', 'telefone', 'email']
+    
     colunas_faltantes = [col for col in colunas_base if col not in df.columns]
 
     if colunas_faltantes:
@@ -307,6 +344,22 @@ def validar_dataframe(df, tipo_cadastro):
         erro = "O arquivo não contém dados para importação"
         st.error(erro)
         return False, erro
+
+    # Validações específicas por tipo de cadastro
+    if tipo_cadastro == "Produto":
+        # Verificar se os preços são válidos (quando presentes)
+        for idx, row in df.iterrows():
+            if 'preco_venda' in row and pd.notna(row['preco_venda']):
+                try:
+                    preco_venda = float(row['preco_venda'])
+                    if preco_venda <= 0:
+                        erro = f"Preço de venda deve ser maior que zero na linha {idx+2}"
+                        st.error(erro)
+                        return False, erro
+                except ValueError:
+                    erro = f"Preço de venda inválido na linha {idx+2}: {row['preco_venda']}"
+                    st.error(erro)
+                    return False, erro
 
     return True, "Validação OK"
 
@@ -342,6 +395,15 @@ def gerar_template_csv(tipo):
             'area_atuacao',  
             'tipo_parceria', 
             'observacao'     
+        ])
+    elif tipo == "Produto":
+        df = pd.DataFrame(columns=[
+            'nome',          # Nome do produto
+            'descricao',     # Descrição
+            'preco_custo',   # Preço de custo
+            'preco_venda',   # Preço de venda
+            'categoria',     # Categoria
+            'estoque'        # Quantidade em estoque
         ])
     else:
         return None
@@ -412,6 +474,24 @@ def gerar_template_excel(tipo):
             'data_fim',     # Data de fim (DD/MM/YYYY)
             'prazo_entrega' # Prazo de entrega (DD/MM/YYYY)
         ])
+    elif tipo == "Produto":
+        df = pd.DataFrame(columns=[
+            'nome',          # Nome do produto
+            'descricao',     # Descrição
+            'preco_custo',   # Preço de custo
+            'preco_venda',   # Preço de venda
+            'categoria',     # Categoria
+            'estoque'        # Quantidade em estoque
+        ])
+        # Adicionar linha de exemplo
+        df.loc[0] = [
+            'Produto de Exemplo',     # nome
+            'Descrição detalhada',    # descricao
+            25.50,                    # preco_custo
+            45.99,                    # preco_venda
+            'Organização',            # categoria
+            10                        # estoque
+        ]
     else:
         return None
 

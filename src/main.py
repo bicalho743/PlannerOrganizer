@@ -21,8 +21,10 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 try:
+    import utils
     from utils.database import Database
     from utils.celebration import toggle_celebration, show_celebration
+    import utils.importador
 except ImportError as e:
     logger.error(f"Erro ao importar módulos: {str(e)}")
     st.error("Erro ao carregar módulos necessários. Por favor, tente novamente.")
@@ -321,7 +323,7 @@ else:
 
             import_type = st.selectbox(
                 "Tipo de Importação",
-                ["Clientes", "Propostas", "Fornecedores", "Assistentes", "Parceiros"]
+                ["Clientes", "Propostas", "Fornecedores", "Assistentes", "Parceiros", "Produtos"]
             )
 
             st.info(f"A importação de {import_type} permite carregar dados em massa através de arquivos CSV ou Excel.")
@@ -331,8 +333,55 @@ else:
                 type=["csv", "xlsx"]
             )
 
+            # Download de template
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write("### Template para Importação")
+                # Botão para baixar template CSV
+                st.download_button(
+                    label=f"Baixar Template CSV",
+                    data=utils.importador.gerar_template_csv(import_type),
+                    file_name=f"template_{import_type.lower()}.csv",
+                    mime="text/csv"
+                )
+            
+            with col2:
+                # Botão para baixar template Excel
+                st.write("&nbsp;")  # Para alinhar com o título da coluna 1
+                st.download_button(
+                    label=f"Baixar Template Excel",
+                    data=utils.importador.gerar_template_excel(import_type),
+                    file_name=f"template_{import_type.lower()}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+
             if uploaded_file:
-                st.warning("Funcionalidade em desenvolvimento. Em breve você poderá importar seus dados aqui!")
+                try:
+                    # Importar dados baseado no tipo selecionado
+                    if import_type == "Propostas":
+                        success, message = utils.importador.importar_propostas(uploaded_file, st.session_state.db)
+                    else:
+                        # Usar a função genérica para outros tipos de cadastro
+                        success, message = utils.importador.importar_cadastros(
+                            arquivo=uploaded_file,
+                            tipo_cadastro=import_type.rstrip('s'),  # Remover o 's' do plural
+                            db=st.session_state.db
+                        )
+                    
+                    if success:
+                        st.success(message)
+                        # Adicionar opção de celebração
+                        if st.button("🎉 Celebrar Importação", key="celebrate_import"):
+                            toggle_celebration(
+                                task_name="Importação Concluída",
+                                custom_message=f"Importação de {import_type} realizada com sucesso!"
+                            )
+                            st.rerun()
+                    else:
+                        st.error(message)
+                
+                except Exception as e:
+                    st.error(f"Erro durante a importação: {str(e)}")
 
     except ImportError as e:
         logger.error(f"Erro ao importar módulo da página {st.session_state.current_page}: {str(e)}")
