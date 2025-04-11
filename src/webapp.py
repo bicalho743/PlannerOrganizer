@@ -1,6 +1,6 @@
 # Renomeado de app.py para webapp.py para evitar conflitos
 import streamlit as st
-from pages import dashboard, cadastros, propostas, financeiro, relatorios, teste_importacao
+from pages import dashboard, cadastros, propostas, financeiro, relatorios
 from utils.custom_styles import load_custom_styles
 
 # Carregar estilos personalizados
@@ -39,22 +39,9 @@ def show():
             st.session_state.usuario = None
             st.rerun()
     
-    # Determinar a página selecionada com base nos botões
+    # Determinar a página selecionada com base na sessão
     if 'current_page' not in st.session_state:
         st.session_state.current_page = "Dashboard"  # Página padrão
-    
-    if dashboard_btn:
-        st.session_state.current_page = "Dashboard"
-    elif cadastros_btn:
-        st.session_state.current_page = "Cadastros"
-    elif propostas_btn:
-        st.session_state.current_page = "Propostas"
-    elif financeiro_btn:
-        st.session_state.current_page = "Financeiro"
-    elif relatorios_btn:
-        st.session_state.current_page = "Relatórios"
-    elif teste_importacao_btn:
-        st.session_state.current_page = "Teste de Importação"
     
     pagina = st.session_state.current_page
 
@@ -69,8 +56,6 @@ def show():
         financeiro.show()
     elif pagina == "Relatórios":
         relatorios.show()
-    elif pagina == "Teste de Importação":
-        teste_importacao.show()
 
     # Rodapé
     st.sidebar.markdown("---")

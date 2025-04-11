@@ -1,40 +1,32 @@
+[pages]
+# Desativar a exibição automática de páginas na barra lateral
+enableAutoPagePositioning = false
 
-[[pages]]
-path = "pages/dashboard.py"
-name = "Dashboard"
-icon = "📊"
+# Especificar exatamente quais páginas devem ser exibidas
+page_to_show = [
+    "Dashboard",
+    "Cadastros", 
+    "Propostas", 
+    "Financeiro", 
+    "Relatórios"
+]
 
-[[pages]]
-path = "pages/cadastros.py"
-name = "Cadastros"
-icon = "👥"
-
-[[pages]]
-path = "pages/propostas.py"
-name = "Propostas"
-icon = "📝"
-
-[[pages]]
-path = "pages/andamento.py"
-name = "Andamento"
-icon = "📋"
-
-[[pages]]
-path = "pages/financeiro.py"
-name = "Financeiro"
-icon = "💰"
-
-[[pages]]
-path = "pages/importacao.py"
-name = "Importação"
-icon = "📥"
-
-[[pages]]
-path = "pages/pagamentos.py"
-name = "Pagamentos"
-icon = "💳"
-
-[[pages]]
-path = "pages/relatorios.py"
-name = "Relatórios"
-icon = "📈"
+# Ocultar todos os outros arquivos
+hidePage = [
+    "pages/admin.py",
+    "pages/andamento.py",
+    "pages/backup.py",
+    "pages/clientes.py",
+    "pages/importacao.py",
+    "pages/login.py",
+    "pages/pagamentos.py",
+    "pages/teste_importacao.py",
+    "admin.py",
+    "andamento.py",
+    "backup.py",
+    "clientes.py",
+    "importacao.py",
+    "login.py",
+    "pagamentos.py",
+    "teste_importacao.py"
+]

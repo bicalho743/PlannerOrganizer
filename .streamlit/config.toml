@@ -2,26 +2,25 @@
 headless = true
 address = "0.0.0.0"
 port = 5000
-enableCORS = false
-enableXsrfProtection = false
-
-[theme]
-primaryColor = "#F1A208"
-backgroundColor = "#1C1C1C"
-secondaryBackgroundColor = "#2E2E2E"
-textColor = "#F5F5F5"
-font = "sans serif"
-base = "dark"
 
 [browser]
 gatherUsageStats = false
 
-[client]
-showErrorDetails = true
-toolbarMode = "minimal"
-
-[runner]
-fastReruns = true
+[theme]
+primaryColor = "#F1A208"  # Cor amarela para botões principais
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6"
+textColor = "#262730"
+font = "sans serif"
 
 [ui]
-hideTopBar = true
+# Mais opções visuais
+hideTopBar = false
+
+[runner]
+# Configurações de execução
+magicEnabled = true
+fastReruns = true
+
+[logger]
+level = "info"
