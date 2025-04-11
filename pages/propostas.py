@@ -3,14 +3,16 @@ import pandas as pd
 from datetime import datetime
 import os
 from utils.pdf_generator import gerar_pdf_fechamento
+from utils.importador import importar_cadastros, gerar_template_csv
 
 def show():
     st.title("📝 Gestão de Propostas")
 
-    tab1, tab2, tab3 = st.tabs([
+    tab1, tab2, tab3, tab4 = st.tabs([
         "Nova Proposta",
         "Lista de Propostas",
-        "Andamento do Trabalho"
+        "Andamento do Trabalho",
+        "Importar Propostas"
     ])
 
     with tab1:
@@ -302,3 +304,52 @@ def show():
 
         except Exception as e:
             st.error(f"Erro ao carregar dados: {str(e)}")
+            
+    # Implementação da aba de importação de propostas
+    with tab4:
+        st.subheader("Importar Propostas")
+        
+        # Instruções para o usuário
+        st.write("""
+        Para importar propostas, seu arquivo CSV deve ter o seguinte formato:
+        - Arquivo CSV com separador ponto e vírgula (;)
+        - Colunas necessárias:
+            - cliente_id (obrigatório): ID do cliente existente no sistema
+            - descricao (obrigatório): Descrição da proposta
+            - valor (obrigatório): Valor em Reais (ex: 1500.00)
+            - status: Status da proposta ("Aberta", "Fechada", "Recusada")
+            - tipo_proposta: Tipo de proposta
+            - data_inicio: Data de início (formato: DD/MM/YYYY)
+            - data_fim: Data de fim (formato: DD/MM/YYYY)
+        """)
+        
+        # Download de template para o usuário
+        template = gerar_template_csv("Proposta")
+        st.download_button(
+            "📝 Baixar Template",
+            template,
+            "template_proposta.csv",
+            "text/csv",
+            help="Baixe este template, preencha com seus dados e faça upload para importar"
+        )
+        
+        # Upload do arquivo
+        arquivo = st.file_uploader(
+            "Selecione o arquivo CSV",
+            type=['csv'],
+            key="proposta_file_uploader"
+        )
+        
+        if arquivo:
+            if st.button("Importar Propostas", key="importar_propostas_button"):
+                # Modificar o importador para adicionar suporte a Propostas
+                try:
+                    # Adicionar o tipo "Proposta" no importador
+                    with st.spinner("Importando propostas..."):
+                        sucesso, mensagem = importar_cadastros(arquivo, "Proposta", st.session_state.db)
+                        if sucesso:
+                            st.success(mensagem)
+                        else:
+                            st.error(mensagem)
+                except Exception as e:
+                    st.error(f"Erro ao importar propostas: {str(e)}")

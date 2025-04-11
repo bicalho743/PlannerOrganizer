@@ -286,6 +286,117 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                         erros.append(erro_msg)
                         logger.error(erro_msg)
                         continue
+                        
+                elif tipo_cadastro == "Proposta":
+                    try:
+                        # Verificar cliente_id ou cliente_nome
+                        cliente_id = None
+                        
+                        # Se temos um cliente_id direto
+                        if pd.notna(row.get('cliente_id')):
+                            try:
+                                cliente_id = int(row['cliente_id'])
+                            except ValueError:
+                                erros.append(f"ID de cliente inválido na linha {idx + 2}")
+                                continue
+                        # Se temos cliente_nome, precisamos buscar o ID
+                        elif pd.notna(row.get('cliente_nome')):
+                            # Carregar clientes para buscar o ID pelo nome
+                            cliente_nome = str(row['cliente_nome']).strip().lower()
+                            clientes = db.get_clientes()
+                            
+                            if not clientes.empty:
+                                # Transformar nomes para minúsculo para comparação
+                                clientes_map = {nome.lower(): id for id, nome in 
+                                              zip(clientes['id'], clientes['nome'])}
+                                
+                                if cliente_nome in clientes_map:
+                                    cliente_id = clientes_map[cliente_nome]
+                                else:
+                                    erros.append(f"Cliente '{row['cliente_nome']}' não encontrado, linha {idx + 2}")
+                                    continue
+                            else:
+                                erros.append(f"Não há clientes cadastrados no sistema para associar à proposta na linha {idx + 2}")
+                                continue
+                        else:
+                            erros.append(f"Cliente não especificado na linha {idx + 2}")
+                            continue
+                            
+                        # Validar descrição
+                        descricao = str(row.get('descricao', '')).strip() if pd.notna(row.get('descricao')) else None
+                        if not descricao:
+                            erros.append(f"Descrição vazia na linha {idx + 2}")
+                            continue
+                            
+                        # Validar valor
+                        valor = None
+                        try:
+                            valor = float(row.get('valor', 0)) if pd.notna(row.get('valor')) else 0
+                            if valor <= 0:
+                                erros.append(f"Valor inválido na linha {idx + 2}")
+                                continue
+                        except ValueError:
+                            erros.append(f"Valor não numérico na linha {idx + 2}")
+                            continue
+                            
+                        # Preparar status
+                        status = str(row.get('status', 'Aberta')).strip() if pd.notna(row.get('status')) else 'Aberta'
+                        if status not in ['Aberta', 'Recusada', 'Fechada']:
+                            st.warning(f"Status inválido na linha {idx + 2}. Usando 'Aberta'.")
+                            status = 'Aberta'
+                            
+                        # Preparar tipo_proposta
+                        tipo_proposta = str(row.get('tipo_proposta', '')).strip() if pd.notna(row.get('tipo_proposta')) else None
+                        
+                        # Processar datas
+                        data_inicio = None
+                        data_fim = None
+                        prazo_entrega = None
+                        
+                        if pd.notna(row.get('data_inicio')):
+                            try:
+                                if isinstance(row['data_inicio'], str):
+                                    data_inicio = pd.to_datetime(row['data_inicio'], format='%d/%m/%Y').date()
+                                else:
+                                    data_inicio = pd.to_datetime(row['data_inicio']).date()
+                            except Exception as e:
+                                st.warning(f"Data de início inválida na linha {idx + 2}: {str(e)}")
+                                
+                        if pd.notna(row.get('data_fim')):
+                            try:
+                                if isinstance(row['data_fim'], str):
+                                    data_fim = pd.to_datetime(row['data_fim'], format='%d/%m/%Y').date()
+                                else:
+                                    data_fim = pd.to_datetime(row['data_fim']).date()
+                            except Exception as e:
+                                st.warning(f"Data de fim inválida na linha {idx + 2}: {str(e)}")
+                                
+                        if pd.notna(row.get('prazo_entrega')):
+                            try:
+                                if isinstance(row['prazo_entrega'], str):
+                                    prazo_entrega = pd.to_datetime(row['prazo_entrega'], format='%d/%m/%Y').date()
+                                else:
+                                    prazo_entrega = pd.to_datetime(row['prazo_entrega']).date()
+                            except Exception as e:
+                                st.warning(f"Prazo de entrega inválido na linha {idx + 2}: {str(e)}")
+                        
+                        # Adicionar proposta
+                        db.add_proposta(
+                            cliente_id=cliente_id,
+                            descricao=descricao,
+                            valor=valor,
+                            status=status,
+                            tipo_proposta=tipo_proposta,
+                            data_inicio=data_inicio,
+                            data_fim=data_fim,
+                            prazo_entrega=prazo_entrega
+                        )
+                        sucessos += 1
+                    except Exception as e:
+                        erro_msg = f"Erro ao processar proposta na linha {idx + 2}: {str(e)}"
+                        erros.append(erro_msg)
+                        logger.error(erro_msg)
+                        continue
 
             except Exception as e:
                 erro_msg = f"Erro na linha {idx + 2}: {str(e)}"
@@ -374,6 +485,12 @@ def validar_dataframe(df, tipo_cadastro):
     # Definir colunas obrigatórias baseadas no tipo de cadastro
     if tipo_cadastro == "Produto":
         colunas_base = ['nome', 'preco_venda']
+    elif tipo_cadastro == "Proposta":
+        # Para propostas, precisamos cliente (id ou nome) e valor
+        if 'cliente_id' in df.columns or 'cliente_nome' in df.columns:
+            colunas_base = ['descricao', 'valor']
+        else:
+            colunas_base = ['cliente_id', 'descricao', 'valor']
     else:
         colunas_base = ['nome', 'telefone', 'email']
     
@@ -405,6 +522,27 @@ def validar_dataframe(df, tipo_cadastro):
                     erro = f"Preço de venda inválido na linha {idx+2}: {row['preco_venda']}"
                     st.error(erro)
                     return False, erro
+    
+    elif tipo_cadastro == "Proposta":
+        # Verificar se os valores de proposta são válidos
+        for idx, row in df.iterrows():
+            if 'valor' in row and pd.notna(row['valor']):
+                try:
+                    valor = float(row['valor'])
+                    if valor <= 0:
+                        erro = f"Valor da proposta deve ser maior que zero na linha {idx+2}"
+                        st.error(erro)
+                        return False, erro
+                except ValueError:
+                    erro = f"Valor da proposta inválido na linha {idx+2}: {row['valor']}"
+                    st.error(erro)
+                    return False, erro
+                    
+            # Verificar se temos ou cliente_id ou cliente_nome
+            if not ('cliente_id' in row and pd.notna(row['cliente_id'])) and not ('cliente_nome' in row and pd.notna(row['cliente_nome'])):
+                erro = f"Cliente não especificado na linha {idx+2}. Forneça cliente_id ou cliente_nome."
+                st.error(erro)
+                return False, erro
 
     return True, "Validação OK"
 
@@ -449,6 +587,16 @@ def gerar_template_csv(tipo):
             'preco_venda',   # Preço de venda
             'categoria',     # Categoria
             'estoque'        # Quantidade em estoque
+        ])
+    elif tipo == "Proposta" or tipo == "Propostas":
+        df = pd.DataFrame(columns=[
+            'cliente_id',      # ID do cliente (obrigatório)
+            'descricao',       # Descrição da proposta (obrigatório)
+            'valor',           # Valor da proposta (obrigatório)
+            'status',          # Status: Aberta, Fechada, Recusada
+            'tipo_proposta',   # Tipo de proposta
+            'data_inicio',     # Data de início (DD/MM/AAAA)
+            'data_fim'         # Data de fim (DD/MM/AAAA)
         ])
     else:
         # Retornar um template genérico em vez de None para evitar erros
