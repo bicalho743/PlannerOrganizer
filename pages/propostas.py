@@ -321,7 +321,7 @@ def show():
         Para importar propostas, seu arquivo CSV deve ter o seguinte formato:
         - Arquivo CSV com separador ponto e vírgula (;)
         - Colunas necessárias:
-            - cliente_id (obrigatório): ID do cliente existente no sistema
+            - cliente_nome (obrigatório): Nome do cliente existente no sistema
             - descricao (obrigatório): Descrição da proposta
             - valor (obrigatório): Valor em Reais (ex: 1500.00)
             - status: Status da proposta ("Aberta", "Fechada", "Recusada")
