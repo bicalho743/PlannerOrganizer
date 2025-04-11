@@ -72,8 +72,28 @@ def show():
     with col3:
         st.subheader("🎂 Aniversariantes")
         hoje = datetime.now()
-        mes_atual = hoje.strftime('%b').lower()  # Mês atual em formato abreviado
-        dia_atual = hoje.strftime('%d/%b').lower()  # Dia/mês atual
+        
+        # Dicionário de tradução de meses inglês -> português
+        meses_traducao = {
+            'jan': 'jan', 'feb': 'fev', 'mar': 'mar', 'apr': 'abr',
+            'may': 'mai', 'jun': 'jun', 'jul': 'jul', 'aug': 'ago',
+            'sep': 'set', 'oct': 'out', 'nov': 'nov', 'dec': 'dez'
+        }
+        
+        # Nome do mês em português e inglês
+        mes_atual_en = hoje.strftime('%b').lower()
+        mes_atual = meses_traducao.get(mes_atual_en, mes_atual_en)  # Mês atual em formato abreviado em português
+        
+        # Nome completo do mês em português
+        meses_completos = {
+            'jan': 'Janeiro', 'fev': 'Fevereiro', 'mar': 'Março', 'abr': 'Abril',
+            'mai': 'Maio', 'jun': 'Junho', 'jul': 'Julho', 'ago': 'Agosto',
+            'set': 'Setembro', 'out': 'Outubro', 'nov': 'Novembro', 'dez': 'Dezembro'
+        }
+        nome_mes_completo = meses_completos.get(mes_atual, hoje.strftime('%B').capitalize())
+        
+        # Dia atual no formato do banco (DD/MMM em português)
+        dia_atual = f"{hoje.day:02d}/{mes_atual}"
 
         if not clientes.empty and 'data_aniversario' in clientes.columns:
             # Aniversariantes de hoje
@@ -110,7 +130,7 @@ def show():
             with st.container():
                 st.markdown(f"""
                 <div style='background-color: #2A3F5F; padding: 10px; border-radius: 7px; margin: 15px 0;'>
-                    <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>🗓️ Mês de {hoje.strftime('%B').capitalize()}</h4>
+                    <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>🗓️ Mês de {nome_mes_completo}</h4>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -138,7 +158,7 @@ def show():
                             </div>
                             """, unsafe_allow_html=True)
                 else:
-                    st.info(f"Nenhum aniversariante em {hoje.strftime('%B').capitalize()}.")
+                    st.info(f"Nenhum aniversariante em {nome_mes_completo}.")
 
             # Próximos aniversariantes (próximos dias)
             st.markdown("""
@@ -147,12 +167,20 @@ def show():
             </div>
             """, unsafe_allow_html=True)
             
+            # Gerar as datas dos próximos 7 dias
             proximos_dias = pd.date_range(hoje, periods=7, freq='D')
-            datas_proximas = [d.strftime('%d/%b').lower() for d in proximos_dias]
-
+            
+            # Converter cada data para o formato em português
+            datas_proximas = []
+            for d in proximos_dias:
+                mes_en = d.strftime('%b').lower()
+                mes_pt = meses_traducao.get(mes_en, mes_en)
+                datas_proximas.append(f"{d.day:02d}/{mes_pt}")
+            
+            # Buscar aniversariantes dos próximos dias
             proximos = clientes[
                 (clientes['data_aniversario'].notna()) &
-                (clientes['data_aniversario'].str.lower().isin(datas_proximas))
+                (clientes['data_aniversario'].str.lower().isin([d.lower() for d in datas_proximas]))
             ]
 
             if not proximos.empty:
