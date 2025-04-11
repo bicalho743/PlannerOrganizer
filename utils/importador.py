@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 # Mapeamento de meses em português para validação
 MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 
-def try_read_csv(arquivo, encodings=['utf-8', 'latin1', 'iso-8859-1', 'cp1252']):
+def try_read_csv(arquivo, encodings=['utf-8', 'latin1', 'iso-8859-1', 'cp1252', 'cp850', 'cp437', 'cp860', 'cp863', 'cp865', 'windows-1252', 'utf-16', 'utf-16-le', 'utf-16-be']):
     """Try reading CSV with different encodings and handling binary streams"""
     for encoding in encodings:
         try:
@@ -18,13 +18,29 @@ def try_read_csv(arquivo, encodings=['utf-8', 'latin1', 'iso-8859-1', 'cp1252'])
             arquivo.seek(0)
             # Create a bytes buffer to store the content
             bytes_buffer = io.BytesIO(arquivo.read())
-            # Try to decode with current encoding
-            text_content = bytes_buffer.getvalue().decode(encoding)
-            # Create a string buffer and read as CSV
-            string_buffer = io.StringIO(text_content)
-            df = pd.read_csv(string_buffer, sep=';')
-            # If successful, return the DataFrame
-            return df
+            
+            try:
+                # Try to read directly with pandas and specified encoding
+                # This works better for some files than manually decoding first
+                arquivo.seek(0)
+                df = pd.read_csv(arquivo, sep=';', encoding=encoding, on_bad_lines='warn')
+                logger.info(f"Successful read with direct pandas using {encoding}")
+                return df
+            except Exception as pe:
+                logger.warning(f"Direct pandas read failed with {encoding}: {str(pe)}")
+                
+                try:
+                    # Try to decode with current encoding
+                    text_content = bytes_buffer.getvalue().decode(encoding, errors='replace')
+                    # Create a string buffer and read as CSV
+                    string_buffer = io.StringIO(text_content)
+                    df = pd.read_csv(string_buffer, sep=';', on_bad_lines='warn')
+                    logger.info(f"Successful read with manual decode using {encoding}")
+                    return df
+                except Exception as e:
+                    logger.warning(f"Manual decode failed with {encoding}: {str(e)}")
+                    continue
+                
         except UnicodeDecodeError as e:
             logger.warning(f"Failed to decode with {encoding}: {str(e)}")
             continue
@@ -35,6 +51,25 @@ def try_read_csv(arquivo, encodings=['utf-8', 'latin1', 'iso-8859-1', 'cp1252'])
             logger.error(f"Error reading CSV with encoding {encoding}: {str(e)}\n{traceback.format_exc()}")
             continue
 
+    # Try a last resort approach - read byte by byte and replace problematic characters
+    try:
+        arquivo.seek(0)
+        content = arquivo.read()
+        # Replace the problematic byte 0xed with a similar character
+        content_fixed = content.replace(b'\xed', b'i')
+        
+        for encoding in ['utf-8', 'latin1', 'windows-1252']:
+            try:
+                text = content_fixed.decode(encoding, errors='replace')
+                df = pd.read_csv(io.StringIO(text), sep=';', on_bad_lines='warn')
+                logger.info(f"Successful read with byte replacement using {encoding}")
+                return df
+            except Exception as e:
+                logger.warning(f"Byte replacement approach failed with {encoding}: {str(e)}")
+                continue
+    except Exception as e:
+        logger.error(f"Byte replacement approach failed: {str(e)}")
+    
     # If we get here, none of the encodings worked
     error_msg = "Não foi possível ler o arquivo com nenhuma das codificações suportadas"
     logger.error(error_msg)
