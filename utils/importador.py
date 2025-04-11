@@ -171,6 +171,7 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                         
                         # Garantir que tipo_conta tenha um valor padrão
                         tipo_conta = str(row.get('tipo_conta', 'PF')).strip() if pd.notna(row.get('tipo_conta')) else 'PF'
+                        logger.info(f"Processando fornecedor: {descricao} com tipo_conta: {tipo_conta}")
                         
                         # Preparar dados do fornecedor
                         fornecedor_data = {
@@ -186,6 +187,9 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                             'observacoes': str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None,
                             'tipo_conta': tipo_conta
                         }
+                        
+                        # Remover valores None para evitar erros de not-null constraint
+                        fornecedor_data = {k: v for k, v in fornecedor_data.items() if v is not None}
                         
                         # Adicionar fornecedor
                         db.add_fornecedor(**fornecedor_data)
