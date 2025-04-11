@@ -64,103 +64,103 @@ def show():
             # Lista de clientes
             st.subheader("Lista de Clientes")
             try:
-            @st.cache_data(ttl=60)
-            def load_clientes():
-                return st.session_state.db.get_clientes()
+                @st.cache_data(ttl=60)
+                def load_clientes():
+                    return st.session_state.db.get_clientes()
 
-            if 'update_clientes' in st.session_state and st.session_state['update_clientes']:
-                st.session_state['clientes'] = load_clientes()
-                st.session_state['update_clientes'] = False
-            elif 'clientes' not in st.session_state:
-                st.session_state['clientes'] = load_clientes()
+                if 'update_clientes' in st.session_state and st.session_state['update_clientes']:
+                    st.session_state['clientes'] = load_clientes()
+                    st.session_state['update_clientes'] = False
+                elif 'clientes' not in st.session_state:
+                    st.session_state['clientes'] = load_clientes()
 
-            registros = st.session_state['clientes']
+                registros = st.session_state['clientes']
 
-            if not registros.empty:
-                # Definir colunas para exibição
-                colunas = ['id', 'nome', 'telefone', 'cpf', 'estado', 'cidade', 'bairro',
-                          'endereco', 'data_aniversario', 'origem_cliente', 'observacoes']
-                rename = {
-                    'id': 'ID',
-                    'nome': 'Nome',
-                    'telefone': 'Telefone',
-                    'cpf': 'CPF',
-                    'estado': 'Estado',
-                    'cidade': 'Cidade',
-                    'bairro': 'Bairro',
-                    'endereco': 'Endereço',
-                    'data_aniversario': 'Data Aniversário',
-                    'origem_cliente': 'Origem',
-                    'observacoes': 'Observações'
-                }
+                if not registros.empty:
+                    # Definir colunas para exibição
+                    colunas = ['id', 'nome', 'telefone', 'cpf', 'estado', 'cidade', 'bairro',
+                              'endereco', 'data_aniversario', 'origem_cliente', 'observacoes']
+                    rename = {
+                        'id': 'ID',
+                        'nome': 'Nome',
+                        'telefone': 'Telefone',
+                        'cpf': 'CPF',
+                        'estado': 'Estado',
+                        'cidade': 'Cidade',
+                        'bairro': 'Bairro',
+                        'endereco': 'Endereço',
+                        'data_aniversario': 'Data Aniversário',
+                        'origem_cliente': 'Origem',
+                        'observacoes': 'Observações'
+                    }
 
-                # Criar DataFrame para exibição
-                df_display = registros[colunas].copy()
-                df_display.columns = [rename[col] for col in colunas]
+                    # Criar DataFrame para exibição
+                    df_display = registros[colunas].copy()
+                    df_display.columns = [rename[col] for col in colunas]
 
-                # Exibir tabela editável
-                edited_df = st.data_editor(
-                    df_display,
-                    num_rows="dynamic",
-                    use_container_width=True,
-                    hide_index=True
-                )
-
-                # Botões de ação
-                col1, col2 = st.columns(2)
-                with col1:
-                    cliente_id = st.number_input(
-                        "ID do cliente para ação:",
-                        min_value=1,
-                        max_value=len(registros) if not registros.empty else 1,
-                        step=1
+                    # Exibir tabela editável
+                    edited_df = st.data_editor(
+                        df_display,
+                        num_rows="dynamic",
+                        use_container_width=True,
+                        hide_index=True
                     )
 
-                with col2:
-                    acao = st.selectbox(
-                        "Ação:",
-                        ["Excluir"]
-                    )
+                    # Botões de ação
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        cliente_id = st.number_input(
+                            "ID do cliente para ação:",
+                            min_value=1,
+                            max_value=len(registros) if not registros.empty else 1,
+                            step=1
+                        )
 
-                # Botão de confirmação
-                if st.button(f"Confirmar {acao}"):
-                    if acao == "Excluir":
-                        try:
-                            st.session_state.db.delete_cliente(cliente_id)
-                            st.success(f"Cliente excluído com sucesso!")
-                            st.session_state['update_clientes'] = True
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"Erro ao excluir cliente: {str(e)}")
+                    with col2:
+                        acao = st.selectbox(
+                            "Ação:",
+                            ["Excluir"]
+                        )
 
-                # Verificar mudanças na edição
-                if edited_df is not None and not edited_df.equals(df_display):
-                    for index, row in edited_df.iterrows():
-                        original_row = df_display.iloc[index]
-                        if not row.equals(original_row):
+                    # Botão de confirmação
+                    if st.button(f"Confirmar {acao}"):
+                        if acao == "Excluir":
                             try:
-                                cliente_id = int(row['ID'])
-                                update_data = {
-                                    'nome': row['Nome'],
-                                    'telefone': row['Telefone'],
-                                    'cpf': row['CPF'],
-                                    'estado': row['Estado'],
-                                    'cidade': row['Cidade'],
-                                    'bairro': row['Bairro'],
-                                    'endereco': row['Endereço'],
-                                    'data_aniversario': row['Data Aniversário'],
-                                    'origem_cliente': row['Origem'],
-                                    'observacoes': row['Observações']
-                                }
-                                st.session_state.db.update_cliente(cliente_id, **update_data)
-                                st.success(f"Cliente {cliente_id} atualizado com sucesso!")
+                                st.session_state.db.delete_cliente(cliente_id)
+                                st.success(f"Cliente excluído com sucesso!")
                                 st.session_state['update_clientes'] = True
+                                st.rerun()
                             except Exception as e:
-                                st.error(f"Erro ao atualizar cliente {cliente_id}: {str(e)}")
-            else:
-                st.info("Nenhum cliente cadastrado.")
+                                st.error(f"Erro ao excluir cliente: {str(e)}")
 
-        except Exception as e:
+                    # Verificar mudanças na edição
+                    if edited_df is not None and not edited_df.equals(df_display):
+                        for index, row in edited_df.iterrows():
+                            original_row = df_display.iloc[index]
+                            if not row.equals(original_row):
+                                try:
+                                    cliente_id = int(row['ID'])
+                                    update_data = {
+                                        'nome': row['Nome'],
+                                        'telefone': row['Telefone'],
+                                        'cpf': row['CPF'],
+                                        'estado': row['Estado'],
+                                        'cidade': row['Cidade'],
+                                        'bairro': row['Bairro'],
+                                        'endereco': row['Endereço'],
+                                        'data_aniversario': row['Data Aniversário'],
+                                        'origem_cliente': row['Origem'],
+                                        'observacoes': row['Observações']
+                                    }
+                                    st.session_state.db.update_cliente(cliente_id, **update_data)
+                                    st.success(f"Cliente {cliente_id} atualizado com sucesso!")
+                                    st.session_state['update_clientes'] = True
+                                except Exception as e:
+                                    st.error(f"Erro ao atualizar cliente {cliente_id}: {str(e)}")
+                else:
+                    st.info("Nenhum cliente cadastrado.")
+
+            except Exception as e:
                 st.error(f"Erro ao carregar clientes: {str(e)}")
                 
         with cliente_tab2:
@@ -740,54 +740,4 @@ def show():
                         else:
                             st.error(mensagem)
 
-    with tab3:
-        st.subheader("Importar Clientes")
-        st.write("""
-        Para importar clientes, seu arquivo deve ter o seguinte formato:
-        - Arquivo CSV com separador ponto e vírgula (;)
-        - Colunas disponíveis:
-            - nome (obrigatório)
-            - telefone
-            - email
-            - cpf
-            - estado
-            - cidade
-            - bairro
-            - endereco
-            - data_aniversario (formato: DD/MM/YYYY)
-            - origem_cliente
-        """)
-
-        # Download do template
-        template = gerar_template_csv("Cliente")
-        st.download_button(
-            "📝 Baixar Template",
-            template,
-            "template_cliente.csv",
-            "text/csv",
-            help="Baixe este template, preencha com seus dados e faça upload para importar"
-        )
-
-        # Upload e importação
-        arquivo = st.file_uploader(
-            "Selecione o arquivo CSV",
-            type=['csv'],
-            key="cliente_file_uploader"
-        )
-        if arquivo:
-            try:
-                # Ler primeiras linhas para preview
-                df_preview = pd.read_csv(arquivo, sep=';', nrows=5)
-                st.write("Preview dos dados:")
-                st.dataframe(df_preview)
-
-                if st.button("Importar Clientes", key="cliente_import_button"):
-                    arquivo.seek(0)  # Voltar ao início do arquivo
-                    with st.spinner("Importando dados..."):
-                        sucesso, mensagem = importar_cadastros(arquivo, "Cliente", st.session_state.db)
-                        if sucesso:
-                            st.success(mensagem)
-                        else:
-                            st.error(mensagem)
-            except Exception as e:
-                st.error(f"Erro ao processar arquivo: {str(e)}")
+# Removida seção antiga de importação
