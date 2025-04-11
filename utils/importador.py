@@ -302,19 +302,32 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                         # Se temos cliente_nome, precisamos buscar o ID
                         elif pd.notna(row.get('cliente_nome')):
                             # Carregar clientes para buscar o ID pelo nome
-                            cliente_nome = str(row['cliente_nome']).strip().lower()
+                            cliente_nome = str(row['cliente_nome']).strip()
                             clientes = db.get_clientes()
                             
                             if not clientes.empty:
-                                # Transformar nomes para minúsculo para comparação
-                                clientes_map = {nome.lower(): id for id, nome in 
-                                              zip(clientes['id'], clientes['nome'])}
+                                # Exibe debug no console
+                                logger.info(f"Buscando cliente pelo nome: '{cliente_nome}'")
+                                logger.info(f"Clientes disponíveis: {clientes['nome'].tolist()}")
                                 
-                                if cliente_nome in clientes_map:
-                                    cliente_id = clientes_map[cliente_nome]
+                                # Busca com correspondência exata
+                                cliente_encontrado = clientes[clientes['nome'] == cliente_nome]
+                                
+                                if not cliente_encontrado.empty:
+                                    cliente_id = int(cliente_encontrado['id'].iloc[0])
+                                    logger.info(f"Cliente encontrado com ID: {cliente_id}")
                                 else:
-                                    erros.append(f"Cliente '{row['cliente_nome']}' não encontrado, linha {idx + 2}")
-                                    continue
+                                    # Busca com correspondência parcial (case insensitive)
+                                    cliente_nome_lower = cliente_nome.lower()
+                                    for _, c in clientes.iterrows():
+                                        if cliente_nome_lower in c['nome'].lower():
+                                            cliente_id = int(c['id'])
+                                            logger.info(f"Cliente encontrado com correspondência parcial: {c['nome']}, ID: {cliente_id}")
+                                            break
+                                    
+                                    if cliente_id is None:
+                                        erros.append(f"Cliente '{cliente_nome}' não encontrado, linha {idx + 2}")
+                                        continue
                             else:
                                 erros.append(f"Não há clientes cadastrados no sistema para associar à proposta na linha {idx + 2}")
                                 continue
@@ -590,13 +603,14 @@ def gerar_template_csv(tipo):
         ])
     elif tipo == "Proposta" or tipo == "Propostas":
         df = pd.DataFrame(columns=[
-            'cliente_id',      # ID do cliente (obrigatório)
+            'cliente_nome',     # Nome do cliente (obrigatório)
             'descricao',       # Descrição da proposta (obrigatório)
             'valor',           # Valor da proposta (obrigatório)
             'status',          # Status: Aberta, Fechada, Recusada
             'tipo_proposta',   # Tipo de proposta
             'data_inicio',     # Data de início (DD/MM/AAAA)
-            'data_fim'         # Data de fim (DD/MM/AAAA)
+            'data_fim',        # Data de fim (DD/MM/AAAA)
+            'prazo_entrega'    # Prazo de entrega (DD/MM/AAAA)
         ])
     else:
         # Retornar um template genérico em vez de None para evitar erros
@@ -694,7 +708,8 @@ def gerar_template_excel(tipo):
             'status',           # Status: Aberta, Fechada, Recusada
             'tipo_proposta',    # Tipo de proposta
             'data_inicio',      # Data de início (DD/MM/AAAA)
-            'data_fim'          # Data de fim (DD/MM/AAAA)
+            'data_fim',         # Data de fim (DD/MM/AAAA)
+            'prazo_entrega'     # Prazo de entrega (DD/MM/AAAA)
         ])
         # Adicionar uma linha de exemplo
         df.loc[0] = [
@@ -702,9 +717,10 @@ def gerar_template_excel(tipo):
             'Proposta de Organização Residencial', # descricao
             1500.00,               # valor
             'Aberta',              # status
-            'Residencial',         # tipo_proposta
+            'Organização',         # tipo_proposta
             '01/05/2025',          # data_inicio
-            '15/05/2025'           # data_fim
+            '15/05/2025',          # data_fim
+            '20/05/2025'           # prazo_entrega
         ]
     else:
         # Retornar um template genérico em vez de None para evitar erros
