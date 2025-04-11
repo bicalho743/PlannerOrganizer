@@ -162,52 +162,97 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                         continue
 
                 elif tipo_cadastro == "Fornecedor":
-                    descricao = str(row['descricao']).strip() if pd.notna(row.get('descricao')) else None
-                    if not descricao:
+                    try:
+                        # Verificar campo obrigatório
+                        descricao = str(row['descricao']).strip() if pd.notna(row.get('descricao')) else None
+                        if not descricao:
+                            erros.append(f"Descrição (Razão Social) vazia na linha {idx + 2}")
+                            continue
+                        
+                        # Garantir que tipo_conta tenha um valor padrão
+                        tipo_conta = str(row.get('tipo_conta', 'PF')).strip() if pd.notna(row.get('tipo_conta')) else 'PF'
+                        
+                        # Preparar dados do fornecedor
+                        fornecedor_data = {
+                            'descricao': descricao,
+                            'contato': str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None,
+                            'categoria': str(row.get('categoria', '')).strip() if pd.notna(row.get('categoria')) else None,
+                            'estado': str(row.get('estado', '')).strip() if pd.notna(row.get('estado')) else None,
+                            'cidade': str(row.get('cidade', '')).strip() if pd.notna(row.get('cidade')) else None,
+                            'bairro': str(row.get('bairro', '')).strip() if pd.notna(row.get('bairro')) else None,
+                            'endereco': str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
+                            'pix': str(row.get('pix', '')).strip() if pd.notna(row.get('pix')) else None,
+                            'recorrente': bool(row.get('recorrente', False)) if pd.notna(row.get('recorrente')) else False,
+                            'observacoes': str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None,
+                            'tipo_conta': tipo_conta
+                        }
+                        
+                        # Adicionar fornecedor
+                        db.add_fornecedor(**fornecedor_data)
+                        sucessos += 1
+                        
+                    except Exception as e:
+                        erro_msg = f"Erro ao processar fornecedor na linha {idx + 2}: {str(e)}"
+                        st.error(erro_msg)
+                        erros.append(erro_msg)
+                        logger.error(erro_msg)
                         continue
-
-                    db.add_fornecedor(
-                        descricao=descricao,
-                        contato=str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None,
-                        categoria=str(row.get('categoria', '')).strip() if pd.notna(row.get('categoria')) else None,
-                        estado=str(row.get('estado', '')).strip() if pd.notna(row.get('estado')) else None,
-                        cidade=str(row.get('cidade', '')).strip() if pd.notna(row.get('cidade')) else None,
-                        bairro=str(row.get('bairro', '')).strip() if pd.notna(row.get('bairro')) else None,
-                        endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
-                        pix=str(row.get('pix', '')).strip() if pd.notna(row.get('pix')) else None,
-                        recorrente=bool(row.get('recorrente', False)) if pd.notna(row.get('recorrente')) else False,
-                        observacoes=str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None,
-                        tipo_conta=str(row.get('tipo_conta', 'PF')).strip() if pd.notna(row.get('tipo_conta')) else 'PF'
-                    )
-                    sucessos += 1
 
                 elif tipo_cadastro == "Parceiro":
-                    nome = str(row['nome']).strip() if pd.notna(row.get('nome')) else None
-                    if not nome:
+                    try:
+                        # Verificar campo obrigatório
+                        nome = str(row['nome']).strip() if pd.notna(row.get('nome')) else None
+                        if not nome:
+                            erros.append(f"Nome vazio na linha {idx + 2}")
+                            continue
+                        
+                        # Preparar dados do parceiro
+                        parceiro_data = {
+                            'nome': nome,
+                            'telefone': str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None,
+                            'area_atuacao': str(row.get('area_atuacao', '')).strip() if pd.notna(row.get('area_atuacao')) else None,
+                            'tipo_parceria': str(row.get('tipo_parceria', '')).strip() if pd.notna(row.get('tipo_parceria')) else None,
+                            'observacoes': str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None
+                        }
+                        
+                        # Adicionar parceiro
+                        db.add_parceiro(**parceiro_data)
+                        sucessos += 1
+                        
+                    except Exception as e:
+                        erro_msg = f"Erro ao processar parceiro na linha {idx + 2}: {str(e)}"
+                        st.error(erro_msg)
+                        erros.append(erro_msg)
+                        logger.error(erro_msg)
                         continue
-
-                    db.add_parceiro(
-                        nome=nome,
-                        telefone=str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None,
-                        area_atuacao=str(row.get('area_atuacao', '')).strip() if pd.notna(row.get('area_atuacao')) else None,
-                        tipo_parceria=str(row.get('tipo_parceria', '')).strip() if pd.notna(row.get('tipo_parceria')) else None,
-                        observacoes=str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None
-                    )
-                    sucessos += 1
 
                 elif tipo_cadastro == "Assistente":
-                    nome = str(row['nome']).strip() if pd.notna(row.get('nome')) else None
-                    if not nome:
+                    try:
+                        # Verificar campo obrigatório
+                        nome = str(row['nome']).strip() if pd.notna(row.get('nome')) else None
+                        if not nome:
+                            erros.append(f"Nome vazio na linha {idx + 2}")
+                            continue
+                        
+                        # Preparar dados do assistente
+                        assistente_data = {
+                            'nome': nome,
+                            'telefone': str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None,
+                            'endereco': str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
+                            'pix': str(row.get('pix', '')).strip() if pd.notna(row.get('pix')) else None,
+                            'observacoes': str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None
+                        }
+                        
+                        # Adicionar assistente
+                        db.add_assistente(**assistente_data)
+                        sucessos += 1
+                        
+                    except Exception as e:
+                        erro_msg = f"Erro ao processar assistente na linha {idx + 2}: {str(e)}"
+                        st.error(erro_msg)
+                        erros.append(erro_msg)
+                        logger.error(erro_msg)
                         continue
-
-                    db.add_assistente(
-                        nome=nome,
-                        telefone=str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None,
-                        endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
-                        pix=str(row.get('pix', '')).strip() if pd.notna(row.get('pix')) else None,
-                        observacoes=str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None
-                    )
-                    sucessos += 1
                     
                 elif tipo_cadastro == "Produto":
                     nome = str(row['nome']).strip() if pd.notna(row.get('nome')) else None
@@ -365,13 +410,13 @@ def validar_dataframe(df, tipo_cadastro):
 
 def gerar_template_csv(tipo):
     """Gera um arquivo CSV template baseado no tipo de importação"""
-    if tipo == "Cliente":
+    if tipo == "Cliente" or tipo == "Clientes":
         df = pd.DataFrame(columns=[
             'nome', 'telefone', 'email', 'data_aniversario', 
             'origem_cliente', 'cpf', 'estado', 'cidade',
             'bairro', 'endereco', 'observacoes'
         ])
-    elif tipo == "Fornecedor":
+    elif tipo == "Fornecedor" or tipo == "Fornecedores":
         df = pd.DataFrame(columns=[
             'descricao',  # Razão Social
             'telefone',   
@@ -380,7 +425,7 @@ def gerar_template_csv(tipo):
             'pix',       
             'observacao'  
         ])
-    elif tipo == "Assistente":
+    elif tipo == "Assistente" or tipo == "Assistentes":
         df = pd.DataFrame(columns=[
             'nome',      
             'telefone',  
@@ -388,7 +433,7 @@ def gerar_template_csv(tipo):
             'pix',      
             'observacao' 
         ])
-    elif tipo == "Parceiro":
+    elif tipo == "Parceiro" or tipo == "Parceiros":
         df = pd.DataFrame(columns=[
             'nome',          
             'telefone',      
@@ -396,7 +441,7 @@ def gerar_template_csv(tipo):
             'tipo_parceria', 
             'observacao'     
         ])
-    elif tipo == "Produto":
+    elif tipo == "Produto" or tipo == "Produtos":
         df = pd.DataFrame(columns=[
             'nome',          # Nome do produto
             'descricao',     # Descrição
@@ -406,13 +451,14 @@ def gerar_template_csv(tipo):
             'estoque'        # Quantidade em estoque
         ])
     else:
-        return None
+        # Retornar um template genérico em vez de None para evitar erros
+        df = pd.DataFrame(columns=['nome', 'descricao'])
 
     return df.to_csv(index=False, sep=';').encode('utf-8')
 
 def gerar_template_excel(tipo):
     """Gera um arquivo Excel template baseado no tipo de importação"""
-    if tipo == "Cliente":
+    if tipo == "Cliente" or tipo == "Clientes":
         df = pd.DataFrame(columns=[
             'nome',  # Obrigatório
             'telefone',
@@ -438,7 +484,7 @@ def gerar_template_excel(tipo):
             'Site',             # origem_cliente
             'Observações aqui'  # observacoes
         ]
-    elif tipo == "Fornecedor":
+    elif tipo == "Fornecedor" or tipo == "Fornecedores":
         df = pd.DataFrame(columns=[
             'descricao',  # Razão Social
             'telefone',   
@@ -447,7 +493,7 @@ def gerar_template_excel(tipo):
             'pix',       
             'observacao'  
         ])
-    elif tipo == "Assistente":
+    elif tipo == "Assistente" or tipo == "Assistentes":
         df = pd.DataFrame(columns=[
             'nome',      
             'telefone',  
@@ -455,7 +501,7 @@ def gerar_template_excel(tipo):
             'pix',      
             'observacao' 
         ])
-    elif tipo == "Parceiro":
+    elif tipo == "Parceiro" or tipo == "Parceiros":
         df = pd.DataFrame(columns=[
             'nome',          
             'telefone',      
@@ -463,7 +509,7 @@ def gerar_template_excel(tipo):
             'tipo_parceria', 
             'observacao'     
         ])
-    elif tipo == "Proposta":
+    elif tipo == "Proposta" or tipo == "Propostas":
         df = pd.DataFrame(columns=[
             'cliente_nome',  # Nome do cliente para buscar o ID
             'descricao',    # Descrição do serviço
@@ -474,7 +520,7 @@ def gerar_template_excel(tipo):
             'data_fim',     # Data de fim (DD/MM/YYYY)
             'prazo_entrega' # Prazo de entrega (DD/MM/YYYY)
         ])
-    elif tipo == "Produto":
+    elif tipo == "Produto" or tipo == "Produtos":
         df = pd.DataFrame(columns=[
             'nome',          # Nome do produto
             'descricao',     # Descrição
@@ -493,7 +539,9 @@ def gerar_template_excel(tipo):
             10                        # estoque
         ]
     else:
-        return None
+        # Retornar um template genérico em vez de None para evitar erros
+        df = pd.DataFrame(columns=['nome', 'descricao'])
+        df.loc[0] = ['Nome', 'Descrição']
 
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine='openpyxl') as writer:

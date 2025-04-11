@@ -22,149 +22,164 @@ def show():
     with tab_produtos:
         st.subheader("Cadastro de Produtos")
         
-        # Layout de 2 colunas: Formulário + Lista
-        col1, col2 = st.columns([1, 2])
+        # Adicionar abas para incluir a importação
+        cadastro_tab, importacao_tab = st.tabs(["Cadastro Individual", "Importação em Massa"])
         
-        # Formulário de cadastro de produto
-        with col1:
-            with st.form("cadastro_produto", clear_on_submit=True):
-                nome = st.text_input("Nome do Produto")
-                descricao = st.text_area("Descrição", height=100)
-                preco_custo = st.number_input("Preço de Custo (R$)", min_value=0.0, step=0.01, format="%.2f")
-                preco_venda = st.number_input("Preço de Venda (R$)", min_value=0.0, step=0.01, format="%.2f")
-                categoria = st.text_input("Categoria")
-                estoque = st.number_input("Estoque Inicial", min_value=0, step=1)
-                
-                submitted = st.form_submit_button("Cadastrar Produto")
-                
-                if submitted:
-                    try:
-                        # Verificar se os preços são válidos
-                        if preco_venda <= 0:
-                            st.error("O preço de venda deve ser maior que zero.")
-                        else:
-                            produto_id = st.session_state.db.add_produto(
-                                nome=nome,
-                                descricao=descricao,
-                                preco_custo=preco_custo,
-                                preco_venda=preco_venda,
-                                categoria=categoria,
-                                estoque=estoque
-                            )
-                            st.success(f"Produto '{nome}' cadastrado com sucesso!")
-                            # Recarregar a lista de produtos
-                            st.rerun()
-                    except Exception as e:
-                        st.error(f"Erro ao cadastrar produto: {str(e)}")
-        
-        # Lista de produtos
-        with col2:
-            st.subheader("Produtos Cadastrados")
-            
+        # Aba de importação de produtos
+        with importacao_tab:
             try:
-                produtos_df = st.session_state.db.get_produtos()
-                if produtos_df.empty:
-                    st.info("Nenhum produto cadastrado.")
-                else:
-                    # Configurar colunas para exibição
-                    produtos_df['lucro'] = produtos_df['preco_venda'] - produtos_df['preco_custo']
-                    produtos_df['margem'] = (produtos_df['lucro'] / produtos_df['preco_venda'] * 100).round(2)
-                    
-                    # Formatar colunas monetárias
-                    for col in ['preco_custo', 'preco_venda', 'lucro']:
-                        produtos_df[col] = produtos_df[col].map('R$ {:.2f}'.format)
-                    
-                    produtos_df['margem'] = produtos_df['margem'].map('{:.2f}%'.format)
-                    
-                    # Colunas a exibir
-                    colunas_exibir = ['id', 'nome', 'categoria', 'preco_custo', 'preco_venda', 'lucro', 'margem', 'estoque']
-                    
-                    # Exibir tabela com opções de edição/exclusão
-                    st.dataframe(produtos_df[colunas_exibir], hide_index=True)
-                    
-                    # Área para editar/excluir produtos
-                    with st.expander("Gerenciar Produtos"):
-                        col1, col2 = st.columns(2)
-                        
-                        with col1:
-                            # Editar produto
-                            st.subheader("Editar Produto")
-                            produto_id = st.selectbox("Selecione o produto", 
-                                                    options=produtos_df['id'].tolist(),
-                                                    format_func=lambda x: f"{x} - {produtos_df[produtos_df['id'] == x]['nome'].iloc[0]}")
-                            
-                            if produto_id:
-                                produto_selecionado = produtos_df[produtos_df['id'] == produto_id].iloc[0]
-                                
-                                with st.form("editar_produto"):
-                                    # Remover formatação de moeda para edição
-                                    preco_custo_str = produto_selecionado['preco_custo'].replace('R$ ', '').replace(',', '.')
-                                    preco_venda_str = produto_selecionado['preco_venda'].replace('R$ ', '').replace(',', '.')
-                                    
-                                    nome_edit = st.text_input("Nome", value=produto_selecionado['nome'])
-                                    descricao_edit = st.text_area("Descrição", value=produto_selecionado.get('descricao', ''), height=100)
-                                    preco_custo_edit = st.number_input("Preço de Custo", 
-                                                                    value=float(preco_custo_str), 
-                                                                    min_value=0.0, 
-                                                                    step=0.01, 
-                                                                    format="%.2f")
-                                    preco_venda_edit = st.number_input("Preço de Venda", 
-                                                                    value=float(preco_venda_str), 
-                                                                    min_value=0.0, 
-                                                                    step=0.01, 
-                                                                    format="%.2f")
-                                    categoria_edit = st.text_input("Categoria", value=produto_selecionado.get('categoria', ''))
-                                    estoque_edit = st.number_input("Estoque", value=int(produto_selecionado['estoque']), min_value=0)
-                                    
-                                    submit_edit = st.form_submit_button("Atualizar Produto")
-                                    
-                                    if submit_edit:
-                                        try:
-                                            result = st.session_state.db.update_produto(
-                                                produto_id=produto_id,
-                                                nome=nome_edit,
-                                                descricao=descricao_edit,
-                                                preco_custo=preco_custo_edit,
-                                                preco_venda=preco_venda_edit,
-                                                categoria=categoria_edit,
-                                                estoque=estoque_edit
-                                            )
-                                            
-                                            if result:
-                                                st.success("Produto atualizado com sucesso!")
-                                                st.rerun()
-                                            else:
-                                                st.error("Falha ao atualizar o produto.")
-                                        except Exception as e:
-                                            st.error(f"Erro ao atualizar produto: {str(e)}")
-                        
-                        with col2:
-                            # Excluir produto
-                            st.subheader("Excluir Produto")
-                            produto_remover_id = st.selectbox("Selecione o produto para excluir", 
-                                                            options=produtos_df['id'].tolist(),
-                                                            format_func=lambda x: f"{x} - {produtos_df[produtos_df['id'] == x]['nome'].iloc[0]}", 
-                                                            key="remover_produto")
-                            
-                            if st.button("Excluir Produto", type="primary", use_container_width=True):
-                                if produto_remover_id:
-                                    produto_nome = produtos_df[produtos_df['id'] == produto_remover_id]['nome'].iloc[0]
-                                    
-                                    # Confirmação
-                                    confirmacao = st.checkbox(f"Confirmo a exclusão do produto: {produto_nome}")
-                                    
-                                    if confirmacao and st.button("Confirmar Exclusão", type="primary", use_container_width=True):
-                                        try:
-                                            result = st.session_state.db.delete_produto(produto_remover_id)
-                                            if result:
-                                                st.success(f"Produto '{produto_nome}' excluído com sucesso!")
-                                                st.rerun()
-                                            else:
-                                                st.error("Falha ao excluir o produto.")
-                                        except Exception as e:
-                                            st.error(f"Erro ao excluir produto: {str(e)}")
+                from utils.componentes_importacao import interface_importacao
+                interface_importacao(tipo_cadastro="Produto", db=st.session_state.db, 
+                                    pagina_titulo="Importação de Produtos")
             except Exception as e:
-                st.error(f"Erro ao carregar produtos: {str(e)}")
+                st.error(f"Erro ao carregar interface de importação: {str(e)}")
+                import traceback
+                st.error(traceback.format_exc())
+        
+        with cadastro_tab:
+            # Layout de 2 colunas: Formulário + Lista
+            col1, col2 = st.columns([1, 2])
+            
+            # Formulário de cadastro de produto
+            with col1:
+                with st.form("cadastro_produto", clear_on_submit=True):
+                    nome = st.text_input("Nome do Produto")
+                    descricao = st.text_area("Descrição", height=100)
+                    preco_custo = st.number_input("Preço de Custo (R$)", min_value=0.0, step=0.01, format="%.2f")
+                    preco_venda = st.number_input("Preço de Venda (R$)", min_value=0.0, step=0.01, format="%.2f")
+                    categoria = st.text_input("Categoria")
+                    estoque = st.number_input("Estoque Inicial", min_value=0, step=1)
+                    
+                    submitted = st.form_submit_button("Cadastrar Produto")
+                    
+                    if submitted:
+                        try:
+                            # Verificar se os preços são válidos
+                            if preco_venda <= 0:
+                                st.error("O preço de venda deve ser maior que zero.")
+                            else:
+                                produto_id = st.session_state.db.add_produto(
+                                    nome=nome,
+                                    descricao=descricao,
+                                    preco_custo=preco_custo,
+                                    preco_venda=preco_venda,
+                                    categoria=categoria,
+                                    estoque=estoque
+                                )
+                                st.success(f"Produto '{nome}' cadastrado com sucesso!")
+                                # Recarregar a lista de produtos
+                                st.rerun()
+                        except Exception as e:
+                            st.error(f"Erro ao cadastrar produto: {str(e)}")
+            
+            # Lista de produtos
+            with col2:
+                st.subheader("Produtos Cadastrados")
+            
+                try:
+                    produtos_df = st.session_state.db.get_produtos()
+                    if produtos_df.empty:
+                        st.info("Nenhum produto cadastrado.")
+                    else:
+                        # Configurar colunas para exibição
+                        produtos_df['lucro'] = produtos_df['preco_venda'] - produtos_df['preco_custo']
+                        produtos_df['margem'] = (produtos_df['lucro'] / produtos_df['preco_venda'] * 100).round(2)
+                        
+                        # Formatar colunas monetárias
+                        for col in ['preco_custo', 'preco_venda', 'lucro']:
+                            produtos_df[col] = produtos_df[col].map('R$ {:.2f}'.format)
+                        
+                        produtos_df['margem'] = produtos_df['margem'].map('{:.2f}%'.format)
+                        
+                        # Colunas a exibir
+                        colunas_exibir = ['id', 'nome', 'categoria', 'preco_custo', 'preco_venda', 'lucro', 'margem', 'estoque']
+                        
+                        # Exibir tabela com opções de edição/exclusão
+                        st.dataframe(produtos_df[colunas_exibir], hide_index=True)
+                        
+                        # Área para editar/excluir produtos
+                        with st.expander("Gerenciar Produtos"):
+                            col_edit1, col_edit2 = st.columns(2)
+                            
+                            with col_edit1:
+                                # Editar produto
+                                st.subheader("Editar Produto")
+                                produto_id = st.selectbox("Selecione o produto", 
+                                                        options=produtos_df['id'].tolist(),
+                                                        format_func=lambda x: f"{x} - {produtos_df[produtos_df['id'] == x]['nome'].iloc[0]}")
+                                
+                                if produto_id:
+                                    produto_selecionado = produtos_df[produtos_df['id'] == produto_id].iloc[0]
+                                    
+                                    with st.form("editar_produto"):
+                                        # Remover formatação de moeda para edição
+                                        preco_custo_str = produto_selecionado['preco_custo'].replace('R$ ', '').replace(',', '.')
+                                        preco_venda_str = produto_selecionado['preco_venda'].replace('R$ ', '').replace(',', '.')
+                                        
+                                        nome_edit = st.text_input("Nome", value=produto_selecionado['nome'])
+                                        descricao_edit = st.text_area("Descrição", value=produto_selecionado.get('descricao', ''), height=100)
+                                        preco_custo_edit = st.number_input("Preço de Custo", 
+                                                                        value=float(preco_custo_str), 
+                                                                        min_value=0.0, 
+                                                                        step=0.01, 
+                                                                        format="%.2f")
+                                        preco_venda_edit = st.number_input("Preço de Venda", 
+                                                                        value=float(preco_venda_str), 
+                                                                        min_value=0.0, 
+                                                                        step=0.01, 
+                                                                        format="%.2f")
+                                        categoria_edit = st.text_input("Categoria", value=produto_selecionado.get('categoria', ''))
+                                        estoque_edit = st.number_input("Estoque", value=int(produto_selecionado['estoque']), min_value=0)
+                                        
+                                        submit_edit = st.form_submit_button("Atualizar Produto")
+                                        
+                                        if submit_edit:
+                                            try:
+                                                result = st.session_state.db.update_produto(
+                                                    produto_id=produto_id,
+                                                    nome=nome_edit,
+                                                    descricao=descricao_edit,
+                                                    preco_custo=preco_custo_edit,
+                                                    preco_venda=preco_venda_edit,
+                                                    categoria=categoria_edit,
+                                                    estoque=estoque_edit
+                                                )
+                                                
+                                                if result:
+                                                    st.success("Produto atualizado com sucesso!")
+                                                    st.rerun()
+                                                else:
+                                                    st.error("Falha ao atualizar o produto.")
+                                            except Exception as e:
+                                                st.error(f"Erro ao atualizar produto: {str(e)}")
+                            
+                            with col_edit2:
+                                # Excluir produto
+                                st.subheader("Excluir Produto")
+                                produto_remover_id = st.selectbox("Selecione o produto para excluir", 
+                                                                options=produtos_df['id'].tolist(),
+                                                                format_func=lambda x: f"{x} - {produtos_df[produtos_df['id'] == x]['nome'].iloc[0]}", 
+                                                                key="remover_produto")
+                                
+                                if st.button("Excluir Produto", type="primary", use_container_width=True):
+                                    if produto_remover_id:
+                                        produto_nome = produtos_df[produtos_df['id'] == produto_remover_id]['nome'].iloc[0]
+                                        
+                                        # Confirmação
+                                        confirmacao = st.checkbox(f"Confirmo a exclusão do produto: {produto_nome}")
+                                        
+                                        if confirmacao and st.button("Confirmar Exclusão", type="primary", use_container_width=True):
+                                            try:
+                                                result = st.session_state.db.delete_produto(produto_remover_id)
+                                                if result:
+                                                    st.success(f"Produto '{produto_nome}' excluído com sucesso!")
+                                                    st.rerun()
+                                                else:
+                                                    st.error("Falha ao excluir o produto.")
+                                            except Exception as e:
+                                                st.error(f"Erro ao excluir produto: {str(e)}")
+                except Exception as e:
+                    st.error(f"Erro ao carregar produtos: {str(e)}")
 
     # === Aba de Nova Venda ===
     with tab_nova_venda:
