@@ -176,7 +176,8 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                         endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
                         pix=str(row.get('pix', '')).strip() if pd.notna(row.get('pix')) else None,
                         recorrente=bool(row.get('recorrente', False)) if pd.notna(row.get('recorrente')) else False,
-                        observacoes=str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None
+                        observacoes=str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None,
+                        tipo_conta=str(row.get('tipo_conta', 'PF')).strip() if pd.notna(row.get('tipo_conta')) else 'PF'
                     )
                     sucessos += 1
 

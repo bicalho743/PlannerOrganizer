@@ -93,6 +93,7 @@ class Fornecedor(Base):
     data_vencimento = Column(Date, nullable=True)
     data_pagamento = Column(Date, nullable=True)
     status = Column(String, nullable=True)
+    tipo_conta = Column(String, default='PF')  # Adicionado campo tipo_conta
 
 
 class Assistente(Base):
@@ -438,7 +439,7 @@ class Database:
 
     def add_fornecedor(self, descricao, contato, categoria, estado=None, cidade=None, 
                   bairro=None, endereco=None, pix=None, recorrente=False, observacoes=None, 
-                  valor=None, data_vencimento=None, data_pagamento=None, status=None):
+                  valor=None, data_vencimento=None, data_pagamento=None, status=None, tipo_conta='PF'):
         def query():
             fornecedor = Fornecedor(
                 descricao=descricao,
@@ -454,7 +455,8 @@ class Database:
                 valor=valor,
                 data_vencimento=data_vencimento,
                 data_pagamento=data_pagamento,
-                status=status
+                status=status,
+                tipo_conta=tipo_conta
             )
             self.session.add(fornecedor)
             return fornecedor.id
