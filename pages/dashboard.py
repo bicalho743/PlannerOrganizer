@@ -72,25 +72,81 @@ def show():
     with col3:
         st.subheader("🎂 Aniversariantes")
         hoje = datetime.now()
+        mes_atual = hoje.strftime('%b').lower()  # Mês atual em formato abreviado
+        dia_atual = hoje.strftime('%d/%b').lower()  # Dia/mês atual
 
         if not clientes.empty and 'data_aniversario' in clientes.columns:
-            # Aniversariantes do dia
+            # Aniversariantes de hoje
             aniversariantes_hoje = clientes[
                 (clientes['data_aniversario'].notna()) &
-                (clientes['data_aniversario'].str.lower() == hoje.strftime('%d/%b').lower())
+                (clientes['data_aniversario'].str.lower() == dia_atual)
             ]
 
-            st.write("**Hoje:**")
-            if not aniversariantes_hoje.empty:
-                for _, aniversariante in aniversariantes_hoje.iterrows():
-                    st.write(f"🎈 {aniversariante['nome']}")
-                    if aniversariante['telefone']:
-                        st.write(f"📱 {aniversariante['telefone']}")
-            else:
-                st.info("Nenhum aniversariante hoje!")
+            with st.container():
+                st.markdown("""
+                <div style='background-color: #2A3F5F; padding: 10px; border-radius: 7px; margin-bottom: 15px;'>
+                    <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>✨ Hoje</h4>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                if not aniversariantes_hoje.empty:
+                    for _, aniversariante in aniversariantes_hoje.iterrows():
+                        with st.container():
+                            st.markdown(f"""
+                            <div style='background-color: #304878; padding: 10px; border-radius: 5px; margin-bottom: 8px;'>
+                                <div style='font-weight: bold; color: white;'>🎈 {aniversariante['nome']}</div>
+                                {"<div style='color: #E2E8F0; font-size: 0.9em;'>📱 " + aniversariante['telefone'] + "</div>" if aniversariante['telefone'] else ""}
+                            </div>
+                            """, unsafe_allow_html=True)
+                else:
+                    st.info("Nenhum aniversariante hoje!")
 
-            # Próximos aniversariantes
-            st.write("\n**Próximos 7 dias:**")
+            # Aniversariantes do mês atual
+            aniversariantes_mes = clientes[
+                (clientes['data_aniversario'].notna()) &
+                (clientes['data_aniversario'].str.lower().str.endswith(f"/{mes_atual}"))
+            ]
+            
+            with st.container():
+                st.markdown(f"""
+                <div style='background-color: #2A3F5F; padding: 10px; border-radius: 7px; margin: 15px 0;'>
+                    <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>🗓️ Mês de {hoje.strftime('%B').capitalize()}</h4>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                if not aniversariantes_mes.empty:
+                    aniversariantes_ordenados = aniversariantes_mes.copy()
+                    # Extrair o dia do aniversário para ordenação
+                    aniversariantes_ordenados['dia'] = aniversariantes_ordenados['data_aniversario'].str.split('/').str[0].astype(int)
+                    aniversariantes_ordenados = aniversariantes_ordenados.sort_values('dia')
+                    
+                    for _, aniversariante in aniversariantes_ordenados.iterrows():
+                        # Verificar se o aniversário já passou este mês
+                        dia_aniv = int(aniversariante['data_aniversario'].split('/')[0])
+                        passou = dia_aniv < hoje.day
+                        
+                        with st.container():
+                            st.markdown(f"""
+                            <div style='background-color: {'#375170' if not passou else '#415570'}; padding: 10px; 
+                                  border-radius: 5px; margin-bottom: 8px; opacity: {'1' if not passou else '0.8'};'>
+                                <div style='font-weight: bold; color: white;'>
+                                    {'🎂' if not passou else '✓'} {aniversariante['nome']} 
+                                    <span style='font-weight: normal; color: {"#F1A208" if not passou else "#B0B0B0"}; 
+                                          font-size: 0.9em;'>({aniversariante['data_aniversario']})</span>
+                                </div>
+                                {"<div style='color: #E2E8F0; font-size: 0.9em;'>📱 " + aniversariante['telefone'] + "</div>" if aniversariante['telefone'] else ""}
+                            </div>
+                            """, unsafe_allow_html=True)
+                else:
+                    st.info(f"Nenhum aniversariante em {hoje.strftime('%B').capitalize()}.")
+
+            # Próximos aniversariantes (próximos dias)
+            st.markdown("""
+            <div style='background-color: #2A3F5F; padding: 10px; border-radius: 7px; margin: 15px 0;'>
+                <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>🔜 Próximos 7 dias</h4>
+            </div>
+            """, unsafe_allow_html=True)
+            
             proximos_dias = pd.date_range(hoje, periods=7, freq='D')
             datas_proximas = [d.strftime('%d/%b').lower() for d in proximos_dias]
 
@@ -101,9 +157,15 @@ def show():
 
             if not proximos.empty:
                 for _, proximo in proximos.iterrows():
-                    st.write(f"🎂 {proximo['nome']} ({proximo['data_aniversario']})")
-                    if proximo['telefone']:
-                        st.write(f"📱 {proximo['telefone']}")
+                    with st.container():
+                        st.markdown(f"""
+                        <div style='background-color: #304878; padding: 10px; border-radius: 5px; margin-bottom: 8px;'>
+                            <div style='font-weight: bold; color: white;'>🎂 {proximo['nome']} 
+                                <span style='font-weight: normal; color: #F1A208; font-size: 0.9em;'>({proximo['data_aniversario']})</span>
+                            </div>
+                            {"<div style='color: #E2E8F0; font-size: 0.9em;'>📱 " + proximo['telefone'] + "</div>" if proximo['telefone'] else ""}
+                        </div>
+                        """, unsafe_allow_html=True)
             else:
                 st.info("Nenhum aniversariante nos próximos dias.")
         else:
