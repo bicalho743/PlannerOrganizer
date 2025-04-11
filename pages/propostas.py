@@ -8,12 +8,19 @@ from utils.importador import importar_cadastros, gerar_template_csv
 def show():
     st.title("📝 Gestão de Propostas")
 
-    tab1, tab2, tab3, tab4 = st.tabs([
+    # Definir as abas do sistema
+    tabs = st.tabs([
         "Nova Proposta",
         "Lista de Propostas",
         "Andamento do Trabalho",
         "Importar Propostas"
     ])
+    
+    # Atribuir cada aba a uma variável
+    tab1 = tabs[0]
+    tab2 = tabs[1]
+    tab3 = tabs[2]
+    tab4 = tabs[3]
 
     with tab1:
         st.subheader("Cadastrar Nova Proposta")
