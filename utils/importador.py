@@ -169,9 +169,13 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                     db.add_fornecedor(
                         descricao=descricao,
                         contato=str(row.get('telefone', '')).strip() if pd.notna(row.get('telefone')) else None,
-                        endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
                         categoria=str(row.get('categoria', '')).strip() if pd.notna(row.get('categoria')) else None,
+                        estado=str(row.get('estado', '')).strip() if pd.notna(row.get('estado')) else None,
+                        cidade=str(row.get('cidade', '')).strip() if pd.notna(row.get('cidade')) else None,
+                        bairro=str(row.get('bairro', '')).strip() if pd.notna(row.get('bairro')) else None,
+                        endereco=str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
                         pix=str(row.get('pix', '')).strip() if pd.notna(row.get('pix')) else None,
+                        recorrente=bool(row.get('recorrente', False)) if pd.notna(row.get('recorrente')) else False,
                         observacoes=str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None
                     )
                     sucessos += 1
