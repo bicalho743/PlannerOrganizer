@@ -48,32 +48,109 @@ if 'db' not in st.session_state:
 # Estilo CSS customizado
 st.markdown("""
     <style>
+    /* Estilo para botões principais */
     div.stButton > button {
         width: 100%;
         text-align: left;
         padding: 0.75rem 1rem;
         background-color: #F1A208 !important;
         color: #262730 !important;
-        font-weight: 500;
-        margin-bottom: 0.25rem;
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+        border-radius: 8px;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
     }
     div.stButton > button:hover {
         background-color: #ffc107 !important;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
     }
+    
+    /* Estilo para a barra lateral */
     section[data-testid="stSidebar"] {
-        background-color: #262730;
+        background-color: #1E293B;
+        color: white;
     }
-    /* Container escuro para os botões */
+    
+    /* Container para os botões do menu */
     div.nav-buttons {
-        background-color: #262730;
-        padding: 1rem;
+        background-color: #1E293B;
+        padding: 1.2rem;
         margin: 0 -1rem;
+        border-radius: 0 0 10px 10px;
+    }
+    
+    /* Estilo para os expanders de informações */
+    div.streamlit-expanderHeader {
+        background-color: #3B82F6 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 0.8rem !important;
+        font-weight: 600 !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+        margin-top: 1rem !important;
+        margin-bottom: 0.5rem !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    div.streamlit-expanderHeader:hover {
+        background-color: #2563EB !important;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    div.streamlit-expanderContent {
+        background-color: #2A3F5F !important;
+        color: white !important;
+        border-radius: 0 0 8px 8px !important;
+        padding: 1rem !important;
+        margin-top: -0.5rem !important;
+        border: 1px solid #3B82F6 !important;
+    }
+    
+    /* Ajustes para texto dentro dos expanders */
+    div.streamlit-expanderContent p, div.streamlit-expanderContent li {
+        color: #E2E8F0 !important;
+    }
+    
+    div.streamlit-expanderContent h3 {
+        color: #F1A208 !important;
+        margin-top: 1rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    div.streamlit-expanderContent strong {
+        color: #F8FAFC !important;
+    }
+    
+    /* Customização do título do sidebar */
+    section[data-testid="stSidebar"] .stMarkdown h1 {
+        color: #F1A208 !important;
+        margin-bottom: 1rem !important;
+        font-size: 1.5rem !important;
+        text-align: center !important;
+        padding-top: 1rem !important;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    /* Personalização para separadores */
+    hr {
+        margin-top: 1.5rem !important;
+        margin-bottom: 1.5rem !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Menu principal
-st.sidebar.title("Menu Principal")
+# Menu principal - com cabeçalho melhorado
+st.sidebar.markdown("""
+<div style='text-align: center; padding: 15px; background-color: #1E293B; border-bottom: 3px solid #F1A208; margin-bottom: 20px;'>
+    <img src="https://cdn-icons-png.flaticon.com/512/3208/3208615.png" width="60" style='margin-bottom: 10px;'>
+    <h1 style='color: #F1A208; font-size: 1.5rem; margin: 5px 0;'>PLANNER ORGANIZER</h1>
+    <p style='color: #E2E8F0; font-size: 0.8rem; margin: 0;'>Sistema de Gestão Profissional</p>
+</div>
+""", unsafe_allow_html=True)
 
 # Container dos botões com fundo escuro
 st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
@@ -103,7 +180,31 @@ st.sidebar.markdown('</div>', unsafe_allow_html=True)
 # Informações do sistema no final
 st.sidebar.markdown("---")
 
-# Sobre o Sistema
+# Cabeçalho personalizado para as seções do sistema
+st.sidebar.markdown("""
+<div style='text-align: center; margin-bottom: 20px;'>
+    <h2 style='color: #F1A208; margin-bottom: 10px; font-size: 1.3rem;'>INFORMAÇÕES DO SISTEMA</h2>
+    <p style='color: #E2E8F0; font-size: 0.9rem;'>Confira recursos e funcionalidades abaixo</p>
+    <div style='background-color: #F1A208; height: 3px; width: 50%; margin: 10px auto;'></div>
+</div>
+""", unsafe_allow_html=True)
+
+# Sobre o Sistema - com botão personalizado
+st.sidebar.markdown("""
+<div class='system-info-button' onclick="document.querySelector('#sobre-sistema-expander button').click();" 
+     style='background-color: #3B82F6; padding: 12px; border-radius: 10px; margin-bottom: 15px; cursor: pointer; 
+     box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease;'>
+    <div style='display: flex; align-items: center;'>
+        <div style='font-size: 24px; margin-right: 10px;'>📌</div>
+        <div>
+            <div style='font-weight: bold; font-size: 1.1rem; color: white;'>Sobre o Sistema</div>
+            <div style='color: rgba(255,255,255,0.8); font-size: 0.8rem;'>Funcionalidades e recursos</div>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# O expander real (que será controlado pelo botão acima)
 with st.sidebar.expander("📌 Sobre o Sistema", expanded=False):
     st.markdown("""
     O **Sistema Planner Organizer** é uma ferramenta completa para o gerenciamento 
@@ -136,7 +237,22 @@ with st.sidebar.expander("📌 Sobre o Sistema", expanded=False):
     - Exportação de dados
     """)
 
-# Informações da versão
+# Informações do Sistema - com botão personalizado
+st.sidebar.markdown("""
+<div class='system-info-button' onclick="document.querySelector('#info-sistema-expander button').click();" 
+     style='background-color: #2563EB; padding: 12px; border-radius: 10px; margin-bottom: 15px; cursor: pointer; 
+     box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease;'>
+    <div style='display: flex; align-items: center;'>
+        <div style='font-size: 24px; margin-right: 10px;'>ℹ️</div>
+        <div>
+            <div style='font-weight: bold; font-size: 1.1rem; color: white;'>Informações do Sistema</div>
+            <div style='color: rgba(255,255,255,0.8); font-size: 0.8rem;'>Versão e atualizações recentes</div>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# O expander real (que será controlado pelo botão acima)
 with st.sidebar.expander("ℹ️ Informações do Sistema", expanded=False):
     st.markdown("""
     ### Sistema Personal Organizer
@@ -154,8 +270,10 @@ with st.sidebar.expander("ℹ️ Informações do Sistema", expanded=False):
     - 📊 Dashboard aprimorado
     - 📱 Interface responsiva
 
+    <div style='text-align: center; margin-top: 20px; padding: 10px; background-color: #1E293B; border-radius: 5px;'>
     Desenvolvido com ❤️ usando Streamlit
-    """)
+    </div>
+    """, unsafe_allow_html=True)
 
 # Verificar se há uma celebração pendente
 if st.session_state.get('show_celebration', False):
@@ -211,6 +329,19 @@ else:
         logger.error(f"Erro ao exibir página {st.session_state.current_page}: {str(e)}")
         st.error(f"Erro ao exibir página {st.session_state.current_page}: {str(e)}")
 
-# Rodapé
+# Rodapé melhorado
 st.sidebar.markdown("---")
-st.sidebar.markdown("<div style='text-align: center; color: #888888; font-size: 0.8em;'>Sistema Personal Organizer</div>", unsafe_allow_html=True)
+st.sidebar.markdown("""
+<div style='text-align: center; padding: 15px; margin-top: 10px;'>
+    <div style='font-weight: bold; color: #F1A208; margin-bottom: 5px; font-size: 1rem;'>Sistema Planner Organizer</div>
+    <div style='color: #E2E8F0; font-size: 0.7rem; margin-bottom: 10px;'>© 2025 - Todos os direitos reservados</div>
+    <div style='display: flex; justify-content: center; margin-top: 5px;'>
+        <div style='width: 30px; height: 30px; border-radius: 50%; background-color: #F1A208; display: flex; 
+                 justify-content: center; align-items: center; margin: 0 5px; font-size: 15px;'>📱</div>
+        <div style='width: 30px; height: 30px; border-radius: 50%; background-color: #F1A208; display: flex; 
+                 justify-content: center; align-items: center; margin: 0 5px; font-size: 15px;'>💼</div>
+        <div style='width: 30px; height: 30px; border-radius: 50%; background-color: #F1A208; display: flex; 
+                 justify-content: center; align-items: center; margin: 0 5px; font-size: 15px;'>📈</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
