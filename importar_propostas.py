@@ -15,6 +15,7 @@ st.title("📥 Importar Propostas")
 
 # Inicializar banco de dados
 from utils.database import Database
+from utils.limpar_dados import limpar_clientes_form
 
 # Garantir que temos uma instância do banco de dados na session_state
 if 'db' not in st.session_state:
@@ -400,6 +401,11 @@ def importar_propostas(arquivo, debug_mode=False, usar_cliente_id=False):
         st.error(erro_msg)
         logger.error(f"{erro_msg}\n{traceback.format_exc()}")
         return False, erro_msg
+
+# Seção para limpar dados de clientes
+with st.expander("🧹 Limpar Cadastro de Clientes"):
+    st.write("Use esta opção para remover todos os clientes do sistema antes da importação.")
+    limpar_clientes_form()
 
 # Opções de depuração
 debug_mode = st.checkbox("Modo de depuração (exibe informações detalhadas)")

@@ -312,6 +312,56 @@ class Database:
                 'observacoes': c.observacoes # Added observations to get_clientes
             } for c in clientes])
         return self._safe_query(query)
+        
+    def limpar_clientes(self):
+        """Remove todos os registros da tabela de clientes"""
+        def query():
+            # Verifique se existem propostas vinculadas aos clientes
+            propostas_count = self.session.query(func.count()).select_from(Proposta).scalar()
+            
+            if propostas_count > 0:
+                # Primeiro limpar as propostas, já que elas têm foreign key para clientes
+                # Remover acréscimos de propostas
+                self.session.query(AcrescimoProposta).delete()
+                
+                # Remover produtos associados às propostas
+                for prod_org in self.session.query(ProdutoOrganizador).all():
+                    # Remover fornecedores de produtos
+                    self.session.query(ProdutoFornecedor).filter(
+                        ProdutoFornecedor.produto_id == prod_org.id
+                    ).delete()
+                
+                # Agora é seguro remover os produtos
+                self.session.query(ProdutoOrganizador).delete()
+                
+                # Remover andamentos de propostas
+                self.session.query(AndamentoProposta).delete()
+                
+                # Remover transações financeiras vinculadas a propostas
+                self.session.query(Transacao).filter(
+                    Transacao.origem_tipo == 'proposta'
+                ).delete()
+                
+                # Agora podemos remover as propostas
+                self.session.query(Proposta).delete()
+            
+            # Remover vendas e itens de venda relacionados a clientes
+            vendas = self.session.query(Venda).all()
+            for venda in vendas:
+                # Remover itens de venda
+                self.session.query(ItemVenda).filter(
+                    ItemVenda.venda_id == venda.id
+                ).delete()
+            
+            # Remover vendas
+            self.session.query(Venda).delete()
+            
+            # Finalmente, remover os clientes
+            self.session.query(Cliente).delete()
+            
+            return True
+        
+        return self._safe_query(query)
 
     def add_cliente(self, nome, email=None, telefone=None, estado=None, cidade=None, bairro=None, 
                    endereco=None, cpf=None, data_aniversario=None, origem_cliente=None, observacoes=None):
