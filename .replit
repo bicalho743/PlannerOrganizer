@@ -43,6 +43,10 @@ args = "Importar Propostas V2"
 task = "workflow.run"
 args = "Importação Direta"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Importação Direta V2"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -147,6 +151,21 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run importacao_direta.py --server.port 8504 --server.address 0.0.0.0"
 waitForPort = 8504
+
+[[workflows.workflow]]
+name = "Importação Direta V2"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run propostas_direto.py --server.port 8510 --server.address 0.0.0.0"
+waitForPort = 8510
 
 [[ports]]
 localPort = 443

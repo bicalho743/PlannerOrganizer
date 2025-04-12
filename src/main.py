@@ -605,13 +605,9 @@ if st.session_state.get('show_import_direto', False):
     # Esconder a página atual
     st.empty()
     
-    # Executar diretamente a função integrada
-    importar_propostas_direto_integrado()
-    
-    # Botão para voltar
-    if st.button("← Voltar", key="btn_voltar_import"):
-        st.session_state['show_import_direto'] = False
-        st.rerun()
+    # Executar a função do módulo separado
+    import propostas_direto
+    propostas_direto.show()
 
 # Container dos botões com fundo escuro
 st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
