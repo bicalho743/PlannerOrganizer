@@ -4,6 +4,7 @@ from datetime import datetime
 import io
 import logging
 import traceback
+import unidecode  # Para normalizar strings e melhorar comparações
 
 logger = logging.getLogger(__name__)
 
@@ -310,28 +311,42 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                             clientes = db.get_clientes()
                             
                             if not clientes.empty:
+                                # Inicializar cliente_id como None
+                                cliente_id = None
+                                
                                 # Exibe debug no console
                                 logger.info(f"Buscando cliente pelo nome: '{cliente_nome}'")
                                 logger.info(f"Clientes disponíveis: {clientes['nome'].tolist()}")
                                 
-                                # Busca com correspondência exata
+                                # Estratégia 1: Busca com correspondência exata
                                 cliente_encontrado = clientes[clientes['nome'] == cliente_nome]
                                 
                                 if not cliente_encontrado.empty:
                                     cliente_id = int(cliente_encontrado['id'].iloc[0])
                                     logger.info(f"Cliente encontrado com ID: {cliente_id}")
                                 else:
-                                    # Busca com correspondência parcial (case insensitive)
-                                    cliente_nome_lower = cliente_nome.lower()
+                                    # Estratégia 2: Busca usando unidecode para normalizar acentos
+                                    cliente_nome_norm = unidecode.unidecode(cliente_nome.lower())
                                     for _, c in clientes.iterrows():
-                                        if cliente_nome_lower in c['nome'].lower():
+                                        nome_db_norm = unidecode.unidecode(c['nome'].lower())
+                                        if cliente_nome_norm == nome_db_norm:
                                             cliente_id = int(c['id'])
-                                            logger.info(f"Cliente encontrado com correspondência parcial: {c['nome']}, ID: {cliente_id}")
+                                            logger.info(f"Cliente encontrado usando normalização: {c['nome']}, ID: {cliente_id}")
                                             break
                                     
+                                    # Estratégia 3: Busca com correspondência parcial
                                     if cliente_id is None:
-                                        erros.append(f"Cliente '{cliente_nome}' não encontrado, linha {idx + 2}")
-                                        continue
+                                        for _, c in clientes.iterrows():
+                                            nome_db_norm = unidecode.unidecode(c['nome'].lower())
+                                            if cliente_nome_norm in nome_db_norm or nome_db_norm in cliente_nome_norm:
+                                                cliente_id = int(c['id'])
+                                                logger.info(f"Cliente encontrado com correspondência parcial: {c['nome']}, ID: {cliente_id}")
+                                                break
+                                
+                                # Se não encontrou o cliente após todas as tentativas
+                                if cliente_id is None:
+                                    erros.append(f"Cliente '{cliente_nome}' não encontrado, linha {idx + 2}")
+                                    continue
                             else:
                                 erros.append(f"Não há clientes cadastrados no sistema para associar à proposta na linha {idx + 2}")
                                 continue
