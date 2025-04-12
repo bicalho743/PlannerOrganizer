@@ -125,7 +125,22 @@ def find_client_id(client_name, mappings):
 
 # Função para importar diretamente as propostas
 def importar_propostas_direto(db):
-    # Planilha de propostas embutida no código
+    try:
+        # Buscando clientes para verificar se existem
+        clientes = db.get_clientes()
+        if clientes.empty:
+            return False, f"Não há clientes cadastrados no sistema. Por favor, importe os clientes primeiro.", []
+            
+        st.info(f"Encontrados {len(clientes)} clientes no sistema.")
+        
+        # Mostrar alguns clientes para confirmação
+        with st.expander("Ver lista de clientes disponíveis (primeiros 10)"):
+            st.dataframe(clientes[['id', 'nome']].head(10))
+    except Exception as e:
+        st.error(f"Erro ao buscar clientes: {str(e)}")
+        return False, f"Erro ao acessar o banco de dados: {str(e)}", []
+    
+    # Planilha de propostas embutida no código - com dados reais
     propostas_csv = """cliente_nome;descricao;valor;status;tipo_proposta;data_inicio;data_fim;prazo_entrega
 Alessandra Marquiori;Organização;R$ 1.400,00;fechada;Organização;04/11/2023;10/11/2023;
 Daniela Cristina Gomes Paraguai;Organização;R$ 1.900,00;fechada;Organização;13/11/2023;14/11/2023;

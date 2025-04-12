@@ -156,9 +156,9 @@ st.sidebar.markdown("""
 
 # Ferramenta especial de importação direta
 if st.sidebar.button("⚡ IMPORTAR PROPOSTAS DIRETO", type="primary"):
-    import importar_planilha_diretamente
-    importar_planilha_diretamente.show()
-    st.stop()
+    # Definir estado para manter-se na página de importação direta
+    st.session_state.current_page = "ImportacaoDireta"
+    st.rerun()
 
 # Container dos botões com fundo escuro
 st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
@@ -322,6 +322,9 @@ else:
         elif st.session_state.current_page == "Relatórios":
             from pages.relatorios import show
             show()
+        elif st.session_state.current_page == "ImportacaoDireta":
+            import importar_planilha_diretamente
+            importar_planilha_diretamente.show()
         elif st.session_state.current_page == "Importar":
             st.title("📥 Importação de Dados")
             st.write("### Selecione o tipo de dados para importar:")
