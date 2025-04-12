@@ -459,15 +459,25 @@ class Database:
         
         Os parâmetros são renomeados para evitar conflitos de escopo
         """
-        # Salvar valores em variáveis com nomes diferentes para evitar colisão
-        cliente_id_local = int(cliente_id) if cliente_id is not None else None
-        descricao_local = descricao
-        valor_local = float(valor) if valor is not None else None
-        status_local = status
-        tipo_proposta_local = tipo_proposta
-        data_inicio_local = data_inicio
-        data_fim_local = data_fim
-        prazo_entrega_local = prazo_entrega
+        # Verificações mais robustas dos valores antes de convertê-los
+        if cliente_id is None:
+            raise ValueError("Cliente ID não pode ser nulo")
+            
+        if valor is None:
+            raise ValueError("Valor da proposta não pode ser nulo")
+            
+        try:
+            # Salvar valores em variáveis com nomes diferentes para evitar colisão
+            cliente_id_local = int(cliente_id)
+            descricao_local = descricao
+            valor_local = float(valor)
+            status_local = status
+            tipo_proposta_local = tipo_proposta
+            data_inicio_local = data_inicio
+            data_fim_local = data_fim
+            prazo_entrega_local = prazo_entrega
+        except (ValueError, TypeError) as e:
+            raise ValueError(f"Erro ao converter valores: {str(e)}")
         
         def query():
             # Gerar próximo número de proposta
