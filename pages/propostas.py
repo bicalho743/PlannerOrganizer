@@ -41,7 +41,11 @@ def mostrar_nova_proposta():
 
             # Campos do formulário
             cliente_nome = st.selectbox("Cliente", clientes['nome'].tolist())
-            cliente_id = int(clientes[clientes['nome'] == cliente_nome]['id'].iloc[0])
+            cliente_row = clientes[clientes['nome'] == cliente_nome]
+            if cliente_row.empty:
+                st.error("Cliente não encontrado")
+                return
+            cliente_id = int(cliente_row['id'].iloc[0])
 
             descricao = st.text_area("Descrição do Serviço")
             valor = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
@@ -54,11 +58,11 @@ def mostrar_nova_proposta():
 
             col1, col2 = st.columns(2)
             with col1:
-                data_inicio = st.date_input("Data de Início", format="DD/MM/YYYY")
+                data_inicio = st.date_input("Data de Início")
             with col2:
-                data_fim = st.date_input("Data de Fim", format="DD/MM/YYYY")
+                data_fim = st.date_input("Data de Fim")
 
-            prazo_entrega = st.date_input("Prazo de Entrega", format="DD/MM/YYYY") if tipo_proposta in ["Organização", "Organização Mudança"] else None
+            prazo_entrega = st.date_input("Prazo de Entrega") if tipo_proposta in ["Organização", "Organização Mudança"] else None
             status = st.selectbox("Status", ["Aberta", "Recusada", "Fechada"])
 
             # Botão de submissão
