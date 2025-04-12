@@ -48,14 +48,34 @@ Ciclano dos Santos;Consultoria de decoração;2000.00;Aberta;Consultoria;15/05/2
 template_file = io.BytesIO()
 template_df = pd.DataFrame([
     {
-        'cliente_nome': 'Fulano da Silva',
+        'cliente_nome': 'Maria da Silva',
         'descricao': 'Organização de armários',
-        'valor': 1500.00,
+        'valor': '1500,00',
         'status': 'Aberta',
         'tipo_proposta': 'Organização',
         'data_inicio': '01/06/2025',
         'data_fim': '10/06/2025',
         'prazo_entrega': '15/06/2025'
+    },
+    {
+        'cliente_nome': 'João Santos',
+        'descricao': 'Consultoria de decoração',
+        'valor': '2000,00',
+        'status': 'Aberta',
+        'tipo_proposta': 'Consultoria',
+        'data_inicio': '15/05/2025',
+        'data_fim': '20/05/2025',
+        'prazo_entrega': '30/05/2025'
+    },
+    {
+        'cliente_nome': 'Ana Oliveira',
+        'descricao': 'Reorganização de cozinha',
+        'valor': '1800,00',
+        'status': 'Aberta',
+        'tipo_proposta': 'Reorganização',
+        'data_inicio': '15/07/2025',
+        'data_fim': '20/07/2025',
+        'prazo_entrega': '25/07/2025'
     }
 ])
 
@@ -287,6 +307,9 @@ def importar_propostas(arquivo, debug_mode=False, usar_cliente_id=False):
                         if cliente_id is None:
                             erros.append(f"Cliente '{cliente_nome}' não encontrado na linha {idx + 2}")
                             continue
+                            
+                        # Garantir que cliente_id seja um int válido
+                        cliente_id = int(cliente_id)
                         
                         # Debug
                         if debug_mode and cliente_encontrado:
