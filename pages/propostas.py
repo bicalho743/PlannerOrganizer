@@ -15,9 +15,9 @@ def show():
         horizontal=True,
         label_visibility="collapsed"
     )
-    
+
     st.write("---")  # Divisor para separar o menu das abas do conteúdo
-    
+
     # Exibir conteúdo com base na aba selecionada
     if aba_selecionada == "Nova Proposta":
         mostrar_nova_proposta()
@@ -162,11 +162,13 @@ def mostrar_lista_propostas():
                             acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
 
                             # Gerar PDF
+                            usar_template_canva = st.checkbox("Usar Template Canva")
                             pdf_path = gerar_pdf_fechamento(
                                 proposta=proposta,
                                 cliente={'nome': proposta['nome']},
                                 acrescimos=acrescimos,
-                                filename=filename
+                                filename=filename,
+                                usar_template=usar_template_canva
                             )
 
                             # Criar link para download
@@ -320,7 +322,7 @@ def mostrar_andamento():
 
 def mostrar_importacao():
     st.subheader("Importar Propostas")
-    
+
     # Instruções para o usuário
     st.write("""
     Para importar propostas, seu arquivo CSV deve ter o seguinte formato:
@@ -334,7 +336,7 @@ def mostrar_importacao():
         - data_inicio: Data de início (formato: DD/MM/YYYY)
         - data_fim: Data de fim (formato: DD/MM/YYYY)
     """)
-    
+
     # Download de template para o usuário
     col1, col2 = st.columns([1, 2])
     with col1:
@@ -346,13 +348,13 @@ def mostrar_importacao():
             "text/csv",
             help="Baixe este template, preencha com seus dados e faça upload para importar"
         )
-    
+
     with col2:
         st.info("""
         O template contém todas as colunas necessárias para importar propostas.
         Preencha os dados e faça upload do arquivo abaixo.
         """)
-    
+
     # Upload do arquivo
     st.subheader("Upload do arquivo")
     arquivo = st.file_uploader(
@@ -360,7 +362,7 @@ def mostrar_importacao():
         type=['csv'],
         key="proposta_file_uploader"
     )
-    
+
     if arquivo:
         if st.button("Importar Propostas", key="importar_propostas_button", type="primary"):
             try:
@@ -373,3 +375,22 @@ def mostrar_importacao():
                         st.error(mensagem)
             except Exception as e:
                 st.error(f"Erro ao importar propostas: {str(e)}")
+
+def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename, usar_template=False):
+    if usar_template:
+        from utils.pdf_merger import preencher_template_canva
+        dados = {
+            'cliente': cliente['nome'],
+            'valor': float(proposta['valor']),
+            'data': datetime.now().strftime('%d/%m/%Y'),
+            'descricao': proposta['descricao']
+        }
+        template_path = "templates/proposta_template.pdf"
+        preencher_template_canva(template_path, dados, filename)
+        return filename
+    else:
+        #Example of how it might look:  Replace this with your actual original PDF generation code.
+        #This is a placeholder,  you need to replace this with your existing code.
+        with open(filename, "wb") as f:
+            f.write(b"This is a placeholder PDF. Replace this with your actual PDF generation code.")
+        return filename
