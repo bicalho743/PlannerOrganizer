@@ -11,47 +11,80 @@ def salvar_proposta(db, cliente_id_arg, descricao_arg,
                    valor_arg, status_arg, tipo_proposta_arg=None,
                    data_inicio_arg=None, data_fim_arg=None, 
                    prazo_entrega_arg=None):
-    """Função isolada para salvar proposta no banco de dados"""
+    """
+    Função isolada para salvar proposta diretamente no banco de dados
+    Esta função contorna a função add_proposta do módulo Database 
+    e acessa diretamente o Session do banco para evitar problemas de escopo
+    """
     try:
-        # Validar cliente_id_arg - verificando se não é None antes
+        # VERIFICAÇÕES PREVENTIVAS
+        # Validar cliente_id
         if cliente_id_arg is None:
             return False, None, "ID do cliente não pode ser nulo"
             
-        # Validar valor_arg - verificando se não é None antes
+        # Validar valor
         if valor_arg is None:
             return False, None, "Valor da proposta não pode ser nulo"
             
-        # Garantir que os tipos estejam corretos - com validações adicionais
-        # para evitar erros de conversão 'NoneType'
+        # Converter tipos com validação
         try:
             cliente_id_int = int(cliente_id_arg)
         except (TypeError, ValueError):
-            return False, None, f"Erro ao converter ID do cliente para número: {cliente_id_arg}"
+            return False, None, f"Erro ao converter ID do cliente: {cliente_id_arg} ({type(cliente_id_arg)})"
             
         try:
             valor_float = float(valor_arg)
         except (TypeError, ValueError):
-            return False, None, f"Erro ao converter valor para número: {valor_arg}"
+            return False, None, f"Erro ao converter valor: {valor_arg} ({type(valor_arg)})"
         
-        # Debug para verificar os valores
-        print(f"Debug - Salvando proposta: cliente_id={cliente_id_int}, valor={valor_float}")
+        # Log para debug
+        print(f"Debug - Valores validados: cliente_id={cliente_id_int}, valor={valor_float}")
         
-        # Chamar a função do banco de dados
-        proposta_id = db.add_proposta(
-            cliente_id=cliente_id_int,
-            descricao=descricao_arg,
-            valor=valor_float,
-            status=status_arg,
-            tipo_proposta=tipo_proposta_arg,
-            data_inicio=data_inicio_arg,
-            data_fim=data_fim_arg,
-            prazo_entrega=prazo_entrega_arg
-        )
-        return True, proposta_id, None
+        # INSERIR DIRETAMENTE NO BANCO
+        try:
+            from utils.database import Proposta
+            from sqlalchemy import func
+            
+            # Obter sessão do banco
+            session = db.session
+            
+            # Gerar próximo número de proposta
+            ultimo_numero = session.query(func.max(Proposta.numero)).scalar()
+            proximo_numero = 1 if ultimo_numero is None else int(ultimo_numero) + 1
+            
+            # Criar objeto Proposta
+            proposta = Proposta(
+                numero=proximo_numero,
+                cliente_id=cliente_id_int,
+                descricao=descricao_arg,
+                valor=valor_float,
+                status=status_arg,
+                tipo_proposta=tipo_proposta_arg,
+                data_inicio=data_inicio_arg,
+                data_fim=data_fim_arg,
+                prazo_entrega=prazo_entrega_arg
+            )
+            
+            # Adicionar à sessão
+            session.add(proposta)
+            session.commit()
+            
+            # Obter ID
+            proposta_id = proposta.id
+            
+            return True, proposta_id, None
+            
+        except Exception as e:
+            # Rollback em caso de erro
+            session.rollback()
+            import traceback
+            traceback_str = traceback.format_exc()
+            return False, None, f"Erro SQL: {str(e)}\n{traceback_str}"
+            
     except Exception as e:
         import traceback
         traceback_str = traceback.format_exc()
-        return False, None, f"{str(e)}\n{traceback_str}"
+        return False, None, f"Erro geral: {str(e)}\n{traceback_str}"
 
 def normalizar_valor_monetario(valor_str):
     """Normaliza um valor monetário no formato brasileiro para float"""
