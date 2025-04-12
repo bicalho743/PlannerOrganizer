@@ -35,6 +35,10 @@ args = "Limpar Clientes"
 task = "workflow.run"
 args = "Importar Clientes"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Importar Propostas V2"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -109,6 +113,21 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run importar_clientes.py --server.port 8507 --server.address 0.0.0.0"
 waitForPort = 8507
+
+[[workflows.workflow]]
+name = "Importar Propostas V2"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run importar_propostas_v2.py --server.port 8501 --server.address 0.0.0.0"
+waitForPort = 8501
 
 [[ports]]
 localPort = 443
