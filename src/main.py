@@ -154,6 +154,12 @@ st.sidebar.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# Ferramenta especial de importação direta
+if st.sidebar.button("⚡ IMPORTAR PROPOSTAS DIRETO", type="primary"):
+    import importar_planilha_diretamente
+    importar_planilha_diretamente.show()
+    st.stop()
+
 # Container dos botões com fundo escuro
 st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
 
