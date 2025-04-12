@@ -473,9 +473,11 @@ class Database:
             valor_local = float(valor)
             status_local = status
             tipo_proposta_local = tipo_proposta
-            data_inicio_local = data_inicio
-            data_fim_local = data_fim
-            prazo_entrega_local = prazo_entrega
+            
+            # Para datas, vamos garantir que não sejam None antes de usar
+            data_inicio_local = data_inicio if data_inicio is not None else None
+            data_fim_local = data_fim if data_fim is not None else None
+            prazo_entrega_local = prazo_entrega if prazo_entrega is not None else None
         except (ValueError, TypeError) as e:
             raise ValueError(f"Erro ao converter valores: {str(e)}")
         
@@ -484,20 +486,32 @@ class Database:
             ultimo_numero = self.session.query(func.max(Proposta.numero)).scalar()
             proximo_numero = 1 if ultimo_numero is None else int(ultimo_numero) + 1
 
-            # Usar as variáveis locais com nomes diferentes
-            proposta = Proposta(
-                numero=proximo_numero,
-                cliente_id=cliente_id_local,  # Usar variável renomeada
-                descricao=descricao_local,    # Usar variável renomeada
-                valor=valor_local,            # Usar variável renomeada
-                status=status_local,          # Usar variável renomeada
-                tipo_proposta=tipo_proposta_local,  # Usar variável renomeada
-                data_inicio=data_inicio_local,      # Usar variável renomeada
-                data_fim=data_fim_local,            # Usar variável renomeada
-                prazo_entrega=prazo_entrega_local   # Usar variável renomeada
-            )
+            # Criar dicionário com valores para a proposta
+            proposta_data = {
+                'numero': proximo_numero,
+                'cliente_id': cliente_id_local,
+                'descricao': descricao_local,
+                'valor': valor_local,
+                'status': status_local,
+            }
+            
+            # Adicionar valores opcionais apenas se não forem None
+            if tipo_proposta_local is not None:
+                proposta_data['tipo_proposta'] = tipo_proposta_local
+            if data_inicio_local is not None:
+                proposta_data['data_inicio'] = data_inicio_local
+            if data_fim_local is not None:
+                proposta_data['data_fim'] = data_fim_local
+            if prazo_entrega_local is not None:
+                proposta_data['prazo_entrega'] = prazo_entrega_local
+                
+            # Criar a proposta com os valores filtrados
+            proposta = Proposta(**proposta_data)
             self.session.add(proposta)
-            return int(proposta.id)  # Converter para int nativo
+            
+            # Garantir que temos um ID válido
+            self.session.flush()
+            return int(proposta.id) if proposta.id is not None else 0
         
         return self._safe_query(query)
 
