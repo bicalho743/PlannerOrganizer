@@ -555,14 +555,14 @@ if arquivo:
                             
                             # Informações de debug
                             if "info_debug" in etapa:
-                                with st.expander("Ver informações de debug"):
-                                    for info in etapa["info_debug"]:
-                                        st.write(info)
+                                st.write("**Informações de debug:**")
+                                for info in etapa["info_debug"]:
+                                    st.write(f"- {info}")
                             
                             # Traceback para erros
                             if "traceback" in etapa:
-                                with st.expander("Ver traceback do erro"):
-                                    st.code(etapa["traceback"])
+                                st.write("**Traceback do erro:**")
+                                st.code(etapa["traceback"])
                         
                         # Resultado final
                         if "sucesso" in analise and analise["sucesso"]:
