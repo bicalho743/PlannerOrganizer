@@ -38,6 +38,13 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Configuração para formato de data brasileiro (DD/MM/YYYY)
+locale_date_format = "DD/MM/YYYY"
+
+# Aplicar configuração de data
+if "date_format" not in st.session_state:
+    st.session_state.date_format = locale_date_format
+
 # Inicialização da base de dados
 if 'db' not in st.session_state:
     try:

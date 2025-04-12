@@ -54,11 +54,11 @@ def mostrar_nova_proposta():
 
             col1, col2 = st.columns(2)
             with col1:
-                data_inicio = st.date_input("Data de Início")
+                data_inicio = st.date_input("Data de Início", format="DD/MM/YYYY")
             with col2:
-                data_fim = st.date_input("Data de Fim")
+                data_fim = st.date_input("Data de Fim", format="DD/MM/YYYY")
 
-            prazo_entrega = st.date_input("Prazo de Entrega") if tipo_proposta in ["Organização", "Organização Mudança"] else None
+            prazo_entrega = st.date_input("Prazo de Entrega", format="DD/MM/YYYY") if tipo_proposta in ["Organização", "Organização Mudança"] else None
             status = st.selectbox("Status", ["Aberta", "Recusada", "Fechada"])
 
             # Botão de submissão
