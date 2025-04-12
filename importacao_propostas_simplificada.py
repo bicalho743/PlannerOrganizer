@@ -63,7 +63,7 @@ def criar_modelo_csv():
     df = pd.DataFrame(dados)
     
     # Salvar no sistema de arquivos
-    modelo_path = 'modelo_propostas_para_importacao.csv'
+    modelo_path = 'template_proposta.csv'
     df.to_csv(modelo_path, index=False, sep=';')
     st.success(f"Modelo atualizado em {modelo_path}")
     
@@ -313,7 +313,7 @@ modelo_csv = criar_modelo_csv()
 st.download_button(
     label="📥 Baixar modelo CSV",
     data=modelo_csv,
-    file_name="modelo_propostas_para_importacao.csv",
+    file_name="template_proposta.csv",
     mime="text/csv"
 )
 
