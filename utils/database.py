@@ -453,28 +453,42 @@ class Database:
 
     def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, 
                     data_inicio=None, data_fim=None, prazo_entrega=None):
+        """
+        VERSÃO MODIFICADA PARA EVITAR PROBLEMAS DE ESCOPO
+        Função para adicionar proposta ao banco de dados
+        
+        Os parâmetros são renomeados para evitar conflitos de escopo
+        """
+        # Salvar valores em variáveis com nomes diferentes para evitar colisão
+        cliente_id_local = int(cliente_id) if cliente_id is not None else None
+        descricao_local = descricao
+        valor_local = float(valor) if valor is not None else None
+        status_local = status
+        tipo_proposta_local = tipo_proposta
+        data_inicio_local = data_inicio
+        data_fim_local = data_fim
+        prazo_entrega_local = prazo_entrega
+        
         def query():
-            # Converter tipos para formato nativo Python
-            cliente_id = int(cliente_id)
-            valor = float(valor) if valor is not None else None
-
             # Gerar próximo número de proposta
             ultimo_numero = self.session.query(func.max(Proposta.numero)).scalar()
             proximo_numero = 1 if ultimo_numero is None else int(ultimo_numero) + 1
 
+            # Usar as variáveis locais com nomes diferentes
             proposta = Proposta(
                 numero=proximo_numero,
-                cliente_id=cliente_id,
-                descricao=descricao,
-                valor=valor,
-                status=status,
-                tipo_proposta=tipo_proposta,
-                data_inicio=data_inicio,
-                data_fim=data_fim,
-                prazo_entrega=prazo_entrega
+                cliente_id=cliente_id_local,  # Usar variável renomeada
+                descricao=descricao_local,    # Usar variável renomeada
+                valor=valor_local,            # Usar variável renomeada
+                status=status_local,          # Usar variável renomeada
+                tipo_proposta=tipo_proposta_local,  # Usar variável renomeada
+                data_inicio=data_inicio_local,      # Usar variável renomeada
+                data_fim=data_fim_local,            # Usar variável renomeada
+                prazo_entrega=prazo_entrega_local   # Usar variável renomeada
             )
             self.session.add(proposta)
             return int(proposta.id)  # Converter para int nativo
+        
         return self._safe_query(query)
 
     def get_financeiro(self):
