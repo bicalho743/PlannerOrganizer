@@ -493,30 +493,46 @@ Ana Clara;organização;R$ 3450.00;fechada;organização;01/04/2025;05/04/2025;"
                 # Verificação final dos dados
                 st.text(f"Verificando proposta {idx+1} - Cliente ID: {proposta_data.get('cliente_id')} | Valor: {proposta_data.get('valor')}")
                 
-                # 7. Adicionar proposta ao banco de dados
+                # 7. Adicionar proposta ao banco de dados usando uma função interna
                 try:
-                    # Extrair explicitamente os argumentos do dicionário para chamar a função diretamente
-                    cliente_id = proposta_data['cliente_id']
-                    descricao = proposta_data['descricao']
-                    valor = proposta_data['valor']
-                    status = proposta_data['status']
+                    # Função de helper para salvar proposta - garante escopo isolado para os parâmetros
+                    def __save_proposta(db_conn, cliente_id_save, descricao_save, valor_save, status_save,
+                                      tipo_proposta_save=None, data_inicio_save=None, 
+                                      data_fim_save=None, prazo_entrega_save=None):
+                        return db_conn.add_proposta(
+                            cliente_id=cliente_id_save,
+                            descricao=descricao_save,
+                            valor=valor_save,
+                            status=status_save,
+                            tipo_proposta=tipo_proposta_save,
+                            data_inicio=data_inicio_save,
+                            data_fim=data_fim_save,
+                            prazo_entrega=prazo_entrega_save
+                        )
+                    
+                    # Extrair dados da proposta
+                    cliente_id_val = proposta_data['cliente_id']
+                    descricao_val = proposta_data['descricao']
+                    valor_val = proposta_data['valor']
+                    status_val = proposta_data['status']
                     
                     # Argumentos opcionais
-                    tipo_proposta = proposta_data.get('tipo_proposta')
-                    data_inicio = proposta_data.get('data_inicio')
-                    data_fim = proposta_data.get('data_fim')
-                    prazo_entrega = proposta_data.get('prazo_entrega')
+                    tipo_proposta_val = proposta_data.get('tipo_proposta')
+                    data_inicio_val = proposta_data.get('data_inicio')
+                    data_fim_val = proposta_data.get('data_fim')
+                    prazo_entrega_val = proposta_data.get('prazo_entrega')
                     
                     # Chamar a função com argumentos explícitos
-                    proposta_id = db.add_proposta(
-                        cliente_id=cliente_id,
-                        descricao=descricao,
-                        valor=valor,
-                        status=status,
-                        tipo_proposta=tipo_proposta,
-                        data_inicio=data_inicio,
-                        data_fim=data_fim,
-                        prazo_entrega=prazo_entrega
+                    proposta_id = __save_proposta(
+                        db_conn=db,
+                        cliente_id_save=cliente_id_val,
+                        descricao_save=descricao_val,
+                        valor_save=valor_val,
+                        status_save=status_val,
+                        tipo_proposta_save=tipo_proposta_val,
+                        data_inicio_save=data_inicio_val,
+                        data_fim_save=data_fim_val,
+                        prazo_entrega_save=prazo_entrega_val
                     )
                     
                     sucessos += 1
