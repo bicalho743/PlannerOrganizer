@@ -310,10 +310,10 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                             cliente_nome = str(row['cliente_nome']).strip()
                             clientes = db.get_clientes()
                             
+                            # Variável para garantir que cliente_id seja sempre definido
+                            cliente_id = None
+                            
                             if not clientes.empty:
-                                # Inicializar cliente_id como None
-                                cliente_id = None
-                                
                                 # Exibe debug no console
                                 logger.info(f"Buscando cliente pelo nome: '{cliente_nome}'")
                                 logger.info(f"Clientes disponíveis: {clientes['nome'].tolist()}")
@@ -322,26 +322,39 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                                 cliente_encontrado = clientes[clientes['nome'] == cliente_nome]
                                 
                                 if not cliente_encontrado.empty:
-                                    cliente_id = int(cliente_encontrado['id'].iloc[0])
-                                    logger.info(f"Cliente encontrado com ID: {cliente_id}")
+                                    try:
+                                        cliente_id = int(cliente_encontrado['id'].iloc[0])
+                                        logger.info(f"Cliente encontrado com ID: {cliente_id}")
+                                    except (ValueError, TypeError, IndexError) as e:
+                                        logger.error(f"Erro ao converter ID do cliente: {str(e)}")
+                                        erros.append(f"Erro ao processar ID do cliente '{cliente_nome}' na linha {idx + 2}: {str(e)}")
+                                        continue
                                 else:
                                     # Estratégia 2: Busca usando unidecode para normalizar acentos
                                     cliente_nome_norm = unidecode.unidecode(cliente_nome.lower())
                                     for _, c in clientes.iterrows():
-                                        nome_db_norm = unidecode.unidecode(c['nome'].lower())
+                                        nome_db_norm = unidecode.unidecode(str(c['nome']).lower())
                                         if cliente_nome_norm == nome_db_norm:
-                                            cliente_id = int(c['id'])
-                                            logger.info(f"Cliente encontrado usando normalização: {c['nome']}, ID: {cliente_id}")
-                                            break
+                                            try:
+                                                cliente_id = int(c['id'])
+                                                logger.info(f"Cliente encontrado usando normalização: {c['nome']}, ID: {cliente_id}")
+                                                break
+                                            except (ValueError, TypeError) as e:
+                                                logger.error(f"Erro ao converter ID do cliente: {str(e)}")
+                                                continue
                                     
-                                    # Estratégia 3: Busca com correspondência parcial
+                                    # Estratégia 3: Busca com correspondência parcial (só se não foi encontrado até agora)
                                     if cliente_id is None:
                                         for _, c in clientes.iterrows():
-                                            nome_db_norm = unidecode.unidecode(c['nome'].lower())
+                                            nome_db_norm = unidecode.unidecode(str(c['nome']).lower())
                                             if cliente_nome_norm in nome_db_norm or nome_db_norm in cliente_nome_norm:
-                                                cliente_id = int(c['id'])
-                                                logger.info(f"Cliente encontrado com correspondência parcial: {c['nome']}, ID: {cliente_id}")
-                                                break
+                                                try:
+                                                    cliente_id = int(c['id'])
+                                                    logger.info(f"Cliente encontrado com correspondência parcial: {c['nome']}, ID: {cliente_id}")
+                                                    break
+                                                except (ValueError, TypeError) as e:
+                                                    logger.error(f"Erro ao converter ID do cliente: {str(e)}")
+                                                    continue
                                 
                                 # Se não encontrou o cliente após todas as tentativas
                                 if cliente_id is None:
@@ -350,8 +363,10 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                             else:
                                 erros.append(f"Não há clientes cadastrados no sistema para associar à proposta na linha {idx + 2}")
                                 continue
-                        else:
-                            erros.append(f"Cliente não especificado na linha {idx + 2}")
+                                
+                        # Se chegou aqui sem um cliente_id válido, não continua
+                        if cliente_id is None:
+                            erros.append(f"ID de cliente não reconhecido na linha {idx + 2}")
                             continue
                             
                         # Validar descrição
