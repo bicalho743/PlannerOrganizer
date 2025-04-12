@@ -390,6 +390,47 @@ class Database:
             self.session.add(cliente)
             return cliente.id
         return self._safe_query(query)
+        
+    def add_cliente_with_id(self, id, nome, email=None, telefone=None, estado=None, cidade=None, bairro=None, 
+                           endereco=None, cpf=None, data_aniversario=None, origem_cliente=None, observacoes=None):
+        """
+        Adiciona um cliente com um ID específico (para importação)
+        
+        Args:
+            id (int): ID específico do cliente
+            nome (str): Nome do cliente
+            email (str, optional): Email do cliente
+            telefone (str, optional): Telefone do cliente
+            estado (str, optional): Estado (UF)
+            cidade (str, optional): Cidade
+            bairro (str, optional): Bairro
+            endereco (str, optional): Endereço
+            cpf (str, optional): CPF
+            data_aniversario (str, optional): Data de aniversário
+            origem_cliente (str, optional): Origem do cliente
+            observacoes (str, optional): Observações
+            
+        Returns:
+            int: ID do cliente adicionado
+        """
+        def query():
+            cliente = Cliente(
+                id=id,  # Usar o ID especificado
+                nome=nome,
+                email=email,
+                telefone=telefone,
+                estado=estado,
+                cidade=cidade,
+                bairro=bairro,
+                endereco=endereco,
+                cpf=cpf,
+                data_aniversario=data_aniversario,
+                origem_cliente=origem_cliente,
+                observacoes=observacoes
+            )
+            self.session.add(cliente)
+            return cliente.id
+        return self._safe_query(query)
 
     def get_propostas(self):
         def query():
