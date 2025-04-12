@@ -113,20 +113,118 @@ def mostrar_lista_propostas():
 
             # Ordenar por data de proposta, mais recentes primeiro
             propostas = propostas.sort_values('data_proposta', ascending=False)
+            
+            # Guardar a referência original das propostas
+            st.session_state.propostas_completas = propostas.copy()
 
             # Criar DataFrame para exibição
-            df_display = propostas[['numero', 'nome', 'descricao', 'valor', 'status', 'data_proposta']].copy()
-            df_display.columns = ['Número', 'Cliente', 'Descrição', 'Valor (R$)', 'Status', 'Data']
+            df_display = propostas[['id', 'numero', 'nome', 'descricao', 'valor', 'status', 'data_proposta']].copy()
+            df_display.columns = ['ID', 'Número', 'Cliente', 'Descrição', 'Valor (R$)', 'Status', 'Data']
 
             # Formatar valores
             df_display['Valor (R$)'] = df_display['Valor (R$)'].apply(lambda x: f'R$ {float(x):.2f}')
             # Formatação da data no formato brasileiro (DD/MM/YYYY)
             df_display['Data'] = pd.to_datetime(df_display['Data']).dt.strftime('%d/%m/%Y')
-
-            # Exibir tabela
-            st.dataframe(df_display, hide_index=True)
-
+            
+            # Criar uma cópia do DataFrame no state para edição
+            if 'propostas_editaveis' not in st.session_state:
+                st.session_state.propostas_editaveis = df_display.copy()
+            
+            # Exibir tabela editável
+            st.write("**Edite os dados diretamente na tabela abaixo:**")
+            edited_df = st.data_editor(
+                df_display,
+                hide_index=True,
+                use_container_width=True,
+                column_config={
+                    "ID": st.column_config.NumberColumn(
+                        "ID", 
+                        disabled=True,
+                        required=True,
+                        width="small"
+                    ),
+                    "Número": st.column_config.NumberColumn(
+                        "Número", 
+                        disabled=True,
+                        required=True,
+                        width="small"
+                    ),
+                    "Cliente": st.column_config.TextColumn(
+                        "Cliente",
+                        disabled=True,
+                        width="medium"
+                    ),
+                    "Descrição": st.column_config.TextColumn(
+                        "Descrição",
+                        width="medium"
+                    ),
+                    "Valor (R$)": st.column_config.TextColumn(
+                        "Valor (R$)",
+                        width="small"
+                    ),
+                    "Status": st.column_config.SelectboxColumn(
+                        "Status",
+                        options=["Aberta", "Fechada", "Recusada"],
+                        width="small"
+                    ),
+                    "Data": st.column_config.TextColumn(
+                        "Data",
+                        disabled=True,
+                        width="small"
+                    ),
+                },
+                num_rows="dynamic",
+                key="propostas_editor"
+            )
+            
+            # Verificar se houve alterações e atualizar o banco de dados
+            if st.button("Salvar Alterações"):
+                contador_atualizacoes = 0
+                
+                # Verificar cada linha do DataFrame editado
+                for i, row in edited_df.iterrows():
+                    proposta_id = row['ID']
+                    proposta_original = st.session_state.propostas_completas[st.session_state.propostas_completas['id'] == proposta_id].iloc[0]
+                    
+                    # Verificar se houve alteração na descrição
+                    if row['Descrição'] != proposta_original['descricao']:
+                        st.session_state.db.atualizar_proposta(
+                            proposta_id=proposta_id,
+                            descricao=row['Descrição']
+                        )
+                        contador_atualizacoes += 1
+                    
+                    # Verificar se houve alteração no status
+                    if row['Status'] != proposta_original['status']:
+                        st.session_state.db.atualizar_proposta(
+                            proposta_id=proposta_id,
+                            status=row['Status']
+                        )
+                        contador_atualizacoes += 1
+                    
+                    # Verificar se houve alteração no valor
+                    valor_editado = row['Valor (R$)'].replace('R$', '').replace('.', '').replace(',', '.').strip()
+                    try:
+                        valor_editado = float(valor_editado)
+                        if abs(valor_editado - float(proposta_original['valor'])) > 0.01:  # Comparação com tolerância
+                            st.session_state.db.atualizar_proposta(
+                                proposta_id=proposta_id,
+                                valor=valor_editado
+                            )
+                            contador_atualizacoes += 1
+                    except:
+                        st.warning(f"Valor inválido para a proposta {row['Número']}: {row['Valor (R$)']}")
+                
+                if contador_atualizacoes > 0:
+                    st.success(f"{contador_atualizacoes} atualizações realizadas com sucesso!")
+                    st.rerun()
+                else:
+                    st.info("Nenhuma alteração detectada.")
+            
+            st.markdown("---")
+            
             # Seleção de proposta para ação
+            st.subheader("Outras Ações")
             col1, col2 = st.columns(2)
             with col1:
                 proposta_num = st.number_input("Número da proposta para ação:", 

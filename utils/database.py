@@ -1014,6 +1014,62 @@ class Database:
             except (ValueError, TypeError) as e:
                 raise Exception(f"Erro ao converter valores: {str(e)}")
         return self._safe_query(query)
+        
+    def atualizar_proposta(self, proposta_id, descricao=None, valor=None, status=None, 
+                          tipo_proposta=None, data_inicio=None, data_fim=None, prazo_entrega=None):
+        """
+        Atualiza os dados de uma proposta existente
+        
+        Args:
+            proposta_id: ID da proposta a ser atualizada
+            descricao: Nova descrição (opcional)
+            valor: Novo valor (opcional)
+            status: Novo status (opcional)
+            tipo_proposta: Novo tipo de proposta (opcional)
+            data_inicio: Nova data de início (opcional)
+            data_fim: Nova data de fim (opcional)
+            prazo_entrega: Nova data de prazo de entrega (opcional)
+            
+        Returns:
+            bool: True se a atualização foi bem-sucedida, False caso contrário
+        """
+        def query():
+            try:
+                # Converter proposta_id para inteiro
+                proposta_id_int = int(proposta_id)
+                
+                # Buscar a proposta
+                proposta = self.session.query(Proposta).filter_by(id=proposta_id_int).first()
+                if not proposta:
+                    return False
+                
+                # Atualizar apenas os campos fornecidos
+                if descricao is not None:
+                    proposta.descricao = descricao
+                
+                if valor is not None:
+                    proposta.valor = float(valor)
+                
+                if status is not None:
+                    proposta.status = status
+                
+                if tipo_proposta is not None:
+                    proposta.tipo_proposta = tipo_proposta
+                
+                if data_inicio is not None:
+                    proposta.data_inicio = data_inicio
+                
+                if data_fim is not None:
+                    proposta.data_fim = data_fim
+                
+                if prazo_entrega is not None:
+                    proposta.prazo_entrega = prazo_entrega
+                
+                return True
+            except Exception as e:
+                raise Exception(f"Erro ao atualizar proposta: {str(e)}")
+        
+        return self._safe_query(query)
 
     def add_acrescimo_proposta(self, proposta_id, tipo, valor, descricao=None, fornecedor=None, status_pagamento='Pendente'):
         def query():
