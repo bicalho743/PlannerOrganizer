@@ -169,6 +169,7 @@ def importar_propostas(arquivo, debug_mode=False, usar_cliente_id=False):
                             if df.shape[0] > 0 and df.shape[1] > 1:
                                 if debug_mode:
                                     st.success(f"Arquivo lido com sucesso usando separador '{sep}' e codificação '{encoding}'")
+                                    logger.info(f"Successful read with separator='{sep}', encoding='{encoding}'")
                                 return df, True
                         except Exception as e:
                             if debug_mode:
@@ -213,11 +214,20 @@ def importar_propostas(arquivo, debug_mode=False, usar_cliente_id=False):
         # Obter o banco de dados
         db = st.session_state.db
         
+        # Verificar se já existem clientes no sistema, mesmo para modo cliente_id direto
+        clientes_df = db.get_clientes()
+        if clientes_df.empty and not debug_mode:
+            st.error("Não há clientes cadastrados no sistema. Importe clientes primeiro antes de importar propostas.")
+            return False, "Não há clientes cadastrados no sistema. Importe clientes primeiro."
+        
+        # Criar um conjunto com os IDs dos clientes disponíveis para verificação
+        clientes_ids_disponiveis = set(clientes_df['id'].astype(int).tolist()) if not clientes_df.empty else set()
+        
         # Carregar clientes para mapear nomes para IDs apenas se não estivermos usando cliente_id direto
         clientes_mapping = None
         if not usar_cliente_id:
             clientes_mapping = get_clients_mapping()
-            if not clientes_mapping['exact']:
+            if not clientes_mapping['exact'] and not debug_mode:
                 st.error("Não há clientes cadastrados no sistema")
                 return False, "Não há clientes cadastrados no sistema"
             
@@ -250,6 +260,12 @@ def importar_propostas(arquivo, debug_mode=False, usar_cliente_id=False):
                     # Usar cliente_id direto do arquivo
                     try:
                         cliente_id = int(row['cliente_id'])
+                        
+                        # Verificar se o cliente_id existe no sistema
+                        if cliente_id not in clientes_ids_disponiveis and not debug_mode:
+                            erros.append(f"Cliente não especificado na linha {idx + 2}")
+                            continue
+                            
                         if debug_mode:
                             st.info(f"Usando cliente_id do arquivo: {cliente_id}")
                     except (ValueError, TypeError):
