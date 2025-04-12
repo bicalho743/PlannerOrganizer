@@ -60,56 +60,95 @@ def normalizar_valor_monetario(valor_str):
 
 # Função para mapear/normalizar nomes de clientes para busca flexível
 def get_client_mappings(db):
+    """
+    Obter mapeamento de nomes de clientes para IDs
+    
+    Args:
+        db: Objeto de conexão com o banco de dados
+        
+    Returns:
+        dict: Dicionário com mapeamentos (exact, normalized, all_clients)
+    """
     # Obter clientes do banco de dados
-    clientes_df = db.get_clientes()
-    
-    if clientes_df.empty:
-        st.error("Não há clientes cadastrados no sistema. Importe clientes primeiro.")
+    try:
+        clientes_df = db.get_clientes()
+        
+        # Verificar se há clientes
+        if clientes_df.empty:
+            st.error("Não há clientes cadastrados no sistema. Importe clientes primeiro.")
+            return None
+        
+        # Mostrar alguns clientes para debug
+        st.write(f"Obtidos {len(clientes_df)} clientes do banco de dados.")
+        
+        # Criar mapa de nomes normalizados
+        client_map = {}
+        normalized_map = {}
+        
+        for _, row in clientes_df.iterrows():
+            client_id = row['id']
+            name = row['nome'].strip() if isinstance(row['nome'], str) else str(row['nome'])
+            
+            # Armazenar o nome original e ID
+            client_map[name] = client_id
+            
+            # Normalizar nome (remover acentos, minúsculas)
+            normalized_name = unidecode.unidecode(name.lower())
+            normalized_map[normalized_name] = client_id
+            
+            # Adicionar partes do nome para busca parcial
+            parts = normalized_name.split()
+            if len(parts) > 1:
+                normalized_map[parts[0]] = client_id  # Primeiro nome
+        
+        st.success(f"Mapeamento de clientes criado com sucesso. {len(client_map)} clientes mapeados.")
+        
+        return {
+            'exact': client_map,
+            'normalized': normalized_map,
+            'all_clients': clientes_df
+        }
+    except Exception as e:
+        st.error(f"Erro ao obter clientes: {str(e)}")
         return None
-    
-    # Criar mapa de nomes normalizados
-    client_map = {}
-    normalized_map = {}
-    
-    for _, row in clientes_df.iterrows():
-        client_id = row['id']
-        name = row['nome'].strip()
-        
-        # Armazenar o nome original e ID
-        client_map[name] = client_id
-        
-        # Normalizar nome (remover acentos, minúsculas)
-        normalized_name = unidecode.unidecode(name.lower())
-        normalized_map[normalized_name] = client_id
-        
-        # Adicionar partes do nome para busca parcial
-        parts = normalized_name.split()
-        if len(parts) > 1:
-            normalized_map[parts[0]] = client_id  # Primeiro nome
-    
-    return {
-        'exact': client_map,
-        'normalized': normalized_map,
-        'all_clients': clientes_df
-    }
 
 # Função para encontrar cliente por diferentes estratégias
 def find_client_id(client_name, mappings):
+    """
+    Procura um cliente pelo nome usando diferentes estratégias
+    
+    Args:
+        client_name (str): Nome do cliente para buscar
+        mappings (dict): Dicionário com mapeamentos de nomes para IDs
+        
+    Returns:
+        int: ID do cliente encontrado ou None se não encontrado
+    """
     if not client_name or not mappings:
+        return None
+    
+    # Verificar mappings
+    if 'exact' not in mappings or 'normalized' not in mappings:
+        print(f"Erro: Formato inválido de mappings: {mappings.keys()}")
         return None
     
     # 1. Busca exata
     if client_name in mappings['exact']:
-        return mappings['exact'][client_name]
+        client_id = mappings['exact'][client_name]
+        print(f"Encontrado cliente '{client_name}' por busca exata: ID={client_id}")
+        return client_id
     
     # 2. Busca normalizada
     normalized_name = unidecode.unidecode(client_name.lower())
     if normalized_name in mappings['normalized']:
-        return mappings['normalized'][normalized_name]
+        client_id = mappings['normalized'][normalized_name]
+        print(f"Encontrado cliente '{client_name}' por busca normalizada: ID={client_id}")
+        return client_id
     
     # 3. Busca parcial
     for stored_name, client_id in mappings['normalized'].items():
         if normalized_name in stored_name or stored_name in normalized_name:
+            print(f"Encontrado cliente '{client_name}' por busca parcial (match: '{stored_name}'): ID={client_id}")
             return client_id
     
     # 4. Busca por conteúdo parcial (mais flexível)
@@ -119,8 +158,10 @@ def find_client_id(client_name, mappings):
             original_name[:len(original_name)//2] in client_name or
             client_name[:len(client_name)//2] in original_name
         ):
+            print(f"Encontrado cliente '{client_name}' por busca flexível (match: '{original_name}'): ID={client_id}")
             return client_id
     
+    print(f"Cliente '{client_name}' não encontrado")
     return None
 
 # Função para importar diretamente as propostas
@@ -320,8 +361,17 @@ Ana Clara;organização;R$ 3450.00;fechada;organização;01/04/2025;05/04/2025;"
             # Campo opcional, ignorar erro
             pass
         
+        # Verificação adicional para garantir que cliente_id foi definido
+        if 'cliente_id' not in proposta_data or not proposta_data['cliente_id']:
+            erros.append(f"Erro: cliente_id não definido para proposta na linha {idx+2}")
+            continue
+            
         # 7. Adicionar proposta ao banco de dados
         try:
+            # Exibir dados que serão salvos para debug
+            st.text(f"Salvando proposta {idx+1}: Cliente ID: {proposta_data['cliente_id']}, Valor: {proposta_data['valor']}")
+            
+            # Salvar no banco de dados
             proposta_id = db.add_proposta(**proposta_data)
             sucessos += 1
         except Exception as e:

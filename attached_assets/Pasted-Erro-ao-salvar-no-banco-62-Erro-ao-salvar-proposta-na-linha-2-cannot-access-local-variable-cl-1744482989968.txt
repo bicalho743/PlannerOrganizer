@@ -1,0 +1,23 @@
+Erro ao salvar no banco (62)
+
+Erro ao salvar proposta na linha 2: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 3: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 4: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 5: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 6: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 7: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 8: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 9: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 10: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 11: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 12: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 13: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 14: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 15: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 16: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 17: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 18: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 19: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 20: cannot access local variable 'cliente_id' where it is not associated with a value
+Erro ao salvar proposta na linha 21: cannot access local variable 'cliente_id' where it is not associated with a value
+... e mais 42 erros deste tipo.
