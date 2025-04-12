@@ -43,10 +43,6 @@ args = "Importar Clientes"
 task = "workflow.run"
 args = "Importação Simplificada"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Debug Importação"
-
 [[workflows.workflow]]
 name = "Personal Organizer App"
 author = "agent"
@@ -149,22 +145,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run importacao_propostas_simplificada.py --server.port 8510 --server.address 0.0.0.0"
-waitForPort = 8510
-
-[[workflows.workflow]]
-name = "Debug Importação"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run importacao_propostas_debug.py --server.port 5000 --server.address 0.0.0.0"
+args = "streamlit run importacao_propostas_simplificada.py --server.port 5000 --server.address 0.0.0.0"
 waitForPort = 5000
 
 [[ports]]
