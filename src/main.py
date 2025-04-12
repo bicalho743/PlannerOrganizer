@@ -495,8 +495,30 @@ Ana Clara;organização;R$ 3450.00;fechada;organização;01/04/2025;05/04/2025;"
                 
                 # 7. Adicionar proposta ao banco de dados
                 try:
-                    # Salvar no banco de dados
-                    proposta_id = db.add_proposta(**proposta_data)
+                    # Extrair explicitamente os argumentos do dicionário para chamar a função diretamente
+                    cliente_id = proposta_data['cliente_id']
+                    descricao = proposta_data['descricao']
+                    valor = proposta_data['valor']
+                    status = proposta_data['status']
+                    
+                    # Argumentos opcionais
+                    tipo_proposta = proposta_data.get('tipo_proposta')
+                    data_inicio = proposta_data.get('data_inicio')
+                    data_fim = proposta_data.get('data_fim')
+                    prazo_entrega = proposta_data.get('prazo_entrega')
+                    
+                    # Chamar a função com argumentos explícitos
+                    proposta_id = db.add_proposta(
+                        cliente_id=cliente_id,
+                        descricao=descricao,
+                        valor=valor,
+                        status=status,
+                        tipo_proposta=tipo_proposta,
+                        data_inicio=data_inicio,
+                        data_fim=data_fim,
+                        prazo_entrega=prazo_entrega
+                    )
+                    
                     sucessos += 1
                     st.success(f"✅ Proposta {idx+1} salva com sucesso. ID: {proposta_id}")
                 except Exception as e:
