@@ -5,8 +5,73 @@ import io
 import logging
 import traceback
 import unidecode  # Para normalizar strings e melhorar comparações
+import re  # Para expressões regulares
 
 logger = logging.getLogger(__name__)
+
+# Função para normalizar valor monetário com tratamento super robusto
+def normalizar_valor_monetario(valor_str):
+    """
+    Normaliza um valor monetário no formato brasileiro para float
+    com tratamento robusto para diversos formatos e problemas
+    
+    Args:
+        valor_str: String com o valor monetário
+    
+    Returns:
+        float: Valor convertido para float ou None se inválido
+    """
+    try:
+        # Converter para string caso não seja
+        valor_str = str(valor_str).strip()
+        
+        # Remover símbolo de moeda e espaços
+        valor_str = re.sub(r'R\$', '', valor_str).replace(' ', '')
+        
+        # Manter apenas dígitos, pontos e vírgulas
+        valor_str = ''.join(c for c in valor_str if c.isdigit() or c in '.,')
+        
+        # Tratar o caso especial de dois pontos (ex: 3.450.00)
+        pontos = valor_str.count('.')
+        virgulas = valor_str.count(',')
+        
+        if pontos > 1 and virgulas == 0:
+            # Caso de múltiplos pontos sem vírgula (3.450.00)
+            partes = valor_str.split('.')
+            # Manter o último ponto como decimal
+            valor_str = ''.join(partes[:-1]) + '.' + partes[-1]
+        elif pontos == 1 and virgulas == 1:
+            # Caso de ponto e vírgula (1.234,56 ou 1,234.56)
+            if valor_str.find('.') < valor_str.find(','):
+                # Formato BR: 1.234,56 -> 1234.56
+                valor_str = valor_str.replace('.', '').replace(',', '.')
+            else:
+                # Formato US: 1,234.56 -> 1234.56
+                valor_str = valor_str.replace(',', '')
+        else:
+            # Casos simples: converter vírgula para ponto
+            valor_str = valor_str.replace(',', '.')
+            
+            # Extrair apenas dígitos e um único ponto decimal (se houver)
+            # Isso lida com casos como "1.234" que pode ser interpretado como 1234.0 e não 1.234
+            num_parts = valor_str.split('.')
+            if len(num_parts) > 2:
+                # Se tem mais de um ponto, reconstrói com apenas o último como decimal
+                valor_int = ''.join(num_parts[:-1]) 
+                valor_str = valor_int + '.' + num_parts[-1]
+        
+        # Converter para float
+        valor = float(valor_str)
+        
+        # Validar o resultado
+        if valor <= 0:
+            return None
+            
+        return valor
+        
+    except (ValueError, TypeError) as e:
+        logger.error(f"Erro ao normalizar valor monetário '{valor_str}': {str(e)}")
+        return None
 
 # Mapeamento de meses em português para validação
 MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
