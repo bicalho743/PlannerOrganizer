@@ -116,8 +116,8 @@ def mostrar_lista_propostas():
 
             # Formatar valores
             df_display['Valor (R$)'] = df_display['Valor (R$)'].apply(lambda x: f'R$ {float(x):.2f}')
-            # Formatação da data conforme solicitação: dia, ano e mês
-            df_display['Data'] = pd.to_datetime(df_display['Data']).dt.strftime('%d/%Y/%m')
+            # Formatação da data no formato brasileiro (DD/MM/YYYY)
+            df_display['Data'] = pd.to_datetime(df_display['Data']).dt.strftime('%d/%m/%Y')
 
             # Exibir tabela
             st.dataframe(df_display, hide_index=True)
@@ -382,7 +382,7 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename, usar_template=
         dados = {
             'cliente': cliente['nome'],
             'valor': float(proposta['valor']),
-            'data': datetime.now().strftime('%d/%Y/%m'),
+            'data': datetime.now().strftime('%d/%m/%Y'),
             'descricao': proposta['descricao']
         }
         template_path = "templates/proposta_template.pdf"
