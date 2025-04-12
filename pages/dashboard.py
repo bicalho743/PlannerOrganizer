@@ -1,5 +1,5 @@
 import streamlit as st
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 
 def show():
@@ -20,8 +20,9 @@ def show():
             else:
                 st.sidebar.error("Erro ao adicionar dados de teste")
 
-    # Dashboard layout
-    col1, col2, col3 = st.columns([2, 2, 1])
+    # Dashboard layout 
+    # Alterado para 4 colunas para adicionar seção de acompanhamento de 90 dias
+    col1, col2, col3, col4 = st.columns([2, 2, 1, 2])
 
     with col1:
         st.subheader("📊 Resumo")
@@ -72,6 +73,114 @@ def show():
     with col3:
         st.subheader("🎂 Aniversariantes")
         hoje = datetime.now()
+        
+    with col4:
+        st.subheader("📆 Clientes - 90 dias")
+        
+        # Verificar se há propostas disponíveis
+        try:
+            # Verificar propostas e clientes
+            if 'propostas' not in locals() or propostas.empty:
+                propostas = st.session_state.db.get_propostas()
+                
+            if propostas.empty:
+                st.info("Nenhuma proposta encontrada.")
+            else:
+                # Obter data atual
+                hoje_date = datetime.now().date()
+                
+                # Calcular data limite (90 dias atrás)
+                data_limite_90_dias = hoje_date - timedelta(days=90)
+                
+                # Juntar propostas com informações de clientes
+                if 'cliente_nome' not in propostas.columns:
+                    clientes = st.session_state.db.get_clientes()
+                    propostas = propostas.merge(
+                        clientes[['id', 'nome']],
+                        left_on='cliente_id',
+                        right_on='id',
+                        how='left',
+                        suffixes=('', '_cliente')
+                    )
+                    propostas['cliente_nome'] = propostas['nome']
+                
+                # Filtrar propostas por tipo (apenas de organização e com data de início preenchida)
+                propostas_organizacao = propostas[
+                    (propostas['tipo_proposta'].isin(['Organização', 'Organização Mudança'])) &
+                    (propostas['data_inicio'].notna())
+                ]
+                
+                if propostas_organizacao.empty:
+                    st.info("Nenhuma proposta de organização com data de início definida.")
+                else:
+                    # Converter data_inicio para datetime.date se ainda não for
+                    if not isinstance(propostas_organizacao['data_inicio'].iloc[0], datetime.date):
+                        propostas_organizacao['data_inicio'] = pd.to_datetime(propostas_organizacao['data_inicio']).dt.date
+                    
+                    # Calcular dias passados desde o início para cada proposta
+                    propostas_organizacao['dias_passados'] = propostas_organizacao['data_inicio'].apply(
+                        lambda x: (hoje_date - x).days
+                    )
+                    
+                    # Clientes que atingiram 90 dias
+                    propostas_90_dias = propostas_organizacao[propostas_organizacao['dias_passados'] >= 90].sort_values('dias_passados')
+                    
+                    # Clientes que ainda não atingiram 90 dias mas estão próximos
+                    propostas_proximas = propostas_organizacao[
+                        (propostas_organizacao['dias_passados'] < 90) & 
+                        (propostas_organizacao['dias_passados'] >= 60)
+                    ].sort_values('dias_passados', ascending=False)
+                    
+                    # Exibir clientes que atingiram 90 dias
+                    st.markdown("""
+                    <div style='background-color: #2A3F5F; padding: 10px; border-radius: 7px; margin-bottom: 15px;'>
+                        <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>✅ Completaram 90 dias</h4>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    if not propostas_90_dias.empty:
+                        for _, proposta in propostas_90_dias.head(5).iterrows():
+                            with st.container():
+                                st.markdown(f"""
+                                <div style='background-color: #304878; padding: 10px; border-radius: 5px; margin-bottom: 8px;'>
+                                    <div style='font-weight: bold; color: white;'>📋 {proposta['cliente_nome']}</div>
+                                    <div style='color: #E2E8F0; font-size: 0.9em;'>
+                                        Organização concluída há {proposta['dias_passados']} dias
+                                    </div>
+                                    <div style='color: #F1A208; font-size: 0.8em;'>
+                                        Início: {proposta['data_inicio'].strftime('%d/%m/%Y')}
+                                    </div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                    else:
+                        st.info("Nenhum cliente completou 90 dias desde a organização.")
+                    
+                    # Exibir clientes próximos de completar 90 dias
+                    st.markdown("""
+                    <div style='background-color: #2A3F5F; padding: 10px; border-radius: 7px; margin: 15px 0;'>
+                        <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>🔜 Próximos a completar 90 dias</h4>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    if not propostas_proximas.empty:
+                        for _, proposta in propostas_proximas.head(5).iterrows():
+                            dias_restantes = 90 - proposta['dias_passados']
+                            with st.container():
+                                st.markdown(f"""
+                                <div style='background-color: #375170; padding: 10px; border-radius: 5px; margin-bottom: 8px;'>
+                                    <div style='font-weight: bold; color: white;'>📋 {proposta['cliente_nome']}</div>
+                                    <div style='color: #E2E8F0; font-size: 0.9em;'>
+                                        Faltam {dias_restantes} dias para completar 90 dias
+                                    </div>
+                                    <div style='color: #F1A208; font-size: 0.8em;'>
+                                        Início: {proposta['data_inicio'].strftime('%d/%m/%Y')}
+                                    </div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                    else:
+                        st.info("Nenhum cliente próximo de completar 90 dias.")
+        except Exception as e:
+            st.error(f"Erro ao carregar dados de monitoramento: {str(e)}")
         
         # Dicionário de tradução de meses inglês -> português
         meses_traducao = {
