@@ -13,9 +13,28 @@ def salvar_proposta(db, cliente_id_arg, descricao_arg,
                    prazo_entrega_arg=None):
     """Função isolada para salvar proposta no banco de dados"""
     try:
-        # Garantir que os tipos estejam corretos
-        cliente_id_int = int(cliente_id_arg)
-        valor_float = float(valor_arg)
+        # Validar cliente_id_arg - verificando se não é None antes
+        if cliente_id_arg is None:
+            return False, None, "ID do cliente não pode ser nulo"
+            
+        # Validar valor_arg - verificando se não é None antes
+        if valor_arg is None:
+            return False, None, "Valor da proposta não pode ser nulo"
+            
+        # Garantir que os tipos estejam corretos - com validações adicionais
+        # para evitar erros de conversão 'NoneType'
+        try:
+            cliente_id_int = int(cliente_id_arg)
+        except (TypeError, ValueError):
+            return False, None, f"Erro ao converter ID do cliente para número: {cliente_id_arg}"
+            
+        try:
+            valor_float = float(valor_arg)
+        except (TypeError, ValueError):
+            return False, None, f"Erro ao converter valor para número: {valor_arg}"
+        
+        # Debug para verificar os valores
+        print(f"Debug - Salvando proposta: cliente_id={cliente_id_int}, valor={valor_float}")
         
         # Chamar a função do banco de dados
         proposta_id = db.add_proposta(
@@ -30,7 +49,9 @@ def salvar_proposta(db, cliente_id_arg, descricao_arg,
         )
         return True, proposta_id, None
     except Exception as e:
-        return False, None, str(e)
+        import traceback
+        traceback_str = traceback.format_exc()
+        return False, None, f"{str(e)}\n{traceback_str}"
 
 def normalizar_valor_monetario(valor_str):
     """Normaliza um valor monetário no formato brasileiro para float"""
