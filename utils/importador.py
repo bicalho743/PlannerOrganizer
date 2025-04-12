@@ -356,6 +356,12 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                             
                         # Validar descrição
                         descricao = str(row.get('descricao', '')).strip() if pd.notna(row.get('descricao')) else None
+                        # Se a descrição estiver vazia, tenta usar a coluna "assunto" como alternativa (compatibilidade)
+                        if not descricao and pd.notna(row.get('assunto')):
+                            descricao = str(row.get('assunto', '')).strip()
+                            logger.info(f"Usando campo 'assunto' como descrição na linha {idx + 2}")
+                        
+                        # Se ainda estiver vazia, reporta erro
                         if not descricao:
                             erros.append(f"Descrição vazia na linha {idx + 2}")
                             continue
@@ -363,18 +369,43 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                         # Validar valor
                         valor = None
                         try:
-                            valor = float(row.get('valor', 0)) if pd.notna(row.get('valor')) else 0
+                            # Tratar o valor como string primeiro para substituir vírgulas por pontos
+                            valor_texto = str(row.get('valor', '0')).strip() if pd.notna(row.get('valor')) else '0'
+                            # Remover caracteres não numéricos como R$, espaços, etc., exceto vírgulas e pontos
+                            valor_texto = ''.join(c for c in valor_texto if c.isdigit() or c in ',.') 
+                            # Substituir vírgula por ponto (padrão brasileiro -> internacional)
+                            valor_texto = valor_texto.replace(',', '.')
+                            
+                            # Converter para float
+                            valor = float(valor_texto)
+                            
                             if valor <= 0:
                                 erros.append(f"Valor inválido na linha {idx + 2}")
                                 continue
-                        except ValueError:
+                                
+                            # Log para depuração
+                            logger.info(f"Valor processado na linha {idx + 2}: original '{row.get('valor')}' -> convertido '{valor}'")
+                            
+                        except (ValueError, TypeError) as e:
+                            logger.error(f"Erro ao processar valor na linha {idx + 2}: {str(e)}")
                             erros.append(f"Valor não numérico na linha {idx + 2}")
                             continue
                             
                         # Preparar status
                         status = str(row.get('status', 'Aberta')).strip() if pd.notna(row.get('status')) else 'Aberta'
-                        if status not in ['Aberta', 'Recusada', 'Fechada']:
-                            st.warning(f"Status inválido na linha {idx + 2}. Usando 'Aberta'.")
+                        
+                        # Normalizar status com case insensitive (aceitar variações como "aberta", "ABERTA", etc.)
+                        status_map = {
+                            'aberta': 'Aberta',
+                            'fechada': 'Fechada',
+                            'recusada': 'Recusada'
+                        }
+                        
+                        status_lower = status.lower()
+                        if status_lower in status_map:
+                            status = status_map[status_lower]
+                        elif status not in ['Aberta', 'Recusada', 'Fechada']:
+                            logger.warning(f"Status inválido na linha {idx + 2}: '{status}'. Usando 'Aberta'.")
                             status = 'Aberta'
                             
                         # Preparar tipo_proposta
@@ -558,23 +589,32 @@ def validar_dataframe(df, tipo_cadastro):
     elif tipo_cadastro == "Proposta":
         # Verificar se os valores de proposta são válidos
         for idx, row in df.iterrows():
-            if 'valor' in row and pd.notna(row['valor']):
-                try:
-                    valor = float(row['valor'])
-                    if valor <= 0:
-                        erro = f"Valor da proposta deve ser maior que zero na linha {idx+2}"
-                        st.error(erro)
-                        return False, erro
-                except ValueError:
-                    erro = f"Valor da proposta inválido na linha {idx+2}: {row['valor']}"
-                    st.error(erro)
-                    return False, erro
-                    
             # Verificar se temos ou cliente_id ou cliente_nome
             if not ('cliente_id' in row and pd.notna(row['cliente_id'])) and not ('cliente_nome' in row and pd.notna(row['cliente_nome'])):
                 erro = f"Cliente não especificado na linha {idx+2}. Forneça cliente_id ou cliente_nome."
                 st.error(erro)
                 return False, erro
+                
+            # Validar valor como string primeiro (melhor compatibilidade)
+            if 'valor' in row and pd.notna(row['valor']):
+                try:
+                    # Tratar o valor como string para substituir vírgulas por pontos
+                    valor_texto = str(row['valor']).strip()
+                    # Remover caracteres não numéricos, exceto vírgulas e pontos
+                    valor_texto = ''.join(c for c in valor_texto if c.isdigit() or c in ',.') 
+                    # Substituir vírgula por ponto (padrão brasileiro -> internacional)
+                    valor_texto = valor_texto.replace(',', '.')
+                    
+                    # Tentar converter
+                    valor = float(valor_texto)
+                    if valor <= 0:
+                        erro = f"Valor da proposta deve ser maior que zero na linha {idx+2}"
+                        st.error(erro)
+                        return False, erro
+                except (ValueError, TypeError):
+                    # Aceitamos qualquer formato de valor na validação inicial
+                    # O processamento real será feito durante a importação
+                    pass
 
     return True, "Validação OK"
 
