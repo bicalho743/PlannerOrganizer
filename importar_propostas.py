@@ -148,24 +148,45 @@ def find_client_id(cliente_nome, clientes_mapping):
 def importar_propostas(arquivo, debug_mode=False):
     """Importar propostas a partir de um arquivo CSV"""
     try:
-        # Carregar o arquivo
+        # Carregar o arquivo com tratamento especial
         try:
-            df = pd.read_csv(arquivo, sep=';', encoding='utf-8')
-        except UnicodeDecodeError:
-            # Tentar codificações alternativas
-            encodings = ['latin1', 'iso-8859-1', 'cp1252', 'utf-8-sig']
-            for encoding in encodings:
-                try:
-                    arquivo.seek(0)
-                    df = pd.read_csv(arquivo, sep=';', encoding=encoding)
-                    st.info(f"Arquivo lido com sucesso usando codificação {encoding}")
-                    break
-                except:
-                    continue
-            else:
-                # Se nenhuma codificação funcionou
-                st.error("Não foi possível ler o arquivo. Tente salvar como UTF-8 ou CSV separado por ponto e vírgula.")
+            # Função para tentar ler diferentes formatos de arquivo
+            def try_read_csv_with_formats():
+                """Tenta ler um CSV com diferentes separadores e codificações"""
+                # Lista de possíveis separadores e encodings
+                separadores = [';', ',', '\t']
+                encodings = ['utf-8', 'latin1', 'iso-8859-1', 'cp1252', 'utf-8-sig', 'windows-1252']
+                
+                # Tenta cada combinação
+                for encoding in encodings:
+                    for sep in separadores:
+                        try:
+                            arquivo.seek(0)
+                            df = pd.read_csv(arquivo, sep=sep, encoding=encoding)
+                            
+                            # Verificar se o DataFrame tem pelo menos 1 linha e 2 colunas
+                            if df.shape[0] > 0 and df.shape[1] > 1:
+                                if debug_mode:
+                                    st.success(f"Arquivo lido com sucesso usando separador '{sep}' e codificação '{encoding}'")
+                                return df, True
+                        except Exception as e:
+                            if debug_mode:
+                                st.warning(f"Tentativa falhou: separador='{sep}', encoding='{encoding}'")
+                            continue
+                
+                # Se chegou aqui, não conseguiu ler o arquivo
+                return None, False
+            
+            # Tentar ler o arquivo com formatos variados
+            df, success = try_read_csv_with_formats()
+            
+            if not success:
+                st.error("Não foi possível ler o arquivo. Tente usar CSV com separador ponto-e-vírgula (;) e codificação UTF-8.")
                 return False, "Erro na leitura do arquivo"
+                
+        except Exception as e:
+            st.error(f"Erro ao ler arquivo: {str(e)}")
+            return False, f"Erro ao ler arquivo: {str(e)}"
         
         # Debug info
         if debug_mode:
@@ -245,13 +266,31 @@ def importar_propostas(arquivo, debug_mode=False):
                 # Validar valor
                 valor = None
                 try:
-                    valor_str = str(row['valor']).strip().replace(',', '.')
+                    # Obter o valor como string
+                    valor_str = str(row['valor']).strip()
+                    
+                    # Remover símbolos de moeda e caracteres não numéricos (exceto pontos e vírgulas)
+                    valor_str = ''.join(c for c in valor_str if c.isdigit() or c in '.,')
+                    
+                    # Substituir vírgulas por pontos para decimal
+                    valor_str = valor_str.replace(',', '.')
+                    
+                    # Debug
+                    if debug_mode:
+                        st.info(f"Valor original: '{row['valor']}', limpo: '{valor_str}'")
+                    
+                    # Converter para float
                     valor = float(valor_str)
+                    
+                    # Validar valor
                     if valor <= 0:
                         erros.append(f"Valor deve ser maior que zero na linha {idx + 2}")
                         continue
-                except (ValueError, TypeError):
-                    erros.append(f"Valor não numérico na linha {idx + 2}")
+                        
+                except (ValueError, TypeError) as e:
+                    if debug_mode:
+                        st.error(f"Erro ao processar valor na linha {idx + 2}: {str(e)}, valor: '{row['valor']}'")
+                    erros.append(f"Valor não numérico na linha {idx + 2}: {str(row['valor'])}")
                     continue
                 
                 # Status padrão se não for fornecido
