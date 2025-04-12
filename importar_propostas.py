@@ -272,23 +272,29 @@ def importar_propostas(arquivo, debug_mode=False, usar_cliente_id=False):
                         erros.append(f"ID de cliente inválido na linha {idx + 2}: {row['cliente_id']}")
                         continue
                 else:
-                    # Buscar cliente pelo nome
-                    cliente_nome = str(row['cliente_nome']).strip()
-                    if not cliente_nome:
-                        erros.append(f"Nome do cliente vazio na linha {idx + 2}")
+                    # Capturar erros na busca de cliente pelo nome
+                    try:
+                        # Buscar cliente pelo nome
+                        cliente_nome = str(row['cliente_nome']).strip()
+                        if not cliente_nome:
+                            erros.append(f"Nome do cliente vazio na linha {idx + 2}")
+                            continue
+                        
+                        # Buscar cliente por diferentes estratégias
+                        cliente_id, cliente_encontrado = find_client_id(cliente_nome, clientes_mapping)
+                        
+                        # Se não encontrou cliente
+                        if cliente_id is None:
+                            erros.append(f"Cliente '{cliente_nome}' não encontrado na linha {idx + 2}")
+                            continue
+                        
+                        # Debug
+                        if debug_mode and cliente_encontrado:
+                            st.info(f"Cliente '{cliente_nome}' corresponde a '{cliente_encontrado}' (ID: {cliente_id})")
+                    except Exception as e:
+                        logger.error(f"Erro ao processar cliente na linha {idx + 2}: {str(e)}")
+                        erros.append(f"Erro ao processar cliente na linha {idx + 2}: {str(e)}")
                         continue
-                    
-                    # Buscar cliente por diferentes estratégias
-                    cliente_id, cliente_encontrado = find_client_id(cliente_nome, clientes_mapping)
-                    
-                    # Se não encontrou cliente
-                    if cliente_id is None:
-                        erros.append(f"Cliente '{cliente_nome}' não encontrado na linha {idx + 2}")
-                        continue
-                    
-                    # Debug
-                    if debug_mode and cliente_encontrado:
-                        st.info(f"Cliente '{cliente_nome}' corresponde a '{cliente_encontrado}' (ID: {cliente_id})")
                 
                 # Validar descrição
                 descricao = str(row['descricao']).strip()
@@ -303,6 +309,13 @@ def importar_propostas(arquivo, debug_mode=False, usar_cliente_id=False):
                     valor_str = str(row['valor']).strip()
                     
                     # Remover símbolos de moeda e caracteres não numéricos (exceto pontos e vírgulas)
+                    # Primeiro remover espaços
+                    valor_str = valor_str.replace(' ', '')
+                    
+                    # Remover símbolos de moeda como R$
+                    valor_str = valor_str.replace('R$', '')
+                    
+                    # Remover outros caracteres não numéricos (exceto pontos e vírgulas)
                     valor_str = ''.join(c for c in valor_str if c.isdigit() or c in '.,')
                     
                     # Substituir vírgulas por pontos para decimal
@@ -311,6 +324,10 @@ def importar_propostas(arquivo, debug_mode=False, usar_cliente_id=False):
                     # Debug
                     if debug_mode:
                         st.info(f"Valor original: '{row['valor']}', limpo: '{valor_str}'")
+                    
+                    # Tratar o caso de string vazia
+                    if not valor_str:
+                        valor_str = "0"
                     
                     # Converter para float
                     valor = float(valor_str)
@@ -323,7 +340,7 @@ def importar_propostas(arquivo, debug_mode=False, usar_cliente_id=False):
                 except (ValueError, TypeError) as e:
                     if debug_mode:
                         st.error(f"Erro ao processar valor na linha {idx + 2}: {str(e)}, valor: '{row['valor']}'")
-                    erros.append(f"Valor não numérico na linha {idx + 2}: {str(row['valor'])}")
+                    erros.append(f"Valor não numérico na linha {idx + 2}")
                     continue
                 
                 # Status padrão se não for fornecido
