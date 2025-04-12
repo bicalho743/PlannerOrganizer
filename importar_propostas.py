@@ -145,7 +145,7 @@ def find_client_id(cliente_nome, clientes_mapping):
     return None, None
 
 # Função para importar propostas
-def importar_propostas(arquivo, debug_mode=False):
+def importar_propostas(arquivo, debug_mode=False, usar_cliente_id=False):
     """Importar propostas a partir de um arquivo CSV"""
     try:
         # Carregar o arquivo com tratamento especial
@@ -194,8 +194,12 @@ def importar_propostas(arquivo, debug_mode=False):
             st.write("Primeiras linhas:")
             st.dataframe(df.head())
         
-        # Verificar colunas obrigatórias
-        colunas_obrigatorias = ['cliente_nome', 'descricao', 'valor']
+        # Verificar colunas obrigatórias - verificar se temos cliente_id ou cliente_nome
+        if usar_cliente_id:
+            colunas_obrigatorias = ['cliente_id', 'descricao', 'valor']
+        else:
+            colunas_obrigatorias = ['cliente_nome', 'descricao', 'valor']
+            
         colunas_faltantes = [col for col in colunas_obrigatorias if col not in df.columns]
         if colunas_faltantes:
             st.error(f"Colunas obrigatórias não encontradas: {', '.join(colunas_faltantes)}")
@@ -208,19 +212,21 @@ def importar_propostas(arquivo, debug_mode=False):
         # Obter o banco de dados
         db = st.session_state.db
         
-        # Carregar clientes para mapear nomes para IDs
-        clientes_mapping = get_clients_mapping()
-        if not clientes_mapping['exact']:
-            st.error("Não há clientes cadastrados no sistema")
-            return False, "Não há clientes cadastrados no sistema"
-        
-        # Em modo debug, mostrar clientes disponíveis
-        if debug_mode:
-            # Criar um DataFrame para exibir
-            clientes_df = pd.DataFrame([(id, nome) for nome, id in clientes_mapping['exact'].items()], 
-                                       columns=['id', 'nome'])
-            st.write("### Clientes disponíveis no sistema")
-            st.dataframe(clientes_df)
+        # Carregar clientes para mapear nomes para IDs apenas se não estivermos usando cliente_id direto
+        clientes_mapping = None
+        if not usar_cliente_id:
+            clientes_mapping = get_clients_mapping()
+            if not clientes_mapping['exact']:
+                st.error("Não há clientes cadastrados no sistema")
+                return False, "Não há clientes cadastrados no sistema"
+            
+            # Em modo debug, mostrar clientes disponíveis
+            if debug_mode:
+                # Criar um DataFrame para exibir
+                clientes_df = pd.DataFrame([(id, nome) for nome, id in clientes_mapping['exact'].items()], 
+                                        columns=['id', 'nome'])
+                st.write("### Clientes disponíveis no sistema")
+                st.dataframe(clientes_df)
         
         # Resultados
         sucessos = 0
@@ -237,25 +243,35 @@ def importar_propostas(arquivo, debug_mode=False):
                 
                 # Inicializar cliente_id como None no início de cada iteração
                 cliente_id = None
-                cliente_encontrado = None
                 
-                # Buscar cliente pelo nome
-                cliente_nome = str(row['cliente_nome']).strip()
-                if not cliente_nome:
-                    erros.append(f"Nome do cliente vazio na linha {idx + 2}")
-                    continue
-                
-                # Buscar cliente por diferentes estratégias
-                cliente_id, cliente_encontrado = find_client_id(cliente_nome, clientes_mapping)
-                
-                # Se não encontrou cliente
-                if cliente_id is None:
-                    erros.append(f"Cliente '{cliente_nome}' não encontrado na linha {idx + 2}")
-                    continue
-                
-                # Debug
-                if debug_mode and cliente_encontrado:
-                    st.info(f"Cliente '{cliente_nome}' corresponde a '{cliente_encontrado}' (ID: {cliente_id})")
+                # Obter cliente_id conforme modo escolhido
+                if usar_cliente_id:
+                    # Usar cliente_id direto do arquivo
+                    try:
+                        cliente_id = int(row['cliente_id'])
+                        if debug_mode:
+                            st.info(f"Usando cliente_id do arquivo: {cliente_id}")
+                    except (ValueError, TypeError):
+                        erros.append(f"ID de cliente inválido na linha {idx + 2}: {row['cliente_id']}")
+                        continue
+                else:
+                    # Buscar cliente pelo nome
+                    cliente_nome = str(row['cliente_nome']).strip()
+                    if not cliente_nome:
+                        erros.append(f"Nome do cliente vazio na linha {idx + 2}")
+                        continue
+                    
+                    # Buscar cliente por diferentes estratégias
+                    cliente_id, cliente_encontrado = find_client_id(cliente_nome, clientes_mapping)
+                    
+                    # Se não encontrou cliente
+                    if cliente_id is None:
+                        erros.append(f"Cliente '{cliente_nome}' não encontrado na linha {idx + 2}")
+                        continue
+                    
+                    # Debug
+                    if debug_mode and cliente_encontrado:
+                        st.info(f"Cliente '{cliente_nome}' corresponde a '{cliente_encontrado}' (ID: {cliente_id})")
                 
                 # Validar descrição
                 descricao = str(row['descricao']).strip()
@@ -388,6 +404,18 @@ def importar_propostas(arquivo, debug_mode=False):
 # Opções de depuração
 debug_mode = st.checkbox("Modo de depuração (exibe informações detalhadas)")
 
+# Opção para usar cliente_id direto
+usar_cliente_id = st.checkbox("Usar ID do cliente direto do arquivo (ignora a verificação de nomes)", 
+                             help="Ative esta opção se seu arquivo CSV contém uma coluna 'cliente_id' ao invés de 'cliente_nome'")
+
+# Exemplo para modo cliente_id
+if usar_cliente_id:
+    st.info("""
+    Seu arquivo CSV deve conter a coluna 'cliente_id' com o ID numérico do cliente.
+    Exemplo: cliente_id;descricao;valor;status
+             42;Organização de armários;1500,00;Aberta
+    """)
+
 # Widget para upload de arquivo
 arquivo = st.file_uploader("Selecione o arquivo CSV", type=['csv'])
 
@@ -396,7 +424,7 @@ if arquivo:
     with col1:
         if st.button("Importar Propostas", type="primary"):
             with st.spinner("Importando propostas..."):
-                sucesso, mensagem = importar_propostas(arquivo, debug_mode=debug_mode)
+                sucesso, mensagem = importar_propostas(arquivo, debug_mode=debug_mode, usar_cliente_id=usar_cliente_id)
                 if sucesso:
                     st.success(mensagem)
                 else:
@@ -406,49 +434,119 @@ if arquivo:
         if st.button("Verificar arquivo (sem importar)"):
             with st.spinner("Verificando arquivo..."):
                 try:
-                    # Tenta ler o arquivo com diferentes codificações
-                    encodings = ['utf-8', 'latin1', 'iso-8859-1', 'cp1252', 'utf-8-sig']
-                    for encoding in encodings:
-                        try:
-                            arquivo.seek(0)
-                            df = pd.read_csv(arquivo, sep=';', encoding=encoding)
-                            st.success(f"Arquivo lido com sucesso usando codificação {encoding}")
-                            st.write(f"Dimensões: {df.shape}")
-                            st.write("Primeiras linhas:")
-                            st.dataframe(df.head())
-                            
-                            # Verificar correspondência de clientes
-                            if 'cliente_nome' in df.columns:
-                                st.write("### Verificando correspondência de clientes:")
-                                clientes_mapping = get_clients_mapping()
-                                
-                                resultados = []
-                                for idx, row in df.iterrows():
-                                    cliente_nome = str(row['cliente_nome']).strip()
-                                    cliente_id, cliente_encontrado = find_client_id(cliente_nome, clientes_mapping)
+                    # Função para tentar ler diferentes formatos de arquivo
+                    def try_read_csv_with_formats():
+                        """Tenta ler um CSV com diferentes separadores e codificações"""
+                        # Lista de possíveis separadores e encodings
+                        separadores = [';', ',', '\t']
+                        encodings = ['utf-8', 'latin1', 'iso-8859-1', 'cp1252', 'utf-8-sig', 'windows-1252']
+                        
+                        # Tenta cada combinação
+                        for encoding in encodings:
+                            for sep in separadores:
+                                try:
+                                    arquivo.seek(0)
+                                    df = pd.read_csv(arquivo, sep=sep, encoding=encoding)
                                     
-                                    status = "✅ Encontrado" if cliente_id else "❌ Não encontrado"
-                                    resultados.append({
-                                        'Linha': idx + 2,
-                                        'Nome no CSV': cliente_nome,
-                                        'Nome no Sistema': cliente_encontrado if cliente_encontrado else "-",
-                                        'ID': cliente_id if cliente_id else "-",
-                                        'Status': status
-                                    })
-                                
-                                resultados_df = pd.DataFrame(resultados)
-                                st.dataframe(resultados_df)
-                                
-                                # Estatísticas de correspondência
-                                encontrados = sum(1 for r in resultados if r['Status'] == "✅ Encontrado")
-                                total = len(resultados)
-                                st.write(f"Correspondência: {encontrados}/{total} clientes encontrados ({encontrados/total:.0%})")
-                                
-                            break
-                        except Exception as e:
-                            continue
+                                    # Verificar se o DataFrame tem pelo menos 1 linha e 2 colunas
+                                    if df.shape[0] > 0 and df.shape[1] > 1:
+                                        st.success(f"Arquivo lido com sucesso usando separador '{sep}' e codificação '{encoding}'")
+                                        return df, True
+                                except Exception as e:
+                                    continue
+                        
+                        # Se chegou aqui, não conseguiu ler o arquivo
+                        return None, False
+                    
+                    # Tentar ler o arquivo com formatos variados
+                    df, success = try_read_csv_with_formats()
+                    
+                    if not success:
+                        st.error("Não foi possível ler o arquivo. Tente outro formato ou codificação.")
                     else:
-                        st.error("Não foi possível ler o arquivo com nenhuma codificação.")
+                        st.write(f"Dimensões: {df.shape}")
+                        st.write("Primeiras linhas:")
+                        st.dataframe(df.head())
+                        
+                        # Verificar colunas presentes
+                        st.write("### Colunas encontradas no arquivo:")
+                        st.write(", ".join(df.columns.tolist()))
+                        
+                        # Verificar correspondência de clientes apenas se não estiver usando cliente_id
+                        if not usar_cliente_id and 'cliente_nome' in df.columns:
+                            st.write("### Verificando correspondência de clientes:")
+                            clientes_mapping = get_clients_mapping()
+                            
+                            resultados = []
+                            for idx, row in df.iterrows():
+                                cliente_nome = str(row['cliente_nome']).strip()
+                                cliente_id, cliente_encontrado = find_client_id(cliente_nome, clientes_mapping)
+                                
+                                status = "✅ Encontrado" if cliente_id else "❌ Não encontrado"
+                                resultados.append({
+                                    'Linha': idx + 2,
+                                    'Nome no CSV': cliente_nome,
+                                    'Nome no Sistema': cliente_encontrado if cliente_encontrado else "-",
+                                    'ID': cliente_id if cliente_id else "-",
+                                    'Status': status
+                                })
+                            
+                            resultados_df = pd.DataFrame(resultados)
+                            st.dataframe(resultados_df)
+                            
+                            # Estatísticas de correspondência
+                            encontrados = sum(1 for r in resultados if r['Status'] == "✅ Encontrado")
+                            total = len(resultados)
+                            st.write(f"Correspondência: {encontrados}/{total} clientes encontrados ({encontrados/total:.0%})")
+                        
+                        # Se estiver usando cliente_id, verificar os IDs
+                        elif usar_cliente_id and 'cliente_id' in df.columns:
+                            st.write("### Verificando IDs de clientes:")
+                            
+                            # Verificar se todos os IDs são numéricos
+                            validos = 0
+                            invalidos = 0
+                            for idx, row in df.iterrows():
+                                try:
+                                    cliente_id = int(row['cliente_id'])
+                                    validos += 1
+                                except (ValueError, TypeError):
+                                    invalidos += 1
+                            
+                            st.write(f"IDs válidos: {validos}, IDs inválidos: {invalidos}")
+                            if invalidos > 0:
+                                st.warning("Alguns IDs de clientes não são números inteiros válidos.")
+                            else:
+                                st.success("Todos os IDs de clientes são válidos!")
+                                
+                        # Análise de valores monetários
+                        if 'valor' in df.columns:
+                            st.write("### Amostra de valores monetários:")
+                            valores_amostra = df['valor'].head(5).tolist()
+                            
+                            for i, valor_original in enumerate(valores_amostra):
+                                # Obter como string
+                                valor_str = str(valor_original).strip()
+                                
+                                # Limpar e processar
+                                valor_limpo = ''.join(c for c in valor_str if c.isdigit() or c in '.,')
+                                valor_limpo = valor_limpo.replace(',', '.')
+                                
+                                # Tentar converter
+                                try:
+                                    valor_numerico = float(valor_limpo)
+                                    status = "✅ Válido"
+                                except (ValueError, TypeError):
+                                    valor_numerico = None
+                                    status = "❌ Inválido"
+                                
+                                st.write(f"{i+1}. Original: '{valor_original}' → Processado: '{valor_limpo}' → {status}")
+                        
+                        # Análise de status
+                        if 'status' in df.columns:
+                            status_valores = df['status'].dropna().unique().tolist()
+                            st.write(f"### Status encontrados: {', '.join([str(s) for s in status_valores])}")
+                                
                 except Exception as e:
                     st.error(f"Erro ao verificar arquivo: {str(e)}")
 else:
