@@ -5,6 +5,10 @@ from datetime import datetime
 import logging
 import traceback
 import unidecode  # Para normalizar strings na comparação
+import re  # Para expressões regulares
+
+# Importar função robusta para valores monetários
+from utils.importador import normalizar_valor_monetario
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -276,19 +280,24 @@ def importar_propostas(arquivo, debug_mode=False, usar_cliente_id=False):
                 progress = (idx + 1) / len(df)
                 progress_bar.progress(progress)
                 
-                # Inicializar cliente_id como None no início de cada iteração
+                # Vamos declarar cliente_id a um valor padrão (None) e depois atribuir dentro de cada bloco
+                # com um escopo garantido para evitar problemas de variável local
                 cliente_id = None
                 
                 # Obter cliente_id conforme modo escolhido
                 if usar_cliente_id:
                     # Usar cliente_id direto do arquivo
                     try:
-                        cliente_id = int(row['cliente_id'])
+                        # Extrair cliente_id e garantir que seja um inteiro válido
+                        id_cliente = int(row['cliente_id'])
                         
                         # Verificar se o cliente_id existe no sistema
-                        if cliente_id not in clientes_ids_disponiveis and not debug_mode:
+                        if id_cliente not in clientes_ids_disponiveis and not debug_mode:
                             erros.append(f"Cliente não especificado na linha {idx + 2}")
                             continue
+                        
+                        # Se chegou aqui, o cliente_id é válido, então podemos atribuir
+                        cliente_id = id_cliente
                             
                         if debug_mode:
                             st.info(f"Usando cliente_id do arquivo: {cliente_id}")
@@ -305,15 +314,15 @@ def importar_propostas(arquivo, debug_mode=False, usar_cliente_id=False):
                             continue
                         
                         # Buscar cliente por diferentes estratégias
-                        cliente_id, cliente_encontrado = find_client_id(cliente_nome, clientes_mapping)
+                        id_cliente, cliente_encontrado = find_client_id(cliente_nome, clientes_mapping)
                         
                         # Se não encontrou cliente
-                        if cliente_id is None:
+                        if id_cliente is None:
                             erros.append(f"Cliente '{cliente_nome}' não encontrado na linha {idx + 2}")
                             continue
                             
-                        # Garantir que cliente_id seja um int válido
-                        cliente_id = int(cliente_id)
+                        # Garantir que cliente_id seja um int válido e atribuir
+                        cliente_id = int(id_cliente)
                         
                         # Debug
                         if debug_mode and cliente_encontrado:
@@ -329,42 +338,20 @@ def importar_propostas(arquivo, debug_mode=False, usar_cliente_id=False):
                     erros.append(f"Descrição vazia na linha {idx + 2}")
                     continue
                 
-                # Validar valor
-                valor = None
+                # Validar valor usando a função robusta importada
                 try:
-                    # Obter o valor como string
-                    valor_str = str(row['valor']).strip()
-                    
-                    # Remover símbolos de moeda e caracteres não numéricos (exceto pontos e vírgulas)
-                    # Primeiro remover espaços
-                    valor_str = valor_str.replace(' ', '')
-                    
-                    # Remover símbolos de moeda como R$
-                    valor_str = valor_str.replace('R$', '')
-                    
-                    # Remover outros caracteres não numéricos (exceto pontos e vírgulas)
-                    valor_str = ''.join(c for c in valor_str if c.isdigit() or c in '.,')
-                    
-                    # Substituir vírgulas por pontos para decimal
-                    valor_str = valor_str.replace(',', '.')
-                    
-                    # Debug
-                    if debug_mode:
-                        st.info(f"Valor original: '{row['valor']}', limpo: '{valor_str}'")
-                    
-                    # Tratar o caso de string vazia
-                    if not valor_str:
-                        valor_str = "0"
-                    
-                    # Converter para float
-                    valor = float(valor_str)
-                    
-                    # Validar valor
-                    if valor <= 0:
-                        erros.append(f"Valor deve ser maior que zero na linha {idx + 2}")
+                    # Usar a função robusta para normalizar valor monetário
+                    valor = normalizar_valor_monetario(str(row['valor']))
+                    if valor is None or valor <= 0:
+                        erros.append(f"Valor inválido na linha {idx + 2}")
                         continue
                         
-                except (ValueError, TypeError) as e:
+                    # Debug
+                    if debug_mode:
+                        st.info(f"Valor original: '{row['valor']}', processado: '{valor}'")
+                        
+                except Exception as e:
+                    logger.error(f"Erro ao processar valor na linha {idx + 2}: {str(e)}")
                     if debug_mode:
                         st.error(f"Erro ao processar valor na linha {idx + 2}: {str(e)}, valor: '{row['valor']}'")
                     erros.append(f"Valor não numérico na linha {idx + 2}")
