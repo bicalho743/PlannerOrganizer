@@ -79,7 +79,11 @@ template_df = pd.DataFrame([
     }
 ])
 
-# Converter para CSV
+# Salvar template em arquivo do sistema
+with open('modelo_propostas_para_importacao.csv', 'w', encoding='utf-8') as f:
+    f.write(template_df.to_csv(index=False, sep=';'))
+
+# Converter para CSV para download
 template_csv = template_df.to_csv(index=False, sep=';').encode('utf-8')
 
 # Botão para baixar o template
