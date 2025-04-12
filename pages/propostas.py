@@ -8,10 +8,10 @@ from utils.importador import importar_cadastros, gerar_template_csv
 def show():
     st.title("📝 Gestão de Propostas")
 
-    # Usar radio para selecionar a aba
+    # Usar radio para selecionar a aba - Removida opção de importação
     aba_selecionada = st.radio(
         "Selecione a opção:",
-        ["Nova Proposta", "Lista de Propostas", "Andamento do Trabalho", "Importar Propostas"],
+        ["Nova Proposta", "Lista de Propostas", "Andamento do Trabalho"],
         horizontal=True,
         label_visibility="collapsed"
     )
@@ -25,8 +25,7 @@ def show():
         mostrar_lista_propostas()
     elif aba_selecionada == "Andamento do Trabalho":
         mostrar_andamento()
-    elif aba_selecionada == "Importar Propostas":
-        mostrar_importacao()
+    # Opção de importação removida conforme solicitação do cliente
 
 def mostrar_nova_proposta():
     st.subheader("Cadastrar Nova Proposta")

@@ -590,24 +590,8 @@ Ana Clara;organização;R$ 3450.00;fechada;organização;01/04/2025;05/04/2025;"
             except:
                 pass
 
-# Ferramenta especial de importação direta
-if st.sidebar.button("⚡ IMPORTAR PROPOSTAS DIRETO", type="primary", key="btn_import_direto"):
-    # Alterar o estado para mostrar a importação direta na página
-    st.session_state['show_import_direto'] = True
-    
-# Verificar se devemos mostrar a importação direta
-if st.session_state.get('show_import_direto', False):
-    # Limpar o Dashboard ou qualquer outro conteúdo
-    if 'current_page' in st.session_state:
-        # Salvar página atual para voltar depois
-        st.session_state['previous_page'] = st.session_state['current_page']
-    
-    # Esconder a página atual
-    st.empty()
-    
-    # Executar a função do módulo separado
-    import propostas_direto
-    propostas_direto.show()
+# Ferramenta especial de importação direta foi removida conforme solicitado pelo cliente
+# Anteriormente havia um botão para importação direta de propostas neste local
 
 # Container dos botões com fundo escuro
 st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
