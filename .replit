@@ -31,6 +31,10 @@ args = "Teste Importação"
 task = "workflow.run"
 args = "Importar Propostas"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Limpar Clientes"
+
 [[workflows.workflow]]
 name = "Personal Organizer App"
 author = "agent"
@@ -91,6 +95,21 @@ task = "shell.exec"
 args = "streamlit run importar_propostas.py --server.port 8505 --server.address 0.0.0.0"
 waitForPort = 8505
 
+[[workflows.workflow]]
+name = "Limpar Clientes"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run limpar_clientes.py --server.port 8506 --server.address 0.0.0.0"
+waitForPort = 8506
+
 [[ports]]
 localPort = 443
 externalPort = 3001
@@ -110,3 +129,7 @@ externalPort = 3002
 [[ports]]
 localPort = 8505
 externalPort = 3003
+
+[[ports]]
+localPort = 8506
+externalPort = 4200
