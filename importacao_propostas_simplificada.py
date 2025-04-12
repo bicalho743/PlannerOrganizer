@@ -188,15 +188,35 @@ def importar_propostas(arquivo):
                     erros.append(f"Descrição vazia na linha {idx+2}")
                     continue
                 
-                # 3. Processar valor (convertendo formato brasileiro)
+                # 3. Processar valor (convertendo formato brasileiro com tratamento super robusto)
                 try:
                     valor_str = str(row['valor']).strip()
+                    
                     # Limpar formatação
                     valor_str = valor_str.replace('R$', '').replace(' ', '')
                     # Manter apenas dígitos, pontos e vírgulas
                     valor_str = ''.join(c for c in valor_str if c.isdigit() or c in '.,')
-                    # Converter vírgula para ponto
-                    valor_str = valor_str.replace(',', '.')
+                    
+                    # Tratar o caso especial de dois pontos (ex: 3.450.00)
+                    pontos = valor_str.count('.')
+                    virgulas = valor_str.count(',')
+                    
+                    if pontos > 1 and virgulas == 0:
+                        # Caso de múltiplos pontos sem vírgula (3.450.00)
+                        partes = valor_str.split('.')
+                        # Manter o último ponto como decimal
+                        valor_str = ''.join(partes[:-1]) + '.' + partes[-1]
+                    elif pontos == 1 and virgulas == 1:
+                        # Caso de ponto e vírgula (1.234,56 ou 1,234.56)
+                        if valor_str.find('.') < valor_str.find(','):
+                            # Formato BR: 1.234,56 -> 1234.56
+                            valor_str = valor_str.replace('.', '').replace(',', '.')
+                        else:
+                            # Formato US: 1,234.56 -> 1234.56
+                            valor_str = valor_str.replace(',', '')
+                    else:
+                        # Caso simples: apenas substituir vírgula por ponto
+                        valor_str = valor_str.replace(',', '.')
                     
                     # Converter para float
                     valor = float(valor_str)
@@ -204,7 +224,7 @@ def importar_propostas(arquivo):
                         erros.append(f"Valor inválido (deve ser maior que zero) na linha {idx+2}")
                         continue
                 except (ValueError, TypeError) as e:
-                    erros.append(f"Valor não numérico na linha {idx+2}")
+                    erros.append(f"Valor não numérico na linha {idx+2}: '{valor_str}'")
                     continue
                 
                 # 4. Processar campos opcionais
