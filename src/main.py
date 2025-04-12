@@ -553,9 +553,27 @@ Ana Clara;organização;R$ 3450.00;fechada;organização;01/04/2025;05/04/2025;"
                 pass
 
 # Ferramenta especial de importação direta
-if st.sidebar.button("⚡ IMPORTAR PROPOSTAS DIRETO", type="primary"):
-    # Executar diretamente a função integrada sem mudar de página
+if st.sidebar.button("⚡ IMPORTAR PROPOSTAS DIRETO", type="primary", key="btn_import_direto"):
+    # Alterar o estado para mostrar a importação direta na página
+    st.session_state['show_import_direto'] = True
+    
+# Verificar se devemos mostrar a importação direta
+if st.session_state.get('show_import_direto', False):
+    # Limpar o Dashboard ou qualquer outro conteúdo
+    if 'current_page' in st.session_state:
+        # Salvar página atual para voltar depois
+        st.session_state['previous_page'] = st.session_state['current_page']
+    
+    # Esconder a página atual
+    st.empty()
+    
+    # Executar diretamente a função integrada
     importar_propostas_direto_integrado()
+    
+    # Botão para voltar
+    if st.button("← Voltar", key="btn_voltar_import"):
+        st.session_state['show_import_direto'] = False
+        st.rerun()
 
 # Container dos botões com fundo escuro
 st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
@@ -701,7 +719,10 @@ else:
 
     # Roteamento de páginas
     try:
-        if st.session_state.current_page == "Dashboard":
+        # Se estiver no modo de importação direta integrada, não carregue outras páginas
+        if st.session_state.get('show_import_direto', False):
+            pass  # Não faz nada, pois a lógica de exibição já está implementada acima
+        elif st.session_state.current_page == "Dashboard":
             from pages.dashboard import show
             show()
         elif st.session_state.current_page == "Cadastros":
