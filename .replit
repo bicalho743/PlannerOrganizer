@@ -17,10 +17,6 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Personal Organizer App"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Start application"
 
 [[workflows.workflow.tasks]]
@@ -38,21 +34,6 @@ args = "Limpar Clientes"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Importar Clientes"
-
-[[workflows.workflow]]
-name = "Personal Organizer App"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run app.py --server.port 5000 --server.address 0.0.0.0 --server.headless true"
-waitForPort = 5000
 
 [[workflows.workflow]]
 name = "Start application"
