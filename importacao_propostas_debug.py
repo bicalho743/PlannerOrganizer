@@ -88,7 +88,7 @@ def encontrar_cliente_id(nome_cliente, debug=False):
     
     return None, info_debug
 
-# Função para normalizar valor monetário
+# Função para normalizar valor monetário com tratamento super robusto
 def normalizar_valor_monetario(valor_str, debug=False):
     """
     Normaliza um valor monetário no formato brasileiro para float
@@ -116,32 +116,53 @@ def normalizar_valor_monetario(valor_str, debug=False):
         valor_str = valor_str.replace(' ', '')
         info_debug.append(f"Valor sem espaços: '{valor_str}'")
         
-        # Tratar diferentes formatos de números (1.234,56 ou 1,234.56)
-        # Para valores acima de mil com separador de milhar
-        if '.' in valor_str and ',' in valor_str:
-            # Verificar qual vem primeiro
-            ponto_pos = valor_str.find('.')
-            virgula_pos = valor_str.find(',')
-            
-            if ponto_pos < virgula_pos:  # formato 1.234,56 (BR)
-                valor_str = valor_str.replace('.', '')  # remove pontos (separadores de milhar)
-                valor_str = valor_str.replace(',', '.')  # substitui vírgula por ponto
-            else:  # formato 1,234.56 (US)
-                valor_str = valor_str.replace(',', '')  # remove vírgulas (separadores de milhar)
-        else:
-            # Para valores abaixo de mil ou sem separador de milhar
-            valor_str = valor_str.replace(',', '.')  # troca vírgula por ponto
-            
-        info_debug.append(f"Valor formatado para parsing: '{valor_str}'")
+        # Manter apenas dígitos, pontos e vírgulas
+        valor_limpo = ''.join(c for c in valor_str if c.isdigit() or c in '.,')
+        if valor_limpo != valor_str:
+            info_debug.append(f"Removidos caracteres inválidos: '{valor_limpo}'")
+            valor_str = valor_limpo
         
-        # Extrair apenas dígitos e um único ponto decimal (se houver)
-        # Isso lida com casos como "1.234" que pode ser interpretado como 1234.0 e não 1.234
-        num_parts = valor_str.split('.')
-        if len(num_parts) > 2:
-            # Se tem mais de um ponto, reconstrói com apenas o último como decimal
-            valor_int = ''.join(num_parts[:-1])
-            valor_str = valor_int + '.' + num_parts[-1]
-            info_debug.append(f"Reconstruído com só um ponto decimal: '{valor_str}'")
+        # Tratar o caso especial de dois pontos (ex: 3.450.00)
+        pontos = valor_str.count('.')
+        virgulas = valor_str.count(',')
+        
+        info_debug.append(f"Contagem: {pontos} pontos, {virgulas} vírgulas")
+        
+        if pontos > 1 and virgulas == 0:
+            # Caso de múltiplos pontos sem vírgula (3.450.00)
+            partes = valor_str.split('.')
+            # Manter o último ponto como decimal
+            valor_int = ''.join(partes[:-1])
+            valor_str = valor_int + '.' + partes[-1]
+            info_debug.append(f"Múltiplos pontos corrigidos: '{valor_str}'")
+        elif pontos == 1 and virgulas == 1:
+            # Caso de ponto e vírgula (1.234,56 ou 1,234.56)
+            if valor_str.find('.') < valor_str.find(','):
+                # Formato BR: 1.234,56 -> 1234.56
+                info_debug.append("Detectado formato brasileiro (1.234,56)")
+                valor_str = valor_str.replace('.', '').replace(',', '.')
+            else:
+                # Formato US: 1,234.56 -> 1234.56
+                info_debug.append("Detectado formato americano (1,234.56)")
+                valor_str = valor_str.replace(',', '')
+            info_debug.append(f"Valor após conversão de formato: '{valor_str}'")
+        else:
+            # Casos simples
+            if virgulas > 0:
+                # Qualquer vírgula é convertida para ponto
+                info_debug.append("Convertendo vírgulas para pontos")
+                valor_str = valor_str.replace(',', '.')
+            
+            # Extrair apenas dígitos e um único ponto decimal (se houver)
+            # Isso lida com casos como "1.234" que pode ser interpretado como 1234.0 e não 1.234
+            num_parts = valor_str.split('.')
+            if len(num_parts) > 2:
+                # Se tem mais de um ponto, reconstrói com apenas o último como decimal
+                valor_int = ''.join(num_parts[:-1])
+                valor_str = valor_int + '.' + num_parts[-1]
+                info_debug.append(f"Reconstruído com só um ponto decimal: '{valor_str}'")
+        
+        info_debug.append(f"Valor final para conversão: '{valor_str}'")
         
         # Converter para float
         valor = float(valor_str)
