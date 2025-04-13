@@ -2,6 +2,17 @@ import streamlit as st
 from datetime import datetime, timedelta
 import pandas as pd
 
+# Função auxiliar para formatar datas com segurança
+def format_date_safe(date_obj, format_str='%d/%m/%Y'):
+    """Formata uma data com segurança, retornando string em caso de erro"""
+    try:
+        if hasattr(date_obj, 'strftime'):
+            return date_obj.strftime(format_str)
+        else:
+            return str(date_obj)
+    except Exception as e:
+        return str(date_obj)
+
 def show():
     st.title("📊 Dashboard")
 
@@ -64,7 +75,7 @@ def show():
                         st.write(f"**Cliente:** {proposta['cliente_nome']}")
                         st.write(f"**Valor:** R$ {proposta['valor']:,.2f}")
                         if proposta.get('prazo_entrega'):
-                            st.write(f"**Prazo:** {proposta['prazo_entrega'].strftime('%d/%m/%Y')}")
+                            st.write(f"**Prazo:** {format_date_safe(proposta['prazo_entrega'])}")
             else:
                 st.info("Nenhuma proposta em aberto.")
         else:
@@ -108,8 +119,11 @@ def show():
                     st.info("Nenhuma proposta de organização com data de início definida.")
                 else:
                     # Converter data_inicio para datetime.date se ainda não for
-                    if not isinstance(propostas_organizacao['data_inicio'].iloc[0], datetime.date):
+                    try:
+                        # Tentar converter todas as datas para datetime.date
                         propostas_organizacao['data_inicio'] = pd.to_datetime(propostas_organizacao['data_inicio']).dt.date
+                    except Exception as e:
+                        st.warning(f"Erro ao converter datas: {str(e)}. Usando formato original.")
                     
                     # Calcular dias passados desde o início para cada proposta
                     propostas_organizacao['dias_passados'] = propostas_organizacao['data_inicio'].apply(
