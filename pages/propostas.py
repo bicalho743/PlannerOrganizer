@@ -243,17 +243,35 @@ def mostrar_lista_propostas():
                         contador_atualizacoes += 1
                     
                     # Verificar se houve alteração no valor
-                    valor_editado = row['Valor (R$)'].replace('R$', '').replace('.', '').replace(',', '.').strip()
                     try:
-                        valor_editado = float(valor_editado)
+                        # Extração mais cuidadosa do valor monetário
+                        valor_str = row['Valor (R$)']
+                        
+                        # Remover símbolo monetário
+                        valor_str = valor_str.replace('R$', '').strip()
+                        
+                        # Verificar qual formato o usuário está usando
+                        if ',' in valor_str and '.' in valor_str:
+                            # Formato brasileiro com separador de milhares (1.234,56)
+                            valor_str = valor_str.replace('.', '').replace(',', '.')
+                        elif ',' in valor_str:
+                            # Formato com vírgula como decimal (1234,56)
+                            valor_str = valor_str.replace(',', '.')
+                        # Caso contrário, mantém o formato com ponto decimal (1234.56)
+                            
+                        valor_editado = float(valor_str)
+                        
+                        # Log para diagnóstico
+                        print(f"Debug: Conversão de valor: original='{row['Valor (R$)']}', limpo='{valor_str}', float={valor_editado}")
+                        
                         if abs(valor_editado - float(proposta_original['valor'])) > 0.01:  # Comparação com tolerância
                             st.session_state.db.atualizar_proposta(
                                 proposta_id=proposta_id,
                                 valor=valor_editado
                             )
                             contador_atualizacoes += 1
-                    except:
-                        st.warning(f"Valor inválido para a proposta {row['Número']}: {row['Valor (R$)']}")
+                    except Exception as e:
+                        st.warning(f"Valor inválido para a proposta {row['Número']}: {row['Valor (R$)']}. Erro: {str(e)}")
                         
                     # Verificar se houve alteração na data
                     try:
@@ -261,7 +279,14 @@ def mostrar_lista_propostas():
                         if row['Data'] != data_original:
                             # Converter a data para o formato do banco
                             try:
-                                nova_data = pd.to_datetime(row['Data'], format='%d/%m/%Y').date()
+                                # Tentar diferentes formatos de data para maior flexibilidade
+                                try:
+                                    # Primeiro tentar o formato DD/MM/YYYY
+                                    nova_data = pd.to_datetime(row['Data'], format='%d/%m/%Y').date()
+                                except:
+                                    # Depois tentar formato MM/DD/YYYY caso o usuário digite nesse formato
+                                    nova_data = pd.to_datetime(row['Data'], format='%m/%d/%Y').date()
+                                
                                 st.session_state.db.atualizar_proposta(
                                     proposta_id=proposta_id,
                                     data_proposta=nova_data
