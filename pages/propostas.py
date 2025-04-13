@@ -718,42 +718,29 @@ def mostrar_andamento():
                                 print(f"DEBUG PROPOSTAS UI: Iniciando adição de acréscimo para proposta ID={proposta_id_atual}")
                                 print(f"DEBUG PROPOSTAS UI: Parâmetros - tipo={tipo_acrescimo}, fornecedor={fornecedor_nome}, valor={valor_acrescimo}")
                                 
-                                # Adicionar acréscimo com tratamento de erro mais detalhado
-                                try:
-                                    acrescimo_id = st.session_state.db.add_acrescimo_proposta(
-                                        proposta_id=proposta_id_atual,
-                                        tipo=tipo_acrescimo,
-                                        fornecedor=fornecedor_nome,
-                                        descricao=descricao_acrescimo if descricao_acrescimo else None,
-                                        valor=float(valor_acrescimo)
-                                    )
-                                    print(f"DEBUG PROPOSTAS UI: Resultado da adição do acréscimo: ID={acrescimo_id}")
-                                except Exception as inner_e:
-                                    print(f"DEBUG PROPOSTAS UI ERROR: Falha na função add_acrescimo_proposta: {str(inner_e)}")
-                                    import traceback
-                                    traceback.print_exc()
-                                    raise inner_e
+                                # Usar o helper para adicionar acréscimo
+                                from utils.propostas_helper import st_adicionar_acrescimo
                                 
-                                if acrescimo_id:
-                                    print(f"DEBUG PROPOSTAS UI: Acréscimo adicionado com sucesso, ID={acrescimo_id}")
-                                    st.success(f"Acréscimo de {tipo_acrescimo} adicionado com sucesso!")
-                                    
-                                    # Salvar dados para manter a mesma proposta selecionada após o rerun
-                                    st.session_state.proposta_atual_id = proposta_id_atual
-                                    st.session_state.ultimo_acrescimo_id = acrescimo_id
-                                    
+                                # Chamar função simplificada
+                                sucesso, acrescimo_id = st_adicionar_acrescimo(
+                                    proposta_id_atual,
+                                    tipo_acrescimo,
+                                    fornecedor_nome,
+                                    descricao_acrescimo,
+                                    valor_acrescimo
+                                )
+                                
+                                # Se bem-sucedido, o helper já faz rerun, então não precisamos fazer mais nada
+                                if sucesso:
                                     # Limpar campos após sucesso
                                     if 'valor_acrescimo' in st.session_state:
                                         st.session_state.valor_acrescimo = 0.0
                                     if 'descricao_acrescimo' in st.session_state:
                                         st.session_state.descricao_acrescimo = ""
                                     
-                                    print("DEBUG PROPOSTAS UI: Executando rerun para atualizar interface")
-                                    # Rerun para atualizar a interface
-                                    st.experimental_rerun()
-                                else:
-                                    print("DEBUG PROPOSTAS UI ERROR: Função add_acrescimo_proposta retornou None ou 0")
-                                    st.error("Não foi possível adicionar o acréscimo. Tente novamente.")
+                                    # Salvar dados para manter a mesma proposta selecionada após o rerun
+                                    st.session_state.proposta_atual_id = proposta_id_atual
+                                    st.session_state.ultimo_acrescimo_id = acrescimo_id
                             except Exception as e:
                                 print(f"DEBUG PROPOSTAS UI CRITICAL ERROR: {str(e)}")
                                 import traceback
@@ -870,19 +857,11 @@ def mostrar_andamento():
                                 st.write(f"👤 Cliente: {cliente_dict.get('nome', 'N/A')}")
                                 st.write(f"💰 Valor base: R$ {float(proposta.get('valor', 0)):.2f}")
                                 
-                                # Gerar PDF com tratamento de erros mais detalhado
-                                try:
-                                    pdf_path = gerar_pdf_fechamento(proposta, cliente_dict, acrescimos, filename)
-                                    st.success("✅ Fatura gerada com sucesso!")
-                                    
-                                    # Botão para download do arquivo
-                                    with open(pdf_path, "rb") as pdf:
-                                        st.download_button(
-                                            label="⬇️ Baixar PDF",
-                                            data=pdf.read(),
-                                            file_name=f"proposta_{proposta['numero']}_fechamento.pdf",
-                                            mime="application/pdf"
-                                        )
+                                # Usar o helper para gerar PDF
+                                from utils.propostas_helper import st_gerar_pdf_proposta
+                                
+                                # Chamar função simplificada
+                                st_gerar_pdf_proposta(proposta['id'], filename)
                             except Exception as pdf_error:
                                 st.error(f"Erro ao gerar PDF: {str(pdf_error)}")
                                 import traceback
@@ -894,13 +873,9 @@ def mostrar_andamento():
                                    type="secondary", 
                                    use_container_width=True):
                             try:
-                                # Atualizar status de pagamento na proposta
-                                st.session_state.db.atualizar_pagamento_base_proposta(
-                                    proposta_id=proposta['id'],
-                                    status_pagamento_base="Recebido"
-                                )
-                                st.success("Proposta marcada como paga com sucesso!")
-                                st.experimental_rerun()
+                                # Usar o helper para marcar como paga
+                                from utils.propostas_helper import st_marcar_proposta_como_paga
+                                st_marcar_proposta_como_paga(proposta['id'])
                             except Exception as pay_error:
                                 st.error(f"Erro ao atualizar status de pagamento: {str(pay_error)}")
                                 import traceback
