@@ -129,25 +129,30 @@ def show():
                     
                     # Calcular dias passados desde o início para cada proposta
                     def calcular_dias(data_inicio):
+                        # Nova implementação simplificada
                         try:
-                            # Simplificada a lógica de verificação de tipo
-                            if isinstance(data_inicio, datetime) or hasattr(data_inicio, 'date'):
-                                # Se for um datetime ou tiver método date
+                            # Verificar se é None ou NaN
+                            if data_inicio is None or pd.isna(data_inicio):
+                                return 0
+                                
+                            # Converter para data padrão, independente do tipo
+                            if hasattr(data_inicio, 'date') and callable(data_inicio.date):
+                                # É um objeto datetime
+                                data = data_inicio.date()
+                            elif hasattr(data_inicio, 'date') and not callable(data_inicio.date):
+                                # Já é um objeto date
+                                data = data_inicio
+                            else:
+                                # Tentar converter para datetime usando pandas
                                 try:
-                                    if hasattr(data_inicio, 'date') and callable(data_inicio.date):
-                                        return (hoje_date - data_inicio.date()).days
-                                    else:
-                                        return (hoje_date - data_inicio).days
+                                    data = pd.to_datetime(data_inicio).date()
                                 except:
                                     return 0
-                            elif isinstance(data_inicio, str):
-                                # Tentar converter para data se for string
-                                converted = pd.to_datetime(data_inicio).date()
-                                return (hoje_date - converted).days
-                            else:
-                                return 0
-                        except Exception as e:
-                            # Simplified error handling
+                                    
+                            # Calcular a diferença em dias
+                            return (hoje_date - data).days
+                        except:
+                            # Em caso de erro, retornar 0
                             return 0
                         
                     propostas_organizacao['dias_passados'] = propostas_organizacao['data_inicio'].apply(calcular_dias)
