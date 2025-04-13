@@ -129,30 +129,19 @@ def show():
                     
                     # Calcular dias passados desde o início para cada proposta
                     def calcular_dias(data_inicio):
-                        # Nova implementação simplificada
                         try:
-                            # Verificar se é None ou NaN
-                            if data_inicio is None or pd.isna(data_inicio):
-                                return 0
-                                
-                            # Converter para data padrão, independente do tipo
                             if hasattr(data_inicio, 'date') and callable(data_inicio.date):
-                                # É um objeto datetime
                                 data = data_inicio.date()
+                                return (hoje_date - data).days
                             elif hasattr(data_inicio, 'date') and not callable(data_inicio.date):
-                                # Já é um objeto date
-                                data = data_inicio
+                                return (hoje_date - data_inicio).days
+                            elif isinstance(data_inicio, str):
+                                # Tentar converter para data se for string
+                                converted = pd.to_datetime(data_inicio).date()
+                                return (hoje_date - converted).days
                             else:
-                                # Tentar converter para datetime usando pandas
-                                try:
-                                    data = pd.to_datetime(data_inicio).date()
-                                except:
-                                    return 0
-                                    
-                            # Calcular a diferença em dias
-                            return (hoje_date - data).days
-                        except:
-                            # Em caso de erro, retornar 0
+                                return 0
+                        except Exception:
                             return 0
                         
                     propostas_organizacao['dias_passados'] = propostas_organizacao['data_inicio'].apply(calcular_dias)
