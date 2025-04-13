@@ -51,6 +51,10 @@ args = "Importação Direta V2"
 task = "workflow.run"
 args = "Examinar Tabela Propostas"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Ajustar Data Proposta"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -186,6 +190,21 @@ task = "shell.exec"
 args = "streamlit run examinar_tabela_propostas.py --server.port 8515 --server.address 0.0.0.0"
 waitForPort = 8515
 
+[[workflows.workflow]]
+name = "Ajustar Data Proposta"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run ajustar_data_proposta.py --server.port 8520 --server.address 0.0.0.0"
+waitForPort = 8520
+
 [[ports]]
 localPort = 443
 externalPort = 3001
@@ -233,3 +252,7 @@ externalPort = 6000
 [[ports]]
 localPort = 8515
 externalPort = 6800
+
+[[ports]]
+localPort = 8520
+externalPort = 8080
