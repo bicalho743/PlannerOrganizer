@@ -4,7 +4,31 @@ import time
 import sys
 import datetime
 import os
-from utils.database import Database
+from utils.database import Database, Proposta
+
+def corrigir_todas_propostas():
+    """Atualiza a data_proposta de todas as propostas para usar a data_inicio quando disponível"""
+    db = Database()
+    
+    # Função para atualizar propostas no banco de dados
+    def update_propostas():
+        propostas = db.session.query(Proposta).all()
+        atualizadas = 0
+        
+        for proposta in propostas:
+            if proposta.data_inicio and proposta.data_proposta != proposta.data_inicio:
+                proposta.data_proposta = proposta.data_inicio
+                atualizadas += 1
+                
+        db.session.commit()
+        return atualizadas
+    
+    try:
+        atualizadas = update_propostas()
+        return atualizadas
+    except Exception as e:
+        print(f"Erro ao atualizar propostas: {str(e)}")
+        return 0
 
 def main():
     st.set_page_config(page_title="Ajustar Data de Proposta", layout="wide")
@@ -14,6 +38,11 @@ def main():
     if "db" not in st.session_state:
         st.session_state.db = Database()
     
+    # Botão para corrigir datas de todas as propostas
+    if st.button("⚠️ Corrigir Datas de Todas as Propostas"):
+        atualizadas = corrigir_todas_propostas()
+        st.success(f"✅ {atualizadas} propostas atualizadas com sucesso! As datas de proposta agora correspondem às datas de início.")
+        
     # Obter propostas
     propostas = st.session_state.db.get_propostas()
     

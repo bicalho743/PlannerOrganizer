@@ -516,6 +516,8 @@ class Database:
                 proposta_data['tipo_proposta'] = tipo_proposta_local
             if data_inicio_local is not None:
                 proposta_data['data_inicio'] = data_inicio_local
+                # Usar a data de início como data da proposta quando disponível
+                proposta_data['data_proposta'] = data_inicio_local
             if data_fim_local is not None:
                 proposta_data['data_fim'] = data_fim_local
             if prazo_entrega_local is not None:
