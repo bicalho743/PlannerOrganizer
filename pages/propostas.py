@@ -625,7 +625,11 @@ def mostrar_andamento():
                 # Seção de acréscimos
                 st.subheader("Adicionar Acréscimos")
 
-                with st.form("adicionar_acrescimo", clear_on_submit=False):
+                # Verificar se a proposta está fechada e mostrar alerta
+                if proposta['status'] == 'Fechada':
+                    st.warning("Esta proposta está fechada, mas você ainda pode adicionar acréscimos se necessário.")
+                
+                with st.form("adicionar_acrescimo", clear_on_submit=True):
                     col1, col2 = st.columns(2)
 
                     with col1:
@@ -638,14 +642,16 @@ def mostrar_andamento():
                     with col2:
                         fornecedor_nome = None
                         if tipo_acrescimo == "Fornecedor":
-                            # Carregar lista de fornecedores do banco de dados
+                            # Carregar lista de fornecedores do banco de dados ou usar valores padrão
                             try:
                                 fornecedores = st.session_state.db.get_fornecedores()
                                 if not fornecedores.empty:
                                     fornecedor_opcoes = fornecedores['nome'].tolist()
                                 else:
+                                    st.info("Lista de fornecedores não encontrada, usando valores padrão.")
                                     fornecedor_opcoes = ["La Luc", "Multicoisas", "Organizatta", "Outro"]
                             except Exception as e:
+                                st.info("Erro ao carregar fornecedores, usando valores padrão.")
                                 print(f"Erro ao carregar fornecedores: {str(e)}")
                                 fornecedor_opcoes = ["La Luc", "Multicoisas", "Organizatta", "Outro"]
                             
@@ -657,6 +663,7 @@ def mostrar_andamento():
                             fornecedor_nome = fornecedor
                             
                         elif tipo_acrescimo == "Assistente":
+                            # Carregar lista de assistentes ou usar valores padrão
                             try:
                                 assistentes = st.session_state.db.get_assistentes()
                                 if not assistentes.empty:
@@ -667,28 +674,43 @@ def mostrar_andamento():
                                     )
                                     fornecedor_nome = assistente
                                 else:
-                                    st.warning("Nenhum assistente cadastrado. Por favor, cadastre assistentes na seção Cadastros.")
+                                    # Usar valores padrão se não houver assistentes cadastrados
+                                    st.info("Nenhum assistente cadastrado, usando valores padrão.")
+                                    assistente = st.selectbox(
+                                        "Assistente",
+                                        options=["Assistente Padrão", "Outro Assistente"],
+                                        key="assistente_select_padrao"
+                                    )
+                                    fornecedor_nome = assistente
                             except Exception as e:
-                                st.error(f"Erro ao carregar assistentes: {str(e)}")
+                                st.info("Erro ao carregar assistentes, usando valores padrão.")
+                                print(f"Erro ao carregar assistentes: {str(e)}")
+                                assistente = st.selectbox(
+                                    "Assistente",
+                                    options=["Assistente Padrão", "Outro Assistente"],
+                                    key="assistente_select_padrao"
+                                )
+                                fornecedor_nome = assistente
+
+                    # Garantir que sempre tenhamos um fornecedor ou assistente
+                    if not fornecedor_nome and tipo_acrescimo in ["Organização", "Marcenaria", "Produto"]:
+                        fornecedor_nome = f"{tipo_acrescimo} Padrão"
 
                     descricao_acrescimo = st.text_area("Descrição", height=80, key="descricao_acrescimo")
-                    valor_acrescimo = st.number_input("Valor (R$)", min_value=0.0, step=0.01, key="valor_acrescimo")
+                    valor_acrescimo = st.number_input("Valor (R$)", min_value=0.0, step=0.01, value=100.0, key="valor_acrescimo")
 
                     # Salvar ID da proposta em session_state para uso após POST
-                    if 'proposta_atual_id' not in st.session_state:
-                        st.session_state.proposta_atual_id = int(proposta['id'])
+                    proposta_id_atual = int(proposta['id'])
+                    st.session_state.proposta_atual_id = proposta_id_atual
                     
                     # Botão para adicionar acréscimo
-                    submitted = st.form_submit_button("Adicionar Acréscimo", use_container_width=True)
+                    submitted = st.form_submit_button("Adicionar Acréscimo", use_container_width=True, type="primary")
                     
                     if submitted:
                         if valor_acrescimo <= 0:
                             st.error("Por favor, insira um valor válido maior que zero.")
-                        elif tipo_acrescimo == "Assistente" and not fornecedor_nome:
-                            st.error("Por favor, selecione um assistente.")
-                        elif tipo_acrescimo == "Fornecedor" and not fornecedor_nome:
-                            st.error("Por favor, selecione um fornecedor.")
                         else:
+                            # Sempre temos um fornecedor_nome, então podemos prosseguir
                             proposta_id_atual = int(proposta['id'])
                             
                             try:
