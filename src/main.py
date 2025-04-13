@@ -150,18 +150,33 @@ st.markdown("""
         border-color: rgba(255, 255, 255, 0.2) !important;
     }
     
-    /* Ocultar menu de links de navegação gerados pelo Streamlit */
-    section[data-testid="stSidebar"] > div:first-child > div:first-child > ul {
+    /* Ocultar TODOS os links de navegação do Streamlit no sidebar */
+    section[data-testid="stSidebar"] ul[data-testid="main-menu"] {
         display: none !important;
     }
     
-    /* Ocultar HR abaixo do título da página */
-    section[data-testid="stSidebar"] > div:first-child > div:first-child > hr {
+    /* Método alternativo #1: ocultar por posição no DOM */
+    section[data-testid="stSidebar"] > div > div:first-child > div:nth-child(1) {
         display: none !important;
     }
     
-    /* Ocultar o título da página atual no sidebar (diferente do PLANNER ORGANIZER) */
-    section[data-testid="stSidebar"] > div:first-child > div:first-child > div > div.stMarkdown h1:not(:contains("PLANNER ORGANIZER")) {
+    /* Método alternativo #2: ocultar especificamente os links ul li */
+    section[data-testid="stSidebar"] ul li a {
+        display: none !important;
+    }
+    
+    /* Método alternativo #3: ocultar via atributos */
+    a[data-testid="sidebar-nav-link"] {
+        display: none !important;
+    }
+    
+    /* Método alternativo #4: ocultar a seção específica que contém os links */
+    .css-1oe5cao {
+        display: none !important;
+    }
+    
+    /* Método alternativo #5: ocultar via caminho mais específico */
+    section[data-testid="stSidebar"] .css-zt5igj li[role="listitem"] {
         display: none !important;
     }
     </style>
