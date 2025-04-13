@@ -103,38 +103,44 @@ def main():
             
             # Atualizar data da proposta com chamadas sequenciais
             with st.spinner("Atualizando data da proposta..."):
-                # 1. Atualizar data da proposta
-                print(f"DEBUG: Atualizando data da proposta {proposta['id']} para {nova_data}")
-                st.session_state.db.atualizar_proposta(
-                    proposta_id=proposta['id'],
-                    data_proposta=nova_data
-                )
-                time.sleep(0.5)  # Pequena pausa para garantir que a operação seja concluída
+                # Calcular a data de fim
+                data_fim = nova_data + datetime.timedelta(days=dias_previstos) if dias_previstos > 0 else None
                 
-                # 2. Atualizar data de início
-                print(f"DEBUG: Atualizando data de início para {nova_data}")
-                st.session_state.db.atualizar_proposta(
-                    proposta_id=proposta['id'],
-                    data_inicio=nova_data
-                )
-                time.sleep(0.5)
+                # Atualizar todos os campos de uma só vez para garantir consistência
+                print(f"DEBUG: Atualizando TODAS as datas da proposta {proposta['id']} para:")
+                print(f"DEBUG: - Data da proposta: {nova_data}")
+                print(f"DEBUG: - Data de início: {nova_data}")
+                print(f"DEBUG: - Previsão de dias: {dias_previstos}")
+                print(f"DEBUG: - Data de fim: {data_fim}")
                 
-                # 3. Atualizar previsão de dias
-                print(f"DEBUG: Atualizando previsão para {dias_previstos} dias")
-                st.session_state.db.atualizar_proposta(
-                    proposta_id=proposta['id'],
-                    previsao_dias=dias_previstos
-                )
-                time.sleep(0.5)
-                
-                # 4. Calcular e atualizar data de fim
-                if dias_previstos > 0:
-                    data_fim = nova_data + datetime.timedelta(days=dias_previstos)
-                    print(f"DEBUG: Atualizando data de fim para {data_fim}")
+                try:
+                    # Atualizar tudo de uma vez para garantir consistência
                     st.session_state.db.atualizar_proposta(
                         proposta_id=proposta['id'],
+                        data_proposta=nova_data,
+                        data_inicio=nova_data,
+                        previsao_dias=dias_previstos,
                         data_fim=data_fim
                     )
+                    
+                    # Verificar se os dados foram atualizados
+                    time.sleep(1)  # Dar tempo para o banco processar
+                    
+                    # Buscar a proposta atualizada diretamente
+                    propostas_atualizadas = st.session_state.db.get_propostas()
+                    proposta_verificacao = propostas_atualizadas[propostas_atualizadas['id'] == proposta['id']].iloc[0]
+                    
+                    # Validar os dados
+                    print(f"DEBUG: Verificação após atualização - proposta {proposta['id']}:")
+                    print(f"DEBUG: - Data proposta: {proposta_verificacao['data_proposta']}")
+                    print(f"DEBUG: - Data início: {proposta_verificacao['data_inicio']}")
+                    print(f"DEBUG: - Data fim: {proposta_verificacao['data_fim']}")
+                    print(f"DEBUG: - Previsão dias: {proposta_verificacao['previsao_dias']}")
+                    
+                except Exception as e:
+                    print(f"DEBUG: ERRO NA ATUALIZAÇÃO: {str(e)}")
+                    st.error(f"Erro ao atualizar dados: {str(e)}")
+                    raise
             
             st.success("✅ Data da proposta atualizada com sucesso!")
             st.write(f"**Nova data da proposta:** {nova_data.strftime('%d/%m/%Y')}")
