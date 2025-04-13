@@ -24,7 +24,7 @@ def show():
     elif aba_selecionada == "Lista de Propostas":
         mostrar_lista_propostas()
     elif aba_selecionada == "Propostas em Execução":
-        st.subheader("📋 Propostas em Execução")
+        st.subheader("📋 PROPOSTAS EM EXECUÇÃO")
         propostas_fechadas = st.session_state.db.get_propostas(status="Fechada")
         
         if not propostas_fechadas.empty:
