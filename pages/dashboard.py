@@ -130,15 +130,22 @@ def show():
                     # Calcular dias passados desde o início para cada proposta
                     def calcular_dias(data_inicio):
                         try:
-                            if isinstance(data_inicio, datetime) or hasattr(data_inicio, 'date'):
-                                return (hoje_date - data_inicio).days
+                            # Verificar se é um objeto datetime
+                            if hasattr(data_inicio, 'date'):
+                                # Se for um datetime, obter o date
+                                if callable(data_inicio.date):
+                                    data = data_inicio.date()
+                                else:
+                                    data = data_inicio
+                                return (hoje_date - data).days
                             elif isinstance(data_inicio, str):
                                 # Tentar converter para data se for string
                                 converted = pd.to_datetime(data_inicio).date()
                                 return (hoje_date - converted).days
                             else:
                                 return 0
-                        except Exception:
+                        except Exception as e:
+                            st.warning(f"Erro ao calcular dias: {str(e)}")
                             return 0
                         
                     propostas_organizacao['dias_passados'] = propostas_organizacao['data_inicio'].apply(calcular_dias)
