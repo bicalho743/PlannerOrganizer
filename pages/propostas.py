@@ -333,11 +333,46 @@ def mostrar_lista_propostas():
                 key="propostas_editor"
             )
             
-            # Verificar se houve alterações e atualizar o banco de dados
-            if st.button("Salvar Alterações", type="primary", use_container_width=True):
-                contador_atualizacoes = 0
-                
-                # Verificar cada linha do DataFrame editado
+            # Botões de ações principais em colunas
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Botão para salvar alterações
+                if st.button("💾 Salvar Alterações", type="primary", use_container_width=True):
+                    contador_atualizacoes = 0
+            
+            with col2:
+                # Botão para fechar propostas selecionadas
+                if st.button("🔒 Fechar Propostas Selecionadas", type="secondary", use_container_width=True):
+                    from utils.propostas_helper import fechar_proposta
+                    
+                    # Fechar propostas que foram marcadas como "Fechada" no Status
+                    propostas_para_fechar = edited_df[edited_df['Status'] == 'Fechada']
+                    
+                    if propostas_para_fechar.empty:
+                        st.warning("Nenhuma proposta foi marcada como 'Fechada'. Selecione o status 'Fechada' nas propostas que deseja fechar.")
+                    else:
+                        contador_fechamentos = 0
+                        for _, row in propostas_para_fechar.iterrows():
+                            # Verificar se a proposta já estava fechada
+                            proposta_id = row['ID']
+                            proposta_original = st.session_state.propostas_completas[st.session_state.propostas_completas['id'] == proposta_id].iloc[0]
+                            
+                            if proposta_original['status'] != 'Fechada':
+                                sucesso, mensagem = fechar_proposta(st.session_state.db, proposta_id)
+                                if sucesso:
+                                    contador_fechamentos += 1
+                        
+                        if contador_fechamentos > 0:
+                            st.success(f"{contador_fechamentos} proposta(s) fechada(s) com sucesso!")
+                            st.experimental_rerun()
+                        else:
+                            st.info("Nenhuma proposta foi fechada. Talvez já estivessem com status 'Fechada'.")
+            
+            # Linha horizontal para separar
+            st.markdown("---")
+                    
+                    # Verificar cada linha do DataFrame editado
                 for i, row in edited_df.iterrows():
                     proposta_id = row['ID']
                     proposta_original = st.session_state.propostas_completas[st.session_state.propostas_completas['id'] == proposta_id].iloc[0]
