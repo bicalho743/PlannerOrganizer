@@ -1357,29 +1357,32 @@ class Database:
         # Log para diagnóstico
         print(f"DEBUG: Adicionando acréscimo à proposta ID={proposta_id}, tipo={tipo}, fornecedor={fornecedor}, valor={valor}")
         
+        # Converter valores para tipos nativos Python antes da consulta
         try:
-            # Primeiro verificar se a proposta existe
-            session = Session()
-            proposta = session.query(Proposta).filter_by(id=proposta_id).first()
-            session.close()
+            proposta_id_int = int(proposta_id)
+            valor_float = float(valor) if valor is not None else 0.0
             
-            if not proposta:
-                raise ValueError(f"Proposta ID {proposta_id} não encontrada no banco de dados")
+            # Fornecer um valor padrão para o fornecedor se não foi fornecido
+            fornecedor_nome = str(fornecedor) if fornecedor else f"{tipo} Padrão"
+            
+            # Garantir que a descrição não seja None
+            descricao_texto = str(descricao) if descricao else f"Acréscimo de {tipo}"
                 
             def query():
-                # Converter proposta_id e valor para tipos nativos Python
+                # Verificar se a proposta existe na sessão atual
+                proposta = self.session.query(Proposta).filter_by(id=proposta_id_int).first()
+                if not proposta:
+                    raise ValueError(f"Proposta ID {proposta_id} não encontrada no banco de dados")
+                
                 try:
-                    proposta_id_int = int(proposta_id)
-                    valor_float = float(valor) if valor is not None else None
+                    print(f"DEBUG: Criando acréscimo para proposta ID={proposta_id_int}, tipo={tipo}, fornecedor={fornecedor_nome}")
                     
-                    print(f"DEBUG: Valores convertidos - proposta_id={proposta_id_int}, valor={valor_float}")
-                    
-                    # Criar objeto de acréscimo
+                    # Criar objeto de acréscimo com valores já verificados
                     acrescimo = AcrescimoProposta(
                         proposta_id=proposta_id_int,
                         tipo=tipo,
-                        fornecedor=fornecedor,
-                        descricao=descricao,
+                        fornecedor=fornecedor_nome,
+                        descricao=descricao_texto,
                         valor=valor_float,
                         status_pagamento=status_pagamento,
                         data_cadastro=datetime.now().date()
@@ -1388,18 +1391,30 @@ class Database:
                     # Adicionar à sessão
                     self.session.add(acrescimo)
                     self.session.flush()  # Flush para obter o ID sem commitar ainda
-                    acrescimo_id = int(acrescimo.id)
                     
-                    print(f"DEBUG: Acréscimo criado com sucesso, ID={acrescimo_id}")
-                    return acrescimo_id
+                    # Garantir que temos um ID inteiro válido
+                    if acrescimo.id is not None:
+                        acrescimo_id = int(acrescimo.id)
+                        print(f"DEBUG: Acréscimo criado com sucesso, ID={acrescimo_id}")
+                        
+                        # Gerar transação financeira para este acréscimo (opcional)
+                        # Se necessário, adicione código aqui para gerar transações financeiras
+                        
+                        return acrescimo_id
+                    else:
+                        raise ValueError("Não foi possível obter ID do acréscimo após flush")
                     
                 except Exception as e:
                     print(f"DEBUG ERROR: Erro ao criar acréscimo: {str(e)}")
                     import traceback
                     traceback.print_exc()
+                    self.session.rollback()  # Fazer rollback em caso de erro
                     raise e
                     
-            return self._safe_query(query)
+            # Usar _safe_query para garantir transação adequada
+            resultado = self._safe_query(query)
+            print(f"DEBUG: Resultado final da adição de acréscimo: {resultado}")
+            return resultado
             
         except Exception as e:
             print(f"DEBUG CRITICAL: Exceção crítica ao adicionar acréscimo: {str(e)}")
@@ -1560,6 +1575,69 @@ class Database:
                 acrescimo.status_pagamento = status
                 return True
             return False
+        return self._safe_query(query)
+
+    def atualizar_pagamento_base_proposta(self, proposta_id, status_pagamento_base="Recebido"):
+        """
+        Atualiza o status de pagamento do valor base de uma proposta
+        
+        Args:
+            proposta_id: ID da proposta
+            status_pagamento_base: Status do pagamento ("Pendente", "Recebido")
+            
+        Returns:
+            bool: True se atualizado com sucesso, False se não encontrou a proposta
+        """
+        print(f"DEBUG: Atualizando status de pagamento da proposta ID={proposta_id} para {status_pagamento_base}")
+        
+        def query():
+            try:
+                proposta = self.session.query(Proposta).filter_by(id=proposta_id).first()
+                
+                if not proposta:
+                    print(f"DEBUG: Proposta ID={proposta_id} não encontrada")
+                    return False
+                
+                # Atualizar status de pagamento
+                proposta.status_pagamento_base = status_pagamento_base
+                
+                # Se marcou como recebido, registrar data de recebimento
+                if status_pagamento_base == "Recebido":
+                    # Verificar se já existe uma transação para esta proposta
+                    transacao_existente = self.session.query(Transacao).filter_by(
+                        proposta_id=proposta_id,
+                        tipo_receita="Valor Base"
+                    ).first()
+                    
+                    # Se não existir transação, criar uma nova
+                    if not transacao_existente:
+                        transacao = Transacao(
+                            tipo="receita",
+                            descricao=f"Pagamento do valor base da proposta #{proposta.numero} - {proposta.descricao}",
+                            valor=proposta.valor,
+                            categoria="Proposta",
+                            subcategoria=proposta.tipo_proposta if proposta.tipo_proposta else "Outros",
+                            tipo_receita="Valor Base",
+                            origem_id=proposta.id,
+                            origem_tipo="proposta",
+                            proposta_id=proposta.id,
+                            tipo_conta="PF",
+                            status="Recebido",
+                            data_recebimento=datetime.now().date(),
+                            classificacao="receita"
+                        )
+                        self.session.add(transacao)
+                    
+                print(f"DEBUG: Status de pagamento da proposta ID={proposta_id} atualizado com sucesso")
+                return True
+            
+            except Exception as e:
+                print(f"DEBUG ERROR: Erro ao atualizar status de pagamento da proposta: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                self.session.rollback()
+                raise e
+        
         return self._safe_query(query)
 
     def get_historico_pagamentos(self):

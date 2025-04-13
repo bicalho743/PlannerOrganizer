@@ -764,10 +764,19 @@ def mostrar_andamento():
                 # Exibir acréscimos existentes
                 try:
                     print(f"DEBUG PROPOSTAS UI: Buscando acréscimos para proposta ID={proposta['id']}")
+                    # Adicionar timestamp para evitar caching
+                    import time
+                    timestamp = time.time()
                     acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
+                    print(f"DEBUG PROPOSTAS UI: Query acréscimos executada em {time.time() - timestamp:.2f}s")
                     
-                    # Sempre exibir o cabeçalho da seção
-                    st.write("### Acréscimos Adicionados")
+                    # Sempre exibir o cabeçalho da seção e separador
+                    st.markdown("---")
+                    st.subheader("Acréscimos Adicionados")
+                    
+                    # Botão para atualizar/recarregar os acréscimos
+                    if st.button("🔄 Atualizar Lista de Acréscimos", key="refresh_acrescimos", type="secondary", use_container_width=True):
+                        st.experimental_rerun()
                     
                     if acrescimos.empty:
                         # Exibir mensagem quando não houver acréscimos
@@ -780,33 +789,101 @@ def mostrar_andamento():
                         print(f"DEBUG PROPOSTAS UI: Encontrados {len(acrescimos)} acréscimos")
                         
                         # Criar DataFrame para exibição
-                        df_acrescimos = acrescimos[['tipo', 'fornecedor', 'valor', 'descricao']].copy()
-                        df_acrescimos.columns = ['Tipo', 'Fornecedor', 'Valor (R$)', 'Descrição']
-
-                        # Formatar valores
+                        df_acrescimos = acrescimos[['id', 'tipo', 'fornecedor', 'valor', 'descricao', 'status_pagamento', 'data_cadastro']].copy()
+                        
+                        # Renomear colunas para exibição
+                        df_acrescimos.columns = ['ID', 'Tipo', 'Fornecedor', 'Valor (R$)', 'Descrição', 'Status Pgto', 'Data']
+                        
+                        # Formatar valores e data
                         df_acrescimos['Valor (R$)'] = df_acrescimos['Valor (R$)'].apply(lambda x: f'R$ {float(x):.2f}')
+                        df_acrescimos['Data'] = df_acrescimos['Data'].apply(lambda x: x.strftime('%d/%m/%Y') if x else '')
 
                         # Exibir tabela com os acréscimos
                         st.dataframe(df_acrescimos, hide_index=True)
 
                         # Calcular e exibir valor total com acréscimos
-                        valor_acrescimos = acrescimos['valor'].sum()
-                        valor_base = float(proposta['valor'])
-                        valor_total = valor_base + valor_acrescimos
-                        
-                        # Exibir valores detalhados
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            st.write(f"**Valor Base:** R$ {valor_base:.2f}")
-                            st.write(f"**Total Acréscimos:** R$ {valor_acrescimos:.2f}")
-                        with col2:
-                            st.write(f"**Valor Total da Proposta:** R$ {valor_total:.2f}")
+                        try:
+                            valor_acrescimos = acrescimos['valor'].sum()
+                            valor_base = float(proposta['valor'])
+                            valor_total = valor_base + valor_acrescimos
+                            
+                            # Exibir valores detalhados em um container destacado
+                            st.markdown("---")
+                            st.subheader("Resumo Financeiro")
+                            
+                            col1, col2, col3 = st.columns(3)
+                            with col1:
+                                st.info(f"**Valor Base**\nR$ {valor_base:.2f}")
+                            with col2:
+                                st.info(f"**Total Acréscimos**\nR$ {valor_acrescimos:.2f}")
+                            with col3:
+                                st.success(f"**Valor Total**\nR$ {valor_total:.2f}")
+                        except Exception as calc_error:
+                            print(f"DEBUG PROPOSTAS UI ERROR: Erro ao calcular valores: {str(calc_error)}")
+                            st.error(f"Erro ao calcular valores: {str(calc_error)}")
 
                 except Exception as e:
                     print(f"DEBUG PROPOSTAS UI ERROR: Erro ao carregar acréscimos: {str(e)}")
                     import traceback
                     traceback.print_exc()
                     st.error(f"Erro ao carregar acréscimos: {str(e)}")
+                    
+                # Adicionar botão para gerar PDF de fechamento sempre disponível para propostas fechadas
+                st.markdown("---")
+                if proposta['status'] == 'Fechada':
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button("📄 Gerar PDF de Fechamento", 
+                                    key="gerar_pdf_fechamento", 
+                                    type="primary", 
+                                    use_container_width=True):
+                            try:
+                                st.info("Gerando PDF de fechamento... Por favor, aguarde.")
+                                # Buscar dados do cliente
+                                cliente = st.session_state.db.get_cliente_by_id(proposta['cliente_id'])
+                                
+                                # Obter acréscimos da proposta 
+                                acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
+                                
+                                # Nome do arquivo
+                                filename = f"pdfs/proposta_{proposta['numero']}_{proposta['cliente_id']}_fechamento.pdf"
+                                
+                                # Gerar PDF com parâmetros corretos
+                                from utils.pdf_generator import gerar_pdf_fechamento
+                                pdf_path = gerar_pdf_fechamento(proposta, cliente, acrescimos, filename)
+                                
+                                st.success("Fatura gerada com sucesso!")
+                                
+                                # Botão para download do arquivo
+                                with open(pdf_path, "rb") as pdf:
+                                    st.download_button(
+                                        label="⬇️ Baixar PDF",
+                                        data=pdf.read(),
+                                        file_name=f"proposta_{proposta['numero']}_fechamento.pdf",
+                                        mime="application/pdf"
+                                    )
+                            except Exception as pdf_error:
+                                st.error(f"Erro ao gerar PDF: {str(pdf_error)}")
+                                import traceback
+                                traceback.print_exc()
+                    
+                    with col2:
+                        if st.button("💰 Marcar como Paga", 
+                                   key="marcar_como_paga", 
+                                   type="secondary", 
+                                   use_container_width=True):
+                            try:
+                                # Atualizar status de pagamento na proposta
+                                st.session_state.db.atualizar_pagamento_base_proposta(
+                                    proposta_id=proposta['id'],
+                                    status_pagamento_base="Recebido"
+                                )
+                                st.success("Proposta marcada como paga com sucesso!")
+                                st.experimental_rerun()
+                            except Exception as pay_error:
+                                st.error(f"Erro ao atualizar status de pagamento: {str(pay_error)}")
+                                import traceback
+                                traceback.print_exc()
 
             except Exception as e:
                 st.error(f"Erro ao processar proposta selecionada: {str(e)}")
