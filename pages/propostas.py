@@ -389,42 +389,48 @@ def mostrar_lista_propostas():
                             st.rerun()
             
             elif acao == "Exportar PDF":
+                # Primeiro mostre a opção de template Canva
+                usar_template_canva = st.checkbox("Usar Template Canva", help="Selecione esta opção para usar um template visual para o PDF")
+                
                 # Botão simples para confirmar a exportação
                 if st.button(f"Confirmar {acao}"):
                     proposta = propostas[propostas['numero'] == proposta_num].iloc[0]
                     try:
-                        # Criar diretório para PDFs se não existir
-                        os.makedirs("pdfs", exist_ok=True)
+                        with st.spinner("Gerando PDF..."):
+                            # Criar diretório para PDFs se não existir
+                            os.makedirs("pdfs", exist_ok=True)
 
-                        # Nome do arquivo
-                        filename = f"pdfs/proposta_{proposta['numero']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                            # Nome do arquivo
+                            filename = f"pdfs/proposta_{proposta['numero']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
 
-                        # Buscar acréscimos da proposta
-                        acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
-
-                        # Opção para usar template
-                        usar_template_canva = st.checkbox("Usar Template Canva")
-                        
-                        # Gerar PDF
-                        pdf_path = gerar_pdf_fechamento(
-                            proposta=proposta,
-                            cliente={'nome': proposta['nome']},
-                            acrescimos=acrescimos,
-                            filename=filename,
-                            usar_template=usar_template_canva
-                        )
-
-                        # Criar link para download (agora fora do form)
-                        with open(pdf_path, "rb") as pdf_file:
-                            pdf_bytes = pdf_file.read()
-                            st.download_button(
-                                label="Baixar PDF",
-                                data=pdf_bytes,
-                                file_name=os.path.basename(filename),
-                                mime="application/pdf"
+                            # Buscar acréscimos da proposta
+                            acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
+                            
+                            # Log para diagnóstico
+                            print(f"Debug: Gerando PDF para proposta {proposta['numero']} - usando template: {usar_template_canva}")
+                            
+                            # Gerar PDF
+                            pdf_path = gerar_pdf_fechamento(
+                                proposta=proposta,
+                                cliente={'nome': proposta['nome']},
+                                acrescimos=acrescimos,
+                                filename=filename,
+                                usar_template=usar_template_canva
                             )
 
-                        st.success("PDF gerado com sucesso!")
+                            print(f"Debug: PDF gerado no caminho: {pdf_path}")
+                            st.success("PDF gerado com sucesso!")
+                            
+                            # Criar link para download (agora fora do form)
+                            with open(pdf_path, "rb") as pdf_file:
+                                pdf_bytes = pdf_file.read()
+                                st.download_button(
+                                    label="📥 Baixar PDF",
+                                    data=pdf_bytes,
+                                    file_name=os.path.basename(filename),
+                                    mime="application/pdf",
+                                    key=f"download_button_{proposta['numero']}"
+                                )
                     except Exception as e:
                         st.error(f"Erro ao gerar PDF: {str(e)}")
 
