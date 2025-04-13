@@ -105,9 +105,37 @@ def show():
                         valor_final = float(proposta['valor']) + total_fornecedores + total_assistentes + total_produtos
                         
                         # Gerar PDF com fatura
-                        filename = f"pdfs/fatura_proposta_{proposta['numero']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-                        gerar_pdf_fechamento(proposta, filename)
-                        st.success("Fatura gerada com sucesso!")
+                        try:
+                            # Garantir que o diretório pdfs existe
+                            import os
+                            if not os.path.exists("pdfs"):
+                                os.makedirs("pdfs")
+                            
+                            filename = f"pdfs/fatura_proposta_{proposta['numero']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                            
+                            # Buscar cliente
+                            cliente = clientes[clientes['id'] == proposta['cliente_id']].iloc[0]
+                            
+                            # Buscar acréscimos
+                            acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
+                            
+                            # Gerar PDF com parâmetros corretos
+                            gerar_pdf_fechamento(proposta, cliente, acrescimos, filename)
+                            
+                            st.success("Fatura gerada com sucesso!")
+                            
+                            # Disponibilizar o download do PDF gerado
+                            with open(filename, "rb") as file:
+                                st.download_button(
+                                    label="Baixar Fatura em PDF",
+                                    data=file,
+                                    file_name=f"fatura_proposta_{proposta['numero']}.pdf",
+                                    mime="application/pdf",
+                                    key="download_pdf_fatura"
+                                )
+                        except Exception as e:
+                            st.error(f"Erro ao gerar PDF: {str(e)}")
+                            print(f"Erro detalhado ao gerar PDF: {str(e)}")
         else:
             st.info("Não há propostas em execução.")
         st.write("""
@@ -514,13 +542,22 @@ def mostrar_lista_propostas():
                             print(f"Debug: Gerando PDF para proposta {proposta['numero']} - usando template: {usar_template_canva}")
                             
                             # Gerar PDF
-                            pdf_path = gerar_pdf_fechamento(
-                                proposta=proposta,
-                                cliente={'nome': proposta['nome']},
-                                acrescimos=acrescimos,
-                                filename=filename,
-                                usar_template=usar_template_canva
-                            )
+                            if usar_template_canva:
+                                # Usar função que suporta template
+                                pdf_path = gerar_pdf_com_template(
+                                    proposta=proposta,
+                                    cliente={'nome': proposta['nome']},
+                                    acrescimos=acrescimos,
+                                    filename=filename
+                                )
+                            else:
+                                # Usar função padrão
+                                pdf_path = gerar_pdf_fechamento(
+                                    proposta=proposta,
+                                    cliente={'nome': proposta['nome']},
+                                    acrescimos=acrescimos,
+                                    filename=filename
+                                )
 
                             print(f"Debug: PDF gerado no caminho: {pdf_path}")
                             st.success("PDF gerado com sucesso!")
@@ -770,210 +807,23 @@ def mostrar_importacao():
             except Exception as e:
                 st.error(f"Erro ao importar propostas: {str(e)}")
 
-def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename, usar_template=False):
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib import colors
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.units import inch
-    
-    # IMPORTANTE: Carregar dados atualizados da proposta diretamente do banco
-    # para garantir que estamos usando as informações mais recentes
-    import pandas as pd
-    print(f"DEBUG PDF: Recarregando dados atualizados da proposta #{proposta.get('numero')}")
-    
-    # Usar duas abordagens para garantir redundância e segurança
-    
-    # 1. Consulta SQL direta para pegar os dados mais recentes
+# Função auxiliar para gerar PDF com template
+def gerar_pdf_com_template(proposta, cliente, acrescimos, filename):
+    """
+    Função auxiliar que usa template Canva para gerar PDF
+    """
     try:
-        if 'id' in proposta:
-            from sqlalchemy.sql import text
-            from utils.database import Session
-            
-            session = Session()
-            try:
-                # Consulta SQL direta para garantir dados mais atualizados
-                result = session.execute(
-                    text("""
-                    SELECT id, numero, cliente_id, descricao, valor, status, 
-                           tipo_proposta, data_inicio, data_fim, prazo_entrega, 
-                           data_proposta, status_pagamento_base, previsao_dias 
-                    FROM propostas 
-                    WHERE id = :id
-                    """),
-                    {"id": proposta['id']}
-                ).fetchone()
-                
-                if result:
-                    # Atualizar dados da proposta com os valores do banco
-                    proposta_dict = {
-                        'id': result[0],
-                        'numero': result[1],
-                        'cliente_id': result[2],
-                        'descricao': result[3],
-                        'valor': result[4],
-                        'status': result[5],
-                        'tipo_proposta': result[6],
-                        'data_inicio': result[7],
-                        'data_fim': result[8],
-                        'prazo_entrega': result[9],
-                        'data_proposta': result[10],
-                        'status_pagamento_base': result[11],
-                        'previsao_dias': result[12]
-                    }
-                    
-                    # Atualizar a proposta com os dados novos
-                    for key, value in proposta_dict.items():
-                        proposta[key] = value
-                    
-                    print(f"DEBUG PDF: Proposta recarregada com SQL direto! ID={proposta['id']}")
-                    print(f"DEBUG PDF: Data da proposta: {proposta['data_proposta']}")
-                    print(f"DEBUG PDF: Data início: {proposta['data_inicio']}")
-                    print(f"DEBUG PDF: Data fim: {proposta['data_fim']}")
-                    print(f"DEBUG PDF: Previsão dias: {proposta['previsao_dias']}")
-            except Exception as e:
-                print(f"DEBUG PDF: Erro na consulta SQL direta: {str(e)}")
-            finally:
-                session.close()
+        from utils.pdf_merger import preencher_template_canva
+        dados = {
+            'cliente': cliente['nome'],
+            'valor': float(proposta['valor']),
+            'data': datetime.now().strftime('%d/%m/%Y'),
+            'descricao': proposta['descricao']
+        }
+        template_path = "templates/proposta_template.pdf"
+        preencher_template_canva(template_path, dados, filename)
+        return filename
     except Exception as e:
-        print(f"DEBUG PDF: Erro ao tentar acesso direto ao banco: {str(e)}")
-        
-    # 2. Método secundário usando a API normal do banco de dados (como backup)
-    try:
-        if 'db' in st.session_state and 'id' in proposta:
-            propostas_atualizadas = st.session_state.db.get_propostas()
-            if not propostas_atualizadas.empty:
-                proposta_atualizada = propostas_atualizadas[propostas_atualizadas['id'] == proposta['id']]
-                if not proposta_atualizada.empty:
-                    proposta_backup = proposta_atualizada.iloc[0]
-                    print(f"DEBUG PDF: Proposta também recarregada via API normal! ID={proposta_backup['id']}")
-    except Exception as e:
-        print(f"DEBUG PDF: Erro ao recarregar proposta via API: {str(e)}")
-    
-    if usar_template:
-        try:
-            from utils.pdf_merger import preencher_template_canva
-            dados = {
-                'cliente': cliente['nome'],
-                'valor': float(proposta['valor']),
-                'data': datetime.now().strftime('%d/%m/%Y'),
-                'descricao': proposta['descricao']
-            }
-            template_path = "templates/proposta_template.pdf"
-            preencher_template_canva(template_path, dados, filename)
-            return filename
-        except Exception as e:
-            st.warning(f"Não foi possível usar o template Canva. Usando geração padrão: {str(e)}")
-            # Se falhar, continua com a geração padrão
-    
-    # Criação do documento com ReportLab
-    doc = SimpleDocTemplate(
-        filename,
-        pagesize=letter,
-        rightMargin=72,
-        leftMargin=72,
-        topMargin=72,
-        bottomMargin=72
-    )
-    styles = getSampleStyleSheet()
-    
-    # Criar estilo personalizado para o cabeçalho
-    styles.add(ParagraphStyle(
-        name='TituloAzul',
-        parent=styles['Heading1'],
-        textColor=colors.blue,
-        spaceAfter=12
-    ))
-    
-    elements = []
-    
-    # Adicionar título
-    elements.append(Paragraph("PROPOSTA DE SERVIÇO", styles['TituloAzul']))
-    elements.append(Spacer(1, 0.25*inch))
-    
-    # Adicionar informações básicas da proposta
-    elements.append(Paragraph(f"<b>Número:</b> {proposta.get('numero', '')}", styles['Normal']))
-    elements.append(Paragraph(f"<b>Cliente:</b> {cliente.get('nome', '')}", styles['Normal']))
-    
-    # Usar a data da proposta se disponível, senão usar a data atual
-    data_proposta = proposta.get('data_proposta')
-    if pd.notna(data_proposta):
-        data_str = pd.to_datetime(data_proposta).strftime('%d/%m/%Y')
-    else:
-        data_str = datetime.now().strftime('%d/%m/%Y')
-    
-    elements.append(Paragraph(f"<b>Data:</b> {data_str}", styles['Normal']))
-    elements.append(Spacer(1, 0.1*inch))
-    elements.append(Paragraph(f"<b>Descrição:</b> {proposta.get('descricao', '')}", styles['Normal']))
-    
-    # Adicionar informações de prazo (se disponíveis)
-    if pd.notna(proposta.get('data_inicio')) and pd.notna(proposta.get('data_fim')):
-        data_inicio = pd.to_datetime(proposta['data_inicio']).strftime('%d/%m/%Y')
-        data_fim = pd.to_datetime(proposta['data_fim']).strftime('%d/%m/%Y')
-        elements.append(Paragraph(f"<b>Período:</b> {data_inicio} a {data_fim}", styles['Normal']))
-        
-        dias = (pd.to_datetime(proposta['data_fim']) - pd.to_datetime(proposta['data_inicio'])).days
-        elements.append(Paragraph(f"<b>Previsão:</b> {dias} dias", styles['Normal']))
-    
-    elements.append(Spacer(1, 0.25*inch))
-    
-    # Adicionar detalhes de valor
-    valor_base = float(proposta.get('valor', 0))
-    elements.append(Paragraph(f"<b>Valor Base:</b> R$ {valor_base:.2f}", styles['Normal']))
-    
-    # Adicionar tabela de acréscimos se existirem
-    if acrescimos is not None and not acrescimos.empty:
-        elements.append(Spacer(1, 0.2*inch))
-        elements.append(Paragraph("<b>Acréscimos:</b>", styles['Normal']))
-        
-        # Criar dados da tabela
-        data = [['Tipo', 'Fornecedor', 'Descrição', 'Valor (R$)']]
-        valor_total_acrescimos = 0
-        
-        for _, a in acrescimos.iterrows():
-            valor = float(a.get('valor', 0))
-            valor_total_acrescimos += valor
-            data.append([
-                a.get('tipo', ''),
-                a.get('fornecedor', ''),
-                a.get('descricao', ''),
-                f'R$ {valor:.2f}'
-            ])
-        
-        # Criar a tabela
-        table = Table(data, colWidths=[1.2*inch, 1.5*inch, 2.5*inch, 1*inch])
-        
-        # Estilo da tabela
-        table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
-        ]))
-        
-        elements.append(table)
-        elements.append(Spacer(1, 0.2*inch))
-        
-        # Valor total com acréscimos
-        valor_total = valor_base + valor_total_acrescimos
-        elements.append(Paragraph(f"<b>Acréscimos:</b> R$ {valor_total_acrescimos:.2f}", styles['Normal']))
-        elements.append(Paragraph(f"<b>Valor Total:</b> R$ {valor_total:.2f}", styles['Normal']))
-    
-    # Adicionar condições e termos
-    elements.append(Spacer(1, 0.4*inch))
-    elements.append(Paragraph("<b>CONDIÇÕES E TERMOS:</b>", styles['Heading3']))
-    elements.append(Paragraph("1. Esta proposta é válida por 30 dias a partir da data de emissão.", styles['Normal']))
-    elements.append(Paragraph("2. O pagamento deve ser realizado conforme condições acordadas.", styles['Normal']))
-    elements.append(Paragraph("3. Alterações no escopo podem resultar em ajustes de prazo e valor.", styles['Normal']))
-    
-    # Adicionar assinaturas
-    elements.append(Spacer(1, inch))
-    elements.append(Paragraph("____________________________                    ____________________________", styles['Normal']))
-    elements.append(Paragraph("         Planner Organizer                                             Cliente", styles['Normal']))
-    
-    # Gerar o PDF
-    doc.build(elements)
-    return filename
+        st.warning(f"Não foi possível usar o template Canva: {str(e)}")
+        # Usar a função padrão se falhar
+        return gerar_pdf_fechamento(proposta, cliente, acrescimos, filename)
