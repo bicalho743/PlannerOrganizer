@@ -277,23 +277,48 @@ def mostrar_lista_propostas():
                     try:
                         data_original = pd.to_datetime(proposta_original['data_proposta']).strftime('%d/%m/%Y')
                         if row['Data'] != data_original:
-                            # Converter a data para o formato do banco
+                            # Log para diagnóstico
+                            print(f"Debug: Conversão de data: original='{data_original}', nova='{row['Data']}'")
+                            
+                            # Converter a data para o formato do banco - com tratamento mais robusto
                             try:
-                                # Tentar diferentes formatos de data para maior flexibilidade
+                                # Primeira estratégia: usar parse do pandas diretamente (mais flexível)
+                                nova_data = None
                                 try:
-                                    # Primeiro tentar o formato DD/MM/YYYY
-                                    nova_data = pd.to_datetime(row['Data'], format='%d/%m/%Y').date()
+                                    # Tentar converter sem especificar formato (pandas tenta inferir)
+                                    nova_data = pd.to_datetime(row['Data']).date()
+                                    print(f"Debug: Data convertida com sucesso usando inferência automática: {nova_data}")
                                 except:
-                                    # Depois tentar formato MM/DD/YYYY caso o usuário digite nesse formato
-                                    nova_data = pd.to_datetime(row['Data'], format='%m/%d/%Y').date()
-                                
-                                st.session_state.db.atualizar_proposta(
-                                    proposta_id=proposta_id,
-                                    data_proposta=nova_data
-                                )
-                                contador_atualizacoes += 1
+                                    # Se falhar, tentar com formatos específicos
+                                    try:
+                                        # Formato DD/MM/YYYY (brasileiro)
+                                        nova_data = pd.to_datetime(row['Data'], format='%d/%m/%Y').date()
+                                        print(f"Debug: Data convertida com formato DD/MM/YYYY: {nova_data}")
+                                    except:
+                                        try:
+                                            # Formato MM/DD/YYYY (americano)
+                                            nova_data = pd.to_datetime(row['Data'], format='%m/%d/%Y').date()
+                                            print(f"Debug: Data convertida com formato MM/DD/YYYY: {nova_data}")
+                                        except:
+                                            try:
+                                                # Formato YYYY-MM-DD (ISO)
+                                                nova_data = pd.to_datetime(row['Data'], format='%Y-%m-%d').date()
+                                                print(f"Debug: Data convertida com formato YYYY-MM-DD: {nova_data}")
+                                            except Exception as e:
+                                                print(f"Debug: Todos os formatos de data falharam: {str(e)}")
+                                                
+                                # Se conseguimos converter a data, atualizar no banco
+                                if nova_data:
+                                    st.session_state.db.atualizar_proposta(
+                                        proposta_id=proposta_id,
+                                        data_proposta=nova_data
+                                    )
+                                    contador_atualizacoes += 1
+                                    print(f"Debug: Data atualizada com sucesso para: {nova_data}")
+                                else:
+                                    st.warning(f"Não foi possível converter a data '{row['Data']}'. Use o formato DD/MM/YYYY.")
                             except Exception as e:
-                                st.warning(f"Formato de data inválido para a proposta {row['Número']}: {row['Data']}. Use o formato DD/MM/YYYY.")
+                                st.warning(f"Formato de data inválido para a proposta {row['Número']}: {row['Data']}. Erro: {str(e)}. Use o formato DD/MM/YYYY.")
                     except Exception as e:
                         st.warning(f"Erro ao processar data para a proposta {row['Número']}: {str(e)}")
                                 
