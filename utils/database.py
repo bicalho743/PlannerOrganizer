@@ -1689,6 +1689,99 @@ class Database:
             return True
         return self._safe_query(query)
         
+    def adicionar_venda_a_proposta(self, proposta_id, itens, forma_pagamento=None, observacoes=None):
+        """
+        Adiciona uma venda diretamente a uma proposta existente, criando um acréscimo do tipo "Produto"
+        
+        Args:
+            proposta_id: ID da proposta
+            itens: Lista de itens da venda, onde cada item é um dicionário com as chaves:
+                   - produto_id: ID do produto
+                   - quantidade: quantidade do produto
+                   - preco_unitario: preço unitário do produto
+            forma_pagamento: Forma de pagamento (opcional)
+            observacoes: Observações sobre a venda (opcional)
+            
+        Returns:
+            int: ID da venda criada, ou None em caso de erro
+        """
+        def query():
+            # Primeiro recuperar a proposta para obter cliente_id
+            session = self.Session()
+            proposta = session.query(Proposta).filter(Proposta.id == proposta_id).first()
+            
+            if not proposta:
+                raise ValueError(f"Proposta {proposta_id} não encontrada")
+                
+            cliente_id = proposta.cliente_id
+            
+            # 1. Criar a venda normalmente
+            # Criar objeto de venda
+            venda = Venda(
+                cliente_id=cliente_id,
+                data_venda=datetime.now(),
+                status='Concluída',
+                forma_pagamento=forma_pagamento or 'Vinculada à Proposta',
+                observacoes=observacoes
+            )
+            session.add(venda)
+            session.flush()  # Obter o ID da venda
+            
+            # Calcular valor total da venda
+            valor_total = 0
+            
+            # Adicionar itens da venda
+            for item_data in itens:
+                produto_id = item_data['produto_id']
+                quantidade = item_data['quantidade']
+                preco_unitario = item_data['preco_unitario']
+                subtotal = quantidade * preco_unitario
+                
+                produto = session.query(Produto).filter(Produto.id == produto_id).first()
+                if not produto:
+                    raise ValueError(f"Produto {produto_id} não encontrado")
+                
+                # Criar item de venda
+                item = ItemVenda(
+                    venda_id=venda.id,
+                    produto_id=produto_id,
+                    quantidade=quantidade,
+                    preco_unitario=preco_unitario,
+                    subtotal=subtotal
+                )
+                session.add(item)
+                
+                # Atualizar valor total
+                valor_total += subtotal
+            
+            # 2. Adicionar o valor da venda como acréscimo na proposta
+            # Detalhes para o acréscimo
+            desc_acrescimo = f"Venda #{venda.id} - {len(itens)} itens"
+            if observacoes:
+                desc_acrescimo += f" - {observacoes}"
+                
+            # Criar acréscimo
+            acrescimo = AcrescimoProposta(
+                proposta_id=proposta_id,
+                tipo="Produto",
+                fornecedor=f"Venda interna #{venda.id}",
+                descricao=desc_acrescimo,
+                valor=valor_total
+            )
+            session.add(acrescimo)
+            
+            # Atualizar valor total da venda
+            venda.valor_total = valor_total
+            
+            # Criar um registro para vincular a venda à proposta
+            proposta.observacoes = (proposta.observacoes or '') + f"\nVenda #{venda.id} adicionada em {datetime.now().strftime('%d/%m/%Y')}"
+            
+            # Salvar tudo
+            session.commit()
+            return venda.id
+            
+        return self._safe_query(query)
+    
     def criar_venda_de_proposta(self, proposta_id, produtos=None, forma_pagamento='À vista'):
         """
         Cria uma venda a partir de uma proposta
