@@ -1,0 +1,241 @@
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from datetime import datetime, timedelta
+import numpy as np
+
+def show():
+    st.title("📊 Relatórios Avançados")
+
+    tipo_relatorio = st.selectbox(
+        "Selecione o Relatório",
+        ["Desempenho Financeiro", "Análise de Clientes", "Status de Propostas"]
+    )
+
+    if tipo_relatorio == "Desempenho Financeiro":
+        st.subheader("💰 Análise Financeira Detalhada")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            periodo = st.selectbox(
+                "Período de Análise",
+                ["Último mês", "Último trimestre", "Último ano", "Todo o período"]
+            )
+
+        with col2:
+            tipo_conta = st.multiselect(
+                "Tipo de Conta",
+                ["PF", "PJ"],
+                default=["PF", "PJ"]
+            )
+
+        try:
+            financeiro = st.session_state.db.get_financeiro()
+
+            if not financeiro.empty:
+                # Filtrar por período
+                financeiro['data'] = pd.to_datetime(financeiro['data'])
+                if periodo == "Último mês":
+                    financeiro = financeiro[financeiro['data'] >= datetime.now() - timedelta(days=30)]
+                elif periodo == "Último trimestre":
+                    financeiro = financeiro[financeiro['data'] >= datetime.now() - timedelta(days=90)]
+                elif periodo == "Último ano":
+                    financeiro = financeiro[financeiro['data'] >= datetime.now() - timedelta(days=365)]
+
+                # Análise por tipo de receita
+                receitas = financeiro[financeiro['tipo'] == 'receita']
+                if not receitas.empty:
+                    st.subheader("Análise de Receitas")
+
+                    # Gráfico de receitas por tipo
+                    if 'tipo_receita' in receitas.columns:
+                        fig = px.pie(
+                            receitas,
+                            values='valor',
+                            names='tipo_receita',
+                            title='Distribuição de Receitas por Tipo'
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+
+                        # Tendência de receitas por tipo
+                        receitas_mensais = receitas.groupby([
+                            receitas['data'].dt.strftime('%Y-%m'),
+                            'tipo_receita'
+                        ])['valor'].sum().reset_index()
+
+                        fig = px.line(
+                            receitas_mensais,
+                            x='data',
+                            y='valor',
+                            color='tipo_receita',
+                            title='Evolução de Receitas por Tipo'
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+
+                    # Projeção financeira
+                    st.subheader("Projeção Financeira")
+                    # Criar série temporal contínua
+                    receitas_diarias = receitas.groupby('data')['valor'].sum().reset_index()
+                    if len(receitas_diarias) > 1:
+                        # Criar índice contínuo de datas
+                        date_range = pd.date_range(
+                            start=receitas_diarias['data'].min(),
+                            end=receitas_diarias['data'].max(),
+                            freq='D'
+                        )
+
+                        # Reindexar com preenchimento de zeros
+                        receitas_diarias = receitas_diarias.set_index('data').reindex(date_range, fill_value=0)
+                        receitas_diarias = receitas_diarias.reset_index()
+                        receitas_diarias.columns = ['data', 'valor']
+
+                        # Calcular dias desde o início
+                        dias_serie = (receitas_diarias['data'] - receitas_diarias['data'].min()).dt.days
+                        valores_serie = receitas_diarias['valor']
+
+                        # Calcular tendência
+                        z = np.polyfit(dias_serie, valores_serie, 1)
+                        p = np.poly1d(z)
+
+                        # Criar dados para projeção
+                        dias_futuros = pd.date_range(
+                            start=receitas_diarias['data'].max(),
+                            end=receitas_diarias['data'].max() + timedelta(days=30),
+                            freq='D'
+                        )
+
+                        dias_projecao = (dias_futuros - receitas_diarias['data'].min()).dt.days
+                        valores_projecao = p(dias_projecao)
+
+                        # Criar gráfico
+                        fig = go.Figure()
+
+                        # Dados históricos
+                        fig.add_trace(go.Scatter(
+                            x=receitas_diarias['data'],
+                            y=receitas_diarias['valor'],
+                            name='Dados Históricos'
+                        ))
+
+                        # Projeção
+                        fig.add_trace(go.Scatter(
+                            x=dias_futuros,
+                            y=valores_projecao,
+                            name='Projeção',
+                            line=dict(dash='dash')
+                        ))
+
+                        fig.update_layout(
+                            title='Projeção de Receitas (30 dias)',
+                            xaxis_title='Data',
+                            yaxis_title='Valor (R$)'
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("Não há dados financeiros para análise.")
+        except Exception as e:
+            st.error(f"Erro ao carregar dados financeiros: {str(e)}")
+
+    elif tipo_relatorio == "Análise de Clientes":
+        st.subheader("👥 Análise de Clientes")
+        try:
+            clientes = st.session_state.db.get_clientes()
+            propostas = st.session_state.db.get_propostas()
+
+            if not clientes.empty and not propostas.empty:
+                # Métricas de clientes
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+                    clientes_ativos = len(clientes)
+                    st.metric("Total de Clientes", clientes_ativos)
+
+                with col2:
+                    ticket_medio = propostas['valor'].mean() if 'valor' in propostas.columns else 0
+                    st.metric("Ticket Médio", f"R$ {ticket_medio:.2f}")
+
+                with col3:
+                    propostas_por_cliente = len(propostas) / len(clientes) if len(clientes) > 0 else 0
+                    st.metric("Propostas/Cliente", f"{propostas_por_cliente:.1f}")
+
+                # Análise de origem dos clientes
+                if 'origem_cliente' in clientes.columns:
+                    st.subheader("Origem dos Clientes")
+                    origem_counts = clientes['origem_cliente'].value_counts()
+                    fig = px.pie(
+                        values=origem_counts.values,
+                        names=origem_counts.index,
+                        title='Distribuição por Origem'
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+
+                # Análise temporal
+                if 'data_cadastro' in clientes.columns:
+                    st.subheader("Novos Clientes por Mês")
+                    clientes['data_cadastro'] = pd.to_datetime(clientes['data_cadastro'])
+                    cadastros_mensais = clientes.groupby(
+                        clientes['data_cadastro'].dt.strftime('%Y-%m')
+                    ).size().reset_index(name='count')
+
+                    fig = px.line(
+                        cadastros_mensais,
+                        x='data_cadastro',
+                        y='count',
+                        title='Evolução de Novos Clientes'
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("Não há dados suficientes para análise de clientes.")
+        except Exception as e:
+            st.error(f"Erro ao carregar dados de clientes: {str(e)}")
+
+    elif tipo_relatorio == "Status de Propostas":
+        st.subheader("📋 Análise de Propostas")
+        try:
+            propostas = st.session_state.db.get_propostas()
+
+            if not propostas.empty:
+                # Métricas principais
+                col1, col2, col3 = st.columns(3)
+
+                total_propostas = len(propostas)
+                propostas_abertas = len(propostas[propostas['status'] == 'Aberta']) if 'status' in propostas.columns else 0
+                propostas_fechadas = len(propostas[propostas['status'] == 'Fechada']) if 'status' in propostas.columns else 0
+
+                col1.metric("Total de Propostas", total_propostas)
+                col2.metric("Propostas em Aberto", propostas_abertas)
+                col3.metric("Propostas Fechadas", propostas_fechadas)
+
+                # Análise temporal
+                if 'data_proposta' in propostas.columns and 'status' in propostas.columns:
+                    st.subheader("Evolução Temporal")
+                    propostas['data_proposta'] = pd.to_datetime(propostas['data_proposta'])
+                    propostas_mensais = propostas.groupby([
+                        propostas['data_proposta'].dt.strftime('%Y-%m'),
+                        'status'
+                    ]).size().reset_index(name='count')
+
+                    fig = px.line(
+                        propostas_mensais,
+                        x='data_proposta',
+                        y='count',
+                        color='status',
+                        title='Evolução de Propostas por Status'
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+
+                # Análise de valores
+                if 'valor' in propostas.columns and 'status' in propostas.columns:
+                    st.subheader("Distribuição de Valores")
+                    fig = px.box(
+                        propostas,
+                        x='status',
+                        y='valor',
+                        title='Distribuição de Valores por Status'
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("Não há propostas cadastradas para análise.")
+        except Exception as e:
+            st.error(f"Erro ao carregar dados de propostas: {str(e)}")
