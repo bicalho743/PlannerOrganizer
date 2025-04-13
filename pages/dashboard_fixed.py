@@ -34,8 +34,8 @@ def show():
                 st.sidebar.error("Erro ao adicionar dados de teste")
 
     # Dashboard layout 
-    # Alterado para 4 colunas para adicionar seção de acompanhamento de 90 dias
-    col1, col2, col3, col4 = st.columns([2, 2, 1, 2])
+    # Layout simplificado com 3 colunas
+    col1, col2, col3 = st.columns([2, 2, 1])
 
     with col1:
         st.subheader("📊 Resumo")
