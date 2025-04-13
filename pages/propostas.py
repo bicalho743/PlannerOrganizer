@@ -652,22 +652,74 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename, usar_template=
     # para garantir que estamos usando as informações mais recentes
     import pandas as pd
     print(f"DEBUG PDF: Recarregando dados atualizados da proposta #{proposta.get('numero')}")
+    
+    # Usar duas abordagens para garantir redundância e segurança
+    
+    # 1. Consulta SQL direta para pegar os dados mais recentes
     try:
-        if 'db' in st.session_state:
+        if 'id' in proposta:
+            from sqlalchemy.sql import text
+            from utils.database import Session
+            
+            session = Session()
+            try:
+                # Consulta SQL direta para garantir dados mais atualizados
+                result = session.execute(
+                    text("""
+                    SELECT id, numero, cliente_id, descricao, valor, status, 
+                           tipo_proposta, data_inicio, data_fim, prazo_entrega, 
+                           data_proposta, status_pagamento_base, previsao_dias 
+                    FROM propostas 
+                    WHERE id = :id
+                    """),
+                    {"id": proposta['id']}
+                ).fetchone()
+                
+                if result:
+                    # Atualizar dados da proposta com os valores do banco
+                    proposta_dict = {
+                        'id': result[0],
+                        'numero': result[1],
+                        'cliente_id': result[2],
+                        'descricao': result[3],
+                        'valor': result[4],
+                        'status': result[5],
+                        'tipo_proposta': result[6],
+                        'data_inicio': result[7],
+                        'data_fim': result[8],
+                        'prazo_entrega': result[9],
+                        'data_proposta': result[10],
+                        'status_pagamento_base': result[11],
+                        'previsao_dias': result[12]
+                    }
+                    
+                    # Atualizar a proposta com os dados novos
+                    for key, value in proposta_dict.items():
+                        proposta[key] = value
+                    
+                    print(f"DEBUG PDF: Proposta recarregada com SQL direto! ID={proposta['id']}")
+                    print(f"DEBUG PDF: Data da proposta: {proposta['data_proposta']}")
+                    print(f"DEBUG PDF: Data início: {proposta['data_inicio']}")
+                    print(f"DEBUG PDF: Data fim: {proposta['data_fim']}")
+                    print(f"DEBUG PDF: Previsão dias: {proposta['previsao_dias']}")
+            except Exception as e:
+                print(f"DEBUG PDF: Erro na consulta SQL direta: {str(e)}")
+            finally:
+                session.close()
+    except Exception as e:
+        print(f"DEBUG PDF: Erro ao tentar acesso direto ao banco: {str(e)}")
+        
+    # 2. Método secundário usando a API normal do banco de dados (como backup)
+    try:
+        if 'db' in st.session_state and 'id' in proposta:
             propostas_atualizadas = st.session_state.db.get_propostas()
-            if not propostas_atualizadas.empty and 'id' in proposta:
+            if not propostas_atualizadas.empty:
                 proposta_atualizada = propostas_atualizadas[propostas_atualizadas['id'] == proposta['id']]
                 if not proposta_atualizada.empty:
-                    proposta = proposta_atualizada.iloc[0]
-                    print(f"DEBUG PDF: Proposta recarregada com sucesso! ID={proposta['id']}")
-                    if pd.notna(proposta['data_proposta']):
-                        print(f"DEBUG PDF: Data da proposta: {proposta['data_proposta']}")
-                    if pd.notna(proposta['data_inicio']):
-                        print(f"DEBUG PDF: Data início: {proposta['data_inicio']}")
-                    if pd.notna(proposta['data_fim']):
-                        print(f"DEBUG PDF: Data fim: {proposta['data_fim']}")
+                    proposta_backup = proposta_atualizada.iloc[0]
+                    print(f"DEBUG PDF: Proposta também recarregada via API normal! ID={proposta_backup['id']}")
     except Exception as e:
-        print(f"DEBUG PDF: Erro ao recarregar proposta: {str(e)}")
+        print(f"DEBUG PDF: Erro ao recarregar proposta via API: {str(e)}")
     
     if usar_template:
         try:

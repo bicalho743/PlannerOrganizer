@@ -114,7 +114,43 @@ def main():
                 print(f"DEBUG: - Data de fim: {data_fim}")
                 
                 try:
-                    # Atualizar tudo de uma vez para garantir consistência
+                    # Primeiro, faça um update direto no banco para garantir consistência
+                    sql_query = """
+                    UPDATE propostas 
+                    SET data_proposta = %s, 
+                        data_inicio = %s, 
+                        data_fim = %s, 
+                        previsao_dias = %s 
+                    WHERE id = %s
+                    """
+                    
+                    # Usar Session para executar comando SQL direto
+                    from sqlalchemy.sql import text
+                    from utils.database import Session
+                    
+                    session = Session()
+                    try:
+                        # Executar SQL diretamente para evitar problemas de sincronização
+                        session.execute(
+                            text(sql_query), 
+                            {
+                                "param_1": nova_data, 
+                                "param_2": nova_data, 
+                                "param_3": data_fim,
+                                "param_4": dias_previstos,
+                                "param_5": proposta['id']
+                            }
+                        )
+                        session.commit()
+                        print(f"DEBUG: SQL direto executado com sucesso para proposta {proposta['id']}")
+                    except Exception as e:
+                        session.rollback()
+                        print(f"DEBUG: Erro ao executar SQL direto: {str(e)}")
+                        raise
+                    finally:
+                        session.close()
+                    
+                    # Usar também o método padrão como backup
                     st.session_state.db.atualizar_proposta(
                         proposta_id=proposta['id'],
                         data_proposta=nova_data,
@@ -171,6 +207,33 @@ def main():
                     
                     # Gerar PDF
                     with st.spinner("Gerando PDF..."):
+                        print("DEBUG PDF: Recarregando dados atualizados da proposta #" + str(proposta['numero']))
+                        # Pegar dados recentes do banco
+                        try:
+                            # Garantir que temos a versão mais atualizada da proposta
+                            from sqlalchemy.sql import text
+                            from utils.database import Session
+                            
+                            session = Session()
+                            try:
+                                result = session.execute(
+                                    text("SELECT id, numero, data_proposta, data_inicio, data_fim, previsao_dias FROM propostas WHERE id = :id"),
+                                    {"id": proposta['id']}
+                                ).fetchone()
+                                
+                                if result:
+                                    print(f"DEBUG PDF: Proposta recarregada com sucesso! ID={result[0]}")
+                                    print(f"DEBUG PDF: Data da proposta: {result[2]}")
+                                    print(f"DEBUG PDF: Data início: {result[3]}")
+                                    print(f"DEBUG PDF: Data fim: {result[4]}")
+                                
+                            except Exception as e:
+                                print(f"DEBUG PDF: Erro ao consultar proposta: {str(e)}")
+                            finally:
+                                session.close()
+                        except Exception as debug_e:
+                            print(f"DEBUG PDF: Erro no debug: {str(debug_e)}")
+                        
                         pdf_path = gerar_pdf_fechamento(
                             proposta=proposta_atualizada,
                             cliente={'nome': proposta['nome']},
