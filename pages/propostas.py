@@ -69,6 +69,14 @@ def mostrar_nova_proposta():
                     "Data de Fim",
                     format="DD/MM/YYYY"
                 )
+                
+            # Calcular e exibir previsão de dias entre início e fim
+            if data_inicio and data_fim:
+                dias_previstos = (data_fim - data_inicio).days
+                if dias_previstos >= 0:
+                    st.info(f"**Previsão de Dias:** {dias_previstos} dias")
+                else:
+                    st.warning("A data de fim deve ser posterior à data de início.")
 
             # Configurar formato brasileiro de data (DD/MM/YYYY) para prazo de entrega
             prazo_entrega = st.date_input(
@@ -129,9 +137,23 @@ def mostrar_lista_propostas():
             # Guardar a referência original das propostas
             st.session_state.propostas_completas = propostas.copy()
 
+            # Calcular a previsão de dias (utilizando data_inicio e data_fim - é a diferença entre elas)
+            propostas['previsao_dias'] = None
+            for idx, row in propostas.iterrows():
+                try:
+                    if pd.notna(row['data_inicio']) and pd.notna(row['data_fim']):
+                        inicio = pd.to_datetime(row['data_inicio'])
+                        fim = pd.to_datetime(row['data_fim'])
+                        dias = (fim - inicio).days
+                        propostas.at[idx, 'previsao_dias'] = dias if dias >= 0 else None
+                        # Adicionar log para debug
+                        print(f"Debug: Proposta {row['numero']}, Data início: {inicio}, Data fim: {fim}, Dias calculados: {dias}")
+                except Exception as e:
+                    print(f"Erro ao calcular dias para proposta {row.get('numero', 'desconhecida')}: {str(e)}")  # Log de erro para debug
+                    
             # Criar DataFrame para exibição
-            df_display = propostas[['id', 'numero', 'nome', 'descricao', 'valor', 'status', 'data_proposta']].copy()
-            df_display.columns = ['ID', 'Número', 'Cliente', 'Descrição', 'Valor (R$)', 'Status', 'Data']
+            df_display = propostas[['id', 'numero', 'nome', 'descricao', 'valor', 'status', 'data_proposta', 'previsao_dias']].copy()
+            df_display.columns = ['ID', 'Número', 'Cliente', 'Descrição', 'Valor (R$)', 'Status', 'Data', 'Previsão (Dias)']
 
             # Formatar valores
             df_display['Valor (R$)'] = df_display['Valor (R$)'].apply(lambda x: f'R$ {float(x):.2f}')
@@ -181,7 +203,13 @@ def mostrar_lista_propostas():
                     ),
                     "Data": st.column_config.TextColumn(
                         "Data",
-                        disabled=True,
+                        disabled=False,  # Agora permitimos editar a data
+                        width="small"
+                    ),
+                    "Previsão (Dias)": st.column_config.NumberColumn(
+                        "Previsão (Dias)",
+                        min_value=0,
+                        format="%d dias",
                         width="small"
                     ),
                 },
@@ -226,6 +254,51 @@ def mostrar_lista_propostas():
                             contador_atualizacoes += 1
                     except:
                         st.warning(f"Valor inválido para a proposta {row['Número']}: {row['Valor (R$)']}")
+                        
+                    # Verificar se houve alteração na data
+                    try:
+                        data_original = pd.to_datetime(proposta_original['data_proposta']).strftime('%d/%m/%Y')
+                        if row['Data'] != data_original:
+                            # Converter a data para o formato do banco
+                            try:
+                                nova_data = pd.to_datetime(row['Data'], format='%d/%m/%Y').date()
+                                st.session_state.db.atualizar_proposta(
+                                    proposta_id=proposta_id,
+                                    data_proposta=nova_data
+                                )
+                                contador_atualizacoes += 1
+                            except Exception as e:
+                                st.warning(f"Formato de data inválido para a proposta {row['Número']}: {row['Data']}. Use o formato DD/MM/YYYY.")
+                    except Exception as e:
+                        st.warning(f"Erro ao processar data para a proposta {row['Número']}: {str(e)}")
+                                
+                    # Verificar se houve alteração na previsão de dias
+                    previsao_dias_original = proposta_original.get('previsao_dias')
+                    if pd.notna(row['Previsão (Dias)']) and row['Previsão (Dias)'] != previsao_dias_original:
+                        try:
+                            # Se temos a previsão de dias mas não as datas, vamos calculá-las
+                            dias = int(row['Previsão (Dias)'])
+                            inicio = None
+                            fim = None
+                            
+                            # Se já temos data de início, calculamos a data de fim
+                            if pd.notna(proposta_original['data_inicio']):
+                                inicio = pd.to_datetime(proposta_original['data_inicio'])
+                                fim = inicio + pd.Timedelta(days=dias)
+                            # Se não temos data de início, usamos a data da proposta como início
+                            elif pd.notna(proposta_original['data_proposta']):
+                                inicio = pd.to_datetime(proposta_original['data_proposta'])
+                                fim = inicio + pd.Timedelta(days=dias)
+                                
+                            if inicio and fim:
+                                st.session_state.db.atualizar_proposta(
+                                    proposta_id=proposta_id,
+                                    data_inicio=inicio.date(),
+                                    data_fim=fim.date()
+                                )
+                                contador_atualizacoes += 1
+                        except Exception as e:
+                            st.warning(f"Erro ao atualizar datas baseadas na previsão de dias: {str(e)}")
                 
                 if contador_atualizacoes > 0:
                     st.success(f"{contador_atualizacoes} atualizações realizadas com sucesso!")
