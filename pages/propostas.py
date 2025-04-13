@@ -692,16 +692,28 @@ def mostrar_andamento():
                             proposta_id_atual = int(proposta['id'])
                             
                             try:
-                                # Adicionar acréscimo
-                                acrescimo_id = st.session_state.db.add_acrescimo_proposta(
-                                    proposta_id=proposta_id_atual,
-                                    tipo=tipo_acrescimo,
-                                    fornecedor=fornecedor_nome,
-                                    descricao=descricao_acrescimo if descricao_acrescimo else None,
-                                    valor=float(valor_acrescimo)
-                                )
+                                # Logs para depuração
+                                print(f"DEBUG PROPOSTAS UI: Iniciando adição de acréscimo para proposta ID={proposta_id_atual}")
+                                print(f"DEBUG PROPOSTAS UI: Parâmetros - tipo={tipo_acrescimo}, fornecedor={fornecedor_nome}, valor={valor_acrescimo}")
+                                
+                                # Adicionar acréscimo com tratamento de erro mais detalhado
+                                try:
+                                    acrescimo_id = st.session_state.db.add_acrescimo_proposta(
+                                        proposta_id=proposta_id_atual,
+                                        tipo=tipo_acrescimo,
+                                        fornecedor=fornecedor_nome,
+                                        descricao=descricao_acrescimo if descricao_acrescimo else None,
+                                        valor=float(valor_acrescimo)
+                                    )
+                                    print(f"DEBUG PROPOSTAS UI: Resultado da adição do acréscimo: ID={acrescimo_id}")
+                                except Exception as inner_e:
+                                    print(f"DEBUG PROPOSTAS UI ERROR: Falha na função add_acrescimo_proposta: {str(inner_e)}")
+                                    import traceback
+                                    traceback.print_exc()
+                                    raise inner_e
                                 
                                 if acrescimo_id:
+                                    print(f"DEBUG PROPOSTAS UI: Acréscimo adicionado com sucesso, ID={acrescimo_id}")
                                     st.success(f"Acréscimo de {tipo_acrescimo} adicionado com sucesso!")
                                     
                                     # Salvar dados para manter a mesma proposta selecionada após o rerun
@@ -714,20 +726,37 @@ def mostrar_andamento():
                                     if 'descricao_acrescimo' in st.session_state:
                                         st.session_state.descricao_acrescimo = ""
                                     
+                                    print("DEBUG PROPOSTAS UI: Executando rerun para atualizar interface")
                                     # Rerun para atualizar a interface
                                     st.experimental_rerun()
                                 else:
+                                    print("DEBUG PROPOSTAS UI ERROR: Função add_acrescimo_proposta retornou None ou 0")
                                     st.error("Não foi possível adicionar o acréscimo. Tente novamente.")
                             except Exception as e:
+                                print(f"DEBUG PROPOSTAS UI CRITICAL ERROR: {str(e)}")
+                                import traceback
+                                traceback.print_exc()
                                 st.error(f"Erro ao adicionar acréscimo: {str(e)}")
                                 print(f"Erro detalhado ao adicionar acréscimo: {str(e)}")
 
                 # Exibir acréscimos existentes
                 try:
+                    print(f"DEBUG PROPOSTAS UI: Buscando acréscimos para proposta ID={proposta['id']}")
                     acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
-                    if not acrescimos.empty:
-                        st.write("### Acréscimos Adicionados")
-
+                    
+                    # Sempre exibir o cabeçalho da seção
+                    st.write("### Acréscimos Adicionados")
+                    
+                    if acrescimos.empty:
+                        # Exibir mensagem quando não houver acréscimos
+                        st.info("Nenhum acréscimo cadastrado para esta proposta.")
+                        
+                        # Exibir apenas o valor base da proposta
+                        valor_total = float(proposta['valor'])
+                        st.write(f"**Valor Base da Proposta:** R$ {valor_total:.2f}")
+                    else:
+                        print(f"DEBUG PROPOSTAS UI: Encontrados {len(acrescimos)} acréscimos")
+                        
                         # Criar DataFrame para exibição
                         df_acrescimos = acrescimos[['tipo', 'fornecedor', 'valor', 'descricao']].copy()
                         df_acrescimos.columns = ['Tipo', 'Fornecedor', 'Valor (R$)', 'Descrição']
@@ -735,14 +764,26 @@ def mostrar_andamento():
                         # Formatar valores
                         df_acrescimos['Valor (R$)'] = df_acrescimos['Valor (R$)'].apply(lambda x: f'R$ {float(x):.2f}')
 
-                        # Exibir tabela
+                        # Exibir tabela com os acréscimos
                         st.dataframe(df_acrescimos, hide_index=True)
 
-                        # Status e valor total
-                        valor_total = float(proposta['valor']) + acrescimos['valor'].sum()
-                        st.write(f"**Valor Total da Proposta:** R$ {valor_total:.2f}")
+                        # Calcular e exibir valor total com acréscimos
+                        valor_acrescimos = acrescimos['valor'].sum()
+                        valor_base = float(proposta['valor'])
+                        valor_total = valor_base + valor_acrescimos
+                        
+                        # Exibir valores detalhados
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.write(f"**Valor Base:** R$ {valor_base:.2f}")
+                            st.write(f"**Total Acréscimos:** R$ {valor_acrescimos:.2f}")
+                        with col2:
+                            st.write(f"**Valor Total da Proposta:** R$ {valor_total:.2f}")
 
                 except Exception as e:
+                    print(f"DEBUG PROPOSTAS UI ERROR: Erro ao carregar acréscimos: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
                     st.error(f"Erro ao carregar acréscimos: {str(e)}")
 
             except Exception as e:

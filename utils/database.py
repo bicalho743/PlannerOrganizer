@@ -1408,20 +1408,54 @@ class Database:
             raise Exception(f"Erro ao adicionar acréscimo: {str(e)}")
 
     def get_acrescimos_proposta(self, proposta_id):
+        """
+        Retorna todos os acréscimos de uma proposta em um DataFrame
+        
+        Args:
+            proposta_id: ID da proposta
+            
+        Returns:
+            DataFrame com os acréscimos da proposta, ou DataFrame vazio se não houver acréscimos
+        """
         # Converter proposta_id para int nativo do Python antes da função query
         proposta_id = int(proposta_id) if proposta_id is not None else None
+        
+        print(f"DEBUG: Buscando acréscimos para proposta ID={proposta_id}")
 
         def query():
-            acrescimos = self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).all()
-            return pd.DataFrame([{
-                'id': int(a.id),  # Garantir que todos os IDs sejam int nativos
-                'tipo': a.tipo,
-                'fornecedor': a.fornecedor,
-                'descricao': a.descricao,
-                'valor': float(a.valor) if a.valor is not None else None,  # Converter para float nativo
-                'status_pagamento': a.status_pagamento,
-                'data_cadastro': a.data_cadastro
-            } for a in acrescimos])
+            try:
+                # Verificar se a proposta existe
+                proposta = self.session.query(Proposta).filter_by(id=proposta_id).first()
+                if not proposta:
+                    print(f"DEBUG WARNING: Proposta ID={proposta_id} não encontrada ao buscar acréscimos")
+                    # Retornar DataFrame vazio em vez de levantar exceção
+                    return pd.DataFrame(columns=['id', 'tipo', 'fornecedor', 'descricao', 'valor', 'status_pagamento', 'data_cadastro'])
+                
+                # Buscar acréscimos
+                acrescimos = self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).all()
+                print(f"DEBUG: Encontrados {len(acrescimos)} acréscimos para proposta ID={proposta_id}")
+                
+                # Se não houver acréscimos, retornar DataFrame vazio
+                if not acrescimos:
+                    return pd.DataFrame(columns=['id', 'tipo', 'fornecedor', 'descricao', 'valor', 'status_pagamento', 'data_cadastro'])
+                
+                # Converter para DataFrame
+                return pd.DataFrame([{
+                    'id': int(a.id),  # Garantir que todos os IDs sejam int nativos
+                    'tipo': a.tipo,
+                    'fornecedor': a.fornecedor,
+                    'descricao': a.descricao,
+                    'valor': float(a.valor) if a.valor is not None else None,  # Converter para float nativo
+                    'status_pagamento': a.status_pagamento,
+                    'data_cadastro': a.data_cadastro
+                } for a in acrescimos])
+            except Exception as e:
+                print(f"DEBUG ERROR: Erro ao buscar acréscimos para proposta ID={proposta_id}: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                # Ainda retorna DataFrame vazio em caso de erro para evitar quebrar a UI
+                return pd.DataFrame(columns=['id', 'tipo', 'fornecedor', 'descricao', 'valor', 'status_pagamento', 'data_cadastro'])
+                
         return self._safe_query(query)
 
     def get_pagamentos_pendentes(self):
