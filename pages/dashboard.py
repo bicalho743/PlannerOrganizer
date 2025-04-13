@@ -92,17 +92,11 @@ def show():
                 # Calcular data limite (90 dias atrás)
                 data_limite_90_dias = hoje_date - timedelta(days=90)
                 
-                # Juntar propostas com informações de clientes
+                # Verificar se a coluna 'cliente_nome' existe
+                # (Já deve existir pois foi adicionada na função get_propostas)
                 if 'cliente_nome' not in propostas.columns:
-                    clientes = st.session_state.db.get_clientes()
-                    propostas = propostas.merge(
-                        clientes[['id', 'nome']],
-                        left_on='cliente_id',
-                        right_on='id',
-                        how='left',
-                        suffixes=('', '_cliente')
-                    )
-                    propostas['cliente_nome'] = propostas['nome']
+                    st.warning("Coluna 'cliente_nome' não encontrada nas propostas, utilize uma versão atualizada.")
+                    propostas['cliente_nome'] = "Cliente não identificado"
                 
                 # Filtrar propostas por tipo (apenas de organização e com data de início preenchida)
                 propostas_organizacao = propostas[

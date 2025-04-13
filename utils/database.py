@@ -447,7 +447,13 @@ class Database:
 
     def get_propostas(self):
         def query():
-            propostas = self.session.query(Proposta).all()
+            # Join com a tabela de clientes para obter os nomes dos clientes
+            propostas_com_clientes = self.session.query(
+                Proposta, Cliente.nome.label('cliente_nome')
+            ).outerjoin(
+                Cliente, Proposta.cliente_id == Cliente.id
+            ).all()
+            
             return pd.DataFrame([{
                 'id': int(p.id),  # Converter para int nativo
                 'numero': int(p.numero),  # Converter para int nativo
@@ -463,8 +469,9 @@ class Database:
                 'status_pagamento_base': p.status_pagamento_base,
                 'previsao_dias': p.previsao_dias,
                 'data_inicio_execucao': p.data_inicio_execucao,
-                'status_execucao': p.status_execucao
-            } for p in propostas])
+                'status_execucao': p.status_execucao,
+                'cliente_nome': cliente_nome  # Adicionar o nome do cliente
+            } for p, cliente_nome in propostas_com_clientes])
         return self._safe_query(query)
 
     def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, 
