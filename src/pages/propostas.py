@@ -757,58 +757,101 @@ def mostrar_andamento():
                     st.markdown("### Adicionar Acréscimo")
                     
                     # Layout com formulário mais organizado 
-                    with st.form("adicionar_acrescimo"):
+                    with st.form("adicionar_acrescimo", clear_on_submit=False):
                         col1, col2 = st.columns(2)
 
                         with col1:
                             tipo_acrescimo = st.selectbox(
                                 "Tipo de Acréscimo",
-                                ["Organização", "Assistente", "Fornecedor", "Marcenaria", "Produto"]
+                                ["Organização", "Assistente", "Fornecedor", "Marcenaria", "Produto"],
+                                key="tipo_acrescimo"
                             )
 
                         with col2:
                             fornecedor_nome = None
                             if tipo_acrescimo == "Fornecedor":
+                                # Carregar lista de fornecedores do banco de dados
+                                try:
+                                    fornecedores = st.session_state.db.get_fornecedores()
+                                    if not fornecedores.empty:
+                                        fornecedor_opcoes = fornecedores['nome'].tolist()
+                                    else:
+                                        fornecedor_opcoes = ["La Luc", "Multicoisas", "Organizatta", "Outro"]
+                                except Exception as e:
+                                    print(f"Erro ao carregar fornecedores: {str(e)}")
+                                    fornecedor_opcoes = ["La Luc", "Multicoisas", "Organizatta", "Outro"]
+                                
                                 fornecedor = st.selectbox(
                                     "Fornecedor",
-                                    ["La Luc", "Multicoisas", "Organizatta", "Outro"]
+                                    options=fornecedor_opcoes,
+                                    key="fornecedor_select"
                                 )
                                 fornecedor_nome = fornecedor
+                                
                             elif tipo_acrescimo == "Assistente":
                                 try:
                                     assistentes = st.session_state.db.get_assistentes()
                                     if not assistentes.empty:
                                         assistente = st.selectbox(
                                             "Assistente",
-                                            assistentes['nome'].tolist()
+                                            options=assistentes['nome'].tolist(),
+                                            key="assistente_select"
                                         )
                                         fornecedor_nome = assistente
                                     else:
-                                        st.warning("Nenhum assistente cadastrado.")
+                                        st.warning("Nenhum assistente cadastrado. Por favor, cadastre assistentes na seção Cadastros.")
                                 except Exception as e:
                                     st.error(f"Erro ao carregar assistentes: {str(e)}")
 
-                        descricao_acrescimo = st.text_input("Descrição")
-                        valor_acrescimo = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
+                        descricao_acrescimo = st.text_area("Descrição", height=80, key="descricao_acrescimo")
+                        valor_acrescimo = st.number_input("Valor (R$)", min_value=0.0, step=0.01, key="valor_acrescimo")
 
-                        if st.form_submit_button("Adicionar Acréscimo"):
+                        submitted = st.form_submit_button("Adicionar Acréscimo", use_container_width=True)
+                        
+                        if submitted:
                             if valor_acrescimo <= 0:
                                 st.error("Por favor, insira um valor válido maior que zero.")
                             elif tipo_acrescimo == "Assistente" and not fornecedor_nome:
                                 st.error("Por favor, selecione um assistente.")
+                            elif tipo_acrescimo == "Fornecedor" and not fornecedor_nome:
+                                st.error("Por favor, selecione um fornecedor.")
                             else:
                                 try:
-                                    st.session_state.db.add_acrescimo_proposta(
-                                        proposta_id=int(proposta['id']),
+                                    # Salvando o ID da proposta em uma variável de sessão para manter após o rerun
+                                    proposta_id_atual = int(proposta['id'])
+                                    if 'proposta_selecionada_id' not in st.session_state:
+                                        st.session_state.proposta_selecionada_id = proposta_id_atual
+                                    else:
+                                        st.session_state.proposta_selecionada_id = proposta_id_atual
+                                    
+                                    # Adicionando o acréscimo
+                                    result = st.session_state.db.add_acrescimo_proposta(
+                                        proposta_id=proposta_id_atual,
                                         tipo=tipo_acrescimo,
                                         fornecedor=fornecedor_nome,
                                         descricao=descricao_acrescimo if descricao_acrescimo else None,
                                         valor=float(valor_acrescimo)
                                     )
-                                    st.success("Acréscimo adicionado com sucesso!")
-                                    st.rerun()
+                                    
+                                    # Verificar se o acréscimo foi adicionado com sucesso
+                                    if result:
+                                        st.success(f"Acréscimo de {tipo_acrescimo} adicionado com sucesso!")
+                                        
+                                        # Limpar campos após sucesso
+                                        if 'valor_acrescimo' in st.session_state:
+                                            st.session_state.valor_acrescimo = 0.0
+                                        if 'descricao_acrescimo' in st.session_state:
+                                            st.session_state.descricao_acrescimo = ""
+                                    else:
+                                        st.error("Não foi possível adicionar o acréscimo. Tente novamente.")
+                                    
+                                    # Não precisamos de rerun aqui porque vamos atualizar a exibição logo em seguida
                                 except Exception as e:
                                     st.error(f"Erro ao adicionar acréscimo: {str(e)}")
+                                    print(f"Erro detalhado: {str(e)}")
+                                    
+                            # Recarregar a mesma proposta
+                            st.experimental_rerun()
 
                     # Exibir acréscimos existentes com melhor formatação
                     st.markdown("### Acréscimos Cadastrados")

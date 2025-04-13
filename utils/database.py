@@ -1707,8 +1707,7 @@ class Database:
         """
         def query():
             # Primeiro recuperar a proposta para obter cliente_id
-            session = self.Session()
-            proposta = session.query(Proposta).filter(Proposta.id == proposta_id).first()
+            proposta = self.session.query(Proposta).filter(Proposta.id == proposta_id).first()
             
             if not proposta:
                 raise ValueError(f"Proposta {proposta_id} não encontrada")
@@ -1724,8 +1723,8 @@ class Database:
                 forma_pagamento=forma_pagamento or 'Vinculada à Proposta',
                 observacoes=observacoes
             )
-            session.add(venda)
-            session.flush()  # Obter o ID da venda
+            self.session.add(venda)
+            self.session.flush()  # Obter o ID da venda
             
             # Calcular valor total da venda
             valor_total = 0
@@ -1737,7 +1736,7 @@ class Database:
                 preco_unitario = item_data['preco_unitario']
                 subtotal = quantidade * preco_unitario
                 
-                produto = session.query(Produto).filter(Produto.id == produto_id).first()
+                produto = self.session.query(Produto).filter(Produto.id == produto_id).first()
                 if not produto:
                     raise ValueError(f"Produto {produto_id} não encontrado")
                 
@@ -1749,7 +1748,7 @@ class Database:
                     preco_unitario=preco_unitario,
                     subtotal=subtotal
                 )
-                session.add(item)
+                self.session.add(item)
                 
                 # Atualizar valor total
                 valor_total += subtotal
@@ -1768,7 +1767,7 @@ class Database:
                 descricao=desc_acrescimo,
                 valor=valor_total
             )
-            session.add(acrescimo)
+            self.session.add(acrescimo)
             
             # Atualizar valor total da venda
             venda.valor_total = valor_total
@@ -1776,8 +1775,7 @@ class Database:
             # Criar um registro para vincular a venda à proposta
             proposta.observacoes = (proposta.observacoes or '') + f"\nVenda #{venda.id} adicionada em {datetime.now().strftime('%d/%m/%Y')}"
             
-            # Salvar tudo
-            session.commit()
+            # Não precisamos chamar commit explicitamente pois _safe_query faz isso
             return venda.id
             
         return self._safe_query(query)
