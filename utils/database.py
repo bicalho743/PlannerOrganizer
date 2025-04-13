@@ -142,6 +142,7 @@ class Proposta(Base):
     prazo_entrega = Column(Date)
     data_proposta = Column(Date, default=datetime.now().date())
     status_pagamento_base = Column(String, default='Pendente')  # New column
+    previsao_dias = Column(Integer)  # Novo campo para armazenar a previsão de dias
 
     cliente = relationship("Cliente", back_populates="propostas")
     produtos = relationship("ProdutoOrganizador", back_populates="proposta", cascade="all, delete-orphan")
@@ -447,7 +448,8 @@ class Database:
                 'data_fim': p.data_fim,
                 'prazo_entrega': p.prazo_entrega,
                 'data_proposta': p.data_proposta,
-                'status_pagamento_base': p.status_pagamento_base
+                'status_pagamento_base': p.status_pagamento_base,
+                'previsao_dias': p.previsao_dias
             } for p in propostas])
         return self._safe_query(query)
 
