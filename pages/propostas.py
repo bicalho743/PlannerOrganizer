@@ -550,7 +550,7 @@ def mostrar_lista_propostas():
         st.error(f"Erro ao carregar propostas: {str(e)}")
 
 def mostrar_andamento():
-    st.subheader("Andamento do Trabalho")
+    st.subheader("PROPOSTAS EM EXECUÇÃO")
     try:
         propostas = st.session_state.db.get_propostas()
         if propostas.empty:
