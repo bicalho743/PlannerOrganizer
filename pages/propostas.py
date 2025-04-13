@@ -8,10 +8,10 @@ from utils.importador import importar_cadastros, gerar_template_csv
 def show():
     st.title("📝 Gestão de Propostas")
 
-    # Usar radio para selecionar a aba - Adicionada opção de Integração
+    # Usar radio para selecionar a aba
     aba_selecionada = st.radio(
         "Selecione a opção:",
-        ["Nova Proposta", "Lista de Propostas", "Andamento do Trabalho", "Integração com Módulos"],
+        ["Nova Proposta", "Lista de Propostas", "Propostas em Execução"],
         horizontal=True,
         label_visibility="collapsed"
     )
@@ -23,10 +23,93 @@ def show():
         mostrar_nova_proposta()
     elif aba_selecionada == "Lista de Propostas":
         mostrar_lista_propostas()
-    elif aba_selecionada == "Andamento do Trabalho":
-        mostrar_andamento()
-    elif aba_selecionada == "Integração com Módulos":
-        st.subheader("🔄 Integração entre Módulos")
+    elif aba_selecionada == "Propostas em Execução":
+        st.subheader("📋 Propostas em Execução")
+        propostas_fechadas = st.session_state.db.get_propostas(status="Fechada")
+        
+        if not propostas_fechadas.empty:
+            for _, proposta in propostas_fechadas.iterrows():
+                with st.expander(f"Proposta #{proposta['numero']} - {proposta['cliente_nome']}"):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.write(f"**Valor Base:** R$ {proposta['valor']:.2f}")
+                        st.write(f"**Data Início:** {proposta['data_inicio'].strftime('%d/%m/%Y')}")
+                    
+                    with col2:
+                        st.write(f"**Status Execução:** {proposta['status_execucao']}")
+                        if proposta['data_fim']:
+                            st.write(f"**Data Fim:** {proposta['data_fim'].strftime('%d/%m/%Y')}")
+                    
+                    # Adicionar fornecedor
+                    st.subheader("Adicionar Fornecedor")
+                    with st.form(f"form_fornecedor_{proposta['id']}"):
+                        fornecedores = st.session_state.db.get_fornecedores()
+                        fornecedor = st.selectbox("Fornecedor", fornecedores['descricao'].tolist())
+                        valor_fornecedor = st.number_input("Valor", min_value=0.0, step=0.01)
+                        
+                        if st.form_submit_button("Registrar Fornecedor"):
+                            # Registrar comissão a receber
+                            st.session_state.db.add_transacao(
+                                tipo="receita_a_receber",
+                                descricao=f"Comissão - Proposta #{proposta['numero']}",
+                                valor=valor_fornecedor,
+                                categoria="Comissão",
+                                origem_tipo="fornecedor"
+                            )
+                            st.success("Fornecedor registrado e comissão gerada!")
+                    
+                    # Adicionar assistente
+                    st.subheader("Adicionar Assistente")
+                    with st.form(f"form_assistente_{proposta['id']}"):
+                        assistentes = st.session_state.db.get_assistentes()
+                        assistente = st.selectbox("Assistente", assistentes['nome'].tolist())
+                        valor_assistente = st.number_input("Valor", min_value=0.0, step=0.01, key=f"valor_assist_{proposta['id']}")
+                        
+                        if st.form_submit_button("Registrar Assistente"):
+                            # Registrar pagamento a assistente
+                            st.session_state.db.add_transacao(
+                                tipo="despesa",
+                                descricao=f"Pagamento Assistente - Proposta #{proposta['numero']}",
+                                valor=valor_assistente,
+                                categoria="Assistente"
+                            )
+                            st.success("Assistente registrado e pagamento gerado!")
+                    
+                    # Adicionar produtos
+                    st.subheader("Adicionar Produtos")
+                    with st.form(f"form_produtos_{proposta['id']}"):
+                        produtos = st.session_state.db.get_produtos()
+                        produto = st.selectbox("Produto", produtos['nome'].tolist())
+                        quantidade = st.number_input("Quantidade", min_value=1, step=1)
+                        produto_info = produtos[produtos['nome'] == produto].iloc[0]
+                        valor_total = quantidade * float(produto_info['preco_venda'].replace('R$ ', '').replace(',', '.'))
+                        
+                        if st.form_submit_button("Adicionar Produto"):
+                            # Registrar venda
+                            st.session_state.db.add_venda(
+                                cliente_id=proposta['cliente_id'],
+                                produtos=[{
+                                    'produto_id': produto_info['id'],
+                                    'quantidade': quantidade,
+                                    'valor': valor_total
+                                }],
+                                proposta_id=proposta['id']
+                            )
+                            st.success("Produto adicionado com sucesso!")
+                    
+                    # Gerar fatura de fechamento
+                    if st.button("Gerar Fatura de Fechamento", key=f"fatura_{proposta['id']}"):
+                        total_fornecedores = 0  # Somar valores dos fornecedores
+                        total_assistentes = 0   # Somar valores dos assistentes
+                        total_produtos = 0      # Somar valores dos produtos
+                        valor_final = float(proposta['valor']) + total_fornecedores + total_assistentes + total_produtos
+                        
+                        # Gerar PDF com fatura
+                        filename = f"pdfs/fatura_proposta_{proposta['numero']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                        gerar_pdf_fechamento(proposta, filename)
+                        st.success("Fatura gerada com sucesso!")
+        else:
+            st.info("Não há propostas em execução.")
         st.write("""
         Esta seção permite testar a integração entre os módulos de Propostas, Financeiro e Vendas.
         """)
