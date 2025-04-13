@@ -273,10 +273,68 @@ def show():
                 col1, col2 = st.columns(2)
                 
                 with col1:
+                    # Adicionar opção de adicionar à proposta
+                    formas_pagamento_padrao = ["Dinheiro", "Cartão de Crédito", "Cartão de Débito", "PIX", "Transferência", "Outro"]
+                    
+                    # Buscar propostas para adicionar como opção
+                    try:
+                        propostas = st.session_state.db.get_propostas()
+                        
+                        # Filtrar propostas ativas (status="Fechada" - em execução)
+                        if not propostas.empty:
+                            propostas_ativas = propostas[propostas['status'] == 'Fechada']
+                            
+                            # Juntar propostas com informações dos clientes
+                            if not propostas_ativas.empty:
+                                clientes_df = st.session_state.db.get_clientes()
+                                propostas_ativas = propostas_ativas.merge(
+                                    clientes_df[['id', 'nome']], 
+                                    left_on='cliente_id', 
+                                    right_on='id', 
+                                    how='left',
+                                    suffixes=('', '_cliente')
+                                )
+                                
+                                # Criar lista de opções "Adicionar à Proposta #X - Cliente"
+                                opcoes_propostas = [
+                                    f"Adicionar à Proposta #{p['numero']} - {p['nome']}" 
+                                    for _, p in propostas_ativas.iterrows()
+                                ]
+                                
+                                # Adicionar opções de propostas às formas de pagamento
+                                formas_pagamento = formas_pagamento_padrao + opcoes_propostas
+                            else:
+                                formas_pagamento = formas_pagamento_padrao
+                        else:
+                            formas_pagamento = formas_pagamento_padrao
+                            
+                    except Exception as e:
+                        print(f"Erro ao carregar propostas para formas de pagamento: {str(e)}")
+                        formas_pagamento = formas_pagamento_padrao
+                    
                     forma_pagamento = st.selectbox(
                         "Forma de Pagamento",
-                        options=["Dinheiro", "Cartão de Crédito", "Cartão de Débito", "PIX", "Transferência", "Outro"]
+                        options=formas_pagamento
                     )
+                    
+                    # Se selecionou adicionar à proposta, mostrar campo para escolher proposta
+                    proposta_id = None
+                    if forma_pagamento.startswith("Adicionar à Proposta #"):
+                        # Extrair o número da proposta
+                        try:
+                            numero_proposta = int(forma_pagamento.split('#')[1].split(' -')[0])
+                            proposta_selecionada = propostas_ativas[propostas_ativas['numero'] == numero_proposta].iloc[0]
+                            proposta_id = int(proposta_selecionada['id'])
+                            
+                            # Mostrar detalhes da proposta
+                            st.info(f"""
+                            **Proposta selecionada:** #{proposta_selecionada['numero']}
+                            **Cliente:** {proposta_selecionada['nome']}
+                            **Valor base:** R$ {float(proposta_selecionada['valor']):.2f}
+                            """)
+                        except Exception as e:
+                            st.error(f"Erro ao processar proposta selecionada: {str(e)}")
+                            proposta_id = None
                 
                 with col2:
                     observacoes = st.text_area("Observações", height=100)
@@ -301,13 +359,23 @@ def show():
                                     'preco_unitario': item['preco_unitario'] if isinstance(item['preco_unitario'], float) else float(item['preco_unitario'].replace('R$ ', '').replace(',', '.'))
                                 })
                             
-                            # Registrar venda
-                            venda_id = st.session_state.db.add_venda(
-                                cliente_id=cliente_id,
-                                itens=itens,
-                                forma_pagamento=forma_pagamento,
-                                observacoes=observacoes
-                            )
+                            # Verificar se vamos adicionar a uma proposta existente
+                            if forma_pagamento.startswith("Adicionar à Proposta #") and proposta_id:
+                                # Adicionar venda diretamente à proposta
+                                venda_id = st.session_state.db.adicionar_venda_a_proposta(
+                                    proposta_id=proposta_id,
+                                    itens=itens,
+                                    forma_pagamento=f"Venda vinculada à Proposta #{numero_proposta}",
+                                    observacoes=observacoes
+                                )
+                            else:
+                                # Registrar venda normal
+                                venda_id = st.session_state.db.add_venda(
+                                    cliente_id=cliente_id,
+                                    itens=itens,
+                                    forma_pagamento=forma_pagamento,
+                                    observacoes=observacoes
+                                )
                             
                             # Limpar carrinho e mostrar sucesso
                             st.session_state.produtos_venda = []

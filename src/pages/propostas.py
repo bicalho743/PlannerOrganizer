@@ -11,7 +11,7 @@ def show():
     # Usar radio para selecionar a aba
     aba_selecionada = st.radio(
         "Selecione a opção:",
-        ["Nova Proposta", "Lista de Propostas", "Propostas em Execução"],
+        ["Nova Proposta", "Lista de Propostas", "Propostas em Execução", "Propostas Finalizadas"],
         horizontal=True,
         label_visibility="collapsed"
     )
@@ -26,7 +26,200 @@ def show():
     elif aba_selecionada == "Propostas em Execução":
         st.subheader("📋 PROPOSTAS EM EXECUÇÃO")
         mostrar_andamento()
+    elif aba_selecionada == "Propostas Finalizadas":
+        st.subheader("✅ PROPOSTAS FINALIZADAS")
+        mostrar_propostas_finalizadas()
     # Opção de importação removida conforme solicitação do cliente
+
+def mostrar_propostas_finalizadas():
+    """
+    Exibe as propostas que foram finalizadas (concluídas após a execução).
+    Estas propostas servem apenas para histórico/controle.
+    """
+    try:
+        # Carregar propostas finalizadas (status "Concluída")
+        propostas = st.session_state.db.get_propostas()
+        if not propostas.empty:
+            # Filtrar apenas propostas finalizadas (com status "Concluída")
+            propostas = propostas[propostas['status'] == 'Concluída']
+        
+        if propostas.empty:
+            st.info("Nenhuma proposta finalizada encontrada no sistema.")
+            return
+
+        # Juntar dados de propostas com clientes
+        clientes = st.session_state.db.get_clientes()
+        propostas = propostas.merge(
+            clientes[['id', 'nome']], 
+            left_on='cliente_id', 
+            right_on='id', 
+            how='left',
+            suffixes=('', '_cliente')
+        )
+
+        # Ordenar por data de proposta, mais recentes primeiro
+        propostas = propostas.sort_values('data_proposta', ascending=False)
+        
+        # Criar DataFrame para exibição
+        df_display = propostas[['numero', 'nome', 'descricao', 'valor', 'tipo_proposta', 'data_proposta']].copy()
+        df_display.columns = ['Número', 'Cliente', 'Descrição', 'Valor (R$)', 'Tipo', 'Data']
+
+        # Formatar valores
+        df_display['Valor (R$)'] = df_display['Valor (R$)'].apply(lambda x: f'R$ {float(x):.2f}')
+        # Formatação da data no formato brasileiro (DD/MM/YYYY)
+        df_display['Data'] = pd.to_datetime(df_display['Data']).dt.strftime('%d/%m/%Y')
+        
+        # Exibir tabela com dados
+        st.write("#### Lista de Propostas Finalizadas")
+        st.dataframe(
+            df_display, 
+            hide_index=True, 
+            use_container_width=True,
+            column_config={
+                "Número": st.column_config.NumberColumn("Número", width="small"),
+                "Cliente": st.column_config.TextColumn("Cliente", width="medium"),
+                "Descrição": st.column_config.TextColumn("Descrição", width="large"),
+                "Valor (R$)": st.column_config.TextColumn("Valor (R$)", width="small"),
+                "Tipo": st.column_config.TextColumn("Tipo", width="medium"),
+                "Data": st.column_config.TextColumn("Data", width="small"),
+            }
+        )
+        
+        # Adicionar filtros para melhor visualização
+        st.write("#### Filtrar Propostas Finalizadas")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Filtrar por cliente
+            cliente_selecionado = st.selectbox(
+                "Filtrar por Cliente",
+                ["Todos"] + df_display['Cliente'].unique().tolist()
+            )
+        
+        with col2:
+            # Filtrar por tipo
+            tipo_selecionado = st.selectbox(
+                "Filtrar por Tipo",
+                ["Todos"] + df_display['Tipo'].unique().tolist()
+            )
+            
+        # Aplicar filtros se necessário
+        df_filtrado = df_display.copy()
+        
+        if cliente_selecionado != "Todos":
+            df_filtrado = df_filtrado[df_filtrado['Cliente'] == cliente_selecionado]
+            
+        if tipo_selecionado != "Todos":
+            df_filtrado = df_filtrado[df_filtrado['Tipo'] == tipo_selecionado]
+            
+        # Exibir resultados filtrados se houver filtros aplicados
+        if cliente_selecionado != "Todos" or tipo_selecionado != "Todos":
+            st.write("#### Resultados Filtrados")
+            
+            if df_filtrado.empty:
+                st.info("Nenhuma proposta encontrada com os filtros selecionados.")
+            else:
+                st.dataframe(
+                    df_filtrado, 
+                    hide_index=True, 
+                    use_container_width=True
+                )
+                
+                # Mostrar análise estatística
+                valor_total = df_filtrado['Valor (R$)'].str.replace('R$', '').str.strip().str.replace('.', '').str.replace(',', '.').astype(float).sum()
+                st.metric("Valor Total", f"R$ {valor_total:.2f}")
+                
+        # Adicionar opção para ver detalhes de uma proposta específica
+        st.write("#### Visualizar Detalhes da Proposta")
+        
+        proposta_num = st.selectbox(
+            "Selecione o número da proposta",
+            df_display['Número'].tolist()
+        )
+        
+        if st.button("📋 Ver Detalhes Completos", use_container_width=True):
+            # Buscar proposta pelo número
+            proposta = propostas[propostas['numero'] == proposta_num].iloc[0]
+            cliente = clientes[clientes['id'] == proposta['cliente_id']].iloc[0]
+            
+            # Exibir detalhes completos
+            st.write("---")
+            st.write("### Detalhes da Proposta Finalizada")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.write(f"**Número:** #{proposta['numero']}")
+                st.write(f"**Cliente:** {proposta['nome']}")
+                st.write(f"**Tipo:** {proposta['tipo_proposta']}")
+                st.write(f"**Data:** {pd.to_datetime(proposta['data_proposta']).strftime('%d/%m/%Y')}")
+                
+            with col2:
+                st.write(f"**Valor Base:** R$ {float(proposta['valor']):.2f}")
+                
+                # Adicionar dados de acréscimos se existirem
+                try:
+                    acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
+                    if not acrescimos.empty:
+                        valor_acrescimos = acrescimos['valor'].sum()
+                        valor_total = float(proposta['valor']) + valor_acrescimos
+                        st.write(f"**Valor Acréscimos:** R$ {valor_acrescimos:.2f}")
+                        st.write(f"**Valor Total:** R$ {valor_total:.2f}")
+                except Exception as e:
+                    st.error(f"Erro ao buscar acréscimos: {str(e)}")
+            
+            st.write("**Descrição:**")
+            st.info(proposta['descricao'])
+            
+            # Exibir acréscimos se existirem
+            try:
+                acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
+                if not acrescimos.empty:
+                    st.write("### Acréscimos da Proposta")
+                    
+                    # Preparar dados
+                    df_acrescimos = acrescimos[['tipo', 'fornecedor', 'valor', 'descricao']].copy()
+                    df_acrescimos.columns = ['Tipo', 'Fornecedor/Assistente', 'Valor (R$)', 'Descrição']
+                    df_acrescimos['Valor (R$)'] = df_acrescimos['Valor (R$)'].apply(lambda x: f'R$ {float(x):.2f}')
+                    
+                    # Exibir tabela de acréscimos
+                    st.dataframe(df_acrescimos, hide_index=True, use_container_width=True)
+            except Exception as e:
+                st.error(f"Erro ao buscar acréscimos: {str(e)}")
+            
+            # Botão para baixar PDF se necessário
+            if st.button("📄 Gerar PDF da Proposta Finalizada", type="primary"):
+                try:
+                    # Primeiro recuperar os acréscimos da proposta
+                    acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
+                    
+                    # Criar diretório se não existir
+                    import os
+                    os.makedirs("pdfs", exist_ok=True)
+                    
+                    # Gerar nome do arquivo
+                    filename = f"pdfs/proposta_finalizada_{proposta['numero']}_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                    
+                    # Gerar o PDF
+                    gerar_pdf_fechamento(proposta, cliente, acrescimos, filename)
+                    
+                    # Exibir link para download
+                    with open(filename, "rb") as pdf_file:
+                        PDFbyte = pdf_file.read()
+                        
+                    st.success("PDF gerado com sucesso!")
+                    st.download_button(
+                        label="📥 Baixar PDF", 
+                        data=PDFbyte,
+                        file_name=f"proposta_finalizada_{proposta['numero']}.pdf",
+                        mime="application/pdf"
+                    )
+                except Exception as e:
+                    st.error(f"Erro ao gerar PDF: {str(e)}")
+    
+    except Exception as e:
+        st.error(f"Erro ao carregar propostas finalizadas: {str(e)}")
 
 def mostrar_nova_proposta():
     st.subheader("Cadastrar Nova Proposta")
@@ -460,9 +653,14 @@ def mostrar_lista_propostas():
 def mostrar_andamento():
     # Nota: A subheader já é inserida na chamada da função agora
     try:
+        # Carregar propostas em execução (status Fechada)
         propostas = st.session_state.db.get_propostas()
+        if not propostas.empty:
+            # Filtrar apenas propostas em execução (com status "Fechada")
+            propostas = propostas[propostas['status'] == 'Fechada']
+            
         if propostas.empty:
-            st.warning("Nenhuma proposta cadastrada.")
+            st.warning("Nenhuma proposta em execução encontrada.")
             return
 
         # Juntar dados de propostas com clientes
@@ -471,114 +669,325 @@ def mostrar_andamento():
             clientes[['id', 'nome']], 
             left_on='cliente_id', 
             right_on='id', 
+            how='left',
             suffixes=('', '_cliente')
         )
 
         # Selecionar proposta
         proposta_display = [
-            f"Proposta #{p['numero']} - {p['nome']}" 
+            f"Proposta #{p['numero']} - {p['nome']} - {p['descricao'][:30] + '...' if len(p['descricao']) > 30 else p['descricao']}" 
             for _, p in propostas.iterrows()
         ]
 
-        with st.form("selecionar_proposta"):
+        # Usar colunas para melhorar o layout
+        col_selecao1, col_selecao2 = st.columns([3, 1])
+        
+        with col_selecao1:
             proposta_selecionada = st.selectbox(
-                "Selecione a Proposta",
-                proposta_display
+                "Selecione a Proposta em Execução",
+                proposta_display,
+                key="proposta_execucao"
             )
-            submited = st.form_submit_button("Selecionar")
+            
+        with col_selecao2:
+            btn_selecionar = st.button("Visualizar Detalhes", type="primary", use_container_width=True)
 
-        if proposta_selecionada and submited:
+        if proposta_selecionada and btn_selecionar:
             try:
                 # Extrair número da proposta
                 numero_proposta = int(proposta_selecionada.split('#')[1].split(' -')[0])
                 proposta = propostas[propostas['numero'] == numero_proposta].iloc[0]
+                cliente = clientes[clientes['id'] == proposta['cliente_id']].iloc[0]
 
-                # Exibir detalhes da proposta
-                st.write(f"**Cliente:** {proposta['nome']}")
-                st.write(f"**Descrição:** {proposta['descricao']}")
-                st.write(f"**Valor Base:** R$ {float(proposta['valor']):.2f}")
-
-                # Seção de acréscimos
-                st.subheader("Adicionar Acréscimos")
-
-                with st.form("adicionar_acrescimo"):
+                # Criar 3 abas para organizar as informações
+                tab_info, tab_acrescimos, tab_pagamentos = st.tabs([
+                    "📋 Informações Gerais", 
+                    "💰 Acréscimos e Fornecedores", 
+                    "📊 Pagamentos"
+                ])
+                
+                with tab_info:
+                    # Exibir detalhes da proposta com melhor layout
                     col1, col2 = st.columns(2)
-
+                    
                     with col1:
-                        tipo_acrescimo = st.selectbox(
-                            "Tipo de Acréscimo",
-                            ["Organização", "Assistente", "Fornecedor", "Marcenaria", "Produto"]
-                        )
-
+                        st.markdown("### Dados da Proposta")
+                        st.write(f"**Número:** #{proposta['numero']}")
+                        st.write(f"**Data:** {pd.to_datetime(proposta['data_proposta']).strftime('%d/%m/%Y')}")
+                        st.write(f"**Tipo:** {proposta['tipo_proposta']}")
+                        st.write(f"**Status:** {proposta['status']}")
+                        
+                        # Exibir datas
+                        if pd.notna(proposta['data_inicio']) and pd.notna(proposta['data_fim']):
+                            data_inicio = pd.to_datetime(proposta['data_inicio']).strftime('%d/%m/%Y')
+                            data_fim = pd.to_datetime(proposta['data_fim']).strftime('%d/%m/%Y')
+                            st.write(f"**Período:** {data_inicio} a {data_fim}")
+                            
+                            # Calcular dias
+                            dias = (pd.to_datetime(proposta['data_fim']) - pd.to_datetime(proposta['data_inicio'])).days
+                            st.write(f"**Duração:** {dias} dias")
+                    
                     with col2:
-                        fornecedor_nome = None
-                        if tipo_acrescimo == "Fornecedor":
-                            fornecedor = st.selectbox(
-                                "Fornecedor",
-                                ["La Luc", "Multicoisas", "Organizatta", "Outro"]
+                        st.markdown("### Dados do Cliente")
+                        st.write(f"**Nome:** {cliente['nome']}")
+                        st.write(f"**Telefone:** {cliente.get('telefone', 'Não informado')}")
+                        st.write(f"**Email:** {cliente.get('email', 'Não informado')}")
+                        st.write(f"**Endereço:** {cliente.get('endereco', 'Não informado')}")
+                    
+                    st.markdown("### Descrição do Serviço")
+                    st.write(proposta['descricao'])
+                    
+                    st.markdown("### Valores")
+                    st.write(f"**Valor Base:** R$ {float(proposta['valor']):.2f}")
+                    
+                    # Calcular e exibir valor total com acréscimos
+                    try:
+                        acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
+                        if not acrescimos.empty:
+                            valor_acrescimos = acrescimos['valor'].sum()
+                            valor_total = float(proposta['valor']) + valor_acrescimos
+                            st.write(f"**Valor Acréscimos:** R$ {valor_acrescimos:.2f}")
+                            st.write(f"**Valor Total:** R$ {valor_total:.2f}")
+                        else:
+                            st.write(f"**Valor Total:** R$ {float(proposta['valor']):.2f} (sem acréscimos)")
+                    except Exception as e:
+                        st.error(f"Erro ao calcular valores totais: {str(e)}")
+                
+                with tab_acrescimos:
+                    st.markdown("### Adicionar Acréscimo")
+                    
+                    # Layout com formulário mais organizado 
+                    with st.form("adicionar_acrescimo"):
+                        col1, col2 = st.columns(2)
+
+                        with col1:
+                            tipo_acrescimo = st.selectbox(
+                                "Tipo de Acréscimo",
+                                ["Organização", "Assistente", "Fornecedor", "Marcenaria", "Produto"]
                             )
-                            fornecedor_nome = fornecedor
-                        elif tipo_acrescimo == "Assistente":
-                            try:
-                                assistentes = st.session_state.db.get_assistentes()
-                                if not assistentes.empty:
-                                    assistente = st.selectbox(
-                                        "Assistente",
-                                        assistentes['nome'].tolist()
+
+                        with col2:
+                            fornecedor_nome = None
+                            if tipo_acrescimo == "Fornecedor":
+                                fornecedor = st.selectbox(
+                                    "Fornecedor",
+                                    ["La Luc", "Multicoisas", "Organizatta", "Outro"]
+                                )
+                                fornecedor_nome = fornecedor
+                            elif tipo_acrescimo == "Assistente":
+                                try:
+                                    assistentes = st.session_state.db.get_assistentes()
+                                    if not assistentes.empty:
+                                        assistente = st.selectbox(
+                                            "Assistente",
+                                            assistentes['nome'].tolist()
+                                        )
+                                        fornecedor_nome = assistente
+                                    else:
+                                        st.warning("Nenhum assistente cadastrado.")
+                                except Exception as e:
+                                    st.error(f"Erro ao carregar assistentes: {str(e)}")
+
+                        descricao_acrescimo = st.text_input("Descrição")
+                        valor_acrescimo = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
+
+                        if st.form_submit_button("Adicionar Acréscimo"):
+                            if valor_acrescimo <= 0:
+                                st.error("Por favor, insira um valor válido maior que zero.")
+                            elif tipo_acrescimo == "Assistente" and not fornecedor_nome:
+                                st.error("Por favor, selecione um assistente.")
+                            else:
+                                try:
+                                    st.session_state.db.add_acrescimo_proposta(
+                                        proposta_id=int(proposta['id']),
+                                        tipo=tipo_acrescimo,
+                                        fornecedor=fornecedor_nome,
+                                        descricao=descricao_acrescimo if descricao_acrescimo else None,
+                                        valor=float(valor_acrescimo)
                                     )
-                                    fornecedor_nome = assistente
-                                else:
-                                    st.warning("Nenhum assistente cadastrado.")
-                            except Exception as e:
-                                st.error(f"Erro ao carregar assistentes: {str(e)}")
+                                    st.success("Acréscimo adicionado com sucesso!")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Erro ao adicionar acréscimo: {str(e)}")
 
-                    descricao_acrescimo = st.text_input("Descrição")
-                    valor_acrescimo = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
+                    # Exibir acréscimos existentes com melhor formatação
+                    st.markdown("### Acréscimos Cadastrados")
+                    try:
+                        acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
+                        if not acrescimos.empty:
+                            # Criar visual mais rico para acréscimos
+                            # Separar acréscimos por tipo
+                            assistentes = acrescimos[acrescimos['tipo'] == 'Assistente']
+                            fornecedores = acrescimos[acrescimos['tipo'] == 'Fornecedor']
+                            outros = acrescimos[~acrescimos['tipo'].isin(['Assistente', 'Fornecedor'])]
+                            
+                            # Display usando métrica para melhor visualização
+                            col1, col2, col3 = st.columns(3)
+                            
+                            with col1:
+                                total_assistentes = assistentes['valor'].sum() if not assistentes.empty else 0
+                                st.metric("Total Assistentes", f"R$ {total_assistentes:.2f}")
+                                
+                            with col2:
+                                total_fornecedores = fornecedores['valor'].sum() if not fornecedores.empty else 0
+                                st.metric("Total Fornecedores", f"R$ {total_fornecedores:.2f}")
+                                
+                            with col3:
+                                total_outros = outros['valor'].sum() if not outros.empty else 0
+                                st.metric("Total Outros", f"R$ {total_outros:.2f}")
+                            
+                            # Criar DataFrame para exibição
+                            df_acrescimos = acrescimos[['tipo', 'fornecedor', 'valor', 'descricao']].copy()
+                            df_acrescimos.columns = ['Tipo', 'Fornecedor/Assistente', 'Valor (R$)', 'Descrição']
 
-                    if st.form_submit_button("Adicionar"):
-                        if valor_acrescimo <= 0:
-                            st.error("Por favor, insira um valor válido maior que zero.")
-                            return
+                            # Formatar valores
+                            df_acrescimos['Valor (R$)'] = df_acrescimos['Valor (R$)'].apply(lambda x: f'R$ {float(x):.2f}')
 
-                        if tipo_acrescimo == "Assistente" and not fornecedor_nome:
-                            st.error("Por favor, selecione um assistente.")
-                            return
-
-                        try:
-                            st.session_state.db.add_acrescimo_proposta(
-                                proposta_id=int(proposta['id']),
-                                tipo=tipo_acrescimo,
-                                fornecedor=fornecedor_nome,
-                                descricao=descricao_acrescimo if descricao_acrescimo else None,
-                                valor=float(valor_acrescimo)
+                            # Exibir tabela com melhor design
+                            st.dataframe(
+                                df_acrescimos, 
+                                hide_index=True,
+                                use_container_width=True,
+                                column_config={
+                                    "Tipo": st.column_config.TextColumn("Tipo", width="medium"),
+                                    "Fornecedor/Assistente": st.column_config.TextColumn("Fornecedor/Assistente", width="medium"),
+                                    "Valor (R$)": st.column_config.TextColumn("Valor (R$)", width="small"),
+                                    "Descrição": st.column_config.TextColumn("Descrição", width="large"),
+                                }
                             )
-                            st.success("Acréscimo adicionado com sucesso!")
+
+                            # Calcular valor total 
+                            valor_total = float(proposta['valor']) + acrescimos['valor'].sum()
+                            st.metric("Valor Total da Proposta", f"R$ {valor_total:.2f}", 
+                                      delta=f"R$ {acrescimos['valor'].sum():.2f} em acréscimos")
+                        else:
+                            st.info("Nenhum acréscimo cadastrado para esta proposta.")
+                    except Exception as e:
+                        st.error(f"Erro ao carregar acréscimos: {str(e)}")
+                
+                with tab_pagamentos:
+                    st.markdown("### Resumo Financeiro")
+                    
+                    # 1. Exibir resumo de pagamentos ao cliente
+                    st.subheader("Pagamentos do Cliente")
+                    try:
+                        # Aqui você pode conectar com o módulo financeiro
+                        # Para demonstração, vamos mostrar valores fictícios baseados nos acréscimos
+                        
+                        # Valor base da proposta
+                        valor_base = float(proposta['valor'])
+                        
+                        # Obter acréscimos se existirem
+                        acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
+                        valor_acrescimos = acrescimos['valor'].sum() if not acrescimos.empty else 0
+                        
+                        # Valor total
+                        valor_total = valor_base + valor_acrescimos
+                        
+                        # Criar tabela de pagamentos ao cliente
+                        st.write(f"**Valor base:** R$ {valor_base:.2f}")
+                        st.write(f"**Valor acréscimos:** R$ {valor_acrescimos:.2f}")
+                        st.write(f"**Valor total a receber:** R$ {valor_total:.2f}")
+                        
+                        # Aqui poderia exibir um histórico de pagamentos já recebidos
+                        # st.write("**Pagamentos recebidos:** R$ X.XX")
+                        # st.write("**Saldo a receber:** R$ X.XX")
+                        
+                    except Exception as e:
+                        st.error(f"Erro ao carregar resumo financeiro: {str(e)}")
+                    
+                    # 2. Exibir resumo de pagamentos a fornecedores/assistentes
+                    st.subheader("Pagamentos a Fornecedores/Assistentes")
+                    try:
+                        acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
+                        if not acrescimos.empty:
+                            # Agrupar por tipo e fornecedor
+                            resumo = acrescimos.groupby(['tipo', 'fornecedor'])['valor'].sum().reset_index()
+                            resumo.columns = ['Tipo', 'Fornecedor/Assistente', 'Valor a Pagar (R$)']
+                            
+                            # Formatar valores
+                            resumo['Valor a Pagar (R$)'] = resumo['Valor a Pagar (R$)'].apply(lambda x: f'R$ {float(x):.2f}')
+                            
+                            # Exibir tabela de pagamentos
+                            st.dataframe(resumo, hide_index=True, use_container_width=True)
+                        else:
+                            st.info("Nenhum pagamento pendente para fornecedores ou assistentes.")
+                    except Exception as e:
+                        st.error(f"Erro ao carregar pagamentos a fornecedores: {str(e)}")
+                
+                # Botões para ações na proposta
+                st.write("---")
+                col_botoes1, col_botoes2, col_botoes3 = st.columns(3)
+                
+                with col_botoes1:
+                    # Botão para gerar PDF de fechamento
+                    if st.button("📄 Gerar PDF de Fechamento", type="primary", use_container_width=True):
+                        try:
+                            # Primeiro recuperar os acréscimos da proposta
+                            acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
+                            
+                            # Gerar nome de arquivo temporário
+                            import tempfile
+                            import os
+                            
+                            # Criar diretório temporário se não existir
+                            os.makedirs("pdfs", exist_ok=True)
+                            
+                            # Gerar nome do arquivo
+                            filename = f"pdfs/proposta_{proposta['numero']}_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                            
+                            # Gerar o PDF
+                            gerar_pdf_fechamento(proposta, cliente, acrescimos, filename)
+                            
+                            # Exibir link para download
+                            with open(filename, "rb") as pdf_file:
+                                PDFbyte = pdf_file.read()
+                                
+                            st.success("PDF gerado com sucesso!")
+                            st.download_button(
+                                label="📥 Baixar PDF", 
+                                data=PDFbyte,
+                                file_name=f"proposta_{proposta['numero']}_fechamento.pdf",
+                                mime="application/pdf"
+                            )
+                        except Exception as e:
+                            st.error(f"Erro ao gerar PDF: {str(e)}")
+                
+                with col_botoes2:
+                    # Botão para marcar proposta como finalizada
+                    if st.button("✅ Finalizar Proposta", use_container_width=True):
+                        try:
+                            # Aqui implementaríamos a lógica para marcar a proposta como finalizada
+                            # Atualizando seu status para um novo valor como "Finalizada" ou "Concluída"
+                            st.session_state.db.atualizar_proposta(
+                                proposta_id=proposta['id'],
+                                status="Concluída"  # Novo status para propostas finalizadas
+                            )
+                            st.success("Proposta marcada como finalizada com sucesso!")
                             st.rerun()
                         except Exception as e:
-                            st.error(f"Erro ao adicionar acréscimo: {str(e)}")
-
-                # Exibir acréscimos existentes
-                try:
-                    acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
-                    if not acrescimos.empty:
-                        st.write("### Acréscimos Adicionados")
-
-                        # Criar DataFrame para exibição
-                        df_acrescimos = acrescimos[['tipo', 'fornecedor', 'valor', 'descricao']].copy()
-                        df_acrescimos.columns = ['Tipo', 'Fornecedor', 'Valor (R$)', 'Descrição']
-
-                        # Formatar valores
-                        df_acrescimos['Valor (R$)'] = df_acrescimos['Valor (R$)'].apply(lambda x: f'R$ {float(x):.2f}')
-
-                        # Exibir tabela
-                        st.dataframe(df_acrescimos, hide_index=True)
-
-                        # Status e valor total
-                        valor_total = float(proposta['valor']) + acrescimos['valor'].sum()
-                        st.write(f"**Valor Total da Proposta:** R$ {valor_total:.2f}")
-
-                except Exception as e:
-                    st.error(f"Erro ao carregar acréscimos: {str(e)}")
+                            st.error(f"Erro ao finalizar proposta: {str(e)}")
+                
+                with col_botoes3:
+                    # Botão para gerar transações financeiras
+                    if st.button("💰 Gerar Transações Financeiras", use_container_width=True):
+                        try:
+                            # Aqui implementaríamos a lógica para gerar as transações financeiras
+                            # similar à que existia no módulo de integração
+                            resultado = st.session_state.db.gerar_transacoes_proposta(proposta['id'])
+                            
+                            if resultado.get("status") == "já existem transações":
+                                st.info(f"⚠️ Já existem {resultado.get('count', 0)} transações para esta proposta.")
+                            elif resultado.get("status") == "sucesso":
+                                st.success(f"""
+                                ✅ Transações geradas com sucesso!
+                                - Receita ID: {resultado.get('receita_id')}
+                                - Despesas geradas: {resultado.get('total_despesas')}
+                                """)
+                            else:
+                                st.warning("⚠️ Não foi possível gerar as transações. Verifique os dados da proposta.")
+                        except Exception as e:
+                            st.error(f"Erro ao gerar transações financeiras: {str(e)}")
 
             except Exception as e:
                 st.error(f"Erro ao processar proposta selecionada: {str(e)}")
