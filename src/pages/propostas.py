@@ -8,10 +8,10 @@ from utils.importador import importar_cadastros, gerar_template_csv
 def show():
     st.title("📝 Gestão de Propostas")
 
-    # Usar radio para selecionar a aba - Adicionada opção de Integração
+    # Usar radio para selecionar a aba
     aba_selecionada = st.radio(
         "Selecione a opção:",
-        ["Nova Proposta", "Lista de Propostas", "Andamento do Trabalho", "Integração com Módulos"],
+        ["Nova Proposta", "Lista de Propostas", "Propostas em Execução"],
         horizontal=True,
         label_visibility="collapsed"
     )
@@ -23,18 +23,9 @@ def show():
         mostrar_nova_proposta()
     elif aba_selecionada == "Lista de Propostas":
         mostrar_lista_propostas()
-    elif aba_selecionada == "Andamento do Trabalho":
+    elif aba_selecionada == "Propostas em Execução":
+        st.subheader("📋 PROPOSTAS EM EXECUÇÃO")
         mostrar_andamento()
-    elif aba_selecionada == "Integração com Módulos":
-        st.subheader("🔄 Integração entre Módulos")
-        st.write("""
-        Esta seção permite testar a integração entre os módulos de Propostas, Financeiro e Vendas.
-        """)
-        
-        # Adicionar botão para ir para a página dedicada de integração
-        if st.button("🔄 Acessar Integração de Módulos", type="primary", use_container_width=True):
-            st.session_state.voltar_para_propostas = True
-            st.switch_page("pages/integracao_modulos.py")
     # Opção de importação removida conforme solicitação do cliente
 
 def mostrar_nova_proposta():
@@ -467,7 +458,7 @@ def mostrar_lista_propostas():
         st.error(f"Erro ao carregar propostas: {str(e)}")
 
 def mostrar_andamento():
-    st.subheader("Andamento do Trabalho")
+    # Nota: A subheader já é inserida na chamada da função agora
     try:
         propostas = st.session_state.db.get_propostas()
         if propostas.empty:
