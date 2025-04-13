@@ -4,30 +4,32 @@ import time
 import sys
 import datetime
 import os
-from utils.database import Database, Proposta
+from utils.database import Database
 
 def corrigir_todas_propostas():
     """Atualiza a data_proposta de todas as propostas para usar a data_inicio quando disponível"""
     db = Database()
     
-    # Função para atualizar propostas no banco de dados
-    def update_propostas():
-        propostas = db.session.query(Proposta).all()
-        atualizadas = 0
-        
-        for proposta in propostas:
-            if proposta.data_inicio and proposta.data_proposta != proposta.data_inicio:
-                proposta.data_proposta = proposta.data_inicio
-                atualizadas += 1
-                
-        db.session.commit()
-        return atualizadas
-    
     try:
-        atualizadas = update_propostas()
-        return atualizadas
+        # Executar SQL diretamente
+        from sqlalchemy.sql import text
+        
+        # Atualizar todas as propostas que têm data_inicio mas não têm data_proposta igual
+        sql = """
+        UPDATE propostas
+        SET data_proposta = data_inicio
+        WHERE data_inicio IS NOT NULL 
+        AND (data_proposta IS NULL OR data_proposta != data_inicio)
+        """
+        
+        result = db.session.execute(text(sql))
+        db.session.commit()
+        
+        # Retornar número de linhas afetadas
+        return result.rowcount
     except Exception as e:
         print(f"Erro ao atualizar propostas: {str(e)}")
+        db.session.rollback()
         return 0
 
 def main():
