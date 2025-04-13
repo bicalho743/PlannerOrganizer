@@ -149,6 +149,16 @@ st.markdown("""
         margin-bottom: 1.5rem !important;
         border-color: rgba(255, 255, 255, 0.2) !important;
     }
+    
+    /* Ocultar links de navegação do sidebar */
+    section[data-testid="stSidebar"] > div:nth-child(2) {
+        display: none !important;
+    }
+    
+    /* Ocultar separador que fica entre o cabeçalho e os links */
+    section[data-testid="stSidebar"] > div:nth-child(1) > div:nth-child(2) > hr {
+        display: none !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 

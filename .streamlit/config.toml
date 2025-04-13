@@ -3,24 +3,14 @@ headless = true
 address = "0.0.0.0"
 port = 5000
 
+[theme]
+primaryColor = "#F1A208"
+backgroundColor = "#2A3F5F"
+secondaryBackgroundColor = "#1E293B"
+textColor = "#FFFFFF"
+
 [browser]
 gatherUsageStats = false
 
-[theme]
-primaryColor = "#F1A208"  # Cor amarela para botões principais
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F0F2F6"
-textColor = "#262730"
-font = "sans serif"
-
 [ui]
-# Mais opções visuais
-hideTopBar = false
-
-[runner]
-# Configurações de execução
-magicEnabled = true
-fastReruns = true
-
-[logger]
-level = "info"
+hideTopBar = true
