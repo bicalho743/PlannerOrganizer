@@ -150,13 +150,18 @@ st.markdown("""
         border-color: rgba(255, 255, 255, 0.2) !important;
     }
     
-    /* Ocultar links de navegação do sidebar */
-    section[data-testid="stSidebar"] > div:nth-child(2) {
+    /* Ocultar apenas os links de navegação padrão do Streamlit no sidebar */
+    section[data-testid="stSidebar"] div.element-container:has(nav.css-wugbhu) {
         display: none !important;
     }
     
-    /* Ocultar separador que fica entre o cabeçalho e os links */
-    section[data-testid="stSidebar"] > div:nth-child(1) > div:nth-child(2) > hr {
+    /* Também ocultar o hr abaixo do nome da página atual */
+    section[data-testid="stSidebar"] div.element-container:has(div.stMarkdown h1:not(:contains("PLANNER ORGANIZER"))) {
+        display: none !important;
+    }
+    
+    /* E o separador que vem logo após (que separa o título da página dos links) */
+    section[data-testid="stSidebar"] div.element-container:has(hr) {
         display: none !important;
     }
     </style>
