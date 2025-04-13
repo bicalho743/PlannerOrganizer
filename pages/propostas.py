@@ -26,7 +26,15 @@ def show():
     elif aba_selecionada == "Andamento do Trabalho":
         mostrar_andamento()
     elif aba_selecionada == "Integração com Módulos":
-        mostrar_integracao_modulos()
+        st.subheader("🔄 Integração entre Módulos")
+        st.write("""
+        Esta seção permite testar a integração entre os módulos de Propostas, Financeiro e Vendas.
+        """)
+        
+        # Adicionar botão para ir para a página dedicada de integração
+        if st.button("🔄 Acessar Integração de Módulos", type="primary", use_container_width=True):
+            st.session_state.voltar_para_propostas = True
+            st.switch_page("pages/integracao_modulos.py")
     # Opção de importação removida conforme solicitação do cliente
 
 def mostrar_nova_proposta():
