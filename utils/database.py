@@ -1016,7 +1016,8 @@ class Database:
         return self._safe_query(query)
         
     def atualizar_proposta(self, proposta_id, descricao=None, valor=None, status=None, 
-                          tipo_proposta=None, data_inicio=None, data_fim=None, prazo_entrega=None):
+                          tipo_proposta=None, data_inicio=None, data_fim=None, prazo_entrega=None,
+                          data_proposta=None, previsao_dias=None):
         """
         Atualiza os dados de uma proposta existente
         
@@ -1029,6 +1030,8 @@ class Database:
             data_inicio: Nova data de início (opcional)
             data_fim: Nova data de fim (opcional)
             prazo_entrega: Nova data de prazo de entrega (opcional)
+            data_proposta: Nova data da proposta (opcional)
+            previsao_dias: Nova previsão de dias (opcional)
             
         Returns:
             bool: True se a atualização foi bem-sucedida, False caso contrário
@@ -1064,6 +1067,12 @@ class Database:
                 
                 if prazo_entrega is not None:
                     proposta.prazo_entrega = prazo_entrega
+                
+                if data_proposta is not None:
+                    proposta.data_proposta = data_proposta
+                
+                if previsao_dias is not None:
+                    proposta.previsao_dias = previsao_dias
                 
                 return True
             except Exception as e:

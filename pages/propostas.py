@@ -309,12 +309,27 @@ def mostrar_lista_propostas():
                                                 
                                 # Se conseguimos converter a data, atualizar no banco
                                 if nova_data:
+                                    # Atualizar não só a data_proposta, mas também data_inicio e data_fim
+                                    # para que a visualização do PDF use as datas atualizadas
                                     st.session_state.db.atualizar_proposta(
                                         proposta_id=proposta_id,
-                                        data_proposta=nova_data
+                                        data_proposta=nova_data,
+                                        data_inicio=nova_data,  # Atualizar também a data de início
                                     )
+                                    
+                                    # Se temos previsão de dias, calcular nova data de fim
+                                    dias_previstos = proposta_original.get('previsao_dias', 0)
+                                    if dias_previstos and dias_previstos > 0:
+                                        data_fim_nova = nova_data + pd.Timedelta(days=dias_previstos)
+                                        st.session_state.db.atualizar_proposta(
+                                            proposta_id=proposta_id,
+                                            data_fim=data_fim_nova
+                                        )
+                                        print(f"Debug: Data atualizada com sucesso. Início: {nova_data}, Fim: {data_fim_nova}")
+                                    else:
+                                        print(f"Debug: Data atualizada com sucesso para: {nova_data} (sem ajuste da data fim)")
+                                    
                                     contador_atualizacoes += 1
-                                    print(f"Debug: Data atualizada com sucesso para: {nova_data}")
                                 else:
                                     st.warning(f"Não foi possível converter a data '{row['Data']}'. Use o formato DD/MM/YYYY.")
                             except Exception as e:
