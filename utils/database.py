@@ -280,31 +280,60 @@ class Database:
             raise e
 
     def _safe_query(self, query_func):
-        """Wrapper para executar queries com tratamento de erro"""
+        """
+        Wrapper para executar queries com tratamento de erro
+        
+        Esta função garante que as operações no banco de dados sejam executadas
+        em uma transação segura, com tratamento adequado de erros e conversão de tipos.
+        """
         try:
+            # Verificar se a sessão está ativa ou criar uma nova
             if not self.session.is_active:
                 self.session = Session()
+                print("DEBUG: Nova sessão criada")
+            
+            # Executar a função de query
+            print("DEBUG: Executando query")
             result = query_func()
+            
+            # Commit da transação
+            print("DEBUG: Realizando commit da transação")
             self.session.commit()
+            print("DEBUG: Commit realizado com sucesso")
 
             # Se o resultado for um DataFrame, converter tipos numéricos
             if isinstance(result, pd.DataFrame):
                 # Converter colunas numéricas para tipos nativos Python
                 for col in result.select_dtypes(include=['int64', 'float64', 'Int64']).columns:
                     result[col] = result[col].astype(object).where(pd.notnull(result[col]), None)
+                print(f"DEBUG: DataFrame processado com {len(result)} registros")
 
             # Se o resultado for um número, garantir que seja tipo nativo Python
             elif isinstance(result, (np.int64, np.float64)):
                 result = result.item()
-
+                print(f"DEBUG: Valor numérico convertido: {result}")
+            
             return result
+            
         except Exception as e:
+            # Em caso de erro, fazer rollback
+            print(f"DEBUG ERROR: Erro durante a execução da query: {str(e)}")
             if self.session.is_active:
+                print("DEBUG: Realizando rollback da transação")
                 self.session.rollback()
-            raise e
+            
+            # Logar e re-levantar a exceção com mais informações
+            import traceback
+            traceback.print_exc()
+            
+            # Re-lançar a exceção com mais contexto
+            raise Exception(f"Erro ao executar operação no banco de dados: {str(e)}")
+            
         finally:
-            self.session.close()
-            Session.remove()
+            # A sessão só será fechada se close_session=True
+            # mas continuará utilizável para futuras transações
+            # evitando o erro "Object has been detached or deleted"
+            print("DEBUG: Mantendo sessão ativa para futuras transações")
 
     def get_clientes(self):
         def query():
@@ -1311,22 +1340,72 @@ class Database:
         return self._safe_query(query)
 
     def add_acrescimo_proposta(self, proposta_id, tipo, valor, descricao=None, fornecedor=None, status_pagamento='Pendente'):
-        def query():
-            # Converter proposta_id e valor para tipos nativos Python
-            proposta_id = int(proposta_id)
-            valor = float(valor) if valor is not None else None
-
-            acrescimo = AcrescimoProposta(
-                proposta_id=proposta_id,
-                tipo=tipo,
-                fornecedor=fornecedor,
-                descricao=descricao,
-                valor=valor,
-                status_pagamento=status_pagamento
-            )
-            self.session.add(acrescimo)
-            return int(acrescimo.id)  # Converter para int nativo
-        return self._safe_query(query)
+        """
+        Adiciona um acréscimo a uma proposta
+        
+        Args:
+            proposta_id: ID da proposta
+            tipo: Tipo de acréscimo (Organização, Assistente, Fornecedor, Marcenaria, Produto)
+            valor: Valor do acréscimo
+            descricao: Descrição do acréscimo (opcional)
+            fornecedor: Nome do fornecedor ou assistente (opcional)
+            status_pagamento: Status do pagamento (Pendente, Pago)
+            
+        Returns:
+            int: ID do acréscimo adicionado
+        """
+        # Log para diagnóstico
+        print(f"DEBUG: Adicionando acréscimo à proposta ID={proposta_id}, tipo={tipo}, fornecedor={fornecedor}, valor={valor}")
+        
+        try:
+            # Primeiro verificar se a proposta existe
+            session = Session()
+            proposta = session.query(Proposta).filter_by(id=proposta_id).first()
+            session.close()
+            
+            if not proposta:
+                raise ValueError(f"Proposta ID {proposta_id} não encontrada no banco de dados")
+                
+            def query():
+                # Converter proposta_id e valor para tipos nativos Python
+                try:
+                    proposta_id_int = int(proposta_id)
+                    valor_float = float(valor) if valor is not None else None
+                    
+                    print(f"DEBUG: Valores convertidos - proposta_id={proposta_id_int}, valor={valor_float}")
+                    
+                    # Criar objeto de acréscimo
+                    acrescimo = AcrescimoProposta(
+                        proposta_id=proposta_id_int,
+                        tipo=tipo,
+                        fornecedor=fornecedor,
+                        descricao=descricao,
+                        valor=valor_float,
+                        status_pagamento=status_pagamento,
+                        data_cadastro=datetime.now().date()
+                    )
+                    
+                    # Adicionar à sessão
+                    self.session.add(acrescimo)
+                    self.session.flush()  # Flush para obter o ID sem commitar ainda
+                    acrescimo_id = int(acrescimo.id)
+                    
+                    print(f"DEBUG: Acréscimo criado com sucesso, ID={acrescimo_id}")
+                    return acrescimo_id
+                    
+                except Exception as e:
+                    print(f"DEBUG ERROR: Erro ao criar acréscimo: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
+                    raise e
+                    
+            return self._safe_query(query)
+            
+        except Exception as e:
+            print(f"DEBUG CRITICAL: Exceção crítica ao adicionar acréscimo: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            raise Exception(f"Erro ao adicionar acréscimo: {str(e)}")
 
     def get_acrescimos_proposta(self, proposta_id):
         # Converter proposta_id para int nativo do Python antes da função query
