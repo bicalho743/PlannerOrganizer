@@ -849,19 +849,40 @@ def mostrar_andamento():
                                 filename = f"pdfs/proposta_{proposta['numero']}_{proposta['cliente_id']}_fechamento.pdf"
                                 
                                 # Gerar PDF com parâmetros corretos
+                                import os
                                 from utils.pdf_generator import gerar_pdf_fechamento
-                                pdf_path = gerar_pdf_fechamento(proposta, cliente, acrescimos, filename)
                                 
-                                st.success("Fatura gerada com sucesso!")
+                                # Garantir que o diretório existe
+                                if not os.path.exists('pdfs'):
+                                    os.makedirs('pdfs')
                                 
-                                # Botão para download do arquivo
-                                with open(pdf_path, "rb") as pdf:
-                                    st.download_button(
-                                        label="⬇️ Baixar PDF",
-                                        data=pdf.read(),
-                                        file_name=f"proposta_{proposta['numero']}_fechamento.pdf",
-                                        mime="application/pdf"
-                                    )
+                                # Converter cliente de dataframe para dicionário se necessário
+                                cliente_dict = cliente
+                                if hasattr(cliente, 'to_dict'):
+                                    cliente_dict = cliente.to_dict()
+                                elif not isinstance(cliente, dict):
+                                    # Caso seja um objeto SQLAlchemy, extrair atributos
+                                    cliente_dict = {'nome': cliente.nome if hasattr(cliente, 'nome') else "Cliente"}
+                                
+                                # Debugging
+                                st.write("⏳ Gerando PDF... Por favor, aguarde.")
+                                st.write(f"📄 Nome do arquivo: {filename}")
+                                st.write(f"👤 Cliente: {cliente_dict.get('nome', 'N/A')}")
+                                st.write(f"💰 Valor base: R$ {float(proposta.get('valor', 0)):.2f}")
+                                
+                                # Gerar PDF com tratamento de erros mais detalhado
+                                try:
+                                    pdf_path = gerar_pdf_fechamento(proposta, cliente_dict, acrescimos, filename)
+                                    st.success("✅ Fatura gerada com sucesso!")
+                                    
+                                    # Botão para download do arquivo
+                                    with open(pdf_path, "rb") as pdf:
+                                        st.download_button(
+                                            label="⬇️ Baixar PDF",
+                                            data=pdf.read(),
+                                            file_name=f"proposta_{proposta['numero']}_fechamento.pdf",
+                                            mime="application/pdf"
+                                        )
                             except Exception as pdf_error:
                                 st.error(f"Erro ao gerar PDF: {str(pdf_error)}")
                                 import traceback
