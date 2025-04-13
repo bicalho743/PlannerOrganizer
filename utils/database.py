@@ -468,7 +468,7 @@ class Database:
         return self._safe_query(query)
 
     def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, 
-                    data_inicio=None, data_fim=None, prazo_entrega=None):
+                    data_inicio=None, data_fim=None, prazo_entrega=None, gerar_transacoes_automaticas=True):
         """
         VERSÃO MODIFICADA PARA EVITAR PROBLEMAS DE ESCOPO
         Função para adicionar proposta ao banco de dados
@@ -529,7 +529,21 @@ class Database:
             
             # Garantir que temos um ID válido
             self.session.flush()
-            return int(proposta.id) if proposta.id is not None else 0
+            proposta_id = int(proposta.id) if proposta.id is not None else 0
+            
+            # Gerar transações financeiras automaticamente se a proposta for criada com status "Aprovada"
+            if status_local == "Aprovada" and gerar_transacoes_automaticas and proposta_id > 0:
+                try:
+                    # Buscar o cliente da proposta
+                    cliente = self.session.query(Cliente).filter_by(id=cliente_id_local).first()
+                    if cliente:
+                        # Criar transação de receita
+                        if valor_local > 0:
+                            self._criar_transacao_receita(proposta, cliente)
+                except Exception as e:
+                    print(f"Erro ao gerar transações automáticas para a proposta {proposta_id}: {str(e)}")
+            
+            return proposta_id
         
         return self._safe_query(query)
 
@@ -1160,7 +1174,7 @@ class Database:
     def atualizar_proposta(self, proposta_id, descricao=None, valor=None, status=None, 
                           tipo_proposta=None, data_inicio=None, data_fim=None, prazo_entrega=None,
                           data_proposta=None, previsao_dias=None, data_inicio_execucao=None,
-                          status_execucao=None):
+                          status_execucao=None, gerar_transacoes_automaticas=True):
         """
         Atualiza os dados de uma proposta existente
         
@@ -1177,9 +1191,10 @@ class Database:
             previsao_dias: Nova previsão de dias (opcional)
             data_inicio_execucao: Data de início da execução (opcional)
             status_execucao: Status de execução (opcional)
+            gerar_transacoes_automaticas: Se True, gerará transações financeiras automaticamente quando o status for alterado para "Aprovada"
             
         Returns:
-            bool: True se a atualização foi bem-sucedida, False caso contrário
+            dict: Resultado da operação com status, mensagem e info das transações (se aplicável)
         """
         def query():
             try:
@@ -1189,7 +1204,14 @@ class Database:
                 # Buscar a proposta
                 proposta = self.session.query(Proposta).filter_by(id=proposta_id_int).first()
                 if not proposta:
-                    return False
+                    return {"status": False, "message": f"Proposta ID {proposta_id} não encontrada"}
+                
+                # Verificar se precisamos gerar transações automaticamente
+                proposta_aprovada = False
+                
+                # Verificar mudança de status para "Aprovada"
+                if status is not None and status == "Aprovada" and proposta.status != "Aprovada":
+                    proposta_aprovada = True
                 
                 # Atualizar apenas os campos fornecidos
                 if descricao is not None:
@@ -1225,7 +1247,57 @@ class Database:
                 if status_execucao is not None:
                     proposta.status_execucao = status_execucao
                 
-                return True
+                # Salvar as alterações antes de gerar transações
+                self.session.flush()
+                
+                # Gerar transações financeiras automaticamente se a proposta foi aprovada
+                resultado = {"status": True, "message": "Proposta atualizada com sucesso"}
+                
+                if proposta_aprovada and gerar_transacoes_automaticas:
+                    # Verificar se já existem transações para esta proposta
+                    transacoes_existentes = self.session.query(Transacao).filter_by(
+                        proposta_id=proposta_id_int
+                    ).count()
+                    
+                    if transacoes_existentes > 0:
+                        resultado["transacoes"] = {
+                            "status": "já existem transações",
+                            "count": transacoes_existentes,
+                            "message": f"Já existem {transacoes_existentes} transações para esta proposta."
+                        }
+                    else:
+                        # Buscar o cliente da proposta
+                        cliente = self.session.query(Cliente).filter_by(id=proposta.cliente_id).first()
+                        if not cliente:
+                            resultado["transacoes"] = {
+                                "status": "erro",
+                                "message": f"Cliente ID {proposta.cliente_id} não encontrado"
+                            }
+                        else:
+                            # Criar transação de receita
+                            receita_id = None
+                            if proposta.valor and proposta.valor > 0:
+                                receita_id = self._criar_transacao_receita(proposta, cliente)
+                            
+                            # Buscar acréscimos da proposta
+                            acrescimos = self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id_int).all()
+                            
+                            # Criar transações de despesa para cada acréscimo
+                            despesa_ids = []
+                            for acrescimo in acrescimos:
+                                if acrescimo.valor and acrescimo.valor > 0:
+                                    despesa_id = self._criar_transacao_despesa(acrescimo, proposta)
+                                    despesa_ids.append(despesa_id)
+                            
+                            resultado["transacoes"] = {
+                                "status": "sucesso",
+                                "receita_id": receita_id,
+                                "despesa_ids": despesa_ids,
+                                "total_despesas": len(despesa_ids),
+                                "message": f"Transações financeiras geradas automaticamente para a proposta #{proposta.numero}"
+                            }
+                
+                return resultado
             except Exception as e:
                 raise Exception(f"Erro ao atualizar proposta: {str(e)}")
         
