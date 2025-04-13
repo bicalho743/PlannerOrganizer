@@ -35,7 +35,7 @@ st.set_page_config(
     page_title="Planner Organizer",
     page_icon="📋",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # Configuração para formato de data brasileiro (DD/MM/YYYY)
