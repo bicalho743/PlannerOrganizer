@@ -620,20 +620,128 @@ def mostrar_importacao():
                 st.error(f"Erro ao importar propostas: {str(e)}")
 
 def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename, usar_template=False):
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    
     if usar_template:
-        from utils.pdf_merger import preencher_template_canva
-        dados = {
-            'cliente': cliente['nome'],
-            'valor': float(proposta['valor']),
-            'data': datetime.now().strftime('%d/%m/%Y'),
-            'descricao': proposta['descricao']
-        }
-        template_path = "templates/proposta_template.pdf"
-        preencher_template_canva(template_path, dados, filename)
-        return filename
-    else:
-        #Example of how it might look:  Replace this with your actual original PDF generation code.
-        #This is a placeholder,  you need to replace this with your existing code.
-        with open(filename, "wb") as f:
-            f.write(b"This is a placeholder PDF. Replace this with your actual PDF generation code.")
-        return filename
+        try:
+            from utils.pdf_merger import preencher_template_canva
+            dados = {
+                'cliente': cliente['nome'],
+                'valor': float(proposta['valor']),
+                'data': datetime.now().strftime('%d/%m/%Y'),
+                'descricao': proposta['descricao']
+            }
+            template_path = "templates/proposta_template.pdf"
+            preencher_template_canva(template_path, dados, filename)
+            return filename
+        except Exception as e:
+            st.warning(f"Não foi possível usar o template Canva. Usando geração padrão: {str(e)}")
+            # Se falhar, continua com a geração padrão
+    
+    # Criação do documento com ReportLab
+    doc = SimpleDocTemplate(
+        filename,
+        pagesize=letter,
+        rightMargin=72,
+        leftMargin=72,
+        topMargin=72,
+        bottomMargin=72
+    )
+    styles = getSampleStyleSheet()
+    
+    # Criar estilo personalizado para o cabeçalho
+    styles.add(ParagraphStyle(
+        name='TituloAzul',
+        parent=styles['Heading1'],
+        textColor=colors.blue,
+        spaceAfter=12
+    ))
+    
+    elements = []
+    
+    # Adicionar título
+    elements.append(Paragraph("PROPOSTA DE SERVIÇO", styles['TituloAzul']))
+    elements.append(Spacer(1, 0.25*inch))
+    
+    # Adicionar informações básicas da proposta
+    elements.append(Paragraph(f"<b>Número:</b> {proposta.get('numero', '')}", styles['Normal']))
+    elements.append(Paragraph(f"<b>Cliente:</b> {cliente.get('nome', '')}", styles['Normal']))
+    elements.append(Paragraph(f"<b>Data:</b> {datetime.now().strftime('%d/%m/%Y')}", styles['Normal']))
+    elements.append(Spacer(1, 0.1*inch))
+    elements.append(Paragraph(f"<b>Descrição:</b> {proposta.get('descricao', '')}", styles['Normal']))
+    
+    # Adicionar informações de prazo (se disponíveis)
+    if pd.notna(proposta.get('data_inicio')) and pd.notna(proposta.get('data_fim')):
+        data_inicio = pd.to_datetime(proposta['data_inicio']).strftime('%d/%m/%Y')
+        data_fim = pd.to_datetime(proposta['data_fim']).strftime('%d/%m/%Y')
+        elements.append(Paragraph(f"<b>Período:</b> {data_inicio} a {data_fim}", styles['Normal']))
+        
+        dias = (pd.to_datetime(proposta['data_fim']) - pd.to_datetime(proposta['data_inicio'])).days
+        elements.append(Paragraph(f"<b>Previsão:</b> {dias} dias", styles['Normal']))
+    
+    elements.append(Spacer(1, 0.25*inch))
+    
+    # Adicionar detalhes de valor
+    valor_base = float(proposta.get('valor', 0))
+    elements.append(Paragraph(f"<b>Valor Base:</b> R$ {valor_base:.2f}", styles['Normal']))
+    
+    # Adicionar tabela de acréscimos se existirem
+    if acrescimos is not None and not acrescimos.empty:
+        elements.append(Spacer(1, 0.2*inch))
+        elements.append(Paragraph("<b>Acréscimos:</b>", styles['Normal']))
+        
+        # Criar dados da tabela
+        data = [['Tipo', 'Fornecedor', 'Descrição', 'Valor (R$)']]
+        valor_total_acrescimos = 0
+        
+        for _, a in acrescimos.iterrows():
+            valor = float(a.get('valor', 0))
+            valor_total_acrescimos += valor
+            data.append([
+                a.get('tipo', ''),
+                a.get('fornecedor', ''),
+                a.get('descricao', ''),
+                f'R$ {valor:.2f}'
+            ])
+        
+        # Criar a tabela
+        table = Table(data, colWidths=[1.2*inch, 1.5*inch, 2.5*inch, 1*inch])
+        
+        # Estilo da tabela
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        elements.append(table)
+        elements.append(Spacer(1, 0.2*inch))
+        
+        # Valor total com acréscimos
+        valor_total = valor_base + valor_total_acrescimos
+        elements.append(Paragraph(f"<b>Acréscimos:</b> R$ {valor_total_acrescimos:.2f}", styles['Normal']))
+        elements.append(Paragraph(f"<b>Valor Total:</b> R$ {valor_total:.2f}", styles['Normal']))
+    
+    # Adicionar condições e termos
+    elements.append(Spacer(1, 0.4*inch))
+    elements.append(Paragraph("<b>CONDIÇÕES E TERMOS:</b>", styles['Heading3']))
+    elements.append(Paragraph("1. Esta proposta é válida por 30 dias a partir da data de emissão.", styles['Normal']))
+    elements.append(Paragraph("2. O pagamento deve ser realizado conforme condições acordadas.", styles['Normal']))
+    elements.append(Paragraph("3. Alterações no escopo podem resultar em ajustes de prazo e valor.", styles['Normal']))
+    
+    # Adicionar assinaturas
+    elements.append(Spacer(1, inch))
+    elements.append(Paragraph("____________________________                    ____________________________", styles['Normal']))
+    elements.append(Paragraph("         Planner Organizer                                             Cliente", styles['Normal']))
+    
+    # Gerar o PDF
+    doc.build(elements)
+    return filename
