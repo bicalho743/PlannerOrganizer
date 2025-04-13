@@ -554,18 +554,22 @@ class Database:
         return self._safe_query(query)
 
     def add_transacao(self, tipo, descricao, valor, categoria, tipo_receita=None, 
-                     origem_id=None, origem_tipo=None, tipo_conta='PF', status='Pendente'):
+                     origem_id=None, origem_tipo=None, tipo_conta='PF', status='Pendente',
+                     proposta_id=None, subcategoria=None, classificacao=None):
         def query():
             transacao = Transacao(
                 tipo=tipo,
                 descricao=descricao,
                 valor=valor,
                 categoria=categoria,
+                subcategoria=subcategoria,
                 tipo_receita=tipo_receita,
                 origem_id=origem_id,
                 origem_tipo=origem_tipo,
                 tipo_conta=tipo_conta,
-                status=status
+                status=status,
+                proposta_id=proposta_id,
+                classificacao=classificacao
             )
             self.session.add(transacao)
             return transacao.id
@@ -582,7 +586,8 @@ class Database:
             return False
         return self._safe_query(query)
 
-    def update_transacao(self, transacao_id, tipo, descricao, valor, categoria, tipo_receita=None):
+    def update_transacao(self, transacao_id, tipo, descricao, valor, categoria, tipo_receita=None,
+                      subcategoria=None, classificacao=None, proposta_id=None):
         """Atualiza uma transação existente"""
         def query():
             transacao = self.session.query(Transacao).filter_by(id=transacao_id).first()
@@ -592,9 +597,119 @@ class Database:
                 transacao.valor = valor
                 transacao.categoria = categoria
                 transacao.tipo_receita = tipo_receita
+                
+                if subcategoria is not None:
+                    transacao.subcategoria = subcategoria
+                    
+                if classificacao is not None:
+                    transacao.classificacao = classificacao
+                    
+                if proposta_id is not None:
+                    transacao.proposta_id = proposta_id
+                    
                 return True
             return False
         return self._safe_query(query)
+        
+    def gerar_transacoes_proposta(self, proposta_id):
+        """
+        Gera transações financeiras a partir de uma proposta
+        - Cria uma transação de receita com base no valor da proposta
+        - Cria transações de despesa para cada acréscimo da proposta
+        
+        Args:
+            proposta_id: ID da proposta
+            
+        Returns:
+            dict: Dicionário com os IDs das transações criadas
+        """
+        def query():
+            # Buscar a proposta
+            proposta = self.session.query(Proposta).filter_by(id=proposta_id).first()
+            if not proposta:
+                raise ValueError(f"Proposta ID {proposta_id} não encontrada")
+                
+            # Buscar o cliente da proposta
+            cliente = self.session.query(Cliente).filter_by(id=proposta.cliente_id).first()
+            if not cliente:
+                raise ValueError(f"Cliente ID {proposta.cliente_id} não encontrado")
+            
+            # Verificar se já existem transações para esta proposta
+            transacoes_existentes = self.session.query(Transacao).filter_by(
+                proposta_id=proposta_id
+            ).count()
+            
+            if transacoes_existentes > 0:
+                # Já existem transações, não criar novamente
+                return {"status": "já existem transações", "count": transacoes_existentes}
+            
+            # Criar transação de receita
+            receita_id = None
+            if proposta.valor and proposta.valor > 0:
+                receita_id = self._criar_transacao_receita(proposta, cliente)
+            
+            # Buscar acréscimos da proposta
+            acrescimos = self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).all()
+            
+            # Criar transações de despesa para cada acréscimo
+            despesa_ids = []
+            for acrescimo in acrescimos:
+                if acrescimo.valor and acrescimo.valor > 0:
+                    despesa_id = self._criar_transacao_despesa(acrescimo, proposta)
+                    despesa_ids.append(despesa_id)
+            
+            return {
+                "status": "sucesso",
+                "receita_id": receita_id,
+                "despesa_ids": despesa_ids,
+                "total_despesas": len(despesa_ids)
+            }
+        
+        return self._safe_query(query)
+    
+    def _criar_transacao_receita(self, proposta, cliente):
+        """Cria uma transação de receita para a proposta"""
+        # Nome do cliente para a descrição da transação
+        nome_cliente = cliente.nome if cliente else "Cliente"
+        
+        transacao = Transacao(
+            tipo="receita_a_receber",
+            descricao=f"Proposta #{proposta.numero} - {proposta.descricao} - {nome_cliente}",
+            valor=proposta.valor,
+            categoria="Propostas",
+            subcategoria=proposta.tipo_proposta,
+            tipo_receita="Projeto",
+            origem_id=proposta.id,
+            origem_tipo="proposta",
+            tipo_conta="PF",
+            status="Pendente",
+            proposta_id=proposta.id,
+            classificacao="receita",
+            data=proposta.data_proposta or datetime.now().date()
+        )
+        self.session.add(transacao)
+        self.session.flush()
+        return transacao.id
+    
+    def _criar_transacao_despesa(self, acrescimo, proposta):
+        """Cria uma transação de despesa para um acréscimo de proposta"""
+        transacao = Transacao(
+            tipo="despesa",
+            descricao=f"Despesa: {acrescimo.descricao} - Proposta #{proposta.numero}",
+            valor=acrescimo.valor,
+            categoria="Custos de Projeto",
+            subcategoria=acrescimo.tipo,
+            origem_id=acrescimo.id,
+            origem_tipo="acrescimo",
+            tipo_conta="PF",
+            status="Pendente",
+            proposta_id=proposta.id,
+            classificacao="custo_direto",
+            data=acrescimo.data_cadastro or datetime.now().date()
+        )
+        self.session.add(transacao)
+        self.session.flush()
+        return transacao.id
 
     def delete_transacao(self, transacao_id):
         """Exclui uma transação"""
@@ -1042,7 +1157,8 @@ class Database:
         
     def atualizar_proposta(self, proposta_id, descricao=None, valor=None, status=None, 
                           tipo_proposta=None, data_inicio=None, data_fim=None, prazo_entrega=None,
-                          data_proposta=None, previsao_dias=None):
+                          data_proposta=None, previsao_dias=None, data_inicio_execucao=None,
+                          status_execucao=None):
         """
         Atualiza os dados de uma proposta existente
         
@@ -1057,6 +1173,8 @@ class Database:
             prazo_entrega: Nova data de prazo de entrega (opcional)
             data_proposta: Nova data da proposta (opcional)
             previsao_dias: Nova previsão de dias (opcional)
+            data_inicio_execucao: Data de início da execução (opcional)
+            status_execucao: Status de execução (opcional)
             
         Returns:
             bool: True se a atualização foi bem-sucedida, False caso contrário
@@ -1098,6 +1216,12 @@ class Database:
                 
                 if previsao_dias is not None:
                     proposta.previsao_dias = previsao_dias
+                
+                if data_inicio_execucao is not None:
+                    proposta.data_inicio_execucao = data_inicio_execucao
+                    
+                if status_execucao is not None:
+                    proposta.status_execucao = status_execucao
                 
                 return True
             except Exception as e:
@@ -1483,3 +1607,161 @@ class Database:
             
             return True
         return self._safe_query(query)
+        
+    def criar_venda_de_proposta(self, proposta_id, produtos=None, forma_pagamento='À vista'):
+        """
+        Cria uma venda a partir de uma proposta
+        
+        Args:
+            proposta_id: ID da proposta
+            produtos: Lista opcional de produtos da proposta a incluir na venda
+                      Se None, serão incluídos todos os produtos da proposta
+            forma_pagamento: Forma de pagamento da venda
+            
+        Returns:
+            dict: Dicionário com informações sobre a venda criada
+        """
+        def query():
+            # Buscar a proposta
+            proposta = self.session.query(Proposta).filter_by(id=proposta_id).first()
+            if not proposta:
+                raise ValueError(f"Proposta ID {proposta_id} não encontrada")
+                
+            # Verificar se a proposta já tem uma venda associada
+            venda_existente = self.session.query(Venda).filter_by(proposta_id=proposta_id).first()
+            if venda_existente:
+                return {
+                    "status": "venda_existente", 
+                    "venda_id": venda_existente.id,
+                    "message": f"Já existe uma venda (ID: {venda_existente.id}) para esta proposta"
+                }
+            
+            # Buscar produtos da proposta
+            produtos_proposta = self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id).all()
+            if not produtos_proposta:
+                # Criar uma venda apenas com o valor da proposta como serviço
+                venda = Venda(
+                    cliente_id=proposta.cliente_id,
+                    valor_total=proposta.valor,
+                    forma_pagamento=forma_pagamento,
+                    observacoes=f"Venda gerada da proposta #{proposta.numero} - {proposta.descricao}",
+                    proposta_id=proposta_id,
+                    status="Concluída"
+                )
+                self.session.add(venda)
+                self.session.flush()
+                
+                # Criar um item virtual para representar o serviço
+                item_venda = ItemVenda(
+                    venda_id=venda.id,
+                    produto_id=None,  # Sem produto físico
+                    quantidade=1,
+                    preco_unitario=proposta.valor,
+                    subtotal=proposta.valor,
+                    descricao=f"Serviço: {proposta.descricao}"
+                )
+                self.session.add(item_venda)
+                
+                # Registrar transação financeira se já não existir
+                self._registrar_transacao_venda(venda, proposta)
+                
+                # Atualizar status da proposta para vendida
+                proposta.status_execucao = "Vendida"
+                
+                return {
+                    "status": "sucesso",
+                    "venda_id": venda.id,
+                    "valor": venda.valor_total,
+                    "tipo": "serviço",
+                    "message": "Venda de serviço criada com sucesso"
+                }
+            
+            # Lista para armazenar os itens da venda
+            itens_venda = []
+            valor_total = 0
+            
+            # Filtrar produtos se uma lista específica foi fornecida
+            if produtos and len(produtos) > 0:
+                produtos_filtrados = [p for p in produtos_proposta if p.id in produtos]
+            else:
+                produtos_filtrados = produtos_proposta
+                
+            # Preparar itens de venda
+            for produto in produtos_filtrados:
+                item = {
+                    "produto_id": produto.id,
+                    "quantidade": produto.quantidade,
+                    "preco_unitario": produto.valor
+                }
+                itens_venda.append(item)
+                valor_total += produto.valor * produto.quantidade
+            
+            # Criar venda
+            venda = Venda(
+                cliente_id=proposta.cliente_id,
+                valor_total=valor_total,
+                forma_pagamento=forma_pagamento,
+                observacoes=f"Venda gerada da proposta #{proposta.numero} - {proposta.descricao}",
+                proposta_id=proposta_id,
+                status="Concluída"
+            )
+            self.session.add(venda)
+            self.session.flush()
+            
+            # Adicionar itens à venda
+            for item in itens_venda:
+                item_venda = ItemVenda(
+                    venda_id=venda.id,
+                    produto_id=item["produto_id"],
+                    quantidade=item["quantidade"],
+                    preco_unitario=item["preco_unitario"],
+                    subtotal=item["quantidade"] * item["preco_unitario"]
+                )
+                self.session.add(item_venda)
+            
+            # Registrar transação financeira
+            self._registrar_transacao_venda(venda, proposta)
+            
+            # Atualizar status da proposta
+            proposta.status_execucao = "Vendida"
+            
+            return {
+                "status": "sucesso",
+                "venda_id": venda.id,
+                "valor": valor_total,
+                "tipo": "produtos",
+                "itens": len(itens_venda),
+                "message": f"Venda com {len(itens_venda)} itens criada com sucesso"
+            }
+        
+        return self._safe_query(query)
+    
+    def _registrar_transacao_venda(self, venda, proposta):
+        """Registra uma transação financeira para a venda"""
+        # Verificar se já existe uma transação para esta venda
+        transacao_existente = self.session.query(Transacao).filter_by(
+            origem_id=venda.id,
+            origem_tipo="venda"
+        ).first()
+        
+        if not transacao_existente:
+            transacao = Transacao(
+                tipo="receita",
+                descricao=f"Venda da proposta #{proposta.numero} - {proposta.descricao}",
+                valor=venda.valor_total,
+                categoria="Vendas",
+                subcategoria=proposta.tipo_proposta,
+                tipo_receita="Venda",
+                origem_id=venda.id,
+                origem_tipo="venda",
+                proposta_id=proposta.id,
+                tipo_conta="PF",
+                status="Recebido",
+                data_recebimento=datetime.now().date(),
+                classificacao="receita"
+            )
+            self.session.add(transacao)
+            self.session.flush()
+            return transacao.id
+        
+        return transacao_existente.id
