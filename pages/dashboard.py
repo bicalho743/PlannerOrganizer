@@ -6,14 +6,21 @@ import pandas as pd
 def format_date_safe(date_obj, format_str='%d/%m/%Y'):
     """Formata uma data com segurança, retornando string em caso de erro"""
     try:
-        if hasattr(date_obj, 'strftime'):
+        # Verificar se o objeto tem método strftime (datetime, date, etc)
+        if hasattr(date_obj, 'strftime') and callable(date_obj.strftime):
             return date_obj.strftime(format_str)
-        elif isinstance(date_obj, str):
+        # Verificar se é uma string
+        elif hasattr(date_obj, 'strip') and callable(date_obj.strip):
             return date_obj
+        # Caso contrário, converter para string
         else:
             return str(date_obj)
-    except Exception as e:
-        return str(date_obj)
+    except Exception:
+        # Em caso de erro, retornar como string
+        try:
+            return str(date_obj)
+        except:
+            return "Data indisponível"
 
 def show():
     st.title("📊 Dashboard")
@@ -129,19 +136,46 @@ def show():
                     
                     # Calcular dias passados desde o início para cada proposta
                     def calcular_dias(data_inicio):
+                        # Função simplificada para evitar qualquer uso de isinstance()
                         try:
-                            if hasattr(data_inicio, 'date') and callable(data_inicio.date):
-                                data = data_inicio.date()
-                                return (hoje_date - data).days
-                            elif hasattr(data_inicio, 'date') and not callable(data_inicio.date):
-                                return (hoje_date - data_inicio).days
-                            elif isinstance(data_inicio, str):
-                                # Tentar converter para data se for string
-                                converted = pd.to_datetime(data_inicio).date()
-                                return (hoje_date - converted).days
-                            else:
+                            # Verificar se é None
+                            if data_inicio is None:
                                 return 0
+                                
+                            # Tentativa 1: É um objeto datetime com método date()
+                            if hasattr(data_inicio, 'date') and callable(data_inicio.date):
+                                try:
+                                    data = data_inicio.date()
+                                    return (hoje_date - data).days
+                                except:
+                                    pass
+                                
+                            # Tentativa 2: É um objeto date diretamente
+                            if hasattr(data_inicio, 'day') and hasattr(data_inicio, 'month') and hasattr(data_inicio, 'year'):
+                                try:
+                                    return (hoje_date - data_inicio).days
+                                except:
+                                    pass
+                                
+                            # Tentativa 3: É uma string que pode ser convertida para data
+                            try:
+                                if hasattr(data_inicio, 'strip'): # verifica se é uma string
+                                    data = pd.to_datetime(data_inicio).date()
+                                    return (hoje_date - data).days
+                            except:
+                                pass
+                                
+                            # Tentativa 4: Tentar uma conversão genérica
+                            try:
+                                data = pd.to_datetime(data_inicio).date()
+                                return (hoje_date - data).days
+                            except:
+                                pass
+                                
+                            # Se nada funcionou, retornar 0
+                            return 0
                         except Exception:
+                            # Em caso de qualquer erro, retornar 0 para evitar quebrar a interface
                             return 0
                         
                     propostas_organizacao['dias_passados'] = propostas_organizacao['data_inicio'].apply(calcular_dias)
