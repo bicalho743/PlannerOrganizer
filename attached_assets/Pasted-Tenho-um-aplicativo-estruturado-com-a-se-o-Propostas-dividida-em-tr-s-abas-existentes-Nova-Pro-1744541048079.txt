@@ -1,0 +1,102 @@
+Tenho um aplicativo estruturado com a seção "Propostas", dividida em três abas existentes:
+
+Nova Proposta
+
+Lista de Propostas
+
+Andamento de Trabalho
+
+Preciso realizar ajustes nessas abas e reformular o módulo Financeiro, com forte integração automática entre todos os módulos, incluindo agora a integração com o módulo "Vendas".
+
+Seguem os detalhes finais com todas as funcionalidades corrigidas:
+
+1. Seção "Propostas" (Ajustes finais):
+Nova Proposta:
+Sem lançamento financeiro imediato após aprovação da proposta. O lançamento financeiro ocorrerá somente no início efetivo da execução.
+
+Andamento de Trabalho:
+Ao marcar a proposta como "execução iniciada", automaticamente gerar no módulo financeiro:
+
+"Receita (Cliente a Receber)", com valor total do serviço e data prevista.
+
+Ao cadastrar um Fornecedor, automaticamente gerar:
+
+"Receita (Comissão Fornecedor a Receber)", calculada por percentual previamente definido.
+
+Inclusão automática do fornecedor no documento entregue ao cliente, discriminando claramente valores pagos diretamente pelo cliente ao fornecedor.
+
+Ao cadastrar um Assistente (colaborador), automaticamente gerar:
+
+"Custo Direto (Assistente a Pagar)", com valor, nome e data prevista.
+
+Cadastro Automático de Produto (via Módulo Vendas):
+O cadastro e lançamento de produtos virá diretamente do módulo "Vendas" já existente. Quando ocorrer uma nova venda no módulo de vendas e esta venda estiver vinculada automaticamente à proposta e cliente em execução, gerar automaticamente no módulo financeiro:
+
+"Receita (Produto a Receber)", especificando valor, nome do produto vendido e data prevista de recebimento.
+
+2. Reformulação Completa do Módulo Financeiro:
+O módulo financeiro deverá classificar automaticamente as transações da seguinte forma:
+
+Receita (automático):
+
+Valores recebidos dos clientes pelos serviços.
+
+Comissões recebidas de fornecedores.
+
+Valores recebidos pela venda de produtos (lançado automaticamente via módulo vendas).
+
+Custos Diretos (automático):
+
+Valores pagos diretamente aos fornecedores.
+
+Valores pagos aos assistentes (colaboradores).
+
+Custos diretos específicos, como Uber/transporte diretamente relacionados ao serviço.
+
+Despesas Operacionais (lançamento manual mensal, não vinculado diretamente ao fechamento individual de clientes):
+
+Aluguel
+
+Marketing, propaganda, social media
+
+Administrativo
+
+Outros custos gerais mensais
+
+Essas despesas operacionais serão consideradas exclusivamente no fechamento mensal geral da empresa.
+
+3. Documento Final de Fechamento Individual com o Cliente:
+Gerar automaticamente um documento com duas versões claramente definidas:
+
+Versão para o Cliente:
+
+Valor total a ser pago diretamente a mim (serviços e produtos vendidos).
+
+Valores discriminados e claros que o cliente pagará diretamente aos fornecedores.
+
+Versão Interna (apenas para mim):
+
+Receita total recebida do cliente (serviços, produtos e comissões).
+
+Custos diretos totais pagos (fornecedores, assistentes, Uber/transporte).
+
+Cálculo automático claro do Lucro Bruto (Receita total - Custos Diretos).
+
+Despesas operacionais não devem constar nesse documento individual, apenas no fechamento mensal geral.
+
+Exemplo Prático da Versão Interna do Documento Individual do Cliente:
+Receita total recebida (cliente + produtos + comissões): R$ 10.000
+
+Custos diretos totais (fornecedores, assistentes, Uber): R$ 3.000
+→ Lucro Bruto Individual: R$ 7.000
+
+(Despesas operacionais aparecem somente no relatório mensal geral.)
+
+4. Interface Visual (UX/UI):
+Deve ser simples, clara e intuitiva.
+
+Indicação visual clara para lançamentos automáticos e status das etapas.
+
+O documento final gerado deve ser organizado, objetivo e profissional.
+
+Gere o código utilizando boas práticas, forte automação entre módulos, integração eficiente entre Propostas, Financeiro e Vendas, e garanta uma UX/UI intuitiva e agradável para o usuário.
