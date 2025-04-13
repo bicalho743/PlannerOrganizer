@@ -369,12 +369,13 @@ def mostrar_lista_propostas():
             with col2:
                 acao = st.selectbox("Ação:", ["Excluir", "Exportar PDF"])
 
-            # Formulário de ação
-            with st.form("acao_proposta"):
-                if st.form_submit_button(f"Confirmar {acao}"):
-                    proposta = propostas[propostas['numero'] == proposta_num].iloc[0]
-
-                    if acao == "Excluir":
+            # Duas ações diferentes: Excluir precisa de formulário, mas Exportar PDF não
+            if acao == "Excluir":
+                # Formulário para exclusão
+                with st.form("acao_proposta"):
+                    if st.form_submit_button(f"Confirmar {acao}"):
+                        proposta = propostas[propostas['numero'] == proposta_num].iloc[0]
+                        
                         if st.session_state.get(f'confirm_delete_proposta_{proposta["id"]}', False):
                             sucesso, msg = st.session_state.db.excluir_proposta(proposta['id'])
                             if sucesso:
@@ -386,41 +387,46 @@ def mostrar_lista_propostas():
                             st.session_state[f'confirm_delete_proposta_{proposta["id"]}'] = True
                             st.warning("Confirma a exclusão desta proposta?")
                             st.rerun()
+            
+            elif acao == "Exportar PDF":
+                # Botão simples para confirmar a exportação
+                if st.button(f"Confirmar {acao}"):
+                    proposta = propostas[propostas['numero'] == proposta_num].iloc[0]
+                    try:
+                        # Criar diretório para PDFs se não existir
+                        os.makedirs("pdfs", exist_ok=True)
 
-                    elif acao == "Exportar PDF":
-                        try:
-                            # Criar diretório para PDFs se não existir
-                            os.makedirs("pdfs", exist_ok=True)
+                        # Nome do arquivo
+                        filename = f"pdfs/proposta_{proposta['numero']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
 
-                            # Nome do arquivo
-                            filename = f"pdfs/proposta_{proposta['numero']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                        # Buscar acréscimos da proposta
+                        acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
 
-                            # Buscar acréscimos da proposta
-                            acrescimos = st.session_state.db.get_acrescimos_proposta(proposta['id'])
+                        # Opção para usar template
+                        usar_template_canva = st.checkbox("Usar Template Canva")
+                        
+                        # Gerar PDF
+                        pdf_path = gerar_pdf_fechamento(
+                            proposta=proposta,
+                            cliente={'nome': proposta['nome']},
+                            acrescimos=acrescimos,
+                            filename=filename,
+                            usar_template=usar_template_canva
+                        )
 
-                            # Gerar PDF
-                            usar_template_canva = st.checkbox("Usar Template Canva")
-                            pdf_path = gerar_pdf_fechamento(
-                                proposta=proposta,
-                                cliente={'nome': proposta['nome']},
-                                acrescimos=acrescimos,
-                                filename=filename,
-                                usar_template=usar_template_canva
+                        # Criar link para download (agora fora do form)
+                        with open(pdf_path, "rb") as pdf_file:
+                            pdf_bytes = pdf_file.read()
+                            st.download_button(
+                                label="Baixar PDF",
+                                data=pdf_bytes,
+                                file_name=os.path.basename(filename),
+                                mime="application/pdf"
                             )
 
-                            # Criar link para download
-                            with open(pdf_path, "rb") as pdf_file:
-                                pdf_bytes = pdf_file.read()
-                                st.download_button(
-                                    label="Baixar PDF",
-                                    data=pdf_bytes,
-                                    file_name=os.path.basename(filename),
-                                    mime="application/pdf"
-                                )
-
-                            st.success("PDF gerado com sucesso!")
-                        except Exception as e:
-                            st.error(f"Erro ao gerar PDF: {str(e)}")
+                        st.success("PDF gerado com sucesso!")
+                    except Exception as e:
+                        st.error(f"Erro ao gerar PDF: {str(e)}")
 
         else:
             st.info("Nenhuma proposta encontrada.")
