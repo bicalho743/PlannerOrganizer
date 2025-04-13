@@ -94,6 +94,7 @@ class Fornecedor(Base):
     data_pagamento = Column(Date, nullable=True)
     status = Column(String, nullable=True)
     tipo_conta = Column(String, default='PF')  # Adicionado campo tipo_conta
+    percentual_comissao = Column(Float, default=0.0)  # Percentual de comissão para o fornecedor
 
 
 class Assistente(Base):
@@ -141,12 +142,15 @@ class Proposta(Base):
     data_fim = Column(Date)
     prazo_entrega = Column(Date)
     data_proposta = Column(Date, default=datetime.now().date())
-    status_pagamento_base = Column(String, default='Pendente')  # New column
-    previsao_dias = Column(Integer)  # Novo campo para armazenar a previsão de dias
+    status_pagamento_base = Column(String, default='Pendente')
+    previsao_dias = Column(Integer)  # Dias previstos para execução
+    data_inicio_execucao = Column(Date)  # Data de início efetivo da execução
+    status_execucao = Column(String, default='Não iniciada')  # Status da execução: 'Não iniciada', 'Em execução', 'Concluída'
 
     cliente = relationship("Cliente", back_populates="propostas")
     produtos = relationship("ProdutoOrganizador", back_populates="proposta", cascade="all, delete-orphan")
     acrescimos = relationship("AcrescimoProposta", back_populates="proposta", cascade="all, delete-orphan")
+    vendas = relationship("Venda", back_populates="proposta") # Relacionamento com vendas
 
     __table_args__ = (
         Index('idx_proposta_numero', 'numero', unique=True),
@@ -197,12 +201,18 @@ class Transacao(Base):
     valor = Column(Float)
     data = Column(Date, default=datetime.now().date())
     categoria = Column(String)
+    subcategoria = Column(String)  # Nova subcategoria para classificação mais detalhada
     tipo_receita = Column(String)
     origem_id = Column(Integer)
     origem_tipo = Column(String)
     tipo_conta = Column(String, default='PF')
     status = Column(String, default='Pendente')  # 'Pendente', 'Recebido', 'Cancelado'
     data_recebimento = Column(Date, nullable=True)
+    proposta_id = Column(Integer, ForeignKey('propostas.id'), nullable=True)  # Referência direta à proposta
+    classificacao = Column(String)  # 'receita', 'custo_direto', 'despesa_operacional'
+    
+    # Relacionamento com proposta
+    proposta = relationship("Proposta")
 
 class AcrescimoProposta(Base):
     __tablename__ = 'acrescimos_proposta'
@@ -235,6 +245,7 @@ class Venda(Base):
     __tablename__ = 'vendas'
     id = Column(Integer, primary_key=True)
     cliente_id = Column(Integer, ForeignKey('clientes.id'))
+    proposta_id = Column(Integer, ForeignKey('propostas.id'), nullable=True)  # Referência à proposta
     data_venda = Column(Date, default=datetime.now().date())
     valor_total = Column(Float, nullable=False)
     status = Column(String, default='Concluída')  # Concluída, Cancelada, Pendente
@@ -243,6 +254,7 @@ class Venda(Base):
     
     # Relacionamentos
     cliente = relationship("Cliente")
+    proposta = relationship("Proposta", back_populates="vendas")  # Relacionamento com proposta
     itens = relationship("ItemVenda", back_populates="venda", cascade="all, delete-orphan")
 
 class ItemVenda(Base):
@@ -449,7 +461,9 @@ class Database:
                 'prazo_entrega': p.prazo_entrega,
                 'data_proposta': p.data_proposta,
                 'status_pagamento_base': p.status_pagamento_base,
-                'previsao_dias': p.previsao_dias
+                'previsao_dias': p.previsao_dias,
+                'data_inicio_execucao': p.data_inicio_execucao,
+                'status_execucao': p.status_execucao
             } for p in propostas])
         return self._safe_query(query)
 
@@ -527,12 +541,15 @@ class Database:
                 'valor': t.valor,
                 'data': t.data,
                 'categoria': t.categoria,
+                'subcategoria': t.subcategoria,
                 'tipo_receita': t.tipo_receita,
                 'origem_id': t.origem_id,
                 'origem_tipo': t.origem_tipo,
                 'tipo_conta': t.tipo_conta,
                 'status': t.status,
-                'data_recebimento': t.data_recebimento
+                'data_recebimento': t.data_recebimento,
+                'proposta_id': t.proposta_id,
+                'classificacao': t.classificacao
             } for t in transacoes])
         return self._safe_query(query)
 
@@ -601,17 +618,21 @@ class Database:
                 'valor': t.valor,
                 'data': t.data,
                 'categoria': t.categoria,
+                'subcategoria': t.subcategoria,
                 'tipo_receita': t.tipo_receita,
                 'origem_tipo': t.origem_tipo,
                 'tipo_conta': t.tipo_conta,
                 'status': t.status,
-                'data_recebimento': t.data_recebimento
+                'data_recebimento': t.data_recebimento,
+                'proposta_id': t.proposta_id,
+                'classificacao': t.classificacao
             } for t in contas])
         return self._safe_query(query)
 
     def add_fornecedor(self, descricao, contato, categoria, estado=None, cidade=None, 
                   bairro=None, endereco=None, pix=None, recorrente=False, observacoes=None, 
-                  valor=None, data_vencimento=None, data_pagamento=None, status=None, tipo_conta='PF'):
+                  valor=None, data_vencimento=None, data_pagamento=None, status=None, tipo_conta='PF',
+                  percentual_comissao=0.0):
         def query():
             fornecedor = Fornecedor(
                 descricao=descricao,
@@ -628,7 +649,8 @@ class Database:
                 data_vencimento=data_vencimento,
                 data_pagamento=data_pagamento,
                 status=status,
-                tipo_conta=tipo_conta
+                tipo_conta=tipo_conta,
+                percentual_comissao=percentual_comissao
             )
             self.session.add(fornecedor)
             return fornecedor.id
@@ -652,7 +674,8 @@ class Database:
                 'valor': f.valor,
                 'data_vencimento': f.data_vencimento,
                 'data_pagamento': f.data_pagamento,
-                'status': f.status
+                'status': f.status,
+                'percentual_comissao': f.percentual_comissao
             } for f in fornecedores])
         return self._safe_query(query)
 
