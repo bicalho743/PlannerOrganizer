@@ -218,13 +218,14 @@ def mostrar_lista_propostas():
             )
             
             # Verificar se houve alterações e atualizar o banco de dados
-            if st.button("Salvar Alterações"):
+            if st.button("Salvar Alterações", type="primary", use_container_width=True):
                 contador_atualizacoes = 0
                 
                 # Verificar cada linha do DataFrame editado
                 for i, row in edited_df.iterrows():
                     proposta_id = row['ID']
                     proposta_original = st.session_state.propostas_completas[st.session_state.propostas_completas['id'] == proposta_id].iloc[0]
+                    alteracoes_realizadas = False
                     
                     # Verificar se houve alteração na descrição
                     if row['Descrição'] != proposta_original['descricao']:
