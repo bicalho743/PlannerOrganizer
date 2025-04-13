@@ -648,6 +648,27 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename, usar_template=
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import inch
     
+    # IMPORTANTE: Carregar dados atualizados da proposta diretamente do banco
+    # para garantir que estamos usando as informações mais recentes
+    import pandas as pd
+    print(f"DEBUG PDF: Recarregando dados atualizados da proposta #{proposta.get('numero')}")
+    try:
+        if 'db' in st.session_state:
+            propostas_atualizadas = st.session_state.db.get_propostas()
+            if not propostas_atualizadas.empty and 'id' in proposta:
+                proposta_atualizada = propostas_atualizadas[propostas_atualizadas['id'] == proposta['id']]
+                if not proposta_atualizada.empty:
+                    proposta = proposta_atualizada.iloc[0]
+                    print(f"DEBUG PDF: Proposta recarregada com sucesso! ID={proposta['id']}")
+                    if pd.notna(proposta['data_proposta']):
+                        print(f"DEBUG PDF: Data da proposta: {proposta['data_proposta']}")
+                    if pd.notna(proposta['data_inicio']):
+                        print(f"DEBUG PDF: Data início: {proposta['data_inicio']}")
+                    if pd.notna(proposta['data_fim']):
+                        print(f"DEBUG PDF: Data fim: {proposta['data_fim']}")
+    except Exception as e:
+        print(f"DEBUG PDF: Erro ao recarregar proposta: {str(e)}")
+    
     if usar_template:
         try:
             from utils.pdf_merger import preencher_template_canva
@@ -692,7 +713,15 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename, usar_template=
     # Adicionar informações básicas da proposta
     elements.append(Paragraph(f"<b>Número:</b> {proposta.get('numero', '')}", styles['Normal']))
     elements.append(Paragraph(f"<b>Cliente:</b> {cliente.get('nome', '')}", styles['Normal']))
-    elements.append(Paragraph(f"<b>Data:</b> {datetime.now().strftime('%d/%m/%Y')}", styles['Normal']))
+    
+    # Usar a data da proposta se disponível, senão usar a data atual
+    data_proposta = proposta.get('data_proposta')
+    if pd.notna(data_proposta):
+        data_str = pd.to_datetime(data_proposta).strftime('%d/%m/%Y')
+    else:
+        data_str = datetime.now().strftime('%d/%m/%Y')
+    
+    elements.append(Paragraph(f"<b>Data:</b> {data_str}", styles['Normal']))
     elements.append(Spacer(1, 0.1*inch))
     elements.append(Paragraph(f"<b>Descrição:</b> {proposta.get('descricao', '')}", styles['Normal']))
     
