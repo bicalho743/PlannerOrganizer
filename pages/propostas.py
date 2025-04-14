@@ -382,8 +382,139 @@ def show():
                     proposta_exec = propostas_em_execucao[propostas_em_execucao['id'] == proposta_exec_id]
                     
                     if not proposta_exec.empty:
-                        st.write(f"Proposta #{proposta_exec.iloc[0]['numero']} - {proposta_exec.iloc[0]['descricao']}")
+                        st.write(f"Proposta #{proposta_exec.iloc[0]['id']} - {proposta_exec.iloc[0]['descricao']}")
                         
+                        # Botões de ação no nível principal
+                        st.subheader("Ações")
+                        col_edit, col_delete = st.columns(2)
+                        
+                        with col_edit:
+                            if st.button("Editar Proposta", key="editar_proposta_execucao"):
+                                st.session_state.proposta_para_editar = proposta_exec_id
+                                st.session_state.modo_edicao_proposta = True
+                                st.rerun()
+                        
+                        with col_delete:
+                            if st.button("Excluir Proposta", key="excluir_proposta_execucao"):
+                                if 'confirmar_exclusao_execucao' not in st.session_state:
+                                    st.session_state.confirmar_exclusao_execucao = False
+                                    st.session_state.proposta_para_excluir_execucao = proposta_exec_id
+                                
+                                st.session_state.confirmar_exclusao_execucao = True
+                                st.session_state.proposta_para_excluir_execucao = proposta_exec_id
+                                st.warning(f"Tem certeza que deseja excluir a proposta #{proposta_exec.iloc[0]['id']}?")
+                                
+                                confirm_col1, confirm_col2 = st.columns(2)
+                                with confirm_col1:
+                                    if st.button("Sim, excluir", key="confirmar_exclusao_execucao"):
+                                        # Excluir proposta
+                                        sucesso = st.session_state.db.excluir_proposta(proposta_exec_id)
+                                        
+                                        if sucesso:
+                                            st.success(f"Proposta excluída com sucesso!")
+                                            # Limpar estado
+                                            if 'confirmar_exclusao_execucao' in st.session_state:
+                                                del st.session_state.confirmar_exclusao_execucao
+                                            if 'proposta_para_excluir_execucao' in st.session_state:
+                                                del st.session_state.proposta_para_excluir_execucao
+                                            time.sleep(1)
+                                            st.rerun()
+                                        else:
+                                            st.error(f"Erro ao excluir proposta {proposta_exec_id}")
+                                
+                                with confirm_col2:
+                                    if st.button("Cancelar", key="cancelar_exclusao_execucao"):
+                                        # Limpar estado
+                                        if 'confirmar_exclusao_execucao' in st.session_state:
+                                            del st.session_state.confirmar_exclusao_execucao
+                                        if 'proposta_para_excluir_execucao' in st.session_state:
+                                            del st.session_state.proposta_para_excluir_execucao
+                                        st.rerun()
+                        
+                        # Botões de relatórios para propostas em execução
+                        st.subheader("Documentos")
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            if st.button("Gerar Relatório para Cliente", key=f"relatorio_cliente_execucao_{proposta_exec_id}"):
+                                # Gerar relatório para cliente
+                                try:
+                                    # Obter dados completos da proposta
+                                    proposta_dict = proposta_exec.iloc[0].to_dict()
+                                    
+                                    # Obter dados do cliente
+                                    cliente_id = proposta_dict['cliente_id']
+                                    cliente = st.session_state.db.get_cliente_by_id(cliente_id)
+                                    cliente_dict = cliente.iloc[0].to_dict() if not cliente.empty else {}
+                                    
+                                    # Obter acréscimos públicos (excluindo assistentes)
+                                    acrescimos = st.session_state.db.get_acrescimos_proposta(proposta_dict['id'])
+                                    
+                                    # Verifica se tem diretório para salvar os PDFs
+                                    os.makedirs('pdfs', exist_ok=True)
+                                    
+                                    # Nome do arquivo
+                                    filename = f"pdfs/proposta_cliente_{proposta_dict['id']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                                    
+                                    # Gerar PDF
+                                    from utils.pdf_generator import gerar_pdf_cliente
+                                    pdf_path = gerar_pdf_cliente(proposta_dict, cliente_dict, acrescimos, filename)
+                                    
+                                    # Disponibilizar para download
+                                    with open(pdf_path, "rb") as file:
+                                        btn = st.download_button(
+                                            label="Baixar Relatório do Cliente",
+                                            data=file,
+                                            file_name=f"Proposta_{proposta_dict['id']}_Cliente.pdf",
+                                            mime="application/pdf",
+                                            key=f"download_cliente_exec_{proposta_dict['id']}"
+                                        )
+                                    
+                                    st.success("Relatório para cliente gerado com sucesso!")
+                                    
+                                except Exception as e:
+                                    st.error(f"Erro ao gerar relatório para cliente: {str(e)}")
+                        
+                        with col2:
+                            if st.button("Gerar Relatório Interno", key=f"relatorio_interno_execucao_{proposta_exec_id}"):
+                                # Gerar relatório interno
+                                try:
+                                    # Obter dados completos da proposta
+                                    proposta_dict = proposta_exec.iloc[0].to_dict()
+                                    
+                                    # Obter dados do cliente
+                                    cliente_id = proposta_dict['cliente_id']
+                                    cliente = st.session_state.db.get_cliente_by_id(cliente_id)
+                                    cliente_dict = cliente.iloc[0].to_dict() if not cliente.empty else {}
+                                    
+                                    # Obter todos os acréscimos (incluindo assistentes)
+                                    acrescimos = st.session_state.db.get_acrescimos_proposta(proposta_dict['id'])
+                                    
+                                    # Verifica se tem diretório para salvar os PDFs
+                                    os.makedirs('pdfs', exist_ok=True)
+                                    
+                                    # Nome do arquivo
+                                    filename = f"pdfs/proposta_interna_{proposta_dict['id']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                                    
+                                    # Gerar PDF
+                                    from utils.pdf_generator import gerar_pdf_interno
+                                    pdf_path = gerar_pdf_interno(proposta_dict, cliente_dict, acrescimos, filename)
+                                    
+                                    # Disponibilizar para download
+                                    with open(pdf_path, "rb") as file:
+                                        btn = st.download_button(
+                                            label="Baixar Relatório Interno",
+                                            data=file,
+                                            file_name=f"Proposta_{proposta_dict['id']}_Interno.pdf",
+                                            mime="application/pdf",
+                                            key=f"download_interno_exec_{proposta_dict['id']}"
+                                        )
+                                    
+                                    st.success("Relatório interno gerado com sucesso!")
+                                    
+                                except Exception as e:
+                                    st.error(f"Erro ao gerar relatório interno: {str(e)}")
+                                    
                         # Criar abas para gerenciar diferentes aspectos da execução
                         exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5 = st.tabs([
                             "Andamento", "Produtos", "Fornecedores", "Assistentes", "Finalizar"
