@@ -1518,9 +1518,13 @@ class Database:
                     print(f"DEBUG: Criando acréscimo para proposta ID={proposta_id_int}, tipo={tipo}, fornecedor={fornecedor_nome}")
                     
                     # Criar objeto de acréscimo com valores já verificados
+                    # Garantir que o tipo esteja em maiúsculas para consistência
+                    tipo_upper = tipo.upper() if tipo else "OUTROS"
+                    print(f"DEBUG: Convertendo tipo de acréscimo para maiúsculas: {tipo} -> {tipo_upper}")
+                    
                     acrescimo = AcrescimoProposta(
                         proposta_id=proposta_id_int,
-                        tipo=tipo,
+                        tipo=tipo_upper,
                         fornecedor=fornecedor_nome,
                         descricao=descricao_texto,
                         valor=valor_float,
@@ -1547,8 +1551,8 @@ class Database:
                         
                         resultado["acrescimo_id"] = acrescimo_id
                         
-                        # Se for do tipo Fornecedor e tiver percentual de comissão, gerar recebimento automático
-                        if tipo == "Fornecedor" and percentual_comissao_float is not None and percentual_comissao_float > 0:
+                        # Se for do tipo FORNECEDOR e tiver percentual de comissão, gerar recebimento automático
+                        if tipo_upper == "FORNECEDOR" and percentual_comissao_float is not None and percentual_comissao_float > 0:
                             # Calcular valor da comissão
                             valor_comissao = valor_float * (percentual_comissao_float / 100.0)
                             
@@ -2455,7 +2459,7 @@ class Database:
                 # Criar acréscimo para o assistente
                 acrescimo = AcrescimoProposta(
                     proposta_id=proposta_id_int,
-                    tipo="Assistente",
+                    tipo="ASSISTENTE",  # Garantir que o tipo está em maiúsculo
                     fornecedor=assistente.nome,
                     descricao=observacoes if observacoes else f"Serviço de {assistente.nome}",
                     valor=valor_float,
