@@ -962,7 +962,7 @@ def show():
                 # Preparar DataFrame para exibição
                 if not propostas_filtradas.empty:
                     df_todas = pd.DataFrame()
-                    df_todas['ID'] = propostas_filtradas['id']
+                    # Removido o ID da tabela para mostrar apenas o número da proposta
                     df_todas['Número'] = propostas_filtradas['numero']
                     df_todas['Cliente'] = propostas_filtradas['nome']
                     df_todas['Descrição'] = propostas_filtradas['descricao']
