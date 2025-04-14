@@ -356,6 +356,54 @@ class Database:
             } for c in clientes])
         return self._safe_query(query)
         
+    def get_cliente_by_id(self, cliente_id):
+        """
+        Busca um cliente pelo ID
+        
+        Args:
+            cliente_id: ID do cliente
+            
+        Returns:
+            DataFrame com os dados do cliente ou DataFrame vazio se não encontrado
+        """
+        def query():
+            try:
+                # Converter para int nativo do Python
+                cliente_id_int = int(cliente_id) if cliente_id is not None else None
+                
+                if cliente_id_int is None:
+                    print("ERRO: ID do cliente é None")
+                    return pd.DataFrame()
+                
+                # Buscar cliente pelo ID
+                cliente = self.session.query(Cliente).filter_by(id=cliente_id_int).first()
+                
+                if not cliente:
+                    print(f"AVISO: Cliente ID={cliente_id_int} não encontrado")
+                    return pd.DataFrame()
+                
+                # Retornar como DataFrame
+                return pd.DataFrame([{
+                    'id': cliente.id,
+                    'nome': cliente.nome,
+                    'email': cliente.email,
+                    'telefone': cliente.telefone,
+                    'estado': cliente.estado,
+                    'cidade': cliente.cidade,
+                    'bairro': cliente.bairro,
+                    'endereco': cliente.endereco,
+                    'cpf': cliente.cpf,
+                    'data_aniversario': cliente.data_aniversario,
+                    'origem_cliente': cliente.origem_cliente,
+                    'data_cadastro': cliente.data_cadastro,
+                    'observacoes': cliente.observacoes
+                }])
+            except Exception as e:
+                print(f"ERRO ao buscar cliente por ID: {str(e)}")
+                return pd.DataFrame()
+        
+        return self._safe_query(query)
+        
     def limpar_clientes(self):
         """Remove todos os registros da tabela de clientes"""
         def query():
