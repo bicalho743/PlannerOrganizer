@@ -1650,6 +1650,64 @@ class Database:
                 return pd.DataFrame(columns=['id', 'tipo', 'fornecedor', 'descricao', 'valor', 'status_pagamento', 'data_cadastro'])
                 
         return self._safe_query(query)
+        
+    def get_acrescimos_proposta_por_tipo(self, proposta_id, tipo):
+        """
+        Retorna os acréscimos de uma proposta filtrados por tipo
+        
+        Args:
+            proposta_id (int): ID da proposta
+            tipo (str): Tipo de acréscimo (FORNECEDOR, ASSISTENTE, OUTROS)
+            
+        Returns:
+            DataFrame: Acréscimos do tipo especificado
+        """
+        # Converter proposta_id para int nativo do Python
+        proposta_id = int(proposta_id) if proposta_id is not None else None
+        
+        print(f"DEBUG: Buscando acréscimos do tipo {tipo} para proposta ID={proposta_id}")
+
+        def query():
+            try:
+                # Verificar se a proposta existe
+                proposta = self.session.query(Proposta).filter_by(id=proposta_id).first()
+                if not proposta:
+                    print(f"DEBUG: Proposta ID={proposta_id} não encontrada")
+                    return pd.DataFrame()
+                
+                # Obter acréscimos do tipo especificado
+                acrescimos = self.session.query(AcrescimoProposta).filter_by(
+                    proposta_id=proposta_id, 
+                    tipo=tipo
+                ).order_by(AcrescimoProposta.data_acrescimo).all()
+                
+                if not acrescimos:
+                    print(f"DEBUG: Nenhum acréscimo do tipo {tipo} encontrado para proposta ID={proposta_id}")
+                    return pd.DataFrame(columns=['id', 'tipo', 'fornecedor', 'descricao', 'valor', 'status_pagamento', 'data_cadastro', 'observacoes'])
+                
+                print(f"DEBUG: Encontrados {len(acrescimos)} acréscimos do tipo {tipo}")
+                
+                # Converter para dataframe
+                result = []
+                for a in acrescimos:
+                    result.append({
+                        'id': a.id,
+                        'tipo': a.tipo,
+                        'fornecedor': a.fornecedor,
+                        'descricao': a.descricao,
+                        'valor': a.valor,
+                        'status_pagamento': a.status_pagamento,
+                        'data_acrescimo': a.data_acrescimo,
+                        'observacoes': a.observacoes
+                    })
+                
+                return pd.DataFrame(result)
+                
+            except Exception as e:
+                print(f"DEBUG: Erro ao obter acréscimos do tipo {tipo} para proposta ID={proposta_id}: {str(e)}")
+                return pd.DataFrame(columns=['id', 'tipo', 'fornecedor', 'descricao', 'valor', 'status_pagamento', 'data_cadastro', 'observacoes'])
+        
+        return self._safe_query(query)
 
     def get_pagamentos_pendentes(self):
         def query():
