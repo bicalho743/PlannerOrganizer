@@ -54,8 +54,17 @@ def show():
         # Propostas
         try:
             propostas = st.session_state.db.get_propostas()
-            propostas_ativas = len(propostas[propostas['status'] == 'Aberta']) if not propostas.empty else 0
-            st.metric("Propostas Ativas", propostas_ativas)
+            
+            # Contar propostas em elaboração ou aguardando aprovação como "em aberto"
+            if not propostas.empty:
+                propostas_em_aberto = len(propostas[
+                    (propostas['status'] == 'Em elaboração') | 
+                    (propostas['status'] == 'Aguardando aprovação')
+                ])
+            else:
+                propostas_em_aberto = 0
+                
+            st.metric("Propostas em Aberto", propostas_em_aberto)
         except Exception as e:
             st.warning("Erro ao carregar propostas")
             propostas = pd.DataFrame()
@@ -77,16 +86,28 @@ def show():
     with col2:
         st.subheader("📋 Propostas em Aberto")
         if not propostas.empty:
-            propostas_abertas = propostas[propostas['status'] == 'Aberta'].sort_values('data_inicio', ascending=False)
+            # Filtrar propostas em aberto (Em elaboração e Aguardando aprovação)
+            propostas_abertas = propostas[
+                (propostas['status'] == 'Em elaboração') | 
+                (propostas['status'] == 'Aguardando aprovação')
+            ].sort_values('data_inicio', ascending=False)
+            
             if not propostas_abertas.empty:
                 for _, proposta in propostas_abertas.head(5).iterrows():
-                    with st.expander(f"Proposta #{proposta['id']} - {proposta['descricao'][:50]}..."):
-                        st.write(f"**Cliente:** {proposta['cliente_nome']}")
-                        st.write(f"**Valor:** R$ {proposta['valor']:,.2f}")
-                        if proposta.get('prazo_entrega'):
-                            st.write(f"**Prazo:** {format_date_safe(proposta['prazo_entrega'])}")
+                    status_emoji = "🔄" if proposta['status'] == 'Em elaboração' else "⏳"
+                    
+                    with st.expander(f"{status_emoji} #{proposta['numero']} - {proposta['descricao'][:40]}..."):
+                        st.write(f"**Cliente:** {proposta.get('cliente_nome', 'N/A')}")
+                        st.write(f"**Valor:** R$ {float(proposta['valor']):,.2f}")
+                        st.write(f"**Status:** {proposta['status']}")
+                        
+                        if pd.notna(proposta.get('data_inicio')):
+                            st.write(f"**Data Início:** {format_date_safe(proposta['data_inicio'])}")
+                            
+                        if pd.notna(proposta.get('previsao_dias')) and proposta.get('previsao_dias') > 0:
+                            st.write(f"**Prazo:** {proposta['previsao_dias']} dias")
             else:
-                st.info("Nenhuma proposta em aberto.")
+                st.info("Nenhuma proposta em elaboração ou aguardando aprovação.")
         else:
             st.info("Nenhuma proposta cadastrada.")
 
