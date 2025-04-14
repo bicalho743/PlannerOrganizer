@@ -1074,14 +1074,23 @@ def show():
                     
                     # Adicionar área para exclusão de proposta
                     with st.expander("Excluir Proposta Finalizada"):
-                        proposta_exc_id = st.number_input("ID da Proposta a Excluir", min_value=1, step=1, key="id_proposta_finalizada_excluir")
-                        proposta_exc = propostas_finalizadas[propostas_finalizadas['id'] == proposta_exc_id]
+                        # Obter lista de números de propostas finalizadas para o select box
+                        numeros_propostas = propostas_finalizadas['numero'].tolist()
+                        numeros_propostas.sort()  # Ordenar para facilitar a seleção
+                        
+                        proposta_numero = st.selectbox(
+                            "Selecione o número da proposta a excluir:",
+                            numeros_propostas,
+                            key="numero_proposta_finalizada_excluir"
+                        )
+                        
+                        proposta_exc = propostas_finalizadas[propostas_finalizadas['numero'] == proposta_numero]
                         
                         if not proposta_exc.empty:
-                            st.warning(f"Você está prestes a excluir a proposta #{proposta_exc.iloc[0]['numero']} - {proposta_exc.iloc[0]['descricao']}")
+                            st.warning(f"Você está prestes a excluir a proposta #{proposta_numero} - {proposta_exc.iloc[0]['descricao']}")
                             if st.button("CONFIRMAR EXCLUSÃO", key="confirmar_exclusao_finalizada"):
                                 try:
-                                    sucesso, mensagem = st.session_state.db.excluir_proposta(proposta_exc_id)
+                                    sucesso, mensagem = st.session_state.db.excluir_proposta_por_numero(proposta_numero)
                                     if sucesso:
                                         st.success("Proposta excluída com sucesso!")
                                         time.sleep(1)
@@ -1096,10 +1105,18 @@ def show():
                     # Ações para propostas finalizadas
                     st.subheader("Documentos")
                     
-                    proposta_final_id = st.number_input("ID da Proposta", min_value=1, step=1, key="id_proposta_finalizada")
+                    # Obter lista de números de propostas para o select box
+                    numeros_propostas_finalizadas = propostas_finalizadas['numero'].tolist()
+                    numeros_propostas_finalizadas.sort()  # Ordenar para facilitar a seleção
+                    
+                    proposta_numero = st.selectbox(
+                        "Selecione o número da proposta:",
+                        numeros_propostas_finalizadas,
+                        key="numero_proposta_finalizada_docs"
+                    )
                     
                     # Verificar se a proposta existe
-                    proposta_final = propostas_finalizadas[propostas_finalizadas['id'] == proposta_final_id]
+                    proposta_final = propostas_finalizadas[propostas_finalizadas['numero'] == proposta_numero]
                     
                     if not proposta_final.empty:
                         st.write(f"Proposta #{proposta_final.iloc[0]['numero']} - {proposta_final.iloc[0]['descricao']}")
@@ -1107,7 +1124,7 @@ def show():
                         col1, col2 = st.columns(2)
                         
                         with col1:
-                            if st.button("Gerar Relatório para Cliente", key=f"relatorio_cliente_{proposta_final_id}"):
+                            if st.button("Gerar Relatório para Cliente", key=f"relatorio_cliente_{proposta_numero}"):
                                 try:
                                     # Obter dados da proposta
                                     proposta_dict = proposta_final.iloc[0].to_dict()
