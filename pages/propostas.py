@@ -851,16 +851,23 @@ def show():
                                 try:
                                     # Obter dados da proposta
                                     proposta_dict = proposta_final.iloc[0].to_dict()
+                                    st.write(f"DEBUG: Proposta ID: {proposta_dict['id']}, Cliente ID: {proposta_dict['cliente_id']}")
                                     
                                     # Obter dados do cliente
+                                    st.write(f"DEBUG: Buscando cliente com ID {proposta_dict['cliente_id']}")
                                     cliente = st.session_state.db.get_cliente_by_id(proposta_dict['cliente_id'])
+                                    st.write(f"DEBUG: Cliente encontrado?: {not cliente.empty}")
                                     cliente_dict = cliente.iloc[0].to_dict() if not cliente.empty else {'nome': 'Cliente não encontrado'}
+                                    st.write(f"DEBUG: Nome do cliente: {cliente_dict.get('nome', 'N/A')}")
                                     
                                     # Obter acréscimos da proposta
+                                    st.write(f"DEBUG: Buscando acréscimos da proposta {proposta_dict['id']}")
                                     acrescimos = st.session_state.db.get_acrescimos_proposta(proposta_dict['id'])
+                                    st.write(f"DEBUG: Acréscimos encontrados: {len(acrescimos) if not acrescimos.empty else 0}")
                                     
                                     # Definir caminho do arquivo
                                     relatorio_path = f"pdfs/relatorio_cliente_{proposta_dict['numero']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                                    st.write(f"DEBUG: Caminho do relatório: {relatorio_path}")
                                     
                                     # Mostrar spinner enquanto gera o relatório
                                     with st.spinner("Gerando relatório para cliente..."):
