@@ -117,48 +117,123 @@ def show():
             st.header("Propostas em Aberto")
             
             if not propostas.empty:
-                # Filtrar propostas em elaboração ou aprovadas
+                # Filtrar propostas que não estão em execução ou finalizadas
                 propostas_em_aberto = propostas_com_clientes[
-                    propostas_com_clientes['status'].isin(['Em elaboração', 'Aprovada'])
+                    ~propostas_com_clientes['status'].isin(['Em execução', 'Concluída'])
                 ]
                 
                 if not propostas_em_aberto.empty:
-                    # Preparar DataFrame para exibição
-                    df_em_aberto = pd.DataFrame()
-                    df_em_aberto['ID'] = propostas_em_aberto['id']
-                    df_em_aberto['Número'] = propostas_em_aberto['numero']
-                    df_em_aberto['Cliente'] = propostas_em_aberto['nome']
-                    df_em_aberto['Descrição'] = propostas_em_aberto['descricao']
-                    df_em_aberto['Valor (R$)'] = propostas_em_aberto['valor'].apply(lambda x: f"R$ {float(x):.2f}")
-                    df_em_aberto['Status'] = propostas_em_aberto['status']
-                    df_em_aberto['Tipo'] = propostas_em_aberto['tipo_proposta']
+                    # Criar uma cópia das propostas para manipulação
+                    propostas_display = propostas_em_aberto.copy()
                     
-                    # Formatar datas para exibição
-                    df_em_aberto['Início'] = propostas_em_aberto['data_inicio'].apply(
+                    # Converter valores para exibição
+                    propostas_display['valor_formatado'] = propostas_display['valor'].apply(lambda x: f"R$ {float(x):.2f}")
+                    propostas_display['data_inicio_formatada'] = propostas_display['data_inicio'].apply(
                         lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
                     )
-                    df_em_aberto['Prazo (dias)'] = propostas_em_aberto['previsao_dias']
                     
-                    # Exibir tabela
-                    st.dataframe(df_em_aberto)
+                    # Definir um dicionário para a seleção de status com descrições mais claras
+                    status_opcoes = {
+                        "Em elaboração": "Em elaboração",
+                        "Aguardando aprovação": "Aguardando aprovação",
+                        "Aprovada": "Aprovada",
+                        "Em execução": "Em execução",
+                        "Recusada": "Recusada",
+                        "Excluir": "❌ Excluir proposta"
+                    }
                     
-                    # Adicionar coluna de ações à tabela
-                    # Converter o DataFrame para exibição e adicionar coluna de ações
-                    df_em_aberto_display = df_em_aberto.copy()
+                    # Criar um DataFrame com seleção de status para cada proposta
+                    df_com_acoes = []
                     
-                    # Adicionar ID como coluna escondida para uso nas ações
-                    df_em_aberto_display['proposta_id'] = propostas_em_aberto['id']
+                    # Processar cada proposta
+                    for idx, proposta in propostas_display.iterrows():
+                        proposta_id = proposta['id']
+                        
+                        # Verificar se há alguma alteração de status pendente
+                        alterar_status_key = f"alterar_status_{proposta_id}"
+                        if alterar_status_key in st.session_state and st.session_state[alterar_status_key]:
+                            novo_status = st.session_state[alterar_status_key]
+                            
+                            if novo_status == "Excluir":
+                                # Processar exclusão
+                                sucesso, mensagem = st.session_state.db.excluir_proposta(proposta_id)
+                                if sucesso:
+                                    st.success(f"Proposta {proposta_id} excluída com sucesso!")
+                                    # Remover da sessão e recarregar
+                                    del st.session_state[alterar_status_key]
+                                    st.rerun()
+                                else:
+                                    st.error(f"Erro ao excluir proposta: {mensagem}")
+                                    del st.session_state[alterar_status_key]
+                            
+                            elif novo_status != proposta['status']:
+                                # Processar mudança de status
+                                data_aprovacao = None
+                                data_inicio_execucao = None
+                                status_execucao = None
+                                
+                                # Definir parâmetros com base no novo status
+                                if novo_status == "Aprovada":
+                                    data_aprovacao = datetime.now().date()
+                                
+                                if novo_status == "Em execução":
+                                    data_inicio_execucao = datetime.now().date()
+                                    status_execucao = "Iniciada"
+                                    
+                                    # Se a proposta não foi aprovada, aprovar primeiro
+                                    if proposta['status'] != "Aprovada" and data_aprovacao is None:
+                                        data_aprovacao = datetime.now().date()
+                                
+                                # Atualizar o status
+                                if data_aprovacao:
+                                    sucesso = st.session_state.db.update_proposta_status(
+                                        proposta_id=proposta_id,
+                                        novo_status=novo_status,
+                                        data_aprovacao=data_aprovacao
+                                    )
+                                else:
+                                    sucesso = st.session_state.db.atualizar_proposta(
+                                        proposta_id=proposta_id,
+                                        status=novo_status,
+                                        data_inicio_execucao=data_inicio_execucao,
+                                        status_execucao=status_execucao
+                                    )
+                                
+                                if sucesso:
+                                    st.success(f"Proposta {proposta_id} atualizada para '{novo_status}'!")
+                                    # Remover da sessão e recarregar
+                                    del st.session_state[alterar_status_key]
+                                    st.rerun()
+                                else:
+                                    st.error(f"Erro ao atualizar proposta {proposta_id}")
+                                    del st.session_state[alterar_status_key]
+                        
+                        # Criar linha para o DataFrame de exibição
+                        row = {
+                            "ID": proposta['id'],
+                            "Número": proposta['numero'],
+                            "Cliente": proposta['nome'],
+                            "Descrição": proposta['descricao'],
+                            "Valor (R$)": proposta['valor_formatado'],
+                            "Status": proposta['status'],
+                            "Tipo": proposta['tipo_proposta'],
+                            "Início": proposta['data_inicio_formatada'],
+                            "Prazo (dias)": proposta['previsao_dias'],
+                            "Ações": proposta['status']  # Este valor será substituído pelo selectbox
+                        }
+                        df_com_acoes.append(row)
                     
-                    # Preparar o índice para agir como chave para cada proposta
-                    df_em_aberto_display = df_em_aberto_display.reset_index()
+                    # Converter para DataFrame
+                    df_exibicao = pd.DataFrame(df_com_acoes)
                     
-                    # Exibir tabela com os dados
-                    st.dataframe(df_em_aberto_display.drop(columns=['proposta_id', 'index']))
+                    # Exibir o DataFrame
+                    st.dataframe(df_exibicao.drop(columns=["Ações"]))
                     
-                    # Separador para a seção de ações
+                    # Divider para a seção de ações
                     st.divider()
                     st.subheader("Alterar Status da Proposta")
                     
+                    # Grid para edição
                     col1, col2, col3 = st.columns([2, 2, 1])
                     
                     with col1:
@@ -171,85 +246,78 @@ def show():
                         with col2:
                             st.write(f"Status atual: **{status_atual}**")
                             
+                            # Determinar quais opções de status mostrar baseado no status atual
+                            opcoes_status_disponiveis = {}
+                            
+                            if status_atual == "Em elaboração":
+                                opcoes_status_disponiveis = {
+                                    "Em elaboração": "Manter em elaboração",
+                                    "Aguardando aprovação": "Marcar como Aguardando aprovação",
+                                    "Aprovada": "Aprovar proposta",
+                                    "Recusada": "Recusar proposta",
+                                    "Excluir": "❌ Excluir proposta"
+                                }
+                            elif status_atual == "Aguardando aprovação":
+                                opcoes_status_disponiveis = {
+                                    "Aguardando aprovação": "Manter aguardando aprovação",
+                                    "Em elaboração": "Voltar para Em elaboração",
+                                    "Aprovada": "Aprovar proposta",
+                                    "Recusada": "Recusar proposta",
+                                    "Excluir": "❌ Excluir proposta"
+                                }
+                            elif status_atual == "Aprovada":
+                                opcoes_status_disponiveis = {
+                                    "Aprovada": "Manter como Aprovada",
+                                    "Em execução": "Iniciar execução",
+                                    "Recusada": "Recusar proposta",
+                                    "Excluir": "❌ Excluir proposta"
+                                }
+                            elif status_atual == "Recusada":
+                                opcoes_status_disponiveis = {
+                                    "Recusada": "Manter como Recusada",
+                                    "Em elaboração": "Voltar para Em elaboração",
+                                    "Aprovada": "Aprovar proposta",
+                                    "Excluir": "❌ Excluir proposta"
+                                }
+                            
                             # Lista suspensa com as opções de status para a proposta
-                            opcoes_status = ["Manter como está", "Aprovada (Fechar)", "Recusada", "Excluir Proposta"]
+                            opcoes = list(opcoes_status_disponiveis.keys())
+                            labels = list(opcoes_status_disponiveis.values())
+                            index = opcoes.index(status_atual) if status_atual in opcoes else 0
+                            
                             novo_status = st.selectbox(
-                                "Selecione a ação:",
-                                opcoes_status,
-                                key=f"acao_proposta_{proposta_id}"
+                                "Alterar para:",
+                                options=opcoes,
+                                format_func=lambda x: opcoes_status_disponiveis.get(x, x),
+                                index=index,
+                                key=f"status_proposta_{proposta_id}"
                             )
                         
                         with col3:
-                            # Botão para confirmar a ação selecionada
-                            if st.button("Confirmar", key=f"confirmar_acao_{proposta_id}"):
-                                if novo_status == "Manter como está":
-                                    st.info("Nenhuma alteração realizada na proposta.")
-                                
-                                elif novo_status == "Aprovada (Fechar)":
-                                    # Atualizar o status da proposta para "Aprovada"
-                                    data_aprovacao = datetime.now().date()
-                                    
-                                    # Se já estava aprovada, mover para Em execução
-                                    if status_atual == "Aprovada":
-                                        data_inicio_execucao = datetime.now().date()
-                                        sucesso = st.session_state.db.atualizar_proposta(
-                                            proposta_id=proposta_id,
-                                            status="Em execução",
-                                            data_inicio_execucao=data_inicio_execucao,
-                                            status_execucao="Iniciada"
-                                        )
-                                        mensagem = f"Proposta {proposta_id} movida para 'Em Execução'!"
-                                    else:
-                                        # Primeiro aprovar a proposta
-                                        sucesso = st.session_state.db.update_proposta_status(
-                                            proposta_id=proposta_id,
-                                            novo_status="Aprovada",
-                                            data_aprovacao=data_aprovacao
-                                        )
-                                        mensagem = f"Proposta {proposta_id} aprovada com sucesso!"
-                                    
-                                    if sucesso:
-                                        st.success(mensagem)
-                                        st.rerun()
-                                    else:
-                                        st.error(f"Erro ao atualizar proposta {proposta_id}")
-                                
-                                elif novo_status == "Recusada":
-                                    # Atualizar o status da proposta para "Recusada"
-                                    sucesso = st.session_state.db.update_proposta_status(
-                                        proposta_id=proposta_id,
-                                        novo_status="Recusada"
-                                    )
-                                    
-                                    if sucesso:
-                                        st.success(f"Proposta {proposta_id} marcada como recusada!")
-                                        st.rerun()
-                                    else:
-                                        st.error(f"Erro ao recusar proposta {proposta_id}")
-                                
-                                elif novo_status == "Excluir Proposta":
-                                    # Confirmação adicional para exclusão
-                                    st.warning(f"⚠️ Tem certeza que deseja excluir a proposta {proposta_id}? Esta ação não pode ser desfeita.")
-                                    col_sim, col_nao = st.columns(2)
-                                    
-                                    with col_sim:
+                            # Botão para confirmar a alteração de status
+                            confirmar_status_key = f"confirmar_status_{proposta_id}"
+                            
+                            if st.button("Confirmar", key=confirmar_status_key):
+                                if novo_status == status_atual:
+                                    st.info(f"Proposta mantida como '{status_atual}'.")
+                                elif novo_status == "Excluir":
+                                    # Confirmação para exclusão
+                                    st.warning(f"⚠️ Tem certeza que deseja excluir a proposta {proposta_id}?")
+                                    col1, col2 = st.columns(2)
+                                    with col1:
                                         if st.button("Sim, excluir", key=f"confirmar_exclusao_{proposta_id}"):
-                                            sucesso, mensagem = st.session_state.db.excluir_proposta(proposta_id)
-                                            
-                                            if sucesso:
-                                                st.success(f"Proposta {proposta_id} excluída com sucesso!")
-                                                st.rerun()
-                                            else:
-                                                st.error(f"Erro ao excluir proposta: {mensagem}")
-                                    
-                                    with col_nao:
+                                            st.session_state[f"alterar_status_{proposta_id}"] = "Excluir"
+                                            st.rerun()
+                                    with col2:
                                         if st.button("Cancelar", key=f"cancelar_exclusao_{proposta_id}"):
                                             st.info("Exclusão cancelada.")
-                                            st.rerun()
-                        
-                        # Botão para editar proposta independente do status
-                        with col3:
-                            if st.button("Editar Proposta", key="editar_proposta_em_aberto"):
+                                else:
+                                    # Registrar o status para alteração no próximo ciclo
+                                    st.session_state[f"alterar_status_{proposta_id}"] = novo_status
+                                    st.rerun()
+                            
+                            # Botão para editar proposta
+                            if st.button("Editar Proposta", key=f"editar_proposta_{proposta_id}"):
                                 st.session_state.proposta_para_editar = proposta_id
                                 st.session_state.modo_edicao_proposta = True
                                 st.rerun()
