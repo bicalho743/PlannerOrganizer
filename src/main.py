@@ -784,8 +784,8 @@ else:
             from pages.cadastros import show
             show()
         elif st.session_state.current_page == "Propostas":
-            from pages.propostas import show
-            show()
+            # Código da página de propostas está embutido direto no app.py
+            st.warning("Módulo de propostas movido para app.py. Por favor, use o menu principal.")
         elif st.session_state.current_page == "Vendas":
             from pages.vendas import show
             show()
