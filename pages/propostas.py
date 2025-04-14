@@ -4,7 +4,7 @@ import time
 import os
 from datetime import datetime, timedelta
 import uuid
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 
 def show():
     st.title("PROPOSTAS")
@@ -944,7 +944,6 @@ def show():
                                 valores_filtrados = {k: v for k, v in valores.items() if v > 0}
                                 
                                 # Criar versão alternativa do gráfico usando plotly para maior compatibilidade
-                                import plotly.graph_objects as go
                                 
                                 if valores_filtrados:
                                     labels = list(valores_filtrados.keys())
