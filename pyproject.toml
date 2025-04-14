@@ -15,6 +15,7 @@ dependencies = [
     "psycopg2-binary>=2.9.10",
     "pyjwt>=2.10.1",
     "pypdf2>=3.0.1",
+    "reflex>=0.7.6",
     "reportlab>=4.3.0",
     "schedule>=1.2.2",
     "sqlalchemy>=2.0.38",
