@@ -879,9 +879,8 @@ def show():
                                 # 1. Dados básicos da proposta
                                 st.write("### Dados Básicos")
                                 dados_basicos = pd.DataFrame({
-                                    "Item": ["ID", "Número", "Cliente", "Descrição", "Data de Início", "Data de Aprovação", "Valor Base", "Status"],
+                                    "Item": ["Número", "Cliente", "Descrição", "Data de Início", "Data de Aprovação", "Valor Base", "Status"],
                                     "Valor": [
-                                        proposta_exec.iloc[0]['id'],
                                         proposta_exec.iloc[0]['numero'],
                                         proposta_exec.iloc[0]['nome'],
                                         proposta_exec.iloc[0]['descricao'],
@@ -923,8 +922,8 @@ def show():
                                     # Formatar para exibição
                                     df_fornecedores = pd.DataFrame()
                                     df_fornecedores['Fornecedor'] = fornecedores['fornecedor']
+                                    df_fornecedores['Descrição'] = fornecedores['descricao']
                                     df_fornecedores['Valor'] = fornecedores['valor'].apply(lambda x: f"R$ {float(x):.2f}")
-                                    df_fornecedores['Observações'] = fornecedores['observacoes']
                                     
                                     st.dataframe(df_fornecedores, hide_index=True, use_container_width=True)
                                     st.info(f"Total Fornecedores: R$ {total_fornecedores:.2f}")
@@ -940,8 +939,8 @@ def show():
                                     # Formatar para exibição
                                     df_assistentes = pd.DataFrame()
                                     df_assistentes['Assistente'] = assistentes['fornecedor']
+                                    df_assistentes['Descrição'] = assistentes['descricao']
                                     df_assistentes['Valor'] = assistentes['valor'].apply(lambda x: f"R$ {float(x):.2f}")
-                                    df_assistentes['Observações'] = assistentes['observacoes']
                                     
                                     st.dataframe(df_assistentes, hide_index=True, use_container_width=True)
                                     st.info(f"Total Assistentes: R$ {total_assistentes:.2f}")
