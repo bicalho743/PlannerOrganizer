@@ -390,7 +390,7 @@ def show():
                             # Formulário para adicionar produtos
                             with st.form(key=f"produto_form_{proposta_exec_id}"):
                                 nome_produto = st.text_input("Nome do produto:")
-                                descricao_produto = st.text_area("Descrição:", height=50)
+                                descricao_produto = st.text_area("Descrição:", height=70)
                                 valor_produto = st.number_input("Valor unitário (R$):", min_value=0.0, format="%.2f")
                                 quantidade = st.number_input("Quantidade:", min_value=1, value=1)
                                 comodo_produto = st.text_input("Cômodo/Área:")
@@ -461,7 +461,7 @@ def show():
                                         )
                                         
                                         valor_fornecimento = st.number_input("Valor do fornecimento (R$):", min_value=0.0, format="%.2f")
-                                        observacao_fornecimento = st.text_area("Observações:", height=50)
+                                        observacao_fornecimento = st.text_area("Observações:", height=70)
                                         
                                         if st.form_submit_button("Adicionar Fornecedor"):
                                             # Aqui precisamos implementar a função para adicionar fornecedor à proposta
@@ -490,7 +490,7 @@ def show():
                                         )
                                         
                                         valor_assistente = st.number_input("Valor do serviço (R$):", min_value=0.0, format="%.2f")
-                                        observacao_assistente = st.text_area("Observações:", height=50)
+                                        observacao_assistente = st.text_area("Observações:", height=70)
                                         
                                         if st.form_submit_button("Adicionar Assistente"):
                                             # Aqui precisamos implementar a função para adicionar assistente à proposta
