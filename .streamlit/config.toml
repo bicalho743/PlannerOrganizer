@@ -2,15 +2,3 @@
 headless = true
 address = "0.0.0.0"
 port = 5000
-
-[theme]
-primaryColor = "#F1A208"
-backgroundColor = "#2A3F5F"
-secondaryBackgroundColor = "#1E293B"
-textColor = "#FFFFFF"
-
-[browser]
-gatherUsageStats = false
-
-[ui]
-hideTopBar = true

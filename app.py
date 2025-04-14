@@ -1,5 +1,21 @@
 import os
+import sys
 import streamlit as st
+import logging
+
+# Configurar logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Adicionar diretório raiz ao path
+project_root = os.path.abspath(os.path.dirname(__file__))
+if project_root not in sys.path:
+    sys.path.append(project_root)
+    logger.info(f"Adicionado {project_root} ao sys.path")
+
 from utils.database import Database
 
 # Configuração da página
