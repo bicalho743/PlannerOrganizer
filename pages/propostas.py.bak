@@ -170,7 +170,7 @@ def show():
                                     
                                     if sucesso:
                                         st.success(f"Proposta {proposta_id} aprovada com sucesso!")
-                                        st.rerun()
+                                        st.experimental_rerun()
                                     else:
                                         st.error(f"Erro ao aprovar proposta {proposta_id}")
                             
@@ -187,7 +187,7 @@ def show():
                                     
                                     if sucesso:
                                         st.success(f"Proposta {proposta_id} iniciada com sucesso!")
-                                        st.rerun()
+                                        st.experimental_rerun()
                                     else:
                                         st.error(f"Erro ao iniciar execução da proposta {proposta_id}")
                             

@@ -48,7 +48,7 @@ def limpar_clientes_form():
                         
                         # Adicionar botão para recarregar a página após limpeza
                         st.button("Recarregar Página", type="primary", 
-                                 on_click=lambda: st.rerun())
+                                 on_click=lambda: st.experimental_rerun())
                     else:
                         st.error("❌ Ocorreu um erro durante a limpeza dos dados.")
                 except Exception as e:

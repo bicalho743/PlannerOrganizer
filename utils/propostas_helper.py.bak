@@ -259,7 +259,7 @@ def st_adicionar_acrescimo(proposta_id, tipo, fornecedor, descricao, valor):
         if sucesso:
             st.success(mensagem)
             # Rerun para atualizar a interface
-            st.rerun()
+            st.experimental_rerun()
         else:
             st.error(mensagem)
             
@@ -276,7 +276,7 @@ def st_fechar_proposta(proposta_id):
         if sucesso:
             st.success(mensagem)
             # Rerun para atualizar a interface
-            st.rerun()
+            st.experimental_rerun()
         else:
             st.error(mensagem)
             
@@ -322,7 +322,7 @@ def st_marcar_proposta_como_paga(proposta_id):
         if sucesso:
             st.success(mensagem)
             # Rerun para atualizar a interface
-            st.rerun()
+            st.experimental_rerun()
         else:
             st.error(mensagem)
             
