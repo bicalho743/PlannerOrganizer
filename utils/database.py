@@ -1679,7 +1679,7 @@ class Database:
                 acrescimos = self.session.query(AcrescimoProposta).filter_by(
                     proposta_id=proposta_id, 
                     tipo=tipo
-                ).order_by(AcrescimoProposta.data_acrescimo).all()
+                ).order_by(AcrescimoProposta.data_cadastro).all()
                 
                 if not acrescimos:
                     print(f"DEBUG: Nenhum acréscimo do tipo {tipo} encontrado para proposta ID={proposta_id}")
@@ -1697,7 +1697,7 @@ class Database:
                         'descricao': a.descricao,
                         'valor': a.valor,
                         'status_pagamento': a.status_pagamento,
-                        'data_acrescimo': a.data_acrescimo,
+                        'data_cadastro': a.data_cadastro,
                         'observacoes': a.observacoes
                     })
                 
