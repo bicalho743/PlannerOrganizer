@@ -758,8 +758,110 @@ def show():
                         with exec_tab3:
                             st.subheader("Fornecedores")
                             
-                            # Obter lista de fornecedores cadastrados
+                            # 1. Exibir fornecedores já adicionados à proposta
                             try:
+                                fornecedores_atuais = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_exec_id, "FORNECEDOR")
+                                
+                                if not fornecedores_atuais.empty:
+                                    st.markdown("### Fornecedores Adicionados")
+                                    
+                                    # Criar tabela para exibição dos fornecedores
+                                    for idx, row in fornecedores_atuais.iterrows():
+                                        with st.container():
+                                            col1, col2, col3, col4 = st.columns([3, 2, 1, 1])
+                                            
+                                            with col1:
+                                                st.markdown(f"**{row['fornecedor']}**")
+                                                st.caption(row['descricao'])
+                                            
+                                            with col2:
+                                                st.markdown(f"**R$ {float(row['valor']):.2f}**")
+                                            
+                                            with col3:
+                                                if st.button("Editar", key=f"edit_forn_{row['id']}"):
+                                                    # Armazenar ID do acréscimo sendo editado
+                                                    st.session_state[f"edit_forn_id_{proposta_exec_id}"] = row['id']
+                                                    st.rerun()
+                                            
+                                            with col4:
+                                                if st.button("Excluir", key=f"del_forn_{row['id']}"):
+                                                    try:
+                                                        # Excluir acréscimo
+                                                        sucesso = st.session_state.db.excluir_acrescimo(row['id'])
+                                                        if sucesso:
+                                                            st.success("Fornecedor removido com sucesso!")
+                                                            time.sleep(1)
+                                                            st.rerun()
+                                                        else:
+                                                            st.error("Erro ao remover fornecedor.")
+                                                    except Exception as e:
+                                                        st.error(f"Erro ao remover fornecedor: {str(e)}")
+                                            
+                                            st.divider()
+                                
+                                # 2. Formulário de edição se algum item foi selecionado
+                                edit_forn_id = st.session_state.get(f"edit_forn_id_{proposta_exec_id}", None)
+                                if edit_forn_id:
+                                    st.markdown("### Editar Fornecedor")
+                                    
+                                    # Buscar dados do acréscimo
+                                    acrescimo = st.session_state.db.get_acrescimo_by_id(edit_forn_id)
+                                    if not acrescimo.empty:
+                                        with st.form(key=f"edit_forn_form_{edit_forn_id}"):
+                                            # Preparar valores atuais para edição
+                                            fornecedor_nome = acrescimo.iloc[0]['fornecedor']
+                                            acrescimo_valor = acrescimo.iloc[0]['valor']
+                                            acrescimo_descricao = acrescimo.iloc[0]['descricao']
+                                            
+                                            st.write(f"Fornecedor: **{fornecedor_nome}**")
+                                            
+                                            valor_edit = st.number_input(
+                                                "Valor (R$):", 
+                                                min_value=0.0, 
+                                                value=float(acrescimo_valor), 
+                                                format="%.2f"
+                                            )
+                                            
+                                            descricao_edit = st.text_area(
+                                                "Descrição/Observações:", 
+                                                value=acrescimo_descricao, 
+                                                height=70
+                                            )
+                                            
+                                            col1, col2 = st.columns(2)
+                                            with col1:
+                                                if st.form_submit_button("Salvar Alterações"):
+                                                    try:
+                                                        # Atualizar acréscimo
+                                                        sucesso = st.session_state.db.atualizar_acrescimo(
+                                                            acrescimo_id=edit_forn_id,
+                                                            valor=valor_edit,
+                                                            descricao=descricao_edit
+                                                        )
+                                                        
+                                                        if sucesso:
+                                                            st.success("Fornecedor atualizado com sucesso!")
+                                                            # Limpar estado de edição
+                                                            del st.session_state[f"edit_forn_id_{proposta_exec_id}"]
+                                                            time.sleep(1)
+                                                            st.rerun()
+                                                        else:
+                                                            st.error("Erro ao atualizar fornecedor.")
+                                                    except Exception as e:
+                                                        st.error(f"Erro ao atualizar fornecedor: {str(e)}")
+                                            
+                                            with col2:
+                                                if st.form_submit_button("Cancelar"):
+                                                    # Limpar estado de edição
+                                                    del st.session_state[f"edit_forn_id_{proposta_exec_id}"]
+                                                    st.rerun()
+                                                    
+                                st.markdown("---")
+                                
+                                # 3. Formulário para adicionar novo fornecedor
+                                st.markdown("### Adicionar Novo Fornecedor")
+                                
+                                # Obter lista de fornecedores cadastrados
                                 fornecedores = st.session_state.db.get_fornecedores()
                                 
                                 if not fornecedores.empty:
@@ -826,13 +928,116 @@ def show():
                                     st.warning("Nenhum fornecedor cadastrado no sistema.")
                                     st.write("Vá para a seção de Cadastros para adicionar fornecedores.")
                             except Exception as e:
-                                st.error(f"Erro ao carregar fornecedores: {str(e)}")
+                                st.error(f"Erro ao carregar informações: {str(e)}")
+                                st.write("Detalhes do erro:", str(e))
                                 
                         with exec_tab4:
                             st.subheader("Assistentes")
                             
-                            # Obter lista de assistentes cadastrados
+                            # 1. Exibir assistentes já adicionados à proposta
                             try:
+                                assistentes_atuais = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_exec_id, "ASSISTENTE")
+                                
+                                if not assistentes_atuais.empty:
+                                    st.markdown("### Assistentes Adicionados")
+                                    
+                                    # Criar tabela para exibição dos assistentes
+                                    for idx, row in assistentes_atuais.iterrows():
+                                        with st.container():
+                                            col1, col2, col3, col4 = st.columns([3, 2, 1, 1])
+                                            
+                                            with col1:
+                                                st.markdown(f"**{row['assistente']}**")
+                                                st.caption(row['descricao'])
+                                            
+                                            with col2:
+                                                st.markdown(f"**R$ {float(row['valor']):.2f}**")
+                                            
+                                            with col3:
+                                                if st.button("Editar", key=f"edit_asst_{row['id']}"):
+                                                    # Armazenar ID do acréscimo sendo editado
+                                                    st.session_state[f"edit_asst_id_{proposta_exec_id}"] = row['id']
+                                                    st.rerun()
+                                            
+                                            with col4:
+                                                if st.button("Excluir", key=f"del_asst_{row['id']}"):
+                                                    try:
+                                                        # Excluir acréscimo
+                                                        sucesso = st.session_state.db.excluir_acrescimo(row['id'])
+                                                        if sucesso:
+                                                            st.success("Assistente removido com sucesso!")
+                                                            time.sleep(1)
+                                                            st.rerun()
+                                                        else:
+                                                            st.error("Erro ao remover assistente.")
+                                                    except Exception as e:
+                                                        st.error(f"Erro ao remover assistente: {str(e)}")
+                                            
+                                            st.divider()
+                                
+                                # 2. Formulário de edição se algum item foi selecionado
+                                edit_asst_id = st.session_state.get(f"edit_asst_id_{proposta_exec_id}", None)
+                                if edit_asst_id:
+                                    st.markdown("### Editar Assistente")
+                                    
+                                    # Buscar dados do acréscimo
+                                    acrescimo = st.session_state.db.get_acrescimo_by_id(edit_asst_id)
+                                    if not acrescimo.empty:
+                                        with st.form(key=f"edit_asst_form_{edit_asst_id}"):
+                                            # Preparar valores atuais para edição
+                                            assistente_nome = acrescimo.iloc[0]['assistente']
+                                            acrescimo_valor = acrescimo.iloc[0]['valor']
+                                            acrescimo_descricao = acrescimo.iloc[0]['descricao']
+                                            
+                                            st.write(f"Assistente: **{assistente_nome}**")
+                                            
+                                            valor_edit = st.number_input(
+                                                "Valor (R$):", 
+                                                min_value=0.0, 
+                                                value=float(acrescimo_valor), 
+                                                format="%.2f"
+                                            )
+                                            
+                                            descricao_edit = st.text_area(
+                                                "Descrição/Observações:", 
+                                                value=acrescimo_descricao, 
+                                                height=70
+                                            )
+                                            
+                                            col1, col2 = st.columns(2)
+                                            with col1:
+                                                if st.form_submit_button("Salvar Alterações"):
+                                                    try:
+                                                        # Atualizar acréscimo
+                                                        sucesso = st.session_state.db.atualizar_acrescimo(
+                                                            acrescimo_id=edit_asst_id,
+                                                            valor=valor_edit,
+                                                            descricao=descricao_edit
+                                                        )
+                                                        
+                                                        if sucesso:
+                                                            st.success("Assistente atualizado com sucesso!")
+                                                            # Limpar estado de edição
+                                                            del st.session_state[f"edit_asst_id_{proposta_exec_id}"]
+                                                            time.sleep(1)
+                                                            st.rerun()
+                                                        else:
+                                                            st.error("Erro ao atualizar assistente.")
+                                                    except Exception as e:
+                                                        st.error(f"Erro ao atualizar assistente: {str(e)}")
+                                            
+                                            with col2:
+                                                if st.form_submit_button("Cancelar"):
+                                                    # Limpar estado de edição
+                                                    del st.session_state[f"edit_asst_id_{proposta_exec_id}"]
+                                                    st.rerun()
+                                                    
+                                st.markdown("---")
+                                
+                                # 3. Formulário para adicionar novo assistente
+                                st.markdown("### Adicionar Novo Assistente")
+                                
+                                # Obter lista de assistentes cadastrados
                                 assistentes = st.session_state.db.get_assistentes()
                                 
                                 if not assistentes.empty:
@@ -869,7 +1074,8 @@ def show():
                                     st.warning("Nenhum assistente cadastrado no sistema.")
                                     st.write("Vá para a seção de Cadastros para adicionar assistentes.")
                             except Exception as e:
-                                st.error(f"Erro ao carregar assistentes: {str(e)}")
+                                st.error(f"Erro ao carregar informações: {str(e)}")
+                                st.write("Detalhes do erro:", str(e))
                                 
                         with exec_tab5:
                             st.subheader("Finalizar Proposta")
