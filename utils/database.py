@@ -1697,14 +1697,29 @@ class Database:
                 # Converter para dataframe
                 result = []
                 for a in acrescimos:
+                    # Buscar informações adicionais conforme o tipo
+                    fornecedor_nome = None
+                    assistente_nome = None
+                    
+                    if tipo_upper == "FORNECEDOR" and a.fornecedor_id:
+                        fornecedor = self.session.query(Fornecedor).filter_by(id=a.fornecedor_id).first()
+                        fornecedor_nome = fornecedor.descricao if fornecedor else "Não encontrado"
+                    
+                    if tipo_upper == "ASSISTENTE" and a.assistente_id:
+                        assistente = self.session.query(Assistente).filter_by(id=a.assistente_id).first()
+                        assistente_nome = assistente.nome if assistente else "Não encontrado"
+                    
                     result.append({
                         'id': a.id,
                         'tipo': a.tipo,
-                        'fornecedor': a.fornecedor,
+                        'fornecedor': fornecedor_nome or a.fornecedor,
+                        'assistente': assistente_nome,
                         'descricao': a.descricao,
                         'valor': a.valor,
                         'status_pagamento': a.status_pagamento,
-                        'data_cadastro': a.data_cadastro
+                        'data_cadastro': a.data_cadastro,
+                        'fornecedor_id': a.fornecedor_id,
+                        'assistente_id': a.assistente_id
                     })
                 
                 return pd.DataFrame(result)
@@ -1712,6 +1727,132 @@ class Database:
             except Exception as e:
                 print(f"DEBUG: Erro ao obter acréscimos do tipo {tipo} para proposta ID={proposta_id}: {str(e)}")
                 return pd.DataFrame(columns=['id', 'tipo', 'fornecedor', 'descricao', 'valor', 'status_pagamento', 'data_cadastro'])
+        
+        return self._safe_query(query)
+    
+    def get_acrescimo_by_id(self, acrescimo_id):
+        """
+        Retorna um acréscimo específico pelo ID
+        
+        Args:
+            acrescimo_id (int): ID do acréscimo
+            
+        Returns:
+            DataFrame: Dados do acréscimo
+        """
+        acrescimo_id = int(acrescimo_id) if acrescimo_id is not None else None
+        
+        def query():
+            try:
+                acrescimo = self.session.query(AcrescimoProposta).filter_by(id=acrescimo_id).first()
+                if not acrescimo:
+                    return pd.DataFrame()
+                
+                # Se for um fornecedor ou assistente, buscar detalhes adicionais
+                fornecedor_nome = None
+                assistente_nome = None
+                
+                if acrescimo.tipo == "FORNECEDOR" and acrescimo.fornecedor_id:
+                    fornecedor = self.session.query(Fornecedor).filter_by(id=acrescimo.fornecedor_id).first()
+                    fornecedor_nome = fornecedor.descricao if fornecedor else "Não encontrado"
+                
+                if acrescimo.tipo == "ASSISTENTE" and acrescimo.assistente_id:
+                    assistente = self.session.query(Assistente).filter_by(id=acrescimo.assistente_id).first()
+                    assistente_nome = assistente.nome if assistente else "Não encontrado"
+                
+                # Criar DataFrame com os dados
+                data = {
+                    'id': [acrescimo.id],
+                    'proposta_id': [acrescimo.proposta_id],
+                    'tipo': [acrescimo.tipo],
+                    'descricao': [acrescimo.descricao],
+                    'valor': [float(acrescimo.valor)],
+                    'data_cadastro': [acrescimo.data_cadastro],
+                    'status_pagamento': [acrescimo.status_pagamento],
+                    'fornecedor_id': [acrescimo.fornecedor_id],
+                    'assistente_id': [acrescimo.assistente_id],
+                    'fornecedor': [fornecedor_nome],
+                    'assistente': [assistente_nome]
+                }
+                
+                return pd.DataFrame(data)
+            except Exception as e:
+                print(f"Erro ao buscar acréscimo: {str(e)}")
+                return pd.DataFrame()
+        
+        return self._safe_query(query)
+    
+    def atualizar_acrescimo(self, acrescimo_id, valor=None, descricao=None, status_pagamento=None):
+        """
+        Atualiza os dados de um acréscimo
+        
+        Args:
+            acrescimo_id (int): ID do acréscimo
+            valor (float, optional): Novo valor do acréscimo
+            descricao (str, optional): Nova descrição do acréscimo
+            status_pagamento (str, optional): Novo status de pagamento
+            
+        Returns:
+            bool: True se a atualização foi bem-sucedida, False caso contrário
+        """
+        acrescimo_id = int(acrescimo_id) if acrescimo_id is not None else None
+        
+        def query():
+            try:
+                acrescimo = self.session.query(AcrescimoProposta).filter_by(id=acrescimo_id).first()
+                if not acrescimo:
+                    print(f"Acréscimo ID={acrescimo_id} não encontrado")
+                    return False
+                
+                # Atualizar apenas os campos fornecidos
+                if valor is not None:
+                    acrescimo.valor = valor
+                
+                if descricao is not None:
+                    acrescimo.descricao = descricao
+                
+                if status_pagamento is not None:
+                    acrescimo.status_pagamento = status_pagamento
+                
+                # Commit das alterações
+                self.session.commit()
+                return True
+            
+            except Exception as e:
+                self.session.rollback()
+                print(f"Erro ao atualizar acréscimo: {str(e)}")
+                return False
+        
+        return self._safe_query(query)
+    
+    def excluir_acrescimo(self, acrescimo_id):
+        """
+        Exclui um acréscimo pelo ID
+        
+        Args:
+            acrescimo_id (int): ID do acréscimo
+            
+        Returns:
+            bool: True se a exclusão foi bem-sucedida, False caso contrário
+        """
+        acrescimo_id = int(acrescimo_id) if acrescimo_id is not None else None
+        
+        def query():
+            try:
+                acrescimo = self.session.query(AcrescimoProposta).filter_by(id=acrescimo_id).first()
+                if not acrescimo:
+                    print(f"Acréscimo ID={acrescimo_id} não encontrado")
+                    return False
+                
+                # Excluir o acréscimo
+                self.session.delete(acrescimo)
+                self.session.commit()
+                return True
+            
+            except Exception as e:
+                self.session.rollback()
+                print(f"Erro ao excluir acréscimo: {str(e)}")
+                return False
         
         return self._safe_query(query)
 
