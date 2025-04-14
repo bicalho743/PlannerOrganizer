@@ -125,7 +125,7 @@ def show():
                 if not propostas_em_aberto.empty:
                     # Preparar DataFrame para exibição
                     df_em_aberto = pd.DataFrame()
-                    df_em_aberto['ID'] = propostas_em_aberto['id']
+                    # Removido o ID da tabela para mostrar apenas o número da proposta
                     df_em_aberto['Número'] = propostas_em_aberto['numero']
                     df_em_aberto['Cliente'] = propostas_em_aberto['nome']
                     df_em_aberto['Descrição'] = propostas_em_aberto['descricao']
@@ -159,20 +159,41 @@ def show():
                             
                             # Botões de ação baseados no status
                             if status_atual == "Em elaboração":
-                                if st.button("Aprovar Proposta", key="aprovar_proposta_em_aberto"):
-                                    # Atualizar o status da proposta para "Aprovada"
-                                    data_aprovacao = datetime.now().date()
-                                    sucesso = st.session_state.db.update_proposta_status(
-                                        proposta_id=proposta_id,
-                                        novo_status="Aprovada",
-                                        data_aprovacao=data_aprovacao
-                                    )
-                                    
-                                    if sucesso:
-                                        st.success(f"Proposta {proposta_id} aprovada com sucesso!")
-                                        st.experimental_rerun()
-                                    else:
-                                        st.error(f"Erro ao aprovar proposta {proposta_id}")
+                                col_aprove, col_reject = st.columns(2)
+                                
+                                with col_aprove:
+                                    if st.button("Aprovar Proposta", key="aprovar_proposta_em_aberto"):
+                                        # Atualizar o status da proposta para "Aprovada"
+                                        data_aprovacao = datetime.now().date()
+                                        sucesso = st.session_state.db.update_proposta_status(
+                                            proposta_id=proposta_id,
+                                            novo_status="Aprovada",
+                                            data_aprovacao=data_aprovacao
+                                        )
+                                        
+                                        if sucesso:
+                                            st.success(f"Proposta {proposta_id} aprovada com sucesso!")
+                                            time.sleep(1)
+                                            st.rerun()
+                                        else:
+                                            st.error(f"Erro ao aprovar proposta {proposta_id}")
+                                
+                                with col_reject:
+                                    if st.button("Recusar Proposta", key="recusar_proposta_em_aberto"):
+                                        # Atualizar o status da proposta para "Recusada"
+                                        data_recusa = datetime.now().date()
+                                        sucesso = st.session_state.db.update_proposta_status(
+                                            proposta_id=proposta_id,
+                                            novo_status="Recusada",
+                                            data_recusa=data_recusa
+                                        )
+                                        
+                                        if sucesso:
+                                            st.success(f"Proposta {proposta_id} recusada.")
+                                            time.sleep(1)
+                                            st.rerun()
+                                        else:
+                                            st.error(f"Erro ao recusar proposta {proposta_id}")
                             
                             elif status_atual == "Aprovada":
                                 if st.button("Iniciar Execução", key="iniciar_execucao"):
@@ -187,15 +208,56 @@ def show():
                                     
                                     if sucesso:
                                         st.success(f"Proposta {proposta_id} iniciada com sucesso!")
-                                        st.experimental_rerun()
+                                        time.sleep(1)
+                                        st.rerun()
                                     else:
                                         st.error(f"Erro ao iniciar execução da proposta {proposta_id}")
                             
-                            # Botão para editar proposta independente do status
-                            if st.button("Editar Proposta", key="editar_proposta_em_aberto"):
-                                st.session_state.proposta_para_editar = proposta_id
-                                st.session_state.modo_edicao_proposta = True
-                                st.rerun()
+                            # Botões presentes independente do status
+                            col_edit, col_delete = st.columns(2)
+                            
+                            with col_edit:
+                                if st.button("Editar Proposta", key="editar_proposta_em_aberto"):
+                                    st.session_state.proposta_para_editar = proposta_id
+                                    st.session_state.modo_edicao_proposta = True
+                                    st.rerun()
+                            
+                            with col_delete:
+                                if st.button("Excluir Proposta", key="excluir_proposta_em_aberto"):
+                                    if 'confirmar_exclusao' not in st.session_state:
+                                        st.session_state.confirmar_exclusao = False
+                                        st.session_state.proposta_para_excluir = proposta_id
+                                    
+                                    st.session_state.confirmar_exclusao = True
+                                    st.session_state.proposta_para_excluir = proposta_id
+                                    st.warning(f"Tem certeza que deseja excluir a proposta #{proposta_selecionada.iloc[0]['numero']}?")
+                                    
+                                    confirm_col1, confirm_col2 = st.columns(2)
+                                    with confirm_col1:
+                                        if st.button("Sim, excluir", key="confirmar_exclusao"):
+                                            # Excluir proposta
+                                            sucesso = st.session_state.db.excluir_proposta(proposta_id)
+                                            
+                                            if sucesso:
+                                                st.success(f"Proposta excluída com sucesso!")
+                                                # Limpar estado
+                                                if 'confirmar_exclusao' in st.session_state:
+                                                    del st.session_state.confirmar_exclusao
+                                                if 'proposta_para_excluir' in st.session_state:
+                                                    del st.session_state.proposta_para_excluir
+                                                time.sleep(1)
+                                                st.rerun()
+                                            else:
+                                                st.error(f"Erro ao excluir proposta {proposta_id}")
+                                    
+                                    with confirm_col2:
+                                        if st.button("Cancelar", key="cancelar_exclusao"):
+                                            # Limpar estado
+                                            if 'confirmar_exclusao' in st.session_state:
+                                                del st.session_state.confirmar_exclusao
+                                            if 'proposta_para_excluir' in st.session_state:
+                                                del st.session_state.proposta_para_excluir
+                                            st.rerun()
                         else:
                             st.warning("Selecione uma proposta válida.")
                     
@@ -297,7 +359,7 @@ def show():
                 if not propostas_em_execucao.empty:
                     # Preparar DataFrame para exibição
                     df_execucao = pd.DataFrame()
-                    df_execucao['ID'] = propostas_em_execucao['id']
+                    # Removido o ID da tabela para mostrar apenas o número da proposta
                     df_execucao['Número'] = propostas_em_execucao['numero']
                     df_execucao['Cliente'] = propostas_em_execucao['nome']
                     df_execucao['Descrição'] = propostas_em_execucao['descricao']
@@ -390,7 +452,7 @@ def show():
                             # Formulário para adicionar produtos
                             with st.form(key=f"produto_form_{proposta_exec_id}"):
                                 nome_produto = st.text_input("Nome do produto:")
-                                descricao_produto = st.text_area("Descrição:", height=50)
+                                descricao_produto = st.text_area("Descrição:", height=70)
                                 valor_produto = st.number_input("Valor unitário (R$):", min_value=0.0, format="%.2f")
                                 quantidade = st.number_input("Quantidade:", min_value=1, value=1)
                                 comodo_produto = st.text_input("Cômodo/Área:")
@@ -812,7 +874,7 @@ def show():
                 if not propostas_finalizadas.empty:
                     # Preparar DataFrame para exibição
                     df_finalizadas = pd.DataFrame()
-                    df_finalizadas['ID'] = propostas_finalizadas['id']
+                    # Removido o ID da tabela para mostrar apenas o número da proposta
                     df_finalizadas['Número'] = propostas_finalizadas['numero']
                     df_finalizadas['Cliente'] = propostas_finalizadas['nome']
                     df_finalizadas['Descrição'] = propostas_finalizadas['descricao']
