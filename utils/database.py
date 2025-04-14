@@ -504,7 +504,8 @@ class Database:
         return self._safe_query(query)
 
     def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, 
-                    data_inicio=None, data_fim=None, prazo_entrega=None, gerar_transacoes_automaticas=True):
+                    data_inicio=None, data_fim=None, prazo_entrega=None, previsao_dias=None, 
+                    gerar_transacoes_automaticas=True):
         """
         VERSÃO MODIFICADA PARA EVITAR PROBLEMAS DE ESCOPO
         Função para adicionar proposta ao banco de dados
@@ -876,6 +877,37 @@ class Database:
             )
             self.session.add(andamento)
             return andamento.id
+        return self._safe_query(query)
+
+    def update_proposta_status(self, proposta_id, novo_status, data_aprovacao=None):
+        """
+        Atualiza o status de uma proposta e opcionalmente define a data de aprovação
+        
+        Args:
+            proposta_id: ID da proposta a ser atualizada
+            novo_status: Novo status da proposta
+            data_aprovacao: Data de aprovação (opcional)
+        
+        Returns:
+            bool: True se a atualização foi bem-sucedida, False caso contrário
+        """
+        def query():
+            # Buscar a proposta por ID
+            proposta = self.session.query(Proposta).filter(Proposta.id == proposta_id).first()
+            
+            if proposta is None:
+                print(f"DEBUG: Proposta com ID {proposta_id} não encontrada")
+                return False
+            
+            # Atualizar campos
+            proposta.status = novo_status
+            if data_aprovacao:
+                proposta.data_aprovacao = data_aprovacao
+            
+            # Registrar a mudança de status
+            print(f"DEBUG: Proposta {proposta_id} atualizada com status '{novo_status}'")
+            return True
+            
         return self._safe_query(query)
 
     def get_andamentos_proposta(self, proposta_id):
