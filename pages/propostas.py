@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import time
+import os
 from datetime import datetime, timedelta
 import uuid
 
@@ -873,18 +874,35 @@ def show():
                                     with st.spinner("Gerando relatório para cliente..."):
                                         from utils.pdf_generator import gerar_pdf_cliente
                                         pdf_path = gerar_pdf_cliente(proposta_dict, cliente_dict, acrescimos, relatorio_path)
+                                        st.write(f"DEBUG: PDF gerado em: {pdf_path}")
+                                        st.write(f"DEBUG: O arquivo existe? {os.path.exists(pdf_path)}")
                                         
-                                        # Criar link para download
-                                        with open(pdf_path, "rb") as pdf_file:
-                                            pdf_bytes = pdf_file.read()
-                                        
-                                        st.success(f"Relatório para cliente gerado com sucesso!")
-                                        st.download_button(
-                                            label="Download do Relatório",
-                                            data=pdf_bytes,
-                                            file_name=f"relatorio_cliente_{proposta_dict['numero']}.pdf",
-                                            mime="application/pdf"
-                                        )
+                                        try:
+                                            # Criar link para download
+                                            with open(pdf_path, "rb") as pdf_file:
+                                                pdf_bytes = pdf_file.read()
+                                            
+                                            st.write(f"DEBUG: Tamanho do PDF: {len(pdf_bytes)} bytes")
+                                            st.success(f"Relatório para cliente gerado com sucesso!")
+                                            
+                                            # Usar um botão com key única para evitar conflitos
+                                            download_key = f"download_cliente_{proposta_dict['id']}_{datetime.now().strftime('%H%M%S')}"
+                                            st.write(f"DEBUG: Criando botão com key: {download_key}")
+                                            
+                                            # Adicionando try/except específico para o download_button
+                                            try:
+                                                st.download_button(
+                                                    label="Download do Relatório",
+                                                    data=pdf_bytes,
+                                                    file_name=f"relatorio_cliente_{proposta_dict['numero']}.pdf",
+                                                    mime="application/pdf",
+                                                    key=download_key
+                                                )
+                                                st.write("DEBUG: Botão de download criado com sucesso")
+                                            except Exception as e:
+                                                st.error(f"Erro ao criar botão de download: {str(e)}")
+                                        except Exception as e:
+                                            st.error(f"Erro ao processar arquivo PDF: {str(e)}")
                                 except Exception as e:
                                     st.error(f"Erro ao gerar relatório para cliente: {str(e)}")
                         
