@@ -1697,29 +1697,17 @@ class Database:
                 # Converter para dataframe
                 result = []
                 for a in acrescimos:
-                    # Buscar informações adicionais conforme o tipo
-                    fornecedor_nome = None
-                    assistente_nome = None
-                    
-                    if tipo_upper == "FORNECEDOR" and a.fornecedor_id:
-                        fornecedor = self.session.query(Fornecedor).filter_by(id=a.fornecedor_id).first()
-                        fornecedor_nome = fornecedor.descricao if fornecedor else "Não encontrado"
-                    
-                    if tipo_upper == "ASSISTENTE" and a.assistente_id:
-                        assistente = self.session.query(Assistente).filter_by(id=a.assistente_id).first()
-                        assistente_nome = assistente.nome if assistente else "Não encontrado"
-                    
+                    # Na estrutura atual, o campo 'fornecedor' já contém o nome 
+                    # e não há colunas de referência para 'fornecedor_id' ou 'assistente_id'
                     result.append({
                         'id': a.id,
                         'tipo': a.tipo,
-                        'fornecedor': fornecedor_nome or a.fornecedor,
-                        'assistente': assistente_nome,
+                        'fornecedor': a.fornecedor,  # Já contém o nome do fornecedor ou assistente
+                        'assistente': a.fornecedor if a.tipo == "ASSISTENTE" else None,  # Reutiliza o mesmo campo
                         'descricao': a.descricao,
                         'valor': a.valor,
                         'status_pagamento': a.status_pagamento,
-                        'data_cadastro': a.data_cadastro,
-                        'fornecedor_id': a.fornecedor_id,
-                        'assistente_id': a.assistente_id
+                        'data_cadastro': a.data_cadastro
                     })
                 
                 return pd.DataFrame(result)
@@ -1748,17 +1736,8 @@ class Database:
                 if not acrescimo:
                     return pd.DataFrame()
                 
-                # Se for um fornecedor ou assistente, buscar detalhes adicionais
-                fornecedor_nome = None
-                assistente_nome = None
-                
-                if acrescimo.tipo == "FORNECEDOR" and acrescimo.fornecedor_id:
-                    fornecedor = self.session.query(Fornecedor).filter_by(id=acrescimo.fornecedor_id).first()
-                    fornecedor_nome = fornecedor.descricao if fornecedor else "Não encontrado"
-                
-                if acrescimo.tipo == "ASSISTENTE" and acrescimo.assistente_id:
-                    assistente = self.session.query(Assistente).filter_by(id=acrescimo.assistente_id).first()
-                    assistente_nome = assistente.nome if assistente else "Não encontrado"
+                # Na versão atual, o campo 'fornecedor' já contém o nome diretamente
+                # Usar o mesmo campo para assistentes ou fornecedores conforme o tipo
                 
                 # Criar DataFrame com os dados
                 data = {
@@ -1769,10 +1748,8 @@ class Database:
                     'valor': [float(acrescimo.valor)],
                     'data_cadastro': [acrescimo.data_cadastro],
                     'status_pagamento': [acrescimo.status_pagamento],
-                    'fornecedor_id': [acrescimo.fornecedor_id],
-                    'assistente_id': [acrescimo.assistente_id],
-                    'fornecedor': [fornecedor_nome],
-                    'assistente': [assistente_nome]
+                    'fornecedor': [acrescimo.fornecedor],
+                    'assistente': [acrescimo.fornecedor if acrescimo.tipo == "ASSISTENTE" else None]
                 }
                 
                 return pd.DataFrame(data)
