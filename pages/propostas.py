@@ -521,7 +521,20 @@ def show():
                     # Ações para propostas em execução
                     st.subheader("Gerenciar Execução")
                     
-                    proposta_exec_id = st.number_input("ID da Proposta", min_value=1, step=1, key="id_proposta_execucao")
+                    # Obter lista de números de propostas para o select box
+                    numeros_propostas_execucao = propostas_em_execucao['numero'].tolist()
+                    numeros_propostas_execucao.sort()  # Ordenar para facilitar a seleção
+                    
+                    # Usar selectbox em vez de number_input para escolher pelo número da proposta
+                    proposta_exec_numero = st.selectbox(
+                        "Número da Proposta",
+                        numeros_propostas_execucao,
+                        key="numero_proposta_execucao_gerenciar"
+                    )
+                    
+                    # Buscar o ID correspondente ao número selecionado
+                    proposta_exec_selecionada = propostas_em_execucao[propostas_em_execucao['numero'] == proposta_exec_numero]
+                    proposta_exec_id = proposta_exec_selecionada.iloc[0]['id'] if not proposta_exec_selecionada.empty else 0
                     
                     # Verificar se a proposta existe
                     proposta_exec = propostas_em_execucao[propostas_em_execucao['id'] == proposta_exec_id]
@@ -1027,7 +1040,7 @@ def show():
                                     )
                                     
                                     if sucesso:
-                                        st.success(f"Proposta {proposta_exec_id} marcada como concluída!")
+                                        st.success(f"Proposta #{proposta_exec_numero} marcada como concluída!")
                                         time.sleep(1)
                                         st.rerun()
                                     else:
