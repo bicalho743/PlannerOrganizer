@@ -705,21 +705,56 @@ def show():
                                             format_func=lambda x: fornecedores[fornecedores['id']==x]['descricao'].iloc[0]
                                         )
                                         
+                                        # Obter o percentual de comissão padrão do fornecedor selecionado (se houver)
+                                        percentual_padrao = 0.0
+                                        try:
+                                            fornecedor_selecionado = fornecedores[fornecedores['id'] == fornecedor_id]
+                                            if not fornecedor_selecionado.empty and 'percentual_comissao' in fornecedor_selecionado.columns:
+                                                percentual_padrao = fornecedor_selecionado['percentual_comissao'].iloc[0] or 0.0
+                                        except (KeyError, IndexError):
+                                            pass
+                                        
                                         valor_fornecimento = st.number_input("Valor do fornecimento (R$):", min_value=0.0, format="%.2f")
+                                        
+                                        # Campo para o percentual de comissão
+                                        col1, col2 = st.columns([3, 1])
+                                        with col1:
+                                            percentual_comissao = st.number_input(
+                                                "Percentual de comissão (%):",
+                                                min_value=0.0,
+                                                max_value=100.0,
+                                                value=percentual_padrao,
+                                                format="%.2f",
+                                                help="Digite o percentual de comissão a receber sobre este fornecimento. Será gerada automaticamente uma comissão a receber no financeiro."
+                                            )
+                                        
+                                        with col2:
+                                            if percentual_comissao > 0:
+                                                valor_comissao = valor_fornecimento * (percentual_comissao / 100)
+                                                st.info(f"Comissão: R$ {valor_comissao:.2f}")
+                                        
                                         observacao_fornecimento = st.text_area("Observações:", height=70)
                                         
                                         if st.form_submit_button("Adicionar Fornecedor"):
                                             try:
                                                 # Adicionar fornecedor à proposta usando a nova função
-                                                acrescimo_id = st.session_state.db.add_fornecedor_proposta(
+                                                resultado = st.session_state.db.add_fornecedor_proposta(
                                                     proposta_id=proposta_exec_id,
                                                     fornecedor_id=fornecedor_id,
                                                     valor=valor_fornecimento,
-                                                    observacoes=observacao_fornecimento
+                                                    observacoes=observacao_fornecimento,
+                                                    percentual_comissao=percentual_comissao if percentual_comissao > 0 else None
                                                 )
                                                 
-                                                if acrescimo_id:
-                                                    st.success(f"Fornecedor adicionado com sucesso à proposta!")
+                                                if resultado and resultado.get("acrescimo_id"):
+                                                    mensagem = f"Fornecedor adicionado com sucesso à proposta!"
+                                                    
+                                                    # Se gerou comissão, adicionar essa informação à mensagem
+                                                    if resultado.get("comissao_gerada", False):
+                                                        valor_comissao = resultado.get("valor_comissao", 0)
+                                                        mensagem += f"\nComissão de R$ {valor_comissao:.2f} registrada automaticamente."
+                                                    
+                                                    st.success(mensagem)
                                                     time.sleep(1)
                                                     st.rerun()
                                                 else:

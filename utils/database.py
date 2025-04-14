@@ -2307,7 +2307,7 @@ class Database:
         
         return transacao_existente.id
         
-    def add_fornecedor_proposta(self, proposta_id, fornecedor_id, valor, observacoes=None):
+    def add_fornecedor_proposta(self, proposta_id, fornecedor_id, valor, observacoes=None, percentual_comissao=None):
         """
         Adiciona um fornecedor à proposta como um acréscimo
         
@@ -2316,9 +2316,10 @@ class Database:
             fornecedor_id: ID do fornecedor
             valor: Valor do fornecimento
             observacoes: Observações (opcional)
+            percentual_comissao: Percentual de comissão a receber (opcional)
             
         Returns:
-            int: ID do acréscimo adicionado
+            dict: Informações sobre o acréscimo adicionado e comissão gerada
         """
         try:
             # Converter para tipos nativos
@@ -2337,21 +2338,22 @@ class Database:
                 if not proposta:
                     raise ValueError(f"Proposta ID {proposta_id} não encontrada")
                 
-                # Criar acréscimo para o fornecedor
-                acrescimo = AcrescimoProposta(
+                # Se não foi informado o percentual, usar o cadastrado no fornecedor (se existir)
+                if percentual_comissao is None and fornecedor.percentual_comissao is not None and fornecedor.percentual_comissao > 0:
+                    percentual_comissao = fornecedor.percentual_comissao
+                
+                # Criar acréscimo usando a função existente
+                resultado = self.add_acrescimo_proposta(
                     proposta_id=proposta_id_int,
                     tipo="Fornecedor",
-                    fornecedor=fornecedor.descricao,
-                    descricao=observacoes if observacoes else f"Fornecimento de {fornecedor.descricao}",
                     valor=valor_float,
+                    descricao=observacoes if observacoes else f"Fornecimento de {fornecedor.descricao}",
+                    fornecedor=fornecedor.descricao,
                     status_pagamento="Pendente",
-                    data_cadastro=datetime.now().date()
+                    percentual_comissao=percentual_comissao
                 )
                 
-                self.session.add(acrescimo)
-                self.session.flush()
-                
-                return acrescimo.id
+                return resultado
                 
             return self._safe_query(query)
             
