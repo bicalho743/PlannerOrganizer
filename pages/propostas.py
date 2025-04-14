@@ -217,17 +217,19 @@ def show():
                     # Cabeçalho e descrição
                     st.write("Selecione uma proposta abaixo para editar ou alterar o status:")
                     
-                    # Layout com 4 colunas. A última vai conter os controles (cada linha terá seu próprio seletor)
-                    col_id, col_info, col_status, col_export = st.columns([1, 5, 3, 1])
+                    # Layout com 5 colunas. A última vai conter o botão de exclusão
+                    col_num, col_info, col_status, col_export, col_excluir = st.columns([1, 4, 3, 1, 1])
                     
-                    with col_id:
-                        st.markdown("**ID**")
+                    with col_num:
+                        st.markdown("**Número**")
                     with col_info:
                         st.markdown("**Informações da Proposta**")
                     with col_status:
                         st.markdown("**Alterar Status**")
                     with col_export:
                         st.markdown("**PDF**")
+                    with col_excluir:
+                        st.markdown("**Ações**")
                     
                     # Exibir cada proposta com seus controles
                     for idx, proposta in propostas_display.iterrows():
@@ -236,17 +238,17 @@ def show():
                         
                         # Criar container para a linha da proposta
                         with st.container():
-                            # 4 colunas: ID, Info, Status Selector, Export
-                            col_id, col_info, col_status, col_export = st.columns([1, 5, 3, 1])
+                            # 5 colunas: Número, Info, Status Selector, Export, Excluir
+                            col_num, col_info, col_status, col_export, col_excluir = st.columns([1, 4, 3, 1, 1])
                             
-                            # Coluna 1: ID
-                            with col_id:
-                                st.write(f"**{proposta_id}**")
+                            # Coluna 1: Número da proposta (não mais o ID)
+                            with col_num:
+                                st.write(f"**{proposta['numero']}**")
                             
-                            # Coluna 2: Informações da proposta
+                            # Coluna 2: Informações da proposta (sem incluir o número no título)
                             with col_info:
                                 st.markdown(f"""
-                                **#{proposta['numero']} - {proposta['nome']}**  
+                                **{proposta['nome']}**  
                                 {proposta['descricao']}  
                                 **Valor:** {proposta['valor_formatado']} | **Tipo:** {proposta['tipo_proposta']}  
                                 **Início:** {proposta['data_inicio_formatada']} | **Prazo:** {proposta['previsao_dias']} dias
@@ -349,6 +351,23 @@ def show():
                                         st.success("✓")
                                     else:
                                         st.error(f"Erro: {mensagem}")
+                            
+                            # Coluna 5: Botão de exclusão
+                            with col_excluir:
+                                if st.button("EXCLUIR", key=f"excluir_{proposta_id}"):
+                                    # Confirmar exclusão
+                                    st.warning(f"Confirmar exclusão da proposta #{proposta['numero']}?")
+                                    if st.button("CONFIRMAR", key=f"confirmar_excluir_{proposta_id}"):
+                                        try:
+                                            sucesso, mensagem = st.session_state.db.excluir_proposta(proposta_id)
+                                            if sucesso:
+                                                st.success("Proposta excluída com sucesso!")
+                                                time.sleep(1)
+                                                st.rerun()
+                                            else:
+                                                st.error(f"Erro ao excluir proposta: {mensagem}")
+                                        except Exception as e:
+                                            st.error(f"Erro ao excluir proposta: {str(e)}")
                             
                             # Separador entre propostas
                             st.markdown("---")
@@ -454,7 +473,7 @@ def show():
                 if not propostas_em_execucao.empty:
                     # Preparar DataFrame para exibição
                     df_execucao = pd.DataFrame()
-                    df_execucao['ID'] = propostas_em_execucao['id']  # Mostrando apenas o ID como pedido
+                    df_execucao['Número'] = propostas_em_execucao['numero']  # Mostrar número em vez do ID
                     df_execucao['Cliente'] = propostas_em_execucao['nome']
                     df_execucao['Descrição'] = propostas_em_execucao['descricao']
                     df_execucao['Valor (R$)'] = propostas_em_execucao['valor'].apply(lambda x: f"R$ {float(x):.2f}")
@@ -463,8 +482,32 @@ def show():
                         lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
                     )
                     
+                    # Adicionar coluna para o botão de exclusão
+                    df_execucao['ID'] = propostas_em_execucao['id']  # Manter o ID como coluna oculta para referência
+                    
                     # Exibir tabela sem o índice automático do pandas
-                    st.dataframe(df_execucao, hide_index=True)
+                    st.dataframe(df_execucao.drop(columns=['ID']), hide_index=True)
+                    
+                    # Adicionar área para exclusão de proposta
+                    with st.expander("Excluir Proposta em Execução"):
+                        proposta_exc_id = st.number_input("ID da Proposta a Excluir", min_value=1, step=1, key="id_proposta_execucao_excluir")
+                        proposta_exc = propostas_em_execucao[propostas_em_execucao['id'] == proposta_exc_id]
+                        
+                        if not proposta_exc.empty:
+                            st.warning(f"Você está prestes a excluir a proposta #{proposta_exc.iloc[0]['numero']} - {proposta_exc.iloc[0]['descricao']}")
+                            if st.button("CONFIRMAR EXCLUSÃO", key="confirmar_exclusao_execucao"):
+                                try:
+                                    sucesso, mensagem = st.session_state.db.excluir_proposta(proposta_exc_id)
+                                    if sucesso:
+                                        st.success("Proposta excluída com sucesso!")
+                                        time.sleep(1)
+                                        st.rerun()
+                                    else:
+                                        st.error(f"Erro ao excluir proposta: {mensagem}")
+                                except Exception as e:
+                                    st.error(f"Erro ao excluir proposta: {str(e)}")
+                        else:
+                            st.info("Selecione uma proposta válida para excluir.")
                     
                     # Ações para propostas em execução
                     st.subheader("Gerenciar Execução")
