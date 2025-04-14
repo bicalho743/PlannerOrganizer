@@ -2204,3 +2204,107 @@ class Database:
             return transacao.id
         
         return transacao_existente.id
+        
+    def add_fornecedor_proposta(self, proposta_id, fornecedor_id, valor, observacoes=None):
+        """
+        Adiciona um fornecedor à proposta como um acréscimo
+        
+        Args:
+            proposta_id: ID da proposta
+            fornecedor_id: ID do fornecedor
+            valor: Valor do fornecimento
+            observacoes: Observações (opcional)
+            
+        Returns:
+            int: ID do acréscimo adicionado
+        """
+        try:
+            # Converter para tipos nativos
+            proposta_id_int = int(proposta_id)
+            fornecedor_id_int = int(fornecedor_id)
+            valor_float = float(valor)
+            
+            def query():
+                # Buscar fornecedor
+                fornecedor = self.session.query(Fornecedor).filter_by(id=fornecedor_id_int).first()
+                if not fornecedor:
+                    raise ValueError(f"Fornecedor ID {fornecedor_id} não encontrado")
+                    
+                # Buscar proposta
+                proposta = self.session.query(Proposta).filter_by(id=proposta_id_int).first()
+                if not proposta:
+                    raise ValueError(f"Proposta ID {proposta_id} não encontrada")
+                
+                # Criar acréscimo para o fornecedor
+                acrescimo = AcrescimoProposta(
+                    proposta_id=proposta_id_int,
+                    tipo="Fornecedor",
+                    fornecedor=fornecedor.descricao,
+                    descricao=observacoes if observacoes else f"Fornecimento de {fornecedor.descricao}",
+                    valor=valor_float,
+                    status_pagamento="Pendente",
+                    data_cadastro=datetime.now().date()
+                )
+                
+                self.session.add(acrescimo)
+                self.session.flush()
+                
+                return acrescimo.id
+                
+            return self._safe_query(query)
+            
+        except Exception as e:
+            print(f"ERRO ao adicionar fornecedor à proposta: {str(e)}")
+            raise
+    
+    def add_assistente_proposta(self, proposta_id, assistente_id, valor, observacoes=None):
+        """
+        Adiciona um assistente à proposta como um acréscimo
+        
+        Args:
+            proposta_id: ID da proposta
+            assistente_id: ID do assistente
+            valor: Valor do serviço
+            observacoes: Observações (opcional)
+            
+        Returns:
+            int: ID do acréscimo adicionado
+        """
+        try:
+            # Converter para tipos nativos
+            proposta_id_int = int(proposta_id)
+            assistente_id_int = int(assistente_id)
+            valor_float = float(valor)
+            
+            def query():
+                # Buscar assistente
+                assistente = self.session.query(Assistente).filter_by(id=assistente_id_int).first()
+                if not assistente:
+                    raise ValueError(f"Assistente ID {assistente_id} não encontrado")
+                    
+                # Buscar proposta
+                proposta = self.session.query(Proposta).filter_by(id=proposta_id_int).first()
+                if not proposta:
+                    raise ValueError(f"Proposta ID {proposta_id} não encontrada")
+                
+                # Criar acréscimo para o assistente
+                acrescimo = AcrescimoProposta(
+                    proposta_id=proposta_id_int,
+                    tipo="Assistente",
+                    fornecedor=assistente.nome,
+                    descricao=observacoes if observacoes else f"Serviço de {assistente.nome}",
+                    valor=valor_float,
+                    status_pagamento="Pendente",
+                    data_cadastro=datetime.now().date()
+                )
+                
+                self.session.add(acrescimo)
+                self.session.flush()
+                
+                return acrescimo.id
+                
+            return self._safe_query(query)
+            
+        except Exception as e:
+            print(f"ERRO ao adicionar assistente à proposta: {str(e)}")
+            raise

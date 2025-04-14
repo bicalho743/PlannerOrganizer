@@ -709,9 +709,23 @@ def show():
                                         observacao_fornecimento = st.text_area("Observações:", height=70)
                                         
                                         if st.form_submit_button("Adicionar Fornecedor"):
-                                            # Aqui precisamos implementar a função para adicionar fornecedor à proposta
-                                            st.success("Fornecedor adicionado com sucesso!")
-                                            st.info("Esta funcionalidade será implementada em breve.")
+                                            try:
+                                                # Adicionar fornecedor à proposta usando a nova função
+                                                acrescimo_id = st.session_state.db.add_fornecedor_proposta(
+                                                    proposta_id=proposta_exec_id,
+                                                    fornecedor_id=fornecedor_id,
+                                                    valor=valor_fornecimento,
+                                                    observacoes=observacao_fornecimento
+                                                )
+                                                
+                                                if acrescimo_id:
+                                                    st.success(f"Fornecedor adicionado com sucesso à proposta!")
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                                else:
+                                                    st.error("Erro ao adicionar fornecedor.")
+                                            except Exception as e:
+                                                st.error(f"Erro ao adicionar fornecedor: {str(e)}")
                                 else:
                                     st.warning("Nenhum fornecedor cadastrado no sistema.")
                                     st.write("Vá para a seção de Cadastros para adicionar fornecedores.")
