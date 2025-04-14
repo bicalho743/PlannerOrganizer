@@ -2,6 +2,8 @@ import os
 import sys
 import streamlit as st
 import logging
+import pandas as pd
+from datetime import datetime
 
 # Configurar logging
 logging.basicConfig(
@@ -230,6 +232,41 @@ try:
                             
                             # Exibir tabela
                             st.dataframe(df_exibicao)
+                            
+                            # Adicionar botões de ação para cada proposta
+                            st.subheader("Ações")
+                            col1, col2 = st.columns(2)
+                            
+                            with col1:
+                                proposta_id = st.number_input("ID da Proposta", min_value=1, step=1)
+                            
+                            with col2:
+                                # Filtrar a proposta selecionada para verificar o status
+                                proposta_selecionada = propostas[propostas['id'] == proposta_id]
+                                if not proposta_selecionada.empty:
+                                    status_atual = proposta_selecionada.iloc[0]['status']
+                                    st.write(f"Status atual: {status_atual}")
+                                    
+                                    # Mostrar botão de aprovação apenas para propostas em elaboração
+                                    if status_atual == "Em elaboração":
+                                        if st.button("Aprovar Proposta", key="aprovar_proposta"):
+                                            # Atualizar o status da proposta para "Aprovada"
+                                            data_aprovacao = datetime.now().date()
+                                            sucesso = st.session_state.db.update_proposta_status(
+                                                proposta_id=proposta_id,
+                                                novo_status="Aprovada",
+                                                data_aprovacao=data_aprovacao
+                                            )
+                                            
+                                            if sucesso:
+                                                st.success(f"Proposta {proposta_id} aprovada com sucesso!")
+                                                st.experimental_rerun()  # Recarregar a página para atualizar a tabela
+                                            else:
+                                                st.error(f"Erro ao aprovar proposta {proposta_id}")
+                                    elif status_atual == "Aprovada":
+                                        st.info("Esta proposta já está aprovada.")
+                                else:
+                                    st.warning("Selecione uma proposta válida.")
                         else:
                             st.info("Nenhuma proposta cadastrada.")
                     except Exception as e:
