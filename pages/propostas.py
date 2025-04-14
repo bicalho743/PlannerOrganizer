@@ -4,6 +4,7 @@ import time
 import os
 from datetime import datetime, timedelta
 import uuid
+import matplotlib.pyplot as plt
 
 def show():
     st.title("PROPOSTAS")
@@ -813,6 +814,162 @@ def show():
                         with exec_tab5:
                             st.subheader("Finalizar Proposta")
                             
+                            # Exibir resumo completo da proposta antes de finalizar
+                            try:
+                                # 1. Dados básicos da proposta
+                                st.write("### Dados Básicos")
+                                dados_basicos = pd.DataFrame({
+                                    "Item": ["ID", "Número", "Cliente", "Descrição", "Data de Início", "Data de Aprovação", "Valor Base", "Status"],
+                                    "Valor": [
+                                        proposta_exec.iloc[0]['id'],
+                                        proposta_exec.iloc[0]['numero'],
+                                        proposta_exec.iloc[0]['nome'],
+                                        proposta_exec.iloc[0]['descricao'],
+                                        proposta_exec.iloc[0]['data_inicio'].strftime('%d/%m/%Y') if pd.notna(proposta_exec.iloc[0]['data_inicio']) else 'N/A',
+                                        proposta_exec.iloc[0]['data_aprovacao'].strftime('%d/%m/%Y') if pd.notna(proposta_exec.iloc[0]['data_aprovacao']) else 'N/A',
+                                        f"R$ {float(proposta_exec.iloc[0]['valor']):.2f}",
+                                        proposta_exec.iloc[0]['status']
+                                    ]
+                                })
+                                st.dataframe(dados_basicos, hide_index=True, use_container_width=True)
+                                
+                                # 2. Produtos adicionados
+                                st.write("### Produtos")
+                                produtos = st.session_state.db.get_produtos_organizadores(proposta_exec_id)
+                                if not produtos.empty:
+                                    # Calcular valor total
+                                    produtos['valor_total'] = produtos['valor'] * produtos['quantidade']
+                                    total_produtos = produtos['valor_total'].sum()
+                                    
+                                    # Formatar para exibição
+                                    df_produtos = pd.DataFrame()
+                                    df_produtos['Nome'] = produtos['nome']
+                                    df_produtos['Valor Unit.'] = produtos['valor'].apply(lambda x: f"R$ {float(x):.2f}")
+                                    df_produtos['Quantidade'] = produtos['quantidade']
+                                    df_produtos['Valor Total'] = produtos['valor_total'].apply(lambda x: f"R$ {float(x):.2f}")
+                                    df_produtos['Cômodo'] = produtos['comodo']
+                                    
+                                    st.dataframe(df_produtos, hide_index=True, use_container_width=True)
+                                    st.info(f"Total Produtos: R$ {total_produtos:.2f}")
+                                else:
+                                    st.info("Nenhum produto adicionado a esta proposta.")
+                                
+                                # 3. Fornecedores
+                                st.write("### Fornecedores")
+                                fornecedores = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_exec_id, "FORNECEDOR")
+                                if not fornecedores.empty:
+                                    total_fornecedores = fornecedores['valor'].sum()
+                                    
+                                    # Formatar para exibição
+                                    df_fornecedores = pd.DataFrame()
+                                    df_fornecedores['Fornecedor'] = fornecedores['fornecedor']
+                                    df_fornecedores['Valor'] = fornecedores['valor'].apply(lambda x: f"R$ {float(x):.2f}")
+                                    df_fornecedores['Observações'] = fornecedores['observacoes']
+                                    
+                                    st.dataframe(df_fornecedores, hide_index=True, use_container_width=True)
+                                    st.info(f"Total Fornecedores: R$ {total_fornecedores:.2f}")
+                                else:
+                                    st.info("Nenhum fornecedor adicionado a esta proposta.")
+                                
+                                # 4. Assistentes
+                                st.write("### Assistentes")
+                                assistentes = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_exec_id, "ASSISTENTE")
+                                if not assistentes.empty:
+                                    total_assistentes = assistentes['valor'].sum()
+                                    
+                                    # Formatar para exibição
+                                    df_assistentes = pd.DataFrame()
+                                    df_assistentes['Assistente'] = assistentes['fornecedor']
+                                    df_assistentes['Valor'] = assistentes['valor'].apply(lambda x: f"R$ {float(x):.2f}")
+                                    df_assistentes['Observações'] = assistentes['observacoes']
+                                    
+                                    st.dataframe(df_assistentes, hide_index=True, use_container_width=True)
+                                    st.info(f"Total Assistentes: R$ {total_assistentes:.2f}")
+                                else:
+                                    st.info("Nenhum assistente adicionado a esta proposta.")
+                                
+                                # 5. Outros itens
+                                st.write("### Outros Itens")
+                                outros_itens = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_exec_id, "OUTROS")
+                                if not outros_itens.empty:
+                                    total_outros = outros_itens['valor'].sum()
+                                    
+                                    # Formatar para exibição
+                                    df_outros = pd.DataFrame()
+                                    df_outros['Descrição'] = outros_itens['descricao']
+                                    df_outros['Valor'] = outros_itens['valor'].apply(lambda x: f"R$ {float(x):.2f}")
+                                    
+                                    st.dataframe(df_outros, hide_index=True, use_container_width=True)
+                                    st.info(f"Total Outros: R$ {total_outros:.2f}")
+                                else:
+                                    st.info("Nenhum item adicional nesta proposta.")
+                                
+                                # 6. Resumo financeiro
+                                st.write("### Resumo Financeiro")
+                                
+                                # Calcular totais
+                                valor_base = float(proposta_exec.iloc[0]['valor'])
+                                valor_produtos = total_produtos if 'total_produtos' in locals() else 0
+                                valor_fornecedores = total_fornecedores if 'total_fornecedores' in locals() else 0
+                                valor_assistentes = total_assistentes if 'total_assistentes' in locals() else 0
+                                valor_outros = total_outros if 'total_outros' in locals() else 0
+                                
+                                valor_total = valor_base + valor_produtos + valor_fornecedores + valor_assistentes + valor_outros
+                                
+                                resumo = pd.DataFrame({
+                                    "Item": ["Valor Base", "Produtos", "Fornecedores", "Assistentes", "Outros", "Total Geral"],
+                                    "Valor": [
+                                        f"R$ {valor_base:.2f}",
+                                        f"R$ {valor_produtos:.2f}",
+                                        f"R$ {valor_fornecedores:.2f}",
+                                        f"R$ {valor_assistentes:.2f}",
+                                        f"R$ {valor_outros:.2f}",
+                                        f"R$ {valor_total:.2f}"
+                                    ]
+                                })
+                                
+                                st.dataframe(resumo, hide_index=True, use_container_width=True)
+                                
+                                # Gráfico de distribuição de valores
+                                st.write("### Distribuição de Valores")
+                                valores = {
+                                    'Valor Base': valor_base,
+                                    'Produtos': valor_produtos,
+                                    'Fornecedores': valor_fornecedores,
+                                    'Assistentes': valor_assistentes,
+                                    'Outros': valor_outros
+                                }
+                                
+                                # Filtrar apenas valores maiores que zero
+                                valores_filtrados = {k: v for k, v in valores.items() if v > 0}
+                                
+                                # Criar versão alternativa do gráfico usando plotly para maior compatibilidade
+                                import plotly.graph_objects as go
+                                
+                                if valores_filtrados:
+                                    labels = list(valores_filtrados.keys())
+                                    values = list(valores_filtrados.values())
+                                    
+                                    fig = go.Figure(data=[go.Pie(
+                                        labels=labels,
+                                        values=values,
+                                        hole=.3,
+                                        hoverinfo='label+percent',
+                                        textinfo='label+value'
+                                    )])
+                                    
+                                    fig.update_layout(
+                                        title="Distribuição de Valores da Proposta",
+                                        height=500
+                                    )
+                                    
+                                    st.plotly_chart(fig, use_container_width=True)
+                                
+                            except Exception as e:
+                                st.error(f"Erro ao gerar resumo da proposta: {str(e)}")
+                            
+                            # Botão para finalizar a proposta
+                            st.markdown("---")
                             if st.button("Marcar como Concluída", key=f"finalizar_{proposta_exec_id}"):
                                 try:
                                     data_conclusao = datetime.now().date()
