@@ -540,35 +540,125 @@ def show():
                                 st.error(f"Erro ao carregar andamentos: {str(e)}")
                         
                         with exec_tab2:
-                            st.subheader("Produtos")
+                            st.subheader("Adição à Proposta")
                             
-                            # Formulário para adicionar produtos
-                            with st.form(key=f"produto_form_{proposta_exec_id}"):
-                                nome_produto = st.text_input("Nome do produto:")
-                                descricao_produto = st.text_area("Descrição:", height=70)
-                                valor_produto = st.number_input("Valor unitário (R$):", min_value=0.0, format="%.2f")
-                                quantidade = st.number_input("Quantidade:", min_value=1, value=1)
-                                comodo_produto = st.text_input("Cômodo/Área:")
-                                
-                                if st.form_submit_button("Adicionar Produto"):
-                                    try:
-                                        produto_id = st.session_state.db.add_produto_organizador(
-                                            proposta_id=proposta_exec_id,
-                                            nome=nome_produto,
-                                            descricao=descricao_produto,
-                                            valor=valor_produto,
-                                            quantidade=quantidade,
-                                            comodo=comodo_produto
-                                        )
-                                        
-                                        if produto_id:
-                                            st.success("Produto adicionado com sucesso!")
-                                            time.sleep(1)
-                                            st.rerun()
+                            # Criação de abas para as diferentes formas de adicionar itens à proposta
+                            prod_tab1, prod_tab2 = st.tabs(["Adicionar Produto do Catálogo", "Adicionar OUTROS Itens"])
+                            
+                            # Tab 1: Adicionar produtos do catálogo
+                            with prod_tab1:
+                                try:
+                                    # Buscar produtos cadastrados
+                                    produtos_cadastrados = st.session_state.db.get_produtos()
+                                    
+                                    if not produtos_cadastrados.empty:
+                                        with st.form(key=f"produto_catalogo_form_{proposta_exec_id}"):
+                                            # Seleção de produto do catálogo
+                                            produto_id = st.selectbox(
+                                                "Selecione o produto:",
+                                                produtos_cadastrados['id'].tolist(),
+                                                format_func=lambda x: f"{produtos_cadastrados[produtos_cadastrados['id']==x]['nome'].iloc[0]} - R$ {float(produtos_cadastrados[produtos_cadastrados['id']==x]['preco_venda'].iloc[0]):.2f}"
+                                            )
+                                            
+                                            # Obter dados do produto selecionado
+                                            produto_info = produtos_cadastrados[produtos_cadastrados['id'] == produto_id].iloc[0]
+                                            
+                                            # Exibir informações do produto
+                                            st.write(f"**Descrição:** {produto_info['descricao']}")
+                                            st.write(f"**Categoria:** {produto_info['categoria']}")
+                                            
+                                            # Campos para configurar a adição
+                                            quantidade = st.number_input("Quantidade:", min_value=1, value=1)
+                                            comodo_produto = st.text_input("Cômodo/Área:")
+                                            
+                                            # Opção para ajustar o preço (padrão é o preço de venda)
+                                            usar_preco_padrao = st.checkbox("Usar preço padrão", value=True)
+                                            preco_personalizado = st.number_input(
+                                                "Preço personalizado (R$):", 
+                                                min_value=0.0, 
+                                                value=float(produto_info['preco_venda']),
+                                                format="%.2f",
+                                                disabled=usar_preco_padrao
+                                            )
+                                            
+                                            # Determinar qual preço usar
+                                            preco_final = float(produto_info['preco_venda']) if usar_preco_padrao else preco_personalizado
+                                            
+                                            if st.form_submit_button("Adicionar à Proposta"):
+                                                try:
+                                                    # Adicionar o produto à proposta
+                                                    produto_org_id = st.session_state.db.add_produto_organizador(
+                                                        proposta_id=proposta_exec_id,
+                                                        nome=produto_info['nome'],
+                                                        descricao=produto_info['descricao'],
+                                                        valor=preco_final,
+                                                        quantidade=quantidade,
+                                                        comodo=comodo_produto
+                                                    )
+                                                    
+                                                    if produto_org_id:
+                                                        st.success(f"Produto '{produto_info['nome']}' adicionado com sucesso!")
+                                                        time.sleep(1)
+                                                        st.rerun()
+                                                    else:
+                                                        st.error("Erro ao adicionar produto à proposta.")
+                                                except Exception as e:
+                                                    st.error(f"Erro ao adicionar produto: {str(e)}")
+                                    else:
+                                        st.warning("Não há produtos cadastrados no sistema.")
+                                        st.write("Vá para o módulo de Vendas > Produtos para cadastrar produtos.")
+                                except Exception as e:
+                                    st.error(f"Erro ao carregar produtos: {str(e)}")
+                            
+                            # Tab 2: Adicionar outros itens (não catalogados)
+                            with prod_tab2:
+                                with st.form(key=f"produto_outros_form_{proposta_exec_id}"):
+                                    # Campos para item personalizado
+                                    st.write("### Adicionar Item Personalizado")
+                                    nome_produto = st.text_input("Nome do item:")
+                                    descricao_produto = st.text_area("Descrição:", height=70)
+                                    valor_produto = st.number_input("Valor unitário (R$):", min_value=0.0, format="%.2f")
+                                    quantidade = st.number_input("Quantidade:", min_value=1, value=1)
+                                    comodo_produto = st.text_input("Cômodo/Área:")
+                                    
+                                    # Visualização do valor total
+                                    valor_total = valor_produto * quantidade
+                                    st.write(f"**Valor Total: R$ {valor_total:.2f}**")
+                                    
+                                    # Botão para adicionar
+                                    if st.form_submit_button("Adicionar Item"):
+                                        if not nome_produto:
+                                            st.error("O nome do item é obrigatório.")
                                         else:
-                                            st.error("Erro ao adicionar produto.")
-                                    except Exception as e:
-                                        st.error(f"Erro ao adicionar produto: {str(e)}")
+                                            try:
+                                                # Adicionar o "OUTROS" à proposta
+                                                produto_id = st.session_state.db.add_produto_organizador(
+                                                    proposta_id=proposta_exec_id,
+                                                    nome=nome_produto,
+                                                    descricao=descricao_produto,
+                                                    valor=valor_produto,
+                                                    quantidade=quantidade,
+                                                    comodo=comodo_produto if comodo_produto else "Geral"
+                                                )
+                                                
+                                                # Adicionar um acréscimo à proposta (opcional)
+                                                if produto_id:
+                                                    # Também pode adicionar um acréscimo na tabela de acréscimos
+                                                    acrescimo_id = st.session_state.db.add_acrescimo_proposta(
+                                                        proposta_id=proposta_exec_id,
+                                                        tipo="OUTROS",
+                                                        valor=valor_total,
+                                                        descricao=nome_produto,
+                                                        fornecedor="Item Adicional"
+                                                    )
+                                                    
+                                                    st.success(f"Item '{nome_produto}' adicionado com sucesso!")
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                                else:
+                                                    st.error("Erro ao adicionar item.")
+                                            except Exception as e:
+                                                st.error(f"Erro ao adicionar item: {str(e)}")
                             
                             # Mostrar produtos adicionados
                             try:
