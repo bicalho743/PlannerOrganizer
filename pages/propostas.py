@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import time
 import os
+import plotly.express as px
 from datetime import datetime, timedelta
 import uuid
 
@@ -778,6 +779,85 @@ def show():
                                 
                         with exec_tab5:
                             st.subheader("Finalizar Proposta")
+                            
+                            # Resumo de todos os acréscimos da proposta antes de finalizar
+                            st.markdown("### Resumo da Proposta")
+                            # Mostrar informações da proposta
+                            proposta_exec_dict = proposta_exec.iloc[0].to_dict()
+                            proposta_exec_cliente = proposta_exec.iloc[0]['nome']
+                            
+                            st.write(f"Proposta: #{proposta_exec_id} - {proposta_exec_dict['descricao']}")
+                            st.write(f"Cliente: {proposta_exec_cliente}")
+                            st.write(f"Valor Base: R$ {float(proposta_exec_dict['valor']):.2f}")
+                            
+                            # 1. Buscar todos os acréscimos
+                            try:
+                                acrescimos = st.session_state.db.get_acrescimos_proposta(proposta_exec_id)
+                                
+                                if not acrescimos.empty:
+                                    # Calcular o valor total de todos os acréscimos
+                                    valor_total_acrescimos = acrescimos['valor'].sum()
+                                    
+                                    # Mostrar valor total da proposta com acréscimos
+                                    valor_total_proposta = float(proposta_exec_dict['valor']) + valor_total_acrescimos
+                                    st.metric("Valor Total da Proposta", f"R$ {valor_total_proposta:.2f}", 
+                                             delta=f"R$ {valor_total_acrescimos:.2f} em acréscimos")
+                                    
+                                    # Separar acréscimos por tipo para melhor visualização
+                                    st.markdown("### Todos os Acréscimos Adicionados")
+                                    
+                                    # Criar um dataframe com todos os acréscimos formatados para exibição
+                                    df_acrescimos = pd.DataFrame()
+                                    df_acrescimos['Tipo'] = acrescimos['tipo'].apply(lambda x: x.upper())
+                                    df_acrescimos['Fornecedor/Responsável'] = acrescimos['fornecedor']
+                                    df_acrescimos['Descrição'] = acrescimos['descricao']
+                                    df_acrescimos['Valor'] = acrescimos['valor'].apply(lambda x: f"R$ {float(x):.2f}")
+                                    df_acrescimos['Status Pagamento'] = acrescimos['status_pagamento']
+                                    
+                                    st.dataframe(df_acrescimos)
+                                    
+                                    # Mostrar resumo por tipo de acréscimo
+                                    resumo_tipos = acrescimos.groupby('tipo')['valor'].sum().reset_index()
+                                    
+                                    # Mostrar em formato de tabela
+                                    col1, col2 = st.columns(2)
+                                    
+                                    with col1:
+                                        st.markdown("#### Resumo por Tipo")
+                                        
+                                        dados_resumo = []
+                                        for _, tipo in resumo_tipos.iterrows():
+                                            dados_resumo.append([
+                                                tipo['tipo'].upper(),
+                                                f"R$ {float(tipo['valor']):.2f}"
+                                            ])
+                                            
+                                        dados_resumo.append(["TOTAL", f"R$ {float(valor_total_acrescimos):.2f}"])
+                                        
+                                        # Criar dataframe para exibição
+                                        df_resumo = pd.DataFrame(dados_resumo, columns=["Tipo", "Valor Total"])
+                                        st.table(df_resumo)
+                                    
+                                    with col2:
+                                        # Mostrar gráfico de pizza
+                                        fig = px.pie(resumo_tipos, values='valor', names='tipo', 
+                                                   title='Distribuição de Valores por Tipo',
+                                                   color_discrete_sequence=px.colors.qualitative.Pastel)
+                                        st.plotly_chart(fig, use_container_width=True)
+                                        
+                                else:
+                                    st.info("Não há acréscimos registrados para esta proposta.")
+                                    # Mostrar apenas o valor base
+                                    st.metric("Valor Total da Proposta", f"R$ {float(proposta_exec_dict['valor']):.2f}")
+                                
+                            except Exception as e:
+                                st.error(f"Erro ao carregar acréscimos: {str(e)}")
+                            
+                            # Linha divisória
+                            st.markdown("---")
+                            
+                            st.markdown("### Finalizar e Gerar Relatórios")
+                            st.warning("Ao marcar uma proposta como concluída, ela será movida para a seção de 'Propostas Finalizadas'")
                             
                             if st.button("Marcar como Concluída", key=f"finalizar_{proposta_exec_id}"):
                                 try:
