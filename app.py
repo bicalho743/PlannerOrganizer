@@ -184,7 +184,9 @@ try:
                                     status="Em elaboração",  # Status inicial
                                     data_inicio=data_inicio,
                                     data_fim=data_fim,
-                                    prazo_entrega=prazo
+                                    previsao_dias=prazo,  # Prazo em dias (número)
+                                    # O prazo_entrega deve ser do tipo date
+                                    prazo_entrega=data_inicio  # Usamos data_inicio como base
                                 )
                                 
                                 if novo_numero:
