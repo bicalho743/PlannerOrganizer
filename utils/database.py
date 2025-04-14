@@ -1824,7 +1824,7 @@ class Database:
                 try:
                     # Excluir registros financeiros relacionados primeiro
                     # Esta é a tabela que estava causando a violação de chave estrangeira
-                    self.session.query(Financeiro).filter_by(proposta_id=proposta_id).delete()
+                    self.session.query(Transacao).filter_by(proposta_id=proposta_id).delete()
                 
                     # Excluir outros registros relacionados
                     self.session.query(AndamentoProposta).filter_by(proposta_id=proposta_id).delete()
