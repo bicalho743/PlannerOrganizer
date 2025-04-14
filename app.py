@@ -269,20 +269,14 @@ with st.sidebar.expander("ℹ️ Informações do Sistema", expanded=False):
 # A navegação é controlada pelos botões do menu principal
 # Os botões já atualizam st.session_state.current_page
 
-# Conteúdo principal da página atual
-if st.session_state.current_page == "Dashboard":
-    from pages.dashboard import show
-    show()
-elif st.session_state.current_page == "Cadastros":
-    from pages.cadastros import show
-    show()
-elif st.session_state.current_page == "Propostas":
-    from pages.propostas import show
-    show()
-elif st.session_state.current_page == "Financeiro":
-    from pages.financeiro import show
-    show()
-elif st.session_state.current_page == "Relatórios":
-    from pages.relatorios import show
-    show()
+# O conteúdo principal já é exibido acima, sem duplicação
+# Se a página for Propostas, já temos o código inserido diretamente no app.py
+# Não precisamos chamar o módulo externo pages.propostas
+if st.session_state.current_page in ["Dashboard", "Cadastros", "Financeiro", "Relatórios"]:
+    module_name = st.session_state.current_page.lower()
+    try:
+        module = __import__(f"pages.{module_name}", fromlist=["show"])
+        module.show()
+    except ImportError as e:
+        st.error(f"Erro ao carregar módulo {module_name}: {str(e)}")
 # Não temos mais a opção de importação no menu
