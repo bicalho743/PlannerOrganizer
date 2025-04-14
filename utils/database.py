@@ -1792,10 +1792,35 @@ class Database:
         return self._safe_query(query)
 
     def excluir_proposta(self, proposta_id):
-        """Exclui uma proposta e seus registros relacionados"""
+        """Exclui uma proposta e seus registros relacionados usando o ID da proposta"""
         def query():
             proposta = self.session.query(Proposta).filter_by(id=proposta_id).first()
             if proposta:
+                try:
+                    # Excluir registros financeiros relacionados primeiro
+                    # Esta é a tabela que estava causando a violação de chave estrangeira
+                    self.session.query(Transacao).filter_by(proposta_id=proposta_id).delete()
+                
+                    # Excluir outros registros relacionados
+                    self.session.query(AndamentoProposta).filter_by(proposta_id=proposta_id).delete()
+                    self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id).delete()
+                    self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).delete()
+                    
+                    # Excluir a proposta
+                    self.session.delete(proposta)
+                    return True, "Proposta excluída com sucesso"
+                except Exception as e:
+                    self.session.rollback()
+                    return False, f"Erro ao excluir proposta: {str(e)}"
+            return False, "Proposta não encontrada"
+        return self._safe_query(query)
+    
+    def excluir_proposta_por_numero(self, numero_proposta):
+        """Exclui uma proposta pelo seu número (não pelo ID)"""
+        def query():
+            proposta = self.session.query(Proposta).filter_by(numero=numero_proposta).first()
+            if proposta:
+                proposta_id = proposta.id
                 try:
                     # Excluir registros financeiros relacionados primeiro
                     # Esta é a tabela que estava causando a violação de chave estrangeira

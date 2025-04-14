@@ -490,14 +490,23 @@ def show():
                     
                     # Adicionar área para exclusão de proposta
                     with st.expander("Excluir Proposta em Execução"):
-                        proposta_exc_id = st.number_input("ID da Proposta a Excluir", min_value=1, step=1, key="id_proposta_execucao_excluir")
-                        proposta_exc = propostas_em_execucao[propostas_em_execucao['id'] == proposta_exc_id]
+                        # Obter lista de números de propostas em execução para o select box
+                        numeros_propostas = propostas_em_execucao['numero'].tolist()
+                        numeros_propostas.sort()  # Ordenar para facilitar a seleção
+                        
+                        proposta_numero = st.selectbox(
+                            "Selecione o número da proposta a excluir:",
+                            numeros_propostas,
+                            key="numero_proposta_execucao_excluir"
+                        )
+                        
+                        proposta_exc = propostas_em_execucao[propostas_em_execucao['numero'] == proposta_numero]
                         
                         if not proposta_exc.empty:
-                            st.warning(f"Você está prestes a excluir a proposta #{proposta_exc.iloc[0]['numero']} - {proposta_exc.iloc[0]['descricao']}")
+                            st.warning(f"Você está prestes a excluir a proposta #{proposta_numero} - {proposta_exc.iloc[0]['descricao']}")
                             if st.button("CONFIRMAR EXCLUSÃO", key="confirmar_exclusao_execucao"):
                                 try:
-                                    sucesso, mensagem = st.session_state.db.excluir_proposta(proposta_exc_id)
+                                    sucesso, mensagem = st.session_state.db.excluir_proposta_por_numero(proposta_numero)
                                     if sucesso:
                                         st.success("Proposta excluída com sucesso!")
                                         time.sleep(1)
@@ -1271,14 +1280,23 @@ def show():
                     
                     # Adicionar área para exclusão de proposta
                     with st.expander("Excluir Proposta"):
-                        proposta_exc_id = st.number_input("ID da Proposta a Excluir", min_value=1, step=1, key="id_proposta_todas_excluir")
-                        proposta_exc = propostas_filtradas[propostas_filtradas['id'] == proposta_exc_id]
+                        # Obter lista de números de propostas para o select box
+                        numeros_propostas = propostas_filtradas['numero'].tolist()
+                        numeros_propostas.sort()  # Ordenar para facilitar a seleção
+                        
+                        proposta_numero = st.selectbox(
+                            "Selecione o número da proposta a excluir:",
+                            numeros_propostas,
+                            key="numero_proposta_todas_excluir"
+                        )
+                        
+                        proposta_exc = propostas_filtradas[propostas_filtradas['numero'] == proposta_numero]
                         
                         if not proposta_exc.empty:
-                            st.warning(f"Você está prestes a excluir a proposta #{proposta_exc.iloc[0]['numero']} - {proposta_exc.iloc[0]['descricao']}")
+                            st.warning(f"Você está prestes a excluir a proposta #{proposta_numero} - {proposta_exc.iloc[0]['descricao']}")
                             if st.button("CONFIRMAR EXCLUSÃO", key="confirmar_exclusao_todas"):
                                 try:
-                                    sucesso, mensagem = st.session_state.db.excluir_proposta(proposta_exc_id)
+                                    sucesso, mensagem = st.session_state.db.excluir_proposta_por_numero(proposta_numero)
                                     if sucesso:
                                         st.success("Proposta excluída com sucesso!")
                                         time.sleep(1)
