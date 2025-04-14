@@ -142,6 +142,7 @@ class Proposta(Base):
     data_fim = Column(Date)
     prazo_entrega = Column(Date)
     data_proposta = Column(Date, default=datetime.now().date())
+    data_aprovacao = Column(Date, nullable=True)  # Data de aprovação da proposta
     status_pagamento_base = Column(String, default='Pendente')
     previsao_dias = Column(Integer)  # Dias previstos para execução
     data_inicio_execucao = Column(Date)  # Data de início efetivo da execução
@@ -1281,6 +1282,8 @@ class Database:
                 # Verificar mudança de status para "Aprovada"
                 if status is not None and status == "Aprovada" and proposta.status != "Aprovada":
                     proposta_aprovada = True
+                    # Registrar a data de aprovação
+                    proposta.data_aprovacao = datetime.now().date()
                 
                 # Atualizar apenas os campos fornecidos
                 if descricao is not None:
