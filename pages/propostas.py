@@ -758,11 +758,61 @@ def show():
                         with exec_tab3:
                             st.subheader("Fornecedores")
                             
-                            # 1. Exibir fornecedores já adicionados à proposta
                             try:
-                                fornecedores_atuais = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_exec_id, "FORNECEDOR")
+                                # 1. Formulário para adicionar novo fornecedor
+                                st.markdown("### Adicionar Novo Fornecedor")
                                 
-                                if not fornecedores_atuais.empty:
+                                # Obter lista de fornecedores cadastrados
+                                fornecedores = st.session_state.db.get_fornecedores()
+                                
+                                # 2. Se estiver editando, mostrar formulário de edição
+                                if hasattr(st.session_state, 'editing_fornecedor_id') and st.session_state.editing_fornecedor_id:
+                                    st.markdown("### Editar Fornecedor")
+                                    
+                                    with st.form(key=f"edit_fornecedor_form_{st.session_state.editing_fornecedor_id}"):
+                                        valor_edit = st.number_input(
+                                            "Valor:", 
+                                            min_value=0.01, 
+                                            value=st.session_state.editing_fornecedor_valor,
+                                            format="%.2f"
+                                        )
+                                        
+                                        descricao_edit = st.text_area(
+                                            "Descrição:", 
+                                            value=st.session_state.editing_fornecedor_descricao,
+                                            height=70
+                                        )
+                                        
+                                        col1, col2 = st.columns(2)
+                                        
+                                        with col1:
+                                            if st.form_submit_button("Salvar Alterações"):
+                                                if st.session_state.db.atualizar_acrescimo(
+                                                    st.session_state.editing_fornecedor_id,
+                                                    valor=valor_edit,
+                                                    descricao=descricao_edit
+                                                ):
+                                                    st.success("Fornecedor atualizado com sucesso!")
+                                                    # Limpar estado de edição
+                                                    st.session_state.editing_fornecedor_id = None
+                                                    st.session_state.editing_fornecedor_valor = None
+                                                    st.session_state.editing_fornecedor_descricao = None
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                                else:
+                                                    st.error("Erro ao atualizar fornecedor.")
+                                        
+                                        with col2:
+                                            if st.form_submit_button("Cancelar"):
+                                                # Limpar estado de edição
+                                                st.session_state.editing_fornecedor_id = None
+                                                st.session_state.editing_fornecedor_valor = None
+                                                st.session_state.editing_fornecedor_descricao = None
+                                                st.rerun()
+                                
+                                if not fornecedores.empty:
+                                    # Formulário para adicionar fornecedor à proposta
+                                    with st.form(key=f"fornecedor_form_{proposta_exec_id}"):
                                     st.markdown("### Fornecedores Adicionados")
                                     
                                     # Criar tabela para exibição dos fornecedores
