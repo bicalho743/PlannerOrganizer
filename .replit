@@ -55,6 +55,10 @@ args = "Ajustar Data Proposta"
 task = "workflow.run"
 args = "Start application"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Limpar Propostas"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -205,6 +209,21 @@ task = "shell.exec"
 args = "streamlit run app.py"
 waitForPort = 5000
 
+[[workflows.workflow]]
+name = "Limpar Propostas"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run limpar_propostas.py --server.port 8509 --server.address 0.0.0.0"
+waitForPort = 8509
+
 [[ports]]
 localPort = 443
 externalPort = 3001
@@ -240,6 +259,10 @@ externalPort = 4200
 [[ports]]
 localPort = 8507
 externalPort = 5000
+
+[[ports]]
+localPort = 8509
+externalPort = 8081
 
 [[ports]]
 localPort = 8510

@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, func, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session
@@ -1463,7 +1463,8 @@ class Database:
         
         return self._safe_query(query)
 
-    def add_acrescimo_proposta(self, proposta_id, tipo, valor, descricao=None, fornecedor=None, status_pagamento='Pendente'):
+    def add_acrescimo_proposta(self, proposta_id, tipo, valor, descricao=None, fornecedor=None, 
+                               status_pagamento='Pendente', percentual_comissao=None):
         """
         Adiciona um acréscimo a uma proposta
         
@@ -1474,9 +1475,10 @@ class Database:
             descricao: Descrição do acréscimo (opcional)
             fornecedor: Nome do fornecedor ou assistente (opcional)
             status_pagamento: Status do pagamento (Pendente, Pago)
+            percentual_comissao: Percentual de comissão para acréscimos do tipo Fornecedor (opcional)
             
         Returns:
-            int: ID do acréscimo adicionado
+            dict: Informações sobre o acréscimo adicionado e transações geradas
         """
         # Log para diagnóstico
         print(f"DEBUG: Adicionando acréscimo à proposta ID={proposta_id}, tipo={tipo}, fornecedor={fornecedor}, valor={valor}")
@@ -1491,12 +1493,26 @@ class Database:
             
             # Garantir que a descrição não seja None
             descricao_texto = str(descricao) if descricao else f"Acréscimo de {tipo}"
-                
+            
+            # Converter percentual_comissao se fornecido
+            percentual_comissao_float = None
+            if percentual_comissao is not None:
+                try:
+                    percentual_comissao_float = float(percentual_comissao)
+                    if percentual_comissao_float < 0 or percentual_comissao_float > 100:
+                        percentual_comissao_float = None
+                except (ValueError, TypeError):
+                    percentual_comissao_float = None
+                    
             def query():
                 # Verificar se a proposta existe na sessão atual
                 proposta = self.session.query(Proposta).filter_by(id=proposta_id_int).first()
                 if not proposta:
                     raise ValueError(f"Proposta ID {proposta_id} não encontrada no banco de dados")
+                
+                cliente = self.session.query(Cliente).filter_by(id=proposta.cliente_id).first()
+                if not cliente:
+                    raise ValueError(f"Cliente ID {proposta.cliente_id} não encontrado no banco de dados")
                 
                 try:
                     print(f"DEBUG: Criando acréscimo para proposta ID={proposta_id_int}, tipo={tipo}, fornecedor={fornecedor_nome}")
@@ -1516,15 +1532,53 @@ class Database:
                     self.session.add(acrescimo)
                     self.session.flush()  # Flush para obter o ID sem commitar ainda
                     
+                    # Estrutura para armazenar os resultados
+                    resultado = {
+                        "acrescimo_id": None,
+                        "comissao_gerada": False,
+                        "comissao_id": None,
+                        "valor_comissao": 0.0
+                    }
+                    
                     # Garantir que temos um ID inteiro válido
                     if acrescimo.id is not None:
                         acrescimo_id = int(acrescimo.id)
                         print(f"DEBUG: Acréscimo criado com sucesso, ID={acrescimo_id}")
                         
-                        # Gerar transação financeira para este acréscimo (opcional)
-                        # Se necessário, adicione código aqui para gerar transações financeiras
+                        resultado["acrescimo_id"] = acrescimo_id
                         
-                        return acrescimo_id
+                        # Se for do tipo Fornecedor e tiver percentual de comissão, gerar recebimento automático
+                        if tipo == "Fornecedor" and percentual_comissao_float is not None and percentual_comissao_float > 0:
+                            # Calcular valor da comissão
+                            valor_comissao = valor_float * (percentual_comissao_float / 100.0)
+                            
+                            # Criar recebimento para a comissão
+                            receita = Receita(
+                                cliente_id=proposta.cliente_id,
+                                tipo="Comissão",
+                                categoria="Comissão de Fornecedor",
+                                descricao=f"Comissão de {percentual_comissao_float}% sobre fornecimento de {fornecedor_nome}",
+                                valor=valor_comissao,
+                                data_vencimento=datetime.now().date() + timedelta(days=30),  # Vencimento em 30 dias
+                                data_recebimento=None,  # Ainda não recebido
+                                status="Pendente",
+                                forma_pagamento=None,  # Será definido quando for recebido
+                                proposta_id=proposta_id_int,
+                                cliente_nome=cliente.nome if cliente else "Cliente não identificado"
+                            )
+                            
+                            self.session.add(receita)
+                            self.session.flush()
+                            
+                            if receita.id is not None:
+                                comissao_id = int(receita.id)
+                                resultado["comissao_gerada"] = True
+                                resultado["comissao_id"] = comissao_id
+                                resultado["valor_comissao"] = valor_comissao
+                                
+                                print(f"DEBUG: Comissão gerada com sucesso, ID={comissao_id}, Valor={valor_comissao}")
+                        
+                        return resultado
                     else:
                         raise ValueError("Não foi possível obter ID do acréscimo após flush")
                     
@@ -2356,3 +2410,51 @@ class Database:
         except Exception as e:
             print(f"ERRO ao adicionar assistente à proposta: {str(e)}")
             raise
+            
+    def limpar_propostas(self):
+        """
+        Remove todas as propostas e dados relacionados, reiniciando a sequência de numeração.
+        Mantém os clientes, fornecedores e assistentes intactos.
+        
+        Returns:
+            bool: True se a operação foi bem-sucedida, False caso contrário
+        """
+        def query():
+            try:
+                # Deletar tabelas na ordem correta para evitar violação de chave estrangeira
+                # Primeiro os andamentos de proposta
+                self.session.query(AndamentoProposta).delete()
+                
+                # Remover produtos associados a propostas
+                self.session.query(ProdutoOrganizador).delete()
+                
+                # Remover acréscimos
+                self.session.query(AcrescimoProposta).delete()
+                
+                # Remover transações financeiras relacionadas a propostas
+                # (isso é opcional, dependendo da sua estrutura de dados)
+                receitas = self.session.query(Receita).filter(Receita.tipo == "Proposta").all()
+                for receita in receitas:
+                    self.session.delete(receita)
+                
+                despesas = self.session.query(Despesa).filter(Despesa.tipo == "Proposta").all()
+                for despesa in despesas:
+                    self.session.delete(despesa)
+                
+                # Finalmente, remover as propostas
+                self.session.query(Proposta).delete()
+                
+                # Reset da sequência (específico para PostgreSQL)
+                self.session.execute("ALTER SEQUENCE propostas_id_seq RESTART WITH 1;")
+                self.session.execute("ALTER SEQUENCE propostas_numero_seq RESTART WITH 1;")
+                
+                # Commit das alterações
+                self.session.commit()
+                return True
+                
+            except Exception as e:
+                self.session.rollback()
+                print(f"Erro ao limpar propostas: {str(e)}")
+                raise
+                
+        return self._safe_query(query)
