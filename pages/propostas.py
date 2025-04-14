@@ -707,27 +707,22 @@ def show():
                                         )
                                         
                                         # Obter o percentual de comissão padrão do fornecedor selecionado (se houver)
-                                        percentual_padrao = 0.0
+                                        # Buscar percentual de comissão do fornecedor selecionado
+                                        percentual_comissao = 0.0
                                         try:
                                             fornecedor_selecionado = fornecedores[fornecedores['id'] == fornecedor_id]
                                             if not fornecedor_selecionado.empty and 'percentual_comissao' in fornecedor_selecionado.columns:
-                                                percentual_padrao = fornecedor_selecionado['percentual_comissao'].iloc[0] or 0.0
+                                                percentual_comissao = fornecedor_selecionado['percentual_comissao'].iloc[0] or 0.0
                                         except (KeyError, IndexError):
                                             pass
                                         
                                         valor_fornecimento = st.number_input("Valor do fornecimento (R$):", min_value=0.0, format="%.2f")
                                         
-                                        # Campo para o percentual de comissão
+                                        # Exibir o percentual de comissão que está configurado no cadastro do fornecedor (somente leitura)
                                         col1, col2 = st.columns([3, 1])
                                         with col1:
-                                            percentual_comissao = st.number_input(
-                                                "Percentual de comissão (%):",
-                                                min_value=0.0,
-                                                max_value=100.0,
-                                                value=percentual_padrao,
-                                                format="%.2f",
-                                                help="Digite o percentual de comissão a receber sobre este fornecimento. Será gerada automaticamente uma comissão a receber no financeiro."
-                                            )
+                                            st.info(f"Percentual de comissão configurado para este fornecedor: {percentual_comissao:.2f}%")
+                                            st.caption("O percentual de comissão é definido no cadastro do fornecedor")
                                         
                                         with col2:
                                             if percentual_comissao > 0:

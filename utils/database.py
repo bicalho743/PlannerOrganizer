@@ -2374,7 +2374,7 @@ class Database:
             fornecedor_id: ID do fornecedor
             valor: Valor do fornecimento
             observacoes: Observações (opcional)
-            percentual_comissao: Percentual de comissão a receber (opcional)
+            percentual_comissao: Parâmetro mantido por compatibilidade, mas será ignorado em favor do percentual cadastrado no fornecedor
             
         Returns:
             dict: Informações sobre o acréscimo adicionado e comissão gerada
@@ -2396,9 +2396,9 @@ class Database:
                 if not proposta:
                     raise ValueError(f"Proposta ID {proposta_id} não encontrada")
                 
-                # Se não foi informado o percentual, usar o cadastrado no fornecedor (se existir)
-                if percentual_comissao is None and fornecedor.percentual_comissao is not None and fornecedor.percentual_comissao > 0:
-                    percentual_comissao = fornecedor.percentual_comissao
+                # Usar SEMPRE o percentual cadastrado no fornecedor
+                percentual_fornecedor = fornecedor.percentual_comissao if fornecedor.percentual_comissao is not None else 0.0
+                print(f"DEBUG: Usando percentual de comissão do fornecedor: {percentual_fornecedor}%")
                 
                 # Criar acréscimo usando a função existente
                 resultado = self.add_acrescimo_proposta(
@@ -2408,7 +2408,7 @@ class Database:
                     descricao=observacoes if observacoes else f"Fornecimento de {fornecedor.descricao}",
                     fornecedor=fornecedor.descricao,
                     status_pagamento="Pendente",
-                    percentual_comissao=percentual_comissao
+                    percentual_comissao=percentual_fornecedor
                 )
                 
                 return resultado
