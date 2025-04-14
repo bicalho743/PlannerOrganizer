@@ -17,10 +17,6 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Start application"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Teste Importação"
 
 [[workflows.workflow.tasks]]
@@ -55,20 +51,9 @@ args = "Examinar Tabela Propostas"
 task = "workflow.run"
 args = "Ajustar Data Proposta"
 
-[[workflows.workflow]]
-name = "Start application"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
 [[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run src/main.py --server.port 5000 --server.address 0.0.0.0 --server.headless true"
-waitForPort = 5000
+task = "workflow.run"
+args = "Start application"
 
 [[workflows.workflow]]
 name = "Teste Importação"
@@ -204,6 +189,21 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run ajustar_data_proposta.py --server.port 8520 --server.address 0.0.0.0"
 waitForPort = 8520
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run app.py --server.port 5000 --server.address 0.0.0.0 --server.headless true"
+waitForPort = 5000
 
 [[ports]]
 localPort = 443
