@@ -495,6 +495,7 @@ class Database:
                 'data_fim': p.data_fim,
                 'prazo_entrega': p.prazo_entrega,
                 'data_proposta': p.data_proposta,
+                'data_aprovacao': p.data_aprovacao,  # Adicionando o campo data_aprovacao
                 'status_pagamento_base': p.status_pagamento_base,
                 'previsao_dias': p.previsao_dias,
                 'data_inicio_execucao': p.data_inicio_execucao,
