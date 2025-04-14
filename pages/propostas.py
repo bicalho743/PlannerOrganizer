@@ -618,10 +618,14 @@ def show():
                     )
                 
                 # Aplicar filtros
+                # Convertendo data_filter para timestamp para comparação correta
+                data_timestamp = pd.Timestamp(data_filter)
+                
                 propostas_filtradas = propostas_com_clientes[
                     (propostas_com_clientes['status'].isin(status_filter)) &
                     (propostas_com_clientes['nome'].isin(clientes_filter)) &
-                    (propostas_com_clientes['data_proposta'] >= pd.Timestamp(data_filter))
+                    # Usando .dt.date para comparar apenas a parte da data
+                    (propostas_com_clientes['data_proposta'].apply(lambda x: pd.Timestamp(x).date() if pd.notna(x) else pd.NaT) >= data_filter)
                 ]
                 
                 # Preparar DataFrame para exibição
