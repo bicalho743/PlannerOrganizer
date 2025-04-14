@@ -117,9 +117,9 @@ def show():
             st.header("Propostas em Aberto")
             
             if not propostas.empty:
-                # Filtrar propostas que não estão em execução ou finalizadas
+                # Filtrar apenas propostas em elaboração ou aguardando aprovação
                 propostas_em_aberto = propostas_com_clientes[
-                    ~propostas_com_clientes['status'].isin(['Em execução', 'Concluída'])
+                    propostas_com_clientes['status'].isin(['Em elaboração', 'Aguardando aprovação'])
                 ]
                 
                 if not propostas_em_aberto.empty:
