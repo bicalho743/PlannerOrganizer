@@ -102,6 +102,7 @@ MENU_PRINCIPAL = {
     "📊 Dashboard": "Dashboard",
     "👥 Cadastros": "Cadastros",
     "📝 Propostas": "Propostas",
+    "🛒 Vendas": "Vendas",
     "💰 Financeiro": "Financeiro",
     "📈 Relatórios": "Relatórios"
 }
@@ -124,6 +125,9 @@ try:
         show()
     elif st.session_state.current_page == "Propostas":
         from pages.propostas import show
+        show()
+    elif st.session_state.current_page == "Vendas":
+        from pages.vendas import show
         show()
     elif st.session_state.current_page == "Financeiro":
         from pages.financeiro import show

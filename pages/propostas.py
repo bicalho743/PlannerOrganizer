@@ -246,14 +246,15 @@ def show():
                                         if st.button("Cancelar", key=f"cancelar_exclusao_{proposta_id}"):
                                             st.info("Exclusão cancelada.")
                                             st.rerun()
-                            
-                            # Botão para editar proposta independente do status
+                        
+                        # Botão para editar proposta independente do status
+                        with col3:
                             if st.button("Editar Proposta", key="editar_proposta_em_aberto"):
                                 st.session_state.proposta_para_editar = proposta_id
                                 st.session_state.modo_edicao_proposta = True
                                 st.rerun()
-                        else:
-                            st.warning("Selecione uma proposta válida.")
+                    else:
+                        st.warning("Selecione uma proposta válida.")
                     
                     # Formulário de edição condicional
                     if 'modo_edicao_proposta' in st.session_state and st.session_state.modo_edicao_proposta:
