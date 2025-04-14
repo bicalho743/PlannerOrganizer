@@ -1162,7 +1162,7 @@ def show():
                                             st.success(f"Relatório para cliente gerado com sucesso!")
                                             
                                             # Usar um botão com key única para evitar conflitos
-                                            download_key = f"download_cliente_{proposta_dict['id']}_{datetime.now().strftime('%H%M%S')}"
+                                            download_key = f"download_cliente_{proposta_dict['numero']}_{datetime.now().strftime('%H%M%S')}"
                                             st.write(f"DEBUG: Criando botão com key: {download_key}")
                                             
                                             # Adicionando try/except específico para o download_button
@@ -1183,7 +1183,7 @@ def show():
                                     st.error(f"Erro ao gerar relatório para cliente: {str(e)}")
                         
                         with col2:
-                            if st.button("Gerar Relatório Interno", key=f"relatorio_interno_{proposta_final_id}"):
+                            if st.button("Gerar Relatório Interno", key=f"relatorio_interno_{proposta_numero}"):
                                 try:
                                     # Obter dados da proposta
                                     proposta_dict = proposta_final.iloc[0].to_dict()
