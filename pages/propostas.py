@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import time
+import os
 from datetime import datetime, timedelta
 import uuid
 
@@ -908,11 +909,83 @@ def show():
                         
                         with col1:
                             if st.button("Gerar Relatório para Cliente", key=f"relatorio_cliente_{proposta_final_id}"):
-                                st.info("Gerando relatório para cliente... Esta funcionalidade será implementada em breve.")
+                                # Gerar relatório para cliente
+                                try:
+                                    # Obter dados completos da proposta
+                                    proposta_dict = proposta_final.iloc[0].to_dict()
+                                    
+                                    # Obter dados do cliente
+                                    cliente_id = proposta_dict['cliente_id']
+                                    cliente = st.session_state.db.get_cliente_by_id(cliente_id)
+                                    cliente_dict = cliente.iloc[0].to_dict() if not cliente.empty else {}
+                                    
+                                    # Obter acréscimos públicos (excluindo assistentes)
+                                    acrescimos = st.session_state.db.get_acrescimos_proposta(proposta_dict['id'])
+                                    
+                                    # Verifica se tem diretório para salvar os PDFs
+                                    os.makedirs('pdfs', exist_ok=True)
+                                    
+                                    # Nome do arquivo
+                                    filename = f"pdfs/proposta_cliente_{proposta_dict['id']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                                    
+                                    # Gerar PDF
+                                    from utils.pdf_generator import gerar_pdf_cliente
+                                    pdf_path = gerar_pdf_cliente(proposta_dict, cliente_dict, acrescimos, filename)
+                                    
+                                    # Disponibilizar para download
+                                    with open(pdf_path, "rb") as file:
+                                        btn = st.download_button(
+                                            label="Baixar Relatório do Cliente",
+                                            data=file,
+                                            file_name=f"Proposta_{proposta_dict['id']}_Cliente.pdf",
+                                            mime="application/pdf",
+                                            key=f"download_cliente_{proposta_dict['id']}"
+                                        )
+                                    
+                                    st.success("Relatório para cliente gerado com sucesso!")
+                                    
+                                except Exception as e:
+                                    st.error(f"Erro ao gerar relatório para cliente: {str(e)}")
                         
                         with col2:
                             if st.button("Gerar Relatório Interno", key=f"relatorio_interno_{proposta_final_id}"):
-                                st.info("Gerando relatório interno... Esta funcionalidade será implementada em breve.")
+                                # Gerar relatório interno
+                                try:
+                                    # Obter dados completos da proposta
+                                    proposta_dict = proposta_final.iloc[0].to_dict()
+                                    
+                                    # Obter dados do cliente
+                                    cliente_id = proposta_dict['cliente_id']
+                                    cliente = st.session_state.db.get_cliente_by_id(cliente_id)
+                                    cliente_dict = cliente.iloc[0].to_dict() if not cliente.empty else {}
+                                    
+                                    # Obter todos os acréscimos (incluindo assistentes)
+                                    acrescimos = st.session_state.db.get_acrescimos_proposta(proposta_dict['id'])
+                                    
+                                    # Verifica se tem diretório para salvar os PDFs
+                                    os.makedirs('pdfs', exist_ok=True)
+                                    
+                                    # Nome do arquivo
+                                    filename = f"pdfs/proposta_interna_{proposta_dict['id']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                                    
+                                    # Gerar PDF
+                                    from utils.pdf_generator import gerar_pdf_interno
+                                    pdf_path = gerar_pdf_interno(proposta_dict, cliente_dict, acrescimos, filename)
+                                    
+                                    # Disponibilizar para download
+                                    with open(pdf_path, "rb") as file:
+                                        btn = st.download_button(
+                                            label="Baixar Relatório Interno",
+                                            data=file,
+                                            file_name=f"Proposta_{proposta_dict['id']}_Interno.pdf",
+                                            mime="application/pdf",
+                                            key=f"download_interno_{proposta_dict['id']}"
+                                        )
+                                    
+                                    st.success("Relatório interno gerado com sucesso!")
+                                    
+                                except Exception as e:
+                                    st.error(f"Erro ao gerar relatório interno: {str(e)}")
                         
                         # Botões de editar/excluir
                         st.subheader("Gerenciar Proposta")
