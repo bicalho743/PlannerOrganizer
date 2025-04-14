@@ -752,9 +752,23 @@ def show():
                                         observacao_assistente = st.text_area("Observações:", height=70)
                                         
                                         if st.form_submit_button("Adicionar Assistente"):
-                                            # Aqui precisamos implementar a função para adicionar assistente à proposta
-                                            st.success("Assistente adicionado com sucesso!")
-                                            st.info("Esta funcionalidade será implementada em breve.")
+                                            try:
+                                                # Adicionar assistente à proposta usando a nova função
+                                                acrescimo_id = st.session_state.db.add_assistente_proposta(
+                                                    proposta_id=proposta_exec_id,
+                                                    assistente_id=assistente_id,
+                                                    valor=valor_assistente,
+                                                    observacoes=observacao_assistente
+                                                )
+                                                
+                                                if acrescimo_id:
+                                                    st.success(f"Assistente adicionado com sucesso à proposta!")
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                                else:
+                                                    st.error("Erro ao adicionar assistente.")
+                                            except Exception as e:
+                                                st.error(f"Erro ao adicionar assistente: {str(e)}")
                                 else:
                                     st.warning("Nenhum assistente cadastrado no sistema.")
                                     st.write("Vá para a seção de Cadastros para adicionar assistentes.")
@@ -834,11 +848,73 @@ def show():
                         
                         with col1:
                             if st.button("Gerar Relatório para Cliente", key=f"relatorio_cliente_{proposta_final_id}"):
-                                st.info("Gerando relatório para cliente... Esta funcionalidade será implementada em breve.")
+                                try:
+                                    # Obter dados da proposta
+                                    proposta_dict = proposta_final.iloc[0].to_dict()
+                                    
+                                    # Obter dados do cliente
+                                    cliente = st.session_state.db.get_cliente_by_id(proposta_dict['cliente_id'])
+                                    cliente_dict = cliente.iloc[0].to_dict() if not cliente.empty else {'nome': 'Cliente não encontrado'}
+                                    
+                                    # Obter acréscimos da proposta
+                                    acrescimos = st.session_state.db.get_acrescimos_proposta(proposta_dict['id'])
+                                    
+                                    # Definir caminho do arquivo
+                                    relatorio_path = f"pdfs/relatorio_cliente_{proposta_dict['numero']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                                    
+                                    # Mostrar spinner enquanto gera o relatório
+                                    with st.spinner("Gerando relatório para cliente..."):
+                                        from utils.pdf_generator import gerar_pdf_cliente
+                                        pdf_path = gerar_pdf_cliente(proposta_dict, cliente_dict, acrescimos, relatorio_path)
+                                        
+                                        # Criar link para download
+                                        with open(pdf_path, "rb") as pdf_file:
+                                            pdf_bytes = pdf_file.read()
+                                        
+                                        st.success(f"Relatório para cliente gerado com sucesso!")
+                                        st.download_button(
+                                            label="Download do Relatório",
+                                            data=pdf_bytes,
+                                            file_name=f"relatorio_cliente_{proposta_dict['numero']}.pdf",
+                                            mime="application/pdf"
+                                        )
+                                except Exception as e:
+                                    st.error(f"Erro ao gerar relatório para cliente: {str(e)}")
                         
                         with col2:
                             if st.button("Gerar Relatório Interno", key=f"relatorio_interno_{proposta_final_id}"):
-                                st.info("Gerando relatório interno... Esta funcionalidade será implementada em breve.")
+                                try:
+                                    # Obter dados da proposta
+                                    proposta_dict = proposta_final.iloc[0].to_dict()
+                                    
+                                    # Obter dados do cliente
+                                    cliente = st.session_state.db.get_cliente_by_id(proposta_dict['cliente_id'])
+                                    cliente_dict = cliente.iloc[0].to_dict() if not cliente.empty else {'nome': 'Cliente não encontrado'}
+                                    
+                                    # Obter acréscimos da proposta
+                                    acrescimos = st.session_state.db.get_acrescimos_proposta(proposta_dict['id'])
+                                    
+                                    # Definir caminho do arquivo
+                                    relatorio_path = f"pdfs/relatorio_interno_{proposta_dict['numero']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                                    
+                                    # Mostrar spinner enquanto gera o relatório
+                                    with st.spinner("Gerando relatório interno..."):
+                                        from utils.pdf_generator import gerar_pdf_interno
+                                        pdf_path = gerar_pdf_interno(proposta_dict, cliente_dict, acrescimos, relatorio_path)
+                                        
+                                        # Criar link para download
+                                        with open(pdf_path, "rb") as pdf_file:
+                                            pdf_bytes = pdf_file.read()
+                                        
+                                        st.success(f"Relatório interno gerado com sucesso!")
+                                        st.download_button(
+                                            label="Download do Relatório Interno",
+                                            data=pdf_bytes,
+                                            file_name=f"relatorio_interno_{proposta_dict['numero']}.pdf",
+                                            mime="application/pdf"
+                                        )
+                                except Exception as e:
+                                    st.error(f"Erro ao gerar relatório interno: {str(e)}")
                     else:
                         st.warning("Selecione uma proposta válida finalizada.")
                 else:
