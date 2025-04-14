@@ -161,8 +161,12 @@ def show():
                                 # Definir parâmetros com base no novo status
                                 if novo_status == "Aprovada":
                                     data_aprovacao = datetime.now().date()
+                                    # Automaticamente mudar para "Em execução" quando aprovada
+                                    novo_status = "Em execução"
+                                    data_inicio_execucao = datetime.now().date()
+                                    status_execucao = "Iniciada"
                                 
-                                if novo_status == "Em execução":
+                                elif novo_status == "Em execução":
                                     data_inicio_execucao = datetime.now().date()
                                     status_execucao = "Iniciada"
                                     

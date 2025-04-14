@@ -884,6 +884,10 @@ class Database:
     def update_proposta_status(self, proposta_id, novo_status, data_aprovacao=None):
         """
         Atualiza o status de uma proposta e opcionalmente define a data de aprovação
+        Se o status for "Em execução", automaticamente:
+        - Define data_inicio_execucao para a data atual
+        - Define status_execucao como "Iniciada"
+        - Cria transação financeira para cliente a receber
         
         Args:
             proposta_id: ID da proposta a ser atualizada
@@ -905,6 +909,42 @@ class Database:
             proposta.status = novo_status
             if data_aprovacao:
                 proposta.data_aprovacao = data_aprovacao
+                
+            # Definir campos adicionais se o status for "Em execução"
+            if novo_status == "Em execução":
+                proposta.data_inicio_execucao = datetime.now().date()
+                proposta.status_execucao = "Iniciada"
+                
+                # Processar a geração de transação financeira
+                # Verificar se já existem transações para esta proposta
+                transacoes_existentes = self.session.query(Transacao).filter_by(
+                    proposta_id=proposta_id
+                ).count()
+                
+                if transacoes_existentes == 0:
+                    # Buscar o cliente da proposta
+                    cliente = self.session.query(Cliente).filter_by(id=proposta.cliente_id).first()
+                    if cliente:
+                        # Criar uma transação financeira de receita a receber
+                        nome_cliente = cliente.nome
+                        
+                        transacao = Transacao(
+                            tipo="receita_a_receber",
+                            descricao=f"Proposta #{proposta.numero} - {proposta.descricao} - {nome_cliente}",
+                            valor=proposta.valor,
+                            categoria="Propostas",
+                            subcategoria=proposta.tipo_proposta,
+                            tipo_receita="Projeto",
+                            origem_id=proposta.id,
+                            origem_tipo="proposta",
+                            tipo_conta="PF",
+                            status="Pendente",
+                            proposta_id=proposta.id,
+                            classificacao="receita",
+                            data=proposta.data_proposta or datetime.now().date()
+                        )
+                        self.session.add(transacao)
+                        print(f"DEBUG: Transação financeira criada para proposta {proposta_id}")
             
             # Registrar a mudança de status
             print(f"DEBUG: Proposta {proposta_id} atualizada com status '{novo_status}'")
