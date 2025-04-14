@@ -462,8 +462,8 @@ def show():
                         lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
                     )
                     
-                    # Exibir tabela
-                    st.dataframe(df_execucao)
+                    # Exibir tabela sem o índice automático do pandas
+                    st.dataframe(df_execucao, hide_index=True)
                     
                     # Ações para propostas em execução
                     st.subheader("Gerenciar Execução")
