@@ -125,8 +125,8 @@ def show():
                 if not propostas_em_aberto.empty:
                     # Preparar DataFrame para exibição
                     df_em_aberto = pd.DataFrame()
-                    # Removido o ID da tabela para mostrar apenas o número da proposta
-                    df_em_aberto['Número'] = propostas_em_aberto['numero']
+                    # Usamos o ID da proposta como número único para identificação
+                    df_em_aberto['ID'] = propostas_em_aberto['id']
                     df_em_aberto['Cliente'] = propostas_em_aberto['nome']
                     df_em_aberto['Descrição'] = propostas_em_aberto['descricao']
                     df_em_aberto['Valor (R$)'] = propostas_em_aberto['valor'].apply(lambda x: f"R$ {float(x):.2f}")
@@ -359,8 +359,8 @@ def show():
                 if not propostas_em_execucao.empty:
                     # Preparar DataFrame para exibição
                     df_execucao = pd.DataFrame()
-                    # Removido o ID da tabela para mostrar apenas o número da proposta
-                    df_execucao['Número'] = propostas_em_execucao['numero']
+                    # Usamos o ID da proposta como número único para identificação
+                    df_execucao['ID'] = propostas_em_execucao['id']
                     df_execucao['Cliente'] = propostas_em_execucao['nome']
                     df_execucao['Descrição'] = propostas_em_execucao['descricao']
                     df_execucao['Valor (R$)'] = propostas_em_execucao['valor'].apply(lambda x: f"R$ {float(x):.2f}")
@@ -874,8 +874,8 @@ def show():
                 if not propostas_finalizadas.empty:
                     # Preparar DataFrame para exibição
                     df_finalizadas = pd.DataFrame()
-                    # Removido o ID da tabela para mostrar apenas o número da proposta
-                    df_finalizadas['Número'] = propostas_finalizadas['numero']
+                    # Usamos o ID da proposta como número único para identificação
+                    df_finalizadas['ID'] = propostas_finalizadas['id']
                     df_finalizadas['Cliente'] = propostas_finalizadas['nome']
                     df_finalizadas['Descrição'] = propostas_finalizadas['descricao']
                     df_finalizadas['Valor (R$)'] = propostas_finalizadas['valor'].apply(lambda x: f"R$ {float(x):.2f}")
@@ -892,7 +892,7 @@ def show():
                     st.dataframe(df_finalizadas)
                     
                     # Ações para propostas finalizadas
-                    st.subheader("Documentos")
+                    st.subheader("Ações")
                     
                     proposta_final_id = st.number_input("ID da Proposta", min_value=1, step=1, key="id_proposta_finalizada")
                     
@@ -900,8 +900,10 @@ def show():
                     proposta_final = propostas_finalizadas[propostas_finalizadas['id'] == proposta_final_id]
                     
                     if not proposta_final.empty:
-                        st.write(f"Proposta #{proposta_final.iloc[0]['numero']} - {proposta_final.iloc[0]['descricao']}")
+                        st.write(f"Proposta #{proposta_final.iloc[0]['id']} - {proposta_final.iloc[0]['descricao']}")
                         
+                        # Botões de relatórios
+                        st.subheader("Documentos")
                         col1, col2 = st.columns(2)
                         
                         with col1:
@@ -911,6 +913,53 @@ def show():
                         with col2:
                             if st.button("Gerar Relatório Interno", key=f"relatorio_interno_{proposta_final_id}"):
                                 st.info("Gerando relatório interno... Esta funcionalidade será implementada em breve.")
+                        
+                        # Botões de editar/excluir
+                        st.subheader("Gerenciar Proposta")
+                        col_edit, col_delete = st.columns(2)
+                        
+                        with col_edit:
+                            if st.button("Editar Proposta", key="editar_proposta_finalizada"):
+                                st.session_state.proposta_para_editar = proposta_final_id
+                                st.session_state.modo_edicao_proposta = True
+                                st.rerun()
+                        
+                        with col_delete:
+                            if st.button("Excluir Proposta", key="excluir_proposta_finalizada"):
+                                if 'confirmar_exclusao_finalizada' not in st.session_state:
+                                    st.session_state.confirmar_exclusao_finalizada = False
+                                    st.session_state.proposta_para_excluir_finalizada = proposta_final_id
+                                
+                                st.session_state.confirmar_exclusao_finalizada = True
+                                st.session_state.proposta_para_excluir_finalizada = proposta_final_id
+                                st.warning(f"Tem certeza que deseja excluir a proposta #{proposta_final.iloc[0]['id']}?")
+                                
+                                confirm_col1, confirm_col2 = st.columns(2)
+                                with confirm_col1:
+                                    if st.button("Sim, excluir", key="confirmar_exclusao_finalizada"):
+                                        # Excluir proposta
+                                        sucesso = st.session_state.db.excluir_proposta(proposta_final_id)
+                                        
+                                        if sucesso:
+                                            st.success(f"Proposta excluída com sucesso!")
+                                            # Limpar estado
+                                            if 'confirmar_exclusao_finalizada' in st.session_state:
+                                                del st.session_state.confirmar_exclusao_finalizada
+                                            if 'proposta_para_excluir_finalizada' in st.session_state:
+                                                del st.session_state.proposta_para_excluir_finalizada
+                                            time.sleep(1)
+                                            st.rerun()
+                                        else:
+                                            st.error(f"Erro ao excluir proposta {proposta_final_id}")
+                                
+                                with confirm_col2:
+                                    if st.button("Cancelar", key="cancelar_exclusao_finalizada"):
+                                        # Limpar estado
+                                        if 'confirmar_exclusao_finalizada' in st.session_state:
+                                            del st.session_state.confirmar_exclusao_finalizada
+                                        if 'proposta_para_excluir_finalizada' in st.session_state:
+                                            del st.session_state.proposta_para_excluir_finalizada
+                                        st.rerun()
                     else:
                         st.warning("Selecione uma proposta válida finalizada.")
                 else:
@@ -962,8 +1011,8 @@ def show():
                 # Preparar DataFrame para exibição
                 if not propostas_filtradas.empty:
                     df_todas = pd.DataFrame()
-                    # Removido o ID da tabela para mostrar apenas o número da proposta
-                    df_todas['Número'] = propostas_filtradas['numero']
+                    # Usamos o ID da proposta como número único para identificação
+                    df_todas['ID'] = propostas_filtradas['id']
                     df_todas['Cliente'] = propostas_filtradas['nome']
                     df_todas['Descrição'] = propostas_filtradas['descricao']
                     df_todas['Valor (R$)'] = propostas_filtradas['valor'].apply(lambda x: f"R$ {float(x):.2f}")
@@ -989,6 +1038,65 @@ def show():
                     
                     # Exibir tabela
                     st.dataframe(df_todas)
+                    
+                    # Ações para qualquer proposta
+                    st.subheader("Gerenciar Propostas")
+                    
+                    proposta_acao_id = st.number_input("ID da Proposta", min_value=1, step=1, key="id_proposta_todas")
+                    
+                    # Verificar se a proposta existe
+                    proposta_acao = propostas_filtradas[propostas_filtradas['id'] == proposta_acao_id]
+                    
+                    if not proposta_acao.empty:
+                        st.write(f"Proposta selecionada: {proposta_acao.iloc[0]['descricao']} - {proposta_acao.iloc[0]['status']}")
+                        
+                        # Botões de ação
+                        col_edit, col_delete = st.columns(2)
+                        
+                        with col_edit:
+                            if st.button("Editar Proposta", key="editar_proposta_todas"):
+                                st.session_state.proposta_para_editar = proposta_acao_id
+                                st.session_state.modo_edicao_proposta = True
+                                st.rerun()
+                        
+                        with col_delete:
+                            if st.button("Excluir Proposta", key="excluir_proposta_todas"):
+                                if 'confirmar_exclusao_todas' not in st.session_state:
+                                    st.session_state.confirmar_exclusao_todas = False
+                                    st.session_state.proposta_para_excluir_todas = proposta_acao_id
+                                
+                                st.session_state.confirmar_exclusao_todas = True
+                                st.session_state.proposta_para_excluir_todas = proposta_acao_id
+                                st.warning(f"Tem certeza que deseja excluir a proposta #{proposta_acao.iloc[0]['numero']}?")
+                                
+                                confirm_col1, confirm_col2 = st.columns(2)
+                                with confirm_col1:
+                                    if st.button("Sim, excluir", key="confirmar_exclusao_todas"):
+                                        # Excluir proposta
+                                        sucesso = st.session_state.db.excluir_proposta(proposta_acao_id)
+                                        
+                                        if sucesso:
+                                            st.success(f"Proposta excluída com sucesso!")
+                                            # Limpar estado
+                                            if 'confirmar_exclusao_todas' in st.session_state:
+                                                del st.session_state.confirmar_exclusao_todas
+                                            if 'proposta_para_excluir_todas' in st.session_state:
+                                                del st.session_state.proposta_para_excluir_todas
+                                            time.sleep(1)
+                                            st.rerun()
+                                        else:
+                                            st.error(f"Erro ao excluir proposta {proposta_acao_id}")
+                                
+                                with confirm_col2:
+                                    if st.button("Cancelar", key="cancelar_exclusao_todas"):
+                                        # Limpar estado
+                                        if 'confirmar_exclusao_todas' in st.session_state:
+                                            del st.session_state.confirmar_exclusao_todas
+                                        if 'proposta_para_excluir_todas' in st.session_state:
+                                            del st.session_state.proposta_para_excluir_todas
+                                        st.rerun()
+                    else:
+                        st.warning("Selecione uma proposta válida.")
                     
                     # Mostrar resumo
                     st.subheader("Resumo")
