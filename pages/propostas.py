@@ -194,37 +194,48 @@ def show():
                                     st.error(f"Erro ao atualizar proposta {proposta_id}")
                                     del st.session_state[alterar_status_key]
                     
-                    # Preparar colunas para exibição
-                    df_exibicao = pd.DataFrame()
-                    df_exibicao['ID'] = propostas_display['id']
-                    df_exibicao['Número'] = propostas_display['numero']
-                    df_exibicao['Cliente'] = propostas_display['nome'] 
-                    df_exibicao['Descrição'] = propostas_display['descricao']
-                    df_exibicao['Valor (R$)'] = propostas_display['valor_formatado']
-                    df_exibicao['Tipo'] = propostas_display['tipo_proposta']
-                    df_exibicao['Início'] = propostas_display['data_inicio_formatada']
-                    df_exibicao['Prazo (dias)'] = propostas_display['previsao_dias']
+                    # Construir interface com seletores de status direto na tabela
                     
-                    # Exibir tabela
-                    st.dataframe(df_exibicao)
+                    # Cabeçalho e descrição
+                    st.write("Selecione uma proposta abaixo para editar ou alterar o status:")
                     
-                    # Criar tabela de seletores de status abaixo
-                    col1, col2, col3 = st.columns([1, 2, 1])
+                    # Layout com 4 colunas. A última vai conter os controles (cada linha terá seu próprio seletor)
+                    col_id, col_info, col_status, col_export = st.columns([1, 5, 3, 1])
                     
-                    with col2:
-                        st.write("### Alterar Status da Proposta")
-                        for idx, proposta in propostas_display.iterrows():
-                            proposta_id = proposta['id']
-                            status_atual = proposta['status']
+                    with col_id:
+                        st.markdown("**ID**")
+                    with col_info:
+                        st.markdown("**Informações da Proposta**")
+                    with col_status:
+                        st.markdown("**Alterar Status**")
+                    with col_export:
+                        st.markdown("**PDF**")
+                    
+                    # Exibir cada proposta com seus controles
+                    for idx, proposta in propostas_display.iterrows():
+                        proposta_id = proposta['id']
+                        status_atual = proposta['status']
+                        
+                        # Criar container para a linha da proposta
+                        with st.container():
+                            # 4 colunas: ID, Info, Status Selector, Export
+                            col_id, col_info, col_status, col_export = st.columns([1, 5, 3, 1])
                             
-                            # Criar um container para cada linha
-                            with st.container():
-                                # Criar 3 colunas: ID, Status Selector, Submit button
-                                id_col, status_col, btn_col = st.columns([1, 4, 1])
-                                
-                                with id_col:
-                                    st.write(f"**ID: {proposta_id}**")
-                                
+                            # Coluna 1: ID
+                            with col_id:
+                                st.write(f"**{proposta_id}**")
+                            
+                            # Coluna 2: Informações da proposta
+                            with col_info:
+                                st.markdown(f"""
+                                **#{proposta['numero']} - {proposta['nome']}**  
+                                {proposta['descricao']}  
+                                **Valor:** {proposta['valor_formatado']} | **Tipo:** {proposta['tipo_proposta']}  
+                                **Início:** {proposta['data_inicio_formatada']} | **Prazo:** {proposta['previsao_dias']} dias
+                                """)
+                            
+                            # Coluna 3: Seletor de status com botão para salvar
+                            with col_status:
                                 # Definir opções de status com base no fluxo de trabalho
                                 opcoes_status = []
                                 if status_atual == "Em elaboração":
@@ -257,74 +268,75 @@ def show():
                                 # Adicionar opção de exclusão
                                 opcoes_status.append("Excluir")
                                 
-                                # Índice padrão
+                                # Índice padrão para o seletor
                                 try:
                                     status_index = opcoes_status.index(status_atual)
                                 except ValueError:
                                     status_index = 0
                                 
+                                # Criar duas colunas para o seletor e o botão
+                                status_col, btn_col = st.columns([3, 1])
+                                
                                 with status_col:
-                                    # Exibir seletor de status
+                                    # Seletor de status
                                     novo_status = st.selectbox(
-                                        f"Proposta #{proposta['numero']} - {proposta['nome']}",
+                                        f"Status atual: {status_atual}",
                                         opcoes_status,
                                         index=status_index,
                                         format_func=lambda x: f"❌ Excluir proposta" if x == "Excluir" else x,
-                                        key=f"status_sel_{proposta_id}"
+                                        key=f"status_sel_{proposta_id}",
+                                        label_visibility="collapsed"
                                     )
                                 
                                 with btn_col:
-                                    # Botão de atualização
+                                    # Botão de salvar alteração
                                     if st.button("Salvar", key=f"btn_save_{proposta_id}"):
                                         if novo_status == status_atual:
-                                            st.success(f"Proposta mantida como '{status_atual}'.")
+                                            st.success("✓")
                                         elif novo_status == "Excluir":
-                                            if st.button("Confirmar", key=f"confirm_del_{proposta_id}"):
+                                            st.warning("⚠️")
+                                            confirmar_key = f"confirm_del_{proposta_id}"
+                                            if st.button("Confirmar", key=confirmar_key):
                                                 st.session_state[f"alterar_status_{proposta_id}"] = "Excluir"
                                                 st.rerun()
                                         else:
                                             st.session_state[f"alterar_status_{proposta_id}"] = novo_status
                                             st.rerun()
+                            
+                            # Coluna 4: Botão para exportar PDF
+                            with col_export:
+                                if st.button("PDF", key=f"pdf_{proposta_id}"):
+                                    from utils.propostas_helper import gerar_pdf_proposta
+                                    
+                                    # Gerar o PDF
+                                    sucesso, mensagem, arquivo = gerar_pdf_proposta(
+                                        db=st.session_state.db,
+                                        proposta_id=proposta_id
+                                    )
+                                    
+                                    if sucesso and arquivo:
+                                        # Ler o arquivo para download
+                                        with open(arquivo, "rb") as file:
+                                            pdf_bytes = file.read()
+                                        
+                                        # Oferecer o download
+                                        proposta_numero = proposta['numero']
+                                        st.download_button(
+                                            label="⬇️",
+                                            data=pdf_bytes,
+                                            file_name=f"proposta_{proposta_numero}.pdf",
+                                            mime="application/pdf",
+                                            key=f"download_pdf_{proposta_id}"
+                                        )
+                                        st.success("✓")
+                                    else:
+                                        st.error(f"Erro: {mensagem}")
+                            
+                            # Separador entre propostas
+                            st.markdown("---")
                     
-                    # Barra separadora
+                    # Barra separadora para separar da área de edição de proposta
                     st.divider()
-                    
-                    # Mostrar a área de exportação de PDF abaixo da tabela
-                    st.subheader("Exportar Proposta em PDF")
-                    proposta_pdf_id = st.number_input("ID da Proposta:", min_value=1, step=1, key="pdf_proposta_id")
-                    
-                    # Botão para gerar PDF
-                    if st.button("Gerar PDF da Proposta", key="gerar_pdf_proposta"):
-                        # Verificar se proposta existe
-                        proposta_pdf = propostas_com_clientes[propostas_com_clientes['id'] == proposta_pdf_id]
-                        if not proposta_pdf.empty:
-                            from utils.propostas_helper import gerar_pdf_proposta
-                            
-                            # Gerar o PDF
-                            sucesso, mensagem, arquivo = gerar_pdf_proposta(
-                                db=st.session_state.db,
-                                proposta_id=proposta_pdf_id
-                            )
-                            
-                            if sucesso and arquivo:
-                                # Ler o arquivo para download
-                                with open(arquivo, "rb") as file:
-                                    pdf_bytes = file.read()
-                                
-                                # Oferecer o download
-                                proposta_numero = proposta_pdf.iloc[0]['numero']
-                                st.download_button(
-                                    label="Baixar PDF",
-                                    data=pdf_bytes,
-                                    file_name=f"proposta_{proposta_numero}.pdf",
-                                    mime="application/pdf",
-                                    key="download_pdf_proposta"
-                                )
-                                st.success("PDF gerado com sucesso!")
-                            else:
-                                st.error(f"Erro ao gerar PDF: {mensagem}")
-                        else:
-                            st.error(f"Proposta ID={proposta_pdf_id} não encontrada.")
                     
                     # Formulário de edição condicional
                     if 'modo_edicao_proposta' in st.session_state and st.session_state.modo_edicao_proposta:

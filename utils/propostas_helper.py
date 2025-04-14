@@ -172,9 +172,22 @@ def gerar_pdf_proposta(db, proposta_id, custom_filename=None):
             return False, f"Proposta ID={proposta_id} não encontrada.", None
             
         # Buscar cliente
-        cliente = db.get_cliente_by_id(proposta['cliente_id'])
-        if cliente is None:
-            return False, "Cliente não encontrado.", None
+        try:
+            # Obter clientes e procurar o cliente específico
+            clientes = db.get_clientes()
+            cliente = None
+            cliente_id = int(proposta['cliente_id'])
+            
+            if not clientes.empty:
+                cliente_found = clientes[clientes['id'] == cliente_id]
+                if not cliente_found.empty:
+                    cliente = cliente_found.iloc[0]
+            
+            if cliente is None:
+                return False, f"Cliente ID={cliente_id} não encontrado.", None
+        except Exception as e:
+            print(f"DEBUG HELPER ERROR: Erro ao buscar cliente: {str(e)}")
+            return False, f"Erro ao buscar cliente: {str(e)}", None
             
         # Converter cliente para dicionário se necessário
         cliente_dict = cliente
