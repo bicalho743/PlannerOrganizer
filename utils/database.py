@@ -1675,10 +1675,13 @@ class Database:
                     print(f"DEBUG: Proposta ID={proposta_id} não encontrada")
                     return pd.DataFrame()
                 
-                # Obter acréscimos do tipo especificado
+                # Obter acréscimos do tipo especificado (garantindo que o tipo seja maiúsculo)
+                tipo_upper = tipo.upper() if tipo else "OUTROS"
+                print(f"DEBUG: Buscando acréscimos com tipo={tipo_upper}")
+                
                 acrescimos = self.session.query(AcrescimoProposta).filter_by(
                     proposta_id=proposta_id, 
-                    tipo=tipo
+                    tipo=tipo_upper
                 ).order_by(AcrescimoProposta.data_cadastro).all()
                 
                 if not acrescimos:
@@ -2403,7 +2406,7 @@ class Database:
                 # Criar acréscimo usando a função existente
                 resultado = self.add_acrescimo_proposta(
                     proposta_id=proposta_id_int,
-                    tipo="Fornecedor",
+                    tipo="FORNECEDOR",  # Garantir que o tipo está em maiúsculo
                     valor=valor_float,
                     descricao=observacoes if observacoes else f"Fornecimento de {fornecedor.descricao}",
                     fornecedor=fornecedor.descricao,
