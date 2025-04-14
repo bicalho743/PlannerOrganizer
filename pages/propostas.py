@@ -453,7 +453,7 @@ def show():
                 if not propostas_em_execucao.empty:
                     # Preparar DataFrame para exibição
                     df_execucao = pd.DataFrame()
-                    df_execucao['Nº Proposta'] = propostas_em_execucao['numero']
+                    df_execucao['ID'] = propostas_em_execucao['id']  # Mostrando apenas o ID como pedido
                     df_execucao['Cliente'] = propostas_em_execucao['nome']
                     df_execucao['Descrição'] = propostas_em_execucao['descricao']
                     df_execucao['Valor (R$)'] = propostas_em_execucao['valor'].apply(lambda x: f"R$ {float(x):.2f}")
