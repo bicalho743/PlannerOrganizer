@@ -932,42 +932,31 @@ def show():
                                 try:
                                     # Obter dados da proposta
                                     proposta_dict = proposta_final.iloc[0].to_dict()
-                                    st.write(f"DEBUG: Proposta ID: {proposta_dict['id']}, Cliente ID: {proposta_dict['cliente_id']}")
                                     
                                     # Obter dados do cliente
-                                    st.write(f"DEBUG: Buscando cliente com ID {proposta_dict['cliente_id']}")
                                     cliente = st.session_state.db.get_cliente_by_id(proposta_dict['cliente_id'])
-                                    st.write(f"DEBUG: Cliente encontrado?: {not cliente.empty}")
                                     cliente_dict = cliente.iloc[0].to_dict() if not cliente.empty else {'nome': 'Cliente não encontrado'}
-                                    st.write(f"DEBUG: Nome do cliente: {cliente_dict.get('nome', 'N/A')}")
                                     
                                     # Obter acréscimos da proposta
-                                    st.write(f"DEBUG: Buscando acréscimos da proposta {proposta_dict['id']}")
                                     acrescimos = st.session_state.db.get_acrescimos_proposta(proposta_dict['id'])
-                                    st.write(f"DEBUG: Acréscimos encontrados: {len(acrescimos) if not acrescimos.empty else 0}")
                                     
                                     # Definir caminho do arquivo
                                     relatorio_path = f"pdfs/relatorio_cliente_{proposta_dict['numero']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-                                    st.write(f"DEBUG: Caminho do relatório: {relatorio_path}")
                                     
                                     # Mostrar spinner enquanto gera o relatório
                                     with st.spinner("Gerando relatório para cliente..."):
                                         from utils.pdf_generator import gerar_pdf_cliente
                                         pdf_path = gerar_pdf_cliente(proposta_dict, cliente_dict, acrescimos, relatorio_path)
-                                        st.write(f"DEBUG: PDF gerado em: {pdf_path}")
-                                        st.write(f"DEBUG: O arquivo existe? {os.path.exists(pdf_path)}")
                                         
                                         try:
                                             # Criar link para download
                                             with open(pdf_path, "rb") as pdf_file:
                                                 pdf_bytes = pdf_file.read()
                                             
-                                            st.write(f"DEBUG: Tamanho do PDF: {len(pdf_bytes)} bytes")
                                             st.success(f"Relatório para cliente gerado com sucesso!")
                                             
                                             # Usar um botão com key única para evitar conflitos
                                             download_key = f"download_cliente_{proposta_dict['id']}_{datetime.now().strftime('%H%M%S')}"
-                                            st.write(f"DEBUG: Criando botão com key: {download_key}")
                                             
                                             # Adicionando try/except específico para o download_button
                                             try:
@@ -978,7 +967,6 @@ def show():
                                                     mime="application/pdf",
                                                     key=download_key
                                                 )
-                                                st.write("DEBUG: Botão de download criado com sucesso")
                                             except Exception as e:
                                                 st.error(f"Erro ao criar botão de download: {str(e)}")
                                         except Exception as e:
