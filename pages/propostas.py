@@ -159,12 +159,14 @@ def show():
                                 status_execucao = None
                                 
                                 # Definir parâmetros com base no novo status
+                                gerar_transacoes = False
                                 if novo_status == "Aprovada":
                                     data_aprovacao = datetime.now().date()
                                     # Automaticamente mudar para "Em execução" quando aprovada
                                     novo_status = "Em execução"
                                     data_inicio_execucao = datetime.now().date()
                                     status_execucao = "Iniciada"
+                                    gerar_transacoes = True
                                 
                                 elif novo_status == "Em execução":
                                     data_inicio_execucao = datetime.now().date()
@@ -173,6 +175,7 @@ def show():
                                     # Se a proposta não foi aprovada, aprovar primeiro
                                     if proposta['status'] != "Aprovada" and data_aprovacao is None:
                                         data_aprovacao = datetime.now().date()
+                                        gerar_transacoes = True
                                 
                                 # Atualizar o status
                                 if data_aprovacao:
@@ -181,6 +184,15 @@ def show():
                                         novo_status=novo_status,
                                         data_aprovacao=data_aprovacao
                                     )
+                                    
+                                    # Após atualizar o status, se necessário gerar transações
+                                    if sucesso and gerar_transacoes:
+                                        try:
+                                            # Gerar transações financeiras (receita e despesas)
+                                            resultado = st.session_state.db.gerar_transacoes_proposta(proposta_id)
+                                            print(f"DEBUG: Transações geradas para proposta {proposta_id}: {resultado}")
+                                        except Exception as e:
+                                            st.error(f"Erro ao gerar transações financeiras: {str(e)}")
                                 else:
                                     sucesso = st.session_state.db.atualizar_proposta(
                                         proposta_id=proposta_id,
