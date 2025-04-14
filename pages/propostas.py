@@ -142,54 +142,110 @@ def show():
                     # Exibir tabela
                     st.dataframe(df_em_aberto)
                     
-                    # Ações para propostas em aberto
-                    st.subheader("Ações")
+                    # Adicionar coluna de ações à tabela
+                    # Converter o DataFrame para exibição e adicionar coluna de ações
+                    df_em_aberto_display = df_em_aberto.copy()
                     
-                    col1, col2 = st.columns(2)
+                    # Adicionar ID como coluna escondida para uso nas ações
+                    df_em_aberto_display['proposta_id'] = propostas_em_aberto['id']
+                    
+                    # Preparar o índice para agir como chave para cada proposta
+                    df_em_aberto_display = df_em_aberto_display.reset_index()
+                    
+                    # Exibir tabela com os dados
+                    st.dataframe(df_em_aberto_display.drop(columns=['proposta_id', 'index']))
+                    
+                    # Separador para a seção de ações
+                    st.divider()
+                    st.subheader("Alterar Status da Proposta")
+                    
+                    col1, col2, col3 = st.columns([2, 2, 1])
                     
                     with col1:
                         proposta_id = st.number_input("ID da Proposta", min_value=1, step=1, key="id_proposta_em_aberto")
                     
-                    with col2:
-                        # Filtrar a proposta selecionada para verificar o status
-                        proposta_selecionada = propostas_em_aberto[propostas_em_aberto['id'] == proposta_id]
-                        if not proposta_selecionada.empty:
-                            status_atual = proposta_selecionada.iloc[0]['status']
-                            st.write(f"Status atual: {status_atual}")
+                    proposta_selecionada = propostas_em_aberto[propostas_em_aberto['id'] == proposta_id]
+                    if not proposta_selecionada.empty:
+                        status_atual = proposta_selecionada.iloc[0]['status']
+                        
+                        with col2:
+                            st.write(f"Status atual: **{status_atual}**")
                             
-                            # Botões de ação baseados no status
-                            if status_atual == "Em elaboração":
-                                if st.button("Aprovar Proposta", key="aprovar_proposta_em_aberto"):
+                            # Lista suspensa com as opções de status para a proposta
+                            opcoes_status = ["Manter como está", "Aprovada (Fechar)", "Recusada", "Excluir Proposta"]
+                            novo_status = st.selectbox(
+                                "Selecione a ação:",
+                                opcoes_status,
+                                key=f"acao_proposta_{proposta_id}"
+                            )
+                        
+                        with col3:
+                            # Botão para confirmar a ação selecionada
+                            if st.button("Confirmar", key=f"confirmar_acao_{proposta_id}"):
+                                if novo_status == "Manter como está":
+                                    st.info("Nenhuma alteração realizada na proposta.")
+                                
+                                elif novo_status == "Aprovada (Fechar)":
                                     # Atualizar o status da proposta para "Aprovada"
                                     data_aprovacao = datetime.now().date()
+                                    
+                                    # Se já estava aprovada, mover para Em execução
+                                    if status_atual == "Aprovada":
+                                        data_inicio_execucao = datetime.now().date()
+                                        sucesso = st.session_state.db.atualizar_proposta(
+                                            proposta_id=proposta_id,
+                                            status="Em execução",
+                                            data_inicio_execucao=data_inicio_execucao,
+                                            status_execucao="Iniciada"
+                                        )
+                                        mensagem = f"Proposta {proposta_id} movida para 'Em Execução'!"
+                                    else:
+                                        # Primeiro aprovar a proposta
+                                        sucesso = st.session_state.db.update_proposta_status(
+                                            proposta_id=proposta_id,
+                                            novo_status="Aprovada",
+                                            data_aprovacao=data_aprovacao
+                                        )
+                                        mensagem = f"Proposta {proposta_id} aprovada com sucesso!"
+                                    
+                                    if sucesso:
+                                        st.success(mensagem)
+                                        st.rerun()
+                                    else:
+                                        st.error(f"Erro ao atualizar proposta {proposta_id}")
+                                
+                                elif novo_status == "Recusada":
+                                    # Atualizar o status da proposta para "Recusada"
                                     sucesso = st.session_state.db.update_proposta_status(
                                         proposta_id=proposta_id,
-                                        novo_status="Aprovada",
-                                        data_aprovacao=data_aprovacao
+                                        novo_status="Recusada"
                                     )
                                     
                                     if sucesso:
-                                        st.success(f"Proposta {proposta_id} aprovada com sucesso!")
+                                        st.success(f"Proposta {proposta_id} marcada como recusada!")
                                         st.rerun()
                                     else:
-                                        st.error(f"Erro ao aprovar proposta {proposta_id}")
-                            
-                            elif status_atual == "Aprovada":
-                                if st.button("Iniciar Execução", key="iniciar_execucao"):
-                                    # Atualizar o status da proposta para "Em execução"
-                                    data_inicio_execucao = datetime.now().date()
-                                    sucesso = st.session_state.db.atualizar_proposta(
-                                        proposta_id=proposta_id,
-                                        status="Em execução",
-                                        data_inicio_execucao=data_inicio_execucao,
-                                        status_execucao="Iniciada"
-                                    )
+                                        st.error(f"Erro ao recusar proposta {proposta_id}")
+                                
+                                elif novo_status == "Excluir Proposta":
+                                    # Confirmação adicional para exclusão
+                                    st.warning(f"⚠️ Tem certeza que deseja excluir a proposta {proposta_id}? Esta ação não pode ser desfeita.")
+                                    col_sim, col_nao = st.columns(2)
                                     
-                                    if sucesso:
-                                        st.success(f"Proposta {proposta_id} iniciada com sucesso!")
-                                        st.rerun()
-                                    else:
-                                        st.error(f"Erro ao iniciar execução da proposta {proposta_id}")
+                                    with col_sim:
+                                        if st.button("Sim, excluir", key=f"confirmar_exclusao_{proposta_id}"):
+                                            sucesso, mensagem = st.session_state.db.excluir_proposta(proposta_id)
+                                            
+                                            if sucesso:
+                                                st.success(f"Proposta {proposta_id} excluída com sucesso!")
+                                                st.rerun()
+                                            else:
+                                                st.error(f"Erro ao excluir proposta: {mensagem}")
+                                    
+                                    with col_nao:
+                                        if st.button("Cancelar", key=f"cancelar_exclusao_{proposta_id}"):
+                                            st.info("Exclusão cancelada.")
+                                            st.rerun()
                             
                             # Botão para editar proposta independente do status
                             if st.button("Editar Proposta", key="editar_proposta_em_aberto"):
