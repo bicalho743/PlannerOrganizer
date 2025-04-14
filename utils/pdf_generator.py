@@ -92,11 +92,15 @@ def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
         if not acrescimos.empty:
             for _, acrescimo in acrescimos.iterrows():
                 # Excluir explicitamente o tipo 'assistente' do relatório do cliente
-                # apenas mostrar tipos 'organização' e 'outro'
-                if acrescimo['tipo'].lower() in ['organização', 'outro']:
+                # Incluir todos os outros tipos (organização, outro, produto, fornecedor, marcenaria, etc)
+                if acrescimo['tipo'].lower() != 'assistente':
                     descricao = f"{acrescimo['tipo']}"
                     if acrescimo.get('descricao'):
                         descricao += f" - {acrescimo['descricao']}"
+                    
+                    # Adicionar nome do fornecedor se disponível
+                    if acrescimo.get('fornecedor'):
+                        descricao += f" ({acrescimo['fornecedor']})"
                     
                     valor = float(acrescimo['valor'])
                     
