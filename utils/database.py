@@ -1690,7 +1690,7 @@ class Database:
                 
                 if not acrescimos:
                     print(f"DEBUG: Nenhum acréscimo do tipo {tipo} encontrado para proposta ID={proposta_id}")
-                    return pd.DataFrame(columns=['id', 'tipo', 'fornecedor', 'descricao', 'valor', 'status_pagamento', 'data_cadastro', 'observacoes'])
+                    return pd.DataFrame(columns=['id', 'tipo', 'fornecedor', 'descricao', 'valor', 'status_pagamento', 'data_cadastro'])
                 
                 print(f"DEBUG: Encontrados {len(acrescimos)} acréscimos do tipo {tipo}")
                 
@@ -1704,15 +1704,14 @@ class Database:
                         'descricao': a.descricao,
                         'valor': a.valor,
                         'status_pagamento': a.status_pagamento,
-                        'data_cadastro': a.data_cadastro,
-                        'observacoes': a.observacoes
+                        'data_cadastro': a.data_cadastro
                     })
                 
                 return pd.DataFrame(result)
                 
             except Exception as e:
                 print(f"DEBUG: Erro ao obter acréscimos do tipo {tipo} para proposta ID={proposta_id}: {str(e)}")
-                return pd.DataFrame(columns=['id', 'tipo', 'fornecedor', 'descricao', 'valor', 'status_pagamento', 'data_cadastro', 'observacoes'])
+                return pd.DataFrame(columns=['id', 'tipo', 'fornecedor', 'descricao', 'valor', 'status_pagamento', 'data_cadastro'])
         
         return self._safe_query(query)
 
