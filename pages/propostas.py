@@ -1045,6 +1045,7 @@ def show():
                 if not propostas_finalizadas.empty:
                     # Preparar DataFrame para exibição
                     df_finalizadas = pd.DataFrame()
+                    # Manter o ID como coluna oculta para referência
                     df_finalizadas['ID'] = propostas_finalizadas['id']
                     df_finalizadas['Número'] = propostas_finalizadas['numero']
                     df_finalizadas['Cliente'] = propostas_finalizadas['nome']
@@ -1059,8 +1060,29 @@ def show():
                         lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
                     )
                     
-                    # Exibir tabela
-                    st.dataframe(df_finalizadas)
+                    # Exibir tabela sem mostrar a coluna ID
+                    st.dataframe(df_finalizadas.drop(columns=['ID']), hide_index=True)
+                    
+                    # Adicionar área para exclusão de proposta
+                    with st.expander("Excluir Proposta Finalizada"):
+                        proposta_exc_id = st.number_input("ID da Proposta a Excluir", min_value=1, step=1, key="id_proposta_finalizada_excluir")
+                        proposta_exc = propostas_finalizadas[propostas_finalizadas['id'] == proposta_exc_id]
+                        
+                        if not proposta_exc.empty:
+                            st.warning(f"Você está prestes a excluir a proposta #{proposta_exc.iloc[0]['numero']} - {proposta_exc.iloc[0]['descricao']}")
+                            if st.button("CONFIRMAR EXCLUSÃO", key="confirmar_exclusao_finalizada"):
+                                try:
+                                    sucesso, mensagem = st.session_state.db.excluir_proposta(proposta_exc_id)
+                                    if sucesso:
+                                        st.success("Proposta excluída com sucesso!")
+                                        time.sleep(1)
+                                        st.rerun()
+                                    else:
+                                        st.error(f"Erro ao excluir proposta: {mensagem}")
+                                except Exception as e:
+                                    st.error(f"Erro ao excluir proposta: {str(e)}")
+                        else:
+                            st.info("Selecione uma proposta válida para excluir.")
                     
                     # Ações para propostas finalizadas
                     st.subheader("Documentos")
@@ -1244,8 +1266,29 @@ def show():
                         lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
                     )
                     
-                    # Exibir tabela
-                    st.dataframe(df_todas)
+                    # Exibir tabela sem a coluna ID
+                    st.dataframe(df_todas.drop(columns=['ID']), hide_index=True)
+                    
+                    # Adicionar área para exclusão de proposta
+                    with st.expander("Excluir Proposta"):
+                        proposta_exc_id = st.number_input("ID da Proposta a Excluir", min_value=1, step=1, key="id_proposta_todas_excluir")
+                        proposta_exc = propostas_filtradas[propostas_filtradas['id'] == proposta_exc_id]
+                        
+                        if not proposta_exc.empty:
+                            st.warning(f"Você está prestes a excluir a proposta #{proposta_exc.iloc[0]['numero']} - {proposta_exc.iloc[0]['descricao']}")
+                            if st.button("CONFIRMAR EXCLUSÃO", key="confirmar_exclusao_todas"):
+                                try:
+                                    sucesso, mensagem = st.session_state.db.excluir_proposta(proposta_exc_id)
+                                    if sucesso:
+                                        st.success("Proposta excluída com sucesso!")
+                                        time.sleep(1)
+                                        st.rerun()
+                                    else:
+                                        st.error(f"Erro ao excluir proposta: {mensagem}")
+                                except Exception as e:
+                                    st.error(f"Erro ao excluir proposta: {str(e)}")
+                        else:
+                            st.info("Selecione uma proposta válida para excluir.")
                     
                     # Mostrar resumo
                     st.subheader("Resumo")
