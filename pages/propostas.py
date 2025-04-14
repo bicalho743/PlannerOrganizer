@@ -643,9 +643,15 @@ def show():
                     df_todas['Data Proposta'] = propostas_filtradas['data_proposta'].apply(
                         lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
                     )
-                    df_todas['Data Aprovação'] = propostas_filtradas['data_aprovacao'].apply(
-                        lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
-                    )
+                    
+                    # Verificar se o campo data_aprovacao existe no dataframe
+                    if 'data_aprovacao' in propostas_filtradas.columns:
+                        df_todas['Data Aprovação'] = propostas_filtradas['data_aprovacao'].apply(
+                            lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
+                        )
+                    else:
+                        df_todas['Data Aprovação'] = ''
+                        
                     df_todas['Início'] = propostas_filtradas['data_inicio'].apply(
                         lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
                     )
