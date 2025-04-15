@@ -5,6 +5,7 @@ import os
 from datetime import datetime, timedelta
 import uuid
 import plotly.graph_objects as go
+from utils.database import Fornecedor
 
 def show():
     st.title("PROPOSTAS")
@@ -832,13 +833,22 @@ def show():
                                         )
                                         
                                         # Obter o percentual de comissão padrão do fornecedor selecionado (se houver)
-                                        # Buscar percentual de comissão do fornecedor selecionado
+                                        # Buscar percentual de comissão mais atualizado do fornecedor selecionado diretamente do banco de dados
                                         percentual_comissao = 0.0
                                         try:
-                                            fornecedor_selecionado = fornecedores[fornecedores['id'] == fornecedor_id]
-                                            if not fornecedor_selecionado.empty and 'percentual_comissao' in fornecedor_selecionado.columns:
-                                                percentual_comissao = fornecedor_selecionado['percentual_comissao'].iloc[0] or 0.0
-                                        except (KeyError, IndexError):
+                                            # Buscar diretamente do banco para garantir que temos a informação mais recente
+                                            fornecedor_info = st.session_state.db.session.query(Fornecedor).filter_by(id=fornecedor_id).first()
+                                            if fornecedor_info:
+                                                percentual_comissao = fornecedor_info.percentual_comissao or 0.0
+                                                # DEBUG para identificar problemas
+                                                print(f"DEBUG: Fornecedor ID={fornecedor_id}, Percentual={percentual_comissao}")
+                                            else:
+                                                # Fallback para o método antigo
+                                                fornecedor_selecionado = fornecedores[fornecedores['id'] == fornecedor_id]
+                                                if not fornecedor_selecionado.empty and 'percentual_comissao' in fornecedor_selecionado.columns:
+                                                    percentual_comissao = fornecedor_selecionado['percentual_comissao'].iloc[0] or 0.0
+                                        except Exception as e:
+                                            print(f"DEBUG: Erro ao buscar percentual de comissão: {str(e)}")
                                             pass
                                         
                                         valor_fornecimento = st.number_input("Valor do fornecimento (R$):", min_value=0.0, format="%.2f")
