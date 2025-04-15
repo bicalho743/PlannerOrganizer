@@ -68,6 +68,10 @@ args = "Sistema de Backup"
 task = "workflow.run"
 args = "Limpar Vendas"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Exclusão Simples"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -263,6 +267,21 @@ task = "shell.exec"
 args = "streamlit run limpar_vendas.py --server.port 8509 --server.address 0.0.0.0"
 waitForPort = 8509
 
+[[workflows.workflow]]
+name = "Exclusão Simples"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run excluir_vendas_standalone.py --server.port 8512 --server.address 0.0.0.0"
+waitForPort = 8512
+
 [[ports]]
 localPort = 443
 externalPort = 3001
@@ -310,6 +329,10 @@ externalPort = 5173
 [[ports]]
 localPort = 8511
 externalPort = 6000
+
+[[ports]]
+localPort = 8512
+externalPort = 9000
 
 [[ports]]
 localPort = 8515
