@@ -634,14 +634,38 @@ class Database:
         
         return self._safe_query(query)
 
-    def get_financeiro(self):
+    def get_financeiro(self, include_all=True, categorias=None, limit=1000):
+        """
+        Retorna os dados financeiros (transações)
+        
+        Args:
+            include_all (bool): Se True, inclui todas as transações. Se False, inclui apenas transações pendentes
+            categorias (list): Lista de categorias para filtrar
+            limit (int): Limite de registros a serem retornados
+        
+        Returns:
+            DataFrame: DataFrame com as transações
+        """
         def query():
-            transacoes = self.session.query(Transacao).order_by(Transacao.data.desc()).limit(1000).all()
-            return pd.DataFrame([{
+            # Criar query base
+            query = self.session.query(Transacao)
+            
+            # Aplicar filtros se necessário
+            if not include_all:
+                query = query.filter(Transacao.status == 'Pendente')
+                
+            if categorias:
+                query = query.filter(Transacao.categoria.in_(categorias))
+            
+            # Ordenar e limitar
+            transacoes = query.order_by(Transacao.data.desc()).limit(limit).all()
+            
+            # Converter para DataFrame
+            df = pd.DataFrame([{
                 'id': t.id,
                 'tipo': t.tipo,
                 'descricao': t.descricao,
-                'valor': t.valor,
+                'valor': float(t.valor) if hasattr(t, 'valor') and t.valor is not None else 0.0,
                 'data': t.data,
                 'categoria': t.categoria,
                 'subcategoria': t.subcategoria,
@@ -652,8 +676,13 @@ class Database:
                 'status': t.status,
                 'data_recebimento': t.data_recebimento,
                 'proposta_id': t.proposta_id,
-                'classificacao': t.classificacao
+                'classificacao': t.classificacao,
+                # Campos calculados para facilitar a análise
+                'receita': float(t.valor) if t.tipo in ['receita', 'receita_a_receber'] else 0.0,
+                'despesa': float(t.valor) if t.tipo == 'despesa' else 0.0
             } for t in transacoes])
+            
+            return df
         return self._safe_query(query)
 
     def add_transacao(self, tipo, descricao, valor, categoria, tipo_receita=None, 
