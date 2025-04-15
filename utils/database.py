@@ -1790,7 +1790,10 @@ class Database:
                         "acrescimo_id": None,
                         "comissao_gerada": False,
                         "comissao_id": None,
-                        "valor_comissao": 0.0
+                        "valor_comissao": 0.0,
+                        "despesa_gerada": False,
+                        "despesa_id": None,
+                        "valor_despesa": 0.0
                     }
                     
                     # Garantir que temos um ID inteiro válido
@@ -1830,6 +1833,30 @@ class Database:
                                 resultado["valor_comissao"] = valor_comissao
                                 
                                 print(f"DEBUG: Comissão gerada com sucesso, ID={comissao_id}, Valor={valor_comissao}")
+                                
+                        # Se for do tipo ASSISTENTE, gerar despesa a pagar automaticamente
+                        elif tipo_upper == "ASSISTENTE":
+                            # Criar despesa para o assistente
+                            despesa = Despesa(
+                                categoria="Pagamento de Assistente",
+                                descricao=f"Pagamento para {fornecedor_nome} - Proposta #{proposta.id}",
+                                valor=valor_float,
+                                data_vencimento=datetime.now().date() + timedelta(days=15),  # Vencimento em 15 dias
+                                status="Pendente",
+                                proposta_id=proposta_id_int,
+                                origem_tipo="assistente"
+                            )
+                            
+                            self.session.add(despesa)
+                            self.session.flush()
+                            
+                            if despesa.id is not None:
+                                despesa_id = int(despesa.id)
+                                resultado["despesa_gerada"] = True
+                                resultado["despesa_id"] = despesa_id
+                                resultado["valor_despesa"] = valor_float
+                                
+                                print(f"DEBUG: Despesa para assistente gerada com sucesso, ID={despesa_id}, Valor={valor_float}")
                         
                         return resultado
                     else:
