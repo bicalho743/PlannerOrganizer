@@ -340,11 +340,19 @@ def show():
                                             pdf_bytes = file.read()
                                         
                                         # Oferecer o download
-                                        proposta_numero = proposta['numero']
+                                        proposta_id = proposta['id']
+                                        # Obter nome do cliente da proposta para usar no nome do arquivo
+                                        cliente_id = proposta['cliente_id']
+                                        cliente_info = st.session_state.db.get_cliente(cliente_id)
+                                        cliente_nome = "sem_nome"
+                                        if cliente_info is not None:
+                                            cliente_nome = cliente_info.get('nome', 'sem_nome').replace(' ', '_').lower()
+                                        
+                                        # Usar o mesmo formato de nome de arquivo que definimos em propostas_helper.py
                                         st.download_button(
                                             label="⬇️",
                                             data=pdf_bytes,
-                                            file_name=f"proposta_{proposta_numero}.pdf",
+                                            file_name=f"Proposta_{proposta_id}_{cliente_nome}.pdf",
                                             mime="application/pdf",
                                             key=f"download_pdf_{proposta_id}"
                                         )
