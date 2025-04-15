@@ -376,7 +376,7 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
     
 def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
     """
-    Gera um PDF com o fechamento da proposta, separando valores a receber e a pagar
+    Gera um PDF com o fechamento da proposta com o novo formato solicitado
     
     Args:
         proposta: Dicionário com os dados da proposta
@@ -425,17 +425,26 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
             story.append(Paragraph(f"<b>Data Início:</b> {proposta['data_inicio'].strftime('%d/%m/%Y')}", styles["Normal"]))
         if proposta.get('data_fim'):
             story.append(Paragraph(f"<b>Data Fim:</b> {proposta['data_fim'].strftime('%d/%m/%Y')}", styles["Normal"]))
-        if proposta.get('prazo_entrega'):
-            story.append(Paragraph(f"<b>Prazo de Entrega:</b> {proposta['prazo_entrega'].strftime('%d/%m/%Y')}", styles["Normal"]))
+            
+            # Calcular prazo de entrega em dias se ambas as datas estiverem disponíveis
+            if proposta.get('data_inicio'):
+                dias = (proposta['data_fim'] - proposta['data_inicio']).days
+                story.append(Paragraph(f"<b>Prazo de Entrega:</b> {dias} dias", styles["Normal"]))
         story.append(Spacer(1, 12))
 
-        # Descrição da Proposta
+        # Descrição da Proposta (formato lista, um item por linha)
         story.append(Paragraph("<b>Descrição do Serviço:</b>", styles["Heading3"]))
-        story.append(Paragraph(proposta['descricao'], styles["Normal"]))
+        # Separar a descrição em linhas
+        descricao_linhas = proposta['descricao'].split('\n')
+        for linha in descricao_linhas:
+            # Remover espaços extras e verificar se há conteúdo
+            linha = linha.strip()
+            if linha:
+                story.append(Paragraph(f"• {linha}", styles["Normal"]))
         story.append(Spacer(1, 12))
 
-        # Separar valores a receber (do cliente) e a pagar (assistentes)
-        story.append(Paragraph("<b>Valores a Receber do Cliente</b>", styles["Heading3"]))
+        # Renomear "Valores a Receber do Cliente" para "Investimento"
+        story.append(Paragraph("<b>Investimento</b>", styles["Heading3"]))
         data_receber = [["Descrição", "Valor", "Status"]]
         data_pagar_assistentes = [["Descrição", "Valor", "Status"]]
         data_pagar_lojas = [["Descrição", "Valor", "Status"]]
@@ -506,8 +515,8 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
         table_receber.setStyle(table_style)
         story.append(table_receber)
         story.append(Spacer(1, 12))
-        story.append(Paragraph(f"<b>Total a Receber do Cliente:</b> R$ {total_receber:.2f}", 
-                             ParagraphStyle('Total', parent=styles['Normal'], fontSize=12, alignment=2)))
+        
+        # Removido "Total a receber do Cliente" conforme solicitado
 
         # Se houver valores a pagar para lojas/fornecedores
         if len(data_pagar_lojas) > 1:  # Se tiver mais que só o cabeçalho
@@ -531,24 +540,15 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
             story.append(Paragraph(f"<b>Total a Pagar aos Assistentes:</b> R$ {total_pagar_assistentes:.2f}", 
                                  ParagraphStyle('Total', parent=styles['Normal'], fontSize=12, alignment=2)))
 
-        # Resumo final
-        story.append(Spacer(1, 30))
-        story.append(Paragraph("<b>Resumo Financeiro</b>", styles["Heading3"]))
-        story.append(Paragraph(f"Total a Receber do Cliente: R$ {total_receber:.2f}", styles["Normal"]))
-        story.append(Paragraph(f"Total a Pagar a Lojas/Fornecedores: R$ {total_pagar_lojas:.2f}", styles["Normal"]))
-        story.append(Paragraph(f"Total a Pagar aos Assistentes: R$ {total_pagar_assistentes:.2f}", styles["Normal"]))
-        story.append(Paragraph(f"<b>Resultado Final: R$ {(total_receber - total_pagar_assistentes):.2f}</b>", 
-                             ParagraphStyle('Final', parent=styles['Normal'], fontSize=14, alignment=2)))
+        # Removido "Resumo Financeiro" e "Resultado Final" conforme solicitado
 
         # Observações Finais
         story.append(Spacer(1, 30))
         story.append(Paragraph("Observações:", styles["Heading4"]))
-        story.append(Paragraph("1. Este documento representa o fechamento final da proposta.", styles["Normal"]))
+        # Apenas as observações solicitadas
         story.append(Paragraph("2. Os valores apresentados incluem todos os custos e acréscimos.", styles["Normal"]))
         story.append(Paragraph("3. Valores a receber incluem base e serviços de organização.", styles["Normal"]))
-        story.append(Paragraph("4. Valores a pagar aos assistentes são responsabilidade da Organizer.", styles["Normal"]))
         story.append(Paragraph("5. Valores a pagar a lojas/fornecedores são responsabilidade do cliente.", styles["Normal"]))
-        story.append(Paragraph("6. O Resultado Final representa o valor a receber menos os pagamentos aos assistentes.", styles["Normal"]))
 
         # Gerar PDF
         doc.build(story)
