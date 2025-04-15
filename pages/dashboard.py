@@ -266,14 +266,14 @@ def show():
         else:
             st.info("Nenhum cliente cadastrado com data de aniversário.")
             
-    # Nova seção para alertas de propostas se aproximando dos 60 dias após execução
-    st.subheader("📢 Alertas de Propostas")
+    # Nova seção para alertas de retorno ao cliente se aproximando dos 60 dias após execução
+    st.subheader("📢 Alertas Retorno Cliente")
     
     # Container para mostrar propostas se aproximando de 60 dias após execução
     with st.container():
         st.markdown("""
         <div style='background-color: #2A3F5F; padding: 10px; border-radius: 7px; margin-bottom: 15px;'>
-            <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>⏱️ Propostas se aproximando de 60 dias</h4>
+            <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>⏱️ Clientes aguardando retorno (próximo aos 60 dias)</h4>
         </div>
         """, unsafe_allow_html=True)
         
@@ -339,20 +339,20 @@ def show():
                                 <div style='font-weight: bold; color: white;'>
                                     {'⚠️' if p['dias_restantes'] <= 3 else '⚠️'} Proposta #{p['numero']} 
                                     <span style='font-weight: normal; color: white; font-size: 0.9em;'>
-                                        (Faltam {p['dias_restantes']} dias para atingir 60 dias)
+                                        (Faltam {p['dias_restantes']} dias para contatar o cliente)
                                     </span>
                                 </div>
                                 <div style='color: white; font-size: 0.9em;'>
                                     Cliente: <b>{p['cliente_nome']}</b>
                                 </div>
                                 <div style='color: white; font-size: 0.9em;'>
-                                    Início: {format_date_safe(p['data_inicio'])} | Completará 60 dias em: {format_date_safe(p['data_60_dias'])}
+                                    Data da organização: {format_date_safe(p['data_inicio'])} | Completará 60 dias em: {format_date_safe(p['data_60_dias'])}
                                 </div>
                             </div>
                             """, unsafe_allow_html=True)
                 else:
-                    st.info("Não há propostas se aproximando do prazo de 60 dias.")
+                    st.info("Não há clientes aguardando retorno no momento.")
             else:
-                st.info("Não há propostas executadas no sistema.")
+                st.info("Não há propostas em execução no sistema.")
         except Exception as e:
-            st.warning(f"Erro ao processar alertas de propostas: {str(e)}")
+            st.warning(f"Erro ao processar alertas de retorno ao cliente: {str(e)}")
