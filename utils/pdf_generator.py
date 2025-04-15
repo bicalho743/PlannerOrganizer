@@ -432,26 +432,23 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
                 story.append(Paragraph(f"<b>Prazo de Entrega:</b> {dias} dias", styles["Normal"]))
         story.append(Spacer(1, 12))
 
-        # Descrição da Proposta (formato lista, um item por linha)
-        story.append(Paragraph("<b>Descrição do Serviço:</b>", styles["Heading3"]))
-        # Separar a descrição em linhas
-        descricao_linhas = proposta['descricao'].split('\n')
-        for linha in descricao_linhas:
-            # Remover espaços extras e verificar se há conteúdo
-            linha = linha.strip()
-            if linha:
-                story.append(Paragraph(f"• {linha}", styles["Normal"]))
-        story.append(Spacer(1, 12))
-
         # Renomear "Valores a Receber do Cliente" para "Investimento"
         story.append(Paragraph("<b>Investimento</b>", styles["Heading3"]))
         data_receber = [["Descrição", "Valor", "Status"]]
         data_pagar_assistentes = [["Descrição", "Valor", "Status"]]
         data_pagar_lojas = [["Descrição", "Valor", "Status"]]
 
-        # Valor base sempre vai para valores a receber
+        # Processar a descrição para usar como item da tabela
+        descricao_completa = ""
+        descricao_linhas = proposta['descricao'].split('\n')
+        for linha in descricao_linhas:
+            linha = linha.strip()
+            if linha:
+                descricao_completa += f"• {linha}\n"
+        
+        # Usar a descrição do serviço no lugar de "Valor Base"
         data_receber.append([
-            "Valor Base", 
+            descricao_completa, 
             f"R$ {float(proposta['valor']):.2f}", 
             proposta.get('status_pagamento_base', 'Pendente')
         ])
