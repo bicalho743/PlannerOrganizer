@@ -287,20 +287,39 @@ class Database:
         Esta função garante que as operações no banco de dados sejam executadas
         em uma transação segura, com tratamento adequado de erros e conversão de tipos.
         """
+        # Verificar se já existe uma transação em andamento
+        nested_transaction = False
+        in_transaction = False
+        
         try:
             # Verificar se a sessão está ativa ou criar uma nova
             if not self.session.is_active:
                 self.session = Session()
                 print("DEBUG: Nova sessão criada")
+            else:
+                # Verificar se já existe uma transação
+                try:
+                    in_transaction = self.session.in_transaction()
+                    if in_transaction:
+                        nested_transaction = True
+                        print("DEBUG: Transação aninhada detectada, não será feito commit automático")
+                except:
+                    # Caso não consiga verificar, não vamos assumir que está em transação
+                    pass
             
             # Executar a função de query
             print("DEBUG: Executando query")
             result = query_func()
             
-            # Commit da transação
-            print("DEBUG: Realizando commit da transação")
-            self.session.commit()
-            print("DEBUG: Commit realizado com sucesso")
+            # Commit da transação somente se não for aninhada
+            if not nested_transaction:
+                try:
+                    print("DEBUG: Realizando commit da transação")
+                    self.session.commit()
+                    print("DEBUG: Commit realizado com sucesso")
+                except Exception as commit_error:
+                    print(f"DEBUG WARNING: Não foi possível fazer commit: {str(commit_error)}")
+                    # Não interrompe a execução, apenas loga o aviso
 
             # Se o resultado for um DataFrame, converter tipos numéricos
             if isinstance(result, pd.DataFrame):
@@ -317,11 +336,15 @@ class Database:
             return result
             
         except Exception as e:
-            # Em caso de erro, fazer rollback
+            # Em caso de erro, fazer rollback apenas se não for transação aninhada
             print(f"DEBUG ERROR: Erro durante a execução da query: {str(e)}")
-            if self.session.is_active:
-                print("DEBUG: Realizando rollback da transação")
-                self.session.rollback()
+            
+            if self.session.is_active and not nested_transaction:
+                try:
+                    print("DEBUG: Realizando rollback da transação")
+                    self.session.rollback()
+                except Exception as rollback_error:
+                    print(f"DEBUG WARNING: Não foi possível fazer rollback: {str(rollback_error)}")
             
             # Logar e re-levantar a exceção com mais informações
             import traceback
