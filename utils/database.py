@@ -3041,7 +3041,7 @@ class Database:
             observacoes: Observações (opcional)
             
         Returns:
-            int: ID do acréscimo adicionado
+            dict: Informações sobre o acréscimo adicionado e despesa gerada
         """
         try:
             # Converter para tipos nativos
@@ -3060,21 +3060,19 @@ class Database:
                 if not proposta:
                     raise ValueError(f"Proposta ID {proposta_id} não encontrada")
                 
-                # Criar acréscimo para o assistente
-                acrescimo = AcrescimoProposta(
+                # Usar a função add_acrescimo_proposta para criar o acréscimo e gerar a despesa automaticamente
+                print(f"DEBUG: Adicionando assistente {assistente.nome} à proposta {proposta_id_int} com valor {valor_float}")
+                resultado = self.add_acrescimo_proposta(
                     proposta_id=proposta_id_int,
                     tipo="ASSISTENTE",  # Garantir que o tipo está em maiúsculo
-                    fornecedor=assistente.nome,
-                    descricao=observacoes if observacoes else f"Serviço de {assistente.nome}",
                     valor=valor_float,
-                    status_pagamento="Pendente",
-                    data_cadastro=datetime.now().date()
+                    descricao=observacoes if observacoes else f"Serviço de {assistente.nome}",
+                    fornecedor=assistente.nome,
+                    status_pagamento="Pendente"
                 )
                 
-                self.session.add(acrescimo)
-                self.session.flush()
-                
-                return acrescimo.id
+                print(f"DEBUG: Resultado da adição de assistente: {resultado}")
+                return resultado
                 
             return self._safe_query(query)
             
