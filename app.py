@@ -87,8 +87,13 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Menu principal (deve aparecer no topo)
-st.sidebar.title("Menu Principal")
+# Título principal do menu
+st.sidebar.markdown("""
+<h1 style="font-size: 1.5rem; color: #F1A208; margin-bottom: 1rem; text-align: center;">
+    Menu Principal<br>
+    <span style="font-size: 0.9rem; color: #efefef;">Sistema Profissional de Gestão Personal Organizer</span>
+</h1>
+""", unsafe_allow_html=True)
 
 # Container dos botões com fundo escuro
 st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
