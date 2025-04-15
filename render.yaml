@@ -4,8 +4,20 @@ services:
     name: planner-organiza
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true --server.enableCORS=false --server.enableWebsocketCompression=false
+    startCommand: python render_startup.py && streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true --server.enableCORS=false --server.enableWebsocketCompression=false --server.enableXsrfProtection=false --server.maxUploadSize=50
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
+      - key: DATABASE_URL
+        sync: false # Você precisa definir isso manualmente no dashboard do Render
+      - key: JWT_SECRET
+        sync: false # Você precisa definir isso manualmente no dashboard do Render
     autoDeploy: true
+    healthCheckPath: /_stcore/health
+    plan: free # Você pode mudar para 'starter' se precisar de mais recursos
+
+databases:
+  - name: planner-db
+    plan: free # Plano gratuito com 1GB de armazenamento 
+    databaseName: planner
+    user: planner_user
