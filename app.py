@@ -172,23 +172,7 @@ try:
 except Exception as e:
     st.error(f"Erro ao carregar página: {str(e)}")
 
-# Links de navegação ocultos em um expander para desenvolvedores
-with st.sidebar.expander("🔧 Acesso Desenvolvedor", expanded=False):
-    st.markdown("""
-    <div class="navigation-links" style="font-size: 0.9rem;">
-        <p style="margin-bottom: 8px;">Navegação rápida:</p>
-        <a href="/" style="display: block; padding: 4px 0; text-decoration: none;">app</a>
-        <a href="/cadastros" style="display: block; padding: 4px 0; text-decoration: none;">cadastros</a>
-        <a href="/dashboard" style="display: block; padding: 4px 0; text-decoration: none;">dashboard</a>
-        <a href="/dashboard_fixed" style="display: block; padding: 4px 0; text-decoration: none;">dashboard fixed</a>
-        <a href="/financeiro" style="display: block; padding: 4px 0; text-decoration: none;">financeiro</a>
-        <a href="/propostas" style="display: block; padding: 4px 0; text-decoration: none;">propostas</a>
-        <a href="/relatorios" style="display: block; padding: 4px 0; text-decoration: none;">relatórios</a>
-        <a href="/vendas" style="display: block; padding: 4px 0; text-decoration: none;">vendas</a>
-    </div>
-    """, unsafe_allow_html=True)
-
-# Informações do sistema no final
+# Informações do sistema
 st.sidebar.markdown("---")
 with st.sidebar.expander("ℹ️ Informações do Sistema", expanded=False):
     st.markdown("""
@@ -208,6 +192,22 @@ with st.sidebar.expander("ℹ️ Informações do Sistema", expanded=False):
 
     Desenvolvido com ❤️ usando Streamlit
     """)
+
+# Links de navegação ocultos em um expander para desenvolvedores
+with st.sidebar.expander("🔧 Acesso Desenvolvedor", expanded=False):
+    st.markdown("""
+    <div class="navigation-links" style="font-size: 0.9rem;">
+        <p style="margin-bottom: 8px;">Navegação rápida:</p>
+        <a href="/" style="display: block; padding: 4px 0; text-decoration: none;">app</a>
+        <a href="/cadastros" style="display: block; padding: 4px 0; text-decoration: none;">cadastros</a>
+        <a href="/dashboard" style="display: block; padding: 4px 0; text-decoration: none;">dashboard</a>
+        <a href="/dashboard_fixed" style="display: block; padding: 4px 0; text-decoration: none;">dashboard fixed</a>
+        <a href="/financeiro" style="display: block; padding: 4px 0; text-decoration: none;">financeiro</a>
+        <a href="/propostas" style="display: block; padding: 4px 0; text-decoration: none;">propostas</a>
+        <a href="/relatorios" style="display: block; padding: 4px 0; text-decoration: none;">relatórios</a>
+        <a href="/vendas" style="display: block; padding: 4px 0; text-decoration: none;">vendas</a>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Sem botão de importação conforme solicitado
 
