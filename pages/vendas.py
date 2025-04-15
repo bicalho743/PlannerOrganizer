@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import numpy as np
+import time
 
 def show():
     # Verificar se o db está na sessão
@@ -370,20 +371,47 @@ def show():
                         
                         st.dataframe(itens_df[['produto_nome', 'quantidade', 'preco_unitario', 'subtotal']], hide_index=True)
                     
-                    # Opção para cancelar venda
-                    if venda['status'] != 'Cancelada':
-                        if st.button("Cancelar Venda", type="primary"):
-                            confirmacao = st.checkbox("Confirmar cancelamento da venda?")
-                            
-                            if confirmacao and st.button("Confirmar Cancelamento", type="primary"):
-                                try:
-                                    result = st.session_state.db.cancelar_venda(venda_id)
-                                    if result:
-                                        st.success("Venda cancelada com sucesso!")
-                                        st.rerun()
-                                    else:
-                                        st.error("Falha ao cancelar a venda.")
-                                except Exception as e:
-                                    st.error(f"Erro ao cancelar venda: {str(e)}")
+                    # Opções para cancelar ou excluir venda
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        # Opção para cancelar venda (muda o status)
+                        if venda['status'] != 'Cancelada':
+                            if st.button("Cancelar Venda", type="primary", key="btn_cancelar_venda"):
+                                with st.form(key="form_cancelar_venda"):
+                                    st.warning("Confirmar cancelamento da venda? Esta ação não pode ser desfeita.")
+                                    confirmar_cancelamento = st.form_submit_button("Confirmar Cancelamento", type="primary")
+                                
+                                    if confirmar_cancelamento:
+                                        try:
+                                            result = st.session_state.db.cancelar_venda(venda_id)
+                                            if result:
+                                                st.success("Venda cancelada com sucesso!")
+                                                time.sleep(1)
+                                                st.rerun()
+                                            else:
+                                                st.error("Falha ao cancelar a venda.")
+                                        except Exception as e:
+                                            st.error(f"Erro ao cancelar venda: {str(e)}")
+                    
+                    with col2:
+                        # Opção para excluir completamente a venda
+                        if st.button("Excluir Venda", type="primary", key="btn_excluir_venda"):
+                            with st.form(key="form_excluir_venda"):
+                                st.warning("⚠️ ATENÇÃO! Esta ação irá EXCLUIR PERMANENTEMENTE a venda e todos seus itens do sistema.")
+                                confirmar_exclusao = st.form_submit_button("Confirmar Exclusão", type="primary")
+                                
+                                if confirmar_exclusao:
+                                    try:
+                                        # Função nova para excluir venda
+                                        result = st.session_state.db.excluir_venda(venda_id)
+                                        if result:
+                                            st.success("Venda excluída com sucesso!")
+                                            time.sleep(1)
+                                            st.rerun()
+                                        else:
+                                            st.error("Falha ao excluir a venda.")
+                                    except Exception as e:
+                                        st.error(f"Erro ao excluir venda: {str(e)}")
         except Exception as e:
             st.error(f"Erro ao carregar vendas: {str(e)}")

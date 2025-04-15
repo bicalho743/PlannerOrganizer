@@ -2264,6 +2264,43 @@ class Database:
             return True
         return self._safe_query(query)
         
+    def excluir_venda(self, venda_id):
+        """
+        Exclui completamente uma venda e seus itens do banco de dados
+        
+        Esta função deve ser usada com cautela, pois remove permanentemente os registros.
+        Recomenda-se usar cancelar_venda() para a maioria dos casos para manter o histórico.
+        """
+        def query():
+            venda = self.session.query(Venda).filter_by(id=venda_id).first()
+            if not venda:
+                return False
+                
+            # Estornar produtos para o estoque antes de excluir
+            for item in venda.itens:
+                produto = item.produto
+                if produto and venda.status != 'Cancelada':
+                    produto.estoque += item.quantidade
+            
+            # Excluir transações financeiras relacionadas
+            transacoes = self.session.query(Transacao).filter_by(
+                origem_id=venda_id,
+                origem_tipo='venda'
+            ).all()
+            
+            for transacao in transacoes:
+                self.session.delete(transacao)
+            
+            # Remover itens da venda primeiro (devido à restrição de chave estrangeira)
+            for item in venda.itens:
+                self.session.delete(item)
+                
+            # Remover a venda
+            self.session.delete(venda)
+            
+            return True
+        return self._safe_query(query)
+        
     def adicionar_venda_a_proposta(self, proposta_id, itens, forma_pagamento=None, observacoes=None):
         """
         Adiciona uma venda diretamente a uma proposta existente, criando um acréscimo do tipo "Produto"
