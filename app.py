@@ -117,6 +117,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Título principal do menu
+# Adicionar frase motivacional acima do menu principal
+st.sidebar.markdown("""
+<div style="font-size: 0.9rem; color: #efefef; margin-bottom: 1rem; text-align: center; font-style: italic; padding: 10px; background-color: rgba(255,255,255,0.05); border-radius: 5px;">
+    "Organize suas propostas em minutos e nunca mais perca um cliente por desorganização."
+</div>
+""", unsafe_allow_html=True)
+
+# Título do menu
 st.sidebar.markdown("""
 <h1 style="font-size: 1.5rem; color: #F1A208; margin-bottom: 1rem; text-align: center;">
     Menu Principal<br>
