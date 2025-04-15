@@ -2614,3 +2614,253 @@ class Database:
                 raise
                 
         return self._safe_query(query)
+        
+    def gerar_lancamentos_financeiros_proposta_concluida(self, proposta_id):
+        """
+        Gera lançamentos financeiros automáticos quando uma proposta é marcada como concluída
+        
+        Gera:
+        1. Produtos a receber (valor total dos produtos)
+        2. Comissão a receber por fornecedor (com % registrado no cadastro)
+        3. Assistentes a pagar (um registro por assistente)
+        4. Cliente a receber (valor base da proposta)
+        
+        Args:
+            proposta_id: ID da proposta concluída
+            
+        Returns:
+            dict: Resumo dos lançamentos gerados
+        """
+        def query():
+            try:
+                # Converter para inteiro se for string
+                proposta_id_int = int(proposta_id)
+                
+                # Buscar a proposta
+                proposta = self.session.query(Proposta).filter_by(id=proposta_id_int).first()
+                if not proposta:
+                    raise ValueError(f"Proposta ID {proposta_id} não encontrada")
+                
+                # Buscar cliente da proposta
+                cliente = self.session.query(Cliente).filter_by(id=proposta.cliente_id).first()
+                if not cliente:
+                    raise ValueError(f"Cliente ID {proposta.cliente_id} não encontrado")
+                    
+                # Verificar se já existem lançamentos para esta proposta para evitar duplicação
+                lancamentos_existentes = self.session.query(Transacao)\
+                    .filter_by(proposta_id=proposta_id_int, tipo="receita_a_receber")\
+                    .count()
+                    
+                # Se já existirem lançamentos, retornar sem criar novos
+                if lancamentos_existentes > 0:
+                    return {"status": "já existe", "mensagem": "Lançamentos já existem para esta proposta"}
+                
+                # Resultados para retornar
+                result = {
+                    "valor_base": 0,
+                    "valor_produtos": 0,
+                    "valor_fornecedores": 0,
+                    "valor_assistentes": 0,
+                    "lancamentos_gerados": 0
+                }
+                
+                # 1. Lançamento do valor base (cliente a receber)
+                valor_base = float(proposta.valor) if proposta.valor else 0
+                if valor_base > 0:
+                    transacao_base = Transacao(
+                        tipo="receita_a_receber",
+                        descricao=f"Proposta #{proposta.numero} - {proposta.descricao[:50]}... - {cliente.nome}",
+                        valor=valor_base,
+                        data=datetime.now().date(),
+                        categoria="Serviço",
+                        subcategoria=proposta.tipo_proposta or "Organização",
+                        tipo_receita="organização",
+                        origem_id=proposta.cliente_id,
+                        origem_tipo="cliente",
+                        tipo_conta="PF",
+                        status="Pendente",
+                        proposta_id=proposta_id_int,
+                        classificacao="receita"
+                    )
+                    self.session.add(transacao_base)
+                    result["valor_base"] = valor_base
+                    result["lancamentos_gerados"] += 1
+                
+                # 2. Produtos a receber
+                produtos = self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id_int).all()
+                valor_total_produtos = 0
+                
+                if produtos:
+                    # Calcular valor total dos produtos
+                    for produto in produtos:
+                        valor_total_produtos += float(produto.valor) * produto.quantidade
+                    
+                    # Criar lançamento de receita para os produtos
+                    if valor_total_produtos > 0:
+                        transacao_produtos = Transacao(
+                            tipo="receita_a_receber",
+                            descricao=f"Produtos da Proposta #{proposta.numero} - {cliente.nome}",
+                            valor=valor_total_produtos,
+                            data=datetime.now().date(),
+                            categoria="Produto",
+                            subcategoria="Venda de Produtos",
+                            tipo_receita="venda",
+                            origem_id=proposta.cliente_id,
+                            origem_tipo="cliente",
+                            tipo_conta="PF",
+                            status="Pendente",
+                            proposta_id=proposta_id_int,
+                            classificacao="receita"
+                        )
+                        self.session.add(transacao_produtos)
+                        result["valor_produtos"] = valor_total_produtos
+                        result["lancamentos_gerados"] += 1
+                        
+                        # Adicionar à tabela de vendas
+                        self._registrar_venda_produtos(proposta, cliente, produtos)
+                
+                # 3. Comissões a receber por fornecedor
+                fornecedores = self.session.query(AcrescimoProposta)\
+                    .filter_by(proposta_id=proposta_id_int, tipo="FORNECEDOR")\
+                    .all()
+                    
+                valor_total_fornecedores = 0
+                
+                for fornecedor_item in fornecedores:
+                    valor_fornecedor = float(fornecedor_item.valor) if fornecedor_item.valor else 0
+                    valor_total_fornecedores += valor_fornecedor
+                    
+                    # Buscar o percentual de comissão (pode estar no item ou precisamos buscar no cadastro)
+                    percentual_comissao = None
+                    for attr in dir(fornecedor_item):
+                        if attr == 'percentual_comissao':
+                            percentual_comissao = getattr(fornecedor_item, attr)
+                            break
+                    
+                    # Se não tiver percentual no item, buscar no cadastro do fornecedor
+                    nome_fornecedor = fornecedor_item.fornecedor
+                    fornecedor_cadastro = self.session.query(Fornecedor).filter(Fornecedor.descricao == nome_fornecedor).first()
+                    
+                    if not percentual_comissao and fornecedor_cadastro and hasattr(fornecedor_cadastro, 'percentual_comissao'):
+                        percentual_comissao = fornecedor_cadastro.percentual_comissao
+                    
+                    # Se tiver percentual de comissão, calcular o valor e gerar o lançamento
+                    if percentual_comissao and percentual_comissao > 0:
+                        valor_comissao = valor_fornecedor * (percentual_comissao / 100)
+                        
+                        if valor_comissao > 0:
+                            transacao_comissao = Transacao(
+                                tipo="receita_a_receber",
+                                descricao=f"Comissão de {percentual_comissao}% - {nome_fornecedor} - Proposta #{proposta.numero}",
+                                valor=valor_comissao,
+                                data=datetime.now().date(),
+                                categoria="Comissão",
+                                subcategoria="Comissão de Fornecedor",
+                                tipo_receita="comissão",
+                                origem_id=fornecedor_cadastro.id if fornecedor_cadastro else None,
+                                origem_tipo="fornecedor",
+                                tipo_conta="PF",
+                                status="Pendente",
+                                proposta_id=proposta_id_int,
+                                classificacao="receita"
+                            )
+                            self.session.add(transacao_comissao)
+                            result["lancamentos_gerados"] += 1
+                
+                # 4. Assistentes a pagar
+                assistentes = self.session.query(AcrescimoProposta)\
+                    .filter_by(proposta_id=proposta_id_int, tipo="ASSISTENTE")\
+                    .all()
+                    
+                valor_total_assistentes = 0
+                
+                for assistente_item in assistentes:
+                    valor_assistente = float(assistente_item.valor) if assistente_item.valor else 0
+                    valor_total_assistentes += valor_assistente
+                    
+                    if valor_assistente > 0:
+                        nome_assistente = assistente_item.fornecedor  # o campo "fornecedor" armazena o nome do assistente
+                        transacao_assistente = Transacao(
+                            tipo="despesa",
+                            descricao=f"Pagamento Assistente {nome_assistente} - Proposta #{proposta.numero}",
+                            valor=valor_assistente,
+                            data=datetime.now().date(),
+                            categoria="Assistente",
+                            subcategoria="Pagamento de Serviço",
+                            origem_tipo="assistente",
+                            tipo_conta="PF",
+                            status="Pendente",
+                            proposta_id=proposta_id_int,
+                            classificacao="custo_direto"
+                        )
+                        self.session.add(transacao_assistente)
+                        result["lancamentos_gerados"] += 1
+                
+                result["valor_fornecedores"] = valor_total_fornecedores
+                result["valor_assistentes"] = valor_total_assistentes
+                
+                # Resumo dos resultados
+                result["total_lancamentos"] = (
+                    result["valor_base"] + 
+                    result["valor_produtos"] + 
+                    result["valor_fornecedores"] + 
+                    result["valor_assistentes"]
+                )
+                
+                return result
+                
+            except Exception as e:
+                print(f"ERRO ao gerar lançamentos financeiros: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                raise Exception(f"Erro ao gerar lançamentos financeiros: {str(e)}")
+            
+        return self._safe_query(query)
+    
+    def _registrar_venda_produtos(self, proposta, cliente, produtos):
+        """
+        Registra uma venda de produtos a partir de uma proposta finalizada
+        
+        Args:
+            proposta: Objeto Proposta
+            cliente: Objeto Cliente
+            produtos: Lista de objetos ProdutoOrganizador
+        
+        Returns:
+            int: ID da venda criada ou None em caso de erro
+        """
+        try:
+            # Calcular valor total dos produtos
+            valor_total = 0
+            for produto in produtos:
+                valor_total += float(produto.valor) * produto.quantidade
+                
+            # Criar a venda
+            venda = Venda(
+                cliente_id=cliente.id,
+                proposta_id=proposta.id,
+                data_venda=datetime.now().date(),
+                valor_total=valor_total,
+                status="Concluída",
+                forma_pagamento="Proposta",
+                observacoes=f"Venda gerada automaticamente da proposta #{proposta.numero}"
+            )
+            self.session.add(venda)
+            self.session.flush()  # Para obter o ID da venda
+            
+            # Adicionar itens da venda
+            for produto in produtos:
+                item = ItemVenda(
+                    venda_id=venda.id,
+                    produto_id=None,  # Não temos o produto do catálogo, apenas o produto da proposta
+                    quantidade=produto.quantidade,
+                    preco_unitario=float(produto.valor),
+                    subtotal=float(produto.valor) * produto.quantidade
+                )
+                self.session.add(item)
+                
+            return venda.id
+            
+        except Exception as e:
+            print(f"ERRO ao registrar venda de produtos: {str(e)}")
+            return None

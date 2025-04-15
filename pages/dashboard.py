@@ -72,16 +72,41 @@ def show():
         # Financeiro
         try:
             financeiro = st.session_state.db.get_financeiro()
+            
+            # Valores a Receber
             if not financeiro.empty:
+                # Considerar receitas e receitas a receber pendentes
                 valores_receber = financeiro[
-                    (financeiro['tipo'] == 'receita') & 
-                    (financeiro['status'] == 'pendente')
+                    ((financeiro['tipo'] == 'receita') | (financeiro['tipo'] == 'receita_a_receber')) & 
+                    (financeiro['status'] == 'Pendente')
+                ]['valor'].sum()
+                
+                # Valores a Pagar (despesas pendentes)
+                valores_pagar = financeiro[
+                    (financeiro['tipo'] == 'despesa') & 
+                    (financeiro['status'] == 'Pendente')
                 ]['valor'].sum()
             else:
                 valores_receber = 0.0
-            st.metric("Valores a Receber", f"R$ {valores_receber:,.2f}")
+                valores_pagar = 0.0
+                
+            # Exibir métricas
+            st.metric("Valores a Receber", f"R$ {valores_receber:,.2f}", 
+                     delta=f"Total: R$ {valores_receber:,.2f}", delta_color="normal")
+            
+            st.metric("Valores a Pagar", f"R$ {valores_pagar:,.2f}", 
+                     delta=f"-R$ {valores_pagar:,.2f}", delta_color="inverse")
+            
+            # Calcular saldo líquido
+            saldo_liquido = valores_receber - valores_pagar
+            delta_saldo = f"+R$ {saldo_liquido:,.2f}" if saldo_liquido >= 0 else f"-R$ {abs(saldo_liquido):,.2f}"
+            delta_color = "normal" if saldo_liquido >= 0 else "inverse"
+            
+            st.metric("Saldo Líquido", f"R$ {saldo_liquido:,.2f}", 
+                     delta=delta_saldo, delta_color=delta_color)
+            
         except Exception as e:
-            st.warning("Erro ao carregar dados financeiros")
+            st.warning(f"Erro ao carregar dados financeiros: {str(e)}")
 
     with col2:
         st.subheader("📋 Propostas em Aberto")

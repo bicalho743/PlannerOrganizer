@@ -1092,6 +1092,7 @@ def show():
                                 try:
                                     data_conclusao = datetime.now().date()
                                     
+                                    # Atualizar status da proposta
                                     sucesso = st.session_state.db.atualizar_proposta(
                                         proposta_id=proposta_exec_id,
                                         status="Concluída",
@@ -1099,8 +1100,34 @@ def show():
                                     )
                                     
                                     if sucesso:
-                                        st.success(f"Proposta #{proposta_exec_numero} marcada como concluída!")
-                                        time.sleep(1)
+                                        # Gerar lançamentos financeiros automáticos
+                                        try:
+                                            resultado_lancamentos = st.session_state.db.gerar_lancamentos_financeiros_proposta_concluida(
+                                                proposta_id=proposta_exec_id
+                                            )
+                                            
+                                            st.success(f"Proposta #{proposta_exec_numero} marcada como concluída!")
+                                            
+                                            # Mostrar detalhes dos lançamentos gerados, se houver
+                                            if resultado_lancamentos:
+                                                if "status" in resultado_lancamentos and resultado_lancamentos["status"] == "já existe":
+                                                    st.info("Lançamentos financeiros já existem para esta proposta.")
+                                                else:
+                                                    lancamentos_count = resultado_lancamentos.get("lancamentos_gerados", 0)
+                                                    if lancamentos_count > 0:
+                                                        st.success(f"{lancamentos_count} lançamentos financeiros gerados automaticamente!")
+                                                        
+                                                        # Mostrar detalhes dos valores
+                                                        with st.expander("Detalhes dos lançamentos"):
+                                                            st.write(f"- Valor Base (Cliente): R$ {resultado_lancamentos.get('valor_base', 0):.2f}")
+                                                            st.write(f"- Produtos: R$ {resultado_lancamentos.get('valor_produtos', 0):.2f}")
+                                                            st.write(f"- Fornecedores: R$ {resultado_lancamentos.get('valor_fornecedores', 0):.2f}")
+                                                            st.write(f"- Assistentes a Pagar: R$ {resultado_lancamentos.get('valor_assistentes', 0):.2f}")
+                                        
+                                        except Exception as e:
+                                            st.warning(f"Proposta concluída, mas houve um erro ao gerar lançamentos financeiros: {str(e)}")
+                                        
+                                        time.sleep(2)  # Dar tempo para o usuário ver as mensagens
                                         st.rerun()
                                     else:
                                         st.error("Erro ao finalizar proposta.")
