@@ -206,10 +206,11 @@ def gerar_pdf_proposta(db, proposta_id, custom_filename=None):
         if custom_filename:
             filename = custom_filename
         else:
-            # Garantir que temos número da proposta e ID do cliente
-            numero = proposta.get('numero', 'sem_numero')
-            cliente_id = proposta.get('cliente_id', 'sem_cliente')
-            filename = f"pdfs/proposta_{numero}_{cliente_id}_fechamento.pdf"
+            # Garantir que temos ID da proposta e nome do cliente
+            proposta_id = proposta.get('id', 'sem_id')
+            cliente_nome = cliente_dict.get('nome', 'sem_nome').replace(' ', '_').lower()
+            # Criando nome de arquivo com o formato solicitado: Proposta_#ID_NomeCliente.pdf
+            filename = f"pdfs/Proposta_{proposta_id}_{cliente_nome}.pdf"
             
         # Gerar PDF
         pdf_path = gerar_pdf_fechamento(proposta, cliente_dict, acrescimos, filename)
@@ -312,10 +313,12 @@ def st_gerar_pdf_proposta(proposta_id, custom_filename=None):
             
             # Botão para download do arquivo
             with open(filename, "rb") as pdf:
+                # Usar o nome do arquivo original, garantindo que o nome fica correto no download
+                nome_arquivo = os.path.basename(filename)
                 st.download_button(
                     label="⬇️ Baixar PDF",
                     data=pdf.read(),
-                    file_name=os.path.basename(filename),
+                    file_name=nome_arquivo,
                     mime="application/pdf"
                 )
             
