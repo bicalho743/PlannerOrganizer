@@ -2272,33 +2272,73 @@ class Database:
         Recomenda-se usar cancelar_venda() para a maioria dos casos para manter o histórico.
         """
         def query():
-            venda = self.session.query(Venda).filter_by(id=venda_id).first()
-            if not venda:
-                return False
+            try:
+                print(f"DEBUG: Excluindo venda ID {venda_id}")
+                venda = self.session.query(Venda).filter_by(id=venda_id).first()
                 
-            # Estornar produtos para o estoque antes de excluir
-            for item in venda.itens:
-                produto = item.produto
-                if produto and venda.status != 'Cancelada':
-                    produto.estoque += item.quantidade
-            
-            # Excluir transações financeiras relacionadas
-            transacoes = self.session.query(Transacao).filter_by(
-                origem_id=venda_id,
-                origem_tipo='venda'
-            ).all()
-            
-            for transacao in transacoes:
-                self.session.delete(transacao)
-            
-            # Remover itens da venda primeiro (devido à restrição de chave estrangeira)
-            for item in venda.itens:
-                self.session.delete(item)
+                if not venda:
+                    print(f"DEBUG: Venda ID {venda_id} não encontrada")
+                    return False
                 
-            # Remover a venda
-            self.session.delete(venda)
-            
-            return True
+                print(f"DEBUG: Venda encontrada: {venda.id} - status: {venda.status}")
+                
+                # Estornar produtos para o estoque antes de excluir
+                if hasattr(venda, 'itens'):
+                    print(f"DEBUG: Processando {len(venda.itens)} itens da venda")
+                    for item in venda.itens:
+                        if hasattr(item, 'produto') and item.produto is not None:
+                            print(f"DEBUG: Estornando {item.quantidade} unidades do produto {item.produto.id}")
+                            if venda.status != 'Cancelada':
+                                item.produto.estoque += item.quantidade
+                        else:
+                            print(f"DEBUG: Item sem produto associado")
+                else:
+                    print(f"DEBUG: Venda não possui itens relacionados")
+                
+                # Verificar e excluir transações financeiras relacionadas
+                transacoes = self.session.query(Transacao).filter_by(
+                    origem_id=venda_id,
+                    origem_tipo='venda'
+                ).all()
+                
+                print(f"DEBUG: Encontradas {len(transacoes)} transações financeiras relacionadas")
+                for transacao in transacoes:
+                    print(f"DEBUG: Excluindo transação ID {transacao.id}")
+                    self.session.delete(transacao)
+                
+                # Para lidar com possíveis referências à proposta
+                print("DEBUG: Verificando se venda está relacionada a uma proposta")
+                if hasattr(venda, 'proposta_id') and venda.proposta_id:
+                    print(f"DEBUG: Venda relacionada à proposta ID {venda.proposta_id}")
+                    # Apenas desvincular, não excluir a proposta
+                    venda.proposta_id = None
+                
+                # Remover itens da venda primeiro (devido à restrição de chave estrangeira)
+                if hasattr(venda, 'itens'):
+                    itens = list(venda.itens)  # Criar uma cópia da lista para evitar problemas de iteração
+                    for item in itens:
+                        print(f"DEBUG: Excluindo item de venda ID {item.id}")
+                        self.session.delete(item)
+                
+                # Por precaução, realizar flush antes de excluir a venda
+                self.session.flush()
+                
+                # Remover a venda
+                print(f"DEBUG: Finalmente excluindo a venda ID {venda_id}")
+                self.session.delete(venda)
+                
+                # Realizar flush novamente para garantir a exclusão
+                self.session.flush()
+                
+                print(f"DEBUG: Venda ID {venda_id} excluída com sucesso")
+                return True
+            except Exception as e:
+                print(f"ERRO ao excluir venda: {str(e)}")
+                import traceback
+                print(traceback.format_exc())
+                # Fazer rollback em caso de erro
+                self.session.rollback()
+                raise
         return self._safe_query(query)
         
     def adicionar_venda_a_proposta(self, proposta_id, itens, forma_pagamento=None, observacoes=None):
