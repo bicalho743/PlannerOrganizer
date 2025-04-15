@@ -395,39 +395,59 @@ def show():
                         - Status: {venda_excluir['status']}
                         """)
                     
-                    # Botão de exclusão
+                    # Botão para iniciar o processo de exclusão
                     if st.button("Excluir Venda Selecionada", type="primary", key="btn_excluir_venda"):
                         with st.form(key="form_excluir_venda"):
                             st.warning("⚠️ ATENÇÃO! Esta ação irá EXCLUIR PERMANENTEMENTE a venda selecionada e todos seus itens do sistema.")
                             st.warning(f"Você está excluindo a venda #{venda_excluir_id} do cliente {vendas_df[vendas_df['id'] == venda_excluir_id]['cliente_nome'].iloc[0]}")
                             
-                            # Checkbox adicional de confirmação
-                            confirma_checkbox = st.checkbox("Eu entendo que esta ação não pode ser desfeita")
-                            confirmar_exclusao = st.form_submit_button("Confirmar Exclusão", type="primary", disabled=not confirma_checkbox)
+                            # Campo de texto para confirmação
+                            st.error("Digite 'EXCLUIR' abaixo para confirmar a exclusão permanente")
+                            confirmacao_texto = st.text_input("Confirmação", key="text_confirma_exclusao")
+                            confirmar_exclusao = st.form_submit_button("Confirmar Exclusão", type="primary")
                             
                             if confirmar_exclusao:
-                                try:
-                                    # Tenta excluir a venda usando SQL direto para garantir a exclusão
-                                    result = st.session_state.db.excluir_venda_com_sql(venda_excluir_id)
-                                    if result:
-                                        st.success(f"Venda #{venda_excluir_id} excluída com sucesso!")
-                                        time.sleep(1)
-                                        st.rerun()
-                                    else:
-                                        st.error("Falha ao excluir a venda.")
-                                except Exception as e:
-                                    st.error(f"Erro ao excluir venda: {str(e)}")
-                                    st.error("Tentando método alternativo...")
+                                if confirmacao_texto != "EXCLUIR":
+                                    st.error("Confirmação incorreta. Digite 'EXCLUIR' em maiúsculas exatamente como mostrado.")
+                                else:
+                                    # Primeira tentativa: usando SQL direto
                                     try:
-                                        # Segunda tentativa com método alternativo
-                                        result = st.session_state.db.excluir_venda(venda_excluir_id)
+                                        result = st.session_state.db.excluir_venda_com_sql(venda_excluir_id)
                                         if result:
-                                            st.success(f"Venda #{venda_excluir_id} excluída com sucesso pelo método alternativo!")
+                                            st.success(f"Venda #{venda_excluir_id} excluída com sucesso!")
                                             time.sleep(1)
                                             st.rerun()
                                         else:
-                                            st.error("Falha ao excluir a venda em ambos os métodos.")
-                                    except Exception as e2:
-                                        st.error(f"Erro no método alternativo: {str(e2)}")
+                                            st.error("Falha ao excluir a venda no primeiro método.")
+                                            
+                                            # Segunda tentativa: usando ORM
+                                            st.info("Tentando método alternativo...")
+                                            try:
+                                                result = st.session_state.db.excluir_venda(venda_excluir_id)
+                                                if result:
+                                                    st.success(f"Venda #{venda_excluir_id} excluída com sucesso pelo método alternativo!")
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                                else:
+                                                    st.error("Falha ao excluir a venda em ambos os métodos.")
+                                            except Exception as e2:
+                                                st.error(f"Erro no método alternativo: {str(e2)}")
+                                    except Exception as e:
+                                        st.error(f"Erro ao excluir venda: {str(e)}")
+                                        
+                                        # Segunda tentativa após exceção no primeiro método
+                                        st.info("Tentando método alternativo após exceção...")
+                                        try:
+                                            result = st.session_state.db.excluir_venda(venda_excluir_id)
+                                            if result:
+                                                st.success(f"Venda #{venda_excluir_id} excluída com sucesso pelo método alternativo!")
+                                                time.sleep(1)
+                                                st.rerun()
+                                            else:
+                                                st.error("Falha ao excluir a venda em ambos os métodos.")
+                                        except Exception as e2:
+                                            st.error(f"Erro no método alternativo: {str(e2)}")
+                                            st.error("Detalhes técnicos do erro:")
+                                            st.code(f"{str(e)}\n\n{str(e2)}")
         except Exception as e:
             st.error(f"Erro ao carregar vendas: {str(e)}")
