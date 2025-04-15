@@ -926,6 +926,148 @@ class Database:
             return fornecedor.id
         return self._safe_query(query)
 
+    def update_fornecedor(self, fornecedor_id, descricao=None, contato=None, categoria=None, 
+                        estado=None, cidade=None, bairro=None, endereco=None, pix=None, 
+                        recorrente=None, observacoes=None, valor=None, data_vencimento=None, 
+                        data_pagamento=None, status=None, tipo_conta=None, percentual_comissao=None):
+        """
+        Atualiza os dados de um fornecedor existente.
+        
+        Args:
+            fornecedor_id: ID do fornecedor a ser atualizado
+            **kwargs: Campos a serem atualizados
+            
+        Returns:
+            bool: True se a atualização foi bem-sucedida
+        """
+        def query():
+            # Buscar o fornecedor pelo ID
+            fornecedor = self.session.query(Fornecedor).filter(Fornecedor.id == fornecedor_id).first()
+            
+            if not fornecedor:
+                raise ValueError(f"Fornecedor com ID {fornecedor_id} não encontrado")
+            
+            # Atualizar campos se fornecidos
+            if descricao is not None:
+                fornecedor.descricao = descricao
+            if contato is not None:
+                fornecedor.contato = contato
+            if categoria is not None:
+                fornecedor.categoria = categoria
+            if estado is not None:
+                fornecedor.estado = estado
+            if cidade is not None:
+                fornecedor.cidade = cidade
+            if bairro is not None:
+                fornecedor.bairro = bairro
+            if endereco is not None:
+                fornecedor.endereco = endereco
+            if pix is not None:
+                fornecedor.pix = pix
+            if recorrente is not None:
+                fornecedor.recorrente = recorrente
+            if observacoes is not None:
+                fornecedor.observacoes = observacoes
+            if valor is not None:
+                fornecedor.valor = valor
+            if data_vencimento is not None:
+                fornecedor.data_vencimento = data_vencimento
+            if data_pagamento is not None:
+                fornecedor.data_pagamento = data_pagamento
+            if status is not None:
+                fornecedor.status = status
+            if tipo_conta is not None:
+                fornecedor.tipo_conta = tipo_conta
+            if percentual_comissao is not None:
+                fornecedor.percentual_comissao = percentual_comissao
+                
+            return True
+            
+        return self._safe_query(query)
+        
+    def update_parceiro(self, parceiro_id, nome=None, telefone=None, area_atuacao=None, 
+                       tipo_parceria=None, estado=None, cidade=None, bairro=None, 
+                       endereco=None, pix=None, observacoes=None):
+        """
+        Atualiza os dados de um parceiro existente.
+        
+        Args:
+            parceiro_id: ID do parceiro a ser atualizado
+            **kwargs: Campos a serem atualizados
+            
+        Returns:
+            bool: True se a atualização foi bem-sucedida
+        """
+        def query():
+            # Buscar o parceiro pelo ID
+            parceiro = self.session.query(Parceiro).filter(Parceiro.id == parceiro_id).first()
+            
+            if not parceiro:
+                raise ValueError(f"Parceiro com ID {parceiro_id} não encontrado")
+            
+            # Atualizar campos se fornecidos
+            if nome is not None:
+                parceiro.nome = nome
+            if telefone is not None:
+                parceiro.telefone = telefone
+            if area_atuacao is not None:
+                parceiro.area_atuacao = area_atuacao
+            if tipo_parceria is not None:
+                parceiro.tipo_parceria = tipo_parceria
+            if estado is not None:
+                parceiro.estado = estado
+            if cidade is not None:
+                parceiro.cidade = cidade
+            if bairro is not None:
+                parceiro.bairro = bairro
+            if endereco is not None:
+                parceiro.endereco = endereco
+            if pix is not None:
+                parceiro.pix = pix
+            if observacoes is not None:
+                parceiro.observacoes = observacoes
+                
+            return True
+            
+        return self._safe_query(query)
+        
+    def update_assistente(self, assistente_id, nome=None, telefone=None, endereco=None,
+                          disponibilidade=None, pix=None, observacoes=None):
+        """
+        Atualiza os dados de um assistente existente.
+        
+        Args:
+            assistente_id: ID do assistente a ser atualizado
+            **kwargs: Campos a serem atualizados
+            
+        Returns:
+            bool: True se a atualização foi bem-sucedida
+        """
+        def query():
+            # Buscar o assistente pelo ID
+            assistente = self.session.query(Assistente).filter(Assistente.id == assistente_id).first()
+            
+            if not assistente:
+                raise ValueError(f"Assistente com ID {assistente_id} não encontrado")
+            
+            # Atualizar campos se fornecidos
+            if nome is not None:
+                assistente.nome = nome
+            if telefone is not None:
+                assistente.telefone = telefone
+            if endereco is not None:
+                assistente.endereco = endereco
+            if disponibilidade is not None:
+                assistente.disponibilidade = disponibilidade
+            if pix is not None:
+                assistente.pix = pix
+            if observacoes is not None:
+                assistente.observacoes = observacoes
+                
+            return True
+            
+        return self._safe_query(query)
+
     def get_fornecedores(self):
         def query():
             fornecedores = self.session.query(Fornecedor).all()
