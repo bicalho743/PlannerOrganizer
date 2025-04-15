@@ -826,49 +826,33 @@ def show():
                                 if not fornecedores.empty:
                                     # Formulário para adicionar fornecedor à proposta
                                     with st.form(key=f"fornecedor_form_{proposta_exec_id}"):
-                                        # Função para atualizar o percentual de comissão quando o fornecedor muda
-                                        def update_percentual_comissao():
-                                            # Cria chave de sessão para armazenar o percentual do fornecedor selecionado
-                                            fornec_id = st.session_state.get('fornecedor_selecionado', 0)
-                                            if not fornec_id:
-                                                return
-                                                
-                                            try:
-                                                # Buscar diretamente do banco para garantir que temos a informação mais recente
-                                                fornecedor_db = st.session_state.db.session.query(Fornecedor).filter_by(id=fornec_id).first()
-                                                if fornecedor_db:
-                                                    # Armazenar na session_state para uso posterior
-                                                    st.session_state.percentual_comissao_atual = fornecedor_db.percentual_comissao or 0.0
-                                                    print(f"DEBUG: Fornecedor atualizado ID={fornec_id}, Percentual={st.session_state.percentual_comissao_atual}")
-                                            except Exception as e:
-                                                print(f"DEBUG: Erro ao atualizar percentual de comissão: {str(e)}")
-                                                
-                                        # Inicializar valores na session_state se não existirem
-                                        if 'percentual_comissao_atual' not in st.session_state:
-                                            st.session_state.percentual_comissao_atual = 0.0
-                                            
+                                        # Dentro de um form não podemos usar on_change, então temos que fazer de outra forma
+                                        # Seleção do fornecedor (sem callback)
                                         fornecedor_id = st.selectbox(
                                             "Selecione o fornecedor:",
                                             fornecedores['id'].tolist(),
-                                            format_func=lambda x: fornecedores[fornecedores['id']==x]['descricao'].iloc[0],
-                                            key='fornecedor_selecionado',
-                                            on_change=update_percentual_comissao
+                                            format_func=lambda x: fornecedores[fornecedores['id']==x]['descricao'].iloc[0]
                                         )
                                         
-                                        # Obter o percentual de comissão do fornecedor selecionado da session_state
-                                        percentual_comissao = st.session_state.percentual_comissao_atual
-                                        
-                                        # Garantir que o percentual esteja atualizado na primeira carga
-                                        if percentual_comissao == 0.0 and fornecedor_id:
-                                            try:
-                                                # Buscar diretamente do banco para garantir que temos a informação mais recente
-                                                fornecedor_info = st.session_state.db.session.query(Fornecedor).filter_by(id=fornecedor_id).first()
-                                                if fornecedor_info:
-                                                    percentual_comissao = fornecedor_info.percentual_comissao or 0.0
-                                                    st.session_state.percentual_comissao_atual = percentual_comissao
-                                                    print(f"DEBUG: Fornecedor inicial ID={fornecedor_id}, Percentual={percentual_comissao}")
-                                            except Exception as e:
-                                                print(f"DEBUG: Erro ao buscar percentual de comissão inicial: {str(e)}")
+                                        # Buscar o percentual de comissão diretamente após a seleção
+                                        percentual_comissao = 0.0
+                                        try:
+                                            # Buscar do DataFrame primeiro (mais rápido)
+                                            fornecedor_df = fornecedores[fornecedores['id'] == fornecedor_id]
+                                            if not fornecedor_df.empty and 'percentual_comissao' in fornecedor_df.columns:
+                                                percentual_comissao = fornecedor_df['percentual_comissao'].iloc[0] or 0.0
+                                                print(f"DEBUG: Fornecedor ID={fornecedor_id}, Percentual do DF={percentual_comissao}")
+                                            
+                                            # Se não encontrou no DataFrame, buscar direto do banco
+                                            if percentual_comissao == 0.0:
+                                                # Buscar do banco diretamente (fallback)
+                                                forn_query = f"SELECT percentual_comissao FROM fornecedores WHERE id = {fornecedor_id}"
+                                                result = st.session_state.db.session.execute(forn_query).fetchone()
+                                                if result and result[0]:
+                                                    percentual_comissao = float(result[0])
+                                                    print(f"DEBUG: Fornecedor ID={fornecedor_id}, Percentual do Banco={percentual_comissao}")
+                                        except Exception as e:
+                                            print(f"DEBUG: Erro ao buscar percentual de comissão: {str(e)}")
                                             pass
                                         
                                         valor_fornecimento = st.number_input("Valor do fornecimento (R$):", min_value=0.0, format="%.2f")
