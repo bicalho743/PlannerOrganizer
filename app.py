@@ -53,7 +53,7 @@ if 'db' not in st.session_state:
         st.error(f"Detalhes do erro: {str(e)}")
         st.stop()
 
-# Estilo CSS customizado para garantir o menu no topo
+# Estilo CSS customizado para garantir o menu no topo e esconder os links padrão do Streamlit
 st.markdown("""
     <style>
     section[data-testid="stSidebar"] {
@@ -83,6 +83,20 @@ st.markdown("""
         background-color: #262730;
         padding: 1rem;
         margin: 0 -1rem;
+    }
+    
+    /* Esconde os links nativos do Streamlit na barra lateral */
+    section[data-testid="stSidebar"] .element-container:has(svg[xmlns="http://www.w3.org/2000/svg"]) {
+        display: none;
+    }
+    
+    /* Estilos para os links de navegação personalizados */
+    .navigation-links a {
+        transition: color 0.3s ease;
+    }
+    
+    .navigation-links a:hover {
+        color: #F1A208 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -142,6 +156,22 @@ try:
         show()
 except Exception as e:
     st.error(f"Erro ao carregar página: {str(e)}")
+
+# Links de navegação (colocados na parte inferior da barra lateral)
+st.sidebar.markdown("---")
+st.sidebar.markdown("""
+<div class="navigation-links" style="opacity: 0.7; font-size: 0.9rem;">
+    <p style="margin-bottom: 8px; color: #ccc;">Navegação rápida:</p>
+    <a href="/" style="display: block; padding: 4px 0; color: #ccc; text-decoration: none;">app</a>
+    <a href="/cadastros" style="display: block; padding: 4px 0; color: #ccc; text-decoration: none;">cadastros</a>
+    <a href="/dashboard" style="display: block; padding: 4px 0; color: #ccc; text-decoration: none;">dashboard</a>
+    <a href="/dashboard_fixed" style="display: block; padding: 4px 0; color: #ccc; text-decoration: none;">dashboard fixed</a>
+    <a href="/financeiro" style="display: block; padding: 4px 0; color: #ccc; text-decoration: none;">financeiro</a>
+    <a href="/propostas" style="display: block; padding: 4px 0; color: #ccc; text-decoration: none;">propostas</a>
+    <a href="/relatorios" style="display: block; padding: 4px 0; color: #ccc; text-decoration: none;">relatórios</a>
+    <a href="/vendas" style="display: block; padding: 4px 0; color: #ccc; text-decoration: none;">vendas</a>
+</div>
+""", unsafe_allow_html=True)
 
 # Informações do sistema no final
 st.sidebar.markdown("---")
