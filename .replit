@@ -59,6 +59,10 @@ args = "Start application"
 task = "workflow.run"
 args = "Limpar Propostas"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Sistema de Backup"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -224,6 +228,21 @@ task = "shell.exec"
 args = "streamlit run limpar_propostas.py --server.port 8509 --server.address 0.0.0.0"
 waitForPort = 8509
 
+[[workflows.workflow]]
+name = "Sistema de Backup"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run criar_ponto_backup.py --server.port 8530 --server.address 0.0.0.0"
+waitForPort = 8530
+
 [[ports]]
 localPort = 443
 externalPort = 3001
@@ -279,3 +298,7 @@ externalPort = 6800
 [[ports]]
 localPort = 8520
 externalPort = 8080
+
+[[ports]]
+localPort = 8530
+externalPort = 8099
