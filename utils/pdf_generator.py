@@ -44,7 +44,7 @@ def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
             spaceAfter=30
         )
         story.append(Paragraph(f"Relatório de Serviço", title_style))
-        story.append(Paragraph(f"Proposta #{proposta['numero']} - {cliente['nome']}", styles["Heading2"]))
+        story.append(Paragraph(f"Proposta #{proposta['id']} - {cliente['nome']}", styles["Heading2"]))
         story.append(Paragraph(f"{datetime.now().strftime('%d/%m/%Y')}", styles["Heading3"]))
         story.append(Spacer(1, 12))
 
@@ -172,7 +172,7 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
         str: Caminho do arquivo PDF gerado
     """
     # Logs para debugging
-    print(f"DEBUG PDF: Gerando PDF interno para proposta #{proposta.get('numero', 'N/A')}")
+    print(f"DEBUG PDF: Gerando PDF interno para proposta #{proposta.get('id', 'N/A')}")
     print(f"DEBUG PDF: Cliente: {cliente.get('nome', 'N/A')}")
     print(f"DEBUG PDF: Filename: {filename}")
     print(f"DEBUG PDF: Acréscimos: {len(acrescimos) if not acrescimos.empty else 0} registros")
@@ -194,7 +194,7 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
             spaceAfter=30
         )
         story.append(Paragraph(f"RELATÓRIO INTERNO - CONFIDENCIAL", title_style))
-        story.append(Paragraph(f"Proposta #{proposta['numero']} - {cliente['nome']}", styles["Heading2"]))
+        story.append(Paragraph(f"Proposta #{proposta['id']} - {cliente['nome']}", styles["Heading2"]))
         story.append(Paragraph(f"{datetime.now().strftime('%d/%m/%Y')}", styles["Heading3"]))
         story.append(Spacer(1, 12))
 
@@ -388,7 +388,7 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
         str: Caminho do arquivo PDF gerado
     """
     # Logs para debugging
-    print(f"DEBUG PDF: Gerando PDF para proposta #{proposta.get('numero', 'N/A')}")
+    print(f"DEBUG PDF: Gerando PDF para proposta #{proposta.get('id', 'N/A')}")
     print(f"DEBUG PDF: Cliente: {cliente.get('nome', 'N/A')}")
     print(f"DEBUG PDF: Filename: {filename}")
     print(f"DEBUG PDF: Acréscimos: {len(acrescimos) if not acrescimos.empty else 0} registros")
@@ -410,7 +410,7 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
             spaceAfter=30
         )
         story.append(Paragraph(f"Fechamento de Projeto", title_style))
-        story.append(Paragraph(f"Proposta #{proposta['numero']} - {cliente['nome']}", styles["Heading2"]))
+        story.append(Paragraph(f"Proposta #{proposta['id']} - {cliente['nome']}", styles["Heading2"]))
         story.append(Paragraph(f"{datetime.now().strftime('%d/%m/%Y')}", styles["Heading3"]))
         story.append(Spacer(1, 12))
 

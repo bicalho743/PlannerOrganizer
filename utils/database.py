@@ -585,13 +585,13 @@ class Database:
             raise ValueError(f"Erro ao converter valores: {str(e)}")
         
         def query():
-            # Gerar próximo número de proposta
-            ultimo_numero = self.session.query(func.max(Proposta.numero)).scalar()
-            proximo_numero = 1 if ultimo_numero is None else int(ultimo_numero) + 1
+            # Gerar próximo número de proposta igual ao ID (criar com ID=1 se for a primeira proposta)
+            ultimo_id = self.session.query(func.max(Proposta.id)).scalar()
+            proximo_id = 1 if ultimo_id is None else int(ultimo_id) + 1
 
             # Criar dicionário com valores para a proposta
             proposta_data = {
-                'numero': proximo_numero,
+                'numero': proximo_id,  # Usar o mesmo valor do ID como número
                 'cliente_id': cliente_id_local,
                 'descricao': descricao_local,
                 'valor': valor_local,
