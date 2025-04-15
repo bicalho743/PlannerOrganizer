@@ -343,10 +343,12 @@ def show():
                                         proposta_id = proposta['id']
                                         # Obter nome do cliente da proposta para usar no nome do arquivo
                                         cliente_id = proposta['cliente_id']
-                                        cliente_info = st.session_state.db.get_cliente_by_id(cliente_id)
+                                        cliente_df = st.session_state.db.get_cliente_by_id(cliente_id)
                                         cliente_nome = "sem_nome"
-                                        if cliente_info is not None:
-                                            cliente_nome = cliente_info.get('nome', 'sem_nome').replace(' ', '_').lower()
+                                        if not cliente_df.empty:
+                                            # Obter o nome da primeira linha do DataFrame
+                                            nome_str = str(cliente_df.iloc[0]['nome']) if 'nome' in cliente_df.columns else "sem_nome"
+                                            cliente_nome = nome_str.replace(' ', '_').lower()
                                         
                                         # Usar o mesmo formato de nome de arquivo que definimos em propostas_helper.py
                                         st.download_button(
