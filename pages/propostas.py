@@ -364,31 +364,70 @@ def show():
                             
                             # Coluna 5: Botão de exclusão
                             with col_excluir:
-                                if st.button("EXCLUIR", key=f"excluir_{proposta_id}"):
-                                    # Confirmar exclusão
+                                # Usar um identificador único para cada proposta
+                                exclusao_key = f"exclusao_{proposta_id}"
+                                
+                                # Criar ou redefinir estado de exclusão para esta proposta
+                                if exclusao_key not in st.session_state:
+                                    st.session_state[exclusao_key] = {
+                                        "confirmar_visivel": False,
+                                        "excluindo": False
+                                    }
+                                
+                                # Botão para iniciar o processo de exclusão
+                                if not st.session_state[exclusao_key]["confirmar_visivel"] and not st.session_state[exclusao_key]["excluindo"]:
+                                    if st.button("EXCLUIR", key=f"excluir_btn_{proposta_id}"):
+                                        st.session_state[exclusao_key]["confirmar_visivel"] = True
+                                        st.rerun()
+                                
+                                # Mostrar confirmação e botões
+                                if st.session_state[exclusao_key]["confirmar_visivel"]:
                                     st.warning(f"Confirmar exclusão da proposta #{proposta['numero']}?")
-                                    if st.button("CONFIRMAR", key=f"confirmar_excluir_{proposta_id}"):
-                                        try:
-                                            # Adicionar logs para debug
-                                            st.write(f"Tentando excluir proposta ID: {proposta_id}")
-                                            
-                                            # Mostrar dados antes da exclusão
-                                            st.write(f"Tipo de dados do proposta_id: {type(proposta_id)}")
-                                            
-                                            # Chamar função de exclusão
-                                            sucesso, mensagem = st.session_state.db.excluir_proposta(proposta_id)
-                                            
-                                            # Mostrar resultado
-                                            st.write(f"Resultado: sucesso={sucesso}, mensagem={mensagem}")
-                                            
-                                            if sucesso:
-                                                st.success("Proposta excluída com sucesso!")
-                                                time.sleep(1)
+                                    
+                                    # Criar linha para os botões de confirmação
+                                    col1, col2 = st.columns(2)
+                                    
+                                    with col1:
+                                        if st.button("CANCELAR", key=f"cancelar_excluir_{proposta_id}"):
+                                            st.session_state[exclusao_key]["confirmar_visivel"] = False
+                                            st.rerun()
+                                    
+                                    with col2:
+                                        if st.button("CONFIRMAR", key=f"confirmar_excluir_{proposta_id}"):
+                                            st.session_state[exclusao_key]["excluindo"] = True
+                                            st.session_state[exclusao_key]["confirmar_visivel"] = False
+                                            st.rerun()
+                                
+                                # Executar a exclusão
+                                if st.session_state[exclusao_key]["excluindo"]:
+                                    try:
+                                        st.info(f"Excluindo proposta ID: {proposta_id}...")
+                                        # Converter para int explicitamente para garantir
+                                        proposta_id_int = int(proposta_id)
+                                        sucesso, mensagem = st.session_state.db.excluir_proposta(proposta_id_int)
+                                        
+                                        if sucesso:
+                                            st.success("Proposta excluída com sucesso!")
+                                            # Dar tempo para visualizar a mensagem
+                                            time.sleep(1)
+                                            # Resetar o estado e recarregar
+                                            st.session_state[exclusao_key] = {
+                                                "confirmar_visivel": False,
+                                                "excluindo": False
+                                            }
+                                            st.rerun()
+                                        else:
+                                            st.error(f"Erro ao excluir proposta: {mensagem}")
+                                            if st.button("Tentar novamente", key=f"retry_excluir_{proposta_id}"):
+                                                st.session_state[exclusao_key]["excluindo"] = False
+                                                st.session_state[exclusao_key]["confirmar_visivel"] = False
                                                 st.rerun()
-                                            else:
-                                                st.error(f"Erro ao excluir proposta: {mensagem}")
-                                        except Exception as e:
-                                            st.error(f"Erro ao excluir proposta: {str(e)}")
+                                    except Exception as e:
+                                        st.error(f"Erro ao excluir proposta: {str(e)}")
+                                        if st.button("Tentar novamente", key=f"retry_error_{proposta_id}"):
+                                            st.session_state[exclusao_key]["excluindo"] = False
+                                            st.session_state[exclusao_key]["confirmar_visivel"] = False
+                                            st.rerun()
                             
                             # Separador entre propostas
                             st.markdown("---")
