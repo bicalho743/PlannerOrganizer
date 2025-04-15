@@ -1793,25 +1793,55 @@ class Database:
     def excluir_proposta(self, proposta_id):
         """Exclui uma proposta e seus registros relacionados usando o ID da proposta"""
         def query():
-            proposta = self.session.query(Proposta).filter_by(id=proposta_id).first()
-            if proposta:
-                try:
-                    # Excluir registros financeiros relacionados primeiro
-                    # Esta é a tabela que estava causando a violação de chave estrangeira
-                    self.session.query(Transacao).filter_by(proposta_id=proposta_id).delete()
+            # Converter para int se for string
+            try:
+                if isinstance(proposta_id, str):
+                    proposta_id = int(proposta_id)
                 
-                    # Excluir outros registros relacionados
-                    self.session.query(AndamentoProposta).filter_by(proposta_id=proposta_id).delete()
-                    self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id).delete()
-                    self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).delete()
+                print(f"DEBUG DATABASE: Excluindo proposta ID: {proposta_id} - Tipo: {type(proposta_id)}")
+                
+                # Verificar se a proposta existe
+                proposta = self.session.query(Proposta).filter_by(id=proposta_id).first()
+                print(f"DEBUG DATABASE: Proposta encontrada: {proposta is not None}")
+                
+                if proposta:
+                    try:
+                        # Excluir registros financeiros relacionados primeiro
+                        # Esta é a tabela que estava causando a violação de chave estrangeira
+                        transacoes = self.session.query(Transacao).filter_by(proposta_id=proposta_id).all()
+                        print(f"DEBUG DATABASE: {len(transacoes)} transações financeiras encontradas para exclusão")
+                        self.session.query(Transacao).filter_by(proposta_id=proposta_id).delete()
                     
-                    # Excluir a proposta
-                    self.session.delete(proposta)
-                    return True, "Proposta excluída com sucesso"
-                except Exception as e:
-                    self.session.rollback()
-                    return False, f"Erro ao excluir proposta: {str(e)}"
-            return False, "Proposta não encontrada"
+                        # Excluir outros registros relacionados
+                        andamentos = self.session.query(AndamentoProposta).filter_by(proposta_id=proposta_id).all()
+                        print(f"DEBUG DATABASE: {len(andamentos)} andamentos encontrados para exclusão")
+                        self.session.query(AndamentoProposta).filter_by(proposta_id=proposta_id).delete()
+                        
+                        produtos = self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id).all()
+                        print(f"DEBUG DATABASE: {len(produtos)} produtos encontrados para exclusão")
+                        self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id).delete()
+                        
+                        acrescimos = self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).all()
+                        print(f"DEBUG DATABASE: {len(acrescimos)} acréscimos encontrados para exclusão")
+                        self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).delete()
+                        
+                        # Excluir a proposta
+                        print(f"DEBUG DATABASE: Excluindo proposta ID: {proposta_id}")
+                        self.session.delete(proposta)
+                        print(f"DEBUG DATABASE: Proposta excluída com sucesso")
+                        
+                        return True, "Proposta excluída com sucesso"
+                    except Exception as e:
+                        self.session.rollback()
+                        print(f"DEBUG DATABASE ERROR: Erro ao excluir proposta: {str(e)}")
+                        return False, f"Erro ao excluir proposta: {str(e)}"
+                else:
+                    print(f"DEBUG DATABASE: Proposta ID {proposta_id} não encontrada")
+                    return False, f"Proposta ID {proposta_id} não encontrada"
+            except Exception as e:
+                print(f"DEBUG DATABASE ERROR: Erro ao processar ID da proposta: {str(e)}")
+                return False, f"Erro ao processar ID da proposta: {str(e)}"
+                
         return self._safe_query(query)
     
     def excluir_proposta_por_numero(self, numero_proposta):

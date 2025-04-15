@@ -369,7 +369,18 @@ def show():
                                     st.warning(f"Confirmar exclusão da proposta #{proposta['numero']}?")
                                     if st.button("CONFIRMAR", key=f"confirmar_excluir_{proposta_id}"):
                                         try:
+                                            # Adicionar logs para debug
+                                            st.write(f"Tentando excluir proposta ID: {proposta_id}")
+                                            
+                                            # Mostrar dados antes da exclusão
+                                            st.write(f"Tipo de dados do proposta_id: {type(proposta_id)}")
+                                            
+                                            # Chamar função de exclusão
                                             sucesso, mensagem = st.session_state.db.excluir_proposta(proposta_id)
+                                            
+                                            # Mostrar resultado
+                                            st.write(f"Resultado: sucesso={sucesso}, mensagem={mensagem}")
+                                            
                                             if sucesso:
                                                 st.success("Proposta excluída com sucesso!")
                                                 time.sleep(1)
