@@ -2,3 +2,10 @@
 headless = true
 address = "0.0.0.0"
 port = 5000
+
+[theme]
+primaryColor = "#F4B400"
+backgroundColor = "#031B4E"
+secondaryBackgroundColor = "#0A2A5E"
+textColor = "#FFFFFF"
+font = "sans serif"

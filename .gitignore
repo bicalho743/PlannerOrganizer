@@ -1,0 +1,35 @@
+# Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Uploads e dados temporários
+uploaded_files/
+pdfs/
+backups/
+*.bak
+
+# Logs
+*.log
+
+# Outros
+.DS_Store
+.idea/
+.vscode/
