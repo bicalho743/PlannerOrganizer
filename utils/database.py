@@ -214,6 +214,21 @@ class Transacao(Base):
     
     # Relacionamento com proposta
     proposta = relationship("Proposta")
+    
+# Classes para o financeiro (Receita e Despesa) - para manter compatibilidade com código existente
+class Receita(Transacao):
+    """Classe para representar receitas financeiras - herda de Transacao"""
+    def __init__(self, **kwargs):
+        # Definir tipo como receita
+        kwargs['tipo'] = 'receita'
+        super().__init__(**kwargs)
+        
+class Despesa(Transacao):
+    """Classe para representar despesas financeiras - herda de Transacao"""
+    def __init__(self, **kwargs):
+        # Definir tipo como despesa
+        kwargs['tipo'] = 'despesa'
+        super().__init__(**kwargs)
 
 class AcrescimoProposta(Base):
     __tablename__ = 'acrescimos_proposta'
