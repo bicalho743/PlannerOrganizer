@@ -343,7 +343,7 @@ def show():
                                         proposta_id = proposta['id']
                                         # Obter nome do cliente da proposta para usar no nome do arquivo
                                         cliente_id = proposta['cliente_id']
-                                        cliente_info = st.session_state.db.get_cliente(cliente_id)
+                                        cliente_info = st.session_state.db.get_cliente_by_id(cliente_id)
                                         cliente_nome = "sem_nome"
                                         if cliente_info is not None:
                                             cliente_nome = cliente_info.get('nome', 'sem_nome').replace(' ', '_').lower()
