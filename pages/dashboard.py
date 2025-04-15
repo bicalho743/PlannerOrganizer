@@ -278,8 +278,16 @@ def show():
         """, unsafe_allow_html=True)
         
         try:
-            # Buscar todas as propostas executadas
-            propostas_executadas = propostas[propostas['status'].isin(['Executada', 'Em execução', 'Finalizada'])]
+            # Verificar se propostas está vazio ou se tem a coluna status
+            if propostas.empty:
+                st.info("Não existem propostas cadastradas no sistema.")
+                propostas_executadas = pd.DataFrame()
+            elif 'status' not in propostas.columns:
+                st.info("Campo 'status' não encontrado nas propostas.")
+                propostas_executadas = pd.DataFrame()
+            else:
+                # Buscar todas as propostas executadas
+                propostas_executadas = propostas[propostas['status'].isin(['Executada', 'Em execução', 'Finalizada'])]
         except Exception as e:
             st.warning(f"Erro ao filtrar propostas executadas: {str(e)}")
             propostas_executadas = pd.DataFrame()
@@ -293,7 +301,17 @@ def show():
                 # Lista para armazenar propostas próximas de 60 dias
                 propostas_alerta = []
                 
+                # Verificar se a coluna data_inicio existe
+                if 'data_inicio' not in propostas_executadas.columns:
+                    st.info("Campo 'data_inicio' não encontrado nas propostas.")
+                    return
+                    
                 for idx, proposta in propostas_executadas.iterrows():
+                    # Verificar se proposta tem todos os campos necessários
+                    campos_obrigatorios = ['id', 'numero', 'descricao', 'data_inicio']
+                    if not all(campo in proposta for campo in campos_obrigatorios):
+                        continue  # Pula se faltar algum campo obrigatório
+                    
                     # Verificar se tem data de início
                     if pd.notna(proposta.get('data_inicio')):
                         # Converter para datetime se for string
