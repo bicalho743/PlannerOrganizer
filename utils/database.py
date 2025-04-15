@@ -215,20 +215,60 @@ class Transacao(Base):
     # Relacionamento com proposta
     proposta = relationship("Proposta")
     
-# Classes para o financeiro (Receita e Despesa) - para manter compatibilidade com código existente
-class Receita(Transacao):
-    """Classe para representar receitas financeiras - herda de Transacao"""
-    def __init__(self, **kwargs):
-        # Definir tipo como receita
-        kwargs['tipo'] = 'receita'
-        super().__init__(**kwargs)
-        
-class Despesa(Transacao):
-    """Classe para representar despesas financeiras - herda de Transacao"""
-    def __init__(self, **kwargs):
-        # Definir tipo como despesa
-        kwargs['tipo'] = 'despesa'
-        super().__init__(**kwargs)
+# Funções fábrica para criar objetos Transacao como receitas ou despesas
+def Receita(**kwargs):
+    """
+    Função fábrica para criar objetos Transacao como receitas.
+    Mapeia as propriedades esperadas para uma receita para os campos da Transacao.
+    """
+    transacao_kwargs = {}
+    
+    # Mapeamento de campos
+    if 'cliente_id' in kwargs:
+        transacao_kwargs['origem_id'] = kwargs['cliente_id']
+        transacao_kwargs['origem_tipo'] = 'cliente'
+    
+    if 'data_vencimento' in kwargs:
+        transacao_kwargs['data'] = kwargs['data_vencimento']
+    
+    # Copiar campos que existem diretamente em Transacao
+    for field in ['tipo_receita', 'categoria', 'descricao', 'valor', 'status', 
+                  'proposta_id', 'data_recebimento']:
+        if field in kwargs:
+            transacao_kwargs[field] = kwargs[field]
+    
+    # Definir sempre como receita
+    transacao_kwargs['tipo'] = 'receita'
+    
+    # Criar e retornar a transação
+    return Transacao(**transacao_kwargs)
+
+def Despesa(**kwargs):
+    """
+    Função fábrica para criar objetos Transacao como despesas.
+    Mapeia as propriedades esperadas para uma despesa para os campos da Transacao.
+    """
+    transacao_kwargs = {}
+    
+    # Mapeamento de campos
+    if 'fornecedor_id' in kwargs:
+        transacao_kwargs['origem_id'] = kwargs['fornecedor_id']
+        transacao_kwargs['origem_tipo'] = 'fornecedor'
+    
+    if 'data_vencimento' in kwargs:
+        transacao_kwargs['data'] = kwargs['data_vencimento']
+    
+    # Copiar campos que existem diretamente em Transacao
+    for field in ['categoria', 'descricao', 'valor', 'status', 
+                  'proposta_id', 'data_recebimento']:
+        if field in kwargs:
+            transacao_kwargs[field] = kwargs[field]
+    
+    # Definir sempre como despesa
+    transacao_kwargs['tipo'] = 'despesa'
+    
+    # Criar e retornar a transação
+    return Transacao(**transacao_kwargs)
 
 class AcrescimoProposta(Base):
     __tablename__ = 'acrescimos_proposta'
