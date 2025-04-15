@@ -371,24 +371,63 @@ def show():
                         
                         st.dataframe(itens_df[['produto_nome', 'quantidade', 'preco_unitario', 'subtotal']], hide_index=True)
                     
-                    # Opções para cancelar ou excluir venda
-                    # Opção para excluir completamente a venda
-                    if st.button("Excluir Venda", type="primary", key="btn_excluir_venda"):
+                # Seção para gerenciar vendas (excluir)
+                with st.expander("Gerenciar Vendas", expanded=True):
+                    st.subheader("Excluir Venda")
+                    
+                    # Seleção explícita de venda para excluir
+                    venda_excluir_id = st.selectbox(
+                        "Selecione a venda para excluir",
+                        options=vendas_df['id'].tolist(),
+                        format_func=lambda x: f"Venda #{x} - {vendas_df[vendas_df['id'] == x]['cliente_nome'].iloc[0]} - {vendas_df[vendas_df['id'] == x]['valor_total'].iloc[0]}",
+                        key="select_venda_excluir"
+                    )
+                    
+                    # Detalhes da venda a ser excluída
+                    if venda_excluir_id:
+                        venda_excluir = vendas_df[vendas_df['id'] == venda_excluir_id].iloc[0]
+                        st.info(f"""
+                        **Detalhes da venda a excluir:**
+                        - ID: {venda_excluir_id}
+                        - Cliente: {venda_excluir['cliente_nome']}
+                        - Data: {venda_excluir['data_venda']}
+                        - Valor: {venda_excluir['valor_total']}
+                        - Status: {venda_excluir['status']}
+                        """)
+                    
+                    # Botão de exclusão
+                    if st.button("Excluir Venda Selecionada", type="primary", key="btn_excluir_venda"):
                         with st.form(key="form_excluir_venda"):
-                            st.warning("⚠️ ATENÇÃO! Esta ação irá EXCLUIR PERMANENTEMENTE a venda e todos seus itens do sistema.")
-                            confirmar_exclusao = st.form_submit_button("Confirmar Exclusão", type="primary")
+                            st.warning("⚠️ ATENÇÃO! Esta ação irá EXCLUIR PERMANENTEMENTE a venda selecionada e todos seus itens do sistema.")
+                            st.warning(f"Você está excluindo a venda #{venda_excluir_id} do cliente {vendas_df[vendas_df['id'] == venda_excluir_id]['cliente_nome'].iloc[0]}")
+                            
+                            # Checkbox adicional de confirmação
+                            confirma_checkbox = st.checkbox("Eu entendo que esta ação não pode ser desfeita")
+                            confirmar_exclusao = st.form_submit_button("Confirmar Exclusão", type="primary", disabled=not confirma_checkbox)
                             
                             if confirmar_exclusao:
                                 try:
-                                    # Tenta excluir a venda usando a função aprimorada
-                                    result = st.session_state.db.excluir_venda(venda_id)
+                                    # Tenta excluir a venda usando SQL direto para garantir a exclusão
+                                    result = st.session_state.db.excluir_venda_com_sql(venda_excluir_id)
                                     if result:
-                                        st.success("Venda excluída com sucesso!")
+                                        st.success(f"Venda #{venda_excluir_id} excluída com sucesso!")
                                         time.sleep(1)
                                         st.rerun()
                                     else:
                                         st.error("Falha ao excluir a venda.")
                                 except Exception as e:
                                     st.error(f"Erro ao excluir venda: {str(e)}")
+                                    st.error("Tentando método alternativo...")
+                                    try:
+                                        # Segunda tentativa com método alternativo
+                                        result = st.session_state.db.excluir_venda(venda_excluir_id)
+                                        if result:
+                                            st.success(f"Venda #{venda_excluir_id} excluída com sucesso pelo método alternativo!")
+                                            time.sleep(1)
+                                            st.rerun()
+                                        else:
+                                            st.error("Falha ao excluir a venda em ambos os métodos.")
+                                    except Exception as e2:
+                                        st.error(f"Erro no método alternativo: {str(e2)}")
         except Exception as e:
             st.error(f"Erro ao carregar vendas: {str(e)}")
