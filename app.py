@@ -90,6 +90,11 @@ st.markdown("""
         display: none;
     }
     
+    /* Esconde o seletor de páginas nativo do Streamlit */
+    [data-testid="stSidebarNav"] {
+        display: none !important;
+    }
+    
     /* Estilos para os links de navegação personalizados */
     .navigation-links a {
         transition: color 0.3s ease;
@@ -97,6 +102,16 @@ st.markdown("""
     
     .navigation-links a:hover {
         color: #F1A208 !important;
+    }
+    
+    /* Esconde o botão de hamburger do Streamlit */
+    button[kind="header"] {
+        display: none !important;
+    }
+    
+    /* Remove excesso de padding na barra lateral */
+    .st-emotion-cache-16txtl3 {
+        padding-top: 1rem !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -157,21 +172,21 @@ try:
 except Exception as e:
     st.error(f"Erro ao carregar página: {str(e)}")
 
-# Links de navegação (colocados na parte inferior da barra lateral)
-st.sidebar.markdown("---")
-st.sidebar.markdown("""
-<div class="navigation-links" style="opacity: 0.7; font-size: 0.9rem;">
-    <p style="margin-bottom: 8px; color: #ccc;">Navegação rápida:</p>
-    <a href="/" style="display: block; padding: 4px 0; color: #ccc; text-decoration: none;">app</a>
-    <a href="/cadastros" style="display: block; padding: 4px 0; color: #ccc; text-decoration: none;">cadastros</a>
-    <a href="/dashboard" style="display: block; padding: 4px 0; color: #ccc; text-decoration: none;">dashboard</a>
-    <a href="/dashboard_fixed" style="display: block; padding: 4px 0; color: #ccc; text-decoration: none;">dashboard fixed</a>
-    <a href="/financeiro" style="display: block; padding: 4px 0; color: #ccc; text-decoration: none;">financeiro</a>
-    <a href="/propostas" style="display: block; padding: 4px 0; color: #ccc; text-decoration: none;">propostas</a>
-    <a href="/relatorios" style="display: block; padding: 4px 0; color: #ccc; text-decoration: none;">relatórios</a>
-    <a href="/vendas" style="display: block; padding: 4px 0; color: #ccc; text-decoration: none;">vendas</a>
-</div>
-""", unsafe_allow_html=True)
+# Links de navegação ocultos em um expander para desenvolvedores
+with st.sidebar.expander("🔧 Acesso Desenvolvedor", expanded=False):
+    st.markdown("""
+    <div class="navigation-links" style="font-size: 0.9rem;">
+        <p style="margin-bottom: 8px;">Navegação rápida:</p>
+        <a href="/" style="display: block; padding: 4px 0; text-decoration: none;">app</a>
+        <a href="/cadastros" style="display: block; padding: 4px 0; text-decoration: none;">cadastros</a>
+        <a href="/dashboard" style="display: block; padding: 4px 0; text-decoration: none;">dashboard</a>
+        <a href="/dashboard_fixed" style="display: block; padding: 4px 0; text-decoration: none;">dashboard fixed</a>
+        <a href="/financeiro" style="display: block; padding: 4px 0; text-decoration: none;">financeiro</a>
+        <a href="/propostas" style="display: block; padding: 4px 0; text-decoration: none;">propostas</a>
+        <a href="/relatorios" style="display: block; padding: 4px 0; text-decoration: none;">relatórios</a>
+        <a href="/vendas" style="display: block; padding: 4px 0; text-decoration: none;">vendas</a>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Informações do sistema no final
 st.sidebar.markdown("---")
