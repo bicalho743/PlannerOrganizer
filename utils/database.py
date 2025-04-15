@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from datetime import datetime, timedelta
-from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, func, Index
+from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, func, Index, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 import pandas as pd
@@ -2264,9 +2264,68 @@ class Database:
             return True
         return self._safe_query(query)
         
+    def excluir_venda_com_sql(self, venda_id):
+        """
+        Exclui completamente uma venda usando SQL direto para evitar problemas de ORM.
+        """
+        def query():
+            try:
+                print(f"DEBUG: Excluindo venda ID {venda_id} com SQL direto")
+                
+                # Obter informações da venda antes de excluí-la para estornar produtos
+                venda = self.session.query(Venda).filter_by(id=venda_id).first()
+                
+                if not venda:
+                    print(f"DEBUG: Venda ID {venda_id} não encontrada")
+                    return False
+                
+                # Estornar produtos para o estoque
+                if venda.status != 'Cancelada' and hasattr(venda, 'itens'):
+                    print(f"DEBUG: Estornando produtos para o estoque")
+                    for item in venda.itens:
+                        if hasattr(item, 'produto') and item.produto is not None:
+                            print(f"DEBUG: Estornando {item.quantidade} unidades do produto {item.produto.id}")
+                            item.produto.estoque += item.quantidade
+                
+                # Executar SQL para excluir na ordem correta
+                # 1. Excluir transações financeiras relacionadas
+                transacoes_stmt = text("""
+                    DELETE FROM transacoes 
+                    WHERE origem_id = :venda_id AND origem_tipo = 'venda'
+                """)
+                self.session.execute(transacoes_stmt, {"venda_id": venda_id})
+                print("DEBUG: Excluídas transações financeiras relacionadas")
+                
+                # 2. Excluir itens da venda
+                itens_stmt = text("""
+                    DELETE FROM itens_venda
+                    WHERE venda_id = :venda_id
+                """)
+                self.session.execute(itens_stmt, {"venda_id": venda_id})
+                print("DEBUG: Excluídos itens da venda")
+                
+                # 3. Finalmente excluir a venda
+                venda_stmt = text("""
+                    DELETE FROM vendas
+                    WHERE id = :venda_id
+                """)
+                self.session.execute(venda_stmt, {"venda_id": venda_id})
+                print(f"DEBUG: Venda ID {venda_id} excluída com sucesso")
+                
+                return True
+            except Exception as e:
+                print(f"ERRO ao excluir venda: {str(e)}")
+                import traceback
+                print(traceback.format_exc())
+                # Fazer rollback em caso de erro
+                self.session.rollback()
+                raise
+        return self._safe_query(query)
+    
     def excluir_venda(self, venda_id):
         """
-        Exclui completamente uma venda e seus itens do banco de dados
+        Exclui completamente uma venda e seus itens do banco de dados.
+        Esta função tenta primeiro a abordagem ORM e, se falhar, usa SQL direto.
         
         Esta função deve ser usada com cautela, pois remove permanentemente os registros.
         Recomenda-se usar cancelar_venda() para a maioria dos casos para manter o histórico.
@@ -2330,15 +2389,66 @@ class Database:
                 # Realizar flush novamente para garantir a exclusão
                 self.session.flush()
                 
-                print(f"DEBUG: Venda ID {venda_id} excluída com sucesso")
+                print(f"DEBUG: Venda ID {venda_id} excluída com sucesso com ORM")
                 return True
             except Exception as e:
-                print(f"ERRO ao excluir venda: {str(e)}")
-                import traceback
-                print(traceback.format_exc())
-                # Fazer rollback em caso de erro
-                self.session.rollback()
-                raise
+                print(f"ERRO ao excluir venda com ORM: {str(e)}")
+                print("Tentando excluir com SQL direto...")
+                self.session.rollback()  # Garantir que a sessão está limpa
+                
+                # Tentar com SQL direto
+                try:
+                    # Obter informações da venda antes de excluí-la para estornar produtos
+                    venda = self.session.query(Venda).filter_by(id=venda_id).first()
+                    
+                    if not venda:
+                        print(f"DEBUG: Venda ID {venda_id} não encontrada")
+                        return False
+                    
+                    # Estornar produtos para o estoque
+                    if venda.status != 'Cancelada' and hasattr(venda, 'itens'):
+                        print(f"DEBUG: Estornando produtos para o estoque")
+                        for item in venda.itens:
+                            if hasattr(item, 'produto') and item.produto is not None:
+                                print(f"DEBUG: Estornando {item.quantidade} unidades do produto {item.produto.id}")
+                                item.produto.estoque += item.quantidade
+                    
+                    # Executar SQL para excluir na ordem correta
+                    # 1. Excluir transações financeiras relacionadas
+                    self.session.execute(text("""
+                        DELETE FROM transacoes 
+                        WHERE origem_id = :venda_id AND origem_tipo = 'venda'
+                    """), {"venda_id": venda_id})
+                    print("DEBUG: Excluídas transações financeiras relacionadas")
+                    
+                    # 2. Excluir itens da venda
+                    self.session.execute(text("""
+                        DELETE FROM itens_venda
+                        WHERE venda_id = :venda_id
+                    """), {"venda_id": venda_id})
+                    print("DEBUG: Excluídos itens da venda")
+                    
+                    # 3. Atualizar vendas para remover referência à proposta
+                    self.session.execute(text("""
+                        UPDATE vendas
+                        SET proposta_id = NULL
+                        WHERE id = :venda_id
+                    """), {"venda_id": venda_id})
+                    print("DEBUG: Removida referência à proposta")
+                    
+                    # 4. Finalmente excluir a venda
+                    self.session.execute(text("""
+                        DELETE FROM vendas
+                        WHERE id = :venda_id
+                    """), {"venda_id": venda_id})
+                    print(f"DEBUG: Venda ID {venda_id} excluída com sucesso com SQL direto")
+                    
+                    return True
+                except Exception as e2:
+                    print(f"ERRO ao excluir venda com SQL direto: {str(e2)}")
+                    import traceback
+                    print(traceback.format_exc())
+                    raise
         return self._safe_query(query)
         
     def adicionar_venda_a_proposta(self, proposta_id, itens, forma_pagamento=None, observacoes=None):
