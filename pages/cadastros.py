@@ -281,33 +281,39 @@ def show():
                         hide_index=True
                     )
 
-                    # Botões de ação
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        fornecedor_id = st.number_input(
-                            "ID do fornecedor para ação:",
-                            min_value=1,
-                            max_value=len(registros) if not registros.empty else 1,
-                            step=1
-                        )
-
-                    with col2:
-                        acao = st.selectbox(
-                            "Ação:",
-                            ["Excluir"],
-                            key="acao_fornecedor_selectbox"  # Chave única para fornecedor
-                        )
-
-                    # Botão de confirmação
-                    if st.button(f"Confirmar {acao}", key="confirmar_fornecedor"):
-                        if acao == "Excluir":
-                            try:
-                                st.session_state.db.delete_fornecedor(fornecedor_id)
-                                st.success(f"Fornecedor excluído com sucesso!")
-                                st.session_state['update_fornecedores'] = True
+                    # Adicionar botões de ação para cada fornecedor
+                    st.write("**Ações para fornecedores:**")
+                    
+                    # Criar lista de IDs e nomes para seleção
+                    fornecedores_options = [f"{row['ID']} - {row['Nome/Razão Social']}" for _, row in df_display.iterrows()]
+                    
+                    # Dropdown para selecionar fornecedor
+                    fornecedor_selecionado = st.selectbox(
+                        "Selecione um fornecedor:",
+                        fornecedores_options,
+                        key="fornecedor_dropdown"
+                    )
+                    
+                    if fornecedor_selecionado:
+                        # Extrair ID da seleção (formato: "ID - Nome")
+                        fornecedor_id = int(fornecedor_selecionado.split(" - ")[0])
+                        
+                        # Botões de ação lado a lado
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.button("Editar Fornecedor", key=f"edit_fornecedor_{fornecedor_id}"):
+                                st.session_state['editing_fornecedor_id'] = fornecedor_id
                                 st.rerun()
-                            except Exception as e:
-                                st.error(f"Erro ao excluir fornecedor: {str(e)}")
+                        
+                        with col2:
+                            if st.button("Excluir Fornecedor", key=f"delete_fornecedor_{fornecedor_id}"):
+                                try:
+                                    st.session_state.db.delete_fornecedor(fornecedor_id)
+                                    st.success(f"Fornecedor ID {fornecedor_id} excluído com sucesso!")
+                                    st.session_state['update_fornecedores'] = True
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Erro ao excluir fornecedor: {str(e)}")
 
                     # Verificar mudanças na edição
                     if edited_df is not None and not edited_df.equals(df_display):
@@ -346,10 +352,18 @@ def show():
                 edited_data = {}
                 edited_data['descricao'] = st.text_input("Nome/Razão Social", value=fornecedor['descricao'])
                 edited_data['contato'] = st.text_input("Telefone", value=fornecedor['contato'])
+                # Lista de categorias
+                categorias = ["Produtos", "Serviços", "Marcenaria", "Outro"]
+                
+                # Verificar se a categoria do fornecedor existe na lista
+                categoria_atual = fornecedor['categoria']
+                if categoria_atual not in categorias:
+                    categorias.append(categoria_atual)
+                
                 edited_data['categoria'] = st.selectbox(
                     "Categoria",
-                    ["Produtos", "Serviços", "Marcenaria", "Outro"],
-                    index=["Produtos", "Serviços", "Marcenaria", "Outro"].index(fornecedor['categoria'])
+                    categorias,
+                    index=categorias.index(categoria_atual)
                 )
                 edited_data['pix'] = st.text_input("PIX", value=fornecedor['pix'])
                 edited_data['recorrente'] = st.checkbox("Recorrente", value=fornecedor['recorrente'])
@@ -488,33 +502,39 @@ def show():
                         hide_index=True
                     )
 
-                    # Botões de ação
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        parceiro_id = st.number_input(
-                            "ID do parceiro para ação:",
-                            min_value=1,
-                            max_value=len(registros) if not registros.empty else 1,
-                            step=1
-                        )
-
-                    with col2:
-                        acao = st.selectbox(
-                            "Ação:",
-                            ["Excluir"],
-                            key="acao_parceiro_selectbox"  # Chave única para parceiro
-                        )
-
-                    # Botão de confirmação
-                    if st.button(f"Confirmar {acao}", key="confirmar_parceiro_button"):  # Chave única para o botão
-                        if acao == "Excluir":
-                            try:
-                                st.session_state.db.delete_parceiro(parceiro_id)
-                                st.success(f"Parceiro excluído com sucesso!")
-                                st.session_state['update_parceiros'] = True
+                    # Adicionar botões de ação para cada parceiro
+                    st.write("**Ações para parceiros:**")
+                    
+                    # Criar lista de IDs e nomes para seleção
+                    parceiros_options = [f"{row['ID']} - {row['Nome']}" for _, row in df_display.iterrows()]
+                    
+                    # Dropdown para selecionar parceiro
+                    parceiro_selecionado = st.selectbox(
+                        "Selecione um parceiro:",
+                        parceiros_options,
+                        key="parceiro_dropdown"
+                    )
+                    
+                    if parceiro_selecionado:
+                        # Extrair ID da seleção (formato: "ID - Nome")
+                        parceiro_id = int(parceiro_selecionado.split(" - ")[0])
+                        
+                        # Botões de ação lado a lado
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.button("Editar Parceiro", key=f"edit_parceiro_{parceiro_id}"):
+                                st.session_state['editing_parceiro_id'] = parceiro_id
                                 st.rerun()
-                            except Exception as e:
-                                st.error(f"Erro ao excluir parceiro: {str(e)}")
+                        
+                        with col2:
+                            if st.button("Excluir Parceiro", key=f"delete_parceiro_{parceiro_id}"):
+                                try:
+                                    st.session_state.db.delete_parceiro(parceiro_id)
+                                    st.success(f"Parceiro ID {parceiro_id} excluído com sucesso!")
+                                    st.session_state['update_parceiros'] = True
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Erro ao excluir parceiro: {str(e)}")
 
                     # Verificar mudanças na edição
                     if edited_df is not None and not edited_df.equals(df_display):
@@ -552,10 +572,18 @@ def show():
                 edited_data['nome'] = st.text_input("Nome", value=parceiro['nome'])
                 edited_data['telefone'] = st.text_input("Telefone", value=parceiro['telefone'])
                 edited_data['area_atuacao'] = st.text_input("Área de Atuação", value=parceiro['area_atuacao'])
+                # Lista de tipos de parceria
+                tipos_parceria = ["Indicação", "Colaboração", "Projeto Conjunto"]
+                
+                # Verificar se o tipo de parceria do parceiro existe na lista
+                tipo_atual = parceiro['tipo_parceria']
+                if tipo_atual not in tipos_parceria:
+                    tipos_parceria.append(tipo_atual)
+                
                 edited_data['tipo_parceria'] = st.selectbox(
                     "Tipo de Parceria",
-                    ["Indicação", "Colaboração", "Projeto Conjunto"],
-                    index=["Indicação", "Colaboração", "Projeto Conjunto"].index(parceiro['tipo_parceria'])
+                    tipos_parceria,
+                    index=tipos_parceria.index(tipo_atual)
                 )
                 edited_data['pix'] = st.text_input("PIX", value=parceiro['pix'])
                 edited_data['observacoes'] = st.text_area("Observações", value=parceiro['observacoes'])
@@ -676,33 +704,39 @@ def show():
                         hide_index=True
                     )
 
-                    # Botões de ação
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        assistente_id = st.number_input(
-                            "ID do assistente para ação:",
-                            min_value=1,
-                            max_value=len(registros) if not registros.empty else 1,
-                            step=1
-                        )
-
-                    with col2:
-                        acao = st.selectbox(
-                            "Ação:",
-                            ["Excluir"],
-                            key="acao_assistente_selectbox"  # Chave única para assistente
-                        )
-
-                    # Botão de confirmação
-                    if st.button(f"Confirmar {acao}", key="confirmar_assistente_button"):  # Chave única para o botão
-                        if acao == "Excluir":
-                            try:
-                                st.session_state.db.delete_assistente(assistente_id)
-                                st.success(f"Assistente excluído com sucesso!")
-                                st.session_state['update_assistentes'] = True
+                    # Adicionar botões de ação para cada assistente
+                    st.write("**Ações para assistentes:**")
+                    
+                    # Criar lista de IDs e nomes para seleção
+                    assistentes_options = [f"{row['ID']} - {row['Nome']}" for _, row in df_display.iterrows()]
+                    
+                    # Dropdown para selecionar assistente
+                    assistente_selecionado = st.selectbox(
+                        "Selecione um assistente:",
+                        assistentes_options,
+                        key="assistente_dropdown"
+                    )
+                    
+                    if assistente_selecionado:
+                        # Extrair ID da seleção (formato: "ID - Nome")
+                        assistente_id = int(assistente_selecionado.split(" - ")[0])
+                        
+                        # Botões de ação lado a lado
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.button("Editar Assistente", key=f"edit_assistente_{assistente_id}"):
+                                st.session_state['editing_assistente_id'] = assistente_id
                                 st.rerun()
-                            except Exception as e:
-                                st.error(f"Erro ao excluir assistente: {str(e)}")
+                        
+                        with col2:
+                            if st.button("Excluir Assistente", key=f"delete_assistente_{assistente_id}"):
+                                try:
+                                    st.session_state.db.delete_assistente(assistente_id)
+                                    st.success(f"Assistente ID {assistente_id} excluído com sucesso!")
+                                    st.session_state['update_assistentes'] = True
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Erro ao excluir assistente: {str(e)}")
 
                     # Verificar mudanças na edição
                     if edited_df is not None and not edited_df.equals(df_display):
@@ -758,5 +792,38 @@ def show():
                             st.session_state['update_assistentes'] = True
                         else:
                             st.error(mensagem)
+
+        # Seção de edição do assistente (mantido separado para melhor organização)
+        if 'editing_assistente_id' in st.session_state:
+            st.write("---")
+            st.subheader("Editar Assistente")
+            with st.form("edit_assistente_form"):
+                assistente = registros[registros['id'] == st.session_state['editing_assistente_id']].iloc[0]
+                edited_data = {}
+                edited_data['nome'] = st.text_input("Nome", value=assistente['nome'])
+                edited_data['telefone'] = st.text_input("Telefone", value=assistente['telefone'])
+                edited_data['endereco'] = st.text_input("Endereço", value=assistente['endereco'])
+                edited_data['pix'] = st.text_input("PIX", value=assistente['pix'])
+                edited_data['observacoes'] = st.text_area("Observações", value=assistente['observacoes'])
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.form_submit_button("Salvar"):
+                        try:
+                            st.session_state.db.update_assistente(
+                                st.session_state['editing_assistente_id'],
+                                **edited_data
+                            )
+                            del st.session_state['editing_assistente_id']
+                            st.session_state['update_assistentes'] = True
+                            st.success("Assistente atualizado com sucesso!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Erro ao atualizar assistente: {str(e)}")
+
+                with col2:
+                    if st.form_submit_button("Cancelar"):
+                        del st.session_state['editing_assistente_id']
+                        st.rerun()
 
 # Removida seção antiga de importação
