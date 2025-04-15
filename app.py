@@ -127,7 +127,7 @@ st.sidebar.markdown("""
 # Título do menu
 st.sidebar.markdown("""
 <h1 style="font-size: 1.5rem; color: #F1A208; margin-bottom: 1rem; text-align: center;">
-    Menu Principal<br>
+    Planner Organizer<br>
     <span style="font-size: 0.9rem; color: #efefef;">Sistema Profissional de Gestão Personal Organizer</span>
 </h1>
 """, unsafe_allow_html=True)
@@ -184,8 +184,8 @@ except Exception as e:
 st.sidebar.markdown("---")
 with st.sidebar.expander("ℹ️ Informações do Sistema", expanded=False):
     st.markdown("""
-    ### Sistema Personal Organizer
-    **Versão:** 1.0.2
+    ### Planner Organizer
+    **Versão:** 1.0.3
 
     **Recursos Disponíveis:**
     - ✅ Gestão de Clientes
