@@ -402,15 +402,16 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
         styles = getSampleStyleSheet()
         story = []
 
-        # Título
+        # Título centralizado
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
             fontSize=16,
-            spaceAfter=30
+            spaceAfter=30,
+            alignment=1  # Centralizado
         )
-        story.append(Paragraph(f"Fechamento de Projeto", title_style))
-        story.append(Paragraph(f"Proposta #{proposta['id']} - {cliente['nome']}", styles["Heading2"]))
+        # Título único centralizado com o ID da proposta e nome do cliente
+        story.append(Paragraph(f"Proposta #{proposta['id']} - {cliente['nome']}", title_style))
         story.append(Paragraph(f"{datetime.now().strftime('%d/%m/%Y')}", styles["Heading3"]))
         story.append(Spacer(1, 12))
 
