@@ -208,6 +208,14 @@ def show():
                         "Categoria",
                         ["Produtos", "Serviços", "Marcenaria", "Outro"]
                     )
+                    percentual_comissao = st.number_input(
+                        "% de Comissão",
+                        min_value=0.0,
+                        max_value=100.0,
+                        value=0.0,
+                        step=0.5,
+                        help="Percentual de comissão para este fornecedor (entre 0% e 100%)"
+                    )
                 with col2:
                     pix = st.text_input("Chave PIX")
 
@@ -223,7 +231,8 @@ def show():
                             categoria=categoria,
                             endereco=endereco,
                             pix=pix,
-                            observacoes=observacoes
+                            observacoes=observacoes,
+                            percentual_comissao=percentual_comissao
                         )
                         st.success("Fornecedor cadastrado com sucesso!")
                         st.session_state['update_fornecedores'] = True
@@ -247,7 +256,7 @@ def show():
 
                 if not registros.empty:
                     # Definir colunas para exibição
-                    colunas = ['id', 'descricao', 'contato', 'categoria', 'endereco', 'pix', 'recorrente', 'observacoes']
+                    colunas = ['id', 'descricao', 'contato', 'categoria', 'endereco', 'pix', 'recorrente', 'percentual_comissao', 'observacoes']
                     rename = {
                         'id': 'ID',
                         'descricao': 'Nome/Razão Social',
@@ -255,7 +264,8 @@ def show():
                         'categoria': 'Categoria',
                         'endereco': 'Endereço',
                         'pix': 'PIX',
-                        'recorrente': 'Recorrente',
+                        'recorrente': 'Recorrente', 
+                        'percentual_comissao': '% Comissão',
                         'observacoes': 'Observações'
                     }
 
@@ -313,6 +323,7 @@ def show():
                                         'endereco': row['Endereço'],
                                         'pix': row['PIX'],
                                         'recorrente': row['Recorrente'],
+                                        'percentual_comissao': row['% Comissão'],
                                         'observacoes': row['Observações']
                                     }
                                     st.session_state.db.update_fornecedor(fornecedor_id, **update_data)
@@ -342,6 +353,14 @@ def show():
                 )
                 edited_data['pix'] = st.text_input("PIX", value=fornecedor['pix'])
                 edited_data['recorrente'] = st.checkbox("Recorrente", value=fornecedor['recorrente'])
+                edited_data['percentual_comissao'] = st.number_input(
+                    "% de Comissão",
+                    min_value=0.0,
+                    max_value=100.0,
+                    value=float(fornecedor['percentual_comissao']),
+                    step=0.5,
+                    help="Percentual de comissão para este fornecedor (entre 0% e 100%)"
+                )
                 edited_data['observacoes'] = st.text_area("Observações", value=fornecedor['observacoes'])
 
                 col1, col2 = st.columns(2)
