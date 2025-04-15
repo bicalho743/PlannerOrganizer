@@ -98,40 +98,97 @@ def show():
                     df_display = registros[colunas].copy()
                     df_display.columns = [rename[col] for col in colunas]
 
-                    # Exibir tabela editável
-                    edited_df = st.data_editor(
-                        df_display,
-                        num_rows="dynamic",
-                        use_container_width=True,
-                        hide_index=True
-                    )
-
-                    # Botões de ação
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        cliente_id = st.number_input(
-                            "ID do cliente para ação:",
-                            min_value=1,
-                            max_value=len(registros) if not registros.empty else 1,
-                            step=1
+                    # Criar abas para visualização
+                    tab_view, tab_multi_delete = st.tabs(["Visualizar/Editar", "Excluir Múltiplos"])
+                    
+                    with tab_view:
+                        # Exibir tabela editável
+                        edited_df = st.data_editor(
+                            df_display,
+                            num_rows="dynamic",
+                            use_container_width=True,
+                            hide_index=True
                         )
 
-                    with col2:
-                        acao = st.selectbox(
-                            "Ação:",
-                            ["Excluir"]
-                        )
+                        # Botões de ação
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            cliente_id = st.number_input(
+                                "ID do cliente para ação:",
+                                min_value=1,
+                                max_value=len(registros) if not registros.empty else 1,
+                                step=1
+                            )
 
-                    # Botão de confirmação
-                    if st.button(f"Confirmar {acao}"):
-                        if acao == "Excluir":
-                            try:
-                                st.session_state.db.delete_cliente(cliente_id)
-                                st.success(f"Cliente excluído com sucesso!")
-                                st.session_state['update_clientes'] = True
-                                st.rerun()
-                            except Exception as e:
-                                st.error(f"Erro ao excluir cliente: {str(e)}")
+                        with col2:
+                            acao = st.selectbox(
+                                "Ação:",
+                                ["Excluir"]
+                            )
+
+                        # Botão de confirmação
+                        if st.button(f"Confirmar {acao}"):
+                            if acao == "Excluir":
+                                try:
+                                    resultado = st.session_state.db.delete_cliente(cliente_id)
+                                    if resultado[0]:  # Primeiro elemento é o status (True/False)
+                                        st.success(resultado[1])  # Segundo elemento é a mensagem
+                                        st.session_state['update_clientes'] = True
+                                        st.rerun()
+                                    else:
+                                        st.error(resultado[1])
+                                except Exception as e:
+                                    st.error(f"Erro ao excluir cliente: {str(e)}")
+                    
+                    with tab_multi_delete:
+                        st.write("Selecione os clientes que deseja excluir:")
+                        
+                        # Criar DataFrame para seleção
+                        df_select = df_display[['ID', 'Nome', 'Telefone', 'CPF']].copy()
+                        
+                        # Adicionar coluna de seleção
+                        selection = st.data_editor(
+                            df_select,
+                            column_config={
+                                "Selecionar": st.column_config.CheckboxColumn(
+                                    "Selecionar",
+                                    help="Selecione para excluir",
+                                    default=False,
+                                )
+                            },
+                            hide_index=True,
+                            use_container_width=True,
+                        )
+                        
+                        # Verificar clientes selecionados
+                        if st.button("Excluir Clientes Selecionados", type="primary"):
+                            # Obter IDs dos clientes selecionados
+                            clientes_selecionados = []
+                            for i, row in selection.iterrows():
+                                if row.get('Selecionar', False):
+                                    clientes_selecionados.append(int(row['ID']))
+                            
+                            if not clientes_selecionados:
+                                st.warning("Nenhum cliente selecionado para exclusão.")
+                            else:
+                                # Executar exclusão múltipla
+                                resultados = st.session_state.db.delete_multiple_clientes(clientes_selecionados)
+                                
+                                # Mostrar resultados
+                                if resultados["sucesso"]:
+                                    st.success(f"{len(resultados['sucesso'])} clientes excluídos com sucesso!")
+                                    for cliente in resultados["sucesso"]:
+                                        st.info(f"✅ Cliente {cliente['nome']} (ID: {cliente['id']}) excluído com sucesso.")
+                                
+                                if resultados["erro"]:
+                                    st.error(f"{len(resultados['erro'])} clientes não puderam ser excluídos:")
+                                    for erro in resultados["erro"]:
+                                        st.warning(f"❌ Cliente {erro['nome']} (ID: {erro['id']}): {erro['mensagem']}")
+                                
+                                # Atualizar lista de clientes
+                                if resultados["sucesso"]:
+                                    st.session_state['update_clientes'] = True
+                                    st.rerun()
 
                     # Verificar mudanças na edição
                     if edited_df is not None and not edited_df.equals(df_display):

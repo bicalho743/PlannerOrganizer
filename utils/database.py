@@ -2061,9 +2061,68 @@ class Database:
         def query():
             cliente = self.session.query(Cliente).filter_by(id=cliente_id).first()
             if cliente:
+                # Verificar se existem propostas associadas a este cliente
+                propostas = self.session.query(Proposta).filter_by(cliente_id=cliente_id).all()
+                if propostas:
+                    return False, f"Não é possível excluir o cliente pois existem {len(propostas)} propostas associadas."
+                
+                # Verificar se existem vendas associadas a este cliente
+                vendas = self.session.query(Venda).filter_by(cliente_id=cliente_id).all()
+                if vendas:
+                    return False, f"Não é possível excluir o cliente pois existem {len(vendas)} vendas associadas."
+                
+                # Se não houver registros associados, podemos excluir
                 self.session.delete(cliente)
-                return True
-            return False
+                return True, "Cliente excluído com sucesso."
+            return False, "Cliente não encontrado."
+        return self._safe_query(query)
+        
+    def delete_multiple_clientes(self, cliente_ids):
+        """Exclui múltiplos clientes do banco de dados"""
+        def query():
+            resultados = {
+                "sucesso": [],
+                "erro": []
+            }
+            
+            for cliente_id in cliente_ids:
+                cliente = self.session.query(Cliente).filter_by(id=cliente_id).first()
+                if cliente:
+                    # Verificar se existem propostas associadas a este cliente
+                    propostas = self.session.query(Proposta).filter_by(cliente_id=cliente_id).all()
+                    if propostas:
+                        resultados["erro"].append({
+                            "id": cliente_id,
+                            "nome": cliente.nome,
+                            "mensagem": f"Existem {len(propostas)} propostas associadas"
+                        })
+                        continue
+                    
+                    # Verificar se existem vendas associadas a este cliente
+                    vendas = self.session.query(Venda).filter_by(cliente_id=cliente_id).all()
+                    if vendas:
+                        resultados["erro"].append({
+                            "id": cliente_id,
+                            "nome": cliente.nome,
+                            "mensagem": f"Existem {len(vendas)} vendas associadas"
+                        })
+                        continue
+                    
+                    # Se não houver registros associados, podemos excluir
+                    self.session.delete(cliente)
+                    resultados["sucesso"].append({
+                        "id": cliente_id,
+                        "nome": cliente.nome
+                    })
+                else:
+                    resultados["erro"].append({
+                        "id": cliente_id,
+                        "nome": "Desconhecido",
+                        "mensagem": "Cliente não encontrado"
+                    })
+            
+            return resultados
+        
         return self._safe_query(query)
 
     def excluir_proposta(self, proposta_id_param):
