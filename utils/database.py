@@ -777,7 +777,7 @@ class Database:
         
         transacao = Transacao(
             tipo="receita_a_receber",
-            descricao=f"Proposta #{proposta.numero} - {proposta.descricao} - {nome_cliente}",
+            descricao=f"Proposta #{proposta.id} - {proposta.descricao} - {nome_cliente}",
             valor=proposta.valor,
             categoria="Propostas",
             subcategoria=proposta.tipo_proposta,
@@ -798,7 +798,7 @@ class Database:
         """Cria uma transação de despesa para um acréscimo de proposta"""
         transacao = Transacao(
             tipo="despesa",
-            descricao=f"Despesa: {acrescimo.descricao} - Proposta #{proposta.numero}",
+            descricao=f"Despesa: {acrescimo.descricao} - Proposta #{proposta.id}",
             valor=acrescimo.valor,
             categoria="Custos de Projeto",
             subcategoria=acrescimo.tipo,
@@ -978,7 +978,7 @@ class Database:
                         
                         transacao = Transacao(
                             tipo="receita_a_receber",
-                            descricao=f"Proposta #{proposta.numero} - {proposta.descricao} - {nome_cliente}",
+                            descricao=f"Proposta #{proposta.id} - {proposta.descricao} - {nome_cliente}",
                             valor=proposta.valor,
                             categoria="Propostas",
                             subcategoria=proposta.tipo_proposta,
