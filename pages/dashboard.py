@@ -41,7 +41,7 @@ def show():
                 st.sidebar.error("Erro ao adicionar dados de teste")
 
     # Dashboard layout 
-    # Layout simplificado com 3 colunas
+    # Layout com 3 colunas para a primeira linha
     col1, col2, col3 = st.columns([2, 2, 1])
 
     with col1:
@@ -265,3 +265,94 @@ def show():
                 st.info("Nenhum aniversariante nos próximos dias.")
         else:
             st.info("Nenhum cliente cadastrado com data de aniversário.")
+            
+    # Nova seção para alertas de propostas se aproximando dos 60 dias após execução
+    st.subheader("📢 Alertas de Propostas")
+    
+    # Container para mostrar propostas se aproximando de 60 dias após execução
+    with st.container():
+        st.markdown("""
+        <div style='background-color: #2A3F5F; padding: 10px; border-radius: 7px; margin-bottom: 15px;'>
+            <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>⏱️ Propostas se aproximando de 60 dias</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        try:
+            # Buscar todas as propostas executadas
+            propostas_executadas = propostas[propostas['status'].isin(['Executada', 'Em execução', 'Finalizada'])]
+        except Exception as e:
+            st.warning(f"Erro ao filtrar propostas executadas: {str(e)}")
+            propostas_executadas = pd.DataFrame()
+            
+        try:
+            
+            if not propostas_executadas.empty:
+                # Data atual
+                hoje = datetime.now().date()
+                
+                # Lista para armazenar propostas próximas de 60 dias
+                propostas_alerta = []
+                
+                for idx, proposta in propostas_executadas.iterrows():
+                    # Verificar se tem data de início
+                    if pd.notna(proposta.get('data_inicio')):
+                        # Converter para datetime se for string
+                        if isinstance(proposta['data_inicio'], str):
+                            try:
+                                data_inicio = datetime.strptime(proposta['data_inicio'], '%Y-%m-%d').date()
+                            except ValueError:
+                                try:
+                                    data_inicio = datetime.strptime(proposta['data_inicio'], '%d/%m/%Y').date()
+                                except ValueError:
+                                    continue  # Se não conseguir converter, pula
+                        else:
+                            data_inicio = proposta['data_inicio'].date() if hasattr(proposta['data_inicio'], 'date') else proposta['data_inicio']
+                            
+                        # Calcular a data que será 60 dias após o início
+                        data_60_dias = data_inicio + timedelta(days=60)
+                        
+                        # Calcular quantos dias faltam para atingir 60 dias
+                        dias_restantes = (data_60_dias - hoje).days
+                        
+                        # Se faltar 10 dias ou menos (e ainda não tiver passado), mostrar alerta
+                        if 0 <= dias_restantes <= 10:
+                            propostas_alerta.append({
+                                'id': proposta['id'],
+                                'numero': proposta['numero'],
+                                'cliente_nome': proposta.get('cliente_nome', 'Cliente não informado'),
+                                'descricao': proposta['descricao'],
+                                'data_inicio': data_inicio,
+                                'dias_restantes': dias_restantes,
+                                'data_60_dias': data_60_dias
+                            })
+                
+                # Ordenar por dias restantes (mais urgentes primeiro)
+                propostas_alerta.sort(key=lambda x: x['dias_restantes'])
+                
+                # Mostrar alertas
+                if propostas_alerta:
+                    for p in propostas_alerta:
+                        with st.container():
+                            st.markdown(f"""
+                            <div style='background-color: {'#FF5722' if p['dias_restantes'] <= 3 else '#FF9800'}; 
+                                  padding: 10px; border-radius: 5px; margin-bottom: 8px;'>
+                                <div style='font-weight: bold; color: white;'>
+                                    {'⚠️' if p['dias_restantes'] <= 3 else '⚠️'} Proposta #{p['numero']} 
+                                    <span style='font-weight: normal; color: white; font-size: 0.9em;'>
+                                        (Faltam {p['dias_restantes']} dias para atingir 60 dias)
+                                    </span>
+                                </div>
+                                <div style='color: white; font-size: 0.9em;'>
+                                    Cliente: <b>{p['cliente_nome']}</b>
+                                </div>
+                                <div style='color: white; font-size: 0.9em;'>
+                                    Início: {format_date_safe(p['data_inicio'])} | Completará 60 dias em: {format_date_safe(p['data_60_dias'])}
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                else:
+                    st.info("Não há propostas se aproximando do prazo de 60 dias.")
+            else:
+                st.info("Não há propostas executadas no sistema.")
+        except Exception as e:
+            st.warning(f"Erro ao processar alertas de propostas: {str(e)}")
