@@ -2671,7 +2671,10 @@ class Database:
         return self._safe_query(query)
     
     def _registrar_transacao_venda(self, venda, proposta):
-        """Registra uma transação financeira para a venda"""
+        """Registra transações financeiras para a venda, incluindo comissões de fornecedores"""
+        resultados = []
+        
+        # 1. Registrar a transação principal da venda
         # Verificar se já existe uma transação para esta venda
         transacao_existente = self.session.query(Transacao).filter_by(
             origem_id=venda.id,
@@ -2696,9 +2699,58 @@ class Database:
             )
             self.session.add(transacao)
             self.session.flush()
-            return transacao.id
-        
-        return transacao_existente.id
+            resultados.append(transacao.id)
+            
+            # 2. Registrar comissões de fornecedores
+            # Buscar os acréscimos do tipo FORNECEDOR para esta proposta
+            print(f"DEBUG: Buscando acréscimos do tipo FORNECEDOR para proposta ID={proposta.id}")
+            fornecedores = self.session.query(AcrescimoProposta).filter(
+                AcrescimoProposta.proposta_id == proposta.id,
+                AcrescimoProposta.tipo == "FORNECEDOR"
+            ).all()
+            
+            print(f"DEBUG: Encontrados {len(fornecedores)} acréscimos do tipo FORNECEDOR")
+            
+            # Para cada fornecedor, verificar se tem percentual de comissão e gerar receita
+            for fornecedor in fornecedores:
+                # Verificar se já existe comissão para este fornecedor
+                comissao_existente = self.session.query(Transacao).filter(
+                    Transacao.proposta_id == proposta.id,
+                    Transacao.descricao.like(f"%Comissão%{fornecedor.fornecedor}%")
+                ).first()
+                
+                if not comissao_existente and fornecedor.percentual_comissao and fornecedor.percentual_comissao > 0:
+                    print(f"DEBUG: Gerando comissão para fornecedor {fornecedor.fornecedor} com percentual {fornecedor.percentual_comissao}%")
+                    
+                    # Calcular valor da comissão
+                    valor_comissao = fornecedor.valor * (fornecedor.percentual_comissao / 100.0)
+                    
+                    # Criar transação de comissão
+                    comissao = Transacao(
+                        tipo="receita",
+                        descricao=f"Comissão de {fornecedor.percentual_comissao}% - {fornecedor.fornecedor} - Proposta #{proposta.numero}",
+                        valor=valor_comissao,
+                        categoria="Comissões",
+                        subcategoria="Comissão de Fornecedor",
+                        tipo_receita="Comissão",
+                        origem_id=venda.id,
+                        origem_tipo="venda",
+                        proposta_id=proposta.id,
+                        tipo_conta="PF",
+                        status="Pendente",
+                        data_vencimento=datetime.now().date() + timedelta(days=30),
+                        classificacao="receita"
+                    )
+                    self.session.add(comissao)
+                    self.session.flush()
+                    resultados.append(comissao.id)
+                    print(f"DEBUG: Comissão registrada com ID {comissao.id} e valor {valor_comissao}")
+                elif comissao_existente:
+                    print(f"DEBUG: Comissão já existente para fornecedor {fornecedor.fornecedor}: {comissao_existente.id}")
+                else:
+                    print(f"DEBUG: Fornecedor {fornecedor.fornecedor} sem percentual de comissão ou com percentual zero")
+            
+        return resultados
         
     def add_fornecedor_proposta(self, proposta_id, fornecedor_id, valor, observacoes=None, percentual_comissao=None):
         """
