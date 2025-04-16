@@ -347,20 +347,39 @@ class Database:
         in_transaction = False
         
         try:
-            # Verificar se a sessão está ativa ou criar uma nova
-            if not self.session.is_active:
-                self.session = Session()
-                print("DEBUG: Nova sessão criada")
-            else:
-                # Verificar se já existe uma transação
+            # Verificar o estado da sessão e recuperar de estados errôneos
+            try:
+                # Verificar se tem uma sessão em estado problemático
+                session_state = str(getattr(self.session.transaction, '_state', ''))
+                if 'PREPARE' in session_state or 'FINISHED' in session_state:
+                    print(f"DEBUG: Detectado estado problemático na sessão: {session_state}")
+                    try:
+                        self.session.close()
+                    except:
+                        pass
+                    self.session = Session()
+                    print("DEBUG: Sessão recriada após estado problemático")
+                elif not self.session.is_active:
+                    self.session = Session()
+                    print("DEBUG: Nova sessão criada - sessão anterior inativa")
+            except Exception as session_check_error:
+                print(f"DEBUG: Erro ao verificar estado da sessão: {str(session_check_error)}")
                 try:
-                    in_transaction = self.session.in_transaction()
-                    if in_transaction:
-                        nested_transaction = True
-                        print("DEBUG: Transação aninhada detectada, não será feito commit automático")
+                    self.session.close()
                 except:
-                    # Caso não consiga verificar, não vamos assumir que está em transação
                     pass
+                self.session = Session()
+                print("DEBUG: Nova sessão criada após erro de verificação")
+                
+            # Verificar se já existe uma transação
+            try:
+                in_transaction = self.session.in_transaction()
+                if in_transaction:
+                    nested_transaction = True
+                    print("DEBUG: Transação aninhada detectada, não será feito commit automático")
+            except Exception as tx_error:
+                print(f"DEBUG: Erro ao verificar transação: {str(tx_error)}")
+                # Se não conseguirmos verificar, consideramos que não está em transação
             
             # Executar a função de query
             print("DEBUG: Executando query")
@@ -374,7 +393,19 @@ class Database:
                     print("DEBUG: Commit realizado com sucesso")
                 except Exception as commit_error:
                     print(f"DEBUG WARNING: Não foi possível fazer commit: {str(commit_error)}")
-                    # Não interrompe a execução, apenas loga o aviso
+                    # Tentar rollback em caso de erro de commit
+                    try:
+                        self.session.rollback()
+                        print("DEBUG: Rollback após erro de commit realizado")
+                    except:
+                        pass
+                    # Criar nova sessão se necessário
+                    try:
+                        self.session.close()
+                    except:
+                        pass
+                    self.session = Session()
+                    print("DEBUG: Nova sessão criada após erro de commit")
 
             # Se o resultado for um DataFrame, converter tipos numéricos
             if isinstance(result, pd.DataFrame):
@@ -388,18 +419,28 @@ class Database:
                 result = result.item()
                 print(f"DEBUG: Valor numérico convertido: {result}")
             
+            print("DEBUG: Mantendo sessão ativa para futuras transações")
             return result
             
         except Exception as e:
-            # Em caso de erro, fazer rollback apenas se não for transação aninhada
+            # Em caso de erro, fazer rollback
             print(f"DEBUG ERROR: Erro durante a execução da query: {str(e)}")
             
-            if self.session.is_active and not nested_transaction:
-                try:
+            # Sempre tentar rollback para recuperar a sessão
+            try:
+                if self.session.is_active:
                     print("DEBUG: Realizando rollback da transação")
                     self.session.rollback()
-                except Exception as rollback_error:
-                    print(f"DEBUG WARNING: Não foi possível fazer rollback: {str(rollback_error)}")
+                    print("DEBUG: Rollback realizado com sucesso")
+            except Exception as rollback_error:
+                print(f"DEBUG WARNING: Não foi possível fazer rollback: {str(rollback_error)}")
+                # Em caso de falha no rollback, criar nova sessão
+                try:
+                    self.session.close()
+                except:
+                    pass
+                self.session = Session()
+                print("DEBUG: Nova sessão criada após falha no rollback")
             
             # Logar e re-levantar a exceção com mais informações
             import traceback
