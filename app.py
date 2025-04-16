@@ -222,19 +222,18 @@ try:
 except Exception as e:
     st.error(f"Erro ao carregar página: {str(e)}")
 
-# Informações do sistema
+# Divisor antes das informações do sistema
 st.sidebar.markdown('<div style="margin: 1.5rem 0;"><hr style="border: none; height: 1px; background-color: #E0E0E0;"></div>', unsafe_allow_html=True)
 
-# Usando um título mais destacado para a seção de informações
-st.sidebar.markdown("""
-<div style="text-align: center; margin-bottom: 1rem; padding: 0.8rem; background-color: #E3F2FD; border-radius: 6px;">
-    <h3 style="margin:0; color: #1E366F; font-size: 1.1rem;">ℹ️ Informações do Sistema</h3>
-</div>
-""", unsafe_allow_html=True)
-
-# Expandido por padrão para maior visibilidade
-with st.sidebar.expander("🔍 Clique para ver/ocultar detalhes", expanded=True):
-    st.markdown("""
+# Seção de Informações do Sistema na barra lateral
+informacoes_html = """
+<div style="margin-bottom: 1rem;">
+    <!-- Cabeçalho das informações -->
+    <div style="text-align: center; margin-bottom: 1rem; padding: 0.8rem; background-color: #E3F2FD; border-radius: 6px;">
+        <h3 style="margin:0; color: #1E366F; font-size: 1.1rem;">ℹ️ Informações do Sistema</h3>
+    </div>
+    
+    <!-- Conteúdo das informações -->
     <div style="padding: 0.8rem; background-color: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
         <h3 style="color: #1E366F; font-size: 1.2rem; margin-bottom: 1rem; border-bottom: 1px solid #E0E0E0; padding-bottom: 0.5rem;">Planner Organizer</h3>
         <p style="margin-bottom: 0.5rem;"><strong>Versão:</strong> 1.0.4</p>
@@ -278,7 +277,11 @@ with st.sidebar.expander("🔍 Clique para ver/ocultar detalhes", expanded=True)
             </p>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+</div>
+"""
+
+# Exibir as informações do sistema
+st.sidebar.markdown(informacoes_html, unsafe_allow_html=True)
 
 # Links de navegação ocultos em um expander para desenvolvedores
 with st.sidebar.expander("🔧 Acesso Desenvolvedor", expanded=False):
