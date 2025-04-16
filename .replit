@@ -66,15 +66,11 @@ args = "Sistema de Backup"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Limpar Vendas"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Exclusão Simples"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Gerar Manual do Sistema"
+args = "Limpar Vendas"
 
 [[workflows.workflow]]
 name = "Teste Importação"
@@ -257,21 +253,6 @@ args = "streamlit run criar_ponto_backup.py --server.port 8530 --server.address 
 waitForPort = 8530
 
 [[workflows.workflow]]
-name = "Limpar Vendas"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run limpar_vendas.py --server.port 8509 --server.address 0.0.0.0"
-waitForPort = 8509
-
-[[workflows.workflow]]
 name = "Exclusão Simples"
 author = "agent"
 
@@ -287,7 +268,7 @@ args = "streamlit run excluir_vendas_standalone.py --server.port 8512 --server.a
 waitForPort = 8512
 
 [[workflows.workflow]]
-name = "Gerar Manual do Sistema"
+name = "Limpar Vendas"
 author = "agent"
 
 [workflows.workflow.metadata]
@@ -298,7 +279,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run gerar_manual.py --server.port 8600 --server.address 0.0.0.0"
+args = "streamlit run limpar_vendas.py --server.port 8513 --server.address 0.0.0.0"
 
 [[ports]]
 localPort = 443
