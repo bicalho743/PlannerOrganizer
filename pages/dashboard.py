@@ -291,25 +291,6 @@ def show():
                 # Data atual
                 hoje = datetime.now().date()
                 
-                # Adicionar informações de debug
-                st.write(f"**Depuração**: Data atual do sistema = {hoje}")
-                st.write(f"**Depuração**: Total de propostas executadas/finalizadas: {len(propostas_executadas)}")
-                
-                # Mostrar propostas finalizadas ou concluídas para depuração
-                propostas_finalizadas_debug = propostas_executadas[
-                    (propostas_executadas['status'] == 'Finalizada') | (propostas_executadas['status'] == 'Concluída')
-                ]
-                if not propostas_finalizadas_debug.empty:
-                    st.write("**Depuração - Propostas finalizadas/concluídas:**")
-                    for _, p in propostas_finalizadas_debug.iterrows():
-                        data_fim = p.get('data_fim', None)
-                        if data_fim is not None:
-                            data_fim_str = format_date_safe(data_fim)
-                            data_fim_date = data_fim.date() if hasattr(data_fim, 'date') else data_fim
-                            data_60_dias = data_fim_date + timedelta(days=60)
-                            dias_restantes = (data_60_dias - hoje).days
-                            st.write(f"Proposta #{p['numero']}: Data fim = {data_fim_str}, +60 dias = {data_60_dias}, dias restantes = {dias_restantes}")
-                
                 # Lista para armazenar propostas próximas de 60 dias
                 propostas_alerta = []
                 
