@@ -1176,21 +1176,49 @@ def show():
                                 # 2. Produtos adicionados
                                 st.write("### Produtos")
                                 produtos = st.session_state.db.get_produtos_organizadores(proposta_exec_id)
+                                
+                                # Filtrar apenas produtos de catálogo (não itens "Outros")
                                 if not produtos.empty:
-                                    # Calcular valor total
-                                    produtos['valor_total'] = produtos['valor'] * produtos['quantidade']
-                                    total_produtos = produtos['valor_total'].sum()
+                                    # Verificar se tem produtos de UBER ou outros serviços que não são produtos físicos
+                                    # Geralmente esses itens contêm palavras-chave como "serviço", "uber", "transporte", etc.
+                                    termos_outros = ['uber', 'transporte', 'serviço', 'servico', 'frete', 'delivery', 'entrega']
                                     
-                                    # Formatar para exibição
-                                    df_produtos = pd.DataFrame()
-                                    df_produtos['Nome'] = produtos['nome']
-                                    df_produtos['Valor Unit.'] = produtos['valor'].apply(lambda x: f"R$ {float(x):.2f}")
-                                    df_produtos['Quantidade'] = produtos['quantidade']
-                                    df_produtos['Valor Total'] = produtos['valor_total'].apply(lambda x: f"R$ {float(x):.2f}")
-                                    df_produtos['Cômodo'] = produtos['comodo']
+                                    # Filtragem para remover itens que parecem ser "Outros"
+                                    produtos_filtrados = produtos.copy()
+                                    if 'nome' in produtos_filtrados.columns:
+                                        # Converter nomes para minúsculo para comparação
+                                        produtos_filtrados['nome_lower'] = produtos_filtrados['nome'].str.lower()
+                                        
+                                        # Criar máscara para itens que parecem ser outros serviços
+                                        mask_outros = produtos_filtrados['nome_lower'].apply(
+                                            lambda x: any(termo in x for termo in termos_outros) if isinstance(x, str) else False
+                                        )
+                                        
+                                        # Aplicar a máscara para filtrar
+                                        produtos_filtrados = produtos_filtrados[~mask_outros]
+                                        
+                                        # Remover coluna temporária
+                                        if 'nome_lower' in produtos_filtrados.columns:
+                                            produtos_filtrados = produtos_filtrados.drop('nome_lower', axis=1)
                                     
-                                    st.dataframe(df_produtos, hide_index=True, use_container_width=True)
-                                    st.info(f"Total Produtos: R$ {total_produtos:.2f}")
+                                    # Se ainda temos produtos depois da filtragem
+                                    if not produtos_filtrados.empty:
+                                        # Calcular valor total
+                                        produtos_filtrados['valor_total'] = produtos_filtrados['valor'] * produtos_filtrados['quantidade']
+                                        total_produtos = produtos_filtrados['valor_total'].sum()
+                                        
+                                        # Formatar para exibição
+                                        df_produtos = pd.DataFrame()
+                                        df_produtos['Nome'] = produtos_filtrados['nome']
+                                        df_produtos['Valor Unit.'] = produtos_filtrados['valor'].apply(lambda x: f"R$ {float(x):.2f}")
+                                        df_produtos['Quantidade'] = produtos_filtrados['quantidade']
+                                        df_produtos['Valor Total'] = produtos_filtrados['valor_total'].apply(lambda x: f"R$ {float(x):.2f}")
+                                        df_produtos['Cômodo'] = produtos_filtrados['comodo']
+                                        
+                                        st.dataframe(df_produtos, hide_index=True, use_container_width=True)
+                                        st.info(f"Total Produtos: R$ {total_produtos:.2f}")
+                                    else:
+                                        st.info("Nenhum produto físico adicionado a esta proposta.")
                                 else:
                                     st.info("Nenhum produto adicionado a esta proposta.")
                                 
