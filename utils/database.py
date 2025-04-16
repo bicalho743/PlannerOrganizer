@@ -3233,24 +3233,34 @@ class Database:
             try:
                 # Converter para inteiro se for string
                 proposta_id_int = int(proposta_id)
+                print(f"DEBUG LANCAMENTOS: Gerando lançamentos financeiros para proposta ID={proposta_id_int}")
                 
                 # Buscar a proposta
                 proposta = self.session.query(Proposta).filter_by(id=proposta_id_int).first()
                 if not proposta:
+                    print(f"DEBUG LANCAMENTOS: Proposta ID {proposta_id} não encontrada")
                     raise ValueError(f"Proposta ID {proposta_id} não encontrada")
+                
+                print(f"DEBUG LANCAMENTOS: Proposta encontrada: #{proposta.numero} - {proposta.descricao}")
                 
                 # Buscar cliente da proposta
                 cliente = self.session.query(Cliente).filter_by(id=proposta.cliente_id).first()
                 if not cliente:
+                    print(f"DEBUG LANCAMENTOS: Cliente ID {proposta.cliente_id} não encontrado")
                     raise ValueError(f"Cliente ID {proposta.cliente_id} não encontrado")
+                
+                print(f"DEBUG LANCAMENTOS: Cliente encontrado: {cliente.nome}")
                     
                 # Verificar se já existem lançamentos para esta proposta para evitar duplicação
                 lancamentos_existentes = self.session.query(Transacao)\
                     .filter_by(proposta_id=proposta_id_int, tipo="receita_a_receber")\
                     .count()
+                
+                print(f"DEBUG LANCAMENTOS: Lançamentos existentes: {lancamentos_existentes}")
                     
                 # Se já existirem lançamentos, retornar sem criar novos
                 if lancamentos_existentes > 0:
+                    print(f"DEBUG LANCAMENTOS: Já existem lançamentos para esta proposta. Pulando.")
                     return {"status": "já existe", "mensagem": "Lançamentos já existem para esta proposta"}
                 
                 # Resultados para retornar
@@ -3264,6 +3274,8 @@ class Database:
                 
                 # 1. Lançamento do valor base (cliente a receber)
                 valor_base = float(proposta.valor) if proposta.valor else 0
+                print(f"DEBUG LANCAMENTOS: Valor base da proposta: R$ {valor_base:.2f}")
+                
                 if valor_base > 0:
                     transacao_base = Transacao(
                         tipo="receita_a_receber",
@@ -3283,15 +3295,26 @@ class Database:
                     self.session.add(transacao_base)
                     result["valor_base"] = valor_base
                     result["lancamentos_gerados"] += 1
+                    print(f"DEBUG LANCAMENTOS: Lançamento do valor base criado")
                 
                 # 2. Produtos a receber
                 produtos = self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id_int).all()
+                print(f"DEBUG LANCAMENTOS: Produtos encontrados: {len(produtos)}")
+                
+                # Imprimir detalhes de cada produto
+                for i, produto in enumerate(produtos):
+                    print(f"DEBUG LANCAMENTOS: Produto {i+1}: {produto.nome}, Valor: R$ {produto.valor}, Quantidade: {produto.quantidade}")
+                    
                 valor_total_produtos = 0
                 
                 if produtos:
                     # Calcular valor total dos produtos
                     for produto in produtos:
-                        valor_total_produtos += float(produto.valor) * produto.quantidade
+                        valor_produto = float(produto.valor) * produto.quantidade
+                        valor_total_produtos += valor_produto
+                        print(f"DEBUG LANCAMENTOS: Produto '{produto.nome}': R$ {produto.valor} x {produto.quantidade} = R$ {valor_produto:.2f}")
+                    
+                    print(f"DEBUG LANCAMENTOS: Valor total dos produtos: R$ {valor_total_produtos:.2f}")
                     
                     # Criar lançamento de receita para os produtos
                     if valor_total_produtos > 0:
@@ -3313,9 +3336,11 @@ class Database:
                         self.session.add(transacao_produtos)
                         result["valor_produtos"] = valor_total_produtos
                         result["lancamentos_gerados"] += 1
+                        print(f"DEBUG LANCAMENTOS: Lançamento de produtos criado: R$ {valor_total_produtos:.2f}")
                         
                         # Adicionar à tabela de vendas
-                        self._registrar_venda_produtos(proposta, cliente, produtos)
+                        venda_id = self._registrar_venda_produtos(proposta, cliente, produtos)
+                        print(f"DEBUG LANCAMENTOS: Venda registrada com ID: {venda_id}")
                 
                 # 3. Comissões a receber por fornecedor
                 fornecedores = self.session.query(AcrescimoProposta)\
@@ -3428,10 +3453,24 @@ class Database:
             int: ID da venda criada ou None em caso de erro
         """
         try:
+            print(f"DEBUG VENDAS: Iniciando registro de venda para proposta #{proposta.numero}")
+            print(f"DEBUG VENDAS: Cliente: {cliente.nome} (ID: {cliente.id})")
+            print(f"DEBUG VENDAS: Total de produtos: {len(produtos)}")
+            
+            # Verificar se já existe uma venda para esta proposta
+            venda_existente = self.session.query(Venda).filter_by(proposta_id=proposta.id).first()
+            if venda_existente:
+                print(f"DEBUG VENDAS: Já existe uma venda (ID: {venda_existente.id}) para esta proposta")
+                return venda_existente.id
+            
             # Calcular valor total dos produtos
             valor_total = 0
-            for produto in produtos:
-                valor_total += float(produto.valor) * produto.quantidade
+            for i, produto in enumerate(produtos):
+                valor_produto = float(produto.valor) * produto.quantidade
+                valor_total += valor_produto
+                print(f"DEBUG VENDAS: Produto {i+1}: {produto.nome}, Valor: R$ {produto.valor}, Quantidade: {produto.quantidade}, Subtotal: R$ {valor_produto:.2f}")
+                
+            print(f"DEBUG VENDAS: Valor total dos produtos: R$ {valor_total:.2f}")
                 
             # Criar a venda
             venda = Venda(
@@ -3445,20 +3484,29 @@ class Database:
             )
             self.session.add(venda)
             self.session.flush()  # Para obter o ID da venda
+            print(f"DEBUG VENDAS: Venda criada com ID: {venda.id}")
             
             # Adicionar itens da venda
-            for produto in produtos:
+            for i, produto in enumerate(produtos):
+                valor_produto = float(produto.valor) * produto.quantidade
                 item = ItemVenda(
                     venda_id=venda.id,
                     produto_id=None,  # Não temos o produto do catálogo, apenas o produto da proposta
                     quantidade=produto.quantidade,
                     preco_unitario=float(produto.valor),
-                    subtotal=float(produto.valor) * produto.quantidade
+                    subtotal=valor_produto,
+                    descricao=produto.nome  # Adicionado nome do produto para referência
                 )
                 self.session.add(item)
-                
+                print(f"DEBUG VENDAS: Item adicionado à venda: {produto.nome}, Subtotal: R$ {valor_produto:.2f}")
+            
+            # Forçar commit para garantir que a venda seja salva
+            self.session.commit()
+            print(f"DEBUG VENDAS: Venda registrada com sucesso, ID: {venda.id}")
             return venda.id
             
         except Exception as e:
             print(f"ERRO ao registrar venda de produtos: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return None
