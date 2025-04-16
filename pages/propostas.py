@@ -756,6 +756,26 @@ def show():
                                 # Buscar produtos cadastrados
                                 produtos_cadastrados = st.session_state.db.get_produtos()
                                 
+                                # Filtrar produtos de serviço (UBER, CABIDE, etc.)
+                                if not produtos_cadastrados.empty:
+                                    # Definir termos que identificam produtos de serviço
+                                    termos_servico = ['uber', 'transporte', 'serviço', 'servico', 'frete', 'delivery', 'entrega', 'cabide']
+                                    
+                                    # Converter nomes para minúsculo para comparação
+                                    produtos_cadastrados['nome_lower'] = produtos_cadastrados['nome'].str.lower()
+                                    
+                                    # Criar máscara para filtrar produtos de serviço
+                                    mask_servicos = produtos_cadastrados['nome_lower'].apply(
+                                        lambda x: any(termo in x for termo in termos_servico) if isinstance(x, str) else False
+                                    )
+                                    
+                                    # Filtrar para manter apenas produtos que NÃO são de serviço
+                                    produtos_cadastrados = produtos_cadastrados[~mask_servicos].copy()
+                                    
+                                    # Remover coluna temporária
+                                    if 'nome_lower' in produtos_cadastrados.columns:
+                                        produtos_cadastrados = produtos_cadastrados.drop('nome_lower', axis=1)
+                                
                                 if not produtos_cadastrados.empty:
                                     with st.form(key=f"produto_catalogo_form_{proposta_exec_id}"):
                                         # Seleção de produto do catálogo
@@ -861,6 +881,26 @@ def show():
                             try:
                                 produtos = st.session_state.db.get_produtos_organizadores(proposta_exec_id)
                                 
+                                # Filtrar produtos de serviço (UBER, CABIDE, etc.)
+                                if not produtos.empty:
+                                    # Definir termos que identificam produtos de serviço
+                                    termos_servico = ['uber', 'transporte', 'serviço', 'servico', 'frete', 'delivery', 'entrega', 'cabide']
+                                    
+                                    # Converter nomes para minúsculo para comparação
+                                    produtos['nome_lower'] = produtos['nome'].str.lower()
+                                    
+                                    # Criar máscara para filtrar produtos de serviço
+                                    mask_servicos = produtos['nome_lower'].apply(
+                                        lambda x: any(termo in x for termo in termos_servico) if isinstance(x, str) else False
+                                    )
+                                    
+                                    # Filtrar para manter apenas produtos que NÃO são de serviço
+                                    produtos = produtos[~mask_servicos].copy()
+                                    
+                                    # Remover coluna temporária
+                                    if 'nome_lower' in produtos.columns:
+                                        produtos = produtos.drop('nome_lower', axis=1)
+                                
                                 if not produtos.empty:
                                     st.write("Produtos da Proposta:")
                                     
@@ -960,9 +1000,28 @@ def show():
                             
                             # Exibir itens personalizados já adicionados
                             try:
-                                # Usando get_produtos_organizadores pois get_produtos_proposta não existe
-                                # Nota: Não é possível filtrar por tipo, então mostraremos todos os produtos
+                                # Buscar todos os produtos da proposta
                                 outros_itens = st.session_state.db.get_produtos_organizadores(proposta_id=proposta_exec_id)
+                                
+                                # Filtrar para mostrar apenas produtos de serviço nesta seção
+                                if not outros_itens.empty:
+                                    # Definir termos que identificam produtos de serviço
+                                    termos_servico = ['uber', 'transporte', 'serviço', 'servico', 'frete', 'delivery', 'entrega', 'cabide']
+                                    
+                                    # Converter nomes para minúsculo para comparação
+                                    outros_itens['nome_lower'] = outros_itens['nome'].str.lower()
+                                    
+                                    # Criar máscara para filtrar produtos de serviço
+                                    mask_servicos = outros_itens['nome_lower'].apply(
+                                        lambda x: any(termo in x for termo in termos_servico) if isinstance(x, str) else False
+                                    )
+                                    
+                                    # Filtrar para manter APENAS produtos de serviço (o oposto da aba de produtos)
+                                    outros_itens = outros_itens[mask_servicos].copy()
+                                    
+                                    # Remover coluna temporária
+                                    if 'nome_lower' in outros_itens.columns:
+                                        outros_itens = outros_itens.drop('nome_lower', axis=1)
                                 
                                 if not outros_itens.empty:
                                     st.write("### Itens Personalizados Adicionados")
