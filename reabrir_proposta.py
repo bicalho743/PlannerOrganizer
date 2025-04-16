@@ -65,7 +65,7 @@ def reabrir_proposta_finalizada(proposta_id):
             # Atualizar o status da proposta usando SQL diretamente
             query_update = text("""
             UPDATE propostas
-            SET status = 'Em andamento', status_execucao = 'Em execução'
+            SET status = 'Em execução', status_execucao = 'Em execução'
             WHERE id = :proposta_id
             """)
             db.session.execute(query_update, {"proposta_id": proposta_id})
@@ -78,7 +78,7 @@ def reabrir_proposta_finalizada(proposta_id):
             # Se o SQL direto falhar, tentar o método normal
             resultado = db.atualizar_proposta(
                 proposta_id=proposta_id,
-                status="Em andamento",
+                status="Em execução",
                 status_execucao="Em execução",
                 gerar_transacoes_automaticas=False
             )
