@@ -143,62 +143,71 @@ def show():
                     with tab_multi_delete:
                         st.write("Selecione os clientes que deseja excluir:")
                         
-                        # Criar DataFrame para seleção
-                        df_select = df_display[['ID', 'Nome', 'Telefone', 'CPF']].copy()
+                        # Garantir que estamos trabalhando com os dados mais recentes
+                        # Forçar uma atualização da lista de clientes antes de mostrar opções de exclusão
+                        if not 'forcar_atualizacao_clientes' in st.session_state:
+                            st.session_state['clientes'] = st.session_state.db.get_clientes()
+                            st.session_state['forcar_atualizacao_clientes'] = True
                         
-                        # Adicionar coluna de seleção explicitamente ao DataFrame antes
-                        df_select['Selecionar'] = False
+                        # Criar DataFrame para seleção com os dados mais atualizados
+                        clientes_atuais = st.session_state['clientes']
                         
-                        # Adicionar coluna de seleção
-                        selection = st.data_editor(
-                            df_select,
-                            column_config={
-                                "Selecionar": st.column_config.CheckboxColumn(
-                                    "Selecionar",
-                                    help="Selecione para excluir"
-                                )
-                            },
-                            hide_index=True,
-                            use_container_width=True,
-                            key="editor_clientes_multi_delete"
-                        )
-                        
-                        # Verificar clientes selecionados
-                        if st.button("Excluir Clientes Selecionados", type="primary", key="btn_excluir_multi_clientes"):
-                            # Obter IDs dos clientes selecionados
-                            clientes_selecionados = []
+                        if clientes_atuais.empty:
+                            st.info("Nenhum cliente disponível para exclusão.")
+                        else:
+                            # Filtrar apenas colunas necessárias
+                            df_select = clientes_atuais[['id', 'nome', 'telefone', 'cpf']].copy()
+                            # Renomear colunas para exibição
+                            df_select.columns = ['ID', 'Nome', 'Telefone', 'CPF']
+                            # Adicionar coluna de seleção
+                            df_select['Selecionar'] = False
                             
-                            # Debug - mostrar o que está sendo retornado do editor
-                            with st.expander("Debug info"):
-                                st.write("Conteúdo do selection:")
-                                st.write(selection)
+                            # Mostrar lista para seleção
+                            selection = st.data_editor(
+                                df_select,
+                                column_config={
+                                    "Selecionar": st.column_config.CheckboxColumn(
+                                        "Selecionar",
+                                        help="Selecione para excluir"
+                                    )
+                                },
+                                hide_index=True,
+                                use_container_width=True,
+                                key="editor_clientes_multi_delete"
+                            )
                             
-                            # Percorrer as linhas do DataFrame de seleção
-                            for i, row in selection.iterrows():
-                                if row['Selecionar'] == True:  # Comparação explícita com True
-                                    clientes_selecionados.append(int(row['ID']))
-                            
-                            if not clientes_selecionados:
-                                st.warning("Nenhum cliente selecionado para exclusão.")
-                            else:
-                                # Executar exclusão múltipla
-                                resultados = st.session_state.db.delete_multiple_clientes(clientes_selecionados)
+                            # Botão para confirmar exclusão
+                            if st.button("Excluir Clientes Selecionados", type="primary", key="btn_excluir_multi_clientes"):
+                                # Obter IDs dos clientes selecionados
+                                clientes_selecionados = []
                                 
-                                # Mostrar resultados
-                                if resultados["sucesso"]:
-                                    st.success(f"{len(resultados['sucesso'])} clientes excluídos com sucesso!")
-                                    for cliente in resultados["sucesso"]:
-                                        st.info(f"✅ Cliente {cliente['nome']} (ID: {cliente['id']}) excluído com sucesso.")
+                                # Percorrer as linhas do DataFrame de seleção
+                                for i, row in selection.iterrows():
+                                    if row['Selecionar'] == True:  # Comparação explícita com True
+                                        clientes_selecionados.append(int(row['ID']))
                                 
-                                if resultados["erro"]:
-                                    st.error(f"{len(resultados['erro'])} clientes não puderam ser excluídos:")
-                                    for erro in resultados["erro"]:
-                                        st.warning(f"❌ Cliente {erro['nome']} (ID: {erro['id']}): {erro['mensagem']}")
-                                
-                                # Atualizar lista de clientes
-                                if resultados["sucesso"]:
-                                    st.session_state['update_clientes'] = True
-                                    st.rerun()
+                                if not clientes_selecionados:
+                                    st.warning("Nenhum cliente selecionado para exclusão.")
+                                else:
+                                    # Executar exclusão múltipla
+                                    resultados = st.session_state.db.delete_multiple_clientes(clientes_selecionados)
+                                    
+                                    # Mostrar resultados
+                                    if resultados["sucesso"]:
+                                        st.success(f"{len(resultados['sucesso'])} clientes excluídos com sucesso!")
+                                        for cliente in resultados["sucesso"]:
+                                            st.info(f"✅ Cliente {cliente['nome']} (ID: {cliente['id']}) excluído com sucesso.")
+                                    
+                                    if resultados["erro"]:
+                                        st.error(f"{len(resultados['erro'])} clientes não puderam ser excluídos:")
+                                        for erro in resultados["erro"]:
+                                            st.warning(f"❌ Cliente {erro['nome']} (ID: {erro['id']}): {erro['mensagem']}")
+                                    
+                                    # Atualizar lista de clientes e forçar nova leitura na próxima execução
+                                    if resultados["sucesso"]:
+                                        st.session_state['update_clientes'] = True
+                                        st.session_state.pop('forcar_atualizacao_clientes', None)
+                                        st.rerun()
 
                     # Verificar mudanças na edição
                     if edited_df is not None and not edited_df.equals(df_display):
