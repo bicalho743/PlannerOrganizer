@@ -1521,6 +1521,50 @@ def show():
                     # Exibir tabela sem mostrar a coluna ID
                     st.dataframe(df_finalizadas.drop(columns=['ID']), hide_index=True)
                     
+                    # Adicionar área para reabrir proposta finalizada
+                    with st.expander("Reabrir Proposta Finalizada"):
+                        # Obter lista de números de propostas finalizadas para o select box
+                        numeros_propostas = propostas_finalizadas['numero'].tolist()
+                        numeros_propostas.sort()  # Ordenar para facilitar a seleção
+                        
+                        proposta_numero = st.selectbox(
+                            "Selecione o número da proposta a reabrir:",
+                            numeros_propostas,
+                            key="numero_proposta_finalizada_reabrir"
+                        )
+                        
+                        proposta_reabrir = propostas_finalizadas[propostas_finalizadas['numero'] == proposta_numero]
+                        
+                        if not proposta_reabrir.empty:
+                            st.info(f"Você está prestes a reabrir a proposta #{proposta_numero} - {proposta_reabrir.iloc[0]['descricao']}")
+                            st.warning("Esta ação mudará o status da proposta para 'Em execução'.")
+                            
+                            if st.button("REABRIR PROPOSTA", key="confirmar_reabertura"):
+                                try:
+                                    # Importar função de reabrir proposta
+                                    from reabrir_proposta import reabrir_proposta_finalizada
+                                    
+                                    # Obter ID da proposta
+                                    proposta_id = proposta_reabrir.iloc[0]['id']
+                                    
+                                    # Chamar função de reabertura
+                                    resultado = reabrir_proposta_finalizada(proposta_id)
+                                    
+                                    if resultado.get('status') == 'sucesso':
+                                        st.success(resultado.get('mensagem'))
+                                        time.sleep(1)
+                                        st.rerun()
+                                    elif resultado.get('status') == 'sucesso_com_alerta':
+                                        st.success(resultado.get('mensagem'))
+                                        st.warning(resultado.get('alerta'))
+                                        st.info(f"Encontrados {resultado.get('lancamentos_encontrados')} lançamentos financeiros.")
+                                        time.sleep(2)
+                                        st.rerun()
+                                    else:
+                                        st.error(f"Erro ao reabrir proposta: {resultado.get('mensagem')}")
+                                except Exception as e:
+                                    st.error(f"Erro ao reabrir proposta: {str(e)}")
+                    
                     # Adicionar área para exclusão de proposta
                     with st.expander("Excluir Proposta Finalizada"):
                         # Obter lista de números de propostas finalizadas para o select box
