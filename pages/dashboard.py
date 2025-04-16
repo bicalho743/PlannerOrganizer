@@ -277,48 +277,24 @@ def show():
         </div>
         """, unsafe_allow_html=True)
         
-        try:
-            # Debug - Mostrar informações das propostas
-            st.write("Debug - Verificando propostas:")
-            st.write(f"Total de propostas: {len(propostas) if isinstance(propostas, pd.DataFrame) else 'Não é um DataFrame'}")
-            if isinstance(propostas, pd.DataFrame):
-                st.write(f"Colunas disponíveis: {propostas.columns.tolist() if not propostas.empty else 'DataFrame vazio'}")
-            
-            # Verificar se propostas está vazio ou se tem a coluna status
-            if not isinstance(propostas, pd.DataFrame):
-                st.error("Propostas não é um DataFrame válido.")
-                propostas_executadas = pd.DataFrame()
-            elif propostas.empty:
-                st.info("Não existem propostas cadastradas no sistema.")
-                propostas_executadas = pd.DataFrame()
-            elif 'status' not in propostas.columns:
-                st.info("Campo 'status' não encontrado nas propostas.")
-                propostas_executadas = pd.DataFrame()
-            else:
-                # Buscar todas as propostas executadas
-                propostas_executadas = propostas[propostas['status'].isin(['Executada', 'Em execução', 'Finalizada'])]
-                st.write(f"Propostas executadas encontradas: {len(propostas_executadas)}")
-        except Exception as e:
-            st.warning(f"Erro ao filtrar propostas executadas: {str(e)}")
-            import traceback
-            st.code(traceback.format_exc())
+        # Verificar se propostas está vazio ou se tem a coluna status
+        if not isinstance(propostas, pd.DataFrame) or propostas.empty or 'status' not in propostas.columns:
             propostas_executadas = pd.DataFrame()
+        else:
+            # Buscar todas as propostas executadas
+            propostas_executadas = propostas[propostas['status'].isin(['Executada', 'Em execução', 'Finalizada'])]
             
         try:
-            st.write("Debug - Verificando propostas executadas:")
-            st.write(f"Tipo da variável propostas_executadas: {type(propostas_executadas)}")
-            st.write(f"Empty? {propostas_executadas.empty if isinstance(propostas_executadas, pd.DataFrame) else 'Não é um DataFrame'}")
+            # Verificar propostas executadas
             
             if isinstance(propostas_executadas, pd.DataFrame) and not propostas_executadas.empty:
                 # Data atual
                 hoje = datetime.now().date()
-                st.write(f"Data atual: {hoje}")
                 
                 # Lista para armazenar propostas próximas de 60 dias
                 propostas_alerta = []
                 
                 # Verificar se a coluna data_inicio existe
-                st.write(f"Colunas em propostas_executadas: {propostas_executadas.columns.tolist()}")
                 if 'data_inicio' not in propostas_executadas.columns:
                     st.info("Campo 'data_inicio' não encontrado nas propostas.")
                     # Não usamos return aqui para evitar sair da função antes de completar
@@ -390,9 +366,4 @@ def show():
             else:
                 st.info("Não há propostas em execução no sistema.")
         except Exception as e:
-            st.warning(f"Erro ao processar alertas de retorno ao cliente: {str(e)}")
-            import sys
-            import traceback
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            st.error("Detalhes do erro:")
-            st.code(traceback.format_exception(exc_type, exc_value, exc_traceback))
+            st.warning("Erro ao processar alertas de retorno ao cliente.")
