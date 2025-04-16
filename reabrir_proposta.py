@@ -18,9 +18,11 @@ def reabrir_proposta_finalizada(proposta_id):
     try:
         db = Database()
         # Verificar se a proposta existe e está finalizada
-        proposta = db.get_proposta_by_id(proposta_id)
+        # Buscamos todas as propostas e depois filtramos pelo ID
+        propostas = db.get_propostas()
+        proposta = propostas[propostas['id'] == proposta_id] if not propostas.empty else None
         
-        if not proposta or proposta.empty:
+        if proposta is None or proposta.empty:
             return {
                 "status": "erro",
                 "mensagem": "Proposta não encontrada"
