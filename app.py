@@ -225,7 +225,15 @@ except Exception as e:
 # Informações do sistema
 st.sidebar.markdown('<div style="margin: 1.5rem 0;"><hr style="border: none; height: 1px; background-color: #E0E0E0;"></div>', unsafe_allow_html=True)
 
-with st.sidebar.expander("ℹ️ Informações do Sistema", expanded=False):
+# Usando um título mais destacado para a seção de informações
+st.sidebar.markdown("""
+<div style="text-align: center; margin-bottom: 1rem; padding: 0.8rem; background-color: #E3F2FD; border-radius: 6px;">
+    <h3 style="margin:0; color: #1E366F; font-size: 1.1rem;">ℹ️ Informações do Sistema</h3>
+</div>
+""", unsafe_allow_html=True)
+
+# Expandido por padrão para maior visibilidade
+with st.sidebar.expander("🔍 Clique para ver/ocultar detalhes", expanded=True):
     st.markdown("""
     <div style="padding: 0.8rem; background-color: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
         <h3 style="color: #1E366F; font-size: 1.2rem; margin-bottom: 1rem; border-bottom: 1px solid #E0E0E0; padding-bottom: 0.5rem;">Planner Organizer</h3>
