@@ -282,7 +282,7 @@ def show():
             propostas_executadas = pd.DataFrame()
         else:
             # Buscar todas as propostas executadas
-            propostas_executadas = propostas[propostas['status'].isin(['Executada', 'Em execução', 'Finalizada'])]
+            propostas_executadas = propostas[propostas['status'].isin(['Executada', 'Em execução', 'Finalizada', 'Concluída'])]
             
         try:
             # Verificar propostas executadas
@@ -295,10 +295,12 @@ def show():
                 st.write(f"**Depuração**: Data atual do sistema = {hoje}")
                 st.write(f"**Depuração**: Total de propostas executadas/finalizadas: {len(propostas_executadas)}")
                 
-                # Mostrar propostas finalizadas para depuração
-                propostas_finalizadas_debug = propostas_executadas[propostas_executadas['status'] == 'Finalizada']
+                # Mostrar propostas finalizadas ou concluídas para depuração
+                propostas_finalizadas_debug = propostas_executadas[
+                    (propostas_executadas['status'] == 'Finalizada') | (propostas_executadas['status'] == 'Concluída')
+                ]
                 if not propostas_finalizadas_debug.empty:
-                    st.write("**Depuração - Propostas finalizadas:**")
+                    st.write("**Depuração - Propostas finalizadas/concluídas:**")
                     for _, p in propostas_finalizadas_debug.iterrows():
                         data_fim = p.get('data_fim', None)
                         if data_fim is not None:
@@ -327,8 +329,8 @@ def show():
                     # Para outras propostas, usar data_inicio
                     data_referencia = None
                     
-                    # Para propostas finalizadas, preferir a data_fim
-                    if proposta['status'] == 'Finalizada' and pd.notna(proposta.get('data_fim')):
+                    # Para propostas finalizadas ou concluídas, preferir a data_fim
+                    if (proposta['status'] == 'Finalizada' or proposta['status'] == 'Concluída') and pd.notna(proposta.get('data_fim')):
                         data_campo = proposta['data_fim']
                         campo_nome = "data_fim"
                     # Para outras propostas ou se não tiver data_fim, usar data_inicio
