@@ -225,63 +225,67 @@ except Exception as e:
 # Divisor antes das informações do sistema
 st.sidebar.markdown('<div style="margin: 1.5rem 0;"><hr style="border: none; height: 1px; background-color: #E0E0E0;"></div>', unsafe_allow_html=True)
 
-# Seção de Informações do Sistema na barra lateral
-informacoes_html = """
-<div style="margin-bottom: 1rem;">
-    <!-- Cabeçalho das informações -->
-    <div style="text-align: center; margin-bottom: 1rem; padding: 0.8rem; background-color: #E3F2FD; border-radius: 6px;">
-        <h3 style="margin:0; color: #1E366F; font-size: 1.1rem;">ℹ️ Informações do Sistema</h3>
-    </div>
-    
-    <!-- Conteúdo das informações -->
-    <div style="padding: 0.8rem; background-color: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-        <h3 style="color: #1E366F; font-size: 1.2rem; margin-bottom: 1rem; border-bottom: 1px solid #E0E0E0; padding-bottom: 0.5rem;">Planner Organizer</h3>
-        <p style="margin-bottom: 0.5rem;"><strong>Versão:</strong> 1.0.4</p>
-        
-        <p style="margin-top: 1.2rem; margin-bottom: 0.5rem;"><strong style="color: #1E366F;">Módulos do Sistema:</strong></p>
-        <ul style="margin-top: 0; padding-left: 1.5rem;">
-            <li style="margin-bottom: 0.5rem;"><strong style="color: #1976D2;">Dashboard</strong> - Visão geral com métricas, alertas de retorno de clientes e indicadores financeiros</li>
-            <li style="margin-bottom: 0.5rem;"><strong style="color: #1976D2;">Cadastros</strong> - Gerenciamento completo de clientes, fornecedores, parceiros e assistentes</li>
-            <li style="margin-bottom: 0.5rem;"><strong style="color: #1976D2;">Propostas</strong> - Ciclo completo de propostas desde elaboração até aprovação e finalização</li>
-            <li style="margin-bottom: 0.5rem;"><strong style="color: #1976D2;">Vendas</strong> - Controle de produtos vendidos, quantidades e valores por cliente</li>
-            <li style="margin-bottom: 0.5rem;"><strong style="color: #1976D2;">Financeiro</strong> - Gestão de receitas, despesas, contas a pagar e receber</li>
-            <li style="margin-bottom: 0.5rem;"><strong style="color: #1976D2;">Relatórios</strong> - Análises e visualizações detalhadas de desempenho</li>
-        </ul>
-        
-        <p style="margin-top: 1.2rem; margin-bottom: 0.5rem;"><strong style="color: #1E366F;">Funcionalidades Principais:</strong></p>
-        <ul style="margin-top: 0; padding-left: 1.5rem;">
-            <li style="margin-bottom: 0.3rem;">✅ Fluxo de propostas: Em elaboração → Aguardando aprovação → Aprovada → Em execução → Finalizada</li>
-            <li style="margin-bottom: 0.3rem;">✅ Integração automática entre módulos (Propostas/Financeiro/Vendas)</li>
-            <li style="margin-bottom: 0.3rem;">✅ Sistema de alertas para propostas próximas do prazo</li>
-            <li style="margin-bottom: 0.3rem;">✅ Geração automática de lançamentos financeiros</li>
-            <li style="margin-bottom: 0.3rem;">✅ Cálculo automático de comissões para fornecedores</li>
-            <li style="margin-bottom: 0.3rem;">✅ Importação em lote de clientes e propostas</li>
-            <li style="margin-bottom: 0.3rem;">✅ Sistema de backup e restauração de dados</li>
-        </ul>
-        
-        <p style="margin-top: 1.2rem; margin-bottom: 0.5rem;"><strong style="color: #1E366F;">Novidades da Versão:</strong></p>
-        <ul style="margin-top: 0; padding-left: 1.5rem;">
-            <li style="margin-bottom: 0.3rem;">🎉 Telas de celebração para conclusão de tarefas</li>
-            <li style="margin-bottom: 0.3rem;">📊 Dashboard com métricas de desempenho em tempo real</li>
-            <li style="margin-bottom: 0.3rem;">📱 Interface responsiva para diferentes dispositivos</li>
-            <li style="margin-bottom: 0.3rem;">🎨 Tema profissional com visual corporativo</li>
-            <li style="margin-bottom: 0.3rem;">🧹 Seleção múltipla para exclusões em lote</li>
-        </ul>
-        
-        <div style="margin-top: 1.5rem; text-align: center; padding-top: 1rem; border-top: 1px solid #E0E0E0;">
-            <p style="font-size: 0.9rem; color: #5A6A85;">
-                Desenvolvido com ❤️ para Personal Organizers
-            </p>
-            <p style="font-size: 0.8rem; color: #5A6A85; margin-top: 0.3rem;">
-                © 2025 Planner Organizer
-            </p>
-        </div>
-    </div>
+# Título para as informações do sistema
+st.sidebar.markdown("""
+<div style="text-align: center; margin-bottom: 1rem; padding: 0.8rem; background-color: #E3F2FD; border-radius: 6px;">
+    <h3 style="margin:0; color: #1E366F; font-size: 1.1rem;">ℹ️ Informações do Sistema</h3>
 </div>
-"""
+""", unsafe_allow_html=True)
 
-# Exibir as informações do sistema
-st.sidebar.markdown(informacoes_html, unsafe_allow_html=True)
+# Cabeçalho e Versão
+st.sidebar.markdown("""
+<div style="padding: 0.8rem; background-color: white; border-radius: 6px; margin-bottom: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+    <h3 style="color: #1E366F; font-size: 1.2rem; margin-bottom: 0.5rem; border-bottom: 1px solid #E0E0E0; padding-bottom: 0.5rem;">Planner Organizer</h3>
+    <p style="margin-bottom: 0.5rem;"><strong>Versão:</strong> 1.0.4</p>
+</div>
+""", unsafe_allow_html=True)
+
+# Módulos do Sistema
+st.sidebar.markdown("""
+<div style="padding: 0.8rem; background-color: white; border-radius: 6px; margin-bottom: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+    <p style="margin-top: 0; margin-bottom: 0.5rem;"><strong style="color: #1E366F;">Módulos do Sistema:</strong></p>
+    <ul style="margin-top: 0; padding-left: 1.5rem;">
+        <li style="margin-bottom: 0.3rem;"><strong style="color: #1976D2;">Dashboard</strong> - Métricas e alertas</li>
+        <li style="margin-bottom: 0.3rem;"><strong style="color: #1976D2;">Cadastros</strong> - Clientes, parceiros e fornecedores</li>
+        <li style="margin-bottom: 0.3rem;"><strong style="color: #1976D2;">Propostas</strong> - Gestão completa de propostas</li>
+        <li style="margin-bottom: 0.3rem;"><strong style="color: #1976D2;">Vendas</strong> - Controle de produtos vendidos</li>
+        <li style="margin-bottom: 0.3rem;"><strong style="color: #1976D2;">Financeiro</strong> - Receitas e despesas</li>
+        <li style="margin-bottom: 0.3rem;"><strong style="color: #1976D2;">Relatórios</strong> - Análises e visualizações</li>
+    </ul>
+</div>
+""", unsafe_allow_html=True)
+
+# Funcionalidades principais
+st.sidebar.markdown("""
+<div style="padding: 0.8rem; background-color: white; border-radius: 6px; margin-bottom: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+    <p style="margin-top: 0; margin-bottom: 0.5rem;"><strong style="color: #1E366F;">Funcionalidades Principais:</strong></p>
+    <ul style="margin-top: 0; padding-left: 1.5rem;">
+        <li style="margin-bottom: 0.3rem;">✅ Fluxo completo de propostas</li>
+        <li style="margin-bottom: 0.3rem;">✅ Integração entre módulos</li>
+        <li style="margin-bottom: 0.3rem;">✅ Sistema de alertas de prazos</li>
+        <li style="margin-bottom: 0.3rem;">✅ Geração de lançamentos financeiros</li>
+        <li style="margin-bottom: 0.3rem;">✅ Cálculo de comissões</li>
+        <li style="margin-bottom: 0.3rem;">✅ Importação em lote</li>
+        <li style="margin-bottom: 0.3rem;">✅ Backup e restauração</li>
+    </ul>
+</div>
+""", unsafe_allow_html=True)
+
+# Novidades da versão
+st.sidebar.markdown("""
+<div style="padding: 0.8rem; background-color: white; border-radius: 6px; margin-bottom: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+    <p style="margin-top: 0; margin-bottom: 0.5rem;"><strong style="color: #1E366F;">Novidades da Versão:</strong></p>
+    <ul style="margin-top: 0; padding-left: 1.5rem;">
+        <li style="margin-bottom: 0.3rem;">🎉 Telas de celebração</li>
+        <li style="margin-bottom: 0.3rem;">📊 Dashboard aprimorado</li>
+        <li style="margin-bottom: 0.3rem;">🎨 Tema profissional</li>
+        <li style="margin-bottom: 0.3rem;">🧹 Exclusão múltipla em lote</li>
+    </ul>
+    <p style="margin-top: 1rem; text-align: center; font-size: 0.85rem; color: #5A6A85;">
+        © 2025 Planner Organizer
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
 # Links de navegação ocultos em um expander para desenvolvedores
 with st.sidebar.expander("🔧 Acesso Desenvolvedor", expanded=False):
