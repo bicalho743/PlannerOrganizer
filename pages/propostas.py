@@ -1157,7 +1157,8 @@ def show():
                                 if not produtos.empty:
                                     # Verificar se tem produtos de UBER ou outros serviços que não são produtos físicos
                                     # Geralmente esses itens contêm palavras-chave como "serviço", "uber", "transporte", etc.
-                                    termos_outros = ['uber', 'transporte', 'serviço', 'servico', 'frete', 'delivery', 'entrega']
+                                    # Adicionar o termo 'cabide' conforme solicitado
+                                    termos_outros = ['uber', 'transporte', 'serviço', 'servico', 'frete', 'delivery', 'entrega', 'cabide']
                                     
                                     # Filtragem para separar itens que parecem ser "Outros"
                                     produtos_filtrados = produtos.copy()
