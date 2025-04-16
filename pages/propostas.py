@@ -77,8 +77,10 @@ def show():
                             data_aprovacao = st.date_input("Data de aprovação:", data_inicio)
                         
                         if status_inicial in ["Em execução", "Finalizada"]:
-                            # A data de início de execução é a mesma data de início selecionada para cadastros retroativos
-                            data_inicio_execucao = st.date_input("Data de início da execução:", data_inicio)
+                            # A data de início de execução é sempre igual à data de início da proposta
+                            # Não permitimos mais que o usuário selecione uma data diferente
+                            st.info("A data de início de execução será igual à data de início da proposta.")
+                            data_inicio_execucao = data_inicio  # Usar sempre a data de início da proposta
                         
                         if status_inicial == "Finalizada":
                             data_fim_real = st.date_input("Data de conclusão:", data_inicio + timedelta(days=prazo))
@@ -145,8 +147,8 @@ def show():
                                     proposta_atualizada['data_proposta'] = data_aprovacao
                                 
                                 if status_inicial in ["Em execução", "Finalizada"]:
-                                    # Usar a data selecionada, não a data atual
-                                    proposta_atualizada['data_inicio_execucao'] = data_inicio_execucao
+                                    # A data de início de execução é sempre a data de início da proposta
+                                    proposta_atualizada['data_inicio_execucao'] = data_inicio
                                     proposta_atualizada['status_execucao'] = "Em execução"
                                 
                                 if status_inicial == "Finalizada":
