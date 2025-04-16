@@ -77,6 +77,7 @@ def show():
                             data_aprovacao = st.date_input("Data de aprovação:", data_inicio)
                         
                         if status_inicial in ["Em execução", "Finalizada"]:
+                            # A data de início de execução é a mesma data de início selecionada para cadastros retroativos
                             data_inicio_execucao = st.date_input("Data de início da execução:", data_inicio)
                         
                         if status_inicial == "Finalizada":
@@ -140,8 +141,11 @@ def show():
                                 # Adicionar datas relacionadas ao status
                                 if status_inicial in ["Aprovada", "Em execução", "Finalizada"]:
                                     proposta_atualizada['data_aprovacao'] = data_aprovacao
+                                    # Para propostas aprovadas, a data de proposta deve ser a mesma
+                                    proposta_atualizada['data_proposta'] = data_aprovacao
                                 
                                 if status_inicial in ["Em execução", "Finalizada"]:
+                                    # Usar a data selecionada, não a data atual
                                     proposta_atualizada['data_inicio_execucao'] = data_inicio_execucao
                                     proposta_atualizada['status_execucao'] = "Em execução"
                                 
@@ -241,12 +245,14 @@ def show():
                                     data_aprovacao = datetime.now().date()
                                     # Automaticamente mudar para "Em execução" quando aprovada
                                     novo_status = "Em execução"
-                                    data_inicio_execucao = datetime.now().date()
+                                    # Usar a data de início da proposta como data de início de execução
+                                    data_inicio_execucao = proposta['data_inicio'] if pd.notna(proposta['data_inicio']) else datetime.now().date()
                                     status_execucao = "Iniciada"
                                     gerar_transacoes = True
                                 
                                 elif novo_status == "Em execução":
-                                    data_inicio_execucao = datetime.now().date()
+                                    # Usar a data de início da proposta como data de início de execução
+                                    data_inicio_execucao = proposta['data_inicio'] if pd.notna(proposta['data_inicio']) else datetime.now().date()
                                     status_execucao = "Iniciada"
                                     
                                     # Se a proposta não foi aprovada, aprovar primeiro
