@@ -2085,41 +2085,60 @@ class Database:
                 "erro": []
             }
             
+            # Primeiro verifica se todos os IDs são válidos
+            clientes_validos = []
             for cliente_id in cliente_ids:
-                cliente = self.session.query(Cliente).filter_by(id=cliente_id).first()
-                if cliente:
-                    # Verificar se existem propostas associadas a este cliente
-                    propostas = self.session.query(Proposta).filter_by(cliente_id=cliente_id).all()
-                    if propostas:
+                # Verificar se o ID é um número inteiro válido
+                try:
+                    cliente_id = int(cliente_id)
+                    cliente = self.session.query(Cliente).filter_by(id=cliente_id).first()
+                    if cliente:
+                        clientes_validos.append((cliente_id, cliente))
+                    else:
                         resultados["erro"].append({
                             "id": cliente_id,
-                            "nome": cliente.nome,
-                            "mensagem": f"Existem {len(propostas)} propostas associadas"
+                            "nome": "Desconhecido",
+                            "mensagem": "Cliente não encontrado"
                         })
-                        continue
-                    
-                    # Verificar se existem vendas associadas a este cliente
-                    vendas = self.session.query(Venda).filter_by(cliente_id=cliente_id).all()
-                    if vendas:
-                        resultados["erro"].append({
-                            "id": cliente_id,
-                            "nome": cliente.nome,
-                            "mensagem": f"Existem {len(vendas)} vendas associadas"
-                        })
-                        continue
-                    
-                    # Se não houver registros associados, podemos excluir
-                    self.session.delete(cliente)
-                    resultados["sucesso"].append({
-                        "id": cliente_id,
-                        "nome": cliente.nome
+                except (ValueError, TypeError):
+                    resultados["erro"].append({
+                        "id": str(cliente_id),
+                        "nome": "Inválido",
+                        "mensagem": "ID de cliente inválido"
                     })
-                else:
+            
+            # Processa os clientes válidos
+            for cliente_id, cliente in clientes_validos:
+                # Verificar se existem propostas associadas a este cliente
+                propostas = self.session.query(Proposta).filter_by(cliente_id=cliente_id).all()
+                if propostas:
                     resultados["erro"].append({
                         "id": cliente_id,
-                        "nome": "Desconhecido",
-                        "mensagem": "Cliente não encontrado"
+                        "nome": cliente.nome,
+                        "mensagem": f"Existem {len(propostas)} propostas associadas"
                     })
+                    continue
+                
+                # Verificar se existem vendas associadas a este cliente
+                vendas = self.session.query(Venda).filter_by(cliente_id=cliente_id).all()
+                if vendas:
+                    resultados["erro"].append({
+                        "id": cliente_id,
+                        "nome": cliente.nome,
+                        "mensagem": f"Existem {len(vendas)} vendas associadas"
+                    })
+                    continue
+                
+                # Se não houver registros associados, podemos excluir
+                self.session.delete(cliente)
+                resultados["sucesso"].append({
+                    "id": cliente_id,
+                    "nome": cliente.nome
+                })
+            
+            # Commit se houver exclusões bem-sucedidas
+            if resultados["sucesso"]:
+                self.session.commit()
             
             return resultados
         
