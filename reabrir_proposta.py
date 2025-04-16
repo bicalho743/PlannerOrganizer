@@ -4,6 +4,7 @@ Módulo auxiliar para reabrir propostas finalizadas
 import traceback
 from datetime import date, datetime, timedelta
 from utils.database import Database
+from sqlalchemy import text
 
 def reabrir_proposta_finalizada(proposta_id):
     """
@@ -39,10 +40,10 @@ def reabrir_proposta_finalizada(proposta_id):
         
         # Verificar se existem lançamentos financeiros relacionados
         # Consulta os lançamentos financeiros usando SQL diretamente
-        query = """
+        query = text("""
         SELECT COUNT(*) FROM lancamentos_financeiros 
         WHERE ref_id = :proposta_id AND ref_tipo = 'proposta'
-        """
+        """)
         resultado_query = db.session.execute(query, {"proposta_id": proposta_id}).scalar()
         tem_lancamentos = resultado_query > 0
         
