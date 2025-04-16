@@ -686,8 +686,8 @@ def show():
                         st.write(f"Proposta #{proposta_exec.iloc[0]['numero']} - {proposta_exec.iloc[0]['descricao']}")
                         
                         # Criar abas para gerenciar diferentes aspectos da execução
-                        exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5 = st.tabs([
-                            "Andamento", "Produtos", "Fornecedores", "Assistentes", "Finalizar"
+                        exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5, exec_tab6 = st.tabs([
+                            "Andamento", "Produtos", "Outros", "Fornecedores", "Assistentes", "Finalizar"
                         ])
                         
                         with exec_tab1:
@@ -751,11 +751,7 @@ def show():
                         with exec_tab2:
                             st.subheader("Adição à Proposta")
                             
-                            # Criação de abas para as diferentes formas de adicionar itens à proposta
-                            prod_tab1, prod_tab2 = st.tabs(["Adicionar Produto do Catálogo", "Adicionar OUTROS Itens"])
-                            
-                            # Tab 1: Adicionar produtos do catálogo
-                            with prod_tab1:
+                            # Apenas produtos do catálogo nesta aba
                                 try:
                                     # Buscar produtos cadastrados
                                     produtos_cadastrados = st.session_state.db.get_produtos()
