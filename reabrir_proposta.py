@@ -3,8 +3,48 @@ Módulo auxiliar para reabrir propostas finalizadas
 """
 import traceback
 from datetime import date, datetime, timedelta
-from utils.database import Database
-from sqlalchemy import text
+from utils.database import Database, Transacao
+from sqlalchemy import text, delete
+
+def remover_lancamentos_financeiros(db, proposta_id):
+    """
+    Remove todos os lançamentos financeiros relacionados a uma proposta
+    
+    Args:
+        db: Instância do Database
+        proposta_id: ID da proposta
+        
+    Returns:
+        dict: Resultado da operação com status, mensagem e quantidade de lançamentos removidos
+    """
+    try:
+        # Usar SQL direto para excluir os lançamentos
+        query_delete = text("""
+        DELETE FROM financeiro
+        WHERE proposta_id = :proposta_id
+        """)
+        result = db.session.execute(query_delete, {"proposta_id": proposta_id})
+        
+        # Obter o número de linhas afetadas
+        num_lancamentos_removidos = result.rowcount
+        db.session.commit()
+        
+        print(f"DEBUG: Removidos {num_lancamentos_removidos} lançamentos financeiros da proposta ID={proposta_id}")
+        
+        return {
+            "status": "sucesso", 
+            "mensagem": f"Removidos {num_lancamentos_removidos} lançamentos financeiros",
+            "lancamentos_removidos": num_lancamentos_removidos
+        }
+    except Exception as e:
+        db.session.rollback()
+        print(f"ERRO: Falha ao remover lançamentos financeiros: {str(e)}")
+        traceback.print_exc()
+        return {
+            "status": "erro",
+            "mensagem": f"Erro ao remover lançamentos financeiros: {str(e)}",
+            "lancamentos_removidos": 0
+        }
 
 def reabrir_proposta_finalizada(proposta_id):
     """
@@ -89,19 +129,40 @@ def reabrir_proposta_finalizada(proposta_id):
                 "mensagem": f"Erro ao atualizar proposta: {resultado.get('mensagem', 'Erro desconhecido')}"
             }
         
-        # Retornar resultado com alerta se necessário
+        # Se existirem lançamentos financeiros, remova-os
+        resultado_remocao = {"lancamentos_removidos": 0}
         if tem_lancamentos:
+            resultado_remocao = remover_lancamentos_financeiros(db, proposta_id)
+            if resultado_remocao["status"] != "sucesso":
+                # Houve um erro ao remover os lançamentos, mas a proposta já foi reaberta
+                # Alertar o usuário
+                return {
+                    "status": "sucesso_parcial",
+                    "mensagem": "Proposta reaberta com sucesso, mas houve problemas para remover lançamentos existentes",
+                    "alerta": resultado_remocao["mensagem"]
+                }
+        
+        # Gerar novos lançamentos financeiros para a proposta
+        try:
+            # Primeiro, forçar a conclusão da proposta para gerar lançamentos
+            db.gerar_lancamentos_financeiros_proposta_concluida(proposta_id)
+            print(f"DEBUG: Lançamentos financeiros regenerados para a proposta ID={proposta_id}")
+        except Exception as e:
+            print(f"ERRO: Falha ao gerar novos lançamentos financeiros: {str(e)}")
             return {
-                "status": "sucesso_com_alerta",
-                "mensagem": "Proposta reaberta com sucesso",
-                "alerta": "Esta proposta já possui lançamentos financeiros gerados. Considere revisar os registros financeiros.",
-                "lancamentos_encontrados": resultado_query
+                "status": "sucesso_parcial",
+                "mensagem": "Proposta reaberta com sucesso, mas houve problemas para gerar novos lançamentos financeiros",
+                "alerta": f"Erro ao gerar lançamentos: {str(e)}",
+                "lancamentos_removidos": resultado_remocao.get("lancamentos_removidos", 0)
             }
-        else:
-            return {
-                "status": "sucesso",
-                "mensagem": "Proposta reaberta com sucesso"
-            }
+            
+        # Retornar resultado com informações sobre os lançamentos
+        return {
+            "status": "sucesso",
+            "mensagem": "Proposta reaberta com sucesso",
+            "info": "Lançamentos financeiros foram removidos e regenerados automaticamente",
+            "lancamentos_removidos": resultado_remocao.get("lancamentos_removidos", 0)
+        }
             
     except Exception as e:
         print(f"Erro ao reabrir proposta: {str(e)}")
