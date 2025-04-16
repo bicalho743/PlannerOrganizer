@@ -372,7 +372,7 @@ def show():
                                     Cliente: <b>{p['cliente_nome']}</b>
                                 </div>
                                 <div style='color: white; font-size: 0.9em;'>
-                                    {p['campo_nome'] == 'data_fim' ? 'Data de conclusão' : 'Data da organização'}: {format_date_safe(p['data_referencia'])} | Completará 60 dias em: {format_date_safe(p['data_60_dias'])}
+                                    {('Data de conclusão' if p['campo_nome'] == 'data_fim' else 'Data da organização')}: {format_date_safe(p['data_referencia'])} | Completará 60 dias em: {format_date_safe(p['data_60_dias'])}
                                 </div>
                             </div>
                             """, unsafe_allow_html=True)
