@@ -862,11 +862,11 @@ def show():
                                                 st.error(f"Erro ao adicionar produto: {str(e)}")
                                                 import traceback
                                                 st.error(traceback.format_exc())
-                                    else:
-                                        st.warning("Não há produtos cadastrados no sistema.")
-                                        st.write("Vá para o módulo de Vendas > Produtos para cadastrar produtos.")
-                                except Exception as e:
-                                    st.error(f"Erro ao carregar produtos: {str(e)}")
+                                else:
+                                    st.warning("Não há produtos cadastrados no sistema.")
+                                    st.write("Vá para o módulo de Vendas > Produtos para cadastrar produtos.")
+                            except Exception as e:
+                                st.error(f"Erro ao carregar produtos: {str(e)}")
                             
                             # Conteúdo de "prod_tab2" foi movido para a aba "Outros" (exec_tab3)
 
