@@ -227,38 +227,31 @@ st.sidebar.markdown('<div style="margin: 1.5rem 0;"><hr style="border: none; hei
 
 # Usando um expander para as informações do sistema
 with st.sidebar.expander("ℹ️ Informações do Sistema"):
-    # Cabeçalho e Versão
+    st.markdown("### Planner Organizer")
+    st.markdown("**Versão:** 1.0.4")
+    
+    st.markdown("### Módulos do Sistema:")
     st.markdown("""
-    <div style="margin-top: 0.5rem;">
-        <h3 style="color: #1E366F; font-size: 1.2rem; margin-bottom: 0.5rem;">Planner Organizer</h3>
-        <p style="margin-bottom: 1rem;"><strong>Versão:</strong> 1.0.4</p>
-        
-        <p style="margin-top: 1rem; margin-bottom: 0.5rem;"><strong style="color: #1E366F;">Módulos do Sistema:</strong></p>
-        <ul style="margin-top: 0; padding-left: 1.5rem;">
-            <li style="margin-bottom: 0.3rem;"><strong style="color: #1976D2;">Dashboard</strong> - Métricas e alertas</li>
-            <li style="margin-bottom: 0.3rem;"><strong style="color: #1976D2;">Cadastros</strong> - Clientes, parceiros e fornecedores</li>
-            <li style="margin-bottom: 0.3rem;"><strong style="color: #1976D2;">Propostas</strong> - Gestão completa de propostas</li>
-            <li style="margin-bottom: 0.3rem;"><strong style="color: #1976D2;">Vendas</strong> - Controle de produtos vendidos</li>
-            <li style="margin-bottom: 0.3rem;"><strong style="color: #1976D2;">Financeiro</strong> - Receitas e despesas</li>
-            <li style="margin-bottom: 0.3rem;"><strong style="color: #1976D2;">Relatórios</strong> - Análises e visualizações</li>
-        </ul>
-        
-        <p style="margin-top: 1rem; margin-bottom: 0.5rem;"><strong style="color: #1E366F;">Funcionalidades Principais:</strong></p>
-        <ul style="margin-top: 0; padding-left: 1.5rem;">
-            <li style="margin-bottom: 0.3rem;">✅ Fluxo completo de propostas</li>
-            <li style="margin-bottom: 0.3rem;">✅ Integração entre módulos</li>
-            <li style="margin-bottom: 0.3rem;">✅ Sistema de alertas de prazos</li>
-            <li style="margin-bottom: 0.3rem;">✅ Geração de lançamentos financeiros</li>
-            <li style="margin-bottom: 0.3rem;">✅ Cálculo de comissões</li>
-            <li style="margin-bottom: 0.3rem;">✅ Importação em lote</li>
-            <li style="margin-bottom: 0.3rem;">✅ Backup e restauração</li>
-        </ul>
-        
-        <p style="margin-top: 1rem; text-align: center; font-size: 0.85rem; color: #5A6A85;">
-            © 2025 Planner Organizer
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    - **Dashboard** - Métricas e alertas
+    - **Cadastros** - Clientes, parceiros e fornecedores
+    - **Propostas** - Gestão completa de propostas
+    - **Vendas** - Controle de produtos vendidos
+    - **Financeiro** - Receitas e despesas
+    - **Relatórios** - Análises e visualizações
+    """)
+    
+    st.markdown("### Funcionalidades Principais:")
+    st.markdown("""
+    - ✅ Fluxo completo de propostas
+    - ✅ Integração entre módulos
+    - ✅ Sistema de alertas de prazos
+    - ✅ Geração de lançamentos financeiros
+    - ✅ Cálculo de comissões
+    - ✅ Importação em lote
+    - ✅ Backup e restauração
+    """)
+    
+    st.markdown("© 2025 Planner Organizer")
 
 # Links de navegação ocultos em um expander para desenvolvedores
 with st.sidebar.expander("🔧 Acesso Desenvolvedor", expanded=False):
