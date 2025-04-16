@@ -804,25 +804,53 @@ def show():
                                                         # Garantir que comodo_produto não seja None
                                                         comodo_final = comodo_produto if comodo_produto else "Geral"
                                                         
+                                                        # Fazer validações explícitas dos tipos de dados
+                                                        try:
+                                                            proposta_id_validado = int(proposta_exec_id)
+                                                            nome_validado = str(produto_info['nome'])
+                                                            descricao_validada = str(produto_info['descricao']) if produto_info.get('descricao') else ""
+                                                            preco_validado = float(preco_final)
+                                                            quantidade_validada = int(quantidade)
+                                                            comodo_validado = str(comodo_final)
+                                                            
+                                                            st.info(f"DEBUG: Dados validados - ID: {proposta_id_validado}, Preço: {preco_validado}, Qtd: {quantidade_validada}")
+                                                        except (ValueError, TypeError) as e_val:
+                                                            st.error(f"DEBUG: Erro na validação de dados: {str(e_val)}")
+                                                            raise ValueError(f"Erro na preparação dos dados: {str(e_val)}")
+                                                        
+                                                        st.info(f"DEBUG: Chamando add_produto_organizador")
                                                         produto_org_id = st.session_state.db.add_produto_organizador(
-                                                            proposta_id=proposta_exec_id,
-                                                            nome=produto_info['nome'],
-                                                            descricao=produto_info['descricao'],
-                                                            valor=preco_final,
-                                                            quantidade=quantidade,
-                                                            comodo=comodo_final
+                                                            proposta_id=proposta_id_validado,
+                                                            nome=nome_validado,
+                                                            descricao=descricao_validada,
+                                                            valor=preco_validado,
+                                                            quantidade=quantidade_validada,
+                                                            comodo=comodo_validado
                                                         )
                                                         
                                                         st.info(f"DEBUG: Produto adicionado com ID: {produto_org_id}")
                                                         
                                                         # Verificar direto no banco se o produto foi adicionado
+                                                        import psycopg2
+                                                        import os
+                                                        
                                                         try:
-                                                            resultado_verificacao = st.session_state.db.session.execute(
-                                                                f"SELECT COUNT(*) FROM produtos_organizadores WHERE id = {produto_org_id}"
-                                                            ).fetchone()
+                                                            # Conectar diretamente para verificar
+                                                            db_url = os.environ.get('DATABASE_URL')
+                                                            conn = psycopg2.connect(db_url)
+                                                            cursor = conn.cursor()
+                                                            
+                                                            verificacao_sql = f"SELECT COUNT(*) FROM produtos_organizadores WHERE id = {produto_org_id}"
+                                                            st.info(f"DEBUG: Verificando no banco: {verificacao_sql}")
+                                                            
+                                                            cursor.execute(verificacao_sql)
+                                                            resultado_verificacao = cursor.fetchone()
                                                             st.info(f"DEBUG: Verificação no banco: {resultado_verificacao[0]} produto(s) encontrado(s)")
+                                                            
+                                                            cursor.close()
+                                                            conn.close()
                                                         except Exception as e_check:
-                                                            st.error(f"DEBUG: Erro na verificação: {str(e_check)}")
+                                                            st.error(f"DEBUG: Erro na verificação direta: {str(e_check)}")
                                                     except Exception as e_inner:
                                                         st.error(f"DEBUG: Erro específico ao adicionar produto: {str(e_inner)}")
                                                         import traceback
@@ -870,14 +898,28 @@ def show():
                                                 st.info(f"DEBUG: Valor: {valor_produto}, Quantidade: {quantidade}")
                                                 
                                                 try:
+                                                    # Fazer validações explícitas dos tipos de dados
+                                                    try:
+                                                        proposta_id_validado = int(proposta_exec_id)
+                                                        nome_validado = str(nome_produto)
+                                                        descricao_validada = str(descricao_produto) if descricao_produto else ""
+                                                        preco_validado = float(valor_produto)
+                                                        quantidade_validada = int(quantidade)
+                                                        comodo_validado = str(comodo_produto) if comodo_produto else "Geral"
+                                                        
+                                                        st.info(f"DEBUG: Dados outros validados - ID: {proposta_id_validado}, Preço: {preco_validado}, Qtd: {quantidade_validada}")
+                                                    except (ValueError, TypeError) as e_val:
+                                                        st.error(f"DEBUG: Erro na validação de dados outros: {str(e_val)}")
+                                                        raise ValueError(f"Erro na preparação dos dados: {str(e_val)}")
+                                                        
                                                     # Adicionar o "OUTROS" à proposta
                                                     produto_id = st.session_state.db.add_produto_organizador(
-                                                        proposta_id=proposta_exec_id,
-                                                        nome=nome_produto,
-                                                        descricao=descricao_produto,
-                                                        valor=valor_produto,
-                                                        quantidade=quantidade,
-                                                        comodo=comodo_produto if comodo_produto else "Geral"
+                                                        proposta_id=proposta_id_validado,
+                                                        nome=nome_validado,
+                                                        descricao=descricao_validada,
+                                                        valor=preco_validado,
+                                                        quantidade=quantidade_validada,
+                                                        comodo=comodo_validado
                                                     )
                                                     
                                                     st.info(f"DEBUG: Produto adicionado com ID: {produto_id}")
