@@ -273,7 +273,7 @@ def show():
     with st.container():
         st.markdown("""
         <div style='background-color: #2A3F5F; padding: 10px; border-radius: 7px; margin-bottom: 15px;'>
-            <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>⏱️ Clientes aguardando retorno (próximo aos 60 dias)</h4>
+            <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>⏱️ Clientes aguardando retorno (faltam até 15 dias para completar 60 dias)</h4>
         </div>
         """, unsafe_allow_html=True)
         
@@ -290,6 +290,23 @@ def show():
             if isinstance(propostas_executadas, pd.DataFrame) and not propostas_executadas.empty:
                 # Data atual
                 hoje = datetime.now().date()
+                
+                # Adicionar informações de debug
+                st.write(f"**Depuração**: Data atual do sistema = {hoje}")
+                st.write(f"**Depuração**: Total de propostas executadas/finalizadas: {len(propostas_executadas)}")
+                
+                # Mostrar propostas finalizadas para depuração
+                propostas_finalizadas_debug = propostas_executadas[propostas_executadas['status'] == 'Finalizada']
+                if not propostas_finalizadas_debug.empty:
+                    st.write("**Depuração - Propostas finalizadas:**")
+                    for _, p in propostas_finalizadas_debug.iterrows():
+                        data_fim = p.get('data_fim', None)
+                        if data_fim is not None:
+                            data_fim_str = format_date_safe(data_fim)
+                            data_fim_date = data_fim.date() if hasattr(data_fim, 'date') else data_fim
+                            data_60_dias = data_fim_date + timedelta(days=60)
+                            dias_restantes = (data_60_dias - hoje).days
+                            st.write(f"Proposta #{p['numero']}: Data fim = {data_fim_str}, +60 dias = {data_60_dias}, dias restantes = {dias_restantes}")
                 
                 # Lista para armazenar propostas próximas de 60 dias
                 propostas_alerta = []
@@ -339,8 +356,8 @@ def show():
                     # Calcular quantos dias faltam para atingir 60 dias
                     dias_restantes = (data_60_dias - hoje).days
                     
-                    # Se faltar 10 dias ou menos (e ainda não tiver passado), mostrar alerta
-                    if 0 <= dias_restantes <= 10:
+                    # Se faltar 15 dias ou menos (e ainda não tiver passado), mostrar alerta
+                    if 0 <= dias_restantes <= 15:
                         propostas_alerta.append({
                             'id': proposta['id'],
                             'numero': proposta['numero'],
