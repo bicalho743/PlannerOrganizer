@@ -334,7 +334,7 @@ def show():
                                 **{proposta['nome']}**  
                                 {proposta['descricao']}  
                                 **Valor:** {proposta['valor_formatado']} | **Tipo:** {proposta['tipo_proposta']}  
-                                **Início:** {proposta['data_inicio_formatada']} | **Prazo:** {proposta['previsao_dias']} dias
+                                **Início Execução:** {proposta['data_inicio_formatada']} | **Prazo:** {proposta['previsao_dias']} dias
                                 """)
                             
                             # Coluna 3: Seletor de status com botão para salvar
@@ -1256,10 +1256,7 @@ def show():
                     df_finalizadas['Descrição'] = propostas_finalizadas['descricao']
                     df_finalizadas['Valor (R$)'] = propostas_finalizadas['valor'].apply(lambda x: f"R$ {float(x):.2f}")
                     
-                    # Formatar datas para exibição
-                    df_finalizadas['Início'] = propostas_finalizadas['data_inicio'].apply(
-                        lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
-                    )
+                    # Formatar datas para exibição - removida coluna Início duplicada
                     df_finalizadas['Início Execução'] = propostas_finalizadas['data_inicio_execucao'].apply(
                         lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
                     )
@@ -1474,11 +1471,7 @@ def show():
                     else:
                         df_todas['Data Aprovação'] = ''
                         
-                    df_todas['Início'] = propostas_filtradas['data_inicio'].apply(
-                        lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
-                    )
-                    
-                    # Adicionar colunas de início e fim de execução
+                    # Colunas de início e fim de execução - Removida coluna Início duplicada
                     df_todas['Início Execução'] = propostas_filtradas['data_inicio_execucao'].apply(
                         lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
                     )
