@@ -840,32 +840,47 @@ def show():
                                             st.error("O nome do item é obrigatório.")
                                         else:
                                             try:
-                                                # Adicionar o "OUTROS" à proposta
-                                                produto_id = st.session_state.db.add_produto_organizador(
-                                                    proposta_id=proposta_exec_id,
-                                                    nome=nome_produto,
-                                                    descricao=descricao_produto,
-                                                    valor=valor_produto,
-                                                    quantidade=quantidade,
-                                                    comodo=comodo_produto if comodo_produto else "Geral"
-                                                )
+                                                # Log de depuração
+                                                st.info(f"DEBUG: Adicionando produto '{nome_produto}' à proposta ID={proposta_exec_id}")
+                                                st.info(f"DEBUG: Valor: {valor_produto}, Quantidade: {quantidade}")
                                                 
-                                                # Adicionar um acréscimo à proposta (opcional)
-                                                if produto_id:
-                                                    # Também pode adicionar um acréscimo na tabela de acréscimos
-                                                    acrescimo_id = st.session_state.db.add_acrescimo_proposta(
+                                                try:
+                                                    # Adicionar o "OUTROS" à proposta
+                                                    produto_id = st.session_state.db.add_produto_organizador(
                                                         proposta_id=proposta_exec_id,
-                                                        tipo="OUTROS",
-                                                        valor=valor_total,
-                                                        descricao=nome_produto,
-                                                        fornecedor="Item Adicional"
+                                                        nome=nome_produto,
+                                                        descricao=descricao_produto,
+                                                        valor=valor_produto,
+                                                        quantidade=quantidade,
+                                                        comodo=comodo_produto if comodo_produto else "Geral"
                                                     )
                                                     
-                                                    st.success(f"Item '{nome_produto}' adicionado com sucesso!")
-                                                    time.sleep(1)
-                                                    st.rerun()
-                                                else:
-                                                    st.error("Erro ao adicionar item.")
+                                                    st.info(f"DEBUG: Produto adicionado com ID: {produto_id}")
+                                                    
+                                                    # Verificar se o produto foi realmente adicionado
+                                                    # Forçar atualização da aplicação para garantir que o produto seja exibido
+                                                    print(f"DEBUG PRODUTO UI: Verificando se o produto foi adicionado, ID={produto_id}")
+                                                    
+                                                    # Adicionar um acréscimo à proposta (opcional)
+                                                    if produto_id:
+                                                        # Também pode adicionar um acréscimo na tabela de acréscimos
+                                                        acrescimo_id = st.session_state.db.add_acrescimo_proposta(
+                                                            proposta_id=proposta_exec_id,
+                                                            tipo="OUTROS",
+                                                            valor=valor_total,
+                                                            descricao=nome_produto,
+                                                            fornecedor="Item Adicional"
+                                                        )
+                                                        
+                                                        st.info(f"DEBUG: Acréscimo adicionado com ID: {acrescimo_id}")
+                                                except Exception as e:
+                                                    st.error(f"DEBUG: Erro específico ao adicionar produto: {str(e)}")
+                                                    import traceback
+                                                    st.error(traceback.format_exc())
+                                                    
+                                                st.success(f"Item '{nome_produto}' adicionado com sucesso!")
+                                                time.sleep(1)
+                                                st.rerun()
                                             except Exception as e:
                                                 st.error(f"Erro ao adicionar item: {str(e)}")
                             

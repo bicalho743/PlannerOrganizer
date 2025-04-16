@@ -3351,6 +3351,19 @@ class Database:
                 produtos = self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id_int).all()
                 print(f"DEBUG LANCAMENTOS: Produtos encontrados: {len(produtos)}")
                 
+                # Query direto para confirmar problemas
+                try:
+                    produtos_sql = self.session.execute(f"SELECT * FROM produtos_organizadores WHERE proposta_id = {proposta_id_int}").fetchall()
+                    print(f"DEBUG LANCAMENTOS SQL: Produtos via SQL direto: {len(produtos_sql)}")
+                    
+                    if produtos_sql:
+                        for p in produtos_sql:
+                            print(f"DEBUG LANCAMENTOS SQL: Produto ID={p.id}, Nome={p.nome}, Valor={p.valor}")
+                    else:
+                        print(f"DEBUG LANCAMENTOS SQL: Nenhum produto encontrado via SQL direto")
+                except Exception as e:
+                    print(f"DEBUG LANCAMENTOS SQL: Erro ao consultar produtos diretamente: {str(e)}")
+                
                 # Imprimir detalhes de cada produto
                 for i, produto in enumerate(produtos):
                     print(f"DEBUG LANCAMENTOS: Produto {i+1}: {produto.nome}, Valor: R$ {produto.valor}, Quantidade: {produto.quantidade}")
