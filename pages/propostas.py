@@ -751,63 +751,63 @@ def show():
                         with exec_tab2:
                             st.subheader("Adição à Proposta")
                             
-                            # Apenas produtos do catálogo nesta aba
-                                try:
-                                    # Buscar produtos cadastrados
-                                    produtos_cadastrados = st.session_state.db.get_produtos()
-                                    
-                                    if not produtos_cadastrados.empty:
-                                        with st.form(key=f"produto_catalogo_form_{proposta_exec_id}"):
-                                            # Seleção de produto do catálogo
-                                            produto_id = st.selectbox(
-                                                "Selecione o produto:",
-                                                produtos_cadastrados['id'].tolist(),
-                                                format_func=lambda x: f"{produtos_cadastrados[produtos_cadastrados['id']==x]['nome'].iloc[0]} - R$ {float(produtos_cadastrados[produtos_cadastrados['id']==x]['preco_venda'].iloc[0]):.2f}"
-                                            )
+                            # Produtos do catálogo
+                            try:
+                                # Buscar produtos cadastrados
+                                produtos_cadastrados = st.session_state.db.get_produtos()
+                                
+                                if not produtos_cadastrados.empty:
+                                    with st.form(key=f"produto_catalogo_form_{proposta_exec_id}"):
+                                        # Seleção de produto do catálogo
+                                        produto_id = st.selectbox(
+                                            "Selecione o produto:",
+                                            produtos_cadastrados['id'].tolist(),
+                                            format_func=lambda x: f"{produtos_cadastrados[produtos_cadastrados['id']==x]['nome'].iloc[0]} - R$ {float(produtos_cadastrados[produtos_cadastrados['id']==x]['preco_venda'].iloc[0]):.2f}"
+                                        )
+                                        
+                                        # Obter dados do produto selecionado
+                                        produto_info = produtos_cadastrados[produtos_cadastrados['id'] == produto_id].iloc[0]
+                                        
+                                        # Exibir informações do produto
+                                        st.write(f"**Descrição:** {produto_info['descricao']}")
+                                        st.write(f"**Categoria:** {produto_info['categoria']}")
+                                        
+                                        # Campos para configurar a adição
+                                        quantidade = st.number_input("Quantidade:", min_value=1, value=1)
+                                        comodo_produto = st.text_input("Cômodo/Área:")
+                                        
+                                        # Opção para ajustar o preço (padrão é o preço de venda)
+                                        usar_preco_padrao = st.checkbox("Usar preço padrão", value=True)
+                                        preco_personalizado = st.number_input(
+                                            "Preço personalizado (R$):", 
+                                            min_value=0.0, 
+                                            value=float(produto_info['preco_venda']),
+                                            format="%.2f",
+                                            disabled=usar_preco_padrao
+                                        )
                                             
-                                            # Obter dados do produto selecionado
-                                            produto_info = produtos_cadastrados[produtos_cadastrados['id'] == produto_id].iloc[0]
-                                            
-                                            # Exibir informações do produto
-                                            st.write(f"**Descrição:** {produto_info['descricao']}")
-                                            st.write(f"**Categoria:** {produto_info['categoria']}")
-                                            
-                                            # Campos para configurar a adição
-                                            quantidade = st.number_input("Quantidade:", min_value=1, value=1)
-                                            comodo_produto = st.text_input("Cômodo/Área:")
-                                            
-                                            # Opção para ajustar o preço (padrão é o preço de venda)
-                                            usar_preco_padrao = st.checkbox("Usar preço padrão", value=True)
-                                            preco_personalizado = st.number_input(
-                                                "Preço personalizado (R$):", 
-                                                min_value=0.0, 
-                                                value=float(produto_info['preco_venda']),
-                                                format="%.2f",
-                                                disabled=usar_preco_padrao
-                                            )
-                                            
-                                            # Determinar qual preço usar
-                                            preco_final = float(produto_info['preco_venda']) if usar_preco_padrao else preco_personalizado
-                                            
-                                            if st.form_submit_button("Adicionar à Proposta"):
+                                        # Determinar qual preço usar
+                                        preco_final = float(produto_info['preco_venda']) if usar_preco_padrao else preco_personalizado
+                                        
+                                        if st.form_submit_button("Adicionar à Proposta"):
+                                            try:
+                                                # Log de depuração
+                                                st.info(f"DEBUG: Adicionando produto do catálogo '{produto_info['nome']}' à proposta ID={proposta_exec_id}")
+                                                st.info(f"DEBUG: Valor: {preco_final}, Quantidade: {quantidade}")
+                                                
+                                                # Adicionar o produto à proposta
                                                 try:
-                                                    # Log de depuração
-                                                    st.info(f"DEBUG: Adicionando produto do catálogo '{produto_info['nome']}' à proposta ID={proposta_exec_id}")
-                                                    st.info(f"DEBUG: Valor: {preco_final}, Quantidade: {quantidade}")
-                                                    
-                                                    # Adicionar o produto à proposta
-                                                    try:
                                                         # Garantir que comodo_produto não seja None
-                                                        comodo_final = comodo_produto if comodo_produto else "Geral"
-                                                        
-                                                        # Fazer validações explícitas dos tipos de dados
-                                                        try:
-                                                            proposta_id_validado = int(proposta_exec_id)
-                                                            nome_validado = str(produto_info['nome'])
-                                                            descricao_validada = str(produto_info['descricao']) if produto_info.get('descricao') else ""
-                                                            preco_validado = float(preco_final)
-                                                            quantidade_validada = int(quantidade)
-                                                            comodo_validado = str(comodo_final)
+                                                    comodo_final = comodo_produto if comodo_produto else "Geral"
+                                                    
+                                                    # Fazer validações explícitas dos tipos de dados
+                                                    try:
+                                                        proposta_id_validado = int(proposta_exec_id)
+                                                        nome_validado = str(produto_info['nome'])
+                                                        descricao_validada = str(produto_info['descricao']) if produto_info.get('descricao') else ""
+                                                        preco_validado = float(preco_final)
+                                                        quantidade_validada = int(quantidade)
+                                                        comodo_validado = str(comodo_final)
                                                             
                                                             st.info(f"DEBUG: Dados validados - ID: {proposta_id_validado}, Preço: {preco_validado}, Qtd: {quantidade_validada}")
                                                         except (ValueError, TypeError) as e_val:
@@ -868,84 +868,8 @@ def show():
                                 except Exception as e:
                                     st.error(f"Erro ao carregar produtos: {str(e)}")
                             
-                            # Tab 2: Adicionar outros itens (não catalogados)
-                            with prod_tab2:
-                                with st.form(key=f"produto_outros_form_{proposta_exec_id}"):
-                                    # Campos para item personalizado
-                                    st.write("### Adicionar Item Personalizado")
-                                    nome_produto = st.text_input("Nome do item:")
-                                    descricao_produto = st.text_area("Descrição:", height=70)
-                                    valor_produto = st.number_input("Valor unitário (R$):", min_value=0.0, format="%.2f")
-                                    quantidade = st.number_input("Quantidade:", min_value=1, value=1)
-                                    comodo_produto = st.text_input("Cômodo/Área:")
-                                    
-                                    # Visualização do valor total
-                                    valor_total = valor_produto * quantidade
-                                    st.write(f"**Valor Total: R$ {valor_total:.2f}**")
-                                    
-                                    # Botão para adicionar
-                                    if st.form_submit_button("Adicionar Item"):
-                                        if not nome_produto:
-                                            st.error("O nome do item é obrigatório.")
-                                        else:
-                                            try:
-                                                # Log de depuração
-                                                st.info(f"DEBUG: Adicionando produto '{nome_produto}' à proposta ID={proposta_exec_id}")
-                                                st.info(f"DEBUG: Valor: {valor_produto}, Quantidade: {quantidade}")
-                                                
-                                                try:
-                                                    # Fazer validações explícitas dos tipos de dados
-                                                    try:
-                                                        proposta_id_validado = int(proposta_exec_id)
-                                                        nome_validado = str(nome_produto)
-                                                        descricao_validada = str(descricao_produto) if descricao_produto else ""
-                                                        preco_validado = float(valor_produto)
-                                                        quantidade_validada = int(quantidade)
-                                                        comodo_validado = str(comodo_produto) if comodo_produto else "Geral"
-                                                        
-                                                        st.info(f"DEBUG: Dados outros validados - ID: {proposta_id_validado}, Preço: {preco_validado}, Qtd: {quantidade_validada}")
-                                                    except (ValueError, TypeError) as e_val:
-                                                        st.error(f"DEBUG: Erro na validação de dados outros: {str(e_val)}")
-                                                        raise ValueError(f"Erro na preparação dos dados: {str(e_val)}")
-                                                        
-                                                    # Adicionar o "OUTROS" à proposta
-                                                    produto_id = st.session_state.db.add_produto_organizador(
-                                                        proposta_id=proposta_id_validado,
-                                                        nome=nome_validado,
-                                                        descricao=descricao_validada,
-                                                        valor=preco_validado,
-                                                        quantidade=quantidade_validada,
-                                                        comodo=comodo_validado
-                                                    )
-                                                    
-                                                    st.info(f"DEBUG: Produto adicionado com ID: {produto_id}")
-                                                    
-                                                    # Verificar se o produto foi realmente adicionado
-                                                    # Forçar atualização da aplicação para garantir que o produto seja exibido
-                                                    print(f"DEBUG PRODUTO UI: Verificando se o produto foi adicionado, ID={produto_id}")
-                                                    
-                                                    # Adicionar um acréscimo à proposta (opcional)
-                                                    if produto_id:
-                                                        # Também pode adicionar um acréscimo na tabela de acréscimos
-                                                        acrescimo_id = st.session_state.db.add_acrescimo_proposta(
-                                                            proposta_id=proposta_exec_id,
-                                                            tipo="OUTROS",
-                                                            valor=valor_total,
-                                                            descricao=nome_produto,
-                                                            fornecedor="Item Adicional"
-                                                        )
-                                                        
-                                                        st.info(f"DEBUG: Acréscimo adicionado com ID: {acrescimo_id}")
-                                                except Exception as e:
-                                                    st.error(f"DEBUG: Erro específico ao adicionar produto: {str(e)}")
-                                                    import traceback
-                                                    st.error(traceback.format_exc())
-                                                    
-                                                st.success(f"Item '{nome_produto}' adicionado com sucesso!")
-                                                time.sleep(1)
-                                                st.rerun()
-                                            except Exception as e:
-                                                st.error(f"Erro ao adicionar item: {str(e)}")
+                            # Conteúdo de "prod_tab2" foi movido para a aba "Outros" (exec_tab3)
+
                             
                             # Mostrar produtos adicionados
                             try:
