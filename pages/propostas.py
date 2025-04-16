@@ -862,6 +862,10 @@ def show():
                                                         import traceback
                                                         st.error(traceback.format_exc())
                                                         st.error("Erro ao adicionar produto à proposta.")
+                                                except Exception as e_outer:
+                                                    st.error(f"DEBUG: Erro no processamento do produto: {str(e_outer)}")
+                                                    import traceback
+                                                    st.error(traceback.format_exc())
                                             except Exception as e:
                                                 st.error(f"Erro ao adicionar produto: {str(e)}")
                                                 import traceback
