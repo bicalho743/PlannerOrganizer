@@ -352,7 +352,7 @@ class Database:
                 # Verificar se tem uma sessão em estado problemático
                 session_state = str(getattr(self.session.transaction, '_state', ''))
                 if 'PREPARE' in session_state or 'FINISHED' in session_state:
-                    print(f"DEBUG: Detectado estado problemático na sessão: {session_state}")
+                    # # print(f"DEBUG: Detectado estado problemático na sessão: {session_state}")
                     try:
                         self.session.close()
                     except:
@@ -363,7 +363,7 @@ class Database:
                     self.session = Session()
                     print("DEBUG: Nova sessão criada - sessão anterior inativa")
             except Exception as session_check_error:
-                print(f"DEBUG: Erro ao verificar estado da sessão: {str(session_check_error)}")
+                # # print(f"DEBUG: Erro ao verificar estado da sessão: {str(session_check_error)}")
                 try:
                     self.session.close()
                 except:
@@ -376,13 +376,14 @@ class Database:
                 in_transaction = self.session.in_transaction()
                 if in_transaction:
                     nested_transaction = True
-                    print("DEBUG: Transação aninhada detectada, não será feito commit automático")
+                    # print("DEBUG: Transação aninhada detectada, não será feito commit automático")
             except Exception as tx_error:
-                print(f"DEBUG: Erro ao verificar transação: {str(tx_error)}")
+                # print(f"DEBUG: Erro ao verificar transação: {str(tx_error)}")
                 # Se não conseguirmos verificar, consideramos que não está em transação
+                pass
             
             # Executar a função de query
-            print("DEBUG: Executando query")
+            # print("DEBUG: Executando query")
             result = query_func()
             
             # Commit da transação somente se não for aninhada
@@ -412,12 +413,12 @@ class Database:
                 # Converter colunas numéricas para tipos nativos Python
                 for col in result.select_dtypes(include=['int64', 'float64', 'Int64']).columns:
                     result[col] = result[col].astype(object).where(pd.notnull(result[col]), None)
-                print(f"DEBUG: DataFrame processado com {len(result)} registros")
+                # # print(f"DEBUG: DataFrame processado com {len(result)} registros")
 
             # Se o resultado for um número, garantir que seja tipo nativo Python
             elif isinstance(result, (np.int64, np.float64)):
                 result = result.item()
-                print(f"DEBUG: Valor numérico convertido: {result}")
+                # # print(f"DEBUG: Valor numérico convertido: {result}")
             
             print("DEBUG: Mantendo sessão ativa para futuras transações")
             return result
@@ -1240,7 +1241,7 @@ class Database:
             proposta = self.session.query(Proposta).filter(Proposta.id == proposta_id).first()
             
             if proposta is None:
-                print(f"DEBUG: Proposta com ID {proposta_id} não encontrada")
+                # # print(f"DEBUG: Proposta com ID {proposta_id} não encontrada")
                 return False
             
             # Atualizar campos
@@ -1283,10 +1284,10 @@ class Database:
                             data=proposta.data_proposta or datetime.now().date()
                         )
                         self.session.add(transacao)
-                        print(f"DEBUG: Transação financeira criada para proposta {proposta_id}")
+                        # # print(f"DEBUG: Transação financeira criada para proposta {proposta_id}")
             
             # Registrar a mudança de status
-            print(f"DEBUG: Proposta {proposta_id} atualizada com status '{novo_status}'")
+            # # print(f"DEBUG: Proposta {proposta_id} atualizada com status '{novo_status}'")
             return True
             
         return self._safe_query(query)
@@ -1412,8 +1413,8 @@ class Database:
             
         # Se não funcionou, tentar o método tradicional
         try:
-            print(f"DEBUG PRODUTO: SQL direto falhou, tentando método ORM")
-            print(f"DEBUG PRODUTO: Adicionando produto '{nome}' à proposta ID={proposta_id}")
+            # print(f"DEBUG PRODUTO: SQL direto falhou, tentando método ORM")
+            # print(f"DEBUG PRODUTO: Adicionando produto '{nome}' à proposta ID={proposta_id}")
             
             # Verificar se os tipos de dados estão corretos
             proposta_id_int = int(proposta_id)
@@ -1982,8 +1983,8 @@ class Database:
         Returns:
             dict: Informações sobre o acréscimo adicionado e transações geradas
         """
-        # Log para diagnóstico
-        print(f"DEBUG: Adicionando acréscimo à proposta ID={proposta_id}, tipo={tipo}, fornecedor={fornecedor}, valor={valor}")
+        # Log para diagnóstico apenas em modo de depuração avançada
+        # # print(f"DEBUG: Adicionando acréscimo à proposta ID={proposta_id}, tipo={tipo}, fornecedor={fornecedor}, valor={valor}")
         
         # Converter valores para tipos nativos Python antes da consulta
         try:
@@ -2017,12 +2018,12 @@ class Database:
                     raise ValueError(f"Cliente ID {proposta.cliente_id} não encontrado no banco de dados")
                 
                 try:
-                    print(f"DEBUG: Criando acréscimo para proposta ID={proposta_id_int}, tipo={tipo}, fornecedor={fornecedor_nome}")
+                    # # print(f"DEBUG: Criando acréscimo para proposta ID={proposta_id_int}, tipo={tipo}, fornecedor={fornecedor_nome}")
                     
                     # Criar objeto de acréscimo com valores já verificados
                     # Garantir que o tipo esteja em maiúsculas para consistência
                     tipo_upper = tipo.upper() if tipo else "OUTROS"
-                    print(f"DEBUG: Convertendo tipo de acréscimo para maiúsculas: {tipo} -> {tipo_upper}")
+                    # # print(f"DEBUG: Convertendo tipo de acréscimo para maiúsculas: {tipo} -> {tipo_upper}")
                     
                     acrescimo = AcrescimoProposta(
                         proposta_id=proposta_id_int,
@@ -2052,7 +2053,7 @@ class Database:
                     # Garantir que temos um ID inteiro válido
                     if acrescimo.id is not None:
                         acrescimo_id = int(acrescimo.id)
-                        print(f"DEBUG: Acréscimo criado com sucesso, ID={acrescimo_id}")
+                        # # print(f"DEBUG: Acréscimo criado com sucesso, ID={acrescimo_id}")
                         
                         resultado["acrescimo_id"] = acrescimo_id
                         
@@ -2085,7 +2086,7 @@ class Database:
                                 resultado["comissao_id"] = comissao_id
                                 resultado["valor_comissao"] = valor_comissao
                                 
-                                print(f"DEBUG: Comissão gerada com sucesso, ID={comissao_id}, Valor={valor_comissao}")
+                                # # print(f"DEBUG: Comissão gerada com sucesso, ID={comissao_id}, Valor={valor_comissao}")
                                 
                         # Se for do tipo ASSISTENTE, gerar despesa a pagar automaticamente
                         elif tipo_upper == "ASSISTENTE":
@@ -2109,7 +2110,7 @@ class Database:
                                 resultado["despesa_id"] = despesa_id
                                 resultado["valor_despesa"] = valor_float
                                 
-                                print(f"DEBUG: Despesa para assistente gerada com sucesso, ID={despesa_id}, Valor={valor_float}")
+                                # # print(f"DEBUG: Despesa para assistente gerada com sucesso, ID={despesa_id}, Valor={valor_float}")
                         
                         return resultado
                     else:
@@ -2124,7 +2125,7 @@ class Database:
                     
             # Usar _safe_query para garantir transação adequada
             resultado = self._safe_query(query)
-            print(f"DEBUG: Resultado final da adição de acréscimo: {resultado}")
+            # # print(f"DEBUG: Resultado final da adição de acréscimo: {resultado}")
             return resultado
             
         except Exception as e:
@@ -2146,7 +2147,7 @@ class Database:
         # Converter proposta_id para int nativo do Python antes da função query
         proposta_id = int(proposta_id) if proposta_id is not None else None
         
-        print(f"DEBUG: Buscando acréscimos para proposta ID={proposta_id}")
+        # # print(f"DEBUG: Buscando acréscimos para proposta ID={proposta_id}")
 
         def query():
             try:
@@ -2159,7 +2160,7 @@ class Database:
                 
                 # Buscar acréscimos
                 acrescimos = self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).all()
-                print(f"DEBUG: Encontrados {len(acrescimos)} acréscimos para proposta ID={proposta_id}")
+                # # print(f"DEBUG: Encontrados {len(acrescimos)} acréscimos para proposta ID={proposta_id}")
                 
                 # Se não houver acréscimos, retornar DataFrame vazio
                 if not acrescimos:
@@ -2198,19 +2199,19 @@ class Database:
         # Converter proposta_id para int nativo do Python
         proposta_id = int(proposta_id) if proposta_id is not None else None
         
-        print(f"DEBUG: Buscando acréscimos do tipo {tipo} para proposta ID={proposta_id}")
+        # # print(f"DEBUG: Buscando acréscimos do tipo {tipo} para proposta ID={proposta_id}")
 
         def query():
             try:
                 # Verificar se a proposta existe
                 proposta = self.session.query(Proposta).filter_by(id=proposta_id).first()
                 if not proposta:
-                    print(f"DEBUG: Proposta ID={proposta_id} não encontrada")
+                    # # print(f"DEBUG: Proposta ID={proposta_id} não encontrada")
                     return pd.DataFrame()
                 
                 # Obter acréscimos do tipo especificado (garantindo que o tipo seja maiúsculo)
                 tipo_upper = tipo.upper() if tipo else "OUTROS"
-                print(f"DEBUG: Buscando acréscimos com tipo={tipo_upper}")
+                # # print(f"DEBUG: Buscando acréscimos com tipo={tipo_upper}")
                 
                 acrescimos = self.session.query(AcrescimoProposta).filter_by(
                     proposta_id=proposta_id, 
@@ -2218,10 +2219,10 @@ class Database:
                 ).order_by(AcrescimoProposta.data_cadastro).all()
                 
                 if not acrescimos:
-                    print(f"DEBUG: Nenhum acréscimo do tipo {tipo} encontrado para proposta ID={proposta_id}")
+                    # # print(f"DEBUG: Nenhum acréscimo do tipo {tipo} encontrado para proposta ID={proposta_id}")
                     return pd.DataFrame(columns=['id', 'tipo', 'fornecedor', 'descricao', 'valor', 'status_pagamento', 'data_cadastro'])
                 
-                print(f"DEBUG: Encontrados {len(acrescimos)} acréscimos do tipo {tipo}")
+                # # print(f"DEBUG: Encontrados {len(acrescimos)} acréscimos do tipo {tipo}")
                 
                 # Converter para dataframe
                 result = []
@@ -2239,7 +2240,7 @@ class Database:
                 return pd.DataFrame(result)
                 
             except Exception as e:
-                print(f"DEBUG: Erro ao obter acréscimos do tipo {tipo} para proposta ID={proposta_id}: {str(e)}")
+                # # print(f"DEBUG: Erro ao obter acréscimos do tipo {tipo} para proposta ID={proposta_id}: {str(e)}")
                 return pd.DataFrame(columns=['id', 'tipo', 'fornecedor', 'descricao', 'valor', 'status_pagamento', 'data_cadastro'])
         
         return self._safe_query(query)
@@ -2527,14 +2528,14 @@ class Database:
         Returns:
             bool: True se atualizado com sucesso, False se não encontrou a proposta
         """
-        print(f"DEBUG: Atualizando status de pagamento da proposta ID={proposta_id} para {status_pagamento_base}")
+        # # print(f"DEBUG: Atualizando status de pagamento da proposta ID={proposta_id} para {status_pagamento_base}")
         
         def query():
             try:
                 proposta = self.session.query(Proposta).filter_by(id=proposta_id).first()
                 
                 if not proposta:
-                    print(f"DEBUG: Proposta ID={proposta_id} não encontrada")
+                    # # print(f"DEBUG: Proposta ID={proposta_id} não encontrada")
                     return False
                 
                 # Atualizar status de pagamento
@@ -2567,7 +2568,7 @@ class Database:
                         )
                         self.session.add(transacao)
                     
-                print(f"DEBUG: Status de pagamento da proposta ID={proposta_id} atualizado com sucesso")
+                # # print(f"DEBUG: Status de pagamento da proposta ID={proposta_id} atualizado com sucesso")
                 return True
             
             except Exception as e:
@@ -2825,21 +2826,21 @@ class Database:
         """
         def query():
             try:
-                print(f"DEBUG: Excluindo venda ID {venda_id} com SQL direto")
+                # # print(f"DEBUG: Excluindo venda ID {venda_id} com SQL direto")
                 
                 # Obter informações da venda antes de excluí-la para estornar produtos
                 venda = self.session.query(Venda).filter_by(id=venda_id).first()
                 
                 if not venda:
-                    print(f"DEBUG: Venda ID {venda_id} não encontrada")
+                    # # print(f"DEBUG: Venda ID {venda_id} não encontrada")
                     return False
                 
                 # Estornar produtos para o estoque
                 if venda.status != 'Cancelada' and hasattr(venda, 'itens'):
-                    print(f"DEBUG: Estornando produtos para o estoque")
+                    # # print(f"DEBUG: Estornando produtos para o estoque")
                     for item in venda.itens:
                         if hasattr(item, 'produto') and item.produto is not None:
-                            print(f"DEBUG: Estornando {item.quantidade} unidades do produto {item.produto.id}")
+                            # # print(f"DEBUG: Estornando {item.quantidade} unidades do produto {item.produto.id}")
                             item.produto.estoque += item.quantidade
                 
                 # Executar SQL para excluir na ordem correta
@@ -2865,7 +2866,7 @@ class Database:
                     WHERE id = :venda_id
                 """)
                 self.session.execute(venda_stmt, {"venda_id": venda_id})
-                print(f"DEBUG: Venda ID {venda_id} excluída com sucesso")
+                # # print(f"DEBUG: Venda ID {venda_id} excluída com sucesso")
                 
                 return True
             except Exception as e:
@@ -2887,27 +2888,29 @@ class Database:
         """
         def query():
             try:
-                print(f"DEBUG: Excluindo venda ID {venda_id}")
+                # # print(f"DEBUG: Excluindo venda ID {venda_id}")
                 venda = self.session.query(Venda).filter_by(id=venda_id).first()
                 
                 if not venda:
-                    print(f"DEBUG: Venda ID {venda_id} não encontrada")
+                    # # print(f"DEBUG: Venda ID {venda_id} não encontrada")
                     return False
                 
-                print(f"DEBUG: Venda encontrada: {venda.id} - status: {venda.status}")
+                # # print(f"DEBUG: Venda encontrada: {venda.id} - status: {venda.status}")
                 
                 # Estornar produtos para o estoque antes de excluir
                 if hasattr(venda, 'itens'):
-                    print(f"DEBUG: Processando {len(venda.itens)} itens da venda")
+                    # # print(f"DEBUG: Processando {len(venda.itens)} itens da venda")
                     for item in venda.itens:
                         if hasattr(item, 'produto') and item.produto is not None:
-                            print(f"DEBUG: Estornando {item.quantidade} unidades do produto {item.produto.id}")
+                            # # print(f"DEBUG: Estornando {item.quantidade} unidades do produto {item.produto.id}")
                             if venda.status != 'Cancelada':
                                 item.produto.estoque += item.quantidade
                         else:
-                            print(f"DEBUG: Item sem produto associado")
+                            # # print(f"DEBUG: Item sem produto associado")
+                            pass
                 else:
-                    print(f"DEBUG: Venda não possui itens relacionados")
+                    # # print(f"DEBUG: Venda não possui itens relacionados")
+                    pass
                 
                 # Verificar e excluir transações financeiras relacionadas
                 transacoes = self.session.query(Transacao).filter_by(
@@ -2915,15 +2918,15 @@ class Database:
                     origem_tipo='venda'
                 ).all()
                 
-                print(f"DEBUG: Encontradas {len(transacoes)} transações financeiras relacionadas")
+                # # print(f"DEBUG: Encontradas {len(transacoes)} transações financeiras relacionadas")
                 for transacao in transacoes:
-                    print(f"DEBUG: Excluindo transação ID {transacao.id}")
+                    # # print(f"DEBUG: Excluindo transação ID {transacao.id}")
                     self.session.delete(transacao)
                 
                 # Para lidar com possíveis referências à proposta
                 print("DEBUG: Verificando se venda está relacionada a uma proposta")
                 if hasattr(venda, 'proposta_id') and venda.proposta_id:
-                    print(f"DEBUG: Venda relacionada à proposta ID {venda.proposta_id}")
+                    # # print(f"DEBUG: Venda relacionada à proposta ID {venda.proposta_id}")
                     # Apenas desvincular, não excluir a proposta
                     venda.proposta_id = None
                 
@@ -2931,20 +2934,20 @@ class Database:
                 if hasattr(venda, 'itens'):
                     itens = list(venda.itens)  # Criar uma cópia da lista para evitar problemas de iteração
                     for item in itens:
-                        print(f"DEBUG: Excluindo item de venda ID {item.id}")
+                        # # print(f"DEBUG: Excluindo item de venda ID {item.id}")
                         self.session.delete(item)
                 
                 # Por precaução, realizar flush antes de excluir a venda
                 self.session.flush()
                 
                 # Remover a venda
-                print(f"DEBUG: Finalmente excluindo a venda ID {venda_id}")
+                # # print(f"DEBUG: Finalmente excluindo a venda ID {venda_id}")
                 self.session.delete(venda)
                 
                 # Realizar flush novamente para garantir a exclusão
                 self.session.flush()
                 
-                print(f"DEBUG: Venda ID {venda_id} excluída com sucesso com ORM")
+                # # print(f"DEBUG: Venda ID {venda_id} excluída com sucesso com ORM")
                 return True
             except Exception as e:
                 print(f"ERRO ao excluir venda com ORM: {str(e)}")
@@ -2957,15 +2960,15 @@ class Database:
                     venda = self.session.query(Venda).filter_by(id=venda_id).first()
                     
                     if not venda:
-                        print(f"DEBUG: Venda ID {venda_id} não encontrada")
+                        # # print(f"DEBUG: Venda ID {venda_id} não encontrada")
                         return False
                     
                     # Estornar produtos para o estoque
                     if venda.status != 'Cancelada' and hasattr(venda, 'itens'):
-                        print(f"DEBUG: Estornando produtos para o estoque")
+                        # # print(f"DEBUG: Estornando produtos para o estoque")
                         for item in venda.itens:
                             if hasattr(item, 'produto') and item.produto is not None:
-                                print(f"DEBUG: Estornando {item.quantidade} unidades do produto {item.produto.id}")
+                                # # print(f"DEBUG: Estornando {item.quantidade} unidades do produto {item.produto.id}")
                                 item.produto.estoque += item.quantidade
                     
                     # Executar SQL para excluir na ordem correta
@@ -2996,7 +2999,7 @@ class Database:
                         DELETE FROM vendas
                         WHERE id = :venda_id
                     """), {"venda_id": venda_id})
-                    print(f"DEBUG: Venda ID {venda_id} excluída com sucesso com SQL direto")
+                    # # print(f"DEBUG: Venda ID {venda_id} excluída com sucesso com SQL direto")
                     
                     return True
                 except Exception as e2:
@@ -3258,13 +3261,13 @@ class Database:
             
             # 2. Registrar comissões de fornecedores
             # Buscar os acréscimos do tipo FORNECEDOR para esta proposta
-            print(f"DEBUG: Buscando acréscimos do tipo FORNECEDOR para proposta ID={proposta.id}")
+            # # print(f"DEBUG: Buscando acréscimos do tipo FORNECEDOR para proposta ID={proposta.id}")
             fornecedores = self.session.query(AcrescimoProposta).filter(
                 AcrescimoProposta.proposta_id == proposta.id,
                 AcrescimoProposta.tipo == "FORNECEDOR"
             ).all()
             
-            print(f"DEBUG: Encontrados {len(fornecedores)} acréscimos do tipo FORNECEDOR")
+            # # print(f"DEBUG: Encontrados {len(fornecedores)} acréscimos do tipo FORNECEDOR")
             
             # Para cada fornecedor, verificar se tem percentual de comissão e gerar receita
             for fornecedor in fornecedores:
@@ -3275,7 +3278,7 @@ class Database:
                 ).first()
                 
                 if not comissao_existente and fornecedor.percentual_comissao and fornecedor.percentual_comissao > 0:
-                    print(f"DEBUG: Gerando comissão para fornecedor {fornecedor.fornecedor} com percentual {fornecedor.percentual_comissao}%")
+                    # # print(f"DEBUG: Gerando comissão para fornecedor {fornecedor.fornecedor} com percentual {fornecedor.percentual_comissao}%")
                     
                     # Calcular valor da comissão
                     valor_comissao = fornecedor.valor * (fornecedor.percentual_comissao / 100.0)
@@ -3299,11 +3302,13 @@ class Database:
                     self.session.add(comissao)
                     self.session.flush()
                     resultados.append(comissao.id)
-                    print(f"DEBUG: Comissão registrada com ID {comissao.id} e valor {valor_comissao}")
+                    # # print(f"DEBUG: Comissão registrada com ID {comissao.id} e valor {valor_comissao}")
                 elif comissao_existente:
-                    print(f"DEBUG: Comissão já existente para fornecedor {fornecedor.fornecedor}: {comissao_existente.id}")
+                    # # print(f"DEBUG: Comissão já existente para fornecedor {fornecedor.fornecedor}: {comissao_existente.id}")
+                    pass
                 else:
-                    print(f"DEBUG: Fornecedor {fornecedor.fornecedor} sem percentual de comissão ou com percentual zero")
+                    # # print(f"DEBUG: Fornecedor {fornecedor.fornecedor} sem percentual de comissão ou com percentual zero")
+                    pass
             
         return resultados
         
@@ -3340,7 +3345,7 @@ class Database:
                 
                 # Usar SEMPRE o percentual cadastrado no fornecedor
                 percentual_fornecedor = fornecedor.percentual_comissao if fornecedor.percentual_comissao is not None else 0.0
-                print(f"DEBUG: Usando percentual de comissão do fornecedor: {percentual_fornecedor}%")
+                # # print(f"DEBUG: Usando percentual de comissão do fornecedor: {percentual_fornecedor}%")
                 
                 # Criar acréscimo usando a função existente
                 resultado = self.add_acrescimo_proposta(
@@ -3392,7 +3397,7 @@ class Database:
                     raise ValueError(f"Proposta ID {proposta_id} não encontrada")
                 
                 # Usar a função add_acrescimo_proposta para criar o acréscimo e gerar a despesa automaticamente
-                print(f"DEBUG: Adicionando assistente {assistente.nome} à proposta {proposta_id_int} com valor {valor_float}")
+                # # print(f"DEBUG: Adicionando assistente {assistente.nome} à proposta {proposta_id_int} com valor {valor_float}")
                 resultado = self.add_acrescimo_proposta(
                     proposta_id=proposta_id_int,
                     tipo="ASSISTENTE",  # Garantir que o tipo está em maiúsculo
@@ -3402,7 +3407,7 @@ class Database:
                     status_pagamento="Pendente"
                 )
                 
-                print(f"DEBUG: Resultado da adição de assistente: {resultado}")
+                # # print(f"DEBUG: Resultado da adição de assistente: {resultado}")
                 return resultado
                 
             return self._safe_query(query)

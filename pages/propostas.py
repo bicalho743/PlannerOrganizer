@@ -792,8 +792,9 @@ def show():
                                         if st.form_submit_button("Adicionar à Proposta"):
                                             try:
                                                 # Log de depuração
-                                                st.info(f"DEBUG: Adicionando produto do catálogo '{produto_info['nome']}' à proposta ID={proposta_exec_id}")
-                                                st.info(f"DEBUG: Valor: {preco_final}, Quantidade: {quantidade}")
+                                                # Removido logs de debug que apareciam na interface
+                                                # st.info(f"DEBUG: Adicionando produto do catálogo '{produto_info['nome']}' à proposta ID={proposta_exec_id}")
+                                                # st.info(f"DEBUG: Valor: {preco_final}, Quantidade: {quantidade}")
                                                 
                                                 # Adicionar o produto à proposta
                                                 try:
@@ -931,9 +932,9 @@ def show():
                                         st.error("O nome do item é obrigatório.")
                                     else:
                                         try:
-                                            # Log de depuração
-                                            st.info(f"DEBUG: Adicionando item personalizado '{nome_produto}' à proposta ID={proposta_exec_id}")
-                                            st.info(f"DEBUG: Valor: {valor_produto}, Quantidade: {quantidade}")
+                                            # Removido logs de debug que apareciam na interface
+                                            # st.info(f"DEBUG: Adicionando item personalizado '{nome_produto}' à proposta ID={proposta_exec_id}")
+                                            # st.info(f"DEBUG: Valor: {valor_produto}, Quantidade: {quantidade}")
                                             
                                             # Garantir que comodo_produto não seja None
                                             comodo_final = comodo_produto if comodo_produto else "Geral"
