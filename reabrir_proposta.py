@@ -152,8 +152,8 @@ def reabrir_proposta_finalizada(proposta_id):
         try:
             # Criar nova conexão com o banco para evitar o erro de sessão em estado 'prepared'
             db_new = Database()
-            # Gerar lançamentos financeiros
-            db_new.gerar_lancamentos_financeiros_proposta_concluida(proposta_id)
+            # Gerar lançamentos financeiros forçando regeneração
+            db_new.gerar_lancamentos_financeiros_proposta_concluida(proposta_id, forcar_geracao=True)
             print(f"DEBUG: Lançamentos financeiros regenerados para a proposta ID={proposta_id}")
         except Exception as e:
             print(f"ERRO: Falha ao gerar novos lançamentos financeiros: {str(e)}")
