@@ -227,29 +227,48 @@ st.sidebar.markdown('<div style="margin: 1.5rem 0;"><hr style="border: none; hei
 
 with st.sidebar.expander("ℹ️ Informações do Sistema", expanded=False):
     st.markdown("""
-    <div style="padding: 0.5rem; background-color: white; border-radius: 4px;">
-        <h3 style="color: #1E366F; font-size: 1.2rem; margin-bottom: 1rem;">Planner Organizer</h3>
+    <div style="padding: 0.8rem; background-color: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+        <h3 style="color: #1E366F; font-size: 1.2rem; margin-bottom: 1rem; border-bottom: 1px solid #E0E0E0; padding-bottom: 0.5rem;">Planner Organizer</h3>
         <p style="margin-bottom: 0.5rem;"><strong>Versão:</strong> 1.0.4</p>
         
-        <p style="margin-top: 1rem; margin-bottom: 0.5rem;"><strong>Recursos Disponíveis:</strong></p>
+        <p style="margin-top: 1.2rem; margin-bottom: 0.5rem;"><strong style="color: #1E366F;">Módulos do Sistema:</strong></p>
         <ul style="margin-top: 0; padding-left: 1.5rem;">
-            <li style="margin-bottom: 0.3rem;">✅ Gestão de Clientes</li>
-            <li style="margin-bottom: 0.3rem;">✅ Controle de Propostas</li>
-            <li style="margin-bottom: 0.3rem;">✅ Gestão Financeira</li>
-            <li style="margin-bottom: 0.3rem;">✅ Relatórios e Análises</li>
+            <li style="margin-bottom: 0.5rem;"><strong style="color: #1976D2;">Dashboard</strong> - Visão geral com métricas, alertas de retorno de clientes e indicadores financeiros</li>
+            <li style="margin-bottom: 0.5rem;"><strong style="color: #1976D2;">Cadastros</strong> - Gerenciamento completo de clientes, fornecedores, parceiros e assistentes</li>
+            <li style="margin-bottom: 0.5rem;"><strong style="color: #1976D2;">Propostas</strong> - Ciclo completo de propostas desde elaboração até aprovação e finalização</li>
+            <li style="margin-bottom: 0.5rem;"><strong style="color: #1976D2;">Vendas</strong> - Controle de produtos vendidos, quantidades e valores por cliente</li>
+            <li style="margin-bottom: 0.5rem;"><strong style="color: #1976D2;">Financeiro</strong> - Gestão de receitas, despesas, contas a pagar e receber</li>
+            <li style="margin-bottom: 0.5rem;"><strong style="color: #1976D2;">Relatórios</strong> - Análises e visualizações detalhadas de desempenho</li>
         </ul>
         
-        <p style="margin-top: 1rem; margin-bottom: 0.5rem;"><strong>Novidades:</strong></p>
+        <p style="margin-top: 1.2rem; margin-bottom: 0.5rem;"><strong style="color: #1E366F;">Funcionalidades Principais:</strong></p>
         <ul style="margin-top: 0; padding-left: 1.5rem;">
-            <li style="margin-bottom: 0.3rem;">🎉 Telas de celebração</li>
-            <li style="margin-bottom: 0.3rem;">📊 Dashboard aprimorado</li>
-            <li style="margin-bottom: 0.3rem;">📱 Interface responsiva</li>
-            <li style="margin-bottom: 0.3rem;">🎨 Tema profissional</li>
+            <li style="margin-bottom: 0.3rem;">✅ Fluxo de propostas: Em elaboração → Aguardando aprovação → Aprovada → Em execução → Finalizada</li>
+            <li style="margin-bottom: 0.3rem;">✅ Integração automática entre módulos (Propostas/Financeiro/Vendas)</li>
+            <li style="margin-bottom: 0.3rem;">✅ Sistema de alertas para propostas próximas do prazo</li>
+            <li style="margin-bottom: 0.3rem;">✅ Geração automática de lançamentos financeiros</li>
+            <li style="margin-bottom: 0.3rem;">✅ Cálculo automático de comissões para fornecedores</li>
+            <li style="margin-bottom: 0.3rem;">✅ Importação em lote de clientes e propostas</li>
+            <li style="margin-bottom: 0.3rem;">✅ Sistema de backup e restauração de dados</li>
         </ul>
         
-        <p style="margin-top: 1rem; text-align: center; font-size: 0.9rem; color: #5A6A85;">
-            Desenvolvido com ❤️ usando Streamlit
-        </p>
+        <p style="margin-top: 1.2rem; margin-bottom: 0.5rem;"><strong style="color: #1E366F;">Novidades da Versão:</strong></p>
+        <ul style="margin-top: 0; padding-left: 1.5rem;">
+            <li style="margin-bottom: 0.3rem;">🎉 Telas de celebração para conclusão de tarefas</li>
+            <li style="margin-bottom: 0.3rem;">📊 Dashboard com métricas de desempenho em tempo real</li>
+            <li style="margin-bottom: 0.3rem;">📱 Interface responsiva para diferentes dispositivos</li>
+            <li style="margin-bottom: 0.3rem;">🎨 Tema profissional com visual corporativo</li>
+            <li style="margin-bottom: 0.3rem;">🧹 Seleção múltipla para exclusões em lote</li>
+        </ul>
+        
+        <div style="margin-top: 1.5rem; text-align: center; padding-top: 1rem; border-top: 1px solid #E0E0E0;">
+            <p style="font-size: 0.9rem; color: #5A6A85;">
+                Desenvolvido com ❤️ para Personal Organizers
+            </p>
+            <p style="font-size: 0.8rem; color: #5A6A85; margin-top: 0.3rem;">
+                © 2025 Planner Organizer
+            </p>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
