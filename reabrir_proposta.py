@@ -17,6 +17,15 @@ def reabrir_proposta_finalizada(proposta_id):
         dict: Resultado da operação com status e mensagens
     """
     try:
+        # Converter proposta_id para inteiro
+        try:
+            proposta_id = int(proposta_id)
+        except (ValueError, TypeError):
+            return {
+                "status": "erro",
+                "mensagem": f"ID de proposta inválido: {proposta_id}"
+            }
+            
         db = Database()
         # Verificar se a proposta existe e está finalizada
         # Buscamos todas as propostas e depois filtramos pelo ID
@@ -51,13 +60,28 @@ def reabrir_proposta_finalizada(proposta_id):
         # Adicionar um pouco mais de informação para depuração
         print(f"DEBUG: Reabrindo proposta ID={proposta_id} - status anterior: {status}, status_execucao anterior: {status_execucao}")
         
-        # Configurar para não gerar transações financeiras ao reabrir
-        resultado = db.atualizar_proposta(
-            proposta_id=proposta_id,
-            status="Em andamento",
-            status_execucao="Em execução",
-            gerar_transacoes_automaticas=False
-        )
+        # Usar SQL direto para garantir a atualização da proposta
+        try:
+            # Atualizar o status da proposta usando SQL diretamente
+            query_update = text("""
+            UPDATE propostas
+            SET status = 'Em andamento', status_execucao = 'Em execução'
+            WHERE id = :proposta_id
+            """)
+            db.session.execute(query_update, {"proposta_id": proposta_id})
+            db.session.commit()
+            resultado = {"status": "sucesso", "mensagem": "Proposta atualizada com sucesso"}
+        except Exception as e:
+            db.session.rollback()
+            print(f"Erro ao executar SQL direto: {str(e)}")
+            
+            # Se o SQL direto falhar, tentar o método normal
+            resultado = db.atualizar_proposta(
+                proposta_id=proposta_id,
+                status="Em andamento",
+                status_execucao="Em execução",
+                gerar_transacoes_automaticas=False
+            )
         
         if resultado.get('status') != 'sucesso':
             return {
