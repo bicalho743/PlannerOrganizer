@@ -1264,6 +1264,11 @@ def show():
                         lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
                     )
                     
+                    # Adicionar coluna de Fim Execução (usando a data_fim)
+                    df_finalizadas['Fim Execução'] = propostas_finalizadas['data_fim'].apply(
+                        lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
+                    )
+                    
                     # Exibir tabela sem mostrar a coluna ID
                     st.dataframe(df_finalizadas.drop(columns=['ID']), hide_index=True)
                     
@@ -1470,6 +1475,15 @@ def show():
                         df_todas['Data Aprovação'] = ''
                         
                     df_todas['Início'] = propostas_filtradas['data_inicio'].apply(
+                        lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
+                    )
+                    
+                    # Adicionar colunas de início e fim de execução
+                    df_todas['Início Execução'] = propostas_filtradas['data_inicio_execucao'].apply(
+                        lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
+                    )
+                    
+                    df_todas['Fim Execução'] = propostas_filtradas['data_fim'].apply(
                         lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
                     )
                     
