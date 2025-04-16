@@ -3389,8 +3389,19 @@ class Database:
                         print(f"DEBUG LANCAMENTOS: Lançamento de produtos criado: R$ {valor_total_produtos:.2f}")
                         
                         # Adicionar à tabela de vendas
+                        self.session.flush()  # Garantir que a transação dos produtos está no banco
+                        
+                        # Forçar commit para evitar problemas com o registro da venda
+                        self.session.commit()
+                        print(f"DEBUG LANCAMENTOS: Commit realizado antes de registrar a venda")
+                        
+                        # Registrar venda de produtos
                         venda_id = self._registrar_venda_produtos(proposta, cliente, produtos)
                         print(f"DEBUG LANCAMENTOS: Venda registrada com ID: {venda_id}")
+                        
+                        # Forçar outro commit para garantir persistência da venda
+                        self.session.commit()
+                        print(f"DEBUG LANCAMENTOS: Commit realizado após registrar a venda")
                 
                 # 3. Comissões a receber por fornecedor
                 fornecedores = self.session.query(AcrescimoProposta)\
