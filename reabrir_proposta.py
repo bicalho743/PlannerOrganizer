@@ -48,10 +48,15 @@ def reabrir_proposta_finalizada(proposta_id):
         tem_lancamentos = resultado_query > 0
         
         # Atualizar status da proposta
+        # Adicionar um pouco mais de informação para depuração
+        print(f"DEBUG: Reabrindo proposta ID={proposta_id} - status anterior: {status}, status_execucao anterior: {status_execucao}")
+        
+        # Configurar para não gerar transações financeiras ao reabrir
         resultado = db.atualizar_proposta(
             proposta_id=proposta_id,
-            status="Aprovada",
-            status_execucao="Em execução"
+            status="Em andamento",
+            status_execucao="Em execução",
+            gerar_transacoes_automaticas=False
         )
         
         if resultado.get('status') != 'sucesso':
