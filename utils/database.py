@@ -1182,7 +1182,7 @@ class Database:
         """
         Atualiza o status de uma proposta e opcionalmente define a data de aprovação
         Se o status for "Em execução", automaticamente:
-        - Define data_inicio_execucao para a data atual
+        - Define data_inicio_execucao para a data de início da proposta (não a data atual)
         - Define status_execucao como "Iniciada"
         - Cria transação financeira para cliente a receber
         
@@ -1209,7 +1209,8 @@ class Database:
                 
             # Definir campos adicionais se o status for "Em execução"
             if novo_status == "Em execução":
-                proposta.data_inicio_execucao = datetime.now().date()
+                # Sempre usar a data de início da proposta como data de início de execução
+                proposta.data_inicio_execucao = proposta.data_inicio
                 proposta.status_execucao = "Iniciada"
                 
                 # Processar a geração de transação financeira
@@ -1637,6 +1638,10 @@ class Database:
                 
                 if data_inicio is not None:
                     proposta.data_inicio = data_inicio
+                    # Quando a data de início for atualizada, também atualizar a data de início de execução
+                    # se a proposta já estiver aprovada ou em execução
+                    if proposta.status in ['Aprovada', 'Em execução', 'Finalizada']:
+                        proposta.data_inicio_execucao = data_inicio
                 
                 if data_fim is not None:
                     proposta.data_fim = data_fim
@@ -1650,8 +1655,10 @@ class Database:
                 if previsao_dias is not None:
                     proposta.previsao_dias = previsao_dias
                 
+                # Sempre garantir que a data de início de execução seja a data de início da proposta
                 if data_inicio_execucao is not None:
-                    proposta.data_inicio_execucao = data_inicio_execucao
+                    # Ignorar o valor passado e usar a data de início da proposta
+                    proposta.data_inicio_execucao = proposta.data_inicio
                     
                 if status_execucao is not None:
                     proposta.status_execucao = status_execucao
