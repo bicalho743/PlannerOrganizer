@@ -1464,7 +1464,7 @@ class Database:
             db_url = os.environ.get('DATABASE_URL')
             
             # Conectar diretamente com psycopg2
-            print(f"DEBUG SQL GET PRODUTOS: Conectando diretamente com psycopg2")
+            # Removido logs de debug
             conn = psycopg2.connect(db_url)
             
             # Usar DictCursor para facilitar acesso aos campos por nome
@@ -1477,7 +1477,7 @@ class Database:
                 else:
                     sql = "SELECT * FROM produtos_organizadores"
                 
-                print(f"DEBUG SQL GET PRODUTOS: Executando {sql}")
+                # Removido logs de debug
                 cursor.execute(sql)
                 result = cursor.fetchall()
                 
@@ -1497,19 +1497,19 @@ class Database:
                         })
                     
                     df = pd.DataFrame(df_data)
-                    print(f"DEBUG SQL GET PRODUTOS: Encontrados {len(df)} produtos")
+                    # Removido log de debug
                     return df
                 else:
-                    print(f"DEBUG SQL GET PRODUTOS: Nenhum produto encontrado")
+                    # Removido log de debug
                     return pd.DataFrame()
             finally:
                 cursor.close()
                 conn.close()
-                print(f"DEBUG SQL GET PRODUTOS: Conexão psycopg2 fechada")
+                # Removido log de debug
         except Exception as e:
-            print(f"DEBUG SQL GET PRODUTOS: Erro ao buscar produtos via SQL: {str(e)}")
-            import traceback
-            traceback.print_exc()
+            # Removido log de debug
+            # import traceback
+            # traceback.print_exc()
             # Em caso de erro, retornar DataFrame vazio
             import pandas as pd
             return pd.DataFrame()

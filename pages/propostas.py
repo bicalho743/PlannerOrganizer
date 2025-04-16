@@ -1024,7 +1024,7 @@ def show():
                                             fornecedor_df = fornecedores[fornecedores['id'] == fornecedor_id]
                                             if not fornecedor_df.empty and 'percentual_comissao' in fornecedor_df.columns:
                                                 percentual_comissao = fornecedor_df['percentual_comissao'].iloc[0] or 0.0
-                                                print(f"DEBUG: Fornecedor ID={fornecedor_id}, Percentual do DF={percentual_comissao}")
+                                                # Removido log de debug
                                             
                                             # Se não encontrou no DataFrame, buscar direto do banco
                                             if percentual_comissao == 0.0:
@@ -1033,9 +1033,9 @@ def show():
                                                 result = st.session_state.db.session.execute(forn_query).fetchone()
                                                 if result and result[0]:
                                                     percentual_comissao = float(result[0])
-                                                    print(f"DEBUG: Fornecedor ID={fornecedor_id}, Percentual do Banco={percentual_comissao}")
+                                                    # Removido log de debug
                                         except Exception as e:
-                                            print(f"DEBUG: Erro ao buscar percentual de comissão: {str(e)}")
+                                            # Removido log de debug
                                             pass
                                         
                                         valor_fornecimento = st.number_input("Valor do fornecimento (R$):", min_value=0.0, format="%.2f")
