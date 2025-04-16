@@ -34,6 +34,13 @@ def show():
             if clientes.empty:
                 st.warning("Nenhum cliente cadastrado. Por favor, cadastre clientes primeiro.")
             else:
+                # Opção para escolher entre nova proposta padrão ou proposta retroativa
+                tipo_cadastro = st.radio(
+                    "Tipo de cadastro:", 
+                    ["Nova proposta", "Cadastro retroativo"],
+                    horizontal=True
+                )
+                
                 # Formulário para cadastro de nova proposta
                 with st.form(key="nova_proposta_form"):
                     # Cliente (seleção a partir do módulo de cadastro)
@@ -49,8 +56,38 @@ def show():
                     # Prazo estimado (em dias)
                     prazo = st.number_input("Prazo estimado (dias):", min_value=1, value=15)
                     
-                    # Data de início prevista
-                    data_inicio = st.date_input("Data de início prevista:", datetime.now().date())
+                    # Data de início prevista - ajustada conforme tipo de cadastro
+                    if tipo_cadastro == "Nova proposta":
+                        data_inicio = st.date_input("Data de início prevista:", datetime.now().date())
+                    else:
+                        data_inicio = st.date_input("Data de início:", datetime.now().date() - timedelta(days=90))
+                        
+                        # Para cadastros retroativos, oferecer opcões de status mais avançados
+                        status_opcoes = [
+                            "Em elaboração", 
+                            "Aguardando aprovação", 
+                            "Aprovada", 
+                            "Em execução", 
+                            "Finalizada"
+                        ]
+                        status_inicial = st.selectbox("Status da proposta:", status_opcoes)
+                        
+                        # Datas relacionadas ao status selecionado
+                        if status_inicial in ["Aprovada", "Em execução", "Finalizada"]:
+                            data_aprovacao = st.date_input("Data de aprovação:", data_inicio)
+                        
+                        if status_inicial in ["Em execução", "Finalizada"]:
+                            data_inicio_execucao = st.date_input("Data de início da execução:", data_inicio)
+                        
+                        if status_inicial == "Finalizada":
+                            data_fim_real = st.date_input("Data de conclusão:", data_inicio + timedelta(days=prazo))
+                            
+                        # Status de pagamento para propostas finalizadas ou aprovadas
+                        if status_inicial in ["Aprovada", "Finalizada"]:
+                            status_pagamento = st.selectbox(
+                                "Status de pagamento:",
+                                ["Pendente", "Parcial", "Pago"]
+                            )
                     
                     # Calcular data de término com base no prazo
                     data_fim = data_inicio + timedelta(days=prazo)
@@ -62,6 +99,10 @@ def show():
                         ["Organização", "Consultoria", "Acompanhamento", "Projeto", "Outro"]
                     )
                     
+                    # Opção para gerar lançamentos financeiros automaticamente
+                    if tipo_cadastro == "Cadastro retroativo":
+                        gerar_financeiro = st.checkbox("Gerar lançamentos financeiros", value=True)
+                    
                     # Botão para salvar
                     submitted = st.form_submit_button("Salvar Proposta")
                     
@@ -70,18 +111,51 @@ def show():
                             # Obter o ID do cliente selecionado
                             cliente_id = clientes[clientes['nome'] == cliente]['id'].iloc[0]
                             
+                            # Status e configurações baseadas no tipo de cadastro
+                            if tipo_cadastro == "Nova proposta":
+                                status_proposta = "Em elaboração"  # Status inicial padrão
+                                gerar_transacoes = False
+                            else:
+                                status_proposta = status_inicial
+                                gerar_transacoes = gerar_financeiro if 'gerar_financeiro' in locals() else False
+                            
                             # Criar nova proposta
                             novo_numero = st.session_state.db.add_proposta(
                                 cliente_id=cliente_id,
                                 descricao=descricao,
                                 valor=valor,
-                                status="Em elaboração",  # Status inicial
+                                status=status_proposta,
                                 tipo_proposta=tipo_proposta,
                                 data_inicio=data_inicio,
                                 data_fim=data_fim,
                                 previsao_dias=prazo,  # Prazo em dias (número)
-                                prazo_entrega=data_inicio  # Usamos data_inicio como base
+                                prazo_entrega=data_inicio,  # Usamos data_inicio como base
+                                gerar_transacoes_automaticas=gerar_transacoes
                             )
+                            
+                            # Para propostas retroativas com status avançados, atualizar campos adicionais
+                            if tipo_cadastro == "Cadastro retroativo" and novo_numero:
+                                proposta_atualizada = {}
+                                
+                                # Adicionar datas relacionadas ao status
+                                if status_inicial in ["Aprovada", "Em execução", "Finalizada"]:
+                                    proposta_atualizada['data_aprovacao'] = data_aprovacao
+                                
+                                if status_inicial in ["Em execução", "Finalizada"]:
+                                    proposta_atualizada['data_inicio_execucao'] = data_inicio_execucao
+                                    proposta_atualizada['status_execucao'] = "Em execução"
+                                
+                                if status_inicial == "Finalizada":
+                                    proposta_atualizada['data_fim'] = data_fim_real
+                                    proposta_atualizada['status_execucao'] = "Concluída"
+                                
+                                # Status de pagamento para propostas
+                                if status_inicial in ["Aprovada", "Finalizada"]:
+                                    proposta_atualizada['status_pagamento_base'] = status_pagamento
+                                
+                                # Atualizar proposta com os campos adicionais
+                                if proposta_atualizada:
+                                    st.session_state.db.update_proposta(novo_numero, **proposta_atualizada)
                             
                             if novo_numero:
                                 st.success(f"Proposta #{novo_numero} criada com sucesso!")
