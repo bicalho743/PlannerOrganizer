@@ -3549,7 +3549,7 @@ class Database:
                 
                 # Query direto para confirmar problemas
                 try:
-                    produtos_sql = self.session.execute(f"SELECT * FROM produtos_organizadores WHERE proposta_id = {proposta_id_int}").fetchall()
+                    produtos_sql = self.session.execute(text(f"SELECT * FROM produtos_organizadores WHERE proposta_id = {proposta_id_int}")).fetchall()
                     print(f"DEBUG LANCAMENTOS SQL: Produtos via SQL direto: {len(produtos_sql)}")
                     
                     if produtos_sql:
@@ -3560,57 +3560,110 @@ class Database:
                 except Exception as e:
                     print(f"DEBUG LANCAMENTOS SQL: Erro ao consultar produtos diretamente: {str(e)}")
                 
-                # Imprimir detalhes de cada produto
-                for i, produto in enumerate(produtos):
-                    print(f"DEBUG LANCAMENTOS: Produto {i+1}: {produto.nome}, Valor: R$ {produto.valor}, Quantidade: {produto.quantidade}")
-                    
-                valor_total_produtos = 0
+                # Agrupar produtos por tipo (físicos vs. serviços)
+                produtos_fisicos = []
+                produtos_servicos = []
                 
-                if produtos:
-                    # Calcular valor total dos produtos
-                    for produto in produtos:
-                        valor_produto = float(produto.valor) * produto.quantidade
-                        valor_total_produtos += valor_produto
-                        print(f"DEBUG LANCAMENTOS: Produto '{produto.nome}': R$ {produto.valor} x {produto.quantidade} = R$ {valor_produto:.2f}")
+                # Palavras-chave para identificar serviços em vez de produtos físicos
+                termos_servicos = ['uber', 'transporte', 'serviço', 'servico', 'frete', 'delivery', 'entrega']
+                
+                # Categorizar produtos
+                for produto in produtos:
+                    nome_lower = produto.nome.lower() if produto.nome else ""
+                    if any(termo in nome_lower for termo in termos_servicos):
+                        produtos_servicos.append(produto)
+                        print(f"DEBUG LANCAMENTOS: Classificado como SERVIÇO: {produto.nome}")
+                    else:
+                        produtos_fisicos.append(produto)
+                        print(f"DEBUG LANCAMENTOS: Classificado como PRODUTO FÍSICO: {produto.nome}")
+                
+                # Calcular valores
+                valor_total_produtos_fisicos = 0
+                valor_total_servicos = 0
+                
+                # Processar produtos físicos
+                for produto in produtos_fisicos:
+                    valor_produto = float(produto.valor) * produto.quantidade
+                    valor_total_produtos_fisicos += valor_produto
+                    print(f"DEBUG LANCAMENTOS: Produto '{produto.nome}': R$ {produto.valor} x {produto.quantidade} = R$ {valor_produto:.2f}")
+                
+                # Processar serviços
+                for produto in produtos_servicos:
+                    valor_servico = float(produto.valor) * produto.quantidade
+                    valor_total_servicos += valor_servico
+                    print(f"DEBUG LANCAMENTOS: Serviço '{produto.nome}': R$ {produto.valor} x {produto.quantidade} = R$ {valor_servico:.2f}")
+                
+                print(f"DEBUG LANCAMENTOS: Valor total dos produtos físicos: R$ {valor_total_produtos_fisicos:.2f}")
+                print(f"DEBUG LANCAMENTOS: Valor total dos serviços: R$ {valor_total_servicos:.2f}")
+                
+                # Criar lançamento para produtos físicos
+                if valor_total_produtos_fisicos > 0:
+                    transacao_produtos = Transacao(
+                        tipo="receita_a_receber",
+                        descricao=f"Produtos da Proposta #{proposta.numero} - {cliente.nome}",
+                        valor=valor_total_produtos_fisicos,
+                        data=datetime.now().date(),
+                        categoria="Produto",
+                        subcategoria="Venda de Produtos",
+                        tipo_receita="venda",
+                        origem_id=proposta.cliente_id,
+                        origem_tipo="cliente",
+                        tipo_conta="PF",
+                        status="Pendente",
+                        proposta_id=proposta_id_int,
+                        classificacao="receita"
+                    )
+                    self.session.add(transacao_produtos)
+                    result["valor_produtos"] = valor_total_produtos_fisicos
+                    result["lancamentos_gerados"] += 1
+                    print(f"DEBUG LANCAMENTOS: Lançamento de produtos físicos criado: R$ {valor_total_produtos_fisicos:.2f}")
                     
-                    print(f"DEBUG LANCAMENTOS: Valor total dos produtos: R$ {valor_total_produtos:.2f}")
-                    
-                    # Criar lançamento de receita para os produtos
-                    if valor_total_produtos > 0:
-                        transacao_produtos = Transacao(
-                            tipo="receita_a_receber",
-                            descricao=f"Produtos da Proposta #{proposta.numero} - {cliente.nome}",
-                            valor=valor_total_produtos,
-                            data=datetime.now().date(),
-                            categoria="Produto",
-                            subcategoria="Venda de Produtos",
-                            tipo_receita="venda",
-                            origem_id=proposta.cliente_id,
-                            origem_tipo="cliente",
-                            tipo_conta="PF",
-                            status="Pendente",
-                            proposta_id=proposta_id_int,
-                            classificacao="receita"
-                        )
-                        self.session.add(transacao_produtos)
-                        result["valor_produtos"] = valor_total_produtos
-                        result["lancamentos_gerados"] += 1
-                        print(f"DEBUG LANCAMENTOS: Lançamento de produtos criado: R$ {valor_total_produtos:.2f}")
-                        
-                        # Adicionar à tabela de vendas
-                        self.session.flush()  # Garantir que a transação dos produtos está no banco
-                        
+                    # Adicionar à tabela de vendas somente os produtos físicos
+                    try:
+                        self._registrar_venda_produtos(proposta, cliente, produtos_fisicos)
+                    except Exception as e:
+                        print(f"ERRO ao registrar venda de produtos: {str(e)}")
+                
+                # Criar lançamento para serviços (separado dos produtos físicos)
+                if valor_total_servicos > 0:
+                    transacao_servicos = Transacao(
+                        tipo="receita_a_receber",
+                        descricao=f"Serviços da Proposta #{proposta.numero} - {cliente.nome}",
+                        valor=valor_total_servicos,
+                        data=datetime.now().date(),
+                        categoria="Serviço",
+                        subcategoria="Serviços Adicionais",
+                        tipo_receita="servico",
+                        origem_id=proposta.cliente_id,
+                        origem_tipo="cliente",
+                        tipo_conta="PF",
+                        status="Pendente",
+                        proposta_id=proposta_id_int,
+                        classificacao="receita"
+                    )
+                    self.session.add(transacao_servicos)
+                    # Adicionar ao valor total de outros
+                    result["valor_outros"] = result.get("valor_outros", 0) + valor_total_servicos
+                    result["lancamentos_gerados"] += 1
+                    print(f"DEBUG LANCAMENTOS: Lançamento de serviços criado: R$ {valor_total_servicos:.2f}")
+                
+                # Garantir que todos os lançamentos estão salvos antes de registrar a venda
+                self.session.flush()
+                
+                # Registrar venda somente para produtos físicos
+                if produtos_fisicos:
+                    try:
                         # Forçar commit para evitar problemas com o registro da venda
                         self.session.commit()
                         print(f"DEBUG LANCAMENTOS: Commit realizado antes de registrar a venda")
                         
                         # Registrar venda de produtos
-                        venda_id = self._registrar_venda_produtos(proposta, cliente, produtos)
+                        venda_id = self._registrar_venda_produtos(proposta, cliente, produtos_fisicos)
                         print(f"DEBUG LANCAMENTOS: Venda registrada com ID: {venda_id}")
-                        
-                        # Forçar outro commit para garantir persistência da venda
-                        self.session.commit()
-                        print(f"DEBUG LANCAMENTOS: Commit realizado após registrar a venda")
+                    except Exception as e:
+                        print(f"ERRO ao registrar venda de produtos: {str(e)}")
+                        import traceback
+                        traceback.print_exc()
                 
                 # 3. Comissões a receber por fornecedor
                 fornecedores = self.session.query(AcrescimoProposta)\
