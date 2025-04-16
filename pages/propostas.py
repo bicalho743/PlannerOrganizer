@@ -686,8 +686,8 @@ def show():
                         st.write(f"Proposta #{proposta_exec.iloc[0]['numero']} - {proposta_exec.iloc[0]['descricao']}")
                         
                         # Criar abas para gerenciar diferentes aspectos da execução
-                        exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5, exec_tab6 = st.tabs([
-                            "Andamento", "Produtos", "Outros", "Fornecedores", "Assistentes", "Finalizar"
+                        exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5 = st.tabs([
+                            "Andamento", "Produtos", "Fornecedores", "Assistentes", "Finalizar"
                         ])
                         
                         with exec_tab1:
