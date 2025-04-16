@@ -1168,7 +1168,7 @@ def show():
                             except Exception as e:
                                 st.error(f"Erro ao carregar fornecedores: {str(e)}")
                                 
-                        with exec_tab4:
+                        with exec_tab5:
                             st.subheader("Assistentes")
                             
                             # Obter lista de assistentes cadastrados
@@ -1211,7 +1211,7 @@ def show():
                             except Exception as e:
                                 st.error(f"Erro ao carregar assistentes: {str(e)}")
                                 
-                        with exec_tab5:
+                        with exec_tab6:
                             st.subheader("Finalizar Proposta")
                             
                             # Exibir resumo completo da proposta antes de finalizar
