@@ -3557,8 +3557,17 @@ class Database:
                         self.session.flush()
                         print(f"DEBUG LANCAMENTOS: Lançamentos existentes removidos com sucesso")
                     else:
-                        print(f"DEBUG LANCAMENTOS: Já existem lançamentos para esta proposta. Pulando.")
-                        return {"status": "já existe", "mensagem": "Lançamentos já existem para esta proposta"}
+                        # Verificar se existem transações do tipo produto especificamente
+                        transacoes_produtos = self.session.query(Transacao)\
+                            .filter_by(proposta_id=proposta_id_int, categoria="Produto")\
+                            .count()
+                            
+                        if transacoes_produtos > 0:
+                            print(f"DEBUG LANCAMENTOS: Já existem lançamentos para produtos ({transacoes_produtos}). Pulando.")
+                            return {"status": "já existe", "mensagem": "Lançamentos já existem para esta proposta"}
+                        else:
+                            print(f"DEBUG LANCAMENTOS: Não existem lançamentos específicos para produtos. Continuando com a geração.")
+                            # Continuamos a execução para gerar os lançamentos de produtos
                 
                 # Resultados para retornar
                 result = {
@@ -3704,13 +3713,32 @@ class Database:
                 # Registrar venda somente para produtos físicos
                 if produtos_fisicos:
                     try:
-                        # Forçar commit para evitar problemas com o registro da venda
-                        self.session.commit()
-                        print(f"DEBUG LANCAMENTOS: Commit realizado antes de registrar a venda")
+                        # Verificar se já existe uma venda para esta proposta
+                        venda_existente = self.session.query(Venda).filter_by(proposta_id=proposta.id).first()
                         
-                        # Registrar venda de produtos
-                        venda_id = self._registrar_venda_produtos(proposta, cliente, produtos_fisicos, forcar_geracao)
-                        print(f"DEBUG LANCAMENTOS: Venda registrada com ID: {venda_id}")
+                        if venda_existente and not forcar_geracao:
+                            print(f"DEBUG LANCAMENTOS: Já existe uma venda (ID: {venda_existente.id}) para esta proposta. Verificando se tem itens.")
+                            
+                            # Verificar se a venda tem itens
+                            itens = self.session.query(ItemVenda).filter_by(venda_id=venda_existente.id).count()
+                            print(f"DEBUG LANCAMENTOS: Venda existente tem {itens} itens.")
+                            
+                            if itens > 0:
+                                print(f"DEBUG LANCAMENTOS: Venda existente com itens. Pulando geração de nova venda.")
+                                # Não registrar nova venda, pois já existe uma com itens
+                            else:
+                                print(f"DEBUG LANCAMENTOS: Venda existente sem itens. Registrando produtos.")
+                                # Venda existe mas não tem itens, registrar os produtos
+                                self._registrar_venda_produtos(proposta, cliente, produtos_fisicos, True)
+                        else:
+                            # Não existe venda ou estamos forçando geração
+                            # Forçar commit para evitar problemas com o registro da venda
+                            self.session.commit()
+                            print(f"DEBUG LANCAMENTOS: Commit realizado antes de registrar a venda")
+                            
+                            # Registrar venda de produtos
+                            venda_id = self._registrar_venda_produtos(proposta, cliente, produtos_fisicos, forcar_geracao)
+                            print(f"DEBUG LANCAMENTOS: Venda registrada com ID: {venda_id}")
                     except Exception as e:
                         print(f"ERRO ao registrar venda de produtos: {str(e)}")
                         import traceback
@@ -3879,18 +3907,39 @@ class Database:
                     print(f"DEBUG VENDAS: Forçando regeneração da venda. Removendo venda existente ID: {venda_existente.id}")
                     # Primeiro remover os itens relacionados
                     try:
+                        # Remover transações financeiras relacionadas à venda
+                        self.session.query(Transacao).filter_by(
+                            origem_id=venda_existente.id,
+                            origem_tipo='venda'
+                        ).delete()
+                        print(f"DEBUG VENDAS: Transações financeiras da venda removidas")
+                        
+                        # Remover itens da venda
                         self.session.query(ItemVenda).filter_by(venda_id=venda_existente.id).delete()
+                        print(f"DEBUG VENDAS: Itens da venda removidos")
+                        
                         # Depois remover a venda
                         self.session.query(Venda).filter_by(id=venda_existente.id).delete()
                         self.session.flush()
-                        print(f"DEBUG VENDAS: Venda e itens removidos com sucesso")
+                        print(f"DEBUG VENDAS: Venda removida com sucesso")
                     except Exception as e:
                         print(f"ERRO ao remover venda existente: {str(e)}")
                         import traceback
                         traceback.print_exc()
                 else:
-                    # Se não forçar, retornar o ID da venda existente
-                    return venda_existente.id
+                    # Verificar se a venda tem itens
+                    itens = self.session.query(ItemVenda).filter_by(venda_id=venda_existente.id).count()
+                    print(f"DEBUG VENDAS: Venda existente tem {itens} itens")
+                    
+                    if itens == 0:
+                        print(f"DEBUG VENDAS: Venda existe mas não tem itens. Removendo venda vazia para regeneração.")
+                        # Remover a venda sem itens
+                        self.session.query(Venda).filter_by(id=venda_existente.id).delete()
+                        self.session.flush()
+                    else:
+                        # Se não forçar, retornar o ID da venda existente
+                        print(f"DEBUG VENDAS: Usando venda existente com itens")
+                        return venda_existente.id
             
             # Calcular valor total dos produtos
             valor_total = 0
