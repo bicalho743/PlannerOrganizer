@@ -686,8 +686,8 @@ def show():
                         st.write(f"Proposta #{proposta_exec.iloc[0]['numero']} - {proposta_exec.iloc[0]['descricao']}")
                         
                         # Criar abas para gerenciar diferentes aspectos da execução
-                        exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5 = st.tabs([
-                            "Andamento", "Produtos", "Fornecedores", "Assistentes", "Finalizar"
+                        exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5, exec_tab6 = st.tabs([
+                            "Andamento", "Produtos", "Outros", "Fornecedores", "Assistentes", "Finalizar"
                         ])
                         
                         with exec_tab1:
@@ -977,6 +977,112 @@ def show():
                                 st.error(f"Erro ao carregar produtos: {str(e)}")
                                 
                         with exec_tab3:
+                            st.subheader("Outros Itens")
+                            
+                            # Formulário para adicionar itens personalizados
+                            with st.form(key=f"produto_outros_form_{proposta_exec_id}"):
+                                # Campos para item personalizado
+                                st.write("### Adicionar Item Personalizado")
+                                nome_produto = st.text_input("Nome do item:")
+                                descricao_produto = st.text_area("Descrição:", height=70)
+                                valor_produto = st.number_input("Valor unitário (R$):", min_value=0.0, format="%.2f")
+                                quantidade = st.number_input("Quantidade:", min_value=1, value=1)
+                                comodo_produto = st.text_input("Cômodo/Área:")
+                                
+                                # Visualização do valor total
+                                valor_total = valor_produto * quantidade
+                                st.write(f"**Valor Total: R$ {valor_total:.2f}**")
+                                
+                                # Botão para adicionar
+                                if st.form_submit_button("Adicionar Item"):
+                                    if not nome_produto:
+                                        st.error("O nome do item é obrigatório.")
+                                    else:
+                                        try:
+                                            # Log de depuração
+                                            st.info(f"DEBUG: Adicionando item personalizado '{nome_produto}' à proposta ID={proposta_exec_id}")
+                                            st.info(f"DEBUG: Valor: {valor_produto}, Quantidade: {quantidade}")
+                                            
+                                            # Garantir que comodo_produto não seja None
+                                            comodo_final = comodo_produto if comodo_produto else "Geral"
+                                            
+                                            # Validação de tipos
+                                            try:
+                                                proposta_id_validado = int(proposta_exec_id)
+                                                nome_validado = str(nome_produto)
+                                                descricao_validada = str(descricao_produto) if descricao_produto else ""
+                                                valor_validado = float(valor_produto)
+                                                quantidade_validada = int(quantidade)
+                                                comodo_validado = str(comodo_final)
+                                                
+                                                st.info(f"DEBUG: Dados validados - ID: {proposta_id_validado}, Valor: {valor_validado}, Qtd: {quantidade_validada}")
+                                            except (ValueError, TypeError) as e_val:
+                                                st.error(f"DEBUG: Erro na validação de dados: {str(e_val)}")
+                                                raise ValueError(f"Erro na preparação dos dados: {str(e_val)}")
+                                            
+                                            # Salvar o item
+                                            st.info(f"DEBUG: Chamando add_produto_organizador para item personalizado")
+                                            item_id = st.session_state.db.add_produto_organizador(
+                                                proposta_id=proposta_id_validado,
+                                                nome=nome_validado,
+                                                descricao=descricao_validada,
+                                                valor=valor_validado,
+                                                quantidade=quantidade_validada,
+                                                comodo=comodo_validado,
+                                                tipo='outros'  # Identificador para outros itens não catalogados
+                                            )
+                                            
+                                            if item_id:
+                                                st.success(f"Item '{nome_produto}' adicionado com sucesso!")
+                                                time.sleep(1)
+                                                st.rerun()
+                                            else:
+                                                st.error("Erro ao adicionar item à proposta.")
+                                        except Exception as e:
+                                            st.error(f"Erro ao adicionar item: {str(e)}")
+                                            import traceback
+                                            st.error(traceback.format_exc())
+                            
+                            # Exibir itens personalizados já adicionados
+                            try:
+                                outros_itens = st.session_state.db.get_produtos_proposta(proposta_id=proposta_exec_id, tipo='outros')
+                                
+                                if not outros_itens.empty:
+                                    st.write("### Itens Personalizados Adicionados")
+                                    
+                                    for idx, item in outros_itens.iterrows():
+                                        with st.container():
+                                            col1, col2, col3 = st.columns([3, 1, 1])
+                                            
+                                            with col1:
+                                                st.write(f"**{item['nome']}**")
+                                                st.write(f"_{item['descricao'] if pd.notna(item['descricao']) else ''}_")
+                                                st.write(f"Cômodo: {item['comodo'] if pd.notna(item['comodo']) else 'Geral'}")
+                                            
+                                            with col2:
+                                                st.write(f"Quantidade: {int(item['quantidade'])}")
+                                                st.write(f"R$ {float(item['valor']):.2f} cada")
+                                            
+                                            with col3:
+                                                st.write(f"**Total: R$ {float(item['valor']) * int(item['quantidade']):.2f}**")
+                                                
+                                                # Botão para remover
+                                                if st.button(f"Remover {item['nome']}", key=f"remove_outro_{item['id']}"):
+                                                    try:
+                                                        st.session_state.db.remove_produto_organizador(item['id'])
+                                                        st.success(f"Item removido com sucesso!")
+                                                        time.sleep(1)
+                                                        st.rerun()
+                                                    except Exception as e:
+                                                        st.error(f"Erro ao remover item: {str(e)}")
+                                            
+                                            st.divider()
+                                else:
+                                    st.info("Nenhum item personalizado adicionado a esta proposta.")
+                            except Exception as e:
+                                st.error(f"Erro ao carregar itens personalizados: {str(e)}")
+                                
+                        with exec_tab4:
                             st.subheader("Fornecedores")
                             
                             # Obter lista de fornecedores cadastrados
