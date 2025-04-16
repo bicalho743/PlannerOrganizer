@@ -1262,6 +1262,88 @@ class Database:
             } for a in andamentos])
         return self._safe_query(query)
 
+    def add_produto_via_sql_direto(self, proposta_id, nome, descricao, valor, quantidade, comodo):
+        """
+        Adiciona um produto usando SQL direto, evitando camadas ORM
+        
+        Args:
+            proposta_id: ID da proposta
+            nome: Nome do produto
+            descricao: Descrição do produto
+            valor: Valor do produto
+            quantidade: Quantidade do produto
+            comodo: Nome do cômodo onde será usado
+            
+        Returns:
+            int: ID do produto adicionado ou None em caso de erro
+        """
+        try:
+            # Verificar se os tipos de dados estão corretos
+            proposta_id_int = int(proposta_id)
+            valor_float = float(valor)
+            quantidade_int = int(quantidade)
+            comodo_final = comodo or "Geral"
+            descricao_final = descricao or ""
+            
+            # Sanitizar strings para evitar SQL injection
+            nome_sanitizado = nome.replace("'", "''")
+            descricao_sanitizada = descricao_final.replace("'", "''")
+            comodo_sanitizado = comodo_final.replace("'", "''")
+            
+            # SQL para inserir o produto
+            sql = f"""
+            INSERT INTO produtos_organizadores 
+            (proposta_id, nome, descricao, valor, quantidade, comodo, data_cadastro) 
+            VALUES 
+            ({proposta_id_int}, '{nome_sanitizado}', '{descricao_sanitizada}', {valor_float}, {quantidade_int}, '{comodo_sanitizado}', NOW())
+            RETURNING id;
+            """
+            
+            print(f"DEBUG SQL PRODUTO: Executando SQL direto para adicionar produto")
+            print(f"DEBUG SQL PRODUTO: Proposta ID={proposta_id_int}, Nome='{nome_sanitizado}'")
+            
+            # Criar uma conexão fresca para evitar problemas com transações
+            from sqlalchemy import create_engine
+            from sqlalchemy.orm import sessionmaker
+            import os
+            
+            # Obter a conexão diretamente do ambiente
+            db_url = os.environ.get('DATABASE_URL')
+            engine = create_engine(db_url)
+            Session = sessionmaker(bind=engine)
+            session = Session()
+            
+            try:
+                # Executar a inserção
+                result = session.execute(sql).fetchone()
+                session.commit()
+                
+                if result and result[0]:
+                    produto_id = result[0]
+                    print(f"DEBUG SQL PRODUTO: Produto adicionado com ID={produto_id}")
+                    
+                    # Verificar se o produto foi realmente adicionado
+                    verify_sql = f"SELECT COUNT(*) FROM produtos_organizadores WHERE id = {produto_id}"
+                    verify_result = session.execute(verify_sql).fetchone()
+                    if verify_result and verify_result[0] > 0:
+                        print(f"DEBUG SQL PRODUTO: Verificação OK - Produto ID={produto_id} encontrado no banco")
+                    else:
+                        print(f"DEBUG SQL PRODUTO: ALERTA - Produto ID={produto_id} não encontrado na verificação!")
+                    
+                    return produto_id
+                else:
+                    print("DEBUG SQL PRODUTO: Nenhum ID retornado da inserção")
+                    return None
+            finally:
+                # Sempre fechar a sessão
+                session.close()
+                
+        except Exception as e:
+            print(f"DEBUG SQL PRODUTO: ERRO ao adicionar produto via SQL: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return None
+
     def add_produto_organizador(self, proposta_id, nome, descricao, valor, quantidade, comodo):
         """
         Adiciona um produto à proposta de organização
@@ -1277,22 +1359,20 @@ class Database:
         Returns:
             int: ID do produto adicionado
         """
+        # Primeiro tentar a adição via SQL direto
+        produto_id = self.add_produto_via_sql_direto(proposta_id, nome, descricao, valor, quantidade, comodo)
+        if produto_id is not None:
+            return produto_id
+            
+        # Se não funcionou, tentar o método tradicional
         try:
-            print(f"DEBUG PRODUTO: Adicionando produto '{nome}' diretamente à proposta ID={proposta_id}")
-            print(f"DEBUG PRODUTO: Valor: {valor}, Quantidade: {quantidade}, Cômodo: {comodo}")
+            print(f"DEBUG PRODUTO: SQL direto falhou, tentando método ORM")
+            print(f"DEBUG PRODUTO: Adicionando produto '{nome}' à proposta ID={proposta_id}")
             
             # Verificar se os tipos de dados estão corretos
             proposta_id_int = int(proposta_id)
             valor_float = float(valor)
             quantidade_int = int(quantidade)
-            
-            # Verificar se a proposta existe
-            proposta = self.session.query(Proposta).filter_by(id=proposta_id_int).first()
-            if not proposta:
-                print(f"DEBUG PRODUTO: ERRO - Proposta ID={proposta_id_int} não encontrada")
-                raise ValueError(f"Proposta ID={proposta_id_int} não encontrada")
-            
-            print(f"DEBUG PRODUTO: Proposta encontrada: #{proposta.numero}")
             
             # Criar o objeto produto
             produto = ProdutoOrganizador(
@@ -1304,74 +1384,88 @@ class Database:
                 comodo=comodo or "Geral"
             )
             
-            # Adicionar ao banco de dados
+            # Adicionar ao banco de dados usando uma transação isolada
+            self.session = Session()  # Nova sessão limpa
             self.session.add(produto)
             self.session.flush()  # Para obter o ID do produto
-            
-            print(f"DEBUG PRODUTO: Produto adicionado com ID: {produto.id}")
-            
-            # Forçar commit para garantir persistência - não dependemos do _safe_query aqui
             self.session.commit()
             
-            print(f"DEBUG PRODUTO: Commit realizado, produto {produto.id} salvo com sucesso")
-            
-            # Verificar se o produto foi realmente salvo
-            produto_verificacao = self.session.query(ProdutoOrganizador).filter_by(id=produto.id).first()
-            if produto_verificacao:
-                print(f"DEBUG PRODUTO: Verificação OK - Produto ID={produto.id} encontrado no banco")
-            else:
-                print(f"DEBUG PRODUTO: ALERTA - Produto ID={produto.id} não encontrado na verificação pós-commit!")
-            
-            # Executar SQL direto para adicionar por redundância
-            sql = f"""
-            INSERT INTO produtos_organizadores 
-            (proposta_id, nome, descricao, valor, quantidade, comodo, data_cadastro) 
-            VALUES 
-            ({proposta_id_int}, '{nome.replace("'", "''")}', '{descricao.replace("'", "''")}', {valor_float}, {quantidade_int}, '{comodo or "Geral"}', NOW())
-            ON CONFLICT (id) DO NOTHING;
-            """
-            
-            try:
-                print(f"DEBUG PRODUTO: Executando SQL direto (backup) por garantia")
-                self.session.execute(sql)
-                self.session.commit()
-                print(f"DEBUG PRODUTO: SQL direto executado com sucesso")
-            except Exception as e:
-                print(f"DEBUG PRODUTO: Erro no SQL direto (ignorando): {str(e)}")
-                # Ignora erro no SQL redundante pois o produto já deve estar salvo
-            
+            print(f"DEBUG PRODUTO: Produto ORM adicionado com ID: {produto.id}")
             return produto.id
             
         except Exception as e:
-            print(f"DEBUG PRODUTO: ERRO CRÍTICO ao adicionar produto: {str(e)}")
+            print(f"DEBUG PRODUTO: ERRO no método ORM: {str(e)}")
             import traceback
             traceback.print_exc()
             
-            # Tentar salvar diretamente como último recurso
-            try:
-                sql = f"""
-                INSERT INTO produtos_organizadores 
-                (proposta_id, nome, descricao, valor, quantidade, comodo, data_cadastro) 
-                VALUES 
-                ({proposta_id_int}, '{nome.replace("'", "''")}', '{descricao.replace("'", "''")}', {valor_float}, {quantidade_int}, '{comodo or "Geral"}', NOW())
-                RETURNING id;
-                """
-                
-                print(f"DEBUG PRODUTO: Tentativa de último recurso - SQL direto")
-                result = self.session.execute(sql).fetchone()
-                self.session.commit()
-                
-                if result and result[0]:
-                    produto_id = result[0]
-                    print(f"DEBUG PRODUTO: Produto salvo via SQL direto: ID={produto_id}")
-                    return produto_id
-            except Exception as inner_e:
-                print(f"DEBUG PRODUTO: Falha na tentativa final: {str(inner_e)}")
-            
             # Propagar erro original
-            raise
+            raise ValueError(f"Não foi possível adicionar o produto: {str(e)}")
+
+    def get_produtos_organizadores_sql_direto(self, proposta_id=None):
+        """
+        Busca produtos usando SQL direto para evitar problemas de transação
+        """
+        try:
+            # Criar uma conexão fresca para evitar problemas com transações
+            from sqlalchemy import create_engine
+            from sqlalchemy.orm import sessionmaker
+            import os
+            
+            # Obter a conexão diretamente do ambiente
+            db_url = os.environ.get('DATABASE_URL')
+            engine = create_engine(db_url)
+            Session = sessionmaker(bind=engine)
+            session = Session()
+            
+            try:
+                # Executar a busca
+                sql = "SELECT * FROM produtos_organizadores"
+                if proposta_id:
+                    sql += f" WHERE proposta_id = {int(proposta_id)}"
+                
+                result = session.execute(sql).fetchall()
+                
+                # Criar DataFrame manualmente
+                if result:
+                    import pandas as pd
+                    from datetime import datetime
+                    
+                    df_data = []
+                    for row in result:
+                        data_cadastro = row.data_cadastro if hasattr(row, 'data_cadastro') else datetime.now().date()
+                        df_data.append({
+                            'id': row.id,
+                            'nome': row.nome,
+                            'descricao': row.descricao,
+                            'valor': row.valor,
+                            'quantidade': row.quantidade,
+                            'comodo': row.comodo,
+                            'data_cadastro': data_cadastro
+                        })
+                    
+                    return pd.DataFrame(df_data)
+                else:
+                    return pd.DataFrame()
+            finally:
+                session.close()
+        except Exception as e:
+            print(f"DEBUG SQL GET PRODUTOS: Erro ao buscar produtos via SQL: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            # Em caso de erro, retornar DataFrame vazio
+            import pandas as pd
+            return pd.DataFrame()
 
     def get_produtos_organizadores(self, proposta_id=None):
+        """
+        Obtém produtos de uma proposta. Tenta primeiro via SQL direto, e depois via ORM.
+        """
+        # Primeiro tentar via SQL direto
+        df_produtos = self.get_produtos_organizadores_sql_direto(proposta_id)
+        if not df_produtos.empty:
+            return df_produtos
+        
+        # Se falhou, tentar via ORM normal
         def query():
             query = self.session.query(ProdutoOrganizador)
             if proposta_id:
