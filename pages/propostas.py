@@ -1262,8 +1262,10 @@ def show():
                     )
                     
                     # Adicionar coluna de Fim Execução (usando a data_fim)
-                    df_finalizadas['Fim Execução'] = propostas_finalizadas['data_fim'].apply(
-                        lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
+                    # Deixar em branco para propostas recusadas
+                    df_finalizadas['Fim Execução'] = propostas_finalizadas.apply(
+                        lambda row: '' if row['status'] == 'Recusada' else row['data_fim'].strftime('%d/%m/%Y') if pd.notna(row['data_fim']) else '',
+                        axis=1
                     )
                     
                     # Exibir tabela sem mostrar a coluna ID
@@ -1476,8 +1478,10 @@ def show():
                         lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
                     )
                     
-                    df_todas['Fim Execução'] = propostas_filtradas['data_fim'].apply(
-                        lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
+                    # Deixar Fim Execução em branco para propostas recusadas
+                    df_todas['Fim Execução'] = propostas_filtradas.apply(
+                        lambda row: '' if row['status'] == 'Recusada' else row['data_fim'].strftime('%d/%m/%Y') if pd.notna(row['data_fim']) else '', 
+                        axis=1
                     )
                     
                     # Exibir tabela sem a coluna ID
