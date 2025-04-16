@@ -1153,14 +1153,16 @@ def show():
                                 st.write("### Produtos")
                                 produtos = st.session_state.db.get_produtos_organizadores(proposta_exec_id)
                                 
-                                # Filtrar apenas produtos de catálogo (não itens "Outros")
+                                # Filtrar produtos de catálogo (não itens "Outros")
                                 if not produtos.empty:
                                     # Verificar se tem produtos de UBER ou outros serviços que não são produtos físicos
                                     # Geralmente esses itens contêm palavras-chave como "serviço", "uber", "transporte", etc.
                                     termos_outros = ['uber', 'transporte', 'serviço', 'servico', 'frete', 'delivery', 'entrega']
                                     
-                                    # Filtragem para remover itens que parecem ser "Outros"
+                                    # Filtragem para separar itens que parecem ser "Outros"
                                     produtos_filtrados = produtos.copy()
+                                    produtos_servicos = None
+                                    
                                     if 'nome' in produtos_filtrados.columns:
                                         # Converter nomes para minúsculo para comparação
                                         produtos_filtrados['nome_lower'] = produtos_filtrados['nome'].str.lower()
@@ -1170,12 +1172,19 @@ def show():
                                             lambda x: any(termo in x for termo in termos_outros) if isinstance(x, str) else False
                                         )
                                         
-                                        # Aplicar a máscara para filtrar
-                                        produtos_filtrados = produtos_filtrados[~mask_outros]
+                                        # Separar produtos e serviços
+                                        produtos_servicos = produtos_filtrados[mask_outros].copy()
+                                        produtos_filtrados = produtos_filtrados[~mask_outros].copy()
                                         
                                         # Remover coluna temporária
                                         if 'nome_lower' in produtos_filtrados.columns:
                                             produtos_filtrados = produtos_filtrados.drop('nome_lower', axis=1)
+                                        if not produtos_servicos.empty and 'nome_lower' in produtos_servicos.columns:
+                                            produtos_servicos = produtos_servicos.drop('nome_lower', axis=1)
+                                    
+                                    # Guardar para uso posterior na seção "Outros Itens"
+                                    if produtos_servicos is not None and not produtos_servicos.empty:
+                                        st.session_state['produtos_servicos_filtrados'] = produtos_servicos
                                     
                                     # Se ainda temos produtos depois da filtragem
                                     if not produtos_filtrados.empty:
@@ -1235,16 +1244,46 @@ def show():
                                 # 5. Outros itens
                                 st.write("### Outros Itens")
                                 outros_itens = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_exec_id, "OUTROS")
-                                if not outros_itens.empty:
-                                    total_outros = outros_itens['valor'].sum()
-                                    
-                                    # Formatar para exibição
+                                
+                                # Verificar se há produtos de serviço (UBER etc.) filtrados anteriormente
+                                tem_produtos_servico = 'produtos_servicos_filtrados' in st.session_state and not st.session_state['produtos_servicos_filtrados'].empty
+                                
+                                if not outros_itens.empty or tem_produtos_servico:
+                                    # Inicializar o DataFrame para exibição
                                     df_outros = pd.DataFrame()
-                                    df_outros['Descrição'] = outros_itens['descricao']
-                                    df_outros['Valor'] = outros_itens['valor'].apply(lambda x: f"R$ {float(x):.2f}")
                                     
+                                    # Adicionar os acréscimos do tipo OUTROS
+                                    if not outros_itens.empty:
+                                        df_temp = pd.DataFrame()
+                                        df_temp['Descrição'] = outros_itens['descricao']
+                                        df_temp['Valor'] = outros_itens['valor'].apply(lambda x: f"R$ {float(x):.2f}")
+                                        df_temp['Tipo'] = "Acréscimo"
+                                        df_outros = pd.concat([df_outros, df_temp])
+                                    
+                                    # Adicionar os produtos de serviço (UBER etc.)
+                                    if tem_produtos_servico:
+                                        produtos_servicos = st.session_state['produtos_servicos_filtrados']
+                                        produtos_servicos['valor_total'] = produtos_servicos['valor'] * produtos_servicos['quantidade']
+                                        
+                                        df_temp = pd.DataFrame()
+                                        df_temp['Descrição'] = produtos_servicos['nome']
+                                        df_temp['Valor'] = produtos_servicos['valor_total'].apply(lambda x: f"R$ {float(x):.2f}")
+                                        df_temp['Tipo'] = "Serviço"
+                                        df_outros = pd.concat([df_outros, df_temp])
+                                    
+                                    # Calcular valor total
+                                    total_outros = 0
+                                    if not outros_itens.empty:
+                                        total_outros += outros_itens['valor'].sum()
+                                    
+                                    if tem_produtos_servico:
+                                        produtos_servicos = st.session_state['produtos_servicos_filtrados']
+                                        produtos_servicos['valor_total'] = produtos_servicos['valor'] * produtos_servicos['quantidade']
+                                        total_outros += produtos_servicos['valor_total'].sum()
+                                    
+                                    # Exibir dados e totais
                                     st.dataframe(df_outros, hide_index=True, use_container_width=True)
-                                    st.info(f"Total Outros: R$ {total_outros:.2f}")
+                                    st.info(f"Total Outros Itens: R$ {total_outros:.2f}")
                                 else:
                                     st.info("Nenhum item adicional nesta proposta.")
                                 
