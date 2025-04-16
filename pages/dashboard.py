@@ -301,41 +301,56 @@ def show():
                     
                 for idx, proposta in propostas_executadas.iterrows():
                     # Verificar se proposta tem todos os campos necessários
-                    campos_obrigatorios = ['id', 'numero', 'descricao', 'data_inicio']
+                    campos_obrigatorios = ['id', 'numero', 'descricao']
                     if not all(campo in proposta for campo in campos_obrigatorios):
                         continue  # Pula se faltar algum campo obrigatório
                     
-                    # Verificar se tem data de início
-                    if pd.notna(proposta.get('data_inicio')):
-                        # Converter para datetime se for string
-                        if isinstance(proposta['data_inicio'], str):
+                    # Decidir qual data usar para cálculo:
+                    # Para propostas finalizadas, usar data_fim (data de conclusão)
+                    # Para outras propostas, usar data_inicio
+                    data_referencia = None
+                    
+                    # Para propostas finalizadas, preferir a data_fim
+                    if proposta['status'] == 'Finalizada' and pd.notna(proposta.get('data_fim')):
+                        data_campo = proposta['data_fim']
+                        campo_nome = "data_fim"
+                    # Para outras propostas ou se não tiver data_fim, usar data_inicio
+                    elif pd.notna(proposta.get('data_inicio')):
+                        data_campo = proposta['data_inicio']
+                        campo_nome = "data_inicio"
+                    else:
+                        continue  # Se não tem nenhuma data válida, pular esta proposta
+                    
+                    # Converter para datetime se for string
+                    if isinstance(data_campo, str):
+                        try:
+                            data_referencia = datetime.strptime(data_campo, '%Y-%m-%d').date()
+                        except ValueError:
                             try:
-                                data_inicio = datetime.strptime(proposta['data_inicio'], '%Y-%m-%d').date()
+                                data_referencia = datetime.strptime(data_campo, '%d/%m/%Y').date()
                             except ValueError:
-                                try:
-                                    data_inicio = datetime.strptime(proposta['data_inicio'], '%d/%m/%Y').date()
-                                except ValueError:
-                                    continue  # Se não conseguir converter, pula
-                        else:
-                            data_inicio = proposta['data_inicio'].date() if hasattr(proposta['data_inicio'], 'date') else proposta['data_inicio']
-                            
-                        # Calcular a data que será 60 dias após o início
-                        data_60_dias = data_inicio + timedelta(days=60)
+                                continue  # Se não conseguir converter, pula
+                    else:
+                        data_referencia = data_campo.date() if hasattr(data_campo, 'date') else data_campo
                         
-                        # Calcular quantos dias faltam para atingir 60 dias
-                        dias_restantes = (data_60_dias - hoje).days
-                        
-                        # Se faltar 10 dias ou menos (e ainda não tiver passado), mostrar alerta
-                        if 0 <= dias_restantes <= 10:
-                            propostas_alerta.append({
-                                'id': proposta['id'],
-                                'numero': proposta['numero'],
-                                'cliente_nome': proposta.get('cliente_nome', 'Cliente não informado'),
-                                'descricao': proposta['descricao'],
-                                'data_inicio': data_inicio,
-                                'dias_restantes': dias_restantes,
-                                'data_60_dias': data_60_dias
-                            })
+                    # Calcular a data que será 60 dias após a data de referência
+                    data_60_dias = data_referencia + timedelta(days=60)
+                    
+                    # Calcular quantos dias faltam para atingir 60 dias
+                    dias_restantes = (data_60_dias - hoje).days
+                    
+                    # Se faltar 10 dias ou menos (e ainda não tiver passado), mostrar alerta
+                    if 0 <= dias_restantes <= 10:
+                        propostas_alerta.append({
+                            'id': proposta['id'],
+                            'numero': proposta['numero'],
+                            'cliente_nome': proposta.get('cliente_nome', 'Cliente não informado'),
+                            'descricao': proposta['descricao'],
+                            'data_referencia': data_referencia,
+                            'campo_nome': campo_nome,
+                            'dias_restantes': dias_restantes,
+                            'data_60_dias': data_60_dias
+                        })
                 
                 # Ordenar por dias restantes (mais urgentes primeiro)
                 propostas_alerta.sort(key=lambda x: x['dias_restantes'])
@@ -357,7 +372,7 @@ def show():
                                     Cliente: <b>{p['cliente_nome']}</b>
                                 </div>
                                 <div style='color: white; font-size: 0.9em;'>
-                                    Data da organização: {format_date_safe(p['data_inicio'])} | Completará 60 dias em: {format_date_safe(p['data_60_dias'])}
+                                    {p['campo_nome'] == 'data_fim' ? 'Data de conclusão' : 'Data da organização'}: {format_date_safe(p['data_referencia'])} | Completará 60 dias em: {format_date_safe(p['data_60_dias'])}
                                 </div>
                             </div>
                             """, unsafe_allow_html=True)
