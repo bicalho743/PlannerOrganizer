@@ -3679,6 +3679,43 @@ class Database:
                         import traceback
                         traceback.print_exc()
                 
+                # Vamos adicionar processamento de itens tipo "OUTRO"
+                outros = self.session.query(AcrescimoProposta)\
+                    .filter_by(proposta_id=proposta_id_int, tipo="OUTRO")\
+                    .all()
+                    
+                print(f"DEBUG LANCAMENTOS: Itens tipo OUTRO encontrados: {len(outros)}")
+                
+                valor_total_outros = 0
+                for outro_item in outros:
+                    valor_outro = float(outro_item.valor) if outro_item.valor else 0
+                    valor_total_outros += valor_outro
+                    print(f"DEBUG LANCAMENTOS: Item OUTRO '{outro_item.fornecedor}': R$ {valor_outro:.2f}")
+                
+                print(f"DEBUG LANCAMENTOS: Valor total de itens OUTRO: R$ {valor_total_outros:.2f}")
+                
+                # Criar lançamento para itens OUTRO
+                if valor_total_outros > 0:
+                    transacao_outros = Transacao(
+                        tipo="receita_a_receber",
+                        descricao=f"Itens adicionais da Proposta #{proposta.numero} - {cliente.nome}",
+                        valor=valor_total_outros,
+                        data=datetime.now().date(),
+                        categoria="Outros",
+                        subcategoria="Itens Adicionais",
+                        tipo_receita="outros",
+                        origem_id=proposta.cliente_id,
+                        origem_tipo="cliente",
+                        tipo_conta="PF",
+                        status="Pendente",
+                        proposta_id=proposta_id_int,
+                        classificacao="receita"
+                    )
+                    self.session.add(transacao_outros)
+                    result["valor_outros"] = valor_total_outros
+                    result["lancamentos_gerados"] += 1
+                    print(f"DEBUG LANCAMENTOS: Lançamento de itens OUTRO criado: R$ {valor_total_outros:.2f}")
+                
                 # 3. Comissões a receber por fornecedor
                 fornecedores = self.session.query(AcrescimoProposta)\
                     .filter_by(proposta_id=proposta_id_int, tipo="FORNECEDOR")\

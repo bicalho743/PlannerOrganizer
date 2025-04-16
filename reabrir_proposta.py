@@ -129,23 +129,11 @@ def reabrir_proposta_finalizada(proposta_id):
                 "mensagem": f"Erro ao atualizar proposta: {resultado.get('mensagem', 'Erro desconhecido')}"
             }
         
-        # Se existirem lançamentos financeiros, remova-os
-        # É melhor criar uma nova sessão de banco de dados para evitar problemas de transação
+        # A remoção de lançamentos financeiros vai ser realizada pelo mecanismo de forcar_geracao
+        # não precisamos removê-los explicitamente aqui, pois a própria função de geração de lançamentos
+        # já vai remover os existentes quando receber forcar_geracao=True
         resultado_remocao = {"lancamentos_removidos": 0}
-        if tem_lancamentos:
-            # Fechamos a sessão atual para garantir que a transação de atualização de proposta finalize
-            db.session.commit()
-            # Então usamos uma nova conexão para a remoção de lançamentos
-            db_remove = Database()
-            resultado_remocao = remover_lancamentos_financeiros(db_remove, proposta_id)
-            if resultado_remocao["status"] != "sucesso":
-                # Houve um erro ao remover os lançamentos, mas a proposta já foi reaberta
-                # Alertar o usuário
-                return {
-                    "status": "sucesso_parcial",
-                    "mensagem": "Proposta reaberta com sucesso, mas houve problemas para remover lançamentos existentes",
-                    "alerta": resultado_remocao["mensagem"]
-                }
+        print(f"DEBUG: A remoção de lançamentos será realizada automaticamente pela função regeneradora com forcar_geracao=True")
         
         # Gerar novos lançamentos financeiros para a proposta
         # Importante: precisamos usar um novo objeto Database para evitar problemas de transação
