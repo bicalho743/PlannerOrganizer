@@ -53,82 +53,124 @@ if 'db' not in st.session_state:
         st.error(f"Detalhes do erro: {str(e)}")
         st.stop()
 
-# Estilo CSS customizado para garantir o menu no topo e esconder os links padrão do Streamlit
-st.markdown("""
+# Carregar CSS customizado do arquivo style.css
+with open('.streamlit/style.css', 'r') as f:
+    custom_css = f.read()
+
+# Adicionar estilo CSS personalizado para tema profissional
+st.markdown(f"""
     <style>
-    section[data-testid="stSidebar"] {
-        background-color: #262730;
-    }
+    {custom_css}
+    
+    /* Estilo específico para a barra lateral */
+    section[data-testid="stSidebar"] {{
+        background-color: #F9FAFB;
+        border-right: 1px solid #E0E0E0;
+    }}
 
-    div.block-container {
+    div.block-container {{
         padding-top: 0;
-    }
+    }}
 
-    div.stButton > button {
+    /* Estilo para botões do menu */
+    div.stButton > button {{
         width: 100%;
-        background-color: #F1A208 !important;
-        color: #262730 !important;
+        background-color: #1E88E5 !important;
+        color: white !important;
         font-weight: 500;
         text-align: left;
         padding: 0.75rem 1rem;
         margin-bottom: 0.5rem;
-    }
+        border-radius: 4px;
+        border: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        transition: all 0.2s ease;
+    }}
 
-    div.stButton > button:hover {
-        background-color: #ffc107 !important;
-    }
+    div.stButton > button:hover {{
+        background-color: #1976D2 !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        transform: translateY(-1px);
+    }}
 
-    /* Container escuro para os botões */
-    div.nav-buttons {
-        background-color: #262730;
+    /* Container para os botões */
+    div.nav-buttons {{
         padding: 1rem;
         margin: 0 -1rem;
-    }
+    }}
     
     /* Esconde os links nativos do Streamlit na barra lateral */
-    section[data-testid="stSidebar"] .element-container:has(svg[xmlns="http://www.w3.org/2000/svg"]) {
+    section[data-testid="stSidebar"] .element-container:has(svg[xmlns="http://www.w3.org/2000/svg"]) {{
         display: none;
-    }
+    }}
     
     /* Esconde o seletor de páginas nativo do Streamlit */
-    [data-testid="stSidebarNav"] {
+    [data-testid="stSidebarNav"] {{
         display: none !important;
-    }
+    }}
     
     /* Estilos para os links de navegação personalizados */
-    .navigation-links a {
-        transition: color 0.3s ease;
-    }
+    .navigation-links a {{
+        display: block;
+        padding: 8px 12px;
+        margin: 4px 0;
+        text-decoration: none;
+        color: #1E366F;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }}
     
-    .navigation-links a:hover {
-        color: #F1A208 !important;
-    }
+    .navigation-links a:hover {{
+        background-color: #E3F2FD;
+        color: #1976D2 !important;
+    }}
     
     /* Esconde o botão de hamburger do Streamlit */
-    button[kind="header"] {
+    button[kind="header"] {{
         display: none !important;
-    }
+    }}
     
     /* Remove excesso de padding na barra lateral */
-    .st-emotion-cache-16txtl3 {
+    .st-emotion-cache-16txtl3 {{
         padding-top: 1rem !important;
-    }
+    }}
+    
+    /* Título no topo */
+    h1 {{
+        margin-top: 0.5rem;
+        margin-bottom: 1.5rem;
+        color: #1E366F;
+        font-weight: 600;
+    }}
+    
+    /* Expanders na sidebar */
+    .sidebar .st-expander {{
+        border: 1px solid #E0E0E0;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+    }}
+    
+    /* Cabeçalho do expander */
+    .sidebar .st-expander > div:first-child {{
+        background-color: #F5F7FA;
+        padding: 0.75rem;
+    }}
     </style>
 """, unsafe_allow_html=True)
 
 # Título principal do menu
 # Adicionar frase motivacional acima do menu principal
 st.sidebar.markdown("""
-<div style="font-size: 0.9rem; color: #efefef; margin-bottom: 1rem; text-align: center; font-style: italic; padding: 10px; background-color: rgba(255,255,255,0.05); border-radius: 5px;">
-    "Organize suas propostas em minutos e nunca mais perca um cliente por desorganização."
+<div style="font-size: 0.9rem; color: #1E366F; margin-bottom: 1.5rem; text-align: center; font-style: italic; padding: 15px; background-color: #E3F2FD; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+    "Transforme sua organização em resultados: gerencie propostas, clientes e finanças com precisão profissional."
 </div>
 """, unsafe_allow_html=True)
 
 # Título do menu
 st.sidebar.markdown("""
-<h1 style="font-size: 1.5rem; color: #F1A208; margin-bottom: 1rem; text-align: center;">
+<h1 style="font-size: 1.6rem; color: #1E366F; margin-bottom: 1.5rem; text-align: center; font-weight: 600;">
     Planner Organizer<br>
-    <span style="font-size: 0.9rem; color: #efefef;">Sistema Profissional de Gestão Personal Organizer</span>
+    <span style="font-size: 0.9rem; color: #5A6A85; font-weight: 400;">Sistema Profissional de Gestão Personal Organizer</span>
 </h1>
 """, unsafe_allow_html=True)
 
@@ -181,42 +223,59 @@ except Exception as e:
     st.error(f"Erro ao carregar página: {str(e)}")
 
 # Informações do sistema
-st.sidebar.markdown("---")
+st.sidebar.markdown('<div style="margin: 1.5rem 0;"><hr style="border: none; height: 1px; background-color: #E0E0E0;"></div>', unsafe_allow_html=True)
+
 with st.sidebar.expander("ℹ️ Informações do Sistema", expanded=False):
     st.markdown("""
-    ### Planner Organizer
-    **Versão:** 1.0.3
-
-    **Recursos Disponíveis:**
-    - ✅ Gestão de Clientes
-    - ✅ Controle de Propostas
-    - ✅ Gestão Financeira
-    - ✅ Relatórios e Análises
-
-    **Novidades:**
-    - 🎉 Telas de celebração
-    - 📊 Dashboard aprimorado
-    - 📱 Interface responsiva
-
-    Desenvolvido com ❤️ usando Streamlit
-    """)
+    <div style="padding: 0.5rem; background-color: white; border-radius: 4px;">
+        <h3 style="color: #1E366F; font-size: 1.2rem; margin-bottom: 1rem;">Planner Organizer</h3>
+        <p style="margin-bottom: 0.5rem;"><strong>Versão:</strong> 1.0.4</p>
+        
+        <p style="margin-top: 1rem; margin-bottom: 0.5rem;"><strong>Recursos Disponíveis:</strong></p>
+        <ul style="margin-top: 0; padding-left: 1.5rem;">
+            <li style="margin-bottom: 0.3rem;">✅ Gestão de Clientes</li>
+            <li style="margin-bottom: 0.3rem;">✅ Controle de Propostas</li>
+            <li style="margin-bottom: 0.3rem;">✅ Gestão Financeira</li>
+            <li style="margin-bottom: 0.3rem;">✅ Relatórios e Análises</li>
+        </ul>
+        
+        <p style="margin-top: 1rem; margin-bottom: 0.5rem;"><strong>Novidades:</strong></p>
+        <ul style="margin-top: 0; padding-left: 1.5rem;">
+            <li style="margin-bottom: 0.3rem;">🎉 Telas de celebração</li>
+            <li style="margin-bottom: 0.3rem;">📊 Dashboard aprimorado</li>
+            <li style="margin-bottom: 0.3rem;">📱 Interface responsiva</li>
+            <li style="margin-bottom: 0.3rem;">🎨 Tema profissional</li>
+        </ul>
+        
+        <p style="margin-top: 1rem; text-align: center; font-size: 0.9rem; color: #5A6A85;">
+            Desenvolvido com ❤️ usando Streamlit
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Links de navegação ocultos em um expander para desenvolvedores
 with st.sidebar.expander("🔧 Acesso Desenvolvedor", expanded=False):
     st.markdown("""
-    <div class="navigation-links" style="font-size: 0.9rem;">
-        <p style="margin-bottom: 8px;">Navegação rápida:</p>
-        <a href="/" style="display: block; padding: 4px 0; text-decoration: none;">app</a>
-        <a href="/cadastros" style="display: block; padding: 4px 0; text-decoration: none;">cadastros</a>
-        <a href="/dashboard" style="display: block; padding: 4px 0; text-decoration: none;">dashboard</a>
-        <a href="/dashboard_fixed" style="display: block; padding: 4px 0; text-decoration: none;">dashboard fixed</a>
-        <a href="/financeiro" style="display: block; padding: 4px 0; text-decoration: none;">financeiro</a>
-        <a href="/propostas" style="display: block; padding: 4px 0; text-decoration: none;">propostas</a>
-        <a href="/relatorios" style="display: block; padding: 4px 0; text-decoration: none;">relatórios</a>
-        <a href="/vendas" style="display: block; padding: 4px 0; text-decoration: none;">vendas</a>
+    <div style="padding: 0.5rem; background-color: white; border-radius: 4px;">
+        <h4 style="color: #1E366F; font-size: 1rem; margin-bottom: 0.8rem;">Navegação Rápida</h4>
+        
+        <div class="navigation-links">
+            <a href="/" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #F5F7FA; color: #1E366F; text-decoration: none; font-size: 0.85rem;">Home (App)</a>
+            <a href="/cadastros" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #F5F7FA; color: #1E366F; text-decoration: none; font-size: 0.85rem;">Cadastros</a>
+            <a href="/dashboard" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #F5F7FA; color: #1E366F; text-decoration: none; font-size: 0.85rem;">Dashboard</a>
+            <a href="/dashboard_fixed" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #F5F7FA; color: #1E366F; text-decoration: none; font-size: 0.85rem;">Dashboard (Fixed)</a>
+            <a href="/financeiro" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #F5F7FA; color: #1E366F; text-decoration: none; font-size: 0.85rem;">Financeiro</a>
+            <a href="/propostas" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #F5F7FA; color: #1E366F; text-decoration: none; font-size: 0.85rem;">Propostas</a>
+            <a href="/relatorios" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #F5F7FA; color: #1E366F; text-decoration: none; font-size: 0.85rem;">Relatórios</a>
+            <a href="/vendas" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #F5F7FA; color: #1E366F; text-decoration: none; font-size: 0.85rem;">Vendas</a>
+        </div>
+        
+        <p style="margin-top: 1rem; font-size: 0.8rem; color: #5A6A85; text-align: center;">
+            Acesso exclusivo para desenvolvedores
+        </p>
     </div>
     """, unsafe_allow_html=True)
-
+    
     # Sem botão de importação conforme solicitado
 
 # A navegação é controlada pelos botões do menu principal

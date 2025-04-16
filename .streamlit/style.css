@@ -1,0 +1,144 @@
+/* Estilos globais */
+.main {
+    padding: 1.5rem;
+}
+
+/* Personalizações para cabeçalhos */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+h1 {
+    color: #1E366F;
+    border-bottom: 1px solid #eaeaea;
+    padding-bottom: 0.5rem;
+}
+
+/* Estilização de botões */
+.stButton > button {
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
+
+.stButton > button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+/* Estilização de caixas de texto e inputs */
+input, textarea, .stTextInput > div > div > input, .stTextArea > div > div > textarea {
+    border-radius: 4px !important;
+    border: 1px solid #E0E0E0 !important;
+    padding: 0.5rem !important;
+}
+
+input:focus, textarea:focus, .stTextInput > div > div > input:focus, .stTextArea > div > div > textarea:focus {
+    border-color: #1E88E5 !important;
+    box-shadow: 0 0 0 1px rgba(30,136,229,0.2) !important;
+}
+
+/* Estilização para tabelas */
+.stDataFrame {
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.dataframe {
+    border-collapse: collapse;
+}
+
+.dataframe th {
+    background-color: #F5F7FA;
+    font-weight: 600;
+    color: #1E366F;
+    padding: 0.75rem !important;
+    border-bottom: 2px solid #E0E0E0;
+}
+
+.dataframe td {
+    padding: 0.75rem !important;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.dataframe tr:hover {
+    background-color: #F8F9FA;
+}
+
+/* Estilização para selectbox e outros controles */
+.stSelectbox {
+    min-width: 200px;
+}
+
+.stSelectbox > div > div > select {
+    border-radius: 4px !important;
+}
+
+/* Estilização para sidebar */
+.css-1vq4p4l, .css-1d3bhkq {
+    background-color: #F9FAFB !important;
+    border-right: 1px solid #eaeaea;
+}
+
+/* Cards informativos */
+div[data-testid="stMetric"] {
+    background-color: #FFFFFF;
+    border-radius: 6px;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid #eaeaea;
+}
+
+div[data-testid="stMetric"] > div:first-child {
+    color: #1E366F;
+    font-weight: 600;
+}
+
+/* Estilização para alertas e mensagens */
+div[data-testid="stAlert"] {
+    border-radius: 4px;
+    padding: 1rem !important;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Personalizações específicas para diferentes tipos de containers */
+div[data-testid="stExpander"] {
+    border-radius: 4px;
+    border: 1px solid #eaeaea;
+    overflow: hidden;
+}
+
+div[data-testid="stExpander"] > div:first-child {
+    background-color: #F9FAFB;
+    padding: 0.75rem;
+    border-bottom: 1px solid #eaeaea;
+}
+
+/* Estilização para widgets de data */
+div[data-baseweb="calendar"] {
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Ajustes de espaçamento gerais */
+.stTabs {
+    margin-top: 1rem;
+}
+
+/* Estilização para abas */
+button[role="tab"] {
+    padding: 0.75rem 1.5rem !important;
+    font-weight: 500;
+}
+
+.stTabs [aria-selected="true"] {
+    font-weight: 600;
+    color: #1E88E5 !important;
+    border-bottom-color: #1E88E5 !important;
+}
