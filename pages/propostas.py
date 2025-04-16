@@ -970,21 +970,22 @@ def show():
                                                 # st.error(f"DEBUG: Erro na validação de dados: {str(e_val)}")
                                                 raise ValueError(f"Erro na preparação dos dados: {str(e_val)}")
                                             
-                                            # Salvar o item
-                                            # Removido log de debug
+                                            # Salvar o item como acréscimo tipo OUTRO
+                                            # em vez de como produto organizador
                                             item_id = None
                                             try:
-                                                # O método add_produto_organizador não aceita o parâmetro 'tipo'
-                                                item_id = st.session_state.db.add_produto_organizador(
+                                                # Usar a função add_acrescimo_proposta para adicionar como tipo OUTRO
+                                                resultado = st.session_state.db.add_acrescimo_proposta(
                                                     proposta_id=proposta_id_validado,
-                                                    nome=nome_validado,
-                                                    descricao=descricao_validada,
-                                                    valor=valor_validado,
-                                                    quantidade=quantidade_validada,
-                                                    comodo=comodo_validado
+                                                    tipo="OUTRO",  # Tipo OUTRO para garantir que seja processado corretamente
+                                                    fornecedor=nome_validado,  # Nome do item vai como fornecedor
+                                                    descricao=descricao_validada,  # Descrição
+                                                    valor=valor_validado * quantidade_validada  # Valor total (preço unitário x quantidade)
                                                 )
-                                                # Nota: Idealmente deveríamos ter um campo 'tipo' na tabela produtos_organizadores
                                                 
+                                                if resultado and "acrescimo_id" in resultado:
+                                                    item_id = resultado["acrescimo_id"]
+                                                    
                                                 if item_id:
                                                     st.success(f"Item '{nome_produto}' adicionado com sucesso!")
                                                     time.sleep(1)
@@ -998,54 +999,34 @@ def show():
                                             st.error(f"Erro ao adicionar item: {str(e)}")
                                             # Removido logs de debug detalhados
                             
-                            # Exibir itens personalizados já adicionados
+                            # Exibir itens do tipo OUTRO já adicionados
                             try:
-                                # Buscar todos os produtos da proposta
-                                outros_itens = st.session_state.db.get_produtos_organizadores(proposta_id=proposta_exec_id)
-                                
-                                # Filtrar para mostrar apenas produtos de serviço nesta seção
-                                if not outros_itens.empty:
-                                    # Definir termos que identificam produtos de serviço
-                                    termos_servico = ['uber', 'transporte', 'serviço', 'servico', 'frete', 'delivery', 'entrega', 'cabide']
-                                    
-                                    # Converter nomes para minúsculo para comparação
-                                    outros_itens['nome_lower'] = outros_itens['nome'].str.lower()
-                                    
-                                    # Criar máscara para filtrar produtos de serviço
-                                    mask_servicos = outros_itens['nome_lower'].apply(
-                                        lambda x: any(termo in x for termo in termos_servico) if isinstance(x, str) else False
-                                    )
-                                    
-                                    # Filtrar para manter APENAS produtos de serviço (o oposto da aba de produtos)
-                                    outros_itens = outros_itens[mask_servicos].copy()
-                                    
-                                    # Remover coluna temporária
-                                    if 'nome_lower' in outros_itens.columns:
-                                        outros_itens = outros_itens.drop('nome_lower', axis=1)
+                                # Buscar acréscimos do tipo OUTRO da proposta
+                                outros_itens = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_id=proposta_exec_id, tipo="OUTRO")
                                 
                                 if not outros_itens.empty:
-                                    st.write("### Itens Personalizados Adicionados")
+                                    st.write("### Itens Adicionais")
                                     
                                     for idx, item in outros_itens.iterrows():
                                         with st.container():
                                             col1, col2, col3 = st.columns([3, 1, 1])
                                             
                                             with col1:
-                                                st.write(f"**{item['nome']}**")
+                                                # fornecedor é o nome do item
+                                                st.write(f"**{item['fornecedor']}**")
                                                 st.write(f"_{item['descricao'] if pd.notna(item['descricao']) else ''}_")
-                                                st.write(f"Cômodo: {item['comodo'] if pd.notna(item['comodo']) else 'Geral'}")
                                             
                                             with col2:
-                                                st.write(f"Quantidade: {int(item['quantidade'])}")
-                                                st.write(f"R$ {float(item['valor']):.2f} cada")
+                                                # No acréscimo só temos o valor total, não tem quantidade
+                                                st.write(f"R$ {float(item['valor']):.2f}")
+                                                st.write(f"Status: {item['status_pagamento']}")
                                             
                                             with col3:
-                                                st.write(f"**Total: R$ {float(item['valor']) * int(item['quantidade']):.2f}**")
-                                                
                                                 # Botão para remover
-                                                if st.button(f"Remover {item['nome']}", key=f"remove_outro_{item['id']}"):
+                                                if st.button(f"Remover", key=f"remove_outro_{item['id']}"):
                                                     try:
-                                                        st.session_state.db.remove_produto_organizador(item['id'])
+                                                        # Usar função apropriada para remover acréscimo
+                                                        st.session_state.db.remover_acrescimo(item['id'])
                                                         st.success(f"Item removido com sucesso!")
                                                         time.sleep(1)
                                                         st.rerun()
@@ -1054,7 +1035,7 @@ def show():
                                             
                                             st.divider()
                                 else:
-                                    st.info("Nenhum item personalizado adicionado a esta proposta.")
+                                    st.info("Nenhum item adicional foi cadastrado nesta proposta.")
                             except Exception as e:
                                 st.error(f"Erro ao carregar itens personalizados: {str(e)}")
                                 

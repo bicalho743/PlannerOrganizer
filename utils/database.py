@@ -2504,6 +2504,43 @@ class Database:
                 return False, f"Erro ao processar número da proposta: {str(e)}"
         return self._safe_query(query)
 
+    def remover_acrescimo(self, acrescimo_id):
+        """
+        Remove um acréscimo da proposta pelo ID
+        
+        Args:
+            acrescimo_id (int): ID do acréscimo a ser removido
+            
+        Returns:
+            bool: True se removido com sucesso, False se não encontrou o acréscimo
+        """
+        def query():
+            try:
+                # Converter para int para garantir tipo correto
+                acrescimo_id_int = int(acrescimo_id)
+                
+                # Buscar o acréscimo pelo ID
+                acrescimo = self.session.query(AcrescimoProposta).filter_by(id=acrescimo_id_int).first()
+                
+                if not acrescimo:
+                    print(f"DEBUG: Acréscimo ID={acrescimo_id_int} não encontrado")
+                    return False
+                
+                # Remover acréscimo
+                self.session.delete(acrescimo)
+                self.session.flush()
+                
+                print(f"DEBUG: Acréscimo ID={acrescimo_id_int} removido com sucesso")
+                return True
+                
+            except Exception as e:
+                print(f"ERRO ao remover acréscimo: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                raise Exception(f"Erro ao remover acréscimo: {str(e)}")
+                
+        return self._safe_query(query)
+        
     def atualizar_status_pagamento_acrescimo(self, proposta_id, tipo, status):
         """Atualiza o status de pagamento de um acréscimo"""
         def query():
