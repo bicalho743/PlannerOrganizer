@@ -1263,17 +1263,67 @@ class Database:
         return self._safe_query(query)
 
     def add_produto_organizador(self, proposta_id, nome, descricao, valor, quantidade, comodo):
+        """
+        Adiciona um produto à proposta de organização
+        
+        Args:
+            proposta_id: ID da proposta
+            nome: Nome do produto
+            descricao: Descrição do produto
+            valor: Valor do produto
+            quantidade: Quantidade do produto
+            comodo: Nome do cômodo onde será usado
+            
+        Returns:
+            int: ID do produto adicionado
+        """
         def query():
-            produto = ProdutoOrganizador(
-                proposta_id=proposta_id,
-                nome=nome,
-                descricao=descricao,
-                valor=valor,
-                quantidade=quantidade,
-                comodo=comodo
-            )
-            self.session.add(produto)
-            return produto.id
+            try:
+                print(f"DEBUG PRODUTO: Adicionando produto '{nome}' à proposta ID={proposta_id}")
+                print(f"DEBUG PRODUTO: Valor: {valor}, Quantidade: {quantidade}, Cômodo: {comodo}")
+                
+                # Verificar se os tipos de dados estão corretos
+                proposta_id_int = int(proposta_id)
+                valor_float = float(valor)
+                quantidade_int = int(quantidade)
+                
+                # Verificar se a proposta existe
+                proposta = self.session.query(Proposta).filter_by(id=proposta_id_int).first()
+                if not proposta:
+                    print(f"DEBUG PRODUTO: ERRO - Proposta ID={proposta_id_int} não encontrada")
+                    raise ValueError(f"Proposta ID={proposta_id_int} não encontrada")
+                
+                print(f"DEBUG PRODUTO: Proposta encontrada: #{proposta.numero}")
+                
+                # Criar o objeto produto
+                produto = ProdutoOrganizador(
+                    proposta_id=proposta_id_int,
+                    nome=nome,
+                    descricao=descricao,
+                    valor=valor_float,
+                    quantidade=quantidade_int,
+                    comodo=comodo or "Geral"
+                )
+                
+                # Adicionar ao banco de dados
+                self.session.add(produto)
+                self.session.flush()  # Para obter o ID do produto
+                
+                print(f"DEBUG PRODUTO: Produto adicionado com ID: {produto.id}")
+                
+                # Forçar commit para garantir persistência
+                self.session.commit()
+                
+                print(f"DEBUG PRODUTO: Commit realizado, produto {produto.id} salvo com sucesso")
+                
+                return produto.id
+                
+            except Exception as e:
+                print(f"DEBUG PRODUTO: ERRO ao adicionar produto: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                raise
+        
         return self._safe_query(query)
 
     def get_produtos_organizadores(self, proposta_id=None):
