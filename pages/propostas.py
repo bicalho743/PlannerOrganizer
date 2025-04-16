@@ -956,15 +956,16 @@ def show():
                                             st.info(f"DEBUG: Chamando add_produto_organizador para item personalizado")
                                             item_id = None
                                             try:
+                                                # O método add_produto_organizador não aceita o parâmetro 'tipo'
                                                 item_id = st.session_state.db.add_produto_organizador(
                                                     proposta_id=proposta_id_validado,
                                                     nome=nome_validado,
                                                     descricao=descricao_validada,
                                                     valor=valor_validado,
                                                     quantidade=quantidade_validada,
-                                                    comodo=comodo_validado,
-                                                    tipo='outros'  # Identificador para outros itens não catalogados
+                                                    comodo=comodo_validado
                                                 )
+                                                # Nota: Idealmente deveríamos ter um campo 'tipo' na tabela produtos_organizadores
                                                 
                                                 if item_id:
                                                     st.success(f"Item '{nome_produto}' adicionado com sucesso!")
@@ -983,7 +984,9 @@ def show():
                             
                             # Exibir itens personalizados já adicionados
                             try:
-                                outros_itens = st.session_state.db.get_produtos_proposta(proposta_id=proposta_exec_id, tipo='outros')
+                                # Usando get_produtos_organizadores pois get_produtos_proposta não existe
+                                # Nota: Não é possível filtrar por tipo, então mostraremos todos os produtos
+                                outros_itens = st.session_state.db.get_produtos_organizadores(proposta_id=proposta_exec_id)
                                 
                                 if not outros_itens.empty:
                                     st.write("### Itens Personalizados Adicionados")
