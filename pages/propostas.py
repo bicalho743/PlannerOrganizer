@@ -797,7 +797,7 @@ def show():
                                                 
                                                 # Adicionar o produto à proposta
                                                 try:
-                                                        # Garantir que comodo_produto não seja None
+                                                    # Garantir que comodo_produto não seja None
                                                     comodo_final = comodo_produto if comodo_produto else "Geral"
                                                     
                                                     # Fazer validações explícitas dos tipos de dados
@@ -815,49 +815,53 @@ def show():
                                                         raise ValueError(f"Erro na preparação dos dados: {str(e_val)}")
                                                     
                                                     st.info(f"DEBUG: Chamando add_produto_organizador")
-                                                    produto_org_id = st.session_state.db.add_produto_organizador(
-                                                        proposta_id=proposta_id_validado,
-                                                        nome=nome_validado,
-                                                        descricao=descricao_validada,
-                                                        valor=preco_validado,
-                                                        quantidade=quantidade_validada,
-                                                        comodo=comodo_validado
-                                                    )
-                                                        
-                                                    st.info(f"DEBUG: Produto adicionado com ID: {produto_org_id}")
-                                                    
-                                                    # Verificar direto no banco se o produto foi adicionado
-                                                    import psycopg2
-                                                    import os
-                                                    
+                                                    produto_org_id = None  # Inicializa a variável
                                                     try:
-                                                        # Conectar diretamente para verificar
-                                                        db_url = os.environ.get('DATABASE_URL')
-                                                        conn = psycopg2.connect(db_url)
-                                                        cursor = conn.cursor()
+                                                        produto_org_id = st.session_state.db.add_produto_organizador(
+                                                            proposta_id=proposta_id_validado,
+                                                            nome=nome_validado,
+                                                            descricao=descricao_validada,
+                                                            valor=preco_validado,
+                                                            quantidade=quantidade_validada,
+                                                            comodo=comodo_validado
+                                                        )
+                                                            
+                                                        st.info(f"DEBUG: Produto adicionado com ID: {produto_org_id}")
                                                         
-                                                        verificacao_sql = f"SELECT COUNT(*) FROM produtos_organizadores WHERE id = {produto_org_id}"
-                                                        st.info(f"DEBUG: Verificando no banco: {verificacao_sql}")
+                                                        # Verificar direto no banco se o produto foi adicionado
+                                                        import psycopg2
+                                                        import os
                                                         
-                                                        cursor.execute(verificacao_sql)
-                                                        resultado_verificacao = cursor.fetchone()
-                                                        st.info(f"DEBUG: Verificação no banco: {resultado_verificacao[0]} produto(s) encontrado(s)")
-                                                        
-                                                        cursor.close()
-                                                        conn.close()
-                                                    except Exception as e_check:
-                                                        st.error(f"DEBUG: Erro na verificação direta: {str(e_check)}")
-                                                except Exception as e_inner:
-                                                    st.error(f"DEBUG: Erro específico ao adicionar produto: {str(e_inner)}")
-                                                    import traceback
-                                                    st.error(traceback.format_exc())
-                                                
-                                                if produto_org_id:
-                                                    st.success(f"Produto '{produto_info['nome']}' adicionado com sucesso!")
-                                                    time.sleep(2)  # Aumentar tempo para garantir que transação seja concluída
-                                                    st.rerun()
-                                                else:
-                                                    st.error("Erro ao adicionar produto à proposta.")
+                                                        try:
+                                                            # Conectar diretamente para verificar
+                                                            db_url = os.environ.get('DATABASE_URL')
+                                                            conn = psycopg2.connect(db_url)
+                                                            cursor = conn.cursor()
+                                                            
+                                                            verificacao_sql = f"SELECT COUNT(*) FROM produtos_organizadores WHERE id = {produto_org_id}"
+                                                            st.info(f"DEBUG: Verificando no banco: {verificacao_sql}")
+                                                            
+                                                            cursor.execute(verificacao_sql)
+                                                            resultado_verificacao = cursor.fetchone()
+                                                            if resultado_verificacao and resultado_verificacao[0]:
+                                                                st.info(f"DEBUG: Verificação no banco: {resultado_verificacao[0]} produto(s) encontrado(s)")
+                                                            else:
+                                                                st.warning("DEBUG: Nenhum registro encontrado no banco após inserção")
+                                                            
+                                                            cursor.close()
+                                                            conn.close()
+                                                        except Exception as e_check:
+                                                            st.error(f"DEBUG: Erro na verificação direta: {str(e_check)}")
+                                                            
+                                                        # Se chegou aqui, a operação foi bem-sucedida
+                                                        st.success(f"Produto '{produto_info['nome']}' adicionado com sucesso!")
+                                                        time.sleep(2)  # Aumentar tempo para garantir que transação seja concluída
+                                                        st.rerun()
+                                                    except Exception as e_inner:
+                                                        st.error(f"DEBUG: Erro específico ao adicionar produto: {str(e_inner)}")
+                                                        import traceback
+                                                        st.error(traceback.format_exc())
+                                                        st.error("Erro ao adicionar produto à proposta.")
                                             except Exception as e:
                                                 st.error(f"Erro ao adicionar produto: {str(e)}")
                                                 import traceback
@@ -946,22 +950,28 @@ def show():
                                             
                                             # Salvar o item
                                             st.info(f"DEBUG: Chamando add_produto_organizador para item personalizado")
-                                            item_id = st.session_state.db.add_produto_organizador(
-                                                proposta_id=proposta_id_validado,
-                                                nome=nome_validado,
-                                                descricao=descricao_validada,
-                                                valor=valor_validado,
-                                                quantidade=quantidade_validada,
-                                                comodo=comodo_validado,
-                                                tipo='outros'  # Identificador para outros itens não catalogados
-                                            )
-                                            
-                                            if item_id:
-                                                st.success(f"Item '{nome_produto}' adicionado com sucesso!")
-                                                time.sleep(1)
-                                                st.rerun()
-                                            else:
-                                                st.error("Erro ao adicionar item à proposta.")
+                                            item_id = None
+                                            try:
+                                                item_id = st.session_state.db.add_produto_organizador(
+                                                    proposta_id=proposta_id_validado,
+                                                    nome=nome_validado,
+                                                    descricao=descricao_validada,
+                                                    valor=valor_validado,
+                                                    quantidade=quantidade_validada,
+                                                    comodo=comodo_validado,
+                                                    tipo='outros'  # Identificador para outros itens não catalogados
+                                                )
+                                                
+                                                if item_id:
+                                                    st.success(f"Item '{nome_produto}' adicionado com sucesso!")
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                                else:
+                                                    st.error("Erro ao adicionar item à proposta.")
+                                            except Exception as e_add:
+                                                st.error(f"Erro ao adicionar à base de dados: {str(e_add)}")
+                                                import traceback
+                                                st.error(traceback.format_exc())
                                         except Exception as e:
                                             st.error(f"Erro ao adicionar item: {str(e)}")
                                             import traceback
