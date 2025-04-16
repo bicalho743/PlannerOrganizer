@@ -360,7 +360,7 @@ def show():
                     for p in propostas_alerta:
                         with st.container():
                             st.markdown(f"""
-                            <div style='background-color: {'#FF5722' if p['dias_restantes'] <= 3 else '#FF9800'}; 
+                            <div style='background-color: #2A3F5F; 
                                   padding: 10px; border-radius: 5px; margin-bottom: 8px;'>
                                 <div style='font-weight: bold; color: white;'>
                                     {'⚠️' if p['dias_restantes'] <= 3 else '⚠️'} Proposta #{p['numero']} 
