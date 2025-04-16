@@ -1263,14 +1263,27 @@ def show():
                                     
                                     # Adicionar os produtos de serviço (UBER etc.)
                                     if tem_produtos_servico:
-                                        produtos_servicos = st.session_state['produtos_servicos_filtrados']
-                                        produtos_servicos['valor_total'] = produtos_servicos['valor'] * produtos_servicos['quantidade']
-                                        
-                                        df_temp = pd.DataFrame()
-                                        df_temp['Descrição'] = produtos_servicos['nome']
-                                        df_temp['Valor'] = produtos_servicos['valor_total'].apply(lambda x: f"R$ {float(x):.2f}")
-                                        df_temp['Tipo'] = "Serviço"
-                                        df_outros = pd.concat([df_outros, df_temp])
+                                        try:
+                                            produtos_servicos = st.session_state['produtos_servicos_filtrados'].copy()
+                                            # Garantir que campos numéricos sejam números
+                                            if 'valor' in produtos_servicos.columns:
+                                                produtos_servicos['valor'] = produtos_servicos['valor'].astype(float)
+                                            if 'quantidade' in produtos_servicos.columns:
+                                                produtos_servicos['quantidade'] = produtos_servicos['quantidade'].astype(float)
+                                            # Calcular total com valores numéricos corrigidos
+                                            produtos_servicos['valor_total'] = produtos_servicos['valor'] * produtos_servicos['quantidade']
+                                            
+                                            df_temp = pd.DataFrame()
+                                            if 'nome' in produtos_servicos.columns:
+                                                df_temp['Descrição'] = produtos_servicos['nome']
+                                            else:
+                                                df_temp['Descrição'] = ["Item sem nome"] * len(produtos_servicos)
+                                                
+                                            df_temp['Valor'] = produtos_servicos['valor_total'].apply(lambda x: f"R$ {float(x):.2f}")
+                                            df_temp['Tipo'] = "Serviço"
+                                            df_outros = pd.concat([df_outros, df_temp])
+                                        except Exception as e:
+                                            st.warning(f"Não foi possível exibir produtos de serviço: {str(e)}")
                                     
                                     # Calcular valor total
                                     total_outros = 0
@@ -1278,9 +1291,18 @@ def show():
                                         total_outros += outros_itens['valor'].sum()
                                     
                                     if tem_produtos_servico:
-                                        produtos_servicos = st.session_state['produtos_servicos_filtrados']
-                                        produtos_servicos['valor_total'] = produtos_servicos['valor'] * produtos_servicos['quantidade']
-                                        total_outros += produtos_servicos['valor_total'].sum()
+                                        try:
+                                            produtos_servicos = st.session_state['produtos_servicos_filtrados'].copy()
+                                            # Garantir que campos numéricos sejam números
+                                            if 'valor' in produtos_servicos.columns:
+                                                produtos_servicos['valor'] = produtos_servicos['valor'].astype(float)
+                                            if 'quantidade' in produtos_servicos.columns:
+                                                produtos_servicos['quantidade'] = produtos_servicos['quantidade'].astype(float)
+                                            # Calcular total com valores numéricos corrigidos
+                                            produtos_servicos['valor_total'] = produtos_servicos['valor'] * produtos_servicos['quantidade']
+                                            total_outros += produtos_servicos['valor_total'].sum()
+                                        except Exception as e:
+                                            st.warning(f"Erro ao calcular o total de produtos de serviço: {str(e)}")
                                     
                                     # Exibir dados e totais
                                     st.dataframe(df_outros, hide_index=True, use_container_width=True)
