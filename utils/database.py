@@ -358,10 +358,10 @@ class Database:
                     except:
                         pass
                     self.session = Session()
-                    print("DEBUG: Sessão recriada após estado problemático")
+                    # Removido log de debug sobre recriação de sessão
                 elif not self.session.is_active:
                     self.session = Session()
-                    print("DEBUG: Nova sessão criada - sessão anterior inativa")
+                    # Removido log de debug sobre criação de nova sessão
             except Exception as session_check_error:
                 # # print(f"DEBUG: Erro ao verificar estado da sessão: {str(session_check_error)}")
                 try:
@@ -369,7 +369,7 @@ class Database:
                 except:
                     pass
                 self.session = Session()
-                print("DEBUG: Nova sessão criada após erro de verificação")
+                # Removido log de debug sobre criação de nova sessão
                 
             # Verificar se já existe uma transação
             try:
@@ -389,15 +389,15 @@ class Database:
             # Commit da transação somente se não for aninhada
             if not nested_transaction:
                 try:
-                    print("DEBUG: Realizando commit da transação")
+                    # Removido log de debug sobre commit
                     self.session.commit()
-                    print("DEBUG: Commit realizado com sucesso")
+                    # Removido log de debug sobre sucesso do commit
                 except Exception as commit_error:
-                    print(f"DEBUG WARNING: Não foi possível fazer commit: {str(commit_error)}")
+                    # Removido log de debug sobre erro de commit
                     # Tentar rollback em caso de erro de commit
                     try:
                         self.session.rollback()
-                        print("DEBUG: Rollback após erro de commit realizado")
+                        # Removido log de debug sobre rollback
                     except:
                         pass
                     # Criar nova sessão se necessário
@@ -406,7 +406,7 @@ class Database:
                     except:
                         pass
                     self.session = Session()
-                    print("DEBUG: Nova sessão criada após erro de commit")
+                    # Removido log de debug sobre nova sessão
 
             # Se o resultado for um DataFrame, converter tipos numéricos
             if isinstance(result, pd.DataFrame):
@@ -420,28 +420,28 @@ class Database:
                 result = result.item()
                 # # print(f"DEBUG: Valor numérico convertido: {result}")
             
-            print("DEBUG: Mantendo sessão ativa para futuras transações")
+            # Removido log de debug sobre sessão ativa
             return result
             
         except Exception as e:
             # Em caso de erro, fazer rollback
-            print(f"DEBUG ERROR: Erro durante a execução da query: {str(e)}")
+            # Removido log de debug sobre erro
             
             # Sempre tentar rollback para recuperar a sessão
             try:
                 if self.session.is_active:
-                    print("DEBUG: Realizando rollback da transação")
+                    # Removido log de debug sobre rollback
                     self.session.rollback()
-                    print("DEBUG: Rollback realizado com sucesso")
+                    # Removido log de debug sobre sucesso do rollback
             except Exception as rollback_error:
-                print(f"DEBUG WARNING: Não foi possível fazer rollback: {str(rollback_error)}")
+                # Removido log de debug sobre falha no rollback
                 # Em caso de falha no rollback, criar nova sessão
                 try:
                     self.session.close()
                 except:
                     pass
                 self.session = Session()
-                print("DEBUG: Nova sessão criada após falha no rollback")
+                # Removido log de debug sobre nova sessão
             
             # Logar e re-levantar a exceção com mais informações
             import traceback
@@ -454,8 +454,8 @@ class Database:
             # A sessão só será fechada se close_session=True
             # mas continuará utilizável para futuras transações
             # evitando o erro "Object has been detached or deleted"
-            print("DEBUG: Mantendo sessão ativa para futuras transações")
-
+            pass  # Manter sessão ativa para futuras transações
+            
     def get_clientes(self):
         def query():
             clientes = self.session.query(Cliente).all()
