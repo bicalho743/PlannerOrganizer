@@ -795,24 +795,49 @@ def show():
                                             
                                             if st.form_submit_button("Adicionar à Proposta"):
                                                 try:
+                                                    # Log de depuração
+                                                    st.info(f"DEBUG: Adicionando produto do catálogo '{produto_info['nome']}' à proposta ID={proposta_exec_id}")
+                                                    st.info(f"DEBUG: Valor: {preco_final}, Quantidade: {quantidade}")
+                                                    
                                                     # Adicionar o produto à proposta
-                                                    produto_org_id = st.session_state.db.add_produto_organizador(
-                                                        proposta_id=proposta_exec_id,
-                                                        nome=produto_info['nome'],
-                                                        descricao=produto_info['descricao'],
-                                                        valor=preco_final,
-                                                        quantidade=quantidade,
-                                                        comodo=comodo_produto
-                                                    )
+                                                    try:
+                                                        # Garantir que comodo_produto não seja None
+                                                        comodo_final = comodo_produto if comodo_produto else "Geral"
+                                                        
+                                                        produto_org_id = st.session_state.db.add_produto_organizador(
+                                                            proposta_id=proposta_exec_id,
+                                                            nome=produto_info['nome'],
+                                                            descricao=produto_info['descricao'],
+                                                            valor=preco_final,
+                                                            quantidade=quantidade,
+                                                            comodo=comodo_final
+                                                        )
+                                                        
+                                                        st.info(f"DEBUG: Produto adicionado com ID: {produto_org_id}")
+                                                        
+                                                        # Verificar direto no banco se o produto foi adicionado
+                                                        try:
+                                                            resultado_verificacao = st.session_state.db.session.execute(
+                                                                f"SELECT COUNT(*) FROM produtos_organizadores WHERE id = {produto_org_id}"
+                                                            ).fetchone()
+                                                            st.info(f"DEBUG: Verificação no banco: {resultado_verificacao[0]} produto(s) encontrado(s)")
+                                                        except Exception as e_check:
+                                                            st.error(f"DEBUG: Erro na verificação: {str(e_check)}")
+                                                    except Exception as e_inner:
+                                                        st.error(f"DEBUG: Erro específico ao adicionar produto: {str(e_inner)}")
+                                                        import traceback
+                                                        st.error(traceback.format_exc())
                                                     
                                                     if produto_org_id:
                                                         st.success(f"Produto '{produto_info['nome']}' adicionado com sucesso!")
-                                                        time.sleep(1)
+                                                        time.sleep(2)  # Aumentar tempo para garantir que transação seja concluída
                                                         st.rerun()
                                                     else:
                                                         st.error("Erro ao adicionar produto à proposta.")
                                                 except Exception as e:
                                                     st.error(f"Erro ao adicionar produto: {str(e)}")
+                                                    import traceback
+                                                    st.error(traceback.format_exc())
                                     else:
                                         st.warning("Não há produtos cadastrados no sistema.")
                                         st.write("Vá para o módulo de Vendas > Produtos para cadastrar produtos.")
