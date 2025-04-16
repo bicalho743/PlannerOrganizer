@@ -304,6 +304,12 @@ with st.sidebar.expander("🔧 Acesso Desenvolvedor", expanded=False):
             <a href="/vendas" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #F5F7FA; color: #1E366F; text-decoration: none; font-size: 0.85rem;">Vendas</a>
         </div>
         
+        <h4 style="color: #1E366F; font-size: 1rem; margin-top: 1.2rem; margin-bottom: 0.8rem;">Ferramentas</h4>
+        <div class="tools-links">
+            <a href="http://localhost:8600" target="_blank" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #E3F2FD; color: #1976D2; text-decoration: none; font-size: 0.85rem;">📘 Gerar Manual do Sistema</a>
+            <a href="http://localhost:8530" target="_blank" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #E8F5E9; color: #388E3C; text-decoration: none; font-size: 0.85rem;">💾 Sistema de Backup</a>
+        </div>
+        
         <p style="margin-top: 1rem; font-size: 0.8rem; color: #5A6A85; text-align: center;">
             Acesso exclusivo para desenvolvedores
         </p>

@@ -72,6 +72,10 @@ args = "Limpar Vendas"
 task = "workflow.run"
 args = "Exclusão Simples"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Gerar Manual do Sistema"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -281,6 +285,20 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run excluir_vendas_standalone.py --server.port 8512 --server.address 0.0.0.0"
 waitForPort = 8512
+
+[[workflows.workflow]]
+name = "Gerar Manual do Sistema"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run gerar_manual.py --server.port 8600 --server.address 0.0.0.0"
 
 [[ports]]
 localPort = 443
