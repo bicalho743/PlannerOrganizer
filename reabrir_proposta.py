@@ -38,8 +38,13 @@ def reabrir_proposta_finalizada(proposta_id):
             }
         
         # Verificar se existem lançamentos financeiros relacionados
-        lancamentos = db.get_lancamentos_por_referencia('proposta', proposta_id)
-        tem_lancamentos = not lancamentos.empty if lancamentos is not None else False
+        # Consulta os lançamentos financeiros usando SQL diretamente
+        query = """
+        SELECT COUNT(*) FROM lancamentos_financeiros 
+        WHERE ref_id = :proposta_id AND ref_tipo = 'proposta'
+        """
+        resultado_query = db.session.execute(query, {"proposta_id": proposta_id}).scalar()
+        tem_lancamentos = resultado_query > 0
         
         # Atualizar status da proposta
         resultado = db.atualizar_proposta(
@@ -60,7 +65,7 @@ def reabrir_proposta_finalizada(proposta_id):
                 "status": "sucesso_com_alerta",
                 "mensagem": "Proposta reaberta com sucesso",
                 "alerta": "Esta proposta já possui lançamentos financeiros gerados. Considere revisar os registros financeiros.",
-                "lancamentos_encontrados": len(lancamentos)
+                "lancamentos_encontrados": resultado_query
             }
         else:
             return {
