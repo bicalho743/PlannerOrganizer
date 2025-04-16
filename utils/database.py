@@ -3464,7 +3464,7 @@ class Database:
                 
         return self._safe_query(query)
         
-    def gerar_lancamentos_financeiros_proposta_concluida(self, proposta_id):
+    def gerar_lancamentos_financeiros_proposta_concluida(self, proposta_id, forcar_geracao=False):
         """
         Gera lançamentos financeiros automáticos quando uma proposta é marcada como concluída
         
@@ -3476,6 +3476,7 @@ class Database:
         
         Args:
             proposta_id: ID da proposta concluída
+            forcar_geracao: Se True, remove lançamentos existentes e gera novos (para reabertura)
             
         Returns:
             dict: Resumo dos lançamentos gerados
@@ -3509,10 +3510,18 @@ class Database:
                 
                 print(f"DEBUG LANCAMENTOS: Lançamentos existentes: {lancamentos_existentes}")
                     
-                # Se já existirem lançamentos, retornar sem criar novos
+                # Se já existirem lançamentos, verificar se devemos forçar a regeneração
                 if lancamentos_existentes > 0:
-                    print(f"DEBUG LANCAMENTOS: Já existem lançamentos para esta proposta. Pulando.")
-                    return {"status": "já existe", "mensagem": "Lançamentos já existem para esta proposta"}
+                    # Se forçar_geracao=True, remover os lançamentos existentes e continuar
+                    if forcar_geracao:
+                        print(f"DEBUG LANCAMENTOS: Removendo {lancamentos_existentes} lançamentos existentes para regeneração")
+                        # Remover lançamentos existentes
+                        self.session.query(Transacao).filter_by(proposta_id=proposta_id_int).delete()
+                        self.session.flush()
+                        print(f"DEBUG LANCAMENTOS: Lançamentos existentes removidos com sucesso")
+                    else:
+                        print(f"DEBUG LANCAMENTOS: Já existem lançamentos para esta proposta. Pulando.")
+                        return {"status": "já existe", "mensagem": "Lançamentos já existem para esta proposta"}
                 
                 # Resultados para retornar
                 result = {
@@ -3768,7 +3777,7 @@ class Database:
             
         return self._safe_query(query)
     
-    def _registrar_venda_produtos(self, proposta, cliente, produtos):
+    def _registrar_venda_produtos(self, proposta, cliente, produtos, forcar_geracao=False):
         """
         Registra uma venda de produtos a partir de uma proposta finalizada
         
@@ -3776,6 +3785,7 @@ class Database:
             proposta: Objeto Proposta
             cliente: Objeto Cliente
             produtos: Lista de objetos ProdutoOrganizador
+            forcar_geracao: Se True, remove vendas existentes e gera novos registros (para reabertura)
         
         Returns:
             int: ID da venda criada ou None em caso de erro
