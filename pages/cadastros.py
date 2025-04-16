@@ -146,26 +146,36 @@ def show():
                         # Criar DataFrame para seleção
                         df_select = df_display[['ID', 'Nome', 'Telefone', 'CPF']].copy()
                         
+                        # Adicionar coluna de seleção explicitamente ao DataFrame antes
+                        df_select['Selecionar'] = False
+                        
                         # Adicionar coluna de seleção
                         selection = st.data_editor(
                             df_select,
                             column_config={
                                 "Selecionar": st.column_config.CheckboxColumn(
                                     "Selecionar",
-                                    help="Selecione para excluir",
-                                    default=False,
+                                    help="Selecione para excluir"
                                 )
                             },
                             hide_index=True,
                             use_container_width=True,
+                            key="editor_clientes_multi_delete"
                         )
                         
                         # Verificar clientes selecionados
-                        if st.button("Excluir Clientes Selecionados", type="primary"):
+                        if st.button("Excluir Clientes Selecionados", type="primary", key="btn_excluir_multi_clientes"):
                             # Obter IDs dos clientes selecionados
                             clientes_selecionados = []
+                            
+                            # Debug - mostrar o que está sendo retornado do editor
+                            with st.expander("Debug info"):
+                                st.write("Conteúdo do selection:")
+                                st.write(selection)
+                            
+                            # Percorrer as linhas do DataFrame de seleção
                             for i, row in selection.iterrows():
-                                if row.get('Selecionar', False):
+                                if row['Selecionar'] == True:  # Comparação explícita com True
                                     clientes_selecionados.append(int(row['ID']))
                             
                             if not clientes_selecionados:
