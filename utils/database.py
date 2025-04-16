@@ -1277,54 +1277,99 @@ class Database:
         Returns:
             int: ID do produto adicionado
         """
-        def query():
+        try:
+            print(f"DEBUG PRODUTO: Adicionando produto '{nome}' diretamente à proposta ID={proposta_id}")
+            print(f"DEBUG PRODUTO: Valor: {valor}, Quantidade: {quantidade}, Cômodo: {comodo}")
+            
+            # Verificar se os tipos de dados estão corretos
+            proposta_id_int = int(proposta_id)
+            valor_float = float(valor)
+            quantidade_int = int(quantidade)
+            
+            # Verificar se a proposta existe
+            proposta = self.session.query(Proposta).filter_by(id=proposta_id_int).first()
+            if not proposta:
+                print(f"DEBUG PRODUTO: ERRO - Proposta ID={proposta_id_int} não encontrada")
+                raise ValueError(f"Proposta ID={proposta_id_int} não encontrada")
+            
+            print(f"DEBUG PRODUTO: Proposta encontrada: #{proposta.numero}")
+            
+            # Criar o objeto produto
+            produto = ProdutoOrganizador(
+                proposta_id=proposta_id_int,
+                nome=nome,
+                descricao=descricao,
+                valor=valor_float,
+                quantidade=quantidade_int,
+                comodo=comodo or "Geral"
+            )
+            
+            # Adicionar ao banco de dados
+            self.session.add(produto)
+            self.session.flush()  # Para obter o ID do produto
+            
+            print(f"DEBUG PRODUTO: Produto adicionado com ID: {produto.id}")
+            
+            # Forçar commit para garantir persistência - não dependemos do _safe_query aqui
+            self.session.commit()
+            
+            print(f"DEBUG PRODUTO: Commit realizado, produto {produto.id} salvo com sucesso")
+            
+            # Verificar se o produto foi realmente salvo
+            produto_verificacao = self.session.query(ProdutoOrganizador).filter_by(id=produto.id).first()
+            if produto_verificacao:
+                print(f"DEBUG PRODUTO: Verificação OK - Produto ID={produto.id} encontrado no banco")
+            else:
+                print(f"DEBUG PRODUTO: ALERTA - Produto ID={produto.id} não encontrado na verificação pós-commit!")
+            
+            # Executar SQL direto para adicionar por redundância
+            sql = f"""
+            INSERT INTO produtos_organizadores 
+            (proposta_id, nome, descricao, valor, quantidade, comodo, data_cadastro) 
+            VALUES 
+            ({proposta_id_int}, '{nome.replace("'", "''")}', '{descricao.replace("'", "''")}', {valor_float}, {quantidade_int}, '{comodo or "Geral"}', NOW())
+            ON CONFLICT (id) DO NOTHING;
+            """
+            
             try:
-                print(f"DEBUG PRODUTO: Adicionando produto '{nome}' à proposta ID={proposta_id}")
-                print(f"DEBUG PRODUTO: Valor: {valor}, Quantidade: {quantidade}, Cômodo: {comodo}")
+                print(f"DEBUG PRODUTO: Executando SQL direto (backup) por garantia")
+                self.session.execute(sql)
+                self.session.commit()
+                print(f"DEBUG PRODUTO: SQL direto executado com sucesso")
+            except Exception as e:
+                print(f"DEBUG PRODUTO: Erro no SQL direto (ignorando): {str(e)}")
+                # Ignora erro no SQL redundante pois o produto já deve estar salvo
+            
+            return produto.id
+            
+        except Exception as e:
+            print(f"DEBUG PRODUTO: ERRO CRÍTICO ao adicionar produto: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            
+            # Tentar salvar diretamente como último recurso
+            try:
+                sql = f"""
+                INSERT INTO produtos_organizadores 
+                (proposta_id, nome, descricao, valor, quantidade, comodo, data_cadastro) 
+                VALUES 
+                ({proposta_id_int}, '{nome.replace("'", "''")}', '{descricao.replace("'", "''")}', {valor_float}, {quantidade_int}, '{comodo or "Geral"}', NOW())
+                RETURNING id;
+                """
                 
-                # Verificar se os tipos de dados estão corretos
-                proposta_id_int = int(proposta_id)
-                valor_float = float(valor)
-                quantidade_int = int(quantidade)
-                
-                # Verificar se a proposta existe
-                proposta = self.session.query(Proposta).filter_by(id=proposta_id_int).first()
-                if not proposta:
-                    print(f"DEBUG PRODUTO: ERRO - Proposta ID={proposta_id_int} não encontrada")
-                    raise ValueError(f"Proposta ID={proposta_id_int} não encontrada")
-                
-                print(f"DEBUG PRODUTO: Proposta encontrada: #{proposta.numero}")
-                
-                # Criar o objeto produto
-                produto = ProdutoOrganizador(
-                    proposta_id=proposta_id_int,
-                    nome=nome,
-                    descricao=descricao,
-                    valor=valor_float,
-                    quantidade=quantidade_int,
-                    comodo=comodo or "Geral"
-                )
-                
-                # Adicionar ao banco de dados
-                self.session.add(produto)
-                self.session.flush()  # Para obter o ID do produto
-                
-                print(f"DEBUG PRODUTO: Produto adicionado com ID: {produto.id}")
-                
-                # Forçar commit para garantir persistência
+                print(f"DEBUG PRODUTO: Tentativa de último recurso - SQL direto")
+                result = self.session.execute(sql).fetchone()
                 self.session.commit()
                 
-                print(f"DEBUG PRODUTO: Commit realizado, produto {produto.id} salvo com sucesso")
-                
-                return produto.id
-                
-            except Exception as e:
-                print(f"DEBUG PRODUTO: ERRO ao adicionar produto: {str(e)}")
-                import traceback
-                traceback.print_exc()
-                raise
-        
-        return self._safe_query(query)
+                if result and result[0]:
+                    produto_id = result[0]
+                    print(f"DEBUG PRODUTO: Produto salvo via SQL direto: ID={produto_id}")
+                    return produto_id
+            except Exception as inner_e:
+                print(f"DEBUG PRODUTO: Falha na tentativa final: {str(inner_e)}")
+            
+            # Propagar erro original
+            raise
 
     def get_produtos_organizadores(self, proposta_id=None):
         def query():
