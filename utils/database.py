@@ -1290,33 +1290,35 @@ class Database:
             descricao_sanitizada = descricao_final.replace("'", "''")
             comodo_sanitizado = comodo_final.replace("'", "''")
             
-            # SQL para inserir o produto
-            sql = f"""
-            INSERT INTO produtos_organizadores 
-            (proposta_id, nome, descricao, valor, quantidade, comodo, data_cadastro) 
-            VALUES 
-            ({proposta_id_int}, '{nome_sanitizado}', '{descricao_sanitizada}', {valor_float}, {quantidade_int}, '{comodo_sanitizado}', NOW())
-            RETURNING id;
-            """
-            
-            print(f"DEBUG SQL PRODUTO: Executando SQL direto para adicionar produto")
-            print(f"DEBUG SQL PRODUTO: Proposta ID={proposta_id_int}, Nome='{nome_sanitizado}'")
-            
-            # Criar uma conexão fresca para evitar problemas com transações
-            from sqlalchemy import create_engine
-            from sqlalchemy.orm import sessionmaker
+            # Usar psycopg2 diretamente para evitar problemas com SQLAlchemy
+            import psycopg2
             import os
+            from datetime import datetime
             
             # Obter a conexão diretamente do ambiente
             db_url = os.environ.get('DATABASE_URL')
-            engine = create_engine(db_url)
-            Session = sessionmaker(bind=engine)
-            session = Session()
+            
+            # Conectar diretamente com psycopg2
+            print(f"DEBUG SQL PRODUTO: Conectando diretamente com psycopg2")
+            conn = psycopg2.connect(db_url)
+            cursor = conn.cursor()
             
             try:
                 # Executar a inserção
-                result = session.execute(sql).fetchone()
-                session.commit()
+                sql = f"""
+                INSERT INTO produtos_organizadores 
+                (proposta_id, nome, descricao, valor, quantidade, comodo, data_cadastro) 
+                VALUES 
+                ({proposta_id_int}, '{nome_sanitizado}', '{descricao_sanitizada}', {valor_float}, {quantidade_int}, '{comodo_sanitizado}', NOW())
+                RETURNING id;
+                """
+                
+                print(f"DEBUG SQL PRODUTO: Executando SQL direto para adicionar produto")
+                print(f"DEBUG SQL PRODUTO: Proposta ID={proposta_id_int}, Nome='{nome_sanitizado}'")
+                
+                cursor.execute(sql)
+                result = cursor.fetchone()
+                conn.commit()
                 
                 if result and result[0]:
                     produto_id = result[0]
@@ -1324,7 +1326,8 @@ class Database:
                     
                     # Verificar se o produto foi realmente adicionado
                     verify_sql = f"SELECT COUNT(*) FROM produtos_organizadores WHERE id = {produto_id}"
-                    verify_result = session.execute(verify_sql).fetchone()
+                    cursor.execute(verify_sql)
+                    verify_result = cursor.fetchone()
                     if verify_result and verify_result[0] > 0:
                         print(f"DEBUG SQL PRODUTO: Verificação OK - Produto ID={produto_id} encontrado no banco")
                     else:
@@ -1335,8 +1338,10 @@ class Database:
                     print("DEBUG SQL PRODUTO: Nenhum ID retornado da inserção")
                     return None
             finally:
-                # Sempre fechar a sessão
-                session.close()
+                # Sempre fechar a conexão
+                cursor.close()
+                conn.close()
+                print(f"DEBUG SQL PRODUTO: Conexão psycopg2 fechada")
                 
         except Exception as e:
             print(f"DEBUG SQL PRODUTO: ERRO ao adicionar produto via SQL: {str(e)}")
@@ -1403,51 +1408,62 @@ class Database:
 
     def get_produtos_organizadores_sql_direto(self, proposta_id=None):
         """
-        Busca produtos usando SQL direto para evitar problemas de transação
+        Busca produtos usando SQL direto com psycopg2 para evitar problemas de transação
         """
         try:
-            # Criar uma conexão fresca para evitar problemas com transações
-            from sqlalchemy import create_engine
-            from sqlalchemy.orm import sessionmaker
+            # Usar psycopg2 diretamente para evitar problemas com SQLAlchemy
+            import psycopg2
+            import psycopg2.extras
             import os
+            import pandas as pd
+            from datetime import datetime
             
             # Obter a conexão diretamente do ambiente
             db_url = os.environ.get('DATABASE_URL')
-            engine = create_engine(db_url)
-            Session = sessionmaker(bind=engine)
-            session = Session()
+            
+            # Conectar diretamente com psycopg2
+            print(f"DEBUG SQL GET PRODUTOS: Conectando diretamente com psycopg2")
+            conn = psycopg2.connect(db_url)
+            
+            # Usar DictCursor para facilitar acesso aos campos por nome
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             
             try:
-                # Executar a busca
-                sql = "SELECT * FROM produtos_organizadores"
+                # Executar a busca SQL
                 if proposta_id:
-                    sql += f" WHERE proposta_id = {int(proposta_id)}"
+                    sql = f"SELECT * FROM produtos_organizadores WHERE proposta_id = {int(proposta_id)}"
+                else:
+                    sql = "SELECT * FROM produtos_organizadores"
                 
-                result = session.execute(sql).fetchall()
+                print(f"DEBUG SQL GET PRODUTOS: Executando {sql}")
+                cursor.execute(sql)
+                result = cursor.fetchall()
                 
                 # Criar DataFrame manualmente
                 if result:
-                    import pandas as pd
-                    from datetime import datetime
-                    
                     df_data = []
                     for row in result:
-                        data_cadastro = row.data_cadastro if hasattr(row, 'data_cadastro') else datetime.now().date()
+                        data_cadastro = row['data_cadastro'] if 'data_cadastro' in row else datetime.now().date()
                         df_data.append({
-                            'id': row.id,
-                            'nome': row.nome,
-                            'descricao': row.descricao,
-                            'valor': row.valor,
-                            'quantidade': row.quantidade,
-                            'comodo': row.comodo,
+                            'id': row['id'],
+                            'nome': row['nome'],
+                            'descricao': row['descricao'],
+                            'valor': row['valor'],
+                            'quantidade': row['quantidade'],
+                            'comodo': row['comodo'],
                             'data_cadastro': data_cadastro
                         })
                     
-                    return pd.DataFrame(df_data)
+                    df = pd.DataFrame(df_data)
+                    print(f"DEBUG SQL GET PRODUTOS: Encontrados {len(df)} produtos")
+                    return df
                 else:
+                    print(f"DEBUG SQL GET PRODUTOS: Nenhum produto encontrado")
                     return pd.DataFrame()
             finally:
-                session.close()
+                cursor.close()
+                conn.close()
+                print(f"DEBUG SQL GET PRODUTOS: Conexão psycopg2 fechada")
         except Exception as e:
             print(f"DEBUG SQL GET PRODUTOS: Erro ao buscar produtos via SQL: {str(e)}")
             import traceback
