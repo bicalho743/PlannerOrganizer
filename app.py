@@ -20,6 +20,15 @@ if project_root not in sys.path:
 
 from utils.database import Database
 
+# Verificar se o usuário está autenticado
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = True  # Temporariamente definindo como True para testes
+
+# Comentado temporariamente para testes
+# Redirecionar para a página de login se não estiver autenticado
+# if not st.session_state.authenticated and not st.secrets.get("DISABLE_AUTH", False):
+#     st.switch_page("login.py")
+
 # Configuração da página
 st.set_page_config(
     page_title="Planner Organizer",

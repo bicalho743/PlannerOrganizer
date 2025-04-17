@@ -76,6 +76,10 @@ args = "Limpar Vendas"
 task = "workflow.run"
 args = "Download Ícones"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -308,6 +312,21 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run download_icons.py --server.port 8550 --server.address 0.0.0.0"
 waitForPort = 8550
+
+[[workflows.workflow]]
+name = "Login"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run login.py --server.port 5001 --server.address 0.0.0.0"
+waitForPort = 5001
 
 [[ports]]
 localPort = 443
