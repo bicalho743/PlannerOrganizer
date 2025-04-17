@@ -444,6 +444,10 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
             # Registrar totais para debug
             print(f"DEBUG PDF: Totais dos produtos: Valor={total_produtos:.2f}, Lucro={total_lucro:.2f}, Margem={margem_media:.1f}%")
             
+            # Armazenar os valores em variáveis globais para uso nas tabelas de resumo
+            valor_produtos_total = total_produtos
+            lucro_produtos_total = total_lucro
+            
             story.append(Spacer(1, 12))
         
         # Seção de Outros Itens (cabides, etc.)
@@ -570,20 +574,11 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
         story.append(Spacer(1, 15))
         
         # Inicializar variáveis para evitar erro caso não sejam definidas anteriormente
-        total_produtos = 0.0
-        total_lucro = 0.0
-        
-        # Verificar se os produtos foram processados anteriormente
-        if produtos_agrupados:
-            # Usar os valores já calculados na seção de produtos
-            valor_produtos_total = total_produtos
-            lucro_produtos_total = total_lucro
-        else:
-            # Calcular totais dos produtos a partir dos dados brutos da proposta
+        if 'valor_produtos_total' not in locals() or 'lucro_produtos_total' not in locals():
             valor_produtos_total = 0.0
             lucro_produtos_total = 0.0
             
-            # Verificar se há produtos
+            # Calcular totais dos produtos a partir dos dados brutos da proposta
             if produtos_fisicos:
                 for produto in produtos_fisicos:
                     valor_produtos_total += produto['valor_total']
@@ -591,7 +586,7 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                         lucro_produtos_total += produto['lucro_total']
                     elif 'lucro_unitario' in produto and 'quantidade' in produto:
                         lucro_produtos_total += produto['lucro_unitario'] * produto['quantidade']
-                print(f"DEBUG PDF: Calculados valores de produtos: Total={valor_produtos_total:.2f}, Lucro={lucro_produtos_total:.2f}")
+                print(f"DEBUG PDF: Valores calculados diretamente dos produtos físicos: Valor={valor_produtos_total:.2f}, Lucro={lucro_produtos_total:.2f}")
             
         # Calcular custo dos produtos (preço - lucro)
         custo_produtos = valor_produtos_total - lucro_produtos_total
