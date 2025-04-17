@@ -131,8 +131,24 @@ def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
             print(f"DEBUG PDF ERROR: Erro ao buscar produtos: {str(e)}")
             traceback.print_exc()
         
-        # Adicionar produtos físicos à tabela principal de serviços
+        # Agrupar produtos por nome para combinar aqueles com mesmo nome
+        produtos_agrupados = {}
         for produto in produtos_fisicos:
+            nome = produto['nome']
+            if nome not in produtos_agrupados:
+                produtos_agrupados[nome] = {
+                    'nome': nome,
+                    'quantidade': produto['quantidade'],
+                    'valor_total': produto['valor_total'],
+                    'valor_unitario': produto['valor_unitario']
+                }
+            else:
+                # Somar quantidade e valor para produtos com mesmo nome
+                produtos_agrupados[nome]['quantidade'] += produto['quantidade']
+                produtos_agrupados[nome]['valor_total'] += produto['valor_total']
+        
+        # Adicionar produtos agrupados à tabela principal de serviços
+        for nome, produto in produtos_agrupados.items():
             # Criar string com informações de quantidade e valores
             descricao = f"PRODUTO - {produto['nome']}"
             if produto['quantidade'] > 1:
