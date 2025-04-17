@@ -698,20 +698,39 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                 if 'tipo_receita' in acrescimo:
                     print(f"DEBUG PDF: DETALHES - tipo_receita={acrescimo['tipo_receita']}")
                 
-                if ('comissao' in tipo_lower or 'comissão' in tipo_lower or
-                    ('subcategoria' in acrescimo and acrescimo['subcategoria'] and 'comiss' in acrescimo['subcategoria'].lower()) or
-                    ('categoria' in acrescimo and acrescimo['categoria'] and 'comiss' in acrescimo['categoria'].lower()) or
-                    ('tipo_receita' in acrescimo and acrescimo['tipo_receita'] and 'comiss' in acrescimo['tipo_receita'].lower())):
+                # Verificar se o tipo contém 'comissao' ou 'comissão'
+                comissao_tipo = 'comissao' in tipo_lower or 'comissão' in tipo_lower
+                
+                # Verificar se a subcategoria contém 'comissao' ou 'comissão'
+                comissao_subcategoria = False
+                if 'subcategoria' in acrescimo and acrescimo['subcategoria']:
+                    if isinstance(acrescimo['subcategoria'], str):
+                        comissao_subcategoria = 'comiss' in acrescimo['subcategoria'].lower()
+                
+                # Verificar se a categoria contém 'comissao' ou 'comissão'
+                comissao_categoria = False
+                if 'categoria' in acrescimo and acrescimo['categoria']:
+                    if isinstance(acrescimo['categoria'], str):
+                        comissao_categoria = 'comiss' in acrescimo['categoria'].lower()
+                
+                # Verificar se o tipo_receita contém 'comissao' ou 'comissão'
+                comissao_tipo_receita = False
+                if 'tipo_receita' in acrescimo and acrescimo['tipo_receita']:
+                    if isinstance(acrescimo['tipo_receita'], str):
+                        comissao_tipo_receita = 'comiss' in acrescimo['tipo_receita'].lower()
+                
+                # Verificar se qualquer um dos campos identifica uma comissão
+                if comissao_tipo or comissao_subcategoria or comissao_categoria or comissao_tipo_receita:
                     total_comissoes += valor
                     print(f"DEBUG PDF: Adicionado COMISSÃO: R$ {valor:.2f}, Total: R$ {total_comissoes:.2f}")
                     # Mostrar em qual condição a comissão foi identificada
-                    if 'comissao' in tipo_lower or 'comissão' in tipo_lower:
+                    if comissao_tipo:
                         print(f"DEBUG PDF: Comissão identificada pelo TIPO={tipo_lower}")
-                    elif 'subcategoria' in acrescimo and acrescimo['subcategoria'] and 'comiss' in acrescimo['subcategoria'].lower():
+                    elif comissao_subcategoria:
                         print(f"DEBUG PDF: Comissão identificada pela SUBCATEGORIA={acrescimo['subcategoria']}")
-                    elif 'categoria' in acrescimo and acrescimo['categoria'] and 'comiss' in acrescimo['categoria'].lower():
+                    elif comissao_categoria:
                         print(f"DEBUG PDF: Comissão identificada pela CATEGORIA={acrescimo['categoria']}")
-                    elif 'tipo_receita' in acrescimo and acrescimo['tipo_receita'] and 'comiss' in acrescimo['tipo_receita'].lower():
+                    elif comissao_tipo_receita:
                         print(f"DEBUG PDF: Comissão identificada pelo TIPO_RECEITA={acrescimo['tipo_receita']}")
                 # Identificar assistentes (para garantir contabilização correta)
                 elif tipo_lower == 'assistente':
