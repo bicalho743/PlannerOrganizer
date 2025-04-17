@@ -559,9 +559,23 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
         margem_bruta = valor_total - total_custos
         margem_percentual = (margem_bruta / valor_total * 100) if valor_total > 0 else 0
         
-        # Resumo financeiro - Duas visões
+        # Resumo financeiro com duas visões
         story.append(Spacer(1, 20))
-        story.append(Paragraph("<b>Resumo Financeiro</b>", styles["Heading4"]))
+        story.append(Paragraph("<b>ANÁLISE FINANCEIRA COMPLETA</b>", 
+                           ParagraphStyle('TitleFinancial', parent=styles['Heading3'], 
+                                         fontSize=14, alignment=1, spaceAfter=10, textColor=colors.darkblue)))
+        
+        # Adicionar explicação sobre as duas visões
+        story.append(Paragraph(
+            """Este relatório apresenta duas análises financeiras complementares da proposta:
+            
+            <b>1. CUSTO TOTAL DO CLIENTE:</b> Mostra todos os valores que compõem o custo final para o cliente.
+            <b>2. MEU GANHO:</b> Mostra o ganho real para a organização, considerando comissões, lucro de produtos 
+            e descontando pagamentos a assistentes.
+            """, 
+            ParagraphStyle('Explanation', parent=styles['Normal'], 
+                         alignment=0, spaceBefore=5, spaceAfter=15, leading=14)
+        ))
         
         # Calcular totais para as duas visões
         # 1. Custo total do cliente
@@ -585,13 +599,34 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                     total_outros += float(acrescimo['valor'])
         
         # 1. CUSTO TOTAL DO CLIENTE
-        custo_cliente_total = valor_base + total_acrescimos
+        custo_cliente_total = valor_base + valor_produtos_total + custos_fornecedores + total_outros
         
         # 2. MEU GANHO
         meu_ganho = valor_base + total_comissoes + lucro_produtos_total - custos_assistentes
         
-        # Criar tabelas lado a lado para as duas visões
-        story.append(Paragraph("<b>Primeira Visão: Custo Total do Cliente</b>", styles["Heading4"]))
+        # Definir cores para melhorar a distinção visual
+        cor_cliente = colors.dodgerblue
+        cor_ganho = colors.forestgreen
+        
+        # PRIMEIRA VISÃO - Custo total do cliente
+        story.append(Spacer(1, 10))
+        
+        # Cabeçalho da tabela com cores diferentes para identificação visual
+        cliente_header = ParagraphStyle(
+            'ClienteHeader', 
+            parent=styles['Heading4'],
+            textColor=cor_cliente,
+            borderWidth=1,
+            borderColor=cor_cliente,
+            borderPadding=5,
+            borderRadius=5,
+            alignment=0
+        )
+        
+        story.append(Paragraph("<b>VISÃO 1: CUSTO TOTAL DO CLIENTE</b>", cliente_header))
+        story.append(Paragraph("Esta seção mostra todos os valores que o cliente está pagando na proposta.", 
+                           ParagraphStyle('ExplanationClient', parent=styles['Normal'], fontSize=9, leading=10)))
+        story.append(Spacer(1, 5))
         
         # Tabela de resumo - Custo total do cliente
         data_custo_cliente = [
@@ -605,8 +640,8 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
         
         # Estilo para tabela - Custo total do cliente
         cliente_style = TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('BACKGROUND', (0, 0), (-1, 0), cor_cliente),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, 0), 12),
@@ -626,24 +661,40 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
         cliente_table.setStyle(cliente_style)
         story.append(cliente_table)
         
-        # Segunda visão
+        # SEGUNDA VISÃO - Meu ganho
         story.append(Spacer(1, 20))
-        story.append(Paragraph("<b>Segunda Visão: Meu Ganho</b>", styles["Heading4"]))
+        
+        ganho_header = ParagraphStyle(
+            'GanhoHeader', 
+            parent=styles['Heading4'],
+            textColor=cor_ganho,
+            borderWidth=1,
+            borderColor=cor_ganho,
+            borderPadding=5,
+            borderRadius=5,
+            alignment=0
+        )
+        
+        story.append(Paragraph("<b>VISÃO 2: MEU GANHO (ORGANIZADORA)</b>", ganho_header))
+        story.append(Paragraph("Esta seção mostra o ganho real da organizadora, considerando o valor base, comissões, \
+lucro na venda de produtos menos o pagamento a assistentes.", 
+                           ParagraphStyle('ExplanationGanho', parent=styles['Normal'], fontSize=9, leading=10)))
+        story.append(Spacer(1, 5))
         
         # Tabela de resumo - Meu ganho
         data_meu_ganho = [
             ["Item", "Valor"],
             ["Valor Base", f"R$ {valor_base:.2f}"],
             ["Comissões", f"R$ {total_comissoes:.2f}"],
-            ["Lucro Venda Produtos", f"R$ {lucro_produtos_total:.2f}"],
+            ["Lucro em Produtos", f"R$ {lucro_produtos_total:.2f}"],
             ["Pagamento Assistentes", f"R$ -{custos_assistentes:.2f}"],
             ["MEU GANHO TOTAL", f"R$ {meu_ganho:.2f}"]
         ]
         
         # Estilo para tabela - Meu ganho
         ganho_style = TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.darkgreen),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('BACKGROUND', (0, 0), (-1, 0), cor_ganho),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, 0), 12),
@@ -665,19 +716,39 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
         ganho_table.setStyle(ganho_style)
         story.append(ganho_table)
         
-        # Tabela adicional com análise detalhada e margem
+        # Tabela de comparação
         story.append(Spacer(1, 20))
-        story.append(Paragraph("<b>Análise Detalhada</b>", styles["Heading4"]))
+        
+        analise_header = ParagraphStyle(
+            'AnaliseHeader', 
+            parent=styles['Heading4'],
+            textColor=colors.darkblue,
+            borderWidth=1,
+            borderColor=colors.darkblue,
+            borderPadding=5,
+            borderRadius=5,
+            alignment=0
+        )
+        
+        story.append(Paragraph("<b>COMPARATIVO E ANÁLISE DE MARGEM</b>", analise_header))
+        story.append(Paragraph("Comparação direta entre o custo total do cliente e o ganho da organizadora, \
+mostrando a margem de lucro percentual.", 
+                           ParagraphStyle('ExplanationGanho', parent=styles['Normal'], fontSize=9, leading=10)))
+        story.append(Spacer(1, 5))
         
         # Calcular margem de lucro sobre o total
         margem_percentual = (meu_ganho / custo_cliente_total * 100) if custo_cliente_total > 0 else 0
         
-        # Tabela de análise detalhada
+        # Mostrar formato diferente para margem (verde se estiver acima de 30%, amarelo entre 20-30%, vermelho abaixo de 20%)
+        cor_margem = colors.green if margem_percentual >= 30 else (colors.orange if margem_percentual >= 20 else colors.red)
+        avaliacao = "IDEAL" if margem_percentual >= 30 else ("BOA" if margem_percentual >= 20 else "ABAIXO DO IDEAL")
+        
+        # Tabela de análise detalhada com gráfico visual
         data_analise = [
-            ["Item", "Valor"],
-            ["Custo Total do Cliente", f"R$ {custo_cliente_total:.2f}"],
-            ["Meu Ganho Total", f"R$ {meu_ganho:.2f}"],
-            ["MARGEM PERCENTUAL", f"{margem_percentual:.2f}%"]
+            ["Item", "Valor", "Avaliação"],
+            ["Custo Total do Cliente", f"R$ {custo_cliente_total:.2f}", ""],
+            ["Meu Ganho Total", f"R$ {meu_ganho:.2f}", ""],
+            ["MARGEM PERCENTUAL", f"{margem_percentual:.2f}%", avaliacao]
         ]
         
         # Estilo para tabela de análise
@@ -694,14 +765,33 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
             ('FONTSIZE', (0, 1), (-1, -1), 10),
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('ALIGN', (1, 1), (1, -1), 'RIGHT'),
+            ('ALIGN', (2, 1), (2, -1), 'CENTER'),
             # Destacar margem
             ('BACKGROUND', (0, -1), (-1, -1), colors.palegreen),
             ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ('TEXTCOLOR', (2, -1), (2, -1), cor_margem),
+            ('FONTNAME', (2, -1), (2, -1), 'Helvetica-Bold'),
         ])
         
-        analise_table = Table(data_analise, colWidths=[3.5*inch, 3*inch])
+        analise_table = Table(data_analise, colWidths=[3*inch, 2*inch, 1.5*inch])
         analise_table.setStyle(analise_style)
         story.append(analise_table)
+        
+        # Adicionar explicação sobre a margem ideal
+        if margem_percentual < 30:
+            story.append(Spacer(1, 10))
+            story.append(Paragraph(
+                f"<font color='{cor_margem.hexval()}'><b>ATENÇÃO:</b> A margem atual de {margem_percentual:.2f}% está abaixo do ideal de 30%. "
+                f"Considere rever os valores da proposta ou reduzir custos para aumentar a lucratividade.</font>", 
+                ParagraphStyle('AvisoMargem', parent=styles['Normal'], alignment=0, spaceBefore=5)
+            ))
+        else:
+            story.append(Spacer(1, 10))
+            story.append(Paragraph(
+                f"<font color='green'><b>EXCELENTE:</b> A margem atual de {margem_percentual:.2f}% está acima do ideal de 30%. "
+                f"Esta proposta tem uma boa lucratividade para a organização.</font>", 
+                ParagraphStyle('AvisoMargem', parent=styles['Normal'], alignment=0, spaceBefore=5)
+            ))
         
         # Alertas e observações
         story.append(Spacer(1, 20))
