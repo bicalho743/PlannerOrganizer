@@ -251,6 +251,28 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
     - ✅ Backup e restauração
     """)
     
+    # Botão para gerar o manual do sistema
+    if st.button("📘 Gerar Manual do Sistema", use_container_width=True):
+        with st.spinner("Gerando manual em PDF..."):
+            try:
+                from gerar_manual import gerar_manual_sistema
+                pdf_path = gerar_manual_sistema()
+                
+                # Ler o arquivo PDF para download
+                with open(pdf_path, "rb") as pdf_file:
+                    pdf_bytes = pdf_file.read()
+                
+                st.success("Manual gerado com sucesso!")
+                st.download_button(
+                    label="📥 Baixar Manual do Sistema",
+                    data=pdf_bytes,
+                    file_name="Manual_Planner_Organizer.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+            except Exception as e:
+                st.error(f"Erro ao gerar o manual: {str(e)}")
+    
     st.markdown("© 2025 Planner Organizer")
 
 # Links de navegação ocultos em um expander para desenvolvedores
