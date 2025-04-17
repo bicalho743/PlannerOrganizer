@@ -93,39 +93,50 @@ def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
         # Processar apenas acréscimos relevantes para o cliente
         total_servicos = float(proposta['valor'])
         
-        # Adicionar produtos da proposta (COLMEIA JEANS INVISÍVEL, etc.) - apenas produtos que não são do tipo OUTRO
+        # Listas para separar produtos e itens do tipo "OUTRO"
+        produtos_fisicos = []
+        outros_itens = []
+        
         try:
             # Buscar produtos da proposta usando a instância do Database
             produtos = db.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta['id']).all()
             print(f"DEBUG PDF: Encontrados {len(produtos)} produtos para a proposta")
             
-            # Criar uma lista para rastrear itens que já foram adicionados
-            itens_adicionados = []
-            
-            # Adicionar apenas produtos físicos (que não sejam do tipo OUTRO)
+            # Identificar produtos físicos e itens do tipo OUTRO com base no nome
             for produto in produtos:
-                # Verificar se o produto não é um item do tipo OUTRO
-                if produto.tipo != 'OUTRO':
-                    data_servicos.append([
-                        f"PRODUTO - {produto.nome}",
-                        f"R$ {float(produto.valor):.2f}"
-                    ])
-                    total_servicos += float(produto.valor)
-                    print(f"DEBUG PDF: Adicionado produto: {produto.nome} - R$ {float(produto.valor):.2f}")
-                    # Adicionar à lista de itens adicionados para evitar duplicação
-                    itens_adicionados.append(produto.nome.lower())
+                item = {
+                    'nome': produto.nome,
+                    'valor': float(produto.valor)
+                }
+                
+                # Verificar se o nome do produto contém "caixa" ou outros termos que indicam ser do tipo OUTRO
+                # Isso é uma solução temporária até adicionarmos o campo 'tipo' na tabela de produtos
+                nome_lower = produto.nome.lower() if produto.nome else ""
+                termos_outros = ['caixa', 'uber', 'transporte', 'serviço', 'servico', 'frete', 'delivery', 'entrega', 'cabide']
+                
+                if any(termo in nome_lower for termo in termos_outros):
+                    outros_itens.append(item)
+                    print(f"DEBUG PDF: Item OUTRO identificado pelo nome: {produto.nome} - R$ {float(produto.valor):.2f}")
                 else:
-                    print(f"DEBUG PDF: Produto do tipo OUTRO será processado como acréscimo: {produto.nome}")
+                    produtos_fisicos.append(item)
+                    print(f"DEBUG PDF: Produto físico identificado: {produto.nome} - R$ {float(produto.valor):.2f}")
         except Exception as e:
-            print(f"DEBUG PDF ERROR: Erro ao adicionar produtos: {str(e)}")
+            print(f"DEBUG PDF ERROR: Erro ao buscar produtos: {str(e)}")
             traceback.print_exc()
         
-        # Processar acréscimos
+        # Adicionar produtos físicos à tabela principal de serviços
+        for produto in produtos_fisicos:
+            data_servicos.append([
+                f"PRODUTO - {produto['nome']}",
+                f"R$ {produto['valor']:.2f}"
+            ])
+            total_servicos += produto['valor']
+        
+        # Processar acréscimos regulares (não do tipo OUTRO)
         if not acrescimos.empty:
             for _, acrescimo in acrescimos.iterrows():
-                # Excluir explicitamente o tipo 'assistente' do relatório do cliente
-                # Incluir todos os outros tipos (organização, outro, produto, fornecedor, marcenaria, etc)
-                if acrescimo['tipo'].lower() != 'assistente':
+                # Excluir assistentes e itens do tipo OUTRO da seção principal
+                if acrescimo['tipo'].lower() != 'assistente' and acrescimo['tipo'].lower() != 'outro':
                     descricao = f"{acrescimo['tipo']}"
                     if acrescimo.get('descricao'):
                         descricao += f" - {acrescimo['descricao']}"
@@ -141,6 +152,17 @@ def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
                         f"R$ {valor:.2f}"
                     ])
                     total_servicos += valor
+                    
+                # Coletar itens do tipo OUTRO para seção dedicada
+                elif acrescimo['tipo'].lower() == 'outro':
+                    item = {
+                        'nome': acrescimo.get('descricao', 'Item adicional'),
+                        'valor': float(acrescimo['valor']),
+                        'fornecedor': acrescimo.get('fornecedor', '')
+                    }
+                    outros_itens.append(item)
+                    # Adicionar ao total
+                    total_servicos += item['valor']
 
         # Tabela style para serviços
         table_style = TableStyle([

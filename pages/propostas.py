@@ -1284,10 +1284,78 @@ def show():
                                 
                                 # 5. Outros itens
                                 st.write("### Outros Itens")
-                                outros_itens = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_exec_id, "OUTROS")
+                                # Buscar itens do tipo OUTRO (singular) e OUTROS (plural) para garantir compatibilidade
+                                outros_itens_singular = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_exec_id, "OUTRO")
+                                outros_itens_plural = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_exec_id, "OUTROS")
+                                
+                                # Unir os dois conjuntos de dados
+                                if not outros_itens_singular.empty and not outros_itens_plural.empty:
+                                    outros_itens = pd.concat([outros_itens_singular, outros_itens_plural])
+                                elif not outros_itens_singular.empty:
+                                    outros_itens = outros_itens_singular
+                                else:
+                                    outros_itens = outros_itens_plural
                                 
                                 # Verificar se há produtos de serviço (UBER etc.) filtrados anteriormente
                                 tem_produtos_servico = 'produtos_servicos_filtrados' in st.session_state and not st.session_state['produtos_servicos_filtrados'].empty
+                                
+                                # DEBUG - Verificar produtos do tipo "caixa" diretamente no banco
+                                try:
+                                    # Buscar produtos com caixa no nome
+                                    from sqlalchemy import text
+                                    caixa_query = text("""
+                                        SELECT id, nome, valor, quantidade 
+                                        FROM produtos_organizadores 
+                                        WHERE proposta_id = :proposta_id 
+                                        AND LOWER(nome) LIKE '%caixa%'
+                                    """)
+                                    
+                                    produtos_caixa = []
+                                    with st.session_state.db.engine.connect() as connection:
+                                        result = connection.execute(caixa_query, {"proposta_id": proposta_exec_id})
+                                        for row in result:
+                                            produtos_caixa.append({
+                                                "id": row[0],
+                                                "nome": row[1],
+                                                "valor": float(row[2]) if row[2] is not None else 0,
+                                                "quantidade": int(row[3]) if row[3] is not None else 1
+                                            })
+                                    
+                                    # Se encontramos produtos do tipo caixa, adicionar à tabela
+                                    if produtos_caixa:
+                                        # Criar DataFrame para os produtos caixa
+                                        df_caixa = pd.DataFrame(produtos_caixa)
+                                        
+                                        # Se não temos outros itens, criar DataFrame vazio
+                                        if outros_itens.empty:
+                                            outros_itens = pd.DataFrame(columns=['id', 'tipo', 'fornecedor', 'descricao', 'valor', 'status_pagamento', 'data_cadastro'])
+                                            
+                                        # Para cada produto caixa, adicionar como um "Outro item"
+                                        for _, produto in df_caixa.iterrows():
+                                            # Verificar se este item já está nos outros_itens
+                                            if 'descricao' in outros_itens.columns and 'valor' in outros_itens.columns:
+                                                # Verificar se já existe um item com o mesmo nome e valor
+                                                ja_existe = outros_itens[
+                                                    (outros_itens['descricao'] == produto['nome']) & 
+                                                    (outros_itens['valor'] == produto['valor'])
+                                                ].shape[0] > 0
+                                                
+                                                if not ja_existe:
+                                                    # Criar um novo registro para o DataFrame
+                                                    novo_item = pd.DataFrame({
+                                                        'id': [None],
+                                                        'tipo': ['OUTRO'],
+                                                        'fornecedor': [''],
+                                                        'descricao': [produto['nome']],
+                                                        'valor': [produto['valor']],
+                                                        'status_pagamento': ['Pendente'],
+                                                        'data_cadastro': [None]
+                                                    })
+                                                    
+                                                    # Adicionar ao DataFrame principal
+                                                    outros_itens = pd.concat([outros_itens, novo_item])
+                                except Exception as e:
+                                    st.warning(f"Erro ao buscar produtos tipo caixa: {str(e)}")
                                 
                                 if not outros_itens.empty or tem_produtos_servico:
                                     # Inicializar o DataFrame para exibição
