@@ -585,17 +585,13 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
         valor_base = float(proposta['valor'])
         story.append(Paragraph(f"<b>Valor Base:</b> R$ {valor_base:.2f}", styles["Normal"]))
         
-        # Acréscimos
+        # Acréscimos - não exibir a tabela detalhada, mas calcular os valores
         total_acrescimos = 0.0
         custos_fornecedores = 0.0
         custos_assistentes = 0.0
         
         if not acrescimos.empty:
-            story.append(Spacer(1, 12))
-            story.append(Paragraph("<b>Detalhamento de Acréscimos e Custos</b>", styles["Heading4"]))
-            
-            data_acrescimos = [["Tipo", "Fornecedor/Assistente", "Descrição", "Valor", "Status"]]
-            
+            # Processar os acréscimos para cálculos, mas não mostrar a tabela
             for _, acrescimo in acrescimos.iterrows():
                 valor = float(acrescimo['valor'])
                 total_acrescimos += valor
@@ -616,35 +612,6 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                     }
                     outros_itens.append(outro_item)
                     print(f"DEBUG PDF: Interno - Item OUTRO adicionado: {outro_item['nome']} - R$ {valor:.2f}")
-                
-                data_acrescimos.append([
-                    acrescimo['tipo'],
-                    acrescimo['fornecedor'] if 'fornecedor' in acrescimo else "-",
-                    acrescimo['descricao'] if 'descricao' in acrescimo else "-",
-                    f"R$ {valor:.2f}",
-                    acrescimo.get('status_pagamento', 'Pendente')
-                ])
-            
-            # Tabela style para acréscimos
-            table_style = TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
-                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 8),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('ALIGN', (3, 1), (3, -1), 'RIGHT'),
-            ])
-            
-            # Criar e adicionar tabela de acréscimos
-            table = Table(data_acrescimos, colWidths=[1*inch, 1.5*inch, 2*inch, 1*inch, 1*inch])
-            table.setStyle(table_style)
-            story.append(table)
         
         # Cálculos financeiros
         valor_total = valor_base + total_acrescimos
