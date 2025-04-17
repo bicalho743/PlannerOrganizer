@@ -410,11 +410,8 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                 produtos_agrupados[nome]['quantidade'] += produto['quantidade']
                 produtos_agrupados[nome]['valor_total'] += produto['valor_total']
         
-        # Seção de produtos no relatório interno
+        # Cálculos de totais de produtos (sem exibir a tabela) para uso no resumo
         if produtos_agrupados:
-            story.append(Paragraph("<b>Produtos da Proposta</b>", styles["Heading4"]))
-            data_produtos = [["Produto", "Valor Unitário", "Quantidade", "Valor Total", "Custo Unit.", "Lucro Unit.", "Lucro Total", "Margem %"]]
-            
             total_produtos = 0.0
             total_custo = 0.0
             total_lucro = 0.0
@@ -442,18 +439,6 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                 produto['lucro_total'] = lucro_total
                 produto['margem_percentual'] = margem_percentual
                 
-                # Adicionar à tabela
-                data_produtos.append([
-                    produto['nome'],
-                    f"R$ {produto['valor_unitario']:.2f}",
-                    f"{produto['quantidade']}",
-                    f"R$ {produto['valor_total']:.2f}",
-                    f"R$ {preco_custo:.2f}",
-                    f"R$ {lucro_unitario:.2f}",
-                    f"R$ {lucro_total:.2f}",
-                    f"{margem_percentual:.1f}%"
-                ])
-                
                 # Somar aos totais
                 total_produtos += produto['valor_total']
                 total_custo += (preco_custo * produto['quantidade'])
@@ -462,46 +447,9 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
             # Calcular margem percentual média
             margem_media = (total_lucro / total_produtos * 100) if total_produtos > 0 else 0
             
-            # Adicionar linha de total
-            data_produtos.append([
-                "TOTAL PRODUTOS", 
-                "", 
-                "", 
-                f"R$ {total_produtos:.2f}",
-                "",
-                "",
-                f"R$ {total_lucro:.2f}",
-                f"{margem_media:.1f}%"
-            ])
+            # Registrar totais para debug
+            print(f"DEBUG PDF: Totais dos produtos: Valor={total_produtos:.2f}, Lucro={total_lucro:.2f}, Margem={margem_media:.1f}%")
             
-            # Tabela style para produtos
-            produtos_style = TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 9),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
-                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 8),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('ALIGN', (1, 1), (7, -1), 'RIGHT'),
-                # Destacar linha de total
-                ('BACKGROUND', (0, -1), (-1, -1), colors.lightblue),
-                ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-            ])
-            
-            # Criar e adicionar tabela de produtos
-            table = Table(data_produtos, colWidths=[1.5*inch, 0.75*inch, 0.5*inch, 0.75*inch, 0.75*inch, 0.75*inch, 0.75*inch, 0.7*inch])
-            table.setStyle(produtos_style)
-            story.append(table)
-            
-            # Adicionar legenda para facilitar interpretação
-            story.append(Spacer(1, 8))
-            story.append(Paragraph("<i>* Custo Unit. = Preço de custo unitário do estoque; Lucro Unit. = Valor unitário - Custo; Lucro Total = Lucro Unit. × Quantidade; Margem % = Lucro ÷ Valor × 100</i>", 
-                               ParagraphStyle('Legenda', fontSize=7, alignment=0, fontName='Helvetica-Oblique')))
             story.append(Spacer(1, 12))
         
         # Seção de Outros Itens (cabides, etc.)
