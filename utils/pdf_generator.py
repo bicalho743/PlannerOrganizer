@@ -293,19 +293,11 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
         story.append(Paragraph(f"<b>Tipo:</b> {proposta['tipo_proposta']}", styles["Normal"]))
         story.append(Paragraph(f"<b>Status:</b> {proposta['status']}", styles["Normal"]))
 
-        # Datas
-        if proposta.get('data_proposta'):
-            story.append(Paragraph(f"<b>Data da Proposta:</b> {proposta['data_proposta'].strftime('%d/%m/%Y')}", styles["Normal"]))
-        if proposta.get('data_aprovacao'):
-            story.append(Paragraph(f"<b>Data de Aprovação:</b> {proposta['data_aprovacao'].strftime('%d/%m/%Y')}", styles["Normal"]))
-        if proposta.get('data_inicio'):
-            story.append(Paragraph(f"<b>Data Início:</b> {proposta['data_inicio'].strftime('%d/%m/%Y')}", styles["Normal"]))
+        # Apenas as datas solicitadas
         if proposta.get('data_inicio_execucao'):
             story.append(Paragraph(f"<b>Data Início Execução:</b> {proposta['data_inicio_execucao'].strftime('%d/%m/%Y')}", styles["Normal"]))
         if proposta.get('data_fim'):
             story.append(Paragraph(f"<b>Data Fim:</b> {proposta['data_fim'].strftime('%d/%m/%Y')}", styles["Normal"]))
-        if proposta.get('prazo_entrega'):
-            story.append(Paragraph(f"<b>Prazo de Entrega:</b> {proposta['prazo_entrega'].strftime('%d/%m/%Y')}", styles["Normal"]))
         story.append(Spacer(1, 12))
 
         # Descrição da Proposta
