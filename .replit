@@ -9,7 +9,7 @@ run = ["sh", "-c", "streamlit run app.py --server.port=$PORT --server.address=0.
 build = ["sh", "-c", "pip install -r requirements.txt"]
 
 [workflows]
-runButton = "Project"
+runButton = "Gerar Manual"
 
 [[workflows.workflow]]
 name = "Project"
@@ -280,6 +280,15 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run limpar_vendas.py --server.port 8513 --server.address 0.0.0.0"
+
+[[workflows.workflow]]
+name = "Gerar Manual"
+author = 39445503
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run gerar_manual.py --server.port 8550 --server.address 0.0.0.0 --server.headless true"
 
 [[ports]]
 localPort = 443

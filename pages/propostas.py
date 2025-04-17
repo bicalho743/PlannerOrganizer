@@ -1720,6 +1720,43 @@ def show():
                                         # Obter acréscimos da proposta
                                         acrescimos = st.session_state.db.get_acrescimos_proposta(proposta_dict['id'])
                                         
+                                        # Obter transações financeiras relacionadas à proposta
+                                        # Filtrar para obter as comissões
+                                        financeiro = st.session_state.db.get_financeiro(include_all=True)
+                                        if not financeiro.empty:
+                                            comissoes = financeiro[
+                                                (financeiro['proposta_id'] == proposta_dict['id']) & 
+                                                (
+                                                    (financeiro['categoria'].str.lower() == 'comissão') | 
+                                                    (financeiro['subcategoria'].str.lower() == 'comissão de fornecedor') |
+                                                    (financeiro['tipo_receita'].str.lower() == 'comissão')
+                                                )
+                                            ]
+                                            
+                                            # Converter comissões para o mesmo formato dos acréscimos
+                                            if not comissoes.empty:
+                                                print(f"DEBUG: Encontradas {len(comissoes)} comissões para a proposta {proposta_dict['id']}")
+                                                # Adicionar coluna 'comissao' para indicar que são registros de comissão
+                                                for _, comissao in comissoes.iterrows():
+                                                    print(f"DEBUG: Comissão encontrada: {comissao['descricao']} - R$ {comissao['valor']}")
+                                                    
+                                                    # Adicionar ao DataFrame de acréscimos
+                                                    novo_acrescimo = {
+                                                        'id': comissao['id'], 
+                                                        'tipo': 'COMISSÃO',
+                                                        'fornecedor': comissao.get('origem_tipo', ''),
+                                                        'descricao': comissao['descricao'],
+                                                        'valor': comissao['valor'],
+                                                        'status_pagamento': comissao['status'],
+                                                        'data_cadastro': comissao['data'],
+                                                        'categoria': comissao['categoria'],
+                                                        'subcategoria': comissao['subcategoria'],
+                                                        'tipo_receita': comissao.get('tipo_receita', '')
+                                                    }
+                                                    
+                                                    # Adicionar ao DataFrame de acréscimos
+                                                    acrescimos = pd.concat([acrescimos, pd.DataFrame([novo_acrescimo])], ignore_index=True)
+                                        
                                         # Definir caminho do arquivo
                                         # Nome do arquivo inclui o nome do cliente para fácil identificação
                                         cliente_nome_simplificado = proposta_dict['cliente_nome'].replace(" ", "_")[:20] # Limitar tamanho
