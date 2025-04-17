@@ -523,6 +523,17 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                     custos_assistentes += valor
                 elif acrescimo['tipo'].lower() in ['fornecedor', 'produto', 'marcenaria']:
                     custos_fornecedores += valor
+                elif acrescimo['tipo'].lower() == 'outro':
+                    # Adicionar o item à lista de outros_itens para exibição na seção específica
+                    outro_item = {
+                        'nome': acrescimo['fornecedor'] if 'fornecedor' in acrescimo else "Item adicional",
+                        'valor_unitario': valor,
+                        'quantidade': 1,
+                        'valor_total': valor,
+                        'descricao': acrescimo['descricao'] if 'descricao' in acrescimo else ""
+                    }
+                    outros_itens.append(outro_item)
+                    print(f"DEBUG PDF: Interno - Item OUTRO adicionado: {outro_item['nome']} - R$ {valor:.2f}")
                 
                 data_acrescimos.append([
                     acrescimo['tipo'],
