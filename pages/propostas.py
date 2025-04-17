@@ -435,7 +435,7 @@ def show():
                                         
                                         # Usar o mesmo formato de nome de arquivo que definimos em propostas_helper.py
                                         st.download_button(
-                                            label="⬇️",
+                                            label="⬇️ Download",
                                             data=pdf_bytes,
                                             file_name=f"Proposta_{proposta_id}_{cliente_nome}.pdf",
                                             mime="application/pdf",
