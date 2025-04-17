@@ -319,11 +319,25 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
         
         try:
             # Buscar produtos da proposta
-            from utils.database import Database, ProdutoOrganizador
+            from utils.database import Database, ProdutoOrganizador, Produto
             db = Database()
             produtos = db.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta['id']).all()
             print(f"DEBUG PDF: Interno - Encontrados {len(produtos)} produtos para a proposta")
             
+            # Buscar todos os produtos do estoque para usar no cálculo de lucro
+            produtos_estoque = {}
+            try:
+                # Criar um dicionário com os produtos do estoque para facilitar a busca por nome
+                for prod in db.session.query(Produto).all():
+                    produtos_estoque[prod.nome.lower()] = {
+                        'id': prod.id,
+                        'preco_custo': prod.preco_custo,
+                        'preco_venda': prod.preco_venda
+                    }
+                print(f"DEBUG PDF: Interno - Encontrados {len(produtos_estoque)} produtos no estoque")
+            except Exception as e:
+                print(f"DEBUG PDF ERROR: Erro ao buscar produtos do estoque: {str(e)}")
+                
             # Identificar produtos físicos e itens do tipo OUTRO
             for produto in produtos:
                 # Obter quantidade e calcular valor total
@@ -331,11 +345,29 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                 valor_unitario = float(produto.valor) if produto.valor is not None else 0
                 valor_total = valor_unitario * quantidade
                 
+                # Buscar informações de custo no estoque
+                preco_custo = 0
+                lucro_total = 0
+                lucro_unitario = 0
+                margem_percentual = 0
+                
+                if produto.nome and produto.nome.lower() in produtos_estoque:
+                    preco_custo = produtos_estoque[produto.nome.lower()]['preco_custo']
+                    lucro_unitario = valor_unitario - preco_custo
+                    lucro_total = lucro_unitario * quantidade
+                    # Calcular margem percentual
+                    if valor_unitario > 0:
+                        margem_percentual = (lucro_unitario / valor_unitario) * 100
+                
                 item = {
                     'nome': produto.nome,
                     'valor_unitario': valor_unitario,
                     'quantidade': quantidade,
-                    'valor_total': valor_total
+                    'valor_total': valor_total,
+                    'preco_custo': preco_custo,
+                    'lucro_unitario': lucro_unitario,
+                    'lucro_total': lucro_total,
+                    'margem_percentual': margem_percentual
                 }
                 
                 # Verificar se o nome do produto contém termos que indicam ser do tipo OUTRO
@@ -348,6 +380,8 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                 else:
                     produtos_fisicos.append(item)
                     print(f"DEBUG PDF: Interno - Produto físico identificado: {produto.nome} - R$ {valor_unitario:.2f} x {quantidade} = R$ {valor_total:.2f}")
+                    if preco_custo > 0:
+                        print(f"DEBUG PDF: Interno - Custo: R$ {preco_custo:.2f}, Lucro: R$ {lucro_total:.2f}, Margem: {margem_percentual:.2f}%")
         except Exception as e:
             print(f"DEBUG PDF ERROR: Erro ao buscar produtos para relatório interno: {str(e)}")
             traceback.print_exc()
@@ -371,20 +405,66 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
         # Seção de produtos no relatório interno
         if produtos_agrupados:
             story.append(Paragraph("<b>Produtos da Proposta</b>", styles["Heading4"]))
-            data_produtos = [["Produto", "Valor Unitário", "Quantidade", "Valor Total"]]
+            data_produtos = [["Produto", "Valor Unitário", "Quantidade", "Valor Total", "Custo Unit.", "Lucro Unit.", "Lucro Total", "Margem %"]]
             
             total_produtos = 0.0
-            for nome, produto in produtos_agrupados.items():
+            total_custo = 0.0
+            total_lucro = 0.0
+            
+            # Encontrar valores de custo e lucro para os produtos agrupados
+            for nome_produto, produto in produtos_agrupados.items():
+                # Inicializar valores de custo e lucro para este produto
+                preco_custo = 0
+                lucro_unitario = 0
+                lucro_total = 0
+                margem_percentual = 0
+                
+                # Buscar informações de custo/lucro nos produtos originais
+                for prod_original in produtos_fisicos:
+                    if prod_original['nome'] == nome_produto:
+                        preco_custo = prod_original['preco_custo']
+                        lucro_unitario = prod_original['lucro_unitario']
+                        lucro_total = lucro_unitario * produto['quantidade']
+                        margem_percentual = prod_original['margem_percentual']
+                        break
+                
+                # Atualizar produto com valores de custo e lucro
+                produto['preco_custo'] = preco_custo
+                produto['lucro_unitario'] = lucro_unitario
+                produto['lucro_total'] = lucro_total
+                produto['margem_percentual'] = margem_percentual
+                
+                # Adicionar à tabela
                 data_produtos.append([
                     produto['nome'],
                     f"R$ {produto['valor_unitario']:.2f}",
                     f"{produto['quantidade']}",
-                    f"R$ {produto['valor_total']:.2f}"
+                    f"R$ {produto['valor_total']:.2f}",
+                    f"R$ {preco_custo:.2f}",
+                    f"R$ {lucro_unitario:.2f}",
+                    f"R$ {lucro_total:.2f}",
+                    f"{margem_percentual:.1f}%"
                 ])
+                
+                # Somar aos totais
                 total_produtos += produto['valor_total']
+                total_custo += (preco_custo * produto['quantidade'])
+                total_lucro += lucro_total
+            
+            # Calcular margem percentual média
+            margem_media = (total_lucro / total_produtos * 100) if total_produtos > 0 else 0
             
             # Adicionar linha de total
-            data_produtos.append(["TOTAL PRODUTOS", "", "", f"R$ {total_produtos:.2f}"])
+            data_produtos.append([
+                "TOTAL PRODUTOS", 
+                "", 
+                "", 
+                f"R$ {total_produtos:.2f}",
+                "",
+                "",
+                f"R$ {total_lucro:.2f}",
+                f"{margem_media:.1f}%"
+            ])
             
             # Tabela style para produtos
             produtos_style = TableStyle([
@@ -392,23 +472,28 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('FONTSIZE', (0, 0), (-1, 0), 9),
                 ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
                 ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
                 ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
                 ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
                 ('FONTSIZE', (0, 1), (-1, -1), 8),
                 ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('ALIGN', (1, 1), (3, -1), 'RIGHT'),
+                ('ALIGN', (1, 1), (7, -1), 'RIGHT'),
                 # Destacar linha de total
                 ('BACKGROUND', (0, -1), (-1, -1), colors.lightblue),
                 ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
             ])
             
             # Criar e adicionar tabela de produtos
-            table = Table(data_produtos, colWidths=[3*inch, 1*inch, 1*inch, 1.5*inch])
+            table = Table(data_produtos, colWidths=[1.5*inch, 0.75*inch, 0.5*inch, 0.75*inch, 0.75*inch, 0.75*inch, 0.75*inch, 0.7*inch])
             table.setStyle(produtos_style)
             story.append(table)
+            
+            # Adicionar legenda para facilitar interpretação
+            story.append(Spacer(1, 8))
+            story.append(Paragraph("<i>* Custo Unit. = Preço de custo unitário do estoque; Lucro Unit. = Valor unitário - Custo; Lucro Total = Lucro Unit. × Quantidade; Margem % = Lucro ÷ Valor × 100</i>", 
+                               ParagraphStyle('Legenda', fontSize=7, alignment=0, fontName='Helvetica-Oblique')))
             story.append(Spacer(1, 12))
         
         # Valor Total e Custos
