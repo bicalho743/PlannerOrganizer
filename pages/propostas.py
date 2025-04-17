@@ -1747,13 +1747,16 @@ def show():
                                             else:
                                                 print("DEBUG: Coluna 'proposta_id' não encontrada no DataFrame financeiro")
                                             
-                                            # Filtrar as comissões
+                                            # Filtrar as comissões - analisar valores categorizados como "Comissão de Fornecedor"
                                             comissoes = financeiro[
                                                 (financeiro['proposta_id'] == proposta_dict['id']) & 
                                                 (
-                                                    (financeiro['categoria'].str.lower() == 'comissão') | 
-                                                    (financeiro['subcategoria'].str.lower() == 'comissão de fornecedor') |
-                                                    (financeiro['tipo_receita'].str.lower() == 'comissão')
+                                                    (financeiro['categoria'].str.lower().str.contains('comissão')) | 
+                                                    (financeiro['categoria'].str.lower().str.contains('comissao')) | 
+                                                    (financeiro['subcategoria'].str.lower().str.contains('comissão')) |
+                                                    (financeiro['subcategoria'].str.lower().str.contains('comissao')) |
+                                                    (financeiro['tipo_receita'].str.lower().str.contains('comissão')) |
+                                                    (financeiro['tipo_receita'].str.lower().str.contains('comissao'))
                                                 )
                                             ]
                                             

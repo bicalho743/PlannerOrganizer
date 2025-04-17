@@ -690,12 +690,29 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                 print(f"DEBUG PDF: Classificando acréscimo: {tipo_lower} - R$ {valor:.2f}")
                 
                 # Identificar comissões - procurar por tipo comissão, categoria Comissão ou tipo_receita comissão
-                if ('comissao' in tipo_lower or 'comissão' in tipo_lower or 
-                    (acrescimo.get('subcategoria', '').lower() == 'comissão de fornecedor') or
-                    (acrescimo.get('categoria', '').lower() == 'comissão') or
-                    (acrescimo.get('tipo_receita', '').lower() == 'comissão')):
+                # Mostrar detalhes de cada acréscimo
+                if 'categoria' in acrescimo:
+                    print(f"DEBUG PDF: DETALHES - categoria={acrescimo['categoria']}, tipo={tipo_lower}")
+                if 'subcategoria' in acrescimo:
+                    print(f"DEBUG PDF: DETALHES - subcategoria={acrescimo['subcategoria']}")
+                if 'tipo_receita' in acrescimo:
+                    print(f"DEBUG PDF: DETALHES - tipo_receita={acrescimo['tipo_receita']}")
+                
+                if ('comissao' in tipo_lower or 'comissão' in tipo_lower or
+                    ('subcategoria' in acrescimo and acrescimo['subcategoria'] and 'comiss' in acrescimo['subcategoria'].lower()) or
+                    ('categoria' in acrescimo and acrescimo['categoria'] and 'comiss' in acrescimo['categoria'].lower()) or
+                    ('tipo_receita' in acrescimo and acrescimo['tipo_receita'] and 'comiss' in acrescimo['tipo_receita'].lower())):
                     total_comissoes += valor
                     print(f"DEBUG PDF: Adicionado COMISSÃO: R$ {valor:.2f}, Total: R$ {total_comissoes:.2f}")
+                    # Mostrar em qual condição a comissão foi identificada
+                    if 'comissao' in tipo_lower or 'comissão' in tipo_lower:
+                        print(f"DEBUG PDF: Comissão identificada pelo TIPO={tipo_lower}")
+                    elif 'subcategoria' in acrescimo and acrescimo['subcategoria'] and 'comiss' in acrescimo['subcategoria'].lower():
+                        print(f"DEBUG PDF: Comissão identificada pela SUBCATEGORIA={acrescimo['subcategoria']}")
+                    elif 'categoria' in acrescimo and acrescimo['categoria'] and 'comiss' in acrescimo['categoria'].lower():
+                        print(f"DEBUG PDF: Comissão identificada pela CATEGORIA={acrescimo['categoria']}")
+                    elif 'tipo_receita' in acrescimo and acrescimo['tipo_receita'] and 'comiss' in acrescimo['tipo_receita'].lower():
+                        print(f"DEBUG PDF: Comissão identificada pelo TIPO_RECEITA={acrescimo['tipo_receita']}")
                 # Identificar assistentes (para garantir contabilização correta)
                 elif tipo_lower == 'assistente':
                     # Custos de assistentes já são processados na seção anterior
