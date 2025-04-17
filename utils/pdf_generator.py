@@ -285,12 +285,7 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
         story.append(Paragraph(f"{datetime.now().strftime('%d/%m/%Y')}", styles["Heading3"]))
         story.append(Spacer(1, 12))
 
-        # Informações do Cliente
-        story.append(Paragraph("<b>Informações do Cliente</b>", styles["Heading3"]))
-        story.append(Paragraph(f"<b>Nome:</b> {cliente['nome']}", styles["Normal"]))
-        story.append(Paragraph(f"<b>Email:</b> {cliente.get('email', 'Não informado')}", styles["Normal"]))
-        story.append(Paragraph(f"<b>Telefone:</b> {cliente.get('telefone', 'Não informado')}", styles["Normal"]))
-        story.append(Paragraph(f"<b>Endereço:</b> {cliente.get('endereco', 'Não informado')}", styles["Normal"]))
+        # Espaço após título
         story.append(Spacer(1, 12))
 
         # Informações da Proposta
@@ -525,12 +520,11 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
             story.append(Spacer(1, 12))
             print(f"DEBUG PDF: Tabela de Outros Itens adicionada com {len(outros_agrupados)} itens, total R$ {total_outros_valor:.2f}")
         
-        # Valor Total e Custos
-        story.append(Paragraph("<b>Análise Financeira</b>", styles["Heading3"]))
-        
-        # Valor base
+        # Inicializar variável valor_base para uso posterior
         valor_base = float(proposta['valor'])
-        story.append(Paragraph(f"<b>Valor Base:</b> R$ {valor_base:.2f}", styles["Normal"]))
+        
+        # Espaçamento antes das análises
+        story.append(Spacer(1, 15))
         
         # Acréscimos - não exibir a tabela detalhada, mas calcular os valores
         total_acrescimos = 0.0
