@@ -1723,7 +1723,31 @@ def show():
                                         # Obter transações financeiras relacionadas à proposta
                                         # Filtrar para obter as comissões
                                         financeiro = st.session_state.db.get_financeiro(include_all=True)
+                                        print(f"DEBUG: Total de transações financeiras: {len(financeiro)}")
+                                        
                                         if not financeiro.empty:
+                                            print(f"DEBUG: Procurando comissões para proposta ID={proposta_dict['id']}")
+                                            print(f"DEBUG: Colunas disponíveis: {financeiro.columns.tolist()}")
+                                            
+                                            # Verificar se proposta_id existe nas colunas
+                                            if 'proposta_id' in financeiro.columns:
+                                                # Mostrar alguns valores de proposta_id para debug
+                                                proposta_ids = financeiro['proposta_id'].dropna().unique()
+                                                print(f"DEBUG: Valores únicos de proposta_id: {proposta_ids}")
+                                                
+                                                # Filtrar por proposta_id
+                                                transacoes_proposta = financeiro[financeiro['proposta_id'] == proposta_dict['id']]
+                                                print(f"DEBUG: Transações desta proposta: {len(transacoes_proposta)}")
+                                                
+                                                # Mostrar todas as transações para esta proposta para debug
+                                                if not transacoes_proposta.empty:
+                                                    print("DEBUG: Transações encontradas para esta proposta:")
+                                                    for idx, tx in transacoes_proposta.iterrows():
+                                                        print(f"DEBUG: Transação {idx}: {tx['descricao']}, tipo={tx.get('tipo', 'N/A')}, categoria={tx.get('categoria', 'N/A')}, subcategoria={tx.get('subcategoria', 'N/A')}, valor={tx.get('valor', 0)}")
+                                            else:
+                                                print("DEBUG: Coluna 'proposta_id' não encontrada no DataFrame financeiro")
+                                            
+                                            # Filtrar as comissões
                                             comissoes = financeiro[
                                                 (financeiro['proposta_id'] == proposta_dict['id']) & 
                                                 (
