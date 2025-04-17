@@ -313,6 +313,104 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
         story.append(Paragraph(proposta['descricao'], styles["Normal"]))
         story.append(Spacer(1, 20))
 
+        # Produtos associados à proposta
+        produtos_fisicos = []
+        outros_itens = []
+        
+        try:
+            # Buscar produtos da proposta
+            from utils.database import Database, ProdutoOrganizador
+            db = Database()
+            produtos = db.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta['id']).all()
+            print(f"DEBUG PDF: Interno - Encontrados {len(produtos)} produtos para a proposta")
+            
+            # Identificar produtos físicos e itens do tipo OUTRO
+            for produto in produtos:
+                # Obter quantidade e calcular valor total
+                quantidade = produto.quantidade if hasattr(produto, 'quantidade') and produto.quantidade is not None else 1
+                valor_unitario = float(produto.valor) if produto.valor is not None else 0
+                valor_total = valor_unitario * quantidade
+                
+                item = {
+                    'nome': produto.nome,
+                    'valor_unitario': valor_unitario,
+                    'quantidade': quantidade,
+                    'valor_total': valor_total
+                }
+                
+                # Verificar se o nome do produto contém termos que indicam ser do tipo OUTRO
+                nome_lower = produto.nome.lower() if produto.nome else ""
+                termos_outros = ['caixa', 'uber', 'transporte', 'serviço', 'servico', 'frete', 'delivery', 'entrega', 'cabide']
+                
+                if any(termo in nome_lower for termo in termos_outros):
+                    outros_itens.append(item)
+                    print(f"DEBUG PDF: Interno - Item OUTRO identificado: {produto.nome} - R$ {valor_unitario:.2f} x {quantidade} = R$ {valor_total:.2f}")
+                else:
+                    produtos_fisicos.append(item)
+                    print(f"DEBUG PDF: Interno - Produto físico identificado: {produto.nome} - R$ {valor_unitario:.2f} x {quantidade} = R$ {valor_total:.2f}")
+        except Exception as e:
+            print(f"DEBUG PDF ERROR: Erro ao buscar produtos para relatório interno: {str(e)}")
+            traceback.print_exc()
+            
+        # Agrupar produtos por nome para combinar aqueles com mesmo nome
+        produtos_agrupados = {}
+        for produto in produtos_fisicos:
+            nome = produto['nome']
+            if nome not in produtos_agrupados:
+                produtos_agrupados[nome] = {
+                    'nome': nome,
+                    'quantidade': produto['quantidade'],
+                    'valor_total': produto['valor_total'],
+                    'valor_unitario': produto['valor_unitario']
+                }
+            else:
+                # Somar quantidade e valor para produtos com mesmo nome
+                produtos_agrupados[nome]['quantidade'] += produto['quantidade']
+                produtos_agrupados[nome]['valor_total'] += produto['valor_total']
+        
+        # Seção de produtos no relatório interno
+        if produtos_agrupados:
+            story.append(Paragraph("<b>Produtos da Proposta</b>", styles["Heading4"]))
+            data_produtos = [["Produto", "Valor Unitário", "Quantidade", "Valor Total"]]
+            
+            total_produtos = 0.0
+            for nome, produto in produtos_agrupados.items():
+                data_produtos.append([
+                    produto['nome'],
+                    f"R$ {produto['valor_unitario']:.2f}",
+                    f"{produto['quantidade']}",
+                    f"R$ {produto['valor_total']:.2f}"
+                ])
+                total_produtos += produto['valor_total']
+            
+            # Adicionar linha de total
+            data_produtos.append(["TOTAL PRODUTOS", "", "", f"R$ {total_produtos:.2f}"])
+            
+            # Tabela style para produtos
+            produtos_style = TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 8),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('ALIGN', (1, 1), (3, -1), 'RIGHT'),
+                # Destacar linha de total
+                ('BACKGROUND', (0, -1), (-1, -1), colors.lightblue),
+                ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ])
+            
+            # Criar e adicionar tabela de produtos
+            table = Table(data_produtos, colWidths=[3*inch, 1*inch, 1*inch, 1.5*inch])
+            table.setStyle(produtos_style)
+            story.append(table)
+            story.append(Spacer(1, 12))
+        
         # Valor Total e Custos
         story.append(Paragraph("<b>Análise Financeira</b>", styles["Heading3"]))
         
