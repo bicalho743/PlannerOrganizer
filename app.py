@@ -41,22 +41,23 @@ if not st.session_state.authenticated:
     
     body {
         font-family: 'Poppins', sans-serif;
-        background-color: #f9fafc;
+        background: linear-gradient(135deg, #f9fafc, #eef5ff);
         color: #333;
     }
     
     h1, h2, h3, h4 {
         font-family: 'Poppins', sans-serif;
         font-weight: 600;
-        color: #1E366F;
+        color: #2d8cff;
     }
     
     .main-header {
-        color: #1E366F;
+        color: #2d8cff;
         font-size: 2.5rem;
         font-weight: 700;
         margin-bottom: 0.5rem;
         line-height: 1.2;
+        text-shadow: 0px 2px 3px rgba(0,0,0,0.1);
     }
     
     .subheader {
@@ -68,104 +69,125 @@ if not st.session_state.authenticated:
     
     .feature-card {
         background-color: white;
-        border-radius: 8px;
+        border-radius: 12px;
         padding: 1.5rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        margin-bottom: 1rem;
-        border-left: 4px solid #1E88E5;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+        border-top: 4px solid #2d8cff;
         transition: all 0.3s ease;
     }
     
     .feature-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+        border-top: 4px solid #ff6b6b;
     }
     
     .feature-icon {
-        font-size: 2rem;
-        color: #1E88E5;
+        font-size: 2.5rem;
+        color: #2d8cff;
         margin-bottom: 1rem;
     }
     
     .feature-title {
         font-weight: 600;
-        color: #1E366F;
+        color: #2d8cff;
         margin-bottom: 0.5rem;
+        font-size: 1.1rem;
     }
     
     .feature-description {
         color: #5A6A85;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
+        line-height: 1.5;
     }
     
     .testimonial-card {
-        background-color: #E3F2FD;
-        padding: 1.5rem;
-        border-radius: 8px;
+        background: linear-gradient(135deg, #E3F2FD, #bbdefb);
+        padding: 1.8rem;
+        border-radius: 12px;
         position: relative;
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+    }
+    
+    .testimonial-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.12);
     }
     
     .testimonial-text {
         font-style: italic;
         color: #1E366F;
         margin-bottom: 1rem;
+        font-size: 1.05rem;
+        line-height: 1.6;
     }
     
     .testimonial-author {
         font-weight: 600;
         color: #1976D2;
+        font-size: 1.05rem;
     }
     
     .login-container {
-        background-color: white;
-        border-radius: 10px;
-        padding: 2rem;
-        box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+        background: linear-gradient(135deg, white, #f5f9ff);
+        border-radius: 16px;
+        padding: 2.5rem;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+        border: 1px solid rgba(255,255,255,0.8);
     }
     
     .login-header {
         text-align: center;
-        margin-bottom: 1.5rem;
+        margin-bottom: 2rem;
     }
     
     .social-button {
         width: 100%;
-        margin-bottom: 0.8rem;
-        border-radius: 4px;
-        padding: 0.5rem 1rem;
+        margin-bottom: 1rem;
+        border-radius: 12px;
+        padding: 0.7rem 1.2rem;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         font-weight: 500;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
+        font-size: 1rem;
     }
     
     .google-button {
         background-color: white;
         border: 1px solid #E0E0E0;
         color: #5A6A85;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
     }
     
     .google-button:hover {
         background-color: #f5f5f5;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.08);
     }
     
     .facebook-button {
         background-color: #3b5998;
         border: none;
         color: white;
+        box-shadow: 0 4px 8px rgba(59,89,152,0.3);
     }
     
     .facebook-button:hover {
         background-color: #344e86;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(59,89,152,0.4);
     }
     
     .login-divider {
         text-align: center;
         position: relative;
-        margin: 1.5rem 0;
+        margin: 1.8rem 0;
     }
     
     .login-divider:before {
@@ -180,60 +202,125 @@ if not st.session_state.authenticated:
     }
     
     .login-divider-text {
-        background-color: white;
-        padding: 0 10px;
+        background: linear-gradient(135deg, white, #f5f9ff);
+        padding: 0 15px;
         color: #5A6A85;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
     }
     
     .benefits-list li {
-        margin-bottom: 0.8rem;
+        margin-bottom: 1rem;
         display: flex;
         align-items: center;
     }
     
     .benefits-list .check-icon {
         color: #4CAF50;
-        margin-right: 0.5rem;
+        margin-right: 0.8rem;
         font-weight: bold;
+        font-size: 1.2rem;
     }
     
     .call-to-action {
-        background-color: #1E366F;
-        padding: 2rem;
-        border-radius: 10px;
+        background: linear-gradient(135deg, #2d8cff, #0063cc);
+        padding: 2.5rem;
+        border-radius: 16px;
         color: white;
         text-align: center;
-        margin-top: 2rem;
+        margin-top: 2.5rem;
+        box-shadow: 0 12px 30px rgba(45,140,255,0.3);
+        transform: rotate(0);
+        transition: all 0.3s ease;
+    }
+    
+    .call-to-action:hover {
+        transform: scale(1.02);
+        box-shadow: 0 15px 35px rgba(45,140,255,0.4);
     }
     
     .brands-section {
         text-align: center;
-        margin-top: 3rem;
-        padding: 1.5rem;
-        background-color: #f5f7fa;
-        border-radius: 8px;
+        margin-top: 3.5rem;
+        padding: 2rem;
+        background: linear-gradient(135deg, #f5f7fa, #e9f2ff);
+        border-radius: 16px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.05);
     }
     
     .stat-card {
-        background-color: white;
-        border-radius: 8px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        background: linear-gradient(135deg, white, #f5f9ff);
+        border-radius: 12px;
+        padding: 1.8rem;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.08);
         text-align: center;
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        border-bottom: 4px solid transparent;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+    }
+    
+    .stat-card:nth-child(1) {
+        border-bottom-color: #4CAF50;
+    }
+    
+    .stat-card:nth-child(2) {
+        border-bottom-color: #ff6b6b;
+    }
+    
+    .stat-card:nth-child(3) {
+        border-bottom-color: #ffbb33;
     }
     
     .stat-number {
-        font-size: 2rem;
+        font-size: 2.2rem;
         font-weight: 700;
-        color: #1E88E5;
-        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, #2d8cff, #0063cc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.8rem;
     }
     
     .stat-label {
         color: #5A6A85;
-        font-size: 0.9rem;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    
+    /* Estilo para os campos de formulário */
+    .stTextInput > div > div > input {
+        border-radius: 10px !important;
+        padding: 0.7rem 1rem !important;
+        font-size: 1rem !important;
+        border: 1px solid #E0E0E0 !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .stTextInput > div > div > input:focus {
+        border-color: #2d8cff !important;
+        box-shadow: 0 0 0 3px rgba(45,140,255,0.2) !important;
+    }
+    
+    /* Estilo para o botão de enviar */
+    .stButton > button {
+        background: linear-gradient(135deg, #2d8cff, #0063cc) !important;
+        color: white !important;
+        border-radius: 12px !important;
+        padding: 0.7rem 1.2rem !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        border: none !important;
+        box-shadow: 0 4px 10px rgba(45,140,255,0.3) !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .stButton > button:hover {
+        background: linear-gradient(135deg, #0063cc, #004a99) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 15px rgba(45,140,255,0.4) !important;
     }
     
     /* Removendo elementos da interface Streamlit */
