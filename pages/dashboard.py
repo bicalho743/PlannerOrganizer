@@ -337,20 +337,28 @@ def show():
                     data_60_dias = data_referencia + timedelta(days=60)
                     
                     # Calcular quantos dias faltam para atingir 60 dias
-                    dias_restantes = (data_60_dias - hoje).days
-                    
-                    # Se faltar 15 dias ou menos (e ainda não tiver passado), mostrar alerta
-                    if 0 <= dias_restantes <= 15:
-                        propostas_alerta.append({
-                            'id': proposta['id'],
-                            'numero': proposta['numero'],
-                            'cliente_nome': proposta.get('cliente_nome', 'Cliente não informado'),
-                            'descricao': proposta['descricao'],
-                            'data_referencia': data_referencia,
-                            'campo_nome': campo_nome,
-                            'dias_restantes': dias_restantes,
-                            'data_60_dias': data_60_dias
-                        })
+                    try:
+                        dias_restantes = (data_60_dias - hoje).days
+                        
+                        # Se faltar 15 dias ou menos (e ainda não tiver passado), mostrar alerta
+                        if 0 <= dias_restantes <= 15:
+                            # Garantir que todos os valores sejam do tipo correto para evitar comparações incompatíveis
+                            prop_id = int(proposta['id']) if not pd.isna(proposta['id']) else 0
+                            prop_numero = int(proposta['numero']) if not pd.isna(proposta['numero']) else 0
+                            
+                            propostas_alerta.append({
+                                'id': prop_id,
+                                'numero': prop_numero,
+                                'cliente_nome': str(proposta.get('cliente_nome', 'Cliente não informado')),
+                                'descricao': str(proposta['descricao']) if not pd.isna(proposta['descricao']) else "",
+                                'data_referencia': data_referencia,
+                                'campo_nome': campo_nome,
+                                'dias_restantes': dias_restantes,
+                                'data_60_dias': data_60_dias
+                            })
+                    except Exception as e:
+                        # Ignorar essa proposta caso ocorra algum erro de tipo
+                        continue
                 
                 # Ordenar por dias restantes (mais urgentes primeiro)
                 propostas_alerta.sort(key=lambda x: x['dias_restantes'])
