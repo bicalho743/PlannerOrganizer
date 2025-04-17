@@ -515,13 +515,20 @@ if not st.session_state.authenticated:
         </div>
         ''', unsafe_allow_html=True)
         
-        # Informações de acesso para demonstração
+        # Link para recuperação de senha e cadastro com informações de demonstração
         st.markdown('''
-        <div style="margin-top: 1.5rem; padding: 1rem; background-color: #E3F2FD; border-radius: 4px; border-left: 4px solid #1976D2;">
-            <p style="margin: 0; color: #1E366F; font-size: 0.9rem;">
-                <strong>Acesso para demonstração:</strong><br>
-                Usuário: admin<br>
-                Senha: admin
+        <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+                Esqueceu sua senha?
+            </a>
+            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+                Criar uma conta
+            </a>
+        </div>
+        
+        <div style="margin-top: 0.8rem; text-align: center;">
+            <p style="color: #9E9E9E; font-size: 0.75rem;">
+                Para demonstração, use: admin / admin
             </p>
         </div>
         ''', unsafe_allow_html=True)
@@ -529,10 +536,25 @@ if not st.session_state.authenticated:
         st.markdown('</div>', unsafe_allow_html=True)
         
         # Opção para pular login em ambiente de desenvolvimento (apenas para devs)
-        with st.expander("Acesso para desenvolvedores", expanded=False):
-            if st.button("Pular login (apenas para testes)"):
-                st.session_state.authenticated = True
-                st.rerun()
+        footer_container = st.container()
+        with footer_container:
+            st.markdown('''
+            <div style="position: fixed; bottom: 10px; right: 10px; z-index: 999;">
+                <details style="background: transparent; border: none; color: #BDBDBD; font-size: 0.7rem;">
+                    <summary style="cursor: pointer; outline: none;">Dev</summary>
+                    <div style="padding: 10px; background: white; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-top: 5px;">
+                        <p style="margin: 0 0 10px 0; font-size: 0.8rem;">Acesso para desenvolvedores</p>
+                        <button id="dev-login-button" style="background: #E0E0E0; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Pular login</button>
+                    </div>
+                </details>
+            </div>
+            ''', unsafe_allow_html=True)
+            
+            col1, col2, col3 = st.columns([1, 1, 1])
+            with col3:
+                if st.button("Acesso Dev", key="dev_login_access", use_container_width=True):
+                    st.session_state.authenticated = True
+                    st.rerun()
     
     # Seção de marcas/clientes
     st.markdown('''
@@ -751,6 +773,18 @@ if st.sidebar.button("🚪 Sair do Sistema",
     st.rerun()
 
 st.sidebar.markdown('</div>', unsafe_allow_html=True)
+
+# Página de boas-vindas ao fazer login
+if st.session_state.get('show_welcome', True) and st.session_state.authenticated:
+    try:
+        from pages.boas_vindas import show
+        show()
+        # Marcar que a página de boas-vindas já foi mostrada para esta sessão
+        st.session_state.show_welcome = False
+    except Exception as e:
+        st.error(f"Erro ao carregar página de boas-vindas: {str(e)}")
+        # Em caso de erro, desativar a página de boas-vindas
+        st.session_state.show_welcome = False
 
 # Roteamento de páginas
 try:
