@@ -279,30 +279,38 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
             'CustomTitle',
             parent=styles['Heading1'],
             fontSize=16,
-            spaceAfter=30
+            spaceAfter=5  # Reduzido para diminuir o espaçamento
         )
         story.append(Paragraph(f"RELATÓRIO INTERNO - #{proposta['id']} - {cliente['nome']}", title_style))
-        story.append(Paragraph(f"{datetime.now().strftime('%d/%m/%Y')}", styles["Heading3"]))
-        story.append(Spacer(1, 12))
-
-        # Espaço após título
-        story.append(Spacer(1, 12))
-
-        # Informações da Proposta
-        story.append(Paragraph("<b>Informações da Proposta</b>", styles["Heading3"]))
-        story.append(Paragraph(f"<b>Tipo:</b> {proposta['tipo_proposta']}", styles["Normal"]))
-        story.append(Paragraph(f"<b>Status:</b> {proposta['status']}", styles["Normal"]))
+        story.append(Paragraph(f"{datetime.now().strftime('%d/%m/%Y')}", 
+                           ParagraphStyle('DataRelatorio', parent=styles['Normal'], alignment=1, fontSize=10)))
+        
+        # Estilo compacto para informações da proposta
+        info_style = ParagraphStyle(
+            'InfoProposta',
+            parent=styles['Normal'],
+            leading=12,  # Espaçamento entre linhas reduzido
+            spaceBefore=0,
+            spaceAfter=0
+        )
+        
+        # Informações da Proposta (com espaçamento reduzido)
+        story.append(Spacer(1, 5))  # Pequeno espaçamento
+        story.append(Paragraph("<b>Informações da Proposta</b>", 
+                           ParagraphStyle('CompactHeading', parent=styles['Heading4'], spaceBefore=0, spaceAfter=2)))
+        story.append(Paragraph(f"<b>Tipo:</b> {proposta['tipo_proposta']}", info_style))
+        story.append(Paragraph(f"<b>Status:</b> {proposta['status']}", info_style))
 
         # Apenas as datas solicitadas
         if proposta.get('data_inicio_execucao'):
-            story.append(Paragraph(f"<b>Data Início Execução:</b> {proposta['data_inicio_execucao'].strftime('%d/%m/%Y')}", styles["Normal"]))
+            story.append(Paragraph(f"<b>Data Início Execução:</b> {proposta['data_inicio_execucao'].strftime('%d/%m/%Y')}", info_style))
         if proposta.get('data_fim'):
-            story.append(Paragraph(f"<b>Data Fim:</b> {proposta['data_fim'].strftime('%d/%m/%Y')}", styles["Normal"]))
-        story.append(Spacer(1, 12))
-
+            story.append(Paragraph(f"<b>Data Fim:</b> {proposta['data_fim'].strftime('%d/%m/%Y')}", info_style))
+        
         # Descrição da Proposta
-        story.append(Paragraph("<b>Descrição do Serviço:</b>", styles["Heading3"]))
-        story.append(Paragraph(proposta['descricao'], styles["Normal"]))
+        story.append(Paragraph("<b>Descrição do Serviço:</b>", 
+                          ParagraphStyle('CompactHeading', parent=styles['Heading4'], spaceBefore=2, spaceAfter=2)))
+        story.append(Paragraph(proposta['descricao'], info_style))
         story.append(Spacer(1, 20))
 
         # Produtos associados à proposta
@@ -558,17 +566,8 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                            ParagraphStyle('TitleFinancial', parent=styles['Heading3'], 
                                          fontSize=14, alignment=1, spaceAfter=10, textColor=colors.darkblue)))
         
-        # Adicionar explicação sobre as duas visões
-        story.append(Paragraph(
-            """Este relatório apresenta duas análises financeiras complementares da proposta:
-            
-            <b>1. CUSTO TOTAL DO CLIENTE:</b> Mostra todos os valores que compõem o custo final para o cliente.
-            <b>2. MEU GANHO:</b> Mostra o ganho real para a organização, considerando comissões, lucro de produtos 
-            e descontando pagamentos a assistentes.
-            """, 
-            ParagraphStyle('Explanation', parent=styles['Normal'], 
-                         alignment=0, spaceBefore=5, spaceAfter=15, leading=14)
-        ))
+        # Espaçamento
+        story.append(Spacer(1, 15))
         
         # Inicializar variáveis para evitar erro caso não sejam definidas anteriormente
         total_produtos = 0.0
@@ -687,7 +686,7 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
             alignment=0
         )
         
-        story.append(Paragraph("<b>VISÃO 1: CUSTO TOTAL DO CLIENTE</b>", cliente_header))
+        story.append(Paragraph("<b>CUSTO TOTAL DO CLIENTE</b>", cliente_header))
         story.append(Paragraph("Esta seção mostra todos os valores que o cliente está pagando na proposta.", 
                            ParagraphStyle('ExplanationClient', parent=styles['Normal'], fontSize=9, leading=10)))
         story.append(Spacer(1, 5))
@@ -739,7 +738,7 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
             alignment=0
         )
         
-        story.append(Paragraph("<b>VISÃO 2: MEU GANHO (ORGANIZADORA)</b>", ganho_header))
+        story.append(Paragraph("<b>MEU GANHO (ORGANIZADORA)</b>", ganho_header))
         story.append(Paragraph("Esta seção mostra o ganho real da organizadora, considerando o valor base, comissões, \
 lucro na venda de produtos menos o pagamento a assistentes.", 
                            ParagraphStyle('ExplanationGanho', parent=styles['Normal'], fontSize=9, leading=10)))
@@ -870,17 +869,14 @@ mostrando a margem de lucro percentual.",
         # Observações Finais
         story.append(Spacer(1, 30))
         story.append(Paragraph("<b>Observações Finais</b>", styles["Heading4"]))
-        story.append(Paragraph("1. Este documento é CONFIDENCIAL e de uso interno.", styles["Normal"]))
-        story.append(Paragraph("2. A margem ideal deve ser de no mínimo 30% do valor total.", styles["Normal"]))
-        story.append(Paragraph("3. Custos com assistentes são despesas da empresa.", styles["Normal"]))
-        story.append(Paragraph("4. Custos com fornecedores são normalmente repassados ao cliente.", styles["Normal"]))
+        story.append(Paragraph("1. A margem ideal deve ser de no mínimo 30% do valor total.", styles["Normal"]))
+        story.append(Paragraph("2. Custos com assistentes são despesas da empresa.", styles["Normal"]))
+        story.append(Paragraph("3. Custos com fornecedores são normalmente repassados ao cliente.", styles["Normal"]))
 
         # Data e responsável
         story.append(Spacer(1, 50))
         story.append(Paragraph(f"Relatório gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')}", 
                             ParagraphStyle('DataGeracao', fontSize=8, alignment=1)))
-        story.append(Paragraph("CONFIDENCIAL - USO INTERNO", 
-                            ParagraphStyle('Confidencial', fontSize=10, alignment=1, textColor=colors.red)))
 
         # Gerar PDF
         doc.build(story)
