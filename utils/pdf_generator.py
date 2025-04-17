@@ -637,10 +637,14 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                          alignment=0, spaceBefore=5, spaceAfter=15, leading=14)
         ))
         
+        # Inicializar variáveis de produtos caso não tenham sido definidas anteriormente
+        total_produtos = 0.0
+        total_lucro = 0.0
+        
         # Calcular totais para as duas visões
         # 1. Custo total do cliente
-        valor_produtos_total = total_produtos if 'total_produtos' in locals() else 0.0
-        lucro_produtos_total = total_lucro if 'total_lucro' in locals() else 0.0
+        valor_produtos_total = total_produtos
+        lucro_produtos_total = total_lucro
         custo_produtos = valor_produtos_total - lucro_produtos_total
         
         # Categorizar acréscimos
