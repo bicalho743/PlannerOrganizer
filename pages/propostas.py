@@ -1721,7 +1721,9 @@ def show():
                                         acrescimos = st.session_state.db.get_acrescimos_proposta(proposta_dict['id'])
                                         
                                         # Definir caminho do arquivo
-                                        relatorio_path = f"pdfs/relatorio_interno_{proposta_dict['numero']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                                        # Nome do arquivo inclui o nome do cliente para fácil identificação
+                                        cliente_nome_simplificado = proposta_dict['cliente_nome'].replace(" ", "_")[:20] # Limitar tamanho
+                                        relatorio_path = f"pdfs/relatorio_interno_{proposta_dict['numero']}_{cliente_nome_simplificado}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
                                         
                                         # Gerar o PDF
                                         from utils.pdf_generator import gerar_pdf_interno
@@ -1739,7 +1741,7 @@ def show():
                                         st.download_button(
                                             label="Download do Relatório Interno",
                                             data=pdf_bytes,
-                                            file_name=f"relatorio_interno_{proposta_dict['numero']}.pdf",
+                                            file_name=f"relatorio_interno_{proposta_dict['numero']}_{cliente_nome_simplificado}.pdf",
                                             mime="application/pdf",
                                             key=download_key
                                         )
