@@ -23,7 +23,7 @@ from utils.database import Database
 # Configuração da página
 st.set_page_config(
     page_title="Planner Organizer",
-    page_icon="📋",
+    page_icon="favicon.png",
     layout="wide",
     initial_sidebar_state="expanded"
 )
