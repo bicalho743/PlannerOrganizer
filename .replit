@@ -9,7 +9,7 @@ run = ["sh", "-c", "streamlit run app.py --server.port=$PORT --server.address=0.
 build = ["sh", "-c", "pip install -r requirements.txt"]
 
 [workflows]
-runButton = "Gerar Manual"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
@@ -71,6 +71,10 @@ args = "Exclusão Simples"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Limpar Vendas"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Download Ícones"
 
 [[workflows.workflow]]
 name = "Teste Importação"
@@ -289,6 +293,21 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run gerar_manual.py --server.port 8550 --server.address 0.0.0.0 --server.headless true"
+
+[[workflows.workflow]]
+name = "Download Ícones"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run download_icons.py --server.port 8550 --server.address 0.0.0.0"
+waitForPort = 8550
 
 [[ports]]
 localPort = 443

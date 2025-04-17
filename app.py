@@ -274,6 +274,22 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
                 st.error(f"Erro ao gerar o manual: {str(e)}")
     
     st.markdown("© 2025 Planner Organizer")
+    
+    # Botão para download dos ícones do sistema
+    try:
+        with open("downloads/planner-icons.zip", "rb") as f:
+            icones_bytes = f.read()
+        
+        st.download_button(
+            label="🎨 Baixar Ícones do Sistema",
+            data=icones_bytes,
+            file_name="planner-icons.zip",
+            mime="application/zip",
+            use_container_width=True,
+            help="Baixe todos os ícones do sistema em diferentes formatos (SVG, PNG, Favicon)"
+        )
+    except Exception as e:
+        st.warning(f"Pacote de ícones não disponível")
 
 # Links de navegação ocultos em um expander para desenvolvedores
 with st.sidebar.expander("🔧 Acesso Desenvolvedor", expanded=False):
