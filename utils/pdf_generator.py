@@ -684,12 +684,23 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
         if not acrescimos.empty:
             for _, acrescimo in acrescimos.iterrows():
                 tipo_lower = acrescimo['tipo'].lower() if 'tipo' in acrescimo else ''
-                # Identificar comissões, se houver
+                valor = float(acrescimo['valor'])
+                
+                # Adicionar debug para verificar cada tipo de acréscimo
+                print(f"DEBUG PDF: Classificando acréscimo: {tipo_lower} - R$ {valor:.2f}")
+                
+                # Identificar comissões 
                 if 'comissao' in tipo_lower or 'comissão' in tipo_lower:
-                    total_comissoes += float(acrescimo['valor'])
+                    total_comissoes += valor
+                    print(f"DEBUG PDF: Adicionado COMISSÃO: R$ {valor:.2f}, Total: R$ {total_comissoes:.2f}")
+                # Identificar assistentes (para garantir contabilização correta)
+                elif tipo_lower == 'assistente':
+                    # Custos de assistentes já são processados na seção anterior
+                    print(f"DEBUG PDF: Verificado ASSISTENTE: R$ {valor:.2f}, Total: R$ {custos_assistentes:.2f}")
                 # Identificar outros itens que não são classificados como fornecedores ou assistentes
                 elif tipo_lower not in ['assistente', 'fornecedor', 'produto', 'marcenaria']:
-                    total_outros += float(acrescimo['valor'])
+                    total_outros += valor
+                    print(f"DEBUG PDF: Adicionado OUTROS: R$ {valor:.2f}, Total: R$ {total_outros:.2f}")
         
         # 1. CUSTO TOTAL DO CLIENTE
         custo_cliente_total = valor_base + valor_produtos_total + custos_fornecedores + total_outros
