@@ -93,19 +93,29 @@ def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
         # Processar apenas acréscimos relevantes para o cliente
         total_servicos = float(proposta['valor'])
         
-        # Adicionar produtos da proposta (COLMEIA JEANS INVISÍVEL, etc.)
+        # Adicionar produtos da proposta (COLMEIA JEANS INVISÍVEL, etc.) - apenas produtos que não são do tipo OUTRO
         try:
             # Buscar produtos da proposta usando a instância do Database
             produtos = db.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta['id']).all()
             print(f"DEBUG PDF: Encontrados {len(produtos)} produtos para a proposta")
             
+            # Criar uma lista para rastrear itens que já foram adicionados
+            itens_adicionados = []
+            
+            # Adicionar apenas produtos físicos (que não sejam do tipo OUTRO)
             for produto in produtos:
-                data_servicos.append([
-                    f"PRODUTO - {produto.nome}",
-                    f"R$ {float(produto.valor):.2f}"
-                ])
-                total_servicos += float(produto.valor)
-                print(f"DEBUG PDF: Adicionado produto: {produto.nome} - R$ {float(produto.valor):.2f}")
+                # Verificar se o produto não é um item do tipo OUTRO
+                if produto.tipo != 'OUTRO':
+                    data_servicos.append([
+                        f"PRODUTO - {produto.nome}",
+                        f"R$ {float(produto.valor):.2f}"
+                    ])
+                    total_servicos += float(produto.valor)
+                    print(f"DEBUG PDF: Adicionado produto: {produto.nome} - R$ {float(produto.valor):.2f}")
+                    # Adicionar à lista de itens adicionados para evitar duplicação
+                    itens_adicionados.append(produto.nome.lower())
+                else:
+                    print(f"DEBUG PDF: Produto do tipo OUTRO será processado como acréscimo: {produto.nome}")
         except Exception as e:
             print(f"DEBUG PDF ERROR: Erro ao adicionar produtos: {str(e)}")
             traceback.print_exc()
