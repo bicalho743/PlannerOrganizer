@@ -1611,8 +1611,9 @@ def show():
                                         # Obter acréscimos da proposta
                                         acrescimos = st.session_state.db.get_acrescimos_proposta(proposta_dict['id'])
                                         
-                                        # Definir caminho do arquivo
-                                        relatorio_path = f"pdfs/relatorio_cliente_{proposta_dict['numero']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                                        # Definir caminho do arquivo com o formato solicitado (relatório + número da proposta + nome do cliente)
+                                        nome_cliente_formatado = cliente_dict['nome'].replace(' ', '_').replace('/', '_').replace('\\', '_')
+                                        relatorio_path = f"pdfs/relatorio_{proposta_dict['numero']}_{nome_cliente_formatado}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
                                         
                                         # Gerar o PDF
                                         from utils.pdf_generator import gerar_pdf_cliente
@@ -1630,7 +1631,7 @@ def show():
                                         st.download_button(
                                             label="Download do Relatório",
                                             data=pdf_bytes,
-                                            file_name=f"relatorio_cliente_{proposta_dict['numero']}.pdf",
+                                            file_name=f"relatório_{proposta_dict['numero']}_{cliente_dict['nome']}.pdf",
                                             mime="application/pdf",
                                             key=download_key
                                         )
