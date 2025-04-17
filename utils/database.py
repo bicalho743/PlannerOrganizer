@@ -321,6 +321,7 @@ class ItemVenda(Base):
     quantidade = Column(Integer, nullable=False)
     preco_unitario = Column(Float, nullable=False)
     subtotal = Column(Float, nullable=False)
+    descricao = Column(String(255), nullable=True)  # Campo para armazenar o nome do produto
     
     # Relacionamentos
     venda = relationship("Venda", back_populates="itens")
