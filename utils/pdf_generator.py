@@ -496,6 +496,80 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                                ParagraphStyle('Legenda', fontSize=7, alignment=0, fontName='Helvetica-Oblique')))
             story.append(Spacer(1, 12))
         
+        # Seção de Outros Itens (cabides, etc.)
+        if outros_itens:
+            story.append(Paragraph("<b>Outros Itens e Serviços</b>", styles["Heading4"]))
+            
+            # Agrupar outros itens pelo nome para evitar duplicações
+            outros_agrupados = {}
+            
+            for item in outros_itens:
+                nome = item['nome']
+                
+                if nome in outros_agrupados:
+                    # Se o item já existe, somar quantidade e valor
+                    outros_agrupados[nome]['quantidade'] += item.get('quantidade', 1)
+                    outros_agrupados[nome]['valor_total'] += item['valor_total']
+                else:
+                    # Se o item não existe, adicioná-lo
+                    outros_agrupados[nome] = {
+                        'nome': nome,
+                        'descricao': item.get('descricao', ''),
+                        'valor_unitario': item['valor_unitario'],
+                        'quantidade': item.get('quantidade', 1),
+                        'valor_total': item['valor_total']
+                    }
+            
+            # Preparar dados para a tabela
+            data_outros = [["Item", "Descrição", "Valor Unitário", "Quantidade", "Valor Total"]]
+            total_outros_valor = 0.0
+            
+            for nome, item in outros_agrupados.items():
+                data_outros.append([
+                    item['nome'],
+                    item['descricao'],
+                    f"R$ {item['valor_unitario']:.2f}",
+                    f"{item['quantidade']}",
+                    f"R$ {item['valor_total']:.2f}"
+                ])
+                total_outros_valor += item['valor_total']
+            
+            # Adicionar linha de total
+            data_outros.append([
+                "TOTAL OUTROS ITENS",
+                "",
+                "", 
+                "",
+                f"R$ {total_outros_valor:.2f}"
+            ])
+            
+            # Estilo para tabela de outros itens
+            outros_style = TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 9),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 8),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('ALIGN', (2, 1), (4, -1), 'RIGHT'),
+                # Destacar linha de total
+                ('BACKGROUND', (0, -1), (-1, -1), colors.lightgreen),
+                ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ])
+            
+            # Criar e adicionar tabela de outros itens
+            table = Table(data_outros, colWidths=[1.5*inch, 2.5*inch, 1*inch, 0.7*inch, 1*inch])
+            table.setStyle(outros_style)
+            story.append(table)
+            
+            story.append(Spacer(1, 12))
+            print(f"DEBUG PDF: Tabela de Outros Itens adicionada com {len(outros_agrupados)} itens, total R$ {total_outros_valor:.2f}")
+        
         # Valor Total e Custos
         story.append(Paragraph("<b>Análise Financeira</b>", styles["Heading3"]))
         
