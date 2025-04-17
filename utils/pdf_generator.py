@@ -160,14 +160,18 @@ def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
             ])
             total_servicos += produto['valor_total']
         
-        # Processar acréscimos regulares (não do tipo OUTRO)
+        # Processar acréscimos regulares
         if not acrescimos.empty:
             for _, acrescimo in acrescimos.iterrows():
-                # Excluir assistentes e itens do tipo OUTRO da seção principal
-                if acrescimo['tipo'].lower() != 'assistente' and acrescimo['tipo'].lower() != 'outro':
-                    descricao = f"{acrescimo['tipo']}"
-                    if acrescimo.get('descricao'):
-                        descricao += f" - {acrescimo['descricao']}"
+                # Excluir apenas os assistentes da seção principal
+                if acrescimo['tipo'].lower() != 'assistente':
+                    # Construir descrição para o item
+                    if acrescimo['tipo'].lower() == 'outro':
+                        descricao = f"OUTRO - {acrescimo.get('descricao', 'Item adicional')}"
+                    else:
+                        descricao = f"{acrescimo['tipo']}"
+                        if acrescimo.get('descricao'):
+                            descricao += f" - {acrescimo['descricao']}"
                     
                     # Adicionar nome do fornecedor se disponível
                     if acrescimo.get('fornecedor'):
@@ -181,16 +185,18 @@ def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
                     ])
                     total_servicos += valor
                     
-                # Coletar itens do tipo OUTRO para seção dedicada
-                elif acrescimo['tipo'].lower() == 'outro':
-                    item = {
-                        'nome': acrescimo.get('descricao', 'Item adicional'),
-                        'valor': float(acrescimo['valor']),
-                        'fornecedor': acrescimo.get('fornecedor', '')
-                    }
-                    outros_itens.append(item)
-                    # Adicionar ao total
-                    total_servicos += item['valor']
+                    # Se for tipo OUTRO, também coletar para a seção dedicada
+                    if acrescimo['tipo'].lower() == 'outro':
+                        item = {
+                            'nome': acrescimo.get('descricao', 'Item adicional'),
+                            'valor': float(acrescimo['valor']),
+                            'fornecedor': acrescimo.get('fornecedor', '')
+                        }
+                        outros_itens.append(item)
+                        print(f"DEBUG PDF: Adicionando OUTRO item aos serviços: {descricao} - R$ {valor:.2f}")
+                else:
+                    # Apenas registrar que estamos pulando um item de assistente
+                    print(f"DEBUG PDF: Pulando item de assistente: {acrescimo.get('descricao', 'Sem descrição')} - {acrescimo.get('fornecedor', 'Sem fornecedor')}")
 
         # Tabela style para serviços
         table_style = TableStyle([
@@ -375,7 +381,9 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                 termos_outros = ['caixa', 'uber', 'transporte', 'serviço', 'servico', 'frete', 'delivery', 'entrega', 'cabide']
                 
                 if any(termo in nome_lower for termo in termos_outros):
+                    # Incluir tanto nos outros_itens quanto nos produtos_fisicos para aparecer em ambas as tabelas
                     outros_itens.append(item)
+                    produtos_fisicos.append(item)  # Adicionando aqui para aparecer na tabela de serviços
                     print(f"DEBUG PDF: Interno - Item OUTRO identificado: {produto.nome} - R$ {valor_unitario:.2f} x {quantidade} = R$ {valor_total:.2f}")
                 else:
                     produtos_fisicos.append(item)
@@ -598,7 +606,7 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                 elif acrescimo['tipo'].lower() in ['fornecedor', 'produto', 'marcenaria']:
                     custos_fornecedores += valor
                 elif acrescimo['tipo'].lower() == 'outro':
-                    # Adicionar o item à lista de outros_itens para exibição na seção específica
+                    # Criar item para adicionar à lista de outros_itens para exibição na seção específica
                     outro_item = {
                         'nome': acrescimo['fornecedor'] if 'fornecedor' in acrescimo else "Item adicional",
                         'valor_unitario': valor,
