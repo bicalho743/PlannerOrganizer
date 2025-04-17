@@ -559,25 +559,52 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
         margem_bruta = valor_total - total_custos
         margem_percentual = (margem_bruta / valor_total * 100) if valor_total > 0 else 0
         
-        # Resumo financeiro
+        # Resumo financeiro - Duas visões
         story.append(Spacer(1, 20))
         story.append(Paragraph("<b>Resumo Financeiro</b>", styles["Heading4"]))
         
-        # Tabela de resumo financeiro
-        data_resumo = [
+        # Calcular totais para as duas visões
+        # 1. Custo total do cliente
+        valor_produtos_total = total_produtos if 'total_produtos' in locals() else 0.0
+        lucro_produtos_total = total_lucro if 'total_lucro' in locals() else 0.0
+        custo_produtos = valor_produtos_total - lucro_produtos_total
+        
+        # Categorizar acréscimos
+        total_comissoes = 0.0
+        total_outros = 0.0
+        
+        # Se houver acréscimos, classificá-los
+        if not acrescimos.empty:
+            for _, acrescimo in acrescimos.iterrows():
+                tipo_lower = acrescimo['tipo'].lower() if 'tipo' in acrescimo else ''
+                # Identificar comissões, se houver
+                if 'comissao' in tipo_lower or 'comissão' in tipo_lower:
+                    total_comissoes += float(acrescimo['valor'])
+                # Identificar outros itens que não são classificados como fornecedores ou assistentes
+                elif tipo_lower not in ['assistente', 'fornecedor', 'produto', 'marcenaria']:
+                    total_outros += float(acrescimo['valor'])
+        
+        # 1. CUSTO TOTAL DO CLIENTE
+        custo_cliente_total = valor_base + total_acrescimos
+        
+        # 2. MEU GANHO
+        meu_ganho = valor_base + total_comissoes + lucro_produtos_total - custos_assistentes
+        
+        # Criar tabelas lado a lado para as duas visões
+        story.append(Paragraph("<b>Primeira Visão: Custo Total do Cliente</b>", styles["Heading4"]))
+        
+        # Tabela de resumo - Custo total do cliente
+        data_custo_cliente = [
             ["Item", "Valor"],
             ["Valor Base", f"R$ {valor_base:.2f}"],
-            ["Total de Acréscimos", f"R$ {total_acrescimos:.2f}"],
-            ["VALOR TOTAL", f"R$ {valor_total:.2f}"],
-            ["Custos com Fornecedores", f"R$ {custos_fornecedores:.2f}"],
-            ["Custos com Assistentes", f"R$ {custos_assistentes:.2f}"],
-            ["TOTAL DE CUSTOS", f"R$ {total_custos:.2f}"],
-            ["MARGEM BRUTA", f"R$ {margem_bruta:.2f}"],
-            ["MARGEM PERCENTUAL", f"{margem_percentual:.2f}%"]
+            ["Produtos", f"R$ {valor_produtos_total:.2f}"],
+            ["Fornecedores", f"R$ {custos_fornecedores:.2f}"],
+            ["Outros", f"R$ {total_outros:.2f}"],
+            ["CUSTO TOTAL DO CLIENTE", f"R$ {custo_cliente_total:.2f}"]
         ]
         
-        # Estilo para tabela de resumo
-        resumo_style = TableStyle([
+        # Estilo para tabela - Custo total do cliente
+        cliente_style = TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -590,20 +617,91 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
             ('FONTSIZE', (0, 1), (-1, -1), 10),
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('ALIGN', (1, 1), (1, -1), 'RIGHT'),
-            # Destacar valores totais
-            ('BACKGROUND', (0, 3), (-1, 3), colors.lightskyblue),
-            ('FONTNAME', (0, 3), (-1, 3), 'Helvetica-Bold'),
-            ('BACKGROUND', (0, 6), (-1, 6), colors.lightskyblue),
-            ('FONTNAME', (0, 6), (-1, 6), 'Helvetica-Bold'),
-            ('BACKGROUND', (0, 7), (-1, 7), colors.palegreen),
-            ('FONTNAME', (0, 7), (-1, 7), 'Helvetica-Bold'),
-            ('BACKGROUND', (0, 8), (-1, 8), colors.palegreen),
-            ('FONTNAME', (0, 8), (-1, 8), 'Helvetica-Bold'),
+            # Destacar valor total
+            ('BACKGROUND', (0, -1), (-1, -1), colors.lightskyblue),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
         ])
         
-        resumo_table = Table(data_resumo, colWidths=[3.5*inch, 3*inch])
-        resumo_table.setStyle(resumo_style)
-        story.append(resumo_table)
+        cliente_table = Table(data_custo_cliente, colWidths=[3.5*inch, 3*inch])
+        cliente_table.setStyle(cliente_style)
+        story.append(cliente_table)
+        
+        # Segunda visão
+        story.append(Spacer(1, 20))
+        story.append(Paragraph("<b>Segunda Visão: Meu Ganho</b>", styles["Heading4"]))
+        
+        # Tabela de resumo - Meu ganho
+        data_meu_ganho = [
+            ["Item", "Valor"],
+            ["Valor Base", f"R$ {valor_base:.2f}"],
+            ["Comissões", f"R$ {total_comissoes:.2f}"],
+            ["Lucro Venda Produtos", f"R$ {lucro_produtos_total:.2f}"],
+            ["Pagamento Assistentes", f"R$ -{custos_assistentes:.2f}"],
+            ["MEU GANHO TOTAL", f"R$ {meu_ganho:.2f}"]
+        ]
+        
+        # Estilo para tabela - Meu ganho
+        ganho_style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.darkgreen),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.lightgrey),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('ALIGN', (1, 1), (1, -1), 'RIGHT'),
+            # Destacar valores importantes
+            ('BACKGROUND', (0, 2), (-1, 2), colors.palegreen),
+            ('BACKGROUND', (0, 3), (-1, 3), colors.palegreen),
+            ('BACKGROUND', (0, -1), (-1, -1), colors.lightgreen),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ])
+        
+        ganho_table = Table(data_meu_ganho, colWidths=[3.5*inch, 3*inch])
+        ganho_table.setStyle(ganho_style)
+        story.append(ganho_table)
+        
+        # Tabela adicional com análise detalhada e margem
+        story.append(Spacer(1, 20))
+        story.append(Paragraph("<b>Análise Detalhada</b>", styles["Heading4"]))
+        
+        # Calcular margem de lucro sobre o total
+        margem_percentual = (meu_ganho / custo_cliente_total * 100) if custo_cliente_total > 0 else 0
+        
+        # Tabela de análise detalhada
+        data_analise = [
+            ["Item", "Valor"],
+            ["Custo Total do Cliente", f"R$ {custo_cliente_total:.2f}"],
+            ["Meu Ganho Total", f"R$ {meu_ganho:.2f}"],
+            ["MARGEM PERCENTUAL", f"{margem_percentual:.2f}%"]
+        ]
+        
+        # Estilo para tabela de análise
+        analise_style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.lightgrey),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('ALIGN', (1, 1), (1, -1), 'RIGHT'),
+            # Destacar margem
+            ('BACKGROUND', (0, -1), (-1, -1), colors.palegreen),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ])
+        
+        analise_table = Table(data_analise, colWidths=[3.5*inch, 3*inch])
+        analise_table.setStyle(analise_style)
+        story.append(analise_table)
         
         # Alertas e observações
         story.append(Spacer(1, 20))
