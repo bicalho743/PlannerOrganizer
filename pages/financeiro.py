@@ -6,10 +6,11 @@ from datetime import datetime
 def show():
     st.title("💰 Gestão Financeira")
 
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "Registrar Transação",
         "Extrato",
-        "Contas a Receber",
+        "Contas a Receber", 
+        "Contas a Pagar",
         "Dashboard Financeiro"
     ])
 
@@ -158,7 +159,7 @@ def show():
             st.write("---")
             st.subheader("Editar Transação")
 
-            with st.form("edicao_transacao"):
+            with st.form(key="edicao_transacao_form"):
                 tipo = st.selectbox(
                     "Tipo",
                     ["receita", "despesa", "receita_a_receber"],
@@ -181,32 +182,39 @@ def show():
 
                 categoria = st.selectbox(
                     "Categoria",
-                    ["Serviço", "Produto", "Fornecedor", "Outros"],
-                    index=["Serviço", "Produto", "Fornecedor", "Outros"].index(transacao['categoria'])
+                    ["Serviço", "Produto", "Fornecedor", "Assistente", "Outros"],
+                    index=["Serviço", "Produto", "Fornecedor", "Assistente", "Outros"].index(
+                        transacao['categoria'] if transacao['categoria'] in ["Serviço", "Produto", "Fornecedor", "Assistente", "Outros"] else "Outros"
+                    )
                 )
-
+                
+                # Criar uma única linha de botões para o form
                 col1, col2 = st.columns(2)
                 with col1:
-                    if st.form_submit_button("Salvar"):
-                        try:
-                            st.session_state.db.update_transacao(
-                                transacao['id'],
-                                tipo=tipo,
-                                descricao=descricao,
-                                valor=valor,
-                                categoria=categoria,
-                                tipo_receita=tipo_receita
-                            )
-                            del st.session_state.transacao_em_edicao
-                            st.success("Transação atualizada com sucesso!")
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"Erro ao atualizar transação: {str(e)}")
-
+                    salvar_button = st.form_submit_button("💾 Salvar")
                 with col2:
-                    if st.form_submit_button("Cancelar"):
-                        del st.session_state.transacao_em_edicao
-                        st.rerun()
+                    cancelar_button = st.form_submit_button("❌ Cancelar")
+            
+            # Lógica de ações após o form
+            if salvar_button:
+                try:
+                    st.session_state.db.update_transacao(
+                        transacao['id'],
+                        tipo=tipo,
+                        descricao=descricao,
+                        valor=valor,
+                        categoria=categoria,
+                        tipo_receita=tipo_receita
+                    )
+                    st.success("Transação atualizada com sucesso!")
+                    del st.session_state.transacao_em_edicao
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Erro ao atualizar transação: {str(e)}")
+
+            if cancelar_button:
+                del st.session_state.transacao_em_edicao
+                st.rerun()
 
         # Resumo financeiro
         receitas = financeiro[financeiro['tipo'] == 'receita']['valor'].sum() if not financeiro.empty else 0
@@ -268,6 +276,155 @@ def show():
             st.info("Nenhuma conta a receber cadastrada.")
 
     with tab4:
+        st.subheader("Contas a Pagar")
+        
+        # Função para obter contas a pagar (despesas pendentes)
+        contas_pagar = st.session_state.db.get_financeiro()
+        if not contas_pagar.empty:
+            # Filtrar apenas despesas com status pendente
+            contas_pagar = contas_pagar[(contas_pagar['tipo'] == 'despesa') & 
+                                        (contas_pagar['status'] == 'Pendente')]
+            
+            if not contas_pagar.empty:
+                # Adicionar filtro específico para assistentes
+                filtro_tipo = st.radio(
+                    "Filtrar por tipo:",
+                    ["Todos", "Assistentes", "Outros"],
+                    horizontal=True
+                )
+                
+                # Aplicar filtro
+                if filtro_tipo == "Assistentes":
+                    contas_pagar = contas_pagar[contas_pagar['categoria'] == 'Assistente']
+                elif filtro_tipo == "Outros":
+                    contas_pagar = contas_pagar[contas_pagar['categoria'] != 'Assistente']
+                
+                # Exibir contas a pagar
+                if not contas_pagar.empty:
+                    for idx, conta in contas_pagar.iterrows():
+                        with st.container():
+                            col1, col2, col3 = st.columns([3, 1, 1])
+                            
+                            with col1:
+                                st.write(f"**{conta['descricao']}**")
+                                st.write(f"Valor: R$ {conta['valor']:.2f}")
+                                st.write(f"Categoria: {conta['categoria']}")
+                                if 'subcategoria' in conta and pd.notna(conta['subcategoria']):
+                                    st.write(f"Subcategoria: {conta['subcategoria']}")
+                                if 'proposta_id' in conta and pd.notna(conta['proposta_id']):
+                                    st.write(f"Proposta: #{conta['proposta_id']}")
+                                st.write(f"Data: {pd.to_datetime(conta['data']).strftime('%d/%m/%Y')}")
+                            
+                            with col2:
+                                if st.button("✅ Pagar", key=f"pagar_{conta['id']}"):
+                                    st.session_state.db.atualizar_status_transacao(
+                                        conta['id'],
+                                        'Pago',
+                                        datetime.now().date()
+                                    )
+                                    st.success(f"Pagamento de {conta['descricao']} registrado!")
+                                    st.rerun()
+                            
+                            with col3:
+                                if st.button("❌ Cancelar", key=f"cancelar_pagar_{conta['id']}"):
+                                    st.session_state.db.atualizar_status_transacao(
+                                        conta['id'],
+                                        'Cancelado'
+                                    )
+                                    st.success(f"Pagamento de {conta['descricao']} cancelado!")
+                                    st.rerun()
+                            
+                            st.divider()
+                    
+                    # Resumo de contas a pagar
+                    total_pendente = contas_pagar['valor'].sum()
+                    total_assistentes = contas_pagar[contas_pagar['categoria'] == 'Assistente']['valor'].sum()
+                    total_outros = total_pendente - total_assistentes
+                    
+                    col1, col2, col3 = st.columns(3)
+                    col1.metric("Total Pendente", f"R$ {total_pendente:.2f}")
+                    col2.metric("Pagamentos a Assistentes", f"R$ {total_assistentes:.2f}")
+                    col3.metric("Outros Pagamentos", f"R$ {total_outros:.2f}")
+                else:
+                    st.info(f"Nenhuma conta a pagar encontrada do tipo {filtro_tipo.lower()}.")
+            else:
+                st.info("Nenhuma conta a pagar pendente.")
+                
+                # Adicionar botão para ver histórico de pagamentos
+                if st.button("Ver Histórico de Pagamentos"):
+                    st.session_state.mostrar_historico_pagamentos = True
+                
+                # Exibir histórico se solicitado
+                if 'mostrar_historico_pagamentos' in st.session_state and st.session_state.mostrar_historico_pagamentos:
+                    historico = st.session_state.db.get_financeiro()
+                    if not historico.empty:
+                        historico = historico[(historico['tipo'] == 'despesa') & 
+                                             (historico['status'].isin(['Pago', 'Cancelado']))]
+                        
+                        if not historico.empty:
+                            st.subheader("Histórico de Pagamentos")
+                            # Converter coluna data para exibição
+                            historico['data_formatada'] = pd.to_datetime(historico['data']).dt.strftime('%d/%m/%Y')
+                            
+                            # Criar tabela para visualização
+                            st.dataframe(
+                                historico[['data_formatada', 'descricao', 'valor', 'categoria', 'status']].rename(
+                                    columns={'data_formatada': 'Data', 'descricao': 'Descrição', 
+                                            'valor': 'Valor (R$)', 'categoria': 'Categoria', 'status': 'Status'}
+                                ),
+                                use_container_width=True,
+                                hide_index=True
+                            )
+                        else:
+                            st.info("Nenhum registro de pagamento encontrado.")
+        else:
+            st.info("Nenhuma transação financeira encontrada.")
+            
+        # Adicionar assistentes diretamente
+        with st.expander("💼 Cadastrar Pagamento para Assistente"):
+            assistentes = st.session_state.db.get_assistentes()
+            
+            if not assistentes.empty:
+                with st.form("cadastrar_pagamento_assistente"):
+                    assistente_selecionado = st.selectbox(
+                        "Selecione o Assistente",
+                        assistentes['nome'].tolist()
+                    )
+                    
+                    assistente_id = assistentes[assistentes['nome'] == assistente_selecionado]['id'].iloc[0]
+                    
+                    descricao = st.text_input(
+                        "Descrição do Serviço", 
+                        value=f"Pagamento para {assistente_selecionado}"
+                    )
+                    
+                    valor = st.number_input("Valor a Pagar (R$)", min_value=0.0, step=10.0)
+                    
+                    proposta_id = st.number_input("ID da Proposta (opcional)", value=0, min_value=0, step=1)
+                    
+                    if st.form_submit_button("Cadastrar Pagamento"):
+                        if valor > 0:
+                            try:
+                                st.session_state.db.add_transacao(
+                                    tipo="despesa",
+                                    descricao=descricao,
+                                    valor=valor,
+                                    categoria="Assistente",
+                                    subcategoria="Pagamento de Serviço",
+                                    origem_id=assistente_id,
+                                    origem_tipo="assistente",
+                                    proposta_id=proposta_id if proposta_id > 0 else None
+                                )
+                                st.success(f"Pagamento para {assistente_selecionado} cadastrado com sucesso!")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Erro ao cadastrar pagamento: {str(e)}")
+                        else:
+                            st.warning("Por favor, informe um valor válido para o pagamento.")
+            else:
+                st.warning("Nenhum assistente cadastrado. Adicione assistentes no menu Cadastros primeiro.")
+
+    with tab5:
         st.subheader("Dashboard Financeiro")
 
         if not financeiro.empty:
