@@ -104,9 +104,16 @@ def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
             
             # Identificar produtos físicos e itens do tipo OUTRO com base no nome
             for produto in produtos:
+                # Obter quantidade e calcular valor total
+                quantidade = produto.quantidade if hasattr(produto, 'quantidade') and produto.quantidade is not None else 1
+                valor_unitario = float(produto.valor) if produto.valor is not None else 0
+                valor_total = valor_unitario * quantidade
+                
                 item = {
                     'nome': produto.nome,
-                    'valor': float(produto.valor)
+                    'valor_unitario': valor_unitario,
+                    'quantidade': quantidade,
+                    'valor_total': valor_total
                 }
                 
                 # Verificar se o nome do produto contém "caixa" ou outros termos que indicam ser do tipo OUTRO
@@ -116,21 +123,26 @@ def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
                 
                 if any(termo in nome_lower for termo in termos_outros):
                     outros_itens.append(item)
-                    print(f"DEBUG PDF: Item OUTRO identificado pelo nome: {produto.nome} - R$ {float(produto.valor):.2f}")
+                    print(f"DEBUG PDF: Item OUTRO identificado pelo nome: {produto.nome} - R$ {valor_unitario:.2f} x {quantidade} = R$ {valor_total:.2f}")
                 else:
                     produtos_fisicos.append(item)
-                    print(f"DEBUG PDF: Produto físico identificado: {produto.nome} - R$ {float(produto.valor):.2f}")
+                    print(f"DEBUG PDF: Produto físico identificado: {produto.nome} - R$ {valor_unitario:.2f} x {quantidade} = R$ {valor_total:.2f}")
         except Exception as e:
             print(f"DEBUG PDF ERROR: Erro ao buscar produtos: {str(e)}")
             traceback.print_exc()
         
         # Adicionar produtos físicos à tabela principal de serviços
         for produto in produtos_fisicos:
+            # Criar string com informações de quantidade e valores
+            descricao = f"PRODUTO - {produto['nome']}"
+            if produto['quantidade'] > 1:
+                descricao += f" ({produto['quantidade']} unid.)"
+            
             data_servicos.append([
-                f"PRODUTO - {produto['nome']}",
-                f"R$ {produto['valor']:.2f}"
+                descricao,
+                f"R$ {produto['valor_total']:.2f}"
             ])
-            total_servicos += produto['valor']
+            total_servicos += produto['valor_total']
         
         # Processar acréscimos regulares (não do tipo OUTRO)
         if not acrescimos.empty:
