@@ -281,8 +281,7 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
             fontSize=16,
             spaceAfter=30
         )
-        story.append(Paragraph(f"RELATÓRIO INTERNO - CONFIDENCIAL", title_style))
-        story.append(Paragraph(f"Proposta #{proposta['id']} - {cliente['nome']}", styles["Heading2"]))
+        story.append(Paragraph(f"RELATÓRIO INTERNO - #{proposta['id']} - {cliente['nome']}", title_style))
         story.append(Paragraph(f"{datetime.now().strftime('%d/%m/%Y')}", styles["Heading3"]))
         story.append(Spacer(1, 12))
 
@@ -585,8 +584,12 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                          alignment=0, spaceBefore=5, spaceAfter=15, leading=14)
         ))
         
-        # Verificar se existem produtos
-        if 'total_produtos' in locals() and 'total_lucro' in locals():
+        # Inicializar variáveis para evitar erro caso não sejam definidas anteriormente
+        total_produtos = 0.0
+        total_lucro = 0.0
+        
+        # Verificar se os produtos foram processados anteriormente
+        if produtos_agrupados:
             # Usar os valores já calculados na seção de produtos
             valor_produtos_total = total_produtos
             lucro_produtos_total = total_lucro
