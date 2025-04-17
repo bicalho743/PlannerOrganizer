@@ -26,60 +26,449 @@ if "authenticated" not in st.session_state:
 
 # Inicialização da autenticação in-app
 if not st.session_state.authenticated:
-    st.title("Planner Organizer - Login Integrado")
+    # Configuração da página específica para o login
+    st.set_page_config(
+        page_title="Planner Organizer - Sistema Profissional",
+        page_icon="favicon.png",
+        layout="wide",
+        initial_sidebar_state="collapsed"
+    )
     
-    with st.form("login_form"):
-        username = st.text_input("Usuário ou E-mail")
-        password = st.text_input("Senha", type="password")
-        submit = st.form_submit_button("Entrar", use_container_width=True)
+    # CSS personalizado para a landing page
+    st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+    body {
+        font-family: 'Poppins', sans-serif;
+        background-color: #f9fafc;
+        color: #333;
+    }
+    
+    h1, h2, h3, h4 {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        color: #1E366F;
+    }
+    
+    .main-header {
+        color: #1E366F;
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        line-height: 1.2;
+    }
+    
+    .subheader {
+        color: #5A6A85;
+        font-size: 1.2rem;
+        font-weight: 400;
+        margin-bottom: 2rem;
+    }
+    
+    .feature-card {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        margin-bottom: 1rem;
+        border-left: 4px solid #1E88E5;
+        transition: all 0.3s ease;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+    }
+    
+    .feature-icon {
+        font-size: 2rem;
+        color: #1E88E5;
+        margin-bottom: 1rem;
+    }
+    
+    .feature-title {
+        font-weight: 600;
+        color: #1E366F;
+        margin-bottom: 0.5rem;
+    }
+    
+    .feature-description {
+        color: #5A6A85;
+        font-size: 0.9rem;
+    }
+    
+    .testimonial-card {
+        background-color: #E3F2FD;
+        padding: 1.5rem;
+        border-radius: 8px;
+        position: relative;
+        margin-bottom: 1rem;
+    }
+    
+    .testimonial-text {
+        font-style: italic;
+        color: #1E366F;
+        margin-bottom: 1rem;
+    }
+    
+    .testimonial-author {
+        font-weight: 600;
+        color: #1976D2;
+    }
+    
+    .login-container {
+        background-color: white;
+        border-radius: 10px;
+        padding: 2rem;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+    }
+    
+    .login-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .social-button {
+        width: 100%;
+        margin-bottom: 0.8rem;
+        border-radius: 4px;
+        padding: 0.5rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .google-button {
+        background-color: white;
+        border: 1px solid #E0E0E0;
+        color: #5A6A85;
+    }
+    
+    .google-button:hover {
+        background-color: #f5f5f5;
+    }
+    
+    .facebook-button {
+        background-color: #3b5998;
+        border: none;
+        color: white;
+    }
+    
+    .facebook-button:hover {
+        background-color: #344e86;
+    }
+    
+    .login-divider {
+        text-align: center;
+        position: relative;
+        margin: 1.5rem 0;
+    }
+    
+    .login-divider:before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background-color: #E0E0E0;
+        z-index: -1;
+    }
+    
+    .login-divider-text {
+        background-color: white;
+        padding: 0 10px;
+        color: #5A6A85;
+        font-size: 0.9rem;
+    }
+    
+    .benefits-list li {
+        margin-bottom: 0.8rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .benefits-list .check-icon {
+        color: #4CAF50;
+        margin-right: 0.5rem;
+        font-weight: bold;
+    }
+    
+    .call-to-action {
+        background-color: #1E366F;
+        padding: 2rem;
+        border-radius: 10px;
+        color: white;
+        text-align: center;
+        margin-top: 2rem;
+    }
+    
+    .brands-section {
+        text-align: center;
+        margin-top: 3rem;
+        padding: 1.5rem;
+        background-color: #f5f7fa;
+        border-radius: 8px;
+    }
+    
+    .stat-card {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1E88E5;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #5A6A85;
+        font-size: 0.9rem;
+    }
+    
+    /* Removendo elementos da interface Streamlit */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    .stDeployButton {visibility: hidden;}
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Layout principal com duas colunas
+    left_col, right_col = st.columns([3, 2])
+    
+    with left_col:
+        # Cabeçalho principal
+        st.markdown('<h1 class="main-header">Planner Organizer</h1>', unsafe_allow_html=True)
+        st.markdown('<p class="subheader">Sistema Profissional para Personal Organizers</p>', unsafe_allow_html=True)
         
-        if submit:
-            if username.lower() == "admin" and password == "admin":
-                st.session_state.authenticated = True
-                st.success("Login realizado com sucesso!")
-                st.rerun()
-            else:
-                st.error("Usuário ou senha incorretos")
+        # Banner com estatísticas
+        stats_col1, stats_col2, stats_col3 = st.columns(3)
+        
+        with stats_col1:
+            st.markdown('''
+            <div class="stat-card">
+                <div class="stat-number">+300%</div>
+                <div class="stat-label">Aumento na produtividade</div>
+            </div>
+            ''', unsafe_allow_html=True)
+            
+        with stats_col2:
+            st.markdown('''
+            <div class="stat-card">
+                <div class="stat-number">-25%</div>
+                <div class="stat-label">Redução de retrabalho</div>
+            </div>
+            ''', unsafe_allow_html=True)
+            
+        with stats_col3:
+            st.markdown('''
+            <div class="stat-card">
+                <div class="stat-number">+45%</div>
+                <div class="stat-label">Aumento no faturamento</div>
+            </div>
+            ''', unsafe_allow_html=True)
+        
+        # Benefícios principais
+        st.markdown("<h3>Por que escolher o Planner Organizer?</h3>", unsafe_allow_html=True)
+        
+        benefits_col1, benefits_col2 = st.columns(2)
+        
+        with benefits_col1:
+            st.markdown('''
+            <div class="feature-card">
+                <div class="feature-title">📊 Gestão Completa de Propostas</div>
+                <div class="feature-description">
+                    Controle todo o ciclo de vida das suas propostas em um único local, desde a elaboração até a finalização.
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
+            
+            st.markdown('''
+            <div class="feature-card">
+                <div class="feature-title">📱 Acesso de Qualquer Lugar</div>
+                <div class="feature-description">
+                    Sistema web responsivo que pode ser acessado de qualquer dispositivo, a qualquer momento.
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
+            
+        with benefits_col2:
+            st.markdown('''
+            <div class="feature-card">
+                <div class="feature-title">💰 Controle Financeiro</div>
+                <div class="feature-description">
+                    Gerencie receitas, despesas e comissões de forma automatizada e integrada com suas propostas.
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
+            
+            st.markdown('''
+            <div class="feature-card">
+                <div class="feature-title">📄 Relatórios Profissionais</div>
+                <div class="feature-description">
+                    Gere relatórios personalizados para clientes e para controle interno da sua operação.
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
+        
+        # Depoimentos de clientes
+        st.markdown("<h3>O que nossos clientes dizem</h3>", unsafe_allow_html=True)
+        
+        testimonial_col1, testimonial_col2 = st.columns(2)
+        
+        with testimonial_col1:
+            st.markdown('''
+            <div class="testimonial-card">
+                <div class="testimonial-text">
+                    "O Planner Organizer transformou meu negócio! Consigo gerenciar todas as minhas propostas, 
+                    clientes e finanças em um só lugar com facilidade e profissionalismo."
+                </div>
+                <div class="testimonial-author">
+                    — Ana Paula, Personal Organizer
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
+            
+        with testimonial_col2:
+            st.markdown('''
+            <div class="testimonial-card">
+                <div class="testimonial-text">
+                    "Meu faturamento aumentou 45% depois que comecei a usar o sistema. A gestão de propostas 
+                    e o controle financeiro me ajudaram a profissionalizar meu negócio."
+                </div>
+                <div class="testimonial-author">
+                    — Carlos Eduardo, Organizador Profissional
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
+            
+        # CTA (Call to Action)
+        st.markdown('''
+        <div class="call-to-action">
+            <h2>Pronto para transformar seu negócio?</h2>
+            <p>Faça login agora e comece a profissionalizar sua gestão de propostas e finanças.</p>
+        </div>
+        ''', unsafe_allow_html=True)
     
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Botão alternativo de Google
-        st.markdown("""
-        <button style="width: 100%; background-color: white; border: 1px solid #E0E0E0; 
-                       border-radius: 4px; padding: 8px 0; display: flex; align-items: center; 
-                       justify-content: center; cursor: pointer; transition: all 0.2s ease;">
+    with right_col:
+        # Container de login
+        st.markdown('<div class="login-container">', unsafe_allow_html=True)
+        
+        # Cabeçalho do login
+        st.markdown('''
+        <div class="login-header">
+            <h2>Acesse sua conta</h2>
+            <p style="color: #5A6A85;">Entre para gerenciar suas propostas e finanças</p>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+        # Botões de login social
+        st.markdown('''
+        <button class="social-button google-button">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
                  style="width: 18px; height: 18px; margin-right: 8px;">
-            Google
+            Continuar com Google
         </button>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        # Botão alternativo de Facebook
-        st.markdown("""
-        <button style="width: 100%; background-color: #3b5998; border: none; color: white;
-                       border-radius: 4px; padding: 8px 0; display: flex; align-items: center; 
-                       justify-content: center; cursor: pointer; transition: all 0.2s ease;">
+        ''', unsafe_allow_html=True)
+        
+        st.markdown('''
+        <button class="social-button facebook-button">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white" 
                  style="margin-right: 8px;">
                 <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm3 8h-1.35c-.538 0-.65.221-.65.778v1.222h2l-.209 2h-1.791v7h-3v-7h-2v-2h2v-2.308c0-1.769.931-2.692 3.029-2.692h1.971v3z"/>
             </svg>
-            Facebook
+            Continuar com Facebook
         </button>
-        """, unsafe_allow_html=True)
+        ''', unsafe_allow_html=True)
         
-    # Informações de acesso para demonstração
-    st.info("""
-    **Acesso para demonstração:**
-    - Usuário: admin
-    - Senha: admin
-    """)
+        # Divisor
+        st.markdown('''
+        <div class="login-divider">
+            <span class="login-divider-text">ou entre com e-mail</span>
+        </div>
+        ''', unsafe_allow_html=True)
         
-    # Opção para pular login em ambiente de desenvolvimento
-    if st.button("Pular login (apenas para testes)"):
-        st.session_state.authenticated = True
-        st.rerun()
+        # Formulário de login
+        with st.form("login_form"):
+            username = st.text_input("Usuário ou E-mail")
+            password = st.text_input("Senha", type="password")
+            st.markdown('<div style="height: 15px;"></div>', unsafe_allow_html=True)
+            submit = st.form_submit_button("Entrar na minha conta", use_container_width=True)
+            
+            if submit:
+                if username.lower() == "admin" and password == "admin":
+                    st.session_state.authenticated = True
+                    with st.spinner("Autenticando..."):
+                        import time
+                        time.sleep(1)
+                    st.success("Login realizado com sucesso!")
+                    st.rerun()
+                else:
+                    st.error("Usuário ou senha incorretos")
+        
+        # Link para recuperação de senha e cadastro
+        st.markdown('''
+        <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+                Esqueceu sua senha?
+            </a>
+            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+                Criar uma conta
+            </a>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+        # Informações de acesso para demonstração
+        st.markdown('''
+        <div style="margin-top: 1.5rem; padding: 1rem; background-color: #E3F2FD; border-radius: 4px; border-left: 4px solid #1976D2;">
+            <p style="margin: 0; color: #1E366F; font-size: 0.9rem;">
+                <strong>Acesso para demonstração:</strong><br>
+                Usuário: admin<br>
+                Senha: admin
+            </p>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Opção para pular login em ambiente de desenvolvimento (apenas para devs)
+        with st.expander("Acesso para desenvolvedores", expanded=False):
+            if st.button("Pular login (apenas para testes)"):
+                st.session_state.authenticated = True
+                st.rerun()
+    
+    # Seção de marcas/clientes
+    st.markdown('''
+    <div class="brands-section">
+        <p style="color: #5A6A85; font-size: 0.9rem; margin-bottom: 1rem;">CONFIADO POR PERSONAL ORGANIZERS DE TODO O BRASIL</p>
+        <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Organizze Bem</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Expert Closets</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">TopOrder Solutions</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Clean & Order</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Plann.Smart</span>
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
+    
+    # Rodapé
+    st.markdown('''
+    <div style="text-align: center; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #E0E0E0;">
+        <p style="color: #5A6A85; font-size: 0.8rem;">
+            © 2025 Planner Organizer. Todos os direitos reservados.
+        </p>
+    </div>
+    ''', unsafe_allow_html=True)
         
     # Impede a renderização do resto da aplicação
     st.stop()
