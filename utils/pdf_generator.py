@@ -27,6 +27,10 @@ def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
     print(f"DEBUG PDF: Filename: {filename}")
     print(f"DEBUG PDF: Acréscimos: {len(acrescimos) if not acrescimos.empty else 0} registros")
     
+    # Importação específica para buscar produtos da proposta
+    from utils.database import Database, ProdutoOrganizador
+    db = Database()
+    
     try:
         # Certificar que o diretório existe
         os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -89,6 +93,24 @@ def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
         # Processar apenas acréscimos relevantes para o cliente
         total_servicos = float(proposta['valor'])
         
+        # Adicionar produtos da proposta (COLMEIA JEANS INVISÍVEL, etc.)
+        try:
+            # Buscar produtos da proposta usando a instância do Database
+            produtos = db.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta['id']).all()
+            print(f"DEBUG PDF: Encontrados {len(produtos)} produtos para a proposta")
+            
+            for produto in produtos:
+                data_servicos.append([
+                    f"PRODUTO - {produto.nome}",
+                    f"R$ {float(produto.valor):.2f}"
+                ])
+                total_servicos += float(produto.valor)
+                print(f"DEBUG PDF: Adicionado produto: {produto.nome} - R$ {float(produto.valor):.2f}")
+        except Exception as e:
+            print(f"DEBUG PDF ERROR: Erro ao adicionar produtos: {str(e)}")
+            traceback.print_exc()
+        
+        # Processar acréscimos
         if not acrescimos.empty:
             for _, acrescimo in acrescimos.iterrows():
                 # Excluir explicitamente o tipo 'assistente' do relatório do cliente
