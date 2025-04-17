@@ -689,8 +689,11 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                 # Adicionar debug para verificar cada tipo de acréscimo
                 print(f"DEBUG PDF: Classificando acréscimo: {tipo_lower} - R$ {valor:.2f}")
                 
-                # Identificar comissões 
-                if 'comissao' in tipo_lower or 'comissão' in tipo_lower:
+                # Identificar comissões - procurar por tipo comissão, categoria Comissão ou tipo_receita comissão
+                if ('comissao' in tipo_lower or 'comissão' in tipo_lower or 
+                    (acrescimo.get('subcategoria', '').lower() == 'comissão de fornecedor') or
+                    (acrescimo.get('categoria', '').lower() == 'comissão') or
+                    (acrescimo.get('tipo_receita', '').lower() == 'comissão')):
                     total_comissoes += valor
                     print(f"DEBUG PDF: Adicionado COMISSÃO: R$ {valor:.2f}, Total: R$ {total_comissoes:.2f}")
                 # Identificar assistentes (para garantir contabilização correta)
