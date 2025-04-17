@@ -261,6 +261,19 @@ for label, page in MENU_PRINCIPAL.items():
         st.session_state.current_page = page
         st.rerun()
 
+# Adicionar botão de logout
+if st.sidebar.button("🚪 Sair do Sistema", 
+                     key="btn_logout", 
+                     type="secondary", 
+                     use_container_width=True,
+                     help="Clique para sair do sistema e retornar à tela de login"):
+    # Limpar o estado de autenticação
+    st.session_state.authenticated = False
+    # Exibir mensagem
+    st.sidebar.success("Logout realizado com sucesso!")
+    # Redirecionar para a página de login (recarregando a página)
+    st.rerun()
+
 st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
 # Roteamento de páginas
