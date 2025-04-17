@@ -637,14 +637,27 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
                          alignment=0, spaceBefore=5, spaceAfter=15, leading=14)
         ))
         
-        # Inicializar variáveis de produtos caso não tenham sido definidas anteriormente
-        total_produtos = 0.0
-        total_lucro = 0.0
-        
-        # Calcular totais para as duas visões
-        # 1. Custo total do cliente
-        valor_produtos_total = total_produtos
-        lucro_produtos_total = total_lucro
+        # Verificar se existem produtos
+        if 'total_produtos' in locals() and 'total_lucro' in locals():
+            # Usar os valores já calculados na seção de produtos
+            valor_produtos_total = total_produtos
+            lucro_produtos_total = total_lucro
+        else:
+            # Calcular totais dos produtos a partir dos dados brutos da proposta
+            valor_produtos_total = 0.0
+            lucro_produtos_total = 0.0
+            
+            # Verificar se há produtos
+            if produtos_fisicos:
+                for produto in produtos_fisicos:
+                    valor_produtos_total += produto['valor_total']
+                    if 'lucro_total' in produto:
+                        lucro_produtos_total += produto['lucro_total']
+                    elif 'lucro_unitario' in produto and 'quantidade' in produto:
+                        lucro_produtos_total += produto['lucro_unitario'] * produto['quantidade']
+                print(f"DEBUG PDF: Calculados valores de produtos: Total={valor_produtos_total:.2f}, Lucro={lucro_produtos_total:.2f}")
+            
+        # Calcular custo dos produtos (preço - lucro)
         custo_produtos = valor_produtos_total - lucro_produtos_total
         
         # Categorizar acréscimos
