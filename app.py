@@ -24,15 +24,23 @@ from utils.database import Database
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
+# Configuração inicial da página
+st.set_page_config(
+    page_title="Planner Organizer - Sistema Profissional",
+    page_icon="favicon.png",
+    layout="wide",
+    initial_sidebar_state="auto"
+)
+
 # Inicialização da autenticação in-app
 if not st.session_state.authenticated:
-    # Configuração da página específica para o login
-    st.set_page_config(
-        page_title="Planner Organizer - Sistema Profissional",
-        page_icon="favicon.png",
-        layout="wide",
-        initial_sidebar_state="collapsed"
-    )
+    # Ocultar completamente a barra lateral na página de login
+    st.markdown("""
+    <style>
+    [data-testid="collapsedControl"] {display: none;}
+    section[data-testid="stSidebar"] {display: none;}
+    </style>
+    """, unsafe_allow_html=True)
     
     # CSS personalizado para a landing page
     st.markdown("""
