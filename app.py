@@ -22,12 +22,67 @@ from utils.database import Database
 
 # Verificar se o usuário está autenticado
 if "authenticated" not in st.session_state:
-    st.session_state.authenticated = True  # Temporariamente definindo como True para testes
+    st.session_state.authenticated = False
 
-# Comentado temporariamente para testes
-# Redirecionar para a página de login se não estiver autenticado
-# if not st.session_state.authenticated and not st.secrets.get("DISABLE_AUTH", False):
-#     st.switch_page("login.py")
+# Inicialização da autenticação in-app
+if not st.session_state.authenticated:
+    st.title("Planner Organizer - Login Integrado")
+    
+    with st.form("login_form"):
+        username = st.text_input("Usuário ou E-mail")
+        password = st.text_input("Senha", type="password")
+        submit = st.form_submit_button("Entrar", use_container_width=True)
+        
+        if submit:
+            if username.lower() == "admin" and password == "admin":
+                st.session_state.authenticated = True
+                st.success("Login realizado com sucesso!")
+                st.rerun()
+            else:
+                st.error("Usuário ou senha incorretos")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Botão alternativo de Google
+        st.markdown("""
+        <button style="width: 100%; background-color: white; border: 1px solid #E0E0E0; 
+                       border-radius: 4px; padding: 8px 0; display: flex; align-items: center; 
+                       justify-content: center; cursor: pointer; transition: all 0.2s ease;">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                 style="width: 18px; height: 18px; margin-right: 8px;">
+            Google
+        </button>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        # Botão alternativo de Facebook
+        st.markdown("""
+        <button style="width: 100%; background-color: #3b5998; border: none; color: white;
+                       border-radius: 4px; padding: 8px 0; display: flex; align-items: center; 
+                       justify-content: center; cursor: pointer; transition: all 0.2s ease;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white" 
+                 style="margin-right: 8px;">
+                <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm3 8h-1.35c-.538 0-.65.221-.65.778v1.222h2l-.209 2h-1.791v7h-3v-7h-2v-2h2v-2.308c0-1.769.931-2.692 3.029-2.692h1.971v3z"/>
+            </svg>
+            Facebook
+        </button>
+        """, unsafe_allow_html=True)
+        
+    # Informações de acesso para demonstração
+    st.info("""
+    **Acesso para demonstração:**
+    - Usuário: admin
+    - Senha: admin
+    """)
+        
+    # Opção para pular login em ambiente de desenvolvimento
+    if st.button("Pular login (apenas para testes)"):
+        st.session_state.authenticated = True
+        st.rerun()
+        
+    # Impede a renderização do resto da aplicação
+    st.stop()
 
 # Configuração da página
 st.set_page_config(
