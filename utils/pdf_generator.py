@@ -687,9 +687,10 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
         )
         
         story.append(Paragraph("<b>CUSTO TOTAL DO CLIENTE</b>", cliente_header))
+        story.append(Spacer(1, 10))  # Espaçamento aumentado
         story.append(Paragraph("Esta seção mostra todos os valores que o cliente está pagando na proposta.", 
                            ParagraphStyle('ExplanationClient', parent=styles['Normal'], fontSize=9, leading=10)))
-        story.append(Spacer(1, 5))
+        story.append(Spacer(1, 15))  # Espaçamento aumentado
         
         # Tabela de resumo - Custo total do cliente
         data_custo_cliente = [
@@ -739,10 +740,11 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
         )
         
         story.append(Paragraph("<b>MEU GANHO (ORGANIZADORA)</b>", ganho_header))
+        story.append(Spacer(1, 10))  # Espaçamento aumentado
         story.append(Paragraph("Esta seção mostra o ganho real da organizadora, considerando o valor base, comissões, \
 lucro na venda de produtos menos o pagamento a assistentes.", 
                            ParagraphStyle('ExplanationGanho', parent=styles['Normal'], fontSize=9, leading=10)))
-        story.append(Spacer(1, 5))
+        story.append(Spacer(1, 15))  # Espaçamento aumentado
         
         # Tabela de resumo - Meu ganho
         data_meu_ganho = [
