@@ -1,6 +1,15 @@
+import streamlit as st
+
+# Configuração inicial da página - DEVE ser o primeiro comando Streamlit
+st.set_page_config(
+    page_title="Planner Organizer - Sistema Profissional",
+    page_icon="favicon.png",
+    layout="wide",
+    initial_sidebar_state="auto"
+)
+
 import os
 import sys
-import streamlit as st
 import logging
 import pandas as pd
 from datetime import datetime
@@ -19,19 +28,13 @@ if project_root not in sys.path:
     logger.info(f"Adicionado {project_root} ao sys.path")
 
 from utils.database import Database
-from planos_improved import exibir_planos_integracao  # Importando o módulo de planos melhorado
+
+# Importamos a função simplificada de planos do módulo independente
+from exibir_planos import exibir_planos_simples
 
 # Verificar se o usuário está autenticado
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
-
-# Configuração inicial da página
-st.set_page_config(
-    page_title="Planner Organizer - Sistema Profissional",
-    page_icon="favicon.png",
-    layout="wide",
-    initial_sidebar_state="auto"
-)
 
 # Inicialização da autenticação in-app
 if not st.session_state.authenticated:
@@ -479,9 +482,9 @@ if not st.session_state.authenticated:
         # Seção de Planos e Preços
         st.markdown("<h2>Escolha o Plano Ideal Para o Seu Negócio</h2>", unsafe_allow_html=True)
         
-        # Usando a nova implementação melhorada dos planos
-        # Essa versão corrige o redirecionamento e exibe links clicáveis
-        exibir_planos_integracao()
+        # Usando nossa implementação simplificada de planos
+        # Os botões são diretos e não tentam integrar com API externa
+        exibir_planos_simples()
         
         # CTA (Call to Action)
         st.markdown('''

@@ -1,27 +1,153 @@
 import streamlit as st
-import os
-import sys
-import time
 
-# Adicionar diretório raiz ao path
-project_root = os.path.abspath(os.path.dirname(__file__))
-if project_root not in sys.path:
-    sys.path.append(project_root)
-
-# Configuração da página
+# Configuração da página com layout amplo e sidebar colapsada
 st.set_page_config(
-    page_title="Planner Organizer - Login",
+    page_title="Planner Organizer - Sistema Profissional",
     page_icon="favicon.png",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Remover o menu hamburguer e rodapé
+import os
+import sys
+import time
+import random
+from datetime import datetime
+
+# Adicionar diretório raiz ao path para importações
+project_root = os.path.abspath(os.path.dirname(__file__))
+if project_root not in sys.path:
+    sys.path.append(project_root)
+
+# Importamos a função de exibição de planos do módulo independente
+from exibir_planos import exibir_planos_simples
+
+# Remover o menu hamburguer, rodapé e botão de deploy
 hide_menu_style = """
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     .stDeployButton {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* Estilos para a página de login */
+    .login-container {
+        background-color: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        margin-top: 1rem;
+    }
+    
+    .login-title {
+        color: #1E366F;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .social-button {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+        border: 1px solid #E0E0E0;
+        background-color: white;
+        color: #5A6A85;
+        font-weight: 500;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .social-button:hover {
+        background-color: #F5F7FA;
+        border-color: #C0C0C0;
+    }
+    
+    .google-button {
+        color: #5A6A85;
+    }
+    
+    .facebook-button {
+        color: #1877F2;
+    }
+    
+    .login-divider {
+        position: relative;
+        text-align: center;
+        margin: 20px 0;
+    }
+    
+    .login-divider:before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background-color: #E0E0E0;
+    }
+    
+    .login-divider-text {
+        position: relative;
+        background-color: white;
+        padding: 0 15px;
+        color: #9E9E9E;
+        font-size: 0.9rem;
+    }
+    
+    /* Estilos para a seção hero */
+    .hero-section {
+        background: linear-gradient(135deg, #1E366F, #2d8cff);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+        line-height: 1.5;
+    }
+    
+    .call-to-action {
+        background: linear-gradient(135deg, #ff6b6b, #e83e3e);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin: 2rem 0;
+        text-align: center;
+    }
+    
+    .brands-section {
+        padding: 2rem 0;
+        text-align: center;
+        border-top: 1px solid #E0E0E0;
+        margin-top: 2rem;
+    }
+    
+    /* Ajustes para dispositivos móveis */
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1rem;
+        }
+    }
     </style>
 """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
@@ -33,39 +159,178 @@ if "authenticated" not in st.session_state:
 def main():
     # Se o usuário já estiver autenticado, redirecionar para o app principal
     if st.session_state.authenticated:
-        # Redirecionar para o app principal
         st.success("Login realizado com sucesso! Redirecionando...")
         st.session_state.authenticated = True
         st.switch_page("app.py")
         return
     
-    st.title("Planner Organizer - Login")
-    st.subheader("Sistema de Gestão para Personal Organizers")
+    # Layout principal com duas colunas: marketing e login
+    left_col, right_col = st.columns([3, 2])
     
-    # Login tradicional com email/senha
-    with st.form("login_form"):
-        username = st.text_input("Usuário ou E-mail")
-        password = st.text_input("Senha", type="password")
-        submit = st.form_submit_button("Entrar", use_container_width=True)
+    with left_col:
+        # Seção hero com título e subtítulo
+        st.markdown('''
+        <div class="hero-section">
+            <h1 class="hero-title">Transforme seu Negócio com o Planner Organizer</h1>
+            <p class="hero-subtitle">
+                O sistema completo para gerenciar seu negócio de organização profissional.
+                Propostas, clientes, produtos e finanças em um único lugar.
+            </p>
+        </div>
+        ''', unsafe_allow_html=True)
         
-        if submit:
-            if username.lower() == "admin" and password == "admin":
-                st.session_state.authenticated = True
-                st.rerun()
-            else:
-                st.error("Usuário ou senha incorretos")
+        # Seção de recursos principais
+        st.markdown("<h2>Por que escolher o Planner Organizer?</h2>", unsafe_allow_html=True)
+        
+        # Recursos em colunas
+        feat1, feat2, feat3 = st.columns(3)
+        
+        with feat1:
+            st.markdown('''
+            <div style="text-align: center; padding: 1rem;">
+                <div style="font-size: 2rem; color: #2d8cff; margin-bottom: 0.5rem;">📊</div>
+                <h3 style="margin-bottom: 0.5rem; color: #1E366F;">Gestão Completa</h3>
+                <p style="color: #5A6A85;">
+                    Centralize toda gestão do seu negócio em um único sistema integrado.
+                </p>
+            </div>
+            ''', unsafe_allow_html=True)
+            
+        with feat2:
+            st.markdown('''
+            <div style="text-align: center; padding: 1rem;">
+                <div style="font-size: 2rem; color: #2d8cff; margin-bottom: 0.5rem;">📱</div>
+                <h3 style="margin-bottom: 0.5rem; color: #1E366F;">Acesso de Qualquer Lugar</h3>
+                <p style="color: #5A6A85;">
+                    Trabalhe de onde estiver, com acesso via computador ou celular.
+                </p>
+            </div>
+            ''', unsafe_allow_html=True)
+            
+        with feat3:
+            st.markdown('''
+            <div style="text-align: center; padding: 1rem;">
+                <div style="font-size: 2rem; color: #2d8cff; margin-bottom: 0.5rem;">🔒</div>
+                <h3 style="margin-bottom: 0.5rem; color: #1E366F;">Segurança e Privacidade</h3>
+                <p style="color: #5A6A85;">
+                    Seus dados protegidos com o que há de mais moderno em segurança.
+                </p>
+            </div>
+            ''', unsafe_allow_html=True)
+        
+        # Seção de Planos e Preços
+        st.markdown("<h2>Escolha o Plano Ideal Para o Seu Negócio</h2>", unsafe_allow_html=True)
+        
+        # Usar nossa implementação de planos local
+        exibir_planos_simples()
+        
+        # CTA (Call to Action)
+        st.markdown('''
+        <div class="call-to-action">
+            <h2>Pronto para transformar seu negócio?</h2>
+            <p>Faça login agora e comece a profissionalizar sua gestão de propostas e finanças.</p>
+        </div>
+        ''', unsafe_allow_html=True)
     
-    # Informações de acesso para demonstração
-    st.info("""
-    **Acesso para demonstração:**
-    - Usuário: admin
-    - Senha: admin
-    """)
+    with right_col:
+        # Container de login
+        st.markdown('<div class="login-container">', unsafe_allow_html=True)
+        
+        # Título do login
+        st.markdown('<h2 class="login-title">Acesse sua conta</h2>', unsafe_allow_html=True)
+        
+        # Botões de login social
+        st.markdown('''
+        <button class="social-button google-button">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                 style="width: 18px; height: 18px; margin-right: 8px;">
+            Continuar com Google
+        </button>
+        ''', unsafe_allow_html=True)
+        
+        st.markdown('''
+        <button class="social-button facebook-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#1877F2" 
+                 style="margin-right: 8px;">
+                <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm3 8h-1.35c-.538 0-.65.221-.65.778v1.222h2l-.209 2h-1.791v7h-3v-7h-2v-2h2v-2.308c0-1.769.931-2.692 3.029-2.692h1.971v3z"/>
+            </svg>
+            Continuar com Facebook
+        </button>
+        ''', unsafe_allow_html=True)
+        
+        # Divisor
+        st.markdown('''
+        <div class="login-divider">
+            <span class="login-divider-text">ou entre com e-mail</span>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+        # Formulário de login
+        with st.form("login_form"):
+            username = st.text_input("Usuário ou E-mail")
+            password = st.text_input("Senha", type="password")
+            st.markdown('<div style="height: 15px;"></div>', unsafe_allow_html=True)
+            submit = st.form_submit_button("Entrar na minha conta", use_container_width=True)
+            
+            if submit:
+                if username.lower() == "admin" and password == "admin":
+                    st.session_state.authenticated = True
+                    with st.spinner("Autenticando..."):
+                        time.sleep(1)
+                    st.success("Login realizado com sucesso!")
+                    st.rerun()
+                else:
+                    st.error("Usuário ou senha incorretos")
+        
+        # Link para recuperação de senha e cadastro com informações de demonstração
+        st.markdown('''
+        <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+                Esqueceu sua senha?
+            </a>
+            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+                Criar uma conta
+            </a>
+        </div>
+        
+        <div style="margin-top: 0.8rem; text-align: center;">
+            <p style="color: #9E9E9E; font-size: 0.75rem;">
+                Para demonstração, use: admin / admin
+            </p>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    # Opção alternativa para pular o login durante testes
-    if st.button("Pular login (apenas para testes)"):
-        st.session_state.authenticated = True
-        st.rerun()
+    # Seção de marcas/clientes
+    st.markdown('''
+    <div class="brands-section">
+        <p style="color: #5A6A85; font-size: 0.9rem; margin-bottom: 1rem;">CONFIADO POR PERSONAL ORGANIZERS DE TODO O BRASIL</p>
+        <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Organizze Bem</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Expert Closets</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">TopOrder Solutions</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Clean & Order</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Plann.Smart</span>
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
+    
+    # Rodapé
+    st.markdown('''
+    <div style="text-align: center; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #E0E0E0;">
+        <p style="color: #5A6A85; font-size: 0.8rem;">
+            © 2025 Planner Organizer. Todos os direitos reservados.
+        </p>
+    </div>
+    ''', unsafe_allow_html=True)
+    
+    # Opção para desenvolvedores (escondida no canto)
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col3:
+        if st.button("Acesso Técnico", key="dev_login_button", use_container_width=False):
+            st.session_state.authenticated = True
+            st.rerun()
 
 if __name__ == "__main__":
     main()

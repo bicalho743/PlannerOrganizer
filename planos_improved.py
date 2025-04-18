@@ -2,6 +2,8 @@ import streamlit as st
 import requests
 import os
 import json
+import time
+import random
 
 # Configuração da API Stripe
 # No ambiente Replit usamos a API funcionando na porta 8000, 8001 e 8002
@@ -39,13 +41,18 @@ def criar_checkout_session(plan_id):
         "lifetime": "price_1RFBULLWUPER7pUXCiGZn3Jn"    # ID do preço Vitalício (R$247,00) sem trial
     }
     
+    # Gerar timestamp e identificador único para evitar cache e identificação de sessão anterior
+    timestamp = int(time.time())
+    unique_id = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=8))
+    
     # Preparar os dados para enviar ao Stripe usando IDs de preço
     session_data = {
         "price_id": price_mapping.get(plan_id, price_mapping["monthly"]),
-        "success_url": "https://workspace.solanobicalho.repl.co/success",
-        "cancel_url": "https://workspace.solanobicalho.repl.co/cancel",
-        "metadata": {"plan": plan_id},
-        "mode": "subscription" if plan_id in ["monthly", "yearly"] else "payment"
+        "success_url": f"https://workspace.solanobicalho.repl.co/success?t={timestamp}&id={unique_id}",
+        "cancel_url": f"https://workspace.solanobicalho.repl.co/cancel?t={timestamp}&id={unique_id}",
+        "metadata": {"plan": plan_id, "session_id": unique_id},
+        "mode": "subscription" if plan_id in ["monthly", "yearly"] else "payment",
+        "client_reference_id": f"test_{unique_id}"  # ID de referência para sessão única
     }
     
     with st.spinner("Processando pagamento..."):
