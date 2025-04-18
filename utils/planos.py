@@ -3,10 +3,12 @@ import requests
 import os
 
 # Configuração da API Stripe
-# No ambiente Replit usamos a API funcionando na porta 8000
+# No ambiente Replit usamos a API funcionando na porta 8000, 8001 e 8002
 STRIPE_API_URL = "http://0.0.0.0:8000"  # API principal do Stripe (/api/checkout/session)
-# URL de backup para tentar conexão alternativa
+# URLs de backup para tentar conexão alternativa
 STRIPE_LOCAL_API_URL = "http://127.0.0.1:8000"
+STRIPE_DIRECT_API_URL = "http://0.0.0.0:8002"  # API direta do Stripe (/checkout/mensal, /checkout/anual, etc)
+STRIPE_DIRECT_LOCAL_API_URL = "http://127.0.0.1:8002"
 STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "pk_live_51RFB2dLWUPER7pUXim2VuVkCESsrjNcHkDQuMJeDCvvW0ZsyFfqM2exfCTwSSe5O4R2TXBxHJtIpYSGBTAx2gBXT00gpAVYK1f")
 
 def criar_checkout_session(plan_id):
@@ -24,6 +26,9 @@ def criar_checkout_session(plan_id):
         f"{STRIPE_API_URL}/api/checkout/session",        # API principal endpoint (/api/checkout/session)
         f"{STRIPE_LOCAL_API_URL}/api/checkout/session",  # Backup via localhost
         f"{STRIPE_API_URL}:8000/api/checkout/session",   # Alternativa com porta explícita
+        # Endpoints da API direct
+        f"{STRIPE_DIRECT_API_URL}/checkout_{plan_id}",   # API direta endpoint (/checkout_monthly, /checkout_yearly, etc)
+        f"{STRIPE_DIRECT_LOCAL_API_URL}/checkout_{plan_id}",  # Backup via localhost
     ]
     
     # IDs de preço do Stripe fornecidos pelo cliente
