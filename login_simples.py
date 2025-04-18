@@ -282,23 +282,48 @@ def main():
                 else:
                     st.error("Usuário ou senha incorretos")
         
-        # Link para recuperação de senha e cadastro com informações de demonstração
-        st.markdown('''
-        <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
-            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
-                Esqueceu sua senha?
-            </a>
-            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
-                Criar uma conta
-            </a>
-        </div>
+        # Links de recuperação de senha e criação de conta
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Esqueceu sua senha?", type="secondary", key="forgot_password_btn", use_container_width=True):
+                st.info("Funcionalidade de recuperação de senha será implementada em breve.")
         
+        with col2:
+            if st.button("Criar uma conta", type="secondary", key="create_account_btn", use_container_width=True):
+                st.session_state.show_signup = True
+                st.rerun()
+        
+        # Informações de demonstração
+        st.markdown('''
         <div style="margin-top: 0.8rem; text-align: center;">
             <p style="color: #9E9E9E; font-size: 0.75rem;">
                 Para demonstração, use: admin / admin
             </p>
         </div>
         ''', unsafe_allow_html=True)
+        
+        # Lógica para exibir formulário de cadastro
+        if "show_signup" in st.session_state and st.session_state.show_signup:
+            st.markdown('<hr style="margin: 20px 0;">', unsafe_allow_html=True)
+            st.markdown('<h3 style="text-align: center; color: #1E366F;">Criar Nova Conta</h3>', unsafe_allow_html=True)
+            
+            with st.form("signup_form"):
+                nome = st.text_input("Nome Completo")
+                email = st.text_input("E-mail")
+                senha = st.text_input("Senha", type="password")
+                confirmar_senha = st.text_input("Confirmar Senha", type="password")
+                
+                submit_signup = st.form_submit_button("Registrar", use_container_width=True)
+                
+                if submit_signup:
+                    if not nome or not email or not senha or not confirmar_senha:
+                        st.error("Todos os campos são obrigatórios.")
+                    elif senha != confirmar_senha:
+                        st.error("As senhas não coincidem.")
+                    else:
+                        st.success(f"Conta criada com sucesso para {nome}! Verifique seu e-mail {email} para ativar sua conta.")
+                        st.session_state.show_signup = False
+                        st.rerun()
         
         st.markdown('</div>', unsafe_allow_html=True)
     
