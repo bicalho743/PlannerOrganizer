@@ -3,7 +3,10 @@ import requests
 import os
 
 # Configuração da API Stripe
-STRIPE_API_URL = "http://localhost:8001"  # URL base da Stripe Simple API
+# Em ambientes Replit, precisamos usar a URL pública do repl
+STRIPE_API_URL = "https://workspace.solanobicalho.repl.co"  # URL base da Stripe Simple API
+# URL alternativa para conexão local (só funciona dentro do Replit)
+STRIPE_LOCAL_API_URL = "http://0.0.0.0:8001"
 STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "pk_live_51RFB2dLWUPER7pUXim2VuVkCESsrjNcHkDQuMJeDCvvW0ZsyFfqM2exfCTwSSe5O4R2TXBxHJtIpYSGBTAx2gBXT00gpAVYK1f")
 
 def criar_checkout_session(plan_id):
@@ -16,12 +19,26 @@ def criar_checkout_session(plan_id):
     Returns:
         dict: Resposta da API com session_id e URL
     """
-    try:
-        response = requests.post(f"{STRIPE_API_URL}/create-checkout-session/{plan_id}")
-        return response.json()
-    except Exception as e:
-        st.error(f"Erro ao criar sessão: {str(e)}")
-        return {"error": str(e)}
+    # Lista de possíveis endpoints para tentar
+    endpoints = [
+        f"{STRIPE_API_URL}/create-checkout-session/{plan_id}",
+        f"{STRIPE_API_URL}:8001/create-checkout-session/{plan_id}",
+        f"{STRIPE_LOCAL_API_URL}/create-checkout-session/{plan_id}",
+    ]
+    
+    last_error = None
+    for endpoint in endpoints:
+        try:
+            st.write(f"Tentando conectar com: {endpoint}")
+            response = requests.post(endpoint, timeout=5)
+            if response.status_code == 200:
+                return response.json()
+        except Exception as e:
+            last_error = str(e)
+            continue
+    
+    st.error(f"Erro ao criar sessão: {last_error}")
+    return {"error": last_error}
 
 def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True, 
                   com_destaque_plano_medio=True, stripe_ready=True, espacamento_reduzido=False):
