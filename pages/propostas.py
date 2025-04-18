@@ -8,6 +8,8 @@ import plotly.graph_objects as go
 from utils.database import Fornecedor
 
 def show():
+    # Adicionar espaço extra antes do título para evitar corte
+    st.markdown('<div style="height: 3rem;"></div>', unsafe_allow_html=True)
     st.title("PROPOSTAS")
     
     # Verificar se temos uma conexão com o banco de dados

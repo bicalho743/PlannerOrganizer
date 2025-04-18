@@ -13,6 +13,8 @@ h1 {
     color: #1E366F;
     border-bottom: 1px solid #eaeaea;
     padding-bottom: 0.5rem;
+    margin-top: 2.5rem !important;
+    padding-top: 1.5rem !important;
 }
 
 /* Estilização de botões */
@@ -141,4 +143,10 @@ button[role="tab"] {
     font-weight: 600;
     color: #1E88E5 !important;
     border-bottom-color: #1E88E5 !important;
+}
+
+/* Espaçamento específico para as páginas de Dashboard e Propostas */
+[data-testid="stAppViewContainer"] > div > div > div > div:first-child h1 {
+    margin-top: 3.5rem !important;
+    padding-top: 2rem !important;
 }

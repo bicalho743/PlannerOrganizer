@@ -23,6 +23,8 @@ def format_date_safe(date_obj, format_str='%d/%m/%Y'):
             return "Data indisponível"
 
 def show():
+    # Adicionar espaço extra antes do título para evitar corte
+    st.markdown('<div style="height: 3rem;"></div>', unsafe_allow_html=True)
     st.title("📊 Dashboard")
 
     # Add test data button in sidebar if database is empty

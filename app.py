@@ -634,7 +634,7 @@ st.markdown(f"""
     }}
 
     div.block-container {{
-        padding-top: 0;
+        padding-top: 2rem !important;
     }}
 
     /* Estilo para botões do menu */
@@ -702,10 +702,11 @@ st.markdown(f"""
     
     /* Título no topo */
     h1 {{
-        margin-top: 0.5rem;
+        margin-top: 2rem !important;
         margin-bottom: 1.5rem;
         color: #1E366F;
         font-weight: 600;
+        padding-top: 1rem;
     }}
     
     /* Expanders na sidebar */
