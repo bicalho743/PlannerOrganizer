@@ -1,7 +1,8 @@
-modules = ["python-3.11"]
+modules = ["python-3.11", "nodejs-20"]
 
 [nix]
 channel = "stable-24_05"
+packages = ["freetype", "gettext", "glibcLocales", "unzip"]
 
 [deployment]
 deploymentTarget = "autoscale"

@@ -30,3 +30,5 @@ stripe==8.3.0
 uvicorn
 fastapi
 uvicorn
+pyrebase4
+requests
