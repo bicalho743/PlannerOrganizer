@@ -45,6 +45,7 @@ class CheckoutSessionCreate(BaseModel):
     price_id: str
     success_url: str
     cancel_url: str
+    mode: Optional[str] = "subscription"  # "subscription" ou "payment"
     customer_email: Optional[str] = None
     customer_name: Optional[str] = None
     metadata: Optional[Dict[str, str]] = None
@@ -111,7 +112,7 @@ async def create_checkout_session(session_data: CheckoutSessionCreate):
         checkout_data = {
             "success_url": session_data.success_url,
             "cancel_url": session_data.cancel_url,
-            "mode": "subscription",
+            "mode": session_data.mode if hasattr(session_data, 'mode') else "subscription",
             "line_items": [
                 {
                     "price": session_data.price_id,

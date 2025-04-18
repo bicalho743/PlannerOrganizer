@@ -38,7 +38,8 @@ def criar_checkout_session(plan_id):
         "price_id": price_mapping.get(plan_id, price_mapping["monthly"]),
         "success_url": "https://workspace.solanobicalho.repl.co/success",
         "cancel_url": "https://workspace.solanobicalho.repl.co/cancel",
-        "metadata": {"plan": plan_id}
+        "metadata": {"plan": plan_id},
+        "mode": "subscription" if plan_id in ["monthly", "yearly"] else "payment"
     }
     
     last_error = None
