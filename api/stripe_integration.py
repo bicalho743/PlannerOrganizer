@@ -112,15 +112,28 @@ async def create_checkout_session(session_data: CheckoutSessionCreate):
         checkout_data = {
             "success_url": session_data.success_url,
             "cancel_url": session_data.cancel_url,
-            "mode": session_data.mode if hasattr(session_data, 'mode') else "subscription",
-            "line_items": [
+            "payment_method_types": ["card"],
+        }
+        
+        # Configuração específica baseada no modo (assinatura ou pagamento único)
+        # O erro "You must provide at least one recurring price in subscription mode when using prices"
+        # ocorre porque o plano lifetime não é uma assinatura recorrente
+        if session_data.mode == "payment":
+            checkout_data["mode"] = "payment"
+            checkout_data["line_items"] = [
                 {
                     "price": session_data.price_id,
                     "quantity": 1,
                 }
-            ],
-            "payment_method_types": ["card"],
-        }
+            ]
+        else:
+            checkout_data["mode"] = "subscription"
+            checkout_data["line_items"] = [
+                {
+                    "price": session_data.price_id,
+                    "quantity": 1,
+                }
+            ]
         
         # Adicionar email do cliente se fornecido
         if session_data.customer_email:
