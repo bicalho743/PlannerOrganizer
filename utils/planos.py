@@ -1,4 +1,27 @@
 import streamlit as st
+import requests
+import os
+
+# Configuração da API Stripe
+STRIPE_API_URL = "http://localhost:8001"  # URL base da Stripe Simple API
+STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "pk_live_51RFB2dLWUPER7pUXim2VuVkCESsrjNcHkDQuMJeDCvvW0ZsyFfqM2exfCTwSSe5O4R2TXBxHJtIpYSGBTAx2gBXT00gpAVYK1f")
+
+def criar_checkout_session(plan_id):
+    """
+    Cria uma sessão de checkout do Stripe para um plano específico
+    
+    Args:
+        plan_id (str): ID do plano (monthly, yearly, lifetime)
+        
+    Returns:
+        dict: Resposta da API com session_id e URL
+    """
+    try:
+        response = requests.post(f"{STRIPE_API_URL}/create-checkout-session/{plan_id}")
+        return response.json()
+    except Exception as e:
+        st.error(f"Erro ao criar sessão: {str(e)}")
+        return {"error": str(e)}
 
 def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True, 
                   com_destaque_plano_medio=True, stripe_ready=True, espacamento_reduzido=False):
@@ -288,7 +311,32 @@ def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True
         if stripe_ready:
             btn_mensal = st.button("Assinar Mensal", key="btn_mensal", type="primary", use_container_width=True)
             if btn_mensal:
-                st.success("Redirecionando para pagamento do plano mensal...")
+                try:
+                    # Chamar a API Stripe para criar a sessão de checkout
+                    checkout_data = criar_checkout_session("monthly")
+                    if "error" in checkout_data:
+                        st.error(f"Erro ao processar pagamento: {checkout_data['error']}")
+                    else:
+                        # Adicionar script para redirecionar para o checkout
+                        checkout_url = checkout_data.get("url")
+                        if checkout_url:
+                            st.markdown(f"""
+                            <script>
+                                window.location.href = "{checkout_url}";
+                            </script>
+                            """, unsafe_allow_html=True)
+                        else:
+                            # Alternativa usando Stripe.js (caso não retorne URL)
+                            st.markdown(f"""
+                            <script src="https://js.stripe.com/v3/"></script>
+                            <script>
+                                const stripe = Stripe("{STRIPE_PUBLISHABLE_KEY}");
+                                stripe.redirectToCheckout({{ sessionId: "{checkout_data.get('id')}" }});
+                            </script>
+                            """, unsafe_allow_html=True)
+                        st.success("Redirecionando para o checkout do Stripe...")
+                except Exception as e:
+                    st.error(f"Erro ao conectar com o serviço de pagamento: {str(e)}")
 
     with col2:
         plano_class = "plano-card plano-destaque" if com_destaque_plano_medio else "plano-card"
@@ -316,7 +364,32 @@ def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True
         if stripe_ready:
             btn_anual = st.button("Assinar Anual", key="btn_anual", type="primary", use_container_width=True)
             if btn_anual:
-                st.success("Redirecionando para pagamento do plano anual...")
+                try:
+                    # Chamar a API Stripe para criar a sessão de checkout
+                    checkout_data = criar_checkout_session("yearly")
+                    if "error" in checkout_data:
+                        st.error(f"Erro ao processar pagamento: {checkout_data['error']}")
+                    else:
+                        # Adicionar script para redirecionar para o checkout
+                        checkout_url = checkout_data.get("url")
+                        if checkout_url:
+                            st.markdown(f"""
+                            <script>
+                                window.location.href = "{checkout_url}";
+                            </script>
+                            """, unsafe_allow_html=True)
+                        else:
+                            # Alternativa usando Stripe.js (caso não retorne URL)
+                            st.markdown(f"""
+                            <script src="https://js.stripe.com/v3/"></script>
+                            <script>
+                                const stripe = Stripe("{STRIPE_PUBLISHABLE_KEY}");
+                                stripe.redirectToCheckout({{ sessionId: "{checkout_data.get('id')}" }});
+                            </script>
+                            """, unsafe_allow_html=True)
+                        st.success("Redirecionando para o checkout do Stripe...")
+                except Exception as e:
+                    st.error(f"Erro ao conectar com o serviço de pagamento: {str(e)}")
 
     with col3:
         plano_vitalicio = f"""
@@ -342,7 +415,32 @@ def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True
         if stripe_ready:
             btn_vitalicio = st.button("Comprar Vitalício", key="btn_vitalicio", type="primary", use_container_width=True)
             if btn_vitalicio:
-                st.success("Redirecionando para pagamento do plano vitalício...")
+                try:
+                    # Chamar a API Stripe para criar a sessão de checkout
+                    checkout_data = criar_checkout_session("lifetime")
+                    if "error" in checkout_data:
+                        st.error(f"Erro ao processar pagamento: {checkout_data['error']}")
+                    else:
+                        # Adicionar script para redirecionar para o checkout
+                        checkout_url = checkout_data.get("url")
+                        if checkout_url:
+                            st.markdown(f"""
+                            <script>
+                                window.location.href = "{checkout_url}";
+                            </script>
+                            """, unsafe_allow_html=True)
+                        else:
+                            # Alternativa usando Stripe.js (caso não retorne URL)
+                            st.markdown(f"""
+                            <script src="https://js.stripe.com/v3/"></script>
+                            <script>
+                                const stripe = Stripe("{STRIPE_PUBLISHABLE_KEY}");
+                                stripe.redirectToCheckout({{ sessionId: "{checkout_data.get('id')}" }});
+                            </script>
+                            """, unsafe_allow_html=True)
+                        st.success("Redirecionando para o checkout do Stripe...")
+                except Exception as e:
+                    st.error(f"Erro ao conectar com o serviço de pagamento: {str(e)}")
     
     # Prova social
     if com_prova_social:

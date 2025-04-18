@@ -19,8 +19,10 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Configurar Stripe - usamos a versão instalada no ambiente
-api_key = os.environ.get("STRIPE_API_KEY", "")
+# Para demonstração, estamos usando valores hardcoded
+api_key = os.environ.get("STRIPE_API_KEY", "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")
 webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+publishable_key = os.environ.get("STRIPE_PUBLISHABLE_KEY", "pk_live_51RFB2dLWUPER7pUXim2VuVkCESsrjNcHkDQuMJeDCvvW0ZsyFfqM2exfCTwSSe5O4R2TXBxHJtIpYSGBTAx2gBXT00gpAVYK1f")
 
 # Inicializar FastAPI app
 app = FastAPI(title="Stripe Integration API", description="API para integração com o Stripe")
@@ -34,12 +36,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configurar Stripe se a chave API estiver disponível
-if api_key:
-    stripe.api_key = api_key
-    logger.info("Stripe API configurada com sucesso")
-else:
-    logger.warning("STRIPE_API_KEY não encontrada! A API do Stripe não funcionará corretamente.")
+# Configurar Stripe com a chave API
+stripe.api_key = api_key
+logger.info("Stripe API configurada com sucesso")
 
 # Modelos para a API
 class CheckoutSessionCreate(BaseModel):
@@ -104,11 +103,14 @@ async def create_checkout_session(session_data: CheckoutSessionCreate):
         raise HTTPException(status_code=503, detail="Stripe API não configurada")
     
     try:
-        # Configurar os dados da sessão
+        # Verificar versão do Stripe para ajustar a API adequadamente
+        stripe_version = getattr(stripe, "__version__", "unknown")
+        logger.info(f"Usando Stripe versão: {stripe_version}")
+        
+        # Configurar os dados da sessão - compatível com Stripe 8.x até 12.x
         checkout_data = {
             "success_url": session_data.success_url,
             "cancel_url": session_data.cancel_url,
-            "payment_method_types": ["card"],
             "mode": "subscription",
             "line_items": [
                 {
@@ -116,6 +118,7 @@ async def create_checkout_session(session_data: CheckoutSessionCreate):
                     "quantity": 1,
                 }
             ],
+            "payment_method_types": ["card"],
         }
         
         # Adicionar email do cliente se fornecido

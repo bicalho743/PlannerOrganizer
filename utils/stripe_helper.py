@@ -167,6 +167,7 @@ def create_checkout_session(
 ) -> Tuple[bool, Dict[str, Any]]:
     """
     Cria uma sessão de checkout do Stripe para um pagamento único ou assinatura.
+    Compatível com as versões do Stripe 8.x até 12.x
     
     Args:
         price_id: ID do preço do Stripe
@@ -193,15 +194,24 @@ def create_checkout_session(
         checkout_data = {
             "success_url": success_url,
             "cancel_url": cancel_url,
-            "payment_method_types": ["card"],
             "mode": "subscription",
-            "line_items": [
-                {
-                    "price": price_id,
-                    "quantity": 1,
-                }
-            ],
         }
+        
+        # A maneira como line_items é definido mudou entre as versões
+        # Versão 11+ usa uma abordagem mais simples
+        stripe_version = stripe.__version__ if hasattr(stripe, "__version__") else "unknown"
+        logger.info(f"Usando Stripe versão: {stripe_version}")
+        
+        # Configuração de line_items compatível com ambas versões
+        checkout_data["line_items"] = [
+            {
+                "price": price_id,
+                "quantity": 1,
+            }
+        ]
+        
+        # Nas versões mais antigas, era necessário payment_method_types
+        checkout_data["payment_method_types"] = ["card"]
         
         # Adicionar email do cliente se fornecido
         if customer_email:

@@ -1,101 +1,103 @@
-# Instruções para Implementação da Seção de Planos
+# Instruções de Integração com Planos de Assinatura
 
-Este documento explica como integrar a nova seção de planos com destaque visual no seu aplicativo Planner Organizer.
+## Visão Geral
 
-## O que foi implementado
+Este documento fornece instruções sobre como integrar os planos de assinatura do Planner Organizer com sua aplicação usando o Stripe. Foram criadas várias opções de implementação para dar flexibilidade na escolha do método que melhor se adapta às suas necessidades.
 
-1. **Módulo de Planos Completo**
-   - Criamos um módulo reutilizável em `utils/planos.py` que pode ser facilmente integrado em qualquer página
-   - Inclui design moderno com cartões de planos e destaque visual no plano anual (plano do meio)
-   - Todos os planos contêm informações precisas sobre valores e benefícios
+## Opções de Implementação
 
-2. **Seção de Benefícios**
-   - Grid visual de 4 benefícios principais com ícones
-   - Destaque para as funcionalidades mais valorizadas pelos clientes
+### 1. HTML Puro com Stripe.js
 
-3. **Design Otimizado**
-   - Cartão do plano do meio (anual) com destaque visual e etiqueta "RECOMENDADO"
-   - Efeitos de hover e animações sutis para melhor experiência do usuário
-   - Layout totalmente responsivo (adapta-se a dispositivos móveis)
+**Arquivos:**
+- `api/static/index.html` - Página completa de planos com layout responsivo
+- `api/static/checkout-simple.html` - Página simples de checkout
 
-4. **Botões Prontos para Stripe**
-   - Implementação pronta para integração com pagamentos Stripe
-   - Redirecionamento para páginas de checkout (basta adicionar as URLs do Stripe)
+**Funcionamento:**
+- Páginas HTML estáticas que usam JavaScript para se comunicar com a API do Stripe
+- Design responsivo e pronto para produção
+- Funciona com a API Stripe rodando em `/create-checkout-session`
 
-## Como Integrar no Seu Aplicativo
+**Para usar:**
+- Coloque as páginas no diretório de arquivos estáticos do seu servidor web
+- Substitua `pk_test_SUA_CHAVE_PUBLICA_DO_STRIPE` pela sua chave publicável do Stripe
+- Certifique-se de que a API do Stripe esteja rodando e acessível
 
-### Opção 1: Importar o módulo no app.py (Recomendado)
+### 2. API FastAPI para Stripe
 
-Para incorporar a seção de planos diretamente na sua página de login, adicione o seguinte código ao seu arquivo `app.py`:
+**Arquivos:**
+- `api/stripe_integration.py` - API completa com todos os recursos do Stripe
+- `api/stripe_simple.py` - Versão simplificada da API
 
-```python
-# Importar o módulo de planos
-from utils.planos import mostrar_planos
+**Endpoints Principais:**
+- `/create-checkout-session` - Cria uma sessão de checkout para pagamento único
+- `/create-checkout-session/{plan_id}` - Cria uma sessão para um plano específico (mensal, anual, vitalício)
+- `/plans` - Retorna informações sobre os planos disponíveis
+- `/subscription/{subscription_id}` - Obtém detalhes de uma assinatura
 
-# Na parte onde você quer mostrar os planos (após o login ou em uma aba separada)
-mostrar_planos(
-    com_titulo=True,
-    com_prova_social=True,
-    com_teste_gratis=True,
-    com_destaque_plano_medio=True,
-    stripe_ready=True
-)
-```
+**Para usar:**
+- Configure a variável de ambiente `STRIPE_API_KEY` com sua chave secreta do Stripe
+- Execute a API com `uvicorn api.stripe_simple:app --host 0.0.0.0 --port 8001`
+- Ou para a versão completa: `uvicorn api.stripe_integration:app --host 0.0.0.0 --port 8000`
 
-### Opção 2: Página Independente
+### 3. Página Streamlit com Planos
 
-Você também pode manter uma página separada apenas para os planos:
+**Arquivos:**
+- `planos_minimal.py` - Interface Streamlit simplificada de planos
+- `planos_landing.py` - Página completa de landing page com planos
 
-1. Use o arquivo `planos_landing.py` ou `planos_simple.py` como ponto de partida
-2. Configure um workflow separado para esta página
-3. Crie links do seu app principal para esta página
+**Para usar:**
+- Execute `streamlit run planos_minimal.py`
+- Certifique-se de que a API do Stripe esteja rodando para processamento de pagamentos
 
-## Parâmetros Personalizáveis
+### 4. Helper para Integração Direta
 
-O módulo `mostrar_planos()` aceita os seguintes parâmetros:
+**Arquivo:**
+- `utils/stripe_helper.py` - Funções auxiliares para integração direta com o Stripe
 
-- `com_titulo`: Se True, exibe o título principal "Escolha o Plano Ideal..."
-- `com_prova_social`: Se True, exibe os depoimentos de clientes
-- `com_teste_gratis`: Se True, exibe a seção de teste gratuito
-- `com_destaque_plano_medio`: Se True, destaca visualmente o plano anual
-- `stripe_ready`: Se True, adiciona funcionalidade aos botões para integração com Stripe
+**Principais funções:**
+- `get_stripe_status()` - Verifica se o Stripe está configurado corretamente
+- `format_price()` - Formata preços de acordo com a moeda
+- `get_all_products_and_prices()` - Obtém produtos e preços do Stripe
+- `create_checkout_session()` - Cria uma sessão de checkout
+- `render_checkout_button()` - Cria botões de checkout no Streamlit
 
-## Integração com Stripe
+**Para usar:**
+- Importe as funções necessárias em seu código
+- Exemplo: `from utils.stripe_helper import render_checkout_button`
+- Chame a função no seu aplicativo: `render_checkout_button('price_id', 'Assinar Agora')`
 
-Para conectar os botões ao Stripe:
+## Configuração do Ambiente
 
-1. Crie produtos e preços no seu painel do Stripe
-2. Substitua as ações dos botões pelo código de redirecionamento para o Stripe
-3. Exemplo de integração:
+1. **Configurar Chaves do Stripe:**
+   ```
+   export STRIPE_API_KEY=sk_test_sua_chave_secreta
+   export STRIPE_PUBLISHABLE_KEY=pk_test_sua_chave_publica
+   ```
 
-```python
-if btn_mensal:
-    import stripe
-    stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-    checkout_session = stripe.checkout.Session.create(
-        payment_method_types=['card'],
-        line_items=[{
-            'price': 'price_1234567890',  # ID do preço no Stripe
-            'quantity': 1,
-        }],
-        mode='subscription',
-        success_url='https://seusite.com/success',
-        cancel_url='https://seusite.com/cancel',
-    )
-    st.markdown(f"""
-    <script>
-    window.location.href = '{checkout_session.url}';
-    </script>
-    """, unsafe_allow_html=True)
-```
+2. **Criar produtos e preços no Stripe:**
+   - Crie 3 produtos: Mensal, Anual e Vitalício
+   - Defina os preços recorrentes para mensal e anual
+   - Defina um preço único para o plano vitalício
 
-## Arquivos Incluídos
+3. **Configurar Webhook (opcional):**
+   - Configure um endpoint webhook no Stripe para receber notificações de eventos
+   - Aponte para `/stripe-webhook` na sua API
 
-1. `utils/planos.py` - Módulo principal com a implementação da seção de planos
-2. `planos_simple.py` - Versão simplificada e independente da página de planos
-3. `planos_landing.py` - Versão completa da landing page com planos
-4. `app_planos_layout.py` - Exemplo de como integrar no app.py principal
+## Preços Sugeridos
 
-## Suporte
+- **Plano Mensal**: R$ 9,70/mês
+- **Plano Anual**: R$ 97,00/ano (economia de 17% em relação ao mensal)
+- **Acesso Vitalício**: R$ 247,00 (pagamento único)
 
-Para qualquer dúvida sobre a implementação, entre em contato com o suporte.
+## Próximos Passos
+
+1. Escolha uma das opções de implementação acima
+2. Configure as chaves do Stripe no ambiente
+3. Personalize os preços conforme necessário
+4. Integre com o sistema de autenticação existente
+
+## Observações Importantes
+
+- A integração atual exige configuração das chaves do Stripe para funcionar corretamente
+- Em ambiente de desenvolvimento, use as chaves de teste do Stripe
+- Em produção, use as chaves de produção e certifique-se de que as URLs de redirecionamento estejam configuradas corretamente
