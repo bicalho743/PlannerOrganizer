@@ -1,6 +1,7 @@
 import streamlit as st
 
-def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True, com_destaque_plano_medio=True, stripe_ready=True):
+def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True, 
+                  com_destaque_plano_medio=True, stripe_ready=True, espacamento_reduzido=False):
     """
     Exibe a seção de planos e preços completa para o sistema.
     
@@ -10,6 +11,7 @@ def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True
         com_teste_gratis (bool): Se True, mostra a seção de teste grátis
         com_destaque_plano_medio (bool): Se True, destaca visualmente o plano do meio (Anual)
         stripe_ready (bool): Se True, adiciona funcionalidade dos botões para integração com Stripe
+        espacamento_reduzido (bool): Se True, reduz espaçamentos para layouts compactos
     """
     # CSS adicional para os cartões de planos
     st.markdown("""
@@ -210,31 +212,55 @@ def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True
     # Benefícios gerais antes da tabela de planos
     st.markdown("<div class='beneficios-titulo'>Todos os planos incluem:</div>", unsafe_allow_html=True)
     
-    # Grid de benefícios visuais
-    st.markdown("""
-    <div class='beneficios-grid'>
-        <div class='beneficio-item'>
-            <div class='beneficio-icone'>📊</div>
-            <div class='beneficio-titulo'>Painel Financeiro</div>
-            <div class='beneficio-descricao'>Controle completo das suas finanças</div>
+    # Grid de benefícios visuais - com espaçamento normal ou reduzido
+    if espacamento_reduzido:
+        # Versão com espaçamento reduzido
+        st.markdown("""
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-around; margin-bottom: 20px;">
+            <div style="text-align: center; padding: 10px; width: 23%;">
+                <div style="font-size: 24px; margin-bottom: 5px;">📊</div>
+                <div style="font-weight: 600; color: #1E366F; font-size: 14px;">Painel Financeiro</div>
+            </div>
+            <div style="text-align: center; padding: 10px; width: 23%;">
+                <div style="font-size: 24px; margin-bottom: 5px;">🧾</div>
+                <div style="font-weight: 600; color: #1E366F; font-size: 14px;">Propostas</div>
+            </div>
+            <div style="text-align: center; padding: 10px; width: 23%;">
+                <div style="font-size: 24px; margin-bottom: 5px;">💰</div>
+                <div style="font-weight: 600; color: #1E366F; font-size: 14px;">Precificação</div>
+            </div>
+            <div style="text-align: center; padding: 10px; width: 23%;">
+                <div style="font-size: 24px; margin-bottom: 5px;">📈</div>
+                <div style="font-weight: 600; color: #1E366F; font-size: 14px;">Relatórios</div>
+            </div>
         </div>
-        <div class='beneficio-item'>
-            <div class='beneficio-icone'>🧾</div>
-            <div class='beneficio-titulo'>Propostas Profissionais</div>
-            <div class='beneficio-descricao'>Modelo personalizado com sua marca</div>
+        """, unsafe_allow_html=True)
+    else:
+        # Versão original com espaçamento normal
+        st.markdown("""
+        <div class='beneficios-grid'>
+            <div class='beneficio-item'>
+                <div class='beneficio-icone'>📊</div>
+                <div class='beneficio-titulo'>Painel Financeiro</div>
+                <div class='beneficio-descricao'>Controle completo das suas finanças</div>
+            </div>
+            <div class='beneficio-item'>
+                <div class='beneficio-icone'>🧾</div>
+                <div class='beneficio-titulo'>Propostas Profissionais</div>
+                <div class='beneficio-descricao'>Modelo personalizado com sua marca</div>
+            </div>
+            <div class='beneficio-item'>
+                <div class='beneficio-icone'>💰</div>
+                <div class='beneficio-titulo'>Precificação Inteligente</div>
+                <div class='beneficio-descricao'>Calcule valores com precisão</div>
+            </div>
+            <div class='beneficio-item'>
+                <div class='beneficio-icone'>📈</div>
+                <div class='beneficio-titulo'>Relatórios Avançados</div>
+                <div class='beneficio-descricao'>Dados para decisões estratégicas</div>
+            </div>
         </div>
-        <div class='beneficio-item'>
-            <div class='beneficio-icone'>💰</div>
-            <div class='beneficio-titulo'>Precificação Inteligente</div>
-            <div class='beneficio-descricao'>Calcule valores com precisão</div>
-        </div>
-        <div class='beneficio-item'>
-            <div class='beneficio-icone'>📈</div>
-            <div class='beneficio-titulo'>Relatórios Avançados</div>
-            <div class='beneficio-descricao'>Dados para decisões estratégicas</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
     
     # TABELA DE PLANOS
     col1, col2, col3 = st.columns([1, 1.2, 1])  # o do meio ganha mais espaço

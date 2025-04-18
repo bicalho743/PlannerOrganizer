@@ -457,7 +457,8 @@ if not st.session_state.authenticated:
             com_prova_social=True,  # True para mostrar depoimentos
             com_teste_gratis=False,  # False para não duplicar com o CTA abaixo
             com_destaque_plano_medio=True,  # True para destacar o plano anual
-            stripe_ready=True  # True para botões prontos para Stripe
+            stripe_ready=True,  # True para botões prontos para Stripe
+            espacamento_reduzido=True  # True para reduzir o espaçamento
         )
         
         # CTA (Call to Action)
@@ -472,9 +473,9 @@ if not st.session_state.authenticated:
         # Container de login
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
         
-        # Cabeçalho do login
+        # Cabeçalho do login - Removida barra branca acima
         st.markdown('''
-        <div class="login-header">
+        <div class="login-header" style="border: none; box-shadow: none; background: transparent;">
             <h2>Acesse sua conta</h2>
             <p style="color: #5A6A85;">Entre para gerenciar suas propostas e finanças</p>
         </div>
