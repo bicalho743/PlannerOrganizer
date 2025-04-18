@@ -48,27 +48,27 @@ def criar_checkout_session(plan_id):
         "mode": "subscription" if plan_id in ["monthly", "yearly"] else "payment"
     }
     
-    last_error = None
-    for endpoint in endpoints:
-        try:
-            st.write(f"Tentando conectar com: {endpoint}")
-            # Aqui enviamos os dados da sessão como JSON para a API
-            response = requests.post(
-                endpoint, 
-                json=session_data,
-                headers={"Content-Type": "application/json"},
-                timeout=5
-            )
-            # Mostrar a resposta para debug
-            st.write(f"Resposta: {response.status_code}")
-            if response.status_code == 200:
-                return response.json()
-            else:
-                st.write(f"Conteúdo da resposta: {response.text[:200]}")
-        except Exception as e:
-            last_error = str(e)
-            st.write(f"Erro ao conectar: {str(e)}")
-            continue
+    with st.spinner("Processando pagamento..."):
+        last_error = None
+        for endpoint in endpoints:
+            try:
+                # Aqui enviamos os dados da sessão como JSON para a API
+                response = requests.post(
+                    endpoint, 
+                    json=session_data,
+                    headers={"Content-Type": "application/json"},
+                    timeout=5
+                )
+                
+                if response.status_code == 200:
+                    return response.json()
+                else:
+                    # Registrar erro para debug interno (não mostrar ao usuário)
+                    last_error = f"Erro na API (código {response.status_code}): {response.text[:100]}..."
+                    continue
+            except Exception as e:
+                last_error = str(e)
+                continue
     
     st.error(f"Erro ao criar sessão: {last_error}")
     return {"error": last_error}
@@ -251,24 +251,21 @@ def exibir_planos_integracao():
                 checkout_url = checkout_data.get("url")
                 
                 if checkout_url:
-                    # Display the URL as a clickable link
-                    st.markdown(f"""
-                    <div class="stripe-info">
-                        URL de checkout: <a href="{checkout_url}" target="_blank">{checkout_url}</a>
-                    </div>
-                    <a href="{checkout_url}" target="_blank" class="stripe-button">
-                        Prosseguir para checkout do plano mensal
-                    </a>
-                    """, unsafe_allow_html=True)
-                    
-                    # Also try to open it automatically
+                    # Tenta abrir a página de checkout automaticamente
                     st.markdown(f"""
                     <script>
                         window.open("{checkout_url}", "_blank");
                     </script>
                     """, unsafe_allow_html=True)
                     
-                    st.success("Link de checkout gerado com sucesso!")
+                    # Exibe um botão de fallback caso a abertura automática falhe
+                    st.markdown(f"""
+                    <a href="{checkout_url}" target="_blank" class="stripe-button">
+                        Clique aqui para prosseguir para o checkout
+                    </a>
+                    """, unsafe_allow_html=True)
+                    
+                    st.success("Redirecionando para o checkout...")
                 else:
                     st.warning("Link de checkout não foi gerado corretamente.")
 
@@ -303,24 +300,21 @@ def exibir_planos_integracao():
                 checkout_url = checkout_data.get("url")
                 
                 if checkout_url:
-                    # Display the URL as a clickable link
-                    st.markdown(f"""
-                    <div class="stripe-info">
-                        URL de checkout: <a href="{checkout_url}" target="_blank">{checkout_url}</a>
-                    </div>
-                    <a href="{checkout_url}" target="_blank" class="stripe-button destaque">
-                        Prosseguir para checkout do plano anual
-                    </a>
-                    """, unsafe_allow_html=True)
-                    
-                    # Also try to open it automatically
+                    # Tenta abrir a página de checkout automaticamente
                     st.markdown(f"""
                     <script>
                         window.open("{checkout_url}", "_blank");
                     </script>
                     """, unsafe_allow_html=True)
                     
-                    st.success("Link de checkout gerado com sucesso!")
+                    # Exibe um botão de fallback caso a abertura automática falhe
+                    st.markdown(f"""
+                    <a href="{checkout_url}" target="_blank" class="stripe-button destaque">
+                        Clique aqui para prosseguir para o checkout
+                    </a>
+                    """, unsafe_allow_html=True)
+                    
+                    st.success("Redirecionando para o checkout...")
                 else:
                     st.warning("Link de checkout não foi gerado corretamente.")
 
@@ -354,24 +348,21 @@ def exibir_planos_integracao():
                 checkout_url = checkout_data.get("url")
                 
                 if checkout_url:
-                    # Display the URL as a clickable link
-                    st.markdown(f"""
-                    <div class="stripe-info">
-                        URL de checkout: <a href="{checkout_url}" target="_blank">{checkout_url}</a>
-                    </div>
-                    <a href="{checkout_url}" target="_blank" class="stripe-button">
-                        Prosseguir para checkout do acesso vitalício
-                    </a>
-                    """, unsafe_allow_html=True)
-                    
-                    # Also try to open it automatically
+                    # Tenta abrir a página de checkout automaticamente
                     st.markdown(f"""
                     <script>
                         window.open("{checkout_url}", "_blank");
                     </script>
                     """, unsafe_allow_html=True)
                     
-                    st.success("Link de checkout gerado com sucesso!")
+                    # Exibe um botão de fallback caso a abertura automática falhe
+                    st.markdown(f"""
+                    <a href="{checkout_url}" target="_blank" class="stripe-button">
+                        Clique aqui para prosseguir para o checkout
+                    </a>
+                    """, unsafe_allow_html=True)
+                    
+                    st.success("Redirecionando para o checkout...")
                 else:
                     st.warning("Link de checkout não foi gerado corretamente.")
     
