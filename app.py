@@ -66,6 +66,8 @@ if not st.session_state.authenticated:
         font-weight: 700;
         margin-bottom: 0.5rem;
         line-height: 1.2;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
         text-shadow: 0px 2px 3px rgba(0,0,0,0.1);
     }
     
@@ -73,7 +75,29 @@ if not st.session_state.authenticated:
         color: #5A6A85;
         font-size: 1.2rem;
         font-weight: 400;
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Reduzir espaçamento no topo da página - mais agressivamente */
+    .block-container {
+        padding-top: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    /* Remove espaços em branco no topo da aplicação */
+    .st-emotion-cache-z5fcl4, .st-emotion-cache-ue6h4q, .st-emotion-cache-1kyxreq {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    
+    /* Remove cabeçalho do Streamlit completamente */
+    header[data-testid="stHeader"] {
+        display: none !important;
+    }
+    
+    /* Container de contexto principal sem padding */
+    .st-emotion-cache-1wmy9hl {
+        padding-top: 0 !important;
     }
     
     .feature-card {
@@ -143,14 +167,18 @@ if not st.session_state.authenticated:
     .login-container {
         background: linear-gradient(135deg, white, #f5f9ff);
         border-radius: 16px;
-        padding: 2.5rem;
-        box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+        padding: 1.5rem;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         border: 1px solid rgba(255,255,255,0.8);
+        margin-top: 0;
     }
     
     .login-header {
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
     }
     
     .social-button {
@@ -452,9 +480,10 @@ if not st.session_state.authenticated:
         st.markdown("<h2>Escolha o Plano Ideal Para o Seu Negócio</h2>", unsafe_allow_html=True)
         
         # Mostrar os planos com os parâmetros otimizados para landing page
+        # Usando formato com espaço reduzido e sem a seção de benefícios duplicada
         mostrar_planos(
             com_titulo=False,  # False porque já temos um título acima
-            com_prova_social=True,  # True para mostrar depoimentos
+            com_prova_social=False,  # False para layout mais compacto
             com_teste_gratis=False,  # False para não duplicar com o CTA abaixo
             com_destaque_plano_medio=True,  # True para destacar o plano anual
             stripe_ready=True,  # True para botões prontos para Stripe
@@ -470,15 +499,13 @@ if not st.session_state.authenticated:
         ''', unsafe_allow_html=True)
     
     with right_col:
-        # Container de login
-        st.markdown('<div class="login-container">', unsafe_allow_html=True)
+        # Container de login sem espaçamento
+        st.markdown('<div class="login-container" style="margin-top: -10px;">', unsafe_allow_html=True)
         
-        # Cabeçalho do login - Removida barra branca acima
+        # Título direto sem cabeçalho separado para evitar barra branca
         st.markdown('''
-        <div class="login-header" style="border: none; box-shadow: none; background: transparent;">
-            <h2>Acesse sua conta</h2>
-            <p style="color: #5A6A85;">Entre para gerenciar suas propostas e finanças</p>
-        </div>
+        <h2 style="text-align: center; color: #1E366F; margin-top: 0;">Acesse sua conta</h2>
+        <p style="text-align: center; color: #5A6A85; margin-bottom: 20px;">Entre para gerenciar suas propostas e finanças</p>
         ''', unsafe_allow_html=True)
         
         # Botões de login social
