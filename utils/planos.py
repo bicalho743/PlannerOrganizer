@@ -33,7 +33,7 @@ def criar_checkout_session(plan_id):
     
     # IDs de preço do Stripe fornecidos pelo cliente
     price_mapping = {
-        "monthly": "price_1RFBNXLWUPER7pUXzmz8cdsL",    # ID do preço Mensal (R$9,70) com trial de 7 dias
+        "monthly": "price_1RFE2ULWUPER7pUXw1i1X5oR",    # ID do preço Mensal (R$9,70) com trial de 7 dias e recorrência configurada
         "yearly": "price_1RFBTtLWUPER7pUXPt2Ajhgz",     # ID do preço Anual (R$97,00) com trial de 7 dias
         "lifetime": "price_1RFBULLWUPER7pUXCiGZn3Jn"    # ID do preço Vitalício (R$247,00) sem trial
     }

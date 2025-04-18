@@ -19,7 +19,7 @@ if project_root not in sys.path:
     logger.info(f"Adicionado {project_root} ao sys.path")
 
 from utils.database import Database
-from utils.planos import mostrar_planos  # Importando o módulo de planos
+from planos_improved import exibir_planos_integracao  # Importando o módulo de planos melhorado
 
 # Verificar se o usuário está autenticado
 if "authenticated" not in st.session_state:
@@ -479,16 +479,9 @@ if not st.session_state.authenticated:
         # Seção de Planos e Preços
         st.markdown("<h2>Escolha o Plano Ideal Para o Seu Negócio</h2>", unsafe_allow_html=True)
         
-        # Mostrar os planos com os parâmetros otimizados para landing page
-        # Usando formato com espaço reduzido e sem a seção de benefícios duplicada
-        mostrar_planos(
-            com_titulo=False,  # False porque já temos um título acima
-            com_prova_social=False,  # False para layout mais compacto
-            com_teste_gratis=False,  # False para não duplicar com o CTA abaixo
-            com_destaque_plano_medio=True,  # True para destacar o plano anual
-            stripe_ready=True,  # True para botões prontos para Stripe
-            espacamento_reduzido=True  # True para reduzir o espaçamento
-        )
+        # Usando a nova implementação melhorada dos planos
+        # Essa versão corrige o redirecionamento e exibe links clicáveis
+        exibir_planos_integracao()
         
         # CTA (Call to Action)
         st.markdown('''
