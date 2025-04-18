@@ -88,6 +88,10 @@ args = "Login Simples"
 task = "workflow.run"
 args = "Planos Landing"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Planos Simples"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -365,6 +369,21 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run planos_landing.py --server.port 5002 --server.address 0.0.0.0"
 waitForPort = 5002
+
+[[workflows.workflow]]
+name = "Planos Simples"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run planos_simple.py --server.port 8800 --server.address 0.0.0.0"
+waitForPort = 8800
 
 [[ports]]
 localPort = 443
