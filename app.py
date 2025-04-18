@@ -590,13 +590,8 @@ if not st.session_state.authenticated:
     # Impede a renderização do resto da aplicação
     st.stop()
 
-# Configuração da página
-st.set_page_config(
-    page_title="Planner Organizer",
-    page_icon="favicon.png",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# A configuração da página já foi definida no início do arquivo
+# Não é permitido chamar st.set_page_config() mais de uma vez por app
 
 # Inicialização do banco de dados
 if 'db' not in st.session_state:
