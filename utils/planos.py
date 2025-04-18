@@ -26,16 +26,17 @@ def criar_checkout_session(plan_id):
         f"{STRIPE_API_URL}:8000/api/checkout/session",   # Alternativa com porta explícita
     ]
     
-    # Dados do plano a serem enviados para a API
+    # Aguardando IDs dos preços do Stripe
+    # Mapeamento dos planos para os IDs de preço do Stripe
     price_mapping = {
-        "monthly": "price_1RFBzULWUPER7pUXONiGWXZk",    # ID do preço para plano mensal
-        "yearly": "price_1RFBzzLWUPER7pUXHbMv5ZVB",     # ID do preço para plano anual
-        "lifetime": "price_1RFBziLWUPER7pUXs4y44WON"    # ID do preço para plano lifetime
+        "monthly": "price_xxxxxxxx",    # ID do preço para plano mensal (a ser atualizado)
+        "yearly": "price_yyyyyyyy",     # ID do preço para plano anual (a ser atualizado)
+        "lifetime": "price_zzzzzzzz"    # ID do preço para plano lifetime (a ser atualizado)
     }
     
-    # Preparar os dados para enviar ao Stripe
+    # Preparar os dados para enviar ao Stripe usando IDs de preço
     session_data = {
-        "price_id": price_mapping.get(plan_id, "price_1RFBzULWUPER7pUXONiGWXZk"),
+        "price_id": price_mapping.get(plan_id, price_mapping["monthly"]),
         "success_url": "https://workspace.solanobicalho.repl.co/success",
         "cancel_url": "https://workspace.solanobicalho.repl.co/cancel",
         "metadata": {"plan": plan_id}
