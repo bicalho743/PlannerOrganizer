@@ -26,12 +26,11 @@ def criar_checkout_session(plan_id):
         f"{STRIPE_API_URL}:8000/api/checkout/session",   # Alternativa com porta explícita
     ]
     
-    # Aguardando IDs dos preços do Stripe
-    # Mapeamento dos planos para os IDs de preço do Stripe
+    # IDs de preço do Stripe fornecidos pelo cliente
     price_mapping = {
-        "monthly": "price_xxxxxxxx",    # ID do preço para plano mensal (a ser atualizado)
-        "yearly": "price_yyyyyyyy",     # ID do preço para plano anual (a ser atualizado)
-        "lifetime": "price_zzzzzzzz"    # ID do preço para plano lifetime (a ser atualizado)
+        "monthly": "price_1RFBNXLWUPER7pUXzmz8cdsL",    # ID do preço Mensal (R$9,70) com trial de 7 dias
+        "yearly": "price_1RFBTtLWUPER7pUXPt2Ajhgz",     # ID do preço Anual (R$97,00) com trial de 7 dias
+        "lifetime": "price_1RFBULLWUPER7pUXCiGZn3Jn"    # ID do preço Vitalício (R$247,00) sem trial
     }
     
     # Preparar os dados para enviar ao Stripe usando IDs de preço
@@ -335,9 +334,10 @@ def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True
     with col1:
         plano_mensal = f"""
         <div class="plano-card">
-            <div class="plano-titulo">💡 Plano Mensal</div>
+            <div class="plano-titulo">💳 Plano Mensal</div>
             <div class="plano-preco">R$9,70</div>
             <div class="plano-periodo">por mês</div>
+            <div style="background-color: #e6fff0; color: #00a651; padding: 5px; border-radius: 5px; text-align: center; margin-bottom: 15px; font-size: 12px; font-weight: bold;">✨ 7 DIAS DE TESTE GRÁTIS</div>
             <div class="plano-beneficios">
                 <ul>
                     <li>Acesso a todos os recursos</li>
@@ -386,10 +386,11 @@ def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True
         plano_class = "plano-card plano-destaque" if com_destaque_plano_medio else "plano-card"
         plano_anual = f"""
         <div class="{plano_class}">
-            <div class="plano-titulo">🔥 Plano Anual</div>
+            <div class="plano-titulo">📆 Plano Anual</div>
             <div class="plano-preco">R$97,00</div>
             <div class="plano-periodo">por ano</div>
             <div class="plano-economia">ECONOMIZE 17%</div>
+            <div style="background-color: #e6fff0; color: #00a651; padding: 5px; border-radius: 5px; text-align: center; margin-bottom: 15px; font-size: 12px; font-weight: bold;">✨ 7 DIAS DE TESTE GRÁTIS</div>
             <div class="plano-beneficios">
                 <ul>
                     <li>Acesso a todos os recursos</li>
@@ -438,9 +439,10 @@ def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True
     with col3:
         plano_vitalicio = f"""
         <div class="plano-card">
-            <div class="plano-titulo">🏆 Acesso Vitalício</div>
+            <div class="plano-titulo">💎 Acesso Vitalício</div>
             <div class="plano-preco">R$247,00</div>
             <div class="plano-periodo">pagamento único</div>
+            <div class="plano-economia">MELHOR VALOR A LONGO PRAZO</div>
             <div class="plano-beneficios">
                 <ul>
                     <li>Acesso permanente ao sistema</li>
@@ -550,8 +552,9 @@ def mostrar_planos_simples():
     col1, col2, col3 = st.columns([1, 1.2, 1])  # o do meio ganha mais espaço
 
     with col1:
-        st.markdown("### 💡 Plano Mensal")
+        st.markdown("### 💳 Plano Mensal")
         st.markdown("**R$ 9,70 / mês**")
+        st.markdown("✨ *7 dias de teste grátis*")
         st.markdown("- Todos os recursos")
         st.markdown("- Cancelamento fácil")
         st.markdown("- Ideal para começar")
@@ -560,9 +563,10 @@ def mostrar_planos_simples():
     with col2:
         st.markdown("""
             <div style='border: 2px solid #2d8cff; border-radius: 12px; padding: 10px; background-color: #e6f0ff;'>
-            <h3 style='text-align:center;'>🔥 Plano Anual</h3>
-            <p style='text-align:center; font-size: 20px;'><strong>R$ 97 / ano</strong></p>
+            <h3 style='text-align:center;'>📆 Plano Anual</h3>
+            <p style='text-align:center; font-size: 20px;'><strong>R$ 97,00 / ano</strong></p>
             <p style='text-align:center; color:green;'>💸 Economize 17% comparado ao mensal!</p>
+            <p style='text-align:center; color:#00a651; font-weight: bold;'>✨ 7 DIAS DE TESTE GRÁTIS</p>
             <ul>
                 <li>Acesso total por 12 meses</li>
                 <li>Atualizações incluídas</li>
@@ -577,11 +581,12 @@ def mostrar_planos_simples():
         st.button("Assinar Anual", key="btn_anual_simples", type="primary")
 
     with col3:
-        st.markdown("### 🏆 Acesso Vitalício")
+        st.markdown("### 💎 Acesso Vitalício")
         st.markdown("**R$ 247,00 uma única vez**")
         st.markdown("- Acesso permanente ao sistema")
         st.markdown("- Sem mensalidade nunca mais")
-        st.markdown("- Ideal para quem já decidiu")
+        st.markdown("- Todas as atualizações inclusas")
+        st.markdown("- Melhor para longo prazo")
         st.button("Comprar Vitalício", key="btn_vitalicio_simples", type="primary")
 
     # Prova social
