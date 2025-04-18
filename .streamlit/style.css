@@ -150,3 +150,83 @@ button[role="tab"] {
     margin-top: 3.5rem !important;
     padding-top: 2rem !important;
 }
+
+/* Estilos para os cartões de planos */
+.plano-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #e0e0e0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+}
+
+.plano-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.plano-destaque {
+    border: 2px solid #2d8cff;
+    transform: scale(1.05);
+    box-shadow: 0 8px 24px rgba(45,140,255,0.15);
+    position: relative;
+    z-index: 10;
+}
+
+.plano-destaque:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 12px 30px rgba(45,140,255,0.2);
+}
+
+.plano-titulo {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1E366F;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.plano-preco {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #2d8cff;
+    text-align: center;
+    margin-bottom: 0.2rem;
+}
+
+.plano-periodo {
+    font-size: 0.9rem;
+    color: #5A6A85;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.plano-economia {
+    background-color: #e6f7ff;
+    color: #2d8cff;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.plano-beneficios {
+    flex-grow: 1;
+}
+
+.plano-beneficios ul {
+    padding-left: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+.plano-beneficios li {
+    color: #5A6A85;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}

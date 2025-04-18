@@ -482,9 +482,134 @@ if not st.session_state.authenticated:
         # Seção de Planos e Preços
         st.markdown("<h2>Escolha o Plano Ideal Para o Seu Negócio</h2>", unsafe_allow_html=True)
         
-        # Usando nossa implementação simplificada de planos
-        # Os botões são diretos e não tentam integrar com API externa
-        exibir_planos_simples()
+        # TABELA DE PLANOS
+        col1, col2, col3 = st.columns([1, 1.2, 1])  # o do meio ganha mais espaço
+
+        # Adicionando timestamp aleatório para evitar preenchimento automático
+        import random
+        import time
+        timestamp = int(time.time())
+        random_param = random.randint(1000, 9999)
+
+        with col1:
+            # Cartão para Plano Mensal
+            st.markdown("""
+            <div class="plano-card">
+                <div class="plano-titulo">💳 Plano Mensal</div>
+                <div class="plano-preco">R$9,70</div>
+                <div class="plano-periodo">por mês</div>
+                <div style="background-color: #e6fff0; color: #00a651; padding: 5px; border-radius: 5px; text-align: center; margin-bottom: 15px; font-size: 12px; font-weight: bold;">✨ 7 DIAS DE TESTE GRÁTIS</div>
+                <div class="plano-beneficios">
+                    <ul>
+                        <li>Acesso a todos os recursos</li>
+                        <li>Suporte por e-mail</li>
+                        <li>Cancelamento a qualquer momento</li>
+                        <li>Ideal para testar o sistema</li>
+                    </ul>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Botão para checkout do plano mensal
+            button_mensal = st.button("Assinar Plano Mensal", type="primary", use_container_width=True, key=f"mensal_{timestamp}_{random_param}")
+            if button_mensal:
+                with st.spinner("Preparando checkout..."):
+                    # Simulação de checkout
+                    import time
+                    time.sleep(1)
+                    st.success("Preparamos tudo para você! Em breve você será redirecionado para a página de pagamento.")
+                    st.markdown("""
+                    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <p style="margin: 0; color: #4a4a4a;">Clique no botão abaixo para ir para o checkout:</p>
+                        <a href="https://checkout.stripe.com/c/pay/demo_1" target="_blank" style="text-decoration: none;">
+                            <button style="background-color: #2d8cff; color: white; border: none; padding: 10px 20px; 
+                            border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;">
+                                Ir para o checkout seguro
+                            </button>
+                        </a>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+        with col2:
+            # Cartão para Plano Anual (com destaque)
+            st.markdown("""
+            <div class="plano-card plano-destaque">
+                <div class="plano-titulo">📆 Plano Anual</div>
+                <div class="plano-preco">R$97,00</div>
+                <div class="plano-periodo">por ano</div>
+                <div class="plano-economia">ECONOMIZE 17%</div>
+                <div style="background-color: #e6fff0; color: #00a651; padding: 5px; border-radius: 5px; text-align: center; margin-bottom: 15px; font-size: 12px; font-weight: bold;">✨ 7 DIAS DE TESTE GRÁTIS</div>
+                <div class="plano-beneficios">
+                    <ul>
+                        <li>Acesso a todos os recursos</li>
+                        <li>Suporte prioritário</li>
+                        <li>Atualizações gratuitas</li>
+                        <li>Treinamento personalizado</li>
+                        <li>Melhor custo-benefício</li>
+                    </ul>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Botão para checkout do plano anual
+            button_anual = st.button("Assinar Plano Anual", type="primary", use_container_width=True, key=f"anual_{timestamp}_{random_param}")
+            if button_anual:
+                with st.spinner("Preparando checkout..."):
+                    # Simulação de checkout
+                    import time
+                    time.sleep(1)
+                    st.success("Preparamos tudo para você! Em breve você será redirecionado para a página de pagamento.")
+                    st.markdown("""
+                    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <p style="margin: 0; color: #4a4a4a;">Clique no botão abaixo para ir para o checkout:</p>
+                        <a href="https://checkout.stripe.com/c/pay/demo_2" target="_blank" style="text-decoration: none;">
+                            <button style="background-color: #2d8cff; color: white; border: none; padding: 10px 20px; 
+                            border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;">
+                                Ir para o checkout seguro
+                            </button>
+                        </a>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+        with col3:
+            # Cartão para Plano Vitalício
+            st.markdown("""
+            <div class="plano-card">
+                <div class="plano-titulo">💎 Acesso Vitalício</div>
+                <div class="plano-preco">R$247,00</div>
+                <div class="plano-periodo">pagamento único</div>
+                <div class="plano-economia">MELHOR VALOR A LONGO PRAZO</div>
+                <div class="plano-beneficios">
+                    <ul>
+                        <li>Acesso permanente ao sistema</li>
+                        <li>Suporte prioritário</li>
+                        <li>Sem mensalidades futuras</li>
+                        <li>Todas as atualizações inclusas</li>
+                        <li>Melhor para longo prazo</li>
+                    </ul>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Botão para checkout do plano vitalício
+            button_vitalicio = st.button("Adquirir Acesso Vitalício", type="primary", use_container_width=True, key=f"vitalicio_{timestamp}_{random_param}")
+            if button_vitalicio:
+                with st.spinner("Preparando checkout..."):
+                    # Simulação de checkout
+                    import time
+                    time.sleep(1)
+                    st.success("Preparamos tudo para você! Em breve você será redirecionado para a página de pagamento.")
+                    st.markdown("""
+                    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <p style="margin: 0; color: #4a4a4a;">Clique no botão abaixo para ir para o checkout:</p>
+                        <a href="https://checkout.stripe.com/c/pay/demo_3" target="_blank" style="text-decoration: none;">
+                            <button style="background-color: #2d8cff; color: white; border: none; padding: 10px 20px; 
+                            border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;">
+                                Ir para o checkout seguro
+                            </button>
+                        </a>
+                    </div>
+                    """, unsafe_allow_html=True)
         
         # CTA (Call to Action)
         st.markdown('''
@@ -547,23 +672,82 @@ if not st.session_state.authenticated:
                 else:
                     st.error("Usuário ou senha incorretos")
         
-        # Link para recuperação de senha e cadastro com informações de demonstração
-        st.markdown('''
-        <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
-            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
-                Esqueceu sua senha?
-            </a>
-            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
-                Criar uma conta
-            </a>
-        </div>
+        # Botões para recuperação de senha e cadastro com informações de demonstração
+        col1, col2 = st.columns(2)
         
+        # Botão de esqueceu senha
+        with col1:
+            if st.button("Esqueceu sua senha?", type="secondary", key="forgot_password_btn", use_container_width=True):
+                if "show_reset_password" not in st.session_state:
+                    st.session_state.show_reset_password = False
+                st.session_state.show_reset_password = not st.session_state.show_reset_password
+                st.rerun()
+                
+        # Botão de criar conta
+        with col2:
+            if st.button("Criar uma conta", type="secondary", key="create_account_btn", use_container_width=True):
+                if "show_signup" not in st.session_state:
+                    st.session_state.show_signup = False
+                st.session_state.show_signup = not st.session_state.show_signup
+                st.rerun()
+                
+        # Informações de demo
+        st.markdown('''
         <div style="margin-top: 0.8rem; text-align: center;">
             <p style="color: #9E9E9E; font-size: 0.75rem;">
                 Para demonstração, use: admin / admin
             </p>
         </div>
         ''', unsafe_allow_html=True)
+        
+        # Formulário de redefinição de senha
+        if "show_reset_password" in st.session_state and st.session_state.show_reset_password:
+            st.markdown('<hr style="margin: 20px 0;">', unsafe_allow_html=True)
+            st.markdown('<h3 style="text-align: center; color: #1E366F;">Recuperar Senha</h3>', unsafe_allow_html=True)
+            
+            with st.form("reset_password_form"):
+                email_reset = st.text_input("Digite seu e-mail")
+                
+                submit_reset = st.form_submit_button("Enviar link de recuperação", use_container_width=True)
+                
+                if submit_reset:
+                    if not email_reset:
+                        st.error("Por favor, informe seu e-mail.")
+                    else:
+                        # Simulação de envio de e-mail
+                        with st.spinner("Enviando email de recuperação..."):
+                            import time
+                            time.sleep(1.5)
+                        st.success(f"Um link de recuperação foi enviado para {email_reset} (modo de demonstração).")
+                        st.session_state.show_reset_password = False
+                        st.rerun()
+                        
+        # Formulário de cadastro
+        if "show_signup" in st.session_state and st.session_state.show_signup:
+            st.markdown('<hr style="margin: 20px 0;">', unsafe_allow_html=True)
+            st.markdown('<h3 style="text-align: center; color: #1E366F;">Criar Nova Conta</h3>', unsafe_allow_html=True)
+            
+            with st.form("signup_form"):
+                nome = st.text_input("Nome Completo")
+                email = st.text_input("E-mail", key="signup_email")
+                senha = st.text_input("Senha", type="password", key="signup_password")
+                confirmar_senha = st.text_input("Confirmar Senha", type="password")
+                
+                submit_signup = st.form_submit_button("Registrar", use_container_width=True)
+                
+                if submit_signup:
+                    if not nome or not email or not senha or not confirmar_senha:
+                        st.error("Todos os campos são obrigatórios.")
+                    elif senha != confirmar_senha:
+                        st.error("As senhas não coincidem.")
+                    else:
+                        # Simulação de criação de conta
+                        with st.spinner("Criando sua conta..."):
+                            import time
+                            time.sleep(1.5)
+                        st.success(f"Conta criada com sucesso para {nome}! Verifique seu e-mail {email} para ativar sua conta.")
+                        st.session_state.show_signup = False
+                        st.rerun()
         
         st.markdown('</div>', unsafe_allow_html=True)
         
