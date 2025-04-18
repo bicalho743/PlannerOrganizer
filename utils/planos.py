@@ -3,10 +3,10 @@ import requests
 import os
 
 # Configuração da API Stripe
-# Em ambientes Replit, precisamos usar a URL pública do repl
-STRIPE_API_URL = "https://workspace.solanobicalho.repl.co"  # URL base da Stripe Simple API
-# URL alternativa para conexão local (só funciona dentro do Replit)
-STRIPE_LOCAL_API_URL = "http://0.0.0.0:8001"
+# No ambiente Replit usamos a API funcionando na porta 8000
+STRIPE_API_URL = "http://0.0.0.0:8000"  # API principal do Stripe (/api/checkout/session)
+# URL de backup para tentar conexão alternativa
+STRIPE_LOCAL_API_URL = "http://127.0.0.1:8000"
 STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "pk_live_51RFB2dLWUPER7pUXim2VuVkCESsrjNcHkDQuMJeDCvvW0ZsyFfqM2exfCTwSSe5O4R2TXBxHJtIpYSGBTAx2gBXT00gpAVYK1f")
 
 def criar_checkout_session(plan_id):
@@ -21,20 +21,46 @@ def criar_checkout_session(plan_id):
     """
     # Lista de possíveis endpoints para tentar
     endpoints = [
-        f"{STRIPE_API_URL}/create-checkout-session/{plan_id}",
-        f"{STRIPE_API_URL}:8001/create-checkout-session/{plan_id}",
-        f"{STRIPE_LOCAL_API_URL}/create-checkout-session/{plan_id}",
+        f"{STRIPE_API_URL}/api/checkout/session",        # API principal endpoint (/api/checkout/session)
+        f"{STRIPE_LOCAL_API_URL}/api/checkout/session",  # Backup via localhost
+        f"{STRIPE_API_URL}:8000/api/checkout/session",   # Alternativa com porta explícita
     ]
+    
+    # Dados do plano a serem enviados para a API
+    price_mapping = {
+        "monthly": "price_1RFBzULWUPER7pUXONiGWXZk",    # ID do preço para plano mensal
+        "yearly": "price_1RFBzzLWUPER7pUXHbMv5ZVB",     # ID do preço para plano anual
+        "lifetime": "price_1RFBziLWUPER7pUXs4y44WON"    # ID do preço para plano lifetime
+    }
+    
+    # Preparar os dados para enviar ao Stripe
+    session_data = {
+        "price_id": price_mapping.get(plan_id, "price_1RFBzULWUPER7pUXONiGWXZk"),
+        "success_url": "https://workspace.solanobicalho.repl.co/success",
+        "cancel_url": "https://workspace.solanobicalho.repl.co/cancel",
+        "metadata": {"plan": plan_id}
+    }
     
     last_error = None
     for endpoint in endpoints:
         try:
             st.write(f"Tentando conectar com: {endpoint}")
-            response = requests.post(endpoint, timeout=5)
+            # Aqui enviamos os dados da sessão como JSON para a API
+            response = requests.post(
+                endpoint, 
+                json=session_data,
+                headers={"Content-Type": "application/json"},
+                timeout=5
+            )
+            # Mostrar a resposta para debug
+            st.write(f"Resposta: {response.status_code}")
             if response.status_code == 200:
                 return response.json()
+            else:
+                st.write(f"Conteúdo da resposta: {response.text[:200]}")
         except Exception as e:
             last_error = str(e)
+            st.write(f"Erro ao conectar: {str(e)}")
             continue
     
     st.error(f"Erro ao criar sessão: {last_error}")
