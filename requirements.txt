@@ -32,3 +32,4 @@ fastapi
 uvicorn
 pyrebase4
 requests
+pyrebase4
