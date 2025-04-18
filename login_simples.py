@@ -350,7 +350,12 @@ def main():
         
         with col2:
             if st.button("Criar uma conta", type="secondary", key="create_account_btn", use_container_width=True):
-                st.session_state.show_signup = True
+                # Certifique-se de que a variável de estado seja definida
+                if "show_signup" not in st.session_state:
+                    st.session_state.show_signup = False
+                
+                # Alterna o estado para mostrar o formulário de cadastro
+                st.session_state.show_signup = not st.session_state.show_signup
                 st.rerun()
         
         # Informações de demonstração

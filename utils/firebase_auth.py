@@ -2,7 +2,11 @@
 Funções de autenticação usando Firebase
 """
 import streamlit as st
+import logging
 from utils.firebase_config import auth
+
+# Configuração do logging
+logger = logging.getLogger(__name__)
 
 def login_email_senha(email, senha):
     """
@@ -15,6 +19,21 @@ def login_email_senha(email, senha):
     Returns:
         dict: Informações do usuário se autenticado com sucesso, None se falhar
     """
+    # Se auth for None (Firebase não inicializado), modo de demonstração
+    if auth is None:
+        logger.warning("Firebase Auth não disponível, usando modo de demonstração.")
+        if email.lower() == "admin" and senha == "admin":
+            return {
+                'user_id': 'demo-123',
+                'email': email,
+                'token': 'demo-token',
+                'refresh_token': 'demo-refresh',
+                'is_verified': True,
+                'demo_mode': True
+            }
+        return None
+    
+    # Procedimento normal com Firebase
     try:
         user = auth.sign_in_with_email_and_password(email, senha)
         # Obtém informações adicionais do usuário (opcional)
@@ -27,7 +46,7 @@ def login_email_senha(email, senha):
             'is_verified': user_info['users'][0]['emailVerified']
         }
     except Exception as e:
-        st.error(f"Erro ao fazer login: {e}")
+        logger.error(f"Erro ao fazer login: {str(e)}")
         return None
 
 def criar_conta(email, senha, nome=None):
@@ -42,6 +61,18 @@ def criar_conta(email, senha, nome=None):
     Returns:
         dict: Informações do usuário se criado com sucesso, None se falhar
     """
+    # Se auth for None (Firebase não inicializado), modo de demonstração
+    if auth is None:
+        logger.warning("Firebase Auth não disponível, usando modo de demonstração.")
+        return {
+            'user_id': f'demo-{email}-{hash(senha) % 10000}',
+            'email': email,
+            'token': 'demo-token',
+            'refresh_token': 'demo-refresh',
+            'demo_mode': True
+        }
+    
+    # Procedimento normal com Firebase
     try:
         # Cria o usuário
         user = auth.create_user_with_email_and_password(email, senha)
@@ -57,7 +88,7 @@ def criar_conta(email, senha, nome=None):
             'refresh_token': user['refreshToken']
         }
     except Exception as e:
-        st.error(f"Erro ao criar conta: {e}")
+        logger.error(f"Erro ao criar conta: {str(e)}")
         return None
 
 def redefinir_senha(email):
@@ -70,11 +101,17 @@ def redefinir_senha(email):
     Returns:
         bool: True se enviado com sucesso, False se falhar
     """
+    # Se auth for None (Firebase não inicializado), modo de demonstração
+    if auth is None:
+        logger.warning("Firebase Auth não disponível, usando modo de demonstração.")
+        return True
+    
+    # Procedimento normal com Firebase
     try:
         auth.send_password_reset_email(email)
         return True
     except Exception as e:
-        st.error(f"Erro ao redefinir senha: {e}")
+        logger.error(f"Erro ao redefinir senha: {str(e)}")
         return False
 
 def verificar_autenticacao():

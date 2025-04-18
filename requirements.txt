@@ -33,3 +33,4 @@ uvicorn
 pyrebase4
 requests
 pyrebase4
+pyrebase4
