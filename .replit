@@ -117,6 +117,10 @@ args = "Login Simples"
 task = "workflow.run"
 args = "Login Portal"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Efetivo"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -498,6 +502,21 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0.0"
 waitForPort = 5001
+
+[[workflows.workflow]]
+name = "Login Efetivo"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run login_efetivo.py --server.port 8999 --server.address 0.0.0.0"
+waitForPort = 8999
 
 [[ports]]
 localPort = 443
