@@ -505,7 +505,7 @@ if not st.session_state.authenticated:
         # Título direto sem cabeçalho separado para evitar barra branca
         st.markdown('''
         <h2 style="text-align: center; color: #1E366F; margin-top: 0;">Acesse sua conta</h2>
-        <p style="text-align: center; color: #5A6A85; margin-bottom: 20px;">Entre para gerenciar suas propostas e finanças</p>
+        <p style="text-align: center; color: #5A6A85; margin-bottom: 20px;">Entre para gerenciar propostas e finanças</p>
         ''', unsafe_allow_html=True)
         
         # Botões de login social
