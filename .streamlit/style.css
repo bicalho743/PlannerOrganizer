@@ -1,232 +1,111 @@
 /* Estilos globais */
-.main {
-    padding: 1.5rem;
+:root {
+    --primary-color: #2D8CFF;
+    --primary-dark: #1E366F;
+    --light-bg: #F9F9F9;
+    --white: #FFFFFF;
+    --grey-light: #E0E0E0;
+    --grey-text: #5A6A85;
+    --success-color: #00a651;
 }
 
-/* Personalizações para cabeçalhos */
-h1, h2, h3, h4, h5, h6 {
-    font-weight: 600;
-    margin-bottom: 1rem;
+/* Reset de alguns estilos */
+* {
+    box-sizing: border-box;
 }
 
-h1 {
-    color: #1E366F;
-    border-bottom: 1px solid #eaeaea;
-    padding-bottom: 0.5rem;
-    margin-top: 2.5rem !important;
-    padding-top: 1.5rem !important;
+/* Remoção dos espaços excessivos */
+div.block-container {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
 }
 
-/* Estilização de botões */
+/* Estilos para os links */
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+a:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
+/* Estilos para os botões */
 .stButton > button {
-    font-weight: 500;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    transition: all 0.2s ease;
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 4px !important;
+    transition: all 0.3s ease !important;
+    font-weight: 500 !important;
 }
 
 .stButton > button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    background-color: var(--primary-dark) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
 }
 
-/* Estilização de caixas de texto e inputs */
-input, textarea, .stTextInput > div > div > input, .stTextArea > div > div > textarea {
+/* Estilos para inputs e outros elementos de formulário */
+input, select, textarea {
     border-radius: 4px !important;
-    border: 1px solid #E0E0E0 !important;
-    padding: 0.5rem !important;
-}
-
-input:focus, textarea:focus, .stTextInput > div > div > input:focus, .stTextArea > div > div > textarea:focus {
-    border-color: #1E88E5 !important;
-    box-shadow: 0 0 0 1px rgba(30,136,229,0.2) !important;
-}
-
-/* Estilização para tabelas */
-.stDataFrame {
-    border-radius: 6px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.dataframe {
-    border-collapse: collapse;
-}
-
-.dataframe th {
-    background-color: #F5F7FA;
-    font-weight: 600;
-    color: #1E366F;
+    border: 1px solid var(--grey-light) !important;
     padding: 0.75rem !important;
-    border-bottom: 2px solid #E0E0E0;
+    transition: border-color 0.3s, box-shadow 0.3s !important;
 }
 
-.dataframe td {
-    padding: 0.75rem !important;
-    border-bottom: 1px solid #eaeaea;
+input:focus, select:focus, textarea:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 2px rgba(45, 140, 255, 0.2) !important;
 }
 
-.dataframe tr:hover {
-    background-color: #F8F9FA;
-}
-
-/* Estilização para selectbox e outros controles */
-.stSelectbox {
-    min-width: 200px;
-}
-
-.stSelectbox > div > div > select {
-    border-radius: 4px !important;
-}
-
-/* Estilização para sidebar */
-.css-1vq4p4l, .css-1d3bhkq {
-    background-color: #F9FAFB !important;
-    border-right: 1px solid #eaeaea;
-}
-
-/* Cards informativos */
-div[data-testid="stMetric"] {
-    background-color: #FFFFFF;
-    border-radius: 6px;
-    padding: 1rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    border: 1px solid #eaeaea;
-}
-
-div[data-testid="stMetric"] > div:first-child {
-    color: #1E366F;
+/* Títulos e textos */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--primary-dark);
     font-weight: 600;
 }
 
-/* Estilização para alertas e mensagens */
-div[data-testid="stAlert"] {
-    border-radius: 4px;
-    padding: 1rem !important;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-}
-
-/* Personalizações específicas para diferentes tipos de containers */
-div[data-testid="stExpander"] {
-    border-radius: 4px;
-    border: 1px solid #eaeaea;
-    overflow: hidden;
-}
-
-div[data-testid="stExpander"] > div:first-child {
-    background-color: #F9FAFB;
-    padding: 0.75rem;
-    border-bottom: 1px solid #eaeaea;
-}
-
-/* Estilização para widgets de data */
-div[data-baseweb="calendar"] {
-    border-radius: 4px;
-    overflow: hidden;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-
-/* Ajustes de espaçamento gerais */
-.stTabs {
-    margin-top: 1rem;
-}
-
-/* Estilização para abas */
-button[role="tab"] {
-    padding: 0.75rem 1.5rem !important;
-    font-weight: 500;
-}
-
-.stTabs [aria-selected="true"] {
-    font-weight: 600;
-    color: #1E88E5 !important;
-    border-bottom-color: #1E88E5 !important;
-}
-
-/* Espaçamento específico para as páginas de Dashboard e Propostas */
-[data-testid="stAppViewContainer"] > div > div > div > div:first-child h1 {
-    margin-top: 3.5rem !important;
-    padding-top: 2rem !important;
-}
-
-/* Estilos para os cartões de planos */
-.plano-card {
+/* Seções e containers */
+.card {
     background: white;
-    border-radius: 12px;
+    border-radius: 8px;
     padding: 1.5rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    border: 1px solid #e0e0e0;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
+}
+
+/* Mensagens de alerta e status */
+.success-box {
+    padding: 1rem;
+    background-color: rgba(0, 166, 81, 0.1);
+    border-left: 4px solid var(--success-color);
+    border-radius: 4px;
+    margin: 1rem 0;
+}
+
+.warning-box {
+    padding: 1rem;
+    background-color: rgba(255, 152, 0, 0.1);
+    border-left: 4px solid #ff9800;
+    border-radius: 4px;
+    margin: 1rem 0;
+}
+
+.error-box {
+    padding: 1rem;
+    background-color: rgba(244, 67, 54, 0.1);
+    border-left: 4px solid #f44336;
+    border-radius: 4px;
+    margin: 1rem 0;
+}
+
+/* Animações e efeitos */
+.transition-all {
     transition: all 0.3s ease;
 }
 
-.plano-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-}
-
-.plano-destaque {
-    border: 2px solid #2d8cff;
+.hover-scale:hover {
     transform: scale(1.05);
-    box-shadow: 0 8px 24px rgba(45,140,255,0.15);
-    position: relative;
-    z-index: 10;
-}
-
-.plano-destaque:hover {
-    transform: translateY(-5px) scale(1.05);
-    box-shadow: 0 12px 30px rgba(45,140,255,0.2);
-}
-
-.plano-titulo {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #1E366F;
-    margin-bottom: 1rem;
-    text-align: center;
-}
-
-.plano-preco {
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: #2d8cff;
-    text-align: center;
-    margin-bottom: 0.2rem;
-}
-
-.plano-periodo {
-    font-size: 0.9rem;
-    color: #5A6A85;
-    text-align: center;
-    margin-bottom: 1rem;
-}
-
-.plano-economia {
-    background-color: #e6f7ff;
-    color: #2d8cff;
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-align: center;
-    margin-bottom: 1rem;
-}
-
-.plano-beneficios {
-    flex-grow: 1;
-}
-
-.plano-beneficios ul {
-    padding-left: 1.2rem;
-    margin-bottom: 1rem;
-}
-
-.plano-beneficios li {
-    color: #5A6A85;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
 }
