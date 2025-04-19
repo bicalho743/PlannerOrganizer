@@ -490,7 +490,7 @@ if not st.session_state.authenticated:
         
         # URLs diretas para checkout com Stripe
         checkout_mensal_url = "https://buy.stripe.com/bIY8yb4jmetOfSM001"
-        checkout_anual_url = "https://buy.stripe.com/5kA8yb8zC4Te21WeUW"
+        checkout_anual_url = "https://buy.stripe.com/7sI7u703699u21W6os"
         checkout_vitalicio_url = "https://buy.stripe.com/bIY7u70363PadKEfZ1"
 
         # Plano Mensal
