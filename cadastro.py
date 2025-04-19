@@ -213,8 +213,16 @@ def main():
                                 st.error(f"Erro: {response.status_code} - {response.text}")
                         
                         except requests.RequestException as e:
-                            # Modo de demonstração para caso a API não esteja disponível
-                            st.warning("API de integração não disponível. Redirecionando para links diretos...")
+                            # Exibir mensagem baseada no tipo de erro
+                            error_message = str(e)
+                            
+                            if "Cloud Firestore API has not been used" in error_message or "SERVICE_DISABLED" in error_message:
+                                st.error("O serviço Firestore não está ativado no projeto. Por favor, ative-o no console do Firebase.")
+                                st.info("Enquanto isso, você pode continuar usando os links diretos para o Stripe.")
+                            elif "CONNECTION_REFUSED" in error_message or "ConnectionError" in error_message:
+                                st.warning("Não foi possível conectar à API. Redirecionando para links diretos...")
+                            else:
+                                st.warning(f"API de integração não disponível: {error_message[:100]}... Redirecionando para links diretos...")
                             
                             # Links diretos para o Stripe
                             checkout_urls = {

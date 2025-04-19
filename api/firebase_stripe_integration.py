@@ -284,8 +284,14 @@ async def create_user_and_checkout_session(user_data: UserData):
         # Repassar exceções HTTP
         raise he
     except Exception as e:
-        print(f"Erro no processo de criação de usuário e checkout: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        error_message = str(e)
+        print(f"Erro no processo de criação de usuário e checkout: {error_message}")
+        
+        if "Cloud Firestore API has not been used" in error_message or "SERVICE_DISABLED" in error_message:
+            detail = "O serviço Firestore não está ativado no projeto Firebase. Por favor, ative a API do Firestore no Console do Google Cloud."
+            raise HTTPException(status_code=500, detail=detail)
+        else:
+            raise HTTPException(status_code=500, detail=error_message)
 
 @app.post("/webhook")
 async def stripe_webhook(request: Request, stripe_signature: Optional[str] = Header(None)):

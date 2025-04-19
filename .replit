@@ -679,7 +679,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run planos_simplificados.py --server.port 5005 --server.address 0.0.0.0"
+args = "streamlit run planos_simplificados.py --server.port 5005 --server.address 0.0.0.0 --server.headless true"
 waitForPort = 5005
 
 [[workflows.workflow]]
@@ -694,7 +694,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run cadastro.py --server.port 5006 --server.address 0.0.0.0"
+args = "streamlit run cadastro.py --server.port 5006 --server.address 0.0.0.0 --server.headless true"
 waitForPort = 5006
 
 [[ports]]
