@@ -840,11 +840,21 @@ if not st.session_state.authenticated:
                                         # Em produção, usar a URL do domínio
                                         api_url = f"https://{os.environ.get('REPLIT_DOMAIN')}/api/create-user-and-checkout"
                                     
+                                    # Mapeamento dos planos para os IDs corretos na API
+                                    plan_mapping = {
+                                        "mensal": "monthly",
+                                        "anual": "yearly",
+                                        "vitalicio": "lifetime"
+                                    }
+                                    
+                                    # Converter para o formato aceito pela API
+                                    api_plan_id = plan_mapping.get(st.session_state.selected_plan)
+                                    
                                     # Dados para enviar
                                     user_data = {
                                         "email": email,
                                         "name": nome,
-                                        "plan_id": st.session_state.selected_plan
+                                        "plan_id": api_plan_id
                                     }
                                     
                                     # Tentativa real de API
@@ -897,6 +907,7 @@ if not st.session_state.authenticated:
                                             st.session_state.firebase_uid = firebase_uid
                                             
                                             # Redirecionar para checkout do Stripe diretamente
+                                            # Sem necessidade de converter, pois esses são os links diretos
                                             checkout_url = {
                                                 "mensal": checkout_mensal_url,
                                                 "anual": checkout_anual_url,
