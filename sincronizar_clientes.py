@@ -4,33 +4,91 @@ Este aplicativo permite sincronizar clientes entre o PostgreSQL e o Firebase.
 """
 import os
 import json
+import traceback
 import streamlit as st
 import pandas as pd
 
-# Garantir que o arquivo de credenciais existe
-if not os.path.exists("api/firebase_credentials.json"):
-    st.error("Arquivo de credenciais do Firebase não encontrado.")
-    st.stop()
-
-# Importar módulos
-from utils.firebase_client_sync import (
-    get_all_clients_from_postgres,
-    get_all_clients_from_firebase,
-    sync_client_to_firebase,
-    sync_all_clients_to_firebase,
-    link_client_to_firebase_user
-)
-from utils.firebase_config import initialize_firebase
-
-# Inicializar Firebase antes de tudo
-_ = initialize_firebase()
-
-# Configuração da página
+# Esta configuração de página deve estar logo no início do script
+# para evitar erros de "streamlit.errors.DuplicateWidgetID"
 st.set_page_config(
     page_title="Sincronização de Clientes - Firebase",
     page_icon="🔄",
     layout="wide"
 )
+
+# Verificar e mostrar as informações de diagnóstico
+st.info("Verificando conexões e configurações...")
+
+# Verificar o arquivo de credenciais do Firebase
+if os.path.exists("api/firebase_credentials.json"):
+    st.success("✅ Arquivo de credenciais do Firebase encontrado.")
+else:
+    st.error("❌ Arquivo de credenciais do Firebase não encontrado.")
+    if os.path.exists("attached_assets/planner-organizer-68a23-firebase-adminsdk-fbsvc-035c993cd8.json"):
+        st.info("📋 Encontrado arquivo de credenciais nos assets. Copiando para o local correto...")
+        # Copiar o arquivo para o local correto
+        try:
+            import shutil
+            os.makedirs("api", exist_ok=True)
+            shutil.copy(
+                "attached_assets/planner-organizer-68a23-firebase-adminsdk-fbsvc-035c993cd8.json",
+                "api/firebase_credentials.json"
+            )
+            st.success("✅ Arquivo de credenciais copiado com sucesso.")
+        except Exception as e:
+            st.error(f"❌ Erro ao copiar arquivo de credenciais: {e}")
+            st.stop()
+    else:
+        st.error("❌ Nenhum arquivo de credenciais encontrado. A aplicação não pode continuar.")
+        st.stop()
+
+# Verificar conexão com o banco de dados
+if not os.environ.get('DATABASE_URL'):
+    st.error("❌ Variável de ambiente DATABASE_URL não encontrada.")
+    st.stop()
+else:
+    st.success("✅ Variável de ambiente DATABASE_URL encontrada.")
+
+# Importar módulos necessários após ter confirmado que as dependências básicas existem
+try:
+    from utils.firebase_client_sync import (
+        get_all_clients_from_postgres,
+        get_all_clients_from_firebase,
+        sync_client_to_firebase,
+        sync_all_clients_to_firebase,
+        link_client_to_firebase_user
+    )
+    from utils.firebase_config import initialize_firebase, get_firestore_db
+    
+    st.success("✅ Módulos importados com sucesso.")
+except ImportError as e:
+    st.error(f"❌ Erro ao importar módulos: {e}")
+    st.error(traceback.format_exc())
+    st.stop()
+
+# Inicializar Firebase
+try:
+    firebase_app, db = initialize_firebase()
+    if firebase_app and db:
+        st.success("✅ Firebase inicializado com sucesso.")
+    else:
+        st.warning("⚠️ Falha ao inicializar Firebase. Algumas funcionalidades podem não funcionar corretamente.")
+except Exception as e:
+    st.error(f"❌ Erro ao inicializar Firebase: {e}")
+    st.error(traceback.format_exc())
+    st.warning("⚠️ A aplicação continuará, mas a sincronização com o Firebase pode falhar.")
+
+# Verificar conexão com o banco de dados PostgreSQL
+try:
+    test_clients = get_all_clients_from_postgres()
+    if not test_clients.empty:
+        st.success(f"✅ Conexão com PostgreSQL estabelecida. {len(test_clients)} clientes encontrados.")
+    else:
+        st.warning("⚠️ Conexão com PostgreSQL estabelecida, mas nenhum cliente encontrado.")
+except Exception as e:
+    st.error(f"❌ Erro ao conectar ao PostgreSQL: {e}")
+    st.error(traceback.format_exc())
+    st.stop()
 
 # Estilo CSS personalizado
 st.markdown("""

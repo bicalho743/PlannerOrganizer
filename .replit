@@ -145,6 +145,10 @@ args = "Login Efetivo"
 task = "workflow.run"
 args = "Sincronizar Clientes com Firebase"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Verificar Firebase-PostgreSQL"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -628,8 +632,8 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run sincronizar_clientes.py --server.port 8600 --server.address 0.0.0.0"
-waitForPort = 8600
+args = "streamlit run sincronizar_clientes.py --server.port 8700 --server.address 0.0.0.0"
+waitForPort = 8700
 
 [[workflows.workflow]]
 name = "Sincronizar Firebase 5050"
@@ -639,6 +643,21 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run sincronizar_clientes.py --server.port 5050 --server.address 0.0.0.0"
+
+[[workflows.workflow]]
+name = "Verificar Firebase-PostgreSQL"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run firebase_database_check.py --server.port 8999 --server.address 0.0.0.0"
+waitForPort = 8999
 
 [[ports]]
 localPort = 443
