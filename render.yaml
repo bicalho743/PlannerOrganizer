@@ -3,7 +3,7 @@ services:
   - type: web
     name: planner-organiza
     env: python
-    buildCommand: pip install -r render_requirements.txt
+    buildCommand: pip install -e .
     startCommand: python render_startup.py && streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true --server.enableCORS=false --server.enableWebsocketCompression=false --server.enableXsrfProtection=false --server.maxUploadSize=50
     envVars:
       - key: PYTHON_VERSION
