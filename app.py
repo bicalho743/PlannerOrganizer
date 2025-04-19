@@ -835,10 +835,10 @@ if not st.session_state.authenticated:
                             with st.spinner("Criando sua conta e preparando o checkout..."):
                                 try:
                                     # URL da API de integração Firebase-Stripe
-                                    api_url = "http://localhost:8000/api/create-user-and-session"
+                                    api_url = "http://localhost:8001/api/create-user-and-checkout"
                                     if os.environ.get("REPLIT_DOMAIN"):
                                         # Em produção, usar a URL do domínio
-                                        api_url = f"https://{os.environ.get('REPLIT_DOMAIN')}/api/create-user-and-session"
+                                        api_url = f"https://{os.environ.get('REPLIT_DOMAIN')}/api/create-user-and-checkout"
                                     
                                     # Dados para enviar
                                     user_data = {
