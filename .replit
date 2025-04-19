@@ -631,6 +631,15 @@ task = "shell.exec"
 args = "streamlit run sincronizar_clientes.py --server.port 8600 --server.address 0.0.0.0"
 waitForPort = 8600
 
+[[workflows.workflow]]
+name = "Sincronizar Firebase 5050"
+author = 39445503
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run sincronizar_clientes.py --server.port 5050 --server.address 0.0.0.0"
+
 [[ports]]
 localPort = 443
 externalPort = 3001
