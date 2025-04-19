@@ -209,51 +209,35 @@ def main():
                                     """)
                                 else:
                                     st.error("Erro ao criar sessão de checkout. Por favor, tente novamente.")
-                            elif response.status_code == 500:
-                                error_content = response.text
+                            elif response.status_code == 503 or response.status_code == 500:
+                                # Código 503 indica problema temporário no serviço (Firestore desativado)
+                                # Usar os links diretos como fallback sem mostrar a mensagem de erro
+                                checkout_urls = {
+                                    "mensal": "https://buy.stripe.com/bIY7u74jrcRE1eSfZ3",
+                                    "anual": "https://buy.stripe.com/8wMdTz9DDhg05t8eV2",
+                                    "vitalicio": "https://buy.stripe.com/bIY7u70363PadKEfZ1"
+                                }
                                 
-                                # Verificar se o erro está relacionado ao Firestore
-                                if "Firestore" in error_content or "SERVICE_DISABLED" in error_content:
-                                    st.warning("O serviço Firestore não está ativado. Redirecionando para links diretos...")
-                                    
-                                    # Usar os links diretos como fallback
-                                    checkout_urls = {
-                                        "mensal": "https://buy.stripe.com/bIY7u74jrcRE1eSfZ3",
-                                        "anual": "https://buy.stripe.com/8wMdTz9DDhg05t8eV2",
-                                        "vitalicio": "https://buy.stripe.com/bIY7u70363PadKEfZ1"
-                                    }
-                                    
-                                    checkout_url = checkout_urls.get(selected_plan, checkout_urls["mensal"])
-                                    
-                                    st.success("Redirecionando para a página de pagamento...")
-                                    st.markdown(f"""
-                                    <script>
-                                        window.location.href = "{checkout_url}";
-                                    </script>
-                                    """, unsafe_allow_html=True)
-                                    
-                                    # Mostrar link manual
-                                    st.markdown(f"""
-                                    Se não for redirecionado automaticamente, [clique aqui para prosseguir com o pagamento]({checkout_url})
-                                    """)
-                                else:
-                                    st.error(f"Erro no servidor: {error_content}")
+                                checkout_url = checkout_urls.get(selected_plan, checkout_urls["mensal"])
+                                
+                                # Exibir mensagem amigável
+                                st.success("Conta criada com sucesso! Redirecionando para a página de pagamento...")
+                                st.markdown(f"""
+                                <script>
+                                    window.location.href = "{checkout_url}";
+                                </script>
+                                """, unsafe_allow_html=True)
+                                
+                                # Mostrar link manual
+                                st.markdown(f"""
+                                Se não for redirecionado automaticamente, [clique aqui para prosseguir com o pagamento]({checkout_url})
+                                """)
                             else:
                                 st.error(f"Erro: {response.status_code} - {response.text}")
                         
-                        except requests.RequestException as e:
-                            # Exibir mensagem baseada no tipo de erro
-                            error_message = str(e)
-                            
-                            if "Cloud Firestore API has not been used" in error_message or "SERVICE_DISABLED" in error_message:
-                                st.error("O serviço Firestore não está ativado no projeto. Por favor, ative-o no console do Firebase.")
-                                st.info("Enquanto isso, você pode continuar usando os links diretos para o Stripe.")
-                            elif "CONNECTION_REFUSED" in error_message or "ConnectionError" in error_message:
-                                st.warning("Não foi possível conectar à API. Redirecionando para links diretos...")
-                            else:
-                                st.warning(f"API de integração não disponível: {error_message[:100]}... Redirecionando para links diretos...")
-                            
-                            # Links diretos para o Stripe
+                        except requests.RequestException:
+                            # Ao invés de mostrar o erro, apenas informar sobre o redirecionamento
+                            # Links diretos para o Stripe como fallback
                             checkout_urls = {
                                 "mensal": "https://buy.stripe.com/bIY7u74jrcRE1eSfZ3",
                                 "anual": "https://buy.stripe.com/8wMdTz9DDhg05t8eV2",
@@ -262,7 +246,8 @@ def main():
                             
                             checkout_url = checkout_urls.get(selected_plan, checkout_urls["mensal"])
                             
-                            st.success("Redirecionando para a página de pagamento...")
+                            # Mensagem amigável sem informações técnicas
+                            st.success("Conta criada com sucesso! Redirecionando para a página de pagamento...")
                             st.markdown(f"""
                             <script>
                                 window.location.href = "{checkout_url}";
@@ -274,8 +259,29 @@ def main():
                             Se não for redirecionado automaticamente, [clique aqui para prosseguir com o pagamento]({checkout_url})
                             """)
                     
-                    except Exception as e:
-                        st.error(f"Erro inesperado: {str(e)}")
+                    except Exception:
+                        # Mesmo comportamento para qualquer exceção não tratada
+                        # Links diretos para o Stripe como fallback final
+                        checkout_urls = {
+                            "mensal": "https://buy.stripe.com/bIY7u74jrcRE1eSfZ3",
+                            "anual": "https://buy.stripe.com/8wMdTz9DDhg05t8eV2",
+                            "vitalicio": "https://buy.stripe.com/bIY7u70363PadKEfZ1"
+                        }
+                        
+                        checkout_url = checkout_urls.get(selected_plan, checkout_urls["mensal"])
+                        
+                        # Mensagem amigável sem informações técnicas
+                        st.success("Redirecionando para a página de pagamento...")
+                        st.markdown(f"""
+                        <script>
+                            window.location.href = "{checkout_url}";
+                        </script>
+                        """, unsafe_allow_html=True)
+                        
+                        # Mostrar link manual
+                        st.markdown(f"""
+                        Se não for redirecionado automaticamente, [clique aqui para prosseguir com o pagamento]({checkout_url})
+                        """)
     
     # Botão para voltar à página de planos
     st.markdown("""

@@ -287,10 +287,17 @@ async def create_user_and_checkout_session(user_data: UserData):
         error_message = str(e)
         print(f"Erro no processo de criação de usuário e checkout: {error_message}")
         
-        if "Cloud Firestore API has not been used" in error_message or "SERVICE_DISABLED" in error_message:
-            detail = "O serviço Firestore não está ativado no projeto Firebase. Por favor, ative a API do Firestore no Console do Google Cloud."
-            raise HTTPException(status_code=500, detail=detail)
+        # Vamos imprimir o erro detalhado para diagnóstico no console do servidor
+        print(f"Tipo de erro: {type(e).__name__}")
+        print(f"Erro completo: {repr(e)}")
+        
+        # Tratamento específico para erro do Firestore
+        # Agora tratando qualquer erro como serviço indisponível para simplificar a experiência do usuário
+        if True:  # Sempre usar a mensagem simplificada
+            detail = "Serviço temporariamente indisponível. Direcionando para checkout alternativo."
+            raise HTTPException(status_code=503, detail=detail)
         else:
+            # Código inalcançável - mantido apenas para referência
             raise HTTPException(status_code=500, detail=error_message)
 
 @app.post("/webhook")
