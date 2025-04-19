@@ -209,6 +209,35 @@ def main():
                                     """)
                                 else:
                                     st.error("Erro ao criar sessão de checkout. Por favor, tente novamente.")
+                            elif response.status_code == 500:
+                                error_content = response.text
+                                
+                                # Verificar se o erro está relacionado ao Firestore
+                                if "Firestore" in error_content or "SERVICE_DISABLED" in error_content:
+                                    st.warning("O serviço Firestore não está ativado. Redirecionando para links diretos...")
+                                    
+                                    # Usar os links diretos como fallback
+                                    checkout_urls = {
+                                        "mensal": "https://buy.stripe.com/bIY7u74jrcRE1eSfZ3",
+                                        "anual": "https://buy.stripe.com/8wMdTz9DDhg05t8eV2",
+                                        "vitalicio": "https://buy.stripe.com/bIY7u70363PadKEfZ1"
+                                    }
+                                    
+                                    checkout_url = checkout_urls.get(selected_plan, checkout_urls["mensal"])
+                                    
+                                    st.success("Redirecionando para a página de pagamento...")
+                                    st.markdown(f"""
+                                    <script>
+                                        window.location.href = "{checkout_url}";
+                                    </script>
+                                    """, unsafe_allow_html=True)
+                                    
+                                    # Mostrar link manual
+                                    st.markdown(f"""
+                                    Se não for redirecionado automaticamente, [clique aqui para prosseguir com o pagamento]({checkout_url})
+                                    """)
+                                else:
+                                    st.error(f"Erro no servidor: {error_content}")
                             else:
                                 st.error(f"Erro: {response.status_code} - {response.text}")
                         
