@@ -329,6 +329,7 @@ def add_client_to_both(client_data):
         columns = ", ".join(client_data.keys())
         placeholders = ", ".join([f":{key}" for key in client_data.keys()])
         
+        engine = get_engine()
         with engine.connect() as conn:
             # Inserir cliente
             query = f"""

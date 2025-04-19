@@ -33,10 +33,22 @@ def initialize_firebase():
         return firebase_app, db
         
     try:
-        # Tentar inicializar o Firebase Admin SDK
-        cred_path = "api/firebase_credentials.json"
-        if os.path.exists(cred_path):
-            cred = credentials.Certificate(cred_path)
+        # Tentar inicializar o Firebase Admin SDK com credenciais
+        
+        # Primeiro, verificar se existe a variável de ambiente com as credenciais
+        service_account_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
+        if service_account_json:
+            try:
+                cred_dict = json.loads(service_account_json)
+                cred = credentials.Certificate(cred_dict)
+                firebase_app = firebase_admin.initialize_app(cred)
+                print("Firebase Admin inicializado com sucesso (credenciais da variável de ambiente)")
+            except json.JSONDecodeError as e:
+                print(f"Erro ao decodificar JSON de credenciais: {e}")
+                return None, None
+        # Segundo, verificar se existe o arquivo de credenciais
+        elif os.path.exists("api/firebase_credentials.json"):
+            cred = credentials.Certificate("api/firebase_credentials.json")
             firebase_app = firebase_admin.initialize_app(cred)
             print("Firebase Admin inicializado com sucesso (credenciais de arquivo)")
         else:

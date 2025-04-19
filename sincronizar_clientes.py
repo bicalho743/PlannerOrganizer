@@ -2,8 +2,17 @@
 Ferramenta administrativa para sincronizar dados de clientes com o Firebase
 Este aplicativo permite sincronizar clientes entre o PostgreSQL e o Firebase.
 """
+import os
+import json
 import streamlit as st
 import pandas as pd
+
+# Garantir que o arquivo de credenciais existe
+if not os.path.exists("api/firebase_credentials.json"):
+    st.error("Arquivo de credenciais do Firebase não encontrado.")
+    st.stop()
+
+# Importar módulos
 from utils.firebase_client_sync import (
     get_all_clients_from_postgres,
     get_all_clients_from_firebase,
@@ -12,6 +21,9 @@ from utils.firebase_client_sync import (
     link_client_to_firebase_user
 )
 from utils.firebase_config import initialize_firebase
+
+# Inicializar Firebase antes de tudo
+_ = initialize_firebase()
 
 # Configuração da página
 st.set_page_config(
