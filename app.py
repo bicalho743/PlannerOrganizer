@@ -488,10 +488,10 @@ if not st.session_state.authenticated:
         # Obter a chave publicável do Stripe do ambiente
         stripe_publishable_key = os.environ.get("STRIPE_PUBLISHABLE_KEY")
         
-        # URLs diretas para o checkout do Stripe
-        checkout_mensal_url = "https://buy.stripe.com/test_14k3dG3pL3rI6KQ000"
-        checkout_anual_url = "https://buy.stripe.com/test_5kA9F26BP1jA4CI004"
-        checkout_vitalicio_url = "https://buy.stripe.com/test_aEU9F26BPeSEbZ6005"
+        # URLs diretas para página de planos
+        checkout_mensal_url = "https://planner-organiza-com-br.koyeb.app/checkout/mensal"
+        checkout_anual_url = "https://planner-organiza-com-br.koyeb.app/checkout/anual"
+        checkout_vitalicio_url = "https://planner-organiza-com-br.koyeb.app/checkout/vitalicio"
 
         # Plano Mensal
         with col1:

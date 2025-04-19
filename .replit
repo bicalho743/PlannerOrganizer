@@ -133,6 +133,10 @@ args = "Checkout Simples"
 task = "workflow.run"
 args = "Planos Diretos"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Stripe Payment API"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -575,6 +579,21 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run planos_direct_links.py --server.port 8400 --server.address 0.0.0.0"
 waitForPort = 8400
+
+[[workflows.workflow]]
+name = "Stripe Payment API"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd api && python -m uvicorn stripe_payment:app --host 0.0.0.0 --port 8000"
+waitForPort = 8000
 
 [[ports]]
 localPort = 443

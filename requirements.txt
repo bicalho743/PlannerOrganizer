@@ -36,3 +36,7 @@ pyrebase4
 pyrebase4
 fastapi
 uvicorn
+fastapi
+requests
+uvicorn
+stripe
