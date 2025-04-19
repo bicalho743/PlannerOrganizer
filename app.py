@@ -10,6 +10,7 @@ st.set_page_config(
 
 import os
 import sys
+import json
 import logging
 import pandas as pd
 from datetime import datetime
@@ -35,6 +36,42 @@ from exibir_planos import exibir_planos_simples
 # Verificar se o usuário está autenticado
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
+
+# Adicionar o Firebase SDK para autenticação na página
+st.markdown("""
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="/public/js/firebase-auth.js"></script>
+""", unsafe_allow_html=True)
+
+# Configuração do Firebase
+firebase_config = {
+    "apiKey": st.secrets.get("FIREBASE_API_KEY", "AIzaSyA8xzYgZXCkZ-97RWQZXtMpvLVf1Jx8wjk"),
+    "authDomain": st.secrets.get("FIREBASE_AUTH_DOMAIN", "planner-organizer.firebaseapp.com"),
+    "projectId": st.secrets.get("FIREBASE_PROJECT_ID", "planner-organizer"),
+    "storageBucket": st.secrets.get("FIREBASE_STORAGE_BUCKET", "planner-organizer.appspot.com"),
+    "messagingSenderId": st.secrets.get("FIREBASE_MESSAGING_SENDER_ID", "695046724018"),
+    "appId": st.secrets.get("FIREBASE_APP_ID", "1:695046724018:web:98d8feec0c6b6c937d57fd"),
+    "databaseURL": st.secrets.get("FIREBASE_DATABASE_URL", "https://planner-organizer-default-rtdb.firebaseio.com")
+}
+
+# JavaScript para inicializar o Firebase
+st.markdown(f"""
+<script>
+    // Configuração do Firebase
+    const firebaseConfig = {json.dumps(firebase_config)};
+    
+    // Inicializar Firebase quando a página carregar
+    document.addEventListener('DOMContentLoaded', function() {{
+        // Inicializar Firebase
+        if (window.firebaseAuth) {{
+            window.firebaseAuth.init(firebaseConfig);
+            console.log("Firebase inicializado via script");
+        }}
+    }});
+</script>
+""", unsafe_allow_html=True)
 
 # Inicialização da autenticação in-app
 if not st.session_state.authenticated:
@@ -631,15 +668,47 @@ if not st.session_state.authenticated:
             submit = st.form_submit_button("Entrar na minha conta", use_container_width=True)
             
             if submit:
-                if username.lower() == "admin" and password == "admin":
-                    st.session_state.authenticated = True
-                    with st.spinner("Autenticando..."):
-                        import time
-                        time.sleep(1)
-                    st.success("Login realizado com sucesso!")
-                    st.rerun()
-                else:
-                    st.error("Usuário ou senha incorretos")
+                from utils.firebase_auth import fazer_login
+                from utils.subscription_manager import subscription_manager
+                
+                with st.spinner("Autenticando..."):
+                    # Login de demonstração
+                    if username.lower() == "admin" and password == "admin":
+                        st.session_state.authenticated = True
+                        st.session_state.user = {
+                            'user_id': 'admin-demo',
+                            'email': 'admin@example.com',
+                            'demo_mode': True
+                        }
+                        st.success("Login realizado com sucesso (modo de demonstração)!")
+                        st.rerun()
+                    
+                    # Tentativa de login real com Firebase    
+                    result = fazer_login(username, password)
+                    
+                    if result:
+                        # Login bem-sucedido
+                        st.session_state.authenticated = True
+                        st.session_state.user = result
+                        
+                        # Verificar status da assinatura
+                        user_id = result.get('user_id')
+                        subscription_details = subscription_manager.get_subscription_details(user_id)
+                        
+                        # Armazenar detalhes da assinatura na sessão
+                        st.session_state.subscription = subscription_details
+                        
+                        # Verificar se o usuário tem uma assinatura ativa
+                        if subscription_details["is_active"]:
+                            st.success(f"Login realizado com sucesso! Bem-vindo ao {subscription_details['plan_name']}.")
+                        else:
+                            # Usuário sem assinatura ativa
+                            st.warning("Sua assinatura não está ativa. Você será redirecionado para a seleção de planos.")
+                            st.session_state.show_plans = True
+                        
+                        st.rerun()
+                    else:
+                        st.error("Usuário ou senha incorretos")
         
         # Botões para recuperação de senha e cadastro com informações de demonstração
         col1, col2 = st.columns(2)
@@ -698,29 +767,163 @@ if not st.session_state.authenticated:
         # Formulário de cadastro
         if "show_signup" in st.session_state and st.session_state.show_signup:
             st.markdown('<hr style="margin: 20px 0;">', unsafe_allow_html=True)
-            st.markdown('<h3 style="text-align: center; color: #1E366F;">Criar Nova Conta</h3>', unsafe_allow_html=True)
+            st.markdown('<h3 style="text-align: center; color: #1E366F;">Escolha seu plano</h3>', unsafe_allow_html=True)
             
-            with st.form("signup_form"):
-                nome = st.text_input("Nome Completo")
-                email = st.text_input("E-mail", key="signup_email")
-                senha = st.text_input("Senha", type="password", key="signup_password")
-                confirmar_senha = st.text_input("Confirmar Senha", type="password")
+            # Definir as variáveis de estado para o plano selecionado
+            if "selected_plan" not in st.session_state:
+                st.session_state.selected_plan = None
+            
+            # Seleção de plano antes de mostrar o formulário
+            plan_options = {
+                "mensal": "Plano Mensal - R$9,70/mês (7 dias grátis)",
+                "anual": "Plano Anual - R$97,00/ano (7 dias grátis)",
+                "vitalicio": "Acesso Vitalício - R$247,00 (pagamento único)"
+            }
+            
+            selected_plan = st.selectbox(
+                "Selecione seu plano",
+                options=list(plan_options.keys()),
+                format_func=lambda x: plan_options.get(x),
+                key="plan_selection"
+            )
+            
+            # Verificar se já existe um formulário de registro aberto
+            if "signup_form_open" not in st.session_state:
+                st.session_state.signup_form_open = False
+            
+            # Botão para confirmar a seleção de plano
+            if not st.session_state.signup_form_open:
+                if st.button("Continuar com este plano", key="confirm_plan", use_container_width=True):
+                    st.session_state.selected_plan = selected_plan
+                    st.session_state.signup_form_open = True
+                    st.rerun()
+            
+            # Mostrar formulário se o plano foi selecionado
+            if st.session_state.signup_form_open and st.session_state.selected_plan:
+                st.markdown('<hr style="margin: 20px 0;">', unsafe_allow_html=True)
+                st.markdown('<h3 style="text-align: center; color: #1E366F;">Informações pessoais</h3>', unsafe_allow_html=True)
                 
-                submit_signup = st.form_submit_button("Registrar", use_container_width=True)
+                with st.form("signup_form"):
+                    nome = st.text_input("Nome Completo")
+                    email = st.text_input("E-mail", key="signup_email")
+                    senha = st.text_input("Senha", type="password", key="signup_password", 
+                                         help="Mínimo de 6 caracteres")
+                    confirmar_senha = st.text_input("Confirmar Senha", type="password")
+                    
+                    # Mostrar termos e condições
+                    st.markdown("""
+                    <div style="font-size: 0.8rem; color: #666;">
+                        Ao clicar em "Criar conta e prosseguir para pagamento", você concorda com nossos 
+                        <a href="#" target="_blank">Termos de Serviço</a> e 
+                        <a href="#" target="_blank">Política de Privacidade</a>.
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    submit_signup = st.form_submit_button("Criar conta e prosseguir para pagamento", use_container_width=True)
+                    
+                    if submit_signup:
+                        import requests
+                        
+                        if not nome or not email or not senha or not confirmar_senha:
+                            st.error("Todos os campos são obrigatórios.")
+                        elif len(senha) < 6:
+                            st.error("A senha deve ter no mínimo 6 caracteres.")
+                        elif senha != confirmar_senha:
+                            st.error("As senhas não coincidem.")
+                        else:
+                            # Usar nossa API de integração para criar o usuário e sessão de checkout
+                            with st.spinner("Criando sua conta e preparando o checkout..."):
+                                try:
+                                    # URL da API de integração Firebase-Stripe
+                                    api_url = "http://localhost:8000/api/create-user-and-session"
+                                    if os.environ.get("REPLIT_DOMAIN"):
+                                        # Em produção, usar a URL do domínio
+                                        api_url = f"https://{os.environ.get('REPLIT_DOMAIN')}/api/create-user-and-session"
+                                    
+                                    # Dados para enviar
+                                    user_data = {
+                                        "email": email,
+                                        "name": nome,
+                                        "plan_id": st.session_state.selected_plan
+                                    }
+                                    
+                                    # Tentativa real de API
+                                    try:
+                                        response = requests.post(
+                                            api_url,
+                                            json=user_data,
+                                            timeout=10
+                                        )
+                                        
+                                        if response.status_code == 200:
+                                            checkout_data = response.json()
+                                            
+                                            # Salvar UID para uso futuro
+                                            st.session_state.firebase_uid = checkout_data.get("firebase_uid")
+                                            
+                                            # Redirecionar para a página de checkout do Stripe
+                                            checkout_url = checkout_data.get("url")
+                                            
+                                            if checkout_url:
+                                                st.success("Conta criada com sucesso! Redirecionando para o checkout...")
+                                                st.markdown(f"""
+                                                <script>
+                                                    window.location.href = "{checkout_url}";
+                                                </script>
+                                                """, unsafe_allow_html=True)
+                                                
+                                                # Mostrar link manual
+                                                st.markdown(f"""
+                                                Se não for redirecionado automaticamente, [clique aqui para prosseguir com o pagamento]({checkout_url})
+                                                """)
+                                            else:
+                                                st.error(f"Erro ao criar sessão de checkout. Por favor, tente novamente.")
+                                        else:
+                                            st.error(f"Erro: {response.status_code} - {response.text}")
+                                    
+                                    except requests.RequestException as e:
+                                        # Modo de demonstração para caso a API não esteja disponível
+                                        st.warning("API de integração não disponível, usando modo de demonstração")
+                                        
+                                        # Simular criação de conta com Firebase diretamente
+                                        from utils.firebase_auth import criar_conta
+                                        
+                                        # Criar conta no Firebase
+                                        result = criar_conta(email, senha, nome)
+                                        
+                                        if result:
+                                            # Salvar UID para uso futuro
+                                            firebase_uid = result.get('user_id')
+                                            st.session_state.firebase_uid = firebase_uid
+                                            
+                                            # Redirecionar para checkout do Stripe diretamente
+                                            checkout_url = {
+                                                "mensal": checkout_mensal_url,
+                                                "anual": checkout_anual_url,
+                                                "vitalicio": checkout_vitalicio_url
+                                            }.get(st.session_state.selected_plan)
+                                            
+                                            st.success("Conta criada com sucesso! Redirecionando para o checkout...")
+                                            st.markdown(f"""
+                                            <script>
+                                                window.location.href = "{checkout_url}";
+                                            </script>
+                                            """, unsafe_allow_html=True)
+                                            
+                                            # Mostrar link manual
+                                            st.markdown(f"""
+                                            Se não for redirecionado automaticamente, [clique aqui para prosseguir com o pagamento]({checkout_url})
+                                            """)
+                                        else:
+                                            st.error("Erro ao criar conta. Verifique se o e-mail já está em uso.")
+                                
+                                except Exception as e:
+                                    st.error(f"Erro inesperado: {str(e)}")
                 
-                if submit_signup:
-                    if not nome or not email or not senha or not confirmar_senha:
-                        st.error("Todos os campos são obrigatórios.")
-                    elif senha != confirmar_senha:
-                        st.error("As senhas não coincidem.")
-                    else:
-                        # Simulação de criação de conta
-                        with st.spinner("Criando sua conta..."):
-                            import time
-                            time.sleep(1.5)
-                        st.success(f"Conta criada com sucesso para {nome}! Verifique seu e-mail {email} para ativar sua conta.")
-                        st.session_state.show_signup = False
-                        st.rerun()
+                # Voltar para seleção de plano
+                if st.button("Voltar para seleção de plano", key="back_to_plan"):
+                    st.session_state.signup_form_open = False
+                    st.rerun()
         
         st.markdown('</div>', unsafe_allow_html=True)
         

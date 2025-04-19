@@ -1,9 +1,12 @@
+"""
+API para integração com o Stripe para pagamentos
+"""
 import os
 import stripe
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict, Any
 
 app = FastAPI()
 
@@ -16,105 +19,160 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configurar Stripe com a chave API
+# Obter a chave secreta do Stripe a partir da variável de ambiente
 stripe.api_key = os.environ.get("STRIPE_API_KEY")
 
-# Definir os IDs de preço para cada plano
-PRICE_IDS = {
-    "mensal": "price_1RFBNXLWUPER7pUXzmz8cdsL",
-    "anual": "price_1RFBTtLWUPER7pUXPt2Ajhgz",
-    "vitalicio": "price_1RFBULLWUPER7pUXCiGZn3Jn"
+# Mapear planos do Stripe para detalhes das assinaturas
+PLANOS = {
+    "monthly": {
+        "price_id": "price_1RFBNXLWUPER7pUXzmz8cdsL",
+        "nome": "Plano Mensal",
+        "tipo": "subscription",
+        "duracao": "monthly",
+        "periodo_teste": 7,
+        "valor": 9.70,
+        "descricao": "Assinatura mensal com 7 dias grátis"
+    },
+    "yearly": {
+        "price_id": "price_1RFBTtLWUPER7pUXPt2Ajhgz",
+        "nome": "Plano Anual",
+        "tipo": "subscription",
+        "duracao": "yearly",
+        "periodo_teste": 7,
+        "valor": 97.00,
+        "descricao": "Assinatura anual com 7 dias grátis"
+    },
+    "lifetime": {
+        "price_id": "price_1RFBULLWUPER7pUXCiGZn3Jn",
+        "nome": "Acesso Vitalício",
+        "tipo": "lifetime",
+        "duracao": "forever",
+        "periodo_teste": 0,
+        "valor": 247.00,
+        "descricao": "Acesso vitalício sem mensalidades"
+    }
 }
 
-# Modelo de dados para a requisição de checkout
 class CheckoutRequest(BaseModel):
     plan_id: str
-    success_url: Optional[str] = None
-    cancel_url: Optional[str] = None
+    user_id: Optional[str] = None
+    email: Optional[str] = None
+    customer_data: Optional[Dict[str, Any]] = None
 
 @app.get("/")
 async def root():
-    return {"message": "API de pagamento do Planner Organizer"}
+    return {"message": "API de integração com o Stripe"}
 
-@app.post("/create-checkout-session")
+@app.post("/api/create-checkout-session")
 async def create_checkout_session(request: CheckoutRequest):
     """
-    Cria uma sessão de checkout do Stripe para um plano específico.
-    Planos disponíveis: mensal, anual, vitalicio
+    Cria uma sessão de checkout do Stripe para um plano específico
     """
     try:
         # Verificar se o plano existe
-        if request.plan_id not in PRICE_IDS:
-            return {"error": "Plano inválido. Escolha entre: mensal, anual, vitalicio"}
+        plano = PLANOS.get(request.plan_id)
+        if not plano:
+            return {"error": f"Plano não encontrado: {request.plan_id}"}
         
-        # Obter o ID do preço
-        price_id = PRICE_IDS[request.plan_id]
+        # Definir modo com base no tipo de produto
+        mode = "subscription" if plano["tipo"] == "subscription" else "payment"
         
-        # Determinar o modo de pagamento
-        mode = "payment" if request.plan_id == "vitalicio" else "subscription"
-        
-        # URL base da aplicação
-        domain_url = os.environ.get("REPLIT_DOMAIN", "http://localhost:5000")
-        if not domain_url.startswith("http"):
-            domain_url = f"https://{domain_url}"
-        
-        # URLs de sucesso e cancelamento
-        success_url = request.success_url or f"{domain_url}/sucesso?session_id={{CHECKOUT_SESSION_ID}}"
-        cancel_url = request.cancel_url or f"{domain_url}/cancelado"
-        
-        # Criar a sessão de checkout
-        checkout_session = stripe.checkout.Session.create(
-            payment_method_types=["card"],
-            line_items=[
+        # Configurar detalhes de pagamento
+        checkout_session_params = {
+            "line_items": [
                 {
-                    "price": price_id,
-                    "quantity": 1
+                    "price": plano["price_id"],
+                    "quantity": 1,
                 }
             ],
-            mode=mode,
-            success_url=success_url,
-            cancel_url=cancel_url,
-            client_reference_id=f"planner_{request.plan_id}_{os.urandom(4).hex()}"
-        )
+            "mode": mode,
+            "success_url": "https://planner-organizer.replit.app/sucesso?session_id={CHECKOUT_SESSION_ID}",
+            "cancel_url": "https://planner-organizer.replit.app/cancelado",
+            "metadata": {
+                "plan_id": request.plan_id,
+                "plano_nome": plano["nome"],
+                "user_id": request.user_id or "",
+            }
+        }
         
-        return {"id": checkout_session.id, "url": checkout_session.url}
-    except Exception as e:
+        # Se um e-mail foi fornecido, pré-preencher os dados do cliente
+        if request.email:
+            checkout_session_params["customer_email"] = request.email
+        
+        # Para assinaturas com período de teste gratuito
+        if mode == "subscription" and plano["periodo_teste"] > 0:
+            checkout_session_params["subscription_data"] = {
+                "trial_period_days": plano["periodo_teste"]
+            }
+        
+        # Criar sessão de checkout
+        checkout_session = stripe.checkout.Session.create(**checkout_session_params)
+        
+        # Retornar a URL da sessão e o ID
+        return {
+            "id": checkout_session.id,
+            "url": checkout_session.url
+        }
+    
+    except stripe.error.StripeError as e:
+        # Capturar e retornar erros do Stripe
         return {"error": str(e)}
+    except Exception as e:
+        # Capturar outros erros
+        return {"error": f"Erro ao criar sessão de checkout: {str(e)}"}
 
 @app.post("/webhook")
-async def stripe_webhook(request: Request):
+async def webhook_handler(request: Request):
     """
-    Webhook para receber eventos do Stripe.
+    Manipulador de webhook para processar eventos do Stripe
     """
-    # Obter o payload do webhook
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature")
+    endpoint_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
     
     try:
-        # Verificar a assinatura do webhook
-        webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
-        if webhook_secret:
-            event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
-        else:
-            # Sem verificação de assinatura para ambiente de desenvolvimento
-            event = stripe.Event.construct_from(
-                await request.json(), stripe.api_key
+        # Verificar a assinatura para autenticar o webhook
+        if endpoint_secret and sig_header:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, endpoint_secret
             )
+        else:
+            # Se não há segredo de webhook, apenas analisar o JSON (menos seguro)
+            data = await request.json()
+            event = data
         
-        # Processar eventos
-        if event.type == "checkout.session.completed":
-            # Pagamento concluído
-            session = event.data.object
-            print(f"Checkout completado: {session.id}")
+        # Processar eventos específicos
+        if event["type"] == "checkout.session.completed":
+            checkout_session = event["data"]["object"]
+            # Aqui você pode processar a conclusão do checkout, como:
+            # - Ativar uma assinatura
+            # - Enviar e-mails de confirmação
+            # - Atualizar banco de dados
+            print(f"Checkout concluído com sucesso: {checkout_session['id']}")
             
-            # Aqui você pode adicionar lógica para registrar o pagamento no seu sistema
+        elif event["type"] == "customer.subscription.created":
+            subscription = event["data"]["object"]
+            # Processar a criação da assinatura
+            print(f"Assinatura criada: {subscription['id']}")
             
-        return {"success": True}
+        elif event["type"] == "customer.subscription.updated":
+            subscription = event["data"]["object"]
+            # Processar a atualização da assinatura
+            print(f"Assinatura atualizada: {subscription['id']}")
+            
+        elif event["type"] == "customer.subscription.deleted":
+            subscription = event["data"]["object"]
+            # Processar o cancelamento da assinatura
+            print(f"Assinatura cancelada: {subscription['id']}")
         
+        # Retorna um código 200 para confirmar o recebimento
+        return {"status": "success"}
+    
     except Exception as e:
-        return {"error": str(e)}
+        print(f"Erro no webhook: {str(e)}")
+        return {"error": str(e)}, 400
 
-# Iniciar a aplicação FastAPI com uvicorn
+# Para rodar a aplicação localmente para teste
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

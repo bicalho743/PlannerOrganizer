@@ -1,468 +1,683 @@
+"""
+Página de login com integração efetiva com Firebase Auth
+"""
 import streamlit as st
-import time
 import os
-import sys
+import json
+import time
+from datetime import datetime
 
-# Configuração da página com layout amplo
-st.set_page_config(
-    page_title="Planner Organizer - Sistema Profissional",
-    page_icon="favicon.png",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-
-# Esconder o menu, rodapé e cabeçalho
-st.markdown("""
-<style>
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
-</style>
-""", unsafe_allow_html=True)
-
-# Inicialização da sessão
-if 'authenticated' not in st.session_state:
-    st.session_state.authenticated = False
-
-if 'show_signup' not in st.session_state:
-    st.session_state.show_signup = False
-
-if 'show_reset_password' not in st.session_state:
-    st.session_state.show_reset_password = False
+def main():
+    # Configuração da página
+    st.set_page_config(
+        page_title="Login | Planner Organizer",
+        page_icon="🔐",
+        layout="centered",
+        initial_sidebar_state="collapsed"
+    )
     
-# Redirecionamento se já estiver autenticado
-if st.session_state.authenticated:
-    st.success("Login já realizado. Redirecionando...")
-    # Redirecionamento simples
-    st.markdown('<meta http-equiv="refresh" content="2; URL=app.py">', unsafe_allow_html=True)
-    st.stop()
-
-# Carregamento de CSS para estilização
-st.markdown("""
-<style>
-/* Estilos gerais */
-body {
-    font-family: 'Roboto', sans-serif;
-    background-color: #f9fafb;
-    color: #333;
-}
-
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
-}
-
-/* Estilos para as seções e cartões */
-.hero-section {
-    background: linear-gradient(135deg, #1E366F, #2d8cff);
-    color: white;
-    padding: 3rem 2rem;
-    border-radius: 12px;
-    margin-bottom: 2rem;
-}
-
-.hero-title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    line-height: 1.2;
-}
-
-.hero-subtitle {
-    font-size: 1.2rem;
-    margin-bottom: 2rem;
-    opacity: 0.9;
-    line-height: 1.5;
-}
-
-.feature-card {
-    background-color: white;
-    border-radius: 8px;
-    padding: 1.5rem;
-    text-align: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    height: 100%;
-    transition: transform 0.3s ease;
-}
-
-.feature-card:hover {
-    transform: translateY(-5px);
-}
-
-.feature-icon {
-    font-size: 2rem;
-    color: #2d8cff;
-    margin-bottom: 1rem;
-}
-
-.feature-title {
-    color: #1E366F;
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-
-.feature-description {
-    color: #5A6A85;
-    font-size: 0.95rem;
-}
-
-/* Estilos para formulários */
-.login-container {
-    background-color: white;
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-.login-title {
-    color: #1E366F;
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin-bottom: 1.5rem;
-    text-align: center;
-}
-
-/* Estilos para os cartões de planos */
-.plano-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    border: 1px solid #e0e0e0;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    transition: all 0.3s ease;
-}
-
-.plano-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-}
-
-.plano-destaque {
-    border: 2px solid #2d8cff;
-    transform: scale(1.05);
-    box-shadow: 0 8px 24px rgba(45,140,255,0.15);
-    position: relative;
-    z-index: 10;
-}
-
-.plano-destaque:hover {
-    transform: translateY(-5px) scale(1.05);
-    box-shadow: 0 12px 30px rgba(45,140,255,0.2);
-}
-
-.plano-titulo {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #1E366F;
-    margin-bottom: 1rem;
-    text-align: center;
-}
-
-.plano-preco {
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: #2d8cff;
-    text-align: center;
-    margin-bottom: 0.2rem;
-}
-
-.plano-periodo {
-    font-size: 0.9rem;
-    color: #5A6A85;
-    text-align: center;
-    margin-bottom: 1rem;
-}
-
-.plano-economia {
-    background-color: #e6f7ff;
-    color: #2d8cff;
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-align: center;
-    margin-bottom: 1rem;
-}
-
-.plano-beneficios {
-    flex-grow: 1;
-}
-
-.plano-beneficios ul {
-    padding-left: 1.2rem;
-    margin-bottom: 1rem;
-}
-
-.plano-beneficios li {
-    color: #5A6A85;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-}
-
-/* Ajustes de espaçamento */
-.custom-button {
-    background-color: #1E88E5 !important;
-    color: white !important;
-    font-weight: 500 !important;
-    padding: 0.5rem 1rem !important;
-    border-radius: 4px !important;
-    border: none !important;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
-    transition: all 0.3s ease !important;
-}
-
-.custom-button:hover {
-    background-color: #1976D2 !important;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
-    transform: translateY(-2px) !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# Layout principal
-col1, col2 = st.columns([3, 2])
-
-with col1:
-    # Seção de hero
+    # Ocultar menu e rodapé
     st.markdown("""
-    <div class="hero-section">
-        <h1 class="hero-title">Planner Organizer</h1>
-        <p class="hero-subtitle">
-            Sistema profissional para Personal Organizers
-            gerenciarem propostas, produtos e finanças.
-        </p>
-    </div>
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    [data-testid="collapsedControl"] {display: none;}
+    section[data-testid="stSidebar"] {display: none;}
+    
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #f9fafc, #eef5ff);
+        color: #333;
+    }
+    
+    h1, h2, h3, h4 {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        color: #2d8cff;
+    }
+    
+    /* Container principal*/
+    .main-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    /* Cabeçalho */
+    .main-header {
+        color: #2d8cff;
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+    
+    .subheader {
+        color: #5A6A85;
+        font-size: 1.2rem;
+        font-weight: 400;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    /* Formulários */
+    .form-container {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .form-title {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        color: #2d8cff;
+        text-align: center;
+    }
+    
+    .form-input {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-input label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #4a5568;
+    }
+    
+    .form-input input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s;
+    }
+    
+    .form-input input:focus {
+        border-color: #2d8cff;
+        box-shadow: 0 0 0 3px rgba(45,140,255,0.2);
+        outline: none;
+    }
+    
+    .form-button {
+        width: 100%;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #2d8cff, #0063cc);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 1rem;
+    }
+    
+    .form-button:hover {
+        background: linear-gradient(135deg, #0063cc, #004a99);
+        transform: translateY(-2px);
+    }
+    
+    .form-footer {
+        text-align: center;
+        margin-top: 1.5rem;
+        color: #718096;
+        font-size: 0.9rem;
+    }
+    
+    .form-footer a {
+        color: #2d8cff;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .form-divider {
+        display: flex;
+        align-items: center;
+        margin: 1.5rem 0;
+        color: #718096;
+    }
+    
+    .form-divider:before,
+    .form-divider:after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: #e2e8f0;
+    }
+    
+    .form-divider span {
+        padding: 0 1rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Mensagens */
+    .success-message {
+        padding: 1rem;
+        background: #c6f6d5;
+        color: #276749;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .error-message {
+        padding: 1rem;
+        background: #fed7d7;
+        color: #9b2c2c;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Planos */
+    .plans-section {
+        margin-top: 3rem;
+    }
+    
+    .plans-title {
+        font-size: 1.8rem;
+        text-align: center;
+        margin-bottom: 2rem;
+        color: #2d8cff;
+    }
+    
+    .plan-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .plan-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    }
+    
+    .plan-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #2d8cff, #0063cc);
+        color: white;
+        text-align: center;
+    }
+    
+    .plan-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .plan-price {
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    
+    .plan-price-period {
+        font-size: 1rem;
+        opacity: 0.8;
+    }
+    
+    .plan-body {
+        padding: 1.5rem;
+        flex-grow: 1;
+    }
+    
+    .plan-features {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 1.5rem 0;
+    }
+    
+    .plan-features li {
+        padding: 0.5rem 0;
+        display: flex;
+        align-items: center;
+    }
+    
+    .plan-features li:before {
+        content: "✓";
+        color: #48bb78;
+        font-weight: bold;
+        margin-right: 0.5rem;
+    }
+    
+    .plan-footer {
+        padding: 1.5rem;
+        background: #f7fafc;
+        text-align: center;
+    }
+    
+    .plan-button {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #2d8cff, #0063cc);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+    }
+    
+    .plan-button:hover {
+        background: linear-gradient(135deg, #0063cc, #004a99);
+        transform: translateY(-2px);
+    }
+    
+    /* Popular plan */
+    .popular-plan {
+        transform: scale(1.05);
+        border: 2px solid #2d8cff;
+    }
+    
+    .popular-plan .plan-header {
+        background: linear-gradient(135deg, #0063cc, #004a99);
+    }
+    
+    .popular-badge {
+        background: #ed8936;
+        color: white;
+        padding: 0.25rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Responsividade */
+    @media (max-width: 768px) {
+        .plan-card {
+            margin-bottom: 2rem;
+        }
+        .popular-plan {
+            transform: none;
+        }
+    }
+    </style>
     """, unsafe_allow_html=True)
     
-    # Seção de recursos
-    st.markdown("<h2>Por que escolher o Planner Organizer?</h2>", unsafe_allow_html=True)
+    # Adicionar Firebase SDK
+    st.markdown("""
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="/public/js/firebase-auth.js"></script>
+    """, unsafe_allow_html=True)
     
-    # Grid de recursos
-    feat_col1, feat_col2, feat_col3 = st.columns(3)
+    # Definir configuração do Firebase
+    firebase_config = {
+        "apiKey": st.secrets.get("FIREBASE_API_KEY", "AIzaSyA8xzYgZXCkZ-97RWQZXtMpvLVf1Jx8wjk"),
+        "authDomain": st.secrets.get("FIREBASE_AUTH_DOMAIN", "planner-organizer.firebaseapp.com"),
+        "projectId": st.secrets.get("FIREBASE_PROJECT_ID", "planner-organizer"),
+        "storageBucket": st.secrets.get("FIREBASE_STORAGE_BUCKET", "planner-organizer.appspot.com"),
+        "messagingSenderId": st.secrets.get("FIREBASE_MESSAGING_SENDER_ID", "695046724018"),
+        "appId": st.secrets.get("FIREBASE_APP_ID", "1:695046724018:web:98d8feec0c6b6c937d57fd"),
+        "databaseURL": st.secrets.get("FIREBASE_DATABASE_URL", "https://planner-organizer-default-rtdb.firebaseio.com")
+    }
     
-    with feat_col1:
+    # Inicializar Firebase via JavaScript
+    st.markdown(f"""
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {json.dumps(firebase_config)};
+        
+        // Inicializar Firebase quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {{
+            // Inicializar Firebase
+            if (window.firebaseAuth) {{
+                window.firebaseAuth.init(firebaseConfig);
+                console.log("Firebase inicializado na página de login");
+            }}
+        }});
+        
+        // Funções para autenticação
+        function loginUser(email, password) {{
+            if (window.firebaseAuth) {{
+                window.firebaseAuth.login(email, password)
+                    .then((userCredential) => {{
+                        // Login bem-sucedido
+                        const user = userCredential.user;
+                        console.log("Login bem-sucedido:", user.email);
+                        
+                        // Redirecionar para dashboard
+                        window.location.href = "/dashboard";
+                    }})
+                    .catch((error) => {{
+                        // Tratar erros de login
+                        console.error("Erro no login:", error);
+                        document.getElementById('login-error').textContent = getErrorMessage(error.code);
+                        document.getElementById('login-error').style.display = 'block';
+                    }});
+            }}
+        }}
+        
+        function registerUser(email, password, name) {{
+            if (window.firebaseAuth) {{
+                window.firebaseAuth.register(email, password, name)
+                    .then((userCredential) => {{
+                        // Registro bem-sucedido
+                        const user = userCredential.user;
+                        console.log("Registro bem-sucedido:", user.email);
+                        
+                        // Verificar se há um plano selecionado
+                        const selectedPlan = localStorage.getItem('selected_plan');
+                        if (selectedPlan) {{
+                            // Redirecionar para checkout
+                            window.firebaseAuth.createCheckoutSession(selectedPlan)
+                                .then(data => {{
+                                    console.log("Checkout criado:", data);
+                                    localStorage.removeItem('selected_plan');
+                                }})
+                                .catch(error => {{
+                                    console.error("Erro ao criar checkout:", error);
+                                    // Redirecionar para dashboard mesmo com erro
+                                    window.location.href = "/dashboard";
+                                }});
+                        }} else {{
+                            // Redirecionar para dashboard
+                            window.location.href = "/dashboard";
+                        }}
+                    }})
+                    .catch((error) => {{
+                        // Tratar erros de registro
+                        console.error("Erro no registro:", error);
+                        document.getElementById('register-error').textContent = getErrorMessage(error.code);
+                        document.getElementById('register-error').style.display = 'block';
+                    }});
+            }}
+        }}
+        
+        function resetPassword(email) {{
+            if (window.firebaseAuth) {{
+                window.firebaseAuth.resetPassword(email)
+                    .then(() => {{
+                        // E-mail enviado com sucesso
+                        console.log("E-mail de redefinição enviado para:", email);
+                        document.getElementById('reset-success').textContent = 
+                            "E-mail de redefinição enviado. Verifique sua caixa de entrada.";
+                        document.getElementById('reset-success').style.display = 'block';
+                    }})
+                    .catch((error) => {{
+                        // Tratar erros de redefinição
+                        console.error("Erro na redefinição de senha:", error);
+                        document.getElementById('reset-error').textContent = getErrorMessage(error.code);
+                        document.getElementById('reset-error').style.display = 'block';
+                    }});
+            }}
+        }}
+        
+        function getErrorMessage(errorCode) {{
+            switch (errorCode) {{
+                case 'auth/invalid-email':
+                    return 'E-mail inválido.';
+                case 'auth/user-disabled':
+                    return 'Este usuário foi desativado.';
+                case 'auth/user-not-found':
+                    return 'Usuário não encontrado.';
+                case 'auth/wrong-password':
+                    return 'Senha incorreta.';
+                case 'auth/email-already-in-use':
+                    return 'Este e-mail já está sendo usado por outra conta.';
+                case 'auth/weak-password':
+                    return 'A senha é muito fraca. Use pelo menos 6 caracteres.';
+                default:
+                    return 'Ocorreu um erro. Por favor, tente novamente.';
+            }}
+        }}
+    </script>
+    """, unsafe_allow_html=True)
+    
+    # Container principal
+    st.markdown('<div class="main-container">', unsafe_allow_html=True)
+    
+    # Cabeçalho
+    st.markdown('<h1 class="main-header">Planner Organizer</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="subheader">Sistema Profissional para Personal Organizers</p>', unsafe_allow_html=True)
+    
+    # Abas para Login/Registro/Recuperação
+    tab1, tab2, tab3 = st.tabs(["Login", "Criar Conta", "Recuperar Senha"])
+    
+    with tab1:
+        st.markdown('<div class="form-container">', unsafe_allow_html=True)
+        st.markdown('<h2 class="form-title">Faça Login</h2>', unsafe_allow_html=True)
+        
+        # Mensagem de erro (oculta por padrão)
+        st.markdown('<div id="login-error" class="error-message" style="display: none;"></div>', unsafe_allow_html=True)
+        
+        # Formulário de login
+        email_login = st.text_input("E-mail", key="email_login")
+        password_login = st.text_input("Senha", type="password", key="password_login")
+        
+        # Botão de login
+        login_button = st.button("Entrar", key="login_button")
+        
+        if login_button:
+            # JavaScript para executar login
+            st.markdown(f"""
+            <script>
+                loginUser("{email_login}", "{password_login}");
+            </script>
+            """, unsafe_allow_html=True)
+        
+        # Links para outras abas
         st.markdown("""
-        <div class="feature-card">
-            <div class="feature-icon">📊</div>
-            <h3 class="feature-title">Gestão Completa</h3>
-            <p class="feature-description">
-                Gerencie propostas, clientes, produtos e finanças em um único sistema.
-            </p>
+        <div class="form-footer">
+            Não tem uma conta? <a href="#" onclick="document.querySelector('.stTabs [role=tablist] button:nth-child(2)').click(); return false;">Registre-se</a>
+            <br>
+            Esqueceu sua senha? <a href="#" onclick="document.querySelector('.stTabs [role=tablist] button:nth-child(3)').click(); return false;">Recupere aqui</a>
         </div>
         """, unsafe_allow_html=True)
         
-    with feat_col2:
+        # Divisor
+        st.markdown('<div class="form-divider"><span>ou</span></div>', unsafe_allow_html=True)
+        
+        # Botão para modo de demonstração
         st.markdown("""
-        <div class="feature-card">
-            <div class="feature-icon">💰</div>
-            <h3 class="feature-title">Controle Financeiro</h3>
-            <p class="feature-description">
-                Acompanhe receitas, despesas e comissões automaticamente.
-            </p>
+        <div style="text-align: center;">
+            <a href="/dashboard?demo=true" class="form-button" style="background: #718096; display: inline-block; width: auto; padding: 0.5rem 2rem;">
+                Acessar em Modo de Demonstração
+            </a>
         </div>
         """, unsafe_allow_html=True)
         
-    with feat_col3:
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with tab2:
+        st.markdown('<div class="form-container">', unsafe_allow_html=True)
+        st.markdown('<h2 class="form-title">Criar Nova Conta</h2>', unsafe_allow_html=True)
+        
+        # Mensagem de erro (oculta por padrão)
+        st.markdown('<div id="register-error" class="error-message" style="display: none;"></div>', unsafe_allow_html=True)
+        
+        # Formulário de registro
+        name_register = st.text_input("Nome", key="name_register")
+        email_register = st.text_input("E-mail", key="email_register")
+        password_register = st.text_input("Senha", type="password", key="password_register")
+        password_confirm = st.text_input("Confirmar Senha", type="password", key="password_confirm")
+        
+        # Botão de registro
+        register_button = st.button("Criar Conta", key="register_button")
+        
+        if register_button:
+            # Verificar se as senhas conferem
+            if password_register != password_confirm:
+                st.error("As senhas não conferem.")
+            else:
+                # JavaScript para executar registro
+                st.markdown(f"""
+                <script>
+                    registerUser("{email_register}", "{password_register}", "{name_register}");
+                </script>
+                """, unsafe_allow_html=True)
+        
+        # Links para outras abas
         st.markdown("""
-        <div class="feature-card">
-            <div class="feature-icon">📱</div>
-            <h3 class="feature-title">Acesso de Qualquer Lugar</h3>
-            <p class="feature-description">
-                Use em qualquer dispositivo, a qualquer momento.
-            </p>
+        <div class="form-footer">
+            Já tem uma conta? <a href="#" onclick="document.querySelector('.stTabs [role=tablist] button:nth-child(1)').click(); return false;">Faça login</a>
         </div>
         """, unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with tab3:
+        st.markdown('<div class="form-container">', unsafe_allow_html=True)
+        st.markdown('<h2 class="form-title">Recuperar Senha</h2>', unsafe_allow_html=True)
+        
+        # Mensagens (ocultas por padrão)
+        st.markdown('<div id="reset-success" class="success-message" style="display: none;"></div>', unsafe_allow_html=True)
+        st.markdown('<div id="reset-error" class="error-message" style="display: none;"></div>', unsafe_allow_html=True)
+        
+        # Formulário de recuperação
+        email_reset = st.text_input("E-mail", key="email_reset")
+        
+        # Botão de recuperação
+        reset_button = st.button("Enviar E-mail de Recuperação", key="reset_button")
+        
+        if reset_button:
+            # JavaScript para executar recuperação
+            st.markdown(f"""
+            <script>
+                resetPassword("{email_reset}");
+            </script>
+            """, unsafe_allow_html=True)
+        
+        # Informações adicionais
+        st.markdown("""
+        <div class="form-footer">
+            <p>Um e-mail com instruções para redefinir sua senha será enviado para o endereço fornecido, se ele estiver associado a uma conta.</p>
+            <p>Verifique também sua caixa de spam.</p>
+            <a href="#" onclick="document.querySelector('.stTabs [role=tablist] button:nth-child(1)').click(); return false;">Voltar para o login</a>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
     
     # Seção de planos
-    st.markdown("<h2>Planos disponíveis</h2>", unsafe_allow_html=True)
+    st.markdown('<div class="plans-section">', unsafe_allow_html=True)
+    st.markdown('<h2 class="plans-title">Escolha o plano que melhor se adapta a você</h2>', unsafe_allow_html=True)
     
-    plan_col1, plan_col2, plan_col3 = st.columns([1, 1.2, 1])
+    # Layout de planos em 3 colunas
+    col1, col2, col3 = st.columns(3)
     
-    with plan_col1:
+    with col1:
         st.markdown("""
-        <div class="plano-card">
-            <div class="plano-titulo">💳 Plano Mensal</div>
-            <div class="plano-preco">R$9,70</div>
-            <div class="plano-periodo">por mês</div>
-            <div style="background-color: #e6fff0; color: #00a651; padding: 5px; border-radius: 5px; text-align: center; margin-bottom: 15px; font-size: 12px; font-weight: bold;">✨ 7 DIAS DE TESTE GRÁTIS</div>
-            <div class="plano-beneficios">
-                <ul>
-                    <li>Acesso a todos os recursos</li>
-                    <li>Suporte por e-mail</li>
-                    <li>Cancelamento a qualquer momento</li>
-                </ul>
+        <div class="plan-card">
+            <div class="plan-header">
+                <div class="plan-name">Mensal</div>
+                <div class="plan-price">R$ 9,70<span class="plan-price-period">/mês</span></div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("Assinar Plano Mensal", key="mensal_btn", use_container_width=True):
-            st.success("Preparando a página de pagamento...")
-            st.markdown("""
-            <a href='https://checkout.stripe.com/c/pay/cs_test_a1hc4n3' target='_blank'>
-                <button style='width: 100%; padding: 10px; background-color: #1E88E5; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;'>
-                    Ir para o checkout seguro
-                </button>
-            </a>
-            """, unsafe_allow_html=True)
-    
-    with plan_col2:
-        st.markdown("""
-        <div class="plano-card plano-destaque">
-            <div class="plano-titulo">📆 Plano Anual</div>
-            <div class="plano-preco">R$97,00</div>
-            <div class="plano-periodo">por ano</div>
-            <div class="plano-economia">ECONOMIZE 17%</div>
-            <div style="background-color: #e6fff0; color: #00a651; padding: 5px; border-radius: 5px; text-align: center; margin-bottom: 15px; font-size: 12px; font-weight: bold;">✨ 7 DIAS DE TESTE GRÁTIS</div>
-            <div class="plano-beneficios">
-                <ul>
-                    <li>Acesso a todos os recursos</li>
-                    <li>Suporte prioritário</li>
+            <div class="plan-body">
+                <ul class="plan-features">
+                    <li>Acesso completo ao sistema</li>
+                    <li>Suporte via email</li>
                     <li>Atualizações gratuitas</li>
-                    <li>Treinamento personalizado</li>
+                    <li>Exportação de relatórios</li>
+                    <li>7 dias de teste grátis</li>
                 </ul>
+            </div>
+            <div class="plan-footer">
+                <button onclick="selectPlan('monthly')" class="plan-button">Assinar Agora</button>
             </div>
         </div>
         """, unsafe_allow_html=True)
-        
-        if st.button("Assinar Plano Anual", key="anual_btn", use_container_width=True):
-            st.success("Preparando a página de pagamento...")
-            st.markdown("""
-            <a href='https://checkout.stripe.com/c/pay/cs_test_b2hd5o4' target='_blank'>
-                <button style='width: 100%; padding: 10px; background-color: #1E88E5; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;'>
-                    Ir para o checkout seguro
-                </button>
-            </a>
-            """, unsafe_allow_html=True)
     
-    with plan_col3:
+    with col2:
         st.markdown("""
-        <div class="plano-card">
-            <div class="plano-titulo">💎 Acesso Vitalício</div>
-            <div class="plano-preco">R$247,00</div>
-            <div class="plano-periodo">pagamento único</div>
-            <div class="plano-economia">MELHOR VALOR A LONGO PRAZO</div>
-            <div class="plano-beneficios">
-                <ul>
-                    <li>Acesso permanente ao sistema</li>
-                    <li>Suporte prioritário</li>
-                    <li>Sem mensalidades futuras</li>
-                    <li>Todas as atualizações inclusas</li>
+        <div class="plan-card popular-plan">
+            <div class="plan-header">
+                <div class="popular-badge">Mais Popular</div>
+                <div class="plan-name">Anual</div>
+                <div class="plan-price">R$ 97,00<span class="plan-price-period">/ano</span></div>
+            </div>
+            <div class="plan-body">
+                <ul class="plan-features">
+                    <li>Acesso completo ao sistema</li>
+                    <li>Suporte via email</li>
+                    <li>Atualizações gratuitas</li>
+                    <li>Exportação de relatórios</li>
+                    <li>7 dias de teste grátis</li>
+                    <li>Economia de 17% em relação ao plano mensal</li>
                 </ul>
+            </div>
+            <div class="plan-footer">
+                <button onclick="selectPlan('yearly')" class="plan-button">Assinar Agora</button>
             </div>
         </div>
         """, unsafe_allow_html=True)
-        
-        if st.button("Adquirir Acesso Vitalício", key="vitalicio_btn", use_container_width=True):
-            st.success("Preparando a página de pagamento...")
-            st.markdown("""
-            <a href='https://checkout.stripe.com/c/pay/cs_test_c3ie6p5' target='_blank'>
-                <button style='width: 100%; padding: 10px; background-color: #1E88E5; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;'>
-                    Ir para o checkout seguro
-                </button>
-            </a>
-            """, unsafe_allow_html=True)
-
-with col2:
-    # Container de login
+    
+    with col3:
+        st.markdown("""
+        <div class="plan-card">
+            <div class="plan-header">
+                <div class="plan-name">Vitalício</div>
+                <div class="plan-price">R$ 247,00<span class="plan-price-period">/único</span></div>
+            </div>
+            <div class="plan-body">
+                <ul class="plan-features">
+                    <li>Acesso completo ao sistema</li>
+                    <li>Suporte via email</li>
+                    <li>Atualizações gratuitas</li>
+                    <li>Exportação de relatórios</li>
+                    <li>Pagamento único sem mensalidades</li>
+                    <li>Economia a longo prazo</li>
+                </ul>
+            </div>
+            <div class="plan-footer">
+                <button onclick="selectPlan('lifetime')" class="plan-button">Comprar Agora</button>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Script para selecionar plano
     st.markdown("""
-    <div class="login-container">
-        <h2 class="login-title">Acesse sua conta</h2>
+    <script>
+        function selectPlan(planId) {
+            // Verificar se o usuário está logado
+            const user = firebase.auth().currentUser;
+            
+            if (user) {
+                // Usuário logado, criar checkout diretamente
+                window.firebaseAuth.createCheckoutSession(planId)
+                    .then(data => {
+                        console.log("Checkout criado:", data);
+                    })
+                    .catch(error => {
+                        console.error("Erro ao criar checkout:", error);
+                        alert("Erro ao processar pagamento. Por favor, tente novamente.");
+                    });
+            } else {
+                // Usuário não logado, salvar plano e redirecionar para registro
+                localStorage.setItem('selected_plan', planId);
+                // Mudar para a aba de registro
+                document.querySelector('.stTabs [role=tablist] button:nth-child(2)').click();
+                // Mostrar mensagem
+                alert("Você precisa criar uma conta para assinar este plano.");
+            }
+        }
+    </script>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Rodapé
+    st.markdown("""
+    <div style="text-align: center; margin-top: 3rem; color: #718096; font-size: 0.9rem;">
+        <p>© 2025 Planner Organizer. Todos os direitos reservados.</p>
+        <p>Atendendo com excelência Personal Organizers em todo Brasil.</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Formulário de login (nativo do Streamlit)
-    with st.form("login_form"):
-        email = st.text_input("Email ou usuário")
-        password = st.text_input("Senha", type="password")
-        
-        submitted = st.form_submit_button("Entrar", use_container_width=True)
-        
-        if submitted:
-            if email.lower() == "admin" and password == "admin":
-                with st.spinner("Autenticando..."):
-                    time.sleep(1)
-                st.success("Login realizado com sucesso!")
-                st.session_state.authenticated = True
-                st.markdown('<meta http-equiv="refresh" content="2; URL=app.py">', unsafe_allow_html=True)
-            else:
-                st.error("Usuário ou senha incorretos.")
-    
-    # Botões de ação adicionais
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Uso de on_click para o botão "Esqueceu a senha"
-        if st.button("Esqueceu sua senha?", key="forgot_pwd", use_container_width=True):
-            st.session_state.show_reset_password = True
-            st.rerun()
-    
-    with col2:
-        # Uso de on_click para o botão "Criar conta"
-        if st.button("Criar uma conta", key="create_acc", use_container_width=True):
-            st.session_state.show_signup = True
-            st.rerun()
-    
-    # Mensagem de demonstração
-    st.info("Para demonstração, use: admin / admin")
-    
-    # Formulário de recuperação de senha
-    if st.session_state.show_reset_password:
-        st.markdown("""
-        <hr style="margin: 20px 0;">
-        <h3 style="text-align: center; color: #1E366F;">Recuperar Senha</h3>
-        """, unsafe_allow_html=True)
-        
-        with st.form("reset_password_form"):
-            reset_email = st.text_input("Digite seu e-mail")
-            reset_submitted = st.form_submit_button("Enviar link de recuperação", use_container_width=True)
-            
-            if reset_submitted:
-                if not reset_email:
-                    st.error("Por favor, informe seu e-mail.")
-                else:
-                    with st.spinner("Enviando email de recuperação..."):
-                        time.sleep(1.5)
-                    st.success(f"Um link de recuperação foi enviado para {reset_email}")
-                    st.session_state.show_reset_password = False
-                    st.rerun()
-    
-    # Formulário de criação de conta
-    if st.session_state.show_signup:
-        st.markdown("""
-        <hr style="margin: 20px 0;">
-        <h3 style="text-align: center; color: #1E366F;">Criar Nova Conta</h3>
-        """, unsafe_allow_html=True)
-        
-        with st.form("signup_form"):
-            signup_name = st.text_input("Nome completo")
-            signup_email = st.text_input("E-mail")
-            signup_password = st.text_input("Senha", type="password")
-            signup_confirm_password = st.text_input("Confirmar senha", type="password")
-            
-            signup_submitted = st.form_submit_button("Registrar", use_container_width=True)
-            
-            if signup_submitted:
-                if not signup_name or not signup_email or not signup_password or not signup_confirm_password:
-                    st.error("Todos os campos são obrigatórios.")
-                elif signup_password != signup_confirm_password:
-                    st.error("As senhas não coincidem.")
-                else:
-                    with st.spinner("Criando sua conta..."):
-                        time.sleep(1.5)
-                    st.success(f"Conta criada com sucesso para {signup_name}! Verifique seu e-mail {signup_email}.")
-                    st.session_state.show_signup = False
-                    st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# Rodapé
-st.markdown("""
-<div style="text-align: center; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #E0E0E0;">
-    <p style="color: #5A6A85; font-size: 0.8rem;">
-        © 2025 Planner Organizer. Todos os direitos reservados.
-    </p>
-</div>
-""", unsafe_allow_html=True)
+if __name__ == "__main__":
+    main()

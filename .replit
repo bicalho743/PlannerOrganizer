@@ -119,10 +119,6 @@ args = "Login Portal"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Login Efetivo"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Planos JS"
 
 [[workflows.workflow.tasks]]
@@ -136,6 +132,14 @@ args = "Planos Diretos"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Stripe Payment API"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Firebase Stripe Integration"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Efetivo"
 
 [[workflows.workflow]]
 name = "Teste Importação"
@@ -521,21 +525,6 @@ args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0
 waitForPort = 5001
 
 [[workflows.workflow]]
-name = "Login Efetivo"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run login_efetivo.py --server.port 8999 --server.address 0.0.0.0"
-waitForPort = 8999
-
-[[workflows.workflow]]
 name = "Planos JS"
 author = "agent"
 
@@ -593,7 +582,35 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd api && python -m uvicorn stripe_payment:app --host 0.0.0.0 --port 8000"
-waitForPort = 8000
+
+[[workflows.workflow]]
+name = "Firebase Stripe Integration"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd api && python -m uvicorn firebase_stripe_integration:app --host 0.0.0.0 --port 8001"
+
+[[workflows.workflow]]
+name = "Login Efetivo"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run login_efetivo.py --server.port 8999 --server.address 0.0.0.0"
+waitForPort = 8999
 
 [[ports]]
 localPort = 443

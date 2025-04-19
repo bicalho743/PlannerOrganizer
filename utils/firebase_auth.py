@@ -114,6 +114,19 @@ def redefinir_senha(email):
         logger.error(f"Erro ao redefinir senha: {str(e)}")
         return False
 
+def fazer_login(email, senha):
+    """
+    Função wrapper para compatibilidade com o sistema atual
+    
+    Args:
+        email (str): Email do usuário
+        senha (str): Senha do usuário
+        
+    Returns:
+        dict: Informações do usuário ou None se falhar
+    """
+    return login_email_senha(email, senha)
+
 def verificar_autenticacao():
     """
     Verifica se o usuário está autenticado
@@ -121,4 +134,4 @@ def verificar_autenticacao():
     Returns:
         bool: True se autenticado, False se não
     """
-    return 'user_info' in st.session_state and st.session_state.user_info is not None
+    return 'authenticated' in st.session_state and st.session_state.authenticated
