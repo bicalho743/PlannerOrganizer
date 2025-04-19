@@ -141,6 +141,10 @@ args = "Firebase Stripe Integration"
 task = "workflow.run"
 args = "Login Efetivo"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Sincronizar Clientes com Firebase"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -611,6 +615,21 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run login_efetivo.py --server.port 8999 --server.address 0.0.0.0"
 waitForPort = 8999
+
+[[workflows.workflow]]
+name = "Sincronizar Clientes com Firebase"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run sincronizar_clientes.py --server.port 8600 --server.address 0.0.0.0"
+waitForPort = 8600
 
 [[ports]]
 localPort = 443

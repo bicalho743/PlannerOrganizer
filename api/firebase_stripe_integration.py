@@ -61,14 +61,33 @@ PLANOS = {
 
 # Inicializar Firebase Admin SDK
 try:
-    # Usar credenciais se disponíveis
-    if os.environ.get("FIREBASE_SERVICE_ACCOUNT"):
-        cred_dict = json.loads(os.environ.get("FIREBASE_SERVICE_ACCOUNT"))
-        cred = credentials.Certificate(cred_dict)
+    # Usar arquivo de credenciais com diferentes caminhos possíveis
+    import os
+    
+    # Tentar diversos caminhos possíveis
+    credential_paths = [
+        'firebase_credentials.json',  # Mesmo diretório
+        './firebase_credentials.json', # Mesmo diretório (explícito)
+        '../api/firebase_credentials.json', # Diretório acima
+        '/api/firebase_credentials.json', # Caminho absoluto
+    ]
+    
+    # Verificar qual caminho existe
+    cred_path = None
+    for path in credential_paths:
+        if os.path.exists(path):
+            cred_path = path
+            print(f"Arquivo de credenciais encontrado em: {path}")
+            break
+    
+    if cred_path:
+        cred = credentials.Certificate(cred_path)
         firebase_app = firebase_admin.initialize_app(cred)
+        print("Firebase inicializado com sucesso usando credenciais de arquivo")
     else:
-        # Tentativa de inicializar sem credenciais (ambiente de desenvolvimento)
+        # Tentar inicializar com variáveis de ambiente
         firebase_app = firebase_admin.initialize_app()
+        print("Firebase inicializado com configuração padrão")
     
     # Inicializar Firestore
     db = firestore.client()
