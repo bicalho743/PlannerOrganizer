@@ -504,9 +504,9 @@ if not st.session_state.authenticated:
             </div>
             """, unsafe_allow_html=True)
             
-            # Link direto para o checkout
+            # Link direto para o checkout via Stripe Direct API
             st.markdown("""
-            <a href="https://checkout.stripe.com/c/pay/cs_test_a1Xxb3FGdBZyruASfZCdDiXWe8DGHlC0V" target="_blank" style="text-decoration: none;">
+            <a href="http://0.0.0.0:8002/checkout-mensal" target="_blank" style="text-decoration: none;">
                 <button style="width: 100%; padding: 10px; background-color: #1E88E5; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
                     Assinar Plano Mensal
                 </button>
@@ -534,9 +534,9 @@ if not st.session_state.authenticated:
             </div>
             """, unsafe_allow_html=True)
             
-            # Link direto para o checkout
+            # Link direto para o checkout via Stripe Direct API
             st.markdown("""
-            <a href="https://checkout.stripe.com/c/pay/cs_test_b2Dnf4RQk83DjnGxnMDV5RSpfVeYWEgIk" target="_blank" style="text-decoration: none;">
+            <a href="http://0.0.0.0:8002/checkout-anual" target="_blank" style="text-decoration: none;">
                 <button style="width: 100%; padding: 10px; background-color: #1E88E5; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
                     Assinar Plano Anual
                 </button>
@@ -563,9 +563,9 @@ if not st.session_state.authenticated:
             </div>
             """, unsafe_allow_html=True)
             
-            # Link direto para o checkout
+            # Link direto para o checkout via Stripe Direct API
             st.markdown("""
-            <a href="https://checkout.stripe.com/c/pay/cs_test_c3PqY6tHgLfwXkX8u6eoLcD5Zx8kFGRoA" target="_blank" style="text-decoration: none;">
+            <a href="http://0.0.0.0:8002/checkout-vitalicio" target="_blank" style="text-decoration: none;">
                 <button style="width: 100%; padding: 10px; background-color: #1E88E5; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
                     Adquirir Acesso Vitalício
                 </button>

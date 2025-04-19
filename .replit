@@ -456,7 +456,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd api && python -m uvicorn stripe_direct:app --reload --host 0.0.0.0 --port 8002"
+args = "cd api && python -m uvicorn stripe_direct:app --host 0.0.0.0 --port 8002"
 waitForPort = 8002
 
 [[workflows.workflow]]
