@@ -647,14 +647,14 @@ if not st.session_state.authenticated:
             if st.button("Esqueceu sua senha?", key="forgot_password_btn", use_container_width=True):
                 st.session_state.show_reset_password = True
                 st.session_state.show_signup = False
-                st.experimental_rerun()
+                st.rerun()
                 
         # Botão de criar conta - mais simples e direto
         with col2:
             if st.button("Criar uma conta", key="create_account_btn", use_container_width=True):
                 st.session_state.show_signup = True
                 st.session_state.show_reset_password = False 
-                st.experimental_rerun()
+                st.rerun()
                 
         # Informações de demo
         st.markdown('''
