@@ -482,8 +482,16 @@ if not st.session_state.authenticated:
         # Seção de Planos e Preços
         st.markdown("<h2>Escolha o Plano Ideal Para o Seu Negócio</h2>", unsafe_allow_html=True)
         
-        # TABELA DE PLANOS SIMPLIFICADA (com botões e links diretos)
+        # TABELA DE PLANOS SIMPLIFICADA (com links para página de checkout separada)
         col1, col2, col3 = st.columns([1, 1.2, 1])  # o do meio ganha mais espaço
+        
+        # Obter a chave publicável do Stripe do ambiente
+        stripe_publishable_key = os.environ.get("STRIPE_PUBLISHABLE_KEY")
+        
+        # URLs diretas para o checkout do Stripe
+        checkout_mensal_url = "https://buy.stripe.com/test_14k3dG3pL3rI6KQ000"
+        checkout_anual_url = "https://buy.stripe.com/test_5kA9F26BP1jA4CI004"
+        checkout_vitalicio_url = "https://buy.stripe.com/test_aEU9F26BPeSEbZ6005"
 
         # Plano Mensal
         with col1:
@@ -504,9 +512,9 @@ if not st.session_state.authenticated:
             </div>
             """, unsafe_allow_html=True)
             
-            # Link direto para o checkout via Stripe
-            st.markdown("""
-            <a href="https://buy.stripe.com/test_14k3dG3pL3rI6KQ000" target="_blank" style="text-decoration: none;">
+            # Link para a página de checkout
+            st.markdown(f"""
+            <a href="{checkout_mensal_url}" target="_blank" style="text-decoration: none;">
                 <button style="width: 100%; padding: 10px; background-color: #1E88E5; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
                     Assinar Plano Mensal
                 </button>
@@ -534,9 +542,9 @@ if not st.session_state.authenticated:
             </div>
             """, unsafe_allow_html=True)
             
-            # Link direto para o checkout via Stripe
-            st.markdown("""
-            <a href="https://buy.stripe.com/test_5kA9F26BP1jA4CI004" target="_blank" style="text-decoration: none;">
+            # Link para a página de checkout
+            st.markdown(f"""
+            <a href="{checkout_anual_url}" target="_blank" style="text-decoration: none;">
                 <button style="width: 100%; padding: 10px; background-color: #1E88E5; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
                     Assinar Plano Anual
                 </button>
@@ -563,9 +571,9 @@ if not st.session_state.authenticated:
             </div>
             """, unsafe_allow_html=True)
             
-            # Link direto para o checkout via Stripe
-            st.markdown("""
-            <a href="https://buy.stripe.com/test_aEU9F26BPeSEbZ6005" target="_blank" style="text-decoration: none;">
+            # Link para a página de checkout
+            st.markdown(f"""
+            <a href="{checkout_vitalicio_url}" target="_blank" style="text-decoration: none;">
                 <button style="width: 100%; padding: 10px; background-color: #1E88E5; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
                     Adquirir Acesso Vitalício
                 </button>
@@ -743,10 +751,10 @@ if not st.session_state.authenticated:
         <p style="color: #5A6A85; font-size: 0.9rem; margin-bottom: 1rem;">CONFIADO POR PERSONAL ORGANIZERS DE TODO O BRASIL</p>
         <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
             <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Organizze Bem</span>
-            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Expert Closets</span>
-            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">TopOrder Solutions</span>
-            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Clean & Order</span>
-            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Plann.Smart</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Organize Fácil</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Espaço Leve</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Ju Organizer</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Daniela Siqueira</span>
         </div>
     </div>
     ''', unsafe_allow_html=True)

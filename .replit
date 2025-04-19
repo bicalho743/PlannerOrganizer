@@ -121,6 +121,18 @@ args = "Login Portal"
 task = "workflow.run"
 args = "Login Efetivo"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Planos JS"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Checkout Simples"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Planos Diretos"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -518,6 +530,51 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run login_efetivo.py --server.port 8999 --server.address 0.0.0.0"
 waitForPort = 8999
+
+[[workflows.workflow]]
+name = "Planos JS"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run planos_js.py --server.port 8100 --server.address 0.0.0.0"
+waitForPort = 8100
+
+[[workflows.workflow]]
+name = "Checkout Simples"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run planos_simples_checkout.py --server.port 8200 --server.address 0.0.0.0"
+waitForPort = 8200
+
+[[workflows.workflow]]
+name = "Planos Diretos"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run planos_direct_links.py --server.port 8400 --server.address 0.0.0.0"
+waitForPort = 8400
 
 [[ports]]
 localPort = 443
