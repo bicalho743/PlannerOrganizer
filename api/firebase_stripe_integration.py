@@ -119,40 +119,68 @@ async def root():
 async def create_firebase_user(email: str, name: str = None) -> str:
     """
     Cria um usuário no Firebase Authentication e retorna o UID
+    Se o usuário já existir, retorna o UID existente
     """
     try:
-        # Gerar uma senha temporária - o usuário deverá redefini-la
-        password = f"Temp{int(time.time())}"
+        # Tentar encontrar o usuário pelo email primeiro
+        try:
+            user = auth.get_user_by_email(email)
+            print(f"Usuário encontrado para o email: {email}")
+            
+            # Verificar se o usuário existe no Firestore
+            if db:
+                user_ref = db.collection('users').document(user.uid)
+                user_doc = user_ref.get()
+                
+                # Se o documento não existir, criar
+                if not user_doc.exists:
+                    user_ref.set({
+                        'email': email,
+                        'name': name or email.split('@')[0],
+                        'created_at': firestore.SERVER_TIMESTAMP,
+                        'subscription': {
+                            'status': 'pending',
+                            'created_at': firestore.SERVER_TIMESTAMP
+                        }
+                    })
+                    print(f"Documento Firestore criado para usuário existente: {user.uid}")
+            
+            return user.uid
         
-        # Criar usuário no Firebase Authentication
-        user = auth.create_user(
-            email=email,
-            password=password,
-            display_name=name or email.split('@')[0],
-            email_verified=False
-        )
-        
-        # Enviar e-mail para redefinição de senha
-        auth.generate_password_reset_link(email)
-        
-        # Criar documento do usuário no Firestore
-        if db:
-            user_ref = db.collection('users').document(user.uid)
-            user_ref.set({
-                'email': email,
-                'name': name or email.split('@')[0],
-                'created_at': firestore.SERVER_TIMESTAMP,
-                'subscription': {
-                    'status': 'pending',
-                    'created_at': firestore.SERVER_TIMESTAMP
-                }
-            })
-        
-        return user.uid
+        except auth.UserNotFoundError:
+            # Se o usuário não existir, criar um novo
+            password = f"Temp{int(time.time())}"
+            
+            # Criar usuário no Firebase Authentication
+            user = auth.create_user(
+                email=email,
+                password=password,
+                display_name=name or email.split('@')[0],
+                email_verified=False
+            )
+            
+            # Enviar e-mail para redefinição de senha
+            auth.generate_password_reset_link(email)
+            
+            # Criar documento do usuário no Firestore
+            if db:
+                user_ref = db.collection('users').document(user.uid)
+                user_ref.set({
+                    'email': email,
+                    'name': name or email.split('@')[0],
+                    'created_at': firestore.SERVER_TIMESTAMP,
+                    'subscription': {
+                        'status': 'pending',
+                        'created_at': firestore.SERVER_TIMESTAMP
+                    }
+                })
+            
+            print(f"Novo usuário criado: {user.uid}")
+            return user.uid
     
     except Exception as e:
-        print(f"Erro ao criar usuário: {e}")
-        raise HTTPException(status_code=500, detail=f"Erro ao criar usuário: {str(e)}")
+        print(f"Erro ao criar/obter usuário: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao criar/obter usuário: {str(e)}")
 
 async def update_user_subscription(user_id: str, subscription_data: Dict[str, Any]):
     """
@@ -201,6 +229,11 @@ async def create_user_and_checkout_session(user_data: UserData):
         # Definir modo com base no tipo de produto
         mode = "subscription" if plano["tipo"] == "subscription" else "payment"
         
+        # Obter domínio atual para URLs de redirecionamento
+        domain = os.environ.get("REPLIT_DOMAIN", "localhost:5000")
+        success_url = f"https://{domain}/sucesso?session_id={{CHECKOUT_SESSION_ID}}"
+        cancel_url = f"https://{domain}/cancelado"
+        
         # Configurar detalhes de pagamento
         checkout_session_params = {
             "line_items": [
@@ -210,8 +243,8 @@ async def create_user_and_checkout_session(user_data: UserData):
                 }
             ],
             "mode": mode,
-            "success_url": "https://planner-organizer.replit.app/sucesso?session_id={CHECKOUT_SESSION_ID}",
-            "cancel_url": "https://planner-organizer.replit.app/cancelado",
+            "success_url": success_url,
+            "cancel_url": cancel_url,
             "customer_email": user_data.email,
             "metadata": {
                 "plan_id": user_data.plan_id,

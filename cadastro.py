@@ -164,7 +164,9 @@ def main():
                         api_plan_id = PLANO_MAPPING.get(selected_plan, "monthly")
                         
                         # URL da API de integração Firebase-Stripe
-                        api_url = "http://localhost:8001/api/create-user-and-checkout"
+                        api_url = "http://0.0.0.0:8001/api/create-user-and-checkout"
+                        
+                        # Para ambiente de produção ou replit
                         if os.environ.get("REPLIT_DOMAIN"):
                             # Em produção, usar a URL do domínio
                             api_url = f"https://{os.environ.get('REPLIT_DOMAIN')}/api/create-user-and-checkout"
