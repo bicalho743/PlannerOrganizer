@@ -488,10 +488,11 @@ if not st.session_state.authenticated:
         # Obter a chave publicável do Stripe do ambiente
         stripe_publishable_key = os.environ.get("STRIPE_PUBLISHABLE_KEY")
         
-        # URLs diretas para checkout com Stripe
-        checkout_mensal_url = "https://buy.stripe.com/14k8wen9m8Db9qg001"
-        checkout_anual_url = "https://buy.stripe.com/7sI7vc7H09Hfcyo002"
-        checkout_vitalicio_url = "https://buy.stripe.com/28o7vc9Pa6v3dCs003"
+        # URLs para contato via WhatsApp (simplificando o processo de checkout)
+        whatsapp_url = "https://wa.me/5511999999999?text=Olá!%20Tenho%20interesse%20no%20Planner%20Organizer."
+        checkout_mensal_url = whatsapp_url
+        checkout_anual_url = whatsapp_url
+        checkout_vitalicio_url = whatsapp_url
 
         # Plano Mensal
         with col1:
@@ -516,7 +517,7 @@ if not st.session_state.authenticated:
             st.markdown(f"""
             <a href="{checkout_mensal_url}" target="_blank" style="text-decoration: none;">
                 <button style="width: 100%; padding: 10px; background-color: #1E88E5; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
-                    Assinar Plano Mensal
+                    Solicitar Plano Mensal
                 </button>
             </a>
             """, unsafe_allow_html=True)
@@ -546,7 +547,7 @@ if not st.session_state.authenticated:
             st.markdown(f"""
             <a href="{checkout_anual_url}" target="_blank" style="text-decoration: none;">
                 <button style="width: 100%; padding: 10px; background-color: #1E88E5; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
-                    Assinar Plano Anual
+                    Solicitar Plano Anual
                 </button>
             </a>
             """, unsafe_allow_html=True)
@@ -575,7 +576,7 @@ if not st.session_state.authenticated:
             st.markdown(f"""
             <a href="{checkout_vitalicio_url}" target="_blank" style="text-decoration: none;">
                 <button style="width: 100%; padding: 10px; background-color: #1E88E5; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
-                    Adquirir Acesso Vitalício
+                    Solicitar Acesso Vitalício
                 </button>
             </a>
             """, unsafe_allow_html=True)
