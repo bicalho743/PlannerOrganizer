@@ -40,3 +40,4 @@ fastapi
 requests
 uvicorn
 stripe
+pipdeptree

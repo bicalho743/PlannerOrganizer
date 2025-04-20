@@ -68,6 +68,9 @@ async def create_checkout_session(request: CheckoutRequest):
     """
     Cria uma sessão de checkout do Stripe para um plano específico
     """
+    # Inicializar variáveis para evitar erros de escopo
+    mode = None
+    
     try:
         # Verificar se o plano existe
         plano = PLANOS.get(request.plan_id)
@@ -77,7 +80,127 @@ async def create_checkout_session(request: CheckoutRequest):
         # Definir modo com base no tipo de produto
         mode = "subscription" if plano["tipo"] == "subscription" else "payment"
         
-        # Configurar detalhes de pagamento
+        # Se o plano for de assinatura, garantimos que o preço associado seja recorrente
+        if mode == "subscription":
+            precos_recorrentes = {}  # Cache para preços recorrentes já criados
+            
+            try:
+                # Recuperar o preço e verificar se é recorrente
+                try:
+                    price = stripe.Price.retrieve(plano["price_id"])
+                    print(f"Preço existente encontrado: {price.id}")
+                    
+                    # Verificar se o preço é recorrente
+                    if price.type != "recurring":
+                        print(f"O preço {plano['price_id']} não é recorrente (tipo: {price.type}). Criando versão recorrente...")
+                        
+                        # Obter produto associado e garantir que esteja ativo
+                        produto_id = price.product
+                        try:
+                            # Verificar e ativar o produto se necessário
+                            produto = stripe.Product.retrieve(produto_id)
+                            if not produto.active:
+                                print(f"Produto {produto_id} não está ativo. Ativando...")
+                                stripe.Product.modify(
+                                    produto_id,
+                                    active=True
+                                )
+                                print(f"Produto {produto_id} ativado com sucesso.")
+                        except Exception as e:
+                            print(f"Erro ao verificar/ativar produto: {str(e)}")
+                        
+                        # Verificar se já criamos um preço recorrente para este produto e plano
+                        cache_key = f"{produto_id}_{plano['duracao']}"
+                        if cache_key in precos_recorrentes:
+                            price_id = precos_recorrentes[cache_key]
+                            print(f"Usando preço recorrente do cache: {price_id}")
+                            plano["price_id"] = price_id
+                        else:
+                            # Criar um novo preço recorrente
+                            intervalos = {"monthly": "month", "yearly": "year"}
+                            intervalo = intervalos.get(plano["duracao"], "month")
+                            
+                            novo_preco = stripe.Price.create(
+                                unit_amount=int(plano["valor"] * 100),  # Converter para centavos
+                                currency="brl",
+                                recurring={"interval": intervalo},
+                                product=produto_id,
+                                metadata={
+                                    "plan_id": request.plan_id, 
+                                    "original_price_id": plano["price_id"],
+                                    "auto_created": "true"
+                                }
+                            )
+                            print(f"Novo preço recorrente criado: {novo_preco.id}")
+                            
+                            # Armazenar no cache e atualizar o plano
+                            precos_recorrentes[cache_key] = novo_preco.id
+                            plano["price_id"] = novo_preco.id
+                    else:
+                        print(f"Preço já é recorrente: {price.id}, tipo: {price.type}")
+                        
+                except stripe.error.InvalidRequestError as e:
+                    print(f"Erro ao buscar preço: {str(e)}")
+                    
+                    # Se o preço não existe, criamos um novo produto e preço
+                    print(f"Criando novo produto e preço recorrente para {plano['nome']}")
+                    
+                    # Criar um produto primeiro
+                    produto_nome = f"Planner Organizer - {plano['nome']}"
+                    try:
+                        # Tentar encontrar um produto existente com esse nome
+                        produtos = stripe.Product.list(limit=100)
+                        produto_existente = None
+                        for p in produtos.data:
+                            if p.name == produto_nome:
+                                produto_existente = p
+                                break
+                        
+                        if produto_existente:
+                            produto = produto_existente
+                            print(f"Produto existente encontrado: {produto.id}")
+                            # Garantir que o produto esteja ativo
+                            if not produto.active:
+                                print(f"Produto {produto.id} não está ativo. Ativando...")
+                                stripe.Product.modify(
+                                    produto.id,
+                                    active=True
+                                )
+                                print(f"Produto {produto.id} ativado com sucesso.")
+                        else:
+                            # Criar novo produto (garantindo que esteja ativo)
+                            produto = stripe.Product.create(
+                                name=produto_nome,
+                                description=plano["descricao"],
+                                active=True
+                            )
+                            print(f"Novo produto criado: {produto.id}")
+                        
+                        # Criar o preço recorrente
+                        intervalos = {"monthly": "month", "yearly": "year"}
+                        intervalo = intervalos.get(plano["duracao"], "month")
+                        
+                        novo_preco = stripe.Price.create(
+                            unit_amount=int(plano["valor"] * 100),  # Converter para centavos
+                            currency="brl",
+                            recurring={"interval": intervalo},
+                            product=produto.id,
+                            metadata={"plan_id": request.plan_id, "auto_created": "true"}
+                        )
+                        print(f"Novo preço recorrente criado: {novo_preco.id}")
+                        
+                        # Atualizar o price_id no objeto plano
+                        plano["price_id"] = novo_preco.id
+                    except Exception as e:
+                        print(f"Erro ao lidar com produto: {str(e)}")
+                        raise
+            except Exception as e:
+                print(f"Erro ao criar preço recorrente: {str(e)}")
+                return {"error": f"Erro ao criar preço recorrente: {str(e)}"}
+        
+        # Configurar detalhes de pagamento com URLs dinâmicas
+        domain = "https://planner-organizer.replit.app"
+        
         checkout_session_params = {
             "line_items": [
                 {
@@ -86,8 +209,8 @@ async def create_checkout_session(request: CheckoutRequest):
                 }
             ],
             "mode": mode,
-            "success_url": "https://planner-organizer.replit.app/sucesso?session_id={CHECKOUT_SESSION_ID}",
-            "cancel_url": "https://planner-organizer.replit.app/cancelado",
+            "success_url": f"{domain}/sucesso?session_id={{CHECKOUT_SESSION_ID}}",
+            "cancel_url": f"{domain}/cancelado",
             "metadata": {
                 "plan_id": request.plan_id,
                 "plano_nome": plano["nome"],
@@ -105,6 +228,9 @@ async def create_checkout_session(request: CheckoutRequest):
                 "trial_period_days": plano["periodo_teste"]
             }
         
+        # Adicionar informações de diagnóstico
+        print(f"Criando sessão com parâmetros: {checkout_session_params}")
+        
         # Criar sessão de checkout
         checkout_session = stripe.checkout.Session.create(**checkout_session_params)
         
@@ -115,8 +241,18 @@ async def create_checkout_session(request: CheckoutRequest):
         }
     
     except stripe.error.StripeError as e:
-        # Capturar e retornar erros do Stripe
-        return {"error": str(e)}
+        # Capturar e retornar erros do Stripe mais detalhados
+        error_details = {
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "plan_id": request.plan_id
+        }
+        # Adicionar o modo apenas se já estiver definido
+        if 'mode' in locals():
+            error_details["mode"] = mode
+            
+        print(f"Erro do Stripe: {error_details}")
+        return error_details
     except Exception as e:
         # Capturar outros erros
         return {"error": f"Erro ao criar sessão de checkout: {str(e)}"}
