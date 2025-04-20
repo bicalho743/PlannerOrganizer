@@ -1,13 +1,13 @@
 """
-Gerenciador de assinaturas para integração Firebase-Stripe.
+Gerenciador de assinaturas para integração com Firebase.
 Este módulo verifica e gerencia o status de assinatura dos usuários.
 """
 import logging
 import time
 from datetime import datetime
 import streamlit as st
-import pyrebase
-from utils.firebase_config import firebase, db, auth
+import os
+from utils.firebase_config import db, initialize_firebase
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO)
@@ -17,8 +17,8 @@ class SubscriptionManager:
     """Classe para gerenciar assinaturas e planos de usuários"""
     
     def __init__(self):
-        self.db = db
-        self.auth = auth
+        # Inicializa o Firebase se ainda não estiver inicializado
+        _, self.db = initialize_firebase() if not db else (None, db)
         
     def get_user_subscription(self, user_id):
         """
@@ -39,12 +39,12 @@ class SubscriptionManager:
             }
             
         try:
-            # Obter documento do usuário
-            user_ref = self.db.child("users").child(user_id)
-            user_data = user_ref.get()
+            # Obter documento do usuário (usando Firestore)
+            user_ref = self.db.collection("users").document(user_id)
+            user_doc = user_ref.get()
             
-            if user_data and "subscription" in user_data.val():
-                return user_data.val()["subscription"]
+            if user_doc.exists and "subscription" in user_doc.to_dict():
+                return user_doc.to_dict()["subscription"]
             
             # Usuário não tem assinatura
             return None
