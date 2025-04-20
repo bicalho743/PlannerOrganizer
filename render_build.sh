@@ -13,8 +13,12 @@ pip install anthropic humanize mercadopago numpy openai openpyxl plotly pyjwt py
 pip install reflex reportlab schedule sqlalchemy trafilatura twilio unidecode werkzeug xlrd
 pip install zipfile36 streamlit-authenticator requests pyrebase4
 
-# Agora, sem a configuração no-dependencies, instale apenas o Stripe
+# Agora, sem a configuração no-dependencies, executamos o script de limpeza do Python
 unset PIP_CONFIG_FILE
-pip install --no-cache-dir stripe>=11.5.0
+chmod +x render_cleanup.py
+python render_cleanup.py
+
+# Uma última verificação para garantir que temos a versão correta
+pip list | grep stripe
 
 echo "Instalação concluída com sucesso!"
