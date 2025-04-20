@@ -131,14 +131,6 @@ args = "Planos Diretos"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Stripe Payment API"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Firebase Stripe Integration"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Login Efetivo"
 
 [[workflows.workflow.tasks]]
@@ -151,11 +143,7 @@ args = "Verificar Firebase-PostgreSQL"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Planos Simplificados"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Cadastro"
+args = "Planos Sem Stripe"
 
 [[workflows.workflow]]
 name = "Teste Importação"
@@ -586,34 +574,6 @@ args = "streamlit run planos_direct_links.py --server.port 8400 --server.address
 waitForPort = 8400
 
 [[workflows.workflow]]
-name = "Stripe Payment API"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd api && python -m uvicorn stripe_payment:app --host 0.0.0.0 --port 8000"
-
-[[workflows.workflow]]
-name = "Firebase Stripe Integration"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd api && python -m uvicorn firebase_stripe_integration:app --host 0.0.0.0 --port 8001"
-
-[[workflows.workflow]]
 name = "Login Efetivo"
 author = "agent"
 
@@ -668,7 +628,7 @@ args = "streamlit run firebase_database_check.py --server.port 8999 --server.add
 waitForPort = 8999
 
 [[workflows.workflow]]
-name = "Planos Simplificados"
+name = "Planos Sem Stripe"
 author = "agent"
 
 [workflows.workflow.metadata]
@@ -679,23 +639,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run planos_simplificados.py --server.port 5005 --server.address 0.0.0.0 --server.headless true"
-waitForPort = 5005
-
-[[workflows.workflow]]
-name = "Cadastro"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run cadastro.py --server.port 5006 --server.address 0.0.0.0 --server.headless true"
-waitForPort = 5006
+args = "streamlit run planos_sem_stripe.py --server.port 5005 --server.address 0.0.0.0 --server.headless true"
 
 [[ports]]
 localPort = 443

@@ -522,13 +522,12 @@ if not st.session_state.authenticated:
         # TABELA DE PLANOS SIMPLIFICADA (com links para página de checkout separada)
         col1, col2, col3 = st.columns([1, 1.2, 1])  # o do meio ganha mais espaço
         
-        # Obter a chave publicável do Stripe do ambiente
-        stripe_publishable_key = os.environ.get("STRIPE_PUBLISHABLE_KEY")
+        # Exibir informações de contato para vendas
+        contato_email = "contato@plannerorganizer.com.br"
+        contato_whatsapp = "+55 (11) 99999-9999"
         
-        # URLs diretas para checkout com Stripe
-        checkout_mensal_url = "https://buy.stripe.com/bIY8yb4jmetOfSM001"
-        checkout_anual_url = "https://buy.stripe.com/7sI7u703699u21W6os"
-        checkout_vitalicio_url = "https://buy.stripe.com/bIY7u70363PadKEfZ1"
+        # URLs para páginas específicas do produto (sem Stripe)
+        planos_url = "/planos_sem_stripe"
 
         # Plano Mensal
         with col1:
@@ -549,9 +548,9 @@ if not st.session_state.authenticated:
             </div>
             """, unsafe_allow_html=True)
             
-            # Link para a página de checkout
+            # Link para a página de planos
             st.markdown(f"""
-            <a href="{checkout_mensal_url}" target="_blank" style="text-decoration: none;">
+            <a href="{planos_url}" target="_blank" style="text-decoration: none;">
                 <button style="width: 100%; padding: 10px; background-color: #1E88E5; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
                     Assinar Plano Mensal
                 </button>
@@ -579,9 +578,9 @@ if not st.session_state.authenticated:
             </div>
             """, unsafe_allow_html=True)
             
-            # Link para a página de checkout
+            # Link para a página de planos
             st.markdown(f"""
-            <a href="{checkout_anual_url}" target="_blank" style="text-decoration: none;">
+            <a href="{planos_url}" target="_blank" style="text-decoration: none;">
                 <button style="width: 100%; padding: 10px; background-color: #1E88E5; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
                     Assinar Plano Anual
                 </button>
@@ -608,9 +607,9 @@ if not st.session_state.authenticated:
             </div>
             """, unsafe_allow_html=True)
             
-            # Link para a página de checkout
+            # Link para a página de planos
             st.markdown(f"""
-            <a href="{checkout_vitalicio_url}" target="_blank" style="text-decoration: none;">
+            <a href="{planos_url}" target="_blank" style="text-decoration: none;">
                 <button style="width: 100%; padding: 10px; background-color: #1E88E5; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
                     Adquirir Acesso Vitalício
                 </button>
@@ -866,28 +865,27 @@ if not st.session_state.authenticated:
                                         )
                                         
                                         if response.status_code == 200:
-                                            checkout_data = response.json()
+                                            user_data = response.json()
                                             
                                             # Salvar UID para uso futuro
-                                            st.session_state.firebase_uid = checkout_data.get("firebase_uid")
+                                            st.session_state.firebase_uid = user_data.get("firebase_uid")
                                             
-                                            # Redirecionar para a página de checkout do Stripe
-                                            checkout_url = checkout_data.get("url")
+                                            # Redirecionar para a página de planos sem Stripe
+                                            st.success("Conta criada com sucesso! Você será redirecionado para a página de planos.")
                                             
-                                            if checkout_url:
-                                                st.success("Conta criada com sucesso! Redirecionando para o checkout...")
-                                                st.markdown(f"""
-                                                <script>
-                                                    window.location.href = "{checkout_url}";
-                                                </script>
-                                                """, unsafe_allow_html=True)
-                                                
-                                                # Mostrar link manual
-                                                st.markdown(f"""
-                                                Se não for redirecionado automaticamente, [clique aqui para prosseguir com o pagamento]({checkout_url})
-                                                """)
-                                            else:
-                                                st.error(f"Erro ao criar sessão de checkout. Por favor, tente novamente.")
+                                            # Redirecionamento para a página de planos
+                                            st.markdown(f"""
+                                            <script>
+                                                setTimeout(function() {{
+                                                    window.location.href = "{planos_url}";
+                                                }}, 3000);
+                                            </script>
+                                            """, unsafe_allow_html=True)
+                                            
+                                            # Mostrar link manual
+                                            st.markdown(f"""
+                                            Se não for redirecionado automaticamente, [clique aqui para ver os planos disponíveis]({planos_url})
+                                            """)
                                         else:
                                             st.error(f"Erro: {response.status_code} - {response.text}")
                                     
@@ -906,24 +904,21 @@ if not st.session_state.authenticated:
                                             firebase_uid = result.get('user_id')
                                             st.session_state.firebase_uid = firebase_uid
                                             
-                                            # Redirecionar para checkout do Stripe diretamente
-                                            # Sem necessidade de converter, pois esses são os links diretos
-                                            checkout_url = {
-                                                "mensal": checkout_mensal_url,
-                                                "anual": checkout_anual_url,
-                                                "vitalicio": checkout_vitalicio_url
-                                            }.get(st.session_state.selected_plan)
+                                            # Redirecionar para a página de planos sem Stripe
+                                            st.success("Conta criada com sucesso! Você será redirecionado para a página de planos.")
                                             
-                                            st.success("Conta criada com sucesso! Redirecionando para o checkout...")
+                                            # Redirecionamento para a página de planos
                                             st.markdown(f"""
                                             <script>
-                                                window.location.href = "{checkout_url}";
+                                                setTimeout(function() {{
+                                                    window.location.href = "{planos_url}";
+                                                }}, 3000);
                                             </script>
                                             """, unsafe_allow_html=True)
                                             
                                             # Mostrar link manual
                                             st.markdown(f"""
-                                            Se não for redirecionado automaticamente, [clique aqui para prosseguir com o pagamento]({checkout_url})
+                                            Se não for redirecionado automaticamente, [clique aqui para ver os planos disponíveis]({planos_url})
                                             """)
                                         else:
                                             st.error("Erro ao criar conta. Verifique se o e-mail já está em uso.")
