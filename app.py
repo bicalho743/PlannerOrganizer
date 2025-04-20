@@ -31,6 +31,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Definir URL dos planos (para compatibilidade com código existente)
+planos_url = "pages/planos_sem_stripe.py"
+
 # Adicionar diretório raiz ao path
 project_root = os.path.abspath(os.path.dirname(__file__))
 if project_root not in sys.path:

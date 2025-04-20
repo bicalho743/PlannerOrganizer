@@ -137,9 +137,14 @@ def exibir_planos_simples():
                 <p class="feature-item">✅ Exportação de relatórios</p>
                 <p class="feature-item">✅ Sem preocupação mensal</p>
             </div>
-            <button class="pricing-button" style="background-color: #ffa500;" onclick="alert('Funcionalidade em implementação. Entre em contato para assinar.')">Melhor Valor!</button>
         </div>
         """, unsafe_allow_html=True)
+        
+        # Botão nativo do Streamlit destacado
+        st.markdown('<style>div[data-testid="stButton"] button {background-color: #FFA500;}</style>', unsafe_allow_html=True)
+        if st.button("Melhor Valor! Assinar Plano Anual", key="anual_btn", type="primary", use_container_width=True):
+            st.success("Funcionalidade em implementação. Entre em contato para assinar.")
+            st.balloons()
     
     # Plano Vitalício
     with col3:
@@ -156,9 +161,13 @@ def exibir_planos_simples():
                 <p class="feature-item">✅ Atualizações gratuitas</p>
                 <p class="feature-item">✅ 100% sem recorrência</p>
             </div>
-            <button class="pricing-button" onclick="alert('Funcionalidade em implementação. Entre em contato para adquirir.')">Adquirir</button>
         </div>
         """, unsafe_allow_html=True)
+        
+        # Botão nativo do Streamlit para o plano vitalício
+        if st.button("Adquirir Acesso Vitalício", key="vitalicio_btn", type="primary", use_container_width=True):
+            st.success("Funcionalidade em implementação. Entre em contato para adquirir.")
+            st.balloons()
     
     # Informações de contato e FAQ
     st.markdown("""
