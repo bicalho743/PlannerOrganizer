@@ -3,10 +3,18 @@
 # Script para construir a aplicação no Render
 # Este script resolve o problema de conflito na versão do Stripe
 
-# Instalar diretamente do arquivo de requisitos unificado
-pip install -r requirements_unified.txt
+# Primeiro, remova qualquer versão existente do Stripe
+pip uninstall -y stripe
 
-# Garantir que a versão do Stripe seja a mais recente
-pip install --force-reinstall stripe>=11.5.0
+# Instalar pacotes sem dependências (exceto Stripe)
+export PIP_CONFIG_FILE=render_pip.conf
+pip install streamlit fastapi uvicorn psycopg2-binary pandas firebase-admin 
+pip install anthropic humanize mercadopago numpy openai openpyxl plotly pyjwt pypdf2
+pip install reflex reportlab schedule sqlalchemy trafilatura twilio unidecode werkzeug xlrd
+pip install zipfile36 streamlit-authenticator requests pyrebase4
+
+# Agora, sem a configuração no-dependencies, instale apenas o Stripe
+unset PIP_CONFIG_FILE
+pip install --no-cache-dir stripe>=11.5.0
 
 echo "Instalação concluída com sucesso!"
