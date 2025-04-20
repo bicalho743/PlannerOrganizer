@@ -39,18 +39,37 @@ class SubscriptionManager:
             }
             
         try:
-            # Obter documento do usuário (usando Firestore)
-            user_ref = self.db.collection("users").document(user_id)
-            user_doc = user_ref.get()
-            
-            if user_doc.exists and "subscription" in user_doc.to_dict():
-                return user_doc.to_dict()["subscription"]
-            
-            # Usuário não tem assinatura
-            return None
+            # Tentar usar Firestore se disponível
+            try:
+                # Obter documento do usuário (usando Firestore)
+                user_ref = self.db.collection("users").document(user_id)
+                user_doc = user_ref.get()
+                
+                if user_doc.exists and "subscription" in user_doc.to_dict():
+                    return user_doc.to_dict()["subscription"]
+                
+                # Usuário não tem assinatura
+                return None
+                
+            except Exception as firestore_error:
+                # Firestore não está disponível, usar modo de demonstração
+                logger.warning(f"Firestore não disponível: {firestore_error}")
+                return {
+                    "status": "active",
+                    "plan": "demo",
+                    "tipo": "vitalicio",
+                    "demo_mode": True
+                }
+                
         except Exception as e:
             logger.error(f"Erro ao obter assinatura: {e}")
-            return None
+            # Retornar assinatura de demonstração em caso de erro
+            return {
+                "status": "active",
+                "plan": "demo",
+                "tipo": "vitalicio",
+                "demo_mode": True
+            }
     
     def is_subscription_active(self, user_id):
         """

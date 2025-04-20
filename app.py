@@ -15,6 +15,15 @@ import logging
 import pandas as pd
 from datetime import datetime
 
+# Verificar se há um redirecionamento pendente para a página de planos
+if "redirect_to_planos" in st.session_state and st.session_state.redirect_to_planos:
+    # Resetar o estado de redirecionamento
+    plano_selecionado = st.session_state.plano_selecionado
+    st.session_state.redirect_to_planos = False
+    
+    # Redirecionar para a página de planos
+    st.switch_page("pages/planos_sem_stripe.py")
+
 # Configurar logging
 logging.basicConfig(
     level=logging.INFO,
@@ -527,7 +536,8 @@ if not st.session_state.authenticated:
         contato_whatsapp = "+55 (11) 99999-9999"
         
         # URLs para páginas específicas do produto (sem Stripe)
-        planos_url = "/planos_sem_stripe"
+        # No Streamlit, a navegação é diferente do HTML normal
+        # Vamos usar uma solução baseada em estado para navegar
 
         # Plano Mensal
         with col1:
@@ -548,14 +558,12 @@ if not st.session_state.authenticated:
             </div>
             """, unsafe_allow_html=True)
             
-            # Link para a página de planos
-            st.markdown(f"""
-            <a href="{planos_url}" target="_blank" style="text-decoration: none;">
-                <button style="width: 100%; padding: 10px; background-color: #1E88E5; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
-                    Assinar Plano Mensal
-                </button>
-            </a>
-            """, unsafe_allow_html=True)
+            # Botão nativo para a página de planos
+            if st.button("Assinar Plano Mensal", key="btn_mensal", use_container_width=True):
+                # Adicionar ao estado para navegar
+                st.session_state.redirect_to_planos = True
+                st.session_state.plano_selecionado = "mensal"
+                st.rerun()
 
         # Plano Anual
         with col2:
@@ -578,14 +586,12 @@ if not st.session_state.authenticated:
             </div>
             """, unsafe_allow_html=True)
             
-            # Link para a página de planos
-            st.markdown(f"""
-            <a href="{planos_url}" target="_blank" style="text-decoration: none;">
-                <button style="width: 100%; padding: 10px; background-color: #1E88E5; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
-                    Assinar Plano Anual
-                </button>
-            </a>
-            """, unsafe_allow_html=True)
+            # Botão nativo para a página de planos
+            if st.button("Assinar Plano Anual", key="btn_anual", use_container_width=True):
+                # Adicionar ao estado para navegar
+                st.session_state.redirect_to_planos = True
+                st.session_state.plano_selecionado = "anual"
+                st.rerun()
 
         # Plano Vitalício
         with col3:
@@ -607,14 +613,12 @@ if not st.session_state.authenticated:
             </div>
             """, unsafe_allow_html=True)
             
-            # Link para a página de planos
-            st.markdown(f"""
-            <a href="{planos_url}" target="_blank" style="text-decoration: none;">
-                <button style="width: 100%; padding: 10px; background-color: #1E88E5; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
-                    Adquirir Acesso Vitalício
-                </button>
-            </a>
-            """, unsafe_allow_html=True)
+            # Botão nativo para a página de planos
+            if st.button("Adquirir Acesso Vitalício", key="btn_vitalicio", use_container_width=True):
+                # Adicionar ao estado para navegar
+                st.session_state.redirect_to_planos = True
+                st.session_state.plano_selecionado = "vitalicio"
+                st.rerun()
         
         # CTA (Call to Action)
         st.markdown('''
