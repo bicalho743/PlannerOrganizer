@@ -18,14 +18,14 @@ router.post('/salvar-usuario', async (req, res) => {
   try {
     // Verificar se o usuário já existe
     const userCheck = await pool.query(
-      'SELECT * FROM usuarios WHERE uid = $1 OR email = $2',
+      'SELECT * FROM usuarios_firebase WHERE uid = $1 OR email = $2',
       [uid, email]
     );
 
     if (userCheck.rows.length > 0) {
       // Usuário já existe, atualizar os dados
       const result = await pool.query(
-        `UPDATE usuarios 
+        `UPDATE usuarios_firebase 
          SET nome = $1, provedor = $2, foto_url = $3, ultimo_login = CURRENT_TIMESTAMP
          WHERE uid = $4
          RETURNING *`,
@@ -40,7 +40,7 @@ router.post('/salvar-usuario', async (req, res) => {
     } else {
       // Novo usuário, inserir no banco
       const result = await pool.query(
-        `INSERT INTO usuarios (uid, nome, email, provedor, foto_url)
+        `INSERT INTO usuarios_firebase (uid, nome, email, provedor, foto_url)
          VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
         [uid, nome, email, provedor, foto_url]
@@ -69,7 +69,7 @@ router.get('/usuario/:uid', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'SELECT * FROM usuarios WHERE uid = $1',
+      'SELECT * FROM usuarios_firebase WHERE uid = $1',
       [uid]
     );
 
@@ -90,6 +90,27 @@ router.get('/usuario/:uid', async (req, res) => {
     return res.status(500).json({
       sucesso: false,
       mensagem: 'Erro interno ao buscar usuário',
+      erro: error.message
+    });
+  }
+});
+
+// Rota para listar todos os usuários do Firebase
+router.get('/usuarios', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM usuarios_firebase ORDER BY criado_em DESC');
+    
+    return res.status(200).json({
+      sucesso: true,
+      total: result.rows.length,
+      usuarios: result.rows
+    });
+  } catch (error) {
+    console.error('Erro ao listar usuários:', error);
+    
+    return res.status(500).json({
+      sucesso: false,
+      mensagem: 'Erro interno ao listar usuários',
       erro: error.message
     });
   }

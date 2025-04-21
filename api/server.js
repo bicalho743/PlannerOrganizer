@@ -23,15 +23,20 @@ app.get('/', (req, res) => {
   res.sendFile('login.html', { root: 'public' });
 });
 
+// Rota de teste de status
+app.get('/status', (req, res) => {
+  res.json({ status: 'online', timestamp: new Date() });
+});
+
 // Inicializar o banco de dados e iniciar o servidor
 async function iniciarServidor() {
   try {
     // Inicializar o banco de dados
     await initializeDatabase();
     
-    // Iniciar o servidor
-    app.listen(PORT, () => {
-      console.log(`Servidor rodando em http://localhost:${PORT}`);
+    // Iniciar o servidor em 0.0.0.0 para estar acessível externamente
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Servidor rodando em http://0.0.0.0:${PORT}`);
     });
   } catch (error) {
     console.error('Erro ao iniciar o servidor:', error);

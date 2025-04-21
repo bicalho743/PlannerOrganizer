@@ -157,6 +157,10 @@ args = "Login Social"
 task = "workflow.run"
 args = "Login Minimo"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "API do Firebase"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -637,7 +641,6 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run firebase_database_check.py --server.port 8999 --server.address 0.0.0.0"
-waitForPort = 8999
 
 [[workflows.workflow]]
 name = "Planos Sem Stripe"
@@ -697,6 +700,20 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run login_minimo.py --server.port 8080 --server.address 0.0.0.0"
 waitForPort = 8080
+
+[[workflows.workflow]]
+name = "API do Firebase"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd api && node server.js"
 
 [[ports]]
 localPort = 443

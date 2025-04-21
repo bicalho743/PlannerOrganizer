@@ -16,9 +16,9 @@ const pool = new Pool({
 // Função para inicializar o banco de dados com as tabelas necessárias
 export async function initializeDatabase() {
   try {
-    // Criar tabela de usuários se não existir
+    // Criar tabela de usuários firebase se não existir
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS usuarios (
+      CREATE TABLE IF NOT EXISTS usuarios_firebase (
         id SERIAL PRIMARY KEY,
         uid TEXT UNIQUE NOT NULL,
         nome TEXT,
