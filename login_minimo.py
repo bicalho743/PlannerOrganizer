@@ -13,7 +13,7 @@ if "user" not in st.session_state:
     st.session_state.user = None
 
 # Verificar parâmetros de URL
-params = st.experimental_get_query_params()
+params = st.query_params.to_dict()
 if "auth_success" in params and params["auth_success"][0] == "true":
     if "uid" in params and "email" in params:
         uid = params["uid"][0]
@@ -28,7 +28,7 @@ if "auth_success" in params and params["auth_success"][0] == "true":
         }
         
         # Limpar parâmetros
-        st.experimental_set_query_params()
+        st.query_params.clear()
         st.rerun()
 
 # Título da página

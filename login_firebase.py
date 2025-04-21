@@ -41,7 +41,7 @@ firebase_config = {
 }
 
 # Verificar parâmetros de autenticação na URL
-query_params = st.experimental_get_query_params()
+query_params = st.query_params.to_dict()
 if "auth_success" in query_params and query_params["auth_success"][0] == "true":
     if "uid" in query_params and "email" in query_params:
         uid = query_params["uid"][0]
@@ -57,7 +57,7 @@ if "auth_success" in query_params and query_params["auth_success"][0] == "true":
         }
         
         # Limpar parâmetros da URL
-        st.experimental_set_query_params()
+        st.query_params.clear()
         st.rerun()
 
 # Título da página

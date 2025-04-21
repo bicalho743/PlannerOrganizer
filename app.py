@@ -52,7 +52,7 @@ if "authenticated" not in st.session_state:
 # Verificar se há dados de login do Firebase
 if not st.session_state.authenticated:
     # Verificar parâmetros de URL para login com Firebase
-    params = st.experimental_get_query_params()
+    params = st.query_params.to_dict()
     if "login_success" in params and params["login_success"][0] == "true":
         if "uid" in params and "email" in params:
             # Login com Firebase bem-sucedido
@@ -71,7 +71,7 @@ if not st.session_state.authenticated:
             st.session_state.subscription = {"status": "active", "demo_mode": True}
             
             # Limpar parâmetros da URL
-            st.experimental_set_query_params()
+            st.query_params.clear()
             st.rerun()
 
 # Adicionar o Firebase SDK para autenticação na página

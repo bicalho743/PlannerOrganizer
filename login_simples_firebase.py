@@ -182,7 +182,7 @@ if not st.session_state.authenticated:
     """, unsafe_allow_html=True)
     
     # Verificar parâmetros de login
-    params = st.experimental_get_query_params()
+    params = st.query_params.to_dict()
     if "login_success" in params and params["login_success"][0] == "true":
         if "uid" in params and "email" in params:
             uid = params["uid"][0]
@@ -197,7 +197,7 @@ if not st.session_state.authenticated:
             }
             
             # Limpar parâmetros da URL
-            st.experimental_set_query_params()
+            st.query_params.clear()
             st.rerun()
     
     # Login tradicional

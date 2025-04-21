@@ -81,7 +81,7 @@ st.markdown("""
 # Utilidades para manipular parâmetros de URL
 def get_query_params():
     """Obter parâmetros da URL query string"""
-    query_params = st.experimental_get_query_params()
+    query_params = st.query_params.to_dict()
     return query_params
 
 # Mapeamento entre os nomes dos planos em português e os IDs no Stripe
