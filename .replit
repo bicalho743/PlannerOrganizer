@@ -1,12 +1,11 @@
-modules = ["python-3.11", "nodejs-20"]
+modules = ["python-3.11"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["freetype", "gettext", "glibcLocales", "unzip"]
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["sh", "-c", "python -m streamlit run recuperacao_senha.py --server.port 5000 --server.address 0.0.0.0"]
+run = ["sh", "-c", "streamlit run app.py --server.port 5000 --server.address 0.0.0.0"]
 build = ["sh", "-c", "pip install -r requirements.txt"]
 
 [workflows]
@@ -55,6 +54,10 @@ args = "Ajustar Data Proposta"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
 args = "Limpar Propostas"
 
 [[workflows.workflow.tasks]]
@@ -79,6 +82,10 @@ args = "Login"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
+args = "Login Simples"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
 args = "Planos Landing"
 
 [[workflows.workflow.tasks]]
@@ -88,130 +95,6 @@ args = "Planos Simples"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Planos Minimal"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Stripe API"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Stripe Simple API"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Stripe Direct API"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Planos Stripe Direto"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login Simples"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login Portal"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Planos JS"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Checkout Simples"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Planos Diretos"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login Efetivo"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Sincronizar Clientes com Firebase"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Verificar Firebase-PostgreSQL"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Planos Sem Stripe"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login Firebase"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login Social"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login Minimo"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "API do Firebase"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login Firebase Novo"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login Firebase Basico"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login Firebase Iframe"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login Direto"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login Landing"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login com Verificação"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login Atualizado"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login Recuperação"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login Moderno"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login Simples Senha"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login Recuperação Senha"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login Recuperacao Restaurado"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Reset Senha"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Iniciar App MVP"
 
 [[workflows.workflow]]
 name = "Teste Importação"
@@ -349,6 +232,21 @@ args = "streamlit run ajustar_data_proposta.py --server.port 8520 --server.addre
 waitForPort = 8520
 
 [[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run app.py --server.port 5000 --server.address 0.0.0.0"
+waitForPort = 5000
+
+[[workflows.workflow]]
 name = "Limpar Propostas"
 author = "agent"
 
@@ -447,6 +345,21 @@ args = "streamlit run login.py --server.port 5001 --server.address 0.0.0.0"
 waitForPort = 5001
 
 [[workflows.workflow]]
+name = "Login Simples"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0.0"
+waitForPort = 5001
+
+[[workflows.workflow]]
 name = "Planos Landing"
 author = "agent"
 
@@ -490,487 +403,6 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run planos_minimal.py --server.port 8801 --server.address 0.0.0.0"
 waitForPort = 8801
-
-[[workflows.workflow]]
-name = "Stripe API"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd api && python -m uvicorn stripe_integration:app --reload --host 0.0.0.0 --port 8000"
-waitForPort = 8000
-
-[[workflows.workflow]]
-name = "Stripe Simple API"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd api && python -m uvicorn stripe_simple:app --reload --host 0.0.0.0 --port 8001"
-waitForPort = 8001
-
-[[workflows.workflow]]
-name = "Stripe Direct API"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd api && python -m uvicorn stripe_direct:app --host 0.0.0.0 --port 8002"
-waitForPort = 8002
-
-[[workflows.workflow]]
-name = "Planos Stripe Direto"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run planos_stripe_direto.py --server.port 8008 --server.address 0.0.0.0"
-waitForPort = 8008
-
-[[workflows.workflow]]
-name = "Login Simples"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0.0"
-waitForPort = 5001
-
-[[workflows.workflow]]
-name = "Login Portal"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0.0"
-waitForPort = 5001
-
-[[workflows.workflow]]
-name = "Planos JS"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run planos_js.py --server.port 8100 --server.address 0.0.0.0"
-waitForPort = 8100
-
-[[workflows.workflow]]
-name = "Checkout Simples"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run planos_simples_checkout.py --server.port 8200 --server.address 0.0.0.0"
-waitForPort = 8200
-
-[[workflows.workflow]]
-name = "Planos Diretos"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run planos_direct_links.py --server.port 8400 --server.address 0.0.0.0"
-waitForPort = 8400
-
-[[workflows.workflow]]
-name = "Login Efetivo"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run login_efetivo.py --server.port 8999 --server.address 0.0.0.0"
-waitForPort = 8999
-
-[[workflows.workflow]]
-name = "Sincronizar Clientes com Firebase"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run sincronizar_clientes.py --server.port 8700 --server.address 0.0.0.0"
-waitForPort = 8700
-
-[[workflows.workflow]]
-name = "Sincronizar Firebase 5050"
-author = 39445503
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run sincronizar_clientes.py --server.port 5050 --server.address 0.0.0.0"
-
-[[workflows.workflow]]
-name = "Verificar Firebase-PostgreSQL"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run firebase_database_check.py --server.port 8999 --server.address 0.0.0.0"
-
-[[workflows.workflow]]
-name = "Planos Sem Stripe"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run planos_sem_stripe.py --server.port 5005 --server.address 0.0.0.0 --server.headless true"
-
-[[workflows.workflow]]
-name = "Login Firebase"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run login_firebase.py --server.port 5003 --server.address 0.0.0.0"
-waitForPort = 5003
-
-[[workflows.workflow]]
-name = "Login Social"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run login_social.py --server.port 8888 --server.address 0.0.0.0"
-waitForPort = 8888
-
-[[workflows.workflow]]
-name = "Login Minimo"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run login_minimo.py --server.port 8080 --server.address 0.0.0.0"
-waitForPort = 8080
-
-[[workflows.workflow]]
-name = "API do Firebase"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd api && node server.js"
-
-[[workflows.workflow]]
-name = "Login Firebase Novo"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python -m streamlit run login_firebase_novo.py --server.port 8889 --server.address 0.0.0.0"
-waitForPort = 8889
-
-[[workflows.workflow]]
-name = "Login Firebase Basico"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run login_firebase_basico.py --server.port 8890 --server.address 0.0.0.0"
-waitForPort = 8890
-
-[[workflows.workflow]]
-name = "Login Firebase Iframe"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run login_iframe.py --server.port 8895 --server.address 0.0.0.0"
-waitForPort = 8895
-
-[[workflows.workflow]]
-name = "Login Direto"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run login_direto.py --server.port 8080 --server.address 0.0.0.0"
-waitForPort = 8080
-
-[[workflows.workflow]]
-name = "Login Landing"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run login_simples_landing.py --server.port 5001 --server.address 0.0.0.0"
-waitForPort = 5001
-
-[[workflows.workflow]]
-name = "Login com Verificação"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run login_com_verificacao.py --server.port 5001 --server.address 0.0.0.0"
-waitForPort = 5001
-
-[[workflows.workflow]]
-name = "Login Atualizado"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python -m streamlit run login_senhas_atualizado.py --server.port 5015 --server.headless=true --server.address=0.0.0.0"
-waitForPort = 5015
-
-[[workflows.workflow]]
-name = "Login Recuperação"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python -m streamlit run login_recuperacao.py --server.port 5555 --server.address 0.0.0.0"
-waitForPort = 5555
-
-[[workflows.workflow]]
-name = "Login Moderno"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python -m streamlit run login_moderno.py --server.port 5020 --server.address 0.0.0.0"
-waitForPort = 5020
-
-[[workflows.workflow]]
-name = "Login Simples Senha"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python -m streamlit run login_simples_senha.py --server.port 5010 --server.address 0.0.0.0"
-waitForPort = 5010
-
-[[workflows.workflow]]
-name = "Login Recuperação Senha"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python -m streamlit run login_recuperacao_senha.py --server.port 5555"
-waitForPort = 5555
-
-[[workflows.workflow]]
-name = "Main Application"
-author = 39445503
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run app.py --server.port 5000 --server.address 0.0.0.0 --server.headless true --server.enableCORS=false --server.enableWebsocketCompression=false"
-
-[[workflows.workflow]]
-name = "Login Recuperacao Restaurado"
-author = "agent"
-mode = "sequential"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python -m streamlit run login_recuperacao_restaurado.py --server.port 5000 --server.address 0.0.0.0"
-waitForPort = 5000
-
-[[workflows.workflow]]
-name = "Reset Senha"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python -m streamlit run senha_reset.py --server.port 8888 --server.address 0.0.0.0"
-waitForPort = 8888
-
-[[workflows.workflow]]
-name = "Iniciar App MVP"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run iniciar_app_mvp.py --server.port 5010 --server.address 0.0.0.0"
-waitForPort = 5010
 
 [[ports]]
 localPort = 443

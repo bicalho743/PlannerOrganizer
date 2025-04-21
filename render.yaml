@@ -3,7 +3,7 @@ services:
   - type: web
     name: planner-organiza
     env: python
-    buildCommand: chmod +x render_build.sh && ./render_build.sh
+    buildCommand: pip install -r requirements.txt
     startCommand: python render_startup.py && streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true --server.enableCORS=false --server.enableWebsocketCompression=false --server.enableXsrfProtection=false --server.maxUploadSize=50
     envVars:
       - key: PYTHON_VERSION
@@ -12,14 +12,6 @@ services:
         sync: false # Você precisa definir isso manualmente no dashboard do Render
       - key: JWT_SECRET
         sync: false # Você precisa definir isso manualmente no dashboard do Render
-      - key: STRIPE_API_KEY
-        sync: false # Adicione sua chave secreta do Stripe no dashboard do Render
-      - key: STRIPE_PUBLISHABLE_KEY
-        sync: false # Adicione sua chave publicável do Stripe no dashboard do Render
-      - key: FIREBASE_API_KEY
-        sync: false # Adicione sua chave API do Firebase no dashboard do Render
-      - key: FIREBASE_DATABASE_URL
-        sync: false # Adicione o URL do seu banco de dados Firebase no dashboard do Render
     autoDeploy: true
     healthCheckPath: /_stcore/health
     plan: free # Você pode mudar para 'starter' se precisar de mais recursos

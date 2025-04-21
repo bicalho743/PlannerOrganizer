@@ -1,28 +1,9 @@
-import streamlit as st
-
-# Configuração inicial da página - DEVE ser o primeiro comando Streamlit
-st.set_page_config(
-    page_title="Planner Organizer - Sistema Profissional",
-    page_icon="favicon.png",
-    layout="wide",
-    initial_sidebar_state="auto"
-)
-
 import os
 import sys
-import json
+import streamlit as st
 import logging
 import pandas as pd
 from datetime import datetime
-
-# Verificar se há um redirecionamento pendente para a página de planos
-if "redirect_to_planos" in st.session_state and st.session_state.redirect_to_planos:
-    # Resetar o estado de redirecionamento
-    plano_selecionado = st.session_state.plano_selecionado
-    st.session_state.redirect_to_planos = False
-    
-    # Redirecionar para a página de planos
-    st.switch_page("pages/planos_sem_stripe.py")
 
 # Configurar logging
 logging.basicConfig(
@@ -31,9 +12,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Definir URL dos planos (para compatibilidade com código existente)
-planos_url = "pages/planos_sem_stripe.py"
-
 # Adicionar diretório raiz ao path
 project_root = os.path.abspath(os.path.dirname(__file__))
 if project_root not in sys.path:
@@ -41,347 +19,19 @@ if project_root not in sys.path:
     logger.info(f"Adicionado {project_root} ao sys.path")
 
 from utils.database import Database
-
-# Importamos a função simplificada de planos do módulo independente
-from exibir_planos import exibir_planos_simples
+from utils.planos import mostrar_planos  # Importando o módulo de planos
 
 # Verificar se o usuário está autenticado
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
-# Verificar se há dados de login do Firebase
-if not st.session_state.authenticated:
-    # Verificar parâmetros de URL para login com Firebase
-    params = st.query_params.to_dict()
-    if "login_success" in params and params["login_success"][0] == "true":
-        if "uid" in params and "email" in params:
-            # Login com Firebase bem-sucedido
-            uid = params["uid"][0]
-            email = params["email"][0]
-            
-            st.session_state.authenticated = True
-            st.session_state.user = {
-                'user_id': uid,
-                'email': email,
-                'provider': 'firebase',
-                'login_time': datetime.now().isoformat()
-            }
-            
-            # Verificar status da assinatura (simplificado para demonstração)
-            st.session_state.subscription = {"status": "active", "demo_mode": True}
-            
-            # Limpar parâmetros da URL
-            st.query_params.clear()
-            st.rerun()
-
-# Adicionar o Firebase SDK para autenticação na página
-st.markdown("""
-<!-- Bibliotecas Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
-<!-- Nosso módulo de autenticação simplificado -->
-<script>
-/**
- * Módulo simples de autenticação Firebase para Streamlit
- * Este módulo fornece funções básicas para login social com o Firebase
- */
-
-// Objeto Firebase Auth global
-const firebaseSimpleAuth = {
-    // Configuração
-    config: null,
-    
-    // Referências internas
-    app: null,
-    auth: null,
-    
-    // Provedores de autenticação
-    googleProvider: null,
-    facebookProvider: null,
-    
-    /**
-     * Inicializa o Firebase com a configuração fornecida
-     * @param {Object} config - Configuração do Firebase
-     */
-    init: function(config) {
-        try {
-            console.log("Inicializando Firebase Simple Auth...");
-            
-            // Guardar configuração
-            this.config = config;
-            
-            // Inicializar Firebase se ainda não estiver inicializado
-            if (!firebase.apps.length) {
-                this.app = firebase.initializeApp(config);
-                console.log("Firebase inicializado com sucesso");
-            } else {
-                this.app = firebase.app();
-                console.log("Firebase já estava inicializado");
-            }
-            
-            // Obter auth
-            this.auth = firebase.auth();
-            
-            // Inicializar providers
-            this.googleProvider = new firebase.auth.GoogleAuthProvider();
-            this.facebookProvider = new firebase.auth.FacebookAuthProvider();
-            
-            // Configurar opções adicionais (sugestão de conta, etc)
-            this.googleProvider.setCustomParameters({
-                prompt: 'select_account'
-            });
-            
-            // Configurar listener de estado
-            this.setupAuthListener();
-            
-            return true;
-        } catch (error) {
-            console.error("Erro ao inicializar Firebase:", error);
-            return false;
-        }
-    },
-    
-    /**
-     * Configura o listener de estado de autenticação
-     */
-    setupAuthListener: function() {
-        this.auth.onAuthStateChanged(user => {
-            if (user) {
-                console.log("Usuário autenticado:", user.email);
-                this.saveUserToLocalStorage(user);
-            } else {
-                console.log("Nenhum usuário autenticado");
-            }
-        });
-    },
-    
-    /**
-     * Faz login com Google
-     * @returns {Promise} Promessa resolvida após login
-     */
-    loginWithGoogle: function() {
-        console.log("Iniciando login com Google...");
-        return this.auth.signInWithPopup(this.googleProvider)
-            .then(result => {
-                console.log("Login com Google bem-sucedido:", result.user.email);
-                this.saveUserToLocalStorage(result.user);
-                this.redirectAfterLogin(result.user);
-                return result.user;
-            })
-            .catch(error => {
-                console.error("Erro no login com Google:", error);
-                throw error;
-            });
-    },
-    
-    /**
-     * Faz login com Facebook
-     * @returns {Promise} Promessa resolvida após login
-     */
-    loginWithFacebook: function() {
-        console.log("Iniciando login com Facebook...");
-        return this.auth.signInWithPopup(this.facebookProvider)
-            .then(result => {
-                console.log("Login com Facebook bem-sucedido:", result.user.email);
-                this.saveUserToLocalStorage(result.user);
-                this.redirectAfterLogin(result.user);
-                return result.user;
-            })
-            .catch(error => {
-                console.error("Erro no login com Facebook:", error);
-                throw error;
-            });
-    },
-    
-    /**
-     * Salva dados do usuário no localStorage
-     * @param {Object} user - Objeto de usuário do Firebase
-     */
-    saveUserToLocalStorage: function(user) {
-        // Obter token
-        user.getIdToken().then(idToken => {
-            // Dados a serem salvos
-            const userData = {
-                uid: user.uid,
-                email: user.email,
-                displayName: user.displayName || user.email,
-                photoURL: user.photoURL,
-                idToken: idToken,
-                lastLogin: new Date().toISOString()
-            };
-            
-            // Salvar no localStorage
-            localStorage.setItem('firebase_user', JSON.stringify(userData));
-            console.log("Dados do usuário salvos no localStorage");
-        });
-    },
-    
-    /**
-     * Redireciona após login bem-sucedido
-     * @param {Object} user - Objeto de usuário do Firebase
-     */
-    redirectAfterLogin: function(user) {
-        // Criar URL com parâmetros de autenticação
-        const url = new URL(window.location.href);
-        url.searchParams.set('auth_success', 'true');
-        url.searchParams.set('uid', user.uid);
-        url.searchParams.set('email', encodeURIComponent(user.email));
-        
-        // Pequeno delay para garantir que o token seja salvo
-        setTimeout(() => {
-            console.log("Redirecionando após login bem-sucedido...");
-            window.location.href = url.toString();
-        }, 500);
-    },
-    
-    /**
-     * Verifica se o usuário já está autenticado
-     * @returns {Object|null} Dados do usuário ou null
-     */
-    checkExistingAuth: function() {
-        try {
-            const userData = localStorage.getItem('firebase_user');
-            if (userData) {
-                const user = JSON.parse(userData);
-                console.log("Usuário encontrado no localStorage:", user.email);
-                return user;
-            }
-        } catch (error) {
-            console.error("Erro ao verificar autenticação existente:", error);
-            localStorage.removeItem('firebase_user');
-        }
-        return null;
-    },
-    
-    /**
-     * Faz logout do usuário atual
-     */
-    logout: function() {
-        this.auth.signOut()
-            .then(() => {
-                console.log("Logout realizado com sucesso");
-                localStorage.removeItem('firebase_user');
-                window.location.reload();
-            })
-            .catch(error => {
-                console.error("Erro ao fazer logout:", error);
-            });
-    },
-    
-    /**
-     * Adiciona event listeners aos botões de login
-     */
-    setupLoginButtons: function() {
-        console.log("Configurando botões de login...");
-        
-        // Botão de login com Google
-        const googleBtn = document.getElementById('googleLoginBtn');
-        if (googleBtn) {
-            googleBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.loginWithGoogle()
-                    .catch(error => {
-                        alert(`Erro ao fazer login com Google: ${error.message}`);
-                    });
-            });
-            console.log("Event listener adicionado ao botão do Google");
-        } else {
-            console.warn("Botão do Google não encontrado");
-        }
-        
-        // Botão de login com Facebook
-        const fbBtn = document.getElementById('facebookLoginBtn');
-        if (fbBtn) {
-            fbBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.loginWithFacebook()
-                    .catch(error => {
-                        alert(`Erro ao fazer login com Facebook: ${error.message}`);
-                    });
-            });
-            console.log("Event listener adicionado ao botão do Facebook");
-        } else {
-            console.warn("Botão do Facebook não encontrado");
-        }
-    }
-};
-
-// Exportar o módulo para uso global
-window.firebaseSimpleAuth = firebaseSimpleAuth;
-
-// Inicializar quando a página carregar
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM carregado, verificando autenticação...");
-    
-    // Configurar botões depois que o DOM estiver pronto
-    setTimeout(() => {
-        firebaseSimpleAuth.setupLoginButtons();
-        console.log("Botões configurados");
-    }, 1000);
-});
-</script>
-""", unsafe_allow_html=True)
-
-# Configuração do Firebase
-firebase_config = {
-    "apiKey": st.secrets.get("FIREBASE_API_KEY", "AIzaSyA8xzYgZXCkZ-97RWQZXtMpvLVf1Jx8wjk"),
-    "authDomain": st.secrets.get("FIREBASE_AUTH_DOMAIN", "planner-organizer-68a23.firebaseapp.com"),
-    "projectId": st.secrets.get("FIREBASE_PROJECT_ID", "planner-organizer-68a23"),
-    "storageBucket": st.secrets.get("FIREBASE_STORAGE_BUCKET", "planner-organizer-68a23.appspot.com"),
-    "messagingSenderId": st.secrets.get("FIREBASE_MESSAGING_SENDER_ID", "695046724018"),
-    "appId": st.secrets.get("FIREBASE_APP_ID", "1:695046724018:web:98d8feec0c6b6c937d57fd"),
-    "databaseURL": st.secrets.get("FIREBASE_DATABASE_URL", "https://planner-organizer-68a23-default-rtdb.firebaseio.com")
-}
-
-# JavaScript para inicializar o Firebase
-st.markdown(f"""
-<script>
-    // Configuração do Firebase
-    const firebaseConfig = {json.dumps(firebase_config)};
-    
-    // Inicializar Firebase quando a página carregar
-    document.addEventListener('DOMContentLoaded', function() {{
-        console.log("DOM carregado, inicializando o módulo Firebase...");
-        
-        // Verificar se o módulo está disponível
-        if (window.firebaseSimpleAuth) {{
-            // Verificar autenticação existente
-            const user = window.firebaseSimpleAuth.checkExistingAuth();
-            if (user) {{
-                console.log("Usuário já autenticado via localStorage:", user.email);
-                // Redirecionar para ativar login no backend se necessário
-                if (!window.location.search.includes('auth_success')) {{
-                    window.firebaseSimpleAuth.redirectAfterLogin(user);
-                }}
-            }} else {{
-                // Inicializar Firebase
-                setTimeout(function() {{
-                    const success = window.firebaseSimpleAuth.init(firebaseConfig);
-                    if (success) {{
-                        console.log("Firebase inicializado com sucesso");
-                        // Configurar botões de login
-                        window.firebaseSimpleAuth.setupLoginButtons();
-                    }} else {{
-                        console.error("Falha ao inicializar Firebase");
-                    }}
-                }}, 500);
-            }}
-        }} else {{
-            console.error("Módulo Firebase Simple Auth não encontrado");
-        }}
-    }});
-    
-    // Redirecionamento após autenticação
-    window.addEventListener('storage', function(event) {{
-        if (event.key === 'firebase_user' && event.newValue) {{
-            console.log('Alteração no armazenamento Firebase detectada, recarregando...');
-            window.location.reload();
-        }}
-    }});
-</script>
-""", unsafe_allow_html=True)
+# Configuração inicial da página
+st.set_page_config(
+    page_title="Planner Organizer - Sistema Profissional",
+    page_icon="favicon.png",
+    layout="wide",
+    initial_sidebar_state="auto"
+)
 
 # Inicialização da autenticação in-app
 if not st.session_state.authenticated:
@@ -829,97 +479,16 @@ if not st.session_state.authenticated:
         # Seção de Planos e Preços
         st.markdown("<h2>Escolha o Plano Ideal Para o Seu Negócio</h2>", unsafe_allow_html=True)
         
-        # TABELA DE PLANOS SIMPLIFICADA (com links para página de checkout separada)
-        col1, col2, col3 = st.columns([1, 1.2, 1])  # o do meio ganha mais espaço
-        
-        # Exibir informações de contato para vendas
-        contato_email = "contato@plannerorganizer.com.br"
-        contato_whatsapp = "+55 (11) 99999-9999"
-        
-        # URLs para páginas específicas do produto (sem Stripe)
-        # No Streamlit, a navegação é diferente do HTML normal
-        # Vamos usar uma solução baseada em estado para navegar
-
-        # Plano Mensal
-        with col1:
-            st.markdown("""
-            <div class="plano-card">
-                <div class="plano-titulo">💳 Plano Mensal</div>
-                <div class="plano-preco">R$9,70</div>
-                <div class="plano-periodo">por mês</div>
-                <div style="background-color: #e6fff0; color: #00a651; padding: 5px; border-radius: 5px; text-align: center; margin-bottom: 15px; font-size: 12px; font-weight: bold;">✨ 7 DIAS DE TESTE GRÁTIS</div>
-                <div class="plano-beneficios">
-                    <ul>
-                        <li>Acesso a todos os recursos</li>
-                        <li>Suporte por e-mail</li>
-                        <li>Cancelamento a qualquer momento</li>
-                        <li>Ideal para testar o sistema</li>
-                    </ul>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Botão nativo para a página de planos
-            if st.button("Assinar Plano Mensal", key="btn_mensal", use_container_width=True):
-                # Adicionar ao estado para navegar
-                st.session_state.redirect_to_planos = True
-                st.session_state.plano_selecionado = "mensal"
-                st.rerun()
-
-        # Plano Anual
-        with col2:
-            st.markdown("""
-            <div class="plano-card plano-destaque">
-                <div class="plano-titulo">📆 Plano Anual</div>
-                <div class="plano-preco">R$97,00</div>
-                <div class="plano-periodo">por ano</div>
-                <div class="plano-economia">ECONOMIZE 17%</div>
-                <div style="background-color: #e6fff0; color: #00a651; padding: 5px; border-radius: 5px; text-align: center; margin-bottom: 15px; font-size: 12px; font-weight: bold;">✨ 7 DIAS DE TESTE GRÁTIS</div>
-                <div class="plano-beneficios">
-                    <ul>
-                        <li>Acesso a todos os recursos</li>
-                        <li>Suporte prioritário</li>
-                        <li>Atualizações gratuitas</li>
-                        <li>Treinamento personalizado</li>
-                        <li>Melhor custo-benefício</li>
-                    </ul>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Botão nativo para a página de planos
-            if st.button("Assinar Plano Anual", key="btn_anual", use_container_width=True):
-                # Adicionar ao estado para navegar
-                st.session_state.redirect_to_planos = True
-                st.session_state.plano_selecionado = "anual"
-                st.rerun()
-
-        # Plano Vitalício
-        with col3:
-            st.markdown("""
-            <div class="plano-card">
-                <div class="plano-titulo">💎 Acesso Vitalício</div>
-                <div class="plano-preco">R$247,00</div>
-                <div class="plano-periodo">pagamento único</div>
-                <div class="plano-economia">MELHOR VALOR A LONGO PRAZO</div>
-                <div class="plano-beneficios">
-                    <ul>
-                        <li>Acesso permanente ao sistema</li>
-                        <li>Suporte prioritário</li>
-                        <li>Sem mensalidades futuras</li>
-                        <li>Todas as atualizações inclusas</li>
-                        <li>Melhor para longo prazo</li>
-                    </ul>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Botão nativo para a página de planos
-            if st.button("Adquirir Acesso Vitalício", key="btn_vitalicio", use_container_width=True):
-                # Adicionar ao estado para navegar
-                st.session_state.redirect_to_planos = True
-                st.session_state.plano_selecionado = "vitalicio"
-                st.rerun()
+        # Mostrar os planos com os parâmetros otimizados para landing page
+        # Usando formato com espaço reduzido e sem a seção de benefícios duplicada
+        mostrar_planos(
+            com_titulo=False,  # False porque já temos um título acima
+            com_prova_social=False,  # False para layout mais compacto
+            com_teste_gratis=False,  # False para não duplicar com o CTA abaixo
+            com_destaque_plano_medio=True,  # True para destacar o plano anual
+            stripe_ready=True,  # True para botões prontos para Stripe
+            espacamento_reduzido=True  # True para reduzir o espaçamento
+        )
         
         # CTA (Call to Action)
         st.markdown('''
@@ -938,12 +507,29 @@ if not st.session_state.authenticated:
         <h2 style="text-align: center; color: #1E366F; margin-top: 0; margin-bottom: 20px;">Acesse sua conta</h2>
         ''', unsafe_allow_html=True)
         
-        # Texto informativo sobre login
+        # Botões de login social
         st.markdown('''
-        <div style="text-align: center; margin-bottom: 25px;">
-            <p style="color: #555; font-size: 0.9rem;">
-                Entre com seu e-mail e senha para acessar todas as funcionalidades do sistema
-            </p>
+        <button class="social-button google-button">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                 style="width: 18px; height: 18px; margin-right: 8px;">
+            Continuar com Google
+        </button>
+        ''', unsafe_allow_html=True)
+        
+        st.markdown('''
+        <button class="social-button facebook-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white" 
+                 style="margin-right: 8px;">
+                <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm3 8h-1.35c-.538 0-.65.221-.65.778v1.222h2l-.209 2h-1.791v7h-3v-7h-2v-2h2v-2.308c0-1.769.931-2.692 3.029-2.692h1.971v3z"/>
+            </svg>
+            Continuar com Facebook
+        </button>
+        ''', unsafe_allow_html=True)
+        
+        # Divisor
+        st.markdown('''
+        <div class="login-divider">
+            <span class="login-divider-text">ou entre com e-mail</span>
         </div>
         ''', unsafe_allow_html=True)
         
@@ -955,269 +541,45 @@ if not st.session_state.authenticated:
             submit = st.form_submit_button("Entrar na minha conta", use_container_width=True)
             
             if submit:
-                # Login de demonstração
                 if username.lower() == "admin" and password == "admin":
                     st.session_state.authenticated = True
-                    st.session_state.user = {
-                        'user_id': 'admin-demo',
-                        'email': 'admin@example.com',
-                        'demo_mode': True
-                    }
-                    st.success("Login realizado com sucesso (modo de demonstração)!")
-                    st.rerun()
-                
-                # Tentativa de login real com Firebase somente se não for demonstração
-                try:
-                    from utils.firebase_auth import fazer_login
-                    from utils.subscription_manager import subscription_manager
-                    
                     with st.spinner("Autenticando..."):
-                        result = fazer_login(username, password)
-                        
-                        if result:
-                            # Login bem-sucedido
-                            st.session_state.authenticated = True
-                            st.session_state.user = result
-                            
-                            # Verificar status da assinatura
-                            user_id = result.get('user_id')
-                            
-                            try:
-                                subscription_details = subscription_manager.get_subscription_details(user_id)
-                                st.session_state.subscription = subscription_details
-                            except Exception as e:
-                                logger.warning(f"Erro ao verificar assinatura: {e}")
-                                st.session_state.subscription = {"status": "active", "demo_mode": True}
-                            
-                            st.success("Login realizado com sucesso!")
-                            st.rerun()
-                        else:
-                            st.error("Usuário ou senha inválidos")
-                except Exception as e:
-                    logger.warning(f"Erro ao fazer login com Firebase: {e}")
-                    st.error("Erro no serviço de autenticação. Por favor, tente novamente mais tarde ou use o modo de demonstração.")
+                        import time
+                        time.sleep(1)
+                    st.success("Login realizado com sucesso!")
+                    st.rerun()
+                else:
+                    st.error("Usuário ou senha incorretos")
         
-        # Botões para recuperação de senha e cadastro com informações de demonstração
-        col1, col2 = st.columns(2)
-        
-        # Definir as variáveis de estado se não existirem
-        if "show_reset_password" not in st.session_state:
-            st.session_state.show_reset_password = False
-        if "show_signup" not in st.session_state:
-            st.session_state.show_signup = False
-            
-        # Botão de esqueceu senha - mais simples e direto
-        with col1:
-            if st.button("Esqueceu sua senha?", key="forgot_password_btn", use_container_width=True):
-                st.session_state.show_reset_password = True
-                st.session_state.show_signup = False
-                st.rerun()
-                
-        # Botão de criar conta - mais simples e direto
-        with col2:
-            if st.button("Criar uma conta", key="create_account_btn", use_container_width=True):
-                st.session_state.show_signup = True
-                st.session_state.show_reset_password = False 
-                st.rerun()
-                
-        # Informações de demo
+        # Link para recuperação de senha e cadastro
         st.markdown('''
+        <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+                Esqueceu sua senha?
+            </a>
+            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+                Criar uma conta
+            </a>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+        # Link para recuperação de senha e cadastro com informações de demonstração
+        st.markdown('''
+        <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+                Esqueceu sua senha?
+            </a>
+            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+                Criar uma conta
+            </a>
+        </div>
+        
         <div style="margin-top: 0.8rem; text-align: center;">
             <p style="color: #9E9E9E; font-size: 0.75rem;">
                 Para demonstração, use: admin / admin
             </p>
         </div>
         ''', unsafe_allow_html=True)
-        
-        # Formulário de redefinição de senha
-        if "show_reset_password" in st.session_state and st.session_state.show_reset_password:
-            st.markdown('<hr style="margin: 20px 0;">', unsafe_allow_html=True)
-            st.markdown('<h3 style="text-align: center; color: #1E366F;">Recuperar Senha</h3>', unsafe_allow_html=True)
-            
-            with st.form("reset_password_form"):
-                email_reset = st.text_input("Digite seu e-mail")
-                
-                submit_reset = st.form_submit_button("Enviar link de recuperação", use_container_width=True)
-                
-                if submit_reset:
-                    if not email_reset:
-                        st.error("Por favor, informe seu e-mail.")
-                    else:
-                        # Simulação de envio de e-mail
-                        with st.spinner("Enviando email de recuperação..."):
-                            import time
-                            time.sleep(1.5)
-                        st.success(f"Um link de recuperação foi enviado para {email_reset} (modo de demonstração).")
-                        st.session_state.show_reset_password = False
-                        st.rerun()
-                        
-        # Formulário de cadastro
-        if "show_signup" in st.session_state and st.session_state.show_signup:
-            st.markdown('<hr style="margin: 20px 0;">', unsafe_allow_html=True)
-            st.markdown('<h3 style="text-align: center; color: #1E366F;">Escolha seu plano</h3>', unsafe_allow_html=True)
-            
-            # Definir as variáveis de estado para o plano selecionado
-            if "selected_plan" not in st.session_state:
-                st.session_state.selected_plan = None
-            
-            # Seleção de plano antes de mostrar o formulário
-            plan_options = {
-                "mensal": "Plano Mensal - R$9,70/mês (7 dias grátis)",
-                "anual": "Plano Anual - R$97,00/ano (7 dias grátis)",
-                "vitalicio": "Acesso Vitalício - R$247,00 (pagamento único)"
-            }
-            
-            selected_plan = st.selectbox(
-                "Selecione seu plano",
-                options=list(plan_options.keys()),
-                format_func=lambda x: plan_options.get(x),
-                key="plan_selection"
-            )
-            
-            # Verificar se já existe um formulário de registro aberto
-            if "signup_form_open" not in st.session_state:
-                st.session_state.signup_form_open = False
-            
-            # Botão para confirmar a seleção de plano
-            if not st.session_state.signup_form_open:
-                if st.button("Continuar com este plano", key="confirm_plan", use_container_width=True):
-                    st.session_state.selected_plan = selected_plan
-                    st.session_state.signup_form_open = True
-                    st.rerun()
-            
-            # Mostrar formulário se o plano foi selecionado
-            if st.session_state.signup_form_open and st.session_state.selected_plan:
-                st.markdown('<hr style="margin: 20px 0;">', unsafe_allow_html=True)
-                st.markdown('<h3 style="text-align: center; color: #1E366F;">Informações pessoais</h3>', unsafe_allow_html=True)
-                
-                with st.form("signup_form"):
-                    nome = st.text_input("Nome Completo")
-                    email = st.text_input("E-mail", key="signup_email")
-                    senha = st.text_input("Senha", type="password", key="signup_password", 
-                                         help="Mínimo de 6 caracteres")
-                    confirmar_senha = st.text_input("Confirmar Senha", type="password")
-                    
-                    # Mostrar termos e condições
-                    st.markdown("""
-                    <div style="font-size: 0.8rem; color: #666;">
-                        Ao clicar em "Criar conta e prosseguir para pagamento", você concorda com nossos 
-                        <a href="#" target="_blank">Termos de Serviço</a> e 
-                        <a href="#" target="_blank">Política de Privacidade</a>.
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    submit_signup = st.form_submit_button("Criar conta e prosseguir para pagamento", use_container_width=True)
-                    
-                    if submit_signup:
-                        import requests
-                        
-                        if not nome or not email or not senha or not confirmar_senha:
-                            st.error("Todos os campos são obrigatórios.")
-                        elif len(senha) < 6:
-                            st.error("A senha deve ter no mínimo 6 caracteres.")
-                        elif senha != confirmar_senha:
-                            st.error("As senhas não coincidem.")
-                        else:
-                            # Usar nossa API de integração para criar o usuário e sessão de checkout
-                            with st.spinner("Criando sua conta e preparando o checkout..."):
-                                try:
-                                    # URL da API de integração Firebase-Stripe
-                                    api_url = "http://localhost:8001/api/create-user-and-checkout"
-                                    if os.environ.get("REPLIT_DOMAIN"):
-                                        # Em produção, usar a URL do domínio
-                                        api_url = f"https://{os.environ.get('REPLIT_DOMAIN')}/api/create-user-and-checkout"
-                                    
-                                    # Mapeamento dos planos para os IDs corretos na API
-                                    plan_mapping = {
-                                        "mensal": "monthly",
-                                        "anual": "yearly",
-                                        "vitalicio": "lifetime"
-                                    }
-                                    
-                                    # Converter para o formato aceito pela API
-                                    api_plan_id = plan_mapping.get(st.session_state.selected_plan)
-                                    
-                                    # Dados para enviar
-                                    user_data = {
-                                        "email": email,
-                                        "name": nome,
-                                        "plan_id": api_plan_id
-                                    }
-                                    
-                                    # Tentativa real de API
-                                    try:
-                                        response = requests.post(
-                                            api_url,
-                                            json=user_data,
-                                            timeout=10
-                                        )
-                                        
-                                        if response.status_code == 200:
-                                            user_data = response.json()
-                                            
-                                            # Salvar UID para uso futuro
-                                            st.session_state.firebase_uid = user_data.get("firebase_uid")
-                                            
-                                            # Redirecionar para a página de planos sem Stripe
-                                            st.success("Conta criada com sucesso! Você será redirecionado para a página de planos.")
-                                            
-                                            # Redirecionamento para a página de planos
-                                            st.markdown(f"""
-                                            <script>
-                                                setTimeout(function() {{
-                                                    window.location.href = "{planos_url}";
-                                                }}, 3000);
-                                            </script>
-                                            """, unsafe_allow_html=True)
-                                            
-                                            # Mostrar link manual
-                                            st.markdown(f"""
-                                            Se não for redirecionado automaticamente, [clique aqui para ver os planos disponíveis]({planos_url})
-                                            """)
-                                        else:
-                                            st.error(f"Erro: {response.status_code} - {response.text}")
-                                    
-                                    except requests.RequestException as e:
-                                        # Modo de demonstração para caso a API não esteja disponível
-                                        st.warning("API de integração não disponível, usando modo de demonstração")
-                                        
-                                        # Simular criação de conta com Firebase diretamente
-                                        from utils.firebase_auth import criar_conta
-                                        
-                                        # Criar conta no Firebase
-                                        result = criar_conta(email, senha, nome)
-                                        
-                                        if result:
-                                            # Salvar UID para uso futuro
-                                            firebase_uid = result.get('user_id')
-                                            st.session_state.firebase_uid = firebase_uid
-                                            
-                                            # Redirecionar para a página de planos sem Stripe
-                                            st.success("Conta criada com sucesso! Você será redirecionado para a página de planos.")
-                                            
-                                            # Redirecionamento para a página de planos
-                                            st.markdown(f"""
-                                            <script>
-                                                setTimeout(function() {{
-                                                    window.location.href = "{planos_url}";
-                                                }}, 3000);
-                                            </script>
-                                            """, unsafe_allow_html=True)
-                                            
-                                            # Mostrar link manual
-                                            st.markdown(f"""
-                                            Se não for redirecionado automaticamente, [clique aqui para ver os planos disponíveis]({planos_url})
-                                            """)
-                                        else:
-                                            st.error("Erro ao criar conta. Verifique se o e-mail já está em uso.")
-                                
-                                except Exception as e:
-                                    st.error(f"Erro inesperado: {str(e)}")
-                
-                # Voltar para seleção de plano
-                if st.button("Voltar para seleção de plano", key="back_to_plan"):
-                    st.session_state.signup_form_open = False
-                    st.rerun()
         
         st.markdown('</div>', unsafe_allow_html=True)
         
@@ -1248,10 +610,10 @@ if not st.session_state.authenticated:
         <p style="color: #5A6A85; font-size: 0.9rem; margin-bottom: 1rem;">CONFIADO POR PERSONAL ORGANIZERS DE TODO O BRASIL</p>
         <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
             <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Organizze Bem</span>
-            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Organize Fácil</span>
-            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Espaço Leve</span>
-            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Ju Organizer</span>
-            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Daniela Siqueira</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Expert Closets</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">TopOrder Solutions</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Clean & Order</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Plann.Smart</span>
         </div>
     </div>
     ''', unsafe_allow_html=True)
