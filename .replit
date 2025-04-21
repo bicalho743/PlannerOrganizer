@@ -55,10 +55,6 @@ args = "Ajustar Data Proposta"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Start application"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Limpar Propostas"
 
 [[workflows.workflow.tasks]]
@@ -209,6 +205,10 @@ args = "Login Recuperação Senha"
 task = "workflow.run"
 args = "Login Recuperacao Restaurado"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Reset Senha"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -343,21 +343,6 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run ajustar_data_proposta.py --server.port 8520 --server.address 0.0.0.0"
 waitForPort = 8520
-
-[[workflows.workflow]]
-name = "Start application"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python -m streamlit run recuperacao_senha.py --server.port 5000 --server.address 0.0.0.0"
-waitForPort = 5000
 
 [[workflows.workflow]]
 name = "Limpar Propostas"
@@ -952,6 +937,21 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "python -m streamlit run login_recuperacao_restaurado.py --server.port 5000 --server.address 0.0.0.0"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Reset Senha"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python -m streamlit run senha_reset.py --server.port 8888 --server.address 0.0.0.0"
+waitForPort = 8888
 
 [[ports]]
 localPort = 443
