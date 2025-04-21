@@ -1,290 +1,202 @@
 /**
- * Firebase Authentication Manager
- * Este script gerencia o estado de autenticação do usuário e integração com o Stripe
+ * Firebase Authentication Helper
+ * Este script gerencia a autenticação com Firebase nos componentes web
  */
 
-// Inicializar o Firebase (estas configurações serão carregadas dinamicamente)
-function initFirebase(config) {
-  // Inicializar Firebase
-  if (!firebase.apps.length) {
-    firebase.initializeApp(config);
-  }
-  console.log("Firebase inicializado com sucesso");
-  
-  // Configurar listener de estado de autenticação
-  firebase.auth().onAuthStateChanged((user) => {
-    if (user) {
-      console.log("Usuário logado:", user.email);
-      handleLoggedInUser(user);
-    } else {
-      console.log("Usuário não logado");
-      handleLoggedOutUser();
-    }
-  });
-}
-
-// Função para lidar com usuário logado
-function handleLoggedInUser(user) {
-  // Verificar se temos um token de sessão
-  const sessionToken = localStorage.getItem('stripe_session_id');
-  const isCheckoutReturn = window.location.href.includes('session_id=');
-  
-  // Se o usuário acabou de retornar do checkout ou pagamentos
-  if (isCheckoutReturn || sessionToken) {
-    // Capturar parâmetros
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionId = urlParams.get('session_id') || sessionToken;
-    
-    if (sessionId) {
-      // Se tivermos um ID de sessão, verificar com o servidor
-      checkPaymentStatus(sessionId, user.uid);
-    }
-  }
-  
-  // Se estamos na página de login, redirecionar para a dashboard
-  if (window.location.pathname === '/login' || window.location.pathname === '/') {
-    redirectToDashboard();
-  }
-  
-  // Mostrar elementos para usuários logados
-  showLoggedInElements();
-}
-
-// Função para lidar com usuário deslogado
-function handleLoggedOutUser() {
-  // Se não for a página de login e estamos numa página protegida, redirecionar
-  if (window.location.pathname !== '/login' && window.location.pathname !== '/' 
-      && requiresAuth(window.location.pathname)) {
-    redirectToLogin();
-  }
-  
-  // Mostrar elementos para usuários não logados
-  showLoggedOutElements();
-}
-
-// Verificar se uma página requer autenticação
-function requiresAuth(pathname) {
-  // Lista de caminhos que requerem autenticação
-  const protectedPaths = [
-    '/dashboard',
-    '/propostas',
-    '/clientes',
-    '/vendas',
-    '/financeiro',
-    '/configuracoes'
-  ];
-  
-  // Verificar se o caminho atual está na lista ou começa com algum dos caminhos
-  return protectedPaths.some(path => 
-    pathname === path || pathname.startsWith(path + '/')
-  );
-}
-
-// Redirecionar para a dashboard
-function redirectToDashboard() {
-  window.location.href = '/dashboard';
-}
-
-// Redirecionar para o login
-function redirectToLogin() {
-  window.location.href = '/login';
-}
-
-// Verificar status de pagamento ou assinatura
-function checkPaymentStatus(sessionId, userId) {
-  // Salvar ID da sessão localmente
-  localStorage.setItem('stripe_session_id', sessionId);
-  
-  // Requisição para o servidor para verificar o status
-  fetch(`/api/check-payment-status?session_id=${sessionId}&user_id=${userId}`)
-    .then(response => response.json())
-    .then(data => {
-      console.log("Status do pagamento:", data);
-      
-      // Se o pagamento foi bem-sucedido, remover o token da sessão
-      if (data.status === 'success') {
-        localStorage.removeItem('stripe_session_id');
-        
-        // Se estamos na página de sucesso, mostrar mensagem
-        if (window.location.pathname === '/sucesso') {
-          showPaymentSuccessMessage(data);
-        } else {
-          // Redirecionar para dashboard
-          redirectToDashboard();
-        }
-      } 
-      // Se o pagamento falhou ou está pendente
-      else if (data.status === 'pending') {
-        // Mostrar mensagem
-        showPaymentPendingMessage();
-      }
-      else {
-        // Mostrar mensagem de erro
-        showPaymentErrorMessage(data.message);
-      }
-    })
-    .catch(error => {
-      console.error("Erro ao verificar pagamento:", error);
-      showPaymentErrorMessage("Erro ao verificar status do pagamento. Por favor, tente novamente mais tarde.");
-    });
-}
-
-// Funções para modificar a interface com base no estado de autenticação
-function showLoggedInElements() {
-  // Ocultar elementos de login/signup
-  document.querySelectorAll('.logged-out-only').forEach(el => {
-    el.style.display = 'none';
-  });
-  
-  // Mostrar elementos para usuários logados
-  document.querySelectorAll('.logged-in-only').forEach(el => {
-    el.style.display = 'block';
-  });
-}
-
-function showLoggedOutElements() {
-  // Ocultar elementos para usuários logados
-  document.querySelectorAll('.logged-in-only').forEach(el => {
-    el.style.display = 'none';
-  });
-  
-  // Mostrar elementos de login/signup
-  document.querySelectorAll('.logged-out-only').forEach(el => {
-    el.style.display = 'block';
-  });
-}
-
-// Funções para mostrar mensagens relacionadas ao pagamento
-function showPaymentSuccessMessage(data) {
-  const messageContainer = document.getElementById('payment-message-container');
-  if (messageContainer) {
-    messageContainer.innerHTML = `
-      <div class="success-message">
-        <h2>Pagamento Confirmado!</h2>
-        <p>Sua assinatura do ${data.plan_name} foi ativada com sucesso.</p>
-        <p>Você agora tem acesso completo ao sistema.</p>
-        <button onclick="redirectToDashboard()" class="primary-button">Ir para Dashboard</button>
-      </div>
-    `;
-  }
-}
-
-function showPaymentPendingMessage() {
-  const messageContainer = document.getElementById('payment-message-container');
-  if (messageContainer) {
-    messageContainer.innerHTML = `
-      <div class="pending-message">
-        <h2>Pagamento em Processamento</h2>
-        <p>Seu pagamento está sendo processado pela operadora.</p>
-        <p>Assim que confirmado, sua assinatura será ativada automaticamente.</p>
-        <button onclick="redirectToDashboard()" class="primary-button">Continuar</button>
-      </div>
-    `;
-  }
-}
-
-function showPaymentErrorMessage(message) {
-  const messageContainer = document.getElementById('payment-message-container');
-  if (messageContainer) {
-    messageContainer.innerHTML = `
-      <div class="error-message">
-        <h2>Erro no Pagamento</h2>
-        <p>${message}</p>
-        <button onclick="window.location.reload()" class="secondary-button">Tentar Novamente</button>
-      </div>
-    `;
-  }
-}
-
-// Funções de autenticação
-function loginWithEmailPassword(email, password) {
-  return firebase.auth().signInWithEmailAndPassword(email, password)
-    .catch(error => {
-      console.error("Erro no login:", error);
-      throw error;
-    });
-}
-
-function registerWithEmailPassword(email, password, displayName) {
-  return firebase.auth().createUserWithEmailAndPassword(email, password)
-    .then(userCredential => {
-      // Atualizar nome de exibição
-      return userCredential.user.updateProfile({
-        displayName: displayName
-      }).then(() => userCredential);
-    })
-    .catch(error => {
-      console.error("Erro no registro:", error);
-      throw error;
-    });
-}
-
-function logout() {
-  return firebase.auth().signOut()
-    .catch(error => {
-      console.error("Erro ao deslogar:", error);
-    });
-}
-
-function resetPassword(email) {
-  return firebase.auth().sendPasswordResetEmail(email)
-    .catch(error => {
-      console.error("Erro ao resetar senha:", error);
-      throw error;
-    });
-}
-
-// Verificar status da assinatura do usuário
-function checkSubscriptionStatus() {
-  const user = firebase.auth().currentUser;
-  if (!user) return Promise.reject("Usuário não autenticado");
-  
-  return fetch(`/api/check-subscription?user_id=${user.uid}`)
-    .then(response => response.json());
-}
-
-// Função para criar checkout e redirecionar para Stripe
-function createCheckoutSession(planId) {
-  const user = firebase.auth().currentUser;
-  if (!user) {
-    // Se não tiver usuário logado, salvar plano na sessão e redirecionar para login
-    localStorage.setItem('selected_plan', planId);
-    window.location.href = '/login?redirect=checkout';
-    return Promise.reject("Usuário não autenticado");
-  }
-  
-  // Criar sessão de checkout
-  return fetch('/api/create-checkout-session', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      plan_id: planId,
-      user_id: user.uid,
-      email: user.email
-    })
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.url) {
-      // Salvar ID da sessão
-      localStorage.setItem('stripe_session_id', data.id);
-      // Redirecionar para checkout
-      window.location.href = data.url;
-    } else {
-      throw new Error(data.error || "Erro ao criar sessão de checkout");
-    }
-  });
-}
-
-// Exportar funções
+// Variável global para o objeto FirebaseAuth
 window.firebaseAuth = {
-  init: initFirebase,
-  login: loginWithEmailPassword,
-  register: registerWithEmailPassword,
-  logout: logout,
-  resetPassword: resetPassword,
-  checkSubscriptionStatus: checkSubscriptionStatus,
-  createCheckoutSession: createCheckoutSession
+  // Propriedades
+  auth: null,
+  app: null,
+  db: null,
+  provider: null,
+  fbProvider: null,
+  
+  // Função para inicializar o Firebase
+  init: function(config) {
+    try {
+      // Verificar se o Firebase já foi inicializado
+      if (!firebase.apps.length) {
+        // Inicializar o app Firebase
+        this.app = firebase.initializeApp(config);
+        console.log('Firebase inicializado com sucesso');
+      } else {
+        this.app = firebase.app();
+        console.log('Firebase já estava inicializado');
+      }
+      
+      // Obter instância do Auth
+      this.auth = firebase.auth();
+      
+      // Inicializar provedores
+      this.provider = new firebase.auth.GoogleAuthProvider();
+      this.fbProvider = new firebase.auth.FacebookAuthProvider();
+      
+      // Configurar provedores
+      this.provider.setCustomParameters({
+        prompt: 'select_account'
+      });
+      
+      // Configurar listeners
+      this.setupListeners();
+      
+      return true;
+    } catch (error) {
+      console.error('Erro ao inicializar Firebase:', error);
+      return false;
+    }
+  },
+  
+  // Configurar event listeners
+  setupListeners: function() {
+    try {
+      // Verificar se já existe autenticação ao carregar
+      this.auth.onAuthStateChanged((user) => {
+        if (user) {
+          console.log('Usuário autenticado:', user.email);
+          this.onLoginSuccess(user);
+        } else {
+          console.log('Usuário não autenticado');
+        }
+      });
+      
+      // Configurar botões de login
+      this.setupButtons();
+    } catch (error) {
+      console.error('Erro ao configurar listeners:', error);
+    }
+  },
+  
+  // Configurar botões de login do DOM
+  setupButtons: function() {
+    document.addEventListener('DOMContentLoaded', () => {
+      // Botão do Google
+      const googleBtn = document.querySelector('.google-button');
+      if (googleBtn) {
+        googleBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.loginWithGoogle();
+        });
+      }
+      
+      // Botão do Facebook
+      const fbBtn = document.querySelector('.facebook-button');
+      if (fbBtn) {
+        fbBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.loginWithFacebook();
+        });
+      }
+      
+      console.log('Botões de login configurados');
+    });
+  },
+  
+  // Login com Google
+  loginWithGoogle: function() {
+    console.log('Iniciando login com Google...');
+    this.auth.signInWithPopup(this.provider)
+      .then((result) => {
+        // Login bem-sucedido
+        const user = result.user;
+        console.log('Login com Google bem-sucedido:', user.email);
+        this.onLoginSuccess(user);
+      })
+      .catch((error) => {
+        console.error('Erro ao fazer login com Google:', error);
+        this.onLoginError(error);
+      });
+  },
+  
+  // Login com Facebook
+  loginWithFacebook: function() {
+    console.log('Iniciando login com Facebook...');
+    this.auth.signInWithPopup(this.fbProvider)
+      .then((result) => {
+        // Login bem-sucedido
+        const user = result.user;
+        console.log('Login com Facebook bem-sucedido:', user.email);
+        this.onLoginSuccess(user);
+      })
+      .catch((error) => {
+        console.error('Erro ao fazer login com Facebook:', error);
+        this.onLoginError(error);
+      });
+  },
+  
+  // Callback de sucesso de login
+  onLoginSuccess: function(user) {
+    try {
+      // Obter token ID para passagem para backend
+      user.getIdToken().then((idToken) => {
+        // Enviar dados para o Streamlit
+        this.sendLoginInfoToStreamlit({
+          idToken: idToken,
+          uid: user.uid,
+          displayName: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+          loginTimestamp: new Date().toISOString()
+        });
+      });
+    } catch (error) {
+      console.error('Erro ao processar login bem-sucedido:', error);
+    }
+  },
+  
+  // Callback de erro de login
+  onLoginError: function(error) {
+    // Notificar o Streamlit sobre o erro
+    this.sendErrorToStreamlit({
+      code: error.code,
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  },
+  
+  // Enviar informações para o Streamlit
+  sendLoginInfoToStreamlit: function(userInfo) {
+    // Usar Streamlit Component API para comunicação
+    if (window.parent && window.parent.streamlit) {
+      // API de componentes do Streamlit
+      window.parent.streamlit.setComponentValue({
+        type: 'login_success',
+        data: userInfo
+      });
+    } else {
+      // Método alternativo: iFrame e localStorage
+      localStorage.setItem('firebase_user', JSON.stringify(userInfo));
+      
+      // Redirecionar para url com parâmetros
+      const redirectUrl = new URL(window.location.href);
+      redirectUrl.searchParams.set('login_success', 'true');
+      redirectUrl.searchParams.set('uid', userInfo.uid);
+      redirectUrl.searchParams.set('email', userInfo.email);
+      
+      // Redirecionar
+      window.location.href = redirectUrl.toString();
+    }
+  },
+  
+  // Enviar erro para o Streamlit
+  sendErrorToStreamlit: function(errorInfo) {
+    // Usar Streamlit Component API para comunicação de erro
+    if (window.parent && window.parent.streamlit) {
+      window.parent.streamlit.setComponentValue({
+        type: 'login_error',
+        data: errorInfo
+      });
+    } else {
+      // Método alternativo: localStorage
+      localStorage.setItem('firebase_error', JSON.stringify(errorInfo));
+      
+      // Atualizar URL com parâmetros
+      const redirectUrl = new URL(window.location.href);
+      redirectUrl.searchParams.set('login_error', 'true');
+      redirectUrl.searchParams.set('error_code', errorInfo.code);
+      
+      // Redirecionar
+      window.location.href = redirectUrl.toString();
+    }
+  }
 };

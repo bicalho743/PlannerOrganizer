@@ -49,12 +49,217 @@ from exibir_planos import exibir_planos_simples
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
+# Verificar se há dados de login do Firebase
+if not st.session_state.authenticated:
+    # Verificar parâmetros de URL para login com Firebase
+    params = st.experimental_get_query_params()
+    if "login_success" in params and params["login_success"][0] == "true":
+        if "uid" in params and "email" in params:
+            # Login com Firebase bem-sucedido
+            uid = params["uid"][0]
+            email = params["email"][0]
+            
+            st.session_state.authenticated = True
+            st.session_state.user = {
+                'user_id': uid,
+                'email': email,
+                'provider': 'firebase',
+                'login_time': datetime.now().isoformat()
+            }
+            
+            # Verificar status da assinatura (simplificado para demonstração)
+            st.session_state.subscription = {"status": "active", "demo_mode": True}
+            
+            # Limpar parâmetros da URL
+            st.experimental_set_query_params()
+            st.rerun()
+
 # Adicionar o Firebase SDK para autenticação na página
 st.markdown("""
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<script src="/public/js/firebase-auth.js"></script>
+
+<script>
+// Módulo Firebase Auth para Streamlit
+const streamlitFirebaseAuth = {
+    // Propriedades
+    auth: null,
+    app: null,
+    googleProvider: null,
+    facebookProvider: null,
+    
+    // Inicializar Firebase
+    init: function(config) {
+        console.log("Inicializando Firebase Auth...");
+        try {
+            // Verificar se já está inicializado
+            if (!firebase.apps.length) {
+                this.app = firebase.initializeApp(config);
+                console.log("Firebase inicializado com sucesso");
+            } else {
+                this.app = firebase.app();
+                console.log("Firebase já estava inicializado");
+            }
+            
+            // Configuração da autenticação
+            this.auth = firebase.auth();
+            this.googleProvider = new firebase.auth.GoogleAuthProvider();
+            this.facebookProvider = new firebase.auth.FacebookAuthProvider();
+            
+            // Configuração dos provedores
+            this.googleProvider.setCustomParameters({
+                prompt: 'select_account'
+            });
+            
+            // Eventos de autenticação
+            this.setupAuthListener();
+            
+            return true;
+        } catch (error) {
+            console.error("Erro ao inicializar Firebase:", error);
+            return false;
+        }
+    },
+    
+    // Configurar listener de estado de autenticação
+    setupAuthListener: function() {
+        this.auth.onAuthStateChanged(user => {
+            if (user) {
+                console.log("Usuário logado:", user.email);
+                this.handleAuthSuccess(user);
+            } else {
+                console.log("Nenhum usuário logado");
+            }
+        });
+    },
+    
+    // Login com Google
+    loginWithGoogle: function() {
+        console.log("Iniciando login com Google...");
+        this.auth.signInWithPopup(this.googleProvider)
+            .then(result => {
+                const user = result.user;
+                console.log("Login com Google bem-sucedido:", user.email);
+                this.handleAuthSuccess(user);
+            })
+            .catch(error => {
+                console.error("Erro no login com Google:", error);
+                this.handleAuthError(error);
+            });
+    },
+    
+    // Login com Facebook
+    loginWithFacebook: function() {
+        console.log("Iniciando login com Facebook...");
+        this.auth.signInWithPopup(this.facebookProvider)
+            .then(result => {
+                const user = result.user;
+                console.log("Login com Facebook bem-sucedido:", user.email);
+                this.handleAuthSuccess(user);
+            })
+            .catch(error => {
+                console.error("Erro no login com Facebook:", error);
+                this.handleAuthError(error);
+            });
+    },
+    
+    // Manipular sucesso de autenticação
+    handleAuthSuccess: function(user) {
+        // Obter token ID para autenticação no backend
+        user.getIdToken().then(idToken => {
+            // Salvar no localStorage
+            const userData = {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+                idToken: idToken
+            };
+            localStorage.setItem('firebase_user', JSON.stringify(userData));
+            
+            // Redirecionar com parâmetros
+            const url = new URL(window.location.href);
+            url.searchParams.set('login_success', 'true');
+            url.searchParams.set('uid', user.uid);
+            url.searchParams.set('email', user.email);
+            
+            // Redirecionar
+            window.location.href = url.toString();
+        });
+    },
+    
+    // Manipular erro de autenticação
+    handleAuthError: function(error) {
+        console.error("Erro na autenticação:", error);
+        alert("Erro ao fazer login: " + error.message);
+    },
+    
+    // Configurar botões de login
+    setupButtons: function() {
+        console.log("Configurando botões de login...");
+        // Google
+        const googleBtn = document.getElementById('googleLoginBtn');
+        if (googleBtn) {
+            googleBtn.addEventListener('click', e => {
+                e.preventDefault();
+                this.loginWithGoogle();
+            });
+            console.log("Botão Google configurado");
+        }
+        
+        // Facebook
+        const fbBtn = document.getElementById('facebookLoginBtn');
+        if (fbBtn) {
+            fbBtn.addEventListener('click', e => {
+                e.preventDefault();
+                this.loginWithFacebook();
+            });
+            console.log("Botão Facebook configurado");
+        }
+    },
+    
+    // Verificar autenticação existente
+    checkExistingAuth: function() {
+        const userData = localStorage.getItem('firebase_user');
+        if (userData) {
+            try {
+                const user = JSON.parse(userData);
+                console.log("Usuário já autenticado via localStorage:", user.email);
+                
+                // Verificar parâmetros da URL
+                const url = new URL(window.location.href);
+                if (!url.searchParams.has('login_success')) {
+                    // Redirecionar para ativar login no backend
+                    this.handleAuthSuccess({
+                        uid: user.uid,
+                        email: user.email,
+                        displayName: user.displayName,
+                        photoURL: user.photoURL,
+                        getIdToken: () => Promise.resolve(user.idToken)
+                    });
+                }
+                return true;
+            } catch (e) {
+                console.error("Erro ao processar dados do usuário:", e);
+                localStorage.removeItem('firebase_user');
+            }
+        }
+        return false;
+    }
+};
+
+// Inicializar quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM carregado, verificando autenticação...");
+    
+    // Configurar botões depois que o DOM estiver pronto
+    setTimeout(() => {
+        streamlitFirebaseAuth.setupButtons();
+        console.log("Botões configurados");
+    }, 1000);
+});
+</script>
 """, unsafe_allow_html=True)
 
 # Configuração do Firebase
@@ -76,10 +281,28 @@ st.markdown(f"""
     
     // Inicializar Firebase quando a página carregar
     document.addEventListener('DOMContentLoaded', function() {{
-        // Inicializar Firebase
-        if (window.firebaseAuth) {{
-            window.firebaseAuth.init(firebaseConfig);
-            console.log("Firebase inicializado via script");
+        console.log("DOM carregado, inicializando o módulo Firebase...");
+        
+        // Verificar autenticação existente
+        const authExists = streamlitFirebaseAuth.checkExistingAuth();
+        if (!authExists) {{
+            // Inicializar Firebase
+            setTimeout(function() {{
+                const success = streamlitFirebaseAuth.init(firebaseConfig);
+                if (success) {{
+                    console.log("Firebase inicializado com sucesso");
+                }} else {{
+                    console.error("Falha ao inicializar Firebase");
+                }}
+            }}, 500);
+        }}
+    }});
+    
+    // Redirecionamento após autenticação
+    window.addEventListener('storage', function(event) {{
+        if (event.key === 'firebase_user' && event.newValue) {{
+            console.log('Alteração no armazenamento Firebase detectada, recarregando...');
+            window.location.reload();
         }}
     }});
 </script>
@@ -642,7 +865,7 @@ if not st.session_state.authenticated:
         
         # Botões de login social
         st.markdown('''
-        <button class="social-button google-button">
+        <button class="social-button google-button" id="googleLoginBtn">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
                  style="width: 18px; height: 18px; margin-right: 8px;">
             Continuar com Google
@@ -650,13 +873,52 @@ if not st.session_state.authenticated:
         ''', unsafe_allow_html=True)
         
         st.markdown('''
-        <button class="social-button facebook-button">
+        <button class="social-button facebook-button" id="facebookLoginBtn">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white" 
                  style="margin-right: 8px;">
                 <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm3 8h-1.35c-.538 0-.65.221-.65.778v1.222h2l-.209 2h-1.791v7h-3v-7h-2v-2h2v-2.308c0-1.769.931-2.692 3.029-2.692h1.971v3z"/>
             </svg>
             Continuar com Facebook
         </button>
+        ''', unsafe_allow_html=True)
+        
+        # Script para conectar os botões ao Firebase
+        st.markdown('''
+        <script>
+            // Usar o módulo streamlitFirebaseAuth para manipular logins
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log("Configurando botões de login social com o novo módulo Firebase...");
+                
+                // Aguardar um momento para garantir que tudo esteja carregado
+                setTimeout(function() {
+                    // Configurar os botões com o módulo Firebase
+                    if (window.streamlitFirebaseAuth) {
+                        streamlitFirebaseAuth.setupButtons();
+                        console.log("Botões de login social configurados com sucesso");
+                    } else {
+                        console.error("Módulo streamlitFirebaseAuth não encontrado");
+                        
+                        // Fallback para configuração manual
+                        const googleBtn = document.getElementById('googleLoginBtn');
+                        const fbBtn = document.getElementById('facebookLoginBtn');
+                        
+                        if (googleBtn) {
+                            googleBtn.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                alert("Não foi possível inicializar o módulo de autenticação. Por favor, recarregue a página e tente novamente.");
+                            });
+                        }
+                        
+                        if (fbBtn) {
+                            fbBtn.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                alert("Não foi possível inicializar o módulo de autenticação. Por favor, recarregue a página e tente novamente.");
+                            });
+                        }
+                    }
+                }, 500);
+            });
+        </script>
         ''', unsafe_allow_html=True)
         
         # Divisor
