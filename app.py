@@ -938,68 +938,12 @@ if not st.session_state.authenticated:
         <h2 style="text-align: center; color: #1E366F; margin-top: 0; margin-bottom: 20px;">Acesse sua conta</h2>
         ''', unsafe_allow_html=True)
         
-        # Botões de login social
+        # Texto informativo sobre login
         st.markdown('''
-        <button class="social-button google-button" id="googleLoginBtn">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                 style="width: 18px; height: 18px; margin-right: 8px;">
-            Continuar com Google
-        </button>
-        ''', unsafe_allow_html=True)
-        
-        st.markdown('''
-        <button class="social-button facebook-button" id="facebookLoginBtn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white" 
-                 style="margin-right: 8px;">
-                <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm3 8h-1.35c-.538 0-.65.221-.65.778v1.222h2l-.209 2h-1.791v7h-3v-7h-2v-2h2v-2.308c0-1.769.931-2.692 3.029-2.692h1.971v3z"/>
-            </svg>
-            Continuar com Facebook
-        </button>
-        ''', unsafe_allow_html=True)
-        
-        # Script para conectar os botões ao Firebase
-        st.markdown('''
-        <script>
-            // Usar o módulo streamlitFirebaseAuth para manipular logins
-            document.addEventListener('DOMContentLoaded', function() {
-                console.log("Configurando botões de login social com o novo módulo Firebase...");
-                
-                // Aguardar um momento para garantir que tudo esteja carregado
-                setTimeout(function() {
-                    // Configurar os botões com o módulo Firebase
-                    if (window.streamlitFirebaseAuth) {
-                        streamlitFirebaseAuth.setupButtons();
-                        console.log("Botões de login social configurados com sucesso");
-                    } else {
-                        console.error("Módulo streamlitFirebaseAuth não encontrado");
-                        
-                        // Fallback para configuração manual
-                        const googleBtn = document.getElementById('googleLoginBtn');
-                        const fbBtn = document.getElementById('facebookLoginBtn');
-                        
-                        if (googleBtn) {
-                            googleBtn.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                alert("Não foi possível inicializar o módulo de autenticação. Por favor, recarregue a página e tente novamente.");
-                            });
-                        }
-                        
-                        if (fbBtn) {
-                            fbBtn.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                alert("Não foi possível inicializar o módulo de autenticação. Por favor, recarregue a página e tente novamente.");
-                            });
-                        }
-                    }
-                }, 500);
-            });
-        </script>
-        ''', unsafe_allow_html=True)
-        
-        # Divisor
-        st.markdown('''
-        <div class="login-divider">
-            <span class="login-divider-text">ou entre com e-mail</span>
+        <div style="text-align: center; margin-bottom: 25px;">
+            <p style="color: #555; font-size: 0.9rem;">
+                Entre com seu e-mail e senha para acessar todas as funcionalidades do sistema
+            </p>
         </div>
         ''', unsafe_allow_html=True)
         

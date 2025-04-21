@@ -38,11 +38,11 @@ firebase_config = {
 }
 
 # Verificar parâmetros de URL para autenticação
-params = st.experimental_get_query_params()
-if "auth_success" in params and params["auth_success"][0] == "true":
+params = dict(st.query_params)
+if "auth_success" in params and params["auth_success"] == "true":
     if "uid" in params and "email" in params:
-        uid = params["uid"][0]
-        email = params["email"][0]
+        uid = params["uid"]
+        email = params["email"]
 
         # Salvar na sessão
         st.session_state.authenticated = True
@@ -53,7 +53,7 @@ if "auth_success" in params and params["auth_success"][0] == "true":
         }
 
         # Limpar parâmetros
-        st.experimental_set_query_params()
+        st.query_params.clear()
         st.rerun()
 
 # Título principal
@@ -61,136 +61,185 @@ st.title("Login - Planner Organizer")
 
 # Se não estiver autenticado, mostrar tela de login
 if not st.session_state.authenticated:
-    # Carregar bibliotecas do Firebase
+    # Carregar bibliotecas do Firebase (versão 9)
     st.markdown("""
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    """, unsafe_allow_html=True)
+    <script type="module">
+    // Importar Firebase V9 (modular)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { 
+        getAuth, 
+        signInWithPopup, 
+        GoogleAuthProvider, 
+        FacebookAuthProvider,
+        signInWithEmailAndPassword 
+    } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
-    # Script de autenticação
-    st.markdown(f"""
-    <script>
-    // Inicializar Firebase quando a página carregar
-    document.addEventListener('DOMContentLoaded', function() {{
-        console.log("Inicializando Firebase...");
+    // Configuração do Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyDNvFRG_LcmnrQlvGzHx5_dR16vCUTp13I",
+        authDomain: "planner-organizer-68a23.firebaseapp.com",
+        projectId: "planner-organizer-68a23",
+        storageBucket: "planner-organizer-68a23.appspot.com",
+        messagingSenderId: "763383033284",
+        appId: "1:763383033284:web:5a5dc3b4d3f5bc63631ce7"
+    };
 
-        // Configuração do Firebase
-        const firebaseConfig = {json.dumps(firebase_config)};
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const googleProvider = new GoogleAuthProvider();
+    const facebookProvider = new FacebookAuthProvider();
 
-        // Inicializar Firebase
-        let app;
-        try {{
-            if (!firebase.apps.length) {{
-                app = firebase.initializeApp(firebaseConfig);
-            }} else {{
-                app = firebase.app();
-            }}
-            console.log("Firebase inicializado com sucesso");
+    // Função para login com Google
+    window.loginWithGoogle = async function() {
+        console.log("Iniciando login com Google...");
+        try {
+            // Adicionar escopo para perfil e email
+            googleProvider.addScope('profile');
+            googleProvider.addScope('email');
+            
+            // Parâmetros adicionais para o pop-up
+            googleProvider.setCustomParameters({
+                'prompt': 'select_account',
+                'login_hint': 'user@example.com'
+            });
+            
+            // Iniciar pop-up
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+            console.log("Login com Google bem-sucedido:", user.email);
+            
+            // Obter token
+            const token = await user.getIdToken();
+            
+            // Redirecionar com parâmetros
+            const url = new URL(window.location.href);
+            url.searchParams.set('auth_success', 'true');
+            url.searchParams.set('uid', user.uid);
+            url.searchParams.set('email', user.email);
+            
+            // Salvar no localStorage
+            localStorage.setItem('firebase_user', JSON.stringify({
+                uid: user.uid,
+                email: user.email,
+                token: token,
+                provider: 'google'
+            }));
+            
+            // Redirecionar
+            window.location.href = url.toString();
+        } catch (error) {
+            console.error("Erro no login com Google:", error);
+            
+            if (error.code === 'auth/popup-blocked') {
+                alert("O pop-up foi bloqueado pelo navegador. Por favor, permita pop-ups para este site e tente novamente.");
+            } else if (error.code === 'auth/popup-closed-by-user') {
+                console.log("Pop-up fechado pelo usuário");
+            } else {
+                alert("Erro no login com Google: " + error.message);
+            }
+        }
+    };
 
-            // Configurar providers
-            const auth = firebase.auth();
-            const googleProvider = new firebase.auth.GoogleAuthProvider();
-            const facebookProvider = new firebase.auth.FacebookAuthProvider();
+    // Função para login com Facebook
+    window.loginWithFacebook = async function() {
+        console.log("Iniciando login com Facebook...");
+        try {
+            const result = await signInWithPopup(auth, facebookProvider);
+            const user = result.user;
+            console.log("Login com Facebook bem-sucedido:", user.email);
+            
+            // Obter token
+            const token = await user.getIdToken();
+            
+            // Redirecionar com parâmetros
+            const url = new URL(window.location.href);
+            url.searchParams.set('auth_success', 'true');
+            url.searchParams.set('uid', user.uid);
+            url.searchParams.set('email', user.email);
+            
+            // Salvar no localStorage
+            localStorage.setItem('firebase_user', JSON.stringify({
+                uid: user.uid,
+                email: user.email,
+                token: token,
+                provider: 'facebook'
+            }));
+            
+            // Redirecionar
+            window.location.href = url.toString();
+        } catch (error) {
+            console.error("Erro no login com Facebook:", error);
+            
+            if (error.code === 'auth/popup-blocked') {
+                alert("O pop-up foi bloqueado pelo navegador. Por favor, permita pop-ups para este site e tente novamente.");
+            } else if (error.code === 'auth/popup-closed-by-user') {
+                console.log("Pop-up fechado pelo usuário");
+            } else {
+                alert("Erro no login com Facebook: " + error.message);
+            }
+        }
+    };
 
-            // Configurar botões
-            setupLoginButtons(auth, googleProvider, facebookProvider);
+    // Função para login com email e senha
+    window.loginWithEmail = async function(email, password) {
+        console.log("Iniciando login com email e senha...");
+        try {
+            const result = await signInWithEmailAndPassword(auth, email, password);
+            const user = result.user;
+            console.log("Login com email bem-sucedido:", user.email);
+            
+            // Obter token
+            const token = await user.getIdToken();
+            
+            // Redirecionar com parâmetros
+            const url = new URL(window.location.href);
+            url.searchParams.set('auth_success', 'true');
+            url.searchParams.set('uid', user.uid);
+            url.searchParams.set('email', user.email);
+            
+            // Salvar no localStorage
+            localStorage.setItem('firebase_user', JSON.stringify({
+                uid: user.uid,
+                email: user.email,
+                token: token,
+                provider: 'email'
+            }));
+            
+            // Redirecionar
+            window.location.href = url.toString();
+        } catch (error) {
+            console.error("Erro no login com email:", error);
+            alert("Erro no login com email: " + error.message);
+        }
+    };
 
-        }} catch (error) {{
-            console.error("Erro ao inicializar Firebase:", error);
-            alert("Erro ao inicializar Firebase: " + error.message);
-        }}
-    }});
-
-    // Configurar botões de login
-    function setupLoginButtons(auth, googleProvider, facebookProvider) {{
+    // Configurar botões após carregamento do DOM
+    document.addEventListener('DOMContentLoaded', function() {
         console.log("Configurando botões de login...");
-
+        
         // Google Login
         const googleBtn = document.getElementById('googleLogin');
-        if (googleBtn) {{
-            googleBtn.addEventListener('click', function(e) {{
+        if (googleBtn) {
+            googleBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 console.log("Clicou no botão Google");
-
-                // Configurar dimensões do pop-up
-                const width = 500;
-                const height = 600;
-                const left = (window.innerWidth - width) / 2;
-                const top = (window.innerHeight - height) / 2;
-
-                auth.signInWithPopup(googleProvider)
-                    .then((result) => {{
-                        const user = result.user;
-                        console.log("Login com Google bem-sucedido:", user.email);
-
-                        // Obter token
-                        user.getIdToken().then(token => {{
-                            // Redirecionar com parâmetros
-                            const url = new URL(window.location.href);
-                            url.searchParams.set('auth_success', 'true');
-                            url.searchParams.set('uid', user.uid);
-                            url.searchParams.set('email', user.email);
-
-                            // Salvar no localStorage
-                            localStorage.setItem('firebase_user', JSON.stringify({{
-                                uid: user.uid,
-                                email: user.email,
-                                token: token,
-                                provider: 'google'
-                            }}));
-
-                            // Redirecionar
-                            window.location.href = url.toString();
-                        }});
-                    }})
-                    .catch((error) => {{
-                        console.error("Erro no login com Google:", error);
-                        alert("Erro no login com Google: " + error.message);
-                    }});
-            }});
+                window.loginWithGoogle();
+            });
             console.log("Botão Google configurado");
-        }}
-
+        }
+        
         // Facebook Login
         const facebookBtn = document.getElementById('facebookLogin');
-        if (facebookBtn) {{
-            facebookBtn.addEventListener('click', function(e) {{
+        if (facebookBtn) {
+            facebookBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 console.log("Clicou no botão Facebook");
-
-                auth.signInWithPopup(facebookProvider)
-                    .then((result) => {{
-                        const user = result.user;
-                        console.log("Login com Facebook bem-sucedido:", user.email);
-
-                        // Obter token
-                        user.getIdToken().then(token => {{
-                            // Redirecionar com parâmetros
-                            const url = new URL(window.location.href);
-                            url.searchParams.set('auth_success', 'true');
-                            url.searchParams.set('uid', user.uid);
-                            url.searchParams.set('email', user.email);
-
-                            // Salvar no localStorage
-                            localStorage.setItem('firebase_user', JSON.stringify({{
-                                uid: user.uid,
-                                email: user.email,
-                                token: token,
-                                provider: 'facebook'
-                            }}));
-
-                            // Redirecionar
-                            window.location.href = url.toString();
-                        }});
-                    }})
-                    .catch((error) => {{
-                        console.error("Erro no login com Facebook:", error);
-                        alert("Erro no login com Facebook: " + error.message);
-                    }});
-            }});
+                window.loginWithFacebook();
+            });
             console.log("Botão Facebook configurado");
-        }}
-    }}
+        }
+    });
     </script>
     """, unsafe_allow_html=True)
 
@@ -251,17 +300,29 @@ if not st.session_state.authenticated:
         submit = st.form_submit_button("Entrar")
 
         if submit:
-            if email.lower() == "admin" and password == "admin":
-                st.session_state.authenticated = True
-                st.session_state.user = {
-                    "uid": "admin-user",
-                    "email": "admin@example.com",
-                    "demo": True
-                }
-                st.success("Login realizado com sucesso (modo demonstração)")
-                st.rerun()
+            if email and password:
+                # Adicionando código para chamar a função de login com email
+                st.markdown(f"""
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {{
+                    // Chamar a função de login por email
+                    window.loginWithEmail("{email}", "{password}");
+                }});
+                </script>
+                """, unsafe_allow_html=True)
+                
+                # Modo de demonstração (somente para testes)
+                if email.lower() == "admin" and password == "admin":
+                    st.session_state.authenticated = True
+                    st.session_state.user = {
+                        "uid": "admin-user",
+                        "email": "admin@example.com",
+                        "demo": True
+                    }
+                    st.success("Login realizado com sucesso (modo demonstração)")
+                    st.rerun()
             else:
-                st.error("Credenciais inválidas")
+                st.error("Email e senha são obrigatórios")
 else:
     # Mostrar informações do usuário
     st.success(f"Login realizado com sucesso: {st.session_state.user.get('email')}")

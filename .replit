@@ -161,6 +161,26 @@ args = "Login Minimo"
 task = "workflow.run"
 args = "API do Firebase"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Firebase Novo"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Firebase Basico"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Firebase Iframe"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Direto"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Landing"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -714,6 +734,81 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd api && node server.js"
+
+[[workflows.workflow]]
+name = "Login Firebase Novo"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run login_firebase_novo.py --server.port 8889 --server.address 0.0.0.0"
+waitForPort = 8889
+
+[[workflows.workflow]]
+name = "Login Firebase Basico"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run login_firebase_basico.py --server.port 8890 --server.address 0.0.0.0"
+waitForPort = 8890
+
+[[workflows.workflow]]
+name = "Login Firebase Iframe"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run login_iframe.py --server.port 8895 --server.address 0.0.0.0"
+waitForPort = 8895
+
+[[workflows.workflow]]
+name = "Login Direto"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run login_direto.py --server.port 8080 --server.address 0.0.0.0"
+waitForPort = 8080
+
+[[workflows.workflow]]
+name = "Login Landing"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run login_simples_landing.py --server.port 5001 --server.address 0.0.0.0"
+waitForPort = 5001
 
 [[ports]]
 localPort = 443
