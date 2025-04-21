@@ -10,7 +10,7 @@ run = ["sh", "-c", "python -m streamlit run recuperacao_senha.py --server.port 5
 build = ["sh", "-c", "pip install -r requirements.txt"]
 
 [workflows]
-runButton = "Restaurar Checkpoint"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
@@ -204,6 +204,10 @@ args = "Login Simples Senha"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Login Recuperação Senha"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Recuperacao Restaurado"
 
 [[workflows.workflow]]
 name = "Teste Importação"
@@ -934,13 +938,20 @@ task = "shell.exec"
 args = "streamlit run app.py --server.port 5000 --server.address 0.0.0.0 --server.headless true --server.enableCORS=false --server.enableWebsocketCompression=false"
 
 [[workflows.workflow]]
-name = "Restaurar Checkpoint"
-author = 39445503
+name = "Login Recuperacao Restaurado"
+author = "agent"
 mode = "sequential"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run criar_ponto_backup.py --server.port 8530 --server.address 0.0.0.0"
+args = "python -m streamlit run login_recuperacao_restaurado.py --server.port 5000 --server.address 0.0.0.0"
+waitForPort = 5000
 
 [[ports]]
 localPort = 443
