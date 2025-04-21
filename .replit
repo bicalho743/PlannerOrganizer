@@ -6,7 +6,7 @@ packages = ["freetype", "gettext", "glibcLocales", "unzip"]
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["sh", "-c", "streamlit run app.py --server.port 5000 --server.address 0.0.0.0"]
+run = ["sh", "-c", "python -m streamlit run recuperacao_senha.py --server.port 5000 --server.address 0.0.0.0"]
 build = ["sh", "-c", "pip install -r requirements.txt"]
 
 [workflows]
@@ -193,6 +193,18 @@ args = "Login Atualizado"
 task = "workflow.run"
 args = "Login Recuperação"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Moderno"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Simples Senha"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Recuperação Senha"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -340,7 +352,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run app.py --server.port 5000 --server.address 0.0.0.0"
+args = "python -m streamlit run recuperacao_senha.py --server.port 5000 --server.address 0.0.0.0"
 waitForPort = 5000
 
 [[workflows.workflow]]
@@ -865,6 +877,51 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python -m streamlit run login_recuperacao.py --server.port 5555 --server.address 0.0.0.0"
+waitForPort = 5555
+
+[[workflows.workflow]]
+name = "Login Moderno"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python -m streamlit run login_moderno.py --server.port 5020 --server.address 0.0.0.0"
+waitForPort = 5020
+
+[[workflows.workflow]]
+name = "Login Simples Senha"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python -m streamlit run login_simples_senha.py --server.port 5010 --server.address 0.0.0.0"
+waitForPort = 5010
+
+[[workflows.workflow]]
+name = "Login Recuperação Senha"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python -m streamlit run login_recuperacao_senha.py --server.port 5555"
 waitForPort = 5555
 
 [[ports]]
