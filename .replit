@@ -209,6 +209,10 @@ args = "Login Recuperacao Restaurado"
 task = "workflow.run"
 args = "Reset Senha"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Iniciar App MVP"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -952,6 +956,21 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "python -m streamlit run senha_reset.py --server.port 8888 --server.address 0.0.0.0"
 waitForPort = 8888
+
+[[workflows.workflow]]
+name = "Iniciar App MVP"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run iniciar_app_mvp.py --server.port 5010 --server.address 0.0.0.0"
+waitForPort = 5010
 
 [[ports]]
 localPort = 443
