@@ -181,6 +181,10 @@ args = "Login Direto"
 task = "workflow.run"
 args = "Login Landing"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login com Verificação"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -547,7 +551,6 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0.0"
-waitForPort = 5001
 
 [[workflows.workflow]]
 name = "Login Portal"
@@ -747,7 +750,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run login_firebase_novo.py --server.port 8889 --server.address 0.0.0.0"
+args = "python -m streamlit run login_firebase_novo.py --server.port 8889 --server.address 0.0.0.0"
 waitForPort = 8889
 
 [[workflows.workflow]]
@@ -808,6 +811,21 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run login_simples_landing.py --server.port 5001 --server.address 0.0.0.0"
+waitForPort = 5001
+
+[[workflows.workflow]]
+name = "Login com Verificação"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run login_com_verificacao.py --server.port 5001 --server.address 0.0.0.0"
 waitForPort = 5001
 
 [[ports]]

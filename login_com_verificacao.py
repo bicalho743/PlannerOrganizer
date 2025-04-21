@@ -1,159 +1,151 @@
 import streamlit as st
-import os
 import json
-import requests
+import os
 from datetime import datetime
 
 # Configuração da página
 st.set_page_config(
-    page_title="Login - Planner Organizer",
+    page_title="Login com Verificação - Planner Organizer",
     page_icon="🔑",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# Estilo personalizado
-st.markdown("""
-<style>
-    .main {
-        background-color: #f8f9fa;
-    }
-    .block-container {
-        max-width: 800px;
-        padding: 1rem;
-        margin-top: 2rem;
-    }
-    .login-box {
-        background-color: white;
-        padding: 2rem;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        margin-bottom: 1rem;
-    }
-    .gradient-heading {
-        background: linear-gradient(90deg, #007bff, #00c6ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-size: 2.5rem;
-        font-weight: bold;
-        margin-bottom: 1rem;
-        text-align: center;
-    }
-    .pricing-card {
-        background-color: white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        border: 1px solid #ddd;
-        height: 100%;
-    }
-    .pricing-card.highlight {
-        border: 2px solid #007bff;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .pricing-header {
-        background-color: #007bff;
-        color: white;
-        padding: 0.5rem;
-        margin: -1.5rem -1.5rem 1rem -1.5rem;
-        border-radius: 10px 10px 0 0;
-        text-align: center;
-    }
-    .pricing-title {
-        font-size: 1.25rem;
-        font-weight: bold;
-        text-align: center;
-        color: #333;
-    }
-    .pricing-price {
-        font-size: 1.75rem;
-        font-weight: bold;
-        text-align: center;
-        color: #007bff;
-        margin: 0.5rem 0;
-    }
-    .pricing-period {
-        text-align: center;
-        color: #666;
-        margin-bottom: 1rem;
-    }
-    .pricing-features {
-        margin: 1rem 0;
-    }
-    .pricing-button {
-        background-color: #007bff;
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-        cursor: pointer;
-        font-weight: bold;
-        width: 100%;
-        text-align: center;
-        margin-top: 1rem;
-    }
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 2px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        background-color: #e9ecef;
-        padding: 10px 20px;
-        border-radius: 4px 4px 0 0;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #007bff;
-        color: white;
-    }
-    /* Botões estilizados para login social */
-    .social-button-google {
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 10px;
-        background-color: white;
-        color: #444;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        font-size: 16px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .social-button-facebook {
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 10px;
-        background-color: #3b5998;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        font-size: 16px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# Inicializar variáveis de sessão
+# Inicializar estado da sessão
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
-
-if "user" not in st.session_state:
     st.session_state.user = None
 
-if "auth_error" not in st.session_state:
-    st.session_state.auth_error = None
-
-# Carregar configuração do Firebase
+# Configurações do Firebase
 firebase_config = {
-    "apiKey": os.environ.get("FIREBASE_API_KEY", "AIzaSyDNvFRG_LcmnrQlvGzHx5_dR16vCUTp13I"),
+    "apiKey": os.environ.get("FIREBASE_API_KEY", "AIzaSyDWb55-PRwdFkAgxoMd5-V_CVXvdP0FrpY"),
     "authDomain": "planner-organizer-68a23.firebaseapp.com",
     "projectId": "planner-organizer-68a23",
     "storageBucket": "planner-organizer-68a23.appspot.com",
     "messagingSenderId": "763383033284",
     "appId": "1:763383033284:web:5a5dc3b4d3f5bc63631ce7"
 }
+
+# CSS personalizado para estilização
+st.markdown("""
+<style>
+    .gradient-heading {
+        font-size: 48px;
+        background: linear-gradient(45deg, #2193b0, #6dd5ed);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 20px;
+        font-weight: 700;
+    }
+    
+    .login-box {
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        background-color: white;
+    }
+    
+    .pricing-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 10px 15px;
+        border-radius: 5px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        margin-bottom: 10px;
+        color: white;
+    }
+    
+    .pricing-card {
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        background-color: white;
+        position: relative;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .pricing-card.highlight {
+        border: 2px solid #2193b0;
+    }
+    
+    .pricing-header {
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(45deg, #2193b0, #6dd5ed);
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .pricing-title {
+        margin-top: 15px;
+        font-size: 24px;
+        font-weight: 600;
+        color: #333;
+        text-align: center;
+    }
+    
+    .pricing-price {
+        font-size: 36px;
+        font-weight: 700;
+        color: #2193b0;
+        text-align: center;
+        margin: 10px 0 5px;
+    }
+    
+    .pricing-period {
+        font-size: 14px;
+        color: #666;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .pricing-features {
+        list-style-type: none;
+        padding: 0;
+        margin: 0 0 20px;
+        flex-grow: 1;
+    }
+    
+    .pricing-features li {
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+        font-size: 14px;
+        position: relative;
+        padding-left: 25px;
+    }
+    
+    .pricing-features li:before {
+        content: "✓";
+        color: #2193b0;
+        position: absolute;
+        left: 0;
+    }
+    
+    .pricing-button {
+        background: linear-gradient(45deg, #2193b0, #6dd5ed);
+        margin-top: auto;
+        font-size: 16px;
+    }
+    
+    .pricing-button:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # Verificar parâmetros de URL para autenticação
 params = dict(st.query_params)
@@ -172,15 +164,13 @@ if "auth_success" in params and params["auth_success"] == "true":
             
         provider = "email"  # Valor padrão
         
-        # Se for login social (Google/Facebook), considerar como verificado
+        # Verificar o provedor (mantemos apenas email)
         if "provider" in params:
             provider_param = params["provider"]
             if isinstance(provider_param, list):
                 provider = provider_param[0]
             else:
                 provider = provider_param
-                
-            email_verified = provider in ["google", "facebook"] or email_verified
         
         # Salvar na sessão com informações adicionais
         st.session_state.authenticated = True
@@ -195,35 +185,6 @@ if "auth_success" in params and params["auth_success"] == "true":
         # Limpar parâmetros
         st.query_params.clear()
         st.rerun()
-
-# Funções de autenticação para integração com backend
-def register_user_with_backend(uid, email, name=None):
-    """Registra o usuário no backend após autenticação com Firebase"""
-    try:
-        # Faz requisição para o backend
-        response = requests.post(
-            "http://localhost:8000/api/users/register",
-            json={
-                "uid": uid,
-                "email": email,
-                "name": name or email.split('@')[0]
-            }
-        )
-        return response.json()
-    except Exception as e:
-        st.error(f"Erro ao registrar usuário no backend: {e}")
-        return None
-
-def verify_admin_credentials(email, password):
-    """Modo administrador para testes (apenas para desenvolvimento)"""
-    if email.lower() == "admin" and password == "admin":
-        return {
-            "uid": "admin-user",
-            "email": "admin@example.com",
-            "name": "Administrador",
-            "demo": True
-        }
-    return None
 
 # Javascript para Firebase Auth
 firebase_js = f"""
@@ -242,8 +203,6 @@ function initializeFirebase() {{
         console.log("Firebase inicializado com sucesso");
     }}
 }}
-
-// Função removida - login social foi desativado
 
 // Login com Email e Senha
 function loginWithEmail(email, password) {{
@@ -264,6 +223,7 @@ function loginWithEmail(email, password) {{
                     url.searchParams.set('uid', user.uid);
                     url.searchParams.set('email', user.email);
                     url.searchParams.set('email_verified', 'true');
+                    url.searchParams.set('provider', 'email');
                     
                     localStorage.setItem('firebase_user', JSON.stringify({{
                         uid: user.uid,
@@ -330,12 +290,13 @@ function createAccount(email, password) {{
                 url.searchParams.set('auth_success', 'true');
                 url.searchParams.set('uid', user.uid);
                 url.searchParams.set('email', user.email);
-                url.searchParams.set('email_verified', user.emailVerified);
+                url.searchParams.set('email_verified', 'false');
+                url.searchParams.set('provider', 'email');
                 
                 localStorage.setItem('firebase_user', JSON.stringify({{
                     uid: user.uid,
                     email: user.email,
-                    emailVerified: user.emailVerified,
+                    emailVerified: false,
                     token: token,
                     provider: 'email'
                 }}));
@@ -354,7 +315,7 @@ function resetPassword(email) {{
     console.log("Enviando email de recuperação...");
     initializeFirebase();
     
-    // Configurar URL de redirecionamento para recuperação de senha
+    // Configurações adicionais para recuperação de senha
     const actionCodeSettings = {{
         // URL de redirecionamento após recuperação
         url: window.location.origin + window.location.pathname,
@@ -391,11 +352,27 @@ function signOut() {{
     }});
 }}
 
-// Configurando quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', function() {{
-    console.log("Configurando ambiente de autenticação...");
-    // As funções de login social foram desativadas
-}});
+// Reenviar email de verificação
+function resendVerificationEmail() {{
+    console.log("Reenviando email de verificação...");
+    initializeFirebase();
+    
+    const user = auth.currentUser;
+    if (user) {{
+        user.sendEmailVerification()
+            .then(() => {{
+                console.log("Email de verificação reenviado com sucesso");
+                alert("Um novo email de verificação foi enviado para " + user.email);
+            }})
+            .catch((error) => {{
+                console.error("Erro ao reenviar email de verificação:", error);
+                alert("Erro ao reenviar email de verificação: " + error.message);
+            }});
+    }} else {{
+        console.error("Nenhum usuário autenticado para reenviar verificação");
+        alert("Você precisa estar logado para reenviar o email de verificação");
+    }}
+}}
 """
 
 # Função principal
@@ -413,7 +390,7 @@ def main():
 def mostrar_area_logada():
     st.success(f"Login realizado com sucesso como {st.session_state.user.get('email')}")
     
-    # Verificar se o usuário está com email verificado
+    # Verificar se o email está verificado
     if st.session_state.user.get('provider') == 'email' and not st.session_state.user.get('email_verified', False):
         st.warning("Seu email ainda não foi verificado. Por favor, verifique sua caixa de entrada e confirme seu email para acesso completo.")
         
@@ -422,20 +399,10 @@ def mostrar_area_logada():
             st.markdown("""
             <script>
             document.addEventListener('DOMContentLoaded', function() {
-                // Inicializar Firebase
-                if (typeof initializeFirebase === 'function') {
-                    initializeFirebase();
-                    
-                    // Reenviar verificação para o usuário atual
-                    firebase.auth().currentUser.sendEmailVerification()
-                        .then(() => {
-                            alert("Email de verificação reenviado com sucesso!");
-                        })
-                        .catch((error) => {
-                            alert("Erro ao reenviar email: " + error.message);
-                        });
+                if (typeof resendVerificationEmail === 'function') {
+                    resendVerificationEmail();
                 } else {
-                    alert("Não foi possível inicializar o Firebase. Por favor, tente novamente mais tarde.");
+                    alert("Função de reenvio não disponível. Tente fazer login novamente.");
                 }
             });
             </script>
@@ -474,17 +441,6 @@ def mostrar_area_logada():
     # Mostrar detalhes do usuário
     with st.expander("Detalhes do Usuário"):
         st.json(st.session_state.user)
-    
-    # Verificar conexão com API
-    with st.expander("Diagnóstico de Conexão"):
-        try:
-            response = requests.get("http://localhost:8000/status")
-            if response.status_code == 200:
-                st.success(f"API conectada! Status: {response.json().get('status', 'Online')}")
-            else:
-                st.warning(f"API está respondendo com status {response.status_code}")
-        except Exception as e:
-            st.error(f"Erro ao conectar com a API: {e}")
 
 # Exibir tela de login
 def mostrar_login():
@@ -501,52 +457,28 @@ def mostrar_login():
     tab1, tab2, tab3 = st.tabs(["Login", "Criar Conta", "Recuperar Senha"])
     
     with tab1:
-        # Login com email e senha
+        # Login com email/senha
         st.markdown("<div class='login-box'>", unsafe_allow_html=True)
         st.subheader("Login com Email e Senha")
         
-        # Login com email/senha
         with st.form("login_form"):
             email = st.text_input("Email", key="login_email")
             password = st.text_input("Senha", type="password", key="login_password")
             
-            col1, col2 = st.columns(2)
-            with col1:
-                submit = st.form_submit_button("Entrar", use_container_width=True)
-            with col2:
-                demo_mode = st.form_submit_button("Modo Demo", use_container_width=True)
+            submit = st.form_submit_button("Entrar", use_container_width=True)
             
             if submit:
                 if email and password:
-                    # Verificar modo administrador
-                    admin_user = verify_admin_credentials(email, password)
-                    if admin_user:
-                        st.session_state.authenticated = True
-                        st.session_state.user = admin_user
-                        st.success("Login de administrador realizado com sucesso!")
-                        st.rerun()
-                    else:
-                        # Adicionar script para login com Firebase
-                        st.markdown(f"""
-                        <script>
-                        document.addEventListener('DOMContentLoaded', function() {{
-                            loginWithEmail("{email}", "{password}");
-                        }});
-                        </script>
-                        """, unsafe_allow_html=True)
+                    # Adicionar script para login com Firebase
+                    st.markdown(f"""
+                    <script>
+                    document.addEventListener('DOMContentLoaded', function() {{
+                        loginWithEmail("{email}", "{password}");
+                    }});
+                    </script>
+                    """, unsafe_allow_html=True)
                 else:
                     st.error("Por favor, preencha email e senha.")
-            
-            if demo_mode:
-                st.session_state.authenticated = True
-                st.session_state.user = {
-                    "uid": "demo-user",
-                    "email": "demo@example.com",
-                    "name": "Usuário Demo",
-                    "demo": True
-                }
-                st.success("Modo de demonstração ativado!")
-                st.rerun()
         
         st.markdown("</div>", unsafe_allow_html=True)
     
@@ -606,72 +538,7 @@ def mostrar_login():
                     st.error("Por favor, informe seu email.")
         
         st.markdown("</div>", unsafe_allow_html=True)
-    
-    # Exibir planos de preço
-    st.markdown("<h2 style='text-align: center; margin: 2rem 0 1rem;'>Planos e Preços</h2>", unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("""
-        <div class="pricing-card">
-            <h3 class="pricing-title">Mensal</h3>
-            <div class="pricing-price">R$ 9,70</div>
-            <div class="pricing-period">por mês</div>
-            <ul class="pricing-features">
-                <li>Acesso a todas as funcionalidades</li>
-                <li>Suporte via email</li>
-                <li>7 dias de teste grátis</li>
-                <li>Cancele quando quiser</li>
-            </ul>
-            <button class="pricing-button">Assinar Plano</button>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div class="pricing-card highlight">
-            <div class="pricing-header">
-                <span>Mais Popular</span>
-            </div>
-            <h3 class="pricing-title">Anual</h3>
-            <div class="pricing-price">R$ 97,00</div>
-            <div class="pricing-period">por ano (economize 17%)</div>
-            <ul class="pricing-features">
-                <li>Acesso a todas as funcionalidades</li>
-                <li>Suporte prioritário</li>
-                <li>7 dias de teste grátis</li>
-                <li>Cancele quando quiser</li>
-                <li>Economia de 2 meses no ano</li>
-            </ul>
-            <button class="pricing-button">Assinar Plano</button>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown("""
-        <div class="pricing-card">
-            <h3 class="pricing-title">Vitalício</h3>
-            <div class="pricing-price">R$ 247,00</div>
-            <div class="pricing-period">pagamento único</div>
-            <ul class="pricing-features">
-                <li>Acesso a todas as funcionalidades</li>
-                <li>Suporte premium</li>
-                <li>Acesso vitalício sem mensalidades</li>
-                <li>Acesso a novas funcionalidades</li>
-                <li>Prioridade nas atualizações</li>
-            </ul>
-            <button class="pricing-button">Comprar Acesso</button>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Rodapé
-    st.markdown("""
-    <div style="margin-top: 3rem; text-align: center; color: #666; font-size: 0.8rem;">
-        <p>© 2025 Planner Organizer. Todos os direitos reservados.</p>
-        <p>Dúvidas? Entre em contato: contato@plannerorganizer.com.br</p>
-    </div>
-    """, unsafe_allow_html=True)
 
+# Executar aplicação
 if __name__ == "__main__":
     main()
