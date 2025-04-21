@@ -60,12 +60,12 @@ st.markdown("""
 # Configuração do Firebase
 firebase_config = {
     "apiKey": st.secrets.get("FIREBASE_API_KEY", "AIzaSyA8xzYgZXCkZ-97RWQZXtMpvLVf1Jx8wjk"),
-    "authDomain": st.secrets.get("FIREBASE_AUTH_DOMAIN", "planner-organizer.firebaseapp.com"),
-    "projectId": st.secrets.get("FIREBASE_PROJECT_ID", "planner-organizer"),
-    "storageBucket": st.secrets.get("FIREBASE_STORAGE_BUCKET", "planner-organizer.appspot.com"),
+    "authDomain": st.secrets.get("FIREBASE_AUTH_DOMAIN", "planner-organizer-68a23.firebaseapp.com"),
+    "projectId": st.secrets.get("FIREBASE_PROJECT_ID", "planner-organizer-68a23"),
+    "storageBucket": st.secrets.get("FIREBASE_STORAGE_BUCKET", "planner-organizer-68a23.appspot.com"),
     "messagingSenderId": st.secrets.get("FIREBASE_MESSAGING_SENDER_ID", "695046724018"),
     "appId": st.secrets.get("FIREBASE_APP_ID", "1:695046724018:web:98d8feec0c6b6c937d57fd"),
-    "databaseURL": st.secrets.get("FIREBASE_DATABASE_URL", "https://planner-organizer-default-rtdb.firebaseio.com")
+    "databaseURL": st.secrets.get("FIREBASE_DATABASE_URL", "https://planner-organizer-68a23-default-rtdb.firebaseio.com")
 }
 
 # JavaScript para inicializar o Firebase
@@ -674,47 +674,47 @@ if not st.session_state.authenticated:
             submit = st.form_submit_button("Entrar na minha conta", use_container_width=True)
             
             if submit:
-                from utils.firebase_auth import fazer_login
-                from utils.subscription_manager import subscription_manager
+                # Login de demonstração
+                if username.lower() == "admin" and password == "admin":
+                    st.session_state.authenticated = True
+                    st.session_state.user = {
+                        'user_id': 'admin-demo',
+                        'email': 'admin@example.com',
+                        'demo_mode': True
+                    }
+                    st.success("Login realizado com sucesso (modo de demonstração)!")
+                    st.rerun()
                 
-                with st.spinner("Autenticando..."):
-                    # Login de demonstração
-                    if username.lower() == "admin" and password == "admin":
-                        st.session_state.authenticated = True
-                        st.session_state.user = {
-                            'user_id': 'admin-demo',
-                            'email': 'admin@example.com',
-                            'demo_mode': True
-                        }
-                        st.success("Login realizado com sucesso (modo de demonstração)!")
-                        st.rerun()
+                # Tentativa de login real com Firebase somente se não for demonstração
+                try:
+                    from utils.firebase_auth import fazer_login
+                    from utils.subscription_manager import subscription_manager
                     
-                    # Tentativa de login real com Firebase    
-                    result = fazer_login(username, password)
-                    
-                    if result:
-                        # Login bem-sucedido
-                        st.session_state.authenticated = True
-                        st.session_state.user = result
+                    with st.spinner("Autenticando..."):
+                        result = fazer_login(username, password)
                         
-                        # Verificar status da assinatura
-                        user_id = result.get('user_id')
-                        subscription_details = subscription_manager.get_subscription_details(user_id)
-                        
-                        # Armazenar detalhes da assinatura na sessão
-                        st.session_state.subscription = subscription_details
-                        
-                        # Verificar se o usuário tem uma assinatura ativa
-                        if subscription_details["is_active"]:
-                            st.success(f"Login realizado com sucesso! Bem-vindo ao {subscription_details['plan_name']}.")
+                        if result:
+                            # Login bem-sucedido
+                            st.session_state.authenticated = True
+                            st.session_state.user = result
+                            
+                            # Verificar status da assinatura
+                            user_id = result.get('user_id')
+                            
+                            try:
+                                subscription_details = subscription_manager.get_subscription_details(user_id)
+                                st.session_state.subscription = subscription_details
+                            except Exception as e:
+                                logger.warning(f"Erro ao verificar assinatura: {e}")
+                                st.session_state.subscription = {"status": "active", "demo_mode": True}
+                            
+                            st.success("Login realizado com sucesso!")
+                            st.rerun()
                         else:
-                            # Usuário sem assinatura ativa
-                            st.warning("Sua assinatura não está ativa. Você será redirecionado para a seleção de planos.")
-                            st.session_state.show_plans = True
-                        
-                        st.rerun()
-                    else:
-                        st.error("Usuário ou senha incorretos")
+                            st.error("Usuário ou senha inválidos")
+                except Exception as e:
+                    logger.warning(f"Erro ao fazer login com Firebase: {e}")
+                    st.error("Erro no serviço de autenticação. Por favor, tente novamente mais tarde ou use o modo de demonstração.")
         
         # Botões para recuperação de senha e cadastro com informações de demonstração
         col1, col2 = st.columns(2)
