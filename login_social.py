@@ -43,7 +43,7 @@ if "auth_success" in params and params["auth_success"][0] == "true":
     if "uid" in params and "email" in params:
         uid = params["uid"][0]
         email = params["email"][0]
-        
+
         # Salvar na sessão
         st.session_state.authenticated = True
         st.session_state.user = {
@@ -51,7 +51,7 @@ if "auth_success" in params and params["auth_success"][0] == "true":
             "email": email,
             "login_time": datetime.now().isoformat()
         }
-        
+
         # Limpar parâmetros
         st.experimental_set_query_params()
         st.rerun()
@@ -66,17 +66,17 @@ if not st.session_state.authenticated:
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     """, unsafe_allow_html=True)
-    
+
     # Script de autenticação
     st.markdown(f"""
     <script>
     // Inicializar Firebase quando a página carregar
     document.addEventListener('DOMContentLoaded', function() {{
         console.log("Inicializando Firebase...");
-        
+
         // Configuração do Firebase
         const firebaseConfig = {json.dumps(firebase_config)};
-        
+
         // Inicializar Firebase
         let app;
         try {{
@@ -86,37 +86,43 @@ if not st.session_state.authenticated:
                 app = firebase.app();
             }}
             console.log("Firebase inicializado com sucesso");
-            
+
             // Configurar providers
             const auth = firebase.auth();
             const googleProvider = new firebase.auth.GoogleAuthProvider();
             const facebookProvider = new firebase.auth.FacebookAuthProvider();
-            
+
             // Configurar botões
             setupLoginButtons(auth, googleProvider, facebookProvider);
-            
+
         }} catch (error) {{
             console.error("Erro ao inicializar Firebase:", error);
             alert("Erro ao inicializar Firebase: " + error.message);
         }}
     }});
-    
+
     // Configurar botões de login
     function setupLoginButtons(auth, googleProvider, facebookProvider) {{
         console.log("Configurando botões de login...");
-        
+
         // Google Login
         const googleBtn = document.getElementById('googleLogin');
         if (googleBtn) {{
             googleBtn.addEventListener('click', function(e) {{
                 e.preventDefault();
                 console.log("Clicou no botão Google");
-                
+
+                // Configurar dimensões do pop-up
+                const width = 500;
+                const height = 600;
+                const left = (window.innerWidth - width) / 2;
+                const top = (window.innerHeight - height) / 2;
+
                 auth.signInWithPopup(googleProvider)
                     .then((result) => {{
                         const user = result.user;
                         console.log("Login com Google bem-sucedido:", user.email);
-                        
+
                         // Obter token
                         user.getIdToken().then(token => {{
                             // Redirecionar com parâmetros
@@ -124,7 +130,7 @@ if not st.session_state.authenticated:
                             url.searchParams.set('auth_success', 'true');
                             url.searchParams.set('uid', user.uid);
                             url.searchParams.set('email', user.email);
-                            
+
                             // Salvar no localStorage
                             localStorage.setItem('firebase_user', JSON.stringify({{
                                 uid: user.uid,
@@ -132,7 +138,7 @@ if not st.session_state.authenticated:
                                 token: token,
                                 provider: 'google'
                             }}));
-                            
+
                             // Redirecionar
                             window.location.href = url.toString();
                         }});
@@ -144,19 +150,19 @@ if not st.session_state.authenticated:
             }});
             console.log("Botão Google configurado");
         }}
-        
+
         // Facebook Login
         const facebookBtn = document.getElementById('facebookLogin');
         if (facebookBtn) {{
             facebookBtn.addEventListener('click', function(e) {{
                 e.preventDefault();
                 console.log("Clicou no botão Facebook");
-                
+
                 auth.signInWithPopup(facebookProvider)
                     .then((result) => {{
                         const user = result.user;
                         console.log("Login com Facebook bem-sucedido:", user.email);
-                        
+
                         // Obter token
                         user.getIdToken().then(token => {{
                             // Redirecionar com parâmetros
@@ -164,7 +170,7 @@ if not st.session_state.authenticated:
                             url.searchParams.set('auth_success', 'true');
                             url.searchParams.set('uid', user.uid);
                             url.searchParams.set('email', user.email);
-                            
+
                             // Salvar no localStorage
                             localStorage.setItem('firebase_user', JSON.stringify({{
                                 uid: user.uid,
@@ -172,7 +178,7 @@ if not st.session_state.authenticated:
                                 token: token,
                                 provider: 'facebook'
                             }}));
-                            
+
                             // Redirecionar
                             window.location.href = url.toString();
                         }});
@@ -187,12 +193,12 @@ if not st.session_state.authenticated:
     }}
     </script>
     """, unsafe_allow_html=True)
-    
+
     # Botões de login com estilo direto no HTML
     st.markdown("""
     <div style="margin-bottom: 20px; padding: 20px; background-color: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
         <h2 style="text-align: center; margin-bottom: 20px;">Entrar com</h2>
-        
+
         <button id="googleLogin" style="
             width: 100%;
             padding: 10px;
@@ -211,7 +217,7 @@ if not st.session_state.authenticated:
                  style="width: 18px; height: 18px; margin-right: 10px;">
             Continuar com Google
         </button>
-        
+
         <button id="facebookLogin" style="
             width: 100%;
             padding: 10px;
@@ -234,16 +240,16 @@ if not st.session_state.authenticated:
         </button>
     </div>
     """, unsafe_allow_html=True)
-    
+
     # Separador
     st.markdown("<p style='text-align: center; margin: 20px 0;'>OU</p>", unsafe_allow_html=True)
-    
+
     # Formulário de login
     with st.form("login_form"):
         email = st.text_input("Email")
         password = st.text_input("Senha", type="password")
         submit = st.form_submit_button("Entrar")
-        
+
         if submit:
             if email.lower() == "admin" and password == "admin":
                 st.session_state.authenticated = True
@@ -259,22 +265,22 @@ if not st.session_state.authenticated:
 else:
     # Mostrar informações do usuário
     st.success(f"Login realizado com sucesso: {st.session_state.user.get('email')}")
-    
+
     # Exibir dados
     st.write("### Dados do usuário")
     st.json(st.session_state.user)
-    
+
     # Botão de logout
     if st.button("Sair"):
         # Limpar sessão
         st.session_state.authenticated = False
         st.session_state.user = None
-        
+
         # Limpar localStorage
         st.markdown("""
         <script>
         localStorage.removeItem('firebase_user');
         </script>
         """, unsafe_allow_html=True)
-        
+
         st.rerun()
