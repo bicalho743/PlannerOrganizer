@@ -185,6 +185,14 @@ args = "Login Landing"
 task = "workflow.run"
 args = "Login com Verificação"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Atualizado"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Recuperação"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -551,6 +559,7 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0.0"
+waitForPort = 5001
 
 [[workflows.workflow]]
 name = "Login Portal"
@@ -827,6 +836,36 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run login_com_verificacao.py --server.port 5001 --server.address 0.0.0.0"
 waitForPort = 5001
+
+[[workflows.workflow]]
+name = "Login Atualizado"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python -m streamlit run login_senhas_atualizado.py --server.port 5015 --server.headless=true --server.address=0.0.0.0"
+waitForPort = 5015
+
+[[workflows.workflow]]
+name = "Login Recuperação"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python -m streamlit run login_recuperacao.py --server.port 5555 --server.address 0.0.0.0"
+waitForPort = 5555
 
 [[ports]]
 localPort = 443

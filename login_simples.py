@@ -165,6 +165,33 @@ if not st.session_state.authenticated:
             else:
                 st.error("Email ou senha inválidos")
     
+    # Interface para recuperação de senha
+    st.markdown("<h3 style='text-align: center; margin-top: 30px;'>Esqueceu sua senha?</h3>", unsafe_allow_html=True)
+    
+    # Campo para email e botão de recuperação
+    st.markdown("""
+    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 10px;">
+        <p style="margin-bottom: 15px;">Digite seu email abaixo para receber instruções de recuperação de senha:</p>
+        <div style="display: flex; margin-bottom: 10px;">
+            <input type="email" id="resetPasswordEmail" placeholder="Seu email" style="
+                flex: 1;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                margin-right: 10px;
+            ">
+            <button id="resetPasswordBtn" style="
+                padding: 10px 15px;
+                background-color: #1976D2;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            ">Recuperar</button>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
     # Link para criar conta
     st.markdown("""
     <div style="text-align: center; margin-top: 20px;">

@@ -186,6 +186,37 @@ const firebaseSimpleAuth = {
     },
     
     /**
+     * Envia email de recuperação de senha
+     * @param {string} email - Email para enviar a recuperação
+     * @returns {Promise} Promessa resolvida após envio
+     */
+    resetPassword: function(email) {
+        console.log("Enviando email de recuperação para:", email);
+        
+        // Configuração para o email de recuperação
+        const actionCodeSettings = {
+            // URL de redirecionamento após recuperação
+            url: window.location.origin + window.location.pathname,
+            // Manipular código como código de recuperação de senha
+            handleCodeInApp: false
+        };
+        
+        console.log("ActionCodeSettings:", actionCodeSettings);
+        
+        return this.auth.sendPasswordResetEmail(email, actionCodeSettings)
+            .then(() => {
+                console.log("Email de recuperação enviado com sucesso");
+                alert("Um email de recuperação de senha foi enviado para " + email + ". Por favor, verifique sua caixa de entrada e siga as instruções para redefinir sua senha.");
+                return true;
+            })
+            .catch(error => {
+                console.error("Erro ao enviar email de recuperação:", error);
+                alert("Erro ao enviar email de recuperação: " + error.message);
+                throw error;
+            });
+    },
+    
+    /**
      * Adiciona event listeners aos botões de login
      */
     setupLoginButtons: function() {
@@ -219,6 +250,24 @@ const firebaseSimpleAuth = {
             console.log("Event listener adicionado ao botão do Facebook");
         } else {
             console.warn("Botão do Facebook não encontrado");
+        }
+        
+        // Botão de recuperação de senha (se existir)
+        const resetBtn = document.getElementById('resetPasswordBtn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('resetPasswordEmail').value;
+                if (email) {
+                    this.resetPassword(email)
+                        .catch(error => {
+                            console.error("Falha na recuperação de senha:", error);
+                        });
+                } else {
+                    alert("Por favor, informe seu email para recuperação de senha.");
+                }
+            });
+            console.log("Event listener adicionado ao botão de recuperação de senha");
         }
     }
 };
