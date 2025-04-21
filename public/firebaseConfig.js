@@ -1,11 +1,11 @@
-// Obter a chave da API do ambiente (injetar durante o build)
+// Configuração do Firebase da aplicação web
 const firebaseConfig = {
-  apiKey: window.FIREBASE_API_KEY || "AIzaSyA8xzYgZXCkZ-97RWQZXtMpvLVf1Jx8wjk", // Fallback para desenvolvimento
+  apiKey: "AIzaSyAtuIO-4oyI99rQSl9dAMu756FI4q10kcY",
   authDomain: "planner-organizer-68a23.firebaseapp.com",
+  databaseURL: "https://planner-organizer-68a23-default-rtdb.firebaseio.com",
   projectId: "planner-organizer-68a23",
   storageBucket: "planner-organizer-68a23.appspot.com",
-  messagingSenderId: "763383033284",
-  appId: "1:763383033284:web:5a5dc3b4d3f5bc63631ce7"
+  messagingSenderId: "275264106992",
+  appId: "1:275264106992:web:3040a39f4f3530693c6d35",
+  measurementId: "G-E9KP3F40VT"
 };
-
-firebase.initializeApp(firebaseConfig);
