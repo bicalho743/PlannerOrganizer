@@ -76,24 +76,43 @@ if not st.session_state.authenticated:
 
 # Adicionar o Firebase SDK para autenticação na página
 st.markdown("""
+<!-- Bibliotecas Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
+<!-- Nosso módulo de autenticação simplificado -->
 <script>
-// Módulo Firebase Auth para Streamlit
-const streamlitFirebaseAuth = {
-    // Propriedades
-    auth: null,
+/**
+ * Módulo simples de autenticação Firebase para Streamlit
+ * Este módulo fornece funções básicas para login social com o Firebase
+ */
+
+// Objeto Firebase Auth global
+const firebaseSimpleAuth = {
+    // Configuração
+    config: null,
+    
+    // Referências internas
     app: null,
+    auth: null,
+    
+    // Provedores de autenticação
     googleProvider: null,
     facebookProvider: null,
     
-    // Inicializar Firebase
+    /**
+     * Inicializa o Firebase com a configuração fornecida
+     * @param {Object} config - Configuração do Firebase
+     */
     init: function(config) {
-        console.log("Inicializando Firebase Auth...");
         try {
-            // Verificar se já está inicializado
+            console.log("Inicializando Firebase Simple Auth...");
+            
+            // Guardar configuração
+            this.config = config;
+            
+            // Inicializar Firebase se ainda não estiver inicializado
             if (!firebase.apps.length) {
                 this.app = firebase.initializeApp(config);
                 console.log("Firebase inicializado com sucesso");
@@ -102,17 +121,19 @@ const streamlitFirebaseAuth = {
                 console.log("Firebase já estava inicializado");
             }
             
-            // Configuração da autenticação
+            // Obter auth
             this.auth = firebase.auth();
+            
+            // Inicializar providers
             this.googleProvider = new firebase.auth.GoogleAuthProvider();
             this.facebookProvider = new firebase.auth.FacebookAuthProvider();
             
-            // Configuração dos provedores
+            // Configurar opções adicionais (sugestão de conta, etc)
             this.googleProvider.setCustomParameters({
                 prompt: 'select_account'
             });
             
-            // Eventos de autenticação
+            // Configurar listener de estado
             this.setupAuthListener();
             
             return true;
@@ -122,132 +143,173 @@ const streamlitFirebaseAuth = {
         }
     },
     
-    // Configurar listener de estado de autenticação
+    /**
+     * Configura o listener de estado de autenticação
+     */
     setupAuthListener: function() {
         this.auth.onAuthStateChanged(user => {
             if (user) {
-                console.log("Usuário logado:", user.email);
-                this.handleAuthSuccess(user);
+                console.log("Usuário autenticado:", user.email);
+                this.saveUserToLocalStorage(user);
             } else {
-                console.log("Nenhum usuário logado");
+                console.log("Nenhum usuário autenticado");
             }
         });
     },
     
-    // Login com Google
+    /**
+     * Faz login com Google
+     * @returns {Promise} Promessa resolvida após login
+     */
     loginWithGoogle: function() {
         console.log("Iniciando login com Google...");
-        this.auth.signInWithPopup(this.googleProvider)
+        return this.auth.signInWithPopup(this.googleProvider)
             .then(result => {
-                const user = result.user;
-                console.log("Login com Google bem-sucedido:", user.email);
-                this.handleAuthSuccess(user);
+                console.log("Login com Google bem-sucedido:", result.user.email);
+                this.saveUserToLocalStorage(result.user);
+                this.redirectAfterLogin(result.user);
+                return result.user;
             })
             .catch(error => {
                 console.error("Erro no login com Google:", error);
-                this.handleAuthError(error);
+                throw error;
             });
     },
     
-    // Login com Facebook
+    /**
+     * Faz login com Facebook
+     * @returns {Promise} Promessa resolvida após login
+     */
     loginWithFacebook: function() {
         console.log("Iniciando login com Facebook...");
-        this.auth.signInWithPopup(this.facebookProvider)
+        return this.auth.signInWithPopup(this.facebookProvider)
             .then(result => {
-                const user = result.user;
-                console.log("Login com Facebook bem-sucedido:", user.email);
-                this.handleAuthSuccess(user);
+                console.log("Login com Facebook bem-sucedido:", result.user.email);
+                this.saveUserToLocalStorage(result.user);
+                this.redirectAfterLogin(result.user);
+                return result.user;
             })
             .catch(error => {
                 console.error("Erro no login com Facebook:", error);
-                this.handleAuthError(error);
+                throw error;
             });
     },
     
-    // Manipular sucesso de autenticação
-    handleAuthSuccess: function(user) {
-        // Obter token ID para autenticação no backend
+    /**
+     * Salva dados do usuário no localStorage
+     * @param {Object} user - Objeto de usuário do Firebase
+     */
+    saveUserToLocalStorage: function(user) {
+        // Obter token
         user.getIdToken().then(idToken => {
-            // Salvar no localStorage
+            // Dados a serem salvos
             const userData = {
                 uid: user.uid,
                 email: user.email,
-                displayName: user.displayName,
+                displayName: user.displayName || user.email,
                 photoURL: user.photoURL,
-                idToken: idToken
+                idToken: idToken,
+                lastLogin: new Date().toISOString()
             };
+            
+            // Salvar no localStorage
             localStorage.setItem('firebase_user', JSON.stringify(userData));
-            
-            // Redirecionar com parâmetros
-            const url = new URL(window.location.href);
-            url.searchParams.set('login_success', 'true');
-            url.searchParams.set('uid', user.uid);
-            url.searchParams.set('email', user.email);
-            
-            // Redirecionar
-            window.location.href = url.toString();
+            console.log("Dados do usuário salvos no localStorage");
         });
     },
     
-    // Manipular erro de autenticação
-    handleAuthError: function(error) {
-        console.error("Erro na autenticação:", error);
-        alert("Erro ao fazer login: " + error.message);
+    /**
+     * Redireciona após login bem-sucedido
+     * @param {Object} user - Objeto de usuário do Firebase
+     */
+    redirectAfterLogin: function(user) {
+        // Criar URL com parâmetros de autenticação
+        const url = new URL(window.location.href);
+        url.searchParams.set('auth_success', 'true');
+        url.searchParams.set('uid', user.uid);
+        url.searchParams.set('email', encodeURIComponent(user.email));
+        
+        // Pequeno delay para garantir que o token seja salvo
+        setTimeout(() => {
+            console.log("Redirecionando após login bem-sucedido...");
+            window.location.href = url.toString();
+        }, 500);
     },
     
-    // Configurar botões de login
-    setupButtons: function() {
+    /**
+     * Verifica se o usuário já está autenticado
+     * @returns {Object|null} Dados do usuário ou null
+     */
+    checkExistingAuth: function() {
+        try {
+            const userData = localStorage.getItem('firebase_user');
+            if (userData) {
+                const user = JSON.parse(userData);
+                console.log("Usuário encontrado no localStorage:", user.email);
+                return user;
+            }
+        } catch (error) {
+            console.error("Erro ao verificar autenticação existente:", error);
+            localStorage.removeItem('firebase_user');
+        }
+        return null;
+    },
+    
+    /**
+     * Faz logout do usuário atual
+     */
+    logout: function() {
+        this.auth.signOut()
+            .then(() => {
+                console.log("Logout realizado com sucesso");
+                localStorage.removeItem('firebase_user');
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error("Erro ao fazer logout:", error);
+            });
+    },
+    
+    /**
+     * Adiciona event listeners aos botões de login
+     */
+    setupLoginButtons: function() {
         console.log("Configurando botões de login...");
-        // Google
+        
+        // Botão de login com Google
         const googleBtn = document.getElementById('googleLoginBtn');
         if (googleBtn) {
-            googleBtn.addEventListener('click', e => {
+            googleBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.loginWithGoogle();
+                this.loginWithGoogle()
+                    .catch(error => {
+                        alert(`Erro ao fazer login com Google: ${error.message}`);
+                    });
             });
-            console.log("Botão Google configurado");
+            console.log("Event listener adicionado ao botão do Google");
+        } else {
+            console.warn("Botão do Google não encontrado");
         }
         
-        // Facebook
+        // Botão de login com Facebook
         const fbBtn = document.getElementById('facebookLoginBtn');
         if (fbBtn) {
-            fbBtn.addEventListener('click', e => {
+            fbBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.loginWithFacebook();
-            });
-            console.log("Botão Facebook configurado");
-        }
-    },
-    
-    // Verificar autenticação existente
-    checkExistingAuth: function() {
-        const userData = localStorage.getItem('firebase_user');
-        if (userData) {
-            try {
-                const user = JSON.parse(userData);
-                console.log("Usuário já autenticado via localStorage:", user.email);
-                
-                // Verificar parâmetros da URL
-                const url = new URL(window.location.href);
-                if (!url.searchParams.has('login_success')) {
-                    // Redirecionar para ativar login no backend
-                    this.handleAuthSuccess({
-                        uid: user.uid,
-                        email: user.email,
-                        displayName: user.displayName,
-                        photoURL: user.photoURL,
-                        getIdToken: () => Promise.resolve(user.idToken)
+                this.loginWithFacebook()
+                    .catch(error => {
+                        alert(`Erro ao fazer login com Facebook: ${error.message}`);
                     });
-                }
-                return true;
-            } catch (e) {
-                console.error("Erro ao processar dados do usuário:", e);
-                localStorage.removeItem('firebase_user');
-            }
+            });
+            console.log("Event listener adicionado ao botão do Facebook");
+        } else {
+            console.warn("Botão do Facebook não encontrado");
         }
-        return false;
     }
 };
+
+// Exportar o módulo para uso global
+window.firebaseSimpleAuth = firebaseSimpleAuth;
 
 // Inicializar quando a página carregar
 document.addEventListener('DOMContentLoaded', function() {
@@ -255,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Configurar botões depois que o DOM estiver pronto
     setTimeout(() => {
-        streamlitFirebaseAuth.setupButtons();
+        firebaseSimpleAuth.setupLoginButtons();
         console.log("Botões configurados");
     }, 1000);
 });
@@ -283,18 +345,31 @@ st.markdown(f"""
     document.addEventListener('DOMContentLoaded', function() {{
         console.log("DOM carregado, inicializando o módulo Firebase...");
         
-        // Verificar autenticação existente
-        const authExists = streamlitFirebaseAuth.checkExistingAuth();
-        if (!authExists) {{
-            // Inicializar Firebase
-            setTimeout(function() {{
-                const success = streamlitFirebaseAuth.init(firebaseConfig);
-                if (success) {{
-                    console.log("Firebase inicializado com sucesso");
-                }} else {{
-                    console.error("Falha ao inicializar Firebase");
+        // Verificar se o módulo está disponível
+        if (window.firebaseSimpleAuth) {{
+            // Verificar autenticação existente
+            const user = window.firebaseSimpleAuth.checkExistingAuth();
+            if (user) {{
+                console.log("Usuário já autenticado via localStorage:", user.email);
+                // Redirecionar para ativar login no backend se necessário
+                if (!window.location.search.includes('auth_success')) {{
+                    window.firebaseSimpleAuth.redirectAfterLogin(user);
                 }}
-            }}, 500);
+            }} else {{
+                // Inicializar Firebase
+                setTimeout(function() {{
+                    const success = window.firebaseSimpleAuth.init(firebaseConfig);
+                    if (success) {{
+                        console.log("Firebase inicializado com sucesso");
+                        // Configurar botões de login
+                        window.firebaseSimpleAuth.setupLoginButtons();
+                    }} else {{
+                        console.error("Falha ao inicializar Firebase");
+                    }}
+                }}, 500);
+            }}
+        }} else {{
+            console.error("Módulo Firebase Simple Auth não encontrado");
         }}
     }});
     

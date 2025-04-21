@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login com Firebase</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #1a73e8;
+      text-align: center;
+    }
+    .login-container {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .login-button {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 4px;
+      border: 1px solid #dadce0;
+      background-color: white;
+      cursor: pointer;
+      font-size: 16px;
+      text-align: center;
+      transition: background-color 0.3s;
+    }
+    .login-button:hover {
+      background-color: #f1f3f4;
+    }
+    .google-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .google-icon {
+      margin-right: 10px;
+      width: 18px;
+      height: 18px;
+    }
+    .facebook-button {
+      background-color: #1877f2;
+      color: white;
+      border: none;
+    }
+    .facebook-button:hover {
+      background-color: #166fe5;
+    }
+    .error-message {
+      color: #d93025;
+      margin-top: 10px;
+      text-align: center;
+      display: none;
+    }
+    .success-message {
+      color: #0f9d58;
+      margin-top: 10px;
+      text-align: center;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Login com Firebase</h1>
+  
+  <div class="login-container">
+    <p>Escolha uma opção para entrar no sistema:</p>
+    
+    <button id="googleLoginBtn" class="login-button google-button">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="google-icon">
+      Entrar com Google
+    </button>
+    
+    <button id="facebookLoginBtn" class="login-button facebook-button">
+      Entrar com Facebook
+    </button>
+    
+    <p class="error-message" id="errorMessage"></p>
+    <p class="success-message" id="successMessage"></p>
+  </div>
+
+  <!-- Importar Firebase usando a versão de módulos da v9 -->
+  <script type="module">
+    // Importar as funções necessárias do Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { 
+      getAuth, 
+      signInWithPopup, 
+      GoogleAuthProvider,
+      FacebookAuthProvider,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+
+    // Configuração do Firebase - estamos usando a versão inline para facilitar o teste
+    const firebaseConfig = {
+      apiKey: "AIzaSyA8xzYgZXCkZ-97RWQZXtMpvLVf1Jx8wjk",
+      authDomain: "planner-organizer-68a23.firebaseapp.com",
+      projectId: "planner-organizer-68a23",
+      storageBucket: "planner-organizer-68a23.appspot.com",
+      messagingSenderId: "763383033284",
+      appId: "1:763383033284:web:5a5dc3b4d3f5bc63631ce7"
+    };
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    
+    // Providers para login
+    const googleProvider = new GoogleAuthProvider();
+    const facebookProvider = new FacebookAuthProvider();
+    
+    // Referências aos elementos da UI
+    const googleBtn = document.getElementById('googleLoginBtn');
+    const facebookBtn = document.getElementById('facebookLoginBtn');
+    const errorMsg = document.getElementById('errorMessage');
+    const successMsg = document.getElementById('successMessage');
+    
+    // Mostrar mensagem de erro
+    function showError(message) {
+      errorMsg.textContent = message;
+      errorMsg.style.display = 'block';
+      successMsg.style.display = 'none';
+    }
+    
+    // Mostrar mensagem de sucesso
+    function showSuccess(message) {
+      successMsg.textContent = message;
+      successMsg.style.display = 'block';
+      errorMsg.style.display = 'none';
+    }
+    
+    // Função para lidar com o resultado do login
+    function handleAuthResult(result) {
+      const user = result.user;
+      console.log("Usuário autenticado:", user);
+      
+      // Salvar no localStorage para persistência
+      localStorage.setItem('firebase_user', JSON.stringify({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL
+      }));
+      
+      // Mostrar mensagem de sucesso
+      showSuccess(`Bem-vindo, ${user.displayName || user.email}!`);
+      
+      // Redirecionar para a página principal após um breve delay
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+    }
+    
+    // Login com Google
+    function loginWithGoogle() {
+      signInWithPopup(auth, googleProvider)
+        .then(handleAuthResult)
+        .catch(error => {
+          console.error("Erro no login com Google:", error);
+          showError(`Erro ao fazer login: ${error.message}`);
+        });
+    }
+    
+    // Login com Facebook
+    function loginWithFacebook() {
+      signInWithPopup(auth, facebookProvider)
+        .then(handleAuthResult)
+        .catch(error => {
+          console.error("Erro no login com Facebook:", error);
+          showError(`Erro ao fazer login: ${error.message}`);
+        });
+    }
+    
+    // Adicionar event listeners aos botões
+    googleBtn.addEventListener('click', loginWithGoogle);
+    facebookBtn.addEventListener('click', loginWithFacebook);
+    
+    // Verificar se o usuário já está autenticado
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("Usuário já está autenticado:", user.email);
+        showSuccess(`Bem-vindo de volta, ${user.displayName || user.email}!`);
+      }
+    });
+  </script>
+</body>
+</html>
