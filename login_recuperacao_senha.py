@@ -1,9 +1,8 @@
 """
-Página minimalista de login com recuperação de senha
-Esta versão evita componentes interativos complexos para máxima compatibilidade
+Página minimalista de login com recuperação de senha usando Firebase Auth
 """
-import streamlit as st
-import os
+import streamlit as st 
+from utils.firebase_auth import redefinir_senha
 from datetime import datetime
 
 # Configuração da página
@@ -69,16 +68,6 @@ def create_account(email, password, confirm_password):
     
     # Simulação de sucesso
     show_message("Conta criada com sucesso! Um email de verificação foi enviado.", "success")
-    return True
-
-def reset_password(email):
-    """Função de reset de senha simulada (substitua pela integração real)"""
-    if not email:
-        show_message("Por favor, insira seu email.", "error")
-        return False
-    
-    # Simulação de sucesso
-    show_message(f"Email de recuperação enviado para {email}.", "success")
     return True
 
 def logout():
@@ -201,13 +190,14 @@ else:
         col1, col2 = st.columns(2)
         with col1:
             if st.button("Enviar Link", use_container_width=True):
-                if reset_password(email):
-                    # Mostrar mensagem e voltar para login em 3 segundos
-                    import time
-                    time.sleep(2)
-                    switch_to_login()
-                    st.rerun()
-        
+                if email:
+                    if redefinir_senha(email):
+                        show_message(f"Email de recuperação enviado para {email}.", "success")
+                    else:
+                        show_message("Erro ao enviar email de recuperação. Verifique o email informado.", "error")
+                else:
+                    show_message("Por favor, informe seu email.", "error")
+
         with col2:
             if st.button("Voltar ao Login", use_container_width=True):
                 switch_to_login()
