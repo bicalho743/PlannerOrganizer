@@ -149,6 +149,14 @@ args = "Planos Sem Stripe"
 task = "workflow.run"
 args = "Login Firebase"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Social"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Minimo"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -659,6 +667,36 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run login_firebase.py --server.port 5003 --server.address 0.0.0.0"
 waitForPort = 5003
+
+[[workflows.workflow]]
+name = "Login Social"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run login_social.py --server.port 8888 --server.address 0.0.0.0"
+waitForPort = 8888
+
+[[workflows.workflow]]
+name = "Login Minimo"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run login_minimo.py --server.port 8080 --server.address 0.0.0.0"
+waitForPort = 8080
 
 [[ports]]
 localPort = 443
