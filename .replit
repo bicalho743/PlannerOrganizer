@@ -589,8 +589,8 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run login_efetivo.py --server.port 8999 --server.address 0.0.0.0"
-waitForPort = 8999
+args = "streamlit run login_efetivo.py --server.port 8990 --server.address 0.0.0.0"
+waitForPort = 8990
 
 [[workflows.workflow]]
 name = "Sincronizar Clientes com Firebase"

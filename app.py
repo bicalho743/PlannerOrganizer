@@ -722,7 +722,7 @@ if not st.session_state.authenticated:
                     else:
                         st.error("Usuário ou senha incorretos")
         
-        # Botões para recuperação de senha e cadastro com informações de demonstração
+        # Botões para recuperação de senha e cadastro
         col1, col2 = st.columns(2)
         
         # Definir as variáveis de estado se não existirem
@@ -731,19 +731,29 @@ if not st.session_state.authenticated:
         if "show_signup" not in st.session_state:
             st.session_state.show_signup = False
             
-        # Botão de esqueceu senha - mais simples e direto
+        # Botão de esqueceu senha - o original que estava funcionando
         with col1:
             if st.button("Esqueceu sua senha?", key="forgot_password_btn", use_container_width=True):
                 st.session_state.show_reset_password = True
                 st.session_state.show_signup = False
                 st.rerun()
                 
-        # Botão de criar conta - mais simples e direto
+        # Link direto para criação de conta em página separada
         with col2:
-            if st.button("Criar uma conta", key="create_account_btn", use_container_width=True):
-                st.session_state.show_signup = True
-                st.session_state.show_reset_password = False 
-                st.rerun()
+            st.markdown("""
+            <a href="/login_efetivo?tab=signup" target="_blank" style="
+                display: block;
+                text-align: center;
+                text-decoration: none;
+                padding: 10px;
+                border-radius: 4px;
+                background-color: #007bff;
+                color: white;
+                font-weight: 500;
+                border: 1px solid #0069d9;
+                transition: all 0.3s;
+            ">Criar uma conta</a>
+            """, unsafe_allow_html=True)
                 
         # Informações de demo
         st.markdown('''
