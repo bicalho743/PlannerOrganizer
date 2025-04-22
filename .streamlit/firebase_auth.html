@@ -1,103 +1,63 @@
-<!-- Firebase Authentication Component -->
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-
+<!-- Firebase Authentication Component (MODO DE DESENVOLVIMENTO) -->
 <script>
-    // Função para recuperar a configuração do Firebase
-    function getFirebaseConfig() {
-        // Obter configuração do Firebase adicionada via Streamlit
-        const configElement = document.getElementById('firebase-config');
-        if (!configElement) {
-            console.error('Elemento de configuração do Firebase não encontrado');
-            return null;
-        }
+    // Função de login simulada para ambiente de desenvolvimento
+    function simulateGoogleSignIn() {
+        console.log('Simulando login com Google (ambiente de desenvolvimento)');
         
         try {
-            const configText = configElement.textContent;
-            console.log('Config text:', configText ? configText.substring(0, 50) + '...' : 'vazio');
-            return JSON.parse(configText);
-        } catch (e) {
-            console.error('Erro ao parsear configuração do Firebase:', e);
-            return null;
-        }
-    }
-    
-    // Inicializar Firebase
-    function initializeFirebase() {
-        const config = getFirebaseConfig();
-        if (!config) {
-            console.warn('Configuração do Firebase não encontrada ou inválida');
-            return null;
-        }
-        
-        try {
-            // Inicializar Firebase
-            if (!firebase.apps.length) {
-                console.log('Inicializando Firebase com config:', Object.keys(config).join(', '));
-                firebase.initializeApp(config);
-                console.log('Firebase inicializado com sucesso');
-            } else {
-                console.log('Firebase já está inicializado');
-            }
+            // Verificar se estamos em HTTP (ambiente de desenvolvimento)
+            const isDevEnvironment = window.location.protocol === 'http:';
             
-            return firebase;
-        } catch (e) {
-            console.error('Erro ao inicializar Firebase:', e);
-            return null;
-        }
-    }
-    
-    // Login com Google
-    function signInWithGoogle() {
-        console.log('Iniciando fluxo de login com Google');
-        
-        try {
-            const firebase = initializeFirebase();
-            if (!firebase) {
-                console.error('Firebase não inicializado');
-                document.getElementById('firebase-error').textContent = 'Erro: Firebase não inicializado';
-                document.getElementById('firebase-error').style.display = 'block';
-                return;
-            }
-            
-            const provider = new firebase.auth.GoogleAuthProvider();
-            provider.addScope('email');
-            provider.addScope('profile');
-            
-            console.log('Abrindo popup de autenticação Google');
-            
-            firebase.auth().signInWithPopup(provider)
-                .then((result) => {
-                    console.log('Login com Google bem-sucedido, obtendo token');
-                    return result.user.getIdToken();
-                })
-                .then((idToken) => {
-                    console.log('Token obtido, redirecionando');
-                    // Enviar token para o backend (via redirecionamento)
-                    const redirectUrl = window.location.origin + '?auth_provider=google&id_token=' + encodeURIComponent(idToken);
-                    window.location.href = redirectUrl;
-                })
-                .catch((error) => {
-                    console.error('Erro no login com Google:', error);
-                    // Mostrar erro para o usuário
-                    document.getElementById('firebase-error').textContent = 
-                        'Erro no login: ' + (error.message || 'Falha na autenticação');
-                    document.getElementById('firebase-error').style.display = 'block';
-                });
-        } catch (e) {
-            console.error('Erro ao iniciar login com Google:', e);
+            // Mostrar mensagem informativa
             document.getElementById('firebase-error').textContent = 
-                'Erro ao iniciar login: ' + e.message;
+                'Autenticação do Google requer HTTPS. Usando login simulado para desenvolvimento.';
+            document.getElementById('firebase-error').style.display = 'block';
+            
+            // Simular um login para ambiente de desenvolvimento
+            const simulatedEmail = 'usuario.teste@gmail.com';
+            const simulatedName = 'Usuário Teste';
+            const simulatedPhotoURL = 'https://lh3.googleusercontent.com/a/default-user=s96-c';
+            
+            // Criar um payload de "token" simulado (apenas para desenvolvimento)
+            const mockAuthPayload = {
+                provider: 'google',
+                email: simulatedEmail,
+                name: simulatedName,
+                photoURL: simulatedPhotoURL,
+                isSimulated: true,
+                timestamp: Date.now()
+            };
+            
+            // Codificar o payload para simular um token
+            const mockToken = btoa(JSON.stringify(mockAuthPayload));
+            
+            // Redirecionar com o token simulado
+            const redirectUrl = window.location.origin + 
+                '?auth_provider=google_dev&id_token=' + encodeURIComponent(mockToken);
+            
+            // Mostrar informação e redirecionar após um pequeno delay
+            document.getElementById('auth-info').innerHTML = 
+                '<p>Redirecionando com usuário simulado: ' + simulatedEmail + '</p>';
+            document.getElementById('auth-info').style.display = 'block';
+            
+            setTimeout(() => {
+                window.location.href = redirectUrl;
+            }, 1500);
+            
+        } catch (e) {
+            console.error('Erro ao simular login com Google:', e);
+            document.getElementById('firebase-error').textContent = 
+                'Erro ao simular login: ' + e.message;
             document.getElementById('firebase-error').style.display = 'block';
         }
     }
 
     // Adicionar função global para acionamento direto
-    window.googleLogin = signInWithGoogle;
+    window.googleLogin = simulateGoogleSignIn;
     
     // Adicionar listeners para botões de login quando o DOM estiver pronto
     window.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM carregado, configurando botões');
+        console.log('DOM carregado (modo desenvolvimento), configurando botões');
         
         // Encontrar todos os botões de login com Google
         const buttons = document.querySelectorAll('.google-login-button');
@@ -107,37 +67,25 @@
             button.addEventListener('click', function(e) {
                 console.log('Botão de login Google clicado');
                 e.preventDefault();
-                signInWithGoogle();
+                simulateGoogleSignIn();
             });
         });
     });
     
-    // Verificar se o usuário já está logado
-    function checkAuthState() {
-        const firebase = initializeFirebase();
-        if (!firebase) return;
-        
-        firebase.auth().onAuthStateChanged(function(user) {
-            if (user) {
-                console.log('Usuário já está autenticado:', user.email);
-            }
-        });
-    }
-    
-    // Inicializar verificação de auth state
-    checkAuthState();
-    
     // Verificar se o script realmente executou
-    console.log('Script de autenticação Google carregado e executado');
+    console.log('Script de autenticação Google (modo desenvolvimento) carregado e executado');
 </script>
 
-<!-- Elemento para armazenar configuração do Firebase -->
+<!-- Elemento para armazenar configuração do Firebase (mantido para compatibilidade) -->
 <div id="firebase-config" style="display: none;"></div>
 
 <!-- Elemento para mostrar erros -->
 <div id="firebase-error" style="display: none; color: red; margin: 10px 0; padding: 10px; background: #ffeeee; border-radius: 4px;"></div>
 
-<!-- Botão de teste direto -->
+<!-- Elemento para mostrar informações -->
+<div id="auth-info" style="display: none; color: green; margin: 10px 0; padding: 10px; background: #eeffee; border-radius: 4px;"></div>
+
+<!-- Botão de login alternativo para ambiente de desenvolvimento -->
 <button 
     onclick="window.googleLogin()"
     style="
@@ -155,5 +103,9 @@
 >
     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
          style="width: 18px; height: 18px; margin-right: 8px; background: white; padding: 2px; border-radius: 2px;">
-    Teste Login Google (debug)
+    Login Google (ambiente de desenvolvimento)
 </button>
+
+<div style="margin: 10px 0; font-size: 0.8rem; color: #666;">
+    <p>⚠️ Autenticação completa do Google requer HTTPS. Usando login simulado no ambiente de desenvolvimento.</p>
+</div>

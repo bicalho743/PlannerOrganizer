@@ -560,12 +560,20 @@ if not st.session_state.authenticated:
                 auth_provider = query_params.get('auth_provider')
                 id_token = query_params.get('id_token')
                 
-                if auth_provider == 'google' and id_token:
+                # Verificar se é login padrão com Google ou simulado (dev)
+                if (auth_provider == 'google' or auth_provider == 'google_dev') and id_token:
                     with st.spinner("Processando login com Google..."):
-                        # Processar autenticação com Google
-                        result = firebase_auth.process_google_auth(id_token)
+                        # Processar autenticação com Google (normal ou simulada)
+                        result = firebase_auth.process_google_auth(id_token, provider=auth_provider)
+                        
                         if result['success']:
-                            st.success("Login com Google realizado com sucesso!")
+                            # Verificar se é modo de desenvolvimento
+                            if auth_provider == 'google_dev':
+                                st.success("Login com Google (simulado) realizado com sucesso!")
+                                st.info("⚠️ Usando modo de desenvolvimento. A autenticação completa requer HTTPS.")
+                            else:
+                                st.success("Login com Google realizado com sucesso!")
+                                
                             # A sessão já foi configurada pelo método process_google_auth
                             st.session_state.login_page = "login"
                             st.rerun()

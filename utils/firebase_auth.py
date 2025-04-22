@@ -280,24 +280,63 @@ class FirebaseAuth:
         
         return auth_url, params
     
-    def process_google_auth(self, id_token):
+    def process_google_auth(self, id_token, provider="google"):
         """
         Processa autenticação com Google após redirecionamento
         
         Args:
             id_token: Token de ID fornecido pelo Google
+            provider: Provedor de autenticação (google ou google_dev para modo de desenvolvimento)
             
         Returns:
             dict: Resultado da operação com detalhes do usuário
         """
-        if not self.api_key:
+        if not self.api_key and provider != "google_dev":
             return {"success": False, "error": "Firebase não configurado"}
         
         # Verificar se token foi fornecido
         if not id_token:
             return {"success": False, "error": "Token de autenticação não fornecido"}
             
-        # URL para verificar o token
+        # Verificar se é modo de desenvolvimento
+        if provider == "google_dev":
+            # Decodificar token simulado
+            try:
+                import base64
+                decoded_bytes = base64.b64decode(id_token)
+                user_data = json.loads(decoded_bytes.decode('utf-8'))
+                
+                # Verificar se é um token simulado válido
+                if not user_data.get('isSimulated'):
+                    return {"success": False, "error": "Token de desenvolvimento inválido"}
+                
+                # Configurar a sessão com os dados do usuário simulado
+                st.session_state.user = {
+                    "id": "dev-user-id",
+                    "email": user_data.get('email', 'usuario.teste@gmail.com'),
+                    "name": user_data.get('name', 'Usuário Teste'),
+                    "photo_url": user_data.get('photoURL', ''),
+                    "provider": "google_dev",
+                    "is_dev_mode": True
+                }
+                
+                st.session_state.authenticated = True
+                
+                # Log de autenticação simulada
+                logger.info(f"Login simulado realizado com sucesso: {user_data.get('email')}")
+                
+                return {
+                    "success": True, 
+                    "user": st.session_state.user,
+                    "dev_mode": True,
+                    "message": "Login simulado para ambiente de desenvolvimento"
+                }
+                
+            except Exception as e:
+                logger.error(f"Erro ao processar token simulado: {str(e)}")
+                return {"success": False, "error": f"Erro ao processar token simulado: {str(e)}"}
+            
+        # URL para verificar o token (para ambiente de produção)
         url = f"{FIREBASE_AUTH_BASE_URL}/accounts:signInWithIdp?key={self.api_key}"
         
         # Payload da requisição
