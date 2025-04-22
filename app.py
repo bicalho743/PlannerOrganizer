@@ -1,4 +1,21 @@
 import streamlit as st
+import os
+import sys
+
+# Adicionar diretório atual ao path para importações relativas
+sys.path.append('.')
+
+# Importar Database
+try:
+    from utils.database import Database
+except ImportError:
+    # Fallback para quando a Database não estiver disponível
+    class Database:
+        def __init__(self):
+            st.warning("Usando Database em modo mock. Para funcionalidade completa, verifique a importação real.")
+
+# Definição de URLs globais
+planos_url = "/planos_sem_stripe"  # URL para redirecionamento aos planos
 
 # Configuração inicial da página - DEVE ser o primeiro comando Streamlit
 st.set_page_config(
@@ -662,14 +679,21 @@ if not st.session_state.authenticated:
                 with st.spinner("Autenticando..."):
                     # Login de demonstração
                     if username.lower() == "admin" and password == "admin":
+                        # Definir estado de autenticação
                         st.session_state.authenticated = True
                         st.session_state.user = {
                             'user_id': 'admin-demo',
                             'email': 'admin@example.com',
                             'demo_mode': True
                         }
+                        st.session_state.current_page = "Dashboard"
+                        
+                        # Mensagem de sucesso
                         st.success("Login realizado com sucesso (modo de demonstração)!")
-                        st.rerun()
+                        
+                        # Redirecionamento simples com apenas meta refresh
+                        st.markdown('<meta http-equiv="refresh" content="2; url=/" />', unsafe_allow_html=True)
+                        st.stop()
                     
                     # Tentativa de login real com Firebase    
                     result = fazer_login(username, password)
@@ -940,8 +964,16 @@ if not st.session_state.authenticated:
             col1, col2, col3 = st.columns([1, 1, 1])
             with col3:
                 if st.button("Acesso Dev", key="dev_login_access", use_container_width=True):
+                    # Definir estado de autenticação
                     st.session_state.authenticated = True
-                    st.rerun()
+                    st.session_state.current_page = "Dashboard"
+                    
+                    # Mensagem de sucesso
+                    st.success("Acesso de desenvolvedor ativado!")
+                    
+                    # Redirecionamento simples
+                    st.markdown('<meta http-equiv="refresh" content="2; url=/" />', unsafe_allow_html=True)
+                    st.stop()
     
     # Seção de marcas/clientes
     st.markdown('''
