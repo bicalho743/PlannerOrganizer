@@ -634,48 +634,91 @@ if not st.session_state.authenticated:
                     with st.spinner("Autenticando..."):
                         result = firebase_auth.login(email, password)
                         if result['success']:
+                            # Armazenar estado antes de redirecionar
                             st.session_state.authenticated = True
-                            st.success("Login realizado com sucesso!")
-                            # Configurar a página atual para Dashboard
                             st.session_state.current_page = "Dashboard"
-                            # Usar meta refresh para recarregar a página (abordagem mais confiável)
-                            st.markdown('''
-                            <meta http-equiv="refresh" content="1; url=/">
-                            <p>Redirecionando para o Dashboard...</p>
-                            ''', unsafe_allow_html=True)
-                            # Impedir a continuação da renderização atual
+                            st.session_state.login_redirect = True
+                            
+                            # Mensagem de sucesso e redirecionamento imediato
+                            st.success("Login realizado com sucesso!")
+                            
+                            # Redirecionamento forçado
+                            st.markdown("""
+                            <html>
+                            <head>
+                                <meta http-equiv="refresh" content="1; URL=/" />
+                            </head>
+                            <body>
+                                <p>Login realizado com sucesso! Redirecionando...</p>
+                                <script>
+                                    setTimeout(function() {
+                                        window.top.location.href = "/";
+                                    }, 1000);
+                                </script>
+                            </body>
+                            </html>
+                            """, unsafe_allow_html=True)
                             st.stop()
                         else:
                             # Se falhou no Firebase, tentar com a conta de demo
                             if email.lower() == "admin" and password == "admin":
+                                # Armazenar estado antes de redirecionar
                                 st.session_state.authenticated = True
-                                st.success("Login realizado com sucesso (modo demonstração)!")
-                                # Configurar a página atual para Dashboard
                                 st.session_state.current_page = "Dashboard"
-                                # Usar meta refresh para recarregar a página (abordagem mais confiável)
-                                st.markdown('''
-                                <meta http-equiv="refresh" content="1; url=/">
-                                <p>Redirecionando para o Dashboard...</p>
-                                ''', unsafe_allow_html=True)
-                                # Impedir a continuação da renderização atual
+                                st.session_state.login_redirect = True
+                                
+                                # Mensagem de sucesso e redirecionamento imediato
+                                st.success("Login realizado com sucesso (modo demonstração)!")
+                                
+                                # Redirecionamento forçado
+                                st.markdown("""
+                                <html>
+                                <head>
+                                    <meta http-equiv="refresh" content="1; URL=/" />
+                                </head>
+                                <body>
+                                    <p>Login realizado com sucesso! Redirecionando...</p>
+                                    <script>
+                                        setTimeout(function() {
+                                            window.top.location.href = "/";
+                                        }, 1000);
+                                    </script>
+                                </body>
+                                </html>
+                                """, unsafe_allow_html=True)
                                 st.stop()
                             else:
                                 st.error(f"Erro de autenticação: {result['error']}")
                 # Fallback para login de demo se o Firebase não estiver disponível
                 elif email.lower() == "admin" and password == "admin":
+                    # Armazenar estado antes de redirecionar
                     st.session_state.authenticated = True
+                    st.session_state.current_page = "Dashboard"
+                    st.session_state.login_redirect = True
+                    
                     with st.spinner("Autenticando..."):
                         import time
                         time.sleep(1)
+                    
+                    # Mensagem de sucesso e redirecionamento imediato
                     st.success("Login realizado com sucesso (modo demonstração)!")
-                    # Configurar a página atual para Dashboard
-                    st.session_state.current_page = "Dashboard"
-                    # Usar meta refresh para recarregar a página (abordagem mais confiável)
-                    st.markdown('''
-                    <meta http-equiv="refresh" content="1; url=/">
-                    <p>Redirecionando para o Dashboard...</p>
-                    ''', unsafe_allow_html=True)
-                    # Impedir a continuação da renderização atual
+                    
+                    # Redirecionamento forçado
+                    st.markdown("""
+                    <html>
+                    <head>
+                        <meta http-equiv="refresh" content="1; URL=/" />
+                    </head>
+                    <body>
+                        <p>Login realizado com sucesso! Redirecionando...</p>
+                        <script>
+                            setTimeout(function() {
+                                window.top.location.href = "/";
+                            }, 1000);
+                        </script>
+                    </body>
+                    </html>
+                    """, unsafe_allow_html=True)
                     st.stop()
                 else:
                     st.error("Usuário ou senha incorretos")
@@ -720,15 +763,30 @@ if not st.session_state.authenticated:
             col1, col2, col3 = st.columns([1, 1, 1])
             with col3:
                 if st.button("Acesso Dev", key="dev_login_access", use_container_width=True):
+                    # Armazenar estado antes de redirecionar
                     st.session_state.authenticated = True
-                    # Configurar a página atual para Dashboard
                     st.session_state.current_page = "Dashboard"
-                    # Usar meta refresh para recarregar a página (abordagem mais confiável)
-                    st.markdown('''
-                    <meta http-equiv="refresh" content="1; url=/">
-                    <p>Redirecionando para o Dashboard...</p>
-                    ''', unsafe_allow_html=True)
-                    # Impedir a continuação da renderização atual
+                    st.session_state.login_redirect = True
+                    
+                    # Mensagem de sucesso e redirecionamento imediato
+                    st.success("Acesso Dev ativado!")
+                    
+                    # Redirecionamento forçado
+                    st.markdown("""
+                    <html>
+                    <head>
+                        <meta http-equiv="refresh" content="1; URL=/" />
+                    </head>
+                    <body>
+                        <p>Acesso Dev ativado! Redirecionando...</p>
+                        <script>
+                            setTimeout(function() {
+                                window.top.location.href = "/";
+                            }, 1000);
+                        </script>
+                    </body>
+                    </html>
+                    """, unsafe_allow_html=True)
                     st.stop()
     
     # Seção de marcas/clientes
