@@ -134,18 +134,19 @@ def criar_conta(email, senha, nome=None):
 
 def redefinir_senha(email):
     """
-    Envia email para redefinição de senha
+    Envia email para redefinição de senha ou retorna o link diretamente
     
     Args:
         email (str): Email do usuário
         
     Returns:
-        bool: True se enviado com sucesso, False se falhar
+        dict: Dict contendo o status (True/False) e o link (se gerado) ou None se falhar
+            {"success": bool, "link": str ou None, "message": str ou None}
     """
     # Modo de demonstração para emails de teste
     if email.lower().endswith('@example.com') or email.lower() == 'admin':
         logger.warning("Usando modo de demonstração para redefinição de senha")
-        return True
+        return {"success": True, "message": "Email de redefinição enviado com sucesso (demo)", "link": None}
     
     # Inicializar Firebase
     try:
@@ -154,7 +155,7 @@ def redefinir_senha(email):
         # Verificar se inicialização foi bem-sucedida
         if not app:
             logger.warning("Firebase não inicializado - modo de demonstração")
-            return True
+            return {"success": True, "message": "Email de redefinição enviado com sucesso (modo demonstração)", "link": None}
             
         # Importar auth aqui para evitar problemas de importação circular
         from firebase_admin import auth
@@ -162,11 +163,13 @@ def redefinir_senha(email):
         # Gera link de redefinição
         link = auth.generate_password_reset_link(email)
         logger.info(f"Link de redefinição gerado: {link}")
-        # Aqui seria implementado o envio do link por email
-        return True
+        
+        # Retorna o link para ser exibido na interface
+        # Quando implementarmos envio de email, podemos modificar este comportamento
+        return {"success": True, "message": "Link de redefinição gerado com sucesso", "link": link}
     except Exception as e:
         logger.error(f"Erro ao redefinir senha: {str(e)}")
-        return False
+        return {"success": False, "message": str(e), "link": None}
 
 def fazer_login(email, senha):
     """
