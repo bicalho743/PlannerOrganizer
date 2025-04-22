@@ -21,6 +21,7 @@ if project_root not in sys.path:
 
 from utils.database import Database
 from utils.planos import mostrar_planos  # Importando o módulo de planos
+from utils.firebase_config import FIREBASE_CONFIG, AUTH_COOKIE_NAME, TOKEN_EXPIRY
 
 # Importar módulo de autenticação Firebase (pode ser comentado para desabilitar temporariamente)
 try:
@@ -574,16 +575,46 @@ if not st.session_state.authenticated:
                         else:
                             st.error(f"Erro ao autenticar com Google: {result['error']}")
                 
-                # Botão de login com Google (usando href)
-                if google_auth_url:
-                    st.markdown(f'''
-                    <a href="{google_auth_url}"
-                      class="social-button google-button" style="text-decoration: none; display: block; text-align: center;">
-                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                            style="width: 18px; height: 18px; margin-right: 8px; vertical-align: middle;">
-                        <span style="vertical-align: middle;">Continuar com Google</span>
-                    </a>
-                    ''', unsafe_allow_html=True)
+                # Ler o arquivo JavaScript para autenticação com Google
+                with open('.streamlit/google_auth.js', 'r') as f:
+                    google_auth_js = f.read()
+                
+                # Inserir scripts do Firebase e do Google Auth
+                st.markdown('''
+                <!-- Scripts do Firebase -->
+                <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+                <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+                ''', unsafe_allow_html=True)
+                
+                # Inicializar Firebase e adicionar botão de login
+                firebase_config = FIREBASE_CONFIG
+                st.markdown(f'''
+                <script>
+                {google_auth_js}
+                
+                // Inicializar autenticação quando o documento estiver pronto
+                document.addEventListener('DOMContentLoaded', function() {{
+                    const firebaseAuth = initializeFirebaseAuth(
+                        "{firebase_config['apiKey']}",
+                        "{firebase_config['authDomain']}",
+                        "{firebase_config['projectId']}"
+                    );
+                    
+                    // Adicionar evento de clique no botão de login
+                    document.getElementById('google-login-button').addEventListener('click', function() {{
+                        firebaseAuth.signInWithGoogle();
+                    }});
+                }});
+                </script>
+                
+                <!-- Botão de login com Google -->
+                <button id="google-login-button" 
+                  class="social-button google-button" style="text-decoration: none; display: block; text-align: center; background-color: white; border: 1px solid #E0E0E0; color: #5A6A85; box-shadow: 0 4px 8px rgba(0,0,0,0.05); width: 100%; margin-bottom: 1rem; border-radius: 12px; padding: 0.7rem 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 500; transition: all 0.3s ease; font-size: 1rem;">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                         style="width: 18px; height: 18px; margin-right: 8px; vertical-align: middle;">
+                    <span style="vertical-align: middle;">Continuar com Google</span>
+                </button>
+                ''', unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"Erro ao configurar login com Google: {str(e)}")
                 # Botão de login com Google (desabilitado)
