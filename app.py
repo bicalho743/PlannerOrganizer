@@ -559,25 +559,19 @@ if not st.session_state.authenticated:
                 else:
                     st.error("Usuário ou senha incorretos")
         
-        # Botão para abrir cadastro
-        st.markdown('''
-        <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
-            <a href="#" onclick="alert('Função de recuperação de senha em desenvolvimento.');" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
-                Esqueceu sua senha?
-            </a>
-            <a href="#" onclick="alert('Funcionalidade em desenvolvimento. Por favor, use as credenciais de demonstração: admin/admin'); return false;" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
-                Criar uma conta
-            </a>
-        </div>
+        # Botões para recuperação de senha e cadastro
+        col_senha, col_conta = st.columns(2)
         
-        <div style="margin-top: 0.8rem; text-align: center;">
-            <p style="color: #9E9E9E; font-size: 0.75rem;">
-                Para demonstração, use: admin / admin
-            </p>
-        </div>
+        with col_senha:
+            if st.button("Esqueceu sua senha?", key="btn_forgot_password"):
+                st.info("Função de recuperação de senha em desenvolvimento.")
+                
+        with col_conta:
+            if st.button("Criar uma conta", key="btn_create_account"):
+                st.info("Funcionalidade em desenvolvimento. Por favor, use as credenciais de demonstração: admin/admin")
         
-        <!-- Script removido, usando alert direto no onclick -->
-        ''', unsafe_allow_html=True)
+        # Informação de demonstração  
+        st.markdown('<div style="margin-top: 0.8rem; text-align: center;"><p style="color: #9E9E9E; font-size: 0.75rem;">Para demonstração, use: admin / admin</p></div>', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
         
