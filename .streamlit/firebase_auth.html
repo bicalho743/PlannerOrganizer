@@ -7,10 +7,15 @@
     function getFirebaseConfig() {
         // Obter configuração do Firebase adicionada via Streamlit
         const configElement = document.getElementById('firebase-config');
-        if (!configElement) return null;
+        if (!configElement) {
+            console.error('Elemento de configuração do Firebase não encontrado');
+            return null;
+        }
         
         try {
-            return JSON.parse(configElement.textContent);
+            const configText = configElement.textContent;
+            console.log('Config text:', configText ? configText.substring(0, 50) + '...' : 'vazio');
+            return JSON.parse(configText);
         } catch (e) {
             console.error('Erro ao parsear configuração do Firebase:', e);
             return null;
@@ -21,51 +26,86 @@
     function initializeFirebase() {
         const config = getFirebaseConfig();
         if (!config) {
-            console.warn('Configuração do Firebase não encontrada');
+            console.warn('Configuração do Firebase não encontrada ou inválida');
             return null;
         }
         
-        // Inicializar Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(config);
+        try {
+            // Inicializar Firebase
+            if (!firebase.apps.length) {
+                console.log('Inicializando Firebase com config:', Object.keys(config).join(', '));
+                firebase.initializeApp(config);
+                console.log('Firebase inicializado com sucesso');
+            } else {
+                console.log('Firebase já está inicializado');
+            }
+            
+            return firebase;
+        } catch (e) {
+            console.error('Erro ao inicializar Firebase:', e);
+            return null;
         }
-        
-        return firebase;
     }
     
     // Login com Google
     function signInWithGoogle() {
-        const firebase = initializeFirebase();
-        if (!firebase) return;
+        console.log('Iniciando fluxo de login com Google');
         
-        const provider = new firebase.auth.GoogleAuthProvider();
-        provider.addScope('email');
-        provider.addScope('profile');
-        
-        firebase.auth().signInWithPopup(provider)
-            .then((result) => {
-                // Obter token ID para enviar ao backend
-                return result.user.getIdToken();
-            })
-            .then((idToken) => {
-                // Enviar token para o backend (via redirecionamento)
-                const redirectUrl = window.location.origin + '?auth_provider=google&id_token=' + encodeURIComponent(idToken);
-                window.location.href = redirectUrl;
-            })
-            .catch((error) => {
-                console.error('Erro no login com Google:', error);
-                // Mostrar erro para o usuário
-                document.getElementById('firebase-error').textContent = 
-                    'Erro no login: ' + (error.message || 'Falha na autenticação');
+        try {
+            const firebase = initializeFirebase();
+            if (!firebase) {
+                console.error('Firebase não inicializado');
+                document.getElementById('firebase-error').textContent = 'Erro: Firebase não inicializado';
                 document.getElementById('firebase-error').style.display = 'block';
-            });
+                return;
+            }
+            
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('email');
+            provider.addScope('profile');
+            
+            console.log('Abrindo popup de autenticação Google');
+            
+            firebase.auth().signInWithPopup(provider)
+                .then((result) => {
+                    console.log('Login com Google bem-sucedido, obtendo token');
+                    return result.user.getIdToken();
+                })
+                .then((idToken) => {
+                    console.log('Token obtido, redirecionando');
+                    // Enviar token para o backend (via redirecionamento)
+                    const redirectUrl = window.location.origin + '?auth_provider=google&id_token=' + encodeURIComponent(idToken);
+                    window.location.href = redirectUrl;
+                })
+                .catch((error) => {
+                    console.error('Erro no login com Google:', error);
+                    // Mostrar erro para o usuário
+                    document.getElementById('firebase-error').textContent = 
+                        'Erro no login: ' + (error.message || 'Falha na autenticação');
+                    document.getElementById('firebase-error').style.display = 'block';
+                });
+        } catch (e) {
+            console.error('Erro ao iniciar login com Google:', e);
+            document.getElementById('firebase-error').textContent = 
+                'Erro ao iniciar login: ' + e.message;
+            document.getElementById('firebase-error').style.display = 'block';
+        }
     }
+
+    // Adicionar função global para acionamento direto
+    window.googleLogin = signInWithGoogle;
     
-    // Adicionar listeners para botões de login
-    document.addEventListener('DOMContentLoaded', function() {
+    // Adicionar listeners para botões de login quando o DOM estiver pronto
+    window.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM carregado, configurando botões');
+        
         // Encontrar todos os botões de login com Google
-        document.querySelectorAll('.google-login-button').forEach(button => {
+        const buttons = document.querySelectorAll('.google-login-button');
+        console.log('Botões encontrados:', buttons.length);
+        
+        buttons.forEach(button => {
             button.addEventListener('click', function(e) {
+                console.log('Botão de login Google clicado');
                 e.preventDefault();
                 signInWithGoogle();
             });
@@ -80,13 +120,15 @@
         firebase.auth().onAuthStateChanged(function(user) {
             if (user) {
                 console.log('Usuário já está autenticado:', user.email);
-                // Podemos adicionar alguma ação aqui se necessário
             }
         });
     }
     
     // Inicializar verificação de auth state
     checkAuthState();
+    
+    // Verificar se o script realmente executou
+    console.log('Script de autenticação Google carregado e executado');
 </script>
 
 <!-- Elemento para armazenar configuração do Firebase -->
@@ -94,3 +136,24 @@
 
 <!-- Elemento para mostrar erros -->
 <div id="firebase-error" style="display: none; color: red; margin: 10px 0; padding: 10px; background: #ffeeee; border-radius: 4px;"></div>
+
+<!-- Botão de teste direto -->
+<button 
+    onclick="window.googleLogin()"
+    style="
+        background-color: #4285F4;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        margin: 5px 0;
+    "
+>
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+         style="width: 18px; height: 18px; margin-right: 8px; background: white; padding: 2px; border-radius: 2px;">
+    Teste Login Google (debug)
+</button>
