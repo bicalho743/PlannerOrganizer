@@ -575,7 +575,11 @@ if not st.session_state.authenticated:
                                 st.success("Login com Google realizado com sucesso!")
                                 
                             # A sessão já foi configurada pelo método process_google_auth
-                            st.session_state.login_page = "login"
+                            # Configurar para ir para a página principal em vez da página de login
+                            st.session_state.login_page = None
+                            # Configurar a página atual para Dashboard
+                            st.session_state.current_page = "Dashboard"
+                            # Forçar recarregamento da página
                             st.rerun()
                         else:
                             st.error(f"Erro ao autenticar com Google: {result['error']}")
@@ -626,12 +630,16 @@ if not st.session_state.authenticated:
                         if result['success']:
                             st.session_state.authenticated = True
                             st.success("Login realizado com sucesso!")
+                            # Configurar a página atual para Dashboard
+                            st.session_state.current_page = "Dashboard"
                             st.rerun()
                         else:
                             # Se falhou no Firebase, tentar com a conta de demo
                             if email.lower() == "admin" and password == "admin":
                                 st.session_state.authenticated = True
                                 st.success("Login realizado com sucesso (modo demonstração)!")
+                                # Configurar a página atual para Dashboard
+                                st.session_state.current_page = "Dashboard"
                                 st.rerun()
                             else:
                                 st.error(f"Erro de autenticação: {result['error']}")
@@ -687,6 +695,8 @@ if not st.session_state.authenticated:
             with col3:
                 if st.button("Acesso Dev", key="dev_login_access", use_container_width=True):
                     st.session_state.authenticated = True
+                    # Configurar a página atual para Dashboard
+                    st.session_state.current_page = "Dashboard"
                     st.rerun()
     
     # Seção de marcas/clientes
