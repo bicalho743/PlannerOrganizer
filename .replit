@@ -10,7 +10,7 @@ run = ["sh", "-c", "streamlit run app.py --server.port 5000 --server.address 0.0
 build = ["sh", "-c", "pip install -r requirements.txt"]
 
 [workflows]
-runButton = "Run Main App"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
@@ -116,6 +116,10 @@ args = "Login Simples"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Login Portal"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Static Files Server"
 
 [[workflows.workflow]]
 name = "Teste Importação"
@@ -362,8 +366,8 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run login.py --server.port 5001 --server.address 0.0.0.0"
-waitForPort = 5001
+args = "streamlit run login.py --server.port 5003 --server.address 0.0.0.0"
+waitForPort = 5003
 
 [[workflows.workflow]]
 name = "Planos Landing"
@@ -481,8 +485,8 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0.0"
-waitForPort = 5001
+args = "streamlit run login.py --server.port 5004 --server.address 0.0.0.0"
+waitForPort = 5004
 
 [[workflows.workflow]]
 name = "Login Portal"
@@ -500,13 +504,20 @@ args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0
 waitForPort = 5001
 
 [[workflows.workflow]]
-name = "Run Main App"
-author = 39445503
+name = "Static Files Server"
+author = "agent"
 mode = "sequential"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run login_simples.py --server.port 5000 --server.address 0.0.0.0"
+args = "python serve_static.py"
+waitForPort = 8080
 
 [[ports]]
 localPort = 443

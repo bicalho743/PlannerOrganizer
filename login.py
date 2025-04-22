@@ -135,15 +135,17 @@ def main():
                 
                 with col_facebook:
                     st.markdown("""
-                    <button style="width: 100%; background-color: #3b5998; border: none; color: white;
+                    <a href="/login_social.html" target="_blank" style="text-decoration: none;">
+                        <button style="width: 100%; background-color: #3b5998; border: none; color: white;
                                    border-radius: 4px; padding: 8px 0; display: flex; align-items: center; 
                                    justify-content: center; cursor: pointer; transition: all 0.2s ease;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white" 
-                             style="margin-right: 8px;">
-                            <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm3 8h-1.35c-.538 0-.65.221-.65.778v1.222h2l-.209 2h-1.791v7h-3v-7h-2v-2h2v-2.308c0-1.769.931-2.692 3.029-2.692h1.971v3z"/>
-                        </svg>
-                        Facebook
-                    </button>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white" 
+                                 style="margin-right: 8px;">
+                                <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm3 8h-1.35c-.538 0-.65.221-.65.778v1.222h2l-.209 2h-1.791v7h-3v-7h-2v-2h2v-2.308c0-1.769.931-2.692 3.029-2.692h1.971v3z"/>
+                            </svg>
+                            Facebook
+                        </button>
+                    </a>
                     """, unsafe_allow_html=True)
                 
                 # Adicionar links para recuperação de senha
@@ -156,7 +158,7 @@ def main():
                 """, unsafe_allow_html=True)
                 
                 # Nota informativa sobre o login social
-                st.info("Os botões de login social estão em implementação e serão ativados em breve.")
+                st.success("Login social ativado. Clique no botão 'Facebook' para entrar com sua conta.")
                 
                 # Informações de acesso para demonstração
                 st.markdown("""

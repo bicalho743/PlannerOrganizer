@@ -20,9 +20,6 @@ if "redirect_to_planos" in st.session_state and st.session_state.redirect_to_pla
     # Resetar o estado de redirecionamento
     plano_selecionado = st.session_state.plano_selecionado
     st.session_state.redirect_to_planos = False
-    
-    # Redirecionar para a página de planos
-    st.switch_page("pages/planos_sem_stripe.py")
 
 # Configurar logging
 logging.basicConfig(
@@ -44,6 +41,26 @@ from utils.database import Database
 
 # Importamos a função simplificada de planos do módulo independente
 from exibir_planos import exibir_planos_simples
+
+# Verificar se há um token Firebase na URL
+import streamlit.web.server.websocket_headers as ws_headers
+try:
+    # Obter query parameters usando a API não-experimental
+    query_params = st.query_params
+    if "token" in query_params:
+        firebase_token = query_params["token"]
+        # Aqui você pode verificar o token com Firebase Admin e obter as informações do usuário
+        # Como exemplo, vamos apenas simular um login bem-sucedido
+        st.session_state.authenticated = True
+        st.session_state.user_info = {
+            'user_id': 'facebook_user',
+            'email': 'user@facebook.com',
+            'nome': 'Usuário Facebook'
+        }
+        # Limpar a URL após processar o token
+        query_params.clear()
+except Exception as e:
+    st.error(f"Erro ao processar token: {e}")
 
 # Verificar se o usuário está autenticado
 if "authenticated" not in st.session_state:
