@@ -238,6 +238,103 @@ class FirebaseAuth:
             logger.error(f"Erro ao atualizar perfil: {str(e)}")
             return {"success": False, "error": f"Erro de comunicação: {str(e)}"}
     
+    def generate_google_login_url(self, redirect_url):
+        """
+        Gera URL para autenticação com Google
+        
+        Args:
+            redirect_url: URL para redirecionamento após autenticação
+            
+        Returns:
+            tuple: (URL de autenticação, parâmetros)
+        """
+        if not self.api_key or not self.config:
+            logger.warning("Configuração do Firebase insuficiente para login com Google.")
+            return "#", {}
+        
+        # Obter os dados necessários do config
+        project_id = self.config.get("projectId")
+        auth_domain = self.config.get("authDomain")
+        
+        if not project_id or not auth_domain:
+            logger.warning("projectId ou authDomain não encontrados na configuração.")
+            return "#", {}
+        
+        # Gerar state para segurança (anti-CSRF)
+        import uuid
+        state = str(uuid.uuid4())
+        
+        # Parâmetros para o OAuth
+        params = {
+            "client_id": f"{project_id}.apps.googleusercontent.com",
+            "redirect_uri": redirect_url,
+            "response_type": "token id_token",
+            "scope": "email profile",
+            "state": state,
+        }
+        
+        # Construir URL
+        base_url = f"https://accounts.google.com/o/oauth2/auth"
+        param_string = "&".join([f"{k}={v}" for k, v in params.items()])
+        auth_url = f"{base_url}?{param_string}"
+        
+        return auth_url, params
+    
+    def process_google_auth(self, id_token):
+        """
+        Processa autenticação com Google após redirecionamento
+        
+        Args:
+            id_token: Token de ID fornecido pelo Google
+            
+        Returns:
+            dict: Resultado da operação com detalhes do usuário
+        """
+        if not self.api_key:
+            return {"success": False, "error": "Firebase não configurado"}
+        
+        # URL para verificar o token
+        url = f"{FIREBASE_AUTH_BASE_URL}/accounts:signInWithIdp?key={self.api_key}"
+        
+        # Payload da requisição
+        payload = {
+            "postBody": f"id_token={id_token}&providerId=google.com",
+            "requestUri": "http://localhost",  # Não é usado pelo Firebase, mas é necessário
+            "returnIdpCredential": True,
+            "returnSecureToken": True
+        }
+        
+        try:
+            # Fazer requisição para o Firebase
+            response = requests.post(url, json=payload)
+            data = response.json()
+            
+            # Verificar erro
+            if "error" in data:
+                error_message = self._translate_error(data["error"]["message"])
+                return {"success": False, "error": error_message}
+            
+            # Extrair informações do usuário
+            user_data = {
+                "uid": data.get("localId"),
+                "email": data.get("email"),
+                "displayName": data.get("displayName", ""),
+                "photoURL": data.get("photoUrl", ""),
+                "idToken": data.get("idToken"),
+                "refreshToken": data.get("refreshToken"),
+                "expiresIn": data.get("expiresIn"),
+                "provider": "google.com"
+            }
+            
+            # Armazenar token na sessão
+            st.session_state["firebase_token"] = data.get("idToken")
+            
+            return {"success": True, "user": user_data}
+        
+        except Exception as e:
+            logger.error(f"Erro ao processar autenticação com Google: {str(e)}")
+            return {"success": False, "error": f"Erro de comunicação: {str(e)}"}
+    
     def _translate_error(self, error_code):
         """
         Traduz códigos de erro do Firebase para mensagens amigáveis
