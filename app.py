@@ -579,8 +579,14 @@ if not st.session_state.authenticated:
                             st.session_state.login_page = None
                             # Configurar a página atual para Dashboard
                             st.session_state.current_page = "Dashboard"
-                            # Forçar recarregamento da página
-                            st.rerun()
+                            # Forçar redirecionamento completo da página
+                            st.experimental_set_query_params()
+                            # Forçar recarregamento da página (usando html para garantir refresh completo)
+                            st.markdown('''
+                            <meta http-equiv="refresh" content="0">
+                            ''', unsafe_allow_html=True)
+                            # Impedir a continuação da renderização atual
+                            st.stop()
                         else:
                             st.error(f"Erro ao autenticar com Google: {result['error']}")
                 
@@ -632,7 +638,14 @@ if not st.session_state.authenticated:
                             st.success("Login realizado com sucesso!")
                             # Configurar a página atual para Dashboard
                             st.session_state.current_page = "Dashboard"
-                            st.rerun()
+                            # Forçar redirecionamento completo da página
+                            st.experimental_set_query_params()
+                            # Forçar recarregamento da página (usando html para garantir refresh completo)
+                            st.markdown('''
+                            <meta http-equiv="refresh" content="0">
+                            ''', unsafe_allow_html=True)
+                            # Impedir a continuação da renderização atual
+                            st.stop()
                         else:
                             # Se falhou no Firebase, tentar com a conta de demo
                             if email.lower() == "admin" and password == "admin":
@@ -640,7 +653,14 @@ if not st.session_state.authenticated:
                                 st.success("Login realizado com sucesso (modo demonstração)!")
                                 # Configurar a página atual para Dashboard
                                 st.session_state.current_page = "Dashboard"
-                                st.rerun()
+                                # Forçar redirecionamento completo da página
+                                st.experimental_set_query_params()
+                                # Forçar recarregamento da página (usando html para garantir refresh completo)
+                                st.markdown('''
+                                <meta http-equiv="refresh" content="0">
+                                ''', unsafe_allow_html=True)
+                                # Impedir a continuação da renderização atual
+                                st.stop()
                             else:
                                 st.error(f"Erro de autenticação: {result['error']}")
                 # Fallback para login de demo se o Firebase não estiver disponível
@@ -650,7 +670,16 @@ if not st.session_state.authenticated:
                         import time
                         time.sleep(1)
                     st.success("Login realizado com sucesso (modo demonstração)!")
-                    st.rerun()
+                    # Configurar a página atual para Dashboard
+                    st.session_state.current_page = "Dashboard"
+                    # Forçar redirecionamento completo da página
+                    st.experimental_set_query_params()
+                    # Forçar recarregamento da página (usando html para garantir refresh completo)
+                    st.markdown('''
+                    <meta http-equiv="refresh" content="0">
+                    ''', unsafe_allow_html=True)
+                    # Impedir a continuação da renderização atual
+                    st.stop()
                 else:
                     st.error("Usuário ou senha incorretos")
         
@@ -697,7 +726,14 @@ if not st.session_state.authenticated:
                     st.session_state.authenticated = True
                     # Configurar a página atual para Dashboard
                     st.session_state.current_page = "Dashboard"
-                    st.rerun()
+                    # Forçar redirecionamento completo da página
+                    st.experimental_set_query_params()
+                    # Forçar recarregamento da página (usando html para garantir refresh completo)
+                    st.markdown('''
+                    <meta http-equiv="refresh" content="0">
+                    ''', unsafe_allow_html=True)
+                    # Impedir a continuação da renderização atual
+                    st.stop()
     
     # Seção de marcas/clientes
     st.markdown('''
