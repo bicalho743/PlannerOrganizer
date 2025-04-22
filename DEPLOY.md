@@ -98,27 +98,6 @@ Este guia contém instruções para fazer o deploy do sistema Planner Organizer 
 - Confirme que o banco de dados está ativo e não foi pausado por inatividade
 - Verifique se as tabelas foram criadas corretamente
 
-### Erros de DNS no Banco de Dados PostgreSQL
-
-Se você encontrar erros como:
-```
-could not translate host name "dpg-xxxx" to address: Name or service not known
-```
-
-Este é um problema comum no ambiente do Render, especialmente após a criação inicial do serviço ou depois de longos períodos de inatividade. Algumas soluções:
-
-1. **Reconectar o banco de dados**:
-   - No dashboard do Render, vá até seu banco de dados
-   - Na aba "Info", clique em "Reset Database Credentials"
-   - Aguarde a operação concluir e atualize sua variável de ambiente DATABASE_URL
-
-2. **Permitir mais tempo para resolução de DNS**:
-   - O script `render_startup.py` já foi modificado para tentar por mais tempo a resolução do DNS
-   - Pode ser necessário um redeploy manual para aplicar essas mudanças
-
-3. **Entre em contato com o suporte do Render**:
-   - Se o problema persistir após várias tentativas de deploy, abra um chamado com o suporte do Render
-
 ### Domínio personalizado não funciona
 
 - Confirme que os registros DNS estão configurados corretamente
