@@ -1,152 +1,111 @@
 /* Estilos globais */
-.main {
-    padding: 1.5rem;
+:root {
+    --primary-color: #2D8CFF;
+    --primary-dark: #1E366F;
+    --light-bg: #F9F9F9;
+    --white: #FFFFFF;
+    --grey-light: #E0E0E0;
+    --grey-text: #5A6A85;
+    --success-color: #00a651;
 }
 
-/* Personalizações para cabeçalhos */
-h1, h2, h3, h4, h5, h6 {
-    font-weight: 600;
-    margin-bottom: 1rem;
+/* Reset de alguns estilos */
+* {
+    box-sizing: border-box;
 }
 
-h1 {
-    color: #1E366F;
-    border-bottom: 1px solid #eaeaea;
-    padding-bottom: 0.5rem;
-    margin-top: 2.5rem !important;
-    padding-top: 1.5rem !important;
+/* Remoção dos espaços excessivos */
+div.block-container {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
 }
 
-/* Estilização de botões */
+/* Estilos para os links */
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+a:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
+/* Estilos para os botões */
 .stButton > button {
-    font-weight: 500;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    transition: all 0.2s ease;
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 4px !important;
+    transition: all 0.3s ease !important;
+    font-weight: 500 !important;
 }
 
 .stButton > button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    background-color: var(--primary-dark) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
 }
 
-/* Estilização de caixas de texto e inputs */
-input, textarea, .stTextInput > div > div > input, .stTextArea > div > div > textarea {
+/* Estilos para inputs e outros elementos de formulário */
+input, select, textarea {
     border-radius: 4px !important;
-    border: 1px solid #E0E0E0 !important;
-    padding: 0.5rem !important;
+    border: 1px solid var(--grey-light) !important;
+    padding: 0.75rem !important;
+    transition: border-color 0.3s, box-shadow 0.3s !important;
 }
 
-input:focus, textarea:focus, .stTextInput > div > div > input:focus, .stTextArea > div > div > textarea:focus {
-    border-color: #1E88E5 !important;
-    box-shadow: 0 0 0 1px rgba(30,136,229,0.2) !important;
+input:focus, select:focus, textarea:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 2px rgba(45, 140, 255, 0.2) !important;
 }
 
-/* Estilização para tabelas */
-.stDataFrame {
-    border-radius: 6px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.dataframe {
-    border-collapse: collapse;
-}
-
-.dataframe th {
-    background-color: #F5F7FA;
+/* Títulos e textos */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--primary-dark);
     font-weight: 600;
-    color: #1E366F;
-    padding: 0.75rem !important;
-    border-bottom: 2px solid #E0E0E0;
 }
 
-.dataframe td {
-    padding: 0.75rem !important;
-    border-bottom: 1px solid #eaeaea;
+/* Seções e containers */
+.card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
 }
 
-.dataframe tr:hover {
-    background-color: #F8F9FA;
-}
-
-/* Estilização para selectbox e outros controles */
-.stSelectbox {
-    min-width: 200px;
-}
-
-.stSelectbox > div > div > select {
-    border-radius: 4px !important;
-}
-
-/* Estilização para sidebar */
-.css-1vq4p4l, .css-1d3bhkq {
-    background-color: #F9FAFB !important;
-    border-right: 1px solid #eaeaea;
-}
-
-/* Cards informativos */
-div[data-testid="stMetric"] {
-    background-color: #FFFFFF;
-    border-radius: 6px;
+/* Mensagens de alerta e status */
+.success-box {
     padding: 1rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    border: 1px solid #eaeaea;
-}
-
-div[data-testid="stMetric"] > div:first-child {
-    color: #1E366F;
-    font-weight: 600;
-}
-
-/* Estilização para alertas e mensagens */
-div[data-testid="stAlert"] {
+    background-color: rgba(0, 166, 81, 0.1);
+    border-left: 4px solid var(--success-color);
     border-radius: 4px;
-    padding: 1rem !important;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
+    margin: 1rem 0;
 }
 
-/* Personalizações específicas para diferentes tipos de containers */
-div[data-testid="stExpander"] {
+.warning-box {
+    padding: 1rem;
+    background-color: rgba(255, 152, 0, 0.1);
+    border-left: 4px solid #ff9800;
     border-radius: 4px;
-    border: 1px solid #eaeaea;
-    overflow: hidden;
+    margin: 1rem 0;
 }
 
-div[data-testid="stExpander"] > div:first-child {
-    background-color: #F9FAFB;
-    padding: 0.75rem;
-    border-bottom: 1px solid #eaeaea;
-}
-
-/* Estilização para widgets de data */
-div[data-baseweb="calendar"] {
+.error-box {
+    padding: 1rem;
+    background-color: rgba(244, 67, 54, 0.1);
+    border-left: 4px solid #f44336;
     border-radius: 4px;
-    overflow: hidden;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    margin: 1rem 0;
 }
 
-/* Ajustes de espaçamento gerais */
-.stTabs {
-    margin-top: 1rem;
+/* Animações e efeitos */
+.transition-all {
+    transition: all 0.3s ease;
 }
 
-/* Estilização para abas */
-button[role="tab"] {
-    padding: 0.75rem 1.5rem !important;
-    font-weight: 500;
-}
-
-.stTabs [aria-selected="true"] {
-    font-weight: 600;
-    color: #1E88E5 !important;
-    border-bottom-color: #1E88E5 !important;
-}
-
-/* Espaçamento específico para as páginas de Dashboard e Propostas */
-[data-testid="stAppViewContainer"] > div > div > div > div:first-child h1 {
-    margin-top: 3.5rem !important;
-    padding-top: 2rem !important;
+.hover-scale:hover {
+    transform: scale(1.05);
 }

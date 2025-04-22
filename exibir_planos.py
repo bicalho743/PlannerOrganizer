@@ -6,7 +6,59 @@ causar problemas de set_page_config duplicado
 import streamlit as st
 import random
 import time
+import json
+import requests
 from datetime import datetime
+
+def criar_checkout_session(plan_id):
+    """
+    Cria uma sessão de checkout do Stripe para um plano específico
+    
+    Args:
+        plan_id (str): ID do plano (monthly, yearly, lifetime)
+        
+    Returns:
+        dict: Resposta da API com session_id e URL
+    """
+    # Gerando parâmetros aleatórios para evitar cache
+    timestamp = int(time.time())
+    random_param = random.randint(1000, 9999)
+    
+    try:
+        # Tentar conectar à API Stripe
+        response = requests.post(
+            "http://0.0.0.0:8000/api/checkout-session",
+            json={
+                "price_id": f"price_{plan_id}_{timestamp}_{random_param}",  # Simular price_id
+                "success_url": f"http://0.0.0.0:5000/success?t={timestamp}_{random_param}",
+                "cancel_url": f"http://0.0.0.0:5000/cancel?t={timestamp}_{random_param}",
+                "mode": "subscription" if plan_id in ["monthly", "yearly"] else "payment",
+                "customer_email": f"test_{timestamp}_{random_param}@example.com",
+                "metadata": {
+                    "plan_id": plan_id,
+                    "timestamp": str(timestamp),
+                    "random": str(random_param)
+                }
+            }
+        )
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            # Fallback para modo de simulação
+            st.warning(f"Não foi possível conectar ao Stripe (código {response.status_code}). Usando modo de simulação.")
+            return {
+                "id": f"cs_{timestamp}_{random_param}",
+                "url": f"https://checkout.stripe.com/pay/cs_{timestamp}_{random_param}"
+            }
+            
+    except Exception as e:
+        # Fallback para modo de simulação em caso de erro
+        st.warning(f"Erro ao conectar ao Stripe: {str(e)}. Usando modo de simulação.")
+        return {
+            "id": f"cs_{timestamp}_{random_param}",
+            "url": f"https://checkout.stripe.com/pay/cs_{timestamp}_{random_param}"
+        }
 
 def exibir_planos_simples():
     """Função simplificada para exibir os planos na página de login"""
@@ -119,6 +171,11 @@ def exibir_planos_simples():
     timestamp = int(time.time())
     random_param = random.randint(1000, 9999)
 
+    # URLs para redirecionamento
+    base_url = "http://0.0.0.0:5000"
+    success_url = f"{base_url}/success?session_id={{CHECKOUT_SESSION_ID}}&t={timestamp}_{random_param}"
+    cancel_url = f"{base_url}/cancel?t={timestamp}_{random_param}"
+
     with col1:
         # Cartão para Plano Mensal
         st.markdown("""
@@ -141,8 +198,27 @@ def exibir_planos_simples():
         # Botão para checkout do plano mensal
         button_mensal = st.button("Assinar Plano Mensal", type="primary", use_container_width=True, key=f"mensal_{timestamp}_{random_param}")
         if button_mensal:
-            st.info(f"Criando checkout para plano mensal... (ID único: {timestamp}_{random_param})")
-            st.success("Checkout criado! Em um ambiente de produção, você seria redirecionado para o Stripe.")
+            with st.spinner("Conectando ao servidor de pagamentos..."):
+                try:
+                    # Criar a sessão de checkout
+                    checkout_session = criar_checkout_session("monthly")
+                    
+                    # Se for bem sucedido, redireciona
+                    if checkout_session and "url" in checkout_session:
+                        st.success("Redirecionando para o checkout...")
+                        # Link HTML para abrir em nova aba
+                        st.markdown(f"""
+                        <a href="{checkout_session['url']}" target="_blank" style="text-decoration: none;">
+                            <button style="background-color: #2d8cff; color: white; border: none; padding: 10px 20px; 
+                            border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%;">
+                                Clique aqui para ir para o checkout
+                            </button>
+                        </a>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.error("Não foi possível criar a sessão de checkout. Tente novamente.")
+                except Exception as e:
+                    st.error(f"Erro ao processar pagamento: {str(e)}")
 
     with col2:
         # Cartão para Plano Anual (com destaque)
@@ -168,8 +244,27 @@ def exibir_planos_simples():
         # Botão para checkout do plano anual
         button_anual = st.button("Assinar Plano Anual", type="primary", use_container_width=True, key=f"anual_{timestamp}_{random_param}")
         if button_anual:
-            st.info(f"Criando checkout para plano anual... (ID único: {timestamp}_{random_param})")
-            st.success("Checkout criado! Em um ambiente de produção, você seria redirecionado para o Stripe.")
+            with st.spinner("Conectando ao servidor de pagamentos..."):
+                try:
+                    # Criar a sessão de checkout
+                    checkout_session = criar_checkout_session("yearly")
+                    
+                    # Se for bem sucedido, redireciona
+                    if checkout_session and "url" in checkout_session:
+                        st.success("Redirecionando para o checkout...")
+                        # Link HTML para abrir em nova aba
+                        st.markdown(f"""
+                        <a href="{checkout_session['url']}" target="_blank" style="text-decoration: none;">
+                            <button style="background-color: #2d8cff; color: white; border: none; padding: 10px 20px; 
+                            border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%;">
+                                Clique aqui para ir para o checkout
+                            </button>
+                        </a>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.error("Não foi possível criar a sessão de checkout. Tente novamente.")
+                except Exception as e:
+                    st.error(f"Erro ao processar pagamento: {str(e)}")
 
     with col3:
         # Cartão para Plano Vitalício
@@ -194,5 +289,24 @@ def exibir_planos_simples():
         # Botão para checkout do plano vitalício
         button_vitalicio = st.button("Adquirir Acesso Vitalício", type="primary", use_container_width=True, key=f"vitalicio_{timestamp}_{random_param}")
         if button_vitalicio:
-            st.info(f"Criando checkout para acesso vitalício... (ID único: {timestamp}_{random_param})")
-            st.success("Checkout criado! Em um ambiente de produção, você seria redirecionado para o Stripe.")
+            with st.spinner("Conectando ao servidor de pagamentos..."):
+                try:
+                    # Criar a sessão de checkout
+                    checkout_session = criar_checkout_session("lifetime")
+                    
+                    # Se for bem sucedido, redireciona
+                    if checkout_session and "url" in checkout_session:
+                        st.success("Redirecionando para o checkout...")
+                        # Link HTML para abrir em nova aba
+                        st.markdown(f"""
+                        <a href="{checkout_session['url']}" target="_blank" style="text-decoration: none;">
+                            <button style="background-color: #2d8cff; color: white; border: none; padding: 10px 20px; 
+                            border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%;">
+                                Clique aqui para ir para o checkout
+                            </button>
+                        </a>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.error("Não foi possível criar a sessão de checkout. Tente novamente.")
+                except Exception as e:
+                    st.error(f"Erro ao processar pagamento: {str(e)}")

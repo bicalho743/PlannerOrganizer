@@ -41,6 +41,7 @@ def home():
     return {"message": "Stripe Direct API está funcionando"}
 
 # Plano MENSAL
+@app.get("/checkout-mensal")
 @app.post("/checkout/mensal")
 def checkout_mensal():
     try:
@@ -53,7 +54,12 @@ def checkout_mensal():
             }],
             success_url="https://workspace.solanobicalho.repl.co/success",
             cancel_url="https://workspace.solanobicalho.repl.co/cancel",
+            # Adicionar timestamp para prevenir cache
+            client_reference_id=f"mensal_{int(__import__('time').time())}",
         )
+        # Redirecionar diretamente para a URL do Stripe quando for GET
+        if session.url:
+            return RedirectResponse(url=session.url)
         return JSONResponse({"id": session.id, "url": session.url})
     except stripe.error.StripeError as e:
         logger.error(f"Erro ao criar sessão do Stripe: {str(e)}")
@@ -63,6 +69,7 @@ def checkout_mensal():
         )
 
 # Plano ANUAL - Com trial de 7 dias
+@app.get("/checkout-anual")
 @app.post("/checkout/anual")
 def checkout_anual():
     try:
@@ -78,7 +85,12 @@ def checkout_anual():
             },
             success_url="https://workspace.solanobicalho.repl.co/success",
             cancel_url="https://workspace.solanobicalho.repl.co/cancel",
+            # Adicionar timestamp para prevenir cache
+            client_reference_id=f"anual_{int(__import__('time').time())}",
         )
+        # Redirecionar diretamente para a URL do Stripe quando for GET
+        if session.url:
+            return RedirectResponse(url=session.url)
         return JSONResponse({"id": session.id, "url": session.url})
     except stripe.error.StripeError as e:
         logger.error(f"Erro ao criar sessão do Stripe: {str(e)}")
@@ -88,6 +100,7 @@ def checkout_anual():
         )
 
 # Plano VITALÍCIO - Pagamento único (não assinatura)
+@app.get("/checkout-vitalicio")
 @app.post("/checkout/vitalicio")
 def checkout_vitalicio():
     try:
@@ -100,10 +113,15 @@ def checkout_vitalicio():
             }],
             success_url="https://workspace.solanobicalho.repl.co/success",
             cancel_url="https://workspace.solanobicalho.repl.co/cancel",
+            # Adicionar timestamp para prevenir cache
+            client_reference_id=f"vitalicio_{int(__import__('time').time())}",
             metadata={
                 "tipo_plano": "vitalicio"
             }
         )
+        # Redirecionar diretamente para a URL do Stripe quando for GET
+        if session.url:
+            return RedirectResponse(url=session.url)
         return JSONResponse({"id": session.id, "url": session.url})
     except stripe.error.StripeError as e:
         logger.error(f"Erro ao criar sessão do Stripe: {str(e)}")

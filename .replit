@@ -10,7 +10,7 @@ run = ["sh", "-c", "streamlit run app.py --server.port 5000 --server.address 0.0
 build = ["sh", "-c", "pip install -r requirements.txt"]
 
 [workflows]
-runButton = "Project"
+runButton = "Run Main App"
 
 [[workflows.workflow]]
 name = "Project"
@@ -498,6 +498,15 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0.0"
 waitForPort = 5001
+
+[[workflows.workflow]]
+name = "Run Main App"
+author = 39445503
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run login_simples.py --server.port 5000 --server.address 0.0.0.0"
 
 [[ports]]
 localPort = 443
