@@ -55,6 +55,31 @@ if not st.session_state.authenticated:
     </style>
     """, unsafe_allow_html=True)
     
+    # Verificar se o usuário está tentando registrar ou recuperar senha
+    if st.session_state.login_page == "registrar":
+        try:
+            # Tentar importar e mostrar a página de registro
+            from pages.registrar import show
+            show()
+            st.stop()  # Parar o fluxo após mostrar a página
+        except ImportError as e:
+            st.error(f"Não foi possível carregar o módulo de registro: {e}")
+            # Resetar para página de login
+            st.session_state.login_page = "login"
+            st.rerun()
+    
+    elif st.session_state.login_page == "recuperar_senha":
+        try:
+            # Tentar importar e mostrar a página de recuperação de senha
+            from pages.recuperar_senha import show
+            show()
+            st.stop()  # Parar o fluxo após mostrar a página
+        except ImportError as e:
+            st.error(f"Não foi possível carregar o módulo de recuperação de senha: {e}")
+            # Resetar para página de login
+            st.session_state.login_page = "login"
+            st.rerun()
+    
     # CSS personalizado para a landing page
     st.markdown("""
     <style>
@@ -571,54 +596,23 @@ if not st.session_state.authenticated:
                 else:
                     st.error("Usuário ou senha incorretos")
         
-        # Link para recuperação de senha e cadastro com informações de demonstração
+        # Informação de demonstração
         st.markdown('''
-        <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
-            <a href="#" id="esqueceu-senha" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
-                Esqueceu sua senha?
-            </a>
-            <a href="#" id="criar-conta" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
-                Criar uma conta
-            </a>
-        </div>
-        
         <div style="margin-top: 0.8rem; text-align: center;">
             <p style="color: #9E9E9E; font-size: 0.75rem;">
                 Para demonstração, use: admin / admin
             </p>
         </div>
-
-        <script>
-            // Função para enviar mensagem para o Streamlit
-            function reloadWithPage(pageName) {
-                // Tentativa de utilizar sessionStorage
-                sessionStorage.setItem('login_page', pageName);
-                
-                // Recarregar a página para aplicar a mudança
-                window.location.reload();
-            }
-            
-            // Adicionar event listeners
-            document.getElementById('esqueceu-senha').addEventListener('click', function(e) {
-                e.preventDefault();
-                reloadWithPage('recuperar_senha');
-            });
-            
-            document.getElementById('criar-conta').addEventListener('click', function(e) {
-                e.preventDefault();
-                reloadWithPage('registrar');
-            });
-        </script>
         ''', unsafe_allow_html=True)
         
-        # Botões alternativos para navegação caso o JavaScript não funcione
+        # Botões para navegação
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("Esqueceu sua senha?", key="btn_recuperar_senha"):
+            if st.button("Esqueceu sua senha?", key="btn_recuperar_senha", use_container_width=True):
                 st.session_state.login_page = "recuperar_senha"
                 st.rerun()
         with col2:
-            if st.button("Criar uma conta", key="btn_criar_conta"):
+            if st.button("Criar uma conta", key="btn_criar_conta", use_container_width=True):
                 st.session_state.login_page = "registrar"
                 st.rerun()
         
