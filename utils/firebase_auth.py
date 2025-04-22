@@ -129,7 +129,10 @@ class FirebaseAuth:
             # URL de autenticação
             auth_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={FIREBASE_CONFIG['apiKey']}"
             
-            return auth_url, params
+            # Construir a URL completa para evitar erros de sintaxe
+            complete_url = f"{auth_url}&providerId={provider_id}&continueUrl={redirect_url or 'http://localhost:5000/'}"
+            
+            return complete_url, {}
         except Exception as e:
             st.error(f"Erro ao gerar URL de login com Google: {str(e)}")
             return None, None

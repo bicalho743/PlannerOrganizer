@@ -558,10 +558,13 @@ if not st.session_state.authenticated:
                     st.session_state.google_auth_state = str(uuid.uuid4())
                 
                 # Verificar se temos parâmetros de autenticação na URL
-                query_params = st.experimental_get_query_params()
-                if query_params.get('auth_provider') == ['google'] and query_params.get('id_token'):
+                # Usando st.query_params (API mais recente) em vez de st.experimental_get_query_params
+                query_params = st.query_params
+                auth_provider = query_params.get('auth_provider')
+                id_token = query_params.get('id_token')
+                
+                if auth_provider == 'google' and id_token:
                     with st.spinner("Processando login com Google..."):
-                        id_token = query_params.get('id_token')[0]
                         result = firebase_auth.process_google_auth(id_token)
                         if result['success']:
                             st.success("Login com Google realizado com sucesso!")
@@ -572,9 +575,9 @@ if not st.session_state.authenticated:
                             st.error(f"Erro ao autenticar com Google: {result['error']}")
                 
                 # Botão de login com Google (usando href)
-                if google_auth_url and params:
+                if google_auth_url:
                     st.markdown(f'''
-                    <a href="{google_auth_url}?state={st.session_state.google_auth_state}&providerId={params['providerId']}&continueUrl={params['continueUrl']}"
+                    <a href="{google_auth_url}"
                       class="social-button google-button" style="text-decoration: none; display: block; text-align: center;">
                         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
                             style="width: 18px; height: 18px; margin-right: 8px; vertical-align: middle;">
