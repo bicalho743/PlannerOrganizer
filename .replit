@@ -10,7 +10,7 @@ run = ["sh", "-c", "streamlit run app.py --server.port 5000 --server.address 0.0
 build = ["sh", "-c", "pip install -r requirements.txt"]
 
 [workflows]
-runButton = "Run"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
@@ -144,6 +144,10 @@ args = "Verificar Firebase-PostgreSQL"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Planos Sem Stripe"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "App Simple"
 
 [[workflows.workflow]]
 name = "Teste Importação"
@@ -649,6 +653,21 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run app.py --server.address 0.0.0.0 --server.port 5000 --server.headless true"
+
+[[workflows.workflow]]
+name = "App Simple"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run app_simple.py --server.port 5000 --server.address 0.0.0.0"
+waitForPort = 5000
 
 [[ports]]
 localPort = 443

@@ -19,8 +19,69 @@ project_root = os.path.abspath(os.path.dirname(__file__))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-# Importamos a função de exibição de planos do módulo independente
-from exibir_planos import exibir_planos_simples
+# Definimos a função simples localmente para evitar dependências
+def exibir_planos_simples():
+    """Versão simplificada para exibir os planos sem dependências externas"""
+    st.markdown("""
+    <div style="padding: 20px; border-radius: 10px; background-color: #f8f9fa; margin-bottom: 20px;">
+        <h3 style="text-align: center; color: #1E366F;">Escolha o plano ideal para seu negócio</h3>
+        <p style="text-align: center; color: #5A6A85; margin-bottom: 20px;">
+            Todas as opções incluem acesso a todos os recursos do sistema.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Layout de três colunas para os planos
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""
+        <div style="padding: 20px; border-radius: 10px; border: 1px solid #e0e0e0; height: 100%;">
+            <h3 style="text-align: center; color: #1E366F;">Plano Mensal</h3>
+            <h2 style="text-align: center; color: #2d8cff; margin: 20px 0;">R$ 9,70</h2>
+            <p style="text-align: center; color: #5A6A85; margin-bottom: 20px;">por mês</p>
+            <ul style="color: #5A6A85;">
+                <li>Acesso a todos os recursos</li>
+                <li>Suporte por e-mail</li>
+                <li>Cancelamento a qualquer momento</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+        st.button("Assinar Plano Mensal", key="mensal_btn_inline", type="primary", use_container_width=True)
+        
+    with col2:
+        st.markdown("""
+        <div style="padding: 20px; border-radius: 10px; border: 2px solid #2d8cff; height: 100%; background-color: #f8f9fa;">
+            <div style="position: absolute; top: -10px; right: 20px; background: #ff6b6b; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold;">MAIS POPULAR</div>
+            <h3 style="text-align: center; color: #1E366F;">Plano Anual</h3>
+            <h2 style="text-align: center; color: #2d8cff; margin: 20px 0;">R$ 97,00</h2>
+            <p style="text-align: center; color: #5A6A85; margin-bottom: 20px;">por ano</p>
+            <p style="text-align: center; background-color: #e6fff0; color: #00a651; padding: 5px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-bottom: 20px;">ECONOMIZE 17%</p>
+            <ul style="color: #5A6A85;">
+                <li>Acesso a todos os recursos</li>
+                <li>Suporte prioritário</li>
+                <li>Atualizações gratuitas</li>
+                <li>Melhor custo-benefício</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+        st.button("Assinar Plano Anual", key="anual_btn_inline", type="primary", use_container_width=True)
+        
+    with col3:
+        st.markdown("""
+        <div style="padding: 20px; border-radius: 10px; border: 1px solid #e0e0e0; height: 100%;">
+            <h3 style="text-align: center; color: #1E366F;">Acesso Vitalício</h3>
+            <h2 style="text-align: center; color: #2d8cff; margin: 20px 0;">R$ 247,00</h2>
+            <p style="text-align: center; color: #5A6A85; margin-bottom: 20px;">pagamento único</p>
+            <ul style="color: #5A6A85;">
+                <li>Acesso permanente ao sistema</li>
+                <li>Sem mensalidades futuras</li>
+                <li>Todas as atualizações inclusas</li>
+                <li>Melhor para longo prazo</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+        st.button("Adquirir Acesso Vitalício", key="vitalicio_btn_inline", type="primary", use_container_width=True)
 
 # Remover o menu hamburguer, rodapé e botão de deploy
 hide_menu_style = """

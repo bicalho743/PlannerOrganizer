@@ -10,19 +10,8 @@ st.set_page_config(
 
 import os
 import sys
-import json
 import logging
-import pandas as pd
 from datetime import datetime
-
-# Verificar se há um redirecionamento pendente para a página de planos
-if "redirect_to_planos" in st.session_state and st.session_state.redirect_to_planos:
-    # Resetar o estado de redirecionamento
-    plano_selecionado = st.session_state.plano_selecionado
-    st.session_state.redirect_to_planos = False
-    
-    # Redirecionar para a página de planos
-    st.switch_page("pages/planos_sem_stripe.py")
 
 # Configurar logging
 logging.basicConfig(
@@ -31,19 +20,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Definir URL dos planos (para compatibilidade com código existente)
-planos_url = "pages/planos_sem_stripe.py"
-
 # Adicionar diretório raiz ao path
 project_root = os.path.abspath(os.path.dirname(__file__))
 if project_root not in sys.path:
     sys.path.append(project_root)
     logger.info(f"Adicionado {project_root} ao sys.path")
-
-from utils.database import Database
-
-# Importamos a função simplificada de planos do módulo independente
-from exibir_planos import exibir_planos_simples
 
 # Verificar se o usuário está autenticado
 if "authenticated" not in st.session_state:
