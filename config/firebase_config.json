@@ -1,8 +1,8 @@
 {
-  "apiKey": "AIzaSyDTR7xuAYg0ZBdYUqV9avU39ZC_HHj5V0Q",
-  "authDomain": "planner-organizator.firebaseapp.com",
-  "projectId": "planner-organizator",
-  "storageBucket": "planner-organizator.appspot.com",
-  "messagingSenderId": "12345678901",
-  "appId": "1:12345678901:web:abc123def456ghi789jkl"
+  "apiKey": "AIzaSyD1_example_key_2dY",
+  "authDomain": "plannerorganizer.firebaseapp.com",
+  "projectId": "plannerorganizer",
+  "storageBucket": "plannerorganizer.appspot.com",
+  "messagingSenderId": "123456789012",
+  "appId": "1:123456789012:web:abcdef12345"
 }

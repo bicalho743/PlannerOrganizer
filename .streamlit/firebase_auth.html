@@ -28,8 +28,8 @@
                 timestamp: Date.now()
             };
             
-            // Codificar o payload para simular um token
-            const mockToken = btoa(JSON.stringify(mockAuthPayload));
+            // Codificar o payload para simular um token (usando apenas caracteres ASCII seguros)
+            const mockToken = encodeURIComponent(JSON.stringify(mockAuthPayload));
             
             // Redirecionar com o token simulado
             const redirectUrl = window.location.origin + 

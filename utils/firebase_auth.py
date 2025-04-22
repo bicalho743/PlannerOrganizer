@@ -300,11 +300,10 @@ class FirebaseAuth:
             
         # Verificar se é modo de desenvolvimento
         if provider == "google_dev":
-            # Decodificar token simulado
+            # Decodificar token simulado (usando URL decode)
             try:
-                import base64
-                decoded_bytes = base64.b64decode(id_token)
-                user_data = json.loads(decoded_bytes.decode('utf-8'))
+                from urllib.parse import unquote
+                user_data = json.loads(unquote(id_token))
                 
                 # Verificar se é um token simulado válido
                 if not user_data.get('isSimulated'):
