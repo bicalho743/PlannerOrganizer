@@ -25,6 +25,14 @@ from utils.planos import mostrar_planos  # Importando o módulo de planos
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
+# Estado para controlar a exibição do modal de cadastro
+if 'show_signup' not in st.session_state:
+    st.session_state.show_signup = False
+
+# Função para alternar o estado do formulário de cadastro
+def toggle_signup_form():
+    st.session_state.show_signup = not st.session_state.show_signup
+
 # Configuração inicial da página
 st.set_page_config(
     page_title="Planner Organizer - Sistema Profissional",
@@ -551,13 +559,13 @@ if not st.session_state.authenticated:
                 else:
                     st.error("Usuário ou senha incorretos")
         
-        # Link para recuperação de senha e cadastro com informações de demonstração
+        # Botão para abrir cadastro
         st.markdown('''
         <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
-            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+            <a href="#" onclick="alert('Função de recuperação de senha em desenvolvimento.');" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
                 Esqueceu sua senha?
             </a>
-            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+            <a href="#" onclick="alert('Funcionalidade em desenvolvimento. Por favor, use as credenciais de demonstração: admin/admin'); return false;" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
                 Criar uma conta
             </a>
         </div>
@@ -567,6 +575,8 @@ if not st.session_state.authenticated:
                 Para demonstração, use: admin / admin
             </p>
         </div>
+        
+        <!-- Script removido, usando alert direto no onclick -->
         ''', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
