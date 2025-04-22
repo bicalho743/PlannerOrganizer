@@ -1,9 +1,17 @@
+import streamlit as st
+
+# Configuração inicial da página - DEVE ser o primeiro comando Streamlit
+st.set_page_config(
+    page_title="Planner Organizer - Sistema Profissional",
+    page_icon="favicon.png",
+    layout="wide",
+    initial_sidebar_state="auto"
+)
+
 import os
 import sys
-import streamlit as st
+import json
 import logging
-import pandas as pd
-import uuid
 from datetime import datetime
 
 # Configurar logging
@@ -19,33 +27,45 @@ if project_root not in sys.path:
     sys.path.append(project_root)
     logger.info(f"Adicionado {project_root} ao sys.path")
 
-from utils.database import Database
-from utils.planos import mostrar_planos  # Importando o módulo de planos
-from utils.firebase_config import FIREBASE_CONFIG, AUTH_COOKIE_NAME, TOKEN_EXPIRY
-
-# Importar módulo de autenticação Firebase (pode ser comentado para desabilitar temporariamente)
-try:
-    from utils.firebase_auth import firebase_auth
-except ImportError:
-    # Fallback para sistemas sem autenticação Firebase
-    firebase_auth = None
-    st.warning("Módulo Firebase Auth não encontrado. Usando autenticação padrão.")
-
-# Inicialização dos estados da sessão
+# Verificar se o usuário está autenticado
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
-# Estado para controlar a página de login
-if 'login_page' not in st.session_state:
-    st.session_state.login_page = "login"  # Valores possíveis: login, registrar, recuperar_senha
+# Adicionar o Firebase SDK para autenticação na página
+st.markdown("""
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="/public/js/firebase-auth.js"></script>
+""", unsafe_allow_html=True)
 
-# Configuração inicial da página
-st.set_page_config(
-    page_title="Planner Organizer - Sistema Profissional",
-    page_icon="favicon.png",
-    layout="wide",
-    initial_sidebar_state="auto"
-)
+# Configuração do Firebase
+firebase_config = {
+    "apiKey": st.secrets.get("FIREBASE_API_KEY", "AIzaSyA8xzYgZXCkZ-97RWQZXtMpvLVf1Jx8wjk"),
+    "authDomain": st.secrets.get("FIREBASE_AUTH_DOMAIN", "planner-organizer.firebaseapp.com"),
+    "projectId": st.secrets.get("FIREBASE_PROJECT_ID", "planner-organizer"),
+    "storageBucket": st.secrets.get("FIREBASE_STORAGE_BUCKET", "planner-organizer.appspot.com"),
+    "messagingSenderId": st.secrets.get("FIREBASE_MESSAGING_SENDER_ID", "695046724018"),
+    "appId": st.secrets.get("FIREBASE_APP_ID", "1:695046724018:web:98d8feec0c6b6c937d57fd"),
+    "databaseURL": st.secrets.get("FIREBASE_DATABASE_URL", "https://planner-organizer-default-rtdb.firebaseio.com")
+}
+
+# JavaScript para inicializar o Firebase
+st.markdown(f"""
+<script>
+    // Configuração do Firebase
+    const firebaseConfig = {json.dumps(firebase_config)};
+    
+    // Inicializar Firebase quando a página carregar
+    document.addEventListener('DOMContentLoaded', function() {{
+        // Inicializar Firebase
+        if (window.firebaseAuth) {{
+            window.firebaseAuth.init(firebaseConfig);
+            console.log("Firebase inicializado via script");
+        }}
+    }});
+</script>
+""", unsafe_allow_html=True)
 
 # Inicialização da autenticação in-app
 if not st.session_state.authenticated:
@@ -56,31 +76,6 @@ if not st.session_state.authenticated:
     section[data-testid="stSidebar"] {display: none;}
     </style>
     """, unsafe_allow_html=True)
-    
-    # Verificar se o usuário está tentando registrar ou recuperar senha
-    if st.session_state.login_page == "registrar":
-        try:
-            # Tentar importar e mostrar a página de registro
-            from pages.registrar import show
-            show()
-            st.stop()  # Parar o fluxo após mostrar a página
-        except ImportError as e:
-            st.error(f"Não foi possível carregar o módulo de registro: {e}")
-            # Resetar para página de login
-            st.session_state.login_page = "login"
-            st.rerun()
-    
-    elif st.session_state.login_page == "recuperar_senha":
-        try:
-            # Tentar importar e mostrar a página de recuperação de senha
-            from pages.recuperar_senha import show
-            show()
-            st.stop()  # Parar o fluxo após mostrar a página
-        except ImportError as e:
-            st.error(f"Não foi possível carregar o módulo de recuperação de senha: {e}")
-            # Resetar para página de login
-            st.session_state.login_page = "login"
-            st.rerun()
     
     # CSS personalizado para a landing page
     st.markdown("""
@@ -518,16 +513,97 @@ if not st.session_state.authenticated:
         # Seção de Planos e Preços
         st.markdown("<h2>Escolha o Plano Ideal Para o Seu Negócio</h2>", unsafe_allow_html=True)
         
-        # Mostrar os planos com os parâmetros otimizados para landing page
-        # Usando formato com espaço reduzido e sem a seção de benefícios duplicada
-        mostrar_planos(
-            com_titulo=False,  # False porque já temos um título acima
-            com_prova_social=False,  # False para layout mais compacto
-            com_teste_gratis=False,  # False para não duplicar com o CTA abaixo
-            com_destaque_plano_medio=True,  # True para destacar o plano anual
-            stripe_ready=True,  # True para botões prontos para Stripe
-            espacamento_reduzido=True  # True para reduzir o espaçamento
-        )
+        # TABELA DE PLANOS SIMPLIFICADA (com links para página de checkout separada)
+        col1, col2, col3 = st.columns([1, 1.2, 1])  # o do meio ganha mais espaço
+        
+        # Exibir informações de contato para vendas
+        contato_email = "contato@plannerorganizer.com.br"
+        contato_whatsapp = "+55 (11) 99999-9999"
+        
+        # URLs para páginas específicas do produto (sem Stripe)
+        # No Streamlit, a navegação é diferente do HTML normal
+        # Vamos usar uma solução baseada em estado para navegar
+
+        # Plano Mensal
+        with col1:
+            st.markdown("""
+            <div class="plano-card">
+                <div class="plano-titulo">💳 Plano Mensal</div>
+                <div class="plano-preco">R$9,70</div>
+                <div class="plano-periodo">por mês</div>
+                <div style="background-color: #e6fff0; color: #00a651; padding: 5px; border-radius: 5px; text-align: center; margin-bottom: 15px; font-size: 12px; font-weight: bold;">✨ 7 DIAS DE TESTE GRÁTIS</div>
+                <div class="plano-beneficios">
+                    <ul>
+                        <li>Acesso a todos os recursos</li>
+                        <li>Suporte por e-mail</li>
+                        <li>Cancelamento a qualquer momento</li>
+                        <li>Ideal para testar o sistema</li>
+                    </ul>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Botão nativo para a página de planos
+            if st.button("Assinar Plano Mensal", key="btn_mensal", use_container_width=True):
+                # Adicionar ao estado para navegar
+                st.session_state.redirect_to_planos = True
+                st.session_state.plano_selecionado = "mensal"
+                st.rerun()
+
+        # Plano Anual
+        with col2:
+            st.markdown("""
+            <div class="plano-card plano-destaque">
+                <div class="plano-titulo">📆 Plano Anual</div>
+                <div class="plano-preco">R$97,00</div>
+                <div class="plano-periodo">por ano</div>
+                <div class="plano-economia">ECONOMIZE 17%</div>
+                <div style="background-color: #e6fff0; color: #00a651; padding: 5px; border-radius: 5px; text-align: center; margin-bottom: 15px; font-size: 12px; font-weight: bold;">✨ 7 DIAS DE TESTE GRÁTIS</div>
+                <div class="plano-beneficios">
+                    <ul>
+                        <li>Acesso a todos os recursos</li>
+                        <li>Suporte prioritário</li>
+                        <li>Atualizações gratuitas</li>
+                        <li>Treinamento personalizado</li>
+                        <li>Melhor custo-benefício</li>
+                    </ul>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Botão nativo para a página de planos
+            if st.button("Assinar Plano Anual", key="btn_anual", use_container_width=True):
+                # Adicionar ao estado para navegar
+                st.session_state.redirect_to_planos = True
+                st.session_state.plano_selecionado = "anual"
+                st.rerun()
+
+        # Plano Vitalício
+        with col3:
+            st.markdown("""
+            <div class="plano-card">
+                <div class="plano-titulo">💎 Acesso Vitalício</div>
+                <div class="plano-preco">R$247,00</div>
+                <div class="plano-periodo">pagamento único</div>
+                <div class="plano-economia">MELHOR VALOR A LONGO PRAZO</div>
+                <div class="plano-beneficios">
+                    <ul>
+                        <li>Acesso permanente ao sistema</li>
+                        <li>Suporte prioritário</li>
+                        <li>Sem mensalidades futuras</li>
+                        <li>Todas as atualizações inclusas</li>
+                        <li>Melhor para longo prazo</li>
+                    </ul>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Botão nativo para a página de planos
+            if st.button("Adquirir Acesso Vitalício", key="btn_vitalicio", use_container_width=True):
+                # Adicionar ao estado para navegar
+                st.session_state.redirect_to_planos = True
+                st.session_state.plano_selecionado = "vitalicio"
+                st.rerun()
         
         # CTA (Call to Action)
         st.markdown('''
@@ -541,78 +617,29 @@ if not st.session_state.authenticated:
         # Container de login sem espaçamento
         st.markdown('<div class="login-container" style="margin-top: -10px;">', unsafe_allow_html=True)
         
-        # Título da seção de login
+        # Título direto sem cabeçalho separado para evitar barra branca
         st.markdown('''
-        <h2 style="text-align: center; color: #1E366F; margin-top: 0; margin-bottom: 25px;">Acesse sua conta</h2>
+        <h2 style="text-align: center; color: #1E366F; margin-top: 0; margin-bottom: 20px;">Acesse sua conta</h2>
         ''', unsafe_allow_html=True)
         
-        # Botão de login com Google
-        if firebase_auth is not None:
-            try:
-                # Importar componente de autenticação Google
-                from utils.google_auth_component import add_google_auth_component, create_google_login_button
-                
-                # Adicionar o componente JavaScript para autenticação com Google
-                add_google_auth_component(FIREBASE_CONFIG)
-                
-                # Verificar se temos parâmetros de autenticação na URL
-                query_params = st.query_params
-                auth_provider = query_params.get('auth_provider')
-                id_token = query_params.get('id_token')
-                
-                # Verificar se é login padrão com Google ou simulado (dev)
-                if (auth_provider == 'google' or auth_provider == 'google_dev') and id_token:
-                    with st.spinner("Processando login com Google..."):
-                        # Processar autenticação com Google (normal ou simulada)
-                        result = firebase_auth.process_google_auth(id_token, provider=auth_provider)
-                        
-                        if result['success']:
-                            # Verificar se é modo de desenvolvimento
-                            if auth_provider == 'google_dev':
-                                st.success("Login com Google (simulado) realizado com sucesso!")
-                                st.info("⚠️ Usando modo de desenvolvimento. A autenticação completa requer HTTPS.")
-                            else:
-                                st.success("Login com Google realizado com sucesso!")
-                                
-                            # A sessão já foi configurada pelo método process_google_auth
-                            # Configurar para ir para a página principal em vez da página de login
-                            st.session_state.login_page = None
-                            # Configurar a página atual para Dashboard
-                            st.session_state.current_page = "Dashboard"
-                            # Forçar recarregamento da página (usando javascript para garantir refresh completo)
-                            st.markdown('''
-                            <script>
-                                window.parent.location.href = window.parent.location.pathname;
-                            </script>
-                            ''', unsafe_allow_html=True)
-                            # Impedir a continuação da renderização atual
-                            st.stop()
-                        else:
-                            st.error(f"Erro ao autenticar com Google: {result['error']}")
-                
-                # Usar nosso componente personalizado para o botão de login com Google
-                create_google_login_button("Continuar com Google", key="google_login_button")
-                
-            except Exception as e:
-                st.error(f"Erro ao configurar login com Google: {str(e)}")
-                # Botão de login com Google (desabilitado em caso de erro)
-                st.markdown('''
-                <div class="social-button google-button" style="opacity: 0.7; cursor: not-allowed; text-align: center;">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                         style="width: 18px; height: 18px; margin-right: 8px; vertical-align: middle;">
-                    <span style="vertical-align: middle;">Continuar com Google (indisponível)</span>
-                </div>
-                ''', unsafe_allow_html=True)
-        else:
-            # Botão de login com Google (desabilitado)
-            st.markdown('''
-            <div class="social-button google-button" style="opacity: 0.7; cursor: not-allowed; text-align: center;">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                     style="width: 18px; height: 18px; margin-right: 8px; vertical-align: middle;">
-                <span style="vertical-align: middle;">Continuar com Google (indisponível)</span>
-            </div>
-            ''', unsafe_allow_html=True)
-        # Botão Facebook removido conforme solicitado
+        # Botões de login social
+        st.markdown('''
+        <button class="social-button google-button">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                 style="width: 18px; height: 18px; margin-right: 8px;">
+            Continuar com Google
+        </button>
+        ''', unsafe_allow_html=True)
+        
+        st.markdown('''
+        <button class="social-button facebook-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white" 
+                 style="margin-right: 8px;">
+                <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm3 8h-1.35c-.538 0-.65.221-.65.778v1.222h2l-.209 2h-1.791v7h-3v-7h-2v-2h2v-2.308c0-1.769.931-2.692 3.029-2.692h1.971v3z"/>
+            </svg>
+            Continuar com Facebook
+        </button>
+        ''', unsafe_allow_html=True)
         
         # Divisor
         st.markdown('''
@@ -623,107 +650,78 @@ if not st.session_state.authenticated:
         
         # Formulário de login
         with st.form("login_form"):
-            email = st.text_input("Email")
+            username = st.text_input("Usuário ou E-mail")
             password = st.text_input("Senha", type="password")
             st.markdown('<div style="height: 15px;"></div>', unsafe_allow_html=True)
             submit = st.form_submit_button("Entrar na minha conta", use_container_width=True)
             
             if submit:
-                # Tentar login pelo Firebase se disponível
-                if firebase_auth is not None:
-                    with st.spinner("Autenticando..."):
-                        result = firebase_auth.login(email, password)
-                        if result['success']:
-                            # Armazenar estado antes de redirecionar
-                            st.session_state.authenticated = True
-                            st.session_state.current_page = "Dashboard"
-                            st.session_state.login_redirect = True
-                            
-                            # Mensagem de sucesso e redirecionamento imediato
-                            st.success("Login realizado com sucesso!")
-                            
-                            # Redirecionamento forçado
-                            st.markdown("""
-                            <html>
-                            <head>
-                                <meta http-equiv="refresh" content="1; URL=/" />
-                            </head>
-                            <body>
-                                <p>Login realizado com sucesso! Redirecionando...</p>
-                                <script>
-                                    setTimeout(function() {
-                                        window.top.location.href = "/";
-                                    }, 1000);
-                                </script>
-                            </body>
-                            </html>
-                            """, unsafe_allow_html=True)
-                            st.stop()
+                from utils.firebase_auth import fazer_login
+                from utils.subscription_manager import subscription_manager
+                
+                with st.spinner("Autenticando..."):
+                    # Login de demonstração
+                    if username.lower() == "admin" and password == "admin":
+                        st.session_state.authenticated = True
+                        st.session_state.user = {
+                            'user_id': 'admin-demo',
+                            'email': 'admin@example.com',
+                            'demo_mode': True
+                        }
+                        st.success("Login realizado com sucesso (modo de demonstração)!")
+                        st.rerun()
+                    
+                    # Tentativa de login real com Firebase    
+                    result = fazer_login(username, password)
+                    
+                    if result:
+                        # Login bem-sucedido
+                        st.session_state.authenticated = True
+                        st.session_state.user = result
+                        
+                        # Verificar status da assinatura
+                        user_id = result.get('user_id')
+                        subscription_details = subscription_manager.get_subscription_details(user_id)
+                        
+                        # Armazenar detalhes da assinatura na sessão
+                        st.session_state.subscription = subscription_details
+                        
+                        # Verificar se o usuário tem uma assinatura ativa
+                        if subscription_details["is_active"]:
+                            st.success(f"Login realizado com sucesso! Bem-vindo ao {subscription_details['plan_name']}.")
                         else:
-                            # Se falhou no Firebase, tentar com a conta de demo
-                            if email.lower() == "admin" and password == "admin":
-                                # Armazenar estado antes de redirecionar
-                                st.session_state.authenticated = True
-                                st.session_state.current_page = "Dashboard"
-                                st.session_state.login_redirect = True
-                                
-                                # Mensagem de sucesso e redirecionamento imediato
-                                st.success("Login realizado com sucesso (modo demonstração)!")
-                                
-                                # Redirecionamento forçado
-                                st.markdown("""
-                                <html>
-                                <head>
-                                    <meta http-equiv="refresh" content="1; URL=/" />
-                                </head>
-                                <body>
-                                    <p>Login realizado com sucesso! Redirecionando...</p>
-                                    <script>
-                                        setTimeout(function() {
-                                            window.top.location.href = "/";
-                                        }, 1000);
-                                    </script>
-                                </body>
-                                </html>
-                                """, unsafe_allow_html=True)
-                                st.stop()
-                            else:
-                                st.error(f"Erro de autenticação: {result['error']}")
-                # Fallback para login de demo se o Firebase não estiver disponível
-                elif email.lower() == "admin" and password == "admin":
-                    # Armazenar estado antes de redirecionar
-                    st.session_state.authenticated = True
-                    st.session_state.current_page = "Dashboard"
-                    st.session_state.login_redirect = True
-                    
-                    with st.spinner("Autenticando..."):
-                        import time
-                        time.sleep(1)
-                    
-                    # Mensagem de sucesso e redirecionamento imediato
-                    st.success("Login realizado com sucesso (modo demonstração)!")
-                    
-                    # Redirecionamento forçado
-                    st.markdown("""
-                    <html>
-                    <head>
-                        <meta http-equiv="refresh" content="1; URL=/" />
-                    </head>
-                    <body>
-                        <p>Login realizado com sucesso! Redirecionando...</p>
-                        <script>
-                            setTimeout(function() {
-                                window.top.location.href = "/";
-                            }, 1000);
-                        </script>
-                    </body>
-                    </html>
-                    """, unsafe_allow_html=True)
-                    st.stop()
-                else:
-                    st.error("Usuário ou senha incorretos")
+                            # Usuário sem assinatura ativa
+                            st.warning("Sua assinatura não está ativa. Você será redirecionado para a seleção de planos.")
+                            st.session_state.show_plans = True
+                        
+                        st.rerun()
+                    else:
+                        st.error("Usuário ou senha incorretos")
         
-        # Informação de demonstração
+        # Botões para recuperação de senha e cadastro com informações de demonstração
+        col1, col2 = st.columns(2)
+        
+        # Definir as variáveis de estado se não existirem
+        if "show_reset_password" not in st.session_state:
+            st.session_state.show_reset_password = False
+        if "show_signup" not in st.session_state:
+            st.session_state.show_signup = False
+            
+        # Botão de esqueceu senha - mais simples e direto
+        with col1:
+            if st.button("Esqueceu sua senha?", key="forgot_password_btn", use_container_width=True):
+                st.session_state.show_reset_password = True
+                st.session_state.show_signup = False
+                st.rerun()
+                
+        # Botão de criar conta - mais simples e direto
+        with col2:
+            if st.button("Criar uma conta", key="create_account_btn", use_container_width=True):
+                st.session_state.show_signup = True
+                st.session_state.show_reset_password = False 
+                st.rerun()
+                
+        # Informações de demo
         st.markdown('''
         <div style="margin-top: 0.8rem; text-align: center;">
             <p style="color: #9E9E9E; font-size: 0.75rem;">
@@ -732,16 +730,195 @@ if not st.session_state.authenticated:
         </div>
         ''', unsafe_allow_html=True)
         
-        # Botões para navegação
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Esqueceu sua senha?", key="btn_recuperar_senha", use_container_width=True):
-                st.session_state.login_page = "recuperar_senha"
-                st.rerun()
-        with col2:
-            if st.button("Criar uma conta", key="btn_criar_conta", use_container_width=True):
-                st.session_state.login_page = "registrar"
-                st.rerun()
+        # Formulário de redefinição de senha
+        if "show_reset_password" in st.session_state and st.session_state.show_reset_password:
+            st.markdown('<hr style="margin: 20px 0;">', unsafe_allow_html=True)
+            st.markdown('<h3 style="text-align: center; color: #1E366F;">Recuperar Senha</h3>', unsafe_allow_html=True)
+            
+            with st.form("reset_password_form"):
+                email_reset = st.text_input("Digite seu e-mail")
+                
+                submit_reset = st.form_submit_button("Enviar link de recuperação", use_container_width=True)
+                
+                if submit_reset:
+                    if not email_reset:
+                        st.error("Por favor, informe seu e-mail.")
+                    else:
+                        # Simulação de envio de e-mail
+                        with st.spinner("Enviando email de recuperação..."):
+                            import time
+                            time.sleep(1.5)
+                        st.success(f"Um link de recuperação foi enviado para {email_reset} (modo de demonstração).")
+                        st.session_state.show_reset_password = False
+                        st.rerun()
+                        
+        # Formulário de cadastro
+        if "show_signup" in st.session_state and st.session_state.show_signup:
+            st.markdown('<hr style="margin: 20px 0;">', unsafe_allow_html=True)
+            st.markdown('<h3 style="text-align: center; color: #1E366F;">Escolha seu plano</h3>', unsafe_allow_html=True)
+            
+            # Definir as variáveis de estado para o plano selecionado
+            if "selected_plan" not in st.session_state:
+                st.session_state.selected_plan = None
+            
+            # Seleção de plano antes de mostrar o formulário
+            plan_options = {
+                "mensal": "Plano Mensal - R$9,70/mês (7 dias grátis)",
+                "anual": "Plano Anual - R$97,00/ano (7 dias grátis)",
+                "vitalicio": "Acesso Vitalício - R$247,00 (pagamento único)"
+            }
+            
+            selected_plan = st.selectbox(
+                "Selecione seu plano",
+                options=list(plan_options.keys()),
+                format_func=lambda x: plan_options.get(x),
+                key="plan_selection"
+            )
+            
+            # Verificar se já existe um formulário de registro aberto
+            if "signup_form_open" not in st.session_state:
+                st.session_state.signup_form_open = False
+            
+            # Botão para confirmar a seleção de plano
+            if not st.session_state.signup_form_open:
+                if st.button("Continuar com este plano", key="confirm_plan", use_container_width=True):
+                    st.session_state.selected_plan = selected_plan
+                    st.session_state.signup_form_open = True
+                    st.rerun()
+            
+            # Mostrar formulário se o plano foi selecionado
+            if st.session_state.signup_form_open and st.session_state.selected_plan:
+                st.markdown('<hr style="margin: 20px 0;">', unsafe_allow_html=True)
+                st.markdown('<h3 style="text-align: center; color: #1E366F;">Informações pessoais</h3>', unsafe_allow_html=True)
+                
+                with st.form("signup_form"):
+                    nome = st.text_input("Nome Completo")
+                    email = st.text_input("E-mail", key="signup_email")
+                    senha = st.text_input("Senha", type="password", key="signup_password", 
+                                         help="Mínimo de 6 caracteres")
+                    confirmar_senha = st.text_input("Confirmar Senha", type="password")
+                    
+                    # Mostrar termos e condições
+                    st.markdown("""
+                    <div style="font-size: 0.8rem; color: #666;">
+                        Ao clicar em "Criar conta e prosseguir para pagamento", você concorda com nossos 
+                        <a href="#" target="_blank">Termos de Serviço</a> e 
+                        <a href="#" target="_blank">Política de Privacidade</a>.
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    submit_signup = st.form_submit_button("Criar conta e prosseguir para pagamento", use_container_width=True)
+                    
+                    if submit_signup:
+                        import requests
+                        
+                        if not nome or not email or not senha or not confirmar_senha:
+                            st.error("Todos os campos são obrigatórios.")
+                        elif len(senha) < 6:
+                            st.error("A senha deve ter no mínimo 6 caracteres.")
+                        elif senha != confirmar_senha:
+                            st.error("As senhas não coincidem.")
+                        else:
+                            # Usar nossa API de integração para criar o usuário e sessão de checkout
+                            with st.spinner("Criando sua conta e preparando o checkout..."):
+                                try:
+                                    # URL da API de integração Firebase-Stripe
+                                    api_url = "http://localhost:8001/api/create-user-and-checkout"
+                                    if os.environ.get("REPLIT_DOMAIN"):
+                                        # Em produção, usar a URL do domínio
+                                        api_url = f"https://{os.environ.get('REPLIT_DOMAIN')}/api/create-user-and-checkout"
+                                    
+                                    # Mapeamento dos planos para os IDs corretos na API
+                                    plan_mapping = {
+                                        "mensal": "monthly",
+                                        "anual": "yearly",
+                                        "vitalicio": "lifetime"
+                                    }
+                                    
+                                    # Converter para o formato aceito pela API
+                                    api_plan_id = plan_mapping.get(st.session_state.selected_plan)
+                                    
+                                    # Dados para enviar
+                                    user_data = {
+                                        "email": email,
+                                        "name": nome,
+                                        "plan_id": api_plan_id
+                                    }
+                                    
+                                    # Tentativa real de API
+                                    try:
+                                        response = requests.post(
+                                            api_url,
+                                            json=user_data,
+                                            timeout=10
+                                        )
+                                        
+                                        if response.status_code == 200:
+                                            user_data = response.json()
+                                            
+                                            # Salvar UID para uso futuro
+                                            st.session_state.firebase_uid = user_data.get("firebase_uid")
+                                            
+                                            # Redirecionar para a página de planos sem Stripe
+                                            st.success("Conta criada com sucesso! Você será redirecionado para a página de planos.")
+                                            
+                                            # Redirecionamento para a página de planos
+                                            st.markdown(f"""
+                                            <script>
+                                                setTimeout(function() {{
+                                                    window.location.href = "{planos_url}";
+                                                }}, 3000);
+                                            </script>
+                                            """, unsafe_allow_html=True)
+                                            
+                                            # Mostrar link manual
+                                            st.markdown(f"""
+                                            Se não for redirecionado automaticamente, [clique aqui para ver os planos disponíveis]({planos_url})
+                                            """)
+                                        else:
+                                            st.error(f"Erro: {response.status_code} - {response.text}")
+                                    
+                                    except requests.RequestException as e:
+                                        # Modo de demonstração para caso a API não esteja disponível
+                                        st.warning("API de integração não disponível, usando modo de demonstração")
+                                        
+                                        # Simular criação de conta com Firebase diretamente
+                                        from utils.firebase_auth import criar_conta
+                                        
+                                        # Criar conta no Firebase
+                                        result = criar_conta(email, senha, nome)
+                                        
+                                        if result:
+                                            # Salvar UID para uso futuro
+                                            firebase_uid = result.get('user_id')
+                                            st.session_state.firebase_uid = firebase_uid
+                                            
+                                            # Redirecionar para a página de planos sem Stripe
+                                            st.success("Conta criada com sucesso! Você será redirecionado para a página de planos.")
+                                            
+                                            # Redirecionamento para a página de planos
+                                            st.markdown(f"""
+                                            <script>
+                                                setTimeout(function() {{
+                                                    window.location.href = "{planos_url}";
+                                                }}, 3000);
+                                            </script>
+                                            """, unsafe_allow_html=True)
+                                            
+                                            # Mostrar link manual
+                                            st.markdown(f"""
+                                            Se não for redirecionado automaticamente, [clique aqui para ver os planos disponíveis]({planos_url})
+                                            """)
+                                        else:
+                                            st.error("Erro ao criar conta. Verifique se o e-mail já está em uso.")
+                                
+                                except Exception as e:
+                                    st.error(f"Erro inesperado: {str(e)}")
+                
+                # Voltar para seleção de plano
+                if st.button("Voltar para seleção de plano", key="back_to_plan"):
+                    st.session_state.signup_form_open = False
+                    st.rerun()
         
         st.markdown('</div>', unsafe_allow_html=True)
         
@@ -763,31 +940,8 @@ if not st.session_state.authenticated:
             col1, col2, col3 = st.columns([1, 1, 1])
             with col3:
                 if st.button("Acesso Dev", key="dev_login_access", use_container_width=True):
-                    # Armazenar estado antes de redirecionar
                     st.session_state.authenticated = True
-                    st.session_state.current_page = "Dashboard"
-                    st.session_state.login_redirect = True
-                    
-                    # Mensagem de sucesso e redirecionamento imediato
-                    st.success("Acesso Dev ativado!")
-                    
-                    # Redirecionamento forçado
-                    st.markdown("""
-                    <html>
-                    <head>
-                        <meta http-equiv="refresh" content="1; URL=/" />
-                    </head>
-                    <body>
-                        <p>Acesso Dev ativado! Redirecionando...</p>
-                        <script>
-                            setTimeout(function() {
-                                window.top.location.href = "/";
-                            }, 1000);
-                        </script>
-                    </body>
-                    </html>
-                    """, unsafe_allow_html=True)
-                    st.stop()
+                    st.rerun()
     
     # Seção de marcas/clientes
     st.markdown('''
@@ -795,10 +949,10 @@ if not st.session_state.authenticated:
         <p style="color: #5A6A85; font-size: 0.9rem; margin-bottom: 1rem;">CONFIADO POR PERSONAL ORGANIZERS DE TODO O BRASIL</p>
         <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
             <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Organizze Bem</span>
-            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Expert Closets</span>
-            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">TopOrder Solutions</span>
-            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Clean & Order</span>
-            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Plann.Smart</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Organize Fácil</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Espaço Leve</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Ju Organizer</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Daniela Siqueira</span>
         </div>
     </div>
     ''', unsafe_allow_html=True)

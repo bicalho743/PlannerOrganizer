@@ -1,4 +1,76 @@
 import streamlit as st
+import requests
+import os
+
+# Configuração da API Stripe
+# No ambiente Replit usamos a API funcionando na porta 8000, 8001 e 8002
+STRIPE_API_URL = "http://0.0.0.0:8000"  # API principal do Stripe (/api/checkout/session)
+# URLs de backup para tentar conexão alternativa
+STRIPE_LOCAL_API_URL = "http://127.0.0.1:8000"
+STRIPE_DIRECT_API_URL = "http://0.0.0.0:8002"  # API direta do Stripe (/checkout/mensal, /checkout/anual, etc)
+STRIPE_DIRECT_LOCAL_API_URL = "http://127.0.0.1:8002"
+STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "pk_live_51RFB2dLWUPER7pUXim2VuVkCESsrjNcHkDQuMJeDCvvW0ZsyFfqM2exfCTwSSe5O4R2TXBxHJtIpYSGBTAx2gBXT00gpAVYK1f")
+
+def criar_checkout_session(plan_id):
+    """
+    Cria uma sessão de checkout do Stripe para um plano específico
+    
+    Args:
+        plan_id (str): ID do plano (monthly, yearly, lifetime)
+        
+    Returns:
+        dict: Resposta da API com session_id e URL
+    """
+    # Lista de possíveis endpoints para tentar
+    endpoints = [
+        f"{STRIPE_API_URL}/api/checkout/session",        # API principal endpoint (/api/checkout/session)
+        f"{STRIPE_LOCAL_API_URL}/api/checkout/session",  # Backup via localhost
+        f"{STRIPE_API_URL}:8000/api/checkout/session",   # Alternativa com porta explícita
+        # Endpoints da API direct
+        f"{STRIPE_DIRECT_API_URL}/checkout_{plan_id}",   # API direta endpoint (/checkout_monthly, /checkout_yearly, etc)
+        f"{STRIPE_DIRECT_LOCAL_API_URL}/checkout_{plan_id}",  # Backup via localhost
+    ]
+    
+    # IDs de preço do Stripe fornecidos pelo cliente
+    price_mapping = {
+        "monthly": "price_1RFE2ULWUPER7pUXw1i1X5oR",    # ID do preço Mensal (R$9,70) com trial de 7 dias e recorrência configurada
+        "yearly": "price_1RFBTtLWUPER7pUXPt2Ajhgz",     # ID do preço Anual (R$97,00) com trial de 7 dias
+        "lifetime": "price_1RFBULLWUPER7pUXCiGZn3Jn"    # ID do preço Vitalício (R$247,00) sem trial
+    }
+    
+    # Preparar os dados para enviar ao Stripe usando IDs de preço
+    session_data = {
+        "price_id": price_mapping.get(plan_id, price_mapping["monthly"]),
+        "success_url": "https://workspace.solanobicalho.repl.co/success",
+        "cancel_url": "https://workspace.solanobicalho.repl.co/cancel",
+        "metadata": {"plan": plan_id},
+        "mode": "subscription" if plan_id in ["monthly", "yearly"] else "payment"
+    }
+    
+    last_error = None
+    for endpoint in endpoints:
+        try:
+            st.write(f"Tentando conectar com: {endpoint}")
+            # Aqui enviamos os dados da sessão como JSON para a API
+            response = requests.post(
+                endpoint, 
+                json=session_data,
+                headers={"Content-Type": "application/json"},
+                timeout=5
+            )
+            # Mostrar a resposta para debug
+            st.write(f"Resposta: {response.status_code}")
+            if response.status_code == 200:
+                return response.json()
+            else:
+                st.write(f"Conteúdo da resposta: {response.text[:200]}")
+        except Exception as e:
+            last_error = str(e)
+            st.write(f"Erro ao conectar: {str(e)}")
+            continue
+    
+    st.error(f"Erro ao criar sessão: {last_error}")
+    return {"error": last_error}
 
 def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True, 
                   com_destaque_plano_medio=True, stripe_ready=True, espacamento_reduzido=False):
@@ -268,9 +340,10 @@ def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True
     with col1:
         plano_mensal = f"""
         <div class="plano-card">
-            <div class="plano-titulo">💡 Plano Mensal</div>
+            <div class="plano-titulo">💳 Plano Mensal</div>
             <div class="plano-preco">R$9,70</div>
             <div class="plano-periodo">por mês</div>
+            <div style="background-color: #e6fff0; color: #00a651; padding: 5px; border-radius: 5px; text-align: center; margin-bottom: 15px; font-size: 12px; font-weight: bold;">✨ 7 DIAS DE TESTE GRÁTIS</div>
             <div class="plano-beneficios">
                 <ul>
                     <li>Acesso a todos os recursos</li>
@@ -288,16 +361,42 @@ def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True
         if stripe_ready:
             btn_mensal = st.button("Assinar Mensal", key="btn_mensal", type="primary", use_container_width=True)
             if btn_mensal:
-                st.success("Redirecionando para pagamento do plano mensal...")
+                try:
+                    # Chamar a API Stripe para criar a sessão de checkout
+                    checkout_data = criar_checkout_session("monthly")
+                    if "error" in checkout_data:
+                        st.error(f"Erro ao processar pagamento: {checkout_data['error']}")
+                    else:
+                        # Adicionar script para redirecionar para o checkout
+                        checkout_url = checkout_data.get("url")
+                        if checkout_url:
+                            st.markdown(f"""
+                            <script>
+                                window.location.href = "{checkout_url}";
+                            </script>
+                            """, unsafe_allow_html=True)
+                        else:
+                            # Alternativa usando Stripe.js (caso não retorne URL)
+                            st.markdown(f"""
+                            <script src="https://js.stripe.com/v3/"></script>
+                            <script>
+                                const stripe = Stripe("{STRIPE_PUBLISHABLE_KEY}");
+                                stripe.redirectToCheckout({{ sessionId: "{checkout_data.get('id')}" }});
+                            </script>
+                            """, unsafe_allow_html=True)
+                        st.success("Redirecionando para o checkout do Stripe...")
+                except Exception as e:
+                    st.error(f"Erro ao conectar com o serviço de pagamento: {str(e)}")
 
     with col2:
         plano_class = "plano-card plano-destaque" if com_destaque_plano_medio else "plano-card"
         plano_anual = f"""
         <div class="{plano_class}">
-            <div class="plano-titulo">🔥 Plano Anual</div>
+            <div class="plano-titulo">📆 Plano Anual</div>
             <div class="plano-preco">R$97,00</div>
             <div class="plano-periodo">por ano</div>
             <div class="plano-economia">ECONOMIZE 17%</div>
+            <div style="background-color: #e6fff0; color: #00a651; padding: 5px; border-radius: 5px; text-align: center; margin-bottom: 15px; font-size: 12px; font-weight: bold;">✨ 7 DIAS DE TESTE GRÁTIS</div>
             <div class="plano-beneficios">
                 <ul>
                     <li>Acesso a todos os recursos</li>
@@ -316,14 +415,40 @@ def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True
         if stripe_ready:
             btn_anual = st.button("Assinar Anual", key="btn_anual", type="primary", use_container_width=True)
             if btn_anual:
-                st.success("Redirecionando para pagamento do plano anual...")
+                try:
+                    # Chamar a API Stripe para criar a sessão de checkout
+                    checkout_data = criar_checkout_session("yearly")
+                    if "error" in checkout_data:
+                        st.error(f"Erro ao processar pagamento: {checkout_data['error']}")
+                    else:
+                        # Adicionar script para redirecionar para o checkout
+                        checkout_url = checkout_data.get("url")
+                        if checkout_url:
+                            st.markdown(f"""
+                            <script>
+                                window.location.href = "{checkout_url}";
+                            </script>
+                            """, unsafe_allow_html=True)
+                        else:
+                            # Alternativa usando Stripe.js (caso não retorne URL)
+                            st.markdown(f"""
+                            <script src="https://js.stripe.com/v3/"></script>
+                            <script>
+                                const stripe = Stripe("{STRIPE_PUBLISHABLE_KEY}");
+                                stripe.redirectToCheckout({{ sessionId: "{checkout_data.get('id')}" }});
+                            </script>
+                            """, unsafe_allow_html=True)
+                        st.success("Redirecionando para o checkout do Stripe...")
+                except Exception as e:
+                    st.error(f"Erro ao conectar com o serviço de pagamento: {str(e)}")
 
     with col3:
         plano_vitalicio = f"""
         <div class="plano-card">
-            <div class="plano-titulo">🏆 Acesso Vitalício</div>
+            <div class="plano-titulo">💎 Acesso Vitalício</div>
             <div class="plano-preco">R$247,00</div>
             <div class="plano-periodo">pagamento único</div>
+            <div class="plano-economia">MELHOR VALOR A LONGO PRAZO</div>
             <div class="plano-beneficios">
                 <ul>
                     <li>Acesso permanente ao sistema</li>
@@ -342,7 +467,32 @@ def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True
         if stripe_ready:
             btn_vitalicio = st.button("Comprar Vitalício", key="btn_vitalicio", type="primary", use_container_width=True)
             if btn_vitalicio:
-                st.success("Redirecionando para pagamento do plano vitalício...")
+                try:
+                    # Chamar a API Stripe para criar a sessão de checkout
+                    checkout_data = criar_checkout_session("lifetime")
+                    if "error" in checkout_data:
+                        st.error(f"Erro ao processar pagamento: {checkout_data['error']}")
+                    else:
+                        # Adicionar script para redirecionar para o checkout
+                        checkout_url = checkout_data.get("url")
+                        if checkout_url:
+                            st.markdown(f"""
+                            <script>
+                                window.location.href = "{checkout_url}";
+                            </script>
+                            """, unsafe_allow_html=True)
+                        else:
+                            # Alternativa usando Stripe.js (caso não retorne URL)
+                            st.markdown(f"""
+                            <script src="https://js.stripe.com/v3/"></script>
+                            <script>
+                                const stripe = Stripe("{STRIPE_PUBLISHABLE_KEY}");
+                                stripe.redirectToCheckout({{ sessionId: "{checkout_data.get('id')}" }});
+                            </script>
+                            """, unsafe_allow_html=True)
+                        st.success("Redirecionando para o checkout do Stripe...")
+                except Exception as e:
+                    st.error(f"Erro ao conectar com o serviço de pagamento: {str(e)}")
     
     # Prova social
     if com_prova_social:
@@ -408,8 +558,9 @@ def mostrar_planos_simples():
     col1, col2, col3 = st.columns([1, 1.2, 1])  # o do meio ganha mais espaço
 
     with col1:
-        st.markdown("### 💡 Plano Mensal")
+        st.markdown("### 💳 Plano Mensal")
         st.markdown("**R$ 9,70 / mês**")
+        st.markdown("✨ *7 dias de teste grátis*")
         st.markdown("- Todos os recursos")
         st.markdown("- Cancelamento fácil")
         st.markdown("- Ideal para começar")
@@ -418,9 +569,10 @@ def mostrar_planos_simples():
     with col2:
         st.markdown("""
             <div style='border: 2px solid #2d8cff; border-radius: 12px; padding: 10px; background-color: #e6f0ff;'>
-            <h3 style='text-align:center;'>🔥 Plano Anual</h3>
-            <p style='text-align:center; font-size: 20px;'><strong>R$ 97 / ano</strong></p>
+            <h3 style='text-align:center;'>📆 Plano Anual</h3>
+            <p style='text-align:center; font-size: 20px;'><strong>R$ 97,00 / ano</strong></p>
             <p style='text-align:center; color:green;'>💸 Economize 17% comparado ao mensal!</p>
+            <p style='text-align:center; color:#00a651; font-weight: bold;'>✨ 7 DIAS DE TESTE GRÁTIS</p>
             <ul>
                 <li>Acesso total por 12 meses</li>
                 <li>Atualizações incluídas</li>
@@ -435,11 +587,12 @@ def mostrar_planos_simples():
         st.button("Assinar Anual", key="btn_anual_simples", type="primary")
 
     with col3:
-        st.markdown("### 🏆 Acesso Vitalício")
+        st.markdown("### 💎 Acesso Vitalício")
         st.markdown("**R$ 247,00 uma única vez**")
         st.markdown("- Acesso permanente ao sistema")
         st.markdown("- Sem mensalidade nunca mais")
-        st.markdown("- Ideal para quem já decidiu")
+        st.markdown("- Todas as atualizações inclusas")
+        st.markdown("- Melhor para longo prazo")
         st.button("Comprar Vitalício", key="btn_vitalicio_simples", type="primary")
 
     # Prova social

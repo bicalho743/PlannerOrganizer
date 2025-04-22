@@ -1,433 +1,228 @@
-"""
-Página de planos minimalista para o Planner Organizer
-"""
 import streamlit as st
+import base64
+from pathlib import Path
 
 # Configuração da página
 st.set_page_config(
-    page_title="Planos - Planner Organizer",
-    page_icon="📊",
-    layout="wide",
+    page_title="Planner Organizer | Planos",
+    page_icon="favicon.png",
+    layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# Estilos CSS
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-    
-    :root {
-        --primary-color: #1E366F;
-        --secondary-color: #2E7DE6;
-        --accent-color: #4FADE0;
-        --bg-color: #F8F9FA;
-        --text-color: #333;
-        --light-text-color: #6c757d;
-        --border-color: #e0e0e0;
+# Função para carregar CSS
+def load_css():
+    css = """
+    <style>
+    .main {
+        background: linear-gradient(135deg, #f9fafc, #eef5ff);
     }
     
-    html, body, [class*="css"] {
-        font-family: 'Poppins', sans-serif;
+    section[data-testid="stSidebar"] {
+        display: none !important;
     }
     
-    h1 {
-        color: var(--primary-color);
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
+    h1, h2, h3 {
+        color: #1E366F;
     }
     
-    h2 {
-        color: var(--primary-color);
-        font-size: 1.8rem;
-        font-weight: 600;
-        margin-top: 2rem;
-        margin-bottom: 1rem;
-    }
-    
-    p {
-        color: var(--text-color);
-        font-size: 1rem;
-        line-height: 1.6;
-    }
-    
-    .subtitle {
-        color: var(--light-text-color);
-        font-size: 1.2rem;
-        font-weight: 400;
-        margin-bottom: 2rem;
-    }
-    
-    .plans-container {
-        display: flex;
-        gap: 24px;
-        margin-top: 2rem;
-        flex-wrap: wrap;
-    }
-    
-    .plan-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.05);
-        padding: 1.8rem;
-        flex: 1;
-        min-width: 300px;
-        border-top: 5px solid var(--secondary-color);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    
-    .plan-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 30px rgba(0,0,0,0.08);
-    }
-    
-    .plan-title {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: var(--primary-color);
-        margin-bottom: 0.5rem;
-    }
-    
-    .plan-price {
-        font-size: 2.2rem;
-        font-weight: 700;
-        color: var(--secondary-color);
-        margin-bottom: 0.5rem;
-    }
-    
-    .plan-period {
-        font-size: 0.9rem;
-        color: var(--light-text-color);
-        margin-bottom: 1.5rem;
-    }
-    
-    .plan-features {
-        margin: 1.5rem 0;
-    }
-    
-    .feature-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 0.8rem;
-    }
-    
-    .feature-icon {
-        color: var(--secondary-color);
-        margin-right: 10px;
-        font-size: 1.2rem;
-    }
-    
-    .feature-text {
-        color: var(--text-color);
-        font-size: 0.95rem;
-    }
-    
-    .cta-button {
-        display: inline-block;
-        background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
+    .stButton > button {
+        background: linear-gradient(135deg, #2D8CFF, #1E366F);
         color: white;
-        padding: 12px 24px;
-        border-radius: 50px;
-        font-weight: 600;
-        text-align: center;
-        text-decoration: none;
-        margin-top: 1rem;
-        transition: all 0.2s ease;
+        font-weight: bold;
         border: none;
-        cursor: pointer;
-        width: 100%;
+        border-radius: 5px;
+        padding: 0.5rem 1rem;
+        transition: all 0.3s;
     }
     
-    .cta-button:hover {
-        background: linear-gradient(90deg, var(--accent-color), var(--secondary-color));
-        box-shadow: 0 5px 15px rgba(46, 125, 230, 0.3);
+    .stButton > button:hover {
+        background: linear-gradient(135deg, #1E66B5, #152A50);
         transform: translateY(-2px);
     }
     
-    .premium-card {
-        border-top-color: #FFD700;
+    .featured-plan {
+        border: 2px solid #2D8CFF;
+        border-radius: 10px;
+        padding: 20px;
         position: relative;
-        overflow: hidden;
+        background: linear-gradient(to bottom, #f9fdff, #eaf7ff);
     }
     
-    .premium-card .plan-price {
-        color: #FFB100;
+    .regular-plan {
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 20px;
+        background-color: white;
     }
     
-    .premium-card .feature-icon {
-        color: #FFB100;
+    .plan-price {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #2D8CFF;
     }
     
-    .premium-card .cta-button {
-        background: linear-gradient(90deg, #FFB100, #FFC93C);
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
     }
     
-    .premium-card .cta-button:hover {
-        background: linear-gradient(90deg, #FFC93C, #FFB100);
-        box-shadow: 0 5px 15px rgba(255, 177, 0, 0.3);
-    }
-    
-    .popular-tag {
+    .ribbon {
         position: absolute;
-        top: 20px;
-        right: -35px;
-        background: #FFD700;
-        color: #333;
-        padding: 5px 40px;
+        top: -10px;
+        right: 10px;
+        background: #ff6b6b;
+        color: white;
+        padding: 5px 15px;
         font-size: 0.8rem;
-        font-weight: 600;
-        transform: rotate(45deg);
+        font-weight: bold;
+        border-radius: 3px;
+        transform: rotate(2deg);
     }
     
-    .enterprise-card {
-        border-top-color: #6C63FF;
+    .savings {
+        background-color: #e6fff0;
+        color: #00a651;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        display: inline-block;
+        margin-bottom: 15px;
     }
     
-    .enterprise-card .plan-price {
-        color: #6C63FF;
+    .feature-list li {
+        margin-bottom: 8px;
     }
     
-    .enterprise-card .feature-icon {
-        color: #6C63FF;
+    .feature-check {
+        color: #2D8CFF;
+        font-weight: bold;
     }
-    
-    .enterprise-card .cta-button {
-        background: linear-gradient(90deg, #6C63FF, #8F85FF);
+    </style>
+    """
+    st.markdown(css, unsafe_allow_html=True)
+
+# Carregar CSS
+load_css()
+
+# Ativar JavaScript para redirecionamento
+def add_script():
+    script = """
+    <script>
+    const STRIPE_PUBLISHABLE_KEY = "pk_live_51RFB2dLWUPER7pUXim2VuVkCESsrjNcHkDQuMJeDCvvW0ZsyFfqM2exfCTwSSe5O4R2TXBxHJtIpYSGBTAx2gBXT00gpAVYK1f";
+    const API_URL = "http://localhost:8001"; // Porta da Stripe Simple API
+
+    function redirectToCheckout(planId) {
+        fetch(`${API_URL}/create-checkout-session/${planId}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                alert("Erro: " + data.error);
+                return;
+            }
+            
+            // Usar o ID da sessão do Stripe para redirecionar
+            const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+            stripe.redirectToCheckout({ sessionId: data.id })
+            .then(function(result) {
+                if (result.error) {
+                    alert(result.error.message);
+                }
+            });
+        })
+        .catch(err => {
+            alert("Erro: " + err.message);
+        });
     }
-    
-    .enterprise-card .cta-button:hover {
-        background: linear-gradient(90deg, #8F85FF, #6C63FF);
-        box-shadow: 0 5px 15px rgba(108, 99, 255, 0.3);
-    }
-    
-    .section-heading {
-        text-align: center;
-        margin-bottom: 3rem;
-    }
-    
-    .footer {
-        text-align: center;
-        margin-top: 4rem;
-        padding: 2rem 0;
-        font-size: 0.9rem;
-        color: var(--light-text-color);
-    }
-    
-    .faq-container {
-        margin-top: 4rem;
-    }
-    
-    .faq-item {
-        margin-bottom: 1.5rem;
-        background: white;
-        border-radius: 8px;
-        padding: 1.2rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-    }
-    
-    .faq-question {
-        font-weight: 600;
-        font-size: 1.1rem;
-        color: var(--primary-color);
-        margin-bottom: 0.5rem;
-    }
-    
-    .faq-answer {
-        font-size: 0.95rem;
-        color: var(--text-color);
-    }
-    
-    @media screen and (max-width: 768px) {
-        .plans-container {
-            flex-direction: column;
-        }
-        
-        .plan-card {
-            width: 100%;
-            min-width: unset;
-        }
-    }
-</style>
-""", unsafe_allow_html=True)
+    </script>
+    <script src="https://js.stripe.com/v3/"></script>
+    """
+    st.markdown(script, unsafe_allow_html=True)
 
-# Header
-st.markdown("<h1>Planos e Preços</h1>", unsafe_allow_html=True)
-st.markdown("<p class='subtitle'>Escolha o plano ideal para o seu negócio</p>", unsafe_allow_html=True)
+# Adicionar script
+add_script()
 
-# Planos
-st.markdown("<div class='plans-container'>", unsafe_allow_html=True)
+# Cabeçalho
+st.markdown("<div style='text-align: center; padding: 2rem 1rem; background: linear-gradient(135deg, #1E366F, #2D8CFF); border-radius: 15px; margin-bottom: 2rem; color: white;'><h1>Planner Organizer</h1><p>Transforme sua organização em resultados mensuráveis</p></div>", unsafe_allow_html=True)
 
-# Plano Básico
-st.markdown("""
-<div class='plan-card'>
-    <div class='plan-title'>Básico</div>
-    <div class='plan-price'>R$ 49,90</div>
-    <div class='plan-period'>por mês, cobrança mensal</div>
+st.markdown("<h2 style='text-align: center; margin-bottom: 2rem;'>Escolha o Plano Ideal Para o Seu Negócio</h2>", unsafe_allow_html=True)
+
+# Layout de 3 colunas
+col1, col2, col3 = st.columns(3)
+
+# Plano Mensal
+with col1:
+    st.markdown("<div class='regular-plan'>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center;'>💡 Plano Mensal</h3>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center;'><div class='plan-price'>R$9,70</div><div style='color: #666; margin-bottom: 20px;'>por mês</div></div>", unsafe_allow_html=True)
     
-    <div class='plan-features'>
-        <div class='feature-item'>
-            <span class='feature-icon'>✓</span>
-            <span class='feature-text'>Até 50 clientes</span>
-        </div>
-        <div class='feature-item'>
-            <span class='feature-icon'>✓</span>
-            <span class='feature-text'>Até 100 propostas por mês</span>
-        </div>
-        <div class='feature-item'>
-            <span class='feature-icon'>✓</span>
-            <span class='feature-text'>Módulo financeiro básico</span>
-        </div>
-        <div class='feature-item'>
-            <span class='feature-icon'>✓</span>
-            <span class='feature-text'>Controle de propostas</span>
-        </div>
-        <div class='feature-item'>
-            <span class='feature-icon'>✓</span>
-            <span class='feature-text'>Suporte por email</span>
-        </div>
-    </div>
+    st.markdown("<ul class='feature-list'>", unsafe_allow_html=True)
+    st.markdown("<li><span class='feature-check'>✓</span> Acesso a todos os recursos</li>", unsafe_allow_html=True)
+    st.markdown("<li><span class='feature-check'>✓</span> Suporte por e-mail</li>", unsafe_allow_html=True)
+    st.markdown("<li><span class='feature-check'>✓</span> Cancelamento a qualquer momento</li>", unsafe_allow_html=True)
+    st.markdown("<li><span class='feature-check'>✓</span> Ideal para testar o sistema</li>", unsafe_allow_html=True)
+    st.markdown("</ul>", unsafe_allow_html=True)
     
-    <button class='cta-button'>Começar Agora</button>
-</div>
-""", unsafe_allow_html=True)
-
-# Plano Premium
-st.markdown("""
-<div class='plan-card premium-card'>
-    <div class='popular-tag'>POPULAR</div>
-    <div class='plan-title'>Premium</div>
-    <div class='plan-price'>R$ 89,90</div>
-    <div class='plan-period'>por mês, cobrança mensal</div>
+    if st.button("ASSINAR MENSAL", key="monthly"):
+        st.markdown("<script>redirectToCheckout('monthly');</script>", unsafe_allow_html=True)
+        st.info("Redirecionando para o checkout...")
     
-    <div class='plan-features'>
-        <div class='feature-item'>
-            <span class='feature-icon'>✓</span>
-            <span class='feature-text'>Clientes ilimitados</span>
-        </div>
-        <div class='feature-item'>
-            <span class='feature-icon'>✓</span>
-            <span class='feature-text'>Propostas ilimitadas</span>
-        </div>
-        <div class='feature-item'>
-            <span class='feature-icon'>✓</span>
-            <span class='feature-text'>Módulo financeiro completo</span>
-        </div>
-        <div class='feature-item'>
-            <span class='feature-icon'>✓</span>
-            <span class='feature-text'>Relatórios avançados</span>
-        </div>
-        <div class='feature-item'>
-            <span class='feature-icon'>✓</span>
-            <span class='feature-text'>Integração com sistemas externos</span>
-        </div>
-        <div class='feature-item'>
-            <span class='feature-icon'>✓</span>
-            <span class='feature-text'>Suporte prioritário</span>
-        </div>
-    </div>
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# Plano Anual (Destacado)
+with col2:
+    st.markdown("<div class='featured-plan'>", unsafe_allow_html=True)
+    st.markdown("<div class='ribbon'>RECOMENDADO</div>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center;'>🔥 Plano Anual</h3>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center;'><div class='plan-price'>R$97,00</div><div style='color: #666; margin-bottom: 10px;'>por ano</div></div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center;'><div class='savings'>ECONOMIZE 17%</div></div>", unsafe_allow_html=True)
     
-    <button class='cta-button'>Escolher Premium</button>
-</div>
-""", unsafe_allow_html=True)
-
-# Plano Enterprise
-st.markdown("""
-<div class='plan-card enterprise-card'>
-    <div class='plan-title'>Enterprise</div>
-    <div class='plan-price'>R$ 199,90</div>
-    <div class='plan-period'>por mês, cobrança mensal</div>
+    st.markdown("<ul class='feature-list'>", unsafe_allow_html=True)
+    st.markdown("<li><span class='feature-check'>✓</span> Acesso a todos os recursos</li>", unsafe_allow_html=True)
+    st.markdown("<li><span class='feature-check'>✓</span> Suporte prioritário</li>", unsafe_allow_html=True)
+    st.markdown("<li><span class='feature-check'>✓</span> Atualizações gratuitas</li>", unsafe_allow_html=True)
+    st.markdown("<li><span class='feature-check'>✓</span> Treinamento personalizado</li>", unsafe_allow_html=True)
+    st.markdown("<li><span class='feature-check'>✓</span> Melhor custo-benefício</li>", unsafe_allow_html=True)
+    st.markdown("</ul>", unsafe_allow_html=True)
     
-    <div class='plan-features'>
-        <div class='feature-item'>
-            <span class='feature-icon'>✓</span>
-            <span class='feature-text'>Tudo do plano Premium</span>
-        </div>
-        <div class='feature-item'>
-            <span class='feature-icon'>✓</span>
-            <span class='feature-text'>Múltiplos usuários</span>
-        </div>
-        <div class='feature-item'>
-            <span class='feature-icon'>✓</span>
-            <span class='feature-text'>Controle de permissões</span>
-        </div>
-        <div class='feature-item'>
-            <span class='feature-icon'>✓</span>
-            <span class='feature-text'>API completa para integração</span>
-        </div>
-        <div class='feature-item'>
-            <span class='feature-icon'>✓</span>
-            <span class='feature-text'>Suporte 24/7 dedicado</span>
-        </div>
-        <div class='feature-item'>
-            <span class='feature-icon'>✓</span>
-            <span class='feature-text'>Personalização de marca</span>
-        </div>
-    </div>
+    if st.button("ASSINAR ANUAL", key="yearly"):
+        st.markdown("<script>redirectToCheckout('yearly');</script>", unsafe_allow_html=True)
+        st.info("Redirecionando para o checkout...")
     
-    <button class='cta-button'>Falar com Consultor</button>
-</div>
-""", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-st.markdown("</div>", unsafe_allow_html=True)
-
-# Seção de FAQ
-st.markdown("<h2>Perguntas Frequentes</h2>", unsafe_allow_html=True)
-
-st.markdown("<div class='faq-container'>", unsafe_allow_html=True)
-
-# FAQ 1
-st.markdown("""
-<div class='faq-item'>
-    <div class='faq-question'>Como funciona o período de teste?</div>
-    <div class='faq-answer'>
-        Oferecemos um período de teste gratuito de 14 dias para todos os planos. Durante este período, você terá acesso a todos os recursos do plano escolhido. Não é necessário cartão de crédito para começar o teste.
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# FAQ 2
-st.markdown("""
-<div class='faq-item'>
-    <div class='faq-question'>Posso mudar de plano depois?</div>
-    <div class='faq-answer'>
-        Sim, você pode fazer upgrade ou downgrade do seu plano a qualquer momento. As mudanças entram em vigor imediatamente, e o valor será ajustado proporcionalmente ao período restante da sua assinatura.
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# FAQ 3
-st.markdown("""
-<div class='faq-item'>
-    <div class='faq-question'>Como funciona o suporte técnico?</div>
-    <div class='faq-answer'>
-        Todos os planos incluem suporte técnico por email. Os planos Premium e Enterprise têm acesso a suporte prioritário com tempo de resposta garantido de até 6 horas em dias úteis. O plano Enterprise conta com suporte 24/7 por email, chat e telefone.
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# FAQ 4
-st.markdown("""
-<div class='faq-item'>
-    <div class='faq-question'>Existe alguma cobrança adicional?</div>
-    <div class='faq-answer'>
-        Não há cobranças ocultas. O valor mensal cobre todas as funcionalidades listadas para cada plano. Apenas serviços adicionais específicos, como personalização avançada ou integrações sob medida, podem ter custos extras, mas sempre com orçamento prévio.
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-st.markdown("</div>", unsafe_allow_html=True)
+# Plano Vitalício
+with col3:
+    st.markdown("<div class='regular-plan'>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center;'>🏆 Acesso Vitalício</h3>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center;'><div class='plan-price'>R$247,00</div><div style='color: #666; margin-bottom: 20px;'>pagamento único</div></div>", unsafe_allow_html=True)
+    
+    st.markdown("<ul class='feature-list'>", unsafe_allow_html=True)
+    st.markdown("<li><span class='feature-check'>✓</span> Acesso permanente ao sistema</li>", unsafe_allow_html=True)
+    st.markdown("<li><span class='feature-check'>✓</span> Suporte prioritário</li>", unsafe_allow_html=True)
+    st.markdown("<li><span class='feature-check'>✓</span> Sem mensalidades futuras</li>", unsafe_allow_html=True)
+    st.markdown("<li><span class='feature-check'>✓</span> Todas as atualizações inclusas</li>", unsafe_allow_html=True)
+    st.markdown("<li><span class='feature-check'>✓</span> Melhor para longo prazo</li>", unsafe_allow_html=True)
+    st.markdown("</ul>", unsafe_allow_html=True)
+    
+    if st.button("COMPRAR VITALÍCIO", key="lifetime"):
+        st.markdown("<script>redirectToCheckout('lifetime');</script>", unsafe_allow_html=True)
+        st.info("Redirecionando para o checkout...")
+    
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # Rodapé
+st.markdown("<div style='text-align: center; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #e0e0e0; color: #666;'>© 2025 Planner Organizer. Todos os direitos reservados.</div>", unsafe_allow_html=True)
+
+# Nota sobre Stripe
 st.markdown("""
-<div class='footer'>
-    © 2025 Planner Organizer. Todos os direitos reservados.<br>
-    Dúvidas? Entre em contato: contato@plannerorganiza.com.br
+<div style="text-align: center; font-size: 0.8rem; margin-top: 1rem; color: #999;">
+Para testar essa funcionalidade completamente, é necessário configurar as chaves do Stripe.
 </div>
 """, unsafe_allow_html=True)
-
-def main():
-    """Função principal - apenas para manter compatibilidade"""
-    pass
-
-if __name__ == "__main__":
-    main()
