@@ -99,6 +99,24 @@ st.markdown(f"""
             console.log("Firebase inicializado via script");
         }}
     }});
+    
+    // Listener para mensagens de login social bem-sucedido
+    window.addEventListener('message', function(event) {{
+        console.log("Mensagem recebida:", event.data);
+        
+        // Verificar se é uma mensagem de login bem-sucedido
+        if (event.data && event.data.type === 'LOGIN_SUCCESS') {{
+            console.log("Login social bem-sucedido:", event.data);
+            
+            // Salvar dados do usuário no localStorage
+            localStorage.setItem('firebaseToken', event.data.token);
+            localStorage.setItem('userEmail', event.data.email);
+            localStorage.setItem('userName', event.data.name);
+            
+            // Redirecionar para a página principal com o token
+            window.location.href = "/?token=" + event.data.token;
+        }}
+    }}, false);
 </script>
 """, unsafe_allow_html=True)
 
