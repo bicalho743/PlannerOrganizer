@@ -21,9 +21,21 @@ if project_root not in sys.path:
 from utils.database import Database
 from utils.planos import mostrar_planos  # Importando o módulo de planos
 
-# Verificar se o usuário está autenticado
+# Importar módulo de autenticação Firebase (pode ser comentado para desabilitar temporariamente)
+try:
+    from utils.firebase_auth import firebase_auth
+except ImportError:
+    # Fallback para sistemas sem autenticação Firebase
+    firebase_auth = None
+    st.warning("Módulo Firebase Auth não encontrado. Usando autenticação padrão.")
+
+# Inicialização dos estados da sessão
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
+
+# Estado para controlar a página de login
+if 'login_page' not in st.session_state:
+    st.session_state.login_page = "login"  # Valores possíveis: login, registrar, recuperar_senha
 
 # Configuração inicial da página
 st.set_page_config(
@@ -526,18 +538,35 @@ if not st.session_state.authenticated:
         
         # Formulário de login
         with st.form("login_form"):
-            username = st.text_input("Usuário ou E-mail")
+            email = st.text_input("Email")
             password = st.text_input("Senha", type="password")
             st.markdown('<div style="height: 15px;"></div>', unsafe_allow_html=True)
             submit = st.form_submit_button("Entrar na minha conta", use_container_width=True)
             
             if submit:
-                if username.lower() == "admin" and password == "admin":
+                # Tentar login pelo Firebase se disponível
+                if firebase_auth is not None:
+                    with st.spinner("Autenticando..."):
+                        result = firebase_auth.login(email, password)
+                        if result['success']:
+                            st.session_state.authenticated = True
+                            st.success("Login realizado com sucesso!")
+                            st.rerun()
+                        else:
+                            # Se falhou no Firebase, tentar com a conta de demo
+                            if email.lower() == "admin" and password == "admin":
+                                st.session_state.authenticated = True
+                                st.success("Login realizado com sucesso (modo demonstração)!")
+                                st.rerun()
+                            else:
+                                st.error(f"Erro de autenticação: {result['error']}")
+                # Fallback para login de demo se o Firebase não estiver disponível
+                elif email.lower() == "admin" and password == "admin":
                     st.session_state.authenticated = True
                     with st.spinner("Autenticando..."):
                         import time
                         time.sleep(1)
-                    st.success("Login realizado com sucesso!")
+                    st.success("Login realizado com sucesso (modo demonstração)!")
                     st.rerun()
                 else:
                     st.error("Usuário ou senha incorretos")
@@ -545,10 +574,10 @@ if not st.session_state.authenticated:
         # Link para recuperação de senha e cadastro com informações de demonstração
         st.markdown('''
         <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
-            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+            <a href="#" id="esqueceu-senha" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
                 Esqueceu sua senha?
             </a>
-            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+            <a href="#" id="criar-conta" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
                 Criar uma conta
             </a>
         </div>
@@ -558,7 +587,40 @@ if not st.session_state.authenticated:
                 Para demonstração, use: admin / admin
             </p>
         </div>
+
+        <script>
+            // Função para enviar mensagem para o Streamlit
+            function reloadWithPage(pageName) {
+                // Tentativa de utilizar sessionStorage
+                sessionStorage.setItem('login_page', pageName);
+                
+                // Recarregar a página para aplicar a mudança
+                window.location.reload();
+            }
+            
+            // Adicionar event listeners
+            document.getElementById('esqueceu-senha').addEventListener('click', function(e) {
+                e.preventDefault();
+                reloadWithPage('recuperar_senha');
+            });
+            
+            document.getElementById('criar-conta').addEventListener('click', function(e) {
+                e.preventDefault();
+                reloadWithPage('registrar');
+            });
+        </script>
         ''', unsafe_allow_html=True)
+        
+        # Botões alternativos para navegação caso o JavaScript não funcione
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Esqueceu sua senha?", key="btn_recuperar_senha"):
+                st.session_state.login_page = "recuperar_senha"
+                st.rerun()
+        with col2:
+            if st.button("Criar uma conta", key="btn_criar_conta"):
+                st.session_state.login_page = "registrar"
+                st.rerun()
         
         st.markdown('</div>', unsafe_allow_html=True)
         

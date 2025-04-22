@@ -1,237 +1,173 @@
 """
-Módulo para autenticação com Firebase
+Módulo de autenticação com Firebase
 """
-import os
-import json
 import streamlit as st
-import streamlit_authenticator as stauth
-import logging
-from utils.firebase_config import FIREBASE_CONFIG
+import pyrebase
+import json
+from datetime import datetime, timedelta
+from utils.firebase_config import FIREBASE_CONFIG, AUTH_COOKIE_NAME, TOKEN_EXPIRY
 
-# Configurar logger
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Variável para indicar se o Firebase Admin SDK foi inicializado
-firebase_initialized = False
-
-class FirebaseAuthentication:
+class FirebaseAuth:
     """
-    Classe para gerenciar autenticação com Firebase no Streamlit
+    Classe para gerenciar autenticação com Firebase
     """
     def __init__(self):
-        """Inicializa o Firebase Admin SDK"""
-        self.firebase_initialized = firebase_initialized
-        logger.info("Inicializando autenticação via Firebase")
+        self.firebase = pyrebase.initialize_app(FIREBASE_CONFIG)
+        self.auth = self.firebase.auth()
+        self.db = self.firebase.database()
     
-    def criar_usuario(self, email, senha, nome):
+    def login(self, email, password):
         """
-        Simula a criação de um novo usuário (em uma implementação real, usaria o Firebase SDK)
+        Realiza login no Firebase
         
         Args:
-            email (str): E-mail do usuário
-            senha (str): Senha do usuário
-            nome (str): Nome do usuário
+            email: Email do usuário
+            password: Senha do usuário
             
         Returns:
-            dict: Resposta contendo status e mensagem
+            dict: Informações do usuário autenticado ou erro
         """
-        # Versão simplificada e segura para demonstração
-        # Em produção, usaria o Firebase Admin SDK para criar o usuário
-        logger.info(f"Simulando criação de usuário: {email}")
-        return {
-            "status": True, 
-            "mensagem": f"Usuário simulado criado com sucesso para {email}",
-            "uid": "demo-user-id"
-        }
-    
-    def autenticar_usuario(self, email, senha):
-        """
-        Autentica um usuário com email e senha
-        
-        Args:
-            email (str): E-mail do usuário
-            senha (str): Senha do usuário
+        try:
+            user = self.auth.sign_in_with_email_and_password(email, password)
+            # Obter informações adicionais do usuário
+            user_info = self.auth.get_account_info(user['idToken'])
             
-        Returns:
-            dict: Resposta contendo status e mensagem
-        """
-        # Esta função seria implementada com a API de autenticação do Firebase
-        # Como o Firebase não possui API direta para verificar credenciais, isso seria feito via JavaScript
-        # Aqui simulamos apenas para fins de demonstração
-        return {"status": True, "mensagem": "Implementação de frontend pendente"}
-
-def criar_componente_login():
-    """
-    Cria um componente de login usando streamlit_authenticator
-    
-    Returns:
-        tuple: (authenticator, name, authentication_status, username)
-    """
-    # Configurações para o streamlit-authenticator
-    credentials = {
-        "usernames": {
-            "admin": {
-                "name": "Administrador",
-                "password": stauth.Hasher(["admin"]).generate()[0]
+            # Criar objeto de usuário para armazenar na sessão
+            session_user = {
+                'localId': user['localId'],
+                'email': user['email'],
+                'idToken': user['idToken'],
+                'refreshToken': user['refreshToken'],
+                'expiresIn': user['expiresIn'],
+                'registered': user.get('registered', True),
+                'last_login': datetime.now().isoformat(),
+                'expiry': (datetime.now() + timedelta(seconds=TOKEN_EXPIRY)).isoformat()
             }
-        }
-    }
-    
-    cookie_name = "planner_organizer_auth"
-    key = "planner_auth_key"
-    cookie_expiry_days = 30
-    
-    authenticator = stauth.Authenticate(
-        credentials,
-        cookie_name,
-        key,
-        cookie_expiry_days
-    )
-    
-    # Criar o widget de login
-    name, authentication_status, username = authenticator.login('Login', 'main')
-    
-    # Verificar o status da autenticação
-    if authentication_status:
-        st.success(f'Bem-vindo *{name}*')
-    elif authentication_status == False:
-        st.error('Nome de usuário/senha incorreto')
-    else:
-        st.warning('Por favor, faça login')
-    
-    return authenticator, name, authentication_status, username
-
-def criar_componente_registro():
-    """
-    Cria um componente para registro de novos usuários
-    """
-    st.subheader("Registrar nova conta")
-    
-    with st.form("formulario_registro"):
-        col1, col2 = st.columns(2)
+            
+            # Armazenar na sessão
+            st.session_state.user = session_user
+            st.session_state.authenticated = True
+            
+            return {'success': True, 'user': session_user}
         
-        with col1:
-            nome = st.text_input("Nome completo")
-            email = st.text_input("E-mail")
+        except Exception as e:
+            error_msg = str(e)
+            # Verificar tipo de erro para mensagem mais amigável
+            if "INVALID_PASSWORD" in error_msg:
+                error_msg = "Senha incorreta."
+            elif "EMAIL_NOT_FOUND" in error_msg:
+                error_msg = "Email não cadastrado."
+            elif "INVALID_EMAIL" in error_msg:
+                error_msg = "Formato de email inválido."
+            elif "TOO_MANY_ATTEMPTS_TRY_LATER" in error_msg:
+                error_msg = "Muitas tentativas. Tente novamente mais tarde."
+            
+            return {'success': False, 'error': error_msg}
+    
+    def register(self, email, password, name=""):
+        """
+        Registra um novo usuário no Firebase
         
-        with col2:
-            senha = st.text_input("Senha", type="password")
-            confirmar_senha = st.text_input("Confirmar senha", type="password")
+        Args:
+            email: Email do usuário
+            password: Senha do usuário
+            name: Nome do usuário (opcional)
+            
+        Returns:
+            dict: Informações do usuário registrado ou erro
+        """
+        try:
+            # Criar usuário no Firebase Auth
+            user = self.auth.create_user_with_email_and_password(email, password)
+            
+            # Criar perfil no Realtime Database
+            user_profile = {
+                'email': email,
+                'name': name,
+                'created_at': datetime.now().isoformat(),
+                'role': 'user'  # Papel padrão
+            }
+            
+            # Salvar perfil no banco
+            self.db.child("users").child(user['localId']).set(user_profile)
+            
+            # Já fazer login após registro bem-sucedido
+            return self.login(email, password)
         
-        aceito_termos = st.checkbox("Eu aceito os termos de uso")
+        except Exception as e:
+            error_msg = str(e)
+            # Verificar tipo de erro para mensagem mais amigável
+            if "EMAIL_EXISTS" in error_msg:
+                error_msg = "Este email já está cadastrado."
+            elif "WEAK_PASSWORD" in error_msg:
+                error_msg = "A senha deve ter pelo menos 6 caracteres."
+            elif "INVALID_EMAIL" in error_msg:
+                error_msg = "Formato de email inválido."
+            
+            return {'success': False, 'error': error_msg}
+    
+    def logout(self):
+        """
+        Realiza logout do usuário atual
         
-        submit_button = st.form_submit_button("Criar conta")
+        Returns:
+            dict: Status da operação
+        """
+        try:
+            # Limpar dados de sessão
+            if 'user' in st.session_state:
+                del st.session_state.user
+            
+            st.session_state.authenticated = False
+            
+            return {'success': True}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+    
+    def reset_password(self, email):
+        """
+        Envia email para redefinição de senha
         
-        if submit_button:
-            if not (nome and email and senha and confirmar_senha):
-                st.error("Por favor, preencha todos os campos")
-            elif senha != confirmar_senha:
-                st.error("As senhas não coincidem")
-            elif not aceito_termos:
-                st.error("Você precisa aceitar os termos de uso")
-            else:
-                # Inicializar Firebase e criar usuário
-                firebase_auth = FirebaseAuthentication()
-                resultado = firebase_auth.criar_usuario(email, senha, nome)
+        Args:
+            email: Email do usuário
+            
+        Returns:
+            dict: Status da operação
+        """
+        try:
+            self.auth.send_password_reset_email(email)
+            return {'success': True, 'message': 'Email de redefinição enviado.'}
+        except Exception as e:
+            error_msg = str(e)
+            # Verificar tipo de erro para mensagem mais amigável
+            if "EMAIL_NOT_FOUND" in error_msg:
+                error_msg = "Email não cadastrado."
+            elif "INVALID_EMAIL" in error_msg:
+                error_msg = "Formato de email inválido."
                 
-                if resultado["status"]:
-                    st.success(resultado["mensagem"])
-                    st.info("Você pode fazer login agora")
-                else:
-                    st.error(resultado["mensagem"])
-
-def criar_pagina_login():
-    """
-    Cria uma página completa de login com opções de autenticação
+            return {'success': False, 'error': error_msg}
     
-    Returns:
-        bool: True se o usuário estiver autenticado, False caso contrário
-    """
-    # Criar um layout com duas colunas
-    col1, col2 = st.columns([6, 4])
-    
-    with col1:
-        st.markdown("""
-        <div style="padding: 2rem; background-color: #f8f9fa; border-radius: 10px;">
-            <h1 style="color: #1E366F; font-size: 2rem;">Planner Organizer</h1>
-            <h3 style="color: #5A6A85; margin-bottom: 2rem;">Sistema de Gestão para Personal Organizers</h3>
-            
-            <p style="margin-bottom: 1.5rem; color: #495057;">
-                Acesse o sistema para gerenciar suas propostas, clientes, 
-                produtos e finanças de maneira simples e eficiente.
-            </p>
-            
-            <ul style="list-style-type: none; padding-left: 0; margin-bottom: 2rem;">
-                <li style="margin-bottom: 0.5rem; color: #495057;">✅ Controle de propostas</li>
-                <li style="margin-bottom: 0.5rem; color: #495057;">✅ Gestão de clientes</li>
-                <li style="margin-bottom: 0.5rem; color: #495057;">✅ Finanças e receitas</li>
-                <li style="margin-bottom: 0.5rem; color: #495057;">✅ Relatórios detalhados</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        tab1, tab2 = st.tabs(["Login", "Registrar"])
+    def is_authenticated(self):
+        """
+        Verifica se o usuário atual está autenticado
         
-        with tab1:
-            # Login tradicional com email/senha
-            authenticator, name, authentication_status, username = criar_componente_login()
-            
-            # Divisor com "ou"
-            st.markdown("""
-            <div style="text-align: center; margin: 1.5rem 0; position: relative;">
-                <hr style="margin: 0; border: none; height: 1px; background-color: #E0E0E0;">
-                <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); 
-                       background-color: white; padding: 0 10px; color: #5A6A85; font-size: 0.9rem;">
-                    ou continuar com
-                </span>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Botões para login social
-            col_google, col_facebook = st.columns(2)
-            
-            with col_google:
-                st.markdown("""
-                <button style="width: 100%; background-color: white; border: 1px solid #E0E0E0; 
-                               border-radius: 4px; padding: 8px 0; display: flex; align-items: center; 
-                               justify-content: center; cursor: pointer; transition: all 0.2s ease;">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                         style="width: 18px; height: 18px; margin-right: 8px;">
-                    Google
-                </button>
-                """, unsafe_allow_html=True)
-            
-            with col_facebook:
-                st.markdown("""
-                <button style="width: 100%; background-color: #3b5998; border: none; color: white;
-                               border-radius: 4px; padding: 8px 0; display: flex; align-items: center; 
-                               justify-content: center; cursor: pointer; transition: all 0.2s ease;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white" 
-                         style="margin-right: 8px;">
-                        <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm3 8h-1.35c-.538 0-.65.221-.65.778v1.222h2l-.209 2h-1.791v7h-3v-7h-2v-2h2v-2.308c0-1.769.931-2.692 3.029-2.692h1.971v3z"/>
-                    </svg>
-                    Facebook
-                </button>
-                """, unsafe_allow_html=True)
-            
-            # Adicionar links para recuperação de senha
-            st.markdown("""
-            <div style="text-align: center; margin-top: 1rem;">
-                <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
-                    Esqueceu sua senha?
-                </a>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Nota informativa sobre o login social
-            st.info("Os botões de login social estão em implementação e serão ativados em breve.")
-        
-        with tab2:
-            criar_componente_registro()
+        Returns:
+            bool: True se autenticado, False caso contrário
+        """
+        # Implementação básica baseada na sessão
+        return st.session_state.get('authenticated', False)
     
-    return authentication_status
+    def get_current_user(self):
+        """
+        Retorna o usuário atualmente autenticado
+        
+        Returns:
+            dict: Informações do usuário ou None se não autenticado
+        """
+        if not self.is_authenticated():
+            return None
+        
+        return st.session_state.get('user', None)
 
-# Para usar este módulo, importe-o e use a função criar_pagina_login() 
-# O resultado será True se o usuário estiver autenticado
+# Inicializar o objeto de autenticação
+firebase_auth = FirebaseAuth()
