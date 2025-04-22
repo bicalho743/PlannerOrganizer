@@ -106,6 +106,72 @@ class FirebaseAuth:
             
             return {'success': False, 'error': error_msg}
     
+    def generate_google_login_url(self, redirect_url=None):
+        """
+        Gera uma URL para login com o Google usando OAuth
+        
+        Args:
+            redirect_url: URL de redirecionamento após o login
+            
+        Returns:
+            str: URL para iniciar o fluxo de autenticação do Google
+        """
+        try:
+            # Configurar URL base para autenticação com Google
+            provider_id = "google.com"
+            
+            # Parâmetros para login com Google
+            params = {
+                "providerId": provider_id,
+                "continueUrl": redirect_url or "http://localhost:5000/"
+            }
+            
+            # URL de autenticação
+            auth_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={FIREBASE_CONFIG['apiKey']}"
+            
+            return auth_url, params
+        except Exception as e:
+            st.error(f"Erro ao gerar URL de login com Google: {str(e)}")
+            return None, None
+    
+    def process_google_auth(self, id_token):
+        """
+        Processa a autenticação do Google após redirecionamento
+        
+        Args:
+            id_token: Token de identificação do Google
+            
+        Returns:
+            dict: Informações do usuário autenticado ou erro
+        """
+        try:
+            # Verificar e processar o token
+            user_info = self.auth.get_account_info(id_token)
+            
+            # Se chegou aqui, a autenticação foi bem-sucedida
+            # Criar objeto de usuário para armazenar na sessão
+            user = user_info['users'][0]
+            
+            session_user = {
+                'localId': user['localId'],
+                'email': user.get('email', ''),
+                'displayName': user.get('displayName', ''),
+                'photoUrl': user.get('photoUrl', ''),
+                'idToken': id_token,
+                'last_login': datetime.now().isoformat(),
+                'expiry': (datetime.now() + timedelta(seconds=TOKEN_EXPIRY)).isoformat()
+            }
+            
+            # Armazenar na sessão
+            st.session_state.user = session_user
+            st.session_state.authenticated = True
+            
+            return {'success': True, 'user': session_user}
+        
+        except Exception as e:
+            error_msg = str(e)
+            return {'success': False, 'error': error_msg}
+    
     def logout(self):
         """
         Realiza logout do usuário atual
