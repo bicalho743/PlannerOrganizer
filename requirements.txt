@@ -26,6 +26,7 @@ reportlab
 firebase-admin
 streamlit-authenticator
 fastapi
+stripe==8.3.0
 uvicorn
 fastapi
 uvicorn
