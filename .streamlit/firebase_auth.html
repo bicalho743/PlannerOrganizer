@@ -1,82 +1,96 @@
-<!-- Código para implementação completa do Firebase Auth com Popup -->
-<script type="module">
-  // Importar o Firebase SDK
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-  import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+<!-- Firebase Authentication Component -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 
-  // Função para configurar Firebase e autenticação
-  function setupFirebaseAuth() {
-    // Configuração do Firebase (substituída por valores reais do backend)
-    const firebaseConfig = {
-      apiKey: "{{API_KEY}}",
-      authDomain: "{{AUTH_DOMAIN}}",
-      projectId: "{{PROJECT_ID}}",
-      storageBucket: "{{STORAGE_BUCKET}}",
-      messagingSenderId: "{{MESSAGING_SENDER_ID}}",
-      appId: "{{APP_ID}}"
-    };
-
+<script>
+    // Função para recuperar a configuração do Firebase
+    function getFirebaseConfig() {
+        // Obter configuração do Firebase adicionada via Streamlit
+        const configElement = document.getElementById('firebase-config');
+        if (!configElement) return null;
+        
+        try {
+            return JSON.parse(configElement.textContent);
+        } catch (e) {
+            console.error('Erro ao parsear configuração do Firebase:', e);
+            return null;
+        }
+    }
+    
     // Inicializar Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-
-    // Configurar botão para login
-    document.getElementById("google-login-button").addEventListener("click", function() {
-      signInWithPopup(auth, provider)
-        .then((result) => {
-          // Usuário autenticado com sucesso
-          const user = result.user;
-          const credential = GoogleAuthProvider.credentialFromResult(result);
-          const token = credential.idToken;
-          
-          // Enviar o token para o backend do Streamlit
-          fetch('/api/auth/google', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              idToken: token,
-              user: {
-                displayName: user.displayName,
-                email: user.email,
-                photoURL: user.photoURL,
-                uid: user.uid
-              }
+    function initializeFirebase() {
+        const config = getFirebaseConfig();
+        if (!config) {
+            console.warn('Configuração do Firebase não encontrada');
+            return null;
+        }
+        
+        // Inicializar Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(config);
+        }
+        
+        return firebase;
+    }
+    
+    // Login com Google
+    function signInWithGoogle() {
+        const firebase = initializeFirebase();
+        if (!firebase) return;
+        
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.addScope('email');
+        provider.addScope('profile');
+        
+        firebase.auth().signInWithPopup(provider)
+            .then((result) => {
+                // Obter token ID para enviar ao backend
+                return result.user.getIdToken();
             })
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              // Recarregar a página para aplicar autenticação
-              window.location.reload();
-            } else {
-              console.error("Erro ao processar autenticação:", data.error);
-              alert("Erro ao processar autenticação: " + data.error);
-            }
-          })
-          .catch(error => {
-            console.error("Erro na comunicação com o servidor:", error);
-            alert("Erro na comunicação com o servidor");
-          });
-        })
-        .catch((error) => {
-          // Erro na autenticação
-          console.error("Erro na autenticação com Google:", error);
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          alert(`Erro na autenticação com Google (${errorCode}): ${errorMessage}`);
+            .then((idToken) => {
+                // Enviar token para o backend (via redirecionamento)
+                const redirectUrl = window.location.origin + '?auth_provider=google&id_token=' + encodeURIComponent(idToken);
+                window.location.href = redirectUrl;
+            })
+            .catch((error) => {
+                console.error('Erro no login com Google:', error);
+                // Mostrar erro para o usuário
+                document.getElementById('firebase-error').textContent = 
+                    'Erro no login: ' + (error.message || 'Falha na autenticação');
+                document.getElementById('firebase-error').style.display = 'block';
+            });
+    }
+    
+    // Adicionar listeners para botões de login
+    document.addEventListener('DOMContentLoaded', function() {
+        // Encontrar todos os botões de login com Google
+        document.querySelectorAll('.google-login-button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                signInWithGoogle();
+            });
         });
     });
-  }
-
-  // Inicializar quando a página estiver carregada
-  document.addEventListener("DOMContentLoaded", setupFirebaseAuth);
+    
+    // Verificar se o usuário já está logado
+    function checkAuthState() {
+        const firebase = initializeFirebase();
+        if (!firebase) return;
+        
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                console.log('Usuário já está autenticado:', user.email);
+                // Podemos adicionar alguma ação aqui se necessário
+            }
+        });
+    }
+    
+    // Inicializar verificação de auth state
+    checkAuthState();
 </script>
 
-<!-- Botão para login com Google - Este botão é apenas um exemplo e será configurado pelo JavaScript acima -->
-<button id="google-login-button" class="social-button google-button">
-  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo">
-  <span>Continuar com Google</span>
-</button>
+<!-- Elemento para armazenar configuração do Firebase -->
+<div id="firebase-config" style="display: none;"></div>
+
+<!-- Elemento para mostrar erros -->
+<div id="firebase-error" style="display: none; color: red; margin: 10px 0; padding: 10px; background: #ffeeee; border-radius: 4px;"></div>

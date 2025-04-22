@@ -293,6 +293,10 @@ class FirebaseAuth:
         if not self.api_key:
             return {"success": False, "error": "Firebase não configurado"}
         
+        # Verificar se token foi fornecido
+        if not id_token:
+            return {"success": False, "error": "Token de autenticação não fornecido"}
+            
         # URL para verificar o token
         url = f"{FIREBASE_AUTH_BASE_URL}/accounts:signInWithIdp?key={self.api_key}"
         
@@ -305,13 +309,20 @@ class FirebaseAuth:
         }
         
         try:
+            # Log para debugging
+            logger.debug(f"Verificando token Google: {id_token[:20]}...")
+            
             # Fazer requisição para o Firebase
             response = requests.post(url, json=payload)
             data = response.json()
             
+            # Log da resposta (sem dados sensíveis)
+            logger.debug(f"Resposta da verificação do token: {str(data.keys())}")
+            
             # Verificar erro
             if "error" in data:
                 error_message = self._translate_error(data["error"]["message"])
+                logger.warning(f"Erro na autenticação Google: {error_message}")
                 return {"success": False, "error": error_message}
             
             # Extrair informações do usuário
@@ -326,8 +337,19 @@ class FirebaseAuth:
                 "provider": "google.com"
             }
             
-            # Armazenar token na sessão
+            # Log de sucesso 
+            logger.info(f"Login com Google realizado com sucesso para: {user_data.get('email')}")
+            
+            # Armazenar token e dados do usuário na sessão
             st.session_state["firebase_token"] = data.get("idToken")
+            st.session_state["user"] = {
+                "email": user_data.get("email"),
+                "name": user_data.get("displayName"),
+                "photo_url": user_data.get("photoURL"),
+                "uid": user_data.get("uid"),
+                "provider": "google.com"
+            }
+            st.session_state["authenticated"] = True
             
             return {"success": True, "user": user_data}
         

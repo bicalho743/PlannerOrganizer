@@ -549,49 +549,35 @@ if not st.session_state.authenticated:
         # Botão de login com Google
         if firebase_auth is not None:
             try:
-                # Gerar URL para autenticação com Google
-                google_auth_url, params = firebase_auth.generate_google_login_url(
-                    redirect_url=os.environ.get('DEPLOYMENT_URL', 'http://localhost:5000/') + '?auth_provider=google'
-                )
+                # Importar componente de autenticação Google
+                from utils.google_auth_component import add_google_auth_component, create_google_login_button
                 
-                # Configuração de sessão para controle do fluxo OAuth
-                if 'google_auth_state' not in st.session_state:
-                    st.session_state.google_auth_state = str(uuid.uuid4())
+                # Adicionar o componente JavaScript para autenticação com Google
+                add_google_auth_component(firebase_config)
                 
                 # Verificar se temos parâmetros de autenticação na URL
-                # Usando st.query_params (API mais recente) em vez de st.experimental_get_query_params
                 query_params = st.query_params
                 auth_provider = query_params.get('auth_provider')
                 id_token = query_params.get('id_token')
                 
                 if auth_provider == 'google' and id_token:
                     with st.spinner("Processando login com Google..."):
+                        # Processar autenticação com Google
                         result = firebase_auth.process_google_auth(id_token)
                         if result['success']:
                             st.success("Login com Google realizado com sucesso!")
-                            st.session_state.authenticated = True
+                            # A sessão já foi configurada pelo método process_google_auth
                             st.session_state.login_page = "login"
                             st.rerun()
                         else:
                             st.error(f"Erro ao autenticar com Google: {result['error']}")
                 
-                # Simplificando a abordagem - apenas um botão estático para começar
-                st.markdown('''
-                <!-- Botão de login com Google -->
-                <div class="social-button google-button" style="text-decoration: none; display: block; text-align: center; background-color: white; border: 1px solid #E0E0E0; color: #5A6A85; box-shadow: 0 4px 8px rgba(0,0,0,0.05); width: 100%; margin-bottom: 1rem; border-radius: 12px; padding: 0.7rem 1.2rem; cursor: pointer; font-weight: 500; transition: all 0.3s ease; font-size: 1rem;">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                         style="width: 18px; height: 18px; margin-right: 8px; vertical-align: middle;">
-                    <span style="vertical-align: middle;">Continuar com Google</span>
-                </div>
-                ''', unsafe_allow_html=True)
+                # Usar nosso componente personalizado para o botão de login com Google
+                create_google_login_button("Continuar com Google", key="google_login_button")
                 
-                # Adicionar um botão nativo do Streamlit também
-                if st.button("Fazer login com Google (versão Streamlit)", type="primary", key="google_login_streamlit"):
-                    st.info("Autenticação com Google em implementação. Por favor, use o login por email e senha por enquanto.")
-                    # Em uma versão futura, podemos implementar a autenticação com Google corretamente
             except Exception as e:
                 st.error(f"Erro ao configurar login com Google: {str(e)}")
-                # Botão de login com Google (desabilitado)
+                # Botão de login com Google (desabilitado em caso de erro)
                 st.markdown('''
                 <div class="social-button google-button" style="opacity: 0.7; cursor: not-allowed; text-align: center;">
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
