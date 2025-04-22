@@ -553,7 +553,7 @@ if not st.session_state.authenticated:
                 from utils.google_auth_component import add_google_auth_component, create_google_login_button
                 
                 # Adicionar o componente JavaScript para autenticação com Google
-                add_google_auth_component(firebase_config)
+                add_google_auth_component(FIREBASE_CONFIG)
                 
                 # Verificar se temos parâmetros de autenticação na URL
                 query_params = st.query_params
