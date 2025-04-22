@@ -579,11 +579,11 @@ if not st.session_state.authenticated:
                             st.session_state.login_page = None
                             # Configurar a página atual para Dashboard
                             st.session_state.current_page = "Dashboard"
-                            # Forçar redirecionamento completo da página
-                            st.experimental_set_query_params()
-                            # Forçar recarregamento da página (usando html para garantir refresh completo)
+                            # Forçar recarregamento da página (usando javascript para garantir refresh completo)
                             st.markdown('''
-                            <meta http-equiv="refresh" content="0">
+                            <script>
+                                window.parent.location.href = window.parent.location.pathname;
+                            </script>
                             ''', unsafe_allow_html=True)
                             # Impedir a continuação da renderização atual
                             st.stop()
@@ -638,11 +638,11 @@ if not st.session_state.authenticated:
                             st.success("Login realizado com sucesso!")
                             # Configurar a página atual para Dashboard
                             st.session_state.current_page = "Dashboard"
-                            # Forçar redirecionamento completo da página
-                            st.experimental_set_query_params()
-                            # Forçar recarregamento da página (usando html para garantir refresh completo)
+                            # Forçar recarregamento da página (usando javascript para garantir refresh completo)
                             st.markdown('''
-                            <meta http-equiv="refresh" content="0">
+                            <script>
+                                window.parent.location.href = window.parent.location.pathname;
+                            </script>
                             ''', unsafe_allow_html=True)
                             # Impedir a continuação da renderização atual
                             st.stop()
@@ -653,11 +653,11 @@ if not st.session_state.authenticated:
                                 st.success("Login realizado com sucesso (modo demonstração)!")
                                 # Configurar a página atual para Dashboard
                                 st.session_state.current_page = "Dashboard"
-                                # Forçar redirecionamento completo da página
-                                st.experimental_set_query_params()
-                                # Forçar recarregamento da página (usando html para garantir refresh completo)
+                                # Forçar recarregamento da página (usando javascript para garantir refresh completo)
                                 st.markdown('''
-                                <meta http-equiv="refresh" content="0">
+                                <script>
+                                    window.parent.location.href = window.parent.location.pathname;
+                                </script>
                                 ''', unsafe_allow_html=True)
                                 # Impedir a continuação da renderização atual
                                 st.stop()
@@ -672,11 +672,11 @@ if not st.session_state.authenticated:
                     st.success("Login realizado com sucesso (modo demonstração)!")
                     # Configurar a página atual para Dashboard
                     st.session_state.current_page = "Dashboard"
-                    # Forçar redirecionamento completo da página
-                    st.experimental_set_query_params()
-                    # Forçar recarregamento da página (usando html para garantir refresh completo)
+                    # Forçar recarregamento da página (usando javascript para garantir refresh completo)
                     st.markdown('''
-                    <meta http-equiv="refresh" content="0">
+                    <script>
+                        window.parent.location.href = window.parent.location.pathname;
+                    </script>
                     ''', unsafe_allow_html=True)
                     # Impedir a continuação da renderização atual
                     st.stop()
@@ -726,11 +726,11 @@ if not st.session_state.authenticated:
                     st.session_state.authenticated = True
                     # Configurar a página atual para Dashboard
                     st.session_state.current_page = "Dashboard"
-                    # Forçar redirecionamento completo da página
-                    st.experimental_set_query_params()
-                    # Forçar recarregamento da página (usando html para garantir refresh completo)
+                    # Forçar recarregamento da página (usando javascript para garantir refresh completo)
                     st.markdown('''
-                    <meta http-equiv="refresh" content="0">
+                    <script>
+                        window.parent.location.href = window.parent.location.pathname;
+                    </script>
                     ''', unsafe_allow_html=True)
                     # Impedir a continuação da renderização atual
                     st.stop()
