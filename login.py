@@ -4,7 +4,6 @@ import sys
 import time
 import logging
 from utils.planos import mostrar_planos
-from utils.firebase_auth import login_email_senha, criar_conta, redefinir_senha
 
 # Configurar logging
 logging.basicConfig(
@@ -102,29 +101,12 @@ def main():
                     submit = st.form_submit_button("Entrar", use_container_width=True)
                     
                     if submit:
-                        # Manter o login de demonstração com admin/admin
                         if username.lower() == "admin" and password == "admin":
                             st.session_state.authenticated = True
                             st.session_state.admin_login_attempt = True
-                            st.session_state.user_info = {
-                                'user_id': 'admin_demo',
-                                'email': 'admin@demo.com',
-                                'nome': 'Administrador Demo'
-                            }
                             st.rerun()
                         else:
-                            # Tentar autenticar com Firebase
-                            with st.spinner("Realizando login..."):
-                                try:
-                                    result = login_email_senha(username, password)
-                                    if result:
-                                        st.session_state.authenticated = True
-                                        st.session_state.user_info = result
-                                        st.rerun()
-                                    else:
-                                        st.error("Usuário ou senha incorretos")
-                                except Exception as e:
-                                    st.error(f"Erro ao fazer login: {e}")
+                            st.error("Usuário ou senha incorretos")
                 
                 # Divisor com "ou"
                 st.markdown("""
@@ -164,23 +146,14 @@ def main():
                     </button>
                     """, unsafe_allow_html=True)
                 
-                # Funcionalidade de recuperação de senha
-                esqueceu_senha = st.button("Esqueceu sua senha?", type="secondary", use_container_width=True)
-                
-                if esqueceu_senha:
-                    email_reset = st.text_input("Digite seu e-mail para recuperar a senha")
-                    if email_reset:
-                        confirmar_reset = st.button("Enviar link de recuperação", use_container_width=True)
-                        if confirmar_reset:
-                            with st.spinner("Enviando link de recuperação..."):
-                                try:
-                                    result = redefinir_senha(email_reset)
-                                    if result:
-                                        st.success("Link de recuperação enviado para seu e-mail")
-                                    else:
-                                        st.error("Erro ao enviar link de recuperação")
-                                except Exception as e:
-                                    st.error(f"Erro ao processar solicitação: {e}")
+                # Adicionar links para recuperação de senha
+                st.markdown("""
+                <div style="text-align: center; margin-top: 1rem;">
+                    <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+                        Esqueceu sua senha?
+                    </a>
+                </div>
+                """, unsafe_allow_html=True)
                 
                 # Nota informativa sobre o login social
                 st.info("Os botões de login social estão em implementação e serão ativados em breve.")
@@ -220,17 +193,8 @@ def main():
                         elif not aceito_termos:
                             st.error("Você precisa aceitar os termos de uso")
                         else:
-                            with st.spinner("Criando sua conta..."):
-                                try:
-                                    # Usar a função criar_conta do Firebase
-                                    result = criar_conta(email, senha, nome)
-                                    if result:
-                                        st.success(f"Conta criada com sucesso para {email}")
-                                        st.info("Verifique seu e-mail para ativar sua conta. Você já pode fazer login.")
-                                    else:
-                                        st.error("Erro ao criar conta. Tente novamente mais tarde.")
-                                except Exception as e:
-                                    st.error(f"Erro ao criar conta: {e}")
+                            st.success(f"Conta simulada criada com sucesso para {email}")
+                            st.info("Você pode fazer login agora")
     
     # Aba de Planos e Preços
     with tab_planos:
