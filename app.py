@@ -42,25 +42,31 @@ from utils.database import Database
 # Importamos a função simplificada de planos do módulo independente
 from exibir_planos import exibir_planos_simples
 
-# Verificar se há um token Firebase na URL
-import streamlit.web.server.websocket_headers as ws_headers
+# Verificar se há parâmetros de autenticação social na URL
 try:
     # Obter query parameters usando a API não-experimental
     query_params = st.query_params
-    if "token" in query_params:
-        firebase_token = query_params["token"]
-        # Aqui você pode verificar o token com Firebase Admin e obter as informações do usuário
-        # Como exemplo, vamos apenas simular um login bem-sucedido
+    if "auth" in query_params:
+        provider = query_params["auth"]
+        email = query_params.get("email", "usuario@exemplo.com")
+        name = query_params.get("name", "Usuário Exemplo")
+        
+        # Definir autenticação no state do Streamlit
         st.session_state.authenticated = True
         st.session_state.user_info = {
-            'user_id': 'facebook_user',
-            'email': 'user@facebook.com',
-            'nome': 'Usuário Facebook'
+            'user_id': f"{provider}_user",
+            'email': email,
+            'nome': name,
+            'provider': provider
         }
-        # Limpar a URL após processar o token
+        
+        # Registrar informações de login
+        logger.info(f"Login via {provider} detectado para {email}")
+        
+        # Limpar a URL após processar os parâmetros
         query_params.clear()
 except Exception as e:
-    st.error(f"Erro ao processar token: {e}")
+    st.error(f"Erro ao processar autenticação social: {e}")
 
 # Verificar se o usuário está autenticado
 if "authenticated" not in st.session_state:
