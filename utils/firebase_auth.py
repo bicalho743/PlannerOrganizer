@@ -1,242 +1,268 @@
 """
-Módulo de autenticação com Firebase
+Integração com Firebase Authentication
+
+Este módulo fornece funções para autenticação usando Firebase.
+Ele permite login, registro, recuperação de senha e login com Google.
 """
+import os
 import streamlit as st
-import pyrebase
+import requests
 import json
-from datetime import datetime, timedelta
-from utils.firebase_config import FIREBASE_CONFIG, AUTH_COOKIE_NAME, TOKEN_EXPIRY
+import logging
+from utils.firebase_config import firebase_config
+
+# Configuração de logging
+logger = logging.getLogger(__name__)
+
+# URLs base do Firebase Auth REST API
+FIREBASE_AUTH_BASE_URL = "https://identitytoolkit.googleapis.com/v1"
+FIREBASE_AUTH_RESET_URL = "https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode"
+
 
 class FirebaseAuth:
-    """
-    Classe para gerenciar autenticação com Firebase
-    """
-    def __init__(self):
-        self.firebase = pyrebase.initialize_app(FIREBASE_CONFIG)
-        self.auth = self.firebase.auth()
-        self.db = self.firebase.database()
+    """Classe para gerenciar autenticação com Firebase"""
+    
+    def __init__(self, config=None):
+        """
+        Inicializa o serviço de autenticação Firebase
+        
+        Args:
+            config: Configuração do Firebase (dict)
+        """
+        self.config = config or firebase_config
+        self.api_key = self.config.get("apiKey") if self.config else None
+        
+        if not self.config or not self.api_key:
+            logger.warning("Configuração do Firebase não fornecida. Autenticação desabilitada.")
     
     def login(self, email, password):
         """
-        Realiza login no Firebase
+        Realiza o login usando email e senha
         
         Args:
             email: Email do usuário
             password: Senha do usuário
             
         Returns:
-            dict: Informações do usuário autenticado ou erro
+            dict: Resultado da operação com detalhes do usuário
         """
+        if not self.api_key:
+            return {"success": False, "error": "Firebase não configurado"}
+        
+        # Payload da requisição
+        payload = {
+            "email": email,
+            "password": password,
+            "returnSecureToken": True
+        }
+        
+        # URL completa
+        url = f"{FIREBASE_AUTH_BASE_URL}/accounts:signInWithPassword?key={self.api_key}"
+        
         try:
-            user = self.auth.sign_in_with_email_and_password(email, password)
-            # Obter informações adicionais do usuário
-            user_info = self.auth.get_account_info(user['idToken'])
+            # Fazer requisição para o Firebase
+            response = requests.post(url, json=payload)
+            data = response.json()
             
-            # Criar objeto de usuário para armazenar na sessão
-            session_user = {
-                'localId': user['localId'],
-                'email': user['email'],
-                'idToken': user['idToken'],
-                'refreshToken': user['refreshToken'],
-                'expiresIn': user['expiresIn'],
-                'registered': user.get('registered', True),
-                'last_login': datetime.now().isoformat(),
-                'expiry': (datetime.now() + timedelta(seconds=TOKEN_EXPIRY)).isoformat()
+            # Verificar erro
+            if "error" in data:
+                error_message = self._translate_error(data["error"]["message"])
+                return {"success": False, "error": error_message}
+            
+            # Extrair informações do usuário
+            user_data = {
+                "uid": data.get("localId"),
+                "email": data.get("email"),
+                "displayName": data.get("displayName", ""),
+                "photoURL": data.get("photoUrl", ""),
+                "idToken": data.get("idToken"),
+                "refreshToken": data.get("refreshToken"),
+                "expiresIn": data.get("expiresIn")
             }
             
-            # Armazenar na sessão
-            st.session_state.user = session_user
-            st.session_state.authenticated = True
+            # Armazenar token na sessão
+            st.session_state["firebase_token"] = data.get("idToken")
             
-            return {'success': True, 'user': session_user}
+            return {"success": True, "user": user_data}
         
         except Exception as e:
-            error_msg = str(e)
-            # Verificar tipo de erro para mensagem mais amigável
-            if "INVALID_PASSWORD" in error_msg:
-                error_msg = "Senha incorreta."
-            elif "EMAIL_NOT_FOUND" in error_msg:
-                error_msg = "Email não cadastrado."
-            elif "INVALID_EMAIL" in error_msg:
-                error_msg = "Formato de email inválido."
-            elif "TOO_MANY_ATTEMPTS_TRY_LATER" in error_msg:
-                error_msg = "Muitas tentativas. Tente novamente mais tarde."
-            
-            return {'success': False, 'error': error_msg}
+            logger.error(f"Erro ao fazer login no Firebase: {str(e)}")
+            return {"success": False, "error": f"Erro de comunicação: {str(e)}"}
     
-    def register(self, email, password, name=""):
+    def register(self, email, password, display_name=""):
         """
-        Registra um novo usuário no Firebase
+        Registra um novo usuário
         
         Args:
             email: Email do usuário
             password: Senha do usuário
-            name: Nome do usuário (opcional)
+            display_name: Nome de exibição (opcional)
             
         Returns:
-            dict: Informações do usuário registrado ou erro
+            dict: Resultado da operação com detalhes do usuário
         """
+        if not self.api_key:
+            return {"success": False, "error": "Firebase não configurado"}
+        
+        # Payload da requisição
+        payload = {
+            "email": email,
+            "password": password,
+            "returnSecureToken": True
+        }
+        
+        # URL completa
+        url = f"{FIREBASE_AUTH_BASE_URL}/accounts:signUp?key={self.api_key}"
+        
         try:
-            # Criar usuário no Firebase Auth
-            user = self.auth.create_user_with_email_and_password(email, password)
+            # Fazer requisição para o Firebase
+            response = requests.post(url, json=payload)
+            data = response.json()
             
-            # Criar perfil no Realtime Database
-            user_profile = {
-                'email': email,
-                'name': name,
-                'created_at': datetime.now().isoformat(),
-                'role': 'user'  # Papel padrão
+            # Verificar erro
+            if "error" in data:
+                error_message = self._translate_error(data["error"]["message"])
+                return {"success": False, "error": error_message}
+            
+            # Se tiver nome, atualizar perfil
+            if display_name:
+                self._update_profile(data.get("idToken"), display_name)
+            
+            # Extrair informações do usuário
+            user_data = {
+                "uid": data.get("localId"),
+                "email": data.get("email"),
+                "displayName": display_name,
+                "idToken": data.get("idToken"),
+                "refreshToken": data.get("refreshToken"),
+                "expiresIn": data.get("expiresIn")
             }
             
-            # Salvar perfil no banco
-            self.db.child("users").child(user['localId']).set(user_profile)
-            
-            # Já fazer login após registro bem-sucedido
-            return self.login(email, password)
+            return {"success": True, "user": user_data}
         
         except Exception as e:
-            error_msg = str(e)
-            # Verificar tipo de erro para mensagem mais amigável
-            if "EMAIL_EXISTS" in error_msg:
-                error_msg = "Este email já está cadastrado."
-            elif "WEAK_PASSWORD" in error_msg:
-                error_msg = "A senha deve ter pelo menos 6 caracteres."
-            elif "INVALID_EMAIL" in error_msg:
-                error_msg = "Formato de email inválido."
-            
-            return {'success': False, 'error': error_msg}
-    
-    def generate_google_login_url(self, redirect_url=None):
-        """
-        Gera uma URL para login com o Google usando OAuth
-        
-        Args:
-            redirect_url: URL de redirecionamento após o login
-            
-        Returns:
-            str: URL para iniciar o fluxo de autenticação do Google
-        """
-        try:
-            # Configurar URL base para autenticação com Google
-            provider_id = "google.com"
-            
-            # Parâmetros para login com Google
-            params = {
-                "providerId": provider_id,
-                "continueUrl": redirect_url or "http://localhost:5000/"
-            }
-            
-            # URL de autenticação
-            auth_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={FIREBASE_CONFIG['apiKey']}"
-            
-            # Construir a URL completa para evitar erros de sintaxe
-            complete_url = f"{auth_url}&providerId={provider_id}&continueUrl={redirect_url or 'http://localhost:5000/'}"
-            
-            return complete_url, {}
-        except Exception as e:
-            st.error(f"Erro ao gerar URL de login com Google: {str(e)}")
-            return None, None
-    
-    def process_google_auth(self, id_token):
-        """
-        Processa a autenticação do Google após redirecionamento
-        
-        Args:
-            id_token: Token de identificação do Google
-            
-        Returns:
-            dict: Informações do usuário autenticado ou erro
-        """
-        try:
-            # Verificar e processar o token
-            user_info = self.auth.get_account_info(id_token)
-            
-            # Se chegou aqui, a autenticação foi bem-sucedida
-            # Criar objeto de usuário para armazenar na sessão
-            user = user_info['users'][0]
-            
-            session_user = {
-                'localId': user['localId'],
-                'email': user.get('email', ''),
-                'displayName': user.get('displayName', ''),
-                'photoUrl': user.get('photoUrl', ''),
-                'idToken': id_token,
-                'last_login': datetime.now().isoformat(),
-                'expiry': (datetime.now() + timedelta(seconds=TOKEN_EXPIRY)).isoformat()
-            }
-            
-            # Armazenar na sessão
-            st.session_state.user = session_user
-            st.session_state.authenticated = True
-            
-            return {'success': True, 'user': session_user}
-        
-        except Exception as e:
-            error_msg = str(e)
-            return {'success': False, 'error': error_msg}
-    
-    def logout(self):
-        """
-        Realiza logout do usuário atual
-        
-        Returns:
-            dict: Status da operação
-        """
-        try:
-            # Limpar dados de sessão
-            if 'user' in st.session_state:
-                del st.session_state.user
-            
-            st.session_state.authenticated = False
-            
-            return {'success': True}
-        except Exception as e:
-            return {'success': False, 'error': str(e)}
+            logger.error(f"Erro ao registrar usuário no Firebase: {str(e)}")
+            return {"success": False, "error": f"Erro de comunicação: {str(e)}"}
     
     def reset_password(self, email):
         """
-        Envia email para redefinição de senha
+        Envia email de recuperação de senha
         
         Args:
             email: Email do usuário
             
         Returns:
-            dict: Status da operação
+            dict: Resultado da operação
         """
+        if not self.api_key:
+            return {"success": False, "error": "Firebase não configurado"}
+        
+        # Payload da requisição
+        payload = {
+            "requestType": "PASSWORD_RESET",
+            "email": email
+        }
+        
+        # URL completa
+        url = f"{FIREBASE_AUTH_RESET_URL}?key={self.api_key}"
+        
         try:
-            self.auth.send_password_reset_email(email)
-            return {'success': True, 'message': 'Email de redefinição enviado.'}
+            # Fazer requisição para o Firebase
+            response = requests.post(url, json=payload)
+            data = response.json()
+            
+            # Verificar erro
+            if "error" in data:
+                error_message = self._translate_error(data["error"]["message"])
+                return {"success": False, "error": error_message}
+            
+            return {"success": True}
+        
         except Exception as e:
-            error_msg = str(e)
-            # Verificar tipo de erro para mensagem mais amigável
-            if "EMAIL_NOT_FOUND" in error_msg:
-                error_msg = "Email não cadastrado."
-            elif "INVALID_EMAIL" in error_msg:
-                error_msg = "Formato de email inválido."
-                
-            return {'success': False, 'error': error_msg}
+            logger.error(f"Erro ao solicitar recuperação de senha: {str(e)}")
+            return {"success": False, "error": f"Erro de comunicação: {str(e)}"}
     
-    def is_authenticated(self):
+    def logout(self):
         """
-        Verifica se o usuário atual está autenticado
+        Realiza o logout
         
         Returns:
-            bool: True se autenticado, False caso contrário
+            dict: Resultado da operação
         """
-        # Implementação básica baseada na sessão
-        return st.session_state.get('authenticated', False)
+        # Limpar token da sessão
+        if "firebase_token" in st.session_state:
+            del st.session_state["firebase_token"]
+        
+        return {"success": True}
     
-    def get_current_user(self):
+    def _update_profile(self, id_token, display_name, photo_url=""):
         """
-        Retorna o usuário atualmente autenticado
+        Atualiza o perfil do usuário
         
+        Args:
+            id_token: Token de ID do usuário
+            display_name: Nome de exibição
+            photo_url: URL da foto de perfil (opcional)
+            
         Returns:
-            dict: Informações do usuário ou None se não autenticado
+            dict: Resultado da operação
         """
-        if not self.is_authenticated():
-            return None
+        if not id_token:
+            return {"success": False, "error": "Token não fornecido"}
         
-        return st.session_state.get('user', None)
+        # Payload da requisição
+        payload = {
+            "idToken": id_token,
+            "displayName": display_name,
+            "photoUrl": photo_url,
+            "returnSecureToken": False
+        }
+        
+        # URL completa
+        url = f"{FIREBASE_AUTH_BASE_URL}/accounts:update?key={self.api_key}"
+        
+        try:
+            # Fazer requisição para o Firebase
+            response = requests.post(url, json=payload)
+            data = response.json()
+            
+            # Verificar erro
+            if "error" in data:
+                error_message = self._translate_error(data["error"]["message"])
+                logger.error(f"Erro ao atualizar perfil: {error_message}")
+                return {"success": False, "error": error_message}
+            
+            return {"success": True}
+        
+        except Exception as e:
+            logger.error(f"Erro ao atualizar perfil: {str(e)}")
+            return {"success": False, "error": f"Erro de comunicação: {str(e)}"}
+    
+    def _translate_error(self, error_code):
+        """
+        Traduz códigos de erro do Firebase para mensagens amigáveis
+        
+        Args:
+            error_code: Código de erro do Firebase
+            
+        Returns:
+            str: Mensagem de erro traduzida
+        """
+        error_messages = {
+            "EMAIL_EXISTS": "Este email já está sendo usado por outra conta.",
+            "OPERATION_NOT_ALLOWED": "O login com email/senha está desativado para este projeto.",
+            "TOO_MANY_ATTEMPTS_TRY_LATER": "Muitas tentativas. Tente novamente mais tarde.",
+            "EMAIL_NOT_FOUND": "Email não encontrado. Verifique seu email ou crie uma nova conta.",
+            "INVALID_PASSWORD": "Senha inválida. Verifique sua senha ou use a opção de recuperação.",
+            "USER_DISABLED": "Esta conta foi desativada por um administrador.",
+            "WEAK_PASSWORD": "A senha deve ter pelo menos 6 caracteres.",
+            "INVALID_EMAIL": "O formato do email é inválido.",
+            "MISSING_EMAIL": "O email é obrigatório.",
+            "MISSING_PASSWORD": "A senha é obrigatória."
+        }
+        
+        return error_messages.get(error_code, f"Erro: {error_code}")
 
-# Inicializar o objeto de autenticação
-firebase_auth = FirebaseAuth()
+
+# Instância global do Firebase Auth
+firebase_auth = FirebaseAuth() if firebase_config else None

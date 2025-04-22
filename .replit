@@ -97,6 +97,14 @@ args = "Planos Simples"
 task = "workflow.run"
 args = "Planos Minimal"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Modern Login"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Simplificado"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -404,6 +412,36 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run planos_minimal.py --server.port 8801 --server.address 0.0.0.0"
 waitForPort = 8801
+
+[[workflows.workflow]]
+name = "Modern Login"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run pages/modern_login.py --server.port 5005 --server.address 0.0.0.0"
+waitForPort = 5005
+
+[[workflows.workflow]]
+name = "Login Simplificado"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run simplified_login.py --server.port 5001 --server.address 0.0.0.0"
+waitForPort = 5001
 
 [[ports]]
 localPort = 443
