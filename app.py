@@ -1,6 +1,15 @@
+import streamlit as st
+
+# Configuração inicial da página - DEVE ser o primeiro comando Streamlit
+st.set_page_config(
+    page_title="Planner Organizer - Sistema Profissional",
+    page_icon="favicon.png",
+    layout="wide",
+    initial_sidebar_state="auto"
+)
+
 import os
 import sys
-import streamlit as st
 import logging
 import pandas as pd
 from datetime import datetime
@@ -19,27 +28,13 @@ if project_root not in sys.path:
     logger.info(f"Adicionado {project_root} ao sys.path")
 
 from utils.database import Database
-from utils.planos import mostrar_planos  # Importando o módulo de planos
+
+# Importamos a função simplificada de planos do módulo independente
+from exibir_planos import exibir_planos_simples
 
 # Verificar se o usuário está autenticado
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
-
-# Estado para controlar a exibição do modal de cadastro
-if 'show_signup' not in st.session_state:
-    st.session_state.show_signup = False
-
-# Função para alternar o estado do formulário de cadastro
-def toggle_signup_form():
-    st.session_state.show_signup = not st.session_state.show_signup
-
-# Configuração inicial da página
-st.set_page_config(
-    page_title="Planner Organizer - Sistema Profissional",
-    page_icon="favicon.png",
-    layout="wide",
-    initial_sidebar_state="auto"
-)
 
 # Inicialização da autenticação in-app
 if not st.session_state.authenticated:
@@ -487,16 +482,9 @@ if not st.session_state.authenticated:
         # Seção de Planos e Preços
         st.markdown("<h2>Escolha o Plano Ideal Para o Seu Negócio</h2>", unsafe_allow_html=True)
         
-        # Mostrar os planos com os parâmetros otimizados para landing page
-        # Usando formato com espaço reduzido e sem a seção de benefícios duplicada
-        mostrar_planos(
-            com_titulo=False,  # False porque já temos um título acima
-            com_prova_social=False,  # False para layout mais compacto
-            com_teste_gratis=False,  # False para não duplicar com o CTA abaixo
-            com_destaque_plano_medio=True,  # True para destacar o plano anual
-            stripe_ready=True,  # True para botões prontos para Stripe
-            espacamento_reduzido=True  # True para reduzir o espaçamento
-        )
+        # Usando nossa implementação simplificada de planos
+        # Os botões são diretos e não tentam integrar com API externa
+        exibir_planos_simples()
         
         # CTA (Call to Action)
         st.markdown('''
@@ -559,19 +547,59 @@ if not st.session_state.authenticated:
                 else:
                     st.error("Usuário ou senha incorretos")
         
-        # Botões para recuperação de senha e cadastro
-        col_senha, col_conta = st.columns(2)
+        # Botões reais do Streamlit para recuperação de senha e criação de conta
+        col_esq, col_dir = st.columns(2)
         
-        with col_senha:
-            if st.button("Esqueceu sua senha?", key="btn_forgot_password"):
-                st.info("Função de recuperação de senha em desenvolvimento.")
+        with col_esq:
+            if st.button("Esqueceu sua senha?", type="secondary", key="forgot_password_btn", use_container_width=True):
+                st.info("Enviaremos um link de recuperação para o seu e-mail. Esta funcionalidade será implementada em breve.")
+        
+        with col_dir:
+            if st.button("Criar uma conta", type="secondary", key="create_account_btn", use_container_width=True):
+                # Mostrar formulário de cadastro
+                st.session_state.show_signup = True
+                st.info("Preencha os dados abaixo para criar sua conta.")
                 
-        with col_conta:
-            if st.button("Criar uma conta", key="btn_create_account"):
-                st.info("Funcionalidade em desenvolvimento. Por favor, use as credenciais de demonstração: admin/admin")
+                # Formulário de cadastro
+                with st.form("signup_form", clear_on_submit=True):
+                    nome = st.text_input("Nome completo")
+                    email = st.text_input("E-mail")
+                    senha = st.text_input("Senha", type="password")
+                    confirmar_senha = st.text_input("Confirmar Senha", type="password")
+                    
+                    submit_signup = st.form_submit_button("Registrar", use_container_width=True)
+                    
+                    if submit_signup:
+                        if not nome or not email or not senha or not confirmar_senha:
+                            st.error("Todos os campos são obrigatórios.")
+                        elif senha != confirmar_senha:
+                            st.error("As senhas não coincidem.")
+                        else:
+                            try:
+                                from utils.firebase_auth import criar_conta
+                                
+                                # Tenta criar a conta com Firebase
+                                with st.spinner("Criando sua conta..."):
+                                    user_info = criar_conta(email, senha, nome)
+                                    
+                                if user_info is not None:
+                                    st.success(f"Conta criada com sucesso para {nome}! Verifique seu e-mail {email} para ativar sua conta.")
+                                    st.session_state.show_signup = False
+                                else:
+                                    st.error("Erro ao criar conta. Verifique se o e-mail é válido e se a senha tem pelo menos 6 caracteres.")
+                            except Exception as e:
+                                st.error(f"Erro ao criar conta: {e}")
+                                st.error("Usando modo de demonstração por enquanto.")
+                                st.info(f"Em ambiente de produção, a conta para {email} seria criada.")
         
-        # Informação de demonstração  
-        st.markdown('<div style="margin-top: 0.8rem; text-align: center;"><p style="color: #9E9E9E; font-size: 0.75rem;">Para demonstração, use: admin / admin</p></div>', unsafe_allow_html=True)
+        # Informações de demonstração
+        st.markdown('''
+        <div style="margin-top: 0.8rem; text-align: center;">
+            <p style="color: #9E9E9E; font-size: 0.75rem;">
+                Para demonstração, use: admin / admin
+            </p>
+        </div>
+        ''', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
         

@@ -1,4 +1,4 @@
-modules = ["python-3.11"]
+modules = ["python-3.11", "nodejs-20"]
 
 [nix]
 channel = "stable-24_05"
@@ -83,10 +83,6 @@ args = "Login"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Login Simples"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Planos Landing"
 
 [[workflows.workflow.tasks]]
@@ -96,6 +92,30 @@ args = "Planos Simples"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Planos Minimal"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Stripe API"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Stripe Simple API"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Stripe Direct API"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Planos Stripe Direto"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Simples"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Portal"
 
 [[workflows.workflow]]
 name = "Teste Importação"
@@ -346,21 +366,6 @@ args = "streamlit run login.py --server.port 5001 --server.address 0.0.0.0"
 waitForPort = 5001
 
 [[workflows.workflow]]
-name = "Login Simples"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0.0"
-waitForPort = 5001
-
-[[workflows.workflow]]
 name = "Planos Landing"
 author = "agent"
 
@@ -404,6 +409,95 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run planos_minimal.py --server.port 8801 --server.address 0.0.0.0"
 waitForPort = 8801
+
+[[workflows.workflow]]
+name = "Stripe API"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd api && python -m uvicorn stripe_integration:app --reload --host 0.0.0.0 --port 8000"
+
+[[workflows.workflow]]
+name = "Stripe Simple API"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd api && python -m uvicorn stripe_simple:app --reload --host 0.0.0.0 --port 8001"
+waitForPort = 8001
+
+[[workflows.workflow]]
+name = "Stripe Direct API"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd api && python -m uvicorn stripe_direct:app --reload --host 0.0.0.0 --port 8002"
+waitForPort = 8002
+
+[[workflows.workflow]]
+name = "Planos Stripe Direto"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run planos_stripe_direto.py --server.port 8008 --server.address 0.0.0.0"
+waitForPort = 8008
+
+[[workflows.workflow]]
+name = "Login Simples"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0.0"
+waitForPort = 5001
+
+[[workflows.workflow]]
+name = "Login Portal"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0.0"
+waitForPort = 5001
 
 [[ports]]
 localPort = 443

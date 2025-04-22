@@ -25,3 +25,12 @@ zipfile36>=0.1.3
 reportlab
 firebase-admin
 streamlit-authenticator
+fastapi
+stripe==8.3.0
+uvicorn
+fastapi
+uvicorn
+pyrebase4
+requests
+pyrebase4
+pyrebase4
