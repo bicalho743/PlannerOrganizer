@@ -119,15 +119,15 @@ def main():
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Botão para login social (apenas Google)
+                # Botão de login com Google (centralizado)
                 st.markdown("""
                 <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
                     <button onclick="window.open('login_social.html', '_blank')" 
-                           style="width: 60%; background-color: white; border: 1px solid #E0E0E0; 
-                           border-radius: 4px; padding: 10px 0; display: flex; align-items: center; 
-                           justify-content: center; cursor: pointer; transition: all 0.2s ease;">
+                            style="width: 100%; background-color: white; border: 1px solid #E0E0E0; 
+                            border-radius: 4px; padding: 10px 0; display: flex; align-items: center; 
+                            justify-content: center; cursor: pointer; transition: all 0.2s ease;">
                         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                             style="width: 18px; height: 18px; margin-right: 8px;">
+                            style="width: 18px; height: 18px; margin-right: 8px;">
                         Continuar com Google
                     </button>
                 </div>
