@@ -502,9 +502,9 @@ if not st.session_state.authenticated:
         # Container de login sem espaçamento
         st.markdown('<div class="login-container" style="margin-top: -10px;">', unsafe_allow_html=True)
         
-        # Título da seção de login
+        # Título direto sem cabeçalho separado para evitar barra branca
         st.markdown('''
-        <h2 style="text-align: center; color: #1E366F; margin-top: 0; margin-bottom: 25px;">Acesse sua conta</h2>
+        <h2 style="text-align: center; color: #1E366F; margin-top: 0; margin-bottom: 20px;">Acesse sua conta</h2>
         ''', unsafe_allow_html=True)
         
         # Botões de login social
