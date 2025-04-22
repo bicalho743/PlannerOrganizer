@@ -45,34 +45,16 @@ def show():
                             if result['success']:
                                 # Exibir mensagem de sucesso
                                 st.success("Um email de recuperação foi enviado. Verifique sua caixa de entrada.")
-                                # Adicionar botão para voltar ao login
-                                if st.button("Voltar ao Login", use_container_width=True):
-                                    # Redirecionar para a página de login
-                                    st.rerun()
+                                # Redirecionar será feito com botão fora do formulário
                             else:
                                 # Exibir mensagem de erro
                                 st.error(f"Erro: {result['error']}")
             
-            # Link para voltar ao login
-            st.markdown("""
-            <div style="text-align: center; margin-top: 1rem;">
-                <p style="color: #5A6A85; font-size: 0.9rem;">
-                    <a href="#" id="back-to-login" style="color: #1E88E5; text-decoration: none;">
-                        Voltar ao login
-                    </a>
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Adicionar JavaScript para voltar ao login
-            st.markdown("""
-            <script>
-                document.getElementById('back-to-login').addEventListener('click', function(e) {
-                    e.preventDefault();
-                    window.history.back();
-                });
-            </script>
-            """, unsafe_allow_html=True)
+            # Botão para voltar ao login (fora do formulário)
+            if st.button("Voltar ao Login", key="btn_voltar_login", use_container_width=True):
+                # Resetar o estado de login_page para "login"
+                st.session_state.login_page = "login"
+                st.rerun()
 
 if __name__ == "__main__":
     show()
