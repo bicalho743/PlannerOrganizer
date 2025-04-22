@@ -542,18 +542,6 @@ if not st.session_state.authenticated:
                 else:
                     st.error("Usuário ou senha incorretos")
         
-        # Link para recuperação de senha e cadastro
-        st.markdown('''
-        <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
-            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
-                Esqueceu sua senha?
-            </a>
-            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
-                Criar uma conta
-            </a>
-        </div>
-        ''', unsafe_allow_html=True)
-        
         # Link para recuperação de senha e cadastro com informações de demonstração
         st.markdown('''
         <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
