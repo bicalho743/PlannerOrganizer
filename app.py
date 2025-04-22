@@ -639,30 +639,11 @@ if not st.session_state.authenticated:
         <h2 style="text-align: center; color: #1E366F; margin-top: 0; margin-bottom: 20px;">Acesse sua conta</h2>
         ''', unsafe_allow_html=True)
         
-        # Botões de login social
-        st.markdown('''
-        <button class="social-button google-button">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                 style="width: 18px; height: 18px; margin-right: 8px;">
-            Continuar com Google
-        </button>
-        ''', unsafe_allow_html=True)
+        # Removi os botões de login social conforme solicitado
         
+        # Formulário de login sem divisor (já que não temos mais os botões sociais)
         st.markdown('''
-        <button class="social-button facebook-button">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white" 
-                 style="margin-right: 8px;">
-                <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm3 8h-1.35c-.538 0-.65.221-.65.778v1.222h2l-.209 2h-1.791v7h-3v-7h-2v-2h2v-2.308c0-1.769.931-2.692 3.029-2.692h1.971v3z"/>
-            </svg>
-            Continuar com Facebook
-        </button>
-        ''', unsafe_allow_html=True)
-        
-        # Divisor
-        st.markdown('''
-        <div class="login-divider">
-            <span class="login-divider-text">ou entre com e-mail</span>
-        </div>
+        <div style="height: 10px;"></div>
         ''', unsafe_allow_html=True)
         
         # Formulário de login
@@ -738,22 +719,12 @@ if not st.session_state.authenticated:
                 st.session_state.show_signup = False
                 st.rerun()
                 
-        # Link direto para criação de conta em página separada
+        # Botão de criar conta - voltando para a versão original que funcionava
         with col2:
-            st.markdown("""
-            <a href="/login_efetivo?tab=signup" target="_blank" style="
-                display: block;
-                text-align: center;
-                text-decoration: none;
-                padding: 10px;
-                border-radius: 4px;
-                background-color: #007bff;
-                color: white;
-                font-weight: 500;
-                border: 1px solid #0069d9;
-                transition: all 0.3s;
-            ">Criar uma conta</a>
-            """, unsafe_allow_html=True)
+            if st.button("Criar uma conta", key="create_account_btn", use_container_width=True):
+                st.session_state.show_signup = True
+                st.session_state.show_reset_password = False 
+                st.rerun()
                 
         # Informações de demo
         st.markdown('''
@@ -778,13 +749,30 @@ if not st.session_state.authenticated:
                     if not email_reset:
                         st.error("Por favor, informe seu e-mail.")
                     else:
-                        # Simulação de envio de e-mail
-                        with st.spinner("Enviando email de recuperação..."):
-                            import time
-                            time.sleep(1.5)
-                        st.success(f"Um link de recuperação foi enviado para {email_reset} (modo de demonstração).")
-                        st.session_state.show_reset_password = False
-                        st.rerun()
+                        try:
+                            # Importar a função de redefinição de senha do Firebase
+                            from utils.firebase_auth import redefinir_senha
+                            
+                            # Tenta enviar email de recuperação
+                            with st.spinner("Enviando email de recuperação..."):
+                                success = redefinir_senha(email_reset)
+                                
+                            if success:
+                                st.success(f"E-mail de recuperação enviado para {email_reset}. Verifique sua caixa de entrada.")
+                                st.session_state.show_reset_password = False
+                                st.rerun()
+                            else:
+                                st.error("Erro ao enviar email de recuperação. Verifique se o e-mail está correto.")
+                        except ImportError as e:
+                            # Fallback se o módulo Firebase não estiver configurado
+                            st.warning(f"Módulo Firebase indisponível: {str(e)}")
+                            # Simulação de envio de e-mail para modo de demonstração
+                            with st.spinner("Enviando email de recuperação (demonstração)..."):
+                                import time
+                                time.sleep(1.5)
+                            st.success(f"Um link de recuperação foi enviado para {email_reset} (modo de demonstração).")
+                            st.session_state.show_reset_password = False
+                            st.rerun()
                         
         # Formulário de cadastro
         if "show_signup" in st.session_state and st.session_state.show_signup:
