@@ -5,16 +5,15 @@ import os
 import pyrebase
 import streamlit as st
 
-# Configuração do Firebase - SUBSTITUA com seus valores
-# Estes valores seriam definidos como variáveis de ambiente em produção
+# Configuração do Firebase usando variáveis de ambiente ou secrets
 FIREBASE_CONFIG = {
-    "apiKey": st.secrets.get("FIREBASE_API_KEY", "sua_api_key"),
-    "authDomain": st.secrets.get("FIREBASE_AUTH_DOMAIN", "seu_dominio.firebaseapp.com"),
-    "projectId": st.secrets.get("FIREBASE_PROJECT_ID", "seu_project_id"),
-    "storageBucket": st.secrets.get("FIREBASE_STORAGE_BUCKET", "seu_bucket"),
-    "messagingSenderId": st.secrets.get("FIREBASE_MESSAGING_SENDER_ID", "seu_sender_id"),
-    "appId": st.secrets.get("FIREBASE_APP_ID", "sua_app_id"),
-    "databaseURL": st.secrets.get("FIREBASE_DATABASE_URL", "https://seu_database.firebaseio.com")
+    "apiKey": os.environ.get("FIREBASE_API_KEY", st.secrets.get("FIREBASE_API_KEY", "")),
+    "authDomain": os.environ.get("FIREBASE_AUTH_DOMAIN", st.secrets.get("FIREBASE_AUTH_DOMAIN", "")),
+    "projectId": os.environ.get("FIREBASE_PROJECT_ID", st.secrets.get("FIREBASE_PROJECT_ID", "")),
+    "storageBucket": os.environ.get("FIREBASE_STORAGE_BUCKET", st.secrets.get("FIREBASE_STORAGE_BUCKET", "")),
+    "messagingSenderId": os.environ.get("FIREBASE_MESSAGING_SENDER_ID", st.secrets.get("FIREBASE_MESSAGING_SENDER_ID", "")),
+    "appId": os.environ.get("FIREBASE_APP_ID", st.secrets.get("FIREBASE_APP_ID", "")),
+    "databaseURL": os.environ.get("FIREBASE_DATABASE_URL", st.secrets.get("FIREBASE_DATABASE_URL", ""))
 }
 
 def initialize_firebase():
