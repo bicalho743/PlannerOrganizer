@@ -124,7 +124,7 @@ def main():
                 
                 with col_google:
                     st.markdown("""
-                    <button onclick="simulateGoogleLogin()" 
+                    <button onclick="window.open('login_social.html', '_blank')" 
                            style="width: 100%; background-color: white; border: 1px solid #E0E0E0; 
                            border-radius: 4px; padding: 8px 0; display: flex; align-items: center; 
                            justify-content: center; cursor: pointer; transition: all 0.2s ease;">
@@ -136,7 +136,7 @@ def main():
                 
                 with col_facebook:
                     st.markdown("""
-                    <button onclick="simulateFacebookLogin()" 
+                    <button onclick="window.open('login_social.html', '_blank')" 
                            style="width: 100%; background-color: #3b5998; border: none; color: white;
                            border-radius: 4px; padding: 8px 0; display: flex; align-items: center; 
                            justify-content: center; cursor: pointer; transition: all 0.2s ease;">
@@ -147,35 +147,6 @@ def main():
                         Facebook
                     </button>
                     """, unsafe_allow_html=True)
-                
-                # Adicionar funções JavaScript para simulação de login social
-                st.markdown("""
-                <script>
-                    function simulateGoogleLogin() {
-                        console.log("Simulando login com Google");
-                        // Simular login bem-sucedido
-                        localStorage.setItem('authenticated', 'true');
-                        localStorage.setItem('provider', 'google');
-                        localStorage.setItem('userEmail', 'usuario.teste@gmail.com');
-                        localStorage.setItem('userName', 'Usuário de Teste Google');
-                        
-                        // Redirecionar para a aplicação principal
-                        window.location.href = "/?auth=google&email=usuario.teste@gmail.com&name=Usuário de Teste Google";
-                    }
-                    
-                    function simulateFacebookLogin() {
-                        console.log("Simulando login com Facebook");
-                        // Simular login bem-sucedido
-                        localStorage.setItem('authenticated', 'true');
-                        localStorage.setItem('provider', 'facebook');
-                        localStorage.setItem('userEmail', 'usuario.teste@facebook.com');
-                        localStorage.setItem('userName', 'Usuário de Teste Facebook');
-                        
-                        // Redirecionar para a aplicação principal
-                        window.location.href = "/?auth=facebook&email=usuario.teste@facebook.com&name=Usuário de Teste Facebook";
-                    }
-                </script>
-                """, unsafe_allow_html=True)
                 
                 # Adicionar links para recuperação de senha
                 st.markdown("""

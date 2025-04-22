@@ -42,10 +42,12 @@ from utils.database import Database
 # Importamos a função simplificada de planos do módulo independente
 from exibir_planos import exibir_planos_simples
 
-# Verificar se há parâmetros de autenticação social na URL
+# Verificar se há um token Firebase na URL
 try:
-    # Obter query parameters usando a API não-experimental
+    # Obter query parameters
     query_params = st.query_params
+    
+    # Verificar autenticação social na URL
     if "auth" in query_params:
         provider = query_params["auth"]
         email = query_params.get("email", "usuario@exemplo.com")
@@ -66,7 +68,7 @@ try:
         # Limpar a URL após processar os parâmetros
         query_params.clear()
 except Exception as e:
-    st.error(f"Erro ao processar autenticação social: {e}")
+    logger.error(f"Erro ao processar parâmetros: {e}")
 
 # Verificar se o usuário está autenticado
 if "authenticated" not in st.session_state:
