@@ -2,11 +2,24 @@ import streamlit as st
 import os
 import sys
 import time
+import logging
+
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Adicionar diretório raiz ao path
 project_root = os.path.abspath(os.path.dirname(__file__))
 if project_root not in sys.path:
     sys.path.append(project_root)
+    
+# Importar e aplicar correção para problemas de carregamento de módulos JavaScript
+try:
+    from utils.render_fix import inject_render_compatibility_fix
+    inject_render_compatibility_fix()
+    logger.info("Injetado script de compatibilidade para Render no login")
+except Exception as e:
+    logger.error(f"Erro ao injetar script de compatibilidade no login: {e}")
 
 # Configuração da página
 st.set_page_config(

@@ -18,6 +18,14 @@ if project_root not in sys.path:
     sys.path.append(project_root)
     logger.info(f"Adicionado {project_root} ao sys.path")
 
+# Importar e aplicar correção para problemas de carregamento de módulos JavaScript
+try:
+    from utils.render_fix import inject_render_compatibility_fix
+    inject_render_compatibility_fix()
+    logger.info("Injetado script de compatibilidade para Render")
+except Exception as e:
+    logger.error(f"Erro ao injetar script de compatibilidade: {e}")
+    
 from utils.database import Database
 from utils.planos import mostrar_planos  # Importando o módulo de planos
 
