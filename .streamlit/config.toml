@@ -2,6 +2,14 @@
 headless = true
 address = "0.0.0.0"
 port = 5000
+enableCORS = true
+enableWebsocketCompression = true
+enableXsrfProtection = false
+maxUploadSize = 50
+
+# Configurações adicionais para resolver problemas de carregamento no Render
+# Usar template HTML customizado
+fileWatcherType = "none"
 
 # Theme configuration - Tema profissional corporativo
 [theme]
@@ -15,3 +23,5 @@ font = "sans serif"              # Fonte sem serifa para modernidade
 # Arquivos de configuração adicionais
 [browser]
 gatherUsageStats = false
+serverAddress = ""
+serverPort = 0

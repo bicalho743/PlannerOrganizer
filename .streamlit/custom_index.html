@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Planner Organizer - Sistema Profissional</title>
+    <script>
+        // Fix para problemas de importação de módulos
+        window.global = window;
+        window.process = { env: {} };
+        
+        // Função para carregar scripts manualmente se necessário
+        function loadScript(src, async = false, defer = false) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.async = async;
+                script.defer = defer;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+        
+        // Verificar se o script principal falhar ao carregar
+        window.addEventListener('error', function(event) {
+            if (event.target && event.target.tagName === 'SCRIPT' && event.target.src.includes('index.')) {
+                console.warn('Módulo principal falhou, tentando carregar de forma alternativa...');
+                const scriptUrl = event.target.src;
+                // Tentar carregar o script novamente sem type="module"
+                loadScript(scriptUrl, true, true)
+                    .then(() => console.log('Script carregado com sucesso de forma alternativa'))
+                    .catch(e => console.error('Falha no carregamento alternativo', e));
+            }
+        }, true);
+    </script>
+    <!-- Meta tags e favicons serão adicionados pelo Streamlit -->
+</head>
+<body>
+    <noscript>Você precisa ativar o JavaScript para executar este aplicativo.</noscript>
+    <div id="root"></div>
+    <!-- Scripts do Streamlit serão injetados aqui -->
+</body>
+</html>

@@ -4,7 +4,7 @@ services:
     name: planner-organiza
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python render_startup.py && streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true --server.enableCORS=false --server.enableWebsocketCompression=false --server.enableXsrfProtection=false --server.maxUploadSize=50
+    startCommand: python render_startup.py && streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true --server.enableCORS=true --server.enableWebsocketCompression=true --server.enableXsrfProtection=false --server.maxUploadSize=50
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
@@ -14,6 +14,13 @@ services:
         sync: false # Você precisa definir isso manualmente no dashboard do Render
     autoDeploy: true
     healthCheckPath: /_stcore/health
+    headers:
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * 'self' 'unsafe-inline' data: blob:;"
+      - path: /*
+        name: Access-Control-Allow-Origin
+        value: "*"
     plan: free # Você pode mudar para 'starter' se precisar de mais recursos
 
 databases:
