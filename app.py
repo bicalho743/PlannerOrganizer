@@ -47,6 +47,8 @@ if project_root not in sys.path:
 # Verificar se o usuário está autenticado
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
+if "login_page" not in st.session_state:
+    st.session_state.login_page = "login"
 
 # Adicionar o Firebase SDK para autenticação na página
 st.markdown("""
@@ -83,6 +85,24 @@ st.markdown(f"""
     }});
 </script>
 """, unsafe_allow_html=True)
+
+# Verificar se o usuário está tentando registrar ou recuperar senha
+if "login_page" in st.session_state:
+    if st.session_state.login_page == "recuperar_senha":
+        try:
+            # Tentar importar e mostrar a página de recuperação de senha
+            from pages.recuperar_senha import show
+            show()
+            st.stop()  # Parar o fluxo após mostrar a página
+        except ImportError as e:
+            st.error(f"Não foi possível carregar o módulo de recuperação de senha: {e}")
+            # Resetar para página de login
+            st.session_state.login_page = "login"
+            st.rerun()
+    elif st.session_state.login_page == "cadastro":
+        # Exibimos diretamente o formulário de cadastro que já estava desenvolvido
+        st.session_state.show_signup = True
+        st.session_state.login_page = "login"  # Resetamos o login_page para não entrar em loop
 
 # Inicialização da autenticação in-app
 if not st.session_state.authenticated:
@@ -706,24 +726,20 @@ if not st.session_state.authenticated:
         # Botões para recuperação de senha e cadastro
         col1, col2 = st.columns(2)
         
-        # Definir as variáveis de estado se não existirem
-        if "show_reset_password" not in st.session_state:
-            st.session_state.show_reset_password = False
+        # Definir as variáveis de estado para cadastro se não existirem
         if "show_signup" not in st.session_state:
             st.session_state.show_signup = False
             
-        # Botão de esqueceu senha - o original que estava funcionando
+        # Botão de esqueceu senha - usando a variável login_page para controle
         with col1:
             if st.button("Esqueceu sua senha?", key="forgot_password_btn", use_container_width=True):
-                st.session_state.show_reset_password = True
-                st.session_state.show_signup = False
+                st.session_state.login_page = "recuperar_senha"
                 st.rerun()
                 
-        # Botão de criar conta - voltando para a versão original que funcionava
+        # Botão de criar conta - usando o padrão login_page
         with col2:
             if st.button("Criar uma conta", key="create_account_btn", use_container_width=True):
-                st.session_state.show_signup = True
-                st.session_state.show_reset_password = False 
+                st.session_state.login_page = "cadastro"
                 st.rerun()
                 
         # Informações de demo
@@ -735,54 +751,7 @@ if not st.session_state.authenticated:
         </div>
         ''', unsafe_allow_html=True)
         
-        # Formulário de redefinição de senha
-        if "show_reset_password" in st.session_state and st.session_state.show_reset_password:
-            st.markdown('<hr style="margin: 20px 0;">', unsafe_allow_html=True)
-            st.markdown('<h3 style="text-align: center; color: #1E366F;">Recuperar Senha</h3>', unsafe_allow_html=True)
-            
-            # Verificar se já temos um link de redefinição mostrado para permitir fechar o formulário
-            if "reset_password_link_shown" in st.session_state and st.session_state.reset_password_link_shown:
-                if st.button("Fechar e voltar para o login", use_container_width=True):
-                    st.session_state.show_reset_password = False
-                    st.session_state.reset_password_link_shown = False
-                    st.rerun()
-            
-            with st.form("reset_password_form"):
-                email_reset = st.text_input("Digite seu e-mail")
-                
-                submit_reset = st.form_submit_button("Enviar link de recuperação", use_container_width=True)
-                
-                if submit_reset:
-                    if not email_reset:
-                        st.error("Por favor, informe seu e-mail.")
-                    else:
-                        try:
-                            # Importar a função de redefinição de senha do Firebase
-                            from utils.firebase_auth import redefinir_senha
-                            
-                            # Tenta enviar email de recuperação
-                            with st.spinner("Enviando link de recuperação..."):
-                                result = redefinir_senha(email_reset)
-                                
-                            if result["success"]:
-                                # Link foi enviado pelo Firebase
-                                st.success(f"{result['message']}. Verifique sua caixa de entrada e a pasta de spam.")
-                                st.info("Se não receber o e-mail em alguns minutos, tente novamente ou entre em contato com o suporte.")
-                                # Fecha a janela após um curto período
-                                st.session_state.show_reset_password = False
-                                st.rerun()
-                            else:
-                                st.error(f"Erro ao processar recuperação de senha: {result['message'] or 'Verifique se o e-mail está correto.'}")
-                        except ImportError as e:
-                            # Fallback se o módulo Firebase não estiver configurado
-                            st.warning(f"Módulo Firebase indisponível: {str(e)}")
-                            # Simulação de envio de e-mail para modo de demonstração
-                            with st.spinner("Enviando email de recuperação (demonstração)..."):
-                                import time
-                                time.sleep(1.5)
-                            st.success(f"Um link de recuperação foi enviado para {email_reset} (modo de demonstração).")
-                            st.session_state.show_reset_password = False
-                            st.rerun()
+        # A recuperação de senha agora é tratada no início do aplicativo
                         
         # Formulário de cadastro
         if "show_signup" in st.session_state and st.session_state.show_signup:

@@ -41,3 +41,4 @@ requests
 uvicorn
 stripe
 pipdeptree
+flask
