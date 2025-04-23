@@ -5,7 +5,7 @@ import os
 
 # Configuração do Firebase
 FIREBASE_CONFIG = {
-    "apiKey": os.environ.get("FIREBASE_API_KEY", "AIzaSyDxC_OuA0YK9FdVV0c9UQW-OKtjGS4uiDQ"),
+    "apiKey": os.environ.get("FIREBASE_API_KEY", "AIzaSyAtuIO-4oyI99rQSl9dAMu756FI4q10kcY"),
     "authDomain": os.environ.get("FIREBASE_AUTH_DOMAIN", "planner-organizer.firebaseapp.com"),
     "projectId": os.environ.get("FIREBASE_PROJECT_ID", "planner-organizer"),
     "storageBucket": os.environ.get("FIREBASE_STORAGE_BUCKET", "planner-organizer.appspot.com"),
