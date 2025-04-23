@@ -100,9 +100,16 @@ if "login_page" in st.session_state:
             st.session_state.login_page = "login"
             st.rerun()
     elif st.session_state.login_page == "cadastro":
-        # Exibimos diretamente o formulário de cadastro que já estava desenvolvido
-        st.session_state.show_signup = True
-        st.session_state.login_page = "login"  # Resetamos o login_page para não entrar em loop
+        try:
+            # Tentar importar e mostrar a página de cadastro
+            from pages.cadastro import show
+            show()
+            st.stop()  # Parar o fluxo após mostrar a página
+        except ImportError as e:
+            st.error(f"Não foi possível carregar o módulo de cadastro: {e}")
+            # Resetar para página de login
+            st.session_state.login_page = "login"
+            st.rerun()
 
 # Inicialização da autenticação in-app
 if not st.session_state.authenticated:

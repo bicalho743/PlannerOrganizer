@@ -36,8 +36,26 @@ def show():
                         
                         # Enviar e-mail de recuperação
                         with st.spinner("Enviando link de recuperação..."):
-                            # Gera o link de redefinição
-                            auth.generate_password_reset_link(email)
+                            # Determinar a URL de callback dinâmica baseada no ambiente
+                            base_url = "https://plannerorganiza.com.br"
+                            if os.environ.get("REPLIT_DOMAIN"):
+                                base_url = f"https://{os.environ.get('REPLIT_DOMAIN')}"
+                            callback_url = f"{base_url}/login"
+                            
+                            # Gera o link de redefinição com configurações adicionais
+                            action_code_settings = {
+                                'url': callback_url,  # URL para redirecionar após redefinir senha
+                                'handleCodeInApp': False  # Define que o código será tratado por e-mail, não por app
+                            }
+                            
+                            st.write(f"URL de callback configurada: {callback_url}")  # Debug info
+                            
+                            # Tentar gerar o link de redefinição
+                            reset_link = auth.generate_password_reset_link(
+                                email, 
+                                action_code_settings
+                            )
+                            
                             st.success(f"Link de redefinição enviado para {email}. Verifique sua caixa de entrada e pasta de spam.")
                             st.info("Após redefinir sua senha, você poderá fazer login com a nova senha.")
                     
