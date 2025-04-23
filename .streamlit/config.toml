@@ -10,6 +10,9 @@ maxUploadSize = 50
 # Configurações adicionais para resolver problemas de carregamento no Render
 # Usar template HTML customizado
 fileWatcherType = "none"
+# Usar template HTML customizado
+customIndexTemplate = ".streamlit/custom_index.html"
+baseUrlPath = ""
 
 # Theme configuration - Tema profissional corporativo
 [theme]

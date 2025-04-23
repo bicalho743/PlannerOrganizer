@@ -11,6 +11,9 @@
         window.global = window;
         window.process = { env: {} };
         
+        // Criando cache de módulos
+        window._moduleCache = {};
+        
         // Patch para suporte a ES modules
         if (typeof document !== 'undefined') {
             const originalCreateElement = document.createElement;
@@ -32,42 +35,122 @@
             };
         }
         
+        // Sobrescrever fetch para lidar com módulos específicos
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options) {
+            if (typeof url === 'string' && url.includes('index.CC6uDm-p.js')) {
+                console.log('Interceptando solicitação para index.CC6uDm-p.js');
+                // Tentar buscar com outras opções de cache
+                return originalFetch(url, {
+                    ...options,
+                    cache: 'no-cache',
+                    mode: 'cors',
+                    credentials: 'same-origin'
+                }).catch(err => {
+                    console.error('Falha ao carregar via fetch:', err);
+                    // Tentar carregar via XHR como fallback
+                    return new Promise((resolve) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('GET', url);
+                        xhr.responseType = 'text';
+                        xhr.onload = function() {
+                            if (xhr.status === 200) {
+                                const blob = new Blob([xhr.response], { type: 'application/javascript' });
+                                resolve(new Response(blob));
+                            } else {
+                                resolve(Response.error());
+                            }
+                        };
+                        xhr.onerror = function() {
+                            resolve(Response.error());
+                        };
+                        xhr.send();
+                    });
+                });
+            }
+            return originalFetch(url, options);
+        };
+        
         // Função para carregar scripts manualmente se necessário
         function loadScript(src, async = false, defer = false) {
+            // Verificar se já foi carregado
+            if (window._moduleCache[src]) {
+                return Promise.resolve();
+            }
+            
             return new Promise((resolve, reject) => {
                 const script = document.createElement('script');
                 script.src = src;
                 script.async = async;
                 script.defer = defer;
-                script.onload = resolve;
-                script.onerror = reject;
+                script.onload = function() {
+                    window._moduleCache[src] = true;
+                    resolve();
+                };
+                script.onerror = function(e) {
+                    console.error('Erro ao carregar script:', src, e);
+                    
+                    // Tentar com XHR
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('GET', src);
+                    xhr.onload = function() {
+                        if (xhr.status === 200) {
+                            const scriptContent = xhr.responseText;
+                            const newScript = document.createElement('script');
+                            newScript.textContent = scriptContent;
+                            document.head.appendChild(newScript);
+                            window._moduleCache[src] = true;
+                            resolve();
+                        } else {
+                            reject(new Error(`Falha ao carregar ${src} via XHR`));
+                        }
+                    };
+                    xhr.onerror = reject;
+                    xhr.send();
+                };
                 document.head.appendChild(script);
             });
         }
         
         // Verificar se o script principal falhar ao carregar
         window.addEventListener('error', function(event) {
-            if (event.target && event.target.tagName === 'SCRIPT' && event.target.src.includes('index.')) {
-                console.warn('Módulo principal falhou, tentando carregar de forma alternativa...');
+            if (event.target && event.target.tagName === 'SCRIPT') {
                 const scriptUrl = event.target.src;
                 
-                // Remover script original
-                event.target.remove();
-                
-                // Tentar carregar o script novamente sem type="module"
-                const newScript = document.createElement('script');
-                newScript.src = scriptUrl;
-                newScript.async = true;
-                newScript.onerror = function() {
-                    console.error('Falha também na segunda tentativa de carregamento');
-                };
-                document.head.appendChild(newScript);
+                // Se for o módulo específico com problema
+                if (scriptUrl.includes('index.CC6uDm-p.js') || scriptUrl.includes('index.') && scriptUrl.includes('.js')) {
+                    console.warn('Módulo principal falhou, tentando carregar de forma alternativa:', scriptUrl);
+                    event.preventDefault();
+                    
+                    // Remover script original para evitar erros duplicados
+                    event.target.remove();
+                    
+                    // Tentar carregar com XHR
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('GET', scriptUrl);
+                    xhr.onload = function() {
+                        if (xhr.status === 200) {
+                            // Executar script inline sem atributos module
+                            const scriptContent = xhr.responseText;
+                            const newScript = document.createElement('script');
+                            newScript.textContent = scriptContent;
+                            document.head.appendChild(newScript);
+                            console.log('Script carregado via XHR e executado inline');
+                        } else {
+                            console.error('Falha ao carregar script via XHR:', xhr.status);
+                        }
+                    };
+                    xhr.onerror = function() {
+                        console.error('Erro na requisição XHR para', scriptUrl);
+                    };
+                    xhr.send();
+                }
             }
         }, true);
     </script>
     
     <!-- Script de correção externo -->
-    <script src="fix_render_imports.js"></script>
+    <script src="./static/fix_render_imports.js"></script>
     
     <!-- Meta tags e favicons serão adicionados pelo Streamlit -->
 </head>
