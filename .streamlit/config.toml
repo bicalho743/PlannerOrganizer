@@ -1,27 +1,6 @@
 [server]
 headless = true
-address = "0.0.0.0"
 port = 5000
-enableCORS = true
-enableWebsocketCompression = true
+address = "0.0.0.0"
 enableXsrfProtection = false
-maxUploadSize = 50
-
-# Configurações adicionais para resolver problemas de carregamento no Render
-fileWatcherType = "none"
-# Nota: customIndexTemplate não é mais suportado, usaremos st.components.v1.html
-
-# Theme configuration - Tema profissional corporativo
-[theme]
-# Tema Corporativo Profissional
-primaryColor = "#1E88E5"         # Azul médio profissional para botões e ações primárias
-backgroundColor = "#FFFFFF"       # Fundo branco para visual limpo
-secondaryBackgroundColor = "#F0F2F6"  # Cinza muito suave para áreas secundárias
-textColor = "#262730"            # Tom escuro para texto com melhor legibilidade
-font = "sans serif"              # Fonte sem serifa para modernidade
-
-# Arquivos de configuração adicionais
-[browser]
-gatherUsageStats = false
-serverAddress = ""
-serverPort = 0
+enableCORS = false
