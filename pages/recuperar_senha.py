@@ -36,8 +36,9 @@ def show():
                         
                         # Enviar e-mail de recuperação
                         with st.spinner("Enviando link de recuperação..."):
-                            # Enviar e-mail de recuperação de senha pelo Firebase
-                            auth.send_password_reset_email(email)
+                            # Gerar o link de redefinição de senha com o Firebase Admin SDK
+                            # Este método envia automaticamente um e-mail com o link
+                            reset_link = auth.generate_password_reset_link(email)
                             
                             # Mensagem de sucesso
                             st.success(f"✅ Link de recuperação enviado para {email}!")
