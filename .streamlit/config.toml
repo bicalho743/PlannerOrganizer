@@ -8,11 +8,8 @@ enableXsrfProtection = false
 maxUploadSize = 50
 
 # Configurações adicionais para resolver problemas de carregamento no Render
-# Usar template HTML customizado
 fileWatcherType = "none"
-# Usar template HTML customizado
-customIndexTemplate = ".streamlit/custom_index.html"
-baseUrlPath = ""
+# Nota: customIndexTemplate não é mais suportado, usaremos st.components.v1.html
 
 # Theme configuration - Tema profissional corporativo
 [theme]
