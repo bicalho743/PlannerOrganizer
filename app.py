@@ -740,6 +740,13 @@ if not st.session_state.authenticated:
             st.markdown('<hr style="margin: 20px 0;">', unsafe_allow_html=True)
             st.markdown('<h3 style="text-align: center; color: #1E366F;">Recuperar Senha</h3>', unsafe_allow_html=True)
             
+            # Verificar se já temos um link de redefinição mostrado para permitir fechar o formulário
+            if "reset_password_link_shown" in st.session_state and st.session_state.reset_password_link_shown:
+                if st.button("Fechar e voltar para o login", use_container_width=True):
+                    st.session_state.show_reset_password = False
+                    st.session_state.reset_password_link_shown = False
+                    st.rerun()
+            
             with st.form("reset_password_form"):
                 email_reset = st.text_input("Digite seu e-mail")
                 
@@ -754,29 +761,16 @@ if not st.session_state.authenticated:
                             from utils.firebase_auth import redefinir_senha
                             
                             # Tenta enviar email de recuperação
-                            with st.spinner("Gerando link de recuperação..."):
+                            with st.spinner("Enviando link de recuperação..."):
                                 result = redefinir_senha(email_reset)
                                 
                             if result["success"]:
-                                if result["link"]:
-                                    # Se temos um link, mostramos para o usuário
-                                    st.success(f"Link de recuperação gerado com sucesso para {email_reset}.")
-                                    st.markdown(f"""
-                                    <div style="padding: 10px; background-color: #f8f9fa; border-radius: 5px; margin: 10px 0; border: 1px solid #dee2e6;">
-                                        <p style="margin-bottom: 5px; font-weight: bold;">Clique no link abaixo para redefinir sua senha:</p>
-                                        <a href="{result["link"]}" target="_blank" style="word-break: break-all;">{result["link"]}</a>
-                                    </div>
-                                    """, unsafe_allow_html=True)
-                                    
-                                    # Botão para fechar o formulário após uso do link
-                                    if st.button("Fechar", key="close_reset_password"):
-                                        st.session_state.show_reset_password = False
-                                        st.rerun()
-                                else:
-                                    # Se não temos um link, mostramos a mensagem de sucesso
-                                    st.success(f"{result['message'] or 'E-mail de recuperação enviado para ' + email_reset + '. Verifique sua caixa de entrada.'}")
-                                    st.session_state.show_reset_password = False
-                                    st.rerun()
+                                # Link foi enviado pelo Firebase
+                                st.success(f"{result['message']}. Verifique sua caixa de entrada e a pasta de spam.")
+                                st.info("Se não receber o e-mail em alguns minutos, tente novamente ou entre em contato com o suporte.")
+                                # Fecha a janela após um curto período
+                                st.session_state.show_reset_password = False
+                                st.rerun()
                             else:
                                 st.error(f"Erro ao processar recuperação de senha: {result['message'] or 'Verifique se o e-mail está correto.'}")
                         except ImportError as e:

@@ -134,19 +134,22 @@ def criar_conta(email, senha, nome=None):
 
 def redefinir_senha(email):
     """
-    Envia email para redefinição de senha ou retorna o link diretamente
+    Gera o link para redefinição de senha e envia por e-mail através do Firebase
     
     Args:
         email (str): Email do usuário
         
     Returns:
-        dict: Dict contendo o status (True/False) e o link (se gerado) ou None se falhar
-            {"success": bool, "link": str ou None, "message": str ou None}
+        dict: Dict contendo o status (True/False) e mensagem
+            {"success": bool, "message": str}
     """
     # Modo de demonstração para emails de teste
     if email.lower().endswith('@example.com') or email.lower() == 'admin':
         logger.warning("Usando modo de demonstração para redefinição de senha")
-        return {"success": True, "message": "Email de redefinição enviado com sucesso (demo)", "link": None}
+        return {
+            "success": True, 
+            "message": "Link de redefinição enviado para seu e-mail (demo)"
+        }
     
     # Inicializar Firebase
     try:
@@ -155,21 +158,29 @@ def redefinir_senha(email):
         # Verificar se inicialização foi bem-sucedida
         if not app:
             logger.warning("Firebase não inicializado - modo de demonstração")
-            return {"success": True, "message": "Email de redefinição enviado com sucesso (modo demonstração)", "link": None}
+            return {
+                "success": True, 
+                "message": "Link de redefinição enviado para seu e-mail (demonstração)"
+            }
             
         # Importar auth aqui para evitar problemas de importação circular
         from firebase_admin import auth
         
-        # Gera link de redefinição
-        link = auth.generate_password_reset_link(email)
-        logger.info(f"Link de redefinição gerado: {link}")
+        # Gera e envia o link de redefinição de senha
+        # O Firebase automaticamente envia o e-mail pelo endereço noreply
+        auth.generate_password_reset_link(email)
+        logger.info(f"Link de redefinição enviado para {email}")
         
-        # Retorna o link para ser exibido na interface
-        # Quando implementarmos envio de email, podemos modificar este comportamento
-        return {"success": True, "message": "Link de redefinição gerado com sucesso", "link": link}
+        return {
+            "success": True,
+            "message": "Link de redefinição enviado para seu e-mail"
+        }
     except Exception as e:
         logger.error(f"Erro ao redefinir senha: {str(e)}")
-        return {"success": False, "message": str(e), "link": None}
+        return {
+            "success": False, 
+            "message": str(e)
+        }
 
 def fazer_login(email, senha):
     """
