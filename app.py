@@ -37,6 +37,10 @@ if "authenticated" not in st.session_state:
 if 'login_page' not in st.session_state:
     st.session_state.login_page = "login"  # Valores possíveis: login, registrar, recuperar_senha
 
+# Verificar estado para mostrar termos de uso
+if "show_termos" not in st.session_state:
+    st.session_state.show_termos = False
+
 # Configuração inicial da página
 st.set_page_config(
     page_title="Planner Organizer - Sistema Profissional",
@@ -52,6 +56,22 @@ try:
     logger.info("Injetado script de compatibilidade para Render")
 except Exception as e:
     logger.error(f"Erro ao injetar script de compatibilidade: {e}")
+
+# Função para mostrar termos de uso
+def show_termos():
+    """Mostra a página de termos de uso"""
+    st.session_state.show_termos = True
+    st.rerun()
+
+# Mostrar termos de uso se solicitado
+if st.session_state.show_termos:
+    try:
+        from pages.termos_de_uso import show
+        show()
+        st.stop()
+    except ImportError as e:
+        st.error(f"Não foi possível carregar os termos de uso: {e}")
+        st.session_state.show_termos = False
 
 # Inicialização da autenticação in-app
 if not st.session_state.authenticated:
@@ -947,7 +967,30 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
             except Exception as e:
                 st.error(f"Erro ao gerar o manual: {str(e)}")
     
-    st.markdown("© 2025 Planner Organizer")
+    # Adicionar rodapé com links
+    footer_html = """
+    <div class="footer-custom">
+        &copy; 2025 Planner Organizer | 
+        <a href="#" onclick="document.dispatchEvent(new CustomEvent('show_termos')); return false;">Termos de Uso</a> | 
+        <a href="mailto:contato@plannerorganizer.com.br">Contato</a>
+    </div>
+    
+    <script>
+        document.addEventListener('show_termos', function() {
+            window.parent.postMessage({
+                type: 'streamlit:setComponentValue',
+                value: true,
+                dataType: 'bool',
+                componentId: 'termos_link'
+            }, '*');
+        });
+    </script>
+    """
+    st.markdown(footer_html, unsafe_allow_html=True)
+    
+    # Componente invisível para capturar cliques nos termos
+    if st.checkbox("", key="termos_link", label_visibility="collapsed"):
+        show_termos()
     
     # Botão para download dos ícones do sistema
     try:
