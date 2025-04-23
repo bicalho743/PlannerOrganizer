@@ -21,21 +21,9 @@ if project_root not in sys.path:
 from utils.database import Database
 from utils.planos import mostrar_planos  # Importando o módulo de planos
 
-# Importar módulo de autenticação Firebase (pode ser comentado para desabilitar temporariamente)
-try:
-    from utils.firebase_auth import firebase_auth
-except ImportError:
-    # Fallback para sistemas sem autenticação Firebase
-    firebase_auth = None
-    st.warning("Módulo Firebase Auth não encontrado. Usando autenticação padrão.")
-
-# Inicialização dos estados da sessão
+# Verificar se o usuário está autenticado
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
-
-# Estado para controlar a página de login
-if 'login_page' not in st.session_state:
-    st.session_state.login_page = "login"  # Valores possíveis: login, registrar, recuperar_senha
 
 # Configuração inicial da página
 st.set_page_config(
@@ -54,31 +42,6 @@ if not st.session_state.authenticated:
     section[data-testid="stSidebar"] {display: none;}
     </style>
     """, unsafe_allow_html=True)
-    
-    # Verificar se o usuário está tentando registrar ou recuperar senha
-    if st.session_state.login_page == "registrar":
-        try:
-            # Tentar importar e mostrar a página de registro
-            from pages.registrar import show
-            show()
-            st.stop()  # Parar o fluxo após mostrar a página
-        except ImportError as e:
-            st.error(f"Não foi possível carregar o módulo de registro: {e}")
-            # Resetar para página de login
-            st.session_state.login_page = "login"
-            st.rerun()
-    
-    elif st.session_state.login_page == "recuperar_senha":
-        try:
-            # Tentar importar e mostrar a página de recuperação de senha
-            from pages.recuperar_senha import show
-            show()
-            st.stop()  # Parar o fluxo após mostrar a página
-        except ImportError as e:
-            st.error(f"Não foi possível carregar o módulo de recuperação de senha: {e}")
-            # Resetar para página de login
-            st.session_state.login_page = "login"
-            st.rerun()
     
     # CSS personalizado para a landing page
     st.markdown("""
@@ -539,9 +502,9 @@ if not st.session_state.authenticated:
         # Container de login sem espaçamento
         st.markdown('<div class="login-container" style="margin-top: -10px;">', unsafe_allow_html=True)
         
-        # Título da seção de login
+        # Título direto sem cabeçalho separado para evitar barra branca
         st.markdown('''
-        <h2 style="text-align: center; color: #1E366F; margin-top: 0; margin-bottom: 25px;">Acesse sua conta</h2>
+        <h2 style="text-align: center; color: #1E366F; margin-top: 0; margin-bottom: 20px;">Acesse sua conta</h2>
         ''', unsafe_allow_html=True)
         
         # Botões de login social
@@ -552,7 +515,16 @@ if not st.session_state.authenticated:
             Continuar com Google
         </button>
         ''', unsafe_allow_html=True)
-        # Botão Facebook removido conforme solicitado
+        
+        st.markdown('''
+        <button class="social-button facebook-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white" 
+                 style="margin-right: 8px;">
+                <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm3 8h-1.35c-.538 0-.65.221-.65.778v1.222h2l-.209 2h-1.791v7h-3v-7h-2v-2h2v-2.308c0-1.769.931-2.692 3.029-2.692h1.971v3z"/>
+            </svg>
+            Continuar com Facebook
+        </button>
+        ''', unsafe_allow_html=True)
         
         # Divisor
         st.markdown('''
@@ -563,58 +535,51 @@ if not st.session_state.authenticated:
         
         # Formulário de login
         with st.form("login_form"):
-            email = st.text_input("Email")
+            username = st.text_input("Usuário ou E-mail")
             password = st.text_input("Senha", type="password")
             st.markdown('<div style="height: 15px;"></div>', unsafe_allow_html=True)
             submit = st.form_submit_button("Entrar na minha conta", use_container_width=True)
             
             if submit:
-                # Tentar login pelo Firebase se disponível
-                if firebase_auth is not None:
-                    with st.spinner("Autenticando..."):
-                        result = firebase_auth.login(email, password)
-                        if result['success']:
-                            st.session_state.authenticated = True
-                            st.success("Login realizado com sucesso!")
-                            st.rerun()
-                        else:
-                            # Se falhou no Firebase, tentar com a conta de demo
-                            if email.lower() == "admin" and password == "admin":
-                                st.session_state.authenticated = True
-                                st.success("Login realizado com sucesso (modo demonstração)!")
-                                st.rerun()
-                            else:
-                                st.error(f"Erro de autenticação: {result['error']}")
-                # Fallback para login de demo se o Firebase não estiver disponível
-                elif email.lower() == "admin" and password == "admin":
+                if username.lower() == "admin" and password == "admin":
                     st.session_state.authenticated = True
                     with st.spinner("Autenticando..."):
                         import time
                         time.sleep(1)
-                    st.success("Login realizado com sucesso (modo demonstração)!")
+                    st.success("Login realizado com sucesso!")
                     st.rerun()
                 else:
                     st.error("Usuário ou senha incorretos")
         
-        # Informação de demonstração
+        # Link para recuperação de senha e cadastro
         st.markdown('''
+        <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+                Esqueceu sua senha?
+            </a>
+            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+                Criar uma conta
+            </a>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+        # Link para recuperação de senha e cadastro com informações de demonstração
+        st.markdown('''
+        <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+                Esqueceu sua senha?
+            </a>
+            <a href="#" style="color: #1E88E5; text-decoration: none; font-size: 0.9rem;">
+                Criar uma conta
+            </a>
+        </div>
+        
         <div style="margin-top: 0.8rem; text-align: center;">
             <p style="color: #9E9E9E; font-size: 0.75rem;">
                 Para demonstração, use: admin / admin
             </p>
         </div>
         ''', unsafe_allow_html=True)
-        
-        # Botões para navegação
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Esqueceu sua senha?", key="btn_recuperar_senha", use_container_width=True):
-                st.session_state.login_page = "recuperar_senha"
-                st.rerun()
-        with col2:
-            if st.button("Criar uma conta", key="btn_criar_conta", use_container_width=True):
-                st.session_state.login_page = "registrar"
-                st.rerun()
         
         st.markdown('</div>', unsafe_allow_html=True)
         

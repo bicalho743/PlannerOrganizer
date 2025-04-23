@@ -2,76 +2,94 @@
 Página de recuperação de senha
 """
 import streamlit as st
-import os
-from firebase_admin import auth
-from utils.firebase_config import initialize_firebase
+import time
+from utils.firebase_auth import firebase_auth
 
 def show():
     """
-    Exibe a página de recuperação de senha
+    Exibe o formulário de recuperação de senha
     """
-    # Configuração da página
-    st.markdown('<h1 style="text-align: center; color: #1E366F;">Recuperar Senha</h1>', unsafe_allow_html=True)
+    st.title("Recuperar Senha")
     
-    # Formulário de recuperação de senha
+    # Container para o formulário
     with st.container():
-        st.markdown('<p style="text-align: center;">Informe seu e-mail para receber um link de redefinição de senha.</p>', unsafe_allow_html=True)
-        
-        email = st.text_input("E-mail", key="email_reset")
-        
-        col1, col2 = st.columns([1, 1])
-        
-        with col1:
-            if st.button("Enviar link de recuperação", use_container_width=True):
-                if not email:
-                    st.error("Por favor, informe seu e-mail.")
-                else:
-                    try:
-                        # Inicializar Firebase
-                        app, _ = initialize_firebase()
-                        
-                        if not app:
-                            st.error("Erro ao conectar com o serviço de autenticação.")
-                            return
-                        
-                        # Enviar e-mail de recuperação
-                        with st.spinner("Enviando link de recuperação..."):
-                            # Gerar o link de redefinição de senha com o Firebase Admin SDK
-                            # Este método envia automaticamente um e-mail com o link
-                            reset_link = auth.generate_password_reset_link(email)
-                            
-                            # Mensagem de sucesso
-                            st.success(f"✅ Link de recuperação enviado para {email}!")
-                            st.info("Verifique sua caixa de entrada e pasta de spam. Após redefinir sua senha, você poderá fazer login com a nova senha.")
-                    
-                    except Exception as e:
-                        if "USER_NOT_FOUND" in str(e):
-                            # Por segurança, não informamos se o e-mail existe ou não
-                            st.success(f"Se {email} estiver registrado, você receberá um e-mail com instruções para redefinir sua senha.")
-                        else:
-                            st.error(f"Ocorreu um erro: {str(e)}")
+        # Usar colunas para centralizar o formulário
+        col1, col2, col3 = st.columns([1, 2, 1])
         
         with col2:
-            if st.button("Voltar para o login", use_container_width=True):
-                st.session_state.login_page = "login"
-                st.rerun()
-    
-    # Adicionar informações de ajuda
-    st.markdown("""
-    <div style="margin-top: 30px; padding: 15px; border-radius: 5px; background-color: #f8f9fa;">
-        <h3 style="color: #1E366F; font-size: 1.2rem;">Não recebeu o e-mail?</h3>
-        <ul>
-            <li>Verifique sua pasta de spam ou lixo eletrônico</li>
-            <li>Certifique-se de que o e-mail informado está correto</li>
-            <li>Aguarde alguns minutos e tente novamente</li>
-        </ul>
-        <p>Se continuar com problemas, entre em contato com o suporte.</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Adicionar um rodapé
-    st.markdown("""
-    <div style="position: fixed; bottom: 0; left: 0; right: 0; background-color: #f5f5f5; padding: 10px; text-align: center; font-size: 0.8rem; color: #666;">
-        © 2025 Planner Organizer | Todos os direitos reservados
-    </div>
-    """, unsafe_allow_html=True)
+            st.markdown("""
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <h3 style="color: #1E366F; margin-bottom: 0.5rem;">Esqueceu sua senha?</h3>
+                <p style="color: #5A6A85; font-size: 0.9rem;">
+                    Informe seu email para receber um link de redefinição de senha
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Formulário de recuperação
+            with st.form("password_recovery_form", clear_on_submit=False):
+                email = st.text_input("Email cadastrado")
+                
+                # Botão de envio
+                submitted = st.form_submit_button("Recuperar Senha", use_container_width=True)
+                
+                if submitted:
+                    if not email:
+                        st.error("Por favor, informe seu email.")
+                    else:
+                        # Exibir spinner durante o envio
+                        with st.spinner("Enviando email de recuperação..."):
+                            # Tentar enviar email de recuperação
+                            result = firebase_auth.reset_password(email)
+                            
+                            if result['success']:
+                                # Exibir mensagem de sucesso
+                                st.success("Um email de recuperação foi enviado. Verifique sua caixa de entrada e também a pasta de spam.")
+                                
+                                # Adicionar informações adicionais
+                                st.info("""
+                                **Importante:** 
+                                - O link de redefinição é válido por 1 hora
+                                - Se não receber o email em alguns minutos, verifique sua pasta de spam
+                                - Às vezes, os emails podem levar até 10 minutos para chegar
+                                """)
+                                
+                                # Adicionar botão para voltar ao login
+                                if st.button("Voltar ao Login", use_container_width=True):
+                                    # Redirecionar para a página de login
+                                    st.rerun()
+                            else:
+                                # Exibir mensagem de erro
+                                st.error(f"Erro: {result['error']}")
+                                
+                                # Adicionar sugestões para resolver problemas comuns
+                                if "não cadastrado" in result['error'].lower():
+                                    st.info("Verifique se o email foi digitado corretamente ou [crie uma nova conta](/?page=cadastro).")
+                                elif "inválido" in result['error'].lower():
+                                    st.info("Certifique-se de digitar um endereço de email válido no formato usuario@dominio.com")
+                                elif "muitas tentativas" in result['error'].lower():
+                                    st.info("Por segurança, aguarde alguns minutos antes de tentar novamente.")
+            
+            # Link para voltar ao login
+            st.markdown("""
+            <div style="text-align: center; margin-top: 1rem;">
+                <p style="color: #5A6A85; font-size: 0.9rem;">
+                    <a href="#" id="back-to-login" style="color: #1E88E5; text-decoration: none;">
+                        Voltar ao login
+                    </a>
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Adicionar JavaScript para voltar ao login
+            st.markdown("""
+            <script>
+                document.getElementById('back-to-login').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.history.back();
+                });
+            </script>
+            """, unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    show()
