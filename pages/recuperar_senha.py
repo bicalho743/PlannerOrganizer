@@ -11,6 +11,10 @@ def show():
     """
     st.title("Recuperar Senha")
     
+    # Inicializar variáveis de estado
+    if 'email_enviado' not in st.session_state:
+        st.session_state.email_enviado = False
+    
     # Container para o formulário
     with st.container():
         # Usar colunas para centralizar o formulário
@@ -43,6 +47,9 @@ def show():
                             result = firebase_auth.reset_password(email)
                             
                             if result['success']:
+                                # Marcar que o email foi enviado
+                                st.session_state.email_enviado = True
+                                
                                 # Exibir mensagem de sucesso
                                 st.success("Um email de recuperação foi enviado. Verifique sua caixa de entrada e também a pasta de spam.")
                                 
@@ -53,11 +60,6 @@ def show():
                                 - Se não receber o email em alguns minutos, verifique sua pasta de spam
                                 - Às vezes, os emails podem levar até 10 minutos para chegar
                                 """)
-                                
-                                # Adicionar botão para voltar ao login
-                                if st.button("Voltar ao Login", use_container_width=True):
-                                    # Redirecionar para a página de login
-                                    st.rerun()
                             else:
                                 # Exibir mensagem de erro
                                 st.error(f"Erro: {result['error']}")
@@ -70,25 +72,24 @@ def show():
                                 elif "muitas tentativas" in result['error'].lower():
                                     st.info("Por segurança, aguarde alguns minutos antes de tentar novamente.")
             
+            # Se o email foi enviado com sucesso, mostrar botão para voltar ao login
+            if st.session_state.email_enviado:
+                if st.button("Voltar ao Login", use_container_width=True):
+                    # Resetar o estado
+                    st.session_state.email_enviado = False
+                    # Redirecionar para a página de login
+                    st.session_state.page = None
+                    st.rerun()
+            
             # Link para voltar ao login
             st.markdown("""
             <div style="text-align: center; margin-top: 1rem;">
                 <p style="color: #5A6A85; font-size: 0.9rem;">
-                    <a href="#" id="back-to-login" style="color: #1E88E5; text-decoration: none;">
+                    <a href="/" style="color: #1E88E5; text-decoration: none;">
                         Voltar ao login
                     </a>
                 </p>
             </div>
-            """, unsafe_allow_html=True)
-            
-            # Adicionar JavaScript para voltar ao login
-            st.markdown("""
-            <script>
-                document.getElementById('back-to-login').addEventListener('click', function(e) {
-                    e.preventDefault();
-                    window.history.back();
-                });
-            </script>
             """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
