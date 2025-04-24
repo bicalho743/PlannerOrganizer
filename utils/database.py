@@ -653,25 +653,35 @@ class Database:
                 Cliente, Proposta.cliente_id == Cliente.id
             ).all()
             
-            return pd.DataFrame([{
-                'id': int(p.id),  # Converter para int nativo
-                'numero': int(p.numero),  # Converter para int nativo
-                'cliente_id': int(p.cliente_id) if p.cliente_id else None,  # Converter para int nativo
-                'descricao': p.descricao,
-                'valor': float(p.valor) if p.valor is not None else None,  # Converter para float nativo
-                'status': p.status,
-                'tipo_proposta': p.tipo_proposta,
-                'data_inicio': p.data_inicio,
-                'data_fim': p.data_fim,
-                'prazo_entrega': p.prazo_entrega,
-                'data_proposta': p.data_proposta,
-                'data_aprovacao': p.data_aprovacao,  # Adicionando o campo data_aprovacao
-                'status_pagamento_base': p.status_pagamento_base,
-                'previsao_dias': p.previsao_dias,
-                'data_inicio_execucao': p.data_inicio_execucao,
-                'status_execucao': p.status_execucao,
-                'cliente_nome': cliente_nome  # Adicionar o nome do cliente
-            } for p, cliente_nome in propostas_com_clientes])
+            result = []
+            for p, cliente_nome in propostas_com_clientes:
+                try:
+                    # Garantir que todos os valores sejam do tipo correto
+                    proposta_dict = {
+                        'id': int(p.id) if p.id is not None else None,
+                        'numero': int(p.numero) if p.numero is not None else None,
+                        'cliente_id': int(p.cliente_id) if p.cliente_id is not None else None,
+                        'descricao': str(p.descricao) if p.descricao is not None else None,
+                        'valor': float(p.valor) if p.valor is not None else None,
+                        'status': str(p.status) if p.status is not None else None,
+                        'tipo_proposta': str(p.tipo_proposta) if p.tipo_proposta is not None else None,
+                        'data_inicio': p.data_inicio,
+                        'data_fim': p.data_fim,
+                        'prazo_entrega': p.prazo_entrega,
+                        'data_proposta': p.data_proposta,
+                        'data_aprovacao': p.data_aprovacao,
+                        'status_pagamento_base': str(p.status_pagamento_base) if p.status_pagamento_base is not None else None,
+                        'previsao_dias': int(p.previsao_dias) if p.previsao_dias is not None else None,
+                        'data_inicio_execucao': p.data_inicio_execucao,
+                        'status_execucao': str(p.status_execucao) if p.status_execucao is not None else None,
+                        'cliente_nome': str(cliente_nome) if cliente_nome is not None else None
+                    }
+                    result.append(proposta_dict)
+                except Exception as e:
+                    # Logar erro para depuração mas continuar processando outras propostas
+                    print(f"Erro ao processar proposta {p.id}: {str(e)}")
+            
+            return pd.DataFrame(result)
         return self._safe_query(query)
 
     def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, 
