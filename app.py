@@ -992,6 +992,7 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
     <div class="footer-custom">
         &copy; 2025 Planner Organizer | 
         <a href="#" onclick="document.dispatchEvent(new CustomEvent('show_termos')); return false;">Termos de Uso</a> | 
+        <a href="#" onclick="document.dispatchEvent(new CustomEvent('show_politica')); return false;">Política de Privacidade</a> | 
         <a href="mailto:contato@plannerorganizer.com.br">Contato</a>
     </div>
     
@@ -1004,9 +1005,22 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
                 componentId: 'termos_link'
             }, '*');
         });
+        
+        document.addEventListener('show_politica', function() {
+            window.parent.postMessage({
+                type: 'streamlit:setComponentValue',
+                value: true,
+                dataType: 'bool',
+                componentId: 'politica_link'
+            }, '*');
+        });
     </script>
     """
     st.markdown(footer_html, unsafe_allow_html=True)
+    
+    # Detector para política de privacidade
+    if st.checkbox("", key="politica_link", label_visibility="collapsed"):
+        show_politica()
     
     # Componente invisível para capturar cliques nos termos
     if st.checkbox("", key="termos_link", label_visibility="collapsed"):
