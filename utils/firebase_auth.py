@@ -48,14 +48,68 @@ class FirebaseAuth:
             st.session_state.user = session_user
             st.session_state.authenticated = True
             
-            # Sincronizar o objeto 'usuario' para manter compatibilidade com o restante do código
-            st.session_state.usuario = {
+            # Tentar carregar o perfil completo do usuário do Realtime Database
+            user_profile = None
+            try:
+                # Buscar dados do perfil no banco de dados do Firebase
+                user_profile = self.db.child("users").child(user['localId']).get().val()
+                print(f"Perfil encontrado no Firebase: {user_profile}")
+            except Exception as profile_error:
+                print(f"Erro ao carregar perfil do Firebase: {str(profile_error)}")
+            
+            # Inicializar dados do usuário com valores padrão
+            usuario_data = {
                 'email': user['email'],
-                'nome': user.get('displayName', user['email'].split('@')[0].title()),
-                'telefone': '',  # Valor padrão a ser preenchido no perfil
+                'nome': user['email'].split('@')[0].title(),  # Fallback para nome a partir do email
+                'telefone': '',  # Valor padrão
                 'empresa': 'Planner Organizer',  # Valor padrão
                 'role': 'user'  # Papel padrão
             }
+            
+            # Se encontrou perfil no Firebase, atualizar com dados reais
+            if user_profile and isinstance(user_profile, dict):
+                # Atualizar nome se disponível no perfil
+                if 'name' in user_profile and user_profile['name']:
+                    usuario_data['nome'] = user_profile['name']
+                
+                # Atualizar outros campos que possam existir no perfil
+                for field in ['telefone', 'empresa', 'instagram', 'website']:
+                    if field in user_profile and user_profile[field]:
+                        usuario_data[field] = user_profile[field]
+                
+                # Verificar se há dados adicionais
+                if 'profile' in user_profile and isinstance(user_profile['profile'], dict):
+                    for field, value in user_profile['profile'].items():
+                        if value:  # Adicionar apenas se tiver valor
+                            usuario_data[field] = value
+            
+            # Verificar também se há displayName nos dados da conta
+            if 'users' in user_info and len(user_info['users']) > 0:
+                user_data = user_info['users'][0]
+                if 'displayName' in user_data and user_data['displayName']:
+                    usuario_data['nome'] = user_data['displayName']
+            
+            # Atualizar a sessão com os dados enriquecidos do usuário
+            st.session_state.usuario = usuario_data
+            
+            # Tentar carregar perfil do banco de dados PostgreSQL se existir
+            try:
+                from utils.database import Database
+                if 'db' in st.session_state:
+                    db = st.session_state.db
+                    # Verificar se existe método para carregar perfil
+                    if hasattr(db, 'get_perfil_by_email'):
+                        db_profile = db.get_perfil_by_email(email)
+                        if db_profile:
+                            print(f"Perfil encontrado no PostgreSQL: {db_profile}")
+                            # Atualizar dados com o perfil do PostgreSQL
+                            for field, value in db_profile.items():
+                                if value:  # Adicionar apenas se tiver valor
+                                    usuario_data[field] = value
+                            # Atualizar sessão novamente
+                            st.session_state.usuario = usuario_data
+            except Exception as db_error:
+                print(f"Erro ao carregar perfil do PostgreSQL: {str(db_error)}")
             
             print(f"Login realizado com sucesso. Dados do usuário na sessão: {st.session_state.usuario}")
             

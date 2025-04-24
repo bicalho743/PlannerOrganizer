@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from datetime import datetime, timedelta
-from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, func, Index, text
+from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, func, Index, text, select
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 import pandas as pd
@@ -1669,6 +1669,85 @@ class Database:
         if value is None:
             return None
         return int(value)
+        
+    def get_perfil_by_email(self, email):
+        """
+        Busca o perfil do usuário pelo email
+        
+        Args:
+            email: Email do usuário
+            
+        Returns:
+            dict: Dados do perfil ou None se não encontrado
+        """
+        def query():
+            try:
+                print(f"Buscando perfil para o email: {email}")
+                
+                # Buscar na tabela de usuários (que já sabemos que existe)
+                try:
+                    usuario = self.session.query(Usuario).filter_by(email=email).first()
+                    if usuario:
+                        print(f"Usuário encontrado com email {email}")
+                        perfil_dict = {
+                            'id': usuario.id,
+                            'nome': usuario.nome,
+                            'email': usuario.email,
+                            'tipo': usuario.tipo,
+                            'empresa': usuario.empresa if hasattr(usuario, 'empresa') else 'Planner Organizer',
+                            'role': 'user'  # Valor padrão
+                        }
+                        # Adicionar telefone se existir
+                        if hasattr(usuario, 'telefone') and usuario.telefone:
+                            perfil_dict['telefone'] = usuario.telefone
+                        return perfil_dict
+                except Exception as e:
+                    print(f"Erro ao buscar usuário por email: {str(e)}")
+                
+                # Tentar na tabela de clientes como alternativa
+                try:
+                    cliente = self.session.query(Cliente).filter_by(email=email).first()
+                    if cliente:
+                        print(f"Cliente encontrado com email {email}")
+                        perfil_dict = {
+                            'id': cliente.id,
+                            'nome': cliente.nome,
+                            'email': cliente.email,
+                            'telefone': cliente.telefone if cliente.telefone else '',
+                            'empresa': 'Planner Organizer'  # Valor padrão
+                        }
+                        # Adicionar campos adicionais se existirem
+                        for field in ['endereco', 'cidade', 'estado']:
+                            if hasattr(cliente, field) and getattr(cliente, field):
+                                perfil_dict[field] = getattr(cliente, field)
+                        
+                        return perfil_dict
+                except Exception as e:
+                    print(f"Erro ao buscar cliente por email: {str(e)}")
+                
+                # Tentar com uma consulta SQL direta para tabela 'perfis' (se existir)
+                try:
+                    # Tentar consulta SQL direta
+                    sql = text("SELECT * FROM perfis WHERE email = :email")
+                    result = self.session.execute(sql, {'email': email}).fetchone()
+                    if result:
+                        print("Perfil encontrado na tabela 'perfis' via SQL direta")
+                        # Converter resultado para dicionário
+                        perfil_dict = {}
+                        for column, value in result.items():
+                            perfil_dict[column] = value
+                        return perfil_dict
+                except Exception as e:
+                    print(f"Erro ao buscar via SQL direta: {str(e)}")
+                
+                # Se chegou aqui, não encontrou o perfil em nenhuma fonte
+                print(f"Perfil não encontrado para o email: {email}")
+                return None
+            except Exception as e:
+                print(f"ERRO geral ao buscar perfil por email: {str(e)}")
+                return None
+        
+        return self._safe_query(query)
         
     def get_produtos_organizadores(self, proposta_id=None):
         """
