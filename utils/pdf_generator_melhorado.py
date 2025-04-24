@@ -146,7 +146,8 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         y_col2 -= 15
         c.drawString(col2_x, y_col2, f"Data Fim: {data_fim_str}")
         y_col2 -= 15
-        c.drawString(col2_x, y_col2, f"Prazo de Entrega: {prazo_str}")
+        # Usando a data fim como prazo de entrega conforme solicitado
+        c.drawString(col2_x, y_col2, f"Prazo de Entrega: {data_fim_str}")
         
         # Ajusta Y para o menor valor entre as duas colunas
         y = min(y, y_col2) - 15
@@ -166,8 +167,13 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         c.setFillColor(cinza_medio)
         c.setFont("Helvetica", 10)
         
-        # Se a descrição for longa, podemos implementar quebra de linhas
+        # Processar a descrição para remover caracteres indesejados
         descricao = proposta.get('descricao', 'Sem descrição')
+        # Limpar caracteres especiais que podem aparecer como ■
+        descricao = descricao.replace('■', ' ').replace('\r\n', ' ').replace('\n', ' ').strip()
+        # Substituir múltiplos espaços por um único espaço
+        import re
+        descricao = re.sub(r'\s+', ' ', descricao)
         c.drawString(50, y, descricao)
         
         # ===== SERVIÇOS REALIZADOS (TABELA) =====
@@ -207,7 +213,7 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
             c.rect(40, y-15, table_width, 15, fill=True, stroke=False)
             
         c.setFillColor(cinza_medio)
-        c.drawString(50, y-12, "Serviço Base")
+        c.drawString(50, y-12, "Personal Organizer")
         c.drawRightString(40 + desc_col_width + valor_col_width - 10, y-12, f"R$ {float(proposta['valor']):.2f}")
         
         y -= 15
@@ -291,9 +297,12 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         y_rodape -= 12
         c.drawCentredString(width/2, y_rodape, f"{perfil.get('telefone', '(11) 98765-4321')} | www.plannerorganizer.com.br")
         
-        # Data de geração pequena no rodapé
+        # Data de geração pequena no rodapé com timestamp explícito
+        from datetime import datetime
+        agora = datetime.now()
+        # Usar hora em timestamp explícito para evitar problemas de timezone
         c.setFont("Helvetica", 7)
-        c.drawCentredString(width/2, 5, f"Relatório gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')}")
+        c.drawCentredString(width/2, 5, f"Relatório gerado em {agora.strftime('%d/%m/%Y às %H:%M')}")
         
         # Salvar PDF
         c.save()
