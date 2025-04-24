@@ -12,6 +12,17 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Corrigir o problema de adaptação de tipos numpy.int64 para PostgreSQL
+try:
+    from utils.type_conversion_fix import fix_numpy_int64_bug
+    success = fix_numpy_int64_bug()
+    if success:
+        logger.info("Adaptadores para numpy.int* registrados com sucesso")
+    else:
+        logger.warning("Não foi possível registrar adaptadores para numpy.int*")
+except Exception as e:
+    logger.error(f"Erro ao importar/executar fix_numpy_int64_bug: {str(e)}")
+
 # Adicionar diretório raiz ao path
 project_root = os.path.abspath(os.path.dirname(__file__))
 if project_root not in sys.path:

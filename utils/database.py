@@ -1619,7 +1619,9 @@ class Database:
             try:
                 # Executar a busca SQL
                 if proposta_id:
-                    sql = f"SELECT * FROM produtos_organizadores WHERE proposta_id = {int(proposta_id)}"
+                    # Converter explicitamente para int Python padrão (mesmo que seja numpy.int64)
+                    proposta_id_int = int(proposta_id)
+                    sql = f"SELECT * FROM produtos_organizadores WHERE proposta_id = {proposta_id_int}"
                 else:
                     sql = "SELECT * FROM produtos_organizadores"
                 
@@ -1660,6 +1662,14 @@ class Database:
             import pandas as pd
             return pd.DataFrame()
 
+    def _ensure_int(self, value):
+        """
+        Garante que o valor seja um inteiro Python padrão, mesmo que seja numpy.int64
+        """
+        if value is None:
+            return None
+        return int(value)
+        
     def get_produtos_organizadores(self, proposta_id=None):
         """
         Obtém produtos de uma proposta. Tenta primeiro via SQL direto, e depois via ORM.
@@ -1673,7 +1683,9 @@ class Database:
         def query():
             query = self.session.query(ProdutoOrganizador)
             if proposta_id:
-                query = query.filter_by(proposta_id=proposta_id)
+                # Converter explicitamente para int Python padrão
+                proposta_id_int = self._ensure_int(proposta_id)
+                query = query.filter_by(proposta_id=proposta_id_int)
             produtos = query.all()
             return pd.DataFrame([{
                 'id': p.id,
@@ -3724,6 +3736,9 @@ class Database:
                     "lancamentos_gerados": 0
                 }
                 
+                # Converter proposta_id para inteiro nativo do Python para evitar problemas com numpy.int64
+                proposta_id_python_int = self._ensure_int(proposta_id_int)
+                
                 # 1. Lançamento do valor base (cliente a receber)
                 valor_base = float(proposta.valor) if proposta.valor else 0
                 print(f"DEBUG LANCAMENTOS: Valor base da proposta: R$ {valor_base:.2f}")
@@ -3750,12 +3765,12 @@ class Database:
                     print(f"DEBUG LANCAMENTOS: Lançamento do valor base criado")
                 
                 # 2. Produtos a receber
-                produtos = self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id_int).all()
+                produtos = self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id_python_int).all()
                 print(f"DEBUG LANCAMENTOS: Produtos encontrados: {len(produtos)}")
                 
                 # Query direto para confirmar problemas
                 try:
-                    produtos_sql = self.session.execute(text(f"SELECT * FROM produtos_organizadores WHERE proposta_id = {proposta_id_int}")).fetchall()
+                    produtos_sql = self.session.execute(text(f"SELECT * FROM produtos_organizadores WHERE proposta_id = {proposta_id_python_int}")).fetchall()
                     print(f"DEBUG LANCAMENTOS SQL: Produtos via SQL direto: {len(produtos_sql)}")
                     
                     if produtos_sql:
@@ -3892,7 +3907,7 @@ class Database:
                 
                 # Vamos adicionar processamento de itens tipo "OUTRO"
                 outros = self.session.query(AcrescimoProposta)\
-                    .filter_by(proposta_id=proposta_id_int, tipo="OUTRO")\
+                    .filter_by(proposta_id=proposta_id_python_int, tipo="OUTRO")\
                     .all()
                     
                 print(f"DEBUG LANCAMENTOS: Itens tipo OUTRO encontrados: {len(outros)}")
@@ -3929,7 +3944,7 @@ class Database:
                 
                 # 3. Comissões a receber por fornecedor
                 fornecedores = self.session.query(AcrescimoProposta)\
-                    .filter_by(proposta_id=proposta_id_int, tipo="FORNECEDOR")\
+                    .filter_by(proposta_id=proposta_id_python_int, tipo="FORNECEDOR")\
                     .all()
                     
                 valor_total_fornecedores = 0
@@ -3977,7 +3992,7 @@ class Database:
                 
                 # 4. Assistentes a pagar
                 assistentes = self.session.query(AcrescimoProposta)\
-                    .filter_by(proposta_id=proposta_id_int, tipo="ASSISTENTE")\
+                    .filter_by(proposta_id=proposta_id_python_int, tipo="ASSISTENTE")\
                     .all()
                     
                 valor_total_assistentes = 0
