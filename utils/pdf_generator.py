@@ -528,7 +528,15 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
         valor_base = float(proposta['valor'])
         
         # Espaçamento antes das análises
-        story.append(Spacer(1, 15))
+        story.append(Spacer(1, 5))
+        
+        # Título da análise financeira movido para cima (antes dos cálculos)
+        story.append(Paragraph("<b>ANÁLISE FINANCEIRA COMPLETA</b>", 
+                           ParagraphStyle('TitleFinancial', parent=styles['Heading3'], 
+                                         fontSize=14, alignment=1, spaceAfter=10, textColor=colors.darkblue)))
+        
+        # Espaçamento menor depois do título
+        story.append(Spacer(1, 5))
         
         # Acréscimos - não exibir a tabela detalhada, mas calcular os valores
         total_acrescimos = 0.0
@@ -563,12 +571,6 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
         total_custos = custos_fornecedores + custos_assistentes
         margem_bruta = valor_total - total_custos
         margem_percentual = (margem_bruta / valor_total * 100) if valor_total > 0 else 0
-        
-        # Resumo financeiro com duas visões
-        story.append(Spacer(1, 20))
-        story.append(Paragraph("<b>ANÁLISE FINANCEIRA COMPLETA</b>", 
-                           ParagraphStyle('TitleFinancial', parent=styles['Heading3'], 
-                                         fontSize=14, alignment=1, spaceAfter=10, textColor=colors.darkblue)))
         
         # Espaçamento
         story.append(Spacer(1, 15))
@@ -734,21 +736,21 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
             alignment=0
         )
         
-        story.append(Paragraph("<b>MEU GANHO (ORGANIZADORA)</b>", ganho_header))
+        story.append(Paragraph("<b>RECEITA LÍQUIDA PROJETO</b>", ganho_header))
         story.append(Spacer(1, 10))  # Espaçamento aumentado
-        story.append(Paragraph("Esta seção mostra o ganho real da organizadora, considerando o valor base, comissões, \
+        story.append(Paragraph("Esta seção mostra o ganho real da Personal, considerando o valor base, comissões, \
 lucro na venda de produtos menos o pagamento a assistentes.", 
                            ParagraphStyle('ExplanationGanho', parent=styles['Normal'], fontSize=9, leading=10)))
         story.append(Spacer(1, 15))  # Espaçamento aumentado
         
-        # Tabela de resumo - Meu ganho
+        # Tabela de resumo - Receita Líquida
         data_meu_ganho = [
             ["Item", "Valor"],
             ["Valor Base", f"R$ {valor_base:.2f}"],
             ["Comissões", f"R$ {total_comissoes:.2f}"],
             ["Lucro em Produtos", f"R$ {lucro_produtos_total:.2f}"],
             ["Pagamento Assistentes", f"R$ -{custos_assistentes:.2f}"],
-            ["MEU GANHO TOTAL", f"R$ {meu_ganho:.2f}"]
+            ["RECEITA LÍQUIDA TOTAL", f"R$ {meu_ganho:.2f}"]
         ]
         
         # Estilo para tabela - Meu ganho
@@ -791,7 +793,7 @@ lucro na venda de produtos menos o pagamento a assistentes.",
         )
         
         story.append(Paragraph("<b>COMPARATIVO E ANÁLISE DE MARGEM</b>", analise_header))
-        story.append(Paragraph("Comparação direta entre o custo total do cliente e o ganho da organizadora, \
+        story.append(Paragraph("Comparação direta entre o custo total do cliente e a receita líquida da Personal, \
 mostrando a margem de lucro percentual.", 
                            ParagraphStyle('ExplanationGanho', parent=styles['Normal'], fontSize=9, leading=10)))
         story.append(Spacer(1, 5))
@@ -807,7 +809,7 @@ mostrando a margem de lucro percentual.",
         data_analise = [
             ["Item", "Valor", "Avaliação"],
             ["Custo Total do Cliente", f"R$ {custo_cliente_total:.2f}", ""],
-            ["Meu Ganho Total", f"R$ {meu_ganho:.2f}", ""],
+            ["Receita Líquida Total", f"R$ {meu_ganho:.2f}", ""],
             ["MARGEM PERCENTUAL", f"{margem_percentual:.2f}%", avaliacao]
         ]
         
