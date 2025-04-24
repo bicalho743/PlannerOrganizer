@@ -41,6 +41,10 @@ if 'login_page' not in st.session_state:
 if "show_termos" not in st.session_state:
     st.session_state.show_termos = False
 
+# Verificar estado para mostrar política de privacidade
+if "show_politica" not in st.session_state:
+    st.session_state.show_politica = False
+
 # Configuração inicial da página
 st.set_page_config(
     page_title="Planner Organizer - Sistema Profissional",
@@ -63,6 +67,12 @@ def show_termos():
     st.session_state.show_termos = True
     st.rerun()
 
+# Função para mostrar política de privacidade
+def show_politica():
+    """Mostra a página de política de privacidade"""
+    st.session_state.show_politica = True
+    st.rerun()
+
 # Mostrar termos de uso se solicitado
 if st.session_state.show_termos:
     try:
@@ -72,6 +82,16 @@ if st.session_state.show_termos:
     except ImportError as e:
         st.error(f"Não foi possível carregar os termos de uso: {e}")
         st.session_state.show_termos = False
+
+# Mostrar política de privacidade se solicitado
+if st.session_state.show_politica:
+    try:
+        from pages.politica_privacidade import show
+        show()
+        st.stop()
+    except ImportError as e:
+        st.error(f"Não foi possível carregar a política de privacidade: {e}")
+        st.session_state.show_politica = False
 
 # Inicialização da autenticação in-app
 if not st.session_state.authenticated:

@@ -33,6 +33,10 @@ except Exception as e:
 if "show_termos" not in st.session_state:
     st.session_state.show_termos = False
 
+# Verificar estado para mostrar política de privacidade
+if "show_politica" not in st.session_state:
+    st.session_state.show_politica = False
+
 # Estado para controlar modo de criação de conta
 if "creating_account" not in st.session_state:
     st.session_state.creating_account = False
@@ -41,6 +45,12 @@ if "creating_account" not in st.session_state:
 if st.session_state.show_termos or (st.session_state.creating_account and "termos_viewed" not in st.session_state):
     st.session_state.termos_viewed = True  # Marcar que os termos já foram vistos
     from pages.termos_de_uso import show
+    show()
+    st.stop()
+
+# Mostrar política de privacidade se solicitado
+if st.session_state.show_politica:
+    from pages.politica_privacidade import show
     show()
     st.stop()
 
@@ -76,6 +86,11 @@ def show_termos():
     st.session_state.show_termos = True
     st.rerun()
 
+def show_politica():
+    """Mostra a página de política de privacidade"""
+    st.session_state.show_politica = True
+    st.rerun()
+
 def main():
     # Se o usuário já estiver autenticado, redirecionar para o app principal
     if st.session_state.authenticated:
@@ -84,6 +99,13 @@ def main():
         st.session_state.authenticated = True
         st.switch_page("app.py")
         return
+    
+    # Componentes para capturar cliques nos links do formulário
+    if st.checkbox("", key="termos_form_link", label_visibility="collapsed"):
+        show_termos()
+    
+    if st.checkbox("", key="politica_form_link", label_visibility="collapsed"):
+        show_politica()
     
     # Se o usuário está no processo de criação de conta e já aceitou os termos
     if st.session_state.get("creating_account", False) and st.session_state.get("termos_aceitos", False):
@@ -103,6 +125,40 @@ def main():
                 username = st.text_input("Nome de usuário")
                 password = st.text_input("Senha", type="password")
                 confirm_password = st.text_input("Confirmar senha", type="password")
+            
+            # Links para termos e política
+            terms_html = """
+            <div style="font-size: 0.9rem; margin: 15px 0;">
+                Ao criar uma conta, você concorda com nossos 
+                <a href="#" onclick="document.dispatchEvent(new CustomEvent('show_termos_form')); return false;">Termos de Uso</a> e 
+                <a href="#" onclick="document.dispatchEvent(new CustomEvent('show_politica_form')); return false;">Política de Privacidade</a>
+            </div>
+            """
+            st.markdown(terms_html, unsafe_allow_html=True)
+            
+            # Interceptar cliques nos termos e política
+            js_code = """
+            <script>
+                document.addEventListener('show_termos_form', function() {
+                    window.parent.postMessage({
+                        type: 'streamlit:setComponentValue',
+                        value: true,
+                        dataType: 'bool',
+                        componentId: 'termos_form_link'
+                    }, '*');
+                });
+                
+                document.addEventListener('show_politica_form', function() {
+                    window.parent.postMessage({
+                        type: 'streamlit:setComponentValue',
+                        value: true,
+                        dataType: 'bool',
+                        componentId: 'politica_form_link'
+                    }, '*');
+                });
+            </script>
+            """
+            st.components.v1.html(js_code, height=0)
             
             # Checkbox de confirmação
             aceite_marketing = st.checkbox("Desejo receber atualizações e novidades por email")
@@ -204,10 +260,15 @@ def main():
     <div class="footer-custom">
         &copy; 2025 Planner Organizer | 
         <a href="#" onclick="document.dispatchEvent(new CustomEvent('show_termos')); return false;">Termos de Uso</a> | 
+        <a href="#" onclick="document.dispatchEvent(new CustomEvent('show_politica')); return false;">Política de Privacidade</a> | 
         <a href="mailto:contato@plannerorganizer.com.br">Contato</a>
     </div>
     """
     st.markdown(footer_html, unsafe_allow_html=True)
+    
+    # Detector para política de privacidade no rodapé
+    if st.checkbox("", key="politica_link", label_visibility="collapsed"):
+        show_politica()
 
 if __name__ == "__main__":
     main()
