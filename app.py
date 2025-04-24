@@ -1018,13 +1018,97 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
     """
     st.markdown(footer_html, unsafe_allow_html=True)
     
-    # Detector para política de privacidade
-    if st.checkbox("", key="politica_link", label_visibility="collapsed"):
-        show_politica()
+    # Estado para controlar os links do rodapé
+    # Estas variáveis de sessão são atualizadas pelo JavaScript quando os links são clicados
+    if "termos_link_clicked" not in st.session_state:
+        st.session_state.termos_link_clicked = False
+        
+    if "politica_link_clicked" not in st.session_state:
+        st.session_state.politica_link_clicked = False
     
-    # Componente invisível para capturar cliques nos termos
-    if st.checkbox("", key="termos_link", label_visibility="collapsed"):
+    # Quando qualquer um dos links é clicado, executamos a função correspondente
+    if st.session_state.termos_link_clicked:
+        st.session_state.termos_link_clicked = False  # Resetamos o estado
         show_termos()
+        
+    if st.session_state.politica_link_clicked:
+        st.session_state.politica_link_clicked = False  # Resetamos o estado
+        show_politica()
+        
+    # Detector de cliques nos links via JavaScript sem usar checkboxes
+    js_code = """
+    <script>
+        // Função para detectar cliques nos links
+        document.addEventListener('show_termos', function() {
+            window.parent.postMessage(
+                {type: 'streamlit:custom', name: 'show_termos_clicked'}, 
+                '*'
+            );
+        });
+        
+        document.addEventListener('show_politica', function() {
+            window.parent.postMessage(
+                {type: 'streamlit:custom', name: 'show_politica_clicked'}, 
+                '*'
+            );
+        });
+    </script>
+    """
+    st.components.v1.html(js_code, height=0)
+    
+    # Componente para responder aos eventos personalizados
+    components_js = """
+    <script>
+    const sendBackData = (data) => {
+        const streamlitDoc = window.parent.document;
+        const streamlitRerun = streamlitDoc.querySelector('button[kind=primaryFormSubmit]');
+        
+        if (data.name === 'show_termos_clicked') {
+            // Definir state de termos clicado
+            window.parent.postMessage(
+                {
+                    type: 'streamlit:setComponentValue',
+                    value: true,
+                    dataType: 'bool',
+                    key: 'termos_link_clicked'
+                },
+                '*'
+            );
+            
+            // Forçar rerun
+            if (streamlitRerun) {
+                streamlitRerun.click();
+            }
+        }
+        
+        if (data.name === 'show_politica_clicked') {
+            // Definir state de política clicado
+            window.parent.postMessage(
+                {
+                    type: 'streamlit:setComponentValue',
+                    value: true,
+                    dataType: 'bool',
+                    key: 'politica_link_clicked'
+                },
+                '*'
+            );
+            
+            // Forçar rerun
+            if (streamlitRerun) {
+                streamlitRerun.click();
+            }
+        }
+    };
+
+    // Ouvir eventos personalizados
+    window.addEventListener('message', function(event) {
+        if (event.data.type === 'streamlit:custom') {
+            sendBackData(event.data);
+        }
+    });
+    </script>
+    """
+    st.components.v1.html(components_js, height=0)
     
     # Botão para download dos ícones do sistema
     try:
