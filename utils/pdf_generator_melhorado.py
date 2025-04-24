@@ -314,10 +314,10 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         y_rodape -= 12
         c.drawCentredString(width/2, y_rodape, f"{perfil.get('telefone', '(11) 98765-4321')} | www.plannerorganizer.com.br")
         
-        # Data de geração pequena no rodapé com timestamp explícito
-        from datetime import datetime
-        agora = datetime.now()
-        # Usar hora em timestamp explícito para evitar problemas de timezone
+        # Data de geração pequena no rodapé com horário de Brasília (UTC-3)
+        from datetime import datetime, timedelta
+        agora = datetime.now() - timedelta(hours=3)  # Ajustando para UTC-3 (Brasília)
+        # Usar horário do Brasil para o timestamp
         c.setFont("Helvetica", 7)
         c.drawCentredString(width/2, 5, f"Relatório gerado em {agora.strftime('%d/%m/%Y às %H:%M')}")
         
@@ -574,7 +574,9 @@ def gerar_pdf_cliente_melhorado(proposta, cliente, acrescimos, filename):
             alignment=1  # Centro
         )
         
-        story.append(Paragraph(f"Local e data: ________________________, _____ de _______________ de {datetime.now().year}", date_style))
+        from datetime import datetime, timedelta
+        agora = datetime.now() - timedelta(hours=3)  # Ajustando para UTC-3 (Brasília)
+        story.append(Paragraph(f"Local e data: ________________________, _____ de _______________ de {agora.year}", date_style))
         
         # Rodapé com dados de contato
         story.append(Spacer(1, 40))
@@ -668,7 +670,9 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         # Data
         c.setFillColor(cinza_medio)
         c.setFont("Helvetica", 10)
-        c.drawString(30, height - 70, f"Data: {datetime.now().strftime('%d/%m/%Y')}")
+        from datetime import datetime, timedelta
+        agora = datetime.now() - timedelta(hours=3)  # Ajustando para UTC-3 (Brasília)
+        c.drawString(30, height - 70, f"Data: {agora.strftime('%d/%m/%Y')}")
         
         # Informações da Proposta
         y = height - 100
