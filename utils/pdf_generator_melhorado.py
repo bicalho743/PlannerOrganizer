@@ -102,17 +102,17 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
                 prazo_str = f"{dias} dias"
         c.drawString(40, y, f"Prazo de Entrega: {prazo_str}")
         
-        # Bloco de investimento
+        # Bloco de investimento e descrição - redesenhado para ter apenas um título
         y -= 40
         
         # Fundo do bloco de investimento
         c.setFillColor(azul_claro)
         c.rect(30, y - 40, width - 60, 60, fill=True, stroke=0)
         
-        # Título "Investimento"
+        # Título único "Serviço e Investimento"
         c.setFillColor(azul_escuro)
         c.setFont("Helvetica-Bold", 12)
-        c.drawString(40, y + 5, "Investimento")
+        c.drawString(40, y + 5, "Serviço e Investimento")
         
         # Processar a descrição para exibir de forma organizada
         c.setFont("Helvetica-Bold", 11)
@@ -120,7 +120,7 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         
         # Adicionar um retângulo de fundo para a descrição
         c.setFillColor(azul_destaque)  # Usar o azul claro para destacar a área de descrição
-        desc_box_height = 70  # Altura fixa para a caixa de descrição (aumentada)
+        desc_box_height = 70  # Altura fixa para a caixa de descrição
         c.rect(40, y - 20 - desc_box_height, width - 80, desc_box_height, fill=True, stroke=0)
         
         # Adicionar borda fina em cor mais escura para melhorar o destaque visual
@@ -139,7 +139,8 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         import textwrap
         max_chars_per_line = 80  # Ajustar conforme necessário para caber na página
         
-        # Primeiro, quebrar por quebras de linha explícitas
+        # Primeiro, quebrar por quebras de linha explícitas e substituir qualquer caractere estranho
+        descricao_text = descricao_text.replace("•", "-")  # Substituir bullets por hífens
         paragrafos = descricao_text.split('\n')
         
         # Depois, cada parágrafo quebrar por tamanho
@@ -149,14 +150,18 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
                 linhas_quebradas = textwrap.wrap(paragrafo.strip(), max_chars_per_line)
                 todas_linhas.extend(linhas_quebradas)
         
+        # Se não tiver nenhuma linha, adicionar um texto padrão
+        if not todas_linhas:
+            todas_linhas = ["Serviço Base"]
+            
         # Posição Y inicial para o texto
         text_y = y - 35
-        line_height = 15  # Espaçamento entre linhas (aumentado para melhor legibilidade)
+        line_height = 14  # Espaçamento entre linhas
         
         # Exibir mais linhas para acomodar textos maiores
-        max_lines = 5  # Aumentamos para 5 linhas
+        max_lines = 4  # Limitamos a 4 linhas por questão de espaço
         
-        # Calcular quantas linhas iremos mostrar (todas, se forem menos que o máximo)
+        # Calcular quantas linhas iremos mostrar
         linhas_a_mostrar = min(len(todas_linhas), max_lines)
         
         # Ajustar a posição inicial para centralizar verticalmente o texto na caixa
@@ -165,19 +170,12 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
             ajuste_y = (max_lines - linhas_a_mostrar) * line_height / 2
             text_y += ajuste_y
         
-        # Desenhar cada linha com um marcador de bullet
+        # Desenhar cada linha
         for i, linha in enumerate(todas_linhas[:max_lines]):
-            # Adicionar um pequeno círculo como marcador para cada linha
-            if i == 0:
-                # Se for a primeira linha, não precisa de marcador
-                c.drawString(50, text_y - (i * line_height), linha)
-            else:
-                c.setFillColor(azul_escuro)
-                c.circle(45, text_y - (i * line_height) + 3, 2, fill=1)  # Círculo pequeno como marcador
-                c.setFillColor(cinza_medio)  # Voltar para a cor do texto
-                c.drawString(50, text_y - (i * line_height), linha)
+            # Desenhar a linha com indentação uniforme
+            c.drawString(50, text_y - (i * line_height), linha)
             
-        # Se houver mais linhas que o limite, indicar com "..." e o número de linhas adicionais
+        # Se houver mais linhas que o limite, indicar com "..."
         if len(todas_linhas) > max_lines:
             linhas_extras = len(todas_linhas) - max_lines
             c.setFillColor(azul_escuro)
