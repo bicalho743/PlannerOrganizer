@@ -307,95 +307,10 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
             c.drawString(width/2 - 140, text_y, row[0])
             c.drawRightString(width/2 + 140, text_y, row[1])
         
-        # Seção COMPARATIVO E ANÁLISE DE MARGEM
-        y = y - 160
-        c.setFillColor(azul_escuro)
-        c.setFont("Helvetica-Bold", 13)
-        c.drawString(40, y, "COMPARATIVO E ANÁLISE DE MARGEM")
+        # Pulando para a próxima seção diretamente (removido COMPARATIVO E ANÁLISE DE MARGEM)
         
-        # Descrição da seção
-        y -= 20
-        c.setFillColor(cinza_medio)
-        c.setFont("Helvetica", 9)
-        c.drawString(40, y, "Comparação direta entre o custo total do cliente e a receita líquida da Personal, mostrando a margem de lucro")
-        y -= 12
-        c.drawString(40, y, "percentual.")
-        
-        # Tabela de comparativo
-        y -= 30
-        
-        # Desenhar tabela de comparativo
-        c.setFillColor(azul_claro)
-        c.rect(width/2 - 150, y - 100, 300, 90, fill=True, stroke=0)
-        
-        # Borda da tabela
-        c.setStrokeColor(azul_escuro)
-        c.setLineWidth(0.5)
-        c.rect(width/2 - 150, y - 100, 300, 90, fill=False, stroke=1)
-        
-        # Cabeçalhos
-        c.setFillColor(azul_escuro)
-        c.setFont("Helvetica-Bold", 10)
-        c.drawCentredString(width/2 - 100, y - 20, "Item")
-        c.drawCentredString(width/2 + 30, y - 20, "Valor")
-        c.drawCentredString(width/2 + 100, y - 20, "Avaliação")
-        
-        # Linha separadora dos cabeçalhos
-        c.line(width/2 - 150, y - 25, width/2 + 150, y - 25)
-        
-        # Determinando a avaliação da margem
-        avaliacao = "IDEAL" if margem_percentual >= 30 else ("BOA" if margem_percentual >= 20 else "ABAIXO DO IDEAL")
-        cor_avaliacao = verde_claro if margem_percentual >= 30 else (laranja_claro if margem_percentual >= 20 else vermelho_claro)
-        
-        # Dados da tabela
-        row_height = 20
-        rows = [
-            ["Custo Total do Cliente", f"R$ {custo_cliente_total:.2f}", ""],
-            ["Receita Líquida Total", f"R$ {meu_ganho:.2f}", ""],
-            ["MARGEM PERCENTUAL", f"{margem_percentual:.2f}%", avaliacao]
-        ]
-        
-        for i, row in enumerate(rows):
-            text_y = y - 40 - (i * row_height)
-            
-            # Destacar a última linha (margem percentual)
-            if i == len(rows) - 1:
-                c.setFillColor(azul_escuro)
-                c.setFont("Helvetica-Bold", 10)
-                c.rect(width/2 - 150, text_y - 5, 300, row_height, fill=False, stroke=1)
-                
-                # Adicionar cor de fundo para avaliação
-                c.setFillColor(cor_avaliacao)
-                c.rect(width/2 + 50, text_y - 5, 100, row_height, fill=True, stroke=0)
-            else:
-                c.setFillColor(cinza_medio)
-                c.setFont("Helvetica", 10)
-            
-            c.setFillColor(cinza_medio) if i < len(rows) - 1 else c.setFillColor(azul_escuro)
-            c.drawString(width/2 - 140, text_y, row[0])
-            c.drawString(width/2 + 10, text_y, row[1])
-            
-            if i == len(rows) - 1:
-                c.setFillColor(azul_escuro)
-                c.drawCentredString(width/2 + 100, text_y, row[2])
-        
-        # Texto de análise da margem
-        y = y - 120
-        c.setFillColor(azul_escuro)
-        c.setFont("Helvetica-Bold", 10)
-        
-        if margem_percentual >= 30:
-            c.drawString(40, y, f"EXCELENTE: A margem atual de {margem_percentual:.2f}% está acima do ideal de 30%. Esta proposta tem uma boa")
-            y -= 15
-            c.drawString(40, y, "lucratividade para a organização.")
-        elif margem_percentual >= 20:
-            c.drawString(40, y, f"BOA: A margem atual de {margem_percentual:.2f}% está dentro do aceitável. Considere aumentar os valores")
-            y -= 15
-            c.drawString(40, y, "em propostas futuras para atingir a margem ideal de 30%.")
-        else:
-            c.drawString(40, y, f"ATENÇÃO: A margem atual de {margem_percentual:.2f}% está abaixo do ideal. Revisar custos e valores")
-            y -= 15
-            c.drawString(40, y, "para futuras propostas semelhantes.")
+        # Ajuste de posição
+        y = y - 40
         
         # Seção Análise e Recomendações
         y -= 30
