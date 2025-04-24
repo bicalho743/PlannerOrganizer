@@ -987,26 +987,111 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
             except Exception as e:
                 st.error(f"Erro ao gerar o manual: {str(e)}")
     
-    # Verificar parâmetros de URL
-    params = st.experimental_get_query_params()
-    if 'show_termos' in params:
-        show_termos()
-        st.stop()
+    # Gerenciar o estado para os modais de termos e política
+    if "mostrar_termos" not in st.session_state:
+        st.session_state.mostrar_termos = False
+        
+    if "mostrar_politica" not in st.session_state:
+        st.session_state.mostrar_politica = False
     
-    if 'show_politica' in params:
-        show_politica()
-        st.stop()
+    # Funções para gerenciar os estados dos modais
+    def exibir_termos():
+        st.session_state.mostrar_termos = True
+        
+    def ocultar_termos():
+        st.session_state.mostrar_termos = False
+        
+    def exibir_politica():
+        st.session_state.mostrar_politica = True
+        
+    def ocultar_politica():
+        st.session_state.mostrar_politica = False
     
-    # Adicionar rodapé com links diretos
-    footer_html = """
+    # Adicionar rodapé com botões para abrir os modais
+    footer_html = f"""
     <div class="footer-custom">
         &copy; 2025 Planner Organizer | 
-        <a href="/?show_termos=true" target="_self">Termos de Uso</a> | 
-        <a href="/?show_politica=true" target="_self">Política de Privacidade</a> | 
+        <a href="#" onclick="showTerms(); return false;">Termos de Uso</a> | 
+        <a href="#" onclick="showPolicy(); return false;">Política de Privacidade</a> | 
         Contato: contato@plannerorganizer.com.br
     </div>
+    
+    <script>
+        function showTerms() {{
+            // Usar o Streamlit Component API para chamar uma função Python
+            window.parent.postMessage(
+                {{
+                    type: 'streamlit:setComponentValue',
+                    value: true,
+                    dataType: 'bool',
+                    key: 'mostrar_termos'
+                }}, 
+                '*'
+            );
+            // Forçar um rerun para exibir o modal
+            const streamlitDoc = window.parent.document;
+            const streamlitRerun = streamlitDoc.querySelector('button[kind=primaryFormSubmit]');
+            if (streamlitRerun) {{
+                streamlitRerun.click();
+            }}
+        }}
+        
+        function showPolicy() {{
+            // Usar o Streamlit Component API para chamar uma função Python
+            window.parent.postMessage(
+                {{
+                    type: 'streamlit:setComponentValue',
+                    value: true,
+                    dataType: 'bool',
+                    key: 'mostrar_politica'
+                }}, 
+                '*'
+            );
+            // Forçar um rerun para exibir o modal
+            const streamlitDoc = window.parent.document;
+            const streamlitRerun = streamlitDoc.querySelector('button[kind=primaryFormSubmit]');
+            if (streamlitRerun) {{
+                streamlitRerun.click();
+            }}
+        }}
+    </script>
     """
     st.markdown(footer_html, unsafe_allow_html=True)
+    
+    # Exibir modais conforme o estado
+    if st.session_state.mostrar_termos:
+        # Criar um modal/dialog para os termos de uso
+        with st.container():
+            st.markdown("#### Termos de Uso")
+            st.markdown("---")
+            
+            # Importamos a função do módulo
+            from pages.termos_de_uso import get_termos_conteudo
+            
+            # Exibimos o conteúdo
+            st.markdown(get_termos_conteudo(), unsafe_allow_html=True)
+            
+            # Botão para fechar
+            if st.button("Fechar", key="fechar_termos", use_container_width=True):
+                st.session_state.mostrar_termos = False
+                st.experimental_rerun()
+    
+    if st.session_state.mostrar_politica:
+        # Criar um modal/dialog para a política de privacidade
+        with st.container():
+            st.markdown("#### Política de Privacidade")
+            st.markdown("---")
+            
+            # Importamos a função do módulo
+            from pages.politica_privacidade import get_politica_conteudo
+            
+            # Exibimos o conteúdo
+            st.markdown(get_politica_conteudo(), unsafe_allow_html=True)
+            
+            # Botão para fechar
+            if st.button("Fechar", key="fechar_politica", use_container_width=True):
+                st.session_state.mostrar_politica = False
+                st.experimental_rerun()
     
     # Botão para download dos ícones do sistema
     try:

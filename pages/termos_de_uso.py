@@ -10,6 +10,54 @@ project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
+def get_termos_conteudo():
+    """Retorna o conteúdo HTML dos termos de uso"""
+    return """
+    <h1>Termos e Condições de Uso</h1>
+    
+    <p>
+    Bem-vindo ao nosso sistema. Ao utilizar esta plataforma, você concorda com os presentes Termos e Condições de Uso. 
+    Leia com atenção antes de prosseguir.
+    </p>
+    
+    <h3>1.1 Aceitação dos Termos</h3>
+    <p>
+    Ao acessar e utilizar este sistema, o usuário declara que leu, entendeu e concorda com os termos aqui descritos. 
+    Caso não concorde, deve se abster de utilizar os serviços.
+    </p>
+    
+    <h3>1.2 Uso da Plataforma</h3>
+    <p>
+    O sistema deve ser utilizado exclusivamente para fins legais e de acordo com sua finalidade. 
+    É proibido o uso indevido, cópia não autorizada, engenharia reversa, ou qualquer ação que 
+    comprometa a integridade da plataforma.
+    </p>
+    
+    <h3>1.3 Propriedade Intelectual</h3>
+    <p>
+    Todos os direitos sobre o sistema, seus códigos, design, funcionalidades e marcas são de 
+    propriedade exclusiva da empresa desenvolvedora. O uso não confere qualquer direito sobre esses ativos.
+    </p>
+    
+    <h3>1.4 Responsabilidades do Usuário</h3>
+    <p>
+    O usuário é responsável por manter seus dados de acesso em sigilo, e por toda atividade realizada com seu login. 
+    A empresa não se responsabiliza por acessos indevidos decorrentes de negligência.
+    </p>
+    
+    <h3>1.5 Suspensão e Cancelamento</h3>
+    <p>
+    Reservamo-nos o direito de suspender ou cancelar o acesso de qualquer usuário que descumpra estes termos, 
+    sem necessidade de aviso prévio.
+    </p>
+    
+    <h3>1.6 Alterações nos Termos</h3>
+    <p>
+    Estes termos poderão ser atualizados periodicamente. O uso contínuo do sistema após alterações 
+    será considerado como aceitação das novas condições.
+    </p>
+    """
+
 def show():
     """Exibe a página de termos de uso"""
     # Ocultar completamente a barra lateral
