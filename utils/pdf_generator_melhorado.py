@@ -91,14 +91,11 @@ def gerar_pdf_cliente_melhorado(proposta, cliente, acrescimos, filename):
         story.append(Paragraph(f"PROPOSTA DE SERVIÇO #{proposta['id']} - {cliente['nome']}", subtitle_style))
         story.append(Spacer(1, 20))
         
-        # Informações do Cliente e Proposta em blocos separados com estilo mais profissional
-        client_info = f"""
-        <para spaceBefore="10" spaceAfter="10" leading="14"><b>Cliente:</b> {cliente['nome']}</para>
-        <para spaceBefore="4" spaceAfter="4" leading="14"><b>Endereço:</b> {cliente.get('endereco', 'N/A')}</para>
-        <para spaceBefore="4" spaceAfter="4" leading="14"><b>Telefone:</b> {cliente.get('telefone', 'N/A')}</para>
-        <para spaceBefore="4" spaceAfter="4" leading="14"><b>Email:</b> {cliente.get('email', 'N/A')}</para>
-        """
-        story.append(Paragraph(client_info, normal_style))
+        # Informações do Cliente em parágrafos separados (mais seguro)
+        story.append(Paragraph(f"<b>Cliente:</b> {cliente['nome']}", normal_style))
+        story.append(Paragraph(f"<b>Endereço:</b> {cliente.get('endereco', 'N/A')}", normal_style))
+        story.append(Paragraph(f"<b>Telefone:</b> {cliente.get('telefone', 'N/A')}", normal_style))
+        story.append(Paragraph(f"<b>Email:</b> {cliente.get('email', 'N/A')}", normal_style))
         story.append(Spacer(1, 10))
         
         # Informações da Proposta em um bloco separado com fundo colorido
@@ -116,14 +113,11 @@ def gerar_pdf_cliente_melhorado(proposta, cliente, acrescimos, filename):
         
         proposal_date = proposta['data_proposta'].strftime('%d/%m/%Y') if proposta.get('data_proposta') else 'N/A'
         
-        proposal_info = f"""
-        <para spaceBefore="6" spaceAfter="6" leading="14"><b>Tipo de Serviço:</b> {proposta['tipo_proposta']}</para>
-        <para spaceBefore="4" spaceAfter="4" leading="14"><b>Data da Proposta:</b> {proposal_date}</para>
-        <para spaceBefore="4" spaceAfter="4" leading="14"><b>Status:</b> {proposta['status']}</para>
-        <para spaceBefore="4" spaceAfter="4" leading="14"><b>Valor Total:</b> R$ {float(proposta['valor']):.2f}</para>
-        """
-        
-        story.append(Paragraph(proposal_info, proposal_style))
+        # Informações da proposta em parágrafos separados com estilo personalizado
+        story.append(Paragraph(f"<b>Tipo de Serviço:</b> {proposta['tipo_proposta']}", proposal_style))
+        story.append(Paragraph(f"<b>Data da Proposta:</b> {proposal_date}", proposal_style))
+        story.append(Paragraph(f"<b>Status:</b> {proposta['status']}", proposal_style))
+        story.append(Paragraph(f"<b>Valor Total:</b> R$ {float(proposta['valor']):.2f}", proposal_style))
         story.append(Spacer(1, 15))
         
         # Descrição do Serviço com título destacado
@@ -196,42 +190,28 @@ def gerar_pdf_cliente_melhorado(proposta, cliente, acrescimos, filename):
         story.append(Paragraph("CONDIÇÕES DA PROPOSTA", service_title))
         story.append(Spacer(1, 10))
         
-        # Texto das condições com formatação em itens
-        conditions_text = """
-        <para spaceBefore="6" spaceAfter="6" leading="14">
-        <b>1. Pagamento:</b> O pagamento deve ser realizado conforme acordo prévio, podendo ser à vista ou parcelado, via transferência bancária, PIX ou boleto.
-        </para>
+        # Texto das condições com formatação em itens (parágrafos separados)
+        story.append(Paragraph("<b>1. Pagamento:</b> O pagamento deve ser realizado conforme acordo prévio, podendo ser à vista ou parcelado, via transferência bancária, PIX ou boleto.", normal_style))
+        story.append(Spacer(1, 6))
         
-        <para spaceBefore="6" spaceAfter="6" leading="14">
-        <b>2. Custos adicionais:</b> Despesas não previstas nesta proposta serão apresentadas para aprovação antes de sua execução.
-        </para>
+        story.append(Paragraph("<b>2. Custos adicionais:</b> Despesas não previstas nesta proposta serão apresentadas para aprovação antes de sua execução.", normal_style))
+        story.append(Spacer(1, 6))
         
-        <para spaceBefore="6" spaceAfter="6" leading="14">
-        <b>3. Documentação:</b> Os documentos produzidos durante o serviço serão entregues em formato digital ou físico conforme acordado.
-        </para>
+        story.append(Paragraph("<b>3. Documentação:</b> Os documentos produzidos durante o serviço serão entregues em formato digital ou físico conforme acordado.", normal_style))
+        story.append(Spacer(1, 6))
         
-        <para spaceBefore="6" spaceAfter="6" leading="14">
-        <b>4. Treinamento:</b> Caso seja necessário, sessões de treinamento para utilização dos sistemas organizados serão agendadas.
-        </para>
+        story.append(Paragraph("<b>4. Treinamento:</b> Caso seja necessário, sessões de treinamento para utilização dos sistemas organizados serão agendadas.", normal_style))
+        story.append(Spacer(1, 6))
         
-        <para spaceBefore="6" spaceAfter="6" leading="14">
-        <b>5. Produtos:</b> Caso a proposta inclua produtos, estes serão entregues conforme especificado nos itens da proposta.
-        </para>
-        """
-        story.append(Paragraph(conditions_text, normal_style))
+        story.append(Paragraph("<b>5. Produtos:</b> Caso a proposta inclua produtos, estes serão entregues conforme especificado nos itens da proposta.", normal_style))
         story.append(Spacer(1, 15))
         
         # Assinaturas
         story.append(Paragraph("APROVAÇÃO", service_title))
         story.append(Spacer(1, 10))
         
-        # Texto de aprovação
-        approval_text = f"""
-        <para spaceBefore="6" spaceAfter="6" leading="14">
-        Proposta válida por 30 dias a partir da data de emissão. Para formalizar sua aceitação, por favor, assine abaixo.
-        </para>
-        """
-        story.append(Paragraph(approval_text, normal_style))
+        # Texto de aprovação - formato simplificado
+        story.append(Paragraph("Proposta válida por 30 dias a partir da data de emissão. Para formalizar sua aceitação, por favor, assine abaixo.", normal_style))
         story.append(Spacer(1, 30))
         
         # Linhas de Assinatura
@@ -257,12 +237,15 @@ def gerar_pdf_cliente_melhorado(proposta, cliente, acrescimos, filename):
         # Data e Local
         story.append(Spacer(1, 30))
         
-        date_text = f"""
-        <para alignment="center">
-        Local e data: ________________________, _____ de _______________ de {datetime.now().year}
-        </para>
-        """
-        story.append(Paragraph(date_text, normal_style))
+        # Estilo centrado para a data
+        date_style = ParagraphStyle(
+            'DateStyle',
+            parent=styles['Normal'],
+            fontSize=10,
+            alignment=1  # Centro
+        )
+        
+        story.append(Paragraph(f"Local e data: ________________________, _____ de _______________ de {datetime.now().year}", date_style))
         
         # Rodapé com dados de contato
         story.append(Spacer(1, 40))
@@ -271,17 +254,25 @@ def gerar_pdf_cliente_melhorado(proposta, cliente, acrescimos, filename):
             'FooterStyle',
             parent=styles['Normal'],
             fontSize=8,
-            alignment=1,
+            alignment=1,  # Centro
             textColor=colors.HexColor("#1E366F")
         )
         
-        footer_text = f"""
-        <para>
-        {perfil.get('empresa', 'Planner Organizer')} | 
-        Tel: {perfil.get('telefone', '')} | 
-        Email: {perfil.get('email', '')}
-        </para>
-        """
+        company = perfil.get('empresa', 'Planner Organizer')
+        phone = perfil.get('telefone', '')
+        email = perfil.get('email', '')
+        
+        # Montar texto do rodapé conforme dados disponíveis
+        footer_parts = []
+        if company:
+            footer_parts.append(company)
+        if phone:
+            footer_parts.append(f"Tel: {phone}")
+        if email:
+            footer_parts.append(f"Email: {email}")
+            
+        footer_text = " | ".join(footer_parts)
+        
         story.append(Paragraph(footer_text, footer_style))
         
         # Gerar PDF
