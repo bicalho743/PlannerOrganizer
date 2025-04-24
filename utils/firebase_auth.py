@@ -118,15 +118,21 @@ class FirebaseAuth:
         except Exception as e:
             error_msg = str(e)
             # Verificar tipo de erro para mensagem mais amigável
-            if "INVALID_PASSWORD" in error_msg:
-                error_msg = "Senha incorreta."
-            elif "EMAIL_NOT_FOUND" in error_msg:
+            if "INVALID_PASSWORD" in error_msg or "INVALID_LOGIN_CREDENTIALS" in error_msg:
+                error_msg = "Senha incorreta ou credenciais inválidas."
+            elif "EMAIL_NOT_FOUND" in error_msg or "USER_NOT_FOUND" in error_msg:
                 error_msg = "Email não cadastrado."
             elif "INVALID_EMAIL" in error_msg:
                 error_msg = "Formato de email inválido."
             elif "TOO_MANY_ATTEMPTS_TRY_LATER" in error_msg:
                 error_msg = "Muitas tentativas. Tente novamente mais tarde."
+            elif "USER_DISABLED" in error_msg:
+                error_msg = "Esta conta foi desativada. Entre em contato com o suporte."
             
+            # Registrar apenas o erro técnico para logs, não para o usuário
+            print(f"Erro de autenticação (técnico): {str(e)}")
+            
+            # Retornar apenas mensagem amigável para o usuário
             return {'success': False, 'error': error_msg}
     
     def register(self, email, password, name=""):
@@ -168,7 +174,13 @@ class FirebaseAuth:
                 error_msg = "A senha deve ter pelo menos 6 caracteres."
             elif "INVALID_EMAIL" in error_msg:
                 error_msg = "Formato de email inválido."
+            elif "OPERATION_NOT_ALLOWED" in error_msg:
+                error_msg = "O registro com email/senha está desativado temporariamente."
             
+            # Registrar erro técnico apenas nos logs
+            print(f"Erro ao registrar usuário (técnico): {str(e)}")
+            
+            # Retornar apenas mensagem amigável para o usuário
             return {'success': False, 'error': error_msg}
     
     def logout(self):
@@ -232,7 +244,8 @@ class FirebaseAuth:
             return {'success': True, 'message': 'Email de redefinição enviado. Verifique sua caixa de entrada e pasta de spam.'}
         except Exception as e:
             error_msg = str(e)
-            print(f"Exceção ao enviar email de redefinição: {error_msg}")
+            # Registrar erro técnico apenas nos logs
+            print(f"Exceção ao enviar email de redefinição (técnico): {error_msg}")
             
             # Verificar tipo de erro para mensagem mais amigável
             if "EMAIL_NOT_FOUND" in error_msg:
@@ -243,6 +256,11 @@ class FirebaseAuth:
                 error_msg = "Muitas tentativas. Tente novamente mais tarde."
             elif "USER_DISABLED" in error_msg:
                 error_msg = "Esta conta foi desativada. Entre em contato com o suporte."
+            elif "INVALID_CONTINUE_URI" in error_msg or "MISSING_CONTINUE_URI" in error_msg:
+                error_msg = "Erro no sistema de redefinição. Entre em contato com o suporte."
+            else:
+                # Mensagem genérica para outros erros
+                error_msg = "Não foi possível enviar o email de redefinição. Tente novamente mais tarde."
                 
             return {'success': False, 'error': error_msg}
     

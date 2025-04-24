@@ -237,11 +237,46 @@ def main():
         submit = st.form_submit_button("Entrar", use_container_width=True)
         
         if submit:
+            # Credenciais de demonstração para testes
             if username.lower() == "admin" and password == "admin":
                 st.session_state.authenticated = True
+                st.session_state.usuario = {
+                    'email': 'admin@plannerorganizer.com',
+                    'nome': 'Administrador',
+                    'role': 'admin',
+                    'telefone': '',
+                    'empresa': 'Planner Organizer'
+                }
                 st.rerun()
             else:
-                st.error("Usuário ou senha incorretos")
+                # Autenticação Firebase com tratamento de erros
+                try:
+                    from utils.firebase_auth import firebase_auth
+                    
+                    # Fazer login usando Firebase
+                    result = firebase_auth.login(username, password)
+                    
+                    if result["success"]:
+                        st.session_state.authenticated = True
+                        st.rerun()
+                    else:
+                        # Mostrar mensagem de erro amigável
+                        error_message = result.get("error", "")
+                        # Mensagens personalizadas para cada tipo de erro
+                        if "INVALID_PASSWORD" in error_message or "INVALID_LOGIN_CREDENTIALS" in error_message:
+                            st.error("Senha incorreta. Por favor, verifique suas credenciais.")
+                        elif "EMAIL_NOT_FOUND" in error_message or "USER_NOT_FOUND" in error_message:
+                            st.error("Usuário não encontrado. Verifique o email ou crie uma nova conta.")
+                        elif "TOO_MANY_ATTEMPTS_TRY_LATER" in error_message:
+                            st.error("Muitas tentativas incorretas. Por favor, tente novamente mais tarde.")
+                        elif "USER_DISABLED" in error_message:
+                            st.error("Esta conta foi desativada. Entre em contato com o suporte.")
+                        else:
+                            # Mensagem genérica para outros erros
+                            st.error("Erro de autenticação. Verifique suas credenciais.")
+                except Exception as e:
+                    # Em caso de erro no próprio sistema de autenticação
+                    st.error("Sistema de autenticação indisponível no momento. Tente novamente mais tarde.")
     
     # Usando componente para capturar clique nos termos
     if st.checkbox("", key="termos_link", label_visibility="collapsed"):
