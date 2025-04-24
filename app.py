@@ -104,10 +104,10 @@ if not st.session_state.authenticated:
     """, unsafe_allow_html=True)
     
     # Verificar se estamos mostrando termos de uso ou política de privacidade
-    query_params = st.experimental_get_query_params()
+    query_params = st.query_params
     
     # Verificar os parâmetros de consulta para os documentos legais
-    if "show_termos" in query_params and query_params["show_termos"] == ["true"]:
+    if "show_termos" in query_params and query_params["show_termos"] == "true":
         try:
             from pages.termos_de_uso import show
             show()
@@ -115,7 +115,7 @@ if not st.session_state.authenticated:
         except ImportError as e:
             st.error(f"Não foi possível carregar os termos de uso: {e}")
     
-    elif "show_politica" in query_params and query_params["show_politica"] == ["true"]:
+    elif "show_politica" in query_params and query_params["show_politica"] == "true":
         try:
             from pages.politica_privacidade import show
             show()
