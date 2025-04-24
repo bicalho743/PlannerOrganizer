@@ -864,10 +864,67 @@ st.markdown(f"""
         background-color: #F5F7FA;
         padding: 0.75rem;
     }}
+    
+    /* Estilização dos botões do menu principal para padronização */
+    .sidebar button[data-testid="baseButton-secondary"] {{
+        margin-top: 5px !important;
+        margin-bottom: 5px !important;
+        padding: 10px 15px !important;
+        background-color: #f5f7fa !important;
+        border: 1px solid #e0e4e8 !important;
+        border-radius: 8px !important;
+        font-size: 0.95rem !important;
+        font-weight: 500 !important;
+        color: #1E366F !important;
+        transition: all 0.2s ease !important;
+    }}
+    
+    /* Botão selecionado/ativo */
+    .sidebar button[data-testid="baseButton-secondary"].menu-active {{
+        background-color: #E3F2FD !important;
+        border-color: #1E366F !important;
+        box-shadow: 0 2px 5px rgba(30, 54, 111, 0.15) !important;
+    }}
+    
+    /* Hover dos botões do menu */
+    .sidebar button[data-testid="baseButton-secondary"]:hover {{
+        background-color: #E3F2FD !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 8px rgba(30, 54, 111, 0.15) !important;
+    }}
+    
+    /* Container dos botões com padding reduzido */
+    .nav-buttons {{
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }}
+    
+    /* Ajustar espaço entre a barra lateral e o conteúdo principal */
+    [data-testid="stSidebar"] {{
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }}
+    
+    /* Reduzir espaço entre os itens da barra lateral */
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] > div {{
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+        gap: 0.5rem !important;
+    }}
     </style>
 """, unsafe_allow_html=True)
 
 # Sem título na barra lateral - removido conforme solicitação
+
+# CSS para ajustar a barra lateral mais próxima do topo e padronizar menus
+st.sidebar.markdown("""
+<style>
+section[data-testid="stSidebar"] > div {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # Container dos botões com fundo escuro
 st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
@@ -886,8 +943,30 @@ MENU_PRINCIPAL = {
     "📈 Relatórios": "Relatórios"
 }
 
-# Criação dos botões do menu principal
+# Criação dos botões do menu principal com estilização personalizada
 for label, page in MENU_PRINCIPAL.items():
+    # Verificar se este é o botão da página atual para destacá-lo
+    is_active = st.session_state.current_page == page
+    
+    # Aplicar classe personalizada para o botão ativo usando JavaScript
+    if is_active:
+        # Adicionar código JavaScript para adicionar classe ao botão após ele ser renderizado
+        button_id = f"main_menu_{page.lower()}"
+        st.sidebar.markdown(f"""
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {{
+                // Aguardar até que o elemento seja renderizado
+                setTimeout(function() {{
+                    const button = document.querySelector('[data-testid="stButton"] button[kind="secondary"][data-baseweb="button"][aria-keyshortcuts="{button_id}"]');
+                    if (button) {{
+                        button.classList.add('menu-active');
+                    }}
+                }}, 100);
+            }});
+        </script>
+        """, unsafe_allow_html=True)
+    
+    # Renderizar o botão normalmente
     if st.sidebar.button(label, key=f"main_menu_{page.lower()}", use_container_width=True):
         st.session_state.current_page = page
         st.rerun()

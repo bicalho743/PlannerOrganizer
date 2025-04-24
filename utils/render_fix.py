@@ -9,6 +9,7 @@ import streamlit as st
 def inject_render_compatibility_fix():
     """
     Injeta script JavaScript para corrigir problemas de carregamento de módulos no Render
+    e aplicar melhorias visuais em elementos da interface
     
     Esta função deve ser chamada no início do app.py antes de qualquer outro código
     """
@@ -252,6 +253,74 @@ def inject_render_compatibility_fix():
         });
 
         logDebug('Sistema de correção de importação de módulos inicializado');
+        
+        // Script para melhorias visuais da interface
+        document.addEventListener('DOMContentLoaded', function() {
+            // Definir um intervalo para manipulação do DOM após o carregamento completo
+            const interfaceInterval = setInterval(function() {
+                // Encontrar todos os botões da barra lateral
+                const sidebarButtons = document.querySelectorAll('[data-testid="stSidebar"] [data-testid="stButton"] button[kind="secondary"]');
+                
+                if (sidebarButtons && sidebarButtons.length > 0) {
+                    logDebug(`Encontrados ${sidebarButtons.length} botões do menu para estilizar`);
+                    
+                    // Padronizar espaçamento e estilo dos botões
+                    sidebarButtons.forEach(button => {
+                        // Ajustes de estilo
+                        button.style.marginTop = '5px';
+                        button.style.marginBottom = '5px';
+                        button.style.padding = '10px 15px';
+                        button.style.backgroundColor = '#f5f7fa';
+                        button.style.border = '1px solid #e0e4e8';
+                        button.style.borderRadius = '8px';
+                        button.style.fontSize = '0.95rem';
+                        button.style.fontWeight = '500';
+                        button.style.color = '#1E366F';
+                        button.style.transition = 'all 0.2s ease';
+                        
+                        // Adicionar evento hover
+                        button.addEventListener('mouseenter', function() {
+                            this.style.backgroundColor = '#E3F2FD';
+                            this.style.transform = 'translateY(-2px)';
+                            this.style.boxShadow = '0 4px 8px rgba(30, 54, 111, 0.15)';
+                        });
+                        
+                        button.addEventListener('mouseleave', function() {
+                            // Verificar se o botão está ativo
+                            if (!this.classList.contains('menu-active')) {
+                                this.style.backgroundColor = '#f5f7fa';
+                                this.style.transform = 'translateY(0)';
+                                this.style.boxShadow = 'none';
+                            } else {
+                                this.style.backgroundColor = '#E3F2FD';
+                                this.style.transform = 'translateY(0)';
+                                this.style.boxShadow = '0 2px 5px rgba(30, 54, 111, 0.15)';
+                            }
+                        });
+                    });
+                    
+                    // Reduzir espaçamento no topo da sidebar
+                    const sidebar = document.querySelector('[data-testid="stSidebar"]');
+                    if (sidebar) {
+                        const sidebarContent = sidebar.querySelector('[data-testid="stVerticalBlock"]');
+                        if (sidebarContent) {
+                            sidebarContent.style.paddingTop = '0';
+                            sidebarContent.style.marginTop = '0';
+                        }
+                    }
+                    
+                    // Limpar intervalo após sucesso
+                    clearInterval(interfaceInterval);
+                    logDebug('Estilização da interface aplicada com sucesso');
+                }
+            }, 500);
+            
+            // Definir timeout máximo para evitar loop infinito
+            setTimeout(function() {
+                clearInterval(interfaceInterval);
+                logDebug('Timeout da estilização da interface');
+            }, 10000);
+        });
     </script>
     """
     
