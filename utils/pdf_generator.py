@@ -229,12 +229,41 @@ def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
         story.append(Paragraph("2. Para quaisquer dúvidas sobre os serviços, entre em contato conosco.", styles["Normal"]))
         story.append(Paragraph("3. Agradecemos a confiança em nossos serviços.", styles["Normal"]))
 
-        # Informações da Empresa
+        # Informações da Empresa (Personalizadas com dados do usuário logado)
         story.append(Spacer(1, 30))
-        story.append(Paragraph("Planner Organizer", styles["Heading4"]))
-        story.append(Paragraph("contato@plannerorganizer.com.br", styles["Normal"]))
-        story.append(Paragraph("(11) 98765-4321", styles["Normal"]))
-        story.append(Paragraph("www.plannerorganizer.com.br", styles["Normal"]))
+        
+        # Obter informações do usuário logado da sessão do Streamlit
+        import streamlit as st
+        
+        nome_empresa = "Planner Organizer"
+        email_contato = "contato@plannerorganizer.com.br"
+        telefone_contato = "(11) 98765-4321"
+        website = "www.plannerorganizer.com.br"
+        
+        # Usar informações do usuário logado, se disponíveis
+        if "usuario" in st.session_state and st.session_state.usuario:
+            usuario = st.session_state.usuario
+            
+            # Obter nome do usuário ou empresa
+            if isinstance(usuario, dict):
+                if usuario.get("empresa"):
+                    nome_empresa = usuario.get("empresa")
+                elif usuario.get("nome"):
+                    nome_empresa = usuario.get("nome")
+                
+                # Obter email do usuário
+                if usuario.get("email"):
+                    email_contato = usuario.get("email")
+                    
+                # Obter telefone do usuário
+                if usuario.get("telefone"):
+                    telefone_contato = usuario.get("telefone")
+        
+        # Adicionar informações personalizadas ao PDF
+        story.append(Paragraph(nome_empresa, styles["Heading4"]))
+        story.append(Paragraph(email_contato, styles["Normal"]))
+        story.append(Paragraph(telefone_contato, styles["Normal"]))
+        story.append(Paragraph(website, styles["Normal"]))
 
         # Gerar PDF
         doc.build(story)
@@ -873,7 +902,43 @@ mostrando a margem de lucro percentual.",
         story.append(Paragraph("3. Custos com fornecedores são normalmente repassados ao cliente.", styles["Normal"]))
 
         # Data e responsável
-        story.append(Spacer(1, 50))
+        story.append(Spacer(1, 30))
+        
+        # Informações da Empresa (Personalizadas com dados do usuário logado)
+        import streamlit as st
+        
+        nome_empresa = "Planner Organizer"
+        email_contato = "contato@plannerorganizer.com.br"
+        telefone_contato = "(11) 98765-4321"
+        website = "www.plannerorganizer.com.br"
+        
+        # Usar informações do usuário logado, se disponíveis
+        if "usuario" in st.session_state and st.session_state.usuario:
+            usuario = st.session_state.usuario
+            
+            # Obter nome do usuário ou empresa
+            if isinstance(usuario, dict):
+                if usuario.get("empresa"):
+                    nome_empresa = usuario.get("empresa")
+                elif usuario.get("nome"):
+                    nome_empresa = usuario.get("nome")
+                
+                # Obter email do usuário
+                if usuario.get("email"):
+                    email_contato = usuario.get("email")
+                    
+                # Obter telefone do usuário
+                if usuario.get("telefone"):
+                    telefone_contato = usuario.get("telefone")
+        
+        # Adicionar informações personalizadas ao PDF
+        story.append(Paragraph(nome_empresa, styles["Heading4"]))
+        story.append(Paragraph(email_contato, styles["Normal"]))
+        story.append(Paragraph(telefone_contato, styles["Normal"]))
+        story.append(Paragraph(website, styles["Normal"]))
+        
+        # Data de geração
+        story.append(Spacer(1, 20))
         story.append(Paragraph(f"Relatório gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')}", 
                             ParagraphStyle('DataGeracao', fontSize=8, alignment=1)))
 
@@ -1059,6 +1124,42 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
         story.append(Paragraph("2. Os valores apresentados incluem todos os custos e acréscimos.", styles["Normal"]))
         story.append(Paragraph("3. Valores a receber incluem base e serviços de organização.", styles["Normal"]))
         story.append(Paragraph("5. Valores a pagar a lojas/fornecedores são responsabilidade do cliente.", styles["Normal"]))
+
+        # Informações da Empresa (Personalizadas com dados do usuário logado)
+        story.append(Spacer(1, 30))
+        
+        # Obter informações do usuário logado da sessão do Streamlit
+        import streamlit as st
+        
+        nome_empresa = "Planner Organizer"
+        email_contato = "contato@plannerorganizer.com.br"
+        telefone_contato = "(11) 98765-4321"
+        website = "www.plannerorganizer.com.br"
+        
+        # Usar informações do usuário logado, se disponíveis
+        if "usuario" in st.session_state and st.session_state.usuario:
+            usuario = st.session_state.usuario
+            
+            # Obter nome do usuário ou empresa
+            if isinstance(usuario, dict):
+                if usuario.get("empresa"):
+                    nome_empresa = usuario.get("empresa")
+                elif usuario.get("nome"):
+                    nome_empresa = usuario.get("nome")
+                
+                # Obter email do usuário
+                if usuario.get("email"):
+                    email_contato = usuario.get("email")
+                    
+                # Obter telefone do usuário
+                if usuario.get("telefone"):
+                    telefone_contato = usuario.get("telefone")
+        
+        # Adicionar informações personalizadas ao PDF
+        story.append(Paragraph(nome_empresa, styles["Heading4"]))
+        story.append(Paragraph(email_contato, styles["Normal"]))
+        story.append(Paragraph(telefone_contato, styles["Normal"]))
+        story.append(Paragraph(website, styles["Normal"]))
 
         # Gerar PDF
         doc.build(story)

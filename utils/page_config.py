@@ -58,15 +58,45 @@ def apply_page_header():
         margin-bottom: 1rem !important;
         font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     }
+    
+    /* Estilo para o nome do usuário no canto superior direito */
+    .user-welcome {
+        position: absolute;
+        top: 0.5rem;
+        right: 1rem;
+        font-size: 0.85rem;
+        color: #1E366F;
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 0.3rem 0.7rem;
+        border-radius: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        z-index: 1000;
+    }
     </style>
     """
     
     # Aplicar CSS para ajustar espaçamento
     st.markdown(header_css, unsafe_allow_html=True)
     
+    # Obter nome do usuário da sessão
+    nome_usuario = "Usuário"
+    if "usuario" in st.session_state and st.session_state.usuario:
+        if isinstance(st.session_state.usuario, dict) and "nome" in st.session_state.usuario:
+            nome_usuario = st.session_state.usuario["nome"]
+        elif hasattr(st.session_state.usuario, "nome"):
+            nome_usuario = st.session_state.usuario.nome
+    
+    # Componente de "Bem-vindo(a)" no canto superior direito
+    welcome_html = f"""
+    <div class="user-welcome">
+        Bem-vindo(a), {nome_usuario}
+    </div>
+    """
+    
     # Adicionando o cabeçalho no topo da página - mais compacto
-    st.markdown("""
-    <div style="background-color: #1E366F; padding: 0.7rem; border-radius: 0.5rem; margin-bottom: 0.7rem; text-align: center;">
+    st.markdown(f"""
+    <div style="background-color: #1E366F; padding: 0.7rem; border-radius: 0.5rem; margin-bottom: 0.7rem; text-align: center; position: relative;">
         <h2 style="color: white; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; font-size: 1.5rem;">Planner Organizer</h2>
         <p style="color: #E3F2FD; margin: 0.15rem 0 0 0; padding: 0; font-size: 0.85rem; font-family: 'Poppins', sans-serif;">
             Sistema Profissional de Gestão Personal Organizer
@@ -74,6 +104,7 @@ def apply_page_header():
         <p style="color: #BBD8FF; margin: 0.3rem 0 0 0; padding: 0; font-size: 0.75rem; font-family: 'Poppins', sans-serif; font-style: italic;">
             "Transforme sua organização em resultados: gerencie propostas, clientes e finanças com precisão profissional."
         </p>
+        {welcome_html}
     </div>
     """, unsafe_allow_html=True)
 
