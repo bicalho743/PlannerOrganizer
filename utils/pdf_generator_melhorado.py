@@ -42,6 +42,10 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         cinza_medio = colors.HexColor("#5A6A85")     # textos
         azul_escuro = colors.HexColor("#1E366F")     # acentos (cabeçalho)
         azul_claro = colors.HexColor("#e9f2ff")      # destaque
+        
+        # Tons adicionais para melhorar o contraste visual
+        cinza_muito_claro = colors.HexColor("#f8f9fc")  # fundo ainda mais claro para áreas de destaque
+        azul_destaque = colors.HexColor("#d4e5fd")      # azul bem claro para seções de conteúdo
 
         # Cabeçalho
         c.setFillColor(azul_escuro)
@@ -110,31 +114,78 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         c.setFont("Helvetica-Bold", 12)
         c.drawString(40, y + 5, "Investimento")
         
-        # Processar a descrição para exibir como itens
-        descricao_itens = []
-        if proposta.get('descricao'):
-            for linha in proposta['descricao'].split('\n'):
-                linha = linha.strip()
-                if linha:
-                    descricao_itens.append(linha)
+        # Processar a descrição para exibir de forma organizada
+        c.setFont("Helvetica-Bold", 11)
+        c.drawString(40, y - 15, "Descrição do Serviço:")
         
-        # Garantir que temos pelo menos três colunas, mesmo sem itens
-        if not descricao_itens:
-            descricao_itens = ["Serviço Base"]
+        # Adicionar um retângulo de fundo para a descrição
+        c.setFillColor(azul_destaque)  # Usar o azul claro para destacar a área de descrição
+        desc_box_height = 70  # Altura fixa para a caixa de descrição (aumentada)
+        c.rect(40, y - 20 - desc_box_height, width - 80, desc_box_height, fill=True, stroke=0)
         
-        # Distribuir os itens em colunas
-        num_itens = len(descricao_itens)
-        itens_por_coluna = 1
-        num_colunas = min(3, num_itens)  # No máximo 3 colunas
+        # Adicionar borda fina em cor mais escura para melhorar o destaque visual
+        c.setStrokeColor(azul_escuro)
+        c.setLineWidth(0.5)
+        c.rect(40, y - 20 - desc_box_height, width - 80, desc_box_height, fill=False, stroke=1)
         
-        # Posições X para as colunas
-        x_pos = [40, 150, 280]
+        # Formatar e exibir a descrição de forma organizada
+        c.setFillColor(cinza_medio)
+        c.setFont("Helvetica", 10)
         
-        # Exibir os itens em colunas
-        for i in range(min(num_itens, num_colunas)):
-            c.setFillColor(cinza_medio)
-            c.setFont("Helvetica", 11)
-            c.drawString(x_pos[i], y - 15, f"• {descricao_itens[i]}")
+        # Processar o texto da descrição
+        descricao_text = proposta.get('descricao', 'Serviço Base')
+        
+        # Quebrar a descrição em linhas
+        import textwrap
+        max_chars_per_line = 80  # Ajustar conforme necessário para caber na página
+        
+        # Primeiro, quebrar por quebras de linha explícitas
+        paragrafos = descricao_text.split('\n')
+        
+        # Depois, cada parágrafo quebrar por tamanho
+        todas_linhas = []
+        for paragrafo in paragrafos:
+            if paragrafo.strip():  # Ignorar linhas vazias
+                linhas_quebradas = textwrap.wrap(paragrafo.strip(), max_chars_per_line)
+                todas_linhas.extend(linhas_quebradas)
+        
+        # Posição Y inicial para o texto
+        text_y = y - 35
+        line_height = 15  # Espaçamento entre linhas (aumentado para melhor legibilidade)
+        
+        # Exibir mais linhas para acomodar textos maiores
+        max_lines = 5  # Aumentamos para 5 linhas
+        
+        # Calcular quantas linhas iremos mostrar (todas, se forem menos que o máximo)
+        linhas_a_mostrar = min(len(todas_linhas), max_lines)
+        
+        # Ajustar a posição inicial para centralizar verticalmente o texto na caixa
+        if linhas_a_mostrar < max_lines:
+            # Se temos menos linhas que o máximo, centralizar
+            ajuste_y = (max_lines - linhas_a_mostrar) * line_height / 2
+            text_y += ajuste_y
+        
+        # Desenhar cada linha com um marcador de bullet
+        for i, linha in enumerate(todas_linhas[:max_lines]):
+            # Adicionar um pequeno círculo como marcador para cada linha
+            if i == 0:
+                # Se for a primeira linha, não precisa de marcador
+                c.drawString(50, text_y - (i * line_height), linha)
+            else:
+                c.setFillColor(azul_escuro)
+                c.circle(45, text_y - (i * line_height) + 3, 2, fill=1)  # Círculo pequeno como marcador
+                c.setFillColor(cinza_medio)  # Voltar para a cor do texto
+                c.drawString(50, text_y - (i * line_height), linha)
+            
+        # Se houver mais linhas que o limite, indicar com "..." e o número de linhas adicionais
+        if len(todas_linhas) > max_lines:
+            linhas_extras = len(todas_linhas) - max_lines
+            c.setFillColor(azul_escuro)
+            texto_mais = f"... e mais {linhas_extras} {'linha' if linhas_extras == 1 else 'linhas'}"
+            c.drawString(50, text_y - (max_lines * line_height), texto_mais)
+            
+        # Ajustar a posição Y para acomodar a caixa de descrição
+        y -= (desc_box_height + 30)
         
         # Exibir valor e status
         valor_str = f"R$ {float(proposta.get('valor', 0)):.2f}"
@@ -153,15 +204,49 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         
         # Lista de observações
         y -= 20
-        c.drawString(40, y, "1. Pagamento sinal, na reserva da data, via PIX")
-        y -= 16
-        c.drawString(40, y, "2. Os valores apresentados incluem todos os custos.")
-        y -= 16
-        c.drawString(40, y, "3. Não está incluído a organização de documentos.")
-        y -= 16
-        c.drawString(40, y, "4. No caso da proposta incluir treinamento, é necessário a presença de funcionário no período da organização")
-        y -= 16
-        c.drawString(40, y, "5. Não incluido produtos e organizadores, caso o cliente opte por adquirí-los")
+        
+        # Definir as observações padrão
+        observacoes = [
+            "1. Pagamento sinal, na reserva da data, via PIX",
+            "2. Os valores apresentados incluem todos os custos.",
+            "3. Não está incluído a organização de documentos.",
+            "4. No caso da proposta incluir treinamento, é necessário a presença de funcionário no período da organização",
+            "5. Não incluido produtos e organizadores, caso o cliente opte por adquirí-los"
+        ]
+        
+        # Função para quebrar linhas muito longas
+        import textwrap
+        max_largura_obs = 80
+        
+        # Desenhar cada observação, tratando quebras de linha para items muito longos
+        for obs in observacoes:
+            # Se a linha for muito longa, quebrar
+            if len(obs) > max_largura_obs:
+                # Obter o prefixo (número e ponto)
+                prefixo = obs.split(". ")[0] + ". "
+                
+                # Obter o texto após o prefixo
+                texto = obs[len(prefixo):]
+                
+                # Adicionar o prefixo
+                c.drawString(40, y, prefixo)
+                
+                # Quebrar o texto restante
+                linhas_quebradas = textwrap.wrap(texto, max_largura_obs)
+                
+                # Desenhar a primeira linha após o prefixo
+                c.drawString(40 + c.stringWidth(prefixo, "Helvetica", 11), y, linhas_quebradas[0])
+                
+                # Desenhar linhas adicionais, se houver
+                for i, linha in enumerate(linhas_quebradas[1:], 1):
+                    y -= 14
+                    c.drawString(45, y, linha)
+            else:
+                # Se a linha for curta, apenas desenhar
+                c.drawString(40, y, obs)
+            
+            # Avançar para a próxima observação
+            y -= 18
         
         # Adicionar informações do usuário/empresa no rodapé
         c.setFillColor(azul_escuro)
