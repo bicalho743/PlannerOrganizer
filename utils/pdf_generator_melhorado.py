@@ -9,6 +9,12 @@ import os
 import traceback
 import pandas as pd
 
+def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
+    """
+    ALIAS para compatibilidade.
+    """
+    return gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename)
+
 def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
     """
     Gera um PDF com o fechamento da proposta utilizando o novo design
