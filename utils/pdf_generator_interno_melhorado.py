@@ -56,16 +56,20 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
         c.setFillColor(azul_escuro)
         c.rect(0, height - 70, width, 70, fill=True, stroke=0)
         
-        # Título do relatório em branco sobre o fundo azul
+        # Título principal no cabeçalho
         c.setFillColor(colors.white)
         c.setFont("Helvetica-Bold", 18)
-        c.drawString(30, height - 35, f"Relatório Interno - #{proposta.get('id', 'N/A')} - {cliente.get('nome', 'Cliente')}")
+        c.drawString(30, height - 30, "Relatório Interno")
+        
+        # Subtítulo com número da proposta e nome do cliente
+        c.setFont("Helvetica", 11)
+        c.drawString(30, height - 50, f"#{proposta.get('id', 'N/A')} - {cliente.get('nome', 'Cliente')}")
         
         # Data atual à direita no cabeçalho
         c.setFont("Helvetica", 10)
         from datetime import datetime, timedelta
         agora = datetime.now() - timedelta(hours=3)  # Ajustando para UTC-3 (Brasília)
-        c.drawRightString(width - 30, height - 35, f"Data: {agora.strftime('%d/%m/%Y')}")
+        c.drawRightString(width - 30, height - 30, f"Data: {agora.strftime('%d/%m/%Y')}")
         
         # Posição Y inicial para começar o conteúdo
         y = height - 90

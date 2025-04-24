@@ -62,17 +62,21 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         c.setFillColor(azul_principal)
         c.rect(0, height-60, width, 60, fill=True, stroke=0)
         
-        # Título no cabeçalho
+        # Título principal no cabeçalho
         c.setFillColor(colors.white)
         c.setFont("Helvetica-Bold", 18)
-        c.drawString(30, height-35, f"Relatório de Serviço - #{proposta['id']} - {cliente['nome']}")
+        c.drawString(30, height-30, "Relatório de Serviço")
+        
+        # Subtítulo com número da proposta e nome do cliente
+        c.setFont("Helvetica", 11)
+        c.drawString(30, height-50, f"#{proposta['id']} - {cliente['nome']}")
         
         # Data no canto direito
         from datetime import datetime, timedelta
         agora = datetime.now() - timedelta(hours=3)  # Ajustando para UTC-3 (Brasília)
         c.setFont("Helvetica", 10)
         data_str = agora.strftime('%d/%m/%Y')
-        c.drawRightString(width-30, height-35, f"Data: {data_str}")
+        c.drawRightString(width-30, height-30, f"Data: {data_str}")
         
         # ===== INFORMAÇÕES DO CLIENTE =====
         y = height - 100  # Começando abaixo do cabeçalho
@@ -684,14 +688,18 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         c.rect(0, height - 60, width, 60, fill=True, stroke=0)
         c.setFillColor(colors.white)
         c.setFont("Helvetica-Bold", 18)
-        c.drawString(30, height - 35, f"Proposta de Serviço - #{proposta.get('id', 'N/A')} - {cliente.get('nome', 'Cliente')}")
+        c.drawString(30, height - 30, "Proposta de Serviço")
+        
+        # Subtítulo com número da proposta e nome do cliente
+        c.setFont("Helvetica", 11)
+        c.drawString(30, height - 50, f"#{proposta.get('id', 'N/A')} - {cliente.get('nome', 'Cliente')}")
         
         # Data no canto direito (agora dentro da faixa azul)
         c.setFillColor(colors.white)
         c.setFont("Helvetica", 10)
         from datetime import datetime, timedelta
         agora = datetime.now() - timedelta(hours=3)  # Ajustando para UTC-3 (Brasília)
-        c.drawRightString(width - 30, height - 35, f"Data: {agora.strftime('%d/%m/%Y')}")
+        c.drawRightString(width - 30, height - 30, f"Data: {agora.strftime('%d/%m/%Y')}")
         
         # Informações da Proposta
         y = height - 100
