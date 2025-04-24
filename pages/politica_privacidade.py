@@ -23,58 +23,63 @@ def show():
     st.title("Política de Privacidade")
     
     st.markdown("""
-    Agradecemos por utilizar o Sistema Planner Organizer. A sua privacidade é importante para nós. 
-    Esta Política de Privacidade descreve como suas informações pessoais são coletadas, usadas e compartilhadas.
+    Esta Política de Privacidade descreve como tratamos os dados pessoais dos usuários da nossa plataforma, 
+    em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 - LGPD).
     """)
     
-    st.subheader("1. Informações que Coletamos")
+    st.header("1. Coleta de Dados")
     st.write("""
-    Coletamos informações que você nos fornece diretamente:
-    - Informações de cadastro: nome, e-mail, telefone, credenciais de login
-    - Informações de uso: dados sobre como você utiliza nosso sistema
-    - Informações de pagamento: quando aplicável para transações financeiras
+    Coletamos dados como nome, e-mail, telefone e IP no momento do cadastro ou uso da plataforma. 
+    Também podem ser coletados dados de navegação, para fins analíticos.
     """)
     
-    st.subheader("2. Como Usamos Suas Informações")
+    st.header("2. Finalidade do Uso")
     st.write("""
-    Utilizamos suas informações para:
-    - Fornecer, manter e melhorar nossos serviços
-    - Processar transações e enviar notificações relacionadas
-    - Enviar comunicações técnicas, atualizações e mensagens de suporte
-    - Responder a seus comentários e perguntas
-    - Personalizar sua experiência no sistema
+    Utilizamos os dados para:
+    - Autenticação e acesso à conta
+    - Comunicação com o usuário (e-mails transacionais ou promocionais)
+    - Aprimoramento da experiência no sistema
+    - Fins estatísticos e de segurança
     """)
     
-    st.subheader("3. Compartilhamento de Informações")
+    st.header("3. Compartilhamento de Dados")
     st.write("""
-    Não vendemos suas informações pessoais a terceiros. Podemos compartilhar informações nas seguintes situações:
-    - Com seu consentimento
-    - Para cumprir obrigações legais
-    - Para proteger direitos e segurança
-    - Com provedores de serviços que nos ajudam a operar o sistema
+    Os dados poderão ser compartilhados com serviços terceiros (como Firebase, Stripe ou ferramentas de e-mail) 
+    apenas quando necessário para o funcionamento do sistema. Nenhum dado é vendido ou divulgado a terceiros 
+    sem autorização.
     """)
     
-    st.subheader("4. Segurança de Dados")
+    st.header("4. Segurança da Informação")
     st.write("""
-    Implementamos medidas técnicas e organizacionais para proteger suas informações contra acesso 
-    não autorizado, perda ou alteração. No entanto, nenhum sistema é completamente seguro, 
-    e não podemos garantir a segurança absoluta de seus dados.
+    Utilizamos medidas técnicas e organizacionais para proteger seus dados contra acessos não autorizados, 
+    perda ou alteração indevida.
     """)
     
-    st.subheader("5. Seus Direitos")
+    st.header("5. Direitos do Titular")
     st.write("""
-    Você tem direito a:
-    - Acessar seus dados pessoais
-    - Corrigir informações imprecisas
-    - Solicitar a exclusão de seus dados
-    - Opor-se ao processamento de suas informações
-    - Retirar seu consentimento a qualquer momento
+    Você pode, a qualquer momento:
+    - Solicitar acesso aos seus dados
+    - Corrigir dados incorretos
+    - Solicitar exclusão
+    - Revogar consentimentos
     """)
     
-    st.subheader("6. Alterações nesta Política")
+    st.header("6. Alterações na Política de Privacidade")
     st.write("""
     Podemos atualizar esta Política de Privacidade periodicamente. Notificaremos sobre mudanças 
     significativas e obteremos seu consentimento quando necessário.
+    """)
+    
+    st.header("7. Controlador dos Dados")
+    st.write("""
+    O controlador dos seus dados pessoais é a empresa Planner Organizer, responsável pelas decisões 
+    referentes ao tratamento dos seus dados pessoais.
+    """)
+    
+    st.header("8. Contato para Questões de Privacidade")
+    st.write("""
+    Para exercer seus direitos ou esclarecer dúvidas sobre esta Política de Privacidade, 
+    entre em contato pelo e-mail: privacidade@plannerorganizer.com.br
     """)
     
     # Verificar se estamos no fluxo de criação de conta
