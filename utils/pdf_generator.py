@@ -9,8 +9,7 @@ import traceback
 
 def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
     """
-    Gera um PDF com a versão para cliente da proposta, com detalhes necessários 
-    para o cliente, sem informações financeiras internas
+    Gera um PDF com a versão para cliente da proposta, com design profissional
     
     Args:
         proposta: Dicionário com os dados da proposta
@@ -22,61 +21,156 @@ def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
         str: Caminho do arquivo PDF gerado
     """
     # Logs para debugging
-    print(f"DEBUG PDF: Gerando PDF para cliente - proposta #{proposta.get('numero', 'N/A')}")
+    print(f"DEBUG PDF: Gerando PDF para cliente - proposta #{proposta.get('id', 'N/A')}")
     print(f"DEBUG PDF: Cliente: {cliente.get('nome', 'N/A')}")
     print(f"DEBUG PDF: Filename: {filename}")
-    print(f"DEBUG PDF: Acréscimos: {len(acrescimos) if not acrescimos.empty else 0} registros")
+    print(f"DEBUG PDF: Acréscimos: {len(acrescimos) if hasattr(acrescimos, 'empty') and not acrescimos.empty else 0} registros")
     
     # Importação específica para buscar produtos da proposta
     from utils.database import Database, ProdutoOrganizador
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4
+    
     db = Database()
     
     try:
         # Certificar que o diretório existe
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         
-        # Inicializar documento
-        doc = SimpleDocTemplate(filename, pagesize=letter)
-        styles = getSampleStyleSheet()
-        story = []
-
-        # Título
-        title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Heading1'],
-            fontSize=16,
-            spaceAfter=30
-        )
-        story.append(Paragraph(f"Relatório de Serviço", title_style))
-        story.append(Paragraph(f"Proposta #{proposta['id']} - {cliente['nome']}", styles["Heading2"]))
-        story.append(Paragraph(f"{datetime.now().strftime('%d/%m/%Y')}", styles["Heading3"]))
-        story.append(Spacer(1, 12))
-
-        # Informações do Cliente
-        story.append(Paragraph("<b>Informações do Cliente</b>", styles["Heading3"]))
-        story.append(Paragraph(f"<b>Nome:</b> {cliente['nome']}", styles["Normal"]))
-        story.append(Paragraph(f"<b>Email:</b> {cliente.get('email', 'Não informado')}", styles["Normal"]))
-        story.append(Paragraph(f"<b>Telefone:</b> {cliente.get('telefone', 'Não informado')}", styles["Normal"]))
-        story.append(Spacer(1, 12))
-
-        # Informações da Proposta
-        story.append(Paragraph("<b>Informações da Proposta</b>", styles["Heading3"]))
-        story.append(Paragraph(f"<b>Tipo:</b> {proposta['tipo_proposta']}", styles["Normal"]))
-        story.append(Paragraph(f"<b>Status:</b> {proposta['status']}", styles["Normal"]))
-
+        # Approach Canvas (design profissional como no PDF de proposta)
+        c = canvas.Canvas(filename, pagesize=A4)
+        width, height = A4
+        
+        # Definir cores personalizadas
+        cinza_claro = colors.HexColor("#f5f7fa")     # fundo
+        cinza_medio = colors.HexColor("#5A6A85")     # textos
+        azul_escuro = colors.HexColor("#1E366F")     # acentos (cabeçalho)
+        azul_claro = colors.HexColor("#e9f2ff")      # destaque
+        
+        # Tons adicionais para melhorar o contraste visual
+        cinza_muito_claro = colors.HexColor("#f8f9fc")  # fundo ainda mais claro
+        azul_destaque = colors.HexColor("#d4e5fd")      # azul bem claro para seções
+        
+        # Cabeçalho
+        c.setFillColor(azul_escuro)
+        c.rect(0, height - 60, width, 60, fill=True, stroke=0)
+        c.setFillColor(colors.white)
+        c.setFont("Helvetica-Bold", 18)
+        c.drawString(30, height - 40, f"Relatório de Serviço")
+        
+        # Subtítulo com ID da proposta e cliente
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(30, height - 55, f"Proposta #{proposta.get('id', 'N/A')} - {cliente.get('nome', 'Cliente')}")
+        
+        # Data
+        c.setFillColor(cinza_medio)
+        c.setFont("Helvetica", 10)
+        c.drawString(30, height - 70, f"Data: {datetime.now().strftime('%d/%m/%Y')}")
+        
+        # Informações do Cliente - formato de cartão com fundo
+        y = height - 100
+        c.setFillColor(azul_claro)
+        c.rect(30, y - 60, width / 2 - 40, 70, fill=True, stroke=0)
+        
+        c.setFillColor(azul_escuro)
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(40, y + 5, "Informações do Cliente")
+        
+        c.setFillColor(cinza_medio)
+        c.setFont("Helvetica", 10)
+        c.drawString(40, y - 15, f"Nome: {cliente.get('nome', 'N/A')}")
+        c.drawString(40, y - 30, f"Email: {cliente.get('email', 'N/A')}")
+        c.drawString(40, y - 45, f"Telefone: {cliente.get('telefone', 'N/A')}")
+        
+        # Informações da Proposta - formato de cartão com fundo
+        c.setFillColor(azul_claro)
+        c.rect(width/2 + 10, y - 60, width / 2 - 40, 70, fill=True, stroke=0)
+        
+        c.setFillColor(azul_escuro)
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(width/2 + 20, y + 5, "Informações da Proposta")
+        
+        c.setFillColor(cinza_medio)
+        c.setFont("Helvetica", 10)
+        c.drawString(width/2 + 20, y - 15, f"Tipo: {proposta.get('tipo_proposta', 'N/A')}")
+        c.drawString(width/2 + 20, y - 30, f"Status: {proposta.get('status', 'N/A')}")
+        
         # Datas
+        data_inicio_str = "N/A"
         if proposta.get('data_inicio'):
-            story.append(Paragraph(f"<b>Data Início:</b> {proposta['data_inicio'].strftime('%d/%m/%Y')}", styles["Normal"]))
+            if hasattr(proposta['data_inicio'], 'strftime'):
+                data_inicio_str = proposta['data_inicio'].strftime('%d/%m/%Y')
+            else:
+                data_inicio_str = str(proposta['data_inicio'])
+        
+        data_fim_str = "N/A"
         if proposta.get('data_fim'):
-            story.append(Paragraph(f"<b>Data Fim:</b> {proposta['data_fim'].strftime('%d/%m/%Y')}", styles["Normal"]))
-        if proposta.get('prazo_entrega'):
-            story.append(Paragraph(f"<b>Prazo de Entrega:</b> {proposta['prazo_entrega'].strftime('%d/%m/%Y')}", styles["Normal"]))
-        story.append(Spacer(1, 12))
-
-        # Descrição da Proposta
-        story.append(Paragraph("<b>Descrição do Serviço:</b>", styles["Heading3"]))
-        story.append(Paragraph(proposta['descricao'], styles["Normal"]))
-        story.append(Spacer(1, 20))
+            if hasattr(proposta['data_fim'], 'strftime'):
+                data_fim_str = proposta['data_fim'].strftime('%d/%m/%Y')
+            else:
+                data_fim_str = str(proposta['data_fim'])
+        
+        c.drawString(width/2 + 20, y - 45, f"Período: {data_inicio_str} a {data_fim_str}")
+        
+        # Descrição do Serviço - novo design com linha separadora
+        y -= 80
+        c.setFillColor(azul_escuro)
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(40, y + 5, "Descrição do Serviço")
+        
+        # Linha separadora
+        c.setStrokeColor(azul_escuro)
+        c.setLineWidth(1)
+        c.line(40, y - 5, width - 40, y - 5)
+        
+        # Processar o texto da descrição
+        import textwrap
+        
+        # Espaço para descrição
+        y -= 20
+        c.setFillColor(cinza_medio)
+        
+        # Processar o texto da descrição
+        descricao_text = proposta.get('descricao', 'Serviço Base')
+        
+        # Substituir caracteres problemáticos e remover formatação inconsistente
+        descricao_text = descricao_text.replace("•", "- ")
+        descricao_text = descricao_text.replace("\r\n", "\n").replace("\r", "\n")
+        
+        # Separar em parágrafos
+        paragrafos = descricao_text.split('\n')
+        
+        # Depois, cada parágrafo quebrar por tamanho
+        max_chars_per_line = 85
+        todas_linhas = []
+        for paragrafo in paragrafos:
+            if paragrafo.strip():  # Ignorar linhas vazias
+                linhas_quebradas = textwrap.wrap(paragrafo.strip(), max_chars_per_line)
+                todas_linhas.extend(linhas_quebradas)
+        
+        # Se não tiver nenhuma linha, adicionar um texto padrão
+        if not todas_linhas:
+            todas_linhas = ["Serviço Base"]
+        
+        # Configurar a área de texto
+        line_height = 14
+        
+        # Desenhar as linhas (aumentado para 8 para mostrar mais do texto)
+        max_lines = 8
+        for i, linha in enumerate(todas_linhas[:max_lines]):
+            c.setFont("Helvetica", 10)
+            c.drawString(50, y - (i * line_height), linha)
+        
+        # Se houver mais linhas, indicar
+        if len(todas_linhas) > max_lines:
+            linhas_extras = len(todas_linhas) - max_lines
+            c.setFillColor(azul_escuro)
+            texto_mais = f"... e mais {linhas_extras} {'linha' if linhas_extras == 1 else 'linhas'}"
+            c.drawString(50, y - (max_lines * line_height), texto_mais)
+        
+        # Ajustar a posição Y considerando o número de linhas mostradas
+        linhas_mostradas = min(len(todas_linhas), max_lines) 
+        y -= (linhas_mostradas * line_height + 30)
 
         # Serviços Realizados
         story.append(Paragraph("<b>Serviços Realizados</b>", styles["Heading3"]))
@@ -288,11 +382,10 @@ def gerar_pdf_interno(proposta, cliente, acrescimos, filename):
     Returns:
         str: Caminho do arquivo PDF gerado
     """
-    # Logs para debugging
-    print(f"DEBUG PDF: Gerando PDF interno para proposta #{proposta.get('id', 'N/A')}")
-    print(f"DEBUG PDF: Cliente: {cliente.get('nome', 'N/A')}")
-    print(f"DEBUG PDF: Filename: {filename}")
-    print(f"DEBUG PDF: Acréscimos: {len(acrescimos) if not acrescimos.empty else 0} registros")
+    # Usar a versão melhorada com layout profissional
+    print("DEBUG: Usando o gerador de PDF interno melhorado!")
+    from utils.pdf_generator_interno_melhorado import gerar_pdf_interno_melhorado
+    return gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename)
     
     try:
         # Certificar que o diretório existe
