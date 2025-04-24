@@ -59,11 +59,13 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
         # Título do relatório em branco sobre o fundo azul
         c.setFillColor(colors.white)
         c.setFont("Helvetica-Bold", 18)
-        c.drawCentredString(width/2, height - 30, f"RELATÓRIO INTERNO - #{proposta.get('id', 'N/A')} - {cliente.get('nome', 'Cliente')}")
+        c.drawString(30, height - 35, f"Relatório Interno - #{proposta.get('id', 'N/A')} - {cliente.get('nome', 'Cliente')}")
         
         # Data atual à direita no cabeçalho
         c.setFont("Helvetica", 10)
-        c.drawRightString(width - 30, height - 50, f"{datetime.now().strftime('%d/%m/%Y')}")
+        from datetime import datetime, timedelta
+        agora = datetime.now() - timedelta(hours=3)  # Ajustando para UTC-3 (Brasília)
+        c.drawRightString(width - 30, height - 35, f"Data: {agora.strftime('%d/%m/%Y')}")
         
         # Posição Y inicial para começar o conteúdo
         y = height - 90
@@ -317,7 +319,10 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
         c.rect(0, 0, width, 30, fill=True, stroke=0)
         c.setFillColor(colors.white)
         c.setFont("Helvetica", 9)
-        c.drawCentredString(width/2, 10, f"Relatório gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')}")
+        # Usar horário do Brasil para o timestamp
+        from datetime import datetime, timedelta
+        agora = datetime.now() - timedelta(hours=3)  # Ajustando para UTC-3 (Brasília)
+        c.drawCentredString(width/2, 10, f"Relatório gerado em {agora.strftime('%d/%m/%Y às %H:%M')}")
         
         # Salvar PDF
         c.save()

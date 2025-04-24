@@ -65,11 +65,14 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         # Título no cabeçalho
         c.setFillColor(colors.white)
         c.setFont("Helvetica-Bold", 18)
-        c.drawCentredString(width/2, height-35, "RELATÓRIO DE SERVIÇO")
+        c.drawString(30, height-35, f"Relatório de Serviço - #{proposta['id']} - {cliente['nome']}")
         
-        # Número da proposta e cliente
-        c.setFont("Helvetica", 12)
-        c.drawCentredString(width/2, height-55, f"Proposta #{proposta['id']} - {cliente['nome']}")
+        # Data no canto direito
+        from datetime import datetime, timedelta
+        agora = datetime.now() - timedelta(hours=3)  # Ajustando para UTC-3 (Brasília)
+        c.setFont("Helvetica", 10)
+        data_str = agora.strftime('%d/%m/%Y')
+        c.drawRightString(width-30, height-35, f"Data: {data_str}")
         
         # ===== INFORMAÇÕES DO CLIENTE =====
         y = height - 100  # Começando abaixo do cabeçalho
@@ -681,14 +684,14 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         c.rect(0, height - 60, width, 60, fill=True, stroke=0)
         c.setFillColor(colors.white)
         c.setFont("Helvetica-Bold", 18)
-        c.drawString(30, height - 40, f"Proposta #{proposta.get('id', 'N/A')} - {cliente.get('nome', 'Cliente')}")
+        c.drawString(30, height - 35, f"Proposta de Serviço - #{proposta.get('id', 'N/A')} - {cliente.get('nome', 'Cliente')}")
         
-        # Data
-        c.setFillColor(cinza_medio)
+        # Data no canto direito (agora dentro da faixa azul)
+        c.setFillColor(colors.white)
         c.setFont("Helvetica", 10)
         from datetime import datetime, timedelta
         agora = datetime.now() - timedelta(hours=3)  # Ajustando para UTC-3 (Brasília)
-        c.drawString(30, height - 70, f"Data: {agora.strftime('%d/%m/%Y')}")
+        c.drawRightString(width - 30, height - 35, f"Data: {agora.strftime('%d/%m/%Y')}")
         
         # Informações da Proposta
         y = height - 100
