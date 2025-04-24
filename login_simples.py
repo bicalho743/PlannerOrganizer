@@ -61,6 +61,9 @@ header_html = """
     <p style="color: #E3F2FD; margin: 0.2rem 0 0 0; padding: 0; font-size: 0.9rem; font-family: 'Poppins', sans-serif;">
         Sistema Profissional de Gestão Personal Organizer
     </p>
+    <p style="color: #BBD8FF; margin: 0.5rem 0 0 0; padding: 0; font-size: 0.8rem; font-family: 'Poppins', sans-serif; font-style: italic;">
+        "Transforme sua organização em resultados: gerencie propostas, clientes e finanças com precisão profissional."
+    </p>
 </div>
 """
 st.markdown(header_html, unsafe_allow_html=True)
