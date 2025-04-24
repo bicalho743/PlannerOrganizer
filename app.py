@@ -649,6 +649,16 @@ if not st.session_state.authenticated:
                             # Se falhou no Firebase, tentar com a conta de demo
                             if email.lower() == "admin" and password == "admin":
                                 st.session_state.authenticated = True
+                                
+                                # Criar objeto de usuário para modo de demonstração
+                                st.session_state.usuario = {
+                                    'email': 'admin@plannerorganizer.com.br',
+                                    'nome': 'Administrador',
+                                    'telefone': '(11) 98765-4321',
+                                    'empresa': 'Planner Organizer',
+                                    'role': 'admin'
+                                }
+                                
                                 st.success("Login realizado com sucesso (modo demonstração)!")
                                 st.rerun()
                             else:
@@ -656,6 +666,16 @@ if not st.session_state.authenticated:
                 # Fallback para login de demo se o Firebase não estiver disponível
                 elif email.lower() == "admin" and password == "admin":
                     st.session_state.authenticated = True
+                    
+                    # Criar objeto de usuário para modo de demonstração
+                    st.session_state.usuario = {
+                        'email': 'admin@plannerorganizer.com.br',
+                        'nome': 'Administrador',
+                        'telefone': '(11) 98765-4321',
+                        'empresa': 'Planner Organizer',
+                        'role': 'admin'
+                    }
+                    
                     with st.spinner("Autenticando..."):
                         import time
                         time.sleep(1)
@@ -705,6 +725,16 @@ if not st.session_state.authenticated:
             with col3:
                 if st.button("Acesso Dev", key="dev_login_access", use_container_width=True):
                     st.session_state.authenticated = True
+                    
+                    # Criar objeto de usuário para modo de desenvolvedor
+                    st.session_state.usuario = {
+                        'email': 'dev@plannerorganizer.com.br',
+                        'nome': 'Desenvolvedor',
+                        'telefone': '(11) 99999-9999',
+                        'empresa': 'Planner Organizer',
+                        'role': 'dev'
+                    }
+                    
                     st.rerun()
     
     # Seção de marcas/clientes
