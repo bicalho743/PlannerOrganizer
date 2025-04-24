@@ -646,42 +646,87 @@ class Database:
 
     def get_propostas(self):
         def query():
-            # Join com a tabela de clientes para obter os nomes dos clientes
-            propostas_com_clientes = self.session.query(
-                Proposta, Cliente.nome.label('cliente_nome')
-            ).outerjoin(
-                Cliente, Proposta.cliente_id == Cliente.id
-            ).all()
-            
-            result = []
-            for p, cliente_nome in propostas_com_clientes:
-                try:
-                    # Garantir que todos os valores sejam do tipo correto
-                    proposta_dict = {
-                        'id': int(p.id) if p.id is not None else None,
-                        'numero': int(p.numero) if p.numero is not None else None,
-                        'cliente_id': int(p.cliente_id) if p.cliente_id is not None else None,
-                        'descricao': str(p.descricao) if p.descricao is not None else None,
-                        'valor': float(p.valor) if p.valor is not None else None,
-                        'status': str(p.status) if p.status is not None else None,
-                        'tipo_proposta': str(p.tipo_proposta) if p.tipo_proposta is not None else None,
-                        'data_inicio': p.data_inicio,
-                        'data_fim': p.data_fim,
-                        'prazo_entrega': p.prazo_entrega,
-                        'data_proposta': p.data_proposta,
-                        'data_aprovacao': p.data_aprovacao,
-                        'status_pagamento_base': str(p.status_pagamento_base) if p.status_pagamento_base is not None else None,
-                        'previsao_dias': int(p.previsao_dias) if p.previsao_dias is not None else None,
-                        'data_inicio_execucao': p.data_inicio_execucao,
-                        'status_execucao': str(p.status_execucao) if p.status_execucao is not None else None,
-                        'cliente_nome': str(cliente_nome) if cliente_nome is not None else None
-                    }
-                    result.append(proposta_dict)
-                except Exception as e:
-                    # Logar erro para depuração mas continuar processando outras propostas
-                    print(f"Erro ao processar proposta {p.id}: {str(e)}")
-            
-            return pd.DataFrame(result)
+            try:
+                # Join com a tabela de clientes para obter os nomes dos clientes
+                propostas_com_clientes = self.session.query(
+                    Proposta, Cliente.nome.label('cliente_nome')
+                ).outerjoin(
+                    Cliente, Proposta.cliente_id == Cliente.id
+                ).all()
+                
+                result = []
+                for p, cliente_nome in propostas_com_clientes:
+                    try:
+                        # Conversão robusta para tipos numéricos
+                        try:
+                            proposta_id = int(p.id) if p.id is not None else None
+                        except (ValueError, TypeError):
+                            print(f"Erro ao converter ID para int: {p.id}")
+                            proposta_id = None
+                            
+                        try:
+                            proposta_numero = int(p.numero) if p.numero is not None else None
+                        except (ValueError, TypeError):
+                            print(f"Erro ao converter numero para int: {p.numero}")
+                            proposta_numero = None
+                            
+                        try:
+                            cliente_id = int(p.cliente_id) if p.cliente_id is not None else None
+                        except (ValueError, TypeError):
+                            print(f"Erro ao converter cliente_id para int: {p.cliente_id}")
+                            cliente_id = None
+                            
+                        try:
+                            valor = float(p.valor) if p.valor is not None else 0.0
+                        except (ValueError, TypeError):
+                            print(f"Erro ao converter valor para float: {p.valor}")
+                            valor = 0.0
+                            
+                        try:
+                            previsao_dias = int(p.previsao_dias) if p.previsao_dias is not None else None
+                        except (ValueError, TypeError):
+                            print(f"Erro ao converter previsao_dias para int: {p.previsao_dias}")
+                            previsao_dias = None
+                        
+                        # Garantir que todos os valores sejam do tipo correto
+                        proposta_dict = {
+                            'id': proposta_id,
+                            'numero': proposta_numero,
+                            'cliente_id': cliente_id,
+                            'descricao': str(p.descricao) if p.descricao is not None else "",
+                            'valor': valor,
+                            'status': str(p.status) if p.status is not None else "",
+                            'tipo_proposta': str(p.tipo_proposta) if p.tipo_proposta is not None else "",
+                            'data_inicio': p.data_inicio,
+                            'data_fim': p.data_fim,
+                            'prazo_entrega': p.prazo_entrega,
+                            'data_proposta': p.data_proposta,
+                            'data_aprovacao': p.data_aprovacao,
+                            'status_pagamento_base': str(p.status_pagamento_base) if p.status_pagamento_base is not None else "",
+                            'previsao_dias': previsao_dias,
+                            'data_inicio_execucao': p.data_inicio_execucao,
+                            'status_execucao': str(p.status_execucao) if p.status_execucao is not None else "",
+                            'cliente_nome': str(cliente_nome) if cliente_nome is not None else ""
+                        }
+                        result.append(proposta_dict)
+                    except Exception as e:
+                        # Logar erro para depuração mas continuar processando outras propostas
+                        print(f"Erro ao processar proposta {getattr(p, 'id', 'desconhecido')}: {str(e)}")
+                
+                df = pd.DataFrame(result)
+                # Converter explicitamente as colunas numéricas para seus tipos corretos
+                if not df.empty:
+                    numeric_cols = ['id', 'numero', 'cliente_id', 'valor', 'previsao_dias']
+                    for col in numeric_cols:
+                        if col in df.columns:
+                            df[col] = pd.to_numeric(df[col], errors='coerce')
+                
+                return df
+            except Exception as e:
+                print(f"Erro ao recuperar propostas: {str(e)}")
+                # Retornar DataFrame vazio em caso de erro
+                return pd.DataFrame()
+        
         return self._safe_query(query)
 
     def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, 
@@ -887,92 +932,182 @@ class Database:
             dict: Dicionário com os IDs das transações criadas
         """
         def query():
-            # Buscar a proposta
-            proposta = self.session.query(Proposta).filter_by(id=proposta_id).first()
-            if not proposta:
-                raise ValueError(f"Proposta ID {proposta_id} não encontrada")
+            try:
+                # Garantir que proposta_id seja um inteiro
+                try:
+                    proposta_id_int = int(proposta_id)
+                except (ValueError, TypeError):
+                    raise ValueError(f"ID de proposta inválido: {proposta_id}")
                 
-            # Buscar o cliente da proposta
-            cliente = self.session.query(Cliente).filter_by(id=proposta.cliente_id).first()
-            if not cliente:
-                raise ValueError(f"Cliente ID {proposta.cliente_id} não encontrado")
-            
-            # Verificar se já existem transações para esta proposta
-            transacoes_existentes = self.session.query(Transacao).filter_by(
-                proposta_id=proposta_id
-            ).count()
-            
-            if transacoes_existentes > 0:
-                # Já existem transações, não criar novamente
-                return {"status": "já existem transações", "count": transacoes_existentes}
-            
-            # Criar transação de receita
-            receita_id = None
-            if proposta.valor and proposta.valor > 0:
-                receita_id = self._criar_transacao_receita(proposta, cliente)
-            
-            # Buscar acréscimos da proposta
-            acrescimos = self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).all()
-            
-            # Criar transações de despesa para cada acréscimo
-            despesa_ids = []
-            for acrescimo in acrescimos:
-                if acrescimo.valor and acrescimo.valor > 0:
-                    despesa_id = self._criar_transacao_despesa(acrescimo, proposta)
-                    despesa_ids.append(despesa_id)
-            
-            return {
-                "status": "sucesso",
-                "receita_id": receita_id,
-                "despesa_ids": despesa_ids,
-                "total_despesas": len(despesa_ids)
-            }
+                # Buscar a proposta
+                proposta = self.session.query(Proposta).filter_by(id=proposta_id_int).first()
+                if not proposta:
+                    raise ValueError(f"Proposta ID {proposta_id_int} não encontrada")
+                
+                # Garantir que cliente_id seja um inteiro
+                try:
+                    cliente_id_int = int(proposta.cliente_id) if proposta.cliente_id is not None else None
+                except (ValueError, TypeError):
+                    raise ValueError(f"ID de cliente inválido: {proposta.cliente_id}")
+                
+                if cliente_id_int is None:
+                    raise ValueError("Cliente ID não pode ser nulo")
+                
+                # Buscar o cliente da proposta
+                cliente = self.session.query(Cliente).filter_by(id=cliente_id_int).first()
+                if not cliente:
+                    raise ValueError(f"Cliente ID {cliente_id_int} não encontrado")
+                
+                # Verificar se já existem transações para esta proposta
+                transacoes_existentes = self.session.query(Transacao).filter_by(
+                    proposta_id=proposta_id_int
+                ).count()
+                
+                if transacoes_existentes > 0:
+                    # Já existem transações, não criar novamente
+                    return {"status": "já existem transações", "count": transacoes_existentes}
+                
+                # Garantir que valor seja um float
+                try:
+                    valor = float(proposta.valor) if proposta.valor is not None else 0.0
+                except (ValueError, TypeError):
+                    print(f"Erro ao converter valor para float: {proposta.valor}, usando 0.0")
+                    valor = 0.0
+                
+                # Criar transação de receita
+                receita_id = None
+                if valor > 0:
+                    receita_id = self._criar_transacao_receita(proposta, cliente)
+                
+                # Buscar acréscimos da proposta
+                acrescimos = self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id_int).all()
+                
+                # Criar transações de despesa para cada acréscimo
+                despesa_ids = []
+                for acrescimo in acrescimos:
+                    try:
+                        acrescimo_valor = float(acrescimo.valor) if acrescimo.valor is not None else 0.0
+                    except (ValueError, TypeError):
+                        print(f"Erro ao converter valor do acréscimo para float: {acrescimo.valor}, usando 0.0")
+                        acrescimo_valor = 0.0
+                    
+                    if acrescimo_valor > 0:
+                        despesa_id = self._criar_transacao_despesa(acrescimo, proposta)
+                        despesa_ids.append(despesa_id)
+                
+                return {
+                    "status": "sucesso",
+                    "receita_id": receita_id,
+                    "despesa_ids": despesa_ids,
+                    "total_despesas": len(despesa_ids)
+                }
+            except Exception as e:
+                print(f"Erro ao gerar transações para proposta {proposta_id}: {str(e)}")
+                raise
         
         return self._safe_query(query)
     
     def _criar_transacao_receita(self, proposta, cliente):
         """Cria uma transação de receita para a proposta"""
-        # Nome do cliente para a descrição da transação
-        nome_cliente = cliente.nome if cliente else "Cliente"
-        
-        transacao = Transacao(
-            tipo="receita_a_receber",
-            descricao=f"Proposta #{proposta.id} - {proposta.descricao} - {nome_cliente}",
-            valor=proposta.valor,
-            categoria="Propostas",
-            subcategoria=proposta.tipo_proposta,
-            tipo_receita="Projeto",
-            origem_id=proposta.id,
-            origem_tipo="proposta",
-            tipo_conta="PF",
-            status="Pendente",
-            proposta_id=proposta.id,
-            classificacao="receita",
-            data=proposta.data_proposta or datetime.now().date()
-        )
-        self.session.add(transacao)
-        self.session.flush()
-        return transacao.id
+        try:
+            # Nome do cliente para a descrição da transação
+            nome_cliente = str(cliente.nome) if cliente and hasattr(cliente, 'nome') else "Cliente"
+            
+            # Garantir conversão correta de tipos
+            try:
+                proposta_id = int(proposta.id) if proposta.id is not None else 0
+            except (ValueError, TypeError):
+                print(f"Erro ao converter ID da proposta para int: {proposta.id}")
+                proposta_id = 0
+                
+            try:
+                valor = float(proposta.valor) if proposta.valor is not None else 0.0
+            except (ValueError, TypeError):
+                print(f"Erro ao converter valor para float: {proposta.valor}")
+                valor = 0.0
+                
+            # Garantir que temos uma descrição válida
+            descricao = str(proposta.descricao) if proposta.descricao is not None else "Sem descrição"
+            
+            # Garantir que temos um tipo de proposta válido
+            tipo_proposta = str(proposta.tipo_proposta) if proposta.tipo_proposta is not None else "Geral"
+            
+            # Data da proposta ou data atual
+            data_proposta = proposta.data_proposta if hasattr(proposta, 'data_proposta') and proposta.data_proposta is not None else datetime.now().date()
+            
+            transacao = Transacao(
+                tipo="receita_a_receber",
+                descricao=f"Proposta #{proposta_id} - {descricao} - {nome_cliente}",
+                valor=valor,
+                categoria="Propostas",
+                subcategoria=tipo_proposta,
+                tipo_receita="Projeto",
+                origem_id=proposta_id,
+                origem_tipo="proposta",
+                tipo_conta="PF",
+                status="Pendente",
+                proposta_id=proposta_id,
+                classificacao="receita",
+                data=data_proposta
+            )
+            self.session.add(transacao)
+            self.session.flush()
+            return transacao.id
+        except Exception as e:
+            print(f"Erro ao criar transação de receita: {str(e)}")
+            raise
     
     def _criar_transacao_despesa(self, acrescimo, proposta):
         """Cria uma transação de despesa para um acréscimo de proposta"""
-        transacao = Transacao(
-            tipo="despesa",
-            descricao=f"Despesa: {acrescimo.descricao} - Proposta #{proposta.id}",
-            valor=acrescimo.valor,
-            categoria="Custos de Projeto",
-            subcategoria=acrescimo.tipo,
-            origem_id=acrescimo.id,
-            origem_tipo="acrescimo",
-            tipo_conta="PF",
-            status="Pendente",
-            proposta_id=proposta.id,
-            classificacao="custo_direto",
-            data=acrescimo.data_cadastro or datetime.now().date()
-        )
-        self.session.add(transacao)
-        self.session.flush()
-        return transacao.id
+        try:
+            # Garantir conversão correta de tipos
+            try:
+                proposta_id = int(proposta.id) if proposta.id is not None else 0
+            except (ValueError, TypeError):
+                print(f"Erro ao converter ID da proposta para int: {proposta.id}")
+                proposta_id = 0
+                
+            try:
+                acrescimo_id = int(acrescimo.id) if acrescimo.id is not None else 0
+            except (ValueError, TypeError):
+                print(f"Erro ao converter ID do acréscimo para int: {acrescimo.id}")
+                acrescimo_id = 0
+                
+            try:
+                valor = float(acrescimo.valor) if acrescimo.valor is not None else 0.0
+            except (ValueError, TypeError):
+                print(f"Erro ao converter valor para float: {acrescimo.valor}")
+                valor = 0.0
+                
+            # Garantir que temos uma descrição válida
+            descricao = str(acrescimo.descricao) if hasattr(acrescimo, 'descricao') and acrescimo.descricao is not None else "Despesa do projeto"
+            
+            # Garantir que temos um tipo de acréscimo válido
+            tipo_acrescimo = str(acrescimo.tipo) if hasattr(acrescimo, 'tipo') and acrescimo.tipo is not None else "Geral"
+            
+            # Data do cadastro ou data atual
+            data_cadastro = acrescimo.data_cadastro if hasattr(acrescimo, 'data_cadastro') and acrescimo.data_cadastro is not None else datetime.now().date()
+            
+            transacao = Transacao(
+                tipo="despesa",
+                descricao=f"Despesa: {descricao} - Proposta #{proposta_id}",
+                valor=valor,
+                categoria="Custos de Projeto",
+                subcategoria=tipo_acrescimo,
+                origem_id=acrescimo_id,
+                origem_tipo="acrescimo",
+                tipo_conta="PF",
+                status="Pendente",
+                proposta_id=proposta_id,
+                classificacao="custo_direto",
+                data=data_cadastro
+            )
+            self.session.add(transacao)
+            self.session.flush()
+            return transacao.id
+        except Exception as e:
+            print(f"Erro ao criar transação de despesa: {str(e)}")
+            raise
 
     def delete_transacao(self, transacao_id):
         """Exclui uma transação"""
