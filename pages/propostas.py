@@ -10,7 +10,9 @@ from utils.database import Fornecedor
 def show():
     # Adicionar espaço extra antes do título para evitar corte
     st.markdown('<div style="height: 3rem;"></div>', unsafe_allow_html=True)
-    st.title("PROPOSTAS")
+    
+    # Título padronizado com ícone e formato consistente com as demais páginas
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-bottom: 1rem;">📝 Propostas</h1>', unsafe_allow_html=True)
     
     # Verificar se temos uma conexão com o banco de dados
     if not hasattr(st.session_state, 'db'):
