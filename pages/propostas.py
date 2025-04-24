@@ -184,6 +184,12 @@ def show():
         if not 'clientes' in locals() or clientes is None or clientes.empty:
             clientes = st.session_state.db.get_clientes()
         
+        # Garantir que todas as colunas numéricas sejam do tipo correto
+        # Isso evita o erro '<' not supported between instances of 'float' and 'str'
+        for col in ['valor', 'previsao_dias', 'id', 'numero', 'cliente_id']:
+            if col in propostas.columns:
+                propostas[col] = pd.to_numeric(propostas[col], errors='coerce')
+        
         # Mesclar propostas com clientes para exibir nome do cliente
         if not propostas.empty and not clientes.empty:
             propostas_com_clientes = propostas.merge(
@@ -1830,18 +1836,30 @@ def show():
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
-                    status_filter = st.multiselect(
-                        "Status:",
-                        sorted(propostas['status'].unique().tolist()),
-                        default=sorted(propostas['status'].unique().tolist())
-                    )
+                    # Garantir que os valores sejam do tipo string para evitar erro de comparação entre tipos
+                    try:
+                        status_values = [str(x) for x in propostas['status'].unique() if pd.notna(x)]
+                        status_filter = st.multiselect(
+                            "Status:",
+                            sorted(status_values),
+                            default=sorted(status_values)
+                        )
+                    except Exception as e:
+                        st.error(f"Erro ao carregar filtros de status: {str(e)}")
+                        status_filter = []
                 
                 with col2:
-                    clientes_filter = st.multiselect(
-                        "Cliente:",
-                        sorted(propostas_com_clientes['nome'].unique().tolist()),
-                        default=sorted(propostas_com_clientes['nome'].unique().tolist())
-                    )
+                    # Garantir que os valores sejam do tipo string para evitar erro de comparação entre tipos
+                    try:
+                        clientes_values = [str(x) for x in propostas_com_clientes['nome'].unique() if pd.notna(x)]
+                        clientes_filter = st.multiselect(
+                            "Cliente:",
+                            sorted(clientes_values),
+                            default=sorted(clientes_values)
+                        )
+                    except Exception as e:
+                        st.error(f"Erro ao carregar filtros de clientes: {str(e)}")
+                        clientes_filter = []
                 
                 with col3:
                     data_filter = st.date_input(
