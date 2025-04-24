@@ -167,9 +167,14 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
             # Total para cálculo
             total = float(proposta['valor'])
             
-            # Adicionar acréscimos
+            # Adicionar acréscimos, exceto os de tipo 'assistente'
             for _, acrescimo in acrescimos.iterrows():
                 tipo = acrescimo.get('tipo', 'OUTRO')
+                
+                # Pular itens de assistentes que não devem aparecer no relatório para o cliente
+                if tipo.lower() == 'assistente':
+                    continue
+                    
                 descricao = acrescimo.get('descricao', 'Item adicional')
                 fornecedor = acrescimo.get('fornecedor', '')
                 valor = float(acrescimo.get('valor', 0))
