@@ -69,8 +69,38 @@ def show():
     st.title("Perfil do Usuário")
     
     # Verificar se o usuário está logado
+    print(f"Verificando estado da autenticação no perfil: {st.session_state.keys()}")
+    if "authenticated" in st.session_state:
+        print(f"Estado de autenticação: {st.session_state.authenticated}")
+    
+    if "usuario" in st.session_state:
+        print(f"Dados do usuário na sessão: {st.session_state.usuario}")
+    else:
+        print("Dados do usuário na sessão: Não encontrado")
+        
+    if "user" in st.session_state:
+        print(f"Objeto 'user' na sessão: {type(st.session_state.user)}")
+    
+    # Verificar se o usuário está autenticado
+    if "authenticated" in st.session_state and st.session_state.authenticated:
+        # Se apenas o objeto 'user' existe mas não 'usuario'
+        if "user" in st.session_state and "usuario" not in st.session_state:
+            # Criar objeto 'usuario' com dados mínimos
+            if isinstance(st.session_state.user, dict) and 'email' in st.session_state.user:
+                email = st.session_state.user.get('email')
+                st.session_state.usuario = {
+                    'email': email,
+                    'nome': email.split('@')[0].title(),
+                    'role': 'user'
+                }
+                print(f"Criado objeto 'usuario' a partir de 'user': {st.session_state.usuario}")
+    
+    # Verificação principal
     if "usuario" not in st.session_state or not st.session_state.usuario:
         st.warning("Você precisa estar logado para acessar seu perfil.")
+        # Verificar login admin como fallback
+        if "authenticated" in st.session_state and st.session_state.authenticated:
+            st.info("Você está autenticado, mas seus dados de usuário não estão disponíveis. Tente fazer login novamente.")
         return
     
     # Obter dados do usuário atual

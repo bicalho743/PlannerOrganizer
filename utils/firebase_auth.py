@@ -48,6 +48,17 @@ class FirebaseAuth:
             st.session_state.user = session_user
             st.session_state.authenticated = True
             
+            # Sincronizar o objeto 'usuario' para manter compatibilidade com o restante do código
+            st.session_state.usuario = {
+                'email': user['email'],
+                'nome': user.get('displayName', user['email'].split('@')[0].title()),
+                'telefone': '',  # Valor padrão a ser preenchido no perfil
+                'empresa': 'Planner Organizer',  # Valor padrão
+                'role': 'user'  # Papel padrão
+            }
+            
+            print(f"Login realizado com sucesso. Dados do usuário na sessão: {st.session_state.usuario}")
+            
             return {'success': True, 'user': session_user}
         
         except Exception as e:
@@ -117,11 +128,16 @@ class FirebaseAuth:
             # Limpar dados de sessão
             if 'user' in st.session_state:
                 del st.session_state.user
+                
+            if 'usuario' in st.session_state:
+                del st.session_state.usuario
             
             st.session_state.authenticated = False
+            print("Logout realizado. Sessão limpa.")
             
             return {'success': True}
         except Exception as e:
+            print(f"Erro ao realizar logout: {str(e)}")
             return {'success': False, 'error': str(e)}
     
     def reset_password(self, email):
