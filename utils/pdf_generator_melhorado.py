@@ -102,48 +102,40 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
                 prazo_str = f"{dias} dias"
         c.drawString(40, y, f"Prazo de Entrega: {prazo_str}")
         
-        # Bloco de investimento e descrição - redesenhado para ter apenas um título
+        # Layout completamente redesenhado - seção única e mais limpa
         y -= 40
         
-        # Fundo do bloco de investimento
-        c.setFillColor(azul_claro)
-        c.rect(30, y - 40, width - 60, 60, fill=True, stroke=0)
-        
-        # Título único "Serviço e Investimento"
+        # Título principal e subtítulo em vez de caixas
         c.setFillColor(azul_escuro)
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(40, y + 5, "Serviço e Investimento")
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(40, y + 5, "Descrição e Investimento")
         
-        # Processar a descrição para exibir de forma organizada
-        c.setFont("Helvetica-Bold", 11)
-        c.drawString(40, y - 15, "Descrição do Serviço:")
-        
-        # Adicionar um retângulo de fundo para a descrição
-        c.setFillColor(azul_destaque)  # Usar o azul claro para destacar a área de descrição
-        desc_box_height = 70  # Altura fixa para a caixa de descrição
-        c.rect(40, y - 20 - desc_box_height, width - 80, desc_box_height, fill=True, stroke=0)
-        
-        # Adicionar borda fina em cor mais escura para melhorar o destaque visual
+        # Desenhar linha separadora horizontal
         c.setStrokeColor(azul_escuro)
-        c.setLineWidth(0.5)
-        c.rect(40, y - 20 - desc_box_height, width - 80, desc_box_height, fill=False, stroke=1)
+        c.setLineWidth(1)
+        c.line(40, y - 5, width - 40, y - 5)
         
-        # Formatar e exibir a descrição de forma organizada
+        # Processar o texto da descrição diretamente
+        import textwrap
+        
+        # Espaço para descrição do serviço
+        y -= 20
         c.setFillColor(cinza_medio)
-        c.setFont("Helvetica", 10)
+        c.setFont("Helvetica-Bold", 11)
+        c.drawString(40, y, "Descrição do Serviço:")
         
         # Processar o texto da descrição
         descricao_text = proposta.get('descricao', 'Serviço Base')
         
-        # Quebrar a descrição em linhas
-        import textwrap
-        max_chars_per_line = 80  # Ajustar conforme necessário para caber na página
+        # Substituir caracteres problemáticos e remover formatação inconsistente
+        descricao_text = descricao_text.replace("•", "- ")
+        descricao_text = descricao_text.replace("\r\n", "\n").replace("\r", "\n")
         
-        # Primeiro, quebrar por quebras de linha explícitas e substituir qualquer caractere estranho
-        descricao_text = descricao_text.replace("•", "-")  # Substituir bullets por hífens
+        # Separar em parágrafos
         paragrafos = descricao_text.split('\n')
         
         # Depois, cada parágrafo quebrar por tamanho
+        max_chars_per_line = 85  # Um pouco maior para aproveitar o espaço
         todas_linhas = []
         for paragrafo in paragrafos:
             if paragrafo.strip():  # Ignorar linhas vazias
@@ -153,37 +145,27 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         # Se não tiver nenhuma linha, adicionar um texto padrão
         if not todas_linhas:
             todas_linhas = ["Serviço Base"]
-            
-        # Posição Y inicial para o texto
-        text_y = y - 35
-        line_height = 14  # Espaçamento entre linhas
         
-        # Exibir mais linhas para acomodar textos maiores
-        max_lines = 4  # Limitamos a 4 linhas por questão de espaço
+        # Configurar a área de texto
+        y -= 20
+        line_height = 14
         
-        # Calcular quantas linhas iremos mostrar
-        linhas_a_mostrar = min(len(todas_linhas), max_lines)
-        
-        # Ajustar a posição inicial para centralizar verticalmente o texto na caixa
-        if linhas_a_mostrar < max_lines:
-            # Se temos menos linhas que o máximo, centralizar
-            ajuste_y = (max_lines - linhas_a_mostrar) * line_height / 2
-            text_y += ajuste_y
-        
-        # Desenhar cada linha
+        # Desenhar as linhas (limitado a 6 para não ficar muito grande)
+        max_lines = 6  
         for i, linha in enumerate(todas_linhas[:max_lines]):
-            # Desenhar a linha com indentação uniforme
-            c.drawString(50, text_y - (i * line_height), linha)
-            
-        # Se houver mais linhas que o limite, indicar com "..."
+            c.setFont("Helvetica", 10)
+            c.drawString(50, y - (i * line_height), linha)
+        
+        # Se houver mais linhas, indicar
         if len(todas_linhas) > max_lines:
             linhas_extras = len(todas_linhas) - max_lines
             c.setFillColor(azul_escuro)
             texto_mais = f"... e mais {linhas_extras} {'linha' if linhas_extras == 1 else 'linhas'}"
-            c.drawString(50, text_y - (max_lines * line_height), texto_mais)
-            
-        # Ajustar a posição Y para acomodar a caixa de descrição
-        y -= (desc_box_height + 30)
+            c.drawString(50, y - (max_lines * line_height), texto_mais)
+        
+        # Ajustar a posição Y considerando o número de linhas mostradas
+        linhas_mostradas = min(len(todas_linhas), max_lines) 
+        y -= (linhas_mostradas * line_height + 25)
         
         # Exibir valor e status
         valor_str = f"R$ {float(proposta.get('valor', 0)):.2f}"
