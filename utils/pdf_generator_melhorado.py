@@ -147,8 +147,24 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         y_col2 -= 15
         c.drawString(col2_x, y_col2, f"Data Fim: {data_fim_str}")
         y_col2 -= 15
-        # Usando a data fim como prazo de entrega conforme solicitado
-        c.drawString(col2_x, y_col2, f"Prazo de Entrega: {data_fim_str}")
+        # Calcular prazo de entrega em dias
+        prazo_dias = "N/A"
+        if proposta.get('data_inicio') and proposta.get('data_fim'):
+            if hasattr(proposta['data_inicio'], 'toordinal') and hasattr(proposta['data_fim'], 'toordinal'):
+                dias = (proposta['data_fim'] - proposta['data_inicio']).days
+                prazo_dias = f"{dias} dias"
+            elif isinstance(proposta['data_inicio'], str) and isinstance(proposta['data_fim'], str):
+                # Tentativa de converter strings para data
+                try:
+                    from datetime import datetime
+                    inicio = datetime.strptime(proposta['data_inicio'], "%Y-%m-%d")
+                    fim = datetime.strptime(proposta['data_fim'], "%Y-%m-%d")
+                    dias = (fim - inicio).days
+                    prazo_dias = f"{dias} dias"
+                except:
+                    # Em caso de erro, manter N/A
+                    pass
+        c.drawString(col2_x, y_col2, f"Prazo de Entrega: {prazo_dias}")
         
         # Ajusta Y para o menor valor entre as duas colunas
         y = min(y, y_col2) - 15
@@ -709,12 +725,23 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         c.drawString(40, y, f"Data Fim: {data_fim_str}")
         y -= 16
         
-        # Prazo de entrega
+        # Prazo de entrega em dias
         prazo_str = "N/A"
         if proposta.get('data_inicio') and proposta.get('data_fim'):
-            if hasattr(proposta['data_inicio'], 'days') and hasattr(proposta['data_fim'], 'days'):
+            if hasattr(proposta['data_inicio'], 'toordinal') and hasattr(proposta['data_fim'], 'toordinal'):
                 dias = (proposta['data_fim'] - proposta['data_inicio']).days
                 prazo_str = f"{dias} dias"
+            elif isinstance(proposta['data_inicio'], str) and isinstance(proposta['data_fim'], str):
+                # Tentativa de converter strings para data
+                try:
+                    from datetime import datetime
+                    inicio = datetime.strptime(proposta['data_inicio'], "%Y-%m-%d")
+                    fim = datetime.strptime(proposta['data_fim'], "%Y-%m-%d")
+                    dias = (fim - inicio).days
+                    prazo_str = f"{dias} dias"
+                except:
+                    # Em caso de erro, manter N/A
+                    pass
         c.drawString(40, y, f"Prazo de Entrega: {prazo_str}")
         
         # Layout completamente redesenhado - seção única e mais limpa
