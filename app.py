@@ -992,7 +992,8 @@ MENU_PRINCIPAL = {
     "📝 Propostas": "Propostas",
     "🛒 Vendas": "Vendas",
     "💰 Financeiro": "Financeiro",
-    "📈 Relatórios": "Relatórios"
+    "📈 Relatórios": "Relatórios",
+    "🧑‍💼 Meu Perfil": "Perfil"
 }
 
 # Criação dos botões do menu principal com estilização personalizada
@@ -1076,6 +1077,9 @@ try:
         show()
     elif st.session_state.current_page == "Relatórios":
         from pages.relatorios import show
+        show()
+    elif st.session_state.current_page == "Perfil":
+        from pages.perfil import show
         show()
 except Exception as e:
     st.error(f"Erro ao carregar página: {str(e)}")

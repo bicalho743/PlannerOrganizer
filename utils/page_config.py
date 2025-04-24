@@ -81,11 +81,16 @@ def apply_page_header():
     
     # Obter nome do usuário da sessão
     nome_usuario = "Usuário"
+    
+    # Verificar se o objeto de usuário existe na sessão (chave 'usuario')
     if "usuario" in st.session_state and st.session_state.usuario:
         if isinstance(st.session_state.usuario, dict) and "nome" in st.session_state.usuario:
             nome_usuario = st.session_state.usuario["nome"]
         elif hasattr(st.session_state.usuario, "nome"):
             nome_usuario = st.session_state.usuario.nome
+    
+    # Log para debug (temporário)
+    print(f"Dados do usuário na sessão: {st.session_state.get('usuario', 'Não encontrado')}")
     
     # Componente de "Bem-vindo(a)" no canto superior direito
     welcome_html = f"""
