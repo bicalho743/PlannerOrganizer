@@ -1,193 +1,236 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
 import os
 import json
+from datetime import datetime
 
-from utils.page_config import apply_page_header, apply_page_footer
-
-def salvar_perfil_usuario(dados_perfil):
+def carregar_perfil(user_id):
     """
-    Salva as informações do perfil do usuário na sessão e também
-    em um arquivo JSON para persistência
+    Carrega os dados do perfil do usuário a partir do arquivo JSON
     
     Args:
-        dados_perfil: Dicionário com os dados do perfil
-    
+        user_id: ID ou email do usuário
+        
     Returns:
-        bool: True se salvou com sucesso, False caso contrário
+        dict: Dados do perfil ou dicionário vazio se não existir
     """
+    # Normalizar o ID do usuário para uso em nome de arquivo
+    user_id_normalizado = user_id.replace('@', '_at_').replace('.', '_dot_')
+    
+    # Caminho do arquivo de perfil
+    perfil_path = f"data/perfis/{user_id_normalizado}.json"
+    
+    # Verificar se o arquivo existe
+    if os.path.exists(perfil_path):
+        try:
+            with open(perfil_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            st.error(f"Erro ao carregar perfil: {str(e)}")
+            return {}
+    else:
+        return {}
+
+def salvar_perfil(user_id, dados_perfil):
+    """
+    Salva os dados do perfil do usuário em um arquivo JSON
+    
+    Args:
+        user_id: ID ou email do usuário
+        dados_perfil: Dicionário com os dados do perfil
+        
+    Returns:
+        bool: True se o salvamento foi bem-sucedido, False caso contrário
+    """
+    # Normalizar o ID do usuário para uso em nome de arquivo
+    user_id_normalizado = user_id.replace('@', '_at_').replace('.', '_dot_')
+    
+    # Garantir que o diretório existe
+    os.makedirs("data/perfis", exist_ok=True)
+    
+    # Caminho do arquivo de perfil
+    perfil_path = f"data/perfis/{user_id_normalizado}.json"
+    
+    # Adicionar timestamp de atualização
+    dados_perfil['ultima_atualizacao'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    
     try:
-        # Atualizar objeto na sessão
-        if "usuario" not in st.session_state:
-            st.session_state.usuario = {}
-            
-        # Atualizar campos do perfil
-        st.session_state.usuario.update(dados_perfil)
-        
-        # Criar diretório para perfis de usuários se não existir
-        os.makedirs("data/perfis", exist_ok=True)
-        
-        # Gerar ID único para o usuário se não existir
-        if "user_id" not in st.session_state.usuario:
-            st.session_state.usuario["user_id"] = f"user_{datetime.now().strftime('%Y%m%d%H%M%S')}"
-            
-        # Salvar em arquivo JSON
-        user_id = st.session_state.usuario["user_id"]
-        arquivo_perfil = f"data/perfis/{user_id}.json"
-        
-        with open(arquivo_perfil, "w") as f:
-            json.dump(st.session_state.usuario, f, indent=2)
-            
+        with open(perfil_path, 'w', encoding='utf-8') as f:
+            json.dump(dados_perfil, f, ensure_ascii=False, indent=4)
         return True
     except Exception as e:
         st.error(f"Erro ao salvar perfil: {str(e)}")
         return False
 
-def carregar_perfil_usuario():
-    """
-    Carrega as informações do perfil do usuário da sessão ou do arquivo
-    
-    Returns:
-        dict: Dados do perfil ou dicionário vazio
-    """
-    # Se já existe na sessão, retornar
-    if "usuario" in st.session_state and st.session_state.usuario:
-        return st.session_state.usuario
-    
-    # Tentar carregar do arquivo se houver user_id
-    try:
-        if "user_id" in st.session_state:
-            arquivo_perfil = f"data/perfis/{st.session_state.user_id}.json"
-            if os.path.exists(arquivo_perfil):
-                with open(arquivo_perfil, "r") as f:
-                    return json.load(f)
-    except Exception as e:
-        st.warning(f"Erro ao carregar perfil: {str(e)}")
-        
-    # Se não encontrou, retornar vazio
-    return {}
-
 def show():
-    """Exibe a página de perfil do usuário"""
-    # Configuração da página
-    apply_page_header()
+    """
+    Exibe a página de perfil do usuário
+    """
+    st.title("Perfil do Usuário")
     
-    # Título da página
-    st.title("🧑‍💼 Meu Perfil")
+    # Verificar se o usuário está logado
+    if "usuario" not in st.session_state or not st.session_state.usuario:
+        st.warning("Você precisa estar logado para acessar seu perfil.")
+        return
     
-    # Carregar dados atuais do perfil
-    perfil = carregar_perfil_usuario()
+    # Obter dados do usuário atual
+    usuario = st.session_state.usuario
+    user_id = usuario.get('email', 'usuario_desconhecido')
     
-    # Formulário para edição do perfil
-    with st.form("formulario_perfil"):
-        st.subheader("Informações Pessoais")
+    # Carregar perfil existente
+    perfil = carregar_perfil(user_id)
+    
+    # Exibir formulário de perfil
+    with st.form("form_perfil", clear_on_submit=False):
+        st.subheader("Dados Pessoais")
         
-        # Campos pessoais
+        # Seção de dados pessoais
         col1, col2 = st.columns(2)
+        
         with col1:
-            nome = st.text_input("Nome completo", 
-                                value=perfil.get("nome", ""))
+            nome = st.text_input("Nome Completo", 
+                                value=perfil.get('nome', usuario.get('nome', '')))
+            
+            telefone = st.text_input("Telefone", 
+                                    value=perfil.get('telefone', usuario.get('telefone', '')),
+                                    help="Formato: (XX) XXXXX-XXXX")
+        
         with col2:
             email = st.text_input("Email", 
-                                 value=perfil.get("email", ""), 
-                                 disabled="email" in perfil)
-        
-        st.subheader("Informações Profissionais")
-        
-        # Campos profissionais
-        col1, col2 = st.columns(2)
-        with col1:
-            empresa = st.text_input("Empresa/Negócio", 
-                                   value=perfil.get("empresa", ""))
-        with col2:
-            telefone = st.text_input("Telefone para contato", 
-                                    value=perfil.get("telefone", ""), 
-                                    help="Formato: (00) 00000-0000")
-        
-        # Redes sociais
-        st.subheader("Redes Sociais")
-        col1, col2 = st.columns(2)
-        with col1:
+                                value=perfil.get('email', usuario.get('email', '')), 
+                                disabled=True,
+                                help="O email não pode ser alterado pois é usado para autenticação")
+            
             instagram = st.text_input("Instagram", 
-                                     value=perfil.get("instagram", ""), 
-                                     help="Sem o '@'. Ex: seu_perfil")
-        with col2:
-            site = st.text_input("Website", 
-                                value=perfil.get("site", ""),
-                                help="URL completa. Ex: https://seusite.com.br")
+                                    value=perfil.get('instagram', ''),
+                                    help="Seu perfil do Instagram (sem @)")
         
-        # Sobre mim / Bio
-        st.subheader("Sobre mim")
-        bio = st.text_area("Descrição profissional", 
-                          value=perfil.get("bio", ""),
-                          help="Esta descrição aparecerá nos relatórios e propostas enviados aos clientes",
-                          height=150)
+        st.subheader("Dados Profissionais")
         
-        # Preferências de notificação
-        st.subheader("Preferências")
-        
+        # Seção de dados da empresa
         col1, col2 = st.columns(2)
+        
         with col1:
-            notificar_email = st.checkbox("Receber notificações por email", 
-                                         value=perfil.get("notificar_email", True))
+            empresa = st.text_input("Nome da Empresa/Negócio", 
+                                   value=perfil.get('empresa', usuario.get('empresa', '')))
+            
+            website = st.text_input("Website", 
+                                   value=perfil.get('website', 'www.plannerorganizer.com.br'),
+                                   help="Seu site ou landing page")
+        
         with col2:
-            mostrar_valores = st.checkbox("Mostrar valores na página inicial", 
-                                         value=perfil.get("mostrar_valores", True))
+            cargo = st.text_input("Cargo/Função", 
+                                 value=perfil.get('cargo', 'Personal Organizer'))
+            
+            cnpj = st.text_input("CNPJ (se houver)", 
+                                value=perfil.get('cnpj', ''),
+                                help="Formato: XX.XXX.XXX/XXXX-XX")
         
-        # Botão para salvar
-        st.markdown("### ")  # Espaçador
-        salvar = st.form_submit_button("Salvar Perfil", use_container_width=True)
+        # Endereço
+        st.subheader("Endereço Profissional")
         
-        if salvar:
-            # Criar dicionário com os dados do formulário
+        col1, col2, col3 = st.columns([2, 1, 1])
+        
+        with col1:
+            endereco = st.text_input("Endereço", 
+                                    value=perfil.get('endereco', ''))
+        
+        with col2:
+            numero = st.text_input("Número", 
+                                 value=perfil.get('numero', ''))
+        
+        with col3:
+            complemento = st.text_input("Complemento", 
+                                      value=perfil.get('complemento', ''))
+        
+        col1, col2, col3 = st.columns([2, 1, 1])
+        
+        with col1:
+            bairro = st.text_input("Bairro", 
+                                  value=perfil.get('bairro', ''))
+        
+        with col2:
+            cidade = st.text_input("Cidade", 
+                                  value=perfil.get('cidade', ''))
+        
+        with col3:
+            estado = st.text_input("Estado", 
+                                  value=perfil.get('estado', ''),
+                                  max_chars=2)
+            
+        cep = st.text_input("CEP", 
+                          value=perfil.get('cep', ''),
+                          help="Formato: XXXXX-XXX")
+        
+        # Informações adicionais para relatórios
+        st.subheader("Personalização de Relatórios")
+        
+        mensagem_padrao = st.text_area(
+            "Mensagem de Agradecimento (para incluir nos relatórios)", 
+            value=perfil.get('mensagem_padrao', 'Agradecemos a confiança em nossos serviços.'),
+            help="Esta mensagem aparecerá nos relatórios enviados para clientes"
+        )
+        
+        botao_salvar = st.form_submit_button("💾 Salvar Perfil")
+        
+        if botao_salvar:
+            # Preparar dados para salvar
             dados_perfil = {
-                "nome": nome,
-                "email": email if not "email" in perfil else perfil["email"],
-                "empresa": empresa,
-                "telefone": telefone,
-                "instagram": instagram,
-                "site": site,
-                "bio": bio,
-                "notificar_email": notificar_email,
-                "mostrar_valores": mostrar_valores,
-                "ultima_atualizacao": datetime.now().isoformat()
+                'nome': nome,
+                'email': email,
+                'telefone': telefone,
+                'instagram': instagram,
+                'empresa': empresa,
+                'website': website,
+                'cargo': cargo,
+                'cnpj': cnpj,
+                'endereco': endereco,
+                'numero': numero,
+                'complemento': complemento,
+                'bairro': bairro,
+                'cidade': cidade,
+                'estado': estado,
+                'cep': cep,
+                'mensagem_padrao': mensagem_padrao
             }
             
-            # Manter campos que não são editáveis
-            if "role" in perfil:
-                dados_perfil["role"] = perfil["role"]
-                
-            # Salvar o perfil
-            if salvar_perfil_usuario(dados_perfil):
+            # Salvar perfil
+            if salvar_perfil(user_id, dados_perfil):
                 st.success("✅ Perfil salvo com sucesso!")
                 
-                # Forçar atualização da interface
-                st.rerun()
+                # Atualizar dados do usuário na sessão 
+                # (apenas os campos relevantes para outras partes do sistema)
+                if 'usuario' in st.session_state:
+                    st.session_state.usuario['nome'] = nome
+                    st.session_state.usuario['telefone'] = telefone
+                    st.session_state.usuario['empresa'] = empresa
+                
+                # Atualizar também o objeto 'user'
+                if 'user' in st.session_state:
+                    if isinstance(st.session_state.user, dict):
+                        st.session_state.user['nome'] = nome
+                        st.session_state.user['telefone'] = telefone
+                        st.session_state.user['empresa'] = empresa
             else:
                 st.error("❌ Erro ao salvar perfil. Tente novamente.")
     
-    # Informação adicional
-    with st.expander("📋 Informações sobre o Perfil"):
-        st.markdown("""
-        **Seus dados são usados para:**
-        
-        - Personalizar relatórios e propostas para clientes
-        - Identificá-lo no sistema
-        - Fornecer experiência personalizada
-        
-        Mantenha seus dados atualizados para garantir que suas propostas e relatórios contenham 
-        as informações de contato corretas.
-        """)
-        
-        # Debug - mostrar dados atuais do perfil (remover em produção)
-        if st.checkbox("Mostrar dados do perfil (DEBUG)", value=False):
-            st.write(perfil)
-            st.write("Session state:", st.session_state)
+    # Exibir informações de última atualização
+    if 'ultima_atualizacao' in perfil:
+        st.info(f"📅 Última atualização: {perfil['ultima_atualizacao']}")
     
-    # Rodapé
-    apply_page_footer()
+    # Exibir dicas de uso
+    with st.expander("📘 Sobre o Perfil", expanded=False):
+        st.markdown("""
+        ### Por que preencher seu perfil?
+        
+        As informações do seu perfil serão utilizadas nos relatórios e documentos gerados pelo sistema, como:
+        
+        - **Propostas para clientes**: Seu nome e contatos aparecerão como dados do profissional
+        - **Relatórios financeiros**: O nome da empresa será utilizado nos cabeçalhos
+        - **Documentos PDF**: Todas as informações de contato aparecerão no rodapé dos documentos
+        
+        Mantenha seus dados sempre atualizados para uma experiência profissional completa!
+        """)
 
-# Inicializar a interface se executado diretamente
 if __name__ == "__main__":
     show()
