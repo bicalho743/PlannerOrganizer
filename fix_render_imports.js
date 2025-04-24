@@ -1,12 +1,22 @@
 // Script para corrigir problemas de importação no Render e plannerorganiza.com.br
-// Versão 2.0 - Atualizada em 2025-04-23
+// Versão 2.1 - Atualizada em 2025-04-24
 
 // Configuração
 const CONFIG = {
   debug: true,
   moduleFixEnabled: true,
-  specificModules: ['index.CC6uDm-p.js', 'index.B-cSXLfy.js'],
-  checkInterval: 1500,
+  specificModules: [
+    'index.CC6uDm-p.js', 
+    'index.CdkbqTPi.js', 
+    'index.DsopOKvk.js', 
+    'index.6w1bxtr_.js',
+    'index.BUT1S9DN.js',
+    'index.B4xKWXb9.js',
+    'index.Bl-BqJMM.js',
+    'index.Y1tjChmn.js',
+    'index.B-cSXLfy.js'
+  ],
+  checkInterval: 1000,  // Verificação mais frequente
   useXHRFallback: true
 };
 
@@ -183,7 +193,8 @@ window.addEventListener('error', function(event) {
     
     // Verificar se o script é um dos módulos que queremos interceptar
     if (CONFIG.specificModules.some(mod => scriptUrl.includes(mod)) || 
-        (scriptUrl.includes('index.') && scriptUrl.includes('.js'))) {
+        (scriptUrl.includes('index.') && scriptUrl.includes('.js')) ||
+        scriptUrl.includes('plannerorganiza.com.br/static/js/')) {
       logDebug(`Erro detectado em script: ${scriptUrl}`);
       event.preventDefault();
       
@@ -201,28 +212,59 @@ logDebug('Detector de erros de script instalado');
 
 // Verificar periodicamente scripts com problemas
 setInterval(function() {
-  // Encontrar scripts de módulos que podem estar com problemas
-  const failedScripts = Array.from(document.querySelectorAll('script[src*="index."][src$=".js"]')).filter(script => 
+  // Estratégia 1: Encontrar scripts de módulos que podem estar com problemas
+  const failedModuleScripts = Array.from(document.querySelectorAll('script[src*="index."][src$=".js"]')).filter(script => 
     !script.hasAttribute('data-fixed') && 
     (script.hasAttribute('type') && script.getAttribute('type') === 'module')
   );
   
-  if (failedScripts.length > 0) {
-    logDebug(`Encontrados ${failedScripts.length} scripts potencialmente problemáticos`);
+  // Estratégia 2: Procurar qualquer script que seja para plannerorganiza.com.br
+  const plannerScripts = Array.from(document.querySelectorAll('script[src*="plannerorganiza.com.br"]')).filter(script => 
+    !script.hasAttribute('data-fixed')
+  );
+  
+  // Estratégia 3: Verificar todos os scripts com tipo "module"
+  const moduleScripts = Array.from(document.querySelectorAll('script[type="module"]')).filter(script => 
+    !script.hasAttribute('data-fixed') && script.hasAttribute('src')
+  );
+  
+  // Combinar todos os scripts problemáticos
+  const allFailedScripts = [...new Set([...failedModuleScripts, ...plannerScripts, ...moduleScripts])];
+  
+  if (allFailedScripts.length > 0) {
+    logDebug(`Encontrados ${allFailedScripts.length} scripts potencialmente problemáticos`);
     
-    failedScripts.forEach(script => {
+    allFailedScripts.forEach(script => {
       logDebug(`Corrigindo script: ${script.src}`);
       script.setAttribute('data-fixed', 'true');
       
-      // Criar um novo script sem type="module"
-      const newSrc = script.src;
-      const newScript = document.createElement('script');
-      newScript.src = newSrc;
-      newScript.async = true;
-      
-      // Substituir o script original
-      script.parentNode.replaceChild(newScript, script);
-      logDebug(`Script substituído: ${newSrc}`);
+      try {
+        // Criar um novo script sem type="module"
+        const newSrc = script.src;
+        const newScript = document.createElement('script');
+        newScript.src = newSrc;
+        newScript.async = true;
+        newScript.setAttribute('data-fixed-module', 'true');
+        newScript.crossOrigin = 'anonymous';
+        
+        // Definir cabeçalhos de cache para evitar problemas de CORS
+        if (newSrc.includes('plannerorganiza.com.br')) {
+          newScript.setAttribute('referrerpolicy', 'origin');
+        }
+        
+        // Substituir o script original
+        script.parentNode.replaceChild(newScript, script);
+        logDebug(`Script substituído: ${newSrc}`);
+        
+        // Como segunda camada de proteção, também carregar via XHR
+        if (CONFIG.useXHRFallback && (CONFIG.specificModules.some(mod => newSrc.includes(mod)) || newSrc.includes('plannerorganiza.com.br'))) {
+          loadScript(newSrc, true, true)
+            .then(() => logDebug(`Script adicional carregado via XHR: ${newSrc}`))
+            .catch(e => logDebug(`Falha no carregamento adicional via XHR: ${newSrc}`, e));
+        }
+      } catch (e) {
+        logDebug(`Erro ao tentar substituir script: ${e.message}`);
+      }
     });
   }
 }, CONFIG.checkInterval);
@@ -232,9 +274,32 @@ document.addEventListener('DOMContentLoaded', function() {
   const debugElement = document.createElement('div');
   debugElement.id = 'module-fix-debug';
   debugElement.style.display = 'none';
-  debugElement.textContent = 'Fix v2.0 para importação de módulos ativo';
+  debugElement.textContent = 'Fix v2.1 para importação de módulos ativo';
+  debugElement.setAttribute('data-modules', CONFIG.specificModules.join(','));
   document.body.appendChild(debugElement);
   logDebug('Elemento de debug adicionado');
+  
+  // Adicionar um diagnóstico geral para a página
+  setTimeout(() => {
+    const scriptTags = document.querySelectorAll('script[src*="index."][src$=".js"]');
+    logDebug(`Diagnóstico: ${scriptTags.length} scripts de módulos encontrados na página`);
+    
+    // Verificar se estamos na versão de produção
+    if (window.location.hostname === 'plannerorganiza.com.br') {
+      logDebug('Detectado ambiente de produção');
+      
+      // Força o precarregamento dos módulos críticos
+      CONFIG.specificModules.forEach(mod => {
+        const preloadLink = document.createElement('link');
+        preloadLink.rel = 'preload';
+        preloadLink.as = 'script';
+        preloadLink.href = `/static/js/${mod}`;
+        preloadLink.crossOrigin = 'anonymous';
+        document.head.appendChild(preloadLink);
+        logDebug(`Preload adicionado para: ${mod}`);
+      });
+    }
+  }, 1000);
 });
 
 logDebug('Sistema de correção de importação de módulos inicializado');
