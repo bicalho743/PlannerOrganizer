@@ -103,6 +103,26 @@ if not st.session_state.authenticated:
     </style>
     """, unsafe_allow_html=True)
     
+    # Verificar se estamos mostrando termos de uso ou política de privacidade
+    query_params = st.experimental_get_query_params()
+    
+    # Verificar os parâmetros de consulta para os documentos legais
+    if "show_termos" in query_params and query_params["show_termos"] == ["true"]:
+        try:
+            from pages.termos_de_uso import show
+            show()
+            st.stop()  # Parar o fluxo após mostrar a página
+        except ImportError as e:
+            st.error(f"Não foi possível carregar os termos de uso: {e}")
+    
+    elif "show_politica" in query_params and query_params["show_politica"] == ["true"]:
+        try:
+            from pages.politica_privacidade import show
+            show()
+            st.stop()  # Parar o fluxo após mostrar a página
+        except ImportError as e:
+            st.error(f"Não foi possível carregar a política de privacidade: {e}")
+    
     # Verificar se o usuário está tentando registrar ou recuperar senha
     if st.session_state.login_page == "registrar":
         try:
@@ -1007,54 +1027,14 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
     def ocultar_politica():
         st.session_state.mostrar_politica = False
     
-    # Adicionar rodapé com botões para abrir os modais
-    footer_html = f"""
+    # Adicionar rodapé com links usando URLs diretas para streamlit
+    footer_html = """
     <div class="footer-custom">
         &copy; 2025 Planner Organizer | 
-        <a href="#" onclick="showTerms(); return false;">Termos de Uso</a> | 
-        <a href="#" onclick="showPolicy(); return false;">Política de Privacidade</a> | 
+        <a href="?show_termos=true" target="_blank">Termos de Uso</a> | 
+        <a href="?show_politica=true" target="_blank">Política de Privacidade</a> | 
         Contato: contato@plannerorganizer.com.br
     </div>
-    
-    <script>
-        function showTerms() {{
-            // Usar o Streamlit Component API para chamar uma função Python
-            window.parent.postMessage(
-                {{
-                    type: 'streamlit:setComponentValue',
-                    value: true,
-                    dataType: 'bool',
-                    key: 'mostrar_termos'
-                }}, 
-                '*'
-            );
-            // Forçar um rerun para exibir o modal
-            const streamlitDoc = window.parent.document;
-            const streamlitRerun = streamlitDoc.querySelector('button[kind=primaryFormSubmit]');
-            if (streamlitRerun) {{
-                streamlitRerun.click();
-            }}
-        }}
-        
-        function showPolicy() {{
-            // Usar o Streamlit Component API para chamar uma função Python
-            window.parent.postMessage(
-                {{
-                    type: 'streamlit:setComponentValue',
-                    value: true,
-                    dataType: 'bool',
-                    key: 'mostrar_politica'
-                }}, 
-                '*'
-            );
-            // Forçar um rerun para exibir o modal
-            const streamlitDoc = window.parent.document;
-            const streamlitRerun = streamlitDoc.querySelector('button[kind=primaryFormSubmit]');
-            if (streamlitRerun) {{
-                streamlitRerun.click();
-            }}
-        }}
-    </script>
     """
     st.markdown(footer_html, unsafe_allow_html=True)
     
