@@ -228,7 +228,8 @@ def gerar_pdf_proposta(db, proposta_id, custom_filename=None):
         # Buscar produtos da proposta se estiverem disponíveis
         produtos = []
         try:
-            produtos_df = db.get_produtos_proposta(proposta_id)
+            # Usar o método get_produtos_organizadores que já existe para buscar os produtos
+            produtos_df = db.get_produtos_organizadores(proposta_id)
             if produtos_df is not None and not produtos_df.empty:
                 produtos = produtos_df.to_dict('records')
                 print(f"DEBUG PDF: Encontrados {len(produtos)} produtos para a proposta")

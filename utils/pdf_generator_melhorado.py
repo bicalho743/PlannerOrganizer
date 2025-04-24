@@ -153,11 +153,15 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         
         # Lista de observações
         y -= 20
-        c.drawString(40, y, "1. Os valores apresentados incluem todos os custos e acréscimos.")
+        c.drawString(40, y, "1. Pagamento sinal, na reserva da data, via PIX")
         y -= 16
-        c.drawString(40, y, "2. Valores a receber incluem base e serviços de organização.")
+        c.drawString(40, y, "2. Os valores apresentados incluem todos os custos.")
         y -= 16
-        c.drawString(40, y, "3. Valores a pagar a lojas/fornecedores são responsabilidade do cliente.")
+        c.drawString(40, y, "3. Não está incluído a organização de documentos.")
+        y -= 16
+        c.drawString(40, y, "4. No caso da proposta incluir treinamento, é necessário a presença de funcionário no período da organização")
+        y -= 16
+        c.drawString(40, y, "5. Não incluido produtos e organizadores, caso o cliente opte por adquirí-los")
         
         # Adicionar informações do usuário/empresa no rodapé
         c.setFillColor(azul_escuro)
