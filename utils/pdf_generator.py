@@ -1001,11 +1001,12 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
                     ])
                     total_receber += valor
 
-        # Tabela style
+        # Tabela style - com alinhamento centralizado vertical e horizontal para todas as células
         table_style = TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Alinhamento horizontal centralizado para todas as células
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),  # Alinhamento vertical centralizado para todas as células
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, 0), 12),
             ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
@@ -1014,7 +1015,7 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
             ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
             ('FONTSIZE', (0, 1), (-1, -1), 9),
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
+            # Removemos o alinhamento RIGHT das colunas de valor para manter tudo centralizado
         ])
 
         # Criar e adicionar tabela de valores a receber
