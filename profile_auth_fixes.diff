@@ -1,0 +1,17 @@
+Alterações feitas para corrigir a sincronização entre objetos 'user' e 'usuario' na sessão:
+
+1. Modificações no arquivo utils/firebase_auth.py:
+   - Adicionada sincronização automática do objeto 'user' para 'usuario' após o login
+   - Atualizado o método logout para limpar ambos os objetos
+   - Adicionados logs adicionais para depuração da autenticação
+
+2. Modificações no arquivo pages/perfil.py:
+   - Adicionada verificação melhorada para detectar o estado de autenticação
+   - Adicionada sincronização entre os objetos 'user' e 'usuario' quando necessário
+   - Adicionados logs de depuração para rastrear problemas de sessão
+   - Melhorada a lógica de fallback para garantir acesso ao perfil quando autenticado
+
+3. Logs de teste confirmam que a correção está funcionando:
+   - Autenticação é mantida corretamente entre recarregamentos de página
+   - O objeto 'usuario' é criado corretamente a partir de 'user' quando necessário
+   - Os dados de perfil são carregados e salvos corretamente
