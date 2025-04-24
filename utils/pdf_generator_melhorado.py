@@ -12,7 +12,8 @@ import pandas as pd
 
 def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
     """
-    Gera um PDF com o relatório de serviço para o cliente, formatado conforme o modelo
+    Gera um PDF com o relatório de serviço para o cliente, formatado com design profissional
+    com cabeçalho e rodapé azul
     
     Args:
         proposta: Dicionário com os dados da proposta
@@ -23,6 +24,7 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
     Returns:
         str: Caminho do arquivo PDF gerado
     """
+    print("DEBUG: Usando o gerador de relatório de serviço!")
     # Logs para debugging
     print("DEBUG PDF NOVO: Gerando relatório de serviço para proposta #{} com novo design".format(proposta.get('id', 'N/A')))
     print("DEBUG PDF NOVO: Cliente: {}".format(cliente.get('nome', 'N/A')))
@@ -33,19 +35,18 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         # Certificar que o diretório existe
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         
-        # Criação do documento
-        doc = SimpleDocTemplate(
-            filename,
-            pagesize=A4,
-            rightMargin=72,
-            leftMargin=72,
-            topMargin=72,
-            bottomMargin=72
-        )
+        # Configurações da página
+        width, height = A4
         
-        # Inicialização dos elementos
-        story = []
-        styles = getSampleStyleSheet()
+        # Cores padrão para melhor consistência
+        azul_principal = colors.HexColor("#1E366F")  # Azul escuro para cabeçalhos
+        azul_claro = colors.HexColor("#EEF2FF")      # Azul claro para fundos
+        cinza_claro = colors.HexColor("#F5F5F5")     # Cinza claro para alternância
+        cinza_medio = colors.HexColor("#666666")     # Cinza médio para textos normais
+        
+        # Criação do canvas diretamente para maior controle do layout
+        c = canvas.Canvas(filename, pagesize=A4)
+        c.setTitle(f"Relatório de Serviço - {cliente['nome']}")
         
         # Carregar dados do perfil do usuário
         try:
@@ -55,59 +56,67 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         except Exception as e:
             print(f"DEBUG PDF ERROR: Erro ao carregar perfil do usuário: {str(e)}")
             perfil = {'empresa': 'Planner Organizer', 'telefone': '(11) 98765-4321', 'email': 'contato@plannerorganizer.com.br'}
+            
+        # ===== CABEÇALHO COM FAIXA AZUL =====
+        c.setFillColor(azul_principal)
+        c.rect(0, height-60, width, 60, fill=True, stroke=0)
         
-        # Cores brandadas
-        azul_principal = colors.HexColor("#1E366F")
+        # Título no cabeçalho
+        c.setFillColor(colors.white)
+        c.setFont("Helvetica-Bold", 18)
+        c.drawCentredString(width/2, height-35, "RELATÓRIO DE SERVIÇO")
         
-        # Estilos personalizados
-        titulo_principal = ParagraphStyle(
-            'TituloPrincipal',
-            parent=styles['Heading1'],
-            fontSize=18,
-            alignment=1, # Centralizado
-            textColor=colors.white,
-            backColor=azul_principal,
-            borderPadding=10,
-            spaceAfter=15
-        )
+        # Número da proposta e cliente
+        c.setFont("Helvetica", 12)
+        c.drawCentredString(width/2, height-55, f"Proposta #{proposta['id']} - {cliente['nome']}")
         
-        titulo_secao = ParagraphStyle(
-            'TituloSecao',
-            parent=styles['Heading2'],
-            fontSize=14,
-            textColor=azul_principal,
-            spaceBefore=15,
-            spaceAfter=10
-        )
+        # ===== INFORMAÇÕES DO CLIENTE =====
+        y = height - 100  # Começando abaixo do cabeçalho
         
-        normal_style = ParagraphStyle(
-            'NormalStyle',
-            parent=styles['Normal'],
-            fontSize=10,
-            leading=14,
-            spaceBefore=4,
-            spaceAfter=4
-        )
+        # Título da seção
+        c.setFillColor(azul_principal)
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(40, y, "Informações do Cliente")
         
-        # Cabeçalho
-        story.append(Paragraph("Relatório de Serviço", titulo_principal))
+        # Linha decorativa sob o título
+        c.setStrokeColor(azul_principal)
+        c.line(40, y-5, 200, y-5)
         
-        # Título do relatório
-        story.append(Paragraph(f"Proposta #{proposta['id']} - {cliente['nome']}", titulo_secao))
-        story.append(Paragraph(datetime.now().strftime('%d/%m/%Y'), normal_style))
-        story.append(Spacer(1, 20))
+        # Dados do cliente
+        y -= 25
+        c.setFillColor(cinza_medio)
+        c.setFont("Helvetica", 10)
+        c.drawString(40, y, f"Nome: {cliente['nome']}")
+        y -= 15
+        c.drawString(40, y, f"Email: {cliente.get('email', 'N/A')}")
+        y -= 15
+        c.drawString(40, y, f"Telefone: {cliente.get('telefone', 'N/A')}")
         
-        # Informações do Cliente
-        story.append(Paragraph("Informações do Cliente", titulo_secao))
-        story.append(Paragraph(f"Nome: {cliente['nome']}", normal_style))
-        story.append(Paragraph(f"Email: {cliente.get('email', 'N/A')}", normal_style))
-        story.append(Paragraph(f"Telefone: {cliente.get('telefone', 'N/A')}", normal_style))
-        story.append(Spacer(1, 10))
+        # ===== INFORMAÇÕES DA PROPOSTA =====
+        y -= 30
+        c.setFillColor(azul_principal)
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(40, y, "Informações da Proposta")
         
-        # Informações da Proposta
-        story.append(Paragraph("Informações da Proposta", titulo_secao))
-        story.append(Paragraph(f"Tipo: {proposta.get('tipo_proposta', 'Organização')}", normal_style))
-        story.append(Paragraph(f"Status: {proposta.get('status', 'Concluída')}", normal_style))
+        # Linha decorativa sob o título
+        c.setStrokeColor(azul_principal)
+        c.line(40, y-5, 220, y-5)
+        
+        # Dados da proposta em duas colunas
+        col1_x = 40
+        col2_x = width/2
+        y -= 25
+        
+        c.setFillColor(cinza_medio)
+        c.setFont("Helvetica", 10)
+        
+        # Coluna 1
+        c.drawString(col1_x, y, f"Tipo: {proposta.get('tipo_proposta', 'N/A')}")
+        y -= 15
+        c.drawString(col1_x, y, f"Status: {proposta.get('status', 'N/A')}")
+        
+        # Coluna 2 - alinhada
+        y_col2 = y + 15  # Reinicia na mesma altura da primeira linha da coluna 1
         
         # Datas formatadas
         data_inicio_str = "N/A"
@@ -124,104 +133,171 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
             else:
                 data_fim_str = str(proposta['data_fim'])
                 
-        # Adicionar datas
-        story.append(Paragraph(f"Data Início: {data_inicio_str}", normal_style))
-        story.append(Paragraph(f"Data Fim: {data_fim_str}", normal_style))
-        
-        # Prazo de entrega (se disponível)
-        story.append(Paragraph(f"Prazo de Entrega: {data_inicio_str}", normal_style))
-        story.append(Spacer(1, 10))
-        
-        # Descrição do Serviço
-        story.append(Paragraph("Descrição do Serviço:", titulo_secao))
-        story.append(Paragraph(proposta.get('descricao', 'N/A'), normal_style))
-        story.append(Spacer(1, 20))
-        
-        # Serviços Realizados
-        story.append(Paragraph("Serviços Realizados", titulo_secao))
-        
-        # Tabela de Serviços
-        if not acrescimos.empty:
-            # Preparar dados da tabela
-            colWidths = [290, 160]
-            tableStyle = TableStyle([
-                ('BACKGROUND', (0, 0), (1, 0), azul_principal),
-                ('TEXTCOLOR', (0, 0), (1, 0), colors.white),
-                ('ALIGN', (0, 0), (1, 0), 'CENTER'),
-                ('ALIGN', (1, 1), (1, -1), 'RIGHT'),  # Alinhar valores à direita
-                ('FONTNAME', (0, 0), (1, 0), 'Helvetica-Bold'),
-                ('BOTTOMPADDING', (0, 0), (1, 0), 12),
-                ('BACKGROUND', (0, 1), (1, -2), colors.white),
-                ('GRID', (0, 0), (1, -1), 1, colors.black),
-                ('VALIGN', (0, 0), (1, -1), 'MIDDLE'),
-                ('FONTNAME', (0, -1), (1, -1), 'Helvetica-Bold'),
-                ('BACKGROUND', (0, -1), (1, -1), colors.lightgrey),
-            ])
+        # Prazo de entrega
+        prazo_str = "N/A"
+        if proposta.get('prazo_entrega'):
+            if hasattr(proposta['prazo_entrega'], 'strftime'):
+                prazo_str = proposta['prazo_entrega'].strftime('%d/%m/%Y')
+            else:
+                prazo_str = str(proposta['prazo_entrega'])
             
-            # Cabeçalho da tabela
-            data = [["Descrição", "Valor"]]
+        # Adicionando datas na coluna 2
+        c.drawString(col2_x, y_col2, f"Data Início: {data_inicio_str}")
+        y_col2 -= 15
+        c.drawString(col2_x, y_col2, f"Data Fim: {data_fim_str}")
+        y_col2 -= 15
+        c.drawString(col2_x, y_col2, f"Prazo de Entrega: {prazo_str}")
+        
+        # Ajusta Y para o menor valor entre as duas colunas
+        y = min(y, y_col2) - 15
+        
+        # ===== DESCRIÇÃO DO SERVIÇO =====
+        y -= 15
+        c.setFillColor(azul_principal)
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(40, y, "DESCRIÇÃO DO SERVIÇO")
+        
+        # Fundo colorido para a descrição
+        c.setFillColor(azul_claro)
+        c.rect(40, y-40, width-80, 30, fill=True, stroke=False)
+        
+        # Texto da descrição
+        y -= 25
+        c.setFillColor(cinza_medio)
+        c.setFont("Helvetica", 10)
+        
+        # Se a descrição for longa, podemos implementar quebra de linhas
+        descricao = proposta.get('descricao', 'Sem descrição')
+        c.drawString(50, y, descricao)
+        
+        # ===== SERVIÇOS REALIZADOS (TABELA) =====
+        y -= 45
+        c.setFillColor(azul_principal)
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(40, y, "ITENS INCLUSOS")
+        
+        # Cabeçalho da tabela
+        y -= 25
+        table_width = width - 80
+        desc_col_width = table_width * 0.75
+        valor_col_width = table_width * 0.25
+        
+        # Desenhar fundo do cabeçalho
+        c.setFillColor(azul_principal)
+        c.rect(40, y-15, desc_col_width, 15, fill=True, stroke=False)
+        c.rect(40+desc_col_width, y-15, valor_col_width, 15, fill=True, stroke=False)
+        
+        # Texto do cabeçalho
+        c.setFillColor(colors.white)
+        c.setFont("Helvetica-Bold", 10)
+        c.drawCentredString(40 + desc_col_width/2, y-12, "Descrição")
+        c.drawCentredString(40 + desc_col_width + valor_col_width/2, y-12, "Valor")
+        
+        # Conteúdo da tabela
+        y -= 15
+        linha = 0
+        
+        # Serviço base
+        c.setFillColor(cinza_medio)
+        c.setFont("Helvetica", 9)
+        
+        # Alternância de cores para linhas
+        if linha % 2 == 0:
+            c.setFillColor(azul_claro)
+            c.rect(40, y-15, table_width, 15, fill=True, stroke=False)
             
-            # Valor base da proposta
-            data.append([f"Serviço Base", f"R$ {float(proposta['valor']):.2f}"])
+        c.setFillColor(cinza_medio)
+        c.drawString(50, y-12, "Serviço Base")
+        c.drawRightString(40 + desc_col_width + valor_col_width - 10, y-12, f"R$ {float(proposta['valor']):.2f}")
+        
+        y -= 15
+        linha += 1
+        
+        # Total para cálculo
+        total = float(proposta['valor'])
+        
+        # Adicionar acréscimos, exceto os de tipo 'assistente'
+        for _, acrescimo in acrescimos.iterrows():
+            tipo = acrescimo.get('tipo', 'OUTRO')
             
-            # Total para cálculo
-            total = float(proposta['valor'])
-            
-            # Adicionar acréscimos, exceto os de tipo 'assistente'
-            for _, acrescimo in acrescimos.iterrows():
-                tipo = acrescimo.get('tipo', 'OUTRO')
+            # Pular itens de assistentes que não devem aparecer no relatório para o cliente
+            if tipo.lower() == 'assistente':
+                continue
                 
-                # Pular itens de assistentes que não devem aparecer no relatório para o cliente
-                if tipo.lower() == 'assistente':
-                    continue
-                    
-                descricao = acrescimo.get('descricao', 'Item adicional')
-                fornecedor = acrescimo.get('fornecedor', '')
-                valor = float(acrescimo.get('valor', 0))
-                
-                # Formatar descrição completa com tipo e fornecedor quando disponíveis
-                descricao_formatada = f"{tipo.upper()} - {descricao}"
-                if fornecedor:
-                    descricao_formatada += f" ({fornecedor})"
-                
-                # Adicionar à tabela
-                data.append([descricao_formatada, f"R$ {valor:.2f}"])
-                total += valor
+            descricao = acrescimo.get('descricao', 'Item adicional')
+            fornecedor = acrescimo.get('fornecedor', '')
+            valor = float(acrescimo.get('valor', 0))
             
-            # Linha de total
-            data.append(["Total:", f"R$ {total:.2f}"])
+            # Formatar descrição completa com tipo e fornecedor
+            descricao_formatada = f"{tipo.upper()} - {descricao}"
+            if fornecedor:
+                descricao_formatada += f" ({fornecedor})"
             
-            # Criar e adicionar tabela
-            table = Table(data, colWidths=colWidths)
-            table.setStyle(tableStyle)
-            story.append(table)
-            story.append(Spacer(1, 20))
+            # Alternância de cores para linhas
+            if linha % 2 == 0:
+                c.setFillColor(azul_claro)
+                c.rect(40, y-15, table_width, 15, fill=True, stroke=False)
+            
+            # Adicionar item à tabela
+            c.setFillColor(cinza_medio)
+            c.drawString(50, y-12, descricao_formatada)
+            c.drawRightString(40 + desc_col_width + valor_col_width - 10, y-12, f"R$ {valor:.2f}")
+            
+            total += valor
+            y -= 15
+            linha += 1
         
-        # Observações
-        story.append(Paragraph("Observações:", titulo_secao))
-        story.append(Paragraph("1. Este documento representa o relatório para cliente dos serviços prestados.", normal_style))
-        story.append(Paragraph("2. Para quaisquer dúvidas sobre os serviços, entre em contato conosco.", normal_style))
-        story.append(Paragraph("3. Agradecemos a confiança em nossos serviços.", normal_style))
+        # Linha de total com fundo destacado
+        c.setFillColor(azul_principal)
+        c.rect(40, y-15, table_width, 15, fill=True, stroke=False)
+        c.setFillColor(colors.white)
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(50, y-12, "Total:")
+        c.drawRightString(40 + desc_col_width + valor_col_width - 10, y-12, f"R$ {total:.2f}")
         
-        # Rodapé com dados de contato
-        story.append(Spacer(1, 30))
+        # ===== OBSERVAÇÕES =====
+        y -= 40
+        c.setFillColor(azul_principal)
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(40, y, "Observações:")
         
-        footer_style = ParagraphStyle(
-            'FooterStyle',
-            parent=styles['Normal'],
-            fontSize=10,
-            alignment=0,
-            textColor=azul_principal
-        )
+        y -= 20
+        c.setFillColor(cinza_medio)
+        c.setFont("Helvetica", 10)
         
-        # Adicionando dados da empresa no rodapé
-        story.append(Paragraph(f"{perfil.get('empresa', 'Planner Organizer')}", footer_style))
-        story.append(Paragraph(f"{perfil.get('email', 'contato@plannerorganizer.com.br')}", footer_style))
-        story.append(Paragraph(f"{perfil.get('telefone', '(11) 98765-4321')}", footer_style))
-        story.append(Paragraph("www.plannerorganizer.com.br", footer_style))
+        observacoes = [
+            "1. Este documento representa o relatório para cliente dos serviços prestados.",
+            "2. Para quaisquer dúvidas sobre os serviços, entre em contato conosco.",
+            "3. Agradecemos a confiança em nossos serviços."
+        ]
         
-        # Gerar PDF
-        doc.build(story)
+        for obs in observacoes:
+            c.drawString(40, y, obs)
+            y -= 15
+            
+        # ===== RODAPÉ COM FAIXA AZUL =====
+        c.setFillColor(azul_principal)
+        c.rect(0, 0, width, 60, fill=True, stroke=0)
+        
+        # Informações de contato no rodapé
+        c.setFillColor(colors.white)
+        c.setFont("Helvetica-Bold", 10)
+        y_rodape = 40
+        
+        c.drawCentredString(width/2, y_rodape, f"{perfil.get('empresa', 'Planner Organizer')}")
+        y_rodape -= 12
+        c.setFont("Helvetica", 9)
+        c.drawCentredString(width/2, y_rodape, f"{perfil.get('email', 'contato@plannerorganizer.com.br')}")
+        y_rodape -= 12
+        c.drawCentredString(width/2, y_rodape, f"{perfil.get('telefone', '(11) 98765-4321')} | www.plannerorganizer.com.br")
+        
+        # Data de geração pequena no rodapé
+        c.setFont("Helvetica", 7)
+        c.drawCentredString(width/2, 5, f"Relatório gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')}")
+        
+        # Salvar PDF
+        c.save()
+        
         print(f"DEBUG PDF NOVO: Relatório de serviço gerado com sucesso: {filename}")
         return filename
     except Exception as e:
