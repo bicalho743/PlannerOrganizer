@@ -12,6 +12,14 @@ if project_root not in sys.path:
 
 def show():
     """Exibe a página de termos de uso"""
+    # Ocultar completamente a barra lateral
+    st.markdown("""
+    <style>
+    [data-testid="collapsedControl"] {display: none;}
+    section[data-testid="stSidebar"] {display: none;}
+    </style>
+    """, unsafe_allow_html=True)
+    
     st.title("Termos e Condições de Uso")
     
     st.markdown("""
@@ -56,10 +64,31 @@ def show():
     será considerado como aceitação das novas condições.
     """)
     
-    # Botão para voltar
-    if st.button("Voltar"):
-        st.session_state.show_termos = False
-        st.rerun()
+    # Verificar se estamos no fluxo de criação de conta
+    if st.session_state.get("creating_account", False):
+        # Botões para aceitar/recusar termos
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("Aceitar Termos e Criar Conta", type="primary", use_container_width=True):
+                # Marcar termos como aceitos e continuar
+                st.session_state.termos_aceitos = True
+                st.session_state.show_termos = False
+                # Redirecionar para o formulário de cadastro
+                st.success("Termos aceitos! Prosseguindo com o cadastro...")
+                st.rerun()
+        
+        with col2:
+            if st.button("Recusar e Voltar", use_container_width=True):
+                # Voltar ao login sem criar a conta
+                st.session_state.creating_account = False
+                st.session_state.show_termos = False
+                st.rerun()
+    else:
+        # Botão simples para voltar
+        if st.button("Voltar"):
+            st.session_state.show_termos = False
+            st.rerun()
 
 if __name__ == "__main__":
     show()

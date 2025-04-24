@@ -357,7 +357,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0.0"
+args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0.0 --server.headless true"
 waitForPort = 5001
 
 [[workflows.workflow]]
