@@ -309,47 +309,8 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
         
         # Pulando para a próxima seção diretamente (removido COMPARATIVO E ANÁLISE DE MARGEM)
         
-        # Ajuste de posição
+        # Ajuste de posição - sem as seções removidas
         y = y - 40
-        
-        # Seção Análise e Recomendações
-        y -= 30
-        c.setFillColor(azul_escuro)
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(40, y, "Análise e Recomendações")
-        
-        # Texto de análise
-        y -= 20
-        c.setFillColor(cinza_medio)
-        c.setFont("Helvetica", 10)
-        
-        if margem_percentual >= 30:
-            c.drawString(40, y, f"POSITIVO: Margem dentro do esperado ({margem_percentual:.2f}%)")
-        elif margem_percentual >= 20:
-            c.drawString(40, y, f"ATENÇÃO: Margem abaixo do ideal ({margem_percentual:.2f}%), considerar ajustes em propostas futuras")
-        else:
-            c.drawString(40, y, f"NEGATIVO: Margem baixa ({margem_percentual:.2f}%), revisar estrutura de custos e valores")
-        
-        # Seção Observações Finais
-        y -= 40
-        c.setFillColor(azul_escuro)
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(40, y, "Observações Finais")
-        
-        # Observações
-        y -= 20
-        c.setFillColor(cinza_medio)
-        c.setFont("Helvetica", 10)
-        
-        observacoes = [
-            "1. A margem ideal deve ser de no mínimo 30% do valor total.",
-            "2. Custos com assistentes são despesas da empresa.",
-            "3. Custos com fornecedores são normalmente repassados ao cliente."
-        ]
-        
-        for obs in observacoes:
-            c.drawString(40, y, obs)
-            y -= 15
         
         # Rodapé com data e hora de geração
         c.setFillColor(azul_escuro)
