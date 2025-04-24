@@ -4,6 +4,38 @@ def apply_page_header():
     """
     Aplica um cabeçalho padronizado em todas as páginas do sistema
     """
+    # CSS para colocar o cabeçalho mais próximo do topo da página
+    header_css = """
+    <style>
+    /* Reduzir o espaço acima do cabeçalho */
+    .main .block-container {
+        padding-top: 1rem !important;
+        margin-top: 0 !important;
+    }
+    
+    /* Garantir que o header do Streamlit não interfira */
+    header[data-testid="stHeader"] {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Remove espaços extras no topo do corpo da página */
+    [data-testid="stAppViewContainer"] > div:first-child {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    
+    /* Ajusta o topo da área principal */
+    [data-testid="stAppViewContainer"] > section:first-of-type {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    </style>
+    """
+    
+    # Aplicar CSS para ajustar espaçamento
+    st.markdown(header_css, unsafe_allow_html=True)
+    
     # Adicionando o cabeçalho no topo da página
     st.markdown("""
     <div style="background-color: #1E366F; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; text-align: center;">
