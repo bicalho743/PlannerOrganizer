@@ -919,11 +919,12 @@ if st.session_state.get('show_welcome', True) and st.session_state.authenticated
         # Em caso de erro, desativar a página de boas-vindas
         st.session_state.show_welcome = False
 
-# Importar o cabeçalho padrão
-from utils.page_config import apply_page_header
+# Importar o cabeçalho e rodapé padrão
+from utils.page_config import apply_page_header, apply_page_footer
 
-# Aplicar o cabeçalho em todas as páginas 
+# Aplicar o cabeçalho e rodapé em todas as páginas 
 apply_page_header()
+apply_page_footer()
 
 # Roteamento de páginas
 try:
@@ -1019,16 +1020,7 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
     def ocultar_politica():
         st.session_state.mostrar_politica = False
     
-    # Adicionar rodapé com links usando URLs diretas para streamlit
-    footer_html = """
-    <div class="footer-custom">
-        &copy; 2025 Planner Organizer | 
-        <a href="?show_termos=true" target="_blank">Termos de Uso</a> | 
-        <a href="?show_politica=true" target="_blank">Política de Privacidade</a> | 
-        Contato: contato@plannerorganizer.com.br
-    </div>
-    """
-    st.markdown(footer_html, unsafe_allow_html=True)
+    # Sem rodapé aqui - movido para o footer global
     
     # Exibir modais conforme o estado
     if st.session_state.mostrar_termos:

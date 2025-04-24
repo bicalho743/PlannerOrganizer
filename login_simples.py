@@ -270,15 +270,21 @@ def main():
             st.rerun()
     
     # Adicionar rodapé com links
-    footer_html = """
-    <div class="footer-custom">
-        &copy; 2025 Planner Organizer | 
-        <a href="#" onclick="document.dispatchEvent(new CustomEvent('show_termos')); return false;">Termos de Uso</a> | 
-        <a href="#" onclick="document.dispatchEvent(new CustomEvent('show_politica')); return false;">Política de Privacidade</a> | 
-        <a href="mailto:contato@plannerorganizer.com.br">Contato</a>
-    </div>
-    """
-    st.markdown(footer_html, unsafe_allow_html=True)
+    # Importar e usar o rodapé padronizado
+    try:
+        from utils.page_config import apply_page_footer
+        apply_page_footer()
+    except ImportError:
+        # Fallback para o caso de erro na importação
+        footer_html = """
+        <div class="footer-custom">
+            &copy; 2025 Planner Organizer | 
+            <a href="#" onclick="document.dispatchEvent(new CustomEvent('show_termos')); return false;">Termos de Uso</a> | 
+            <a href="#" onclick="document.dispatchEvent(new CustomEvent('show_politica')); return false;">Política de Privacidade</a> | 
+            <a href="mailto:contato@plannerorganizer.com.br">Contato</a>
+        </div>
+        """
+        st.markdown(footer_html, unsafe_allow_html=True)
     
     # Detector para política de privacidade no rodapé
     if st.checkbox("", key="politica_link", label_visibility="collapsed"):
