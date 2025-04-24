@@ -1,0 +1,73 @@
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib import colors
+
+def gerar_pdf_proposta(nome_cliente, numero_proposta, data_emissao, servicos, valor_total, status):
+    arquivo_pdf = f"Proposta_{numero_proposta}_{nome_cliente.replace(' ', '_')}.pdf"
+    c = canvas.Canvas(arquivo_pdf, pagesize=A4)
+
+    largura, altura = A4
+
+    # Paleta de cores
+    cinza_claro = colors.HexColor("#808080")     # fundo e elementos secundários
+    cinza_medio = colors.HexColor("#696969")     # títulos e textos
+    verde_escuro = colors.HexColor("#008000")    # acentos
+    verde_claro = colors.HexColor("#90EE90")     # destaques
+
+    # Fundo cinza claro
+    c.setFillColor(cinza_claro)
+    c.rect(0, 0, largura, altura, fill=True, stroke=0)
+
+    # Cabeçalho com acento verde escuro
+    c.setFillColor(verde_escuro)
+    c.rect(0, altura - 60, largura, 60, fill=True, stroke=0)
+    c.setFillColor(colors.white)
+    c.setFont("Helvetica-Bold", 20)
+    c.drawString(30, altura - 40, f"Proposta #{numero_proposta} – {nome_cliente}")
+
+    # Data da proposta
+    c.setFont("Helvetica", 10)
+    c.drawString(30, altura - 70, f"Data de emissão: {data_emissao}")
+
+    # Título da seção
+    c.setFillColor(cinza_medio)
+    c.setFont("Helvetica-Bold", 13)
+    c.drawString(30, altura - 100, "Informações do Serviço")
+
+    # Lista de serviços
+    y = altura - 120
+    c.setFont("Helvetica", 11)
+    for item in servicos:
+        c.setFillColor(colors.black)
+        c.drawString(40, y, f"• {item}")
+        y -= 18
+
+    # Bloco de investimento com destaque em verde claro
+    y -= 20
+    c.setFillColor(verde_claro)
+    c.rect(30, y - 45, largura - 60, 60, fill=True, stroke=0)
+    c.setFillColor(cinza_medio)
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(40, y + 5, "Investimento Total")
+    c.setFont("Helvetica", 14)
+    c.drawString(40, y - 15, f"R$ {valor_total:.2f} – Status: {status}")
+
+    # Observações
+    y -= 70
+    c.setFont("Helvetica-Bold", 12)
+    c.setFillColor(cinza_medio)
+    c.drawString(30, y, "Observações:")
+    c.setFont("Helvetica", 11)
+    c.setFillColor(colors.black)
+    c.drawString(40, y - 20, "• Os valores apresentados incluem todos os custos.")
+    c.drawString(40, y - 40, "• O pagamento a fornecedores é de responsabilidade do cliente.")
+
+    # Rodapé em verde escuro com texto claro
+    c.setFillColor(verde_escuro)
+    c.rect(0, 0, largura, 40, fill=True, stroke=0)
+    c.setFillColor(colors.white)
+    c.setFont("Helvetica", 10)
+    c.drawString(30, 15, "Planner Organizer | contato@plannerorganizer.com.br | www.plannerorganizer.com.br")
+
+    c.save()
+    print(f"PDF gerado: {arquivo_pdf}")
