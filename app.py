@@ -875,13 +875,7 @@ st.sidebar.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Título do menu
-st.sidebar.markdown("""
-<h1 style="font-size: 1.6rem; color: #1E366F; margin-bottom: 1.5rem; text-align: center; font-weight: 600;">
-    Planner Organizer<br>
-    <span style="font-size: 0.9rem; color: #5A6A85; font-weight: 400;">Sistema Profissional de Gestão Personal Organizer</span>
-</h1>
-""", unsafe_allow_html=True)
+# Sem título na barra lateral - removido conforme solicitação
 
 # Container dos botões com fundo escuro
 st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
@@ -932,6 +926,12 @@ if st.session_state.get('show_welcome', True) and st.session_state.authenticated
         st.error(f"Erro ao carregar página de boas-vindas: {str(e)}")
         # Em caso de erro, desativar a página de boas-vindas
         st.session_state.show_welcome = False
+
+# Importar o cabeçalho padrão
+from utils.page_config import apply_page_header
+
+# Aplicar o cabeçalho em todas as páginas 
+apply_page_header()
 
 # Roteamento de páginas
 try:
