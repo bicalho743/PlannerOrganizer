@@ -28,6 +28,7 @@ def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
     Gera um PDF com a versão para cliente da proposta
     
     Esta função é um redirecionamento para a versão melhorada.
+    Para propostas concluídas, gera um relatório de serviço.
     
     Args:
         proposta: Dicionário com os dados da proposta
@@ -38,10 +39,16 @@ def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
     Returns:
         str: Caminho do arquivo PDF gerado
     """
-    # Usar a versão melhorada com layout profissional
-    print("DEBUG: Usando o gerador de PDF cliente melhorado!")
-    from utils.pdf_generator_melhorado import gerar_pdf_cliente_melhorado
-    return gerar_pdf_cliente_melhorado(proposta, cliente, acrescimos, filename)
+    # Verificar se é para gerar um relatório de serviço
+    if proposta.get('status') == 'Concluída':
+        print("DEBUG: Usando o gerador de relatório de serviço!")
+        from utils.pdf_generator_melhorado import gerar_pdf_relatorio_servico
+        return gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename)
+    else:
+        # Usar a versão melhorada com layout profissional
+        print("DEBUG: Usando o gerador de PDF cliente melhorado!")
+        from utils.pdf_generator_melhorado import gerar_pdf_cliente_melhorado
+        return gerar_pdf_cliente_melhorado(proposta, cliente, acrescimos, filename)
 
 
 def gerar_pdf_interno(proposta, cliente, acrescimos, filename):

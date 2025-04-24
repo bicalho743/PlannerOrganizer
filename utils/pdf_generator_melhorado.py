@@ -10,6 +10,221 @@ import traceback
 import pandas as pd
 
 
+def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
+    """
+    Gera um PDF com o relatório de serviço para o cliente, formatado conforme o modelo
+    
+    Args:
+        proposta: Dicionário com os dados da proposta
+        cliente: Dicionário com os dados do cliente
+        acrescimos: DataFrame com os acréscimos da proposta (versão pública)
+        filename: Nome do arquivo PDF a ser gerado
+        
+    Returns:
+        str: Caminho do arquivo PDF gerado
+    """
+    # Logs para debugging
+    print("DEBUG PDF NOVO: Gerando relatório de serviço para proposta #{} com novo design".format(proposta.get('id', 'N/A')))
+    print("DEBUG PDF NOVO: Cliente: {}".format(cliente.get('nome', 'N/A')))
+    print("DEBUG PDF NOVO: Filename: {}".format(filename))
+    print("DEBUG PDF NOVO: Acréscimos: {} registros".format(len(acrescimos) if hasattr(acrescimos, 'empty') and not acrescimos.empty else 0))
+    
+    try:
+        # Certificar que o diretório existe
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        
+        # Criação do documento
+        doc = SimpleDocTemplate(
+            filename,
+            pagesize=A4,
+            rightMargin=72,
+            leftMargin=72,
+            topMargin=72,
+            bottomMargin=72
+        )
+        
+        # Inicialização dos elementos
+        story = []
+        styles = getSampleStyleSheet()
+        
+        # Carregar dados do perfil do usuário
+        try:
+            from utils.perfil_loader import carregar_perfil_usuario
+            perfil = carregar_perfil_usuario()
+            print(f"DEBUG PDF: Perfil do usuário carregado: {perfil.get('empresa', 'N/A')}")
+        except Exception as e:
+            print(f"DEBUG PDF ERROR: Erro ao carregar perfil do usuário: {str(e)}")
+            perfil = {'empresa': 'Planner Organizer', 'telefone': '(11) 98765-4321', 'email': 'contato@plannerorganizer.com.br'}
+        
+        # Cores brandadas
+        azul_principal = colors.HexColor("#1E366F")
+        
+        # Estilos personalizados
+        titulo_principal = ParagraphStyle(
+            'TituloPrincipal',
+            parent=styles['Heading1'],
+            fontSize=18,
+            alignment=1, # Centralizado
+            textColor=colors.white,
+            backColor=azul_principal,
+            borderPadding=10,
+            spaceAfter=15
+        )
+        
+        titulo_secao = ParagraphStyle(
+            'TituloSecao',
+            parent=styles['Heading2'],
+            fontSize=14,
+            textColor=azul_principal,
+            spaceBefore=15,
+            spaceAfter=10
+        )
+        
+        normal_style = ParagraphStyle(
+            'NormalStyle',
+            parent=styles['Normal'],
+            fontSize=10,
+            leading=14,
+            spaceBefore=4,
+            spaceAfter=4
+        )
+        
+        # Cabeçalho
+        story.append(Paragraph("Relatório de Serviço", titulo_principal))
+        
+        # Título do relatório
+        story.append(Paragraph(f"Proposta #{proposta['id']} - {cliente['nome']}", titulo_secao))
+        story.append(Paragraph(datetime.now().strftime('%d/%m/%Y'), normal_style))
+        story.append(Spacer(1, 20))
+        
+        # Informações do Cliente
+        story.append(Paragraph("Informações do Cliente", titulo_secao))
+        story.append(Paragraph(f"Nome: {cliente['nome']}", normal_style))
+        story.append(Paragraph(f"Email: {cliente.get('email', 'N/A')}", normal_style))
+        story.append(Paragraph(f"Telefone: {cliente.get('telefone', 'N/A')}", normal_style))
+        story.append(Spacer(1, 10))
+        
+        # Informações da Proposta
+        story.append(Paragraph("Informações da Proposta", titulo_secao))
+        story.append(Paragraph(f"Tipo: {proposta.get('tipo_proposta', 'Organização')}", normal_style))
+        story.append(Paragraph(f"Status: {proposta.get('status', 'Concluída')}", normal_style))
+        
+        # Datas formatadas
+        data_inicio_str = "N/A"
+        if proposta.get('data_inicio'):
+            if hasattr(proposta['data_inicio'], 'strftime'):
+                data_inicio_str = proposta['data_inicio'].strftime('%d/%m/%Y')
+            else:
+                data_inicio_str = str(proposta['data_inicio'])
+                
+        data_fim_str = "N/A"
+        if proposta.get('data_fim'):
+            if hasattr(proposta['data_fim'], 'strftime'):
+                data_fim_str = proposta['data_fim'].strftime('%d/%m/%Y')
+            else:
+                data_fim_str = str(proposta['data_fim'])
+                
+        # Adicionar datas
+        story.append(Paragraph(f"Data Início: {data_inicio_str}", normal_style))
+        story.append(Paragraph(f"Data Fim: {data_fim_str}", normal_style))
+        
+        # Prazo de entrega (se disponível)
+        story.append(Paragraph(f"Prazo de Entrega: {data_inicio_str}", normal_style))
+        story.append(Spacer(1, 10))
+        
+        # Descrição do Serviço
+        story.append(Paragraph("Descrição do Serviço:", titulo_secao))
+        story.append(Paragraph(proposta.get('descricao', 'N/A'), normal_style))
+        story.append(Spacer(1, 20))
+        
+        # Serviços Realizados
+        story.append(Paragraph("Serviços Realizados", titulo_secao))
+        
+        # Tabela de Serviços
+        if not acrescimos.empty:
+            # Preparar dados da tabela
+            colWidths = [290, 160]
+            tableStyle = TableStyle([
+                ('BACKGROUND', (0, 0), (1, 0), azul_principal),
+                ('TEXTCOLOR', (0, 0), (1, 0), colors.white),
+                ('ALIGN', (0, 0), (1, 0), 'CENTER'),
+                ('ALIGN', (1, 1), (1, -1), 'RIGHT'),  # Alinhar valores à direita
+                ('FONTNAME', (0, 0), (1, 0), 'Helvetica-Bold'),
+                ('BOTTOMPADDING', (0, 0), (1, 0), 12),
+                ('BACKGROUND', (0, 1), (1, -2), colors.white),
+                ('GRID', (0, 0), (1, -1), 1, colors.black),
+                ('VALIGN', (0, 0), (1, -1), 'MIDDLE'),
+                ('FONTNAME', (0, -1), (1, -1), 'Helvetica-Bold'),
+                ('BACKGROUND', (0, -1), (1, -1), colors.lightgrey),
+            ])
+            
+            # Cabeçalho da tabela
+            data = [["Descrição", "Valor"]]
+            
+            # Valor base da proposta
+            data.append([f"Serviço Base", f"R$ {float(proposta['valor']):.2f}"])
+            
+            # Total para cálculo
+            total = float(proposta['valor'])
+            
+            # Adicionar acréscimos
+            for _, acrescimo in acrescimos.iterrows():
+                tipo = acrescimo.get('tipo', 'OUTRO')
+                descricao = acrescimo.get('descricao', 'Item adicional')
+                fornecedor = acrescimo.get('fornecedor', '')
+                valor = float(acrescimo.get('valor', 0))
+                
+                # Formatar descrição completa com tipo e fornecedor quando disponíveis
+                descricao_formatada = f"{tipo.upper()} - {descricao}"
+                if fornecedor:
+                    descricao_formatada += f" ({fornecedor})"
+                
+                # Adicionar à tabela
+                data.append([descricao_formatada, f"R$ {valor:.2f}"])
+                total += valor
+            
+            # Linha de total
+            data.append(["Total:", f"R$ {total:.2f}"])
+            
+            # Criar e adicionar tabela
+            table = Table(data, colWidths=colWidths)
+            table.setStyle(tableStyle)
+            story.append(table)
+            story.append(Spacer(1, 20))
+        
+        # Observações
+        story.append(Paragraph("Observações:", titulo_secao))
+        story.append(Paragraph("1. Este documento representa o relatório para cliente dos serviços prestados.", normal_style))
+        story.append(Paragraph("2. Para quaisquer dúvidas sobre os serviços, entre em contato conosco.", normal_style))
+        story.append(Paragraph("3. Agradecemos a confiança em nossos serviços.", normal_style))
+        
+        # Rodapé com dados de contato
+        story.append(Spacer(1, 30))
+        
+        footer_style = ParagraphStyle(
+            'FooterStyle',
+            parent=styles['Normal'],
+            fontSize=10,
+            alignment=0,
+            textColor=azul_principal
+        )
+        
+        # Adicionando dados da empresa no rodapé
+        story.append(Paragraph(f"{perfil.get('empresa', 'Planner Organizer')}", footer_style))
+        story.append(Paragraph(f"{perfil.get('email', 'contato@plannerorganizer.com.br')}", footer_style))
+        story.append(Paragraph(f"{perfil.get('telefone', '(11) 98765-4321')}", footer_style))
+        story.append(Paragraph("www.plannerorganizer.com.br", footer_style))
+        
+        # Gerar PDF
+        doc.build(story)
+        print(f"DEBUG PDF NOVO: Relatório de serviço gerado com sucesso: {filename}")
+        return filename
+    except Exception as e:
+        print(f"DEBUG PDF ERROR: Erro ao gerar relatório de serviço: {str(e)}")
+        traceback.print_exc()
+        raise Exception(f"Erro ao gerar relatório de serviço: {str(e)}")
+
+
 def gerar_pdf_cliente_melhorado(proposta, cliente, acrescimos, filename):
     """
     Gera um PDF com a versão para cliente da proposta, com design profissional
@@ -23,6 +238,13 @@ def gerar_pdf_cliente_melhorado(proposta, cliente, acrescimos, filename):
     Returns:
         str: Caminho do arquivo PDF gerado
     """
+    # Para facilitar a manutenção, direcionamos para o relatório de serviço
+    # conforme solicitado pelo usuário
+    if proposta.get('status') == 'Concluída':
+        # Se a proposta estiver concluída, gerar relatório de serviço
+        return gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename)
+        
+    # Se não for concluída, continua com o código original para proposta
     # Logs para debugging
     print("DEBUG PDF NOVO: Gerando PDF para proposta #{} com novo design".format(proposta.get('id', 'N/A')))
     print("DEBUG PDF NOVO: Cliente: {}".format(cliente.get('nome', 'N/A')))
