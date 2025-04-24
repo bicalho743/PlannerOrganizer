@@ -867,16 +867,21 @@ st.markdown(f"""
     
     /* Estilização dos botões do menu principal para padronização */
     .sidebar button[data-testid="baseButton-secondary"] {{
-        margin-top: 5px !important;
-        margin-bottom: 5px !important;
+        margin-top: 3px !important;
+        margin-bottom: 3px !important;
         padding: 10px 15px !important;
         background-color: #f5f7fa !important;
         border: 1px solid #e0e4e8 !important;
         border-radius: 8px !important;
-        font-size: 0.95rem !important;
+        font-size: 0.92rem !important;
         font-weight: 500 !important;
         color: #1E366F !important;
         transition: all 0.2s ease !important;
+        font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+        text-align: left !important;
+        height: 42px !important;
+        line-height: 1.2 !important;
+        letter-spacing: normal !important;
     }}
     
     /* Botão selecionado/ativo */
@@ -895,8 +900,25 @@ st.markdown(f"""
     
     /* Container dos botões com padding reduzido */
     .nav-buttons {{
-        padding-top: 0.5rem !important;
-        padding-bottom: 0.5rem !important;
+        padding-top: 0.2rem !important;
+        padding-bottom: 0.2rem !important;
+        margin-top: 0 !important;
+    }}
+    
+    /* Aplicar tamanho fixo para os ícones e alinhamento consistente */
+    .sidebar button[data-testid="baseButton-secondary"] div {{
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+    }}
+    
+    /* Garantir que todos os ícones tenham espaço e alinhamento uniforme */
+    .sidebar button[data-testid="baseButton-secondary"] div::before {{
+        content: "" !important;
+        width: 24px !important;
+        display: inline-block !important;
+        text-align: center !important;
+        margin-right: 8px !important;
     }}
     
     /* Ajustar espaço entre a barra lateral e o conteúdo principal */

@@ -5,11 +5,12 @@ def apply_page_header():
     Aplica um cabeçalho padronizado em todas as páginas do sistema
     """
     # CSS para colocar o cabeçalho mais próximo do topo da página
+    # e padronizar o espaçamento dos elementos da interface
     header_css = """
     <style>
     /* Reduzir o espaço acima do cabeçalho */
     .main .block-container {
-        padding-top: 1rem !important;
+        padding-top: 0.5rem !important;
         margin-top: 0 !important;
     }
     
@@ -29,6 +30,33 @@ def apply_page_header():
     [data-testid="stAppViewContainer"] > section:first-of-type {
         padding-top: 0 !important;
         margin-top: 0 !important;
+    }
+    
+    /* Ajusta a barra lateral para minimizar espaçamento */
+    [data-testid="stSidebar"] {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    
+    /* Reduz espaçamento nos elementos da barra lateral */
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+        gap: 0 !important;
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    
+    /* Ajusta dimensões da barra lateral */
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] > div {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    
+    /* Garante que títulos em todas as páginas tenham o mesmo estilo e espaçamento */
+    h1 {
+        font-size: 2rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 1rem !important;
+        font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     }
     </style>
     """
