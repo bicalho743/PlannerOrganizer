@@ -987,128 +987,26 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
             except Exception as e:
                 st.error(f"Erro ao gerar o manual: {str(e)}")
     
-    # Adicionar rodapé com links
+    # Verificar parâmetros de URL
+    params = st.experimental_get_query_params()
+    if 'show_termos' in params:
+        show_termos()
+        st.stop()
+    
+    if 'show_politica' in params:
+        show_politica()
+        st.stop()
+    
+    # Adicionar rodapé com links diretos
     footer_html = """
     <div class="footer-custom">
         &copy; 2025 Planner Organizer | 
-        <a href="#" onclick="document.dispatchEvent(new CustomEvent('show_termos')); return false;">Termos de Uso</a> | 
-        <a href="#" onclick="document.dispatchEvent(new CustomEvent('show_politica')); return false;">Política de Privacidade</a> | 
-        <a href="mailto:contato@plannerorganizer.com.br">Contato</a>
+        <a href="/?show_termos=true" target="_self">Termos de Uso</a> | 
+        <a href="/?show_politica=true" target="_self">Política de Privacidade</a> | 
+        Contato: contato@plannerorganizer.com.br
     </div>
-    
-    <script>
-        document.addEventListener('show_termos', function() {
-            window.parent.postMessage({
-                type: 'streamlit:setComponentValue',
-                value: true,
-                dataType: 'bool',
-                componentId: 'termos_link'
-            }, '*');
-        });
-        
-        document.addEventListener('show_politica', function() {
-            window.parent.postMessage({
-                type: 'streamlit:setComponentValue',
-                value: true,
-                dataType: 'bool',
-                componentId: 'politica_link'
-            }, '*');
-        });
-    </script>
     """
     st.markdown(footer_html, unsafe_allow_html=True)
-    
-    # Estado para controlar os links do rodapé
-    # Estas variáveis de sessão são atualizadas pelo JavaScript quando os links são clicados
-    if "termos_link_clicked" not in st.session_state:
-        st.session_state.termos_link_clicked = False
-        
-    if "politica_link_clicked" not in st.session_state:
-        st.session_state.politica_link_clicked = False
-    
-    # Quando qualquer um dos links é clicado, executamos a função correspondente
-    if st.session_state.termos_link_clicked:
-        st.session_state.termos_link_clicked = False  # Resetamos o estado
-        show_termos()
-        
-    if st.session_state.politica_link_clicked:
-        st.session_state.politica_link_clicked = False  # Resetamos o estado
-        show_politica()
-        
-    # Detector de cliques nos links via JavaScript sem usar checkboxes
-    js_code = """
-    <script>
-        // Função para detectar cliques nos links
-        document.addEventListener('show_termos', function() {
-            window.parent.postMessage(
-                {type: 'streamlit:custom', name: 'show_termos_clicked'}, 
-                '*'
-            );
-        });
-        
-        document.addEventListener('show_politica', function() {
-            window.parent.postMessage(
-                {type: 'streamlit:custom', name: 'show_politica_clicked'}, 
-                '*'
-            );
-        });
-    </script>
-    """
-    st.components.v1.html(js_code, height=0)
-    
-    # Componente para responder aos eventos personalizados
-    components_js = """
-    <script>
-    const sendBackData = (data) => {
-        const streamlitDoc = window.parent.document;
-        const streamlitRerun = streamlitDoc.querySelector('button[kind=primaryFormSubmit]');
-        
-        if (data.name === 'show_termos_clicked') {
-            // Definir state de termos clicado
-            window.parent.postMessage(
-                {
-                    type: 'streamlit:setComponentValue',
-                    value: true,
-                    dataType: 'bool',
-                    key: 'termos_link_clicked'
-                },
-                '*'
-            );
-            
-            // Forçar rerun
-            if (streamlitRerun) {
-                streamlitRerun.click();
-            }
-        }
-        
-        if (data.name === 'show_politica_clicked') {
-            // Definir state de política clicado
-            window.parent.postMessage(
-                {
-                    type: 'streamlit:setComponentValue',
-                    value: true,
-                    dataType: 'bool',
-                    key: 'politica_link_clicked'
-                },
-                '*'
-            );
-            
-            // Forçar rerun
-            if (streamlitRerun) {
-                streamlitRerun.click();
-            }
-        }
-    };
-
-    // Ouvir eventos personalizados
-    window.addEventListener('message', function(event) {
-        if (event.data.type === 'streamlit:custom') {
-            sendBackData(event.data);
-        }
-    });
-    </script>
-    """
-    st.components.v1.html(components_js, height=0)
     
     # Botão para download dos ícones do sistema
     try:
