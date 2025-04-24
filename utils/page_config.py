@@ -10,7 +10,7 @@ def apply_page_header():
     <style>
     /* Reduzir o espaço acima do cabeçalho */
     .main .block-container {
-        padding-top: 0.5rem !important;
+        padding-top: 0rem !important;
         margin-top: 0 !important;
     }
     
@@ -64,14 +64,14 @@ def apply_page_header():
     # Aplicar CSS para ajustar espaçamento
     st.markdown(header_css, unsafe_allow_html=True)
     
-    # Adicionando o cabeçalho no topo da página
+    # Adicionando o cabeçalho no topo da página - mais compacto
     st.markdown("""
-    <div style="background-color: #1E366F; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; text-align: center;">
-        <h2 style="color: white; margin: 0; padding: 0; font-family: 'Poppins', sans-serif;">Planner Organizer</h2>
-        <p style="color: #E3F2FD; margin: 0.2rem 0 0 0; padding: 0; font-size: 0.9rem; font-family: 'Poppins', sans-serif;">
+    <div style="background-color: #1E366F; padding: 0.7rem; border-radius: 0.5rem; margin-bottom: 0.7rem; text-align: center;">
+        <h2 style="color: white; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; font-size: 1.5rem;">Planner Organizer</h2>
+        <p style="color: #E3F2FD; margin: 0.15rem 0 0 0; padding: 0; font-size: 0.85rem; font-family: 'Poppins', sans-serif;">
             Sistema Profissional de Gestão Personal Organizer
         </p>
-        <p style="color: #BBD8FF; margin: 0.5rem 0 0 0; padding: 0; font-size: 0.8rem; font-family: 'Poppins', sans-serif; font-style: italic;">
+        <p style="color: #BBD8FF; margin: 0.3rem 0 0 0; padding: 0; font-size: 0.75rem; font-family: 'Poppins', sans-serif; font-style: italic;">
             "Transforme sua organização em resultados: gerencie propostas, clientes e finanças com precisão profissional."
         </p>
     </div>

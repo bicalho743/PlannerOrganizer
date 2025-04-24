@@ -4,7 +4,8 @@ import plotly.express as px
 from datetime import datetime
 
 def show():
-    st.title("💰 Gestão Financeira")
+    # Título com estilo personalizado para ficar mais próximo do topo
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">💰 Gestão Financeira</h1>', unsafe_allow_html=True)
 
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "Registrar Transação",

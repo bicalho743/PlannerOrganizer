@@ -6,7 +6,8 @@ from datetime import datetime, timedelta
 import numpy as np
 
 def show():
-    st.title("📊 Relatórios Avançados")
+    # Título com estilo personalizado para ficar mais próximo do topo
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">📊 Relatórios Avançados</h1>', unsafe_allow_html=True)
 
     tipo_relatorio = st.selectbox(
         "Selecione o Relatório",

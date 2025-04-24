@@ -23,9 +23,8 @@ def format_date_safe(date_obj, format_str='%d/%m/%Y'):
             return "Data indisponível"
 
 def show():
-    # Adicionar espaço extra antes do título para evitar corte
-    st.markdown('<div style="height: 3rem;"></div>', unsafe_allow_html=True)
-    st.title("📊 Dashboard")
+    # Removi o espaço extra e substituí pelo título com estilo personalizado para ficar mais próximo do topo
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">📊 Dashboard</h1>', unsafe_allow_html=True)
 
     # Add test data button in sidebar if database is empty
     if 'db' not in st.session_state:

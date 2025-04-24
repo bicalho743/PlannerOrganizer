@@ -10,7 +10,8 @@ def show():
         st.error("Erro: Conexão com banco de dados não inicializada")
         return
 
-    st.title("🛒 Vendas")
+    # Título com estilo personalizado para ficar mais próximo do topo
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">🛒 Vendas</h1>', unsafe_allow_html=True)
 
     # Abas para diferentes funcionalidades
     tab_produtos, tab_nova_venda, tab_historico = st.tabs([
