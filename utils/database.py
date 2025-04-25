@@ -1731,7 +1731,7 @@ class Database:
             data_aprovacao: Data de aprovação (opcional)
         
         Returns:
-            bool: True se a atualização foi bem-sucedida, False caso contrário
+            dict: Dicionário com status da operação e mensagem
         """
         def query():
             # Buscar a proposta por ID
@@ -1739,7 +1739,7 @@ class Database:
             
             if proposta is None:
                 # # print(f"DEBUG: Proposta com ID {proposta_id} não encontrada")
-                return False
+                return {"status": False, "message": f"Proposta ID {proposta_id} não encontrada"}
             
             # Verificar se a proposta está sendo aprovada
             gerar_lancamentos = False
@@ -1761,17 +1761,21 @@ class Database:
             self.session.flush()
             
             # Gerar lançamentos financeiros se a proposta está sendo aprovada
+            resultado = {"status": True, "message": f"Proposta {proposta_id} atualizada com status '{novo_status}'"}
+            
             if gerar_lancamentos:
                 try:
                     # Gerar lançamentos financeiros para proposta aprovada (receita a receber e contas a receber)
                     self.gerar_lancamentos_proposta_aprovada(proposta_id)
                     print(f"DEBUG: Lançamentos financeiros gerados para proposta aprovada {proposta_id}")
+                    resultado["lancamentos"] = {"status": "success", "message": "Lançamentos financeiros gerados com sucesso"}
                 except Exception as e:
                     print(f"ERRO ao gerar lançamentos para proposta aprovada: {str(e)}")
+                    resultado["lancamentos"] = {"status": "error", "message": f"Erro ao gerar lançamentos: {str(e)}"}
             
             # Registrar a mudança de status
             # # print(f"DEBUG: Proposta {proposta_id} atualizada com status '{novo_status}'")
-            return True
+            return resultado
             
         return self._safe_query(query)
 
@@ -3144,7 +3148,12 @@ class Database:
         return self._safe_query(query)
     
     def excluir_proposta_por_numero(self, numero_proposta):
-        """Exclui uma proposta pelo seu número (não pelo ID)"""
+        """
+        Exclui uma proposta pelo seu número (não pelo ID)
+        
+        Returns:
+            dict: Dicionário com as chaves 'status' (bool) e 'message' (str)
+        """
         def query():
             try:
                 proposta = self.session.query(Proposta).filter_by(numero=numero_proposta).first()
@@ -3179,17 +3188,17 @@ class Database:
                         self.session.delete(proposta)
                         print(f"DEBUG DATABASE: Proposta excluída com sucesso")
                         
-                        return True, "Proposta excluída com sucesso"
+                        return {"status": True, "message": "Proposta excluída com sucesso"}
                     except Exception as e:
                         self.session.rollback()
                         print(f"DEBUG DATABASE ERROR: Erro ao excluir proposta: {str(e)}")
-                        return False, f"Erro ao excluir proposta: {str(e)}"
+                        return {"status": False, "message": f"Erro ao excluir proposta: {str(e)}"}
                 else:
                     print(f"DEBUG DATABASE: Proposta #{numero_proposta} não encontrada")
-                    return False, "Proposta não encontrada"
+                    return {"status": False, "message": f"Proposta #{numero_proposta} não encontrada"}
             except Exception as e:
                 print(f"DEBUG DATABASE ERROR: Erro ao processar número da proposta: {str(e)}")
-                return False, f"Erro ao processar número da proposta: {str(e)}"
+                return {"status": False, "message": f"Erro ao processar número da proposta: {str(e)}"}
         return self._safe_query(query)
 
     def remover_acrescimo(self, acrescimo_id):

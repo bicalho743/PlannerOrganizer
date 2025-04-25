@@ -271,11 +271,14 @@ def show():
                                 
                                 # Atualizar o status
                                 if data_aprovacao:
-                                    sucesso = st.session_state.db.update_proposta_status(
+                                    resultado = st.session_state.db.update_proposta_status(
                                         proposta_id=proposta_id,
                                         novo_status=novo_status,
                                         data_aprovacao=data_aprovacao
                                     )
+                                    
+                                    # Verificar se a atualização teve sucesso
+                                    sucesso = resultado.get('status', False)
                                     
                                     # Após atualizar o status, se necessário gerar transações
                                     if sucesso and gerar_transacoes:
@@ -286,12 +289,15 @@ def show():
                                         except Exception as e:
                                             st.error(f"Erro ao gerar transações financeiras: {str(e)}")
                                 else:
-                                    sucesso = st.session_state.db.atualizar_proposta(
+                                    resultado = st.session_state.db.atualizar_proposta(
                                         proposta_id=proposta_id,
                                         status=novo_status,
                                         data_inicio_execucao=data_inicio_execucao,
                                         status_execucao=status_execucao
                                     )
+                                    
+                                    # Verificar se a atualização teve sucesso
+                                    sucesso = resultado.get('status', False)
                                 
                                 if sucesso:
                                     st.success(f"Proposta {proposta_id} atualizada para '{novo_status}'!")
@@ -659,7 +665,9 @@ def show():
                             st.warning(f"Você está prestes a excluir a proposta #{proposta_numero} - {proposta_exc.iloc[0]['descricao']}")
                             if st.button("CONFIRMAR EXCLUSÃO", key="confirmar_exclusao_execucao"):
                                 try:
-                                    sucesso, mensagem = st.session_state.db.excluir_proposta_por_numero(proposta_numero)
+                                    resultado_exclusao = st.session_state.db.excluir_proposta_por_numero(proposta_numero)
+                                    sucesso = resultado_exclusao.get("status", False)
+                                    mensagem = resultado_exclusao.get("message", "Erro desconhecido")
                                     if sucesso:
                                         st.success("Proposta excluída com sucesso!")
                                         time.sleep(1)
@@ -1951,7 +1959,9 @@ def show():
                             st.warning(f"Você está prestes a excluir a proposta #{proposta_numero} - {proposta_exc.iloc[0]['descricao']}")
                             if st.button("CONFIRMAR EXCLUSÃO", key="confirmar_exclusao_todas"):
                                 try:
-                                    sucesso, mensagem = st.session_state.db.excluir_proposta_por_numero(proposta_numero)
+                                    resultado_exclusao = st.session_state.db.excluir_proposta_por_numero(proposta_numero)
+                                    sucesso = resultado_exclusao.get("status", False)
+                                    mensagem = resultado_exclusao.get("message", "Erro desconhecido")
                                     if sucesso:
                                         st.success("Proposta excluída com sucesso!")
                                         time.sleep(1)
