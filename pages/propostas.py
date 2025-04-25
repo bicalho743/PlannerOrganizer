@@ -1524,33 +1524,40 @@ def show():
                                     sucesso = resultado_atualizacao.get("status", False)
                                     
                                     if sucesso:
-                                        # Gerar lançamentos financeiros automáticos
-                                        try:
-                                            resultado_lancamentos = st.session_state.db.gerar_lancamentos_financeiros_proposta_concluida(
-                                                proposta_id=proposta_exec_id,
-                                                forcar_geracao=True  # Forçar geração para garantir que todos os lançamentos sejam criados
-                                            )
-                                            
-                                            st.success(f"Proposta #{proposta_exec_numero} marcada como concluída!")
-                                            
-                                            # Mostrar detalhes dos lançamentos gerados, se houver
-                                            if resultado_lancamentos:
-                                                if "status" in resultado_lancamentos and resultado_lancamentos["status"] == "já existe":
-                                                    st.info("Lançamentos financeiros já existem para esta proposta.")
-                                                else:
-                                                    lancamentos_count = resultado_lancamentos.get("lancamentos_gerados", 0)
-                                                    if lancamentos_count > 0:
-                                                        st.success(f"{lancamentos_count} lançamentos financeiros gerados automaticamente!")
-                                                        
-                                                        # Mostrar detalhes dos valores
-                                                        with st.expander("Detalhes dos lançamentos"):
-                                                            st.write(f"- Valor Base (Cliente): R$ {resultado_lancamentos.get('valor_base', 0):.2f}")
-                                                            st.write(f"- Produtos: R$ {resultado_lancamentos.get('valor_produtos', 0):.2f}")
-                                                            st.write(f"- Fornecedores: R$ {resultado_lancamentos.get('valor_fornecedores', 0):.2f}")
-                                                            st.write(f"- Assistentes a Pagar: R$ {resultado_lancamentos.get('valor_assistentes', 0):.2f}")
+                                        # Os lançamentos financeiros já são gerados automaticamente na função atualizar_proposta
+                                        # Não precisamos chamar a função gerar_lancamentos_financeiros_proposta_concluida aqui
+                                        # Isso estava causando duplicação de lançamentos
                                         
-                                        except Exception as e:
-                                            st.warning(f"Proposta concluída, mas houve um erro ao gerar lançamentos financeiros: {str(e)}")
+                                        # Obter informações dos lançamentos do resultado da atualização
+                                        resultado_lancamentos = resultado_atualizacao.get("lancamentos_finalizacao", {})
+                                            
+                                        st.success(f"Proposta #{proposta_exec_numero} marcada como concluída!")
+                                        
+                                        # Mostrar detalhes dos lançamentos gerados, se houver
+                                        if resultado_lancamentos:
+                                            if "status" in resultado_lancamentos and resultado_lancamentos["status"] == "já existe":
+                                                st.info("Lançamentos financeiros já existem para esta proposta.")
+                                            else:
+                                                lancamentos_count = resultado_lancamentos.get("lancamentos_gerados", 0)
+                                                if lancamentos_count > 0:
+                                                    st.success(f"{lancamentos_count} lançamentos financeiros gerados automaticamente!")
+                                                    
+                                                    # Mostrar detalhes dos valores
+                                                    with st.expander("Detalhes dos lançamentos"):
+                                                        st.write(f"- Valor Base (Cliente): R$ {resultado_lancamentos.get('valor_base', 0):.2f}")
+                                                        st.write(f"- Produtos: R$ {resultado_lancamentos.get('valor_produtos', 0):.2f}")
+                                                        st.write(f"- Fornecedores: R$ {resultado_lancamentos.get('valor_fornecedores', 0):.2f}")
+                                                        st.write(f"- Assistentes a Pagar: R$ {resultado_lancamentos.get('valor_assistentes', 0):.2f}")
+                                        
+                                        time.sleep(2)  # Dar tempo para o usuário ver as mensagens
+                                        st.rerun()
+                                                        
+                                                    # Mostrar detalhes dos valores
+                                                    with st.expander("Detalhes dos lançamentos"):
+                                                        st.write(f"- Valor Base (Cliente): R$ {resultado_lancamentos.get('valor_base', 0):.2f}")
+                                                        st.write(f"- Produtos: R$ {resultado_lancamentos.get('valor_produtos', 0):.2f}")
+                                                        st.write(f"- Fornecedores: R$ {resultado_lancamentos.get('valor_fornecedores', 0):.2f}")
+                                                        st.write(f"- Assistentes a Pagar: R$ {resultado_lancamentos.get('valor_assistentes', 0):.2f}")
                                         
                                         time.sleep(2)  # Dar tempo para o usuário ver as mensagens
                                         st.rerun()

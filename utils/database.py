@@ -4332,28 +4332,11 @@ class Database:
                     )
                     self.session.add(transacao_base)
                     
-                    # Transação nas contas a receber
-                    transacao_base_contas = Transacao(
-                        tipo="contas_a_receber",
-                        descricao=f"Serviço a receber - Proposta #{proposta.numero} - {cliente.nome}",
-                        valor=valor_base,
-                        data=data_lancamento,
-                        categoria="Serviço",
-                        subcategoria="Serviço a receber",
-                        tipo_receita="organizacao",
-                        origem_id=proposta.cliente_id,
-                        origem_tipo="cliente",
-                        tipo_conta="PF",
-                        status="Pendente",
-                        proposta_id=proposta_id_int,
-                        classificacao="contas_a_receber",
-                        usuario_id=usuario_id
-                    )
-                    self.session.add(transacao_base_contas)
+                    # Removido a transação duplicada nas contas a receber
                     
                     result["valor_base"] = valor_base
-                    result["lancamentos_gerados"] += 2
-                    print(f"DEBUG LANCAMENTOS: Lançamentos do valor base criados")
+                    result["lancamentos_gerados"] += 1
+                    print(f"DEBUG LANCAMENTOS: Lançamento do valor base criado")
                 
                 # 2. Produtos a receber
                 produtos = self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id_python_int).all()
@@ -4436,28 +4419,11 @@ class Database:
                     )
                     self.session.add(transacao_produtos)
                     
-                    # Lançamento nas contas a receber para produtos
-                    transacao_produtos_contas = Transacao(
-                        tipo="contas_a_receber",
-                        descricao=f"Produtos a receber - Proposta #{proposta.numero} - {cliente.nome}",
-                        valor=valor_total_produtos_fisicos,
-                        data=data_lancamento,
-                        categoria="Produto",
-                        subcategoria="Produtos a receber",
-                        tipo_receita="venda",
-                        origem_id=proposta.cliente_id,
-                        origem_tipo="cliente",
-                        tipo_conta="PF",
-                        status="Pendente",
-                        proposta_id=proposta_id_int,
-                        classificacao="contas_a_receber",
-                        usuario_id=usuario_id
-                    )
-                    self.session.add(transacao_produtos_contas)
+                    # Removido o lançamento duplicado nas contas a receber para produtos
                     
                     result["valor_produtos"] = valor_total_produtos_fisicos
-                    result["lancamentos_gerados"] += 2  # Extrato + contas a receber
-                    print(f"DEBUG LANCAMENTOS: Lançamentos de produtos criados: R$ {valor_total_produtos_fisicos:.2f}")
+                    result["lancamentos_gerados"] += 1  # Apenas um lançamento agora
+                    print(f"DEBUG LANCAMENTOS: Lançamento de produtos criado: R$ {valor_total_produtos_fisicos:.2f}")
                     
                     # Adicionar à tabela de vendas somente os produtos físicos
                     try:
@@ -4486,29 +4452,12 @@ class Database:
                     )
                     self.session.add(transacao_servicos)
                     
-                    # Transação nas contas a receber
-                    transacao_servicos_contas = Transacao(
-                        tipo="contas_a_receber",
-                        descricao=f"Serviços adicionais a receber - Proposta #{proposta.numero} - {cliente.nome}",
-                        valor=valor_total_servicos,
-                        data=data_lancamento,
-                        categoria="Serviço",
-                        subcategoria="Serviços a receber",
-                        tipo_receita="servico",
-                        origem_id=proposta.cliente_id,
-                        origem_tipo="cliente",
-                        tipo_conta="PF",
-                        status="Pendente",
-                        proposta_id=proposta_id_int,
-                        classificacao="contas_a_receber",
-                        usuario_id=usuario_id
-                    )
-                    self.session.add(transacao_servicos_contas)
+                    # Removido o lançamento duplicado nas contas a receber
                     
                     # Adicionar ao valor total de outros
                     result["valor_outros"] = result.get("valor_outros", 0) + valor_total_servicos
-                    result["lancamentos_gerados"] += 2
-                    print(f"DEBUG LANCAMENTOS: Lançamentos de serviços criados: R$ {valor_total_servicos:.2f}")
+                    result["lancamentos_gerados"] += 1
+                    print(f"DEBUG LANCAMENTOS: Lançamento de serviços criado: R$ {valor_total_servicos:.2f}")
                 
                 # Garantir que todos os lançamentos estão salvos antes de registrar a venda
                 self.session.flush()
@@ -4571,7 +4520,7 @@ class Database:
                 
                 # Criar lançamento para itens OUTRO apenas se não existir ou se forçado
                 if valor_total_outros > 0 and (transacoes_outros == 0 or forcar_geracao):
-                    print(f"DEBUG LANCAMENTOS: Criando lançamentos para Outros a receber: R$ {valor_total_outros:.2f}")
+                    print(f"DEBUG LANCAMENTOS: Criando lançamento para Outros a receber: R$ {valor_total_outros:.2f}")
                     
                     # Transação no extrato
                     transacao_outros = Transacao(
@@ -4592,28 +4541,11 @@ class Database:
                     )
                     self.session.add(transacao_outros)
                     
-                    # Transação nas contas a receber
-                    transacao_outros_contas = Transacao(
-                        tipo="contas_a_receber",
-                        descricao=f"Outros itens a receber - Proposta #{proposta.numero} - {cliente.nome}",
-                        valor=valor_total_outros,
-                        data=data_lancamento,
-                        categoria="Outros",
-                        subcategoria="Itens diversos a receber",
-                        tipo_receita="outros",
-                        origem_id=proposta.cliente_id,
-                        origem_tipo="cliente",
-                        tipo_conta="PF",
-                        status="Pendente",
-                        proposta_id=proposta_id_int,
-                        classificacao="contas_a_receber",
-                        usuario_id=usuario_id
-                    )
-                    self.session.add(transacao_outros_contas)
+                    # Removido o lançamento duplicado nas contas a receber
                     
                     result["valor_outros"] = valor_total_outros
-                    result["lancamentos_gerados"] += 2
-                    print(f"DEBUG LANCAMENTOS: Lançamentos de itens OUTRO criados: R$ {valor_total_outros:.2f}")
+                    result["lancamentos_gerados"] += 1
+                    print(f"DEBUG LANCAMENTOS: Lançamento de itens OUTRO criado: R$ {valor_total_outros:.2f}")
                 else:
                     if transacoes_outros > 0:
                         print(f"DEBUG LANCAMENTOS: Já existem lançamentos para Outros a receber ({transacoes_outros}). Pulando.")
@@ -4668,26 +4600,9 @@ class Database:
                             )
                             self.session.add(transacao_comissao)
                             
-                            # Transação nas contas a receber
-                            transacao_comissao_contas = Transacao(
-                                tipo="contas_a_receber",
-                                descricao=f"Comissão a receber de {nome_fornecedor} - Proposta #{proposta.numero}",
-                                valor=valor_comissao,
-                                data=data_lancamento,
-                                categoria="Comissão",
-                                subcategoria="Comissão a receber",
-                                tipo_receita="comissao",
-                                origem_id=fornecedor_cadastro.id if fornecedor_cadastro else None,
-                                origem_tipo="fornecedor",
-                                tipo_conta="PF",
-                                status="Pendente",
-                                proposta_id=proposta_id_int,
-                                classificacao="contas_a_receber",
-                                usuario_id=usuario_id
-                            )
-                            self.session.add(transacao_comissao_contas)
+                            # Removido o lançamento duplicado nas contas a receber
                             
-                            result["lancamentos_gerados"] += 2
+                            result["lancamentos_gerados"] += 1
                 
                 # 4. Assistentes a pagar
                 assistentes = self.session.query(AcrescimoProposta)\
@@ -4741,27 +4656,10 @@ class Database:
                             )
                             self.session.add(transacao_assistente)
                             
-                            # Transação nas contas a pagar
-                            transacao_assistente_contas = Transacao(
-                                tipo="contas_a_pagar",
-                                descricao=f"Assistente a pagar - {nome_assistente} - Proposta #{proposta.numero}",
-                                valor=valor_assistente,
-                                data=data_lancamento,
-                                categoria="Assistente",
-                                subcategoria="Assistente a pagar",
-                                tipo_receita="assistente",  # Usaremos tipo_receita mesmo para despesas
-                                origem_id=assistente_item.id,
-                                origem_tipo="assistente",
-                                tipo_conta="PF",
-                                status="Pendente",
-                                proposta_id=proposta_id_int,
-                                classificacao="contas_a_pagar",
-                                usuario_id=usuario_id
-                            )
-                            self.session.add(transacao_assistente_contas)
+                            # Removido o lançamento duplicado nas contas a pagar
                             
-                            result["lancamentos_gerados"] += 2
-                            print(f"DEBUG LANCAMENTOS: Lançamentos criados para assistente {nome_assistente}: R$ {valor_assistente:.2f}")
+                            result["lancamentos_gerados"] += 1
+                            print(f"DEBUG LANCAMENTOS: Lançamento criado para assistente {nome_assistente}: R$ {valor_assistente:.2f}")
                 else:
                     if transacoes_assistentes > 0:
                         print(f"DEBUG LANCAMENTOS: Já existem lançamentos para Assistentes a pagar ({transacoes_assistentes}). Pulando.")
