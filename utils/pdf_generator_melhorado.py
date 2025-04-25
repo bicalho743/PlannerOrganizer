@@ -641,9 +641,31 @@ def gerar_pdf_cliente_melhorado(proposta, cliente, acrescimos, filename):
 
 def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
     """
-    ALIAS para compatibilidade.
+    ALIAS para compatibilidade com melhorias para garantir que todas as informações
+    da proposta sejam adequadamente transferidas.
     """
-    return gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename)
+    # Garantir que as informações críticas da proposta estejam presentes
+    # Debug de informações
+    print(f"DEBUG PDF INFO: Tipo de proposta: {proposta.get('tipo_proposta', 'N/A')}")
+    print(f"DEBUG PDF INFO: Status: {proposta.get('status', 'N/A')}")
+    print(f"DEBUG PDF INFO: Data Início: {proposta.get('data_inicio', 'N/A')}")
+    print(f"DEBUG PDF INFO: Data Fim: {proposta.get('data_fim', 'N/A')}")
+    print(f"DEBUG PDF INFO: Prazo Entrega: {proposta.get('prazo_entrega', 'N/A')}")
+    
+    # Se for um dataframe, converter para dict
+    proposta_dict = proposta
+    if hasattr(proposta, 'to_dict'):
+        proposta_dict = proposta.to_dict()
+    
+    # Garantir que estamos repassando um objeto com todos os campos necessários
+    if isinstance(proposta_dict, dict):
+        # Garantir valores padrão para campos essenciais
+        if 'tipo_proposta' not in proposta_dict:
+            proposta_dict['tipo_proposta'] = 'Organização'
+        if 'status' not in proposta_dict:
+            proposta_dict['status'] = 'Em elaboração'
+    
+    return gerar_pdf_fechamento_novo(proposta_dict, cliente, acrescimos, filename)
 
 def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
     """
@@ -923,5 +945,6 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         traceback.print_exc()
         raise Exception(f"Erro ao gerar PDF: {str(e)}")
 
-# Renomear para ser compatível com a chamada original
-gerar_pdf_fechamento = gerar_pdf_fechamento_novo
+# Não vamos mais sobrescrever a função gerar_pdf_fechamento
+# Mantemos nossa versão melhorada que garante a compatibilidade e transferência
+# correta das informações da proposta
