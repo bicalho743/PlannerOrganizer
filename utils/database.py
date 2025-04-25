@@ -2498,12 +2498,20 @@ class Database:
                 
                 # Verificar se precisamos gerar transações automaticamente
                 proposta_aprovada = False
+                proposta_finalizada = False
                 
                 # Verificar mudança de status para "Aprovada"
                 if status is not None and status == "Aprovada" and proposta.status != "Aprovada":
                     proposta_aprovada = True
                     # Registrar a data de aprovação
                     proposta.data_aprovacao = datetime.now().date()
+                
+                # Verificar mudança de status para "Concluída"
+                if status is not None and status == "Concluída" and proposta.status != "Concluída":
+                    proposta_finalizada = True
+                    # Se não foi fornecida uma data_fim, usar a data atual
+                    if data_fim is None:
+                        proposta.data_fim = datetime.now().date()
                 
                 # Atualizar apenas os campos fornecidos
                 if descricao is not None:
@@ -2548,9 +2556,54 @@ class Database:
                 # Salvar as alterações antes de gerar transações
                 self.session.flush()
                 
-                # Gerar transações financeiras automaticamente se a proposta foi aprovada
+                # Gerar transações financeiras automaticamente se a proposta foi aprovada ou finalizada
                 resultado = {"status": True, "message": "Proposta atualizada com sucesso"}
                 
+                # Tratar proposta finalizada - gerar lançamentos de conclusão e registrar vendas
+                if proposta_finalizada and gerar_transacoes_automaticas:
+                    try:
+                        # Buscar o cliente da proposta
+                        cliente = self.session.query(Cliente).filter_by(id=proposta.cliente_id).first()
+                        if not cliente:
+                            resultado["lancamentos_finalizacao"] = {
+                                "status": "erro",
+                                "message": f"Cliente ID {proposta.cliente_id} não encontrado para gerar lançamentos de finalização"
+                            }
+                        else:
+                            # Gerar lançamentos financeiros para proposta concluída
+                            # Usar forcar_geracao=True para garantir que todos os lançamentos são gerados,
+                            # incluindo para "OUTROS" e "DESPESA ASSISTENTE"
+                            lancamentos_result = self.gerar_lancamentos_financeiros_proposta_concluida(
+                                proposta_id=proposta_id_int, 
+                                forcar_geracao=True
+                            )
+                            
+                            # Buscar produtos da proposta para registrar vendas
+                            produtos_proposta = self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id_int).all()
+                            if produtos_proposta:
+                                try:
+                                    # Registrar vendas dos produtos (usando forcar_geracao=True)
+                                    venda_id = self._registrar_venda_produtos(proposta, cliente, produtos_proposta, forcar_geracao=True)
+                                    if venda_id:
+                                        lancamentos_result["venda_id"] = venda_id
+                                        lancamentos_result["produtos_vendidos"] = len(produtos_proposta)
+                                except Exception as e:
+                                    print(f"ERRO ao registrar venda de produtos: {str(e)}")
+                                    import traceback
+                                    traceback.print_exc()
+                                    lancamentos_result["erro_venda"] = str(e)
+                            
+                            resultado["lancamentos_finalizacao"] = lancamentos_result
+                    except Exception as e:
+                        print(f"ERRO ao gerar lançamentos de finalização: {str(e)}")
+                        import traceback
+                        traceback.print_exc()
+                        resultado["lancamentos_finalizacao"] = {
+                            "status": "erro",
+                            "message": f"Erro ao gerar lançamentos de finalização: {str(e)}"
+                        }
+                
+                # Continuar processando proposta aprovada
                 if proposta_aprovada and gerar_transacoes_automaticas:
                     # Verificar se já existem transações para esta proposta
                     transacoes_existentes = self.session.query(Transacao).filter_by(
@@ -4507,7 +4560,7 @@ class Database:
                               classificacao="contas_a_receber")\
                     .count()
                 
-                # Criar lançamento para itens OUTRO apenas se não existir
+                # Criar lançamento para itens OUTRO apenas se não existir ou se forçado
                 if valor_total_outros > 0 and (transacoes_outros == 0 or forcar_geracao):
                     print(f"DEBUG LANCAMENTOS: Criando lançamentos para Outros a receber: R$ {valor_total_outros:.2f}")
                     

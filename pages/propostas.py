@@ -1516,7 +1516,8 @@ def show():
                                         # Gerar lançamentos financeiros automáticos
                                         try:
                                             resultado_lancamentos = st.session_state.db.gerar_lancamentos_financeiros_proposta_concluida(
-                                                proposta_id=proposta_exec_id
+                                                proposta_id=proposta_exec_id,
+                                                forcar_geracao=True  # Forçar geração para garantir que todos os lançamentos sejam criados
                                             )
                                             
                                             st.success(f"Proposta #{proposta_exec_numero} marcada como concluída!")
