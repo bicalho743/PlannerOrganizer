@@ -42,7 +42,7 @@ def show():
 
     # A data já foi adicionada no cabeçalho, então não precisamos mais desta seção
     
-    # Carrossel avançado de frases motivacionais e dicas profissionais
+    # Simples exibição de uma frase aleatória (motivacional ou dica)
     import random
     import time
     
@@ -94,101 +94,35 @@ def show():
         "Um bom Personal Organizer transforma espaços e também transforma vidas."
     ]
     
-    # Preparar todos os itens do carrossel
-    todas_frases = []
-    for i, frase in enumerate(frases_motivacionais):
-        todas_frases.append({
-            "tipo": "motivacional",
-            "conteudo": frase,
-            "indice": i
-        })
-    
-    for i, dica in enumerate(dicas_profissionais):
-        todas_frases.append({
-            "tipo": "dica",
-            "conteudo": dica,
-            "indice": i
-        })
-    
-    # Embaralhar a lista de frases
+    # Escolher aleatoriamente entre mostrar uma frase motivacional ou uma dica
     random.seed(int(time.time()) % 100000)
-    random.shuffle(todas_frases)
     
-    # Inicializar o controle do carrossel na session state
-    if 'carrossel_index' not in st.session_state:
-        st.session_state.carrossel_index = 0
-    
-    # Função para avançar ou retroceder no carrossel
-    def mudar_item_carrossel(passo):
-        st.session_state.carrossel_index = (st.session_state.carrossel_index + passo) % len(todas_frases)
-    
-    # Obter o item atual do carrossel
-    item_atual = todas_frases[st.session_state.carrossel_index]
-    
-    # Container para o carrossel
-    carrossel_container = st.container()
-    with carrossel_container:
-        if item_atual["tipo"] == "motivacional":
-            frase = item_atual["conteudo"]
-            st.markdown(f"""
-            <div style="padding: 15px; border-radius: 10px; margin-bottom: 10px; 
-                  text-align: center; border-left: 4px solid #1E366F; border-right: 1px solid #e6e6e6; 
-                  box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                <p style="font-style: italic; color: #1E366F; margin: 0; font-size: 1.1rem; font-weight: 500;">
-                    "{frase['texto']}"
-                </p>
-                <p style="color: #4A6FA5; margin: 8px 0 0 0; font-size: 0.85rem; text-align: right; font-weight: 500;">
-                    — {frase['autor']}
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-        else:  # É uma dica
-            dica = item_atual["conteudo"]
-            st.markdown(f"""
-            <div style="padding: 15px; border-radius: 10px; margin-bottom: 10px; 
-                  text-align: center; border-left: 4px solid #FF9800; border-right: 1px solid #e6e6e6;
-                  box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 8px;">
-                    <span style="background-color: rgba(255, 152, 0, 0.1); border-radius: 50%; width: 24px; height: 24px; 
-                         display: flex; align-items: center; justify-content: center; margin-right: 8px;">
-                        💡
-                    </span>
-                    <span style="color: #FF9800; font-weight: bold; font-size: 0.9rem;">DICA PROFISSIONAL</span>
-                </div>
-                <p style="color: #333; margin: 0; font-size: 1.05rem;">
-                    {dica}
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    # Botões de navegação
-    col1, col2, col3 = st.columns([1, 6, 1])
-    with col1:
-        st.button("◀", key="btn_prev", on_click=mudar_item_carrossel, args=(-1,), help="Item anterior")
-    with col3:
-        st.button("▶", key="btn_next", on_click=mudar_item_carrossel, args=(1,), help="Próximo item")
-    
-    # Adicionar CSS para centralizar os botões e deixá-los mais bonitos
-    st.markdown("""
-    <style>
-    /* Ajuste os botões do carrossel */
-    div[data-testid="column"]:nth-of-type(1) button,
-    div[data-testid="column"]:nth-of-type(3) button {
-        width: 100%;
-        background-color: #f1f3f9;
-        border: none;
-        color: #1E366F;
-        font-size: 1.2rem;
-        font-weight: bold;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    div[data-testid="column"]:nth-of-type(1) button:hover,
-    div[data-testid="column"]:nth-of-type(3) button:hover {
-        background-color: #e1e5f1;
-        color: #0D2252;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    if random.choice([True, False]):
+        # Mostrar uma frase motivacional
+        frase = random.choice(frases_motivacionais)
+        st.markdown(f"""
+        <div style="text-align: center; margin-bottom: 25px;">
+            <p style="font-style: italic; color: #1E366F; margin: 0; font-size: 1.1rem; font-weight: 500;">
+                "{frase['texto']}"
+            </p>
+            <p style="color: #4A6FA5; margin: 8px 0 0 0; font-size: 0.85rem; text-align: right; font-weight: 500;">
+                — {frase['autor']}
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        # Mostrar uma dica profissional
+        dica = random.choice(dicas_profissionais)
+        st.markdown(f"""
+        <div style="text-align: center; margin-bottom: 25px;">
+            <p style="color: #FF9800; font-weight: bold; font-size: 0.9rem; margin-bottom: 5px;">
+                💡 DICA PROFISSIONAL
+            </p>
+            <p style="color: #333; margin: 0; font-size: 1.05rem;">
+                {dica}
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
     # Dashboard layout com cards modernos
     # Primeira linha - 3 cartões de métricas principais
