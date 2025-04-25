@@ -32,6 +32,53 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
     print("DEBUG PDF NOVO: Filename: {}".format(filename))
     print("DEBUG PDF NOVO: Acréscimos: {} registros".format(len(acrescimos) if hasattr(acrescimos, 'empty') and not acrescimos.empty else 0))
     
+    # Obter os produtos da venda associada à proposta
+    produtos_venda = []
+    try:
+        import psycopg2
+        import os
+        
+        # Obter conexão do ambiente
+        db_url = os.environ.get("DATABASE_URL")
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        # Buscar a venda associada à proposta
+        cursor.execute("""
+            SELECT id FROM vendas 
+            WHERE proposta_id = %s
+        """, (proposta.get('id'),))
+        venda = cursor.fetchone()
+        
+        if venda:
+            venda_id = venda[0]
+            # Buscar os itens da venda
+            cursor.execute("""
+                SELECT produto_id, quantidade, preco_unitario, subtotal, descricao
+                FROM itens_venda 
+                WHERE venda_id = %s
+            """, (venda_id,))
+            items = cursor.fetchall()
+            
+            # Converter para formato adequado
+            for item in items:
+                produtos_venda.append({
+                    'produto_id': item[0],
+                    'quantidade': item[1],
+                    'preco_unitario': item[2],
+                    'subtotal': item[3],
+                    'descricao': item[4],
+                    'tipo': 'PRODUTO'
+                })
+            
+            print(f"DEBUG PDF: Encontrados {len(produtos_venda)} produtos na venda {venda_id}")
+        
+        # Fechar a conexão
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        print(f"DEBUG PDF ERROR: Erro ao buscar produtos da venda: {str(e)}")
+    
     try:
         # Certificar que o diretório existe
         os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -250,6 +297,32 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         print(f"DEBUG PDF: Relatório de Serviço - Verificando acréscimos: {len(acrescimos)} itens")
         if hasattr(acrescimos, 'columns'):
             print(f"DEBUG PDF: Colunas disponíveis: {', '.join(acrescimos.columns.tolist())}")
+        
+        # Adicionar produtos da venda primeiro
+        for produto in produtos_venda:
+            descricao = produto.get('descricao', 'Produto')
+            valor = float(produto.get('subtotal', 0))
+            quantidade = produto.get('quantidade', 1)
+            
+            # Ajustar descrição se houver quantidade maior que 1
+            if quantidade > 1:
+                descricao = f"{descricao} ({quantidade} un.)"
+                
+            # Debug
+            print(f"DEBUG PDF: Adicionando produto da venda: {descricao}, valor: {valor}")
+            
+            # Alternância de cores para linhas
+            if linha % 2 == 0:
+                c.setFillColor(azul_claro)
+                c.rect(40, y-15, table_width, 15, fill=True, stroke=False)
+                
+            c.setFillColor(cinza_medio)
+            c.drawString(50, y-12, descricao)
+            c.drawRightString(40 + desc_col_width + valor_col_width - 10, y-12, f"R$ {valor:.2f}")
+            
+            y -= 15
+            linha += 1
+            total += valor
         
         # Adicionar acréscimos, exceto os de tipo 'assistente'
         for _, acrescimo in acrescimos.iterrows():

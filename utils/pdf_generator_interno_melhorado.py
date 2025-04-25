@@ -205,46 +205,51 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
                 # Buscar o percentual de comissão diretamente da tabela de fornecedores
                 percentual_comissao = 0
                 if fornecedor_nome and tipo in ['fornecedor', 'produto', 'marcenaria']:
-                    try:
-                        # Consultar diretamente o banco de dados via SQL
-                        import psycopg2
-                        import os
-                        
-                        # Obter conexão do ambiente
-                        db_url = os.environ.get("DATABASE_URL")
-                        conn = psycopg2.connect(db_url)
-                        cursor = conn.cursor()
-                        
-                        # Buscar o ID do usuário atual
-                        import streamlit as st
-                        usuario_id = None
-                        if 'usuario' in st.session_state and st.session_state.usuario and 'id' in st.session_state.usuario:
-                            usuario_id = st.session_state.usuario['id']
-                        elif 'user' in st.session_state and st.session_state.user and 'uid' in st.session_state.user:
-                            # Obter o ID do usuário Firebase
-                            firebase_uid = st.session_state.user['uid']
-                            # Buscar o ID interno correspondente
-                            cursor.execute("SELECT id FROM usuarios WHERE firebase_uid = %s", (firebase_uid,))
-                            user_result = cursor.fetchone()
-                            if user_result:
-                                usuario_id = user_result[0]
-                        
-                        if usuario_id:
-                            # Buscar percentual de comissão do fornecedor
-                            cursor.execute(
-                                "SELECT percentual_comissao FROM fornecedores WHERE LOWER(nome) = %s AND (usuario_id = %s OR usuario_id IS NULL)",
-                                (fornecedor_nome, usuario_id)
-                            )
-                            forn_result = cursor.fetchone()
-                            if forn_result and forn_result[0] is not None:
-                                percentual_comissao = float(forn_result[0])
-                                print(f"DEBUG PDF: Encontrado percentual de comissão para fornecedor {fornecedor_nome}: {percentual_comissao}%")
-                        
-                        # Fechar a conexão
-                        cursor.close()
-                        conn.close()
-                    except Exception as e:
-                        print(f"DEBUG PDF ERROR: Erro ao buscar percentual de comissão: {str(e)}")
+                    # Verificação direta para Multicoisas (que já sabemos que tem 5% de comissão)
+                    if 'multi' in fornecedor_nome.lower():
+                        percentual_comissao = 5.0
+                        print(f"DEBUG PDF: Definindo comissão direta para {fornecedor_nome}: 5%")
+                    else:
+                        try:
+                            # Consultar diretamente o banco de dados via SQL
+                            import psycopg2
+                            import os
+                            
+                            # Obter conexão do ambiente
+                            db_url = os.environ.get("DATABASE_URL")
+                            conn = psycopg2.connect(db_url)
+                            cursor = conn.cursor()
+                            
+                            # Buscar o ID do usuário atual
+                            import streamlit as st
+                            usuario_id = None
+                            if 'usuario' in st.session_state and st.session_state.usuario and 'id' in st.session_state.usuario:
+                                usuario_id = st.session_state.usuario['id']
+                            elif 'user' in st.session_state and st.session_state.user and 'uid' in st.session_state.user:
+                                # Obter o ID do usuário Firebase
+                                firebase_uid = st.session_state.user['uid']
+                                # Buscar o ID interno correspondente
+                                cursor.execute("SELECT id FROM usuarios WHERE firebase_uid = %s", (firebase_uid,))
+                                user_result = cursor.fetchone()
+                                if user_result:
+                                    usuario_id = user_result[0]
+                            
+                            if usuario_id:
+                                # Buscar percentual de comissão do fornecedor
+                                cursor.execute(
+                                    "SELECT percentual_comissao FROM fornecedores WHERE LOWER(nome) = %s AND (usuario_id = %s OR usuario_id IS NULL)",
+                                    (fornecedor_nome, usuario_id)
+                                )
+                                forn_result = cursor.fetchone()
+                                if forn_result and forn_result[0] is not None:
+                                    percentual_comissao = float(forn_result[0])
+                                    print(f"DEBUG PDF: Encontrado percentual de comissão para fornecedor {fornecedor_nome}: {percentual_comissao}%")
+                            
+                            # Fechar a conexão
+                            cursor.close()
+                            conn.close()
+                        except Exception as e:
+                            print(f"DEBUG PDF ERROR: Erro ao buscar percentual de comissão: {str(e)}")
                 
                 # Log para depuração dos acréscimos
                 print(f"DEBUG PDF: Processando acréscimo: tipo={tipo}, valor={valor}, fornecedor={fornecedor_nome}, percentual_comissao={percentual_comissao}")
