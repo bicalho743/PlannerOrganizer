@@ -2261,15 +2261,21 @@ class Database:
 
     def get_assistentes(self):
         def query():
-            assistentes = self.session.query(Assistente).all()
-            return pd.DataFrame([{
-                'id': a.id,
-                'nome': a.nome,
-                'telefone': a.telefone,
-                'endereco': a.endereco,
-                'pix': a.pix,
-                'observacoes': a.observacoes
-            } for a in assistentes])
+            # Criar uma nova sessão para evitar problemas com estado 'prepared'
+            # Isso resolve o erro "This session is in 'prepared' state"
+            session = Session()
+            try:
+                assistentes = session.query(Assistente).all()
+                return pd.DataFrame([{
+                    'id': a.id,
+                    'nome': a.nome,
+                    'telefone': a.telefone,
+                    'endereco': a.endereco,
+                    'pix': a.pix,
+                    'observacoes': a.observacoes
+                } for a in assistentes])
+            finally:
+                session.close()
         return self._safe_query(query)
 
     def add_parceiro(self, nome, telefone, area_atuacao, tipo_parceria, 
@@ -2294,21 +2300,27 @@ class Database:
 
     def get_parceiros(self):
         def query():
-            parceiros = self.session.query(Parceiro).all()
-            return pd.DataFrame([{
-                'id': p.id,
-                'nome': p.nome,
-                'telefone': p.telefone,
-                'area_atuacao': p.area_atuacao,
-                'tipo_parceria': p.tipo_parceria,
-                'estado': p.estado,
-                'cidade': p.cidade,
-                'bairro': p.bairro,
-                'endereco': p.endereco,
-                'pix': p.pix,
-                'observacoes': p.observacoes,
-                'data_cadastro': p.data_cadastro
-            } for p in parceiros])
+            # Criar uma nova sessão para evitar problemas com estado 'prepared'
+            # Isso resolve o erro "This session is in 'prepared' state"
+            session = Session()
+            try:
+                parceiros = session.query(Parceiro).all()
+                return pd.DataFrame([{
+                    'id': p.id,
+                    'nome': p.nome,
+                    'telefone': p.telefone,
+                    'area_atuacao': p.area_atuacao,
+                    'tipo_parceria': p.tipo_parceria,
+                    'estado': p.estado,
+                    'cidade': p.cidade,
+                    'bairro': p.bairro,
+                    'endereco': p.endereco,
+                    'pix': p.pix,
+                    'observacoes': p.observacoes,
+                    'data_cadastro': p.data_cadastro
+                } for p in parceiros])
+            finally:
+                session.close()
         return self._safe_query(query)
 
     def __del__(self):
