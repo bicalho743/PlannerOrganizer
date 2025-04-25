@@ -218,7 +218,7 @@ def show():
                 st.rerun()
 
         # Resumo financeiro
-        receitas = financeiro[financeiro['tipo'] == 'receita']['valor'].sum() if not financeiro.empty else 0
+        receitas = financeiro[financeiro['tipo'].isin(['receita', 'receita_a_receber'])]['valor'].sum() if not financeiro.empty else 0
         despesas = financeiro[financeiro['tipo'] == 'despesa']['valor'].sum() if not financeiro.empty else 0
         saldo = receitas - despesas
 
