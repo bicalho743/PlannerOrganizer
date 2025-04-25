@@ -4721,7 +4721,7 @@ class Database:
                                 data=data_lancamento,
                                 categoria="Assistente",
                                 subcategoria="Pagamento de Serviço",
-                                tipo_despesa="assistente",
+                                tipo_receita="assistente",  # Usaremos tipo_receita mesmo para despesas
                                 origem_id=assistente_item.id,
                                 origem_tipo="assistente",
                                 tipo_conta="PF",
@@ -4740,7 +4740,7 @@ class Database:
                                 data=data_lancamento,
                                 categoria="Assistente",
                                 subcategoria="Assistente a pagar",
-                                tipo_despesa="assistente",
+                                tipo_receita="assistente",  # Usaremos tipo_receita mesmo para despesas
                                 origem_id=assistente_item.id,
                                 origem_tipo="assistente",
                                 tipo_conta="PF",
