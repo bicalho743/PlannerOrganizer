@@ -107,6 +107,7 @@ class Cliente(Base):
     __table_args__ = (
         Index('idx_cliente_nome', 'nome'),
         Index('idx_cliente_email', 'email'),
+        Index('idx_cliente_usuario_id', 'usuario_id'),  # Índice para otimizar filtro por usuário
     )
     nome = Column(String, nullable=False)
     telefone = Column(String)
@@ -120,6 +121,7 @@ class Cliente(Base):
     origem_cliente = Column(String)
     data_cadastro = Column(Date, default=datetime.now().date())
     observacoes = Column(String)  # Adicionado campo observacoes
+    usuario_id = Column(String, nullable=True)  # ID do usuário proprietário do registro (multi-tenant)
 
     propostas = relationship("Proposta", back_populates="cliente")
 
@@ -194,6 +196,7 @@ class Proposta(Base):
     previsao_dias = Column(Integer)  # Dias previstos para execução
     data_inicio_execucao = Column(Date)  # Data de início efetivo da execução
     status_execucao = Column(String, default='Não iniciada')  # Status da execução: 'Não iniciada', 'Em execução', 'Concluída'
+    usuario_id = Column(String, nullable=True)  # ID do usuário proprietário do registro (multi-tenant)
 
     cliente = relationship("Cliente", back_populates="propostas")
     produtos = relationship("ProdutoOrganizador", back_populates="proposta", cascade="all, delete-orphan")
@@ -202,6 +205,7 @@ class Proposta(Base):
 
     __table_args__ = (
         Index('idx_proposta_numero', 'numero', unique=True),
+        Index('idx_proposta_usuario_id', 'usuario_id'),  # Índice para otimizar filtro por usuário
     )
 
 class ProdutoOrganizador(Base):
@@ -258,9 +262,16 @@ class Transacao(Base):
     data_recebimento = Column(Date, nullable=True)
     proposta_id = Column(Integer, ForeignKey('propostas.id'), nullable=True)  # Referência direta à proposta
     classificacao = Column(String)  # 'receita', 'custo_direto', 'despesa_operacional'
+    usuario_id = Column(String, nullable=True)  # ID do usuário proprietário do registro (multi-tenant)
     
     # Relacionamento com proposta
     proposta = relationship("Proposta")
+    
+    __table_args__ = (
+        Index('idx_financeiro_usuario_id', 'usuario_id'),  # Índice para otimizar filtro por usuário
+        Index('idx_financeiro_data', 'data'),  # Índice para otimizar consultas por data
+        Index('idx_financeiro_tipo', 'tipo'),  # Índice para otimizar consultas por tipo de transação
+    )
     
 # Funções fábrica para criar objetos Transacao como receitas ou despesas
 def Receita(**kwargs):
@@ -280,7 +291,7 @@ def Receita(**kwargs):
     
     # Copiar campos que existem diretamente em Transacao
     for field in ['tipo_receita', 'categoria', 'descricao', 'valor', 'status', 
-                  'proposta_id', 'data_recebimento']:
+                  'proposta_id', 'data_recebimento', 'usuario_id']:
         if field in kwargs:
             transacao_kwargs[field] = kwargs[field]
     
@@ -307,7 +318,7 @@ def Despesa(**kwargs):
     
     # Copiar campos que existem diretamente em Transacao
     for field in ['categoria', 'descricao', 'valor', 'status', 
-                  'proposta_id', 'data_recebimento']:
+                  'proposta_id', 'data_recebimento', 'usuario_id']:
         if field in kwargs:
             transacao_kwargs[field] = kwargs[field]
     
@@ -340,9 +351,14 @@ class Produto(Base):
     categoria = Column(String)
     estoque = Column(Integer, default=0)
     data_cadastro = Column(Date, default=datetime.now().date())
+    usuario_id = Column(String, nullable=True)  # ID do usuário proprietário do registro (multi-tenant)
     
     # Relacionamento com vendas
     vendas_itens = relationship("ItemVenda", back_populates="produto", cascade="all, delete-orphan")
+    
+    __table_args__ = (
+        Index('idx_produto_usuario_id', 'usuario_id'),  # Índice para otimizar filtro por usuário
+    )
 
 class Venda(Base):
     __tablename__ = 'vendas'
@@ -354,11 +370,16 @@ class Venda(Base):
     status = Column(String, default='Concluída')  # Concluída, Cancelada, Pendente
     forma_pagamento = Column(String)
     observacoes = Column(String)
+    usuario_id = Column(String, nullable=True)  # ID do usuário proprietário do registro (multi-tenant)
     
     # Relacionamentos
     cliente = relationship("Cliente")
     proposta = relationship("Proposta", back_populates="vendas")  # Relacionamento com proposta
     itens = relationship("ItemVenda", back_populates="venda", cascade="all, delete-orphan")
+    
+    __table_args__ = (
+        Index('idx_venda_usuario_id', 'usuario_id'),  # Índice para otimizar filtro por usuário
+    )
 
 class ItemVenda(Base):
     __tablename__ = 'itens_venda'
@@ -1025,7 +1046,7 @@ class Database:
 
     def add_transacao(self, tipo, descricao, valor, categoria, tipo_receita=None, 
                      origem_id=None, origem_tipo=None, tipo_conta='PF', status='Pendente',
-                     proposta_id=None, subcategoria=None, classificacao=None):
+                     proposta_id=None, subcategoria=None, classificacao=None, usuario_id=None):
         """
         Adiciona uma transação financeira
         
@@ -1042,6 +1063,7 @@ class Database:
             proposta_id (int, optional): ID da proposta relacionada
             subcategoria (str, optional): Subcategoria da transação
             classificacao (str, optional): Classificação contábil
+            usuario_id (str, optional): ID do usuário proprietário da transação (para multi-tenant)
             
         Returns:
             int: ID da transação adicionada
@@ -1218,6 +1240,9 @@ class Database:
             # Data da proposta ou data atual
             data_proposta = proposta.data_proposta if hasattr(proposta, 'data_proposta') and proposta.data_proposta is not None else datetime.now().date()
             
+            # Obter usuario_id da proposta para garantir isolamento de dados
+            usuario_id = proposta.usuario_id if hasattr(proposta, 'usuario_id') else None
+            
             transacao = Transacao(
                 tipo="receita_a_receber",
                 descricao=f"Proposta #{proposta_id} - {descricao} - {nome_cliente}",
@@ -1231,7 +1256,8 @@ class Database:
                 status="Pendente",
                 proposta_id=proposta_id,
                 classificacao="receita",
-                data=data_proposta
+                data=data_proposta,
+                usuario_id=usuario_id
             )
             self.session.add(transacao)
             self.session.flush()
@@ -1271,6 +1297,9 @@ class Database:
             # Data do cadastro ou data atual
             data_cadastro = acrescimo.data_cadastro if hasattr(acrescimo, 'data_cadastro') and acrescimo.data_cadastro is not None else datetime.now().date()
             
+            # Obter usuario_id da proposta para garantir isolamento de dados
+            usuario_id = proposta.usuario_id if hasattr(proposta, 'usuario_id') else None
+            
             transacao = Transacao(
                 tipo="despesa",
                 descricao=f"Despesa: {descricao} - Proposta #{proposta_id}",
@@ -1283,7 +1312,8 @@ class Database:
                 status="Pendente",
                 proposta_id=proposta_id,
                 classificacao="custo_direto",
-                data=data_cadastro
+                data=data_cadastro,
+                usuario_id=usuario_id
             )
             self.session.add(transacao)
             self.session.flush()
@@ -1304,9 +1334,17 @@ class Database:
 
     def get_contas_receber(self):
         def query():
-            contas = self.session.query(Transacao).filter(
+            # Criar query base
+            query = self.session.query(Transacao).filter(
                 Transacao.tipo.in_(['receita_a_receber']),
-            ).order_by(Transacao.data.desc()).all()
+            )
+            
+            # Aplicar filtro por usuário se disponível (multi-tenant)
+            if self.usuario_id:
+                query = query.filter(Transacao.usuario_id == self.usuario_id)
+                
+            # Ordenar e obter resultados
+            contas = query.order_by(Transacao.data.desc()).all()
 
             return pd.DataFrame([{
                 'id': t.id,
@@ -1610,7 +1648,8 @@ class Database:
                             status="Pendente",
                             proposta_id=proposta.id,
                             classificacao="receita",
-                            data=proposta.data_proposta or datetime.now().date()
+                            data=proposta.data_proposta or datetime.now().date(),
+                            usuario_id=proposta.usuario_id
                         )
                         self.session.add(transacao)
                         # # print(f"DEBUG: Transação financeira criada para proposta {proposta_id}")
