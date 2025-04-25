@@ -270,13 +270,33 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
                 
             # Formatar descrição completa
             if tipo.lower() == 'outro':
-                # Para tipo OUTRO, usar o nome ou descrição diretamente
-                descricao_formatada = nome_item if nome_item else descricao
-            else:
-                # Para outros tipos, formatar com tipo e fornecedor
-                descricao_formatada = f"{tipo.upper()} - {descricao}"
+                # Para tipo OUTRO, usar o nome fornecedor como descrição principal, seguido da descrição do item
+                if fornecedor:
+                    descricao_formatada = fornecedor.capitalize()
+                    if descricao and descricao.lower() != "n/a" and descricao.lower() != "item adicional":
+                        descricao_formatada = f"{descricao_formatada} - {descricao}"
+                else:
+                    # Se não houver fornecedor, usar a descrição diretamente
+                    descricao_formatada = descricao
+            elif tipo.lower() == 'produto':
+                # Para PRODUTO, formatar apenas com a descrição do produto
+                descricao_formatada = descricao
                 if fornecedor:
                     descricao_formatada += f" ({fornecedor})"
+            else:
+                # Para outros tipos (FORNECEDOR, etc.), formatar com tipo e fornecedor
+                # Se for fornecedor, colocar o nome do fornecedor em primeiro lugar
+                if tipo.lower() == 'fornecedor' and fornecedor:
+                    descricao_formatada = f"{fornecedor}"
+                    if descricao and descricao.lower() != "n/a" and not descricao.lower().startswith("fornecimento de"):
+                        descricao_formatada += f" - {descricao}"
+                else:
+                    descricao_formatada = f"{descricao}"
+                    if fornecedor:
+                        descricao_formatada += f" ({fornecedor})"
+                        
+            # Log da descrição formatada para debug
+            print(f"DEBUG PDF: Item formatado: {descricao_formatada}, valor: {valor}")
             
             # Alternância de cores para linhas
             if linha % 2 == 0:

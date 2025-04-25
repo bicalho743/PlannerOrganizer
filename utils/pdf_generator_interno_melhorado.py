@@ -200,11 +200,54 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
             for _, acrescimo in acrescimos.iterrows():
                 tipo = acrescimo.get('tipo', '').lower() if hasattr(acrescimo, 'get') else ''
                 valor = float(acrescimo.get('valor', 0)) if hasattr(acrescimo, 'get') else 0
-                percentual_comissao = float(acrescimo.get('percentual_comissao', 0)) if hasattr(acrescimo, 'get') else 0
-                fornecedor = acrescimo.get('fornecedor', '').lower() if hasattr(acrescimo, 'get') else ''
+                fornecedor_nome = acrescimo.get('fornecedor', '').lower() if hasattr(acrescimo, 'get') else ''
+                
+                # Buscar o percentual de comissão diretamente da tabela de fornecedores
+                percentual_comissao = 0
+                if fornecedor_nome and tipo in ['fornecedor', 'produto', 'marcenaria']:
+                    try:
+                        # Consultar diretamente o banco de dados via SQL
+                        import psycopg2
+                        import os
+                        
+                        # Obter conexão do ambiente
+                        db_url = os.environ.get("DATABASE_URL")
+                        conn = psycopg2.connect(db_url)
+                        cursor = conn.cursor()
+                        
+                        # Buscar o ID do usuário atual
+                        import streamlit as st
+                        usuario_id = None
+                        if 'usuario' in st.session_state and st.session_state.usuario and 'id' in st.session_state.usuario:
+                            usuario_id = st.session_state.usuario['id']
+                        elif 'user' in st.session_state and st.session_state.user and 'uid' in st.session_state.user:
+                            # Obter o ID do usuário Firebase
+                            firebase_uid = st.session_state.user['uid']
+                            # Buscar o ID interno correspondente
+                            cursor.execute("SELECT id FROM usuarios WHERE firebase_uid = %s", (firebase_uid,))
+                            user_result = cursor.fetchone()
+                            if user_result:
+                                usuario_id = user_result[0]
+                        
+                        if usuario_id:
+                            # Buscar percentual de comissão do fornecedor
+                            cursor.execute(
+                                "SELECT percentual_comissao FROM fornecedores WHERE LOWER(nome) = %s AND (usuario_id = %s OR usuario_id IS NULL)",
+                                (fornecedor_nome, usuario_id)
+                            )
+                            forn_result = cursor.fetchone()
+                            if forn_result and forn_result[0] is not None:
+                                percentual_comissao = float(forn_result[0])
+                                print(f"DEBUG PDF: Encontrado percentual de comissão para fornecedor {fornecedor_nome}: {percentual_comissao}%")
+                        
+                        # Fechar a conexão
+                        cursor.close()
+                        conn.close()
+                    except Exception as e:
+                        print(f"DEBUG PDF ERROR: Erro ao buscar percentual de comissão: {str(e)}")
                 
                 # Log para depuração dos acréscimos
-                print(f"DEBUG PDF: Processando acréscimo: tipo={tipo}, valor={valor}, fornecedor={fornecedor}, percentual_comissao={percentual_comissao}")
+                print(f"DEBUG PDF: Processando acréscimo: tipo={tipo}, valor={valor}, fornecedor={fornecedor_nome}, percentual_comissao={percentual_comissao}")
                 
                 if tipo == 'assistente':
                     custos_assistentes += valor
@@ -215,7 +258,7 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
                         comissao_valor = valor * (percentual_comissao / 100)
                         total_comissoes += comissao_valor
                         comissao_encontrada = True
-                        print(f"DEBUG PDF: Comissão encontrada em fornecedor ({fornecedor}): {percentual_comissao}% = R$ {comissao_valor:.2f}")
+                        print(f"DEBUG PDF: Comissão calculada para fornecedor ({fornecedor_nome}): {percentual_comissao}% = R$ {comissao_valor:.2f}")
                 elif tipo == 'comissão':
                     # Usar o valor da comissão se existir na tabela de acréscimos
                     total_comissoes += valor
