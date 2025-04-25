@@ -623,20 +623,12 @@ if not st.session_state.authenticated:
         <h2 style="text-align: center; color: #1E366F; margin-top: 0; margin-bottom: 25px;">Acesse sua conta</h2>
         ''', unsafe_allow_html=True)
         
-        # Botões de login social
-        st.markdown('''
-        <button class="social-button google-button">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                 style="width: 18px; height: 18px; margin-right: 8px;">
-            Continuar com Google
-        </button>
-        ''', unsafe_allow_html=True)
-        # Botão Facebook removido conforme solicitado
+        # Login apenas com e-mail (botões sociais removidos conforme solicitado)
         
-        # Divisor
+        # Formulário simples
         st.markdown('''
-        <div class="login-divider">
-            <span class="login-divider-text">ou entre com e-mail</span>
+        <div style="text-align: center; margin-bottom: 20px; color: #5A6A85;">
+            Entre com seu e-mail e senha para acessar o sistema
         </div>
         ''', unsafe_allow_html=True)
         

@@ -108,44 +108,6 @@ def main():
                         else:
                             st.error("Usuário ou senha incorretos")
                 
-                # Divisor com "ou"
-                st.markdown("""
-                <div style="text-align: center; margin: 1.5rem 0; position: relative;">
-                    <hr style="margin: 0; border: none; height: 1px; background-color: #E0E0E0;">
-                    <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); 
-                           background-color: white; padding: 0 10px; color: #5A6A85; font-size: 0.9rem;">
-                        ou continuar com
-                    </span>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Botões para login social
-                col_google, col_facebook = st.columns(2)
-                
-                with col_google:
-                    st.markdown("""
-                    <button style="width: 100%; background-color: white; border: 1px solid #E0E0E0; 
-                                   border-radius: 4px; padding: 8px 0; display: flex; align-items: center; 
-                                   justify-content: center; cursor: pointer; transition: all 0.2s ease;">
-                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                             style="width: 18px; height: 18px; margin-right: 8px;">
-                        Google
-                    </button>
-                    """, unsafe_allow_html=True)
-                
-                with col_facebook:
-                    st.markdown("""
-                    <button style="width: 100%; background-color: #3b5998; border: none; color: white;
-                                   border-radius: 4px; padding: 8px 0; display: flex; align-items: center; 
-                                   justify-content: center; cursor: pointer; transition: all 0.2s ease;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white" 
-                             style="margin-right: 8px;">
-                            <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm3 8h-1.35c-.538 0-.65.221-.65.778v1.222h2l-.209 2h-1.791v7h-3v-7h-2v-2h2v-2.308c0-1.769.931-2.692 3.029-2.692h1.971v3z"/>
-                        </svg>
-                        Facebook
-                    </button>
-                    """, unsafe_allow_html=True)
-                
                 # Adicionar links para recuperação de senha
                 st.markdown("""
                 <div style="text-align: center; margin-top: 1rem;">
@@ -154,9 +116,6 @@ def main():
                     </a>
                 </div>
                 """, unsafe_allow_html=True)
-                
-                # Nota informativa sobre o login social
-                st.info("Os botões de login social estão em implementação e serão ativados em breve.")
                 
                 # Informações de acesso para demonstração
                 st.markdown("""
