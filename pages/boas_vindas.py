@@ -17,18 +17,7 @@ def get_random_color():
 def show():
     """Exibe a página de boas-vindas após o login"""
     
-    # Cabeçalho padronizado
-    st.markdown("""
-    <div style="background-color: #1E366F; padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem;">
-        <h2 style="color: white; margin: 0; padding: 0; font-family: 'Poppins', sans-serif;">Planner Organizer</h2>
-        <p style="color: #E3F2FD; margin: 0.2rem 0 0 0; padding: 0; font-size: 0.9rem; font-family: 'Poppins', sans-serif;">
-            Sistema Profissional de Gestão Personal Organizer
-        </p>
-        <p style="color: #BBD8FF; margin: 0.5rem 0 0 0; padding: 0; font-size: 0.8rem; font-family: 'Poppins', sans-serif; font-style: italic;">
-            "Transforme sua organização em resultados: gerencie propostas, clientes e finanças com precisão profissional."
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    # O cabeçalho já é aplicado pelo page_config.py, então não precisamos adicioná-lo aqui
     
     # Configurações básicas
     st.markdown("""
@@ -172,11 +161,7 @@ def show():
     """, unsafe_allow_html=True)
     
     # Adicionar data fixa
-    st.markdown("<h3 style='text-align: center; color: #5A6A85; font-size: 1.2rem; margin-bottom: 5px;'>📅 25 de abril de 2025</h3>", unsafe_allow_html=True)
-    
-    # Adicionar bem-vindo ao usuário
-    nome_usuario = st.session_state.get('user', {}).get('nome', 'Usuário')
-    st.markdown(f"<h3 style='text-align: center; color: #1E366F; font-size: 1.2rem; margin-bottom: 15px;'>Bem-vindo(a), {nome_usuario}</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: #5A6A85; font-size: 1.2rem; margin-bottom: 15px;'>📅 25 de abril de 2025</h3>", unsafe_allow_html=True)
     
     # Linha horizontal para separar o cabeçalho do conteúdo
     st.markdown("---")

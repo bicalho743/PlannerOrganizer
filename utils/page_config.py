@@ -99,17 +99,19 @@ def apply_page_header():
     </div>
     """
     
-    # Adicionando o cabeçalho no topo da página - mais compacto
+    # Adicionando o cabeçalho no topo da página - exatamente como na imagem
     st.markdown(f"""
-    <div style="background-color: #1E366F; padding: 0.7rem; border-radius: 0.5rem; margin-bottom: 0.7rem; text-align: center; position: relative;">
-        <h2 style="color: white; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; font-size: 1.5rem;">Planner Organizer</h2>
+    <div style="background-color: #1E366F; padding: 1rem; margin-bottom: 1rem; text-align: center; position: relative; width: 100%; margin-top: 0; border-radius: 0;">
+        <h2 style="color: white; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; font-size: 1.5rem; font-weight: 600;">Planner Organizer</h2>
         <p style="color: #E3F2FD; margin: 0.15rem 0 0 0; padding: 0; font-size: 0.85rem; font-family: 'Poppins', sans-serif;">
             Sistema Profissional de Gestão Personal Organizer
         </p>
         <p style="color: #BBD8FF; margin: 0.3rem 0 0 0; padding: 0; font-size: 0.75rem; font-family: 'Poppins', sans-serif; font-style: italic;">
             "Transforme sua organização em resultados: gerencie propostas, clientes e finanças com precisão profissional."
         </p>
-        {welcome_html}
+        <div style="position: absolute; top: 50%; right: 1rem; transform: translateY(-50%); background-color: rgba(255, 255, 255, 0.2); padding: 0.3rem 0.8rem; border-radius: 1rem;">
+            <span style="color: white; font-size: 0.8rem; font-family: 'Poppins', sans-serif;">Bem-vindo(a), {nome_usuario}</span>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
