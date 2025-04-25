@@ -4485,14 +4485,34 @@ class Database:
             # Adicionar itens da venda
             for i, produto in enumerate(produtos):
                 valor_produto = float(produto.valor) * produto.quantidade
-                item = ItemVenda(
-                    venda_id=venda.id,
-                    produto_id=None,  # Não temos o produto do catálogo, apenas o produto da proposta
-                    quantidade=produto.quantidade,
-                    preco_unitario=float(produto.valor),
-                    subtotal=valor_produto,
-                    descricao=produto.nome  # Adicionado nome do produto para referência
-                )
+                # Criar o objeto ItemVenda com campos compatíveis
+                # Evitando usar o campo 'descricao' que pode não existir no ambiente de produção
+                try:
+                    # Tentar criar o objeto com campos básicos primeiro (compatível com produção)
+                    item = ItemVenda(
+                        venda_id=venda.id,
+                        produto_id=None,  # Não temos o produto do catálogo, apenas o produto da proposta
+                        quantidade=produto.quantidade,
+                        preco_unitario=float(produto.valor),
+                        subtotal=valor_produto
+                    )
+                    
+                    # Tentar adicionar o campo descricao somente se for suportado
+                    if hasattr(ItemVenda, 'descricao'):
+                        try:
+                            item.descricao = produto.nome
+                        except Exception as descr_e:
+                            print(f"AVISO: Não foi possível adicionar o campo descricao: {str(descr_e)}")
+                except Exception as e:
+                    print(f"ERRO ao criar item de venda: {str(e)}")
+                    # Garantir que pelo menos os campos obrigatórios são incluídos
+                    item = ItemVenda(
+                        venda_id=venda.id,
+                        produto_id=None,
+                        quantidade=produto.quantidade,
+                        preco_unitario=float(produto.valor),
+                        subtotal=valor_produto
+                    )
                 self.session.add(item)
                 print(f"DEBUG VENDAS: Item adicionado à venda: {produto.nome}, Subtotal: R$ {valor_produto:.2f}")
             
