@@ -93,29 +93,41 @@ def finalizar_proposta_segura(proposta_id):
                 print(f"DEBUG FINALIZAR: Existem {lancamentos_existentes} lançamentos para a proposta")
                 resultado["lancamentos"]["existentes"] = lancamentos_existentes
             
-            # Cria lançamento para o valor base da proposta (valor do cliente)
-            # O valor base é o preço do serviço antes de adicionar produtos/fornecedores/assistentes
-            transacao_base = Transacao(
-                tipo="receita",
-                descricao=f"Receita da proposta #{proposta.numero} - {proposta.descricao}",
-                valor=proposta.valor,
-                categoria="Vendas",
-                subcategoria=proposta.tipo_proposta or "Serviço",
-                tipo_receita="Serviço",
-                data=datetime.now().date(),
-                origem_id=proposta.id,
-                origem_tipo="proposta",
-                tipo_conta="PF",
-                status="Pendente",
-                proposta_id=proposta.id,
-                classificacao="receita_a_receber",
-                usuario_id=proposta.usuario_id
-            )
-            session.add(transacao_base)
+            # Verificar se já existe uma transação de receita para o valor base da proposta
+            transacao_base_existente = session.query(Transacao).filter_by(
+                proposta_id=proposta.id, 
+                tipo="receita_a_receber",
+                origem_tipo="proposta"
+            ).first()
             
-            # Registrar valor no resultado
-            resultado["lancamentos"]["gerados"] += 1
-            resultado["lancamentos"]["valores"]["base"] = proposta.valor
+            if transacao_base_existente:
+                print(f"DEBUG FINALIZAR: Já existe lançamento de receita_a_receber para a proposta ID={proposta.id}, não criando novo lançamento base")
+                resultado["lancamentos"]["valores"]["base"] = proposta.valor
+                resultado["lancamentos"]["existentes_utilizados"] = True
+            else:
+                # Se não existe, cria um novo lançamento para o valor base da proposta
+                print(f"DEBUG FINALIZAR: Não encontrado lançamento de receita_a_receber para a proposta ID={proposta.id}, criando novo")
+                transacao_base = Transacao(
+                    tipo="receita_a_receber",
+                    descricao=f"Proposta #{proposta.numero} - {proposta.descricao}",
+                    valor=proposta.valor,
+                    categoria="Propostas",
+                    subcategoria=proposta.tipo_proposta or "Serviço",
+                    tipo_receita="Serviço",
+                    data=datetime.now().date(),
+                    origem_id=proposta.id,
+                    origem_tipo="proposta",
+                    tipo_conta="PF",
+                    status="Pendente",
+                    proposta_id=proposta.id,
+                    classificacao="receita_a_receber",
+                    usuario_id=proposta.usuario_id
+                )
+                session.add(transacao_base)
+                
+                # Registrar valor no resultado
+                resultado["lancamentos"]["gerados"] += 1
+                resultado["lancamentos"]["valores"]["base"] = proposta.valor
             
             # 7. Buscar produtos, fornecedores, assistentes e outros itens
             produtos_proposta = session.query(ProdutoOrganizador).filter_by(proposta_id=proposta.id).all()
@@ -181,27 +193,43 @@ def finalizar_proposta_segura(proposta_id):
                             
                         session.add(item)
                     
-                    # Registrar transação financeira para a venda
-                    transacao_venda = Transacao(
-                        tipo="receita",
-                        descricao=f"Venda de produtos da proposta #{proposta.numero}",
-                        valor=valor_total_produtos,
-                        categoria="Vendas",
-                        subcategoria="Produtos",
-                        tipo_receita="Venda",
-                        data=datetime.now().date(),
-                        origem_id=venda_id,
-                        origem_tipo="venda",
+                    # Verificar se já existe uma transação para os produtos desta venda
+                    transacao_produto_existente = session.query(Transacao).filter_by(
                         proposta_id=proposta.id,
-                        tipo_conta="PF",
-                        status="Pendente",
-                        classificacao="receita_a_receber",
-                        usuario_id=proposta.usuario_id
-                    )
-                    session.add(transacao_venda)
+                        tipo="receita_a_receber",
+                        origem_tipo="venda"
+                    ).first()
+                    
+                    if transacao_produto_existente:
+                        print(f"DEBUG FINALIZAR: Já existe lançamento para produtos da proposta ID={proposta.id}, atualizando")
+                        # Atualizar o registro existente com o novo valor e ID da venda
+                        transacao_produto_existente.valor = valor_total_produtos
+                        transacao_produto_existente.origem_id = venda_id
+                        transacao_produto_existente.data = datetime.now().date()
+                        resultado["lancamentos"]["atualizados"] = True
+                    else:
+                        # Registrar nova transação financeira para a venda
+                        print(f"DEBUG FINALIZAR: Criando novo lançamento para produtos da proposta ID={proposta.id}")
+                        transacao_venda = Transacao(
+                            tipo="receita_a_receber",
+                            descricao=f"Produtos da proposta #{proposta.numero}",
+                            valor=valor_total_produtos,
+                            categoria="Propostas",
+                            subcategoria="Produtos",
+                            tipo_receita="Venda",
+                            data=datetime.now().date(),
+                            origem_id=venda_id,
+                            origem_tipo="venda",
+                            proposta_id=proposta.id,
+                            tipo_conta="PF",
+                            status="Pendente",
+                            classificacao="receita_a_receber",
+                            usuario_id=proposta.usuario_id
+                        )
+                        session.add(transacao_venda)
+                        resultado["lancamentos"]["gerados"] += 1
                     
                     # Registrar no resultado
-                    resultado["lancamentos"]["gerados"] += 1
                     resultado["lancamentos"]["valores"]["produtos"] = valor_total_produtos
                     resultado["venda_id"] = venda_id
                     resultado["produtos_vendidos"] = len(produtos_proposta)
