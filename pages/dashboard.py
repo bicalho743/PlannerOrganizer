@@ -23,8 +23,7 @@ def format_date_safe(date_obj, format_str='%d/%m/%Y'):
             return "Data indisponível"
 
 def show():
-    # Removi o espaço extra e substituí pelo título com estilo personalizado para ficar mais próximo do topo
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">📊 Dashboard</h1>', unsafe_allow_html=True)
+    # Removido o título de Dashboard conforme solicitado
 
     # Add test data button in sidebar if database is empty
     if 'db' not in st.session_state:
@@ -42,6 +41,29 @@ def show():
                 st.sidebar.error("Erro ao adicionar dados de teste")
 
     # A data já foi adicionada no cabeçalho, então não precisamos mais desta seção
+    
+    # Adicionar frases motivacionais entre o cabeçalho e os cartões
+    # Lista de frases motivacionais
+    import random
+    frases_motivacionais = [
+        "Transforme sua organização em resultados: gerencie propostas, clientes e finanças com precisão profissional.",
+        "A excelência não é um ato isolado, mas um hábito constante de organização e planejamento.",
+        "Organize-se hoje para colher resultados amanhã. Seu sucesso é consequência da sua disciplina.",
+        "Planejar é traçar o caminho para o sucesso. Organize, execute, conquiste.",
+        "Sua organização de hoje determina seu sucesso no futuro. Planeje com sabedoria."
+    ]
+    
+    # Selecionar uma frase aleatória
+    frase_do_dia = random.choice(frases_motivacionais)
+    
+    st.markdown(f"""
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 10px; 
+          margin-bottom: 25px; text-align: center; border-left: 4px solid #1E366F;">
+        <p style="font-style: italic; color: #1E366F; margin: 0; font-size: 1.1rem;">
+            "{frase_do_dia}"
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Dashboard layout com cards modernos
     # Primeira linha - 3 cartões de métricas principais
