@@ -1511,50 +1511,52 @@ def show():
                             st.markdown("---")
                             if st.button("Marcar como Concluída", key=f"finalizar_{proposta_exec_id}"):
                                 try:
-                                    data_conclusao = datetime.now().date()
+                                    # Usar a nova função de finalização segura
+                                    from utils.finalizar_proposta import finalizar_proposta_segura
                                     
-                                    # Atualizar status da proposta
-                                    resultado_atualizacao = st.session_state.db.atualizar_proposta(
-                                        proposta_id=proposta_exec_id,
-                                        status="Concluída",
-                                        status_execucao="Finalizada"
-                                    )
-                                    
-                                    # Verificar se a atualização teve sucesso
-                                    sucesso = resultado_atualizacao.get("status", False)
-                                    
-                                    if sucesso:
-                                        # Os lançamentos financeiros já são gerados automaticamente na função atualizar_proposta
-                                        # Não precisamos chamar a função gerar_lancamentos_financeiros_proposta_concluida aqui
-                                        # Isso estava causando duplicação de lançamentos
+                                    with st.spinner("Finalizando proposta..."):
+                                        # Chamar a função segura que usa uma sessão isolada para evitar problemas de concorrência
+                                        resultado = finalizar_proposta_segura(proposta_exec_id)
                                         
-                                        # Obter informações dos lançamentos do resultado da atualização
-                                        resultado_lancamentos = resultado_atualizacao.get("lancamentos_finalizacao", {})
+                                        # Verificar se a operação foi bem-sucedida
+                                        if resultado.get("status", False):
+                                            # Mostrar mensagem de sucesso
+                                            st.success(f"Proposta #{proposta_exec_numero} marcada como concluída!")
                                             
-                                        st.success(f"Proposta #{proposta_exec_numero} marcada como concluída!")
-                                        
-                                        # Mostrar detalhes dos lançamentos gerados, se houver
-                                        if resultado_lancamentos:
-                                            if "status" in resultado_lancamentos and resultado_lancamentos["status"] == "já existe":
-                                                st.info("Lançamentos financeiros já existem para esta proposta.")
-                                            else:
-                                                lancamentos_count = resultado_lancamentos.get("lancamentos_gerados", 0)
-                                                if lancamentos_count > 0:
-                                                    st.success(f"{lancamentos_count} lançamentos financeiros gerados automaticamente!")
-                                                    
-                                                    # Mostrar detalhes dos valores
-                                                    with st.expander("Detalhes dos lançamentos"):
-                                                        st.write(f"- Valor Base (Cliente): R$ {resultado_lancamentos.get('valor_base', 0):.2f}")
-                                                        st.write(f"- Produtos: R$ {resultado_lancamentos.get('valor_produtos', 0):.2f}")
-                                                        st.write(f"- Fornecedores: R$ {resultado_lancamentos.get('valor_fornecedores', 0):.2f}")
-                                                        st.write(f"- Assistentes a Pagar: R$ {resultado_lancamentos.get('valor_assistentes', 0):.2f}")
-                                        
-                                        time.sleep(2)  # Dar tempo para o usuário ver as mensagens
-                                        st.rerun()
-                                    else:
-                                        st.error("Erro ao finalizar proposta.")
+                                            # Mostrar detalhes dos lançamentos gerados
+                                            lancamentos = resultado.get("lancamentos", {})
+                                            lancamentos_count = lancamentos.get("gerados", 0)
+                                            
+                                            if lancamentos_count > 0:
+                                                st.success(f"{lancamentos_count} lançamentos financeiros gerados com sucesso!")
+                                                
+                                                # Mostrar detalhes dos valores em um expander
+                                                with st.expander("Detalhes dos lançamentos"):
+                                                    valores = lancamentos.get("valores", {})
+                                                    st.write(f"- Valor Base (Cliente): R$ {valores.get('base', 0):.2f}")
+                                                    st.write(f"- Produtos: R$ {valores.get('produtos', 0):.2f}")
+                                                    st.write(f"- Fornecedores: R$ {valores.get('fornecedores', 0) if 'fornecedores' in valores else 0:.2f}")
+                                                    st.write(f"- Assistentes a Pagar: R$ {valores.get('assistentes', 0) if 'assistentes' in valores else 0:.2f}")
+                                                    st.write(f"- Outros: R$ {valores.get('outros', 0) if 'outros' in valores else 0:.2f}")
+                                            
+                                            # Mostrar detalhes de vendas registradas, se houver        
+                                            if "venda_id" in resultado:
+                                                venda_id = resultado.get("venda_id")
+                                                produtos_vendidos = resultado.get("produtos_vendidos", 0)
+                                                st.success(f"Venda #{venda_id} registrada com {produtos_vendidos} produtos!")
+                                            
+                                            # Atualizar a interface após completar a operação
+                                            time.sleep(2)  # Dar tempo para o usuário ver as mensagens
+                                            st.rerun()
+                                        else:
+                                            # Mostrar mensagem de erro
+                                            st.error(f"Falha ao marcar proposta como concluída: {resultado.get('mensagem', 'Erro desconhecido')}")
+                                
                                 except Exception as e:
+                                    # Capturar e mostrar qualquer erro que ocorra durante o processo
                                     st.error(f"Erro ao finalizar proposta: {str(e)}")
+                                    import traceback
+                                    traceback.print_exc()
                     else:
                         st.warning("Selecione uma proposta válida em execução.")
                 else:
