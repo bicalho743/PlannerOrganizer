@@ -1,6 +1,32 @@
 /* Estilos globais */
 .main {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Reset para garantir que o conteúdo não tenha margens ou padding indesejados */
+.block-container {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+    max-width: 100% !important;
+}
+
+/* Estilo para o cabeçalho fixo no topo */
+.app-header {
+    background-color: #1E366F;
+    color: white;
+    width: 100%;
+    padding: 1rem 0;
+    margin: 0;
+    text-align: center;
+    position: relative;
+    border-radius: 0;
+}
+
+/* Espaço para o conteúdo após o cabeçalho */
+.content-wrapper {
     padding: 1.5rem;
+    margin-top: 1rem;
 }
 
 /* Personalizações para cabeçalhos */
@@ -13,8 +39,8 @@ h1 {
     color: #1E366F;
     border-bottom: 1px solid #eaeaea;
     padding-bottom: 0.5rem;
-    margin-top: 2.5rem !important;
-    padding-top: 1.5rem !important;
+    margin-top: 1rem !important;
+    padding-top: 0.5rem !important;
 }
 
 /* Estilização de botões */

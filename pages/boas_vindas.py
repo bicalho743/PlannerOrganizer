@@ -160,11 +160,12 @@ def show():
     </style>
     """, unsafe_allow_html=True)
     
-    # Adicionar data fixa
-    st.markdown("<h3 style='text-align: center; color: #5A6A85; font-size: 1.2rem; margin-bottom: 15px;'>📅 25 de abril de 2025</h3>", unsafe_allow_html=True)
-    
-    # Linha horizontal para separar o cabeçalho do conteúdo
-    st.markdown("---")
+    # Adicionar data fixa com design melhorado
+    st.markdown("""
+    <div style="text-align: center; background-color: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+        <span style="font-size: 1.2rem; color: #1E366F; font-weight: 500;">📅 25 de abril de 2025</span>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Layout principal - Colunas para métricas e atividades
     col_metricas, col_direita = st.columns([2, 1])
@@ -183,9 +184,10 @@ def show():
             ).scalar() or 0
                 
             st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-value">{propostas_em_andamento}</div>
-                <div class="metric-label">Propostas em Execução</div>
+            <div style="background: linear-gradient(135deg, #f8faff, #e6f0ff); border-radius: 12px; padding: 1.5rem; box-shadow: 0 8px 16px rgba(0,0,0,0.08); text-align: center; transition: all 0.3s ease; height: 100%;">
+                <div style="font-size: 2.5rem; font-weight: 700; color: #1E366F; margin-bottom: 0.5rem;">{propostas_em_andamento}</div>
+                <div style="color: #5A6A85; font-size: 0.9rem; font-weight: 500;">Propostas em Execução</div>
+                <div style="margin-top: 0.7rem; font-size: 1.8rem; color: #2d8cff;">📝</div>
             </div>
             """, unsafe_allow_html=True)
         
@@ -197,9 +199,10 @@ def show():
             ).scalar() or 0
                 
             st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-value">{format_currency(receitas)}</div>
-                <div class="metric-label">Receitas do Mês</div>
+            <div style="background: linear-gradient(135deg, #f7fff7, #e6ffe6); border-radius: 12px; padding: 1.5rem; box-shadow: 0 8px 16px rgba(0,0,0,0.08); text-align: center; transition: all 0.3s ease; height: 100%;">
+                <div style="font-size: 2.2rem; font-weight: 700; color: #2E7D32; margin-bottom: 0.5rem;">{format_currency(receitas)}</div>
+                <div style="color: #5A6A85; font-size: 0.9rem; font-weight: 500;">Receitas do Mês</div>
+                <div style="margin-top: 0.7rem; font-size: 1.8rem; color: #4CAF50;">💰</div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -211,9 +214,10 @@ def show():
             ).scalar() or 0
                 
             st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-value">{clientes}</div>
-                <div class="metric-label">Clientes Cadastrados</div>
+            <div style="background: linear-gradient(135deg, #fff8f2, #ffeadb); border-radius: 12px; padding: 1.5rem; box-shadow: 0 8px 16px rgba(0,0,0,0.08); text-align: center; transition: all 0.3s ease; height: 100%;">
+                <div style="font-size: 2.5rem; font-weight: 700; color: #E65100; margin-bottom: 0.5rem;">{clientes}</div>
+                <div style="color: #5A6A85; font-size: 0.9rem; font-weight: 500;">Clientes Cadastrados</div>
+                <div style="margin-top: 0.7rem; font-size: 1.8rem; color: #FF9800;">👥</div>
             </div>
             """, unsafe_allow_html=True)
         
@@ -283,11 +287,30 @@ def show():
             else:
                 data_formatada = "Data não disponível"
                 
+            # Define colors based on status
+            status_colors = {
+                "Finalizada": ["#e8f5e9", "#2E7D32", "#4CAF50"],  # Background, Text, Border
+                "Em execução": ["#fff8e1", "#F57C00", "#FFC107"], 
+                "Aguardando aprovação": ["#e3f2fd", "#1565C0", "#2196F3"],
+                "Cancelada": ["#ffebee", "#C62828", "#EF5350"]
+            }
+            
+            # Use default colors if status doesn't match any known status
+            bg_color, text_color, border_color = status_colors.get(
+                projeto["status"], 
+                ["#f5f5f5", "#757575", "#bdbdbd"]
+            )
+            
             st.markdown(f"""
-            <div class="task-card">
-                <div class="task-date">{data_formatada}</div>
-                <div class="task-title">{projeto["descricao"]} - {projeto["cliente"]}</div>
-                <span class="task-status {status_class}">{projeto["status"]}</span>
+            <div style="background-color: white; border-radius: 10px; padding: 1.2rem; margin-bottom: 1rem; border-left: 4px solid {border_color}; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center;">
+                <div style="flex-grow: 1;">
+                    <div style="font-size: 0.8rem; color: #78909C; margin-bottom: 0.5rem;">{data_formatada}</div>
+                    <div style="font-weight: 500; color: #263238; font-size: 1rem;">{projeto["descricao"]}</div>
+                    <div style="font-size: 0.9rem; color: #546E7A; margin-top: 0.3rem;">{projeto["cliente"]}</div>
+                </div>
+                <div style="background-color: {bg_color}; padding: 0.4rem 0.8rem; border-radius: 20px; color: {text_color}; font-size: 0.75rem; font-weight: 500;">
+                    {projeto["status"]}
+                </div>
             </div>
             """, unsafe_allow_html=True)
         
@@ -357,9 +380,24 @@ def show():
         # Exibir lembretes
         for lembrete in lembretes:
             cor = "#ff6b6b" if lembrete["prioridade"] == "alta" else ("#ffbb33" if lembrete["prioridade"] == "média" else "#4CAF50")
+            # Define icons and colors based on priority
+            priority_info = {
+                "alta": ["🔴", "#FFEBEE", "#C62828", "#EF5350"],  # icon, bg, text, border
+                "média": ["🟠", "#FFF3E0", "#E65100", "#FF9800"],
+                "baixa": ["🟢", "#E8F5E9", "#2E7D32", "#4CAF50"]
+            }
+            
+            icon, bg_color, text_color, border_color = priority_info.get(
+                lembrete["prioridade"], 
+                ["⚪", "#F5F5F5", "#757575", "#BDBDBD"]
+            )
+            
             st.markdown(f"""
-            <div style="padding: 1rem; background-color: white; border-radius: 8px; margin-bottom: 0.8rem; border-left: 3px solid {cor};">
-                {lembrete["texto"]}
+            <div style="background-color: {bg_color}; border-radius: 10px; padding: 1rem; margin-bottom: 0.8rem; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border: 1px solid {border_color};">
+                <div style="display: flex; align-items: center;">
+                    <div style="font-size: 1.2rem; margin-right: 0.5rem;">{icon}</div>
+                    <div style="color: {text_color}; font-weight: 500; flex-grow: 1;">{lembrete["texto"]}</div>
+                </div>
             </div>
             """, unsafe_allow_html=True)
             

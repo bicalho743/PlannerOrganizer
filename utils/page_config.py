@@ -99,10 +99,9 @@ def apply_page_header():
     </div>
     """
     
-    # Adicionando o cabeçalho diretamente no topo da página - abordagem mais simples 
-    # usando estilo inline sem position:fixed
+    # Adicionando o cabeçalho usando a classe CSS definida em style.css
     st.markdown(f"""
-    <div style="background-color: #1E366F; padding: 1rem 0; width: 100%; margin: 0; border-radius: 0; text-align: center; position: relative;">
+    <div class="app-header">
         <h2 style="color: white; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; font-size: 1.5rem; font-weight: 600;">Planner Organizer</h2>
         <p style="color: #E3F2FD; margin: 0.15rem 0 0 0; padding: 0; font-size: 0.85rem; font-family: 'Poppins', sans-serif;">
             Sistema Profissional de Gestão Personal Organizer
@@ -114,7 +113,13 @@ def apply_page_header():
             <span style="color: white; font-size: 0.8rem; font-family: 'Poppins', sans-serif;">Bem-vindo(a), {nome_usuario}</span>
         </div>
     </div>
+    
+    <div class="content-wrapper">
+        <!-- Início do conteúdo principal após o cabeçalho -->
     """, unsafe_allow_html=True)
+    
+    # No final da função, fechamos a div de content-wrapper
+    st.markdown("</div>", unsafe_allow_html=True)
 
 def apply_page_footer():
     """
