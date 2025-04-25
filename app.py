@@ -773,7 +773,7 @@ if not st.session_state.authenticated:
 if 'db' not in st.session_state:
     try:
         st.session_state.db = Database()
-        st.success("Conexão com o banco de dados estabelecida com sucesso!")
+        # Removemos a mensagem de sucesso para manter o visual limpo
     except Exception as e:
         st.error("Erro ao conectar com o banco de dados. O endpoint pode estar desabilitado.")
         st.warning("Se você estiver usando Neon PostgreSQL ou outro banco de dados serverless, você precisa reativar o endpoint.")
