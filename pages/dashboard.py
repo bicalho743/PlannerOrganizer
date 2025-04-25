@@ -42,27 +42,152 @@ def show():
 
     # A data já foi adicionada no cabeçalho, então não precisamos mais desta seção
     
-    # Adicionar frases motivacionais entre o cabeçalho e os cartões
-    # Lista de frases motivacionais
+    # Carrossel avançado de frases motivacionais e dicas profissionais
     import random
+    import time
+    
+    # Lista de frases motivacionais com autores
     frases_motivacionais = [
-        "Transforme sua organização em resultados: gerencie propostas, clientes e finanças com precisão profissional.",
-        "A excelência não é um ato isolado, mas um hábito constante de organização e planejamento.",
-        "Organize-se hoje para colher resultados amanhã. Seu sucesso é consequência da sua disciplina.",
-        "Planejar é traçar o caminho para o sucesso. Organize, execute, conquiste.",
-        "Sua organização de hoje determina seu sucesso no futuro. Planeje com sabedoria."
+        {"texto": "O sucesso é ir de fracasso em fracasso sem perder o entusiasmo.", "autor": "Winston Churchill"},
+        {"texto": "Acredite que você pode, assim você já está no meio do caminho.", "autor": "Theodore Roosevelt"},
+        {"texto": "Tudo parece impossível até que seja feito.", "autor": "Nelson Mandela"},
+        {"texto": "A persistência é o caminho do êxito.", "autor": "Charles Chaplin"},
+        {"texto": "Se você quer algo que nunca teve, precisa fazer algo que nunca fez.", "autor": "Thomas Jefferson"},
+        {"texto": "O único lugar onde o sucesso vem antes do trabalho é no dicionário.", "autor": "Albert Einstein"},
+        {"texto": "Coragem é a resistência ao medo, domínio do medo – não ausência do medo.", "autor": "Mark Twain"},
+        {"texto": "Não encontre falhas, encontre soluções.", "autor": "Henry Ford"},
+        {"texto": "O futuro pertence àqueles que acreditam na beleza dos seus sonhos.", "autor": "Eleanor Roosevelt"},
+        {"texto": "Grandes mentes discutem ideias; mentes medianas discutem eventos; mentes pequenas discutem pessoas.", "autor": "Eleanor Roosevelt"},
+        {"texto": "Você perde 100% dos tiros que não dá.", "autor": "Wayne Gretzky"},
+        {"texto": "Transforme suas feridas em sabedoria.", "autor": "Oprah Winfrey"},
+        {"texto": "A única limitação para o nosso sucesso de amanhã são as nossas dúvidas de hoje.", "autor": "Franklin D. Roosevelt"},
+        {"texto": "O maior erro que você pode cometer é o de ficar o tempo todo com medo de cometer algum.", "autor": "Elbert Hubbard"},
+        {"texto": "Faça da sua vida um sonho, e de um sonho, uma realidade.", "autor": "Antoine de Saint-Exupéry"},
+        {"texto": "Não espere por oportunidades extraordinárias. Agarre ocasiões comuns e torne-as grandes.", "autor": "Orison Swett Marden"},
+        {"texto": "Sorte é o que acontece quando a preparação encontra a oportunidade.", "autor": "Sêneca"},
+        {"texto": "Não sonhe pequeno, pois não há magia na pequenez dos sonhos.", "autor": "Donald Trump"},
+        {"texto": "A melhor maneira de prever o futuro é criá-lo.", "autor": "Peter Drucker"},
+        {"texto": "Quem quer vencer um obstáculo deve armar-se da força do leão e da prudência da serpente.", "autor": "Píndaro"}
     ]
     
-    # Selecionar uma frase aleatória
-    frase_do_dia = random.choice(frases_motivacionais)
+    # Lista de dicas profissionais
+    dicas_profissionais = [
+        "Organizar é mais do que arrumar: é criar soluções práticas e duradouras.",
+        "Conheça as necessidades do cliente antes de iniciar qualquer organização.",
+        "Cada espaço tem um potencial único — descubra-o e valorize-o.",
+        "Setorizar é o segredo para uma organização funcional.",
+        "Antes de organizar, ajude o cliente a desapegar do que não faz mais sentido.",
+        "Produtos organizadores são aliados, mas não substituem um bom projeto de organização.",
+        "Priorize a funcionalidade, depois pense na estética.",
+        "A organização deve ser fácil de manter, não só bonita de ver.",
+        "Ouça atentamente o que o cliente quer — a organização deve refletir o estilo de vida dele.",
+        "Etiquetas são pequenas, mas fazem uma diferença enorme na manutenção da organização.",
+        "Todo item precisa ter seu lugar definido para evitar a bagunça no dia a dia.",
+        "Menos é mais: simplificar é um dos maiores luxos na organização.",
+        "Crie sistemas de organização que economizem tempo para quem usa o espaço.",
+        "Trabalhe com planejamento: cada espaço organizado deve ter começo, meio e fim claros.",
+        "O sucesso do seu trabalho é medido pela praticidade que o cliente sente depois.",
+        "Use materiais de qualidade — eles elevam o resultado e a satisfação do cliente.",
+        "Mantenha-se atualizada: técnicas e tendências de organização evoluem constantemente.",
+        "Seja discreta e respeitosa: cada cliente confia a você sua intimidade.",
+        "Organização não é impor regras, é criar soluções sob medida para cada realidade.",
+        "Um bom Personal Organizer transforma espaços e também transforma vidas."
+    ]
     
-    st.markdown(f"""
-    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 10px; 
-          margin-bottom: 25px; text-align: center; border-left: 4px solid #1E366F;">
-        <p style="font-style: italic; color: #1E366F; margin: 0; font-size: 1.1rem;">
-            "{frase_do_dia}"
-        </p>
-    </div>
+    # Preparar todos os itens do carrossel
+    todas_frases = []
+    for i, frase in enumerate(frases_motivacionais):
+        todas_frases.append({
+            "tipo": "motivacional",
+            "conteudo": frase,
+            "indice": i
+        })
+    
+    for i, dica in enumerate(dicas_profissionais):
+        todas_frases.append({
+            "tipo": "dica",
+            "conteudo": dica,
+            "indice": i
+        })
+    
+    # Embaralhar a lista de frases
+    random.seed(int(time.time()) % 100000)
+    random.shuffle(todas_frases)
+    
+    # Inicializar o controle do carrossel na session state
+    if 'carrossel_index' not in st.session_state:
+        st.session_state.carrossel_index = 0
+    
+    # Função para avançar ou retroceder no carrossel
+    def mudar_item_carrossel(passo):
+        st.session_state.carrossel_index = (st.session_state.carrossel_index + passo) % len(todas_frases)
+    
+    # Obter o item atual do carrossel
+    item_atual = todas_frases[st.session_state.carrossel_index]
+    
+    # Container para o carrossel
+    carrossel_container = st.container()
+    with carrossel_container:
+        if item_atual["tipo"] == "motivacional":
+            frase = item_atual["conteudo"]
+            st.markdown(f"""
+            <div style="padding: 15px; border-radius: 10px; margin-bottom: 10px; 
+                  text-align: center; border-left: 4px solid #1E366F; border-right: 1px solid #e6e6e6; 
+                  box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <p style="font-style: italic; color: #1E366F; margin: 0; font-size: 1.1rem; font-weight: 500;">
+                    "{frase['texto']}"
+                </p>
+                <p style="color: #4A6FA5; margin: 8px 0 0 0; font-size: 0.85rem; text-align: right; font-weight: 500;">
+                    — {frase['autor']}
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+        else:  # É uma dica
+            dica = item_atual["conteudo"]
+            st.markdown(f"""
+            <div style="padding: 15px; border-radius: 10px; margin-bottom: 10px; 
+                  text-align: center; border-left: 4px solid #FF9800; border-right: 1px solid #e6e6e6;
+                  box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 8px;">
+                    <span style="background-color: rgba(255, 152, 0, 0.1); border-radius: 50%; width: 24px; height: 24px; 
+                         display: flex; align-items: center; justify-content: center; margin-right: 8px;">
+                        💡
+                    </span>
+                    <span style="color: #FF9800; font-weight: bold; font-size: 0.9rem;">DICA PROFISSIONAL</span>
+                </div>
+                <p style="color: #333; margin: 0; font-size: 1.05rem;">
+                    {dica}
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # Botões de navegação
+    col1, col2, col3 = st.columns([1, 6, 1])
+    with col1:
+        st.button("◀", key="btn_prev", on_click=mudar_item_carrossel, args=(-1,), help="Item anterior")
+    with col3:
+        st.button("▶", key="btn_next", on_click=mudar_item_carrossel, args=(1,), help="Próximo item")
+    
+    # Adicionar CSS para centralizar os botões e deixá-los mais bonitos
+    st.markdown("""
+    <style>
+    /* Ajuste os botões do carrossel */
+    div[data-testid="column"]:nth-of-type(1) button,
+    div[data-testid="column"]:nth-of-type(3) button {
+        width: 100%;
+        background-color: #f1f3f9;
+        border: none;
+        color: #1E366F;
+        font-size: 1.2rem;
+        font-weight: bold;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    div[data-testid="column"]:nth-of-type(1) button:hover,
+    div[data-testid="column"]:nth-of-type(3) button:hover {
+        background-color: #e1e5f1;
+        color: #0D2252;
+    }
+    </style>
     """, unsafe_allow_html=True)
 
     # Dashboard layout com cards modernos
