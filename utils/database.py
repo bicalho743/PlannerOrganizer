@@ -1,7 +1,8 @@
 import os
 import numpy as np
+import streamlit as st
 from datetime import datetime, timedelta
-from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, func, Index, text, select
+from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, func, Index, text, select, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 import pandas as pd
@@ -36,13 +37,59 @@ Base = declarative_base()
 session_factory = sessionmaker(bind=engine, expire_on_commit=False)
 Session = scoped_session(session_factory)
 
+# Função auxiliar para obter o ID do usuário da sessão do Streamlit
+def get_usuario_id_from_session():
+    """
+    Obtém o ID do usuário atualmente autenticado no Streamlit
+    
+    Returns:
+        str: ID do usuário autenticado ou None se não há usuário na sessão
+    """
+    if 'user' in st.session_state and st.session_state.user:
+        # Usar o localId do Firebase como usuario_id
+        if 'localId' in st.session_state.user:
+            return st.session_state.user['localId']
+        
+        # Verificar alternativas
+        if 'usuario_id' in st.session_state.user:
+            return st.session_state.user['usuario_id']
+            
+    return None
+
+class Perfil(Base):
+    """
+    Tabela de perfis de usuários para sistema multi-tenant
+    Cada usuário deve ter seu registro aqui antes de poder usar o sistema
+    """
+    __tablename__ = 'perfis'
+    id = Column(Integer, primary_key=True)
+    usuario_id = Column(String, unique=True, nullable=False)  # Corresponde ao Firebase UID
+    email = Column(String, unique=True, nullable=False)
+    nome = Column(String, nullable=False)
+    telefone = Column(String)
+    empresa = Column(String)
+    instagram = Column(String)
+    website = Column(String)
+    cor_principal = Column(String)
+    cor_secundaria = Column(String)
+    role = Column(String, default='user')
+    plano = Column(String, default='gratuito')
+    data_cadastro = Column(Date, default=datetime.now().date())
+    ultimo_login = Column(DateTime)
+    ativo = Column(Boolean, default=True)
+
 class Usuario(Base):
+    """
+    Tabela legada de usuários
+    Nota: esta tabela será mantida por retrocompatibilidade, 
+    mas novos usuários devem usar a tabela 'perfis'
+    """
     __tablename__ = 'usuarios'
     id = Column(Integer, primary_key=True)
     email = Column(String, unique=True, nullable=False)
     senha_hash = Column(String, nullable=False)
     nome = Column(String, nullable=False)
-    telefone = Column(String)  # Novo campo
+    telefone = Column(String)
     empresa = Column(String)
     tipo = Column(String, default='usuario')
     ativo = Column(Boolean, default=True)
@@ -328,13 +375,71 @@ class ItemVenda(Base):
     produto = relationship("Produto", back_populates="vendas_itens")
 
 class Database:
-    def __init__(self):
+    def __init__(self, usuario_id=None):
+        """
+        Inicializa a conexão com o banco de dados e configura o contexto de usuário
+        
+        Args:
+            usuario_id (str, optional): ID do usuário para filtrar os dados.
+                                       Se None, tenta obter o ID do usuário da sessão do Streamlit.
+        """
         try:
             Base.metadata.create_all(engine)
             self.session = Session()
+            
+            # Configurar o contexto de usuário para filtrar os dados
+            if usuario_id:
+                self.usuario_id = usuario_id
+            else:
+                # Tenta obter o ID do usuário da sessão do Streamlit
+                self.usuario_id = get_usuario_id_from_session()
+                
+            if self.usuario_id:
+                print(f"Banco de dados inicializado para o usuário: {self.usuario_id}")
+            else:
+                print("Banco de dados inicializado sem contexto de usuário")
+                
+            # Verificar e criar perfil do usuário se necessário
+            if self.usuario_id and 'user' in st.session_state:
+                self._ensure_user_profile()
+                
         except Exception as e:
             print(f"Erro ao inicializar banco de dados: {str(e)}")
             raise e
+            
+    def _ensure_user_profile(self):
+        """
+        Garante que o perfil do usuário existe no banco de dados
+        Cria um novo perfil se não existir
+        """
+        try:
+            # Verificar se o perfil já existe
+            perfil = self.session.query(Perfil).filter_by(usuario_id=self.usuario_id).first()
+            
+            if not perfil and 'user' in st.session_state:
+                # Criar novo perfil com os dados disponíveis na sessão
+                user_data = st.session_state.user
+                
+                nome = user_data.get('nome') or user_data.get('name') or 'Usuário'
+                email = user_data.get('email') or 'sem-email'
+                empresa = user_data.get('empresa') or 'Planner Organizer'
+                telefone = user_data.get('telefone') or ''
+                
+                novo_perfil = Perfil(
+                    usuario_id=self.usuario_id,
+                    email=email,
+                    nome=nome,
+                    telefone=telefone,
+                    empresa=empresa,
+                    ultimo_login=datetime.now()
+                )
+                
+                self.session.add(novo_perfil)
+                self.session.commit()
+                print(f"Perfil criado para usuário: {self.usuario_id}")
+        except Exception as e:
+            print(f"Erro ao verificar/criar perfil: {str(e)}")
+            self.session.rollback()
 
     def _safe_query(self, query_func):
         """
@@ -458,8 +563,18 @@ class Database:
             pass  # Manter sessão ativa para futuras transações
             
     def get_clientes(self):
+        """
+        Retorna todos os clientes do usuário atual
+        """
         def query():
-            clientes = self.session.query(Cliente).all()
+            # Aplicar filtro por usuário se disponível
+            query = self.session.query(Cliente)
+            
+            if self.usuario_id:
+                query = query.filter(Cliente.usuario_id == self.usuario_id)
+                
+            clientes = query.all()
+            
             return pd.DataFrame([{
                 'id': c.id,
                 'nome': c.nome,
@@ -473,7 +588,8 @@ class Database:
                 'data_aniversario': c.data_aniversario,
                 'origem_cliente': c.origem_cliente,
                 'data_cadastro': c.data_cadastro,
-                'observacoes': c.observacoes # Added observations to get_clientes
+                'observacoes': c.observacoes,
+                'usuario_id': c.usuario_id
             } for c in clientes])
         return self._safe_query(query)
         
@@ -496,8 +612,15 @@ class Database:
                     print("ERRO: ID do cliente é None")
                     return pd.DataFrame()
                 
-                # Buscar cliente pelo ID
-                cliente = self.session.query(Cliente).filter_by(id=cliente_id_int).first()
+                # Configurar a consulta básica
+                query = self.session.query(Cliente).filter_by(id=cliente_id_int)
+                
+                # Adicionar filtro por usuário se disponível
+                if self.usuario_id:
+                    query = query.filter(Cliente.usuario_id == self.usuario_id)
+                
+                # Buscar cliente pelo ID e filtros adicionais
+                cliente = query.first()
                 
                 if not cliente:
                     print(f"AVISO: Cliente ID={cliente_id_int} não encontrado")
@@ -517,7 +640,8 @@ class Database:
                     'data_aniversario': cliente.data_aniversario,
                     'origem_cliente': cliente.origem_cliente,
                     'data_cadastro': cliente.data_cadastro,
-                    'observacoes': cliente.observacoes
+                    'observacoes': cliente.observacoes,
+                    'usuario_id': cliente.usuario_id
                 }])
             except Exception as e:
                 print(f"ERRO ao buscar cliente por ID: {str(e)}")
@@ -577,6 +701,25 @@ class Database:
 
     def add_cliente(self, nome, email=None, telefone=None, estado=None, cidade=None, bairro=None, 
                    endereco=None, cpf=None, data_aniversario=None, origem_cliente=None, observacoes=None):
+        """
+        Adiciona um cliente ao banco de dados
+        
+        Args:
+            nome (str): Nome do cliente
+            email (str, optional): Email do cliente
+            telefone (str, optional): Telefone do cliente
+            estado (str, optional): Estado (UF)
+            cidade (str, optional): Cidade
+            bairro (str, optional): Bairro
+            endereco (str, optional): Endereço
+            cpf (str, optional): CPF
+            data_aniversario (str, optional): Data de aniversário
+            origem_cliente (str, optional): Origem do cliente
+            observacoes (str, optional): Observações
+            
+        Returns:
+            int: ID do cliente adicionado
+        """
         def query():
             # Obter o maior ID atual
             max_id = self.session.query(func.max(Cliente.id)).scalar()
@@ -597,7 +740,8 @@ class Database:
                 cpf=cpf,
                 data_aniversario=data_aniversario,
                 origem_cliente=origem_cliente,
-                observacoes=observacoes
+                observacoes=observacoes,
+                usuario_id=self.usuario_id  # Adicionar o ID do usuário atual
             )
             self.session.add(cliente)
             return cliente.id
@@ -638,21 +782,32 @@ class Database:
                 cpf=cpf,
                 data_aniversario=data_aniversario,
                 origem_cliente=origem_cliente,
-                observacoes=observacoes
+                observacoes=observacoes,
+                usuario_id=self.usuario_id  # Adicionar o ID do usuário atual
             )
             self.session.add(cliente)
             return cliente.id
         return self._safe_query(query)
 
     def get_propostas(self):
+        """
+        Retorna todas as propostas do usuário atual
+        """
         def query():
             try:
-                # Join com a tabela de clientes para obter os nomes dos clientes
-                propostas_com_clientes = self.session.query(
+                # Construir consulta base
+                query = self.session.query(
                     Proposta, Cliente.nome.label('cliente_nome')
                 ).outerjoin(
                     Cliente, Proposta.cliente_id == Cliente.id
-                ).all()
+                )
+                
+                # Adicionar filtro por usuário se disponível
+                if self.usuario_id:
+                    query = query.filter(Proposta.usuario_id == self.usuario_id)
+                
+                # Executar consulta
+                propostas_com_clientes = query.all()
                 
                 result = []
                 for p, cliente_nome in propostas_com_clientes:
@@ -706,7 +861,8 @@ class Database:
                             'previsao_dias': previsao_dias,
                             'data_inicio_execucao': p.data_inicio_execucao,
                             'status_execucao': str(p.status_execucao) if p.status_execucao is not None else "",
-                            'cliente_nome': str(cliente_nome) if cliente_nome is not None else ""
+                            'cliente_nome': str(cliente_nome) if cliente_nome is not None else "",
+                            'usuario_id': p.usuario_id
                         }
                         result.append(proposta_dict)
                     except Exception as e:
@@ -772,6 +928,7 @@ class Database:
                 'descricao': descricao_local,
                 'valor': valor_local,
                 'status': status_local,
+                'usuario_id': self.usuario_id,  # Adicionar o ID do usuário atual
             }
             
             # Adicionar valores opcionais apenas se não forem None
@@ -812,7 +969,7 @@ class Database:
 
     def get_financeiro(self, include_all=True, categorias=None, limit=1000):
         """
-        Retorna os dados financeiros (transações)
+        Retorna os dados financeiros (transações) do usuário atual
         
         Args:
             include_all (bool): Se True, inclui todas as transações. Se False, inclui apenas transações pendentes
@@ -825,6 +982,10 @@ class Database:
         def query():
             # Criar query base
             query = self.session.query(Transacao)
+            
+            # Aplicar filtro por usuário se disponível
+            if self.usuario_id:
+                query = query.filter(Transacao.usuario_id == self.usuario_id)
             
             # Aplicar filtros se necessário
             if not include_all:
@@ -855,7 +1016,8 @@ class Database:
                 'classificacao': t.classificacao,
                 # Campos calculados para facilitar a análise
                 'receita': float(t.valor) if t.tipo in ['receita', 'receita_a_receber'] else 0.0,
-                'despesa': float(t.valor) if t.tipo == 'despesa' else 0.0
+                'despesa': float(t.valor) if t.tipo == 'despesa' else 0.0,
+                'usuario_id': t.usuario_id
             } for t in transacoes])
             
             return df
@@ -864,6 +1026,26 @@ class Database:
     def add_transacao(self, tipo, descricao, valor, categoria, tipo_receita=None, 
                      origem_id=None, origem_tipo=None, tipo_conta='PF', status='Pendente',
                      proposta_id=None, subcategoria=None, classificacao=None):
+        """
+        Adiciona uma transação financeira
+        
+        Args:
+            tipo (str): Tipo da transação (receita, despesa, receita_a_receber)
+            descricao (str): Descrição da transação
+            valor (float): Valor da transação
+            categoria (str): Categoria da transação
+            tipo_receita (str, optional): Tipo de receita (para receitas)
+            origem_id (int, optional): ID da origem da transação (cliente, fornecedor, etc.)
+            origem_tipo (str, optional): Tipo da origem (cliente, fornecedor, proposta, etc.)
+            tipo_conta (str, optional): Tipo de conta (PF, PJ)
+            status (str, optional): Status da transação (Pendente, Recebido, Cancelado)
+            proposta_id (int, optional): ID da proposta relacionada
+            subcategoria (str, optional): Subcategoria da transação
+            classificacao (str, optional): Classificação contábil
+            
+        Returns:
+            int: ID da transação adicionada
+        """
         def query():
             transacao = Transacao(
                 tipo=tipo,
@@ -877,7 +1059,8 @@ class Database:
                 tipo_conta=tipo_conta,
                 status=status,
                 proposta_id=proposta_id,
-                classificacao=classificacao
+                classificacao=classificacao,
+                usuario_id=self.usuario_id  # Adicionar o ID do usuário atual
             )
             self.session.add(transacao)
             return transacao.id
@@ -2895,16 +3078,26 @@ class Database:
                 preco_custo=float(preco_custo),
                 preco_venda=float(preco_venda),
                 categoria=categoria,
-                estoque=int(estoque)
+                estoque=int(estoque),
+                usuario_id=self.usuario_id  # Adicionar o ID do usuário atual
             )
             self.session.add(produto)
             return produto.id
         return self._safe_query(query)
         
     def get_produtos(self):
-        """Retorna todos os produtos cadastrados"""
+        """Retorna todos os produtos cadastrados do usuário atual"""
         def query():
-            produtos = self.session.query(Produto).all()
+            # Criar consulta base
+            query = self.session.query(Produto)
+            
+            # Adicionar filtro por usuário se disponível
+            if self.usuario_id:
+                query = query.filter(Produto.usuario_id == self.usuario_id)
+                
+            # Executar consulta
+            produtos = query.all()
+            
             return pd.DataFrame([{
                 'id': p.id,
                 'nome': p.nome,
@@ -2913,7 +3106,8 @@ class Database:
                 'preco_venda': p.preco_venda,
                 'categoria': p.categoria,
                 'estoque': p.estoque,
-                'data_cadastro': p.data_cadastro
+                'data_cadastro': p.data_cadastro,
+                'usuario_id': p.usuario_id
             } for p in produtos])
         return self._safe_query(query)
         
@@ -2983,7 +3177,8 @@ class Database:
                 cliente_id=cliente_id,
                 valor_total=0,  # Será atualizado após adicionar os itens
                 forma_pagamento=forma_pagamento,
-                observacoes=observacoes
+                observacoes=observacoes,
+                usuario_id=self.usuario_id  # Adicionar o ID do usuário atual
             )
             self.session.add(venda)
             self.session.flush()  # Para obter o ID da venda
@@ -3040,9 +3235,18 @@ class Database:
         return self._safe_query(query)
         
     def get_vendas(self):
-        """Retorna todas as vendas realizadas"""
+        """Retorna todas as vendas realizadas do usuário atual"""
         def query():
-            vendas = self.session.query(Venda).order_by(Venda.data_venda.desc()).all()
+            # Criar consulta base
+            query = self.session.query(Venda)
+            
+            # Adicionar filtro por usuário se disponível
+            if self.usuario_id:
+                query = query.filter(Venda.usuario_id == self.usuario_id)
+                
+            # Executar consulta ordenada
+            vendas = query.order_by(Venda.data_venda.desc()).all()
+            
             return pd.DataFrame([{
                 'id': v.id,
                 'cliente_nome': v.cliente.nome if v.cliente else "Cliente não encontrado",
@@ -3050,7 +3254,8 @@ class Database:
                 'data_venda': v.data_venda,
                 'status': v.status,
                 'forma_pagamento': v.forma_pagamento,
-                'observacoes': v.observacoes
+                'observacoes': v.observacoes,
+                'usuario_id': v.usuario_id
             } for v in vendas])
         return self._safe_query(query)
         
