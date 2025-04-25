@@ -1732,11 +1732,13 @@ class Database:
                     print(f"DEBUG SQL PRODUTO: Encontrado usuario_id={usuario_id} para a proposta ID={proposta_id_int}")
                 
                 # Executar a inserção
+                # Nota: A tabela produtos_organizadores não possui o campo usuario_id
+                # A associação com o usuário é feita via proposta_id
                 sql = f"""
                 INSERT INTO produtos_organizadores 
-                (proposta_id, nome, descricao, valor, quantidade, comodo, data_cadastro, usuario_id) 
+                (proposta_id, nome, descricao, valor, quantidade, comodo, data_cadastro) 
                 VALUES 
-                ({proposta_id_int}, '{nome_sanitizado}', '{descricao_sanitizada}', {valor_float}, {quantidade_int}, '{comodo_sanitizado}', NOW(), {usuario_id})
+                ({proposta_id_int}, '{nome_sanitizado}', '{descricao_sanitizada}', {valor_float}, {quantidade_int}, '{comodo_sanitizado}', NOW())
                 RETURNING id;
                 """
                 
@@ -1806,15 +1808,16 @@ class Database:
             valor_float = float(valor)
             quantidade_int = int(quantidade)
             
-            # Criar o objeto produto com usuario_id 
+            # Criar o objeto produto 
+            # Nota: ProdutoOrganizador não possui o campo usuario_id
+            # A associação com o usuário é feita via proposta_id
             produto = ProdutoOrganizador(
                 proposta_id=proposta_id_int,
                 nome=nome,
                 descricao=descricao,
                 valor=valor_float,
                 quantidade=quantidade_int,
-                comodo=comodo or "Geral",
-                usuario_id=self.usuario_id  # Adicionar usuario_id do contexto atual
+                comodo=comodo or "Geral"
             )
             
             # Adicionar ao banco de dados usando uma transação isolada
@@ -1862,15 +1865,27 @@ class Database:
                     # Converter explicitamente para int Python padrão (mesmo que seja numpy.int64)
                     proposta_id_int = int(proposta_id)
                     
-                    # Incluir filtro de usuário
+                    # Não há o campo usuario_id na tabela produtos_organizadores
+                    # A filtragem por usuário é feita indiretamente através do proposta_id
+                    sql = f"SELECT * FROM produtos_organizadores WHERE proposta_id = {proposta_id_int}"
+                    
+                    # Se precisar filtrar por usuário, precisaremos fazer um JOIN com a tabela propostas
                     if self.usuario_id:
-                        sql = f"SELECT * FROM produtos_organizadores WHERE proposta_id = {proposta_id_int} AND usuario_id = {self.usuario_id}"
-                    else:
-                        sql = f"SELECT * FROM produtos_organizadores WHERE proposta_id = {proposta_id_int}"
+                        sql = f"""
+                            SELECT po.* FROM produtos_organizadores po
+                            JOIN propostas p ON po.proposta_id = p.id
+                            WHERE po.proposta_id = {proposta_id_int}
+                            AND p.usuario_id = '{self.usuario_id}'
+                        """
                 else:
-                    # Busca geral com filtro de usuário
+                    # Busca geral
                     if self.usuario_id:
-                        sql = f"SELECT * FROM produtos_organizadores WHERE usuario_id = {self.usuario_id}"
+                        # Com filtro de usuário - precisa fazer JOIN
+                        sql = f"""
+                            SELECT po.* FROM produtos_organizadores po
+                            JOIN propostas p ON po.proposta_id = p.id
+                            WHERE p.usuario_id = '{self.usuario_id}'
+                        """
                     else:
                         sql = "SELECT * FROM produtos_organizadores"
                 
@@ -2017,9 +2032,9 @@ class Database:
                 proposta_id_int = self._ensure_int(proposta_id)
                 query = query.filter_by(proposta_id=proposta_id_int)
                 
-            # Adicionar filtro por usuário se disponível
-            if self.usuario_id:
-                query = query.filter(ProdutoOrganizador.usuario_id == self.usuario_id)
+            # Não filtramos ProdutoOrganizador por usuario_id diretamente
+            # pois esta tabela não possui este campo
+            # A filtragem por usuário já é feita indiretamente via proposta_id
                 
             produtos = query.all()
             return pd.DataFrame([{
