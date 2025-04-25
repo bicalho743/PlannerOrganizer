@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import random
 from utils.database import Database
+from sqlalchemy import text
 
 def format_currency(value):
     """Formata um valor como moeda brasileira"""
@@ -157,7 +158,10 @@ def show():
     </style>
     """, unsafe_allow_html=True)
     
-    # Apenas a linha horizontal para separar o cabeçalho do conteúdo
+    # Adicionar data fixa
+    st.markdown("<h3 style='text-align: center; color: #5A6A85; font-size: 1.2rem; margin-bottom: 15px;'>📅 25 de abril de 2025</h3>", unsafe_allow_html=True)
+    
+    # Linha horizontal para separar o cabeçalho do conteúdo
     st.markdown("---")
     
     # Layout principal - Colunas para métricas e atividades
@@ -173,7 +177,7 @@ def show():
             # Obter dados reais do banco de dados
             db = Database()
             propostas_em_andamento = db.session.execute(
-                "SELECT COUNT(*) FROM propostas WHERE status = 'Em execução'"
+                text("SELECT COUNT(*) FROM propostas WHERE status = 'Em execução'")
             ).scalar() or 0
                 
             st.markdown(f"""
@@ -187,7 +191,7 @@ def show():
             # Obter dados reais do banco de dados
             db = Database()
             receitas = db.session.execute(
-                "SELECT COALESCE(SUM(valor), 0) FROM financeiro WHERE tipo = 'receita' AND EXTRACT(MONTH FROM data) = EXTRACT(MONTH FROM CURRENT_DATE)"
+                text("SELECT COALESCE(SUM(valor), 0) FROM financeiro WHERE tipo = 'receita' AND EXTRACT(MONTH FROM data) = EXTRACT(MONTH FROM CURRENT_DATE)")
             ).scalar() or 0
                 
             st.markdown(f"""
@@ -201,7 +205,7 @@ def show():
             # Obter dados reais do banco de dados
             db = Database()
             clientes = db.session.execute(
-                "SELECT COUNT(*) FROM clientes"
+                text("SELECT COUNT(*) FROM clientes")
             ).scalar() or 0
                 
             st.markdown(f"""
@@ -218,7 +222,7 @@ def show():
         db = Database()
         # Utilizando SQLAlchemy para obter dados de status de proposta
         result = db.session.execute(
-            "SELECT status, COUNT(*) FROM propostas GROUP BY status ORDER BY COUNT(*) DESC"
+            text("SELECT status, COUNT(*) FROM propostas GROUP BY status ORDER BY COUNT(*) DESC")
         )
         dados_propostas = [(row[0], row[1]) for row in result]
         
@@ -244,12 +248,12 @@ def show():
         db = Database()
         # Utilizando SQLAlchemy para obter projetos recentes
         result = db.session.execute(
-            """
+            text("""
             SELECT p.id, p.descricao, p.status, p.data_inicio, c.nome 
             FROM propostas p
             JOIN clientes c ON p.cliente_id = c.id
             ORDER BY p.data_inicio DESC LIMIT 4
-            """
+            """)
         )
         projetos_recentes = [(row[0], row[1], row[2], row[3], row[4]) for row in result]
         
@@ -314,7 +318,7 @@ def show():
         db = Database()
         # Utilizando SQLAlchemy para obter propostas com prazos avançados
         result = db.session.execute(
-            """
+            text("""
             SELECT p.descricao, c.nome, p.data_inicio, 
                    CURRENT_DATE - p.data_inicio AS dias_corridos
             FROM propostas p
@@ -322,7 +326,7 @@ def show():
             WHERE p.status = 'Em execução'
             ORDER BY dias_corridos DESC
             LIMIT 3
-            """
+            """)
         )
         propostas_proximas = [(row[0], row[1], row[2], row[3]) for row in result]
         
