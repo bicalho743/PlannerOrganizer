@@ -794,11 +794,6 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         
         c.drawString(40, y, f"Prazo de Entrega: {prazo_str}")
         
-        # Adicionar outra linha para prazo em dias
-        y -= 16
-        estimativa_dias = "15 dias" # Hardcoded temporariamente para garantir visibilidade
-        c.drawString(40, y, f"Prazo Estimado: {estimativa_dias}")
-        
         # Layout completamente redesenhado - seção única e mais limpa
         y -= 40
         
