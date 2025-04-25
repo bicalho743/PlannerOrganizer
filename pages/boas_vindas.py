@@ -17,6 +17,19 @@ def get_random_color():
 def show():
     """Exibe a página de boas-vindas após o login"""
     
+    # Cabeçalho padronizado
+    st.markdown("""
+    <div style="background-color: #1E366F; padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem;">
+        <h2 style="color: white; margin: 0; padding: 0; font-family: 'Poppins', sans-serif;">Planner Organizer</h2>
+        <p style="color: #E3F2FD; margin: 0.2rem 0 0 0; padding: 0; font-size: 0.9rem; font-family: 'Poppins', sans-serif;">
+            Sistema Profissional de Gestão Personal Organizer
+        </p>
+        <p style="color: #BBD8FF; margin: 0.5rem 0 0 0; padding: 0; font-size: 0.8rem; font-family: 'Poppins', sans-serif; font-style: italic;">
+            "Transforme sua organização em resultados: gerencie propostas, clientes e finanças com precisão profissional."
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     # Configurações básicas
     st.markdown("""
     <style>
@@ -159,7 +172,11 @@ def show():
     """, unsafe_allow_html=True)
     
     # Adicionar data fixa
-    st.markdown("<h3 style='text-align: center; color: #5A6A85; font-size: 1.2rem; margin-bottom: 15px;'>📅 25 de abril de 2025</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: #5A6A85; font-size: 1.2rem; margin-bottom: 5px;'>📅 25 de abril de 2025</h3>", unsafe_allow_html=True)
+    
+    # Adicionar bem-vindo ao usuário
+    nome_usuario = st.session_state.get('user', {}).get('nome', 'Usuário')
+    st.markdown(f"<h3 style='text-align: center; color: #1E366F; font-size: 1.2rem; margin-bottom: 15px;'>Bem-vindo(a), {nome_usuario}</h3>", unsafe_allow_html=True)
     
     # Linha horizontal para separar o cabeçalho do conteúdo
     st.markdown("---")
@@ -349,16 +366,8 @@ def show():
                     "prioridade": "baixa"
                 })
         
-        # Adiciona lembretes sistemas caso não tenha propostas suficientes
-        lembretes_sistema = [
-            {"texto": "Verificar cadastro de clientes e dados de contato", "prioridade": "média"},
-            {"texto": "Atualizar status das propostas em andamento", "prioridade": "média"},
-            {"texto": "Verificar relatórios financeiros do mês", "prioridade": "média"},
-            {"texto": "Conferir propostas pendentes de aprovação", "prioridade": "baixa"}
-        ]
-        
-        while len(lembretes) < 3 and lembretes_sistema:
-            lembretes.append(lembretes_sistema.pop(0))
+        # Não usar lembretes fictícios, apenas mostrar os reais
+        # Se não houver lembretes, apenas deixar a seção vazia
         
         # Exibir lembretes
         for lembrete in lembretes:
@@ -369,42 +378,19 @@ def show():
             </div>
             """, unsafe_allow_html=True)
             
-        # Dica do dia
-        st.subheader("💡 Dica do Dia")
+        # Seção de navegação rápida
+        st.subheader("🔍 Navegação")
         
-        dicas = [
-            "Divida projetos grandes em tarefas menores para aumentar a produtividade.",
-            "Mantenha uma agenda de follow-up com seus clientes.",
-            "Use etiquetas coloridas para facilitar a identificação de itens.",
-            "Invista em fotografias profissionais do antes/depois de seus trabalhos.",
-            "Estabeleça metas claras para cada mês do ano.",
-            "Solicite depoimentos de clientes satisfeitos para seu marketing.",
-            "Acompanhe as tendências de organização em feiras e eventos do setor.",
-            "Crie pacotes de serviços com diferentes níveis de preço."
-        ]
-        
-        dica = random.choice(dicas)
-        
-        st.markdown(f"""
+        st.markdown("""
         <div style="padding: 1rem; background-color: #E3F2FD; border-radius: 8px; margin-bottom: 1.5rem;">
-            {dica}
+            Acesse as principais funções através do menu lateral esquerdo.
         </div>
         """, unsafe_allow_html=True)
         
-        # Frase motivacional
-        frases = [
-            {"texto": "A organização é o primeiro passo para transformar sonhos em realidade.", "autor": "Personal Organizer"},
-            {"texto": "Espaços organizados criam mentes tranquilas e vidas produtivas.", "autor": "Marie Kondo"},
-            {"texto": "A simplicidade é a sofisticação final.", "autor": "Leonardo da Vinci"},
-            {"texto": "Organizar é dar às pessoas a sensação de segurança e controle em suas vidas.", "autor": "Personal Organizer"},
-            {"texto": "Para cada minuto gasto organizando, uma hora é ganha.", "autor": "Benjamin Franklin"}
-        ]
-        
-        frase = random.choice(frases)
-        
-        st.markdown(f"""
+        # Exibir apenas informações dinâmicas do sistema
+        st.markdown("""
         <div class="quote-card">
-            <div class="quote-text">"{frase["texto"]}"</div>
-            <div class="quote-author">— {frase["autor"]}</div>
+            <div class="quote-text">Planner Organizer - Sistema de Gerenciamento</div>
+            <div class="quote-author">— Versão 1.0</div>
         </div>
         """, unsafe_allow_html=True)
