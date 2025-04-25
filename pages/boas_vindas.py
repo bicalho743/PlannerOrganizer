@@ -157,9 +157,13 @@ def show():
     </style>
     """, unsafe_allow_html=True)
     
-    # Cabeçalho de boas-vindas
-    st.markdown(f'<h1 class="welcome-header">👋 Olá! Bem-vindo(a) de volta</h1>', unsafe_allow_html=True)
-    st.markdown("**Planner Organizer** - Sistema Profissional para Personal Organizers", unsafe_allow_html=True)
+    # Carrega o nome do usuário da sessão
+    usuario_nome = "usuário"
+    if "user" in st.session_state and st.session_state["user"] and "nome" in st.session_state["user"]:
+        usuario_nome = st.session_state["user"]["nome"].split()[0]  # Pega apenas o primeiro nome
+    
+    # Cabeçalho de boas-vindas personalizado
+    st.markdown(f'<h1 class="welcome-header">Bem-vindo(a), {usuario_nome}</h1>', unsafe_allow_html=True)
     
     # Data atual em formato brasileiro
     hoje = datetime.now()
@@ -174,7 +178,6 @@ def show():
     for mes_en, mes_pt in meses_pt.items():
         data_formatada = data_formatada.replace(mes_en, mes_pt)
     
-    st.markdown(f"📅 **{data_formatada}**")
     st.markdown("---")
     
     # Layout principal - Colunas para métricas e atividades
