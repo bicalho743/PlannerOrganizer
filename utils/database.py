@@ -4700,12 +4700,18 @@ class Database:
         """
         # Resolver o problema de "concurrent operations are not permitted"
         # usando uma nova sessão isolada para esta operação
+        import os
         from sqlalchemy.orm import Session as SQLSession
         from sqlalchemy import create_engine
-        from utils.config import DATABASE_URL
         
+        # Usar diretamente a variável de ambiente para o DATABASE_URL
+        database_url = os.environ.get('DATABASE_URL')
+        if not database_url:
+            print("ERRO: DATABASE_URL não encontrada no ambiente")
+            return None
+            
         # Criar uma nova sessão independente para esta operação
-        engine_local = create_engine(DATABASE_URL)
+        engine_local = create_engine(database_url)
         session_local = SQLSession(bind=engine_local)
         
         try:
