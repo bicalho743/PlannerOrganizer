@@ -440,15 +440,18 @@ def show():
                                             nome_str = str(cliente_df.iloc[0]['nome']) if 'nome' in cliente_df.columns else "sem_nome"
                                             cliente_nome = nome_str.replace(' ', '_').lower()
                                         
-                                        # Usar o mesmo formato de nome de arquivo que definimos em propostas_helper.py
+                                        # Mostrar mensagem de sucesso padronizada
+                                        st.success(f"Proposta gerada com sucesso!")
+                                        
+                                        # Criar botão de download com formato padronizado
+                                        download_key = f"download_proposta_{proposta['numero']}_{datetime.now().strftime('%H%M%S')}"
                                         st.download_button(
-                                            label="⬇️ Download",
+                                            label="Download da Proposta",
                                             data=pdf_bytes,
                                             file_name=f"Proposta_{proposta_id}_{cliente_nome}.pdf",
                                             mime="application/pdf",
-                                            key=f"download_pdf_{proposta_id}"
+                                            key=download_key
                                         )
-                                        st.success("✓")
                                     else:
                                         st.error(f"Erro: {mensagem}")
                             
