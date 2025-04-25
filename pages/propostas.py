@@ -1367,9 +1367,15 @@ def show():
                                     df_outros = pd.DataFrame()
                                     
                                     # Adicionar os acréscimos do tipo OUTROS
+                                    # Agora usando o nome em vez da descrição conforme solicitado
                                     if not outros_itens.empty:
                                         df_temp = pd.DataFrame()
-                                        df_temp['Descrição'] = outros_itens['descricao']
+                                        # Verificar se a coluna 'fornecedor' tem valor, se não usar a descricao
+                                        df_temp['Nome do Item'] = outros_itens.apply(
+                                            lambda row: row['fornecedor'] if pd.notna(row['fornecedor']) and row['fornecedor'].strip() != '' 
+                                            else row['descricao'], 
+                                            axis=1
+                                        )
                                         df_temp['Valor'] = outros_itens['valor'].apply(lambda x: f"R$ {float(x):.2f}")
                                         df_temp['Tipo'] = "Acréscimo"
                                         df_outros = pd.concat([df_outros, df_temp])
@@ -1388,9 +1394,9 @@ def show():
                                             
                                             df_temp = pd.DataFrame()
                                             if 'nome' in produtos_servicos.columns:
-                                                df_temp['Descrição'] = produtos_servicos['nome']
+                                                df_temp['Nome do Item'] = produtos_servicos['nome']
                                             else:
-                                                df_temp['Descrição'] = ["Item sem nome"] * len(produtos_servicos)
+                                                df_temp['Nome do Item'] = ["Item sem nome"] * len(produtos_servicos)
                                                 
                                             df_temp['Valor'] = produtos_servicos['valor_total'].apply(lambda x: f"R$ {float(x):.2f}")
                                             df_temp['Tipo'] = "Serviço"
