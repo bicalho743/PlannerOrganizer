@@ -1587,6 +1587,136 @@ class Database:
             return andamento.id
         return self._safe_query(query)
 
+    def gerar_lancamentos_proposta_aprovada(self, proposta_id, forcar_geracao=False):
+        """
+        Gera lançamentos financeiros automáticos quando uma proposta é aprovada
+        
+        Gera:
+        1. Receita a receber do cliente (valor base da proposta) no extrato
+        2. Lançamento nas contas a receber (valor base da proposta)
+        
+        Args:
+            proposta_id: ID da proposta aprovada
+            forcar_geracao: Se True, remove lançamentos existentes e gera novos
+            
+        Returns:
+            dict: Resumo dos lançamentos gerados
+        """
+        def query():
+            try:
+                # Converter para inteiro se for string
+                proposta_id_int = int(proposta_id)
+                print(f"DEBUG LANCAMENTOS APROVAÇÃO: Gerando lançamentos para proposta aprovada ID={proposta_id_int}")
+                
+                # Buscar a proposta
+                proposta = self.session.query(Proposta).filter_by(id=proposta_id_int).first()
+                if not proposta:
+                    print(f"DEBUG LANCAMENTOS APROVAÇÃO: Proposta ID {proposta_id} não encontrada")
+                    raise ValueError(f"Proposta ID {proposta_id} não encontrada")
+                
+                print(f"DEBUG LANCAMENTOS APROVAÇÃO: Proposta encontrada: #{proposta.numero} - {proposta.descricao}")
+                
+                # Buscar cliente da proposta
+                cliente = self.session.query(Cliente).filter_by(id=proposta.cliente_id).first()
+                if not cliente:
+                    print(f"DEBUG LANCAMENTOS APROVAÇÃO: Cliente ID {proposta.cliente_id} não encontrado")
+                    raise ValueError(f"Cliente ID {proposta.cliente_id} não encontrado")
+                
+                print(f"DEBUG LANCAMENTOS APROVAÇÃO: Cliente encontrado: {cliente.nome}")
+                
+                # Verificar se já existem lançamentos do tipo "receita_a_receber_aprovacao" para esta proposta
+                lancamentos_existentes = self.session.query(Transacao)\
+                    .filter_by(proposta_id=proposta_id_int, tipo="receita_a_receber_aprovacao")\
+                    .count()
+                
+                print(f"DEBUG LANCAMENTOS APROVAÇÃO: Lançamentos existentes: {lancamentos_existentes}")
+                
+                # Se já existirem lançamentos, verificar se devemos forçar a regeneração
+                if lancamentos_existentes > 0:
+                    if forcar_geracao:
+                        print(f"DEBUG LANCAMENTOS APROVAÇÃO: Removendo {lancamentos_existentes} lançamentos existentes")
+                        # Remover lançamentos existentes
+                        self.session.query(Transacao).filter_by(
+                            proposta_id=proposta_id_int, 
+                            tipo="receita_a_receber_aprovacao"
+                        ).delete()
+                        self.session.flush()
+                        print(f"DEBUG LANCAMENTOS APROVAÇÃO: Lançamentos existentes removidos com sucesso")
+                    else:
+                        print(f"DEBUG LANCAMENTOS APROVAÇÃO: Já existem lançamentos. Pulando.")
+                        return {
+                            "status": "já existe", 
+                            "mensagem": "Lançamentos já existem para esta proposta aprovada"
+                        }
+                
+                # Resultados para retornar
+                result = {
+                    "valor_base": 0,
+                    "lancamentos_gerados": 0
+                }
+                
+                # Obter dados da proposta
+                valor_base = float(proposta.valor) if proposta.valor else 0
+                print(f"DEBUG LANCAMENTOS APROVAÇÃO: Valor base da proposta: R$ {valor_base:.2f}")
+                
+                # Data dos lançamentos (usar data de aprovação se disponível, senão data atual)
+                data_lancamento = proposta.data_aprovacao if proposta.data_aprovacao else datetime.now().date()
+                
+                # Obter usuario_id da proposta para garantir isolamento de dados
+                usuario_id = proposta.usuario_id if hasattr(proposta, 'usuario_id') else None
+                
+                # 1. Lançamento de receita a receber no extrato
+                if valor_base > 0:
+                    transacao_receita = Transacao(
+                        tipo="receita_a_receber_aprovacao",  # Usamos tipo específico para identificar
+                        descricao=f"Proposta #{proposta.numero} - {proposta.descricao[:50]}... - {cliente.nome} (Aprovação)",
+                        valor=valor_base,
+                        data=data_lancamento,
+                        categoria="Serviço",
+                        subcategoria=proposta.tipo_proposta or "Organização",
+                        tipo_receita="organização",
+                        origem_id=proposta.cliente_id,
+                        origem_tipo="cliente",
+                        tipo_conta="PF",
+                        status="Pendente",
+                        proposta_id=proposta_id_int,
+                        classificacao="receita",
+                        usuario_id=usuario_id
+                    )
+                    self.session.add(transacao_receita)
+                    
+                    # 2. Lançamento nas contas a receber - mesmo valor mas tipo diferente
+                    transacao_contas_receber = Transacao(
+                        tipo="contas_a_receber",
+                        descricao=f"Valor a receber - Proposta #{proposta.numero} - {cliente.nome}",
+                        valor=valor_base,
+                        data=data_lancamento,
+                        categoria="Cliente",
+                        subcategoria="Valor a receber",
+                        tipo_receita="organização",
+                        origem_id=proposta.cliente_id,
+                        origem_tipo="cliente",
+                        tipo_conta="PF",
+                        status="Pendente",
+                        proposta_id=proposta_id_int,
+                        classificacao="contas_a_receber",
+                        usuario_id=usuario_id
+                    )
+                    self.session.add(transacao_contas_receber)
+                    
+                    result["valor_base"] = valor_base
+                    result["lancamentos_gerados"] += 2  # Dois lançamentos: extrato e contas a receber
+                    print(f"DEBUG LANCAMENTOS APROVAÇÃO: Lançamentos de aprovação criados com sucesso")
+                
+                return result
+                
+            except Exception as e:
+                print(f"ERRO em gerar_lancamentos_proposta_aprovada: {str(e)}")
+                traceback.print_exc()
+                raise
+        
+        return self._safe_query(query)
+        
     def update_proposta_status(self, proposta_id, novo_status, data_aprovacao=None):
         """
         Atualiza o status de uma proposta e opcionalmente define a data de aprovação
@@ -1611,6 +1741,11 @@ class Database:
                 # # print(f"DEBUG: Proposta com ID {proposta_id} não encontrada")
                 return False
             
+            # Verificar se a proposta está sendo aprovada
+            gerar_lancamentos = False
+            if novo_status == "Aprovada" and proposta.status != "Aprovada":
+                gerar_lancamentos = True
+            
             # Atualizar campos
             proposta.status = novo_status
             if data_aprovacao:
@@ -1621,38 +1756,18 @@ class Database:
                 # Sempre usar a data de início da proposta como data de início de execução
                 proposta.data_inicio_execucao = proposta.data_inicio
                 proposta.status_execucao = "Iniciada"
-                
-                # Processar a geração de transação financeira
-                # Verificar se já existem transações para esta proposta
-                transacoes_existentes = self.session.query(Transacao).filter_by(
-                    proposta_id=proposta_id
-                ).count()
-                
-                if transacoes_existentes == 0:
-                    # Buscar o cliente da proposta
-                    cliente = self.session.query(Cliente).filter_by(id=proposta.cliente_id).first()
-                    if cliente:
-                        # Criar uma transação financeira de receita a receber
-                        nome_cliente = cliente.nome
-                        
-                        transacao = Transacao(
-                            tipo="receita_a_receber",
-                            descricao=f"Proposta #{proposta.id} - {proposta.descricao} - {nome_cliente}",
-                            valor=proposta.valor,
-                            categoria="Propostas",
-                            subcategoria=proposta.tipo_proposta,
-                            tipo_receita="Projeto",
-                            origem_id=proposta.id,
-                            origem_tipo="proposta",
-                            tipo_conta="PF",
-                            status="Pendente",
-                            proposta_id=proposta.id,
-                            classificacao="receita",
-                            data=proposta.data_proposta or datetime.now().date(),
-                            usuario_id=proposta.usuario_id
-                        )
-                        self.session.add(transacao)
-                        # # print(f"DEBUG: Transação financeira criada para proposta {proposta_id}")
+            
+            # Salvar as alterações para garantir que tudo esteja atualizado antes de gerar lançamentos
+            self.session.flush()
+            
+            # Gerar lançamentos financeiros se a proposta está sendo aprovada
+            if gerar_lancamentos:
+                try:
+                    # Gerar lançamentos financeiros para proposta aprovada (receita a receber e contas a receber)
+                    self.gerar_lancamentos_proposta_aprovada(proposta_id)
+                    print(f"DEBUG: Lançamentos financeiros gerados para proposta aprovada {proposta_id}")
+                except Exception as e:
+                    print(f"ERRO ao gerar lançamentos para proposta aprovada: {str(e)}")
             
             # Registrar a mudança de status
             # # print(f"DEBUG: Proposta {proposta_id} atualizada com status '{novo_status}'")
@@ -4127,26 +4242,56 @@ class Database:
                 valor_base = float(proposta.valor) if proposta.valor else 0
                 print(f"DEBUG LANCAMENTOS: Valor base da proposta: R$ {valor_base:.2f}")
                 
+                # Obter usuario_id da proposta para garantir isolamento de dados
+                usuario_id = proposta.usuario_id if hasattr(proposta, 'usuario_id') else None
+                
+                # Data dos lançamentos - usar a data de finalização ou data atual
+                data_lancamento = datetime.now().date()
+                if hasattr(proposta, 'data_fim') and proposta.data_fim:
+                    data_lancamento = proposta.data_fim
+                
                 if valor_base > 0:
+                    # Transação no extrato financeiro
                     transacao_base = Transacao(
                         tipo="receita_a_receber",
                         descricao=f"Proposta #{proposta.numero} - {proposta.descricao[:50]}... - {cliente.nome}",
                         valor=valor_base,
-                        data=datetime.now().date(),
+                        data=data_lancamento,
                         categoria="Serviço",
                         subcategoria=proposta.tipo_proposta or "Organização",
-                        tipo_receita="organização",
+                        tipo_receita="organizacao",
                         origem_id=proposta.cliente_id,
                         origem_tipo="cliente",
                         tipo_conta="PF",
                         status="Pendente",
                         proposta_id=proposta_id_int,
-                        classificacao="receita"
+                        classificacao="receita",
+                        usuario_id=usuario_id
                     )
                     self.session.add(transacao_base)
+                    
+                    # Transação nas contas a receber
+                    transacao_base_contas = Transacao(
+                        tipo="contas_a_receber",
+                        descricao=f"Serviço a receber - Proposta #{proposta.numero} - {cliente.nome}",
+                        valor=valor_base,
+                        data=data_lancamento,
+                        categoria="Serviço",
+                        subcategoria="Serviço a receber",
+                        tipo_receita="organizacao",
+                        origem_id=proposta.cliente_id,
+                        origem_tipo="cliente",
+                        tipo_conta="PF",
+                        status="Pendente",
+                        proposta_id=proposta_id_int,
+                        classificacao="contas_a_receber",
+                        usuario_id=usuario_id
+                    )
+                    self.session.add(transacao_base_contas)
+                    
                     result["valor_base"] = valor_base
-                    result["lancamentos_gerados"] += 1
-                    print(f"DEBUG LANCAMENTOS: Lançamento do valor base criado")
+                    result["lancamentos_gerados"] += 2
+                    print(f"DEBUG LANCAMENTOS: Lançamentos do valor base criados")
                 
                 # 2. Produtos a receber
                 produtos = self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id_python_int).all()
@@ -4201,13 +4346,21 @@ class Database:
                 print(f"DEBUG LANCAMENTOS: Valor total dos produtos físicos: R$ {valor_total_produtos_fisicos:.2f}")
                 print(f"DEBUG LANCAMENTOS: Valor total dos serviços: R$ {valor_total_servicos:.2f}")
                 
-                # Criar lançamento para produtos físicos
+                # Obter usuario_id da proposta para garantir isolamento de dados
+                usuario_id = proposta.usuario_id if hasattr(proposta, 'usuario_id') else None
+                
+                # Data dos lançamentos - usar a data de finalização ou data atual
+                data_lancamento = datetime.now().date()
+                if hasattr(proposta, 'data_fim') and proposta.data_fim:
+                    data_lancamento = proposta.data_fim
+                
+                # Criar lançamento para produtos físicos no extrato (1 - Produtos a receber)
                 if valor_total_produtos_fisicos > 0:
                     transacao_produtos = Transacao(
                         tipo="receita_a_receber",
                         descricao=f"Produtos da Proposta #{proposta.numero} - {cliente.nome}",
                         valor=valor_total_produtos_fisicos,
-                        data=datetime.now().date(),
+                        data=data_lancamento,
                         categoria="Produto",
                         subcategoria="Venda de Produtos",
                         tipo_receita="venda",
@@ -4216,12 +4369,33 @@ class Database:
                         tipo_conta="PF",
                         status="Pendente",
                         proposta_id=proposta_id_int,
-                        classificacao="receita"
+                        classificacao="receita",
+                        usuario_id=usuario_id
                     )
                     self.session.add(transacao_produtos)
+                    
+                    # Lançamento nas contas a receber para produtos
+                    transacao_produtos_contas = Transacao(
+                        tipo="contas_a_receber",
+                        descricao=f"Produtos a receber - Proposta #{proposta.numero} - {cliente.nome}",
+                        valor=valor_total_produtos_fisicos,
+                        data=data_lancamento,
+                        categoria="Produto",
+                        subcategoria="Produtos a receber",
+                        tipo_receita="venda",
+                        origem_id=proposta.cliente_id,
+                        origem_tipo="cliente",
+                        tipo_conta="PF",
+                        status="Pendente",
+                        proposta_id=proposta_id_int,
+                        classificacao="contas_a_receber",
+                        usuario_id=usuario_id
+                    )
+                    self.session.add(transacao_produtos_contas)
+                    
                     result["valor_produtos"] = valor_total_produtos_fisicos
-                    result["lancamentos_gerados"] += 1
-                    print(f"DEBUG LANCAMENTOS: Lançamento de produtos físicos criado: R$ {valor_total_produtos_fisicos:.2f}")
+                    result["lancamentos_gerados"] += 2  # Extrato + contas a receber
+                    print(f"DEBUG LANCAMENTOS: Lançamentos de produtos criados: R$ {valor_total_produtos_fisicos:.2f}")
                     
                     # Adicionar à tabela de vendas somente os produtos físicos
                     try:
@@ -4231,11 +4405,12 @@ class Database:
                 
                 # Criar lançamento para serviços (separado dos produtos físicos)
                 if valor_total_servicos > 0:
+                    # Transação no extrato
                     transacao_servicos = Transacao(
                         tipo="receita_a_receber",
                         descricao=f"Serviços da Proposta #{proposta.numero} - {cliente.nome}",
                         valor=valor_total_servicos,
-                        data=datetime.now().date(),
+                        data=data_lancamento,
                         categoria="Serviço",
                         subcategoria="Serviços Adicionais",
                         tipo_receita="servico",
@@ -4244,13 +4419,34 @@ class Database:
                         tipo_conta="PF",
                         status="Pendente",
                         proposta_id=proposta_id_int,
-                        classificacao="receita"
+                        classificacao="receita",
+                        usuario_id=usuario_id
                     )
                     self.session.add(transacao_servicos)
+                    
+                    # Transação nas contas a receber
+                    transacao_servicos_contas = Transacao(
+                        tipo="contas_a_receber",
+                        descricao=f"Serviços adicionais a receber - Proposta #{proposta.numero} - {cliente.nome}",
+                        valor=valor_total_servicos,
+                        data=data_lancamento,
+                        categoria="Serviço",
+                        subcategoria="Serviços a receber",
+                        tipo_receita="servico",
+                        origem_id=proposta.cliente_id,
+                        origem_tipo="cliente",
+                        tipo_conta="PF",
+                        status="Pendente",
+                        proposta_id=proposta_id_int,
+                        classificacao="contas_a_receber",
+                        usuario_id=usuario_id
+                    )
+                    self.session.add(transacao_servicos_contas)
+                    
                     # Adicionar ao valor total de outros
                     result["valor_outros"] = result.get("valor_outros", 0) + valor_total_servicos
-                    result["lancamentos_gerados"] += 1
-                    print(f"DEBUG LANCAMENTOS: Lançamento de serviços criado: R$ {valor_total_servicos:.2f}")
+                    result["lancamentos_gerados"] += 2
+                    print(f"DEBUG LANCAMENTOS: Lançamentos de serviços criados: R$ {valor_total_servicos:.2f}")
                 
                 # Garantir que todos os lançamentos estão salvos antes de registrar a venda
                 self.session.flush()
@@ -4306,11 +4502,12 @@ class Database:
                 
                 # Criar lançamento para itens OUTRO
                 if valor_total_outros > 0:
+                    # Transação no extrato
                     transacao_outros = Transacao(
                         tipo="receita_a_receber",
                         descricao=f"Itens adicionais da Proposta #{proposta.numero} - {cliente.nome}",
                         valor=valor_total_outros,
-                        data=datetime.now().date(),
+                        data=data_lancamento,
                         categoria="Outros",
                         subcategoria="Itens Adicionais",
                         tipo_receita="outros",
@@ -4319,12 +4516,33 @@ class Database:
                         tipo_conta="PF",
                         status="Pendente",
                         proposta_id=proposta_id_int,
-                        classificacao="receita"
+                        classificacao="receita",
+                        usuario_id=usuario_id
                     )
                     self.session.add(transacao_outros)
+                    
+                    # Transação nas contas a receber
+                    transacao_outros_contas = Transacao(
+                        tipo="contas_a_receber",
+                        descricao=f"Outros itens a receber - Proposta #{proposta.numero} - {cliente.nome}",
+                        valor=valor_total_outros,
+                        data=data_lancamento,
+                        categoria="Outros",
+                        subcategoria="Itens diversos a receber",
+                        tipo_receita="outros",
+                        origem_id=proposta.cliente_id,
+                        origem_tipo="cliente",
+                        tipo_conta="PF",
+                        status="Pendente",
+                        proposta_id=proposta_id_int,
+                        classificacao="contas_a_receber",
+                        usuario_id=usuario_id
+                    )
+                    self.session.add(transacao_outros_contas)
+                    
                     result["valor_outros"] = valor_total_outros
-                    result["lancamentos_gerados"] += 1
-                    print(f"DEBUG LANCAMENTOS: Lançamento de itens OUTRO criado: R$ {valor_total_outros:.2f}")
+                    result["lancamentos_gerados"] += 2
+                    print(f"DEBUG LANCAMENTOS: Lançamentos de itens OUTRO criados: R$ {valor_total_outros:.2f}")
                 
                 # 3. Comissões a receber por fornecedor
                 fornecedores = self.session.query(AcrescimoProposta)\
@@ -4356,23 +4574,45 @@ class Database:
                         valor_comissao = valor_fornecedor * (percentual_comissao / 100)
                         
                         if valor_comissao > 0:
+                            # Transação no extrato
                             transacao_comissao = Transacao(
                                 tipo="receita_a_receber",
                                 descricao=f"Comissão de {percentual_comissao}% - {nome_fornecedor} - Proposta #{proposta.numero}",
                                 valor=valor_comissao,
-                                data=datetime.now().date(),
+                                data=data_lancamento,
                                 categoria="Comissão",
                                 subcategoria="Comissão de Fornecedor",
-                                tipo_receita="comissão",
+                                tipo_receita="comissao",
                                 origem_id=fornecedor_cadastro.id if fornecedor_cadastro else None,
                                 origem_tipo="fornecedor",
                                 tipo_conta="PF",
                                 status="Pendente",
                                 proposta_id=proposta_id_int,
-                                classificacao="receita"
+                                classificacao="receita",
+                                usuario_id=usuario_id
                             )
                             self.session.add(transacao_comissao)
-                            result["lancamentos_gerados"] += 1
+                            
+                            # Transação nas contas a receber
+                            transacao_comissao_contas = Transacao(
+                                tipo="contas_a_receber",
+                                descricao=f"Comissão a receber de {nome_fornecedor} - Proposta #{proposta.numero}",
+                                valor=valor_comissao,
+                                data=data_lancamento,
+                                categoria="Comissão",
+                                subcategoria="Comissão a receber",
+                                tipo_receita="comissao",
+                                origem_id=fornecedor_cadastro.id if fornecedor_cadastro else None,
+                                origem_tipo="fornecedor",
+                                tipo_conta="PF",
+                                status="Pendente",
+                                proposta_id=proposta_id_int,
+                                classificacao="contas_a_receber",
+                                usuario_id=usuario_id
+                            )
+                            self.session.add(transacao_comissao_contas)
+                            
+                            result["lancamentos_gerados"] += 2
                 
                 # 4. Assistentes a pagar
                 assistentes = self.session.query(AcrescimoProposta)\
@@ -4387,21 +4627,46 @@ class Database:
                     
                     if valor_assistente > 0:
                         nome_assistente = assistente_item.fornecedor  # o campo "fornecedor" armazena o nome do assistente
+                        
+                        # Transação no extrato
                         transacao_assistente = Transacao(
                             tipo="despesa",
                             descricao=f"Pagamento Assistente {nome_assistente} - Proposta #{proposta.numero}",
                             valor=valor_assistente,
-                            data=datetime.now().date(),
+                            data=data_lancamento,
                             categoria="Assistente",
                             subcategoria="Pagamento de Serviço",
+                            tipo_despesa="assistente",
+                            origem_id=assistente_item.id,
                             origem_tipo="assistente",
                             tipo_conta="PF",
                             status="Pendente",
                             proposta_id=proposta_id_int,
-                            classificacao="custo_direto"
+                            classificacao="custo_direto",
+                            usuario_id=usuario_id
                         )
                         self.session.add(transacao_assistente)
-                        result["lancamentos_gerados"] += 1
+                        
+                        # Transação nas contas a pagar
+                        transacao_assistente_contas = Transacao(
+                            tipo="contas_a_pagar",
+                            descricao=f"Assistente a pagar - {nome_assistente} - Proposta #{proposta.numero}",
+                            valor=valor_assistente,
+                            data=data_lancamento,
+                            categoria="Assistente",
+                            subcategoria="Assistente a pagar",
+                            tipo_despesa="assistente",
+                            origem_id=assistente_item.id,
+                            origem_tipo="assistente",
+                            tipo_conta="PF",
+                            status="Pendente",
+                            proposta_id=proposta_id_int,
+                            classificacao="contas_a_pagar",
+                            usuario_id=usuario_id
+                        )
+                        self.session.add(transacao_assistente_contas)
+                        
+                        result["lancamentos_gerados"] += 2
                 
                 result["valor_fornecedores"] = valor_total_fornecedores
                 result["valor_assistentes"] = valor_total_assistentes
