@@ -11,9 +11,15 @@ import streamlit as st
 
 # Importar a versão melhorada do gerador de PDF
 try:
+    # Forçar a importação do módulo melhorado
+    import utils.pdf_generator_melhorado
+    # Agora importar a função específica
     from utils.pdf_generator_melhorado import gerar_pdf_fechamento
     print("DEBUG: Usando o gerador de PDF melhorado!")
-except ImportError:
+except ImportError as e:
+    # Log detalhado do erro para diagnóstico
+    print(f"ERRO DETALHADO NA IMPORTAÇÃO: {str(e)}")
+    traceback.print_exc()
     # Fallback para o gerador original em caso de erro
     from utils.pdf_generator import gerar_pdf_fechamento
     print("DEBUG: Usando o gerador de PDF original (fallback)!")

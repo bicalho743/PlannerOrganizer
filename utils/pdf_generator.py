@@ -88,10 +88,12 @@ def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
     Returns:
         str: Caminho do arquivo PDF gerado
     """
-    # Usar a versão melhorada com layout profissional
-    print("DEBUG: Usando o gerador de PDF fechamento melhorado!")
-    from utils.pdf_generator_melhorado import gerar_pdf_fechamento_novo
-    return gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename)
+    # Usar diretamente a função gerar_pdf_fechamento do módulo melhorado
+    # que já tem tratamento adequado para garantir a exibição de todas as
+    # informações da proposta
+    print("DEBUG: Usando o gerador de PDF fechamento melhorado (via gerar_pdf_fechamento)!")
+    from utils.pdf_generator_melhorado import gerar_pdf_fechamento as pdf_melhorado_fechamento
+    return pdf_melhorado_fechamento(proposta, cliente, acrescimos, filename)
 
 
 def get_pdf_as_base64(filename):
