@@ -216,15 +216,10 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
         # Calcular totais
         custo_cliente_total = valor_base + valor_produtos_total + custos_fornecedores + total_outros
         
-        # Cálculo de comissão se não estiver presente na tabela de acréscimos
+        # Verificar se existe comissão definida na tabela de acréscimos
         if not comissao_encontrada:
-            # Usar um percentual padrão sobre o valor total para calcular a comissão
-            percentual_comissao = 0.10  # 10% de comissão padrão
-            comissao_calculada = custo_cliente_total * percentual_comissao
-            total_comissoes = comissao_calculada
-            
-            # Log para depuração
-            print(f"DEBUG PDF: Comissão calculada como {percentual_comissao*100}% do valor total: R$ {comissao_calculada:.2f}")
+            # Não calcular automaticamente a comissão se não estiver definida
+            print(f"DEBUG PDF: Nenhuma comissão encontrada nos acréscimos. Mantendo em zero.")
         else:
             print(f"DEBUG PDF: Total de comissões encontradas: R$ {total_comissoes:.2f}")
         
