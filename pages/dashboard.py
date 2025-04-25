@@ -41,75 +41,130 @@ def show():
             else:
                 st.sidebar.error("Erro ao adicionar dados de teste")
 
-    # Dashboard layout 
-    # Layout com 3 colunas para a primeira linha
-    col1, col2, col3 = st.columns([2, 2, 1])
+    # Adicionar data no topo da página
+    st.markdown("""
+    <div style="text-align: center; background-color: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+        <span style="font-size: 1.2rem; color: #1E366F; font-weight: 500;">📅 25 de abril de 2025</span>
+    </div>
+    """, unsafe_allow_html=True)
 
-    with col1:
-        st.subheader("📊 Resumo")
+    # Dashboard layout com cards modernos
+    # Primeira linha - 3 cartões de métricas principais
+    col_metricas1, col_metricas2, col_metricas3 = st.columns(3)
 
+    # Obter dados
+    try:
+        propostas = st.session_state.db.get_propostas()
+        # Contar propostas em elaboração ou aguardando aprovação como "em aberto"
+        if not propostas.empty:
+            propostas_em_aberto = len(propostas[
+                (propostas['status'] == 'Em elaboração') | 
+                (propostas['status'] == 'Aguardando aprovação')
+            ])
+        else:
+            propostas_em_aberto = 0
+    except Exception as e:
+        st.warning("Erro ao carregar propostas")
+        propostas = pd.DataFrame()
+        propostas_em_aberto = 0
+
+    # Financeiro
+    try:
+        financeiro = st.session_state.db.get_financeiro()
+        
+        # Valores a Receber
+        if not financeiro.empty:
+            # Considerar receitas e receitas a receber pendentes
+            valores_receber = financeiro[
+                ((financeiro['tipo'] == 'receita') | (financeiro['tipo'] == 'receita_a_receber')) & 
+                (financeiro['status'] == 'Pendente')
+            ]['valor'].sum()
+            
+            # Valores a Pagar (despesas pendentes)
+            valores_pagar = financeiro[
+                (financeiro['tipo'] == 'despesa') & 
+                (financeiro['status'] == 'Pendente')
+            ]['valor'].sum()
+        else:
+            valores_receber = 0.0
+            valores_pagar = 0.0
+            
+        # Calcular saldo líquido
+        saldo_liquido = valores_receber - valores_pagar
+        
+    except Exception as e:
+        st.warning(f"Erro ao carregar dados financeiros: {str(e)}")
+        valores_receber = 0.0
+        valores_pagar = 0.0
+        saldo_liquido = 0.0
+
+    # Cartão 1: Total de Clientes
+    with col_metricas1:
         # Estatísticas básicas
         total_clientes = len(clientes) if not clientes.empty else 0
-        st.metric("Total de Clientes", total_clientes)
+        
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #1E366F, #2A4D8F); 
+             color: white; padding: 20px; border-radius: 10px; 
+             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <div style="font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center;">
+                <span style="background-color: rgba(255,255,255,0.2); 
+                       border-radius: 50%; width: 32px; height: 32px; 
+                       display: flex; align-items: center; justify-content: center;
+                       margin-right: 10px;">👥</span>
+                <span><strong>Clientes</strong></span>
+            </div>
+            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0;">{}</div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">Total de clientes cadastrados</div>
+        </div>
+        """.format(total_clientes), unsafe_allow_html=True)
 
-        # Propostas
-        try:
-            propostas = st.session_state.db.get_propostas()
-            
-            # Contar propostas em elaboração ou aguardando aprovação como "em aberto"
-            if not propostas.empty:
-                propostas_em_aberto = len(propostas[
-                    (propostas['status'] == 'Em elaboração') | 
-                    (propostas['status'] == 'Aguardando aprovação')
-                ])
-            else:
-                propostas_em_aberto = 0
-                
-            st.metric("Propostas em Aberto", propostas_em_aberto)
-        except Exception as e:
-            st.warning("Erro ao carregar propostas")
-            propostas = pd.DataFrame()
+    # Cartão 2: Propostas em Aberto
+    with col_metricas2:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #FF9800, #FF5722); 
+             color: white; padding: 20px; border-radius: 10px; 
+             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <div style="font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center;">
+                <span style="background-color: rgba(255,255,255,0.2); 
+                       border-radius: 50%; width: 32px; height: 32px; 
+                       display: flex; align-items: center; justify-content: center;
+                       margin-right: 10px;">📝</span>
+                <span><strong>Propostas</strong></span>
+            </div>
+            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0;">{}</div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">Propostas em aberto</div>
+        </div>
+        """.format(propostas_em_aberto), unsafe_allow_html=True)
 
-        # Financeiro
-        try:
-            financeiro = st.session_state.db.get_financeiro()
-            
-            # Valores a Receber
-            if not financeiro.empty:
-                # Considerar receitas e receitas a receber pendentes
-                valores_receber = financeiro[
-                    ((financeiro['tipo'] == 'receita') | (financeiro['tipo'] == 'receita_a_receber')) & 
-                    (financeiro['status'] == 'Pendente')
-                ]['valor'].sum()
-                
-                # Valores a Pagar (despesas pendentes)
-                valores_pagar = financeiro[
-                    (financeiro['tipo'] == 'despesa') & 
-                    (financeiro['status'] == 'Pendente')
-                ]['valor'].sum()
-            else:
-                valores_receber = 0.0
-                valores_pagar = 0.0
-                
-            # Exibir métricas
-            st.metric("Valores a Receber", f"R$ {valores_receber:,.2f}", 
-                     delta=f"Total: R$ {valores_receber:,.2f}", delta_color="normal")
-            
-            st.metric("Valores a Pagar", f"R$ {valores_pagar:,.2f}", 
-                     delta=f"-R$ {valores_pagar:,.2f}", delta_color="inverse")
-            
-            # Calcular saldo líquido
-            saldo_liquido = valores_receber - valores_pagar
-            delta_saldo = f"+R$ {saldo_liquido:,.2f}" if saldo_liquido >= 0 else f"-R$ {abs(saldo_liquido):,.2f}"
-            delta_color = "normal" if saldo_liquido >= 0 else "inverse"
-            
-            st.metric("Saldo Líquido", f"R$ {saldo_liquido:,.2f}", 
-                     delta=delta_saldo, delta_color=delta_color)
-            
-        except Exception as e:
-            st.warning(f"Erro ao carregar dados financeiros: {str(e)}")
+    # Cartão 3: Saldo Financeiro
+    with col_metricas3:
+        cor_fundo = "#4CAF50" if saldo_liquido >= 0 else "#F44336"
+        cor_secundaria = "#388E3C" if saldo_liquido >= 0 else "#D32F2F"
+        
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, {0}, {1}); 
+             color: white; padding: 20px; border-radius: 10px; 
+             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <div style="font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center;">
+                <span style="background-color: rgba(255,255,255,0.2); 
+                       border-radius: 50%; width: 32px; height: 32px; 
+                       display: flex; align-items: center; justify-content: center;
+                       margin-right: 10px;">💰</span>
+                <span><strong>Saldo</strong></span>
+            </div>
+            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0;">R$ {2:,.2f}</div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">
+                <span style="margin-right: 10px;">📥 R$ {3:,.2f}</span>
+                <span>📤 R$ {4:,.2f}</span>
+            </div>
+        </div>
+        """.format(cor_fundo, cor_secundaria, saldo_liquido, valores_receber, valores_pagar), unsafe_allow_html=True)
 
-    with col2:
+    # Segunda linha - Propostas em aberto e aniversariantes
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
         st.subheader("📋 Propostas em Aberto")
         if not propostas.empty:
             # Filtrar propostas em aberto (Em elaboração e Aguardando aprovação)
@@ -137,7 +192,7 @@ def show():
         else:
             st.info("Nenhuma proposta cadastrada.")
 
-    with col3:
+    with col2:
         st.subheader("🎂 Aniversariantes")
         hoje = datetime.now()
         

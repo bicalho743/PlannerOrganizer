@@ -1042,16 +1042,14 @@ if st.sidebar.button("🚪 Sair do Sistema",
 
 st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
-# Página de boas-vindas ao fazer login
-if st.session_state.get('show_welcome', True) and st.session_state.authenticated:
-    try:
-        from pages.boas_vindas import show
-        show()
+# Já não mostramos a página de boas-vindas separada, 
+# pois agora o Dashboard é a página inicial por padrão
+if st.session_state.authenticated:
+    # Verificar se o usuário está fazendo login pela primeira vez
+    if st.session_state.get('show_welcome', True):
+        # Definir Dashboard como a página inicial
+        st.session_state.current_page = "Dashboard"
         # Marcar que a página de boas-vindas já foi mostrada para esta sessão
-        st.session_state.show_welcome = False
-    except Exception as e:
-        st.error(f"Erro ao carregar página de boas-vindas: {str(e)}")
-        # Em caso de erro, desativar a página de boas-vindas
         st.session_state.show_welcome = False
 
 # Importar o cabeçalho e rodapé padrão
