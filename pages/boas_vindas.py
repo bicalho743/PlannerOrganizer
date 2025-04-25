@@ -188,14 +188,11 @@ def show():
         m1, m2, m3 = st.columns(3)
         
         with m1:
-            # Tenta obter dados reais, caso contrário usa mock
-            try:
-                db = Database()
-                propostas_em_andamento = db.session.execute(
-                    "SELECT COUNT(*) FROM propostas WHERE status = 'Em execução'"
-                ).scalar() or 5
-            except:
-                propostas_em_andamento = 5
+            # Obter dados reais do banco de dados
+            db = Database()
+            propostas_em_andamento = db.session.execute(
+                "SELECT COUNT(*) FROM propostas WHERE status = 'Em execução'"
+            ).scalar() or 0
                 
             st.markdown(f"""
             <div class="metric-card">
@@ -205,14 +202,11 @@ def show():
             """, unsafe_allow_html=True)
         
         with m2:
-            # Tenta obter dados reais, caso contrário usa mock
-            try:
-                db = Database()
-                receitas = db.session.execute(
-                    "SELECT SUM(valor) FROM financeiro WHERE tipo = 'receita' AND EXTRACT(MONTH FROM data) = EXTRACT(MONTH FROM CURRENT_DATE)"
-                ).scalar() or 0
-            except:
-                receitas = 8750.50
+            # Obter dados reais do banco de dados
+            db = Database()
+            receitas = db.session.execute(
+                "SELECT COALESCE(SUM(valor), 0) FROM financeiro WHERE tipo = 'receita' AND EXTRACT(MONTH FROM data) = EXTRACT(MONTH FROM CURRENT_DATE)"
+            ).scalar() or 0
                 
             st.markdown(f"""
             <div class="metric-card">
@@ -222,14 +216,11 @@ def show():
             """, unsafe_allow_html=True)
             
         with m3:
-            # Tenta obter dados reais, caso contrário usa mock
-            try:
-                db = Database()
-                clientes = db.session.execute(
-                    "SELECT COUNT(*) FROM clientes"
-                ).scalar() or 15
-            except:
-                clientes = 15
+            # Obter dados reais do banco de dados
+            db = Database()
+            clientes = db.session.execute(
+                "SELECT COUNT(*) FROM clientes"
+            ).scalar() or 0
                 
             st.markdown(f"""
             <div class="metric-card">
@@ -241,20 +232,20 @@ def show():
         # Gráfico de propostas por status
         st.subheader("📈 Status das Propostas")
         
-        # Tenta obter dados reais, caso contrário usa mock
-        try:
-            db = Database()
-            # Utilizando SQLAlchemy para obter dados de status de proposta
-            result = db.session.execute(
-                "SELECT status, COUNT(*) FROM propostas GROUP BY status ORDER BY COUNT(*) DESC"
-            )
-            dados_propostas = [(row[0], row[1]) for row in result]
-            
+        # Obter dados reais do banco de dados
+        db = Database()
+        # Utilizando SQLAlchemy para obter dados de status de proposta
+        result = db.session.execute(
+            "SELECT status, COUNT(*) FROM propostas GROUP BY status ORDER BY COUNT(*) DESC"
+        )
+        dados_propostas = [(row[0], row[1]) for row in result]
+        
+        if dados_propostas:
             status_propostas = [status for status, _ in dados_propostas]
             contagem_propostas = [contagem for _, contagem in dados_propostas]
-        except:
-            status_propostas = ["Em execução", "Finalizada", "Em elaboração", "Aprovada", "Aguardando aprovação"]
-            contagem_propostas = [5, 12, 3, 2, 1]
+        else:
+            status_propostas = []
+            contagem_propostas = []
         
         # Gráfico de barras para status das propostas
         st.bar_chart(
@@ -267,62 +258,29 @@ def show():
         # Projetos recentes
         st.subheader("🔍 Projetos Recentes")
         
-        # Tenta obter dados reais, caso contrário usa mock
-        try:
-            db = Database()
-            # Utilizando SQLAlchemy para obter projetos recentes
-            result = db.session.execute(
-                """
-                SELECT p.id, p.descricao, p.status, p.data_inicio, c.nome 
-                FROM propostas p
-                JOIN clientes c ON p.cliente_id = c.id
-                ORDER BY p.data_inicio DESC LIMIT 4
-                """
-            )
-            projetos_recentes = [(row[0], row[1], row[2], row[3], row[4]) for row in result]
-            
-            projetos = [
-                {
-                    "id": p[0], 
-                    "descricao": p[1], 
-                    "status": p[2], 
-                    "data": p[3], 
-                    "cliente": p[4]
-                } 
-                for p in projetos_recentes
-            ]
-        except:
-            hoje = datetime.now()
-            projetos = [
-                {
-                    "id": 45, 
-                    "descricao": "Organização Cozinha e Despensa", 
-                    "status": "Em execução", 
-                    "data": hoje - timedelta(days=2), 
-                    "cliente": "Maria Silva"
-                },
-                {
-                    "id": 44, 
-                    "descricao": "Organização Closet Master", 
-                    "status": "Finalizada", 
-                    "data": hoje - timedelta(days=5), 
-                    "cliente": "João Santos"
-                },
-                {
-                    "id": 43, 
-                    "descricao": "Consultoria de Organização", 
-                    "status": "Aguardando aprovação", 
-                    "data": hoje - timedelta(days=7), 
-                    "cliente": "Lucas Mendes"
-                },
-                {
-                    "id": 42, 
-                    "descricao": "Organização Home Office", 
-                    "status": "Em elaboração", 
-                    "data": hoje - timedelta(days=8), 
-                    "cliente": "Ana Oliveira"
-                },
-            ]
+        # Obter projetos recentes do banco de dados
+        db = Database()
+        # Utilizando SQLAlchemy para obter projetos recentes
+        result = db.session.execute(
+            """
+            SELECT p.id, p.descricao, p.status, p.data_inicio, c.nome 
+            FROM propostas p
+            JOIN clientes c ON p.cliente_id = c.id
+            ORDER BY p.data_inicio DESC LIMIT 4
+            """
+        )
+        projetos_recentes = [(row[0], row[1], row[2], row[3], row[4]) for row in result]
+        
+        projetos = [
+            {
+                "id": p[0], 
+                "descricao": p[1], 
+                "status": p[2], 
+                "data": p[3], 
+                "cliente": p[4]
+            } 
+            for p in projetos_recentes
+        ]
         
         # Exibir projetos recentes
         for projeto in projetos:
@@ -370,58 +328,51 @@ def show():
         # Lembretes e atividades
         st.subheader("📌 Seus Lembretes")
         
-        # Tenta obter dados reais, caso contrário usa mock
-        try:
-            db = Database()
-            # Utilizando SQLAlchemy para obter propostas com prazos avançados
-            result = db.session.execute(
-                """
-                SELECT p.descricao, c.nome, p.data_inicio, 
-                       CURRENT_DATE - p.data_inicio AS dias_corridos
-                FROM propostas p
-                JOIN clientes c ON p.cliente_id = c.id
-                WHERE p.status = 'Em execução'
-                ORDER BY dias_corridos DESC
-                LIMIT 3
-                """
-            )
-            propostas_proximas = [(row[0], row[1], row[2], row[3]) for row in result]
-            
-            lembretes = []
-            for p in propostas_proximas:
-                dias = p[3]
-                if dias > 55:
-                    lembretes.append({
-                        "texto": f"Proposta de {p[1]} está há {dias} dias em execução",
-                        "prioridade": "alta"
-                    })
-        except:
-            lembretes = [
-                {
-                    "texto": "Proposta de Maria Silva está há 58 dias em execução",
-                    "prioridade": "alta"
-                },
-                {
-                    "texto": "Ligar para fornecedor de produtos",
-                    "prioridade": "média"
-                },
-                {
-                    "texto": "Enviar proposta para cliente José",
-                    "prioridade": "baixa"
-                }
-            ]
+        # Obter lembretes do banco de dados
+        db = Database()
+        # Utilizando SQLAlchemy para obter propostas com prazos avançados
+        result = db.session.execute(
+            """
+            SELECT p.descricao, c.nome, p.data_inicio, 
+                   CURRENT_DATE - p.data_inicio AS dias_corridos
+            FROM propostas p
+            JOIN clientes c ON p.cliente_id = c.id
+            WHERE p.status = 'Em execução'
+            ORDER BY dias_corridos DESC
+            LIMIT 3
+            """
+        )
+        propostas_proximas = [(row[0], row[1], row[2], row[3]) for row in result]
         
-        # Adiciona lembretes gerais caso tenha poucos lembretes
-        if len(lembretes) < 3:
-            lembretes_gerais = [
-                {"texto": "Ligar para fornecedor de produtos", "prioridade": "média"},
-                {"texto": "Enviar proposta para cliente José", "prioridade": "baixa"},
-                {"texto": "Verificar estoque de materiais", "prioridade": "média"},
-                {"texto": "Agendar reunião com assistente", "prioridade": "baixa"}
-            ]
-            
-            while len(lembretes) < 3:
-                lembretes.append(lembretes_gerais.pop(0))
+        lembretes = []
+        for p in propostas_proximas:
+            dias = p[3]
+            if dias > 55:
+                lembretes.append({
+                    "texto": f"Proposta de {p[1]} está há {dias} dias em execução",
+                    "prioridade": "alta"
+                })
+            elif dias > 30:
+                lembretes.append({
+                    "texto": f"Proposta de {p[1]} está há {dias} dias em execução",
+                    "prioridade": "média"
+                })
+            else:
+                lembretes.append({
+                    "texto": f"Proposta de {p[1]} iniciada há {dias} dias",
+                    "prioridade": "baixa"
+                })
+        
+        # Adiciona lembretes sistemas caso não tenha propostas suficientes
+        lembretes_sistema = [
+            {"texto": "Verificar cadastro de clientes e dados de contato", "prioridade": "média"},
+            {"texto": "Atualizar status das propostas em andamento", "prioridade": "média"},
+            {"texto": "Verificar relatórios financeiros do mês", "prioridade": "média"},
+            {"texto": "Conferir propostas pendentes de aprovação", "prioridade": "baixa"}
+        ]
+        
+        while len(lembretes) < 3 and lembretes_sistema:
+            lembretes.append(lembretes_sistema.pop(0))
         
         # Exibir lembretes
         for lembrete in lembretes:
