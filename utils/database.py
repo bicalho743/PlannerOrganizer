@@ -1714,12 +1714,29 @@ class Database:
             cursor = conn.cursor()
             
             try:
+                # Buscar o usuario_id da proposta
+                get_usuario_sql = f"SELECT usuario_id FROM propostas WHERE id = {proposta_id_int}"
+                cursor.execute(get_usuario_sql)
+                usuario_result = cursor.fetchone()
+                
+                if not usuario_result or usuario_result[0] is None:
+                    print(f"DEBUG SQL PRODUTO: Proposta ID={proposta_id_int} não encontrada ou sem usuario_id")
+                    if self.usuario_id:
+                        usuario_id = self.usuario_id
+                        print(f"DEBUG SQL PRODUTO: Usando usuario_id da sessão atual: {usuario_id}")
+                    else:
+                        print(f"DEBUG SQL PRODUTO: Nenhum usuario_id disponível, impossível continuar")
+                        return None
+                else:
+                    usuario_id = usuario_result[0]
+                    print(f"DEBUG SQL PRODUTO: Encontrado usuario_id={usuario_id} para a proposta ID={proposta_id_int}")
+                
                 # Executar a inserção
                 sql = f"""
                 INSERT INTO produtos_organizadores 
-                (proposta_id, nome, descricao, valor, quantidade, comodo, data_cadastro) 
+                (proposta_id, nome, descricao, valor, quantidade, comodo, data_cadastro, usuario_id) 
                 VALUES 
-                ({proposta_id_int}, '{nome_sanitizado}', '{descricao_sanitizada}', {valor_float}, {quantidade_int}, '{comodo_sanitizado}', NOW())
+                ({proposta_id_int}, '{nome_sanitizado}', '{descricao_sanitizada}', {valor_float}, {quantidade_int}, '{comodo_sanitizado}', NOW(), {usuario_id})
                 RETURNING id;
                 """
                 
@@ -1789,14 +1806,15 @@ class Database:
             valor_float = float(valor)
             quantidade_int = int(quantidade)
             
-            # Criar o objeto produto
+            # Criar o objeto produto com usuario_id 
             produto = ProdutoOrganizador(
                 proposta_id=proposta_id_int,
                 nome=nome,
                 descricao=descricao,
                 valor=valor_float,
                 quantidade=quantidade_int,
-                comodo=comodo or "Geral"
+                comodo=comodo or "Geral",
+                usuario_id=self.usuario_id  # Adicionar usuario_id do contexto atual
             )
             
             # Adicionar ao banco de dados usando uma transação isolada
@@ -1843,9 +1861,18 @@ class Database:
                 if proposta_id:
                     # Converter explicitamente para int Python padrão (mesmo que seja numpy.int64)
                     proposta_id_int = int(proposta_id)
-                    sql = f"SELECT * FROM produtos_organizadores WHERE proposta_id = {proposta_id_int}"
+                    
+                    # Incluir filtro de usuário
+                    if self.usuario_id:
+                        sql = f"SELECT * FROM produtos_organizadores WHERE proposta_id = {proposta_id_int} AND usuario_id = {self.usuario_id}"
+                    else:
+                        sql = f"SELECT * FROM produtos_organizadores WHERE proposta_id = {proposta_id_int}"
                 else:
-                    sql = "SELECT * FROM produtos_organizadores"
+                    # Busca geral com filtro de usuário
+                    if self.usuario_id:
+                        sql = f"SELECT * FROM produtos_organizadores WHERE usuario_id = {self.usuario_id}"
+                    else:
+                        sql = "SELECT * FROM produtos_organizadores"
                 
                 # Removido logs de debug
                 cursor.execute(sql)
@@ -1983,10 +2010,17 @@ class Database:
         # Se falhou, tentar via ORM normal
         def query():
             query = self.session.query(ProdutoOrganizador)
+            
+            # Aplicar filtros
             if proposta_id:
                 # Converter explicitamente para int Python padrão
                 proposta_id_int = self._ensure_int(proposta_id)
                 query = query.filter_by(proposta_id=proposta_id_int)
+                
+            # Adicionar filtro por usuário se disponível
+            if self.usuario_id:
+                query = query.filter(ProdutoOrganizador.usuario_id == self.usuario_id)
+                
             produtos = query.all()
             return pd.DataFrame([{
                 'id': p.id,
