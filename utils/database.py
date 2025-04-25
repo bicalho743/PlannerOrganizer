@@ -4500,8 +4500,17 @@ class Database:
                 
                 print(f"DEBUG LANCAMENTOS: Valor total de itens OUTRO: R$ {valor_total_outros:.2f}")
                 
-                # Criar lançamento para itens OUTRO
-                if valor_total_outros > 0:
+                # Verificar se já existem lançamentos para Outros a receber
+                transacoes_outros = self.session.query(Transacao)\
+                    .filter_by(proposta_id=proposta_id_int, 
+                              categoria="Outros", 
+                              classificacao="contas_a_receber")\
+                    .count()
+                
+                # Criar lançamento para itens OUTRO apenas se não existir
+                if valor_total_outros > 0 and (transacoes_outros == 0 or forcar_geracao):
+                    print(f"DEBUG LANCAMENTOS: Criando lançamentos para Outros a receber: R$ {valor_total_outros:.2f}")
+                    
                     # Transação no extrato
                     transacao_outros = Transacao(
                         tipo="receita_a_receber",
@@ -4543,6 +4552,10 @@ class Database:
                     result["valor_outros"] = valor_total_outros
                     result["lancamentos_gerados"] += 2
                     print(f"DEBUG LANCAMENTOS: Lançamentos de itens OUTRO criados: R$ {valor_total_outros:.2f}")
+                else:
+                    if transacoes_outros > 0:
+                        print(f"DEBUG LANCAMENTOS: Já existem lançamentos para Outros a receber ({transacoes_outros}). Pulando.")
+                    result["valor_outros"] = valor_total_outros
                 
                 # 3. Comissões a receber por fornecedor
                 fornecedores = self.session.query(AcrescimoProposta)\
@@ -4624,49 +4637,72 @@ class Database:
                 for assistente_item in assistentes:
                     valor_assistente = float(assistente_item.valor) if assistente_item.valor else 0
                     valor_total_assistentes += valor_assistente
+                    print(f"DEBUG LANCAMENTOS: Assistente '{assistente_item.fornecedor}': R$ {valor_assistente:.2f}")
+                
+                print(f"DEBUG LANCAMENTOS: Valor total de assistentes: R$ {valor_total_assistentes:.2f}")
+                
+                # Verificar se já existem lançamentos para Assistentes a pagar
+                transacoes_assistentes = self.session.query(Transacao)\
+                    .filter_by(proposta_id=proposta_id_int, 
+                              categoria="Assistente", 
+                              classificacao="contas_a_pagar")\
+                    .count()
                     
-                    if valor_assistente > 0:
-                        nome_assistente = assistente_item.fornecedor  # o campo "fornecedor" armazena o nome do assistente
+                print(f"DEBUG LANCAMENTOS: Lançamentos existentes para Assistentes a pagar: {transacoes_assistentes}")
+                
+                # Criar lançamentos para assistentes apenas se não existirem
+                if valor_total_assistentes > 0 and (transacoes_assistentes == 0 or forcar_geracao):
+                    print(f"DEBUG LANCAMENTOS: Criando lançamentos para Assistentes a pagar: R$ {valor_total_assistentes:.2f}")
+                    
+                    for assistente_item in assistentes:
+                        valor_assistente = float(assistente_item.valor) if assistente_item.valor else 0
                         
-                        # Transação no extrato
-                        transacao_assistente = Transacao(
-                            tipo="despesa",
-                            descricao=f"Pagamento Assistente {nome_assistente} - Proposta #{proposta.numero}",
-                            valor=valor_assistente,
-                            data=data_lancamento,
-                            categoria="Assistente",
-                            subcategoria="Pagamento de Serviço",
-                            tipo_despesa="assistente",
-                            origem_id=assistente_item.id,
-                            origem_tipo="assistente",
-                            tipo_conta="PF",
-                            status="Pendente",
-                            proposta_id=proposta_id_int,
-                            classificacao="custo_direto",
-                            usuario_id=usuario_id
-                        )
-                        self.session.add(transacao_assistente)
-                        
-                        # Transação nas contas a pagar
-                        transacao_assistente_contas = Transacao(
-                            tipo="contas_a_pagar",
-                            descricao=f"Assistente a pagar - {nome_assistente} - Proposta #{proposta.numero}",
-                            valor=valor_assistente,
-                            data=data_lancamento,
-                            categoria="Assistente",
-                            subcategoria="Assistente a pagar",
-                            tipo_despesa="assistente",
-                            origem_id=assistente_item.id,
-                            origem_tipo="assistente",
-                            tipo_conta="PF",
-                            status="Pendente",
-                            proposta_id=proposta_id_int,
-                            classificacao="contas_a_pagar",
-                            usuario_id=usuario_id
-                        )
-                        self.session.add(transacao_assistente_contas)
-                        
-                        result["lancamentos_gerados"] += 2
+                        if valor_assistente > 0:
+                            nome_assistente = assistente_item.fornecedor  # o campo "fornecedor" armazena o nome do assistente
+                            
+                            # Transação no extrato
+                            transacao_assistente = Transacao(
+                                tipo="despesa",
+                                descricao=f"Pagamento Assistente {nome_assistente} - Proposta #{proposta.numero}",
+                                valor=valor_assistente,
+                                data=data_lancamento,
+                                categoria="Assistente",
+                                subcategoria="Pagamento de Serviço",
+                                tipo_despesa="assistente",
+                                origem_id=assistente_item.id,
+                                origem_tipo="assistente",
+                                tipo_conta="PF",
+                                status="Pendente",
+                                proposta_id=proposta_id_int,
+                                classificacao="custo_direto",
+                                usuario_id=usuario_id
+                            )
+                            self.session.add(transacao_assistente)
+                            
+                            # Transação nas contas a pagar
+                            transacao_assistente_contas = Transacao(
+                                tipo="contas_a_pagar",
+                                descricao=f"Assistente a pagar - {nome_assistente} - Proposta #{proposta.numero}",
+                                valor=valor_assistente,
+                                data=data_lancamento,
+                                categoria="Assistente",
+                                subcategoria="Assistente a pagar",
+                                tipo_despesa="assistente",
+                                origem_id=assistente_item.id,
+                                origem_tipo="assistente",
+                                tipo_conta="PF",
+                                status="Pendente",
+                                proposta_id=proposta_id_int,
+                                classificacao="contas_a_pagar",
+                                usuario_id=usuario_id
+                            )
+                            self.session.add(transacao_assistente_contas)
+                            
+                            result["lancamentos_gerados"] += 2
+                            print(f"DEBUG LANCAMENTOS: Lançamentos criados para assistente {nome_assistente}: R$ {valor_assistente:.2f}")
+                else:
+                    if transacoes_assistentes > 0:
+                        print(f"DEBUG LANCAMENTOS: Já existem lançamentos para Assistentes a pagar ({transacoes_assistentes}). Pulando.")
                 
                 result["valor_fornecedores"] = valor_total_fornecedores
                 result["valor_assistentes"] = valor_total_assistentes
