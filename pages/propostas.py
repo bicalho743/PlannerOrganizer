@@ -1309,24 +1309,22 @@ def show():
                                 # DEBUG - Verificar produtos do tipo "caixa" diretamente no banco
                                 try:
                                     # Buscar produtos com caixa no nome
-                                    from sqlalchemy import text
-                                    caixa_query = text("""
-                                        SELECT id, nome, valor, quantidade 
-                                        FROM produtos_organizadores 
-                                        WHERE proposta_id = :proposta_id 
-                                        AND LOWER(nome) LIKE '%caixa%'
-                                    """)
+                                    # Buscar produtos usando a função segura já existente
+                                    produtos_df = st.session_state.db.get_produtos_organizadores_sql_direto(proposta_id=proposta_exec_id)
                                     
                                     produtos_caixa = []
-                                    with st.session_state.db.engine.connect() as connection:
-                                        result = connection.execute(caixa_query, {"proposta_id": proposta_exec_id})
-                                        for row in result:
-                                            produtos_caixa.append({
-                                                "id": row[0],
-                                                "nome": row[1],
-                                                "valor": float(row[2]) if row[2] is not None else 0,
-                                                "quantidade": int(row[3]) if row[3] is not None else 1
-                                            })
+                                    if not produtos_df.empty:
+                                        # Filtrar produtos que contêm "caixa" no nome (case insensitive)
+                                        caixas_df = produtos_df[produtos_df['nome'].str.lower().str.contains('caixa', na=False)]
+                                        
+                                        if not caixas_df.empty:
+                                            for _, row in caixas_df.iterrows():
+                                                produtos_caixa.append({
+                                                    "id": row['id'],
+                                                    "nome": row['nome'],
+                                                    "valor": float(row['valor']) if pd.notna(row['valor']) else 0,
+                                                    "quantidade": int(row['quantidade']) if pd.notna(row['quantidade']) else 1
+                                                })
                                     
                                     # Se encontramos produtos do tipo caixa, adicionar à tabela
                                     if produtos_caixa:
@@ -1435,7 +1433,11 @@ def show():
                                 valor_assistentes = total_assistentes if 'total_assistentes' in locals() else 0
                                 valor_outros = total_outros if 'total_outros' in locals() else 0
                                 
-                                valor_total = valor_base + valor_produtos + valor_fornecedores + valor_assistentes + valor_outros
+                                # Os assistentes são despesas, então devem ser subtraídos do total
+                                valor_total = valor_base + valor_produtos + valor_fornecedores - valor_assistentes + valor_outros
+                                
+                                # Mensagem de debug para acompanhar os valores
+                                print(f"DEBUG FINANCEIRO: base={valor_base}, produtos={valor_produtos}, fornecedores={valor_fornecedores}, assistentes={valor_assistentes} (subtraído), outros={valor_outros}, total={valor_total}")
                                 
                                 resumo = pd.DataFrame({
                                     "Item": ["Valor Base", "Produtos", "Fornecedores", "Assistentes", "Outros", "Total Geral"],
@@ -1457,12 +1459,12 @@ def show():
                                     'Valor Base': valor_base,
                                     'Produtos': valor_produtos,
                                     'Fornecedores': valor_fornecedores,
-                                    'Assistentes': valor_assistentes,
+                                    'Assistentes (Custos)': -valor_assistentes if valor_assistentes > 0 else 0,  # Negativo para representar custos
                                     'Outros': valor_outros
                                 }
                                 
-                                # Filtrar apenas valores maiores que zero
-                                valores_filtrados = {k: v for k, v in valores.items() if v > 0}
+                                # Filtrar apenas valores diferentes de zero (valor absoluto)
+                                valores_filtrados = {k: abs(v) for k, v in valores.items() if v != 0}
                                 
                                 # Criar versão alternativa do gráfico usando plotly para maior compatibilidade
                                 

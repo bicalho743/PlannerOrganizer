@@ -251,7 +251,24 @@ def gerar_pdf_proposta(db, proposta_id, custom_filename=None):
         proposta_dict = proposta
         if hasattr(proposta, 'to_dict'):
             proposta_dict = proposta.to_dict()
+        elif isinstance(proposta, pd.Series):
+            proposta_dict = proposta.to_dict()
+            # Garantir que campos críticos estejam presentes
+            print(f"DEBUG PDF: Convertendo Series para dict com campos: {list(proposta_dict.keys())}")
+        else:
+            # Se não for possível converter, garantir que seja um dicionário
+            proposta_dict = dict(proposta)
+            print(f"DEBUG PDF: Usando proposta como dict diretamente: {list(proposta_dict.keys())}")
             
+        # Garantir que todos os campos importantes estejam presentes
+        campos_esperados = ['id', 'tipo_proposta', 'status', 'data_inicio', 'data_fim', 'prazo_entrega']
+        for campo in campos_esperados:
+            if campo not in proposta_dict:
+                print(f"DEBUG PDF: ALERTA - Campo '{campo}' não encontrado no dicionário da proposta!")
+            else:
+                print(f"DEBUG PDF: Campo '{campo}' encontrado com valor: {proposta_dict[campo]}")
+                
+        # Adicionar valores adicionais
         proposta_dict['perfil'] = perfil
         proposta_dict['produtos'] = produtos
             

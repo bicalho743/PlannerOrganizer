@@ -1,0 +1,27 @@
+Aba finalizar no GERENCIAR EXECUÇÃO
+
+Extrato Financeiro
+
+Gerado extrato receita comissão
+Gerado extrato despesa assistente
+
+Não foi gerado Outros a receber
+Não foi gerado Produtos a receber
+
+
+CONTAS A RECEBER
+
+Não foi gerado comissão a receber
+Não foi gerado Outros a receber
+
+Módulo Vendas
+Não foi gerado Nova Venda
+
+MENSAGEM DE ERRO AO FINALIZAR
+Proposta concluída, mas houve um erro ao gerar lançamentos financeiros: Erro ao executar operação no banco de dados: Erro ao gerar lançamentos financeiros: This Session's transaction has been rolled back due to a previous exception during flush. To begin a new transaction with this Session, first issue Session.rollback(). Original exception was: (psycopg2.errors.UndefinedColumn) column "descricao" of relation "itens_venda" does not exist LINE 1: ...produto_id, quantidade, preco_unitario, subtotal, descricao)... ^
+
+[SQL: INSERT INTO itens_venda (venda_id, produto_id, quantidade, preco_unitario, subtotal, descricao) SELECT p0::INTEGER, p1::INTEGER, p2::INTEGER, p3::FLOAT, p4::FLOAT, p5::VARCHAR FROM (VALUES (%(venda_id__0)s, %(produto_id__0)s, %(quantidade__0)s, %(pre ... 311 characters truncated ... p2, p3, p4, p5, sen_counter) ORDER BY sen_counter RETURNING itens_venda.id, itens_venda.id AS id__1] [parameters: {'descricao__0': 'COLMEIA JEANS INVISÍVEL', 'quantidade__0': 8, 'venda_id__0': 9, 'preco_unitario__0': 61.1, 'subtotal__0': 488.8, 'produto_id__0': None, 'descricao__1': 'COLMEIA JEANS INVISÍVEL', 'quantidade__1': 12, 'venda_id__1': 9, 'preco_unitario__1': 61.1, 'subtotal__1': 733.2, 'produto_id__1': None, 'descricao__2': 'P COLMEIA INVISÍVEL', 'quantidade__2': 8, 'venda_id__2': 9, 'preco_unitario__2': 32.2, 'subtotal__2': 257.6, 'produto_id__2': None}] (Background on this error at: https://sqlalche.me/e/20/f405) (Background on this error at: https://sqlalche.me/e/20/7s2a)
+
+
+REABRIR PROPOSTA
+msg de erro - Erro ao reabrir proposta: Proposta reaberta com sucesso, mas houve problemas para gerar novos lançamentos financeiros
