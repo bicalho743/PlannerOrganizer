@@ -2,17 +2,23 @@
 Módulo para gerar relatórios internos com design profissional.
 Usa a biblioteca ReportLab com Canvas para ter mais controle sobre o design.
 """
+# Imports do sistema
+import os
+import sys
+import traceback
+from datetime import datetime, timedelta
+
+# Imports de bibliotecas externas
+import pandas as pd
+import textwrap
+
+# Imports do ReportLab
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, letter
 from reportlab.pdfgen import canvas
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch, cm
-from datetime import datetime
-import os
-import traceback
-import pandas as pd
-import textwrap
 
 def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
     """
@@ -67,7 +73,6 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
         
         # Data atual à direita no cabeçalho
         c.setFont("Helvetica", 10)
-        from datetime import datetime, timedelta
         agora = datetime.now() - timedelta(hours=3)  # Ajustando para UTC-3 (Brasília)
         c.drawRightString(width - 30, height - 30, f"Data: {agora.strftime('%d/%m/%Y')}")
         
@@ -213,7 +218,6 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
                         try:
                             # Consultar diretamente o banco de dados via SQL
                             import psycopg2
-                            import os
                             
                             # Obter conexão do ambiente
                             db_url = os.environ.get("DATABASE_URL")
@@ -401,7 +405,6 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
         c.setFillColor(colors.white)
         c.setFont("Helvetica", 9)
         # Usar horário do Brasil para o timestamp
-        from datetime import datetime, timedelta
         agora = datetime.now() - timedelta(hours=3)  # Ajustando para UTC-3 (Brasília)
         c.drawCentredString(width/2, 10, f"Relatório gerado em {agora.strftime('%d/%m/%Y às %H:%M')}")
         
