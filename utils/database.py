@@ -4698,13 +4698,29 @@ class Database:
         Returns:
             int: ID da venda criada ou None em caso de erro
         """
+        # Resolver o problema de "concurrent operations are not permitted"
+        # usando uma nova sessão isolada para esta operação
+        from sqlalchemy.orm import Session as SQLSession
+        from sqlalchemy import create_engine
+        from utils.config import DATABASE_URL
+        
+        # Criar uma nova sessão independente para esta operação
+        engine_local = create_engine(DATABASE_URL)
+        session_local = SQLSession(bind=engine_local)
+        
         try:
             print(f"DEBUG VENDAS: Iniciando registro de venda para proposta #{proposta.numero}")
             print(f"DEBUG VENDAS: Cliente: {cliente.nome} (ID: {cliente.id})")
             print(f"DEBUG VENDAS: Total de produtos: {len(produtos)}")
             
-            # Verificar se já existe uma venda para esta proposta
-            venda_existente = self.session.query(Venda).filter_by(proposta_id=proposta.id).first()
+            # Buscar proposta e cliente pela ID na sessão local
+            proposta_id = proposta.id
+            cliente_id = cliente.id
+            proposta_numero = proposta.numero
+            usuario_id = proposta.usuario_id
+            
+            # Verificar se já existe uma venda para esta proposta na sessão local
+            venda_existente = session_local.query(Venda).filter_by(proposta_id=proposta_id).first()
             if venda_existente:
                 print(f"DEBUG VENDAS: Já existe uma venda (ID: {venda_existente.id}) para esta proposta")
                 
@@ -4714,103 +4730,119 @@ class Database:
                     # Primeiro remover os itens relacionados
                     try:
                         # Remover transações financeiras relacionadas à venda
-                        self.session.query(Transacao).filter_by(
+                        session_local.query(Transacao).filter_by(
                             origem_id=venda_existente.id,
                             origem_tipo='venda'
                         ).delete()
                         print(f"DEBUG VENDAS: Transações financeiras da venda removidas")
                         
                         # Remover itens da venda
-                        self.session.query(ItemVenda).filter_by(venda_id=venda_existente.id).delete()
+                        session_local.query(ItemVenda).filter_by(venda_id=venda_existente.id).delete()
                         print(f"DEBUG VENDAS: Itens da venda removidos")
                         
                         # Depois remover a venda
-                        self.session.query(Venda).filter_by(id=venda_existente.id).delete()
-                        self.session.flush()
+                        session_local.query(Venda).filter_by(id=venda_existente.id).delete()
+                        session_local.flush()
                         print(f"DEBUG VENDAS: Venda removida com sucesso")
                     except Exception as e:
                         print(f"ERRO ao remover venda existente: {str(e)}")
                         import traceback
                         traceback.print_exc()
+                        session_local.rollback()
                 else:
                     # Verificar se a venda tem itens
-                    itens = self.session.query(ItemVenda).filter_by(venda_id=venda_existente.id).count()
+                    itens = session_local.query(ItemVenda).filter_by(venda_id=venda_existente.id).count()
                     print(f"DEBUG VENDAS: Venda existente tem {itens} itens")
                     
                     if itens == 0:
                         print(f"DEBUG VENDAS: Venda existe mas não tem itens. Removendo venda vazia para regeneração.")
                         # Remover a venda sem itens
-                        self.session.query(Venda).filter_by(id=venda_existente.id).delete()
-                        self.session.flush()
+                        session_local.query(Venda).filter_by(id=venda_existente.id).delete()
+                        session_local.flush()
                     else:
                         # Se não forçar, retornar o ID da venda existente
                         print(f"DEBUG VENDAS: Usando venda existente com itens")
-                        return venda_existente.id
+                        venda_id = venda_existente.id
+                        session_local.close()
+                        return venda_id
             
             # Calcular valor total dos produtos
             valor_total = 0
+            produtos_info = []  # Lista para armazenar informações dos produtos
+            
             for i, produto in enumerate(produtos):
                 valor_produto = float(produto.valor) * produto.quantidade
                 valor_total += valor_produto
+                produtos_info.append({
+                    'nome': produto.nome,
+                    'valor': float(produto.valor),
+                    'quantidade': produto.quantidade,
+                    'subtotal': valor_produto,
+                    'produto_id': produto.produto_id if hasattr(produto, 'produto_id') else None
+                })
                 print(f"DEBUG VENDAS: Produto {i+1}: {produto.nome}, Valor: R$ {produto.valor}, Quantidade: {produto.quantidade}, Subtotal: R$ {valor_produto:.2f}")
                 
             print(f"DEBUG VENDAS: Valor total dos produtos: R$ {valor_total:.2f}")
                 
             # Criar a venda
             venda = Venda(
-                cliente_id=cliente.id,
-                proposta_id=proposta.id,
+                cliente_id=cliente_id,
+                proposta_id=proposta_id,
                 data_venda=datetime.now().date(),
                 valor_total=valor_total,
                 status="Concluída",
                 forma_pagamento="Proposta",
-                observacoes=f"Venda gerada automaticamente da proposta #{proposta.numero}"
+                observacoes=f"Venda gerada automaticamente da proposta #{proposta_numero}",
+                usuario_id=usuario_id  # Importante: manter o mesmo usuário da proposta
             )
-            self.session.add(venda)
-            self.session.flush()  # Para obter o ID da venda
-            print(f"DEBUG VENDAS: Venda criada com ID: {venda.id}")
+            session_local.add(venda)
+            session_local.flush()  # Para obter o ID da venda
+            venda_id = venda.id
+            print(f"DEBUG VENDAS: Venda criada com ID: {venda_id}")
             
             # Adicionar itens da venda
-            for i, produto in enumerate(produtos):
-                valor_produto = float(produto.valor) * produto.quantidade
+            for produto_info in produtos_info:
                 # Criar o objeto ItemVenda com campos compatíveis
-                # Evitando usar o campo 'descricao' que pode não existir no ambiente de produção
                 try:
                     # Tentar criar o objeto com campos básicos primeiro (compatível com produção)
                     item = ItemVenda(
-                        venda_id=venda.id,
-                        produto_id=None,  # Não temos o produto do catálogo, apenas o produto da proposta
-                        quantidade=produto.quantidade,
-                        preco_unitario=float(produto.valor),
-                        subtotal=valor_produto
+                        venda_id=venda_id,
+                        produto_id=produto_info['produto_id'],
+                        quantidade=produto_info['quantidade'],
+                        preco_unitario=produto_info['valor'],
+                        subtotal=produto_info['subtotal']
                     )
                     
                     # Tentar adicionar o campo descricao somente se for suportado
                     if hasattr(ItemVenda, 'descricao'):
                         try:
-                            item.descricao = produto.nome
+                            item.descricao = produto_info['nome']
                         except Exception as descr_e:
                             print(f"AVISO: Não foi possível adicionar o campo descricao: {str(descr_e)}")
                 except Exception as e:
                     print(f"ERRO ao criar item de venda: {str(e)}")
                     # Garantir que pelo menos os campos obrigatórios são incluídos
                     item = ItemVenda(
-                        venda_id=venda.id,
+                        venda_id=venda_id,
                         produto_id=None,
-                        quantidade=produto.quantidade,
-                        preco_unitario=float(produto.valor),
-                        subtotal=valor_produto
+                        quantidade=produto_info['quantidade'],
+                        preco_unitario=produto_info['valor'],
+                        subtotal=produto_info['subtotal']
                     )
-                self.session.add(item)
-                print(f"DEBUG VENDAS: Item adicionado à venda: {produto.nome}, Subtotal: R$ {valor_produto:.2f}")
+                session_local.add(item)
+                print(f"DEBUG VENDAS: Item adicionado à venda: {produto_info['nome']}, Subtotal: R$ {produto_info['subtotal']:.2f}")
             
             # Forçar commit para garantir que a venda seja salva
-            self.session.commit()
-            print(f"DEBUG VENDAS: Venda registrada com sucesso, ID: {venda.id}")
-            return venda.id
+            session_local.commit()
+            print(f"DEBUG VENDAS: Venda registrada com sucesso, ID: {venda_id}")
+            return venda_id
             
         except Exception as e:
+            session_local.rollback()
             print(f"ERRO ao registrar venda de produtos: {str(e)}")
             import traceback
             traceback.print_exc()
             return None
+        finally:
+            # Sempre fechar a sessão local no final para liberar os recursos
+            session_local.close()
