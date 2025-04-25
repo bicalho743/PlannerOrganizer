@@ -188,7 +188,14 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
         # Se temos produtos, estimamos lucro
         if valor_produtos_total > 0:
             lucro_produtos_total = valor_produtos_total * 0.5  # Estimativa padrão de 50% de lucro
+                
+        # Valor total provisório para cálculo de comissão (sem incluir outros que podem conter comissões)
+        valor_total_provisorio = valor_base + valor_produtos_total
         
+        # Flag para controlar se a comissão foi encontrada nos acréscimos
+        comissao_encontrada = False
+        
+        # Processar acréscimos para identificar custos específicos
         if not acrescimos.empty and hasattr(acrescimos, 'iterrows'):
             for _, acrescimo in acrescimos.iterrows():
                 tipo = acrescimo.get('tipo', '').lower() if hasattr(acrescimo, 'get') else ''
@@ -199,12 +206,28 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
                 elif tipo in ['fornecedor', 'produto', 'marcenaria']:
                     custos_fornecedores += valor
                 elif tipo == 'comissão':
+                    # Usar o valor da comissão se existir na tabela de acréscimos
                     total_comissoes += valor
+                    comissao_encontrada = True
+                    print(f"DEBUG PDF: Comissão encontrada nos acréscimos: R$ {valor:.2f}")
                 else:
                     total_outros += valor
         
         # Calcular totais
         custo_cliente_total = valor_base + valor_produtos_total + custos_fornecedores + total_outros
+        
+        # Cálculo de comissão se não estiver presente na tabela de acréscimos
+        if not comissao_encontrada:
+            # Usar um percentual padrão sobre o valor total para calcular a comissão
+            percentual_comissao = 0.10  # 10% de comissão padrão
+            comissao_calculada = custo_cliente_total * percentual_comissao
+            total_comissoes = comissao_calculada
+            
+            # Log para depuração
+            print(f"DEBUG PDF: Comissão calculada como {percentual_comissao*100}% do valor total: R$ {comissao_calculada:.2f}")
+        else:
+            print(f"DEBUG PDF: Total de comissões encontradas: R$ {total_comissoes:.2f}")
+        
         meu_ganho = valor_base + total_comissoes + lucro_produtos_total - custos_assistentes
         
         # Calcular margem percentual
