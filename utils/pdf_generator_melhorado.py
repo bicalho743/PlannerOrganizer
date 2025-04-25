@@ -246,22 +246,6 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         # Total para cálculo
         total = float(proposta['valor'])
         
-        # Adicionar o produto ORGANZA G
-        # Alternância de cores para linhas
-        if linha % 2 == 0:
-            c.setFillColor(azul_claro)
-            c.rect(40, y-15, table_width, 15, fill=True, stroke=False)
-        
-        # Adicionar item à tabela
-        c.setFillColor(cinza_medio)
-        produto_descricao = "PRODUTO - ORGANZA G (17 unid.)"
-        produto_valor = 53.04
-        c.drawString(50, y-12, produto_descricao)
-        c.drawRightString(40 + desc_col_width + valor_col_width - 10, y-12, f"R$ {produto_valor:.2f}")
-        total += produto_valor
-        y -= 15
-        linha += 1
-        
         # Adicionar acréscimos, exceto os de tipo 'assistente'
         for _, acrescimo in acrescimos.iterrows():
             tipo = acrescimo.get('tipo', 'OUTRO')
