@@ -41,12 +41,7 @@ def show():
             else:
                 st.sidebar.error("Erro ao adicionar dados de teste")
 
-    # Adicionar data no topo da página
-    st.markdown("""
-    <div style="text-align: center; background-color: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-        <span style="font-size: 1.2rem; color: #1E366F; font-weight: 500;">📅 25 de abril de 2025</span>
-    </div>
-    """, unsafe_allow_html=True)
+    # A data já foi adicionada no cabeçalho, então não precisamos mais desta seção
 
     # Dashboard layout com cards modernos
     # Primeira linha - 3 cartões de métricas principais
