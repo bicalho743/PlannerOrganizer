@@ -1551,16 +1551,6 @@ def show():
                                         
                                         time.sleep(2)  # Dar tempo para o usuário ver as mensagens
                                         st.rerun()
-                                        
-                                    # Mostrar detalhes dos valores
-                                    with st.expander("Detalhes dos lançamentos"):
-                                        st.write(f"- Valor Base (Cliente): R$ {resultado_lancamentos.get('valor_base', 0):.2f}")
-                                        st.write(f"- Produtos: R$ {resultado_lancamentos.get('valor_produtos', 0):.2f}")
-                                        st.write(f"- Fornecedores: R$ {resultado_lancamentos.get('valor_fornecedores', 0):.2f}")
-                                        st.write(f"- Assistentes a Pagar: R$ {resultado_lancamentos.get('valor_assistentes', 0):.2f}")
-                                        
-                                        time.sleep(2)  # Dar tempo para o usuário ver as mensagens
-                                        st.rerun()
                                     else:
                                         st.error("Erro ao finalizar proposta.")
                                 except Exception as e:
