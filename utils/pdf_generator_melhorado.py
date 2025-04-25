@@ -729,9 +729,13 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         c.drawString(30, y, "Informações da Proposta")
         y -= 20
         
+        # Calcular a altura total do texto para a caixa sombreada
+        # 4 linhas de informações * 16 pixels de altura cada + 10 pixels de margem superior e inferior
+        box_height = (4 * 16) + 20
+        
         # Criar uma caixa de destaque para os detalhes
         c.setFillColor(azul_claro)
-        c.rect(30, y - 90, width - 60, 90, fill=True, stroke=0)
+        c.rect(30, y - box_height + 10, width - 60, box_height, fill=True, stroke=0)
         c.setFillColor(azul_escuro)
         
         # Tipo da proposta
