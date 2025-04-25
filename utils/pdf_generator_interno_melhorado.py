@@ -200,16 +200,27 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
             for _, acrescimo in acrescimos.iterrows():
                 tipo = acrescimo.get('tipo', '').lower() if hasattr(acrescimo, 'get') else ''
                 valor = float(acrescimo.get('valor', 0)) if hasattr(acrescimo, 'get') else 0
+                percentual_comissao = float(acrescimo.get('percentual_comissao', 0)) if hasattr(acrescimo, 'get') else 0
+                fornecedor = acrescimo.get('fornecedor', '').lower() if hasattr(acrescimo, 'get') else ''
+                
+                # Log para depuração dos acréscimos
+                print(f"DEBUG PDF: Processando acréscimo: tipo={tipo}, valor={valor}, fornecedor={fornecedor}, percentual_comissao={percentual_comissao}")
                 
                 if tipo == 'assistente':
                     custos_assistentes += valor
                 elif tipo in ['fornecedor', 'produto', 'marcenaria']:
                     custos_fornecedores += valor
+                    # Verificar se esse fornecedor tem comissão
+                    if percentual_comissao > 0:
+                        comissao_valor = valor * (percentual_comissao / 100)
+                        total_comissoes += comissao_valor
+                        comissao_encontrada = True
+                        print(f"DEBUG PDF: Comissão encontrada em fornecedor ({fornecedor}): {percentual_comissao}% = R$ {comissao_valor:.2f}")
                 elif tipo == 'comissão':
                     # Usar o valor da comissão se existir na tabela de acréscimos
                     total_comissoes += valor
                     comissao_encontrada = True
-                    print(f"DEBUG PDF: Comissão encontrada nos acréscimos: R$ {valor:.2f}")
+                    print(f"DEBUG PDF: Comissão encontrada diretamente nos acréscimos: R$ {valor:.2f}")
                 else:
                     total_outros += valor
         

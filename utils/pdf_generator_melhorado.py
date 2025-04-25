@@ -246,22 +246,37 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         # Total para cálculo
         total = float(proposta['valor'])
         
+        # Debug para entender os acréscimos
+        print(f"DEBUG PDF: Relatório de Serviço - Verificando acréscimos: {len(acrescimos)} itens")
+        if hasattr(acrescimos, 'columns'):
+            print(f"DEBUG PDF: Colunas disponíveis: {', '.join(acrescimos.columns.tolist())}")
+        
         # Adicionar acréscimos, exceto os de tipo 'assistente'
         for _, acrescimo in acrescimos.iterrows():
+            # Verificar tipo e dados do acréscimo para debug
             tipo = acrescimo.get('tipo', 'OUTRO')
-            
-            # Pular itens de assistentes que não devem aparecer no relatório para o cliente
-            if tipo.lower() == 'assistente':
-                continue
-                
             descricao = acrescimo.get('descricao', 'Item adicional')
             fornecedor = acrescimo.get('fornecedor', '')
             valor = float(acrescimo.get('valor', 0))
+            produto_id = acrescimo.get('produto_id', None)
+            nome_item = acrescimo.get('nome', descricao)
             
-            # Formatar descrição completa com tipo e fornecedor
-            descricao_formatada = f"{tipo.upper()} - {descricao}"
-            if fornecedor:
-                descricao_formatada += f" ({fornecedor})"
+            print(f"DEBUG PDF: Processando item: tipo={tipo}, descricao={descricao}, fornecedor={fornecedor}, valor={valor}, produto_id={produto_id}")
+            
+            # Pular itens de assistentes que não devem aparecer no relatório para o cliente
+            if tipo.lower() == 'assistente':
+                print(f"DEBUG PDF: Pulando item assistente: {descricao}")
+                continue
+                
+            # Formatar descrição completa
+            if tipo.lower() == 'outro':
+                # Para tipo OUTRO, usar o nome ou descrição diretamente
+                descricao_formatada = nome_item if nome_item else descricao
+            else:
+                # Para outros tipos, formatar com tipo e fornecedor
+                descricao_formatada = f"{tipo.upper()} - {descricao}"
+                if fornecedor:
+                    descricao_formatada += f" ({fornecedor})"
             
             # Alternância de cores para linhas
             if linha % 2 == 0:
