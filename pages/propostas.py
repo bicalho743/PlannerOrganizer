@@ -1506,11 +1506,14 @@ def show():
                                     data_conclusao = datetime.now().date()
                                     
                                     # Atualizar status da proposta
-                                    sucesso = st.session_state.db.atualizar_proposta(
+                                    resultado_atualizacao = st.session_state.db.atualizar_proposta(
                                         proposta_id=proposta_exec_id,
                                         status="Concluída",
                                         status_execucao="Finalizada"
                                     )
+                                    
+                                    # Verificar se a atualização teve sucesso
+                                    sucesso = resultado_atualizacao.get("status", False)
                                     
                                     if sucesso:
                                         # Gerar lançamentos financeiros automáticos
@@ -1651,7 +1654,9 @@ def show():
                             st.warning(f"Você está prestes a excluir a proposta #{proposta_numero} - {proposta_exc.iloc[0]['descricao']}")
                             if st.button("CONFIRMAR EXCLUSÃO", key="confirmar_exclusao_finalizada"):
                                 try:
-                                    sucesso, mensagem = st.session_state.db.excluir_proposta_por_numero(proposta_numero)
+                                    resultado_exclusao = st.session_state.db.excluir_proposta_por_numero(proposta_numero)
+                                    sucesso = resultado_exclusao.get("status", False)
+                                    mensagem = resultado_exclusao.get("message", "Erro desconhecido")
                                     if sucesso:
                                         st.success("Proposta excluída com sucesso!")
                                         time.sleep(1)
