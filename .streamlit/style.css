@@ -163,16 +163,153 @@ div[data-baseweb="calendar"] {
 button[role="tab"] {
     padding: 0.75rem 1.5rem !important;
     font-weight: 500;
+    position: relative;
+    transition: all 0.2s ease-in-out;
 }
 
 .stTabs [aria-selected="true"] {
     font-weight: 600;
     color: #1E88E5 !important;
     border-bottom-color: #1E88E5 !important;
+    background-color: rgba(30, 136, 229, 0.05);
+}
+
+/* Estilos para abas principais de navegação */
+.main-tabs button[role="tab"] {
+    border-radius: 4px 4px 0 0;
+    border: 1px solid #eaeaea;
+    border-bottom: none;
+    margin-right: 2px;
+}
+
+.main-tabs [aria-selected="true"] {
+    background-color: #E6F3FF !important;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* Estilos para as sub-abas (dentro da proposta) */
+.execution-tabs button[role="tab"] {
+    background-color: #f8f9fa;
+    border: none;
+    border-radius: 4px;
+    margin: 0 2px;
+    font-size: 0.9rem;
+}
+
+.execution-tabs [aria-selected="true"] {
+    background-color: #E3F2FD !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Cores categorizadas para sub-abas */
+.execution-tabs [data-value="Andamento"][aria-selected="true"] {
+    background-color: #E3F2FD !important; /* Azul */
+}
+
+.execution-tabs [data-value="Produtos"][aria-selected="true"] {
+    background-color: #E8F5E9 !important; /* Verde */
+}
+
+.execution-tabs [data-value="Outros"][aria-selected="true"] {
+    background-color: #FFF8E1 !important; /* Amarelo */
+}
+
+.execution-tabs [data-value="Fornecedores"][aria-selected="true"] {
+    background-color: #FFF3E0 !important; /* Laranja */
+}
+
+.execution-tabs [data-value="Assistentes"][aria-selected="true"] {
+    background-color: #F3E5F5 !important; /* Roxo */
+}
+
+.execution-tabs [data-value="Finalizar"][aria-selected="true"] {
+    background-color: #FFEBEE !important; /* Vermelho */
 }
 
 /* Espaçamento específico para as páginas de Dashboard e Propostas */
 [data-testid="stAppViewContainer"] > div > div > div > div:first-child h1 {
     margin-top: 3.5rem !important;
     padding-top: 2rem !important;
+}
+
+/* Breadcrumbs de navegação */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+}
+
+.breadcrumb span {
+    margin: 0 0.25rem;
+}
+
+/* Cartões de itens */
+.item-card {
+    background-color: white;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #eaeaea;
+    transition: all 0.2s ease;
+}
+
+.item-card:hover {
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+/* Barra de progresso */
+.progress-container {
+    width: 100%;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    margin: 1rem 0;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 10px;
+    background-color: #4CAF50;
+    border-radius: 5px;
+    transition: width 0.3s ease;
+}
+
+/* Sombreamento para containers de seções */
+.section-container {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    border: 1px solid #eaeaea;
+}
+
+/* Estilos para a tabela de detalhes da proposta */
+.proposal-details-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.proposal-details-table th {
+    text-align: left;
+    padding: 0.5rem;
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.proposal-details-table td {
+    padding: 0.5rem;
+    border-bottom: 1px solid #eaeaea;
+}
+
+/* Ícones para as abas */
+.tab-icon {
+    margin-right: 0.5rem;
+    font-size: 1.1rem;
+    vertical-align: middle;
 }

@@ -16,14 +16,27 @@ def show():
         st.error("Erro: Conexão com banco de dados não disponível")
         return
     
-    # Criar abas para organizar o conteúdo
+    # Adicionar classes CSS para melhorar a aparência das abas
+    st.markdown("""
+    <style>
+    div[data-testid="stTabs"] > div:first-child {
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        padding: 0.2rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Criar abas para organizar o conteúdo com ícones para cada uma
+    st.markdown('<div class="main-tabs">', unsafe_allow_html=True)
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "Nova Proposta", 
-        "Propostas em Aberto", 
-        "Em Execução", 
-        "Finalizadas", 
-        "Todas as Propostas"
+        "➕ Nova Proposta", 
+        "📁 Propostas em Aberto", 
+        "⚙️ Em Execução", 
+        "✅ Finalizadas", 
+        "📋 Todas as Propostas"
     ])
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # ABA 1: NOVA PROPOSTA
     with tab1:
@@ -701,12 +714,72 @@ def show():
                     proposta_exec = propostas_em_execucao[propostas_em_execucao['id'] == proposta_exec_id]
                     
                     if not proposta_exec.empty:
-                        st.write(f"Proposta #{proposta_exec.iloc[0]['numero']} - {proposta_exec.iloc[0]['descricao']}")
+                        # Adicionar breadcrumbs para navegação
+                        st.markdown(
+                            f"""
+                            <div class="breadcrumb">
+                                <span>Propostas</span> > 
+                                <span>Em Execução</span> > 
+                                <span>Proposta #{proposta_exec.iloc[0]['numero']}</span>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
                         
-                        # Criar abas para gerenciar diferentes aspectos da execução
+                        # Mostrar informações da proposta com melhor formatação
+                        st.markdown(
+                            f"""
+                            <div class="section-container">
+                                <h2 style="margin-top:0">Proposta #{proposta_exec.iloc[0]['numero']}</h2>
+                                <p style="font-size: 1.1rem; color: #555;">{proposta_exec.iloc[0]['descricao']}</p>
+                                <div style="display: flex; gap: 2rem; margin-top: 0.5rem; margin-bottom: 1rem;">
+                                    <div>
+                                        <strong>Cliente:</strong> {proposta_exec.iloc[0]['nome']}
+                                    </div>
+                                    <div>
+                                        <strong>Valor:</strong> R$ {float(proposta_exec.iloc[0]['valor']):.2f}
+                                    </div>
+                                    <div>
+                                        <strong>Status:</strong> {proposta_exec.iloc[0]['status']}
+                                    </div>
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+                        
+                        # Adicionar barra de progresso visual
+                        progresso = 50  # Valor exemplo, pode ser calculado com base em andamentos registrados
+                        st.markdown(
+                            f"""
+                            <div class="progress-container">
+                                <div class="progress-bar" style="width: {progresso}%;"></div>
+                            </div>
+                            <div style="text-align: center; font-size: 0.85rem; margin-bottom: 1rem;">
+                                Progresso da proposta: {progresso}%
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+                        
+                        # Adicionar estilos específicos para as abas de execução
+                        st.markdown("""
+                        <style>
+                        div[data-testid="stTabs"] > div:nth-child(2) {
+                            background-color: white;
+                            border-radius: 6px;
+                            padding: 1rem;
+                            box-shadow: 0px 1px 3px rgba(0,0,0,0.1);
+                        }
+                        </style>
+                        """, unsafe_allow_html=True)
+                        
+                        # Criar abas para gerenciar diferentes aspectos da execução com ícones e cores
+                        st.markdown('<div class="execution-tabs">', unsafe_allow_html=True)
                         exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5, exec_tab6 = st.tabs([
-                            "Andamento", "Produtos", "Outros", "Fornecedores", "Assistentes", "Finalizar"
+                            "📊 Andamento", "📦 Produtos", "➕ Outros", "🏭 Fornecedores", "👥 Assistentes", "🏁 Finalizar"
                         ])
+                        st.markdown('</div>', unsafe_allow_html=True)
                         
                         with exec_tab1:
                             st.subheader("Andamento")
@@ -740,27 +813,51 @@ def show():
                                     except Exception as e:
                                         st.error(f"Erro ao registrar andamento: {str(e)}")
                             
-                            # Mostrar histórico de andamentos
+                            # Mostrar histórico de andamentos no formato de cartões
                             try:
                                 andamentos = st.session_state.db.get_andamentos_proposta(proposta_exec_id)
                                 
                                 if not andamentos.empty:
-                                    st.write("Histórico de Andamento:")
+                                    st.markdown("""
+                                    <h3 style="margin-top: 2rem; border-bottom: 1px solid #e6e6e6; padding-bottom: 0.5rem;">
+                                        📋 Histórico de Andamento
+                                    </h3>
+                                    """, unsafe_allow_html=True)
                                     
-                                    # Formatar para exibição
-                                    andamentos['Data'] = andamentos['data'].apply(
-                                        lambda x: x.strftime('%d/%m/%Y %H:%M') if pd.notna(x) else ''
-                                    )
+                                    # Ordenar do mais recente para o mais antigo
+                                    andamentos = andamentos.sort_values(by='data', ascending=False)
                                     
-                                    st.dataframe(
-                                        andamentos[['Data', 'status', 'comodo', 'observacao']].rename(
-                                            columns={
-                                                'status': 'Status',
-                                                'comodo': 'Cômodo/Área',
-                                                'observacao': 'Observações'
-                                            }
-                                        )
-                                    )
+                                    # Status e cores
+                                    status_colors = {
+                                        "Em andamento": "#4285F4", # Azul
+                                        "Aguardando cliente": "#FBBC05", # Amarelo
+                                        "Aguardando material": "#F4B400", # Laranja
+                                        "Pausa": "#EA4335", # Vermelho
+                                        "Etapa concluída": "#34A853" # Verde
+                                    }
+                                    
+                                    # Formatação avançada para mostrar dados como cartões
+                                    for idx, andamento in andamentos.iterrows():
+                                        status = andamento['status']
+                                        data = andamento['data'].strftime('%d/%m/%Y %H:%M') if pd.notna(andamento['data']) else ''
+                                        comodo = andamento['comodo'] if pd.notna(andamento['comodo']) else ''
+                                        observacao = andamento['observacao'] if pd.notna(andamento['observacao']) else ''
+                                        
+                                        # Cor para o status
+                                        cor_status = status_colors.get(status, "#1E366F")
+                                        
+                                        st.markdown(f"""
+                                        <div class="item-card" style="border-left: 4px solid {cor_status}; margin-bottom: 1rem;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                                <strong style="color: {cor_status};">{status}</strong>
+                                                <span style="color: #666; font-size: 0.9rem;">{data}</span>
+                                            </div>
+                                            <div style="margin-bottom: 0.5rem;">
+                                                <strong>Cômodo/Área:</strong> {comodo if comodo else "N/A"}
+                                            </div>
+                                            <p style="margin: 0; font-style: italic; color: #555;">{observacao}</p>
+                                        </div>
+                                        """, unsafe_allow_html=True)
                                 else:
                                     st.info("Nenhum registro de andamento para esta proposta.")
                             except Exception as e:
