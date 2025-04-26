@@ -3125,9 +3125,15 @@ class Database:
                         print(f"DEBUG DATABASE: {len(produtos)} produtos encontrados para exclusão")
                         self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id).delete()
                         
-                        acrescimos = self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).all()
-                        print(f"DEBUG DATABASE: {len(acrescimos)} acréscimos encontrados para exclusão")
-                        self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).delete()
+                        # Usar SQL direto em vez de ORM para evitar problemas com a coluna percentual_comissao
+                        from sqlalchemy import text
+                        # Contar acréscimos primeiro
+                        count_result = self.session.execute(text(f"SELECT COUNT(*) FROM acrescimos_proposta WHERE proposta_id = {proposta_id}"))
+                        count = count_result.scalar()
+                        print(f"DEBUG DATABASE: {count} acréscimos encontrados para exclusão")
+                        
+                        # Usar SQL direto para excluir
+                        self.session.execute(text(f"DELETE FROM acrescimos_proposta WHERE proposta_id = {proposta_id}"))
                         
                         # Excluir a proposta
                         print(f"DEBUG DATABASE: Excluindo proposta ID: {proposta_id}")
@@ -3180,9 +3186,15 @@ class Database:
                         print(f"DEBUG DATABASE: {len(produtos)} produtos encontrados para exclusão")
                         self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id_local).delete()
                         
-                        acrescimos = self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id_local).all()
-                        print(f"DEBUG DATABASE: {len(acrescimos)} acréscimos encontrados para exclusão")
-                        self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id_local).delete()
+                        # Usar SQL direto em vez de ORM para evitar problemas com a coluna percentual_comissao
+                        from sqlalchemy import text
+                        # Contar acréscimos primeiro
+                        count_result = self.session.execute(text(f"SELECT COUNT(*) FROM acrescimos_proposta WHERE proposta_id = {proposta_id_local}"))
+                        count = count_result.scalar()
+                        print(f"DEBUG DATABASE: {count} acréscimos encontrados para exclusão")
+                        
+                        # Usar SQL direto para excluir
+                        self.session.execute(text(f"DELETE FROM acrescimos_proposta WHERE proposta_id = {proposta_id_local}"))
                         
                         # Excluir a proposta
                         print(f"DEBUG DATABASE: Excluindo proposta")
@@ -3217,15 +3229,23 @@ class Database:
                 # Converter para int para garantir tipo correto
                 acrescimo_id_int = int(acrescimo_id)
                 
-                # Buscar o acréscimo pelo ID
-                acrescimo = self.session.query(AcrescimoProposta).filter_by(id=acrescimo_id_int).first()
+                # Utilizar SQL direto em vez de ORM para evitar problemas com a coluna percentual_comissao
+                from sqlalchemy import text
                 
-                if not acrescimo:
+                # Verificar se o acréscimo existe
+                count_result = self.session.execute(
+                    text(f"SELECT COUNT(*) FROM acrescimos_proposta WHERE id = {acrescimo_id_int}")
+                )
+                count = count_result.scalar()
+                
+                if count == 0:
                     print(f"DEBUG: Acréscimo ID={acrescimo_id_int} não encontrado")
                     return False
                 
-                # Remover acréscimo
-                self.session.delete(acrescimo)
+                # Remover acréscimo com SQL direto
+                self.session.execute(
+                    text(f"DELETE FROM acrescimos_proposta WHERE id = {acrescimo_id_int}")
+                )
                 self.session.flush()
                 
                 print(f"DEBUG: Acréscimo ID={acrescimo_id_int} removido com sucesso")
@@ -3242,12 +3262,20 @@ class Database:
     def atualizar_status_pagamento_acrescimo(self, proposta_id, tipo, status):
         """Atualiza o status de pagamento de um acréscimo"""
         def query():
-            acrescimo = self.session.query(AcrescimoProposta).filter_by(
-                proposta_id=proposta_id,
-                tipo=tipo
-            ).first()
-            if acrescimo:
-                acrescimo.status_pagamento = status
+            # Usar SQL direto em vez de ORM para evitar problemas com a coluna percentual_comissao
+            from sqlalchemy import text
+            
+            # Verificar se o acréscimo existe
+            count_result = self.session.execute(
+                text(f"SELECT COUNT(*) FROM acrescimos_proposta WHERE proposta_id = {proposta_id} AND tipo = '{tipo}'")
+            )
+            count = count_result.scalar()
+            
+            if count > 0:
+                # Usar SQL direto para atualizar
+                self.session.execute(
+                    text(f"UPDATE acrescimos_proposta SET status_pagamento = '{status}' WHERE proposta_id = {proposta_id} AND tipo = '{tipo}'")
+                )
                 return True
             return False
         return self._safe_query(query)
@@ -3332,15 +3360,24 @@ class Database:
                     'data_recebimento': p.data_proposta
                 })
 
-            # Adicionar acréscimos recebidos
-            acrescimos = self.session.query(AcrescimoProposta).filter_by(status_pagamento='Recebido').all()
-            for a in acrescimos:
+            # Adicionar acréscimos recebidos usando SQL direto em vez de ORM
+            from sqlalchemy import text
+            acrescimos_query = text("""
+                SELECT a.id, a.tipo, a.valor, a.data_cadastro, p.numero as proposta_numero, c.nome as cliente_nome
+                FROM acrescimos_proposta a
+                JOIN propostas p ON a.proposta_id = p.id
+                JOIN clientes c ON p.cliente_id = c.id
+                WHERE a.status_pagamento = 'Recebido'
+            """)
+            acrescimos_result = self.session.execute(acrescimos_query)
+            
+            for row in acrescimos_result:
                 historico.append({
-                    'proposta': a.proposta.numero,
-                    'cliente': a.proposta.cliente.nome,
-                    'tipo': a.tipo,
-                    'valor': a.valor,
-                    'data_recebimento': a.data_cadastro
+                    'proposta': row.proposta_numero,
+                    'cliente': row.cliente_nome,
+                    'tipo': row.tipo,
+                    'valor': row.valor,
+                    'data_recebimento': row.data_cadastro
                 })
 
             return pd.DataFrame(historico)
