@@ -4039,9 +4039,9 @@ class Database:
                     # Calcular valor da comissão
                     valor_comissao = fornecedor.valor * (fornecedor.percentual_comissao / 100.0)
                     
-                    # Criar transação de comissão
+                    # Criar transação de comissão a receber
                     comissao = Transacao(
-                        tipo="receita",
+                        tipo="receita_a_receber",
                         descricao=f"Comissão de {fornecedor.percentual_comissao}% - {fornecedor.fornecedor} - Proposta #{proposta.numero}",
                         valor=valor_comissao,
                         categoria="Comissões",
@@ -4053,7 +4053,7 @@ class Database:
                         tipo_conta="PF",
                         status="Pendente",
                         data_vencimento=datetime.now().date() + timedelta(days=30),
-                        classificacao="receita"
+                        classificacao="receita_a_receber"
                     )
                     self.session.add(comissao)
                     self.session.flush()
