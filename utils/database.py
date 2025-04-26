@@ -338,6 +338,7 @@ class AcrescimoProposta(Base):
     valor = Column(Float, nullable=False)
     status_pagamento = Column(String, default='Pendente')
     data_cadastro = Column(Date, default=datetime.now().date())
+    percentual_comissao = Column(Float, nullable=True)  # Adicionado campo para percentual de comissão
 
     proposta = relationship("Proposta", back_populates="acrescimos")
 
@@ -1334,7 +1335,7 @@ class Database:
 
     def get_contas_receber(self):
         def query():
-            # Criar query base
+            # Criar query base - garantir que receitas a receber de qualquer origem sejam exibidas
             query = self.session.query(Transacao).filter(
                 Transacao.tipo.in_(['receita_a_receber']),
             )

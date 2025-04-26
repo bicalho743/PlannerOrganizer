@@ -132,6 +132,78 @@ def finalizar_proposta_segura(proposta_id):
             # 7. Buscar produtos, fornecedores, assistentes e outros itens
             produtos_proposta = session.query(ProdutoOrganizador).filter_by(proposta_id=proposta.id).all()
             
+            # 7.1 Buscar acréscimos do tipo FORNECEDOR e gerar comissões
+            from utils.database import AcrescimoProposta, Fornecedor
+            fornecedores = session.query(AcrescimoProposta).filter_by(
+                proposta_id=proposta.id, 
+                tipo="FORNECEDOR"
+            ).all()
+            
+            valor_total_fornecedores = 0
+            
+            if fornecedores:
+                print(f"DEBUG FINALIZAR: Encontrados {len(fornecedores)} fornecedores para a proposta ID={proposta.id}")
+                
+                for fornecedor in fornecedores:
+                    valor_fornecedor = float(fornecedor.valor) if fornecedor.valor else 0
+                    valor_total_fornecedores += valor_fornecedor
+                    
+                    # Verificar se já existe uma transação de comissão para este fornecedor
+                    transacao_comissao_existente = session.query(Transacao).filter_by(
+                        proposta_id=proposta.id,
+                        origem_tipo="comissao_fornecedor"
+                    ).filter(Transacao.descricao.like(f"%{fornecedor.fornecedor}%")).first()
+                    
+                    # Buscar percentual de comissão do fornecedor
+                    percentual_comissao = None
+                    
+                    if hasattr(fornecedor, 'percentual_comissao'):
+                        percentual_comissao = fornecedor.percentual_comissao
+                    
+                    # Se não tiver no acréscimo, buscar no cadastro do fornecedor
+                    if not percentual_comissao:
+                        fornecedor_cadastro = session.query(Fornecedor).filter(
+                            Fornecedor.descricao == fornecedor.fornecedor
+                        ).first()
+                        
+                        if fornecedor_cadastro and hasattr(fornecedor_cadastro, 'percentual_comissao'):
+                            percentual_comissao = fornecedor_cadastro.percentual_comissao
+                    
+                    # Se tiver percentual de comissão e não existir transação anterior, criar
+                    if percentual_comissao and percentual_comissao > 0 and not transacao_comissao_existente:
+                        valor_comissao = valor_fornecedor * (percentual_comissao / 100)
+                        
+                        if valor_comissao > 0:
+                            print(f"DEBUG FINALIZAR: Criando lançamento de comissão de {percentual_comissao}% para fornecedor {fornecedor.fornecedor}")
+                            
+                            transacao_comissao = Transacao(
+                                tipo="receita_a_receber",
+                                descricao=f"Comissão de {percentual_comissao}% - {fornecedor.fornecedor} - Proposta #{proposta.numero}",
+                                valor=valor_comissao,
+                                data=datetime.now().date(),
+                                categoria="Comissões",
+                                subcategoria="Comissão de Fornecedor",
+                                tipo_receita="comissao",
+                                origem_id=fornecedor.id,
+                                origem_tipo="comissao_fornecedor",
+                                proposta_id=proposta.id,
+                                tipo_conta="PF",
+                                status="Pendente",
+                                classificacao="receita_a_receber",
+                                usuario_id=proposta.usuario_id
+                            )
+                            session.add(transacao_comissao)
+                            resultado["lancamentos"]["gerados"] += 1
+                            
+                            # Adicionar valor das comissões ao resultado
+                            if "comissoes" not in resultado["lancamentos"]["valores"]:
+                                resultado["lancamentos"]["valores"]["comissoes"] = 0
+                            
+                            resultado["lancamentos"]["valores"]["comissoes"] += valor_comissao
+                
+                # Registrar valor total de fornecedores no resultado
+                resultado["lancamentos"]["valores"]["fornecedores"] = valor_total_fornecedores
+            
             # 8. Registrar venda dos produtos, se houver
             venda_id = None
             if produtos_proposta:
