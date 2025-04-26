@@ -97,6 +97,14 @@ args = "Planos Simples"
 task = "workflow.run"
 args = "Planos Minimal"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Verificar Isolamento"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Verificação de Auth"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -404,6 +412,24 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run planos_minimal.py --server.port 8801 --server.address 0.0.0.0"
 waitForPort = 8801
+
+[[workflows.workflow]]
+name = "Verificar Isolamento"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run verificar_isolamento_dados.py --server.port 8550 --server.address 0.0.0.0"
+waitForPort = 8550
+
+[[workflows.workflow]]
+name = "Verificação de Auth"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run verificar_autenticacao.py --server.port 5002 --server.address 0.0.0.0"
+waitForPort = 5002
 
 [[ports]]
 localPort = 443
