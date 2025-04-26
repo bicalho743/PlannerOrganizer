@@ -277,19 +277,19 @@ def finalizar_proposta_segura(proposta_id):
                         print(f"DEBUG FINALIZAR: Criando lançamento para assistente: {assistente.descricao} - R$ {valor_assistente}")
                         
                         transacao_assistente = Transacao(
-                            tipo="receita_a_receber",
+                            tipo="despesa_a_pagar",
                             descricao=f"Assistente: {assistente.descricao} - Proposta #{proposta.numero}",
                             valor=valor_assistente,
                             data=datetime.now().date(),
                             categoria="Propostas",
                             subcategoria="Assistentes",
-                            tipo_receita="Serviço",
+                            tipo_receita=None,
                             origem_id=assistente.id,
                             origem_tipo="acrescimo_assistente",
                             proposta_id=proposta.id,
                             tipo_conta="PF",
                             status="Pendente",
-                            classificacao="receita_a_receber",
+                            classificacao="despesa_a_pagar",
                             usuario_id=proposta.usuario_id
                         )
                         session.add(transacao_assistente)
