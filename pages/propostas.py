@@ -1541,22 +1541,22 @@ def show():
                                 st.write("### Resumo Financeiro")
                                 
                                 # Calcular totais
-                                valor_base = float(proposta_exec.iloc[0]['valor'])
+                                valor_personal_organizer = float(proposta_exec.iloc[0]['valor'])
                                 valor_produtos = total_produtos if 'total_produtos' in locals() else 0
                                 valor_fornecedores = total_fornecedores if 'total_fornecedores' in locals() else 0
                                 valor_assistentes = total_assistentes if 'total_assistentes' in locals() else 0
                                 valor_outros = total_outros if 'total_outros' in locals() else 0
                                 
                                 # Os assistentes são despesas, então devem ser subtraídos do total
-                                valor_total = valor_base + valor_produtos + valor_fornecedores - valor_assistentes + valor_outros
+                                valor_total = valor_personal_organizer + valor_produtos + valor_fornecedores - valor_assistentes + valor_outros
                                 
                                 # Mensagem de debug para acompanhar os valores
-                                print(f"DEBUG FINANCEIRO: base={valor_base}, produtos={valor_produtos}, fornecedores={valor_fornecedores}, assistentes={valor_assistentes} (subtraído), outros={valor_outros}, total={valor_total}")
+                                print(f"DEBUG FINANCEIRO: base={valor_personal_organizer}, produtos={valor_produtos}, fornecedores={valor_fornecedores}, assistentes={valor_assistentes} (subtraído), outros={valor_outros}, total={valor_total}")
                                 
                                 resumo = pd.DataFrame({
-                                    "Item": ["Valor Base", "Produtos", "Fornecedores", "Assistentes", "Outros", "Total Geral"],
+                                    "Item": ["Valor Personal Organizer", "Produtos", "Fornecedores", "Assistentes", "Outros", "Total Geral"],
                                     "Valor": [
-                                        f"R$ {valor_base:.2f}",
+                                        f"R$ {valor_personal_organizer:.2f}",
                                         f"R$ {valor_produtos:.2f}",
                                         f"R$ {valor_fornecedores:.2f}",
                                         f"R$ {valor_assistentes:.2f}",
@@ -1570,7 +1570,7 @@ def show():
                                 # Gráfico de distribuição de valores
                                 st.write("### Distribuição de Valores")
                                 valores = {
-                                    'Valor Base': valor_base,
+                                    'Valor Personal Organizer': valor_personal_organizer,
                                     'Produtos': valor_produtos,
                                     'Fornecedores': valor_fornecedores,
                                     'Assistentes (Custos)': -valor_assistentes if valor_assistentes > 0 else 0,  # Negativo para representar custos
@@ -1630,7 +1630,7 @@ def show():
                                                 # Mostrar detalhes dos valores em um expander
                                                 with st.expander("Detalhes dos lançamentos"):
                                                     valores = lancamentos.get("valores", {})
-                                                    st.write(f"- Valor Base (Cliente): R$ {valores.get('base', 0):.2f}")
+                                                    st.write(f"- Valor Personal Organizer: R$ {valores.get('base', 0):.2f}")
                                                     st.write(f"- Produtos: R$ {valores.get('produtos', 0):.2f}")
                                                     st.write(f"- Fornecedores: R$ {valores.get('fornecedores', 0) if 'fornecedores' in valores else 0:.2f}")
                                                     st.write(f"- Assistentes a Pagar: R$ {valores.get('assistentes', 0) if 'assistentes' in valores else 0:.2f}")

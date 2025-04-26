@@ -101,7 +101,7 @@ def show():
 
     with st.container():
         with st.container():
-            st.markdown(f"**Valor Base:** R$ {proposta['valor_base']:.2f}")
+            st.markdown(f"**Valor Personal Organizer:** R$ {proposta['valor_base']:.2f}")
             st.markdown(f"**Status:** {proposta.get('status_pagamento_base', 'Pendente')}")
 
         for acrescimo in acrescimos:
