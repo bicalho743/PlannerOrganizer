@@ -312,7 +312,7 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
         # Dados da tabela
         row_height = 20
         rows = [
-            ["Valor Base", f"R$ {valor_base:.2f}"],
+            ["Personal Organizer", f"R$ {valor_base:.2f}"],
             ["Produtos", f"R$ {valor_produtos_total:.2f}"],
             ["Fornecedores", f"R$ {custos_fornecedores:.2f}"],
             ["Outros", f"R$ {total_outros:.2f}"],
@@ -372,7 +372,7 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
         # Dados da tabela
         row_height = 20
         rows = [
-            ["Valor Base", f"R$ {valor_base:.2f}"],
+            ["Personal Organizer", f"R$ {valor_base:.2f}"],
             ["Comissões", f"R$ {total_comissoes:.2f}"],
             ["Lucro em Produtos", f"R$ {lucro_produtos_total:.2f}"],
             ["Pagamento Assistentes", f"R$ -{custos_assistentes:.2f}"],
