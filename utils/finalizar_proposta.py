@@ -204,6 +204,100 @@ def finalizar_proposta_segura(proposta_id):
                 # Registrar valor total de fornecedores no resultado
                 resultado["lancamentos"]["valores"]["fornecedores"] = valor_total_fornecedores
             
+            # 7.2 Buscar acréscimos do tipo OUTRO e gerar lançamentos financeiros para eles
+            outros_acrescimos = session.query(AcrescimoProposta).filter_by(
+                proposta_id=proposta.id, 
+                tipo="OUTRO"
+            ).all()
+            
+            valor_total_outros = 0
+            
+            if outros_acrescimos:
+                print(f"DEBUG FINALIZAR: Encontrados {len(outros_acrescimos)} acréscimos do tipo OUTRO para a proposta ID={proposta.id}")
+                
+                for outro in outros_acrescimos:
+                    valor_outro = float(outro.valor) if outro.valor else 0
+                    valor_total_outros += valor_outro
+                    
+                    # Verificar se já existe uma transação para este acréscimo
+                    transacao_outro_existente = session.query(Transacao).filter_by(
+                        proposta_id=proposta.id,
+                        origem_tipo="acrescimo_outro",
+                        origem_id=outro.id
+                    ).first()
+                    
+                    if not transacao_outro_existente and valor_outro > 0:
+                        print(f"DEBUG FINALIZAR: Criando lançamento para acréscimo OUTRO: {outro.descricao} - R$ {valor_outro}")
+                        
+                        transacao_outro = Transacao(
+                            tipo="receita_a_receber",
+                            descricao=f"{outro.descricao} - Proposta #{proposta.numero}",
+                            valor=valor_outro,
+                            data=datetime.now().date(),
+                            categoria="Propostas",
+                            subcategoria="Outros Acréscimos",
+                            tipo_receita="Serviço",
+                            origem_id=outro.id,
+                            origem_tipo="acrescimo_outro",
+                            proposta_id=proposta.id,
+                            tipo_conta="PF",
+                            status="Pendente",
+                            classificacao="receita_a_receber",
+                            usuario_id=proposta.usuario_id
+                        )
+                        session.add(transacao_outro)
+                        resultado["lancamentos"]["gerados"] += 1
+                
+                # Registrar valor total de outros acréscimos no resultado
+                resultado["lancamentos"]["valores"]["outros"] = valor_total_outros
+                
+            # 7.3 Buscar acréscimos do tipo ASSISTENTE e gerar lançamentos financeiros
+            assistentes = session.query(AcrescimoProposta).filter_by(
+                proposta_id=proposta.id, 
+                tipo="ASSISTENTE"
+            ).all()
+            
+            valor_total_assistentes = 0
+            
+            if assistentes:
+                print(f"DEBUG FINALIZAR: Encontrados {len(assistentes)} assistentes para a proposta ID={proposta.id}")
+                
+                for assistente in assistentes:
+                    valor_assistente = float(assistente.valor) if assistente.valor else 0
+                    valor_total_assistentes += valor_assistente
+                    
+                    # Verificar se já existe uma transação para este assistente
+                    transacao_assistente_existente = session.query(Transacao).filter_by(
+                        proposta_id=proposta.id,
+                        origem_tipo="acrescimo_assistente",
+                        origem_id=assistente.id
+                    ).first()
+                    
+                    if not transacao_assistente_existente and valor_assistente > 0:
+                        print(f"DEBUG FINALIZAR: Criando lançamento para assistente: {assistente.descricao} - R$ {valor_assistente}")
+                        
+                        transacao_assistente = Transacao(
+                            tipo="receita_a_receber",
+                            descricao=f"Assistente: {assistente.descricao} - Proposta #{proposta.numero}",
+                            valor=valor_assistente,
+                            data=datetime.now().date(),
+                            categoria="Propostas",
+                            subcategoria="Assistentes",
+                            tipo_receita="Serviço",
+                            origem_id=assistente.id,
+                            origem_tipo="acrescimo_assistente",
+                            proposta_id=proposta.id,
+                            tipo_conta="PF",
+                            status="Pendente",
+                            classificacao="receita_a_receber",
+                            usuario_id=proposta.usuario_id
+                        )
+                        session.add(transacao_assistente)
+                        resultado["lancamentos"]["gerados"] += 1
+                
+                # Registrar valor total de assistentes no resultado
+                resultado["lancamentos"]["valores"]["assistentes"] = valor_total_assistentes
+            
             # 8. Registrar venda dos produtos, se houver
             venda_id = None
             if produtos_proposta:
