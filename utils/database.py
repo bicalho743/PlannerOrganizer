@@ -3135,6 +3135,32 @@ class Database:
                         # Usar SQL direto para excluir
                         self.session.execute(text(f"DELETE FROM acrescimos_proposta WHERE proposta_id = {proposta_id}"))
                         
+                        # Excluir vendas que foram geradas automaticamente a partir desta proposta
+                        # 1. Identificar vendas relacionadas
+                        vendas_result = self.session.execute(text(f"""
+                            SELECT id FROM vendas 
+                            WHERE proposta_id = {proposta_id} 
+                            OR observacoes LIKE '%Venda gerada%proposta%{proposta_id}%'
+                            OR observacoes LIKE '%Venda gerada%proposta%#{proposta.numero}%'
+                        """))
+                        
+                        vendas_ids = [row[0] for row in vendas_result]
+                        if vendas_ids:
+                            print(f"DEBUG DATABASE: Encontradas {len(vendas_ids)} vendas relacionadas à proposta para exclusão")
+                            
+                            # Para cada venda, excluir seus itens
+                            for venda_id in vendas_ids:
+                                # Excluir itens da venda
+                                self.session.execute(text(f"DELETE FROM itens_venda WHERE venda_id = {venda_id}"))
+                                
+                                # Excluir transações relacionadas à venda
+                                self.session.execute(text(f"DELETE FROM transacoes WHERE origem_id = {venda_id} AND origem_tipo = 'venda'"))
+                                
+                                # Excluir a venda
+                                self.session.execute(text(f"DELETE FROM vendas WHERE id = {venda_id}"))
+                            
+                            print(f"DEBUG DATABASE: Vendas relacionadas excluídas com sucesso")
+                        
                         # Excluir a proposta
                         print(f"DEBUG DATABASE: Excluindo proposta ID: {proposta_id}")
                         self.session.delete(proposta)
@@ -3195,6 +3221,32 @@ class Database:
                         
                         # Usar SQL direto para excluir
                         self.session.execute(text(f"DELETE FROM acrescimos_proposta WHERE proposta_id = {proposta_id_local}"))
+                        
+                        # Excluir vendas que foram geradas automaticamente a partir desta proposta
+                        # 1. Identificar vendas relacionadas
+                        vendas_result = self.session.execute(text(f"""
+                            SELECT id FROM vendas 
+                            WHERE proposta_id = {proposta_id_local} 
+                            OR observacoes LIKE '%Venda gerada%proposta%{proposta_id_local}%'
+                            OR observacoes LIKE '%Venda gerada%proposta%#{numero_proposta}%'
+                        """))
+                        
+                        vendas_ids = [row[0] for row in vendas_result]
+                        if vendas_ids:
+                            print(f"DEBUG DATABASE: Encontradas {len(vendas_ids)} vendas relacionadas à proposta para exclusão")
+                            
+                            # Para cada venda, excluir seus itens
+                            for venda_id in vendas_ids:
+                                # Excluir itens da venda
+                                self.session.execute(text(f"DELETE FROM itens_venda WHERE venda_id = {venda_id}"))
+                                
+                                # Excluir transações relacionadas à venda
+                                self.session.execute(text(f"DELETE FROM transacoes WHERE origem_id = {venda_id} AND origem_tipo = 'venda'"))
+                                
+                                # Excluir a venda
+                                self.session.execute(text(f"DELETE FROM vendas WHERE id = {venda_id}"))
+                            
+                            print(f"DEBUG DATABASE: Vendas relacionadas excluídas com sucesso")
                         
                         # Excluir a proposta
                         print(f"DEBUG DATABASE: Excluindo proposta")
