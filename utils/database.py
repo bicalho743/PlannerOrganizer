@@ -3154,7 +3154,7 @@ class Database:
                                 self.session.execute(text(f"DELETE FROM itens_venda WHERE venda_id = {venda_id}"))
                                 
                                 # Excluir transações relacionadas à venda
-                                self.session.execute(text(f"DELETE FROM transacoes WHERE origem_id = {venda_id} AND origem_tipo = 'venda'"))
+                                self.session.execute(text(f"DELETE FROM financeiro WHERE origem_id = {venda_id} AND origem_tipo = 'venda'"))
                                 
                                 # Excluir a venda
                                 self.session.execute(text(f"DELETE FROM vendas WHERE id = {venda_id}"))
@@ -3241,7 +3241,7 @@ class Database:
                                 self.session.execute(text(f"DELETE FROM itens_venda WHERE venda_id = {venda_id}"))
                                 
                                 # Excluir transações relacionadas à venda
-                                self.session.execute(text(f"DELETE FROM transacoes WHERE origem_id = {venda_id} AND origem_tipo = 'venda'"))
+                                self.session.execute(text(f"DELETE FROM financeiro WHERE origem_id = {venda_id} AND origem_tipo = 'venda'"))
                                 
                                 # Excluir a venda
                                 self.session.execute(text(f"DELETE FROM vendas WHERE id = {venda_id}"))
@@ -3692,7 +3692,7 @@ class Database:
                 # Executar SQL para excluir na ordem correta
                 # 1. Excluir transações financeiras relacionadas
                 transacoes_stmt = text("""
-                    DELETE FROM transacoes 
+                    DELETE FROM financeiro 
                     WHERE origem_id = :venda_id AND origem_tipo = 'venda'
                 """)
                 self.session.execute(transacoes_stmt, {"venda_id": venda_id})
@@ -3820,7 +3820,7 @@ class Database:
                     # Executar SQL para excluir na ordem correta
                     # 1. Excluir transações financeiras relacionadas
                     self.session.execute(text("""
-                        DELETE FROM transacoes 
+                        DELETE FROM financeiro 
                         WHERE origem_id = :venda_id AND origem_tipo = 'venda'
                     """), {"venda_id": venda_id})
                     print("DEBUG: Excluídas transações financeiras relacionadas")
