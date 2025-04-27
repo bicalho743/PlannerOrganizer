@@ -607,7 +607,7 @@ def show():
             
             with col1:
                 # Filtro por tipo de transação
-                tipos_disponiveis = ["receita", "receita_a_receber", "despesa", "despesa_a_pagar"]
+                tipos_disponiveis = ["receita", "despesa"]
                 tipo_selecionado = st.multiselect(
                     "Tipo de Transação", 
                     tipos_disponiveis,
@@ -694,8 +694,8 @@ def show():
                 col1, col2, col3 = st.columns(3)
                 
                 # Valores por tipo
-                receitas = historico[historico['tipo'].isin(['receita', 'receita_a_receber'])]['valor'].sum()
-                despesas = historico[historico['tipo'].isin(['despesa', 'despesa_a_pagar'])]['valor'].sum()
+                receitas = historico[historico['tipo'] == 'receita']['valor'].sum()
+                despesas = historico[historico['tipo'] == 'despesa']['valor'].sum()
                 saldo = receitas - despesas
                 
                 col1.metric("Total Receitas", f"R$ {receitas:.2f}")
@@ -769,7 +769,7 @@ def show():
             st.plotly_chart(fig2, use_container_width=True)
 
             # Distribuição por Tipo de Receita
-            receitas = financeiro[financeiro['tipo'].isin(['receita', 'receita_a_receber'])]
+            receitas = financeiro[financeiro['tipo'] == 'receita']
             if not receitas.empty and 'tipo_receita' in receitas.columns:
                 fig3 = px.pie(
                     receitas,
