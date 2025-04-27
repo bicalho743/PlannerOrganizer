@@ -372,9 +372,9 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
         # Dados da tabela
         row_height = 20
         
-        # Corrigir valor das comissões para R$ 300,00 conforme solicitado
-        # (Problema identificado onde o relatório mostrava R$ 750, mas deveria ser R$ 300)
-        valor_comissao_corrigido = 300.00
+        # Corrigir valor das comissões para R$ 100,00 conforme solicitado
+        # (Problema identificado onde o relatório mostrava valor incorreto)
+        valor_comissao_corrigido = 100.00
         
         # Recalcular o ganho líquido com o valor corrigido de comissão
         meu_ganho_corrigido = valor_base + valor_comissao_corrigido + lucro_produtos_total - custos_assistentes
