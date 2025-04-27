@@ -380,7 +380,7 @@ def finalizar_proposta_segura(proposta_id):
                             tipo="receita_a_receber",
                             descricao=f"Produtos da proposta #{proposta.numero}",
                             valor=valor_total_produtos,
-                            categoria="Propostas",
+                            categoria="Venda de Produtos",
                             subcategoria="Produtos",
                             tipo_receita="Venda",
                             data=datetime.now().date(),

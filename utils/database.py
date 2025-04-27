@@ -4368,7 +4368,7 @@ class Database:
                     else:
                         # Verificar se existem transações do tipo produto especificamente
                         transacoes_produtos = self.session.query(Transacao)\
-                            .filter_by(proposta_id=proposta_id_int, categoria="Produto")\
+                            .filter_by(proposta_id=proposta_id_int, categoria="Venda de Produtos")\
                             .count()
                             
                         if transacoes_produtos > 0:
@@ -4496,8 +4496,8 @@ class Database:
                         descricao=f"Produtos da Proposta #{proposta.numero} - {cliente.nome}",
                         valor=valor_total_produtos_fisicos,
                         data=data_lancamento,
-                        categoria="Produto",
-                        subcategoria="Venda de Produtos",
+                        categoria="Venda de Produtos",
+                        subcategoria="Produtos",
                         tipo_receita="venda",
                         origem_id=proposta.cliente_id,
                         origem_tipo="cliente",
