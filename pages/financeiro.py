@@ -121,7 +121,16 @@ def show():
             df_display = financeiro.copy()
             df_display['data'] = df_display['data'].dt.strftime('%d/%m/%Y')
             df_display['valor'] = df_display['valor'].apply(lambda x: f"R$ {x:.2f}")
-            df_display['tipo'] = df_display['tipo'].apply(lambda x: x.title())
+            # Formatar o tipo para exibição (simplificar tipos)
+            def formatar_tipo(tipo):
+                if tipo == 'receita_a_receber':
+                    return 'Receita'
+                elif tipo == 'despesa_a_pagar':
+                    return 'Despesa'
+                else:
+                    return tipo.title()
+                    
+            df_display['tipo'] = df_display['tipo'].apply(formatar_tipo)
 
             # Exibir tabela
             st.dataframe(

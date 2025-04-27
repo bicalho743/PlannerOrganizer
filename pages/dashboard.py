@@ -158,7 +158,9 @@ def show():
             
             # Valores a Pagar (despesas pendentes)
             valores_pagar = financeiro[
-                (financeiro['tipo'] == 'despesa') & 
+                ((financeiro['tipo'] == 'despesa') | 
+                 (financeiro['tipo'] == 'despesa_a_pagar') |
+                 (financeiro['classificacao'] == 'contas_a_pagar')) & 
                 (financeiro['status'] == 'Pendente')
             ]['valor'].sum()
         else:
