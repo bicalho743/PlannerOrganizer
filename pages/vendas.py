@@ -369,8 +369,9 @@ def show():
                         # Formatar valores
                         itens_df['preco_unitario'] = itens_df['preco_unitario'].map('R$ {:.2f}'.format)
                         itens_df['subtotal'] = itens_df['subtotal'].map('R$ {:.2f}'.format)
+                        itens_df['lucro'] = itens_df['lucro'].map('R$ {:.2f}'.format)
                         
-                        st.dataframe(itens_df[['produto_nome', 'quantidade', 'preco_unitario', 'subtotal']], hide_index=True)
+                        st.dataframe(itens_df[['produto_nome', 'quantidade', 'preco_unitario', 'subtotal', 'lucro']], hide_index=True)
                     
                 # Seção para gerenciar vendas (excluir)
                 with st.expander("Gerenciar Vendas", expanded=True):

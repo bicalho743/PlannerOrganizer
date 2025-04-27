@@ -3635,7 +3635,8 @@ class Database:
                 'produto_nome': i.produto.nome if i.produto else i.descricao,
                 'quantidade': i.quantidade,
                 'preco_unitario': i.preco_unitario,
-                'subtotal': i.subtotal
+                'subtotal': i.subtotal,
+                'lucro': (i.preco_unitario - (i.produto.preco_custo if i.produto else 0)) * i.quantidade
             } for i in itens])
         return self._safe_query(query)
         
