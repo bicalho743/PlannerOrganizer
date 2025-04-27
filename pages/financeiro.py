@@ -1,17 +1,19 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import base64
 from datetime import datetime
 
 def show():
     # Título com estilo personalizado para ficar mais próximo do topo
     st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">💰 Gestão Financeira</h1>', unsafe_allow_html=True)
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "Registrar Transação",
-        "Extrato",
+        "Pendências",
         "Contas a Receber", 
         "Contas a Pagar",
+        "Histórico",
         "Dashboard Financeiro"
     ])
 
@@ -97,7 +99,7 @@ def show():
                     st.warning("Por favor, preencha todos os campos corretamente.")
 
     with tab2:
-        st.subheader("Extrato Financeiro")
+        st.subheader("Pendências Financeiras")
 
         # Filtros
         col1, col2, col3 = st.columns(3)
@@ -125,8 +127,11 @@ def show():
         if not financeiro.empty:
             # Converter a coluna 'data' para datetime
             financeiro['data'] = pd.to_datetime(financeiro['data'])
+            
+            # Filtrar apenas transações pendentes
+            financeiro = financeiro[financeiro['status'] == 'Pendente']
 
-            # Aplicar filtros
+            # Aplicar filtros adicionais
             if tipo_filtro:
                 financeiro = financeiro[financeiro['tipo'].isin(tipo_filtro)]
             if categoria_filtro:
@@ -166,12 +171,25 @@ def show():
                                           range(len(transacoes_display)),
                                           format_func=lambda x: transacoes_display[x])
 
-                col1, col2 = st.columns(2)
+                col1, col2, col3 = st.columns(3)
                 with col1:
+                    if st.button("✅ Aprovar", key=f"aprovar_pendencia"):
+                        transacao_id = financeiro.iloc[selected_idx]['id']
+                        try:
+                            st.session_state.db.atualizar_status_transacao(
+                                transacao_id,
+                                'Aprovado',
+                                datetime.now().date()
+                            )
+                            st.success("Transação aprovada com sucesso!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Erro ao aprovar transação: {str(e)}")
+                with col2:
                     if st.button("✏️ Editar Selecionado"):
                         st.session_state.transacao_em_edicao = financeiro.iloc[selected_idx]
                         st.rerun()
-                with col2:
+                with col3:
                     if st.button("🗑️ Excluir Selecionado"):
                         try:
                             if st.session_state.db.delete_transacao(financeiro.iloc[selected_idx]['id']):
@@ -288,6 +306,23 @@ def show():
         st.subheader("Contas a Receber")
 
         contas_receber = st.session_state.db.get_contas_receber()
+        
+        # Filtrar apenas as contas com status pendente
+        if not contas_receber.empty:
+            contas_receber = contas_receber[contas_receber['status'] == 'Pendente']
+            
+        # Adicionar link para o histórico
+        col1, col2 = st.columns([3, 1])
+        with col2:
+            if st.button("Ver no Histórico", key="ver_historico_receber"):
+                # Define uma variável na sessão para indicar que queremos filtrar o histórico para receitas recebidas
+                st.session_state.filtro_historico = {
+                    "tipo": ["receita", "receita_a_receber"],
+                    "status": ["Recebido", "Aprovado"]
+                }
+                # Redireciona para a aba Histórico
+                st.session_state.aba_atual = "Histórico"
+                st.rerun()
 
         if not contas_receber.empty:
             # Adicionar coluna de ações
@@ -332,6 +367,19 @@ def show():
 
     with tab4:
         st.subheader("Contas a Pagar")
+        
+        # Adicionar link para o histórico
+        col1, col2 = st.columns([3, 1])
+        with col2:
+            if st.button("Ver no Histórico", key="ver_historico_pagar"):
+                # Define uma variável na sessão para indicar que queremos filtrar o histórico para despesas pagas
+                st.session_state.filtro_historico = {
+                    "tipo": ["despesa", "despesa_a_pagar"],
+                    "status": ["Pago", "Aprovado"]
+                }
+                # Redireciona para a aba Histórico
+                st.session_state.aba_atual = "Histórico"
+                st.rerun()
         
         # Função para obter contas a pagar (despesas pendentes)
         contas_pagar = st.session_state.db.get_financeiro()
@@ -498,6 +546,143 @@ def show():
                 st.warning("Nenhum assistente cadastrado. Adicione assistentes no menu Cadastros primeiro.")
 
     with tab5:
+        st.subheader("Histórico Financeiro")
+        
+        # Inicializar filtros em sessão para manter estado quando redirecionado
+        if 'filtro_historico' not in st.session_state:
+            st.session_state.filtro_historico = {
+                "tipo": [],
+                "status": ["Aprovado", "Recebido", "Pago", "Cancelado"]
+            }
+        
+        # Recuperar dados para histórico
+        historico = st.session_state.db.get_financeiro()
+        
+        if not historico.empty:
+            # Converter a coluna 'data' para datetime para manipulação
+            historico['data'] = pd.to_datetime(historico['data'])
+            
+            # Filtrar apenas transações com status não-pendente
+            historico = historico[~(historico['status'] == 'Pendente')]
+            
+            # Controles de filtro
+            st.write("#### Filtros")
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                # Filtro por tipo de transação
+                tipos_disponiveis = ["receita", "receita_a_receber", "despesa", "despesa_a_pagar"]
+                tipo_selecionado = st.multiselect(
+                    "Tipo de Transação", 
+                    tipos_disponiveis,
+                    default=st.session_state.filtro_historico["tipo"] if st.session_state.filtro_historico["tipo"] else []
+                )
+                
+            with col2:
+                # Filtro por status
+                status_disponiveis = ["Aprovado", "Recebido", "Pago", "Cancelado"]
+                status_selecionado = st.multiselect(
+                    "Status", 
+                    status_disponiveis,
+                    default=st.session_state.filtro_historico["status"]
+                )
+                
+            with col3:
+                # Filtro por período
+                hoje = datetime.now().date()
+                primeiro_dia_mes = hoje.replace(day=1)
+                data_inicio = st.date_input(
+                    "Data Inicial", 
+                    value=primeiro_dia_mes,
+                    key="historico_data_inicio"
+                )
+                data_fim = st.date_input(
+                    "Data Final", 
+                    value=hoje,
+                    key="historico_data_fim"
+                )
+            
+            # Aplicar filtros
+            if tipo_selecionado:
+                historico = historico[historico['tipo'].isin(tipo_selecionado)]
+            
+            if status_selecionado:
+                historico = historico[historico['status'].isin(status_selecionado)]
+            
+            # Filtro de data
+            historico = historico[
+                (historico['data'].dt.date >= data_inicio) & 
+                (historico['data'].dt.date <= data_fim)
+            ]
+            
+            # Mostrar os resultados
+            if not historico.empty:
+                # Formatar para exibição
+                df_display = historico.copy()
+                df_display['data'] = df_display['data'].dt.strftime('%d/%m/%Y')
+                df_display['valor'] = df_display['valor'].apply(lambda x: f"R$ {x:.2f}")
+                
+                # Formatar o tipo para exibição (simplificar tipos)
+                def formatar_tipo(tipo):
+                    if tipo == 'receita_a_receber':
+                        return 'Receita'
+                    elif tipo == 'receita':
+                        return 'Receita'
+                    elif tipo == 'despesa_a_pagar':
+                        return 'Despesa'
+                    elif tipo == 'despesa':
+                        return 'Despesa'
+                    else:
+                        return tipo.title()
+                        
+                df_display['tipo'] = df_display['tipo'].apply(formatar_tipo)
+                
+                # Mostrar os dados
+                st.write(f"#### Resultados ({len(df_display)} transações)")
+                st.dataframe(
+                    df_display[['data', 'tipo', 'descricao', 'valor', 'categoria', 'status']],
+                    use_container_width=True,
+                    hide_index=True
+                )
+                
+                # Botão para exportar para CSV
+                if st.button("📊 Exportar para CSV"):
+                    csv = df_display.to_csv(index=False)
+                    # Criar um botão de download
+                    b64 = base64.b64encode(csv.encode()).decode()
+                    href = f'<a href="data:file/csv;base64,{b64}" download="historico_financeiro.csv">Download CSV</a>'
+                    st.markdown(href, unsafe_allow_html=True)
+                
+                # Mostrar resumos
+                st.write("#### Resumo Financeiro")
+                col1, col2, col3 = st.columns(3)
+                
+                # Valores por tipo
+                receitas = historico[historico['tipo'].isin(['receita', 'receita_a_receber'])]['valor'].sum()
+                despesas = historico[historico['tipo'].isin(['despesa', 'despesa_a_pagar'])]['valor'].sum()
+                saldo = receitas - despesas
+                
+                col1.metric("Total Receitas", f"R$ {receitas:.2f}")
+                col2.metric("Total Despesas", f"R$ {despesas:.2f}")
+                col3.metric("Saldo Período", f"R$ {saldo:.2f}")
+                
+                # Gráfico de barras por categoria
+                st.write("#### Distribuição por Categoria")
+                fig = px.bar(
+                    historico, 
+                    x='categoria', 
+                    y='valor', 
+                    color='tipo',
+                    title="Valores por Categoria",
+                    labels={'valor': 'Valor (R$)', 'categoria': 'Categoria'}
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("Nenhuma transação encontrada com os filtros selecionados.")
+        else:
+            st.info("Não há transações no histórico.")
+    
+    with tab6:
         st.subheader("Dashboard Financeiro")
 
         if not financeiro.empty:
