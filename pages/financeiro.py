@@ -60,15 +60,19 @@ def show():
                 origem_tipo = None
                 origem_id = None
 
+            # Definir categorias de acordo com o padrão solicitado
+            categorias_receita = ["Serviços de Organização", "Venda de Produtos", "Comissão sobre Fornecedores", "Serviços Adicionais"]
+            categorias_despesa = ["Pagamento Equipe/Assistentes", "Pagamento Parceiros/Fornecedores", "Custos Operacionais", "Custos Administrativos"]
+            
             if tipo == "receita" or tipo == "receita_a_receber":
                 categoria = st.selectbox(
                     "Categoria",
-                    ["Serviços de Organização", "Venda de Produtos", "Comissão sobre Fornecedores", "Serviços Adicionais"]
+                    categorias_receita
                 )
             else:
                 categoria = st.selectbox(
                     "Categoria",
-                    ["Pagamento Equipe", "Pagamento Parceiros/Fornecedores", "Custos Operacionais", "Custos Administrativos"]
+                    categorias_despesa
                 )
 
             submitted = st.form_submit_button("Registrar")
@@ -105,7 +109,7 @@ def show():
         with col2:
             # Lista completa de categorias para filtro
             categorias_receita = ["Serviços de Organização", "Venda de Produtos", "Comissão sobre Fornecedores", "Serviços Adicionais"]
-            categorias_despesa = ["Pagamento Equipe", "Pagamento Parceiros/Fornecedores", "Custos Operacionais", "Custos Administrativos"]
+            categorias_despesa = ["Pagamento Equipe/Assistentes", "Pagamento Parceiros/Fornecedores", "Custos Operacionais", "Custos Administrativos"]
             todas_categorias = categorias_receita + categorias_despesa
             
             categoria_filtro = st.multiselect(
@@ -221,11 +225,11 @@ def show():
                     else:
                         categoria_index = 3  # Serviços Adicionais
                 else:
-                    categorias_disponíveis = ["Pagamento Equipe", "Pagamento Parceiros/Fornecedores", "Custos Operacionais", "Custos Administrativos"]
+                    categorias_disponíveis = ["Pagamento Equipe/Assistentes", "Pagamento Parceiros/Fornecedores", "Custos Operacionais", "Custos Administrativos"]
                     # Tentar encontrar a categoria atual nas novas categorias
-                    if transacao['categoria'] == "Assistente":
-                        categoria_index = 0  # Pagamento Equipe
-                    elif transacao['categoria'] == "Fornecedor":
+                    if transacao['categoria'] == "Assistente" or transacao['categoria'] == "Pagamento Equipe/Assistentes":
+                        categoria_index = 0  # Pagamento Equipe/Assistentes
+                    elif transacao['categoria'] == "Fornecedor" or transacao['categoria'] == "Pagamento Parceiros/Fornecedores":
                         categoria_index = 1  # Pagamento Parceiros/Fornecedores
                     else:
                         categoria_index = 3  # Custos Administrativos
