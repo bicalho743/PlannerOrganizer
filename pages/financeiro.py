@@ -401,12 +401,18 @@ def show():
                 # Aplicar filtro
                 if filtro_tipo == "Assistentes":
                     contas_pagar = contas_pagar[(contas_pagar['categoria'] == 'Assistente') | 
+                                               (contas_pagar['categoria'] == 'Pagamento Equipe/Assistentes') |
+                                               (contas_pagar['categoria'] == 'Pagamento de Assistente') |
                                                (contas_pagar['subcategoria'] == 'Assistentes') |
                                                (contas_pagar['descricao'].str.contains('Assistente:', na=False))]
                 elif filtro_tipo == "Outros":
-                    contas_pagar = contas_pagar[(contas_pagar['categoria'] != 'Assistente') & 
-                                               (contas_pagar['subcategoria'] != 'Assistentes') &
-                                               (~contas_pagar['descricao'].str.contains('Assistente:', na=False))]
+                    contas_pagar = contas_pagar[
+                        (contas_pagar['categoria'] != 'Assistente') & 
+                        (contas_pagar['categoria'] != 'Pagamento Equipe/Assistentes') &
+                        (contas_pagar['categoria'] != 'Pagamento de Assistente') &
+                        (contas_pagar['subcategoria'] != 'Assistentes') &
+                        (~contas_pagar['descricao'].str.contains('Assistente:', na=False))
+                    ]
                 
                 # Exibir contas a pagar
                 if not contas_pagar.empty:
@@ -451,6 +457,8 @@ def show():
                     # Considerar todas as formas de identificar assistentes
                     assistentes_mask = (
                         (contas_pagar['categoria'] == 'Assistente') | 
+                        (contas_pagar['categoria'] == 'Pagamento Equipe/Assistentes') |
+                        (contas_pagar['categoria'] == 'Pagamento de Assistente') |
                         (contas_pagar['subcategoria'] == 'Assistentes') |
                         (contas_pagar['descricao'].str.contains('Assistente:', na=False))
                     )
@@ -529,8 +537,8 @@ def show():
                                     tipo="despesa_a_pagar",
                                     descricao=descricao,
                                     valor=valor,
-                                    categoria="Assistente",
-                                    subcategoria="Pagamento de Serviço",
+                                    categoria="Pagamento Equipe/Assistentes",
+                                    subcategoria="Assistentes",
                                     origem_id=assistente_id,
                                     origem_tipo="assistente",
                                     proposta_id=proposta_id if proposta_id > 0 else None,
