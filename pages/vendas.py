@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime
 import numpy as np
 import time
+import os
 
 def show():
     # Verificar se o db está na sessão
@@ -372,6 +373,46 @@ def show():
                         itens_df['lucro'] = itens_df['lucro'].map('R$ {:.2f}'.format)
                         
                         st.dataframe(itens_df[['produto_nome', 'quantidade', 'preco_unitario', 'subtotal', 'lucro']], hide_index=True)
+                        
+                        # Botão para gerar PDF
+                        if st.button("📄 Gerar Relatório de Venda", key=f"gerar_pdf_venda_{venda_id}"):
+                            with st.spinner("Gerando relatório de venda..."):
+                                try:
+                                    # Obter dados do cliente
+                                    from datetime import datetime
+                                    cliente_id = venda.get('cliente_id', None)
+                                    if cliente_id:
+                                        cliente_df = st.session_state.db.get_cliente_by_id(cliente_id)
+                                        cliente_dict = cliente_df.iloc[0].to_dict() if not cliente_df.empty else {'nome': venda['cliente_nome']}
+                                    else:
+                                        cliente_dict = {'nome': venda['cliente_nome']}
+                                    
+                                    # Definir caminho do arquivo
+                                    cliente_nome_formatado = cliente_dict['nome'].replace(' ', '_').replace('/', '_').replace('\\', '_')
+                                    pdf_filename = f"pdfs/venda_{venda_id}_{cliente_nome_formatado}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                                    
+                                    # Gerar o PDF
+                                    from utils.pdf_generator_venda import gerar_pdf_venda
+                                    pdf_path = gerar_pdf_venda(venda, cliente_dict, itens_df, pdf_filename)
+                                    
+                                    # Criar link para download
+                                    with open(pdf_path, "rb") as pdf_file:
+                                        pdf_bytes = pdf_file.read()
+                                    
+                                    # Mostrar mensagem de sucesso
+                                    st.success(f"Relatório de venda gerado com sucesso!")
+                                    
+                                    # Botão de download
+                                    download_key = f"download_venda_{venda_id}_{datetime.now().strftime('%H%M%S')}"
+                                    st.download_button(
+                                        label="📥 Baixar Relatório de Venda",
+                                        data=pdf_bytes,
+                                        file_name=os.path.basename(pdf_path),
+                                        mime="application/pdf",
+                                        key=download_key
+                                    )
+                                except Exception as e:
+                                    st.error(f"Erro ao gerar relatório: {str(e)}")
                     
                 # Seção para gerenciar vendas (excluir)
                 with st.expander("Gerenciar Vendas", expanded=True):
