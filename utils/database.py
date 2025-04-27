@@ -3632,7 +3632,7 @@ class Database:
             itens = self.session.query(ItemVenda).filter_by(venda_id=venda_id).all()
             return pd.DataFrame([{
                 'id': i.id,
-                'produto_nome': i.produto.nome if i.produto else "Produto não encontrado",
+                'produto_nome': i.produto.nome if i.produto else i.descricao,
                 'quantidade': i.quantidade,
                 'preco_unitario': i.preco_unitario,
                 'subtotal': i.subtotal
