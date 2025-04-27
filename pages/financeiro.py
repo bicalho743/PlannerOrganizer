@@ -130,6 +130,34 @@ def show():
             
             # Filtrar apenas transações pendentes
             financeiro = financeiro[financeiro['status'] == 'Pendente']
+            
+            # Filtrar para evitar duplicação de pagamentos de assistentes
+            # Primeiro identificamos todos os assistentes que têm transações tanto com categoria antiga quanto nova
+            if 'categoria' in financeiro.columns:
+                # Caso 1: Identificar duplicações de pagamentos de assistentes
+                duplicados_assistentes = []
+                
+                # Separar transações com diferentes categorias de assistentes
+                assistentes_pagamento_equipe = financeiro[financeiro['categoria'] == 'Pagamento Equipe/Assistentes']
+                assistentes_pagamento = financeiro[financeiro['categoria'] == 'Pagamento de Assistente']
+                
+                # Se existem registros em ambas categorias
+                if not assistentes_pagamento_equipe.empty and not assistentes_pagamento.empty:
+                    # Para cada transação com categoria 'Pagamento de Assistente'
+                    for _, row in assistentes_pagamento.iterrows():
+                        # Verificar se há uma transação correspondente com 'Pagamento Equipe/Assistentes'
+                        if 'proposta_id' in row and pd.notna(row['proposta_id']):
+                            # Buscar por proposta_id
+                            duplicados = assistentes_pagamento_equipe[
+                                (assistentes_pagamento_equipe['proposta_id'] == row['proposta_id']) &
+                                (assistentes_pagamento_equipe['valor'] == row['valor'])
+                            ]
+                            if not duplicados.empty:
+                                duplicados_assistentes.append(row['id'])
+                
+                # Remover as transações duplicadas (manter apenas a versão padronizada)
+                if duplicados_assistentes:
+                    financeiro = financeiro[~financeiro['id'].isin(duplicados_assistentes)]
 
             # Aplicar filtros adicionais
             if tipo_filtro:
