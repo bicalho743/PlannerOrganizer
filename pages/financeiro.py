@@ -282,9 +282,11 @@ def show():
         # Função para obter contas a pagar (despesas pendentes)
         contas_pagar = st.session_state.db.get_financeiro()
         if not contas_pagar.empty:
-            # Filtrar apenas despesas com status pendente
-            contas_pagar = contas_pagar[(contas_pagar['tipo'] == 'despesa') & 
-                                        (contas_pagar['status'] == 'Pendente')]
+            # Filtrar por classificação contas_a_pagar ou tipo despesa com status pendente
+            contas_pagar = contas_pagar[(
+                (contas_pagar['classificacao'] == 'contas_a_pagar') | 
+                ((contas_pagar['tipo'] == 'despesa') & (contas_pagar['status'] == 'Pendente'))
+            )]
             
             if not contas_pagar.empty:
                 # Adicionar filtro específico para assistentes
@@ -296,9 +298,13 @@ def show():
                 
                 # Aplicar filtro
                 if filtro_tipo == "Assistentes":
-                    contas_pagar = contas_pagar[contas_pagar['categoria'] == 'Assistente']
+                    contas_pagar = contas_pagar[(contas_pagar['categoria'] == 'Assistente') | 
+                                               (contas_pagar['subcategoria'] == 'Assistentes') |
+                                               (contas_pagar['descricao'].str.contains('Assistente:', na=False))]
                 elif filtro_tipo == "Outros":
-                    contas_pagar = contas_pagar[contas_pagar['categoria'] != 'Assistente']
+                    contas_pagar = contas_pagar[(contas_pagar['categoria'] != 'Assistente') & 
+                                               (contas_pagar['subcategoria'] != 'Assistentes') &
+                                               (~contas_pagar['descricao'].str.contains('Assistente:', na=False))]
                 
                 # Exibir contas a pagar
                 if not contas_pagar.empty:
@@ -339,7 +345,15 @@ def show():
                     
                     # Resumo de contas a pagar
                     total_pendente = contas_pagar['valor'].sum()
-                    total_assistentes = contas_pagar[contas_pagar['categoria'] == 'Assistente']['valor'].sum()
+                    
+                    # Considerar todas as formas de identificar assistentes
+                    assistentes_mask = (
+                        (contas_pagar['categoria'] == 'Assistente') | 
+                        (contas_pagar['subcategoria'] == 'Assistentes') |
+                        (contas_pagar['descricao'].str.contains('Assistente:', na=False))
+                    )
+                    
+                    total_assistentes = contas_pagar[assistentes_mask]['valor'].sum()
                     total_outros = total_pendente - total_assistentes
                     
                     col1, col2, col3 = st.columns(3)
@@ -359,8 +373,11 @@ def show():
                 if 'mostrar_historico_pagamentos' in st.session_state and st.session_state.mostrar_historico_pagamentos:
                     historico = st.session_state.db.get_financeiro()
                     if not historico.empty:
-                        historico = historico[(historico['tipo'] == 'despesa') & 
-                                             (historico['status'].isin(['Pago', 'Cancelado']))]
+                        historico = historico[(
+                            (historico['tipo'] == 'despesa') | 
+                            (historico['tipo'] == 'despesa_a_pagar') |
+                            (historico['classificacao'] == 'contas_a_pagar')
+                        ) & (historico['status'].isin(['Pago', 'Cancelado']))]
                         
                         if not historico.empty:
                             st.subheader("Histórico de Pagamentos")
@@ -407,14 +424,15 @@ def show():
                         if valor > 0:
                             try:
                                 st.session_state.db.add_transacao(
-                                    tipo="despesa",
+                                    tipo="despesa_a_pagar",
                                     descricao=descricao,
                                     valor=valor,
                                     categoria="Assistente",
                                     subcategoria="Pagamento de Serviço",
                                     origem_id=assistente_id,
                                     origem_tipo="assistente",
-                                    proposta_id=proposta_id if proposta_id > 0 else None
+                                    proposta_id=proposta_id if proposta_id > 0 else None,
+                                    classificacao="contas_a_pagar"
                                 )
                                 st.success(f"Pagamento para {assistente_selecionado} cadastrado com sucesso!")
                                 st.rerun()

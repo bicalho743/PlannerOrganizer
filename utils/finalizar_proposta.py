@@ -289,7 +289,7 @@ def finalizar_proposta_segura(proposta_id):
                             proposta_id=proposta.id,
                             tipo_conta="PF",
                             status="Pendente",
-                            classificacao="despesa_a_pagar",
+                            classificacao="contas_a_pagar",
                             usuario_id=proposta.usuario_id
                         )
                         session.add(transacao_assistente)
