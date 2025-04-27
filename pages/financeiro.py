@@ -60,10 +60,16 @@ def show():
                 origem_tipo = None
                 origem_id = None
 
-            categoria = st.selectbox(
-                "Categoria",
-                ["Serviço", "Venda de Produtos", "Fornecedor", "Assistente", "Comissão", "Outros"]
-            )
+            if tipo == "receita" or tipo == "receita_a_receber":
+                categoria = st.selectbox(
+                    "Categoria",
+                    ["Serviços de Organização", "Venda de Produtos", "Comissão sobre Fornecedores", "Serviços Adicionais"]
+                )
+            else:
+                categoria = st.selectbox(
+                    "Categoria",
+                    ["Pagamento Equipe", "Pagamento Parceiros/Fornecedores", "Custos Operacionais", "Custos Administrativos"]
+                )
 
             submitted = st.form_submit_button("Registrar")
 
@@ -97,9 +103,14 @@ def show():
                 ["receita", "despesa"]
             )
         with col2:
+            # Lista completa de categorias para filtro
+            categorias_receita = ["Serviços de Organização", "Venda de Produtos", "Comissão sobre Fornecedores", "Serviços Adicionais"]
+            categorias_despesa = ["Pagamento Equipe", "Pagamento Parceiros/Fornecedores", "Custos Operacionais", "Custos Administrativos"]
+            todas_categorias = categorias_receita + categorias_despesa
+            
             categoria_filtro = st.multiselect(
                 "Categoria",
-                ["Serviço", "Venda de Produtos", "Fornecedor", "Assistente", "Comissão", "Outros"]
+                todas_categorias
             )
         with col3:
             data_filtro = st.date_input("Data")
@@ -197,12 +208,32 @@ def show():
                 else:
                     tipo_receita = None
 
+                # Categorias baseadas no tipo da transação (receita ou despesa)
+                if tipo in ["receita", "receita_a_receber"]:
+                    categorias_disponíveis = ["Serviços de Organização", "Venda de Produtos", "Comissão sobre Fornecedores", "Serviços Adicionais"]
+                    # Tentar encontrar a categoria atual nas novas categorias
+                    if transacao['categoria'] == "Serviço":
+                        categoria_index = 0  # Serviços de Organização
+                    elif transacao['categoria'] in ["Venda de Produtos", "Produto"]:
+                        categoria_index = 1  # Venda de Produtos
+                    elif transacao['categoria'] in ["Fornecedor", "Comissão"]:
+                        categoria_index = 2  # Comissão sobre Fornecedores
+                    else:
+                        categoria_index = 3  # Serviços Adicionais
+                else:
+                    categorias_disponíveis = ["Pagamento Equipe", "Pagamento Parceiros/Fornecedores", "Custos Operacionais", "Custos Administrativos"]
+                    # Tentar encontrar a categoria atual nas novas categorias
+                    if transacao['categoria'] == "Assistente":
+                        categoria_index = 0  # Pagamento Equipe
+                    elif transacao['categoria'] == "Fornecedor":
+                        categoria_index = 1  # Pagamento Parceiros/Fornecedores
+                    else:
+                        categoria_index = 3  # Custos Administrativos
+                
                 categoria = st.selectbox(
                     "Categoria",
-                    ["Serviço", "Venda de Produtos", "Fornecedor", "Assistente", "Outros"],
-                    index=["Serviço", "Venda de Produtos", "Fornecedor", "Assistente", "Outros"].index(
-                        transacao['categoria'] if transacao['categoria'] in ["Serviço", "Venda de Produtos", "Produto", "Fornecedor", "Assistente", "Outros"] else "Outros"
-                    )
+                    categorias_disponíveis,
+                    index=categoria_index
                 )
                 
                 # Criar uma única linha de botões para o form
