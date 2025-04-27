@@ -183,7 +183,7 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
                 else:
                     try:
                         # Tentar extrair valor numérico da string formatada
-                        val = item['subtotal'].replace('R$', '').replace('.', '').replace(',', '.').strip()
+                        val = item['subtotal'].replace('R$', '').replace(',', '.').strip()
                         valor_total += float(val)
                     except:
                         pass
