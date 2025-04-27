@@ -21,7 +21,7 @@ def show():
         with st.form("registro_transacao", clear_on_submit=True):
             tipo = st.selectbox(
                 "Tipo",
-                ["receita", "despesa", "receita_a_receber"]
+                ["receita", "despesa"]
             )
 
             descricao = st.text_input("Descrição")
@@ -94,7 +94,7 @@ def show():
         with col1:
             tipo_filtro = st.multiselect(
                 "Tipo",
-                ["receita", "despesa", "receita_a_receber"]
+                ["receita", "despesa"]
             )
         with col2:
             categoria_filtro = st.multiselect(
@@ -125,7 +125,11 @@ def show():
             def formatar_tipo(tipo):
                 if tipo == 'receita_a_receber':
                     return 'Receita'
+                elif tipo == 'receita':
+                    return 'Receita'
                 elif tipo == 'despesa_a_pagar':
+                    return 'Despesa'
+                elif tipo == 'despesa':
                     return 'Despesa'
                 else:
                     return tipo.title()
@@ -170,10 +174,13 @@ def show():
             st.subheader("Editar Transação")
 
             with st.form(key="edicao_transacao_form"):
+                # Mapeamento de tipo de transação para simplificar
+                tipo_exibido = "receita" if transacao['tipo'] in ["receita", "receita_a_receber"] else "despesa"
+                
                 tipo = st.selectbox(
                     "Tipo",
-                    ["receita", "despesa", "receita_a_receber"],
-                    index=["receita", "despesa", "receita_a_receber"].index(transacao['tipo'])
+                    ["receita", "despesa"],
+                    index=0 if tipo_exibido == "receita" else 1
                 )
 
                 descricao = st.text_input("Descrição", value=transacao['descricao'])
@@ -228,7 +235,10 @@ def show():
 
         # Resumo financeiro
         receitas = financeiro[financeiro['tipo'].isin(['receita', 'receita_a_receber'])]['valor'].sum() if not financeiro.empty else 0
-        despesas = financeiro[financeiro['tipo'] == 'despesa']['valor'].sum() if not financeiro.empty else 0
+        despesas = financeiro[
+            (financeiro['tipo'].isin(['despesa', 'despesa_a_pagar'])) |
+            (financeiro['classificacao'] == 'contas_a_pagar')
+        ]['valor'].sum() if not financeiro.empty else 0
         saldo = receitas - despesas
 
         col1, col2, col3 = st.columns(3)
