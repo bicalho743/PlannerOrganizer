@@ -62,7 +62,7 @@ def show():
 
             categoria = st.selectbox(
                 "Categoria",
-                ["Serviço", "Produto", "Fornecedor", "Outros"]
+                ["Serviço", "Venda de Produtos", "Fornecedor", "Assistente", "Comissão", "Outros"]
             )
 
             submitted = st.form_submit_button("Registrar")
@@ -99,7 +99,7 @@ def show():
         with col2:
             categoria_filtro = st.multiselect(
                 "Categoria",
-                ["Serviço", "Produto", "Fornecedor", "Outros"]
+                ["Serviço", "Venda de Produtos", "Fornecedor", "Assistente", "Comissão", "Outros"]
             )
         with col3:
             data_filtro = st.date_input("Data")
@@ -199,9 +199,9 @@ def show():
 
                 categoria = st.selectbox(
                     "Categoria",
-                    ["Serviço", "Produto", "Fornecedor", "Assistente", "Outros"],
-                    index=["Serviço", "Produto", "Fornecedor", "Assistente", "Outros"].index(
-                        transacao['categoria'] if transacao['categoria'] in ["Serviço", "Produto", "Fornecedor", "Assistente", "Outros"] else "Outros"
+                    ["Serviço", "Venda de Produtos", "Fornecedor", "Assistente", "Outros"],
+                    index=["Serviço", "Venda de Produtos", "Fornecedor", "Assistente", "Outros"].index(
+                        transacao['categoria'] if transacao['categoria'] in ["Serviço", "Venda de Produtos", "Produto", "Fornecedor", "Assistente", "Outros"] else "Outros"
                     )
                 )
                 
