@@ -1248,7 +1248,7 @@ class Database:
                 tipo="receita_a_receber",
                 descricao=f"Proposta #{proposta_id} - {descricao} - {nome_cliente}",
                 valor=valor,
-                categoria="Propostas",
+                categoria="Serviços de Organização",  # Alterado de "Propostas" para "Serviços de Organização"
                 subcategoria=tipo_proposta,
                 tipo_receita="Projeto",
                 origem_id=proposta_id,
@@ -2750,60 +2750,15 @@ class Database:
                         
                         resultado["acrescimo_id"] = acrescimo_id
                         
-                        # Se for do tipo FORNECEDOR e tiver percentual de comissão, gerar recebimento automático
+                        # Não gerar mais transações automáticas de comissão ou assistente aqui
+                        # Elas serão geradas apenas na finalização da proposta (gerar_lancamentos_financeiros_proposta_concluida)
+                        
+                        # Apenas armazenar a informação do percentual de comissão para uso posterior
                         if tipo_upper == "FORNECEDOR" and percentual_comissao_float is not None and percentual_comissao_float > 0:
-                            # Calcular valor da comissão
-                            valor_comissao = valor_float * (percentual_comissao_float / 100.0)
-                            
-                            # Criar recebimento para a comissão
-                            receita = Receita(
-                                cliente_id=proposta.cliente_id,
-                                tipo="Comissão",
-                                categoria="Comissão de Fornecedor",
-                                descricao=f"Comissão de {percentual_comissao_float}% sobre fornecimento de {fornecedor_nome}",
-                                valor=valor_comissao,
-                                data_vencimento=datetime.now().date() + timedelta(days=30),  # Vencimento em 30 dias
-                                data_recebimento=None,  # Ainda não recebido
-                                status="Pendente",
-                                forma_pagamento=None,  # Será definido quando for recebido
-                                proposta_id=proposta_id_int,
-                                cliente_nome=cliente.nome if cliente else "Cliente não identificado"
-                            )
-                            
-                            self.session.add(receita)
-                            self.session.flush()
-                            
-                            if receita.id is not None:
-                                comissao_id = int(receita.id)
-                                resultado["comissao_gerada"] = True
-                                resultado["comissao_id"] = comissao_id
-                                resultado["valor_comissao"] = valor_comissao
-                                
-                                # # print(f"DEBUG: Comissão gerada com sucesso, ID={comissao_id}, Valor={valor_comissao}")
-                                
-                        # Se for do tipo ASSISTENTE, gerar despesa a pagar automaticamente
+                            resultado["comissao_percentual"] = percentual_comissao_float
+                        # Remover a geração automática de despesa para assistentes
                         elif tipo_upper == "ASSISTENTE":
-                            # Criar despesa para o assistente
-                            despesa = Despesa(
-                                categoria="Pagamento de Assistente",
-                                descricao=f"Pagamento para {fornecedor_nome} - Proposta #{proposta.id}",
-                                valor=valor_float,
-                                data_vencimento=datetime.now().date() + timedelta(days=15),  # Vencimento em 15 dias
-                                status="Pendente",
-                                proposta_id=proposta_id_int,
-                                origem_tipo="assistente"
-                            )
-                            
-                            self.session.add(despesa)
-                            self.session.flush()
-                            
-                            if despesa.id is not None:
-                                despesa_id = int(despesa.id)
-                                resultado["despesa_gerada"] = True
-                                resultado["despesa_id"] = despesa_id
-                                resultado["valor_despesa"] = valor_float
-                                
-                                # # print(f"DEBUG: Despesa para assistente gerada com sucesso, ID={despesa_id}, Valor={valor_float}")
+                            resultado["assistente_valor"] = valor_float
                         
                         return resultado
                     else:
@@ -4683,6 +4638,18 @@ class Database:
                             valor_comissao = valor_fornecedor * (percentual_comissao / 100)
                             
                             if valor_comissao > 0:
+                                # Verificar se já existe uma transação de comissão para este fornecedor nesta proposta
+                                comissao_existente = self.session.query(Transacao).filter(
+                                    Transacao.proposta_id == proposta_id_int,
+                                    Transacao.categoria == "Comissão",
+                                    Transacao.subcategoria == "Comissão de Fornecedor",
+                                    Transacao.descricao.like(f"%{nome_fornecedor}%")
+                                ).first()
+                                
+                                if comissao_existente:
+                                    print(f"DEBUG LANCAMENTOS: Comissão para {nome_fornecedor} já existe. ID={comissao_existente.id}. Pulando.")
+                                    continue
+                                
                                 # Transação no extrato
                                 transacao_comissao = Transacao(
                                     tipo="receita_a_receber",
@@ -4735,15 +4702,27 @@ class Database:
                         
                     print(f"DEBUG LANCAMENTOS: Lançamentos existentes para Assistentes a pagar: {transacoes_assistentes}")
                     
-                    # Criar lançamentos para assistentes apenas se não existirem
-                    if valor_total_assistentes > 0 and (transacoes_assistentes == 0 or forcar_geracao):
-                        print(f"DEBUG LANCAMENTOS: Criando lançamentos para Assistentes a pagar: R$ {valor_total_assistentes:.2f}")
+                    # Criar lançamentos individuais para cada assistente (verificando duplicidade por assistente)
+                    if valor_total_assistentes > 0:
+                        print(f"DEBUG LANCAMENTOS: Verificando lançamentos para Assistentes a pagar: R$ {valor_total_assistentes:.2f}")
                         
                         for assistente_item in assistentes:
                             valor_assistente = float(assistente_item.valor) if assistente_item.valor else 0
                             
                             if valor_assistente > 0:
                                 nome_assistente = assistente_item.fornecedor  # o campo "fornecedor" armazena o nome do assistente
+                                
+                                # Verificar se já existe uma transação de pagamento para este assistente nesta proposta
+                                assistente_existente = self.session.query(Transacao).filter(
+                                    Transacao.proposta_id == proposta_id_int,
+                                    Transacao.categoria == "Assistente",
+                                    Transacao.subcategoria == "Pagamento de Serviço",
+                                    Transacao.descricao.like(f"%{nome_assistente}%")
+                                ).first()
+                                
+                                if assistente_existente:
+                                    print(f"DEBUG LANCAMENTOS: Pagamento para assistente {nome_assistente} já existe. ID={assistente_existente.id}. Pulando.")
+                                    continue
                                 
                                 # Transação no extrato
                                 transacao_assistente = Transacao(
