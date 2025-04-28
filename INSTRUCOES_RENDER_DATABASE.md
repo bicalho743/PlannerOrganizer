@@ -1,65 +1,62 @@
-# Instruções para Atualizar o Banco de Dados no Render
+# Instruções para Resolver Erro de Coluna no Render
 
-Estes passos são necessários para corrigir o problema em que a aplicação no Render mostra erros como:
-```
-column clientes.usuario_id does not exist
-```
+Este guia contém instruções para resolver o erro `column clientes.usuario_id does not exist` que ocorre no Render, mesmo após confirmar que a coluna existe no banco de dados.
 
-## Passos para Atualização
+## O Problema
 
-### 1. Acesse o Dashboard do Render
+O erro ocorre porque o SQLAlchemy mantém um cache de metadados que não é atualizado quando você altera o banco diretamente via SQL. Isso faz com que a aplicação continue reportando que a coluna não existe, mesmo quando você já a adicionou.
 
-1. Faça login no [Render Dashboard](https://dashboard.render.com/)
-2. Vá para o serviço PostgreSQL usado pelo seu aplicativo
+## Solução
 
-### 2. Acesse o Console do Banco de Dados
+### 1. Atualizar o Startup Command no Render
 
-1. No serviço PostgreSQL, procure por "Connect" ou "Console"
-2. Abra a interface SQL do banco de dados (normalmente é um botão "psql console")
+Acesse o painel do Render e altere o comando de inicialização:
 
-### 3. Execute o Script de Alteração do Schema
+1. Faça login no [dashboard do Render](https://dashboard.render.com/)
+2. Selecione seu serviço web
+3. Vá para a aba "Settings"
+4. Altere o "Start Command" de:
+   ```
+   streamlit run app.py --server.port 10000 --server.address 0.0.0.0
+   ```
+   para:
+   ```
+   python render_no_cache.py
+   ```
+5. Clique em "Save Changes"
 
-1. Copie todo o conteúdo do arquivo `update_schema.sql` fornecido
-2. Cole e execute o script na interface SQL do Render
-3. Verifique se o script foi executado sem erros
-4. Você deve ver uma lista das tabelas que agora têm a coluna `usuario_id`
+### 2. Fazer Upload dos Arquivos de Correção
 
-### 4. Execute o Script para Popular usuario_id (Se Necessário)
+Faça upload dos seguintes arquivos para o seu repositório:
 
-Se você tiver dados existentes nas tabelas:
+- `fix_render_schema.py` - Script que verifica e corrige o esquema do banco 
+- `fix_render_database.sql` - Script SQL para corrigir o banco diretamente
+- `render_no_cache.py` - Script de inicialização alternativo para o Render
 
-1. Edite o arquivo `populate_usuario_id.sql` e substitua `SEU_ID_USUARIO_FIREBASE` pelo seu ID real do Firebase
-   - Exemplo: `7Be1aICPHZdrS4ghnHZxc9Jp3Yt1`
-2. Copie todo o conteúdo do arquivo modificado
-3. Cole e execute o script na interface SQL do Render
-4. Verifique se o script foi executado sem erros
-5. Você deve ver uma contagem dos registros atualizados por tabela
+### 3. Deploy Limpo
 
-### 5. Reinicie o Serviço Web
+1. No painel do Render, vá para a aba "Manual Deploy"
+2. Clique no botão "Clear build cache & deploy"
+3. Aguarde o término do deploy e verifique os logs para conferir se o script de correção foi executado
 
-1. Volte para o dashboard do Render
-2. Acesse seu serviço Web (o aplicativo Streamlit)
-3. Clique em "Manual Deploy" e selecione "Clear build cache & deploy"
-4. Aguarde o deploy ser concluído
-5. Acesse o aplicativo novamente e teste as funcionalidades
+## Verificação
 
-## Verificação Final
+Depois de aplicar as correções, acesse a aplicação e verifique:
 
-Após executar os passos acima, acesse o aplicativo e verifique se os erros de `column clientes.usuario_id does not exist` ou similares foram resolvidos.
+1. Se consegue fazer login normalmente
+2. Se os clientes estão sendo exibidos corretamente
+3. Se as propostas podem ser criadas e editadas
 
-Se você continuar tendo problemas, verifique os logs do serviço no Render para identificar a causa.
+## Reversão
 
-## Caso Ainda Haja Problemas
+Se algo der errado, você pode:
 
-Se ainda houver problemas mesmo após esses passos, considere:
+1. Voltar ao comando de inicialização original
+2. Fazer um novo deploy limpo
+3. Se necessário, restaurar o banco de dados a partir de um backup
 
-1. Verificar se todos os comandos SQL foram executados com sucesso
-2. Verificar se o deploy foi completo após a atualização do banco
-3. Confirmar se as variáveis de ambiente como DATABASE_URL estão definidas corretamente
-4. Como último recurso, considere recriar o banco de dados do zero
+## Outras Considerações
 
-## Notas Adicionais
-
-- A adição da coluna `usuario_id` é essencial para o funcionamento do isolamento multi-tenant do sistema
-- Estes scripts adicionam colunas sem modificar ou excluir dados existentes
-- Se você tiver grandes volumes de dados, o processo de atualização pode levar algum tempo
+- Esses scripts não afetam os dados existentes, apenas corrigem o esquema
+- O script `render_no_cache.py` irá executar a correção de esquema em cada inicialização da aplicação
+- As correções não são necessárias em ambiente local, somente no Render

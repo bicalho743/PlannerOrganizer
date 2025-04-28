@@ -479,7 +479,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run download_fix_render_db.py --server.port 7500 --server.address 0.0.0.0"
+args = "streamlit run download_fix_render_db.py --server.port 7500 --server.address 0.0.0.0 --server.headless true"
 waitForPort = 7500
 
 [[ports]]
