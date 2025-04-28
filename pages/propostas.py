@@ -1608,8 +1608,8 @@ def show():
                             st.markdown("---")
                             if st.button("Marcar como Concluída", key=f"finalizar_{proposta_exec_id}"):
                                 try:
-                                    # Usar a nova função de finalização segura
-                                    from utils.finalizar_proposta import finalizar_proposta_segura
+                                    # Usar a nova função de finalização robusta
+                                    from utils.finalizar_proposta_fix import finalizar_proposta_sql
                                     
                                     with st.spinner("Finalizando proposta..."):
                                         # Chamar a função segura que usa uma sessão isolada para evitar problemas de concorrência
