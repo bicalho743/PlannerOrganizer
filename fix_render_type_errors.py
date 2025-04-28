@@ -105,7 +105,7 @@ def fix_database_type_errors():
         # Verificar propostas com valores inconsistentes
         print("\n3. Verificando propostas com valores inconsistentes...")
         cursor.execute("""
-            SELECT id, titulo, valor, status, cliente_id 
+            SELECT id, descricao, valor, status, cliente_id 
             FROM propostas 
             WHERE valor IS NULL OR valor::text ~ '[a-zA-Z]'
             LIMIT 10
@@ -155,17 +155,18 @@ def fix_database_type_errors():
                 
                 -- Verificar se já tem lançamento
                 SELECT EXISTS(
-                    SELECT 1 FROM financeiro
-                    WHERE proposta_id = prop.id AND tipo = 'receita_a_receber'
+                    SELECT 1 FROM financeiro f
+                    WHERE f.proposta_id = prop.id AND f.tipo = 'receita_a_receber'
                 ) INTO tem_lancamento;
                 
                 -- Atualizar status e datas
-                UPDATE propostas
+                -- Atualizar status e datas (sem data_finalizacao que não existe no schema)
+                UPDATE propostas p
                 SET 
                     status = 'Finalizada',
-                    data_finalizacao = data_atual,
-                    data_proposta = COALESCE(data_proposta, data_inicio, data_atual)
-                WHERE id = proposta_id;
+                    data_fim = data_atual, -- Usando data_fim em vez de data_finalizacao
+                    data_proposta = COALESCE(p.data_proposta, p.data_inicio, data_atual)
+                WHERE p.id = proposta_id;
                 
                 -- Criar lançamento financeiro se não existir
                 IF NOT tem_lancamento THEN
@@ -178,7 +179,7 @@ def fix_database_type_errors():
                         'Serviços de Organização',
                         'receita_a_receber',
                         'Pendente',
-                        proposta_id,
+                        prop.id,  -- Usando prop.id em vez de proposta_id para evitar ambiguidade
                         prop.usuario_id
                     );
                 END IF;
@@ -271,8 +272,8 @@ def fix_database_type_errors():
                     contador := contador + 1;
                     -- Verificar se tem lançamento financeiro
                     SELECT EXISTS(
-                        SELECT 1 FROM financeiro
-                        WHERE proposta_id = prop.id AND tipo = 'receita_a_receber'
+                        SELECT 1 FROM financeiro f
+                        WHERE f.proposta_id = prop.id AND f.tipo = 'receita_a_receber'
                     ) INTO tem_lancamento;
                     
                     -- Se não tiver lançamento, criar
@@ -284,7 +285,7 @@ def fix_database_type_errors():
                         VALUES (
                             'Proposta #' || prop.id || ' - ' || prop.cliente_nome,
                             CASE WHEN prop.valor IS NULL OR prop.valor::text ~ '[a-zA-Z]' THEN 0 ELSE prop.valor END,
-                            COALESCE(prop.data_finalizacao, data_atual),
+                            COALESCE(prop.data_fim, data_atual),
                             'Serviços de Organização',
                             'receita_a_receber',
                             'Pendente',
@@ -293,12 +294,12 @@ def fix_database_type_errors():
                         );
                     END IF;
                     
-                    -- Garantir que data_finalizacao esteja definida
-                    IF prop.data_finalizacao IS NULL THEN
-                        RAISE NOTICE 'Atualizando data_finalizacao para proposta #%', prop.id;
+                    -- Garantir que data_fim esteja definida (substitui data_finalizacao)
+                    IF prop.data_fim IS NULL THEN
+                        RAISE NOTICE 'Atualizando data_fim para proposta #%', prop.id;
                         
                         UPDATE propostas
-                        SET data_finalizacao = data_atual
+                        SET data_fim = data_atual
                         WHERE id = prop.id;
                     END IF;
                     
