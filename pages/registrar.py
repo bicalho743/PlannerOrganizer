@@ -80,8 +80,8 @@ def show():
             
             # Botão Streamlit para voltar ao login
             if st.button("Voltar ao login", use_container_width=True):
-                # Redirecionar para a página de login
-                st.session_state.current_page = "Login"
+                # Definir a página de login como "login" para voltar à tela inicial
+                st.session_state.login_page = "login"
                 # Garantir que não há outras flags ativas
                 if 'show_welcome' in st.session_state:
                     st.session_state.show_welcome = False
