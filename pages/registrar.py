@@ -69,27 +69,23 @@ def show():
                                 # Exibir mensagem de erro
                                 st.error(f"Erro ao criar conta: {result['error']}")
             
-            # Link para voltar ao login
+            # Texto centralizado
             st.markdown("""
             <div style="text-align: center; margin-top: 1rem;">
                 <p style="color: #5A6A85; font-size: 0.9rem;">
-                    Já tem uma conta? 
-                    <a href="#" id="back-to-login" style="color: #1E88E5; text-decoration: none;">
-                        Voltar ao login
-                    </a>
+                    Já tem uma conta?
                 </p>
             </div>
             """, unsafe_allow_html=True)
             
-            # Adicionar JavaScript para voltar ao login
-            st.markdown("""
-            <script>
-                document.getElementById('back-to-login').addEventListener('click', function(e) {
-                    e.preventDefault();
-                    window.history.back();
-                });
-            </script>
-            """, unsafe_allow_html=True)
+            # Botão Streamlit para voltar ao login
+            if st.button("Voltar ao login", use_container_width=True):
+                # Redirecionar para a página de login
+                st.session_state.current_page = "Login"
+                # Garantir que não há outras flags ativas
+                if 'show_welcome' in st.session_state:
+                    st.session_state.show_welcome = False
+                st.rerun()
 
 if __name__ == "__main__":
     show()
