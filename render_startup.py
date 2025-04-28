@@ -1,86 +1,85 @@
+"""
+Script de inicialização para o Render que força limpeza de cache do SQLAlchemy
+"""
 import os
 import sys
-import logging
 import time
+import subprocess
+import psycopg2
 
-# Configurar logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+print("=== RENDER STARTUP SCRIPT ===")
+print(f"Iniciando em: {time.strftime('%Y-%m-%d %H:%M:%S')}")
 
-def wait_for_database(max_attempts=5, delay=5):
-    """
-    Espera até que a conexão com o banco de dados esteja disponível
-    
-    Isso é útil para o Render, onde o banco de dados pode levar alguns segundos
-    para ficar disponível após a inicialização do serviço.
-    """
-    from sqlalchemy import create_engine
-    
-    # Get database URL from environment variable
-    DATABASE_URL = os.getenv('DATABASE_URL')
-    if DATABASE_URL is None:
-        logger.error("DATABASE_URL environment variable is not set")
-        return False
-    
-    logger.info(f"Verificando conexão com o banco de dados (mascarado): ...@{DATABASE_URL.split('@')[-1] if '@' in DATABASE_URL else 'url-inválida'}")
-    
-    for attempt in range(1, max_attempts + 1):
-        try:
-            # Tenta criar um engine e conectar
-            engine = create_engine(
-                DATABASE_URL,
-                connect_args={
-                    'sslmode': 'require',
-                    'connect_timeout': 10
-                } if 'postgresql' in DATABASE_URL else {},
-            )
-            
-            # Tenta executar uma query simples
-            with engine.connect() as conn:
-                conn.execute("SELECT 1")
-                
-            logger.info("Conexão com o banco de dados estabelecida com sucesso!")
-            return True
-            
-        except Exception as e:
-            logger.warning(f"Tentativa {attempt}/{max_attempts} falhou: {str(e)}")
-            if attempt < max_attempts:
-                logger.info(f"Tentando novamente em {delay} segundos...")
-                time.sleep(delay)
-    
-    logger.error("Não foi possível conectar ao banco de dados após várias tentativas")
-    return False
-
-if __name__ == "__main__":
-    logger.info("=== Iniciando script de preparação para o Render ===")
-    
-    # Esperar até que o banco de dados esteja disponível
-    db_available = wait_for_database()
-    
-    if db_available:
-        logger.info("Banco de dados está pronto, continuando startup...")
+# Verificar e corrigir o esquema do banco antes de iniciar
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    try:
+        print("Verificando banco de dados...")
+        # Conectar diretamente ao banco
+        conn = psycopg2.connect(DATABASE_URL)
+        conn.autocommit = True
+        cursor = conn.cursor()
         
-        # Adicionar diretório raiz ao path
-        project_root = os.path.abspath(os.path.dirname(__file__))
-        if project_root not in sys.path:
-            sys.path.append(project_root)
-            logger.info(f"Adicionado {project_root} ao sys.path")
-            
-        # Importar o modelo do banco de dados e criar as tabelas
-        try:
-            from utils.database import Base, engine
-            logger.info("Criando tabelas do banco de dados...")
-            Base.metadata.create_all(engine)
-            logger.info("Tabelas criadas com sucesso!")
-        except Exception as e:
-            logger.error(f"Erro ao criar tabelas: {str(e)}")
-            sys.exit(1)
-    else:
-        logger.error("Falha na inicialização: Banco de dados não está disponível")
-        sys.exit(1)
+        # Verificar e adicionar coluna usuario_id em clientes
+        cursor.execute("""
+            DO $$
+            BEGIN
+                BEGIN
+                    ALTER TABLE clientes ADD COLUMN usuario_id VARCHAR;
+                    RAISE NOTICE 'Coluna usuario_id adicionada à tabela clientes';
+                EXCEPTION
+                    WHEN duplicate_column THEN
+                        RAISE NOTICE 'Coluna usuario_id já existe na tabela clientes';
+                END;
+            END $$;
+        """)
         
-    logger.info("=== Preparação concluída com sucesso ===")
-    sys.exit(0)
+        # Atualizar valores nulos
+        cursor.execute("""
+            UPDATE clientes SET usuario_id = '7NDbX2b7hAcFqWzwsgi2BXiFZad2' 
+            WHERE usuario_id IS NULL;
+        """)
+        
+        # Criar índice
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_clientes_usuario_id ON clientes (usuario_id);
+        """)
+        
+        # Forçar análise de tabelas
+        cursor.execute("ANALYZE clientes;")
+        
+        # Verificar estrutura final
+        cursor.execute("""
+            SELECT column_name FROM information_schema.columns 
+            WHERE table_name = 'clientes'
+            ORDER BY column_name;
+        """)
+        
+        colunas = cursor.fetchall()
+        print(f"Colunas da tabela clientes: {[col[0] for col in colunas]}")
+        
+        # Verificar se usuario_id está presente
+        tem_usuario_id = any(col[0] == 'usuario_id' for col in colunas)
+        if tem_usuario_id:
+            print("✓ Coluna usuario_id confirmada na tabela clientes")
+        else:
+            print("❌ ALERTA: Coluna usuario_id não encontrada após correção!")
+        
+        # Fechar conexão
+        cursor.close()
+        conn.close()
+        print("Verificação do banco concluída com sucesso!")
+        
+    except Exception as e:
+        print(f"ERRO ao verificar banco: {str(e)}")
+else:
+    print("Aviso: DATABASE_URL não encontrada no ambiente")
+
+# Executar o comando Streamlit
+try:
+    cmd = 'streamlit run app.py --server.port 10000 --server.address 0.0.0.0'
+    print(f"Executando: {cmd}")
+    os.system(cmd)
+except Exception as e:
+    print(f"ERRO: {e}")
+    sys.exit(1)
