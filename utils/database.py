@@ -462,6 +462,135 @@ class Database:
         except Exception as e:
             print(f"Erro ao verificar/criar perfil: {str(e)}")
             self.session.rollback()
+            
+    def create_perfil(self, usuario_id, email, nome, telefone=None, empresa=None, 
+                     instagram=None, website=None, cor_principal=None, cor_secundaria=None, 
+                     role="user", plano="gratuito"):
+        """
+        Cria um novo perfil de usuário no banco de dados PostgreSQL
+        
+        Args:
+            usuario_id (str): ID do usuário no Firebase Auth (UID)
+            email (str): Email do usuário
+            nome (str): Nome do usuário
+            telefone (str, optional): Telefone do usuário
+            empresa (str, optional): Empresa do usuário
+            instagram (str, optional): Instagram do usuário
+            website (str, optional): Website do usuário
+            cor_principal (str, optional): Cor principal do tema
+            cor_secundaria (str, optional): Cor secundária do tema
+            role (str, optional): Papel do usuário (padrão: "user")
+            plano (str, optional): Plano do usuário (padrão: "gratuito")
+            
+        Returns:
+            bool: True se o perfil foi criado com sucesso, False em caso de erro
+        """
+        def query():
+            try:
+                # Verificar se já existe um perfil com este usuario_id
+                perfil_existente = self.session.query(Perfil).filter_by(usuario_id=usuario_id).first()
+                if perfil_existente:
+                    print(f"Perfil já existe para o usuário ID: {usuario_id}")
+                    
+                    # Atualizar último login
+                    perfil_existente.ultimo_login = datetime.now()
+                    self.session.commit()
+                    
+                    return True
+                
+                # Verificar se já existe um perfil com este email
+                perfil_email = self.session.query(Perfil).filter_by(email=email).first()
+                if perfil_email:
+                    print(f"Já existe um perfil com o email: {email}")
+                    
+                    # Se o perfil existente tem um usuario_id diferente, podemos ter um problema
+                    # de duplicação ou de migração de conta
+                    if perfil_email.usuario_id != usuario_id:
+                        print(f"AVISO: Email já cadastrado com outro ID de usuário.")
+                        print(f"  - Atual: {usuario_id}")
+                        print(f"  - Existente: {perfil_email.usuario_id}")
+                    
+                    # Atualizar último login de qualquer forma
+                    perfil_email.ultimo_login = datetime.now()
+                    self.session.commit()
+                    
+                    return True
+                
+                # Criar novo perfil
+                novo_perfil = Perfil(
+                    usuario_id=usuario_id,
+                    email=email,
+                    nome=nome,
+                    telefone=telefone or "",
+                    empresa=empresa or "Planner Organizer",
+                    instagram=instagram,
+                    website=website,
+                    cor_principal=cor_principal,
+                    cor_secundaria=cor_secundaria,
+                    role=role,
+                    plano=plano,
+                    data_cadastro=datetime.now().date(),
+                    ultimo_login=datetime.now(),
+                    ativo=True
+                )
+                
+                self.session.add(novo_perfil)
+                self.session.commit()
+                
+                print(f"Perfil criado com sucesso para: {email} (ID: {usuario_id})")
+                return True
+                
+            except Exception as e:
+                print(f"Erro ao criar perfil: {str(e)}")
+                self.session.rollback()
+                return False
+                
+        return self._safe_query(query)
+        
+    def get_perfil_by_email(self, email):
+        """
+        Busca um perfil de usuário pelo email
+        
+        Args:
+            email (str): Email do usuário
+            
+        Returns:
+            dict: Dicionário com os dados do perfil ou None se não encontrado
+        """
+        def query():
+            try:
+                perfil = self.session.query(Perfil).filter_by(email=email).first()
+                
+                if not perfil:
+                    print(f"Perfil não encontrado para o email: {email}")
+                    return None
+                
+                # Converter objeto para dicionário para facilitar uso
+                perfil_dict = {
+                    'id': perfil.id,
+                    'usuario_id': perfil.usuario_id,
+                    'email': perfil.email,
+                    'nome': perfil.nome,
+                    'telefone': perfil.telefone,
+                    'empresa': perfil.empresa,
+                    'instagram': perfil.instagram,
+                    'website': perfil.website,
+                    'cor_principal': perfil.cor_principal,
+                    'cor_secundaria': perfil.cor_secundaria,
+                    'role': perfil.role,
+                    'plano': perfil.plano,
+                    'data_cadastro': perfil.data_cadastro,
+                    'ultimo_login': perfil.ultimo_login,
+                    'ativo': perfil.ativo
+                }
+                
+                return perfil_dict
+                
+            except Exception as e:
+                print(f"Erro ao buscar perfil por email: {str(e)}")
+                return None
+                
+        return self._safe_query(query)
 
     def _safe_query(self, query_func):
         """

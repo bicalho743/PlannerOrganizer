@@ -151,7 +151,7 @@ class FirebaseAuth:
             # Criar usuário no Firebase Auth
             user = self.auth.create_user_with_email_and_password(email, password)
             
-            # Criar perfil no Realtime Database
+            # Preparar dados do perfil
             user_profile = {
                 'email': email,
                 'name': name,
@@ -159,8 +159,40 @@ class FirebaseAuth:
                 'role': 'user'  # Papel padrão
             }
             
-            # Salvar perfil no banco
-            self.db.child("users").child(user['localId']).set(user_profile)
+            # Tentar salvar o perfil no PostgreSQL em vez do Firebase Realtime Database
+            try:
+                from utils.database import Database
+                if 'db' in st.session_state:
+                    db = st.session_state.db
+                    
+                    # Verificar se o método para criar perfil existe
+                    if hasattr(db, 'create_perfil'):
+                        db.create_perfil(
+                            usuario_id=user['localId'],
+                            email=email,
+                            nome=name if name else email.split('@')[0].title(),
+                            telefone="",
+                            empresa="Planner Organizer",
+                            role="user",
+                            plano="gratuito"
+                        )
+                        print(f"Perfil criado no PostgreSQL para: {email}")
+                    else:
+                        print("Método create_perfil não encontrado no objeto Database")
+                else:
+                    print("Objeto Database não encontrado na sessão")
+            except Exception as db_error:
+                print(f"Erro ao criar perfil no PostgreSQL: {str(db_error)}")
+                # Continuar o processo mesmo com erro, pois o usuário foi criado no Firebase Auth
+            
+            # Tentar salvar no Firebase Realtime Database como fallback
+            # Isso ajuda a manter compatibilidade com sistemas legados
+            try:
+                self.db.child("users").child(user['localId']).set(user_profile)
+                print("Perfil também salvo no Firebase Realtime Database")
+            except Exception as firebase_db_error:
+                print(f"Erro ao salvar no Firebase Realtime Database (esperado em produção): {str(firebase_db_error)}")
+                # Ignorar este erro, já que estamos usando PostgreSQL como principal
             
             # Já fazer login após registro bem-sucedido
             return self.login(email, password)
