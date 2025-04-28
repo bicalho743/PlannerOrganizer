@@ -196,4 +196,17 @@ def main():
     """)
 
 if __name__ == "__main__":
-    main()
+    # Verificar se estamos sendo executados diretamente pela linha de comando
+    # ou pelo Streamlit
+    if 'streamlit' in os.environ.get('_', ''):
+        main()
+    else:
+        # Execução via linha de comando - criar o ZIP diretamente
+        print("Criando arquivo ZIP de deployment diretamente...")
+        try:
+            zip_path = create_deployment_zip()
+            zip_size = Path(zip_path).stat().st_size / (1024 * 1024)  # Tamanho em MB
+            print(f"ZIP criado com sucesso: {zip_path} ({zip_size:.1f} MB)")
+        except Exception as e:
+            print(f"Erro ao criar ZIP: {str(e)}")
+            raise
