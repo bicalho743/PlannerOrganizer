@@ -2,7 +2,7 @@ import os
 import numpy as np
 import streamlit as st
 from datetime import datetime, timedelta
-from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, func, Index, text, select, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, func, Index, text, select, DateTime, inspect
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 import pandas as pd
@@ -15,18 +15,24 @@ if DATABASE_URL is None:
 
 # Ensure proper SSL configuration for PostgreSQL
 try:
+    # Importar NullPool para evitar caching de conexões
+    from sqlalchemy.pool import NullPool
+    
+    # Criar engine sem pool para evitar caching de conexões
     engine = create_engine(
         DATABASE_URL,
         connect_args={
             'sslmode': 'require',
             'connect_timeout': 10
         } if 'postgresql' in DATABASE_URL else {},
-        pool_pre_ping=True,
-        pool_recycle=3600,
-        pool_timeout=30,
-        max_overflow=10,
-        pool_size=5
+        # Usar NullPool para desativar caching de conexões
+        poolclass=NullPool,
+        # Desativar mecanismos de caching para garantir acesso às colunas mais recentes
+        isolation_level='AUTOCOMMIT'
     )
+    
+    # Forçar informar que estamos atualizando o esquema de metadados
+    print("Iniciando motor de banco com caching desativado para resolver problemas de esquema")
 except Exception as e:
     print(f"Error creating database engine: {str(e)}")
     raise
@@ -397,6 +403,28 @@ class ItemVenda(Base):
     produto = relationship("Produto", back_populates="vendas_itens")
 
 class Database:
+    def refresh_schema_metadata(self):
+        """
+        Força a atualização dos metadados do esquema do banco de dados.
+        Isso é útil quando o cache do SQLAlchemy não reflete mudanças recentes no esquema.
+        """
+        try:
+            # Limpar o cache de metadados
+            Base.metadata.clear()
+            
+            # Forçar uma nova leitura do esquema
+            Base.metadata.reflect(bind=engine)
+            
+            # Exibir informações de debug
+            insp = inspect(engine)
+            tables = insp.get_table_names()
+            print(f"Schema atualizado. Tabelas disponíveis: {tables}")
+            
+            return True
+        except Exception as e:
+            print(f"Erro ao atualizar schema: {str(e)}")
+            return False
+
     def __init__(self, usuario_id=None):
         """
         Inicializa a conexão com o banco de dados e configura o contexto de usuário
@@ -405,7 +433,11 @@ class Database:
             usuario_id (str, optional): ID do usuário para filtrar os dados.
                                        Se None, tenta obter o ID do usuário da sessão do Streamlit.
         """
+        # Forçar atualização de metadados para resolver problemas com colunas
+        self.refresh_schema_metadata()
+        
         try:
+            # Criar tabelas se não existirem
             Base.metadata.create_all(engine)
             self.session = Session()
             

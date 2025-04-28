@@ -117,6 +117,10 @@ args = "Criar ZIP dos arquivos alterados"
 task = "workflow.run"
 args = "Download Alterações"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Download Fix Render DB"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -468,6 +472,15 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run download_alteracoes.py --server.port 8999 --server.address 0.0.0.0"
 waitForPort = 8999
+
+[[workflows.workflow]]
+name = "Download Fix Render DB"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run download_fix_render_db.py --server.port 7500 --server.address 0.0.0.0"
+waitForPort = 7500
 
 [[ports]]
 localPort = 443
