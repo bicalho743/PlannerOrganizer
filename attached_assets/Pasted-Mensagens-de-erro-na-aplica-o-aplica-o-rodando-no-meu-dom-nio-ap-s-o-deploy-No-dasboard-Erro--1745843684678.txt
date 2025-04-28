@@ -1,0 +1,28 @@
+Mensagens de erro na aplicação, aplicação rodando no meu domínio após o deploy
+
+No dasboard
+Erro ao carregar página: Erro ao executar operação no banco de dados: (psycopg2.errors.UndefinedColumn) column clientes.usuario_id does not exist LINE 1: ...ro, clientes.observacoes AS clientes_observacoes, clientes.u... ^
+[SQL: SELECT clientes.id AS clientes_id, clientes.nome AS clientes_nome, clientes.telefone AS clientes_telefone, clientes.cpf AS clientes_cpf, clientes.email AS clientes_email, clientes.estado AS clientes_estado, clientes.cidade AS clientes_cidade, clientes.bairro AS clientes_bairro, clientes.endereco AS clientes_endereco, clientes.data_aniversario AS clientes_data_aniversario, clientes.origem_cliente AS clientes_origem_cliente, clientes.data_cadastro AS clientes_data_cadastro, clientes.observacoes AS clientes_observacoes, clientes.usuario_id AS clientes_usuario_id FROM clientes WHERE clientes.usuario_id = %(usuario_id_1)s] [parameters: {'usuario_id_1': '7Be1aICPHZdrS4XxM1YSZtGrE1m1'}] (Background on this error at: https://sqlalche.me/e/20/f405)
+
+Lista de Clientes
+Erro ao carregar clientes: Erro ao executar operação no banco de dados: (psycopg2.errors.UndefinedColumn) column clientes.usuario_id does not exist LINE 1: ...ro, clientes.observacoes AS clientes_observacoes, clientes.u... ^
+[SQL: SELECT clientes.id AS clientes_id, clientes.nome AS clientes_nome, clientes.telefone AS clientes_telefone, clientes.cpf AS clientes_cpf, clientes.email AS clientes_email, clientes.estado AS clientes_estado, clientes.cidade AS clientes_cidade, clientes.bairro AS clientes_bairro, clientes.endereco AS clientes_endereco, clientes.data_aniversario AS clientes_data_aniversario, clientes.origem_cliente AS clientes_origem_cliente, clientes.data_cadastro AS clientes_data_cadastro, clientes.observacoes AS clientes_observacoes, clientes.usuario_id AS clientes_usuario_id FROM clientes WHERE clientes.usuario_id = %(usuario_id_1)s] [parameters: {'usuario_id_1': '7Be1aICPHZdrS4XxM1YSZtGrE1m1'}] (Background on this error at: https://sqlalche.me/e/20/f405)
+
+
+Nova Proposta
+Erro ao carregar clientes: Erro ao executar operação no banco de dados: (psycopg2.errors.UndefinedColumn) column clientes.usuario_id does not exist LINE 1: ...ro, clientes.observacoes AS clientes_observacoes, clientes.u... ^
+[SQL: SELECT clientes.id AS clientes_id, clientes.nome AS clientes_nome, clientes.telefone AS clientes_telefone, clientes.cpf AS clientes_cpf, clientes.email AS clientes_email, clientes.estado AS clientes_estado, clientes.cidade AS clientes_cidade, clientes.bairro AS clientes_bairro, clientes.endereco AS clientes_endereco, clientes.data_aniversario AS clientes_data_aniversario, clientes.origem_cliente AS clientes_origem_cliente, clientes.data_cadastro AS clientes_data_cadastro, clientes.observacoes AS clientes_observacoes, clientes.usuario_id AS clientes_usuario_id FROM clientes WHERE clientes.usuario_id = %(usuario_id_1)s] [parameters: {'usuario_id_1': '7Be1aICPHZdrS4XxM1YSZtGrE1m1'}] (Background on this error at: https://sqlalche.me/e/20/f405)
+Produtos Cadastrados
+Erro ao carregar produtos: Erro ao executar operação no banco de dados: (psycopg2.errors.UndefinedColumn) column produtos.usuario_id does not exist LINE 1: ...produtos.data_cadastro AS produtos_data_cadastro, produtos.u... ^
+[SQL: SELECT produtos.id AS produtos_id, produtos.nome AS produtos_nome, produtos.descricao AS produtos_descricao, produtos.preco_custo AS produtos_preco_custo, produtos.preco_venda AS produtos_preco_venda, produtos.categoria AS produtos_categoria, produtos.estoque AS produtos_estoque, produtos.data_cadastro AS produtos_data_cadastro, produtos.usuario_id AS produtos_usuario_id FROM produtos WHERE produtos.usuario_id = %(usuario_id_1)s] [parameters: {'usuario_id_1': '7Be1aICPHZdrS4XxM1YSZtGrE1m1'}] (Background on this error at: https://sqlalche.me/e/20/f405)
+
+
+Erro ao carregar página: Erro ao executar operação no banco de dados: (psycopg2.errors.UndefinedColumn) column clientes.usuario_id does not exist LINE 1: ...ro, clientes.observacoes AS clientes_observacoes, clientes.u... ^
+[SQL: SELECT clientes.id AS clientes_id, clientes.nome AS clientes_nome, clientes.telefone AS clientes_telefone, clientes.cpf AS clientes_cpf, clientes.email AS clientes_email, clientes.estado AS clientes_estado, clientes.cidade AS clientes_cidade, clientes.bairro AS clientes_bairro, clientes.endereco AS clientes_endereco, clientes.data_aniversario AS clientes_data_aniversario, clientes.origem_cliente AS clientes_origem_cliente, clientes.data_cadastro AS clientes_data_cadastro, clientes.observacoes AS clientes_observacoes, clientes.usuario_id AS clientes_usuario_id FROM clientes WHERE clientes.usuario_id = %(usuario_id_1)s] [parameters: {'usuario_id_1': '7Be1aICPHZdrS4XxM1YSZtGrE1m1'}] (Background on this error at: https://sqlalche.me/e/20/f405)
+
+NOVA TRANSAÇÃO
+Missing Submit Button
+This form has no submit button, which means that user interactions will never be sent to your Streamlit app.
+To create a submit button, use the st.form_submit_button() function.
+For more information, refer to the documentation for forms.
+
