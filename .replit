@@ -137,6 +137,10 @@ args = "Download Fix Proposta"
 task = "workflow.run"
 args = "Download Fix Render Final"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Download Fix Render Console"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -513,8 +517,8 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run corrigir_finalizacao.py --server.port 8800 --server.address 0.0.0.0"
-waitForPort = 8800
+args = "streamlit run corrigir_finalizacao.py --server.port 5001 --server.address 0.0.0.0"
+waitForPort = 5001
 
 [[workflows.workflow]]
 name = "Download Fix Proposta"
@@ -533,6 +537,15 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run download_fix_render_final.py --server.port 8511 --server.address 0.0.0.0"
 waitForPort = 8511
+
+[[workflows.workflow]]
+name = "Download Fix Render Console"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run download_fix_render_console.py --server.port 5003 --server.address 0.0.0.0"
+waitForPort = 5003
 
 [[ports]]
 localPort = 443

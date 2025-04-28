@@ -27,3 +27,6 @@ firebase-admin
 streamlit-authenticator
 pyrebase4
 streamlit-authenticator
+pandas
+psycopg2-binary
+streamlit
