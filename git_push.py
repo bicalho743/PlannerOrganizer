@@ -1,3 +1,4 @@
+
 """
 Script para fazer push de alterações para o GitHub usando credenciais configuradas
 Como o Replit não permite modificações diretas nos arquivos Git, este script usa
@@ -39,7 +40,7 @@ def run_command(command, description=None, show_output=True):
             command,
             capture_output=True,
             text=True,
-            check=False  # Não queremos que exceptions sejam lançadas
+            check=False
         )
         
         if show_output:
@@ -48,7 +49,7 @@ def run_command(command, description=None, show_output=True):
             if result.stderr:
                 logger.warning(f"Erro: {result.stderr.strip()}")
         
-        return result.returncode == 0, result.stdout.strip() if result.stdout else ""
+        return result.returncode == 0, result.stdout.strip() if result.stdout else result.stderr.strip()
     except Exception as e:
         logger.error(f"Erro ao executar comando: {e}")
         return False, str(e)
@@ -59,26 +60,29 @@ def push_to_github():
     """
     logger.info("Iniciando processo de push para GitHub...")
     
-    # 1. Verificar se temos credenciais do GitHub
+    # Verificar token do GitHub
     github_token = os.environ.get("GITHUB_TOKEN")
     if not github_token:
         logger.error("Token do GitHub (GITHUB_TOKEN) não configurado nas variáveis de ambiente")
         return False
-    
-    # Mensagem de commit padrão com timestamp
-    commit_message = f"Atualização automática {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    
-    # Estrutura similar ao git add, commit e push
+
+    # Verificar configuração do Git
+    success, output = run_command(["git", "config", "--list"], "Verificando configuração do Git")
+    if not success:
+        logger.error("Erro ao verificar configuração do Git")
+        return False
+        
+    # Configurar credenciais
     steps = [
         (["git", "config", "user.name", "Deploy Bot"], "Configurando nome do usuário Git", True),
         (["git", "config", "user.email", "deploy@plannerorganiza.com.br"], "Configurando email do usuário Git", True),
+        (["git", "config", "--global", "http.sslVerify", "false"], "Desabilitando verificação SSL", False),
         (["git", "status"], "Verificando status do repositório", True),
         (["git", "add", "."], "Adicionando arquivos", True),
-        (["git", "commit", "-m", commit_message], "Fazendo commit das alterações", True),
-        (["git", "push", "origin", "main"], "Enviando alterações para GitHub", True)
+        (["git", "commit", "-m", f"Atualização automática {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"], "Fazendo commit das alterações", True),
     ]
     
-    # Executar cada passo
+    # Executar configurações iniciais
     for command, description, show_output in steps:
         success, output = run_command(command, description, show_output)
         if not success:
@@ -86,9 +90,28 @@ def push_to_github():
                 logger.info("Nenhuma alteração para enviar ao GitHub")
                 return True
             logger.error(f"Falha no passo: {description}")
+            logger.error(f"Saída: {output}")
             return False
-        time.sleep(1)  # Pequena pausa entre comandos
-    
+        time.sleep(1)
+
+    # Configurar URL do repositório com token
+    remote_url = subprocess.run(["git", "remote", "get-url", "origin"], 
+                              capture_output=True, text=True).stdout.strip()
+    if 'https://' in remote_url:
+        new_url = remote_url.replace('https://', f'https://x-access-token:{github_token}@')
+        success, output = run_command(["git", "remote", "set-url", "origin", new_url], 
+                                    "Configurando URL remota com token", False)
+        if not success:
+            logger.error("Falha ao configurar URL remota")
+            return False
+
+    # Fazer push
+    success, output = run_command(["git", "push", "origin", "main"], 
+                                "Enviando alterações para GitHub", True)
+    if not success:
+        logger.error(f"Falha ao fazer push: {output}")
+        return False
+
     logger.info("Alterações enviadas com sucesso para o GitHub!")
     return True
 
