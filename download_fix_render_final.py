@@ -5,87 +5,66 @@ import streamlit as st
 import base64
 import os
 
-# Configuração da página
-st.set_page_config(
-    page_title="Download Fix Render Final",
-    page_icon="🛠️",
-    layout="wide"
-)
-
 def get_binary_file_downloader_html(bin_file, file_label='File'):
     """Gera link HTML para download de arquivos binários"""
     with open(bin_file, 'rb') as f:
         data = f.read()
-    b64 = base64.b64encode(data).decode()
-    href = f'<a href="data:application/octet-stream;base64,{b64}" download="{os.path.basename(bin_file)}">{file_label}</a>'
+    bin_str = base64.b64encode(data).decode()
+    href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{os.path.basename(bin_file)}">{file_label}</a>'
     return href
 
 def main():
     """Função principal"""
-    st.title("🛠️ Download da Solução Final para o Render")
+    st.set_page_config(
+        page_title="Download da Solução Final para o Render",
+        page_icon="📦",
+        layout="centered"
+    )
+    
+    st.title("📦 Download da Solução Final para o Render")
     
     st.markdown("""
-    ### Solução completa para o problema de finalização de propostas no Render
+    ### Solução Completa para Problemas no Render
     
-    Este pacote contém uma solução robusta para resolver os problemas de finalização de propostas 
-    no ambiente Render. A solução foi desenvolvida para resolver as diferenças de comportamento entre 
-    o ambiente de desenvolvimento e produção, especialmente relacionados a:
+    Este arquivo ZIP contém o script corrigido `fix_render_type_errors.py` e instruções detalhadas em `solucao_render.md` 
+    para resolver os problemas de finalização de propostas e exclusão de clientes no ambiente Render.
     
-    1. **Problema de conversão de tipos de dados** - Erros de conversão entre strings e numéricos
-    2. **Problemas de acesso a banco de dados** - Contorna os problemas de SQLAlchemy com psycopg2
-    3. **Propostas não finalizadas corretamente** - Corrige dados inconsistentes no banco
-    4. **Garantia de integridade** - Adiciona trigger para manter consistência de dados
+    #### O que esta solução corrige:
+    
+    * ✅ Finalização de propostas
+    * ✅ Exclusão de clientes com propostas associadas
+    * ✅ Consistência na relação entre tabelas
+    * ✅ Normalização de dados
+    
+    #### Como aplicar:
+    
+    1. Faça o download do arquivo ZIP abaixo
+    2. Faça upload dos arquivos no ambiente Render
+    3. Acesse o console Shell no Render
+    4. Execute o script com `python fix_render_type_errors.py`
+    5. Reinicie o serviço no Render
+    
+    Para instruções detalhadas, consulte o arquivo `solucao_render.md` incluído no ZIP.
     """)
     
-    col1, col2 = st.columns([3, 1])
+    st.markdown(f"### Download do Arquivo de Solução 👇")
     
-    with col1:
-        st.info("""
-        ### Conteúdo do pacote
+    zip_file = 'fix_render_final.zip'
+    
+    if os.path.exists(zip_file):
+        st.markdown(
+            get_binary_file_downloader_html(zip_file, 'Download da Solução Final (ZIP)'),
+            unsafe_allow_html=True
+        )
         
-        1. `utils/finalizar_proposta_fix.py` - Módulo robusto para finalização de propostas
-        2. `pages/propostas.py` - Arquivo modificado para usar a nova função
-        3. `solucao_render.md` - Documentação detalhada da solução
-        4. `solucao_finalizar_propostas_render.md` - Instruções passo a passo
-        5. `modifica_propostas.py` - Script auxiliar para modificação de arquivos
+        with open("solucao_render.md", "r") as f:
+            instructions = f.read()
         
-        ### Como usar
-        
-        1. Descompacte o arquivo no ambiente Render
-        2. Assegure-se que o diretório `utils` existe
-        3. Copie os arquivos para seus respectivos diretórios
-        4. Execute `python3 fix_proposta.py` (conforme solucao_render.md)
-        """)
-        
-    with col2:
-        st.subheader("Download")
-        
-        # Verificar se o arquivo existe
-        if os.path.exists("fix_render_final.zip"):
-            st.markdown(
-                get_binary_file_downloader_html("fix_render_final.zip", "📥 Baixar solução (ZIP)"),
-                unsafe_allow_html=True
-            )
-            st.success("Arquivo pronto para download!")
-        else:
-            st.error("Arquivo não encontrado. Por favor, gere o arquivo primeiro.")
-    
-    st.markdown("---")
-    
-    st.markdown("""
-    ### Instruções adicionais
-    
-    A solução aborda dois problemas principais:
-    
-    1. **Correção do banco de dados atual** - Corrige propostas existentes que estão em um estado inconsistente
-    2. **Prevenção de problemas futuros** - Substitui a função de finalização por uma versão robusta
-    
-    Após aplicar esta solução, todas as propostas finalizadas terão:
-    
-    - Data de finalização correta
-    - Lançamentos financeiros apropriados
-    - Consistência entre status e dados financeiros
-    """)
+        st.markdown("---")
+        st.markdown("### Instruções de Aplicação")
+        st.markdown(instructions)
+    else:
+        st.error(f"Arquivo {zip_file} não encontrado. Gere o arquivo ZIP primeiro!")
 
 if __name__ == "__main__":
     main()
