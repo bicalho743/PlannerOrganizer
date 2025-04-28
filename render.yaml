@@ -4,7 +4,17 @@ services:
     name: planner-organiza
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python render_startup.py && streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true --server.enableCORS=true --server.enableWebsocketCompression=true --server.enableXsrfProtection=false --server.maxUploadSize=50
+    startCommand: >
+      python render_deploy_helper.py &&
+      python render_startup.py &&
+      streamlit run app.py
+      --server.port=$PORT
+      --server.address=0.0.0.0
+      --server.headless=true
+      --server.enableCORS=true
+      --server.enableWebsocketCompression=true
+      --server.enableXsrfProtection=false
+      --server.maxUploadSize=50
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
@@ -12,6 +22,10 @@ services:
         sync: false # Você precisa definir isso manualmente no dashboard do Render
       - key: JWT_SECRET
         sync: false # Você precisa definir isso manualmente no dashboard do Render
+      - key: RENDER_DEPLOYMENT_ID
+        generateValue: true # Gera um ID único para o deploy
+      - key: RENDER_DEPLOY_TIME
+        time: 300 # Espera 5 minutos (300s) para iniciar o serviço após o build
     autoDeploy: true
     healthCheckPath: /_stcore/health
     headers:

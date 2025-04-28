@@ -1,115 +1,107 @@
-# Guia de Deploy do Planner Organizer no Render
+# Guia de Deploy para o Render
 
-Este guia contém instruções para fazer o deploy do sistema Planner Organizer no Render e configurá-lo com seu domínio personalizado da Locaweb.
+Este guia explica como fazer o deploy do Planner Organizer no [Render](https://render.com).
 
 ## Pré-requisitos
 
-- Uma conta no [Render](https://render.com)
-- Um repositório no GitHub com o código do projeto
-- Seu domínio da Locaweb (plannerorganiza.com.br)
-- Os segredos/variáveis de ambiente necessários (DATABASE_URL, JWT_SECRET)
+1. Uma conta no [Render](https://render.com)
+2. Acesso ao repositório do GitHub: [bicalho743/PlannerOrganizer](https://github.com/bicalho743/PlannerOrganizer)
+3. Um banco de dados PostgreSQL (pode ser criado no próprio Render)
 
-## Passo 1: Preparar o repositório GitHub
+## Etapas para o Deploy
 
-1. Certifique-se de que seu repositório GitHub contém os seguintes arquivos:
-   - `requirements.txt` - Lista de dependências
-   - `Procfile` - Instruções para iniciar a aplicação
-   - `render.yaml` - Configuração do serviço no Render
-   - `render_startup.py` - Script de inicialização
-   - `runtime.txt` - Especificação da versão do Python
+### 1. Crie um banco de dados PostgreSQL no Render
 
-2. Faça commit e push dessas alterações para seu repositório no GitHub.
+1. Acesse o [Dashboard do Render](https://dashboard.render.com)
+2. Clique em "New +" e selecione "PostgreSQL"
+3. Preencha as informações:
+   - **Name**: planner-db (ou outro nome de sua preferência)
+   - **Database**: planner
+   - **User**: planner_user
+   - **Region**: Escolha a região mais próxima de seus usuários
+   - **PostgreSQL Version**: 14 ou superior
+   - **Plan**: Free (ou outro plano se necessário)
+4. Clique em "Create Database"
+5. Aguarde a criação do banco de dados e **anote a URL de conexão**
 
-## Passo 2: Configurar o serviço no Render
+### 2. Crie um Web Service no Render
 
-1. Faça login em sua conta do Render.
-
-2. Clique em "New" e selecione "Blueprint" para usar o arquivo render.yaml para configuração.
-
-3. Conecte sua conta GitHub e selecione o repositório onde seu código está.
-
-4. Render detectará automaticamente o arquivo render.yaml e mostrará os serviços a serem criados.
-
-5. Clique em "Apply Blueprint" para criar o serviço web e o banco de dados.
-
-6. Aguarde enquanto o Render provisiona o banco de dados e configura o ambiente.
-
-## Passo 3: Configurar as variáveis de ambiente
-
-1. Depois que o serviço web for criado, acesse-o no painel do Render.
-
-2. Vá para a guia "Environment" e configure as seguintes variáveis:
-
-   - `DATABASE_URL`: A URL de conexão com o banco de dados PostgreSQL. Se você criou um banco de dados pelo Render, este valor será definido automaticamente.
-   
-   - `JWT_SECRET`: Uma chave secreta para geração de tokens JWT. Você pode gerar uma usando:
+1. No Dashboard do Render, clique em "New +" e selecione "Web Service"
+2. Conecte com seu repositório GitHub ou selecione "Public Git Repository" e use a URL:
+   ```
+   https://github.com/bicalho743/PlannerOrganizer.git
+   ```
+3. Preencha as informações:
+   - **Name**: planner-organiza (ou outro nome de sua preferência)
+   - **Region**: Mesma região escolhida para o banco de dados
+   - **Runtime**: Python 3
+   - **Build Command**:
      ```
-     openssl rand -hex 32
+     pip install -r requirements.txt
      ```
-
-3. Clique em "Save Changes" para aplicar as configurações.
-
-## Passo 4: Verificar o deploy
-
-1. Após salvar as variáveis de ambiente, Render fará o redeploy automático da aplicação.
-
-2. Aguarde a conclusão do build e verifique se a aplicação está em execução sem erros.
-
-3. Você pode acessar os logs para diagnosticar problemas clicando em "Logs" no painel lateral.
-
-## Passo 5: Configurar o domínio personalizado
-
-1. No painel do seu serviço web no Render, vá para a guia "Settings".
-
-2. Role para baixo até "Custom Domain" e clique em "Add Custom Domain".
-
-3. Digite seu domínio: `www.plannerorganiza.com.br`
-
-4. Render fornecerá instruções específicas para configurar registros DNS para verificar seu domínio:
-
-   - Você precisará adicionar um registro CNAME no painel de controle DNS da Locaweb:
+   - **Start Command**:
      ```
-     CNAME  www  [seu-app].onrender.com
+     python render_deploy_helper.py && python render_startup.py && streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true
      ```
+4. Na seção "Advanced", adicione as variáveis de ambiente:
+   - **DATABASE_URL**: Cole a URL do banco de dados PostgreSQL criado anteriormente
+   - **JWT_SECRET**: Gere uma string aleatória (pode usar um [gerador online](https://passwordsgenerator.net/))
+   - **PYTHON_VERSION**: 3.11.0
 
-5. Para o domínio raiz (sem www), você pode:
-   - Adicionar um registro A direcionando para os IPs do Render, ou
-   - Configurar um redirecionamento para a versão www no painel da Locaweb
+5. Deixe a opção "Auto-Deploy" ativada
+6. Clique em "Create Web Service"
 
-6. Aguarde a propagação do DNS (até 24-48 horas, mas geralmente é mais rápido).
+### 3. Aguarde o Deploy
 
-## Passo 6: Verificar o SSL
+1. O Render iniciará automaticamente o processo de deploy
+2. Este processo pode levar de 5 a 10 minutos
+3. Você pode acompanhar o progresso na aba "Logs"
 
-1. Render configurará automaticamente certificados SSL/HTTPS para seu domínio personalizado.
+### 4. Verificar o Deploy
 
-2. Você não precisa fazer nada além de aguardar a verificação do domínio e a emissão do certificado.
+1. Quando o deploy estiver concluído, clique no link fornecido pelo Render
+2. Você deverá ver a página de login do Planner Organizer
+3. Faça login com as credenciais padrão ou crie uma nova conta
 
-## Solução de problemas comuns
+## Solução de Problemas
 
-### A aplicação não inicia
+### Erro "No commits found"
 
-- Verifique os logs para identificar o problema específico
-- Confirme se as variáveis de ambiente estão configuradas corretamente
-- Garanta que o banco de dados esteja acessível
+Se você encontrar erros relacionados a "No commits found" durante o deploy:
 
-### Problemas com o banco de dados
+1. Verifique se o repositório do GitHub está acessível
+2. Tente fazer um push manual usando o script `git_push.py`:
+   ```
+   python git_push.py
+   ```
+3. Verifique se o token do GitHub está configurado corretamente nas variáveis de ambiente
 
-- Verifique se a URL do banco de dados está correta
-- Confirme que o banco de dados está ativo e não foi pausado por inatividade
-- Verifique se as tabelas foram criadas corretamente
+### Erro de conexão com o banco de dados
 
-### Domínio personalizado não funciona
+Se houver problemas de conexão com o banco de dados:
 
-- Confirme que os registros DNS estão configurados corretamente
-- Verifique se houve tempo suficiente para a propagação do DNS
-- Revise as configurações no painel da Locaweb
+1. Verifique se a variável de ambiente `DATABASE_URL` está correta
+2. Certifique-se de que o banco de dados PostgreSQL está em execução
+3. Verifique se o endereço IP do seu serviço web está autorizado a acessar o banco de dados
 
-## Observações importantes
+### Logs para debug
 
-- Aplicações no plano gratuito do Render serão pausadas após 15 minutos de inatividade.
-- O banco de dados no plano gratuito tem limite de 1GB de armazenamento.
-- Para evitar pausas e obter maior disponibilidade, considere fazer upgrade para um plano pago.
+Se precisar de mais informações para debug:
+1. No dashboard do Render, acesse a aba "Logs" do seu serviço
+2. Selecione "All" para ver todos os logs
+3. Procure por mensagens de erro específicas
 
----
+## Deploy Manual Alternativo
 
-Para suporte adicional, consulte a [documentação oficial do Render](https://render.com/docs).
+Se você continuar tendo problemas com a integração GitHub, você pode usar o método alternativo com arquivo ZIP:
+
+1. Execute o script `create_deployment_zip.py` para criar um arquivo ZIP do projeto
+2. No Render, escolha a opção "Upload Files" ao invés de GitHub durante a criação do serviço
+3. Faça upload do arquivo ZIP gerado
+
+## Notas Importantes
+
+- O Render pode levar alguns minutos para disponibilizar o banco de dados após sua criação
+- Mudanças de configuração como adicionar variáveis de ambiente requerem um novo deploy
+- Para aplicar atualizações futuras, basta fazer push para o repositório do GitHub
+- O plano gratuito do Render coloca aplicativos inativos em hibernação após 15 minutos sem uso

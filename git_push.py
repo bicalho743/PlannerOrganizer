@@ -1,71 +1,101 @@
-import os
-import requests
-import base64
-import datetime
+"""
+Script para fazer push de alterações para o GitHub usando credenciais configuradas
+Como o Replit não permite modificações diretas nos arquivos Git, este script usa
+comandos git através de subprocess para evitar bloqueios de arquivos.
+"""
 
-# Função para fazer o push para o GitHub usando a API
-def push_to_github():
-    # Token do GitHub
-    token = os.environ.get('GITHUB_TOKEN')
-    if not token:
-        print("GITHUB_TOKEN não encontrado.")
-        return False
+import os
+import sys
+import time
+import logging
+import subprocess
+from datetime import datetime
+
+# Configuração do logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
+logger = logging.getLogger(__name__)
+
+def run_command(command, description=None, show_output=True):
+    """
+    Executa um comando git e retorna o resultado
     
-    # Nome do repositório e proprietário
-    owner = "bicalho743"
-    repo = "PlannerOrganizer"
-    
-    # Cabeçalho de autenticação
-    headers = {
-        'Authorization': f'token {token}',
-        'Accept': 'application/vnd.github.v3+json'
-    }
-    
-    # Nome do arquivo e caminho
-    file_path = "pages/financeiro.py"
+    Args:
+        command (list): Comando a ser executado
+        description (str): Descrição do comando para log
+        show_output (bool): Se deve mostrar a saída do comando
+        
+    Returns:
+        tuple: (success, output)
+    """
+    if description:
+        logger.info(f"Executando: {description}")
     
     try:
-        # 1. Obter o SHA atual do arquivo
-        url = f"https://api.github.com/repos/{owner}/{repo}/contents/{file_path}"
-        response = requests.get(url, headers=headers)
-        if response.status_code != 200:
-            print(f"Erro ao obter o arquivo: {response.status_code}")
-            print(response.json())
-            return False
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            check=False  # Não queremos que exceptions sejam lançadas
+        )
         
-        file_sha = response.json().get('sha')
+        if show_output:
+            if result.stdout:
+                logger.info(f"Saída: {result.stdout.strip()}")
+            if result.stderr:
+                logger.warning(f"Erro: {result.stderr.strip()}")
         
-        # 2. Ler o conteúdo do arquivo local
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        # 3. Codificar o conteúdo em base64
-        content_encoded = base64.b64encode(content.encode()).decode()
-        
-        # 4. Preparar os dados para o commit
-        commit_data = {
-            'message': 'Simplificar filtro no histórico financeiro para mostrar apenas Receita e Despesa',
-            'content': content_encoded,
-            'sha': file_sha,
-            'branch': 'main'  # ou a branch que deseja usar
-        }
-        
-        # 5. Enviar o commit
-        response = requests.put(url, headers=headers, json=commit_data)
-        
-        if response.status_code in [200, 201]:
-            print("Arquivo atualizado com sucesso no GitHub!")
-            return True
-        else:
-            print(f"Erro ao atualizar o arquivo: {response.status_code}")
-            print(response.json())
-            return False
-            
+        return result.returncode == 0, result.stdout.strip() if result.stdout else ""
     except Exception as e:
-        print(f"Erro: {str(e)}")
+        logger.error(f"Erro ao executar comando: {e}")
+        return False, str(e)
+
+def push_to_github():
+    """
+    Faz o push das alterações para o GitHub usando o GITHUB_TOKEN
+    """
+    logger.info("Iniciando processo de push para GitHub...")
+    
+    # 1. Verificar se temos credenciais do GitHub
+    github_token = os.environ.get("GITHUB_TOKEN")
+    if not github_token:
+        logger.error("Token do GitHub (GITHUB_TOKEN) não configurado nas variáveis de ambiente")
         return False
+    
+    # Mensagem de commit padrão com timestamp
+    commit_message = f"Atualização automática {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    
+    # Estrutura similar ao git add, commit e push
+    steps = [
+        (["git", "config", "user.name", "Deploy Bot"], "Configurando nome do usuário Git", True),
+        (["git", "config", "user.email", "deploy@plannerorganiza.com.br"], "Configurando email do usuário Git", True),
+        (["git", "status"], "Verificando status do repositório", True),
+        (["git", "add", "."], "Adicionando arquivos", True),
+        (["git", "commit", "-m", commit_message], "Fazendo commit das alterações", True),
+        (["git", "push", "origin", "main"], "Enviando alterações para GitHub", True)
+    ]
+    
+    # Executar cada passo
+    for command, description, show_output in steps:
+        success, output = run_command(command, description, show_output)
+        if not success:
+            if "nothing to commit" in output:
+                logger.info("Nenhuma alteração para enviar ao GitHub")
+                return True
+            logger.error(f"Falha no passo: {description}")
+            return False
+        time.sleep(1)  # Pequena pausa entre comandos
+    
+    logger.info("Alterações enviadas com sucesso para o GitHub!")
+    return True
+
+def main():
+    """Função principal"""
+    result = push_to_github()
+    return 0 if result else 1
 
 if __name__ == "__main__":
-    print(f"Iniciando push para GitHub em {datetime.datetime.now()}")
-    result = push_to_github()
-    print(f"Resultado do push: {'Sucesso' if result else 'Falha'}")
+    sys.exit(main())

@@ -105,6 +105,10 @@ args = "Verificar Isolamento"
 task = "workflow.run"
 args = "Verificação de Auth"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Criar ZIP para Deploy"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -430,6 +434,15 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run verificar_autenticacao.py --server.port 5002 --server.address 0.0.0.0"
 waitForPort = 5002
+
+[[workflows.workflow]]
+name = "Criar ZIP para Deploy"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run create_deployment_zip.py --server.port 8600 --server.address 0.0.0.0"
+waitForPort = 8600
 
 [[ports]]
 localPort = 443
