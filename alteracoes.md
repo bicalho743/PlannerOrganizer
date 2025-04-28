@@ -1,42 +1,47 @@
-# Alterações feitas no sistema
+# Alterações Pendentes para Envio ao Repositório
 
-## Simplificação do filtro no Histórico Financeiro
+## Arquivos Modificados
+- `utils/database.py`: Adicionados métodos `create_perfil` e `get_perfil_by_email` para salvar perfis no PostgreSQL em vez do Firebase Realtime Database
+- `pages/registrar.py`: Corrigido botão "Voltar ao login" que não estava funcionando corretamente
 
-Foi realizada a simplificação do filtro no histórico financeiro para mostrar apenas as opções "Receita" e "Despesa", em vez de exibir também "receita_a_receber" e "despesa_a_pagar".
+## Novos Arquivos
+- `update_schema.sql`: Script SQL para adicionar colunas usuario_id às tabelas no banco de dados do Render
+- `populate_usuario_id.sql`: Script SQL para popular as colunas usuario_id nas tabelas existentes
+- `INSTRUCOES_RENDER_DATABASE.md`: Instruções detalhadas para atualizar o banco de dados no Render
 
-### Arquivo modificado: `pages/financeiro.py`
-
-#### Alteração 1: Modificação do filtro de tipos
-```python
-# Antes:
-tipos_disponiveis = ["receita", "receita_a_receber", "despesa", "despesa_a_pagar"]
-
-# Depois:
-tipos_disponiveis = ["receita", "despesa"]
+## Procedimento para Atualização
+1. Baixe o arquivo `alteracoes.zip` criado nesta sessão
+2. Extraia o conteúdo
+3. No seu ambiente local (onde você tem acesso ao git):
+   - Substitua os arquivos existentes 
+   - Adicione os novos arquivos
+   - Execute os seguintes comandos git:
 ```
-
-#### Alteração 2: Modificação nos cálculos de valores por tipo
-```python
-# Antes:
-receitas = historico[historico['tipo'].isin(['receita', 'receita_a_receber'])]['valor'].sum()
-despesas = historico[historico['tipo'].isin(['despesa', 'despesa_a_pagar'])]['valor'].sum()
-
-# Depois:
-receitas = historico[historico['tipo'] == 'receita']['valor'].sum()
-despesas = historico[historico['tipo'] == 'despesa']['valor'].sum()
+git add utils/database.py pages/registrar.py update_schema.sql populate_usuario_id.sql INSTRUCOES_RENDER_DATABASE.md
+git commit -m "Adicionados métodos para perfis no PostgreSQL e scripts para atualização do banco"
+git push origin main
 ```
+4. Siga as instruções em `INSTRUCOES_RENDER_DATABASE.md` para atualizar o banco de dados no Render
 
-#### Alteração 3: Modificação no filtro para distribuição por tipo de receita
-```python
-# Antes:
-receitas = financeiro[financeiro['tipo'].isin(['receita', 'receita_a_receber'])]
+## Alterações Detalhadas
 
-# Depois:
-receitas = financeiro[financeiro['tipo'] == 'receita']
-```
+### utils/database.py
+Adicionados os métodos:
+- `create_perfil(self, uid, email, nome_completo)`: Cria um perfil de usuário no PostgreSQL
+- `get_perfil_by_email(self, email)`: Recupera um perfil pelo email
 
-### Observações
+### pages/registrar.py
+Corrigido o botão "Voltar ao login" para usar `st.session_state.login_page = True` em vez de `current_page = "login"`
 
-- A função `formatar_tipo()` foi mantida para garantir compatibilidade com registros existentes, convertendo "receita_a_receber" para "Receita" e "despesa_a_pagar" para "Despesa"
-- Os filtros na interface do usuário agora mostram apenas "Receita" e "Despesa" como opções
-- Todos os cálculos e filtros agora consideram apenas os tipos simplificados
+### update_schema.sql
+Script SQL para adicionar colunas `usuario_id` às tabelas no banco de dados:
+- clientes
+- produtos
+- categorias_financeiro
+- lancamentos_financeiro
+
+### populate_usuario_id.sql
+Script para popular as colunas `usuario_id` com um valor padrão ou a partir de relacionamentos existentes.
+
+### INSTRUCOES_RENDER_DATABASE.md
+Instruções detalhadas passo a passo para aplicar as alterações no banco de dados do Render.

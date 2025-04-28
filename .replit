@@ -109,6 +109,14 @@ args = "Verificação de Auth"
 task = "workflow.run"
 args = "Criar ZIP para Deploy"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Criar ZIP dos arquivos alterados"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Download Alterações"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -443,6 +451,23 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run create_deployment_zip.py --server.port 8600 --server.address 0.0.0.0"
 waitForPort = 8600
+
+[[workflows.workflow]]
+name = "Criar ZIP dos arquivos alterados"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python3 -c \"import os, zipfile; zip_file = zipfile.ZipFile('alteracoes.zip', 'w'); zip_file.write('utils/database.py'); zip_file.write('pages/registrar.py'); zip_file.write('update_schema.sql'); zip_file.write('populate_usuario_id.sql'); zip_file.write('INSTRUCOES_RENDER_DATABASE.md'); zip_file.close(); print('Arquivos zipados com sucesso!')\""
+
+[[workflows.workflow]]
+name = "Download Alterações"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run download_alteracoes.py --server.port 8999 --server.address 0.0.0.0"
+waitForPort = 8999
 
 [[ports]]
 localPort = 443
