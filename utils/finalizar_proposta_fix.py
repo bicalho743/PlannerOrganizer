@@ -1,219 +1,515 @@
 """
-Versão corrigida do módulo finalizar_proposta para resolver problemas no Render
+Módulo para finalizar propostas de forma robusta, evitando problemas de conversão de tipos
 """
 import os
-import logging
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from datetime import datetime
 import pandas as pd
 import streamlit as st
-from decimal import Decimal
-from datetime import datetime, date
-from utils.database import Database
 
-# Configurar logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-def validar_valor_numerico(valor):
-    """
-    Converte e valida um valor para formato numérico
-    
-    Args:
-        valor: Valor para converter (string, int, float)
-        
-    Returns:
-        float: Valor convertido ou 0.0 se inválido
-    """
-    if pd.isna(valor) or valor is None:
-        return 0.0
-        
-    if isinstance(valor, (int, float, Decimal)):
-        return float(valor)
-        
-    if isinstance(valor, str):
-        # Remover caracteres não numéricos exceto ponto e vírgula
-        valor_limpo = ''.join(c for c in valor if c.isdigit() or c in '.,')
-        # Substituir vírgula por ponto (formato brasileiro)
-        valor_limpo = valor_limpo.replace(',', '.')
-        
-        try:
-            return float(valor_limpo) if valor_limpo else 0.0
-        except:
-            logger.warning(f"Não foi possível converter o valor '{valor}' para número. Usando 0.0.")
-            return 0.0
-    
-    return 0.0
-
-def finalizar_proposta_seguro(proposta_id, usuario_id=None):
-    """
-    Finaliza uma proposta de forma segura, com validações e conversões de tipo explícitas
-    
-    Args:
-        proposta_id: ID da proposta
-        usuario_id: ID do usuário para contexto
-        
-    Returns:
-        dict: Resultado da operação
-    """
+def get_db_connection():
+    """Obtém uma conexão direta com o banco de dados PostgreSQL"""
     try:
-        db = Database(usuario_id)
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        return conn
+    except Exception as e:
+        st.error(f"Erro ao conectar ao banco de dados: {e}")
+        return None
+
+def get_proposta(proposta_id, usuario_id=None):
+    """Obtém detalhes de uma proposta específica"""
+    conn = get_db_connection()
+    if not conn:
+        return None
+    
+    try:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
         
-        # Log para debug
-        logger.info(f"DEBUG FINALIZAR: Iniciando finalização segura da proposta ID={proposta_id}")
+        query = """
+            SELECT p.*, c.nome as cliente_nome
+            FROM propostas p
+            JOIN clientes c ON p.cliente_id = c.id
+            WHERE p.id = %s
+        """
+        params = [proposta_id]
         
-        # Obter proposta
-        proposta = db.get_proposta(proposta_id)
+        if usuario_id:
+            query += " AND p.usuario_id = %s"
+            params.append(usuario_id)
+        
+        cursor.execute(query, params)
+        proposta = cursor.fetchone()
+        
+        return proposta
+    except Exception as e:
+        st.error(f"Erro ao obter proposta: {e}")
+        return None
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_lancamentos_by_proposta(proposta_id):
+    """Obtém lançamentos financeiros associados a uma proposta"""
+    conn = get_db_connection()
+    if not conn:
+        return []
+    
+    try:
+        query = """
+            SELECT id, descricao, valor, data, categoria, tipo, status
+            FROM financeiro
+            WHERE proposta_id = %s
+            ORDER BY id;
+        """
+        
+        lancamentos = pd.read_sql(query, conn, params=(proposta_id,))
+        return lancamentos
+    except Exception as e:
+        st.error(f"Erro ao obter lançamentos: {e}")
+        return []
+    finally:
+        conn.close()
+
+def add_lancamento(descricao, valor, data, categoria, tipo, status, proposta_id, usuario_id):
+    """Adiciona um lançamento financeiro ao banco de dados"""
+    conn = get_db_connection()
+    if not conn:
+        return None
+    
+    try:
+        cursor = conn.cursor()
+        
+        # Verificar campos da tabela financeiro
+        cursor.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'financeiro'
+        """)
+        colunas = [row[0] for row in cursor.fetchall()]
+        
+        # Garantir que valor seja float
+        try:
+            valor = float(valor)
+        except (ValueError, TypeError):
+            st.error(f"Erro ao converter valor '{valor}' para float")
+            return None
+        
+        # Construir query com base nas colunas disponíveis
+        if 'forma_pagamento' in colunas:
+            cursor.execute("""
+                INSERT INTO financeiro 
+                (descricao, valor, data, categoria, tipo, status, forma_pagamento, proposta_id, usuario_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id;
+            """, (
+                descricao, 
+                valor, 
+                data, 
+                categoria,
+                tipo,
+                status,
+                '',
+                proposta_id,
+                usuario_id
+            ))
+        else:
+            cursor.execute("""
+                INSERT INTO financeiro 
+                (descricao, valor, data, categoria, tipo, status, proposta_id, usuario_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id;
+            """, (
+                descricao, 
+                valor, 
+                data, 
+                categoria,
+                tipo,
+                status,
+                proposta_id,
+                usuario_id
+            ))
+        
+        lancamento_id = cursor.fetchone()[0]
+        conn.commit()
+        
+        return lancamento_id
+    except Exception as e:
+        conn.rollback()
+        st.error(f"Erro ao adicionar lançamento: {e}")
+        return None
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_proposta_fornecedores(proposta_id):
+    """Obtém fornecedores associados a uma proposta"""
+    conn = get_db_connection()
+    if not conn:
+        return []
+    
+    try:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute("""
+            SELECT id, nome, valor
+            FROM proposta_fornecedores
+            WHERE proposta_id = %s;
+        """, (proposta_id,))
+        
+        fornecedores = cursor.fetchall()
+        return fornecedores
+    except Exception as e:
+        st.error(f"Erro ao obter fornecedores: {e}")
+        return []
+    finally:
+        cursor.close()
+        conn.close()
+
+def processar_fornecedores(proposta_id, usuario_id, data):
+    """Processa fornecedores criando lançamentos financeiros"""
+    fornecedores = get_proposta_fornecedores(proposta_id)
+    
+    for fornecedor in fornecedores:
+        descricao = f"Fornecedor: {fornecedor['nome']} - Proposta #{proposta_id}"
+        add_lancamento(
+            descricao,
+            float(fornecedor['valor']),
+            data,
+            'Fornecedores',
+            'despesa_a_pagar',
+            'Pendente',
+            proposta_id,
+            usuario_id
+        )
+
+def get_proposta_acrescimos(proposta_id):
+    """Obtém acréscimos associados a uma proposta"""
+    conn = get_db_connection()
+    if not conn:
+        return []
+    
+    try:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute("""
+            SELECT id, descricao, valor, tipo
+            FROM proposta_acrescimos
+            WHERE proposta_id = %s;
+        """, (proposta_id,))
+        
+        acrescimos = cursor.fetchall()
+        return acrescimos
+    except Exception as e:
+        st.error(f"Erro ao obter acréscimos: {e}")
+        return []
+    finally:
+        cursor.close()
+        conn.close()
+
+def processar_acrescimos(proposta_id, usuario_id, data):
+    """Processa acréscimos criando lançamentos financeiros"""
+    acrescimos = get_proposta_acrescimos(proposta_id)
+    
+    for acrescimo in acrescimos:
+        if acrescimo['tipo'] == 'OUTRO':
+            descricao = f"Custo: {acrescimo['descricao']} - Proposta #{proposta_id}"
+            add_lancamento(
+                descricao,
+                float(acrescimo['valor']),
+                data,
+                'Outros Custos',
+                'despesa_a_pagar',
+                'Pendente',
+                proposta_id,
+                usuario_id
+            )
+
+def get_proposta_assistentes(proposta_id):
+    """Obtém assistentes associados a uma proposta"""
+    conn = get_db_connection()
+    if not conn:
+        return []
+    
+    try:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute("""
+            SELECT id, nome, valor
+            FROM proposta_assistentes
+            WHERE proposta_id = %s;
+        """, (proposta_id,))
+        
+        assistentes = cursor.fetchall()
+        return assistentes
+    except Exception as e:
+        st.error(f"Erro ao obter assistentes: {e}")
+        return []
+    finally:
+        cursor.close()
+        conn.close()
+
+def processar_assistentes(proposta_id, usuario_id, data):
+    """Processa assistentes criando lançamentos financeiros"""
+    assistentes = get_proposta_assistentes(proposta_id)
+    
+    for assistente in assistentes:
+        descricao = f"Assistente: {assistente['nome']} - Proposta #{proposta_id}"
+        add_lancamento(
+            descricao,
+            float(assistente['valor']),
+            data,
+            'Assistentes',
+            'despesa_a_pagar',
+            'Pendente',
+            proposta_id,
+            usuario_id
+        )
+
+def get_proposta_produtos(proposta_id):
+    """Obtém produtos associados a uma proposta"""
+    conn = get_db_connection()
+    if not conn:
+        return []
+    
+    try:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute("""
+            SELECT pp.id, pp.quantidade, pp.valor_unitario, pr.nome
+            FROM proposta_produtos pp
+            JOIN produtos pr ON pp.produto_id = pr.id
+            WHERE pp.proposta_id = %s;
+        """, (proposta_id,))
+        
+        produtos = cursor.fetchall()
+        return produtos
+    except Exception as e:
+        st.error(f"Erro ao obter produtos: {e}")
+        return []
+    finally:
+        cursor.close()
+        conn.close()
+
+def processar_produtos(proposta_id, usuario_id, data):
+    """Processa produtos criando lançamentos financeiros"""
+    produtos = get_proposta_produtos(proposta_id)
+    
+    if produtos:
+        total_produtos = sum(float(p['quantidade']) * float(p['valor_unitario']) for p in produtos)
+        nome_produtos = ", ".join(p['nome'] for p in produtos)
+        
+        descricao = f"Produtos: {nome_produtos} - Proposta #{proposta_id}"
+        add_lancamento(
+            descricao,
+            total_produtos,
+            data,
+            'Produtos',
+            'despesa_a_pagar',
+            'Pendente',
+            proposta_id,
+            usuario_id
+        )
+
+def finalizar_proposta_sql(proposta_id, usuario_id=None):
+    """Finaliza uma proposta diretamente via SQL, com verificações de tipos"""
+    conn = get_db_connection()
+    if not conn:
+        return False, "Erro de conexão com o banco de dados"
+    
+    try:
+        # Começar transação
+        conn.autocommit = False
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Verificar se a proposta existe e pertence ao usuário
+        query = """
+            SELECT p.*, c.nome as cliente_nome
+            FROM propostas p
+            JOIN clientes c ON p.cliente_id = c.id
+            WHERE p.id = %s
+        """
+        params = [proposta_id]
+        
+        if usuario_id:
+            query += " AND p.usuario_id = %s"
+            params.append(usuario_id)
+        
+        cursor.execute(query, params)
+        proposta = cursor.fetchone()
+        
         if not proposta:
-            return {
-                'status': 'error', 
-                'message': f'Proposta ID {proposta_id} não encontrada'
-            }
+            conn.rollback()
+            return False, f"Proposta #{proposta_id} não encontrada ou você não tem permissão para finalizá-la"
+        
+        # Definir data atual
+        data_atual = datetime.now().date()
         
         # Verificar se já está finalizada
-        if proposta.status == 'Finalizada':
-            return {
-                'status': 'error', 
-                'message': f'Proposta já está finalizada'
-            }
-        
-        # Verificar se existem lançamentos já associados
-        lancamentos = db.get_lancamentos_by_proposta(proposta_id)
-        logger.info(f"DEBUG FINALIZAR: Existem {len(lancamentos)} lançamentos para a proposta")
-        
-        # Verificar se já existe lançamento de receita
-        lancamento_principal = None
-        for l in lancamentos:
-            if l.categoria == 'Serviços de Organização' and l.tipo == 'receita_a_receber':
-                lancamento_principal = l
-                break
-        
-        # Se não existe lançamento principal, criar
-        valor_proposta = validar_valor_numerico(proposta.valor)
-        
-        if not lancamento_principal:
-            # Criar lançamento de receita
-            db.add_lancamento(
-                descricao=f"Proposta #{proposta.id} - {proposta.cliente_nome}",
-                valor=valor_proposta,
-                data=datetime.now().date(),
-                categoria="Serviços de Organização",
-                tipo="receita_a_receber",
-                status="Pendente",
-                forma_pagamento="",
-                proposta_id=proposta.id
-            )
-        else:
-            logger.info(f"DEBUG FINALIZAR: Já existe lançamento de receita_a_receber para a proposta ID={proposta_id}, não criando novo lançamento base")
-        
-        # Tratar fornecedores
-        fornecedores = db.get_proposta_fornecedores(proposta_id)
-        logger.info(f"DEBUG FINALIZAR: Encontrados {len(fornecedores)} fornecedores para a proposta ID={proposta_id}")
-        
-        for fornecedor in fornecedores:
-            # Processar comissão de parceiros se percentual > 0
-            percentual = validar_valor_numerico(fornecedor.get('percentual', 0))
+        if proposta['status'] == 'Finalizada':
+            # Verificar se tem lançamento financeiro
+            cursor.execute("""
+                SELECT id FROM financeiro 
+                WHERE proposta_id = %s AND tipo = 'receita_a_receber'
+            """, (proposta_id,))
             
-            if percentual > 0:
-                logger.info(f"DEBUG FINALIZAR: Criando lançamento de comissão de {percentual}% para fornecedor {fornecedor.get('nome')}")
+            lancamento = cursor.fetchone()
+            if not lancamento:
+                # Criar lançamento financeiro
+                descricao = f"Proposta #{proposta_id} - {proposta['cliente_nome']}"
                 
-                valor_comissao = (percentual / 100) * valor_proposta
+                # Verificar campos da tabela financeiro
+                cursor.execute("""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'financeiro'
+                """)
+                colunas = [row[0] for row in cursor.fetchall()]
                 
-                db.add_lancamento(
-                    descricao=f"Comissão {fornecedor.get('nome')} - Proposta #{proposta.id}",
-                    valor=valor_comissao,
-                    data=datetime.now().date(),
-                    categoria="Comissões",
-                    tipo="despesa_a_pagar",
-                    status="Pendente",
-                    forma_pagamento="",
-                    proposta_id=proposta.id
-                )
-        
-        # Tratar acréscimos (outros custos)
-        acrescimos = db.get_proposta_acrescimos(proposta_id)
-        logger.info(f"DEBUG FINALIZAR: Encontrados {len([a for a in acrescimos if a.get('tipo') == 'OUTRO'])} acréscimos do tipo OUTRO para a proposta ID={proposta_id}")
-        
-        for acrescimo in acrescimos:
-            tipo_acrescimo = acrescimo.get('tipo', '')
-            
-            # Ignorar acréscimos já tratados (produtos, fornecedores)
-            if tipo_acrescimo in ['PRODUTO', 'FORNECEDOR']:
-                continue
+                # Garantir que valor seja float
+                try:
+                    valor = float(proposta['valor'])
+                except (ValueError, TypeError):
+                    valor = 0.0
+                    st.warning(f"Valor da proposta ({proposta['valor']}) não pôde ser convertido para float, usando 0.0")
                 
-            valor_acrescimo = validar_valor_numerico(acrescimo.get('valor', 0))
-            
-            if valor_acrescimo > 0:
-                logger.info(f"DEBUG FINALIZAR: Criando lançamento para acréscimo {tipo_acrescimo}: {acrescimo.get('descricao')} - R$ {valor_acrescimo}")
+                # Construir query com base nas colunas disponíveis
+                if 'forma_pagamento' in colunas:
+                    cursor.execute("""
+                        INSERT INTO financeiro 
+                        (descricao, valor, data, categoria, tipo, status, forma_pagamento, proposta_id, usuario_id)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id;
+                    """, (
+                        descricao, 
+                        valor, 
+                        data_atual, 
+                        'Serviços de Organização',
+                        'receita_a_receber',
+                        'Pendente',
+                        '',
+                        proposta_id,
+                        proposta['usuario_id']
+                    ))
+                else:
+                    cursor.execute("""
+                        INSERT INTO financeiro 
+                        (descricao, valor, data, categoria, tipo, status, proposta_id, usuario_id)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id;
+                    """, (
+                        descricao, 
+                        valor, 
+                        data_atual, 
+                        'Serviços de Organização',
+                        'receita_a_receber',
+                        'Pendente',
+                        proposta_id,
+                        proposta['usuario_id']
+                    ))
                 
-                db.add_lancamento(
-                    descricao=f"Acréscimo de {tipo_acrescimo} - Proposta #{proposta.id}",
-                    valor=valor_acrescimo,
-                    data=datetime.now().date(),
-                    categoria="Custos de Projetos",
-                    tipo="despesa_a_pagar",
-                    status="Pendente",
-                    forma_pagamento="",
-                    proposta_id=proposta.id
-                )
+                lancamento_id = cursor.fetchone()['id']
+                conn.commit()
+                return True, f"Proposta já estava finalizada, mas lançamento financeiro foi criado com ID: {lancamento_id}"
+            else:
+                conn.commit()
+                return True, "Proposta já está finalizada e tem lançamento financeiro"
         
-        # Tratar assistentes
-        assistentes = db.get_proposta_assistentes(proposta_id)
-        logger.info(f"DEBUG FINALIZAR: Encontrados {len(assistentes)} assistentes para a proposta ID={proposta_id}")
-        
-        for assistente in assistentes:
-            valor_assistente = validar_valor_numerico(assistente.get('valor', 0))
+        # Se não está finalizada, finalizar agora
+        try:
+            # Atualizar proposta
+            cursor.execute("""
+                UPDATE propostas 
+                SET 
+                    status = 'Finalizada',
+                    data_finalizacao = %s,
+                    data_proposta = COALESCE(data_proposta, data_inicio, %s)
+                WHERE id = %s
+                RETURNING id;
+            """, (data_atual, data_atual, proposta_id))
             
-            if valor_assistente > 0:
-                logger.info(f"DEBUG FINALIZAR: Criando lançamento para assistente: {assistente.get('descricao')} - R$ {valor_assistente}")
+            if cursor.fetchone() is None:
+                conn.rollback()
+                return False, f"Erro ao atualizar proposta #{proposta_id}"
+            
+            # Verificar se já existe lançamento
+            cursor.execute("""
+                SELECT id FROM financeiro 
+                WHERE proposta_id = %s AND tipo = 'receita_a_receber'
+            """, (proposta_id,))
+            
+            lancamento = cursor.fetchone()
+            if not lancamento:
+                # Criar lançamento financeiro
+                descricao = f"Proposta #{proposta_id} - {proposta['cliente_nome']}"
                 
-                db.add_lancamento(
-                    descricao=f"Serviço de {assistente.get('descricao')} - Proposta #{proposta.id}",
-                    valor=valor_assistente,
-                    data=datetime.now().date(),
-                    categoria="Assistentes",
-                    tipo="despesa_a_pagar",
-                    status="Pendente",
-                    forma_pagamento="",
-                    proposta_id=proposta.id
-                )
-        
-        # Tratar produtos
-        produtos_total = 0
-        produtos = db.get_proposta_produtos(proposta_id)
-        
-        for produto in produtos:
-            quantidade = validar_valor_numerico(produto.get('quantidade', 0))
-            valor_unitario = validar_valor_numerico(produto.get('valor_unitario', 0))
+                # Verificar campos da tabela financeiro
+                cursor.execute("""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'financeiro'
+                """)
+                colunas = [row[0] for row in cursor.fetchall()]
+                
+                # Garantir que valor seja float
+                try:
+                    valor = float(proposta['valor'])
+                except (ValueError, TypeError):
+                    valor = 0.0
+                    st.warning(f"Valor da proposta ({proposta['valor']}) não pôde ser convertido para float, usando 0.0")
+                
+                # Construir query com base nas colunas disponíveis
+                if 'forma_pagamento' in colunas:
+                    cursor.execute("""
+                        INSERT INTO financeiro 
+                        (descricao, valor, data, categoria, tipo, status, forma_pagamento, proposta_id, usuario_id)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id;
+                    """, (
+                        descricao, 
+                        valor, 
+                        data_atual, 
+                        'Serviços de Organização',
+                        'receita_a_receber',
+                        'Pendente',
+                        '',
+                        proposta_id,
+                        proposta['usuario_id']
+                    ))
+                else:
+                    cursor.execute("""
+                        INSERT INTO financeiro 
+                        (descricao, valor, data, categoria, tipo, status, proposta_id, usuario_id)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id;
+                    """, (
+                        descricao, 
+                        valor, 
+                        data_atual, 
+                        'Serviços de Organização',
+                        'receita_a_receber',
+                        'Pendente',
+                        proposta_id,
+                        proposta['usuario_id']
+                    ))
             
-            produtos_total += quantidade * valor_unitario
-        
-        if produtos_total > 0:
-            logger.info(f"DEBUG FINALIZAR: Criando novo lançamento para produtos da proposta ID={proposta_id}")
+            # Processar fornecedores, acréscimos, assistentes e produtos
+            processar_fornecedores(proposta_id, proposta['usuario_id'], data_atual)
+            processar_acrescimos(proposta_id, proposta['usuario_id'], data_atual)
+            processar_assistentes(proposta_id, proposta['usuario_id'], data_atual)
+            processar_produtos(proposta_id, proposta['usuario_id'], data_atual)
             
-            db.add_lancamento(
-                descricao=f"Produtos para proposta #{proposta.id}",
-                valor=produtos_total,
-                data=datetime.now().date(),
-                categoria="Produtos",
-                tipo="despesa_a_pagar",
-                status="Pendente",
-                forma_pagamento="",
-                proposta_id=proposta.id
-            )
-        
-        # Atualizar status da proposta
-        db.update_proposta_status(proposta_id, 'Finalizada')
-        
-        logger.info(f"DEBUG FINALIZAR: Proposta #{proposta_id} finalizada com sucesso")
-        
-        return {
-            'status': 'success',
-            'message': 'Proposta finalizada com sucesso! Lançamentos financeiros gerados.',
-            'proposta_id': proposta_id
-        }
-    
+            conn.commit()
+            return True, f"Proposta #{proposta_id} finalizada com sucesso"
+        except Exception as e:
+            conn.rollback()
+            return False, f"Erro específico ao finalizar proposta: {str(e)}"
     except Exception as e:
-        logger.error(f"ERRO ao finalizar proposta: {str(e)}")
-        return {
-            'status': 'error',
-            'message': f'Erro ao finalizar proposta: {str(e)}'
-        }
+        if conn:
+            conn.rollback()
+        return False, f"Erro geral ao finalizar proposta: {str(e)}"
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if conn:
+            conn.close()
