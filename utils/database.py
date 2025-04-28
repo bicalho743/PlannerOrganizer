@@ -4317,8 +4317,8 @@ class Database:
         
         Gera:
         1. Produtos a receber (valor total dos produtos)
-        2. Comissão a receber por fornecedor (com % registrado no cadastro)
-        3. Assistentes a pagar (um registro por assistente)
+        2. Comissão a receber por fornecedor (com % registrado no cadastro) - APENAS para propostas concluídas
+        3. Assistentes a pagar (um registro por assistente) - APENAS para propostas concluídas
         4. Cliente a receber (valor base da proposta)
         
         Args:
@@ -4642,118 +4642,137 @@ class Database:
                         print(f"DEBUG LANCAMENTOS: Já existem lançamentos para Outros a receber ({transacoes_outros}). Pulando.")
                     result["valor_outros"] = valor_total_outros
                 
-                # 3. Comissões a receber por fornecedor
-                fornecedores = self.session.query(AcrescimoProposta)\
-                    .filter_by(proposta_id=proposta_id_python_int, tipo="FORNECEDOR")\
-                    .all()
-                    
+                # 3. Comissões a receber por fornecedor - APENAS para propostas concluídas
+                # Verificar se a proposta está concluída antes de gerar lançamentos para fornecedores
+                gerar_lancamentos_comissao = False
+                if proposta.status == "Concluída" or (hasattr(proposta, 'status_execucao') and proposta.status_execucao == "Concluída"):
+                    gerar_lancamentos_comissao = True
+                    print(f"DEBUG LANCAMENTOS: Proposta está concluída. Gerando lançamentos de comissão e assistentes.")
+                else:
+                    print(f"DEBUG LANCAMENTOS: Proposta NÃO está concluída (Status={proposta.status}, Status execução={proposta.status_execucao if hasattr(proposta, 'status_execucao') else 'N/A'}). Pulando lançamentos de comissão e assistentes.")
+                
+                # Inicializar variável para total de fornecedores
                 valor_total_fornecedores = 0
                 
-                for fornecedor_item in fornecedores:
-                    valor_fornecedor = float(fornecedor_item.valor) if fornecedor_item.valor else 0
-                    valor_total_fornecedores += valor_fornecedor
+                # Só processar comissões se a proposta estiver concluída ou se forcar_geracao=True
+                if gerar_lancamentos_comissao or forcar_geracao:
+                    fornecedores = self.session.query(AcrescimoProposta)\
+                        .filter_by(proposta_id=proposta_id_python_int, tipo="FORNECEDOR")\
+                        .all()
                     
-                    # Buscar o percentual de comissão (pode estar no item ou precisamos buscar no cadastro)
-                    percentual_comissao = None
-                    for attr in dir(fornecedor_item):
-                        if attr == 'percentual_comissao':
-                            percentual_comissao = getattr(fornecedor_item, attr)
-                            break
-                    
-                    # Se não tiver percentual no item, buscar no cadastro do fornecedor
-                    nome_fornecedor = fornecedor_item.fornecedor
-                    fornecedor_cadastro = self.session.query(Fornecedor).filter(Fornecedor.descricao == nome_fornecedor).first()
-                    
-                    if not percentual_comissao and fornecedor_cadastro and hasattr(fornecedor_cadastro, 'percentual_comissao'):
-                        percentual_comissao = fornecedor_cadastro.percentual_comissao
-                    
-                    # Se tiver percentual de comissão, calcular o valor e gerar o lançamento
-                    if percentual_comissao and percentual_comissao > 0:
-                        valor_comissao = valor_fornecedor * (percentual_comissao / 100)
+                    for fornecedor_item in fornecedores:
+                        valor_fornecedor = float(fornecedor_item.valor) if fornecedor_item.valor else 0
+                        valor_total_fornecedores += valor_fornecedor
                         
-                        if valor_comissao > 0:
-                            # Transação no extrato
-                            transacao_comissao = Transacao(
-                                tipo="receita_a_receber",
-                                descricao=f"Comissão de {percentual_comissao}% - {nome_fornecedor} - Proposta #{proposta.numero}",
-                                valor=valor_comissao,
-                                data=data_lancamento,
-                                categoria="Comissão",
-                                subcategoria="Comissão de Fornecedor",
-                                tipo_receita="comissao",
-                                origem_id=fornecedor_cadastro.id if fornecedor_cadastro else None,
-                                origem_tipo="fornecedor",
-                                tipo_conta="PF",
-                                status="Pendente",
-                                proposta_id=proposta_id_int,
-                                classificacao="receita",
-                                usuario_id=usuario_id
-                            )
-                            self.session.add(transacao_comissao)
+                        # Buscar o percentual de comissão (pode estar no item ou precisamos buscar no cadastro)
+                        percentual_comissao = None
+                        for attr in dir(fornecedor_item):
+                            if attr == 'percentual_comissao':
+                                percentual_comissao = getattr(fornecedor_item, attr)
+                                break
+                        
+                        # Se não tiver percentual no item, buscar no cadastro do fornecedor
+                        nome_fornecedor = fornecedor_item.fornecedor
+                        fornecedor_cadastro = self.session.query(Fornecedor).filter(Fornecedor.descricao == nome_fornecedor).first()
+                        
+                        if not percentual_comissao and fornecedor_cadastro and hasattr(fornecedor_cadastro, 'percentual_comissao'):
+                            percentual_comissao = fornecedor_cadastro.percentual_comissao
+                        
+                        # Se tiver percentual de comissão, calcular o valor e gerar o lançamento
+                        if percentual_comissao and percentual_comissao > 0:
+                            valor_comissao = valor_fornecedor * (percentual_comissao / 100)
                             
-                            # Removido o lançamento duplicado nas contas a receber
-                            
-                            result["lancamentos_gerados"] += 1
+                            if valor_comissao > 0:
+                                # Transação no extrato
+                                transacao_comissao = Transacao(
+                                    tipo="receita_a_receber",
+                                    descricao=f"Comissão de {percentual_comissao}% - {nome_fornecedor} - Proposta #{proposta.numero}",
+                                    valor=valor_comissao,
+                                    data=data_lancamento,
+                                    categoria="Comissão",
+                                    subcategoria="Comissão de Fornecedor",
+                                    tipo_receita="comissao",
+                                    origem_id=fornecedor_cadastro.id if fornecedor_cadastro else None,
+                                    origem_tipo="fornecedor",
+                                    tipo_conta="PF",
+                                    status="Pendente",
+                                    proposta_id=proposta_id_int,
+                                    classificacao="receita",
+                                    usuario_id=usuario_id
+                                )
+                                self.session.add(transacao_comissao)
+                                
+                                # Removido o lançamento duplicado nas contas a receber
+                                
+                                result["lancamentos_gerados"] += 1
+                                print(f"DEBUG LANCAMENTOS: Lançamento de comissão criado: R$ {valor_comissao:.2f}")
+                else:
+                    print(f"DEBUG LANCAMENTOS: Pulando geração de lançamentos de comissão (proposta não está concluída).")
                 
-                # 4. Assistentes a pagar
-                assistentes = self.session.query(AcrescimoProposta)\
-                    .filter_by(proposta_id=proposta_id_python_int, tipo="ASSISTENTE")\
-                    .all()
-                    
+                # 4. Assistentes a pagar - APENAS para propostas concluídas
+                # Inicializar variável para total de assistentes
                 valor_total_assistentes = 0
                 
-                for assistente_item in assistentes:
-                    valor_assistente = float(assistente_item.valor) if assistente_item.valor else 0
-                    valor_total_assistentes += valor_assistente
-                    print(f"DEBUG LANCAMENTOS: Assistente '{assistente_item.fornecedor}': R$ {valor_assistente:.2f}")
-                
-                print(f"DEBUG LANCAMENTOS: Valor total de assistentes: R$ {valor_total_assistentes:.2f}")
-                
-                # Verificar se já existem lançamentos para Assistentes a pagar
-                transacoes_assistentes = self.session.query(Transacao)\
-                    .filter_by(proposta_id=proposta_id_int, 
-                              categoria="Assistente", 
-                              classificacao="contas_a_pagar")\
-                    .count()
-                    
-                print(f"DEBUG LANCAMENTOS: Lançamentos existentes para Assistentes a pagar: {transacoes_assistentes}")
-                
-                # Criar lançamentos para assistentes apenas se não existirem
-                if valor_total_assistentes > 0 and (transacoes_assistentes == 0 or forcar_geracao):
-                    print(f"DEBUG LANCAMENTOS: Criando lançamentos para Assistentes a pagar: R$ {valor_total_assistentes:.2f}")
+                # Só processar assistentes se a proposta estiver concluída ou se forcar_geracao=True
+                if gerar_lancamentos_comissao or forcar_geracao:
+                    assistentes = self.session.query(AcrescimoProposta)\
+                        .filter_by(proposta_id=proposta_id_python_int, tipo="ASSISTENTE")\
+                        .all()
                     
                     for assistente_item in assistentes:
                         valor_assistente = float(assistente_item.valor) if assistente_item.valor else 0
+                        valor_total_assistentes += valor_assistente
+                        print(f"DEBUG LANCAMENTOS: Assistente '{assistente_item.fornecedor}': R$ {valor_assistente:.2f}")
+                    
+                    print(f"DEBUG LANCAMENTOS: Valor total de assistentes: R$ {valor_total_assistentes:.2f}")
+                    
+                    # Verificar se já existem lançamentos para Assistentes a pagar
+                    transacoes_assistentes = self.session.query(Transacao)\
+                        .filter_by(proposta_id=proposta_id_int, 
+                                  categoria="Assistente", 
+                                  classificacao="contas_a_pagar")\
+                        .count()
                         
-                        if valor_assistente > 0:
-                            nome_assistente = assistente_item.fornecedor  # o campo "fornecedor" armazena o nome do assistente
+                    print(f"DEBUG LANCAMENTOS: Lançamentos existentes para Assistentes a pagar: {transacoes_assistentes}")
+                    
+                    # Criar lançamentos para assistentes apenas se não existirem
+                    if valor_total_assistentes > 0 and (transacoes_assistentes == 0 or forcar_geracao):
+                        print(f"DEBUG LANCAMENTOS: Criando lançamentos para Assistentes a pagar: R$ {valor_total_assistentes:.2f}")
+                        
+                        for assistente_item in assistentes:
+                            valor_assistente = float(assistente_item.valor) if assistente_item.valor else 0
                             
-                            # Transação no extrato
-                            transacao_assistente = Transacao(
-                                tipo="despesa",
-                                descricao=f"Pagamento Assistente {nome_assistente} - Proposta #{proposta.numero}",
-                                valor=valor_assistente,
-                                data=data_lancamento,
-                                categoria="Assistente",
-                                subcategoria="Pagamento de Serviço",
-                                tipo_receita="assistente",  # Usaremos tipo_receita mesmo para despesas
-                                origem_id=assistente_item.id,
-                                origem_tipo="assistente",
-                                tipo_conta="PF",
-                                status="Pendente",
-                                proposta_id=proposta_id_int,
-                                classificacao="custo_direto",
-                                usuario_id=usuario_id
-                            )
-                            self.session.add(transacao_assistente)
-                            
-                            # Removido o lançamento duplicado nas contas a pagar
-                            
-                            result["lancamentos_gerados"] += 1
-                            print(f"DEBUG LANCAMENTOS: Lançamento criado para assistente {nome_assistente}: R$ {valor_assistente:.2f}")
+                            if valor_assistente > 0:
+                                nome_assistente = assistente_item.fornecedor  # o campo "fornecedor" armazena o nome do assistente
+                                
+                                # Transação no extrato
+                                transacao_assistente = Transacao(
+                                    tipo="despesa",
+                                    descricao=f"Pagamento Assistente {nome_assistente} - Proposta #{proposta.numero}",
+                                    valor=valor_assistente,
+                                    data=data_lancamento,
+                                    categoria="Assistente",
+                                    subcategoria="Pagamento de Serviço",
+                                    tipo_receita="assistente",  # Usaremos tipo_receita mesmo para despesas
+                                    origem_id=assistente_item.id,
+                                    origem_tipo="assistente",
+                                    tipo_conta="PF",
+                                    status="Pendente",
+                                    proposta_id=proposta_id_int,
+                                    classificacao="custo_direto",
+                                    usuario_id=usuario_id
+                                )
+                                self.session.add(transacao_assistente)
+                                
+                                # Removido o lançamento duplicado nas contas a pagar
+                                
+                                result["lancamentos_gerados"] += 1
+                                print(f"DEBUG LANCAMENTOS: Lançamento criado para assistente {nome_assistente}: R$ {valor_assistente:.2f}")
+                    else:
+                        if transacoes_assistentes > 0:
+                            print(f"DEBUG LANCAMENTOS: Já existem lançamentos para Assistentes a pagar ({transacoes_assistentes}). Pulando.")
                 else:
-                    if transacoes_assistentes > 0:
-                        print(f"DEBUG LANCAMENTOS: Já existem lançamentos para Assistentes a pagar ({transacoes_assistentes}). Pulando.")
+                    print(f"DEBUG LANCAMENTOS: Pulando geração de lançamentos de assistentes (proposta não está concluída).")
                 
                 result["valor_fornecedores"] = valor_total_fornecedores
                 result["valor_assistentes"] = valor_total_assistentes
