@@ -518,8 +518,8 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run corrigir_finalizacao.py --server.port 5001 --server.address 0.0.0.0"
-waitForPort = 5001
+args = "streamlit run corrigir_erro_finalizacao.py --server.port 5004 --server.address 0.0.0.0 --server.headless true"
+waitForPort = 5004
 
 [[workflows.workflow]]
 name = "Download Fix Proposta"

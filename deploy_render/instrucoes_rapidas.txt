@@ -1,0 +1,44 @@
+INSTRUÇÕES PARA CORRIGIR O ERRO DE FINALIZAÇÃO DE PROPOSTAS
+
+Este arquivo contém instruções rápidas para corrigir o erro:
+"name 'finalizar_proposta_segura' is not defined"
+
+PASSOS:
+
+1. Edite o arquivo pages/propostas.py
+   - Encontre a linha: from utils.finalizar_proposta_fix import finalizar_proposta_sql
+   - Substitua por: from utils.finalizar_proposta_fix import finalizar_proposta_segura
+
+2. Edite o arquivo utils/finalizar_proposta_fix.py
+   - Adicione no final do arquivo a função:
+
+def finalizar_proposta_segura(proposta_id, usuario_id=None):
+    """Função de compatibilidade para código existente"""
+    resultado = finalizar_proposta_sql(proposta_id, usuario_id)
+    
+    # Montar retorno compatível com a assinatura das funções chamadoras
+    if resultado:
+        return {
+            "status": True,
+            "mensagem": "Proposta finalizada com sucesso",
+            "lancamentos": {
+                "gerados": 1,
+                "valores": {
+                    "base": 0,
+                    "produtos": 0,
+                    "fornecedores": 0,
+                    "assistentes": 0,
+                    "outros": 0
+                }
+            }
+        }
+    else:
+        return {
+            "status": False,
+            "mensagem": "Falha ao finalizar proposta"
+        }
+
+3. Reinicie o serviço após fazer estas alterações
+
+Se você preferir substituir os arquivos completos, faça upload dos arquivos 
+incluídos neste pacote, mantendo a estrutura de diretórios.

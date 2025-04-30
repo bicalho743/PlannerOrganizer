@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.finalizar_proposta_fix import finalizar_proposta_segura
+from utils.finalizar_proposta_fix import finalizar_proposta_sql
 import pandas as pd
 import time
 import os
@@ -1609,7 +1609,9 @@ def show():
                             st.markdown("---")
                             if st.button("Marcar como Concluída", key=f"finalizar_{proposta_exec_id}"):
                                 try:
-                                    # Usar a nova função de finalização robusta que já foi importada no topo do arquivo
+                                    # Usar a nova função de finalização robusta
+                                    from utils.finalizar_proposta_fix import finalizar_proposta_segura
+                                    
                                     with st.spinner("Finalizando proposta..."):
                                         # Chamar a função segura que usa uma sessão isolada para evitar problemas de concorrência
                                         resultado = finalizar_proposta_segura(proposta_exec_id)
