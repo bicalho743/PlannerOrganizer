@@ -542,7 +542,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run download_fix_direct.py --server.port 8700 --server.address 0.0.0.0 --server.headless true"
+args = "streamlit run download_fix_direto.py --server.port 8700 --server.address 0.0.0.0 --server.headless true"
 waitForPort = 8700
 
 [[workflows.workflow]]
