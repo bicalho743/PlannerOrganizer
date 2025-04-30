@@ -12,6 +12,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Verificar se estamos no ambiente Render
+is_render = os.environ.get('RENDER') == 'true'
+if is_render:
+    logger.info("Ambiente Render detectado, executando scripts de inicialização...")
+    try:
+        # Verificar se o script render_startup.py existe e executá-lo
+        if os.path.exists('render_startup.py'):
+            logger.info("Executando render_startup.py...")
+            import render_startup
+            logger.info("Script render_startup.py executado com sucesso")
+        else:
+            logger.warning("Script render_startup.py não encontrado")
+    except Exception as e:
+        logger.error(f"Erro ao executar script de inicialização do Render: {str(e)}")
+
 # Corrigir o problema de adaptação de tipos numpy.int64 para PostgreSQL
 try:
     from utils.type_conversion_fix import fix_numpy_int64_bug

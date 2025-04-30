@@ -4,21 +4,14 @@ Script para download da solução final para problemas no Render
 import streamlit as st
 import base64
 import os
-import markdown
 
-def get_binary_file_downloader_html(bin_file, file_label='File'):
+def get_binary_file_downloader_html(bin_file, file_label='Arquivo'):
     """Gera link HTML para download de arquivos binários"""
     with open(bin_file, 'rb') as f:
         data = f.read()
     b64 = base64.b64encode(data).decode()
     href = f'<a href="data:application/octet-stream;base64,{b64}" download="{os.path.basename(bin_file)}" class="download-button">{file_label}</a>'
     return href
-
-def get_markdown_file_content(md_file):
-    """Lê o conteúdo de um arquivo Markdown"""
-    with open(md_file, 'r', encoding='utf-8') as f:
-        content = f.read()
-    return content
 
 def main():
     """Função principal"""
@@ -88,8 +81,9 @@ def main():
     
     # Verificar se o arquivo MD existe e exibir
     if os.path.exists('solucao_render.md'):
-        # Obter o conteúdo do arquivo e renderizar como HTML
-        md_content = get_markdown_file_content('solucao_render.md')
+        # Obter o conteúdo do arquivo
+        with open('solucao_render.md', 'r', encoding='utf-8') as f:
+            md_content = f.read()
         st.markdown(md_content)
     else:
         st.warning("Arquivo de documentação (solucao_render.md) não encontrado.")
@@ -121,6 +115,20 @@ def main():
         st.error(f"Arquivo {zip_file} não encontrado. Por favor, verifique se o arquivo está presente no diretório.")
     
     st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Instruções de deploy
+    if os.path.exists('INSTRUCOES_DEPLOY_RENDER.md'):
+        st.markdown("## Instruções de Deploy")
+        with open('INSTRUCOES_DEPLOY_RENDER.md', 'r', encoding='utf-8') as f:
+            instrucoes = f.read()
+            # Exibir apenas uma parte resumida das instruções
+            linhas = instrucoes.split('\n')
+            resumo = '\n'.join(linhas[:20]) + "\n\n..."
+            
+            st.markdown(resumo)
+            
+            with st.expander("Ver instruções completas"):
+                st.markdown(instrucoes)
     
     # Informações adicionais
     st.markdown("""
