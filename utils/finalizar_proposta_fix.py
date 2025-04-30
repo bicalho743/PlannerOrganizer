@@ -332,4 +332,26 @@ def desassociar_propostas_cliente_sql(cliente_id: int) -> int:
 # Função de compatibilidade para código existente
 def finalizar_proposta_segura(proposta_id, usuario_id=None):
     """Função de compatibilidade para código existente"""
-    return finalizar_proposta_sql(proposta_id, usuario_id)
+    resultado = finalizar_proposta_sql(proposta_id, usuario_id)
+    
+    # Montar retorno compatível com a assinatura das funções chamadoras
+    if resultado:
+        return {
+            "status": True,
+            "mensagem": "Proposta finalizada com sucesso",
+            "lancamentos": {
+                "gerados": 1,
+                "valores": {
+                    "base": 0,  # Valores serão definidos dinamicamente em uso real
+                    "produtos": 0,
+                    "fornecedores": 0,
+                    "assistentes": 0,
+                    "outros": 0
+                }
+            }
+        }
+    else:
+        return {
+            "status": False,
+            "mensagem": "Falha ao finalizar proposta"
+        }

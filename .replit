@@ -153,6 +153,10 @@ args = "Download Solucao Render"
 task = "workflow.run"
 args = "Download Solucao"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Download Solucao Standalone"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -579,6 +583,15 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run download_solucao_render.py --server.port 8800 --server.address 0.0.0.0 --server.headless true"
 waitForPort = 8800
+
+[[workflows.workflow]]
+name = "Download Solucao Standalone"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run download_fix_standalone.py --server.port 5001 --server.address 0.0.0.0 --server.headless true"
+waitForPort = 5001
 
 [[ports]]
 localPort = 443

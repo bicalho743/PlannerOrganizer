@@ -1,47 +1,66 @@
-# Solução Completa para Problemas no Render
+# Solução para Problemas no Render
 
-Este pacote contém todas as correções necessárias para resolver problemas comuns enfrentados no ambiente Render, especialmente relacionados a:
+## Erro de Finalização de Propostas
 
-1. **Finalização de propostas**
-2. **Exclusão de clientes**
-3. **Lançamentos financeiros automáticos**
-4. **Inconsistências de tipos de dados**
+Este pacote contém uma solução completa para o erro `name 'finalizar_proposta_segura' is not defined` que ocorre ao tentar finalizar propostas no ambiente Render.
 
-## O que este pacote resolve?
+### Problema
 
-### 1. Problema de finalização de propostas
-As propostas podem não ser finalizadas corretamente no Render devido a problemas de tipo no PostgreSQL, resultando em erros como:
-- "cannot access local variable where it is not associated with a value"
-- Propostas que não aparecem na lista de finalizadas 
-- Lançamentos financeiros não gerados automaticamente
+No ambiente Render, ao tentar finalizar uma proposta, ocorre um erro porque a função `finalizar_proposta_segura` não está sendo encontrada, embora o código esteja tentando usá-la.
 
-### 2. Problema de exclusão de clientes
-Quando um cliente é excluído, suas propostas podem permanecer "órfãs" ou causar erros na aplicação.
+### Solução
 
-### 3. Problemas de tipo no PostgreSQL
-O PostgreSQL no Render trata tipos de dados de forma ligeiramente diferente do SQLite, causando erros quando valores String são usados onde se espera Integer, ou quando valores NULL são usados onde não se espera.
+1. **Correção de importação**: Ajustamos a importação no arquivo `pages/propostas.py` para importar a função correta:
+   ```python
+   from utils.finalizar_proposta_fix import finalizar_proposta_segura
+   ```
 
-### 4. Inconsistências de usuario_id
-Problemas com a associação correta de `usuario_id` nos lançamentos financeiros gerados a partir de propostas.
+2. **Implementação de função compatível**: Melhoramos a função `finalizar_proposta_segura` no arquivo `utils/finalizar_proposta_fix.py` para retornar um objeto compatível com o que é esperado pelo código que a chama.
 
-## Como a solução funciona?
+### Arquivos Incluídos
 
-A solução implementa três camadas de proteção:
+- `pages/propostas.py` (com a correção da importação)
+- `utils/finalizar_proposta_fix.py` (com a função melhorada)
 
-### 1. Funções SQL nativas
-Criamos funções SQL nativas no PostgreSQL que executam operações críticas diretamente no banco de dados, evitando problemas de tipo do ORM:
-- `finalizar_proposta(proposta_id)` - Finaliza uma proposta e cria o lançamento financeiro correspondente
-- `desassociar_propostas_cliente(cliente_id)` - Marca propostas como canceladas quando um cliente é excluído
+## Problemas de Tipo no PostgreSQL
 
-### 2. Triggers SQL automáticos
-Triggers SQL são criados para manter automaticamente a integridade dos dados:
-- `atualizar_usuario_id_financeiro_trigger` - Garante que o `usuario_id` seja sempre preenchido corretamente em lançamentos financeiros
+Este pacote também inclui correções para problemas de conversão de tipo no PostgreSQL do Render.
 
-### 3. Substituição de funções Python problemáticas
-As funções Python que podem falhar no Render são substituídas por versões seguras que utilizam SQL direto:
-- A função `finalizar_proposta_segura()` substitui a implementação original
-- O arquivo `pages/propostas.py` é modificado automaticamente para usar esta versão segura
+### Problema
 
-## Implementação Automática
+O PostgreSQL no Render tem problemas para converter automaticamente alguns tipos de dados, especialmente entre strings e números.
 
-Todas estas correções são aplicadas automaticamente durante a inicialização da aplicação no Render, sem necessidade de intervenção manual. O script `render_startup.py` é executado automaticamente e aplica todas as correções necessárias.
+### Solução
+
+1. **Funções SQL diretas**: Implementamos funções que usam SQL direto para evitar problemas de tipo do ORM.
+2. **Adaptadores de tipo**: Registramos adaptadores de tipo para Numpy e Python nativos.
+3. **Verificações de tipo robustas**: Adicionamos verificações e conversões de tipo explícitas.
+
+## Instruções de Instalação
+
+1. Faça upload do arquivo ZIP para o ambiente Render.
+2. Descompacte-o usando o comando:
+   ```
+   unzip fix_render_final.zip
+   ```
+3. Os arquivos serão substituídos automaticamente.
+4. Reinicie o serviço para aplicar as mudanças.
+
+## Verificação
+
+Para verificar se a solução está funcionando:
+
+1. Tente finalizar uma proposta no aplicativo.
+2. Se não houver erros e a proposta for marcada como concluída, a solução está funcionando corretamente.
+
+## Suporte
+
+Se você encontrar algum problema após aplicar esta solução, certifique-se de que:
+
+1. Todos os arquivos foram substituídos corretamente.
+2. O serviço foi reiniciado após a instalação.
+3. Não há outros erros nos logs que possam indicar problemas adicionais.
+
+---
+
+© Planner Organizer - 2025
