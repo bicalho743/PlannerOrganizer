@@ -108,31 +108,6 @@ def main():
                         else:
                             st.error("Usuário ou senha incorretos")
                 
-                # Divisor com "ou"
-                st.markdown("""
-                <div style="text-align: center; margin: 1.5rem 0; position: relative;">
-                    <hr style="margin: 0; border: none; height: 1px; background-color: #E0E0E0;">
-                    <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); 
-                           background-color: white; padding: 0 10px; color: #5A6A85; font-size: 0.9rem;">
-                        ou continuar com
-                    </span>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Botão de login com Google (centralizado)
-                st.markdown("""
-                <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
-                    <button onclick="window.open('login_social.html', '_blank')" 
-                            style="width: 100%; background-color: white; border: 1px solid #E0E0E0; 
-                            border-radius: 4px; padding: 10px 0; display: flex; align-items: center; 
-                            justify-content: center; cursor: pointer; transition: all 0.2s ease;">
-                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                            style="width: 18px; height: 18px; margin-right: 8px;">
-                        Continuar com Google
-                    </button>
-                </div>
-                """, unsafe_allow_html=True)
-                
                 # Adicionar links para recuperação de senha
                 st.markdown("""
                 <div style="text-align: center; margin-top: 1rem;">
@@ -141,9 +116,6 @@ def main():
                     </a>
                 </div>
                 """, unsafe_allow_html=True)
-                
-                # Nota informativa sobre o login social
-                st.success("Login social ativado. Clique no botão 'Continuar com Google' para entrar com sua conta Google.")
                 
                 # Informações de acesso para demonstração
                 st.markdown("""

@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import random
 from utils.database import Database
+from sqlalchemy import text
 
 def format_currency(value):
     """Formata um valor como moeda brasileira"""
@@ -15,6 +16,8 @@ def get_random_color():
 
 def show():
     """Exibe a página de boas-vindas após o login"""
+    
+    # O cabeçalho já é aplicado pelo page_config.py, então não precisamos adicioná-lo aqui
     
     # Configurações básicas
     st.markdown("""
@@ -157,104 +160,84 @@ def show():
     </style>
     """, unsafe_allow_html=True)
     
-    # Cabeçalho de boas-vindas
-    st.markdown(f'<h1 class="welcome-header">👋 Olá! Bem-vindo(a) de volta</h1>', unsafe_allow_html=True)
-    st.markdown("**Planner Organizer** - Sistema Profissional para Personal Organizers", unsafe_allow_html=True)
-    
-    # Data atual em formato brasileiro
-    hoje = datetime.now()
-    data_formatada = hoje.strftime("%d de %B de %Y")
-    # Tradução do mês para português
-    meses_pt = {
-        "January": "janeiro", "February": "fevereiro", "March": "março",
-        "April": "abril", "May": "maio", "June": "junho",
-        "July": "julho", "August": "agosto", "September": "setembro",
-        "October": "outubro", "November": "novembro", "December": "dezembro"
-    }
-    for mes_en, mes_pt in meses_pt.items():
-        data_formatada = data_formatada.replace(mes_en, mes_pt)
-    
-    st.markdown(f"📅 **{data_formatada}**")
-    st.markdown("---")
+    # Adicionar data fixa com design melhorado
+    st.markdown("""
+    <div style="text-align: center; background-color: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+        <span style="font-size: 1.2rem; color: #1E366F; font-weight: 500;">📅 25 de abril de 2025</span>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Layout principal - Colunas para métricas e atividades
     col_metricas, col_direita = st.columns([2, 1])
     
     # Seção de métricas principais
     with col_metricas:
-        st.subheader("📊 Resumo do Seu Negócio")
         
         # Métricas em 3 colunas
         m1, m2, m3 = st.columns(3)
         
         with m1:
-            # Tenta obter dados reais, caso contrário usa mock
-            try:
-                db = Database()
-                propostas_em_andamento = db.session.execute(
-                    "SELECT COUNT(*) FROM propostas WHERE status = 'Em execução'"
-                ).scalar() or 5
-            except:
-                propostas_em_andamento = 5
+            # Obter dados reais do banco de dados
+            db = Database()
+            propostas_em_andamento = db.session.execute(
+                text("SELECT COUNT(*) FROM propostas WHERE status = 'Em execução'")
+            ).scalar() or 0
                 
             st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-value">{propostas_em_andamento}</div>
-                <div class="metric-label">Propostas em Execução</div>
+            <div style="background: linear-gradient(135deg, #f8faff, #e6f0ff); border-radius: 12px; padding: 1.5rem; box-shadow: 0 8px 16px rgba(0,0,0,0.08); text-align: center; transition: all 0.3s ease; height: 100%;">
+                <div style="font-size: 2.5rem; font-weight: 700; color: #1E366F; margin-bottom: 0.5rem;">{propostas_em_andamento}</div>
+                <div style="color: #5A6A85; font-size: 0.9rem; font-weight: 500;">Propostas em Execução</div>
+                <div style="margin-top: 0.7rem; font-size: 1.8rem; color: #2d8cff;">📝</div>
             </div>
             """, unsafe_allow_html=True)
         
         with m2:
-            # Tenta obter dados reais, caso contrário usa mock
-            try:
-                db = Database()
-                receitas = db.session.execute(
-                    "SELECT SUM(valor) FROM financeiro WHERE tipo = 'receita' AND EXTRACT(MONTH FROM data) = EXTRACT(MONTH FROM CURRENT_DATE)"
-                ).scalar() or 0
-            except:
-                receitas = 8750.50
+            # Obter dados reais do banco de dados
+            db = Database()
+            receitas = db.session.execute(
+                text("SELECT COALESCE(SUM(valor), 0) FROM financeiro WHERE tipo = 'receita' AND EXTRACT(MONTH FROM data) = EXTRACT(MONTH FROM CURRENT_DATE)")
+            ).scalar() or 0
                 
             st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-value">{format_currency(receitas)}</div>
-                <div class="metric-label">Receitas do Mês</div>
+            <div style="background: linear-gradient(135deg, #f7fff7, #e6ffe6); border-radius: 12px; padding: 1.5rem; box-shadow: 0 8px 16px rgba(0,0,0,0.08); text-align: center; transition: all 0.3s ease; height: 100%;">
+                <div style="font-size: 2.2rem; font-weight: 700; color: #2E7D32; margin-bottom: 0.5rem;">{format_currency(receitas)}</div>
+                <div style="color: #5A6A85; font-size: 0.9rem; font-weight: 500;">Receitas do Mês</div>
+                <div style="margin-top: 0.7rem; font-size: 1.8rem; color: #4CAF50;">💰</div>
             </div>
             """, unsafe_allow_html=True)
             
         with m3:
-            # Tenta obter dados reais, caso contrário usa mock
-            try:
-                db = Database()
-                clientes = db.session.execute(
-                    "SELECT COUNT(*) FROM clientes"
-                ).scalar() or 15
-            except:
-                clientes = 15
+            # Obter dados reais do banco de dados
+            db = Database()
+            clientes = db.session.execute(
+                text("SELECT COUNT(*) FROM clientes")
+            ).scalar() or 0
                 
             st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-value">{clientes}</div>
-                <div class="metric-label">Clientes Cadastrados</div>
+            <div style="background: linear-gradient(135deg, #fff8f2, #ffeadb); border-radius: 12px; padding: 1.5rem; box-shadow: 0 8px 16px rgba(0,0,0,0.08); text-align: center; transition: all 0.3s ease; height: 100%;">
+                <div style="font-size: 2.5rem; font-weight: 700; color: #E65100; margin-bottom: 0.5rem;">{clientes}</div>
+                <div style="color: #5A6A85; font-size: 0.9rem; font-weight: 500;">Clientes Cadastrados</div>
+                <div style="margin-top: 0.7rem; font-size: 1.8rem; color: #FF9800;">👥</div>
             </div>
             """, unsafe_allow_html=True)
         
         # Gráfico de propostas por status
         st.subheader("📈 Status das Propostas")
         
-        # Tenta obter dados reais, caso contrário usa mock
-        try:
-            db = Database()
-            # Utilizando SQLAlchemy para obter dados de status de proposta
-            result = db.session.execute(
-                "SELECT status, COUNT(*) FROM propostas GROUP BY status ORDER BY COUNT(*) DESC"
-            )
-            dados_propostas = [(row[0], row[1]) for row in result]
-            
+        # Obter dados reais do banco de dados
+        db = Database()
+        # Utilizando SQLAlchemy para obter dados de status de proposta
+        result = db.session.execute(
+            text("SELECT status, COUNT(*) FROM propostas GROUP BY status ORDER BY COUNT(*) DESC")
+        )
+        dados_propostas = [(row[0], row[1]) for row in result]
+        
+        if dados_propostas:
             status_propostas = [status for status, _ in dados_propostas]
             contagem_propostas = [contagem for _, contagem in dados_propostas]
-        except:
-            status_propostas = ["Em execução", "Finalizada", "Em elaboração", "Aprovada", "Aguardando aprovação"]
-            contagem_propostas = [5, 12, 3, 2, 1]
+        else:
+            status_propostas = []
+            contagem_propostas = []
         
         # Gráfico de barras para status das propostas
         st.bar_chart(
@@ -267,62 +250,29 @@ def show():
         # Projetos recentes
         st.subheader("🔍 Projetos Recentes")
         
-        # Tenta obter dados reais, caso contrário usa mock
-        try:
-            db = Database()
-            # Utilizando SQLAlchemy para obter projetos recentes
-            result = db.session.execute(
-                """
-                SELECT p.id, p.descricao, p.status, p.data_inicio, c.nome 
-                FROM propostas p
-                JOIN clientes c ON p.cliente_id = c.id
-                ORDER BY p.data_inicio DESC LIMIT 4
-                """
-            )
-            projetos_recentes = [(row[0], row[1], row[2], row[3], row[4]) for row in result]
-            
-            projetos = [
-                {
-                    "id": p[0], 
-                    "descricao": p[1], 
-                    "status": p[2], 
-                    "data": p[3], 
-                    "cliente": p[4]
-                } 
-                for p in projetos_recentes
-            ]
-        except:
-            hoje = datetime.now()
-            projetos = [
-                {
-                    "id": 45, 
-                    "descricao": "Organização Cozinha e Despensa", 
-                    "status": "Em execução", 
-                    "data": hoje - timedelta(days=2), 
-                    "cliente": "Maria Silva"
-                },
-                {
-                    "id": 44, 
-                    "descricao": "Organização Closet Master", 
-                    "status": "Finalizada", 
-                    "data": hoje - timedelta(days=5), 
-                    "cliente": "João Santos"
-                },
-                {
-                    "id": 43, 
-                    "descricao": "Consultoria de Organização", 
-                    "status": "Aguardando aprovação", 
-                    "data": hoje - timedelta(days=7), 
-                    "cliente": "Lucas Mendes"
-                },
-                {
-                    "id": 42, 
-                    "descricao": "Organização Home Office", 
-                    "status": "Em elaboração", 
-                    "data": hoje - timedelta(days=8), 
-                    "cliente": "Ana Oliveira"
-                },
-            ]
+        # Obter projetos recentes do banco de dados
+        db = Database()
+        # Utilizando SQLAlchemy para obter projetos recentes
+        result = db.session.execute(
+            text("""
+            SELECT p.id, p.descricao, p.status, p.data_inicio, c.nome 
+            FROM propostas p
+            JOIN clientes c ON p.cliente_id = c.id
+            ORDER BY p.data_inicio DESC LIMIT 4
+            """)
+        )
+        projetos_recentes = [(row[0], row[1], row[2], row[3], row[4]) for row in result]
+        
+        projetos = [
+            {
+                "id": p[0], 
+                "descricao": p[1], 
+                "status": p[2], 
+                "data": p[3], 
+                "cliente": p[4]
+            } 
+            for p in projetos_recentes
+        ]
         
         # Exibir projetos recentes
         for projeto in projetos:
@@ -337,11 +287,30 @@ def show():
             else:
                 data_formatada = "Data não disponível"
                 
+            # Define colors based on status
+            status_colors = {
+                "Finalizada": ["#e8f5e9", "#2E7D32", "#4CAF50"],  # Background, Text, Border
+                "Em execução": ["#fff8e1", "#F57C00", "#FFC107"], 
+                "Aguardando aprovação": ["#e3f2fd", "#1565C0", "#2196F3"],
+                "Cancelada": ["#ffebee", "#C62828", "#EF5350"]
+            }
+            
+            # Use default colors if status doesn't match any known status
+            bg_color, text_color, border_color = status_colors.get(
+                projeto["status"], 
+                ["#f5f5f5", "#757575", "#bdbdbd"]
+            )
+            
             st.markdown(f"""
-            <div class="task-card">
-                <div class="task-date">{data_formatada}</div>
-                <div class="task-title">{projeto["descricao"]} - {projeto["cliente"]}</div>
-                <span class="task-status {status_class}">{projeto["status"]}</span>
+            <div style="background-color: white; border-radius: 10px; padding: 1.2rem; margin-bottom: 1rem; border-left: 4px solid {border_color}; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center;">
+                <div style="flex-grow: 1;">
+                    <div style="font-size: 0.8rem; color: #78909C; margin-bottom: 0.5rem;">{data_formatada}</div>
+                    <div style="font-weight: 500; color: #263238; font-size: 1rem;">{projeto["descricao"]}</div>
+                    <div style="font-size: 0.9rem; color: #546E7A; margin-top: 0.3rem;">{projeto["cliente"]}</div>
+                </div>
+                <div style="background-color: {bg_color}; padding: 0.4rem 0.8rem; border-radius: 20px; color: {text_color}; font-size: 0.75rem; font-weight: 500;">
+                    {projeto["status"]}
+                </div>
             </div>
             """, unsafe_allow_html=True)
         
@@ -370,104 +339,81 @@ def show():
         # Lembretes e atividades
         st.subheader("📌 Seus Lembretes")
         
-        # Tenta obter dados reais, caso contrário usa mock
-        try:
-            db = Database()
-            # Utilizando SQLAlchemy para obter propostas com prazos avançados
-            result = db.session.execute(
-                """
-                SELECT p.descricao, c.nome, p.data_inicio, 
-                       CURRENT_DATE - p.data_inicio AS dias_corridos
-                FROM propostas p
-                JOIN clientes c ON p.cliente_id = c.id
-                WHERE p.status = 'Em execução'
-                ORDER BY dias_corridos DESC
-                LIMIT 3
-                """
-            )
-            propostas_proximas = [(row[0], row[1], row[2], row[3]) for row in result]
-            
-            lembretes = []
-            for p in propostas_proximas:
-                dias = p[3]
-                if dias > 55:
-                    lembretes.append({
-                        "texto": f"Proposta de {p[1]} está há {dias} dias em execução",
-                        "prioridade": "alta"
-                    })
-        except:
-            lembretes = [
-                {
-                    "texto": "Proposta de Maria Silva está há 58 dias em execução",
-                    "prioridade": "alta"
-                },
-                {
-                    "texto": "Ligar para fornecedor de produtos",
-                    "prioridade": "média"
-                },
-                {
-                    "texto": "Enviar proposta para cliente José",
-                    "prioridade": "baixa"
-                }
-            ]
+        # Obter lembretes do banco de dados
+        db = Database()
+        # Utilizando SQLAlchemy para obter propostas com prazos avançados
+        result = db.session.execute(
+            text("""
+            SELECT p.descricao, c.nome, p.data_inicio, 
+                   CURRENT_DATE - p.data_inicio AS dias_corridos
+            FROM propostas p
+            JOIN clientes c ON p.cliente_id = c.id
+            WHERE p.status = 'Em execução'
+            ORDER BY dias_corridos DESC
+            LIMIT 3
+            """)
+        )
+        propostas_proximas = [(row[0], row[1], row[2], row[3]) for row in result]
         
-        # Adiciona lembretes gerais caso tenha poucos lembretes
-        if len(lembretes) < 3:
-            lembretes_gerais = [
-                {"texto": "Ligar para fornecedor de produtos", "prioridade": "média"},
-                {"texto": "Enviar proposta para cliente José", "prioridade": "baixa"},
-                {"texto": "Verificar estoque de materiais", "prioridade": "média"},
-                {"texto": "Agendar reunião com assistente", "prioridade": "baixa"}
-            ]
-            
-            while len(lembretes) < 3:
-                lembretes.append(lembretes_gerais.pop(0))
+        lembretes = []
+        for p in propostas_proximas:
+            dias = p[3]
+            if dias > 55:
+                lembretes.append({
+                    "texto": f"Proposta de {p[1]} está há {dias} dias em execução",
+                    "prioridade": "alta"
+                })
+            elif dias > 30:
+                lembretes.append({
+                    "texto": f"Proposta de {p[1]} está há {dias} dias em execução",
+                    "prioridade": "média"
+                })
+            else:
+                lembretes.append({
+                    "texto": f"Proposta de {p[1]} iniciada há {dias} dias",
+                    "prioridade": "baixa"
+                })
+        
+        # Não usar lembretes fictícios, apenas mostrar os reais
+        # Se não houver lembretes, apenas deixar a seção vazia
         
         # Exibir lembretes
         for lembrete in lembretes:
             cor = "#ff6b6b" if lembrete["prioridade"] == "alta" else ("#ffbb33" if lembrete["prioridade"] == "média" else "#4CAF50")
+            # Define icons and colors based on priority
+            priority_info = {
+                "alta": ["🔴", "#FFEBEE", "#C62828", "#EF5350"],  # icon, bg, text, border
+                "média": ["🟠", "#FFF3E0", "#E65100", "#FF9800"],
+                "baixa": ["🟢", "#E8F5E9", "#2E7D32", "#4CAF50"]
+            }
+            
+            icon, bg_color, text_color, border_color = priority_info.get(
+                lembrete["prioridade"], 
+                ["⚪", "#F5F5F5", "#757575", "#BDBDBD"]
+            )
+            
             st.markdown(f"""
-            <div style="padding: 1rem; background-color: white; border-radius: 8px; margin-bottom: 0.8rem; border-left: 3px solid {cor};">
-                {lembrete["texto"]}
+            <div style="background-color: {bg_color}; border-radius: 10px; padding: 1rem; margin-bottom: 0.8rem; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border: 1px solid {border_color};">
+                <div style="display: flex; align-items: center;">
+                    <div style="font-size: 1.2rem; margin-right: 0.5rem;">{icon}</div>
+                    <div style="color: {text_color}; font-weight: 500; flex-grow: 1;">{lembrete["texto"]}</div>
+                </div>
             </div>
             """, unsafe_allow_html=True)
             
-        # Dica do dia
-        st.subheader("💡 Dica do Dia")
+        # Seção de navegação rápida
+        st.subheader("🔍 Navegação")
         
-        dicas = [
-            "Divida projetos grandes em tarefas menores para aumentar a produtividade.",
-            "Mantenha uma agenda de follow-up com seus clientes.",
-            "Use etiquetas coloridas para facilitar a identificação de itens.",
-            "Invista em fotografias profissionais do antes/depois de seus trabalhos.",
-            "Estabeleça metas claras para cada mês do ano.",
-            "Solicite depoimentos de clientes satisfeitos para seu marketing.",
-            "Acompanhe as tendências de organização em feiras e eventos do setor.",
-            "Crie pacotes de serviços com diferentes níveis de preço."
-        ]
-        
-        dica = random.choice(dicas)
-        
-        st.markdown(f"""
+        st.markdown("""
         <div style="padding: 1rem; background-color: #E3F2FD; border-radius: 8px; margin-bottom: 1.5rem;">
-            {dica}
+            Acesse as principais funções através do menu lateral esquerdo.
         </div>
         """, unsafe_allow_html=True)
         
-        # Frase motivacional
-        frases = [
-            {"texto": "A organização é o primeiro passo para transformar sonhos em realidade.", "autor": "Personal Organizer"},
-            {"texto": "Espaços organizados criam mentes tranquilas e vidas produtivas.", "autor": "Marie Kondo"},
-            {"texto": "A simplicidade é a sofisticação final.", "autor": "Leonardo da Vinci"},
-            {"texto": "Organizar é dar às pessoas a sensação de segurança e controle em suas vidas.", "autor": "Personal Organizer"},
-            {"texto": "Para cada minuto gasto organizando, uma hora é ganha.", "autor": "Benjamin Franklin"}
-        ]
-        
-        frase = random.choice(frases)
-        
-        st.markdown(f"""
+        # Exibir apenas informações dinâmicas do sistema
+        st.markdown("""
         <div class="quote-card">
-            <div class="quote-text">"{frase["texto"]}"</div>
-            <div class="quote-author">— {frase["autor"]}</div>
+            <div class="quote-text">Planner Organizer - Sistema de Gerenciamento</div>
+            <div class="quote-author">— Versão 1.0</div>
         </div>
         """, unsafe_allow_html=True)

@@ -9,7 +9,8 @@ def show():
         st.error("Erro: Conexão com banco de dados não inicializada")
         return
 
-    st.title("📋 Cadastros")
+    # Título com estilo personalizado para ficar mais próximo do topo
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">👥 Cadastros</h1>', unsafe_allow_html=True)
 
     # Tabs para diferentes tipos de cadastro
     tab_cliente, tab_fornecedor, tab_parceiro, tab_assistente = st.tabs([

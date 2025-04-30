@@ -1,106 +1,100 @@
 import streamlit as st
-import os
-import json
-import requests
 
-def mostrar_planos():
+def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True, 
+                  com_destaque_plano_medio=True, stripe_ready=True, espacamento_reduzido=False):
     """
-    Exibe a seção de planos completa com layout atrativo e botões de ação
+    Exibe a seção de planos e preços completa para o sistema.
+    
+    Args:
+        com_titulo (bool): Se True, mostra o título e subtítulo da seção
+        com_prova_social (bool): Se True, mostra os depoimentos dos clientes
+        com_teste_gratis (bool): Se True, mostra a seção de teste grátis
+        com_destaque_plano_medio (bool): Se True, destaca visualmente o plano do meio (Anual)
+        stripe_ready (bool): Se True, adiciona funcionalidade dos botões para integração com Stripe
+        espacamento_reduzido (bool): Se True, reduz espaçamentos para layouts compactos
     """
-    # CSS personalizado para os planos
+    # CSS adicional para os cartões de planos
     st.markdown("""
     <style>
-    .planos-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        justify-content: center;
-        margin-top: 2rem;
-    }
-    
     .plano-card {
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        padding: 25px;
-        width: 300px;
-        text-align: center;
-        transition: transform 0.3s;
+        background-color: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.3s ease;
+        border: 1px solid #e0e0e0;
     }
     
     .plano-card:hover {
-        transform: translateY(-5px);
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15);
     }
     
     .plano-destaque {
-        border: 2px solid #4CAF50;
+        background: linear-gradient(to bottom, #f9fdff, #eaf7ff);
+        border: 2px solid #2d8cff !important;
         position: relative;
+        overflow: hidden;
+    }
+    
+    .plano-destaque:before {
+        content: "RECOMENDADO";
+        position: absolute;
+        top: 10px;
+        right: -30px;
+        background: #ff6b6b;
+        color: white;
+        padding: 5px 40px;
+        font-size: 10px;
+        font-weight: bold;
+        transform: rotate(45deg);
     }
     
     .plano-titulo {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 15px;
+        font-size: 24px;
+        font-weight: 700;
         color: #1E366F;
+        margin-bottom: 10px;
+        text-align: center;
     }
     
     .plano-preco {
-        font-size: 2.2rem;
-        font-weight: 700;
-        color: #1E88E5;
+        font-size: 36px;
+        font-weight: 800;
+        color: #2d8cff;
+        text-align: center;
         margin-bottom: 5px;
     }
     
     .plano-periodo {
-        color: #757575;
-        font-size: 0.9rem;
-        margin-bottom: 15px;
+        color: #666;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+    
+    .plano-destaque .plano-preco {
+        color: #1E366F;
     }
     
     .plano-economia {
-        background-color: #1E88E5;
-        color: white;
-        font-weight: 500;
-        padding: 5px 10px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        position: absolute;
-        top: -10px;
-        right: 10px;
-    }
-    
-    .plano-badge {
         background-color: #e6fff0;
         color: #00a651;
         padding: 5px 10px;
         border-radius: 20px;
-        font-size: 0.8rem;
+        font-size: 12px;
         font-weight: bold;
-        display: inline-block;
-        margin-bottom: 15px;
-    }
-    
-    .plano-botao {
-        background: linear-gradient(135deg, #1E88E5, #1E366F);
-        color: white;
-        border: none;
-        border-radius: 5px;
-        padding: 10px 20px;
-        font-weight: 600;
-        width: 100%;
-        cursor: pointer;
-        margin-top: 20px;
-        transition: all 0.3s;
-    }
-    
-    .plano-botao:hover {
-        background: linear-gradient(135deg, #0D47A1, #1E366F);
-        transform: translateY(-2px);
+        text-align: center;
+        margin: 0 auto 20px auto;
+        max-width: 80%;
     }
     
     .plano-beneficios {
-        text-align: left;
-        margin-top: 20px;
+        margin-bottom: 20px;
+        flex-grow: 1;
     }
     
     .plano-beneficios ul {
@@ -109,146 +103,290 @@ def mostrar_planos():
     }
     
     .plano-beneficios li {
-        margin-bottom: 10px;
-        display: flex;
-        align-items: flex-start;
+        margin-bottom: 12px;
+        position: relative;
+        padding-left: 28px;
     }
     
-    .plano-beneficios li::before {
+    .plano-beneficios li:before {
         content: "✓";
-        color: #4CAF50;
+        position: absolute;
+        left: 0;
+        color: #2d8cff;
         font-weight: bold;
-        margin-right: 8px;
+    }
+    
+    .plano-destaque .plano-beneficios li:before {
+        color: #00a651;
+    }
+    
+    .plano-button {
+        background: linear-gradient(135deg, #2d8cff, #1e66b5);
+        color: white;
+        border: none;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 16px;
+        cursor: pointer;
+        width: 100%;
+        text-align: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(45,140,255,0.2);
+    }
+    
+    .plano-button:hover {
+        background: linear-gradient(135deg, #1e66b5, #154c8c);
+        box-shadow: 0 6px 10px rgba(45,140,255,0.3);
+    }
+    
+    .plano-destaque .plano-button {
+        background: linear-gradient(135deg, #ff6b6b, #e83e3e);
+        box-shadow: 0 4px 6px rgba(255,107,107,0.2);
+    }
+    
+    .plano-destaque .plano-button:hover {
+        background: linear-gradient(135deg, #e83e3e, #cf2b2b);
+        box-shadow: 0 6px 10px rgba(255,107,107,0.3);
+    }
+    
+    .beneficios-titulo {
+        text-align: center;
+        font-weight: 700;
+        margin-bottom: 30px;
+        color: #1E366F;
+    }
+    
+    .beneficios-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .beneficio-item {
+        background-color: white;
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .beneficio-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }
+    
+    .beneficio-icone {
+        font-size: 32px;
+        margin-bottom: 10px;
+        color: #2d8cff;
+    }
+    
+    .beneficio-titulo {
+        font-weight: 600;
+        color: #1E366F;
+        margin-bottom: 5px;
+    }
+    
+    .beneficio-descricao {
+        color: #666;
+        font-size: 14px;
+    }
+    
+    /* Responsivo */
+    @media (max-width: 768px) {
+        .plano-card {
+            margin-bottom: 30px;
+        }
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Seção de planos
-    st.markdown("<h1 style='text-align: center; margin-bottom: 2rem;'>Planos e Preços</h1>", unsafe_allow_html=True)
+    # Seção de planos - Título
+    if com_titulo:
+        st.markdown("<h2 style='text-align: center; color: #1E366F; margin-top: 50px; margin-bottom: 10px;'>Escolha o Plano Ideal Para o Seu Negócio</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #666; font-size: 18px; margin-bottom: 40px;'>Invista no crescimento da sua organização com nossos planos acessíveis</p>", unsafe_allow_html=True)
     
-    # Layout de 3 colunas
-    col1, col2, col3 = st.columns(3)
+    # Benefícios gerais antes da tabela de planos
+    st.markdown("<div class='beneficios-titulo'>Todos os planos incluem:</div>", unsafe_allow_html=True)
     
-    # Checagem da integração com Stripe
-    stripe_ready = False
-    try:
-        # Verificar se a API do Stripe está disponível tentando fazer uma requisição simples
-        # para o endpoint de status da aplicação
-        stripe_api_url = os.environ.get("STRIPE_API_URL", "http://localhost:8000/api/health")
-        response = requests.get(stripe_api_url, timeout=2)
-        stripe_ready = response.status_code == 200
-    except:
-        # Se não conseguir conectar, assumimos que não está pronto
-        stripe_ready = False
-    
-    # Plano Mensal
-    with col1:
+    # Grid de benefícios visuais - com espaçamento normal ou reduzido
+    if espacamento_reduzido:
+        # Versão com espaçamento reduzido
         st.markdown("""
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-around; margin-bottom: 20px;">
+            <div style="text-align: center; padding: 10px; width: 23%;">
+                <div style="font-size: 24px; margin-bottom: 5px;">📊</div>
+                <div style="font-weight: 600; color: #1E366F; font-size: 14px;">Painel Financeiro</div>
+            </div>
+            <div style="text-align: center; padding: 10px; width: 23%;">
+                <div style="font-size: 24px; margin-bottom: 5px;">🧾</div>
+                <div style="font-weight: 600; color: #1E366F; font-size: 14px;">Propostas</div>
+            </div>
+            <div style="text-align: center; padding: 10px; width: 23%;">
+                <div style="font-size: 24px; margin-bottom: 5px;">💰</div>
+                <div style="font-weight: 600; color: #1E366F; font-size: 14px;">Precificação</div>
+            </div>
+            <div style="text-align: center; padding: 10px; width: 23%;">
+                <div style="font-size: 24px; margin-bottom: 5px;">📈</div>
+                <div style="font-weight: 600; color: #1E366F; font-size: 14px;">Relatórios</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        # Versão original com espaçamento normal
+        st.markdown("""
+        <div class='beneficios-grid'>
+            <div class='beneficio-item'>
+                <div class='beneficio-icone'>📊</div>
+                <div class='beneficio-titulo'>Painel Financeiro</div>
+                <div class='beneficio-descricao'>Controle completo das suas finanças</div>
+            </div>
+            <div class='beneficio-item'>
+                <div class='beneficio-icone'>🧾</div>
+                <div class='beneficio-titulo'>Propostas Profissionais</div>
+                <div class='beneficio-descricao'>Modelo personalizado com sua marca</div>
+            </div>
+            <div class='beneficio-item'>
+                <div class='beneficio-icone'>💰</div>
+                <div class='beneficio-titulo'>Precificação Inteligente</div>
+                <div class='beneficio-descricao'>Calcule valores com precisão</div>
+            </div>
+            <div class='beneficio-item'>
+                <div class='beneficio-icone'>📈</div>
+                <div class='beneficio-titulo'>Relatórios Avançados</div>
+                <div class='beneficio-descricao'>Dados para decisões estratégicas</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # TABELA DE PLANOS
+    col1, col2, col3 = st.columns([1, 1.2, 1])  # o do meio ganha mais espaço
+
+    with col1:
+        plano_mensal = f"""
         <div class="plano-card">
-            <div class="plano-titulo">📱 Plano Mensal</div>
+            <div class="plano-titulo">💡 Plano Mensal</div>
             <div class="plano-preco">R$9,70</div>
             <div class="plano-periodo">por mês</div>
-            <div class="plano-badge">✨ 7 DIAS DE TESTE GRÁTIS</div>
             <div class="plano-beneficios">
                 <ul>
                     <li>Acesso a todos os recursos</li>
                     <li>Suporte por e-mail</li>
-                    <li>Atualizações mensais</li>
-                    <li>Acesso pelo celular e computador</li>
+                    <li>Cancelamento a qualquer momento</li>
+                    <li>Ideal para testar o sistema</li>
                 </ul>
             </div>
+            <button class="plano-button">ASSINAR MENSAL</button>
         </div>
-        """, unsafe_allow_html=True)
+        """
+        st.markdown(plano_mensal, unsafe_allow_html=True)
         
+        # Botão funcional para Stripe (opcional)
         if stripe_ready:
-            st.button("ASSINAR PLANO MENSAL", key="btn_mensal", type="primary", use_container_width=True)
-    
-    # Plano Anual
+            btn_mensal = st.button("Assinar Mensal", key="btn_mensal", type="primary", use_container_width=True)
+            if btn_mensal:
+                st.success("Redirecionando para pagamento do plano mensal...")
+
     with col2:
-        st.markdown("""
-        <div class="plano-card plano-destaque">
-            <div class="plano-economia">ECONOMIZE 17%</div>
+        plano_class = "plano-card plano-destaque" if com_destaque_plano_medio else "plano-card"
+        plano_anual = f"""
+        <div class="{plano_class}">
             <div class="plano-titulo">🔥 Plano Anual</div>
             <div class="plano-preco">R$97,00</div>
-            <div class="plano-periodo">por ano (R$8,08/mês)</div>
-            <div class="plano-badge">✨ 7 DIAS DE TESTE GRÁTIS</div>
+            <div class="plano-periodo">por ano</div>
+            <div class="plano-economia">ECONOMIZE 17%</div>
             <div class="plano-beneficios">
                 <ul>
                     <li>Acesso a todos os recursos</li>
                     <li>Suporte prioritário</li>
-                    <li>Atualizações mensais</li>
-                    <li>Acesso pelo celular e computador</li>
-                    <li>Funcionalidades avançadas de relatórios</li>
+                    <li>Atualizações gratuitas</li>
+                    <li>Treinamento personalizado</li>
+                    <li>Melhor custo-benefício</li>
                 </ul>
             </div>
+            <button class="plano-button">ASSINAR ANUAL</button>
         </div>
-        """, unsafe_allow_html=True)
+        """
+        st.markdown(plano_anual, unsafe_allow_html=True)
         
+        # Botão funcional para Stripe (opcional)
         if stripe_ready:
-            st.button("ASSINAR PLANO ANUAL", key="btn_anual", type="primary", use_container_width=True)
-    
-    # Plano Vitalício
+            btn_anual = st.button("Assinar Anual", key="btn_anual", type="primary", use_container_width=True)
+            if btn_anual:
+                st.success("Redirecionando para pagamento do plano anual...")
+
     with col3:
-        st.markdown("""
+        plano_vitalicio = f"""
         <div class="plano-card">
-            <div class="plano-titulo">💎 Acesso Vitalício</div>
+            <div class="plano-titulo">🏆 Acesso Vitalício</div>
             <div class="plano-preco">R$247,00</div>
             <div class="plano-periodo">pagamento único</div>
-            <div class="plano-badge">🏆 MELHOR PARA PROFISSIONAIS</div>
             <div class="plano-beneficios">
                 <ul>
-                    <li>Acesso a todos os recursos</li>
-                    <li>Suporte prioritário vitalício</li>
-                    <li>Atualizações futuras incluídas</li>
-                    <li>Acesso pelo celular e computador</li>
-                    <li>Funcionalidades avançadas de relatórios</li>
-                    <li>Sem mensalidades ou cobranças recorrentes</li>
+                    <li>Acesso permanente ao sistema</li>
+                    <li>Suporte prioritário</li>
+                    <li>Sem mensalidades futuras</li>
+                    <li>Todas as atualizações inclusas</li>
+                    <li>Melhor para longo prazo</li>
                 </ul>
             </div>
+            <button class="plano-button">COMPRAR VITALÍCIO</button>
+        </div>
+        """
+        st.markdown(plano_vitalicio, unsafe_allow_html=True)
+        
+        # Botão funcional para Stripe (opcional)
+        if stripe_ready:
+            btn_vitalicio = st.button("Comprar Vitalício", key="btn_vitalicio", type="primary", use_container_width=True)
+            if btn_vitalicio:
+                st.success("Redirecionando para pagamento do plano vitalício...")
+    
+    # Prova social
+    if com_prova_social:
+        st.markdown("<h3 style='text-align: center; margin-top: 50px; color: #1E366F;'>O que nossos clientes dizem</h3>", unsafe_allow_html=True)
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, #f0f8ff, #e1efff); padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                <p style="font-style: italic; color: #1E366F; font-size: 16px;">
+                    "Com o PlannerOrganizer fechei 3 contratos em uma semana! A interface é intuitiva e os relatórios impressionam meus clientes."
+                </p>
+                <p style="text-align: right; font-weight: 600; color: #2d8cff;">— Ana L., Personal Organizer</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, #e1efff, #d8eaff); padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                <p style="font-style: italic; color: #1E366F; font-size: 16px;">
+                    "Valeu cada centavo, nunca mais voltei pro Excel! Meu negócio cresceu 35% desde que comecei a usar o sistema."
+                </p>
+                <p style="text-align: right; font-weight: 600; color: #2d8cff;">— Juliana R., Home Organizer</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # Teste grátis
+    if com_teste_gratis:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #1E366F, #2d8cff); padding: 30px; border-radius: 15px; text-align: center; margin-top: 50px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);">
+            <h2 style="color: white; margin-bottom: 15px;">Não precisa decidir agora</h2>
+            <p style="color: white; font-size: 18px; margin-bottom: 25px;">
+                Experimente o Planner Organizer gratuitamente por 7 dias.<br>
+                Sem compromisso. Cancele quando quiser.
+            </p>
+            <button style="background-color: white; color: #1E366F; border: none; padding: 15px 40px; border-radius: 30px; font-weight: bold; font-size: 18px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                INICIAR PERÍODO GRATUITO
+            </button>
         </div>
         """, unsafe_allow_html=True)
         
+        # Botão funcional para Stripe (opcional)
         if stripe_ready:
-            st.button("ADQUIRIR ACESSO VITALÍCIO", key="btn_vitalicio", type="primary", use_container_width=True)
-    
-    # Seção de perguntas frequentes
-    st.markdown("<h2 style='text-align: center; margin-top: 3rem;'>Perguntas Frequentes</h2>", unsafe_allow_html=True)
-    
-    # Perguntas e respostas usando expander
-    with st.expander("💬 Como funciona o período de teste?"):
-        st.write("""
-        Você tem 7 dias para testar todas as funcionalidades do sistema sem nenhum compromisso. 
-        Se não gostar, é só cancelar antes do final do período de teste e não será cobrado.
-        """)
-    
-    with st.expander("💬 Posso mudar de plano depois?"):
-        st.write("""
-        Sim! Você pode fazer upgrade ou downgrade do seu plano a qualquer momento.
-        Se fizer upgrade para o plano vitalício, suas mensalidades serão automaticamente canceladas.
-        """)
-    
-    with st.expander("💬 Como funciona o pagamento?"):
-        st.write("""
-        Utilizamos o Stripe, uma das plataformas de pagamento mais seguras do mundo. 
-        Aceitamos todos os cartões de crédito principais. Seus dados financeiros são criptografados
-        e nunca temos acesso direto às informações do seu cartão.
-        """)
-    
-    with st.expander("💬 O que acontece se eu cancelar a assinatura?"):
-        st.write("""
-        Você mantém acesso ao sistema até o final do período pago. Após isso, seu acesso será limitado
-        até que renove sua assinatura. Seus dados permanecem seguros em nosso sistema por 30 dias
-        após o término da assinatura.
-        """)
-    
-    # Seção de garantias
-    st.markdown("""
-    <div style="background-color: #e6fff0; border-radius: 10px; padding: 20px; margin-top: 2rem; text-align: center;">
-        <h3 style="color: #00a651; margin-bottom: 10px;">🔒 Garantia de satisfação</h3>
-        <p>Se você não estiver satisfeito com o sistema nos primeiros 30 dias após a compra, devolvemos 100% do seu dinheiro.</p>
-        <p style="margin-top: 10px; font-size: 0.9rem;">Seus dados estão seguros e protegidos com criptografia de ponta a ponta.</p>
-    </div>
-    """, unsafe_allow_html=True)
+            st.button("INICIAR PERÍODO GRATUITO", key="btn_teste", type="primary", use_container_width=True)
 
 def mostrar_planos_simples():
     """
@@ -270,28 +408,47 @@ def mostrar_planos_simples():
     col1, col2, col3 = st.columns([1, 1.2, 1])  # o do meio ganha mais espaço
 
     with col1:
-        st.markdown("### 💳 Plano Mensal")
+        st.markdown("### 💡 Plano Mensal")
         st.markdown("**R$ 9,70 / mês**")
-        st.markdown("✨ *7 dias de teste grátis*")
         st.markdown("- Todos os recursos")
-        st.markdown("- Suporte por e-mail")
-        st.markdown("- Atualizações mensais")
-        st.button("COMEÇAR AGORA", key="simples_mensal", use_container_width=True)
+        st.markdown("- Cancelamento fácil")
+        st.markdown("- Ideal para começar")
+        st.button("Assinar Mensal", key="btn_mensal_simples", type="primary")  # aqui entraria o link do Stripe
 
     with col2:
-        st.markdown("### 🔥 Plano Anual")
-        st.markdown("**R$ 97,00 / ano** (economize 17%)")
-        st.markdown("✨ *7 dias de teste grátis*")
-        st.markdown("- Todos os recursos")
-        st.markdown("- Suporte prioritário")
-        st.markdown("- Funcionalidades avançadas")
-        st.button("MELHOR OPÇÃO", key="simples_anual", type="primary", use_container_width=True)
+        st.markdown("""
+            <div style='border: 2px solid #2d8cff; border-radius: 12px; padding: 10px; background-color: #e6f0ff;'>
+            <h3 style='text-align:center;'>🔥 Plano Anual</h3>
+            <p style='text-align:center; font-size: 20px;'><strong>R$ 97 / ano</strong></p>
+            <p style='text-align:center; color:green;'>💸 Economize 17% comparado ao mensal!</p>
+            <ul>
+                <li>Acesso total por 12 meses</li>
+                <li>Atualizações incluídas</li>
+                <li>Suporte prioritário</li>
+            </ul>
+            <div style='text-align:center; margin-top:10px;'>
+                <button style='background-color: #2d8cff; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor:pointer;'>Assinar Anual</button>
+            </div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        st.button("Assinar Anual", key="btn_anual_simples", type="primary")
 
     with col3:
-        st.markdown("### 💎 Vitalício")
-        st.markdown("**R$ 247,00** (único)")
-        st.markdown("🏆 *Sem mensalidades*")
-        st.markdown("- Todos os recursos")
-        st.markdown("- Suporte prioritário vitalício")
-        st.markdown("- Atualizações futuras incluídas")
-        st.button("COMPRAR", key="simples_vitalicio", use_container_width=True)
+        st.markdown("### 🏆 Acesso Vitalício")
+        st.markdown("**R$ 247,00 uma única vez**")
+        st.markdown("- Acesso permanente ao sistema")
+        st.markdown("- Sem mensalidade nunca mais")
+        st.markdown("- Ideal para quem já decidiu")
+        st.button("Comprar Vitalício", key="btn_vitalicio_simples", type="primary")
+
+    # Prova social
+    st.markdown("---")
+    st.markdown("### 💬 Quem já usa, recomenda:")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.success("\"Com o PlannerOrganizer fechei 3 contratos em uma semana!\" – Ana L.")
+    
+    with col2:
+        st.info("\"Valeu cada centavo, nunca mais voltei pro Excel!\" – Juliana R.")

@@ -1,4 +1,4 @@
-modules = ["python-3.11", "nodejs-20"]
+modules = ["python-3.11"]
 
 [nix]
 channel = "stable-24_05"
@@ -6,7 +6,7 @@ packages = ["freetype", "gettext", "glibcLocales", "unzip"]
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["sh", "-c", "streamlit run app.py --server.port 5001 --server.address 0.0.0.0"]
+run = ["sh", "-c", "streamlit run app.py --server.port 5000 --server.address 0.0.0.0"]
 build = ["sh", "-c", "pip install -r requirements.txt"]
 
 [workflows]
@@ -55,10 +55,6 @@ args = "Ajustar Data Proposta"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Start application"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Limpar Propostas"
 
 [[workflows.workflow.tasks]]
@@ -83,6 +79,10 @@ args = "Login"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
+args = "Login Simples"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
 args = "Planos Landing"
 
 [[workflows.workflow.tasks]]
@@ -95,31 +95,55 @@ args = "Planos Minimal"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Stripe API"
+args = "Verificar Isolamento"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Stripe Simple API"
+args = "Verificação de Auth"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Stripe Direct API"
+args = "Criar ZIP para Deploy"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Planos Stripe Direto"
+args = "Criar ZIP dos arquivos alterados"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Login Simples"
+args = "Download Alterações"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Login Portal"
+args = "Download Fix Render DB"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Static Files Server"
+args = "Finalizar Proposta Direto"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Corrigir Finalizacao"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Download Fix Proposta"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Download Fix Render Console"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Download Fix Direto"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Download Solucao Final"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
 
 [[workflows.workflow]]
 name = "Teste Importação"
@@ -257,21 +281,6 @@ args = "streamlit run ajustar_data_proposta.py --server.port 8520 --server.addre
 waitForPort = 8520
 
 [[workflows.workflow]]
-name = "Start application"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run app.py --server.port 5001 --server.address 0.0.0.0"
-waitForPort = 5001
-
-[[workflows.workflow]]
 name = "Limpar Propostas"
 author = "agent"
 
@@ -366,8 +375,23 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run login.py --server.port 5000 --server.address 0.0.0.0"
-waitForPort = 5000
+args = "streamlit run login.py --server.port 5001 --server.address 0.0.0.0"
+waitForPort = 5001
+
+[[workflows.workflow]]
+name = "Login Simples"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0.0 --server.headless true"
+waitForPort = 5001
 
 [[workflows.workflow]]
 name = "Planos Landing"
@@ -415,109 +439,120 @@ args = "streamlit run planos_minimal.py --server.port 8801 --server.address 0.0.
 waitForPort = 8801
 
 [[workflows.workflow]]
-name = "Stripe API"
+name = "Verificar Isolamento"
 author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd api && python -m uvicorn stripe_integration:app --reload --host 0.0.0.0 --port 8000"
+args = "streamlit run verificar_isolamento_dados.py --server.port 8550 --server.address 0.0.0.0"
+waitForPort = 8550
 
 [[workflows.workflow]]
-name = "Stripe Simple API"
+name = "Verificação de Auth"
 author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd api && python -m uvicorn stripe_simple:app --reload --host 0.0.0.0 --port 8001"
-waitForPort = 8001
+args = "streamlit run verificar_autenticacao.py --server.port 5002 --server.address 0.0.0.0"
+waitForPort = 5002
 
 [[workflows.workflow]]
-name = "Stripe Direct API"
+name = "Criar ZIP para Deploy"
 author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd api && python -m uvicorn stripe_direct:app --reload --host 0.0.0.0 --port 8002"
-waitForPort = 8002
+args = "streamlit run create_deployment_zip.py --server.port 8600 --server.address 0.0.0.0"
+waitForPort = 8600
 
 [[workflows.workflow]]
-name = "Planos Stripe Direto"
+name = "Criar ZIP dos arquivos alterados"
 author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run planos_stripe_direto.py --server.port 8008 --server.address 0.0.0.0"
-waitForPort = 8008
+args = "python3 -c \"import os, zipfile; zip_file = zipfile.ZipFile('alteracoes.zip', 'w'); zip_file.write('utils/database.py'); zip_file.write('pages/registrar.py'); zip_file.write('update_schema.sql'); zip_file.write('populate_usuario_id.sql'); zip_file.write('INSTRUCOES_RENDER_DATABASE.md'); zip_file.close(); print('Arquivos zipados com sucesso!')\""
 
 [[workflows.workflow]]
-name = "Login Simples"
+name = "Download Alterações"
 author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run login.py --server.port 5004 --server.address 0.0.0.0"
-waitForPort = 5004
+args = "streamlit run download_alteracoes.py --server.port 8999 --server.address 0.0.0.0"
+waitForPort = 8999
 
 [[workflows.workflow]]
-name = "Login Portal"
+name = "Download Fix Render DB"
 author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0.0"
+args = "streamlit run download_fix_render_db.py --server.port 7500 --server.address 0.0.0.0 --server.headless true"
+waitForPort = 7500
+
+[[workflows.workflow]]
+name = "Finalizar Proposta Direto"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run finalizar_proposta_direto.py --server.port 8800 --server.address 0.0.0.0"
+waitForPort = 8800
+
+[[workflows.workflow]]
+name = "Corrigir Finalizacao"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run corrigir_finalizacao.py --server.port 5001 --server.address 0.0.0.0"
 waitForPort = 5001
 
 [[workflows.workflow]]
-name = "Static Files Server"
+name = "Download Fix Proposta"
 author = "agent"
-mode = "sequential"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python serve_static.py"
-waitForPort = 8080
+args = "streamlit run download_fix_proposta.py --server.port 8511 --server.address 0.0.0.0"
+waitForPort = 8511
+
+[[workflows.workflow]]
+name = "Download Fix Render Console"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run download_fix_render_console.py --server.port 5003 --server.address 0.0.0.0"
+waitForPort = 5003
+
+[[workflows.workflow]]
+name = "Download Fix Direto"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run download_fix_direct.py --server.port 8700 --server.address 0.0.0.0 --server.headless true"
+waitForPort = 8700
+
+[[workflows.workflow]]
+name = "Download Solucao Final"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run download_solucao_final.py --server.port 5002 --server.address 0.0.0.0"
+waitForPort = 5002
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run app.py --server.port 5000 --server.address 0.0.0.0"
+waitForPort = 5000
 
 [[ports]]
 localPort = 443

@@ -1,7 +1,8 @@
 import os
 import numpy as np
+import streamlit as st
 from datetime import datetime, timedelta
-from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, func, Index, text
+from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, func, Index, text, select, DateTime, inspect
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 import pandas as pd
@@ -14,18 +15,24 @@ if DATABASE_URL is None:
 
 # Ensure proper SSL configuration for PostgreSQL
 try:
+    # Importar NullPool para evitar caching de conexões
+    from sqlalchemy.pool import NullPool
+    
+    # Criar engine sem pool para evitar caching de conexões
     engine = create_engine(
         DATABASE_URL,
         connect_args={
             'sslmode': 'require',
             'connect_timeout': 10
         } if 'postgresql' in DATABASE_URL else {},
-        pool_pre_ping=True,
-        pool_recycle=3600,
-        pool_timeout=30,
-        max_overflow=10,
-        pool_size=5
+        # Usar NullPool para desativar caching de conexões
+        poolclass=NullPool,
+        # Desativar mecanismos de caching para garantir acesso às colunas mais recentes
+        isolation_level='AUTOCOMMIT'
     )
+    
+    # Forçar informar que estamos atualizando o esquema de metadados
+    print("Iniciando motor de banco com caching desativado para resolver problemas de esquema")
 except Exception as e:
     print(f"Error creating database engine: {str(e)}")
     raise
@@ -36,13 +43,59 @@ Base = declarative_base()
 session_factory = sessionmaker(bind=engine, expire_on_commit=False)
 Session = scoped_session(session_factory)
 
+# Função auxiliar para obter o ID do usuário da sessão do Streamlit
+def get_usuario_id_from_session():
+    """
+    Obtém o ID do usuário atualmente autenticado no Streamlit
+    
+    Returns:
+        str: ID do usuário autenticado ou None se não há usuário na sessão
+    """
+    if 'user' in st.session_state and st.session_state.user:
+        # Usar o localId do Firebase como usuario_id
+        if 'localId' in st.session_state.user:
+            return st.session_state.user['localId']
+        
+        # Verificar alternativas
+        if 'usuario_id' in st.session_state.user:
+            return st.session_state.user['usuario_id']
+            
+    return None
+
+class Perfil(Base):
+    """
+    Tabela de perfis de usuários para sistema multi-tenant
+    Cada usuário deve ter seu registro aqui antes de poder usar o sistema
+    """
+    __tablename__ = 'perfis'
+    id = Column(Integer, primary_key=True)
+    usuario_id = Column(String, unique=True, nullable=False)  # Corresponde ao Firebase UID
+    email = Column(String, unique=True, nullable=False)
+    nome = Column(String, nullable=False)
+    telefone = Column(String)
+    empresa = Column(String)
+    instagram = Column(String)
+    website = Column(String)
+    cor_principal = Column(String)
+    cor_secundaria = Column(String)
+    role = Column(String, default='user')
+    plano = Column(String, default='gratuito')
+    data_cadastro = Column(Date, default=datetime.now().date())
+    ultimo_login = Column(DateTime)
+    ativo = Column(Boolean, default=True)
+
 class Usuario(Base):
+    """
+    Tabela legada de usuários
+    Nota: esta tabela será mantida por retrocompatibilidade, 
+    mas novos usuários devem usar a tabela 'perfis'
+    """
     __tablename__ = 'usuarios'
     id = Column(Integer, primary_key=True)
     email = Column(String, unique=True, nullable=False)
     senha_hash = Column(String, nullable=False)
     nome = Column(String, nullable=False)
-    telefone = Column(String)  # Novo campo
+    telefone = Column(String)
     empresa = Column(String)
     tipo = Column(String, default='usuario')
     ativo = Column(Boolean, default=True)
@@ -60,6 +113,7 @@ class Cliente(Base):
     __table_args__ = (
         Index('idx_cliente_nome', 'nome'),
         Index('idx_cliente_email', 'email'),
+        Index('idx_cliente_usuario_id', 'usuario_id'),  # Índice para otimizar filtro por usuário
     )
     nome = Column(String, nullable=False)
     telefone = Column(String)
@@ -73,6 +127,7 @@ class Cliente(Base):
     origem_cliente = Column(String)
     data_cadastro = Column(Date, default=datetime.now().date())
     observacoes = Column(String)  # Adicionado campo observacoes
+    usuario_id = Column(String, nullable=True)  # ID do usuário proprietário do registro (multi-tenant)
 
     propostas = relationship("Proposta", back_populates="cliente")
 
@@ -147,6 +202,7 @@ class Proposta(Base):
     previsao_dias = Column(Integer)  # Dias previstos para execução
     data_inicio_execucao = Column(Date)  # Data de início efetivo da execução
     status_execucao = Column(String, default='Não iniciada')  # Status da execução: 'Não iniciada', 'Em execução', 'Concluída'
+    usuario_id = Column(String, nullable=True)  # ID do usuário proprietário do registro (multi-tenant)
 
     cliente = relationship("Cliente", back_populates="propostas")
     produtos = relationship("ProdutoOrganizador", back_populates="proposta", cascade="all, delete-orphan")
@@ -155,6 +211,7 @@ class Proposta(Base):
 
     __table_args__ = (
         Index('idx_proposta_numero', 'numero', unique=True),
+        Index('idx_proposta_usuario_id', 'usuario_id'),  # Índice para otimizar filtro por usuário
     )
 
 class ProdutoOrganizador(Base):
@@ -211,9 +268,16 @@ class Transacao(Base):
     data_recebimento = Column(Date, nullable=True)
     proposta_id = Column(Integer, ForeignKey('propostas.id'), nullable=True)  # Referência direta à proposta
     classificacao = Column(String)  # 'receita', 'custo_direto', 'despesa_operacional'
+    usuario_id = Column(String, nullable=True)  # ID do usuário proprietário do registro (multi-tenant)
     
     # Relacionamento com proposta
     proposta = relationship("Proposta")
+    
+    __table_args__ = (
+        Index('idx_financeiro_usuario_id', 'usuario_id'),  # Índice para otimizar filtro por usuário
+        Index('idx_financeiro_data', 'data'),  # Índice para otimizar consultas por data
+        Index('idx_financeiro_tipo', 'tipo'),  # Índice para otimizar consultas por tipo de transação
+    )
     
 # Funções fábrica para criar objetos Transacao como receitas ou despesas
 def Receita(**kwargs):
@@ -233,7 +297,7 @@ def Receita(**kwargs):
     
     # Copiar campos que existem diretamente em Transacao
     for field in ['tipo_receita', 'categoria', 'descricao', 'valor', 'status', 
-                  'proposta_id', 'data_recebimento']:
+                  'proposta_id', 'data_recebimento', 'usuario_id']:
         if field in kwargs:
             transacao_kwargs[field] = kwargs[field]
     
@@ -260,7 +324,7 @@ def Despesa(**kwargs):
     
     # Copiar campos que existem diretamente em Transacao
     for field in ['categoria', 'descricao', 'valor', 'status', 
-                  'proposta_id', 'data_recebimento']:
+                  'proposta_id', 'data_recebimento', 'usuario_id']:
         if field in kwargs:
             transacao_kwargs[field] = kwargs[field]
     
@@ -280,6 +344,7 @@ class AcrescimoProposta(Base):
     valor = Column(Float, nullable=False)
     status_pagamento = Column(String, default='Pendente')
     data_cadastro = Column(Date, default=datetime.now().date())
+    percentual_comissao = Column(Float, nullable=True)  # Adicionado campo para percentual de comissão
 
     proposta = relationship("Proposta", back_populates="acrescimos")
 
@@ -293,9 +358,14 @@ class Produto(Base):
     categoria = Column(String)
     estoque = Column(Integer, default=0)
     data_cadastro = Column(Date, default=datetime.now().date())
+    usuario_id = Column(String, nullable=True)  # ID do usuário proprietário do registro (multi-tenant)
     
     # Relacionamento com vendas
     vendas_itens = relationship("ItemVenda", back_populates="produto", cascade="all, delete-orphan")
+    
+    __table_args__ = (
+        Index('idx_produto_usuario_id', 'usuario_id'),  # Índice para otimizar filtro por usuário
+    )
 
 class Venda(Base):
     __tablename__ = 'vendas'
@@ -307,11 +377,16 @@ class Venda(Base):
     status = Column(String, default='Concluída')  # Concluída, Cancelada, Pendente
     forma_pagamento = Column(String)
     observacoes = Column(String)
+    usuario_id = Column(String, nullable=True)  # ID do usuário proprietário do registro (multi-tenant)
     
     # Relacionamentos
     cliente = relationship("Cliente")
     proposta = relationship("Proposta", back_populates="vendas")  # Relacionamento com proposta
     itens = relationship("ItemVenda", back_populates="venda", cascade="all, delete-orphan")
+    
+    __table_args__ = (
+        Index('idx_venda_usuario_id', 'usuario_id'),  # Índice para otimizar filtro por usuário
+    )
 
 class ItemVenda(Base):
     __tablename__ = 'itens_venda'
@@ -328,13 +403,226 @@ class ItemVenda(Base):
     produto = relationship("Produto", back_populates="vendas_itens")
 
 class Database:
-    def __init__(self):
+    def refresh_schema_metadata(self):
+        """
+        Força a atualização dos metadados do esquema do banco de dados.
+        Isso é útil quando o cache do SQLAlchemy não reflete mudanças recentes no esquema.
+        """
         try:
+            # Limpar o cache de metadados
+            Base.metadata.clear()
+            
+            # Forçar uma nova leitura do esquema
+            Base.metadata.reflect(bind=engine)
+            
+            # Exibir informações de debug
+            insp = inspect(engine)
+            tables = insp.get_table_names()
+            print(f"Schema atualizado. Tabelas disponíveis: {tables}")
+            
+            return True
+        except Exception as e:
+            print(f"Erro ao atualizar schema: {str(e)}")
+            return False
+
+    def __init__(self, usuario_id=None):
+        """
+        Inicializa a conexão com o banco de dados e configura o contexto de usuário
+        
+        Args:
+            usuario_id (str, optional): ID do usuário para filtrar os dados.
+                                       Se None, tenta obter o ID do usuário da sessão do Streamlit.
+        """
+        # Forçar atualização de metadados para resolver problemas com colunas
+        self.refresh_schema_metadata()
+        
+        try:
+            # Criar tabelas se não existirem
             Base.metadata.create_all(engine)
             self.session = Session()
+            
+            # Configurar o contexto de usuário para filtrar os dados
+            if usuario_id:
+                self.usuario_id = usuario_id
+            else:
+                # Tenta obter o ID do usuário da sessão do Streamlit
+                self.usuario_id = get_usuario_id_from_session()
+                
+            if self.usuario_id:
+                print(f"Banco de dados inicializado para o usuário: {self.usuario_id}")
+            else:
+                print("Banco de dados inicializado sem contexto de usuário")
+                
+            # Verificar e criar perfil do usuário se necessário
+            if self.usuario_id and 'user' in st.session_state:
+                self._ensure_user_profile()
+                
         except Exception as e:
             print(f"Erro ao inicializar banco de dados: {str(e)}")
             raise e
+            
+    def _ensure_user_profile(self):
+        """
+        Garante que o perfil do usuário existe no banco de dados
+        Cria um novo perfil se não existir
+        """
+        try:
+            # Verificar se o perfil já existe
+            perfil = self.session.query(Perfil).filter_by(usuario_id=self.usuario_id).first()
+            
+            if not perfil and 'user' in st.session_state:
+                # Criar novo perfil com os dados disponíveis na sessão
+                user_data = st.session_state.user
+                
+                nome = user_data.get('nome') or user_data.get('name') or 'Usuário'
+                email = user_data.get('email') or 'sem-email'
+                empresa = user_data.get('empresa') or 'Planner Organizer'
+                telefone = user_data.get('telefone') or ''
+                
+                novo_perfil = Perfil(
+                    usuario_id=self.usuario_id,
+                    email=email,
+                    nome=nome,
+                    telefone=telefone,
+                    empresa=empresa,
+                    ultimo_login=datetime.now()
+                )
+                
+                self.session.add(novo_perfil)
+                self.session.commit()
+                print(f"Perfil criado para usuário: {self.usuario_id}")
+        except Exception as e:
+            print(f"Erro ao verificar/criar perfil: {str(e)}")
+            self.session.rollback()
+            
+    def create_perfil(self, usuario_id, email, nome, telefone=None, empresa=None, 
+                     instagram=None, website=None, cor_principal=None, cor_secundaria=None, 
+                     role="user", plano="gratuito"):
+        """
+        Cria um novo perfil de usuário no banco de dados PostgreSQL
+        
+        Args:
+            usuario_id (str): ID do usuário no Firebase Auth (UID)
+            email (str): Email do usuário
+            nome (str): Nome do usuário
+            telefone (str, optional): Telefone do usuário
+            empresa (str, optional): Empresa do usuário
+            instagram (str, optional): Instagram do usuário
+            website (str, optional): Website do usuário
+            cor_principal (str, optional): Cor principal do tema
+            cor_secundaria (str, optional): Cor secundária do tema
+            role (str, optional): Papel do usuário (padrão: "user")
+            plano (str, optional): Plano do usuário (padrão: "gratuito")
+            
+        Returns:
+            bool: True se o perfil foi criado com sucesso, False em caso de erro
+        """
+        def query():
+            try:
+                # Verificar se já existe um perfil com este usuario_id
+                perfil_existente = self.session.query(Perfil).filter_by(usuario_id=usuario_id).first()
+                if perfil_existente:
+                    print(f"Perfil já existe para o usuário ID: {usuario_id}")
+                    
+                    # Atualizar último login
+                    perfil_existente.ultimo_login = datetime.now()
+                    self.session.commit()
+                    
+                    return True
+                
+                # Verificar se já existe um perfil com este email
+                perfil_email = self.session.query(Perfil).filter_by(email=email).first()
+                if perfil_email:
+                    print(f"Já existe um perfil com o email: {email}")
+                    
+                    # Se o perfil existente tem um usuario_id diferente, podemos ter um problema
+                    # de duplicação ou de migração de conta
+                    if perfil_email.usuario_id != usuario_id:
+                        print(f"AVISO: Email já cadastrado com outro ID de usuário.")
+                        print(f"  - Atual: {usuario_id}")
+                        print(f"  - Existente: {perfil_email.usuario_id}")
+                    
+                    # Atualizar último login de qualquer forma
+                    perfil_email.ultimo_login = datetime.now()
+                    self.session.commit()
+                    
+                    return True
+                
+                # Criar novo perfil
+                novo_perfil = Perfil(
+                    usuario_id=usuario_id,
+                    email=email,
+                    nome=nome,
+                    telefone=telefone or "",
+                    empresa=empresa or "Planner Organizer",
+                    instagram=instagram,
+                    website=website,
+                    cor_principal=cor_principal,
+                    cor_secundaria=cor_secundaria,
+                    role=role,
+                    plano=plano,
+                    data_cadastro=datetime.now().date(),
+                    ultimo_login=datetime.now(),
+                    ativo=True
+                )
+                
+                self.session.add(novo_perfil)
+                self.session.commit()
+                
+                print(f"Perfil criado com sucesso para: {email} (ID: {usuario_id})")
+                return True
+                
+            except Exception as e:
+                print(f"Erro ao criar perfil: {str(e)}")
+                self.session.rollback()
+                return False
+                
+        return self._safe_query(query)
+        
+    def get_perfil_by_email(self, email):
+        """
+        Busca um perfil de usuário pelo email
+        
+        Args:
+            email (str): Email do usuário
+            
+        Returns:
+            dict: Dicionário com os dados do perfil ou None se não encontrado
+        """
+        def query():
+            try:
+                perfil = self.session.query(Perfil).filter_by(email=email).first()
+                
+                if not perfil:
+                    print(f"Perfil não encontrado para o email: {email}")
+                    return None
+                
+                # Converter objeto para dicionário para facilitar uso
+                perfil_dict = {
+                    'id': perfil.id,
+                    'usuario_id': perfil.usuario_id,
+                    'email': perfil.email,
+                    'nome': perfil.nome,
+                    'telefone': perfil.telefone,
+                    'empresa': perfil.empresa,
+                    'instagram': perfil.instagram,
+                    'website': perfil.website,
+                    'cor_principal': perfil.cor_principal,
+                    'cor_secundaria': perfil.cor_secundaria,
+                    'role': perfil.role,
+                    'plano': perfil.plano,
+                    'data_cadastro': perfil.data_cadastro,
+                    'ultimo_login': perfil.ultimo_login,
+                    'ativo': perfil.ativo
+                }
+                
+                return perfil_dict
+                
+            except Exception as e:
+                print(f"Erro ao buscar perfil por email: {str(e)}")
+                return None
+                
+        return self._safe_query(query)
 
     def _safe_query(self, query_func):
         """
@@ -458,8 +746,18 @@ class Database:
             pass  # Manter sessão ativa para futuras transações
             
     def get_clientes(self):
+        """
+        Retorna todos os clientes do usuário atual
+        """
         def query():
-            clientes = self.session.query(Cliente).all()
+            # Aplicar filtro por usuário se disponível
+            query = self.session.query(Cliente)
+            
+            if self.usuario_id:
+                query = query.filter(Cliente.usuario_id == self.usuario_id)
+                
+            clientes = query.all()
+            
             return pd.DataFrame([{
                 'id': c.id,
                 'nome': c.nome,
@@ -473,7 +771,8 @@ class Database:
                 'data_aniversario': c.data_aniversario,
                 'origem_cliente': c.origem_cliente,
                 'data_cadastro': c.data_cadastro,
-                'observacoes': c.observacoes # Added observations to get_clientes
+                'observacoes': c.observacoes,
+                'usuario_id': c.usuario_id
             } for c in clientes])
         return self._safe_query(query)
         
@@ -496,8 +795,15 @@ class Database:
                     print("ERRO: ID do cliente é None")
                     return pd.DataFrame()
                 
-                # Buscar cliente pelo ID
-                cliente = self.session.query(Cliente).filter_by(id=cliente_id_int).first()
+                # Configurar a consulta básica
+                query = self.session.query(Cliente).filter_by(id=cliente_id_int)
+                
+                # Adicionar filtro por usuário se disponível
+                if self.usuario_id:
+                    query = query.filter(Cliente.usuario_id == self.usuario_id)
+                
+                # Buscar cliente pelo ID e filtros adicionais
+                cliente = query.first()
                 
                 if not cliente:
                     print(f"AVISO: Cliente ID={cliente_id_int} não encontrado")
@@ -517,7 +823,8 @@ class Database:
                     'data_aniversario': cliente.data_aniversario,
                     'origem_cliente': cliente.origem_cliente,
                     'data_cadastro': cliente.data_cadastro,
-                    'observacoes': cliente.observacoes
+                    'observacoes': cliente.observacoes,
+                    'usuario_id': cliente.usuario_id
                 }])
             except Exception as e:
                 print(f"ERRO ao buscar cliente por ID: {str(e)}")
@@ -577,6 +884,25 @@ class Database:
 
     def add_cliente(self, nome, email=None, telefone=None, estado=None, cidade=None, bairro=None, 
                    endereco=None, cpf=None, data_aniversario=None, origem_cliente=None, observacoes=None):
+        """
+        Adiciona um cliente ao banco de dados
+        
+        Args:
+            nome (str): Nome do cliente
+            email (str, optional): Email do cliente
+            telefone (str, optional): Telefone do cliente
+            estado (str, optional): Estado (UF)
+            cidade (str, optional): Cidade
+            bairro (str, optional): Bairro
+            endereco (str, optional): Endereço
+            cpf (str, optional): CPF
+            data_aniversario (str, optional): Data de aniversário
+            origem_cliente (str, optional): Origem do cliente
+            observacoes (str, optional): Observações
+            
+        Returns:
+            int: ID do cliente adicionado
+        """
         def query():
             # Obter o maior ID atual
             max_id = self.session.query(func.max(Cliente.id)).scalar()
@@ -597,7 +923,8 @@ class Database:
                 cpf=cpf,
                 data_aniversario=data_aniversario,
                 origem_cliente=origem_cliente,
-                observacoes=observacoes
+                observacoes=observacoes,
+                usuario_id=self.usuario_id  # Adicionar o ID do usuário atual
             )
             self.session.add(cliente)
             return cliente.id
@@ -638,40 +965,107 @@ class Database:
                 cpf=cpf,
                 data_aniversario=data_aniversario,
                 origem_cliente=origem_cliente,
-                observacoes=observacoes
+                observacoes=observacoes,
+                usuario_id=self.usuario_id  # Adicionar o ID do usuário atual
             )
             self.session.add(cliente)
             return cliente.id
         return self._safe_query(query)
 
     def get_propostas(self):
+        """
+        Retorna todas as propostas do usuário atual
+        """
         def query():
-            # Join com a tabela de clientes para obter os nomes dos clientes
-            propostas_com_clientes = self.session.query(
-                Proposta, Cliente.nome.label('cliente_nome')
-            ).outerjoin(
-                Cliente, Proposta.cliente_id == Cliente.id
-            ).all()
-            
-            return pd.DataFrame([{
-                'id': int(p.id),  # Converter para int nativo
-                'numero': int(p.numero),  # Converter para int nativo
-                'cliente_id': int(p.cliente_id) if p.cliente_id else None,  # Converter para int nativo
-                'descricao': p.descricao,
-                'valor': float(p.valor) if p.valor is not None else None,  # Converter para float nativo
-                'status': p.status,
-                'tipo_proposta': p.tipo_proposta,
-                'data_inicio': p.data_inicio,
-                'data_fim': p.data_fim,
-                'prazo_entrega': p.prazo_entrega,
-                'data_proposta': p.data_proposta,
-                'data_aprovacao': p.data_aprovacao,  # Adicionando o campo data_aprovacao
-                'status_pagamento_base': p.status_pagamento_base,
-                'previsao_dias': p.previsao_dias,
-                'data_inicio_execucao': p.data_inicio_execucao,
-                'status_execucao': p.status_execucao,
-                'cliente_nome': cliente_nome  # Adicionar o nome do cliente
-            } for p, cliente_nome in propostas_com_clientes])
+            try:
+                # Construir consulta base
+                query = self.session.query(
+                    Proposta, Cliente.nome.label('cliente_nome')
+                ).outerjoin(
+                    Cliente, Proposta.cliente_id == Cliente.id
+                )
+                
+                # Adicionar filtro por usuário se disponível
+                if self.usuario_id:
+                    query = query.filter(Proposta.usuario_id == self.usuario_id)
+                
+                # Executar consulta
+                propostas_com_clientes = query.all()
+                
+                result = []
+                for p, cliente_nome in propostas_com_clientes:
+                    try:
+                        # Conversão robusta para tipos numéricos
+                        try:
+                            proposta_id = int(p.id) if p.id is not None else None
+                        except (ValueError, TypeError):
+                            print(f"Erro ao converter ID para int: {p.id}")
+                            proposta_id = None
+                            
+                        try:
+                            proposta_numero = int(p.numero) if p.numero is not None else None
+                        except (ValueError, TypeError):
+                            print(f"Erro ao converter numero para int: {p.numero}")
+                            proposta_numero = None
+                            
+                        try:
+                            cliente_id = int(p.cliente_id) if p.cliente_id is not None else None
+                        except (ValueError, TypeError):
+                            print(f"Erro ao converter cliente_id para int: {p.cliente_id}")
+                            cliente_id = None
+                            
+                        try:
+                            valor = float(p.valor) if p.valor is not None else 0.0
+                        except (ValueError, TypeError):
+                            print(f"Erro ao converter valor para float: {p.valor}")
+                            valor = 0.0
+                            
+                        try:
+                            previsao_dias = int(p.previsao_dias) if p.previsao_dias is not None else None
+                        except (ValueError, TypeError):
+                            print(f"Erro ao converter previsao_dias para int: {p.previsao_dias}")
+                            previsao_dias = None
+                        
+                        # Garantir que todos os valores sejam do tipo correto
+                        proposta_dict = {
+                            'id': proposta_id,
+                            'numero': proposta_numero,
+                            'cliente_id': cliente_id,
+                            'descricao': str(p.descricao) if p.descricao is not None else "",
+                            'valor': valor,
+                            'status': str(p.status) if p.status is not None else "",
+                            'tipo_proposta': str(p.tipo_proposta) if p.tipo_proposta is not None else "",
+                            'data_inicio': p.data_inicio,
+                            'data_fim': p.data_fim,
+                            'prazo_entrega': p.prazo_entrega,
+                            'data_proposta': p.data_proposta,
+                            'data_aprovacao': p.data_aprovacao,
+                            'status_pagamento_base': str(p.status_pagamento_base) if p.status_pagamento_base is not None else "",
+                            'previsao_dias': previsao_dias,
+                            'data_inicio_execucao': p.data_inicio_execucao,
+                            'status_execucao': str(p.status_execucao) if p.status_execucao is not None else "",
+                            'cliente_nome': str(cliente_nome) if cliente_nome is not None else "",
+                            'usuario_id': p.usuario_id
+                        }
+                        result.append(proposta_dict)
+                    except Exception as e:
+                        # Logar erro para depuração mas continuar processando outras propostas
+                        print(f"Erro ao processar proposta {getattr(p, 'id', 'desconhecido')}: {str(e)}")
+                
+                df = pd.DataFrame(result)
+                # Converter explicitamente as colunas numéricas para seus tipos corretos
+                if not df.empty:
+                    numeric_cols = ['id', 'numero', 'cliente_id', 'valor', 'previsao_dias']
+                    for col in numeric_cols:
+                        if col in df.columns:
+                            df[col] = pd.to_numeric(df[col], errors='coerce')
+                
+                return df
+            except Exception as e:
+                print(f"Erro ao recuperar propostas: {str(e)}")
+                # Retornar DataFrame vazio em caso de erro
+                return pd.DataFrame()
+        
         return self._safe_query(query)
 
     def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, 
@@ -717,6 +1111,7 @@ class Database:
                 'descricao': descricao_local,
                 'valor': valor_local,
                 'status': status_local,
+                'usuario_id': self.usuario_id,  # Adicionar o ID do usuário atual
             }
             
             # Adicionar valores opcionais apenas se não forem None
@@ -757,7 +1152,7 @@ class Database:
 
     def get_financeiro(self, include_all=True, categorias=None, limit=1000):
         """
-        Retorna os dados financeiros (transações)
+        Retorna os dados financeiros (transações) do usuário atual
         
         Args:
             include_all (bool): Se True, inclui todas as transações. Se False, inclui apenas transações pendentes
@@ -770,6 +1165,10 @@ class Database:
         def query():
             # Criar query base
             query = self.session.query(Transacao)
+            
+            # Aplicar filtro por usuário se disponível
+            if self.usuario_id:
+                query = query.filter(Transacao.usuario_id == self.usuario_id)
             
             # Aplicar filtros se necessário
             if not include_all:
@@ -800,7 +1199,8 @@ class Database:
                 'classificacao': t.classificacao,
                 # Campos calculados para facilitar a análise
                 'receita': float(t.valor) if t.tipo in ['receita', 'receita_a_receber'] else 0.0,
-                'despesa': float(t.valor) if t.tipo == 'despesa' else 0.0
+                'despesa': float(t.valor) if t.tipo == 'despesa' else 0.0,
+                'usuario_id': t.usuario_id
             } for t in transacoes])
             
             return df
@@ -808,7 +1208,28 @@ class Database:
 
     def add_transacao(self, tipo, descricao, valor, categoria, tipo_receita=None, 
                      origem_id=None, origem_tipo=None, tipo_conta='PF', status='Pendente',
-                     proposta_id=None, subcategoria=None, classificacao=None):
+                     proposta_id=None, subcategoria=None, classificacao=None, usuario_id=None):
+        """
+        Adiciona uma transação financeira
+        
+        Args:
+            tipo (str): Tipo da transação (receita, despesa, receita_a_receber)
+            descricao (str): Descrição da transação
+            valor (float): Valor da transação
+            categoria (str): Categoria da transação
+            tipo_receita (str, optional): Tipo de receita (para receitas)
+            origem_id (int, optional): ID da origem da transação (cliente, fornecedor, etc.)
+            origem_tipo (str, optional): Tipo da origem (cliente, fornecedor, proposta, etc.)
+            tipo_conta (str, optional): Tipo de conta (PF, PJ)
+            status (str, optional): Status da transação (Pendente, Recebido, Cancelado)
+            proposta_id (int, optional): ID da proposta relacionada
+            subcategoria (str, optional): Subcategoria da transação
+            classificacao (str, optional): Classificação contábil
+            usuario_id (str, optional): ID do usuário proprietário da transação (para multi-tenant)
+            
+        Returns:
+            int: ID da transação adicionada
+        """
         def query():
             transacao = Transacao(
                 tipo=tipo,
@@ -822,7 +1243,8 @@ class Database:
                 tipo_conta=tipo_conta,
                 status=status,
                 proposta_id=proposta_id,
-                classificacao=classificacao
+                classificacao=classificacao,
+                usuario_id=self.usuario_id  # Adicionar o ID do usuário atual
             )
             self.session.add(transacao)
             return transacao.id
@@ -877,92 +1299,190 @@ class Database:
             dict: Dicionário com os IDs das transações criadas
         """
         def query():
-            # Buscar a proposta
-            proposta = self.session.query(Proposta).filter_by(id=proposta_id).first()
-            if not proposta:
-                raise ValueError(f"Proposta ID {proposta_id} não encontrada")
+            try:
+                # Garantir que proposta_id seja um inteiro
+                try:
+                    proposta_id_int = int(proposta_id)
+                except (ValueError, TypeError):
+                    raise ValueError(f"ID de proposta inválido: {proposta_id}")
                 
-            # Buscar o cliente da proposta
-            cliente = self.session.query(Cliente).filter_by(id=proposta.cliente_id).first()
-            if not cliente:
-                raise ValueError(f"Cliente ID {proposta.cliente_id} não encontrado")
-            
-            # Verificar se já existem transações para esta proposta
-            transacoes_existentes = self.session.query(Transacao).filter_by(
-                proposta_id=proposta_id
-            ).count()
-            
-            if transacoes_existentes > 0:
-                # Já existem transações, não criar novamente
-                return {"status": "já existem transações", "count": transacoes_existentes}
-            
-            # Criar transação de receita
-            receita_id = None
-            if proposta.valor and proposta.valor > 0:
-                receita_id = self._criar_transacao_receita(proposta, cliente)
-            
-            # Buscar acréscimos da proposta
-            acrescimos = self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).all()
-            
-            # Criar transações de despesa para cada acréscimo
-            despesa_ids = []
-            for acrescimo in acrescimos:
-                if acrescimo.valor and acrescimo.valor > 0:
-                    despesa_id = self._criar_transacao_despesa(acrescimo, proposta)
-                    despesa_ids.append(despesa_id)
-            
-            return {
-                "status": "sucesso",
-                "receita_id": receita_id,
-                "despesa_ids": despesa_ids,
-                "total_despesas": len(despesa_ids)
-            }
+                # Buscar a proposta
+                proposta = self.session.query(Proposta).filter_by(id=proposta_id_int).first()
+                if not proposta:
+                    raise ValueError(f"Proposta ID {proposta_id_int} não encontrada")
+                
+                # Garantir que cliente_id seja um inteiro
+                try:
+                    cliente_id_int = int(proposta.cliente_id) if proposta.cliente_id is not None else None
+                except (ValueError, TypeError):
+                    raise ValueError(f"ID de cliente inválido: {proposta.cliente_id}")
+                
+                if cliente_id_int is None:
+                    raise ValueError("Cliente ID não pode ser nulo")
+                
+                # Buscar o cliente da proposta
+                cliente = self.session.query(Cliente).filter_by(id=cliente_id_int).first()
+                if not cliente:
+                    raise ValueError(f"Cliente ID {cliente_id_int} não encontrado")
+                
+                # Verificar se já existem transações para esta proposta
+                transacoes_existentes = self.session.query(Transacao).filter_by(
+                    proposta_id=proposta_id_int
+                ).count()
+                
+                if transacoes_existentes > 0:
+                    # Já existem transações, não criar novamente
+                    return {"status": "já existem transações", "count": transacoes_existentes}
+                
+                # Garantir que valor seja um float
+                try:
+                    valor = float(proposta.valor) if proposta.valor is not None else 0.0
+                except (ValueError, TypeError):
+                    print(f"Erro ao converter valor para float: {proposta.valor}, usando 0.0")
+                    valor = 0.0
+                
+                # Criar transação de receita
+                receita_id = None
+                if valor > 0:
+                    receita_id = self._criar_transacao_receita(proposta, cliente)
+                
+                # Buscar acréscimos da proposta
+                acrescimos = self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id_int).all()
+                
+                # Criar transações de despesa para cada acréscimo
+                despesa_ids = []
+                for acrescimo in acrescimos:
+                    try:
+                        acrescimo_valor = float(acrescimo.valor) if acrescimo.valor is not None else 0.0
+                    except (ValueError, TypeError):
+                        print(f"Erro ao converter valor do acréscimo para float: {acrescimo.valor}, usando 0.0")
+                        acrescimo_valor = 0.0
+                    
+                    if acrescimo_valor > 0:
+                        despesa_id = self._criar_transacao_despesa(acrescimo, proposta)
+                        despesa_ids.append(despesa_id)
+                
+                return {
+                    "status": "sucesso",
+                    "receita_id": receita_id,
+                    "despesa_ids": despesa_ids,
+                    "total_despesas": len(despesa_ids)
+                }
+            except Exception as e:
+                print(f"Erro ao gerar transações para proposta {proposta_id}: {str(e)}")
+                raise
         
         return self._safe_query(query)
     
     def _criar_transacao_receita(self, proposta, cliente):
         """Cria uma transação de receita para a proposta"""
-        # Nome do cliente para a descrição da transação
-        nome_cliente = cliente.nome if cliente else "Cliente"
-        
-        transacao = Transacao(
-            tipo="receita_a_receber",
-            descricao=f"Proposta #{proposta.id} - {proposta.descricao} - {nome_cliente}",
-            valor=proposta.valor,
-            categoria="Propostas",
-            subcategoria=proposta.tipo_proposta,
-            tipo_receita="Projeto",
-            origem_id=proposta.id,
-            origem_tipo="proposta",
-            tipo_conta="PF",
-            status="Pendente",
-            proposta_id=proposta.id,
-            classificacao="receita",
-            data=proposta.data_proposta or datetime.now().date()
-        )
-        self.session.add(transacao)
-        self.session.flush()
-        return transacao.id
+        try:
+            # Nome do cliente para a descrição da transação
+            nome_cliente = str(cliente.nome) if cliente and hasattr(cliente, 'nome') else "Cliente"
+            
+            # Garantir conversão correta de tipos
+            try:
+                proposta_id = int(proposta.id) if proposta.id is not None else 0
+            except (ValueError, TypeError):
+                print(f"Erro ao converter ID da proposta para int: {proposta.id}")
+                proposta_id = 0
+                
+            try:
+                valor = float(proposta.valor) if proposta.valor is not None else 0.0
+            except (ValueError, TypeError):
+                print(f"Erro ao converter valor para float: {proposta.valor}")
+                valor = 0.0
+                
+            # Garantir que temos uma descrição válida
+            descricao = str(proposta.descricao) if proposta.descricao is not None else "Sem descrição"
+            
+            # Garantir que temos um tipo de proposta válido
+            tipo_proposta = str(proposta.tipo_proposta) if proposta.tipo_proposta is not None else "Geral"
+            
+            # Data da proposta ou data atual
+            data_proposta = proposta.data_proposta if hasattr(proposta, 'data_proposta') and proposta.data_proposta is not None else datetime.now().date()
+            
+            # Obter usuario_id da proposta para garantir isolamento de dados
+            usuario_id = proposta.usuario_id if hasattr(proposta, 'usuario_id') else None
+            
+            transacao = Transacao(
+                tipo="receita_a_receber",
+                descricao=f"Proposta #{proposta_id} - {descricao} - {nome_cliente}",
+                valor=valor,
+                categoria="Serviços de Organização",  # Alterado de "Propostas" para "Serviços de Organização"
+                subcategoria=tipo_proposta,
+                tipo_receita="Projeto",
+                origem_id=proposta_id,
+                origem_tipo="proposta",
+                tipo_conta="PF",
+                status="Pendente",
+                proposta_id=proposta_id,
+                classificacao="receita",
+                data=data_proposta,
+                usuario_id=usuario_id
+            )
+            self.session.add(transacao)
+            self.session.flush()
+            return transacao.id
+        except Exception as e:
+            print(f"Erro ao criar transação de receita: {str(e)}")
+            raise
     
     def _criar_transacao_despesa(self, acrescimo, proposta):
         """Cria uma transação de despesa para um acréscimo de proposta"""
-        transacao = Transacao(
-            tipo="despesa",
-            descricao=f"Despesa: {acrescimo.descricao} - Proposta #{proposta.id}",
-            valor=acrescimo.valor,
-            categoria="Custos de Projeto",
-            subcategoria=acrescimo.tipo,
-            origem_id=acrescimo.id,
-            origem_tipo="acrescimo",
-            tipo_conta="PF",
-            status="Pendente",
-            proposta_id=proposta.id,
-            classificacao="custo_direto",
-            data=acrescimo.data_cadastro or datetime.now().date()
-        )
-        self.session.add(transacao)
-        self.session.flush()
-        return transacao.id
+        try:
+            # Garantir conversão correta de tipos
+            try:
+                proposta_id = int(proposta.id) if proposta.id is not None else 0
+            except (ValueError, TypeError):
+                print(f"Erro ao converter ID da proposta para int: {proposta.id}")
+                proposta_id = 0
+                
+            try:
+                acrescimo_id = int(acrescimo.id) if acrescimo.id is not None else 0
+            except (ValueError, TypeError):
+                print(f"Erro ao converter ID do acréscimo para int: {acrescimo.id}")
+                acrescimo_id = 0
+                
+            try:
+                valor = float(acrescimo.valor) if acrescimo.valor is not None else 0.0
+            except (ValueError, TypeError):
+                print(f"Erro ao converter valor para float: {acrescimo.valor}")
+                valor = 0.0
+                
+            # Garantir que temos uma descrição válida
+            descricao = str(acrescimo.descricao) if hasattr(acrescimo, 'descricao') and acrescimo.descricao is not None else "Despesa do projeto"
+            
+            # Garantir que temos um tipo de acréscimo válido
+            tipo_acrescimo = str(acrescimo.tipo) if hasattr(acrescimo, 'tipo') and acrescimo.tipo is not None else "Geral"
+            
+            # Data do cadastro ou data atual
+            data_cadastro = acrescimo.data_cadastro if hasattr(acrescimo, 'data_cadastro') and acrescimo.data_cadastro is not None else datetime.now().date()
+            
+            # Obter usuario_id da proposta para garantir isolamento de dados
+            usuario_id = proposta.usuario_id if hasattr(proposta, 'usuario_id') else None
+            
+            transacao = Transacao(
+                tipo="despesa",
+                descricao=f"Despesa: {descricao} - Proposta #{proposta_id}",
+                valor=valor,
+                categoria="Custos de Projeto",
+                subcategoria=tipo_acrescimo,
+                origem_id=acrescimo_id,
+                origem_tipo="acrescimo",
+                tipo_conta="PF",
+                status="Pendente",
+                proposta_id=proposta_id,
+                classificacao="custo_direto",
+                data=data_cadastro,
+                usuario_id=usuario_id
+            )
+            self.session.add(transacao)
+            self.session.flush()
+            return transacao.id
+        except Exception as e:
+            print(f"Erro ao criar transação de despesa: {str(e)}")
+            raise
 
     def delete_transacao(self, transacao_id):
         """Exclui uma transação"""
@@ -976,9 +1496,17 @@ class Database:
 
     def get_contas_receber(self):
         def query():
-            contas = self.session.query(Transacao).filter(
+            # Criar query base - garantir que receitas a receber de qualquer origem sejam exibidas
+            query = self.session.query(Transacao).filter(
                 Transacao.tipo.in_(['receita_a_receber']),
-            ).order_by(Transacao.data.desc()).all()
+            )
+            
+            # Aplicar filtro por usuário se disponível (multi-tenant)
+            if self.usuario_id:
+                query = query.filter(Transacao.usuario_id == self.usuario_id)
+                
+            # Ordenar e obter resultados
+            contas = query.order_by(Transacao.data.desc()).all()
 
             return pd.DataFrame([{
                 'id': t.id,
@@ -1221,6 +1749,136 @@ class Database:
             return andamento.id
         return self._safe_query(query)
 
+    def gerar_lancamentos_proposta_aprovada(self, proposta_id, forcar_geracao=False):
+        """
+        Gera lançamentos financeiros automáticos quando uma proposta é aprovada
+        
+        Gera:
+        1. Receita a receber do cliente (valor base da proposta) no extrato
+        2. Lançamento nas contas a receber (valor base da proposta)
+        
+        Args:
+            proposta_id: ID da proposta aprovada
+            forcar_geracao: Se True, remove lançamentos existentes e gera novos
+            
+        Returns:
+            dict: Resumo dos lançamentos gerados
+        """
+        def query():
+            try:
+                # Converter para inteiro se for string
+                proposta_id_int = int(proposta_id)
+                print(f"DEBUG LANCAMENTOS APROVAÇÃO: Gerando lançamentos para proposta aprovada ID={proposta_id_int}")
+                
+                # Buscar a proposta
+                proposta = self.session.query(Proposta).filter_by(id=proposta_id_int).first()
+                if not proposta:
+                    print(f"DEBUG LANCAMENTOS APROVAÇÃO: Proposta ID {proposta_id} não encontrada")
+                    raise ValueError(f"Proposta ID {proposta_id} não encontrada")
+                
+                print(f"DEBUG LANCAMENTOS APROVAÇÃO: Proposta encontrada: #{proposta.numero} - {proposta.descricao}")
+                
+                # Buscar cliente da proposta
+                cliente = self.session.query(Cliente).filter_by(id=proposta.cliente_id).first()
+                if not cliente:
+                    print(f"DEBUG LANCAMENTOS APROVAÇÃO: Cliente ID {proposta.cliente_id} não encontrado")
+                    raise ValueError(f"Cliente ID {proposta.cliente_id} não encontrado")
+                
+                print(f"DEBUG LANCAMENTOS APROVAÇÃO: Cliente encontrado: {cliente.nome}")
+                
+                # Verificar se já existem lançamentos do tipo "receita_a_receber_aprovacao" para esta proposta
+                lancamentos_existentes = self.session.query(Transacao)\
+                    .filter_by(proposta_id=proposta_id_int, tipo="receita_a_receber_aprovacao")\
+                    .count()
+                
+                print(f"DEBUG LANCAMENTOS APROVAÇÃO: Lançamentos existentes: {lancamentos_existentes}")
+                
+                # Se já existirem lançamentos, verificar se devemos forçar a regeneração
+                if lancamentos_existentes > 0:
+                    if forcar_geracao:
+                        print(f"DEBUG LANCAMENTOS APROVAÇÃO: Removendo {lancamentos_existentes} lançamentos existentes")
+                        # Remover lançamentos existentes
+                        self.session.query(Transacao).filter_by(
+                            proposta_id=proposta_id_int, 
+                            tipo="receita_a_receber_aprovacao"
+                        ).delete()
+                        self.session.flush()
+                        print(f"DEBUG LANCAMENTOS APROVAÇÃO: Lançamentos existentes removidos com sucesso")
+                    else:
+                        print(f"DEBUG LANCAMENTOS APROVAÇÃO: Já existem lançamentos. Pulando.")
+                        return {
+                            "status": "já existe", 
+                            "mensagem": "Lançamentos já existem para esta proposta aprovada"
+                        }
+                
+                # Resultados para retornar
+                result = {
+                    "valor_base": 0,
+                    "lancamentos_gerados": 0
+                }
+                
+                # Obter dados da proposta
+                valor_base = float(proposta.valor) if proposta.valor else 0
+                print(f"DEBUG LANCAMENTOS APROVAÇÃO: Valor base da proposta: R$ {valor_base:.2f}")
+                
+                # Data dos lançamentos (usar data de aprovação se disponível, senão data atual)
+                data_lancamento = proposta.data_aprovacao if proposta.data_aprovacao else datetime.now().date()
+                
+                # Obter usuario_id da proposta para garantir isolamento de dados
+                usuario_id = proposta.usuario_id if hasattr(proposta, 'usuario_id') else None
+                
+                # 1. Lançamento de receita a receber no extrato
+                if valor_base > 0:
+                    transacao_receita = Transacao(
+                        tipo="receita_a_receber_aprovacao",  # Usamos tipo específico para identificar
+                        descricao=f"Proposta #{proposta.numero} - {proposta.descricao[:50]}... - {cliente.nome} (Aprovação)",
+                        valor=valor_base,
+                        data=data_lancamento,
+                        categoria="Serviços de Organização",
+                        subcategoria=proposta.tipo_proposta or "Organização",
+                        tipo_receita="organização",
+                        origem_id=proposta.cliente_id,
+                        origem_tipo="cliente",
+                        tipo_conta="PF",
+                        status="Pendente",
+                        proposta_id=proposta_id_int,
+                        classificacao="receita",
+                        usuario_id=usuario_id
+                    )
+                    self.session.add(transacao_receita)
+                    
+                    # 2. Lançamento nas contas a receber - mesmo valor mas tipo diferente
+                    transacao_contas_receber = Transacao(
+                        tipo="contas_a_receber",
+                        descricao=f"Valor a receber - Proposta #{proposta.numero} - {cliente.nome}",
+                        valor=valor_base,
+                        data=data_lancamento,
+                        categoria="Cliente",
+                        subcategoria="Valor a receber",
+                        tipo_receita="organização",
+                        origem_id=proposta.cliente_id,
+                        origem_tipo="cliente",
+                        tipo_conta="PF",
+                        status="Pendente",
+                        proposta_id=proposta_id_int,
+                        classificacao="contas_a_receber",
+                        usuario_id=usuario_id
+                    )
+                    self.session.add(transacao_contas_receber)
+                    
+                    result["valor_base"] = valor_base
+                    result["lancamentos_gerados"] += 2  # Dois lançamentos: extrato e contas a receber
+                    print(f"DEBUG LANCAMENTOS APROVAÇÃO: Lançamentos de aprovação criados com sucesso")
+                
+                return result
+                
+            except Exception as e:
+                print(f"ERRO em gerar_lancamentos_proposta_aprovada: {str(e)}")
+                traceback.print_exc()
+                raise
+        
+        return self._safe_query(query)
+        
     def update_proposta_status(self, proposta_id, novo_status, data_aprovacao=None):
         """
         Atualiza o status de uma proposta e opcionalmente define a data de aprovação
@@ -1235,7 +1893,7 @@ class Database:
             data_aprovacao: Data de aprovação (opcional)
         
         Returns:
-            bool: True se a atualização foi bem-sucedida, False caso contrário
+            dict: Dicionário com status da operação e mensagem
         """
         def query():
             # Buscar a proposta por ID
@@ -1243,7 +1901,12 @@ class Database:
             
             if proposta is None:
                 # # print(f"DEBUG: Proposta com ID {proposta_id} não encontrada")
-                return False
+                return {"status": False, "message": f"Proposta ID {proposta_id} não encontrada"}
+            
+            # Verificar se a proposta está sendo aprovada
+            gerar_lancamentos = False
+            if novo_status == "Aprovada" and proposta.status != "Aprovada":
+                gerar_lancamentos = True
             
             # Atualizar campos
             proposta.status = novo_status
@@ -1255,41 +1918,26 @@ class Database:
                 # Sempre usar a data de início da proposta como data de início de execução
                 proposta.data_inicio_execucao = proposta.data_inicio
                 proposta.status_execucao = "Iniciada"
-                
-                # Processar a geração de transação financeira
-                # Verificar se já existem transações para esta proposta
-                transacoes_existentes = self.session.query(Transacao).filter_by(
-                    proposta_id=proposta_id
-                ).count()
-                
-                if transacoes_existentes == 0:
-                    # Buscar o cliente da proposta
-                    cliente = self.session.query(Cliente).filter_by(id=proposta.cliente_id).first()
-                    if cliente:
-                        # Criar uma transação financeira de receita a receber
-                        nome_cliente = cliente.nome
-                        
-                        transacao = Transacao(
-                            tipo="receita_a_receber",
-                            descricao=f"Proposta #{proposta.id} - {proposta.descricao} - {nome_cliente}",
-                            valor=proposta.valor,
-                            categoria="Propostas",
-                            subcategoria=proposta.tipo_proposta,
-                            tipo_receita="Projeto",
-                            origem_id=proposta.id,
-                            origem_tipo="proposta",
-                            tipo_conta="PF",
-                            status="Pendente",
-                            proposta_id=proposta.id,
-                            classificacao="receita",
-                            data=proposta.data_proposta or datetime.now().date()
-                        )
-                        self.session.add(transacao)
-                        # # print(f"DEBUG: Transação financeira criada para proposta {proposta_id}")
+            
+            # Salvar as alterações para garantir que tudo esteja atualizado antes de gerar lançamentos
+            self.session.flush()
+            
+            # Gerar lançamentos financeiros se a proposta está sendo aprovada
+            resultado = {"status": True, "message": f"Proposta {proposta_id} atualizada com status '{novo_status}'"}
+            
+            if gerar_lancamentos:
+                try:
+                    # Gerar lançamentos financeiros para proposta aprovada (receita a receber e contas a receber)
+                    self.gerar_lancamentos_proposta_aprovada(proposta_id)
+                    print(f"DEBUG: Lançamentos financeiros gerados para proposta aprovada {proposta_id}")
+                    resultado["lancamentos"] = {"status": "success", "message": "Lançamentos financeiros gerados com sucesso"}
+                except Exception as e:
+                    print(f"ERRO ao gerar lançamentos para proposta aprovada: {str(e)}")
+                    resultado["lancamentos"] = {"status": "error", "message": f"Erro ao gerar lançamentos: {str(e)}"}
             
             # Registrar a mudança de status
             # # print(f"DEBUG: Proposta {proposta_id} atualizada com status '{novo_status}'")
-            return True
+            return resultado
             
         return self._safe_query(query)
 
@@ -1347,7 +1995,26 @@ class Database:
             cursor = conn.cursor()
             
             try:
+                # Buscar o usuario_id da proposta
+                get_usuario_sql = f"SELECT usuario_id FROM propostas WHERE id = {proposta_id_int}"
+                cursor.execute(get_usuario_sql)
+                usuario_result = cursor.fetchone()
+                
+                if not usuario_result or usuario_result[0] is None:
+                    print(f"DEBUG SQL PRODUTO: Proposta ID={proposta_id_int} não encontrada ou sem usuario_id")
+                    if self.usuario_id:
+                        usuario_id = self.usuario_id
+                        print(f"DEBUG SQL PRODUTO: Usando usuario_id da sessão atual: {usuario_id}")
+                    else:
+                        print(f"DEBUG SQL PRODUTO: Nenhum usuario_id disponível, impossível continuar")
+                        return None
+                else:
+                    usuario_id = usuario_result[0]
+                    print(f"DEBUG SQL PRODUTO: Encontrado usuario_id={usuario_id} para a proposta ID={proposta_id_int}")
+                
                 # Executar a inserção
+                # Nota: A tabela produtos_organizadores não possui o campo usuario_id
+                # A associação com o usuário é feita via proposta_id
                 sql = f"""
                 INSERT INTO produtos_organizadores 
                 (proposta_id, nome, descricao, valor, quantidade, comodo, data_cadastro) 
@@ -1422,7 +2089,9 @@ class Database:
             valor_float = float(valor)
             quantidade_int = int(quantidade)
             
-            # Criar o objeto produto
+            # Criar o objeto produto 
+            # Nota: ProdutoOrganizador não possui o campo usuario_id
+            # A associação com o usuário é feita via proposta_id
             produto = ProdutoOrganizador(
                 proposta_id=proposta_id_int,
                 nome=nome,
@@ -1474,9 +2143,32 @@ class Database:
             try:
                 # Executar a busca SQL
                 if proposta_id:
-                    sql = f"SELECT * FROM produtos_organizadores WHERE proposta_id = {int(proposta_id)}"
+                    # Converter explicitamente para int Python padrão (mesmo que seja numpy.int64)
+                    proposta_id_int = int(proposta_id)
+                    
+                    # Não há o campo usuario_id na tabela produtos_organizadores
+                    # A filtragem por usuário é feita indiretamente através do proposta_id
+                    sql = f"SELECT * FROM produtos_organizadores WHERE proposta_id = {proposta_id_int}"
+                    
+                    # Se precisar filtrar por usuário, precisaremos fazer um JOIN com a tabela propostas
+                    if self.usuario_id:
+                        sql = f"""
+                            SELECT po.* FROM produtos_organizadores po
+                            JOIN propostas p ON po.proposta_id = p.id
+                            WHERE po.proposta_id = {proposta_id_int}
+                            AND p.usuario_id = '{self.usuario_id}'
+                        """
                 else:
-                    sql = "SELECT * FROM produtos_organizadores"
+                    # Busca geral
+                    if self.usuario_id:
+                        # Com filtro de usuário - precisa fazer JOIN
+                        sql = f"""
+                            SELECT po.* FROM produtos_organizadores po
+                            JOIN propostas p ON po.proposta_id = p.id
+                            WHERE p.usuario_id = '{self.usuario_id}'
+                        """
+                    else:
+                        sql = "SELECT * FROM produtos_organizadores"
                 
                 # Removido logs de debug
                 cursor.execute(sql)
@@ -1515,6 +2207,93 @@ class Database:
             import pandas as pd
             return pd.DataFrame()
 
+    def _ensure_int(self, value):
+        """
+        Garante que o valor seja um inteiro Python padrão, mesmo que seja numpy.int64
+        """
+        if value is None:
+            return None
+        return int(value)
+        
+    def get_perfil_by_email(self, email):
+        """
+        Busca o perfil do usuário pelo email
+        
+        Args:
+            email: Email do usuário
+            
+        Returns:
+            dict: Dados do perfil ou None se não encontrado
+        """
+        def query():
+            try:
+                print(f"Buscando perfil para o email: {email}")
+                
+                # Buscar na tabela de usuários (que já sabemos que existe)
+                try:
+                    usuario = self.session.query(Usuario).filter_by(email=email).first()
+                    if usuario:
+                        print(f"Usuário encontrado com email {email}")
+                        perfil_dict = {
+                            'id': usuario.id,
+                            'nome': usuario.nome,
+                            'email': usuario.email,
+                            'tipo': usuario.tipo,
+                            'empresa': usuario.empresa if hasattr(usuario, 'empresa') else 'Planner Organizer',
+                            'role': 'user'  # Valor padrão
+                        }
+                        # Adicionar telefone se existir
+                        if hasattr(usuario, 'telefone') and usuario.telefone:
+                            perfil_dict['telefone'] = usuario.telefone
+                        return perfil_dict
+                except Exception as e:
+                    print(f"Erro ao buscar usuário por email: {str(e)}")
+                
+                # Tentar na tabela de clientes como alternativa
+                try:
+                    cliente = self.session.query(Cliente).filter_by(email=email).first()
+                    if cliente:
+                        print(f"Cliente encontrado com email {email}")
+                        perfil_dict = {
+                            'id': cliente.id,
+                            'nome': cliente.nome,
+                            'email': cliente.email,
+                            'telefone': cliente.telefone if cliente.telefone else '',
+                            'empresa': 'Planner Organizer'  # Valor padrão
+                        }
+                        # Adicionar campos adicionais se existirem
+                        for field in ['endereco', 'cidade', 'estado']:
+                            if hasattr(cliente, field) and getattr(cliente, field):
+                                perfil_dict[field] = getattr(cliente, field)
+                        
+                        return perfil_dict
+                except Exception as e:
+                    print(f"Erro ao buscar cliente por email: {str(e)}")
+                
+                # Tentar com uma consulta SQL direta para tabela 'perfis' (se existir)
+                try:
+                    # Tentar consulta SQL direta
+                    sql = text("SELECT * FROM perfis WHERE email = :email")
+                    result = self.session.execute(sql, {'email': email}).fetchone()
+                    if result:
+                        print("Perfil encontrado na tabela 'perfis' via SQL direta")
+                        # Converter resultado para dicionário
+                        perfil_dict = {}
+                        for column, value in result.items():
+                            perfil_dict[column] = value
+                        return perfil_dict
+                except Exception as e:
+                    print(f"Erro ao buscar via SQL direta: {str(e)}")
+                
+                # Se chegou aqui, não encontrou o perfil em nenhuma fonte
+                print(f"Perfil não encontrado para o email: {email}")
+                return None
+            except Exception as e:
+                print(f"ERRO geral ao buscar perfil por email: {str(e)}")
+                return None
+        
+        return self._safe_query(query)
+        
     def get_produtos_organizadores(self, proposta_id=None):
         """
         Obtém produtos de uma proposta. Tenta primeiro via SQL direto, e depois via ORM.
@@ -1527,8 +2306,17 @@ class Database:
         # Se falhou, tentar via ORM normal
         def query():
             query = self.session.query(ProdutoOrganizador)
+            
+            # Aplicar filtros
             if proposta_id:
-                query = query.filter_by(proposta_id=proposta_id)
+                # Converter explicitamente para int Python padrão
+                proposta_id_int = self._ensure_int(proposta_id)
+                query = query.filter_by(proposta_id=proposta_id_int)
+                
+            # Não filtramos ProdutoOrganizador por usuario_id diretamente
+            # pois esta tabela não possui este campo
+            # A filtragem por usuário já é feita indiretamente via proposta_id
+                
             produtos = query.all()
             return pd.DataFrame([{
                 'id': p.id,
@@ -1754,15 +2542,21 @@ class Database:
 
     def get_assistentes(self):
         def query():
-            assistentes = self.session.query(Assistente).all()
-            return pd.DataFrame([{
-                'id': a.id,
-                'nome': a.nome,
-                'telefone': a.telefone,
-                'endereco': a.endereco,
-                'pix': a.pix,
-                'observacoes': a.observacoes
-            } for a in assistentes])
+            # Criar uma nova sessão para evitar problemas com estado 'prepared'
+            # Isso resolve o erro "This session is in 'prepared' state"
+            session = Session()
+            try:
+                assistentes = session.query(Assistente).all()
+                return pd.DataFrame([{
+                    'id': a.id,
+                    'nome': a.nome,
+                    'telefone': a.telefone,
+                    'endereco': a.endereco,
+                    'pix': a.pix,
+                    'observacoes': a.observacoes
+                } for a in assistentes])
+            finally:
+                session.close()
         return self._safe_query(query)
 
     def add_parceiro(self, nome, telefone, area_atuacao, tipo_parceria, 
@@ -1787,21 +2581,27 @@ class Database:
 
     def get_parceiros(self):
         def query():
-            parceiros = self.session.query(Parceiro).all()
-            return pd.DataFrame([{
-                'id': p.id,
-                'nome': p.nome,
-                'telefone': p.telefone,
-                'area_atuacao': p.area_atuacao,
-                'tipo_parceria': p.tipo_parceria,
-                'estado': p.estado,
-                'cidade': p.cidade,
-                'bairro': p.bairro,
-                'endereco': p.endereco,
-                'pix': p.pix,
-                'observacoes': p.observacoes,
-                'data_cadastro': p.data_cadastro
-            } for p in parceiros])
+            # Criar uma nova sessão para evitar problemas com estado 'prepared'
+            # Isso resolve o erro "This session is in 'prepared' state"
+            session = Session()
+            try:
+                parceiros = session.query(Parceiro).all()
+                return pd.DataFrame([{
+                    'id': p.id,
+                    'nome': p.nome,
+                    'telefone': p.telefone,
+                    'area_atuacao': p.area_atuacao,
+                    'tipo_parceria': p.tipo_parceria,
+                    'estado': p.estado,
+                    'cidade': p.cidade,
+                    'bairro': p.bairro,
+                    'endereco': p.endereco,
+                    'pix': p.pix,
+                    'observacoes': p.observacoes,
+                    'data_cadastro': p.data_cadastro
+                } for p in parceiros])
+            finally:
+                session.close()
         return self._safe_query(query)
 
     def __del__(self):
@@ -1864,12 +2664,20 @@ class Database:
                 
                 # Verificar se precisamos gerar transações automaticamente
                 proposta_aprovada = False
+                proposta_finalizada = False
                 
                 # Verificar mudança de status para "Aprovada"
                 if status is not None and status == "Aprovada" and proposta.status != "Aprovada":
                     proposta_aprovada = True
                     # Registrar a data de aprovação
                     proposta.data_aprovacao = datetime.now().date()
+                
+                # Verificar mudança de status para "Concluída"
+                if status is not None and status == "Concluída" and proposta.status != "Concluída":
+                    proposta_finalizada = True
+                    # Se não foi fornecida uma data_fim, usar a data atual
+                    if data_fim is None:
+                        proposta.data_fim = datetime.now().date()
                 
                 # Atualizar apenas os campos fornecidos
                 if descricao is not None:
@@ -1914,9 +2722,54 @@ class Database:
                 # Salvar as alterações antes de gerar transações
                 self.session.flush()
                 
-                # Gerar transações financeiras automaticamente se a proposta foi aprovada
+                # Gerar transações financeiras automaticamente se a proposta foi aprovada ou finalizada
                 resultado = {"status": True, "message": "Proposta atualizada com sucesso"}
                 
+                # Tratar proposta finalizada - gerar lançamentos de conclusão e registrar vendas
+                if proposta_finalizada and gerar_transacoes_automaticas:
+                    try:
+                        # Buscar o cliente da proposta
+                        cliente = self.session.query(Cliente).filter_by(id=proposta.cliente_id).first()
+                        if not cliente:
+                            resultado["lancamentos_finalizacao"] = {
+                                "status": "erro",
+                                "message": f"Cliente ID {proposta.cliente_id} não encontrado para gerar lançamentos de finalização"
+                            }
+                        else:
+                            # Gerar lançamentos financeiros para proposta concluída
+                            # Usar forcar_geracao=True para garantir que todos os lançamentos são gerados,
+                            # incluindo para "OUTROS" e "DESPESA ASSISTENTE"
+                            lancamentos_result = self.gerar_lancamentos_financeiros_proposta_concluida(
+                                proposta_id=proposta_id_int, 
+                                forcar_geracao=True
+                            )
+                            
+                            # Buscar produtos da proposta para registrar vendas
+                            produtos_proposta = self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id_int).all()
+                            if produtos_proposta:
+                                try:
+                                    # Registrar vendas dos produtos (usando forcar_geracao=True)
+                                    venda_id = self._registrar_venda_produtos(proposta, cliente, produtos_proposta, forcar_geracao=True)
+                                    if venda_id:
+                                        lancamentos_result["venda_id"] = venda_id
+                                        lancamentos_result["produtos_vendidos"] = len(produtos_proposta)
+                                except Exception as e:
+                                    print(f"ERRO ao registrar venda de produtos: {str(e)}")
+                                    import traceback
+                                    traceback.print_exc()
+                                    lancamentos_result["erro_venda"] = str(e)
+                            
+                            resultado["lancamentos_finalizacao"] = lancamentos_result
+                    except Exception as e:
+                        print(f"ERRO ao gerar lançamentos de finalização: {str(e)}")
+                        import traceback
+                        traceback.print_exc()
+                        resultado["lancamentos_finalizacao"] = {
+                            "status": "erro",
+                            "message": f"Erro ao gerar lançamentos de finalização: {str(e)}"
+                        }
+                
+                # Continuar processando proposta aprovada
                 if proposta_aprovada and gerar_transacoes_automaticas:
                     # Verificar se já existem transações para esta proposta
                     transacoes_existentes = self.session.query(Transacao).filter_by(
@@ -2058,60 +2911,15 @@ class Database:
                         
                         resultado["acrescimo_id"] = acrescimo_id
                         
-                        # Se for do tipo FORNECEDOR e tiver percentual de comissão, gerar recebimento automático
+                        # Não gerar mais transações automáticas de comissão ou assistente aqui
+                        # Elas serão geradas apenas na finalização da proposta (gerar_lancamentos_financeiros_proposta_concluida)
+                        
+                        # Apenas armazenar a informação do percentual de comissão para uso posterior
                         if tipo_upper == "FORNECEDOR" and percentual_comissao_float is not None and percentual_comissao_float > 0:
-                            # Calcular valor da comissão
-                            valor_comissao = valor_float * (percentual_comissao_float / 100.0)
-                            
-                            # Criar recebimento para a comissão
-                            receita = Receita(
-                                cliente_id=proposta.cliente_id,
-                                tipo="Comissão",
-                                categoria="Comissão de Fornecedor",
-                                descricao=f"Comissão de {percentual_comissao_float}% sobre fornecimento de {fornecedor_nome}",
-                                valor=valor_comissao,
-                                data_vencimento=datetime.now().date() + timedelta(days=30),  # Vencimento em 30 dias
-                                data_recebimento=None,  # Ainda não recebido
-                                status="Pendente",
-                                forma_pagamento=None,  # Será definido quando for recebido
-                                proposta_id=proposta_id_int,
-                                cliente_nome=cliente.nome if cliente else "Cliente não identificado"
-                            )
-                            
-                            self.session.add(receita)
-                            self.session.flush()
-                            
-                            if receita.id is not None:
-                                comissao_id = int(receita.id)
-                                resultado["comissao_gerada"] = True
-                                resultado["comissao_id"] = comissao_id
-                                resultado["valor_comissao"] = valor_comissao
-                                
-                                # # print(f"DEBUG: Comissão gerada com sucesso, ID={comissao_id}, Valor={valor_comissao}")
-                                
-                        # Se for do tipo ASSISTENTE, gerar despesa a pagar automaticamente
+                            resultado["comissao_percentual"] = percentual_comissao_float
+                        # Remover a geração automática de despesa para assistentes
                         elif tipo_upper == "ASSISTENTE":
-                            # Criar despesa para o assistente
-                            despesa = Despesa(
-                                categoria="Pagamento de Assistente",
-                                descricao=f"Pagamento para {fornecedor_nome} - Proposta #{proposta.id}",
-                                valor=valor_float,
-                                data_vencimento=datetime.now().date() + timedelta(days=15),  # Vencimento em 15 dias
-                                status="Pendente",
-                                proposta_id=proposta_id_int,
-                                origem_tipo="assistente"
-                            )
-                            
-                            self.session.add(despesa)
-                            self.session.flush()
-                            
-                            if despesa.id is not None:
-                                despesa_id = int(despesa.id)
-                                resultado["despesa_gerada"] = True
-                                resultado["despesa_id"] = despesa_id
-                                resultado["valor_despesa"] = valor_float
-                                
-                                # # print(f"DEBUG: Despesa para assistente gerada com sucesso, ID={despesa_id}, Valor={valor_float}")
+                            resultado["assistente_valor"] = valor_float
                         
                         return resultado
                     else:
@@ -2433,9 +3241,41 @@ class Database:
                         print(f"DEBUG DATABASE: {len(produtos)} produtos encontrados para exclusão")
                         self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id).delete()
                         
-                        acrescimos = self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).all()
-                        print(f"DEBUG DATABASE: {len(acrescimos)} acréscimos encontrados para exclusão")
-                        self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id).delete()
+                        # Usar SQL direto em vez de ORM para evitar problemas com a coluna percentual_comissao
+                        from sqlalchemy import text
+                        # Contar acréscimos primeiro
+                        count_result = self.session.execute(text(f"SELECT COUNT(*) FROM acrescimos_proposta WHERE proposta_id = {proposta_id}"))
+                        count = count_result.scalar()
+                        print(f"DEBUG DATABASE: {count} acréscimos encontrados para exclusão")
+                        
+                        # Usar SQL direto para excluir
+                        self.session.execute(text(f"DELETE FROM acrescimos_proposta WHERE proposta_id = {proposta_id}"))
+                        
+                        # Excluir vendas que foram geradas automaticamente a partir desta proposta
+                        # 1. Identificar vendas relacionadas
+                        vendas_result = self.session.execute(text(f"""
+                            SELECT id FROM vendas 
+                            WHERE proposta_id = {proposta_id} 
+                            OR observacoes LIKE '%Venda gerada%proposta%{proposta_id}%'
+                            OR observacoes LIKE '%Venda gerada%proposta%#{proposta.numero}%'
+                        """))
+                        
+                        vendas_ids = [row[0] for row in vendas_result]
+                        if vendas_ids:
+                            print(f"DEBUG DATABASE: Encontradas {len(vendas_ids)} vendas relacionadas à proposta para exclusão")
+                            
+                            # Para cada venda, excluir seus itens
+                            for venda_id in vendas_ids:
+                                # Excluir itens da venda
+                                self.session.execute(text(f"DELETE FROM itens_venda WHERE venda_id = {venda_id}"))
+                                
+                                # Excluir transações relacionadas à venda
+                                self.session.execute(text(f"DELETE FROM financeiro WHERE origem_id = {venda_id} AND origem_tipo = 'venda'"))
+                                
+                                # Excluir a venda
+                                self.session.execute(text(f"DELETE FROM vendas WHERE id = {venda_id}"))
+                            
+                            print(f"DEBUG DATABASE: Vendas relacionadas excluídas com sucesso")
                         
                         # Excluir a proposta
                         print(f"DEBUG DATABASE: Excluindo proposta ID: {proposta_id}")
@@ -2457,7 +3297,12 @@ class Database:
         return self._safe_query(query)
     
     def excluir_proposta_por_numero(self, numero_proposta):
-        """Exclui uma proposta pelo seu número (não pelo ID)"""
+        """
+        Exclui uma proposta pelo seu número (não pelo ID)
+        
+        Returns:
+            dict: Dicionário com as chaves 'status' (bool) e 'message' (str)
+        """
         def query():
             try:
                 proposta = self.session.query(Proposta).filter_by(numero=numero_proposta).first()
@@ -2483,26 +3328,58 @@ class Database:
                         print(f"DEBUG DATABASE: {len(produtos)} produtos encontrados para exclusão")
                         self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id_local).delete()
                         
-                        acrescimos = self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id_local).all()
-                        print(f"DEBUG DATABASE: {len(acrescimos)} acréscimos encontrados para exclusão")
-                        self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id_local).delete()
+                        # Usar SQL direto em vez de ORM para evitar problemas com a coluna percentual_comissao
+                        from sqlalchemy import text
+                        # Contar acréscimos primeiro
+                        count_result = self.session.execute(text(f"SELECT COUNT(*) FROM acrescimos_proposta WHERE proposta_id = {proposta_id_local}"))
+                        count = count_result.scalar()
+                        print(f"DEBUG DATABASE: {count} acréscimos encontrados para exclusão")
+                        
+                        # Usar SQL direto para excluir
+                        self.session.execute(text(f"DELETE FROM acrescimos_proposta WHERE proposta_id = {proposta_id_local}"))
+                        
+                        # Excluir vendas que foram geradas automaticamente a partir desta proposta
+                        # 1. Identificar vendas relacionadas
+                        vendas_result = self.session.execute(text(f"""
+                            SELECT id FROM vendas 
+                            WHERE proposta_id = {proposta_id_local} 
+                            OR observacoes LIKE '%Venda gerada%proposta%{proposta_id_local}%'
+                            OR observacoes LIKE '%Venda gerada%proposta%#{numero_proposta}%'
+                        """))
+                        
+                        vendas_ids = [row[0] for row in vendas_result]
+                        if vendas_ids:
+                            print(f"DEBUG DATABASE: Encontradas {len(vendas_ids)} vendas relacionadas à proposta para exclusão")
+                            
+                            # Para cada venda, excluir seus itens
+                            for venda_id in vendas_ids:
+                                # Excluir itens da venda
+                                self.session.execute(text(f"DELETE FROM itens_venda WHERE venda_id = {venda_id}"))
+                                
+                                # Excluir transações relacionadas à venda
+                                self.session.execute(text(f"DELETE FROM financeiro WHERE origem_id = {venda_id} AND origem_tipo = 'venda'"))
+                                
+                                # Excluir a venda
+                                self.session.execute(text(f"DELETE FROM vendas WHERE id = {venda_id}"))
+                            
+                            print(f"DEBUG DATABASE: Vendas relacionadas excluídas com sucesso")
                         
                         # Excluir a proposta
                         print(f"DEBUG DATABASE: Excluindo proposta")
                         self.session.delete(proposta)
                         print(f"DEBUG DATABASE: Proposta excluída com sucesso")
                         
-                        return True, "Proposta excluída com sucesso"
+                        return {"status": True, "message": "Proposta excluída com sucesso"}
                     except Exception as e:
                         self.session.rollback()
                         print(f"DEBUG DATABASE ERROR: Erro ao excluir proposta: {str(e)}")
-                        return False, f"Erro ao excluir proposta: {str(e)}"
+                        return {"status": False, "message": f"Erro ao excluir proposta: {str(e)}"}
                 else:
                     print(f"DEBUG DATABASE: Proposta #{numero_proposta} não encontrada")
-                    return False, "Proposta não encontrada"
+                    return {"status": False, "message": f"Proposta #{numero_proposta} não encontrada"}
             except Exception as e:
                 print(f"DEBUG DATABASE ERROR: Erro ao processar número da proposta: {str(e)}")
-                return False, f"Erro ao processar número da proposta: {str(e)}"
+                return {"status": False, "message": f"Erro ao processar número da proposta: {str(e)}"}
         return self._safe_query(query)
 
     def remover_acrescimo(self, acrescimo_id):
@@ -2520,15 +3397,23 @@ class Database:
                 # Converter para int para garantir tipo correto
                 acrescimo_id_int = int(acrescimo_id)
                 
-                # Buscar o acréscimo pelo ID
-                acrescimo = self.session.query(AcrescimoProposta).filter_by(id=acrescimo_id_int).first()
+                # Utilizar SQL direto em vez de ORM para evitar problemas com a coluna percentual_comissao
+                from sqlalchemy import text
                 
-                if not acrescimo:
+                # Verificar se o acréscimo existe
+                count_result = self.session.execute(
+                    text(f"SELECT COUNT(*) FROM acrescimos_proposta WHERE id = {acrescimo_id_int}")
+                )
+                count = count_result.scalar()
+                
+                if count == 0:
                     print(f"DEBUG: Acréscimo ID={acrescimo_id_int} não encontrado")
                     return False
                 
-                # Remover acréscimo
-                self.session.delete(acrescimo)
+                # Remover acréscimo com SQL direto
+                self.session.execute(
+                    text(f"DELETE FROM acrescimos_proposta WHERE id = {acrescimo_id_int}")
+                )
                 self.session.flush()
                 
                 print(f"DEBUG: Acréscimo ID={acrescimo_id_int} removido com sucesso")
@@ -2545,12 +3430,20 @@ class Database:
     def atualizar_status_pagamento_acrescimo(self, proposta_id, tipo, status):
         """Atualiza o status de pagamento de um acréscimo"""
         def query():
-            acrescimo = self.session.query(AcrescimoProposta).filter_by(
-                proposta_id=proposta_id,
-                tipo=tipo
-            ).first()
-            if acrescimo:
-                acrescimo.status_pagamento = status
+            # Usar SQL direto em vez de ORM para evitar problemas com a coluna percentual_comissao
+            from sqlalchemy import text
+            
+            # Verificar se o acréscimo existe
+            count_result = self.session.execute(
+                text(f"SELECT COUNT(*) FROM acrescimos_proposta WHERE proposta_id = {proposta_id} AND tipo = '{tipo}'")
+            )
+            count = count_result.scalar()
+            
+            if count > 0:
+                # Usar SQL direto para atualizar
+                self.session.execute(
+                    text(f"UPDATE acrescimos_proposta SET status_pagamento = '{status}' WHERE proposta_id = {proposta_id} AND tipo = '{tipo}'")
+                )
                 return True
             return False
         return self._safe_query(query)
@@ -2635,15 +3528,24 @@ class Database:
                     'data_recebimento': p.data_proposta
                 })
 
-            # Adicionar acréscimos recebidos
-            acrescimos = self.session.query(AcrescimoProposta).filter_by(status_pagamento='Recebido').all()
-            for a in acrescimos:
+            # Adicionar acréscimos recebidos usando SQL direto em vez de ORM
+            from sqlalchemy import text
+            acrescimos_query = text("""
+                SELECT a.id, a.tipo, a.valor, a.data_cadastro, p.numero as proposta_numero, c.nome as cliente_nome
+                FROM acrescimos_proposta a
+                JOIN propostas p ON a.proposta_id = p.id
+                JOIN clientes c ON p.cliente_id = c.id
+                WHERE a.status_pagamento = 'Recebido'
+            """)
+            acrescimos_result = self.session.execute(acrescimos_query)
+            
+            for row in acrescimos_result:
                 historico.append({
-                    'proposta': a.proposta.numero,
-                    'cliente': a.proposta.cliente.nome,
-                    'tipo': a.tipo,
-                    'valor': a.valor,
-                    'data_recebimento': a.data_cadastro
+                    'proposta': row.proposta_numero,
+                    'cliente': row.cliente_nome,
+                    'tipo': row.tipo,
+                    'valor': row.valor,
+                    'data_recebimento': row.data_cadastro
                 })
 
             return pd.DataFrame(historico)
@@ -2659,16 +3561,26 @@ class Database:
                 preco_custo=float(preco_custo),
                 preco_venda=float(preco_venda),
                 categoria=categoria,
-                estoque=int(estoque)
+                estoque=int(estoque),
+                usuario_id=self.usuario_id  # Adicionar o ID do usuário atual
             )
             self.session.add(produto)
             return produto.id
         return self._safe_query(query)
         
     def get_produtos(self):
-        """Retorna todos os produtos cadastrados"""
+        """Retorna todos os produtos cadastrados do usuário atual"""
         def query():
-            produtos = self.session.query(Produto).all()
+            # Criar consulta base
+            query = self.session.query(Produto)
+            
+            # Adicionar filtro por usuário se disponível
+            if self.usuario_id:
+                query = query.filter(Produto.usuario_id == self.usuario_id)
+                
+            # Executar consulta
+            produtos = query.all()
+            
             return pd.DataFrame([{
                 'id': p.id,
                 'nome': p.nome,
@@ -2677,7 +3589,8 @@ class Database:
                 'preco_venda': p.preco_venda,
                 'categoria': p.categoria,
                 'estoque': p.estoque,
-                'data_cadastro': p.data_cadastro
+                'data_cadastro': p.data_cadastro,
+                'usuario_id': p.usuario_id
             } for p in produtos])
         return self._safe_query(query)
         
@@ -2747,7 +3660,8 @@ class Database:
                 cliente_id=cliente_id,
                 valor_total=0,  # Será atualizado após adicionar os itens
                 forma_pagamento=forma_pagamento,
-                observacoes=observacoes
+                observacoes=observacoes,
+                usuario_id=self.usuario_id  # Adicionar o ID do usuário atual
             )
             self.session.add(venda)
             self.session.flush()  # Para obter o ID da venda
@@ -2804,9 +3718,18 @@ class Database:
         return self._safe_query(query)
         
     def get_vendas(self):
-        """Retorna todas as vendas realizadas"""
+        """Retorna todas as vendas realizadas do usuário atual"""
         def query():
-            vendas = self.session.query(Venda).order_by(Venda.data_venda.desc()).all()
+            # Criar consulta base
+            query = self.session.query(Venda)
+            
+            # Adicionar filtro por usuário se disponível
+            if self.usuario_id:
+                query = query.filter(Venda.usuario_id == self.usuario_id)
+                
+            # Executar consulta ordenada
+            vendas = query.order_by(Venda.data_venda.desc()).all()
+            
             return pd.DataFrame([{
                 'id': v.id,
                 'cliente_nome': v.cliente.nome if v.cliente else "Cliente não encontrado",
@@ -2814,7 +3737,8 @@ class Database:
                 'data_venda': v.data_venda,
                 'status': v.status,
                 'forma_pagamento': v.forma_pagamento,
-                'observacoes': v.observacoes
+                'observacoes': v.observacoes,
+                'usuario_id': v.usuario_id
             } for v in vendas])
         return self._safe_query(query)
         
@@ -2824,10 +3748,11 @@ class Database:
             itens = self.session.query(ItemVenda).filter_by(venda_id=venda_id).all()
             return pd.DataFrame([{
                 'id': i.id,
-                'produto_nome': i.produto.nome if i.produto else "Produto não encontrado",
+                'produto_nome': i.produto.nome if i.produto else i.descricao,
                 'quantidade': i.quantidade,
                 'preco_unitario': i.preco_unitario,
-                'subtotal': i.subtotal
+                'subtotal': i.subtotal,
+                'lucro': (i.preco_unitario - (i.produto.preco_custo if i.produto else 0)) * i.quantidade
             } for i in itens])
         return self._safe_query(query)
         
@@ -2884,7 +3809,7 @@ class Database:
                 # Executar SQL para excluir na ordem correta
                 # 1. Excluir transações financeiras relacionadas
                 transacoes_stmt = text("""
-                    DELETE FROM transacoes 
+                    DELETE FROM financeiro 
                     WHERE origem_id = :venda_id AND origem_tipo = 'venda'
                 """)
                 self.session.execute(transacoes_stmt, {"venda_id": venda_id})
@@ -3012,7 +3937,7 @@ class Database:
                     # Executar SQL para excluir na ordem correta
                     # 1. Excluir transações financeiras relacionadas
                     self.session.execute(text("""
-                        DELETE FROM transacoes 
+                        DELETE FROM financeiro 
                         WHERE origem_id = :venda_id AND origem_tipo = 'venda'
                     """), {"venda_id": venda_id})
                     print("DEBUG: Excluídas transações financeiras relacionadas")
@@ -3321,9 +4246,9 @@ class Database:
                     # Calcular valor da comissão
                     valor_comissao = fornecedor.valor * (fornecedor.percentual_comissao / 100.0)
                     
-                    # Criar transação de comissão
+                    # Criar transação de comissão a receber
                     comissao = Transacao(
-                        tipo="receita",
+                        tipo="receita_a_receber",
                         descricao=f"Comissão de {fornecedor.percentual_comissao}% - {fornecedor.fornecedor} - Proposta #{proposta.numero}",
                         valor=valor_comissao,
                         categoria="Comissões",
@@ -3335,7 +4260,7 @@ class Database:
                         tipo_conta="PF",
                         status="Pendente",
                         data_vencimento=datetime.now().date() + timedelta(days=30),
-                        classificacao="receita"
+                        classificacao="receita_a_receber"
                     )
                     self.session.add(comissao)
                     self.session.flush()
@@ -3508,8 +4433,8 @@ class Database:
         
         Gera:
         1. Produtos a receber (valor total dos produtos)
-        2. Comissão a receber por fornecedor (com % registrado no cadastro)
-        3. Assistentes a pagar (um registro por assistente)
+        2. Comissão a receber por fornecedor (com % registrado no cadastro) - APENAS para propostas concluídas
+        3. Assistentes a pagar (um registro por assistente) - APENAS para propostas concluídas
         4. Cliente a receber (valor base da proposta)
         
         Args:
@@ -3560,7 +4485,7 @@ class Database:
                     else:
                         # Verificar se existem transações do tipo produto especificamente
                         transacoes_produtos = self.session.query(Transacao)\
-                            .filter_by(proposta_id=proposta_id_int, categoria="Produto")\
+                            .filter_by(proposta_id=proposta_id_int, categoria="Venda de Produtos")\
                             .count()
                             
                         if transacoes_produtos > 0:
@@ -3579,38 +4504,54 @@ class Database:
                     "lancamentos_gerados": 0
                 }
                 
+                # Converter proposta_id para inteiro nativo do Python para evitar problemas com numpy.int64
+                proposta_id_python_int = self._ensure_int(proposta_id_int)
+                
                 # 1. Lançamento do valor base (cliente a receber)
                 valor_base = float(proposta.valor) if proposta.valor else 0
                 print(f"DEBUG LANCAMENTOS: Valor base da proposta: R$ {valor_base:.2f}")
                 
+                # Obter usuario_id da proposta para garantir isolamento de dados
+                usuario_id = proposta.usuario_id if hasattr(proposta, 'usuario_id') else None
+                
+                # Data dos lançamentos - usar a data de finalização ou data atual
+                data_lancamento = datetime.now().date()
+                if hasattr(proposta, 'data_fim') and proposta.data_fim:
+                    data_lancamento = proposta.data_fim
+                
                 if valor_base > 0:
+                    # Transação no extrato financeiro
                     transacao_base = Transacao(
                         tipo="receita_a_receber",
                         descricao=f"Proposta #{proposta.numero} - {proposta.descricao[:50]}... - {cliente.nome}",
                         valor=valor_base,
-                        data=datetime.now().date(),
-                        categoria="Serviço",
+                        data=data_lancamento,
+                        categoria="Serviços de Organização",
                         subcategoria=proposta.tipo_proposta or "Organização",
-                        tipo_receita="organização",
+                        tipo_receita="organizacao",
                         origem_id=proposta.cliente_id,
                         origem_tipo="cliente",
                         tipo_conta="PF",
                         status="Pendente",
                         proposta_id=proposta_id_int,
-                        classificacao="receita"
+                        classificacao="receita",
+                        usuario_id=usuario_id
                     )
                     self.session.add(transacao_base)
+                    
+                    # Removido a transação duplicada nas contas a receber
+                    
                     result["valor_base"] = valor_base
                     result["lancamentos_gerados"] += 1
                     print(f"DEBUG LANCAMENTOS: Lançamento do valor base criado")
                 
                 # 2. Produtos a receber
-                produtos = self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id_int).all()
+                produtos = self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id_python_int).all()
                 print(f"DEBUG LANCAMENTOS: Produtos encontrados: {len(produtos)}")
                 
                 # Query direto para confirmar problemas
                 try:
-                    produtos_sql = self.session.execute(text(f"SELECT * FROM produtos_organizadores WHERE proposta_id = {proposta_id_int}")).fetchall()
+                    produtos_sql = self.session.execute(text(f"SELECT * FROM produtos_organizadores WHERE proposta_id = {proposta_id_python_int}")).fetchall()
                     print(f"DEBUG LANCAMENTOS SQL: Produtos via SQL direto: {len(produtos_sql)}")
                     
                     if produtos_sql:
@@ -3657,27 +4598,39 @@ class Database:
                 print(f"DEBUG LANCAMENTOS: Valor total dos produtos físicos: R$ {valor_total_produtos_fisicos:.2f}")
                 print(f"DEBUG LANCAMENTOS: Valor total dos serviços: R$ {valor_total_servicos:.2f}")
                 
-                # Criar lançamento para produtos físicos
+                # Obter usuario_id da proposta para garantir isolamento de dados
+                usuario_id = proposta.usuario_id if hasattr(proposta, 'usuario_id') else None
+                
+                # Data dos lançamentos - usar a data de finalização ou data atual
+                data_lancamento = datetime.now().date()
+                if hasattr(proposta, 'data_fim') and proposta.data_fim:
+                    data_lancamento = proposta.data_fim
+                
+                # Criar lançamento para produtos físicos no extrato (1 - Produtos a receber)
                 if valor_total_produtos_fisicos > 0:
                     transacao_produtos = Transacao(
                         tipo="receita_a_receber",
                         descricao=f"Produtos da Proposta #{proposta.numero} - {cliente.nome}",
                         valor=valor_total_produtos_fisicos,
-                        data=datetime.now().date(),
-                        categoria="Produto",
-                        subcategoria="Venda de Produtos",
+                        data=data_lancamento,
+                        categoria="Venda de Produtos",
+                        subcategoria="Produtos",
                         tipo_receita="venda",
                         origem_id=proposta.cliente_id,
                         origem_tipo="cliente",
                         tipo_conta="PF",
                         status="Pendente",
                         proposta_id=proposta_id_int,
-                        classificacao="receita"
+                        classificacao="receita",
+                        usuario_id=usuario_id
                     )
                     self.session.add(transacao_produtos)
+                    
+                    # Removido o lançamento duplicado nas contas a receber para produtos
+                    
                     result["valor_produtos"] = valor_total_produtos_fisicos
-                    result["lancamentos_gerados"] += 1
-                    print(f"DEBUG LANCAMENTOS: Lançamento de produtos físicos criado: R$ {valor_total_produtos_fisicos:.2f}")
+                    result["lancamentos_gerados"] += 1  # Apenas um lançamento agora
+                    print(f"DEBUG LANCAMENTOS: Lançamento de produtos criado: R$ {valor_total_produtos_fisicos:.2f}")
                     
                     # Adicionar à tabela de vendas somente os produtos físicos
                     try:
@@ -3687,12 +4640,13 @@ class Database:
                 
                 # Criar lançamento para serviços (separado dos produtos físicos)
                 if valor_total_servicos > 0:
+                    # Transação no extrato
                     transacao_servicos = Transacao(
                         tipo="receita_a_receber",
                         descricao=f"Serviços da Proposta #{proposta.numero} - {cliente.nome}",
                         valor=valor_total_servicos,
-                        data=datetime.now().date(),
-                        categoria="Serviço",
+                        data=data_lancamento,
+                        categoria="Serviços de Organização",
                         subcategoria="Serviços Adicionais",
                         tipo_receita="servico",
                         origem_id=proposta.cliente_id,
@@ -3700,9 +4654,13 @@ class Database:
                         tipo_conta="PF",
                         status="Pendente",
                         proposta_id=proposta_id_int,
-                        classificacao="receita"
+                        classificacao="receita",
+                        usuario_id=usuario_id
                     )
                     self.session.add(transacao_servicos)
+                    
+                    # Removido o lançamento duplicado nas contas a receber
+                    
                     # Adicionar ao valor total de outros
                     result["valor_outros"] = result.get("valor_outros", 0) + valor_total_servicos
                     result["lancamentos_gerados"] += 1
@@ -3747,7 +4705,7 @@ class Database:
                 
                 # Vamos adicionar processamento de itens tipo "OUTRO"
                 outros = self.session.query(AcrescimoProposta)\
-                    .filter_by(proposta_id=proposta_id_int, tipo="OUTRO")\
+                    .filter_by(proposta_id=proposta_id_python_int, tipo="OUTRO")\
                     .all()
                     
                 print(f"DEBUG LANCAMENTOS: Itens tipo OUTRO encontrados: {len(outros)}")
@@ -3760,13 +4718,23 @@ class Database:
                 
                 print(f"DEBUG LANCAMENTOS: Valor total de itens OUTRO: R$ {valor_total_outros:.2f}")
                 
-                # Criar lançamento para itens OUTRO
-                if valor_total_outros > 0:
+                # Verificar se já existem lançamentos para Outros a receber
+                transacoes_outros = self.session.query(Transacao)\
+                    .filter_by(proposta_id=proposta_id_int, 
+                              categoria="Outros", 
+                              classificacao="contas_a_receber")\
+                    .count()
+                
+                # Criar lançamento para itens OUTRO apenas se não existir ou se forçado
+                if valor_total_outros > 0 and (transacoes_outros == 0 or forcar_geracao):
+                    print(f"DEBUG LANCAMENTOS: Criando lançamento para Outros a receber: R$ {valor_total_outros:.2f}")
+                    
+                    # Transação no extrato
                     transacao_outros = Transacao(
                         tipo="receita_a_receber",
                         descricao=f"Itens adicionais da Proposta #{proposta.numero} - {cliente.nome}",
                         valor=valor_total_outros,
-                        data=datetime.now().date(),
+                        data=data_lancamento,
                         categoria="Outros",
                         subcategoria="Itens Adicionais",
                         tipo_receita="outros",
@@ -3775,89 +4743,176 @@ class Database:
                         tipo_conta="PF",
                         status="Pendente",
                         proposta_id=proposta_id_int,
-                        classificacao="receita"
+                        classificacao="receita",
+                        usuario_id=usuario_id
                     )
                     self.session.add(transacao_outros)
+                    
+                    # Removido o lançamento duplicado nas contas a receber
+                    
                     result["valor_outros"] = valor_total_outros
                     result["lancamentos_gerados"] += 1
                     print(f"DEBUG LANCAMENTOS: Lançamento de itens OUTRO criado: R$ {valor_total_outros:.2f}")
+                else:
+                    if transacoes_outros > 0:
+                        print(f"DEBUG LANCAMENTOS: Já existem lançamentos para Outros a receber ({transacoes_outros}). Pulando.")
+                    result["valor_outros"] = valor_total_outros
                 
-                # 3. Comissões a receber por fornecedor
-                fornecedores = self.session.query(AcrescimoProposta)\
-                    .filter_by(proposta_id=proposta_id_int, tipo="FORNECEDOR")\
-                    .all()
-                    
+                # 3. Comissões a receber por fornecedor - APENAS para propostas concluídas
+                # Verificar se a proposta está concluída antes de gerar lançamentos para fornecedores
+                gerar_lancamentos_comissao = False
+                if proposta.status == "Concluída" or (hasattr(proposta, 'status_execucao') and proposta.status_execucao == "Concluída"):
+                    gerar_lancamentos_comissao = True
+                    print(f"DEBUG LANCAMENTOS: Proposta está concluída. Gerando lançamentos de comissão e assistentes.")
+                else:
+                    print(f"DEBUG LANCAMENTOS: Proposta NÃO está concluída (Status={proposta.status}, Status execução={proposta.status_execucao if hasattr(proposta, 'status_execucao') else 'N/A'}). Pulando lançamentos de comissão e assistentes.")
+                
+                # Inicializar variável para total de fornecedores
                 valor_total_fornecedores = 0
                 
-                for fornecedor_item in fornecedores:
-                    valor_fornecedor = float(fornecedor_item.valor) if fornecedor_item.valor else 0
-                    valor_total_fornecedores += valor_fornecedor
+                # Só processar comissões se a proposta estiver concluída ou se forcar_geracao=True
+                if gerar_lancamentos_comissao or forcar_geracao:
+                    fornecedores = self.session.query(AcrescimoProposta)\
+                        .filter_by(proposta_id=proposta_id_python_int, tipo="FORNECEDOR")\
+                        .all()
                     
-                    # Buscar o percentual de comissão (pode estar no item ou precisamos buscar no cadastro)
-                    percentual_comissao = None
-                    for attr in dir(fornecedor_item):
-                        if attr == 'percentual_comissao':
-                            percentual_comissao = getattr(fornecedor_item, attr)
-                            break
-                    
-                    # Se não tiver percentual no item, buscar no cadastro do fornecedor
-                    nome_fornecedor = fornecedor_item.fornecedor
-                    fornecedor_cadastro = self.session.query(Fornecedor).filter(Fornecedor.descricao == nome_fornecedor).first()
-                    
-                    if not percentual_comissao and fornecedor_cadastro and hasattr(fornecedor_cadastro, 'percentual_comissao'):
-                        percentual_comissao = fornecedor_cadastro.percentual_comissao
-                    
-                    # Se tiver percentual de comissão, calcular o valor e gerar o lançamento
-                    if percentual_comissao and percentual_comissao > 0:
-                        valor_comissao = valor_fornecedor * (percentual_comissao / 100)
+                    for fornecedor_item in fornecedores:
+                        valor_fornecedor = float(fornecedor_item.valor) if fornecedor_item.valor else 0
+                        valor_total_fornecedores += valor_fornecedor
                         
-                        if valor_comissao > 0:
-                            transacao_comissao = Transacao(
-                                tipo="receita_a_receber",
-                                descricao=f"Comissão de {percentual_comissao}% - {nome_fornecedor} - Proposta #{proposta.numero}",
-                                valor=valor_comissao,
-                                data=datetime.now().date(),
-                                categoria="Comissão",
-                                subcategoria="Comissão de Fornecedor",
-                                tipo_receita="comissão",
-                                origem_id=fornecedor_cadastro.id if fornecedor_cadastro else None,
-                                origem_tipo="fornecedor",
-                                tipo_conta="PF",
-                                status="Pendente",
-                                proposta_id=proposta_id_int,
-                                classificacao="receita"
-                            )
-                            self.session.add(transacao_comissao)
-                            result["lancamentos_gerados"] += 1
+                        # Buscar o percentual de comissão (pode estar no item ou precisamos buscar no cadastro)
+                        percentual_comissao = None
+                        for attr in dir(fornecedor_item):
+                            if attr == 'percentual_comissao':
+                                percentual_comissao = getattr(fornecedor_item, attr)
+                                break
+                        
+                        # Se não tiver percentual no item, buscar no cadastro do fornecedor
+                        nome_fornecedor = fornecedor_item.fornecedor
+                        fornecedor_cadastro = self.session.query(Fornecedor).filter(Fornecedor.descricao == nome_fornecedor).first()
+                        
+                        if not percentual_comissao and fornecedor_cadastro and hasattr(fornecedor_cadastro, 'percentual_comissao'):
+                            percentual_comissao = fornecedor_cadastro.percentual_comissao
+                        
+                        # Se tiver percentual de comissão, calcular o valor e gerar o lançamento
+                        if percentual_comissao and percentual_comissao > 0:
+                            valor_comissao = valor_fornecedor * (percentual_comissao / 100)
+                            
+                            if valor_comissao > 0:
+                                # Verificar se já existe uma transação de comissão para este fornecedor nesta proposta
+                                comissao_existente = self.session.query(Transacao).filter(
+                                    Transacao.proposta_id == proposta_id_int,
+                                    Transacao.categoria == "Comissão",
+                                    Transacao.subcategoria == "Comissão de Fornecedor",
+                                    Transacao.descricao.like(f"%{nome_fornecedor}%")
+                                ).first()
+                                
+                                if comissao_existente:
+                                    print(f"DEBUG LANCAMENTOS: Comissão para {nome_fornecedor} já existe. ID={comissao_existente.id}. Pulando.")
+                                    continue
+                                
+                                # Transação no extrato
+                                transacao_comissao = Transacao(
+                                    tipo="receita_a_receber",
+                                    descricao=f"Comissão de {percentual_comissao}% - {nome_fornecedor} - Proposta #{proposta.numero}",
+                                    valor=valor_comissao,
+                                    data=data_lancamento,
+                                    categoria="Comissão",
+                                    subcategoria="Comissão de Fornecedor",
+                                    tipo_receita="comissao",
+                                    origem_id=fornecedor_cadastro.id if fornecedor_cadastro else None,
+                                    origem_tipo="fornecedor",
+                                    tipo_conta="PF",
+                                    status="Pendente",
+                                    proposta_id=proposta_id_int,
+                                    classificacao="receita",
+                                    usuario_id=usuario_id
+                                )
+                                self.session.add(transacao_comissao)
+                                
+                                # Removido o lançamento duplicado nas contas a receber
+                                
+                                result["lancamentos_gerados"] += 1
+                                print(f"DEBUG LANCAMENTOS: Lançamento de comissão criado: R$ {valor_comissao:.2f}")
+                else:
+                    print(f"DEBUG LANCAMENTOS: Pulando geração de lançamentos de comissão (proposta não está concluída).")
                 
-                # 4. Assistentes a pagar
-                assistentes = self.session.query(AcrescimoProposta)\
-                    .filter_by(proposta_id=proposta_id_int, tipo="ASSISTENTE")\
-                    .all()
-                    
+                # 4. Assistentes a pagar - APENAS para propostas concluídas
+                # Inicializar variável para total de assistentes
                 valor_total_assistentes = 0
                 
-                for assistente_item in assistentes:
-                    valor_assistente = float(assistente_item.valor) if assistente_item.valor else 0
-                    valor_total_assistentes += valor_assistente
+                # Só processar assistentes se a proposta estiver concluída ou se forcar_geracao=True
+                if gerar_lancamentos_comissao or forcar_geracao:
+                    assistentes = self.session.query(AcrescimoProposta)\
+                        .filter_by(proposta_id=proposta_id_python_int, tipo="ASSISTENTE")\
+                        .all()
                     
-                    if valor_assistente > 0:
-                        nome_assistente = assistente_item.fornecedor  # o campo "fornecedor" armazena o nome do assistente
-                        transacao_assistente = Transacao(
-                            tipo="despesa",
-                            descricao=f"Pagamento Assistente {nome_assistente} - Proposta #{proposta.numero}",
-                            valor=valor_assistente,
-                            data=datetime.now().date(),
-                            categoria="Assistente",
-                            subcategoria="Pagamento de Serviço",
-                            origem_tipo="assistente",
-                            tipo_conta="PF",
-                            status="Pendente",
-                            proposta_id=proposta_id_int,
-                            classificacao="custo_direto"
-                        )
-                        self.session.add(transacao_assistente)
-                        result["lancamentos_gerados"] += 1
+                    for assistente_item in assistentes:
+                        valor_assistente = float(assistente_item.valor) if assistente_item.valor else 0
+                        valor_total_assistentes += valor_assistente
+                        print(f"DEBUG LANCAMENTOS: Assistente '{assistente_item.fornecedor}': R$ {valor_assistente:.2f}")
+                    
+                    print(f"DEBUG LANCAMENTOS: Valor total de assistentes: R$ {valor_total_assistentes:.2f}")
+                    
+                    # Verificar se já existem lançamentos para Assistentes a pagar
+                    transacoes_assistentes = self.session.query(Transacao)\
+                        .filter_by(proposta_id=proposta_id_int, 
+                                  categoria="Assistente", 
+                                  classificacao="contas_a_pagar")\
+                        .count()
+                        
+                    print(f"DEBUG LANCAMENTOS: Lançamentos existentes para Assistentes a pagar: {transacoes_assistentes}")
+                    
+                    # Criar lançamentos individuais para cada assistente (verificando duplicidade por assistente)
+                    if valor_total_assistentes > 0:
+                        print(f"DEBUG LANCAMENTOS: Verificando lançamentos para Assistentes a pagar: R$ {valor_total_assistentes:.2f}")
+                        
+                        for assistente_item in assistentes:
+                            valor_assistente = float(assistente_item.valor) if assistente_item.valor else 0
+                            
+                            if valor_assistente > 0:
+                                nome_assistente = assistente_item.fornecedor  # o campo "fornecedor" armazena o nome do assistente
+                                
+                                # Verificar se já existe uma transação de pagamento para este assistente nesta proposta
+                                assistente_existente = self.session.query(Transacao).filter(
+                                    Transacao.proposta_id == proposta_id_int,
+                                    Transacao.categoria == "Assistente",
+                                    Transacao.subcategoria == "Pagamento de Serviço",
+                                    Transacao.descricao.like(f"%{nome_assistente}%")
+                                ).first()
+                                
+                                if assistente_existente:
+                                    print(f"DEBUG LANCAMENTOS: Pagamento para assistente {nome_assistente} já existe. ID={assistente_existente.id}. Pulando.")
+                                    continue
+                                
+                                # Transação no extrato
+                                transacao_assistente = Transacao(
+                                    tipo="despesa",
+                                    descricao=f"Pagamento Assistente {nome_assistente} - Proposta #{proposta.numero}",
+                                    valor=valor_assistente,
+                                    data=data_lancamento,
+                                    categoria="Assistente",
+                                    subcategoria="Pagamento de Serviço",
+                                    tipo_receita="assistente",  # Usaremos tipo_receita mesmo para despesas
+                                    origem_id=assistente_item.id,
+                                    origem_tipo="assistente",
+                                    tipo_conta="PF",
+                                    status="Pendente",
+                                    proposta_id=proposta_id_int,
+                                    classificacao="custo_direto",
+                                    usuario_id=usuario_id
+                                )
+                                self.session.add(transacao_assistente)
+                                
+                                # Removido o lançamento duplicado nas contas a pagar
+                                
+                                result["lancamentos_gerados"] += 1
+                                print(f"DEBUG LANCAMENTOS: Lançamento criado para assistente {nome_assistente}: R$ {valor_assistente:.2f}")
+                    else:
+                        if transacoes_assistentes > 0:
+                            print(f"DEBUG LANCAMENTOS: Já existem lançamentos para Assistentes a pagar ({transacoes_assistentes}). Pulando.")
+                else:
+                    print(f"DEBUG LANCAMENTOS: Pulando geração de lançamentos de assistentes (proposta não está concluída).")
                 
                 result["valor_fornecedores"] = valor_total_fornecedores
                 result["valor_assistentes"] = valor_total_assistentes
@@ -3893,13 +4948,35 @@ class Database:
         Returns:
             int: ID da venda criada ou None em caso de erro
         """
+        # Resolver o problema de "concurrent operations are not permitted"
+        # usando uma nova sessão isolada para esta operação
+        import os
+        from sqlalchemy.orm import Session as SQLSession
+        from sqlalchemy import create_engine
+        
+        # Usar diretamente a variável de ambiente para o DATABASE_URL
+        database_url = os.environ.get('DATABASE_URL')
+        if not database_url:
+            print("ERRO: DATABASE_URL não encontrada no ambiente")
+            return None
+            
+        # Criar uma nova sessão independente para esta operação
+        engine_local = create_engine(database_url)
+        session_local = SQLSession(bind=engine_local)
+        
         try:
             print(f"DEBUG VENDAS: Iniciando registro de venda para proposta #{proposta.numero}")
             print(f"DEBUG VENDAS: Cliente: {cliente.nome} (ID: {cliente.id})")
             print(f"DEBUG VENDAS: Total de produtos: {len(produtos)}")
             
-            # Verificar se já existe uma venda para esta proposta
-            venda_existente = self.session.query(Venda).filter_by(proposta_id=proposta.id).first()
+            # Buscar proposta e cliente pela ID na sessão local
+            proposta_id = proposta.id
+            cliente_id = cliente.id
+            proposta_numero = proposta.numero
+            usuario_id = proposta.usuario_id
+            
+            # Verificar se já existe uma venda para esta proposta na sessão local
+            venda_existente = session_local.query(Venda).filter_by(proposta_id=proposta_id).first()
             if venda_existente:
                 print(f"DEBUG VENDAS: Já existe uma venda (ID: {venda_existente.id}) para esta proposta")
                 
@@ -3909,83 +4986,119 @@ class Database:
                     # Primeiro remover os itens relacionados
                     try:
                         # Remover transações financeiras relacionadas à venda
-                        self.session.query(Transacao).filter_by(
+                        session_local.query(Transacao).filter_by(
                             origem_id=venda_existente.id,
                             origem_tipo='venda'
                         ).delete()
                         print(f"DEBUG VENDAS: Transações financeiras da venda removidas")
                         
                         # Remover itens da venda
-                        self.session.query(ItemVenda).filter_by(venda_id=venda_existente.id).delete()
+                        session_local.query(ItemVenda).filter_by(venda_id=venda_existente.id).delete()
                         print(f"DEBUG VENDAS: Itens da venda removidos")
                         
                         # Depois remover a venda
-                        self.session.query(Venda).filter_by(id=venda_existente.id).delete()
-                        self.session.flush()
+                        session_local.query(Venda).filter_by(id=venda_existente.id).delete()
+                        session_local.flush()
                         print(f"DEBUG VENDAS: Venda removida com sucesso")
                     except Exception as e:
                         print(f"ERRO ao remover venda existente: {str(e)}")
                         import traceback
                         traceback.print_exc()
+                        session_local.rollback()
                 else:
                     # Verificar se a venda tem itens
-                    itens = self.session.query(ItemVenda).filter_by(venda_id=venda_existente.id).count()
+                    itens = session_local.query(ItemVenda).filter_by(venda_id=venda_existente.id).count()
                     print(f"DEBUG VENDAS: Venda existente tem {itens} itens")
                     
                     if itens == 0:
                         print(f"DEBUG VENDAS: Venda existe mas não tem itens. Removendo venda vazia para regeneração.")
                         # Remover a venda sem itens
-                        self.session.query(Venda).filter_by(id=venda_existente.id).delete()
-                        self.session.flush()
+                        session_local.query(Venda).filter_by(id=venda_existente.id).delete()
+                        session_local.flush()
                     else:
                         # Se não forçar, retornar o ID da venda existente
                         print(f"DEBUG VENDAS: Usando venda existente com itens")
-                        return venda_existente.id
+                        venda_id = venda_existente.id
+                        session_local.close()
+                        return venda_id
             
             # Calcular valor total dos produtos
             valor_total = 0
+            produtos_info = []  # Lista para armazenar informações dos produtos
+            
             for i, produto in enumerate(produtos):
                 valor_produto = float(produto.valor) * produto.quantidade
                 valor_total += valor_produto
+                produtos_info.append({
+                    'nome': produto.nome,
+                    'valor': float(produto.valor),
+                    'quantidade': produto.quantidade,
+                    'subtotal': valor_produto,
+                    'produto_id': produto.produto_id if hasattr(produto, 'produto_id') else None
+                })
                 print(f"DEBUG VENDAS: Produto {i+1}: {produto.nome}, Valor: R$ {produto.valor}, Quantidade: {produto.quantidade}, Subtotal: R$ {valor_produto:.2f}")
                 
             print(f"DEBUG VENDAS: Valor total dos produtos: R$ {valor_total:.2f}")
                 
             # Criar a venda
             venda = Venda(
-                cliente_id=cliente.id,
-                proposta_id=proposta.id,
+                cliente_id=cliente_id,
+                proposta_id=proposta_id,
                 data_venda=datetime.now().date(),
                 valor_total=valor_total,
                 status="Concluída",
                 forma_pagamento="Proposta",
-                observacoes=f"Venda gerada automaticamente da proposta #{proposta.numero}"
+                observacoes=f"Venda gerada automaticamente da proposta #{proposta_numero}",
+                usuario_id=usuario_id  # Importante: manter o mesmo usuário da proposta
             )
-            self.session.add(venda)
-            self.session.flush()  # Para obter o ID da venda
-            print(f"DEBUG VENDAS: Venda criada com ID: {venda.id}")
+            session_local.add(venda)
+            session_local.flush()  # Para obter o ID da venda
+            venda_id = venda.id
+            print(f"DEBUG VENDAS: Venda criada com ID: {venda_id}")
             
             # Adicionar itens da venda
-            for i, produto in enumerate(produtos):
-                valor_produto = float(produto.valor) * produto.quantidade
-                item = ItemVenda(
-                    venda_id=venda.id,
-                    produto_id=None,  # Não temos o produto do catálogo, apenas o produto da proposta
-                    quantidade=produto.quantidade,
-                    preco_unitario=float(produto.valor),
-                    subtotal=valor_produto,
-                    descricao=produto.nome  # Adicionado nome do produto para referência
-                )
-                self.session.add(item)
-                print(f"DEBUG VENDAS: Item adicionado à venda: {produto.nome}, Subtotal: R$ {valor_produto:.2f}")
+            for produto_info in produtos_info:
+                # Criar o objeto ItemVenda com campos compatíveis
+                try:
+                    # Tentar criar o objeto com campos básicos primeiro (compatível com produção)
+                    item = ItemVenda(
+                        venda_id=venda_id,
+                        produto_id=produto_info['produto_id'],
+                        quantidade=produto_info['quantidade'],
+                        preco_unitario=produto_info['valor'],
+                        subtotal=produto_info['subtotal']
+                    )
+                    
+                    # Tentar adicionar o campo descricao somente se for suportado
+                    if hasattr(ItemVenda, 'descricao'):
+                        try:
+                            item.descricao = produto_info['nome']
+                        except Exception as descr_e:
+                            print(f"AVISO: Não foi possível adicionar o campo descricao: {str(descr_e)}")
+                except Exception as e:
+                    print(f"ERRO ao criar item de venda: {str(e)}")
+                    # Garantir que pelo menos os campos obrigatórios são incluídos
+                    item = ItemVenda(
+                        venda_id=venda_id,
+                        produto_id=None,
+                        quantidade=produto_info['quantidade'],
+                        preco_unitario=produto_info['valor'],
+                        subtotal=produto_info['subtotal']
+                    )
+                session_local.add(item)
+                print(f"DEBUG VENDAS: Item adicionado à venda: {produto_info['nome']}, Subtotal: R$ {produto_info['subtotal']:.2f}")
             
             # Forçar commit para garantir que a venda seja salva
-            self.session.commit()
-            print(f"DEBUG VENDAS: Venda registrada com sucesso, ID: {venda.id}")
-            return venda.id
+            session_local.commit()
+            print(f"DEBUG VENDAS: Venda registrada com sucesso, ID: {venda_id}")
+            return venda_id
             
         except Exception as e:
+            session_local.rollback()
             print(f"ERRO ao registrar venda de produtos: {str(e)}")
             import traceback
             traceback.print_exc()
             return None
+        finally:
+            # Sempre fechar a sessão local no final para liberar os recursos
+            session_local.close()

@@ -1,111 +1,315 @@
 /* Estilos globais */
-:root {
-    --primary-color: #2D8CFF;
-    --primary-dark: #1E366F;
-    --light-bg: #F9F9F9;
-    --white: #FFFFFF;
-    --grey-light: #E0E0E0;
-    --grey-text: #5A6A85;
-    --success-color: #00a651;
+.main {
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
-/* Reset de alguns estilos */
-* {
-    box-sizing: border-box;
+/* Reset para garantir que o conteúdo não tenha margens ou padding indesejados */
+.block-container {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+    max-width: 100% !important;
 }
 
-/* Remoção dos espaços excessivos */
-div.block-container {
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
+/* Estilo para o cabeçalho fixo no topo */
+.app-header {
+    background-color: #1E366F;
+    color: white;
+    width: 100%;
+    padding: 1rem 0;
+    margin: 0;
+    text-align: center;
+    position: relative;
+    border-radius: 0;
 }
 
-/* Estilos para os links */
-a {
-    color: var(--primary-color);
-    text-decoration: none;
-    transition: color 0.3s;
+/* Espaço para o conteúdo após o cabeçalho */
+.content-wrapper {
+    padding: 1.5rem;
+    margin-top: 1rem;
 }
 
-a:hover {
-    color: var(--primary-dark);
-    text-decoration: underline;
+/* Personalizações para cabeçalhos */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    margin-bottom: 1rem;
 }
 
-/* Estilos para os botões */
+h1 {
+    color: #1E366F;
+    border-bottom: 1px solid #eaeaea;
+    padding-bottom: 0.5rem;
+    margin-top: 1rem !important;
+    padding-top: 0.5rem !important;
+}
+
+/* Estilização de botões */
 .stButton > button {
-    background-color: var(--primary-color) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 4px !important;
-    transition: all 0.3s ease !important;
-    font-weight: 500 !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
 }
 
 .stButton > button:hover {
-    background-color: var(--primary-dark) !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
 }
 
-/* Estilos para inputs e outros elementos de formulário */
-input, select, textarea {
+/* Estilização de caixas de texto e inputs */
+input, textarea, .stTextInput > div > div > input, .stTextArea > div > div > textarea {
     border-radius: 4px !important;
-    border: 1px solid var(--grey-light) !important;
+    border: 1px solid #E0E0E0 !important;
+    padding: 0.5rem !important;
+}
+
+input:focus, textarea:focus, .stTextInput > div > div > input:focus, .stTextArea > div > div > textarea:focus {
+    border-color: #1E88E5 !important;
+    box-shadow: 0 0 0 1px rgba(30,136,229,0.2) !important;
+}
+
+/* Estilização para tabelas */
+.stDataFrame {
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.dataframe {
+    border-collapse: collapse;
+}
+
+.dataframe th {
+    background-color: #F5F7FA;
+    font-weight: 600;
+    color: #1E366F;
     padding: 0.75rem !important;
-    transition: border-color 0.3s, box-shadow 0.3s !important;
+    border-bottom: 2px solid #E0E0E0;
 }
 
-input:focus, select:focus, textarea:focus {
-    border-color: var(--primary-color) !important;
-    box-shadow: 0 0 0 2px rgba(45, 140, 255, 0.2) !important;
+.dataframe td {
+    padding: 0.75rem !important;
+    border-bottom: 1px solid #eaeaea;
 }
 
-/* Títulos e textos */
-h1, h2, h3, h4, h5, h6 {
-    color: var(--primary-dark);
+.dataframe tr:hover {
+    background-color: #F8F9FA;
+}
+
+/* Estilização para selectbox e outros controles */
+.stSelectbox {
+    min-width: 200px;
+}
+
+.stSelectbox > div > div > select {
+    border-radius: 4px !important;
+}
+
+/* Estilização para sidebar */
+.css-1vq4p4l, .css-1d3bhkq {
+    background-color: #F9FAFB !important;
+    border-right: 1px solid #eaeaea;
+}
+
+/* Cards informativos */
+div[data-testid="stMetric"] {
+    background-color: #FFFFFF;
+    border-radius: 6px;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid #eaeaea;
+}
+
+div[data-testid="stMetric"] > div:first-child {
+    color: #1E366F;
     font-weight: 600;
 }
 
-/* Seções e containers */
-.card {
-    background: white;
+/* Estilização para alertas e mensagens */
+div[data-testid="stAlert"] {
+    border-radius: 4px;
+    padding: 1rem !important;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Personalizações específicas para diferentes tipos de containers */
+div[data-testid="stExpander"] {
+    border-radius: 4px;
+    border: 1px solid #eaeaea;
+    overflow: hidden;
+}
+
+div[data-testid="stExpander"] > div:first-child {
+    background-color: #F9FAFB;
+    padding: 0.75rem;
+    border-bottom: 1px solid #eaeaea;
+}
+
+/* Estilização para widgets de data */
+div[data-baseweb="calendar"] {
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Ajustes de espaçamento gerais */
+.stTabs {
+    margin-top: 1rem;
+}
+
+/* Estilização para abas */
+button[role="tab"] {
+    padding: 0.75rem 1.5rem !important;
+    font-weight: 500;
+    position: relative;
+    transition: all 0.2s ease-in-out;
+}
+
+.stTabs [aria-selected="true"] {
+    font-weight: 600;
+    color: #1E88E5 !important;
+    border-bottom-color: #1E88E5 !important;
+    background-color: rgba(30, 136, 229, 0.05);
+}
+
+/* Estilos para abas principais de navegação */
+.main-tabs button[role="tab"] {
+    border-radius: 4px 4px 0 0;
+    border: 1px solid #eaeaea;
+    border-bottom: none;
+    margin-right: 2px;
+}
+
+.main-tabs [aria-selected="true"] {
+    background-color: #E6F3FF !important;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* Estilos para as sub-abas (dentro da proposta) */
+.execution-tabs button[role="tab"] {
+    background-color: #f8f9fa;
+    border: none;
+    border-radius: 4px;
+    margin: 0 2px;
+    font-size: 0.9rem;
+}
+
+.execution-tabs [aria-selected="true"] {
+    background-color: #E3F2FD !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Cores categorizadas para sub-abas */
+.execution-tabs [data-value="Andamento"][aria-selected="true"] {
+    background-color: #E3F2FD !important; /* Azul */
+}
+
+.execution-tabs [data-value="Produtos"][aria-selected="true"] {
+    background-color: #E8F5E9 !important; /* Verde */
+}
+
+.execution-tabs [data-value="Outros"][aria-selected="true"] {
+    background-color: #FFF8E1 !important; /* Amarelo */
+}
+
+.execution-tabs [data-value="Fornecedores"][aria-selected="true"] {
+    background-color: #FFF3E0 !important; /* Laranja */
+}
+
+.execution-tabs [data-value="Assistentes"][aria-selected="true"] {
+    background-color: #F3E5F5 !important; /* Roxo */
+}
+
+.execution-tabs [data-value="Finalizar"][aria-selected="true"] {
+    background-color: #FFEBEE !important; /* Vermelho */
+}
+
+/* Espaçamento específico para as páginas de Dashboard e Propostas */
+[data-testid="stAppViewContainer"] > div > div > div > div:first-child h1 {
+    margin-top: 3.5rem !important;
+    padding-top: 2rem !important;
+}
+
+/* Breadcrumbs de navegação */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+}
+
+.breadcrumb span {
+    margin: 0 0.25rem;
+}
+
+/* Cartões de itens */
+.item-card {
+    background-color: white;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #eaeaea;
+    transition: all 0.2s ease;
+}
+
+.item-card:hover {
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+/* Barra de progresso */
+.progress-container {
+    width: 100%;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    margin: 1rem 0;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 10px;
+    background-color: #4CAF50;
+    border-radius: 5px;
+    transition: width 0.3s ease;
+}
+
+/* Sombreamento para containers de seções */
+.section-container {
+    background-color: #f9f9f9;
     border-radius: 8px;
     padding: 1.5rem;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    margin-bottom: 1.5rem;
-}
-
-/* Mensagens de alerta e status */
-.success-box {
-    padding: 1rem;
-    background-color: rgba(0, 166, 81, 0.1);
-    border-left: 4px solid var(--success-color);
-    border-radius: 4px;
     margin: 1rem 0;
+    border: 1px solid #eaeaea;
 }
 
-.warning-box {
-    padding: 1rem;
-    background-color: rgba(255, 152, 0, 0.1);
-    border-left: 4px solid #ff9800;
-    border-radius: 4px;
-    margin: 1rem 0;
+/* Estilos para a tabela de detalhes da proposta */
+.proposal-details-table {
+    width: 100%;
+    border-collapse: collapse;
 }
 
-.error-box {
-    padding: 1rem;
-    background-color: rgba(244, 67, 54, 0.1);
-    border-left: 4px solid #f44336;
-    border-radius: 4px;
-    margin: 1rem 0;
+.proposal-details-table th {
+    text-align: left;
+    padding: 0.5rem;
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #eaeaea;
 }
 
-/* Animações e efeitos */
-.transition-all {
-    transition: all 0.3s ease;
+.proposal-details-table td {
+    padding: 0.5rem;
+    border-bottom: 1px solid #eaeaea;
 }
 
-.hover-scale:hover {
-    transform: scale(1.05);
+/* Ícones para as abas */
+.tab-icon {
+    margin-right: 0.5rem;
+    font-size: 1.1rem;
+    vertical-align: middle;
 }

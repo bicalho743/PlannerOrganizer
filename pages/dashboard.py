@@ -23,9 +23,7 @@ def format_date_safe(date_obj, format_str='%d/%m/%Y'):
             return "Data indisponível"
 
 def show():
-    # Adicionar espaço extra antes do título para evitar corte
-    st.markdown('<div style="height: 3rem;"></div>', unsafe_allow_html=True)
-    st.title("📊 Dashboard")
+    # Removido o título de Dashboard conforme solicitado
 
     # Add test data button in sidebar if database is empty
     if 'db' not in st.session_state:
@@ -42,75 +40,209 @@ def show():
             else:
                 st.sidebar.error("Erro ao adicionar dados de teste")
 
-    # Dashboard layout 
-    # Layout com 3 colunas para a primeira linha
-    col1, col2, col3 = st.columns([2, 2, 1])
+    # A data já foi adicionada no cabeçalho, então não precisamos mais desta seção
+    
+    # Simples exibição de uma frase aleatória (motivacional ou dica)
+    import random
+    import time
+    
+    # Lista de frases motivacionais com autores
+    frases_motivacionais = [
+        {"texto": "O sucesso é ir de fracasso em fracasso sem perder o entusiasmo.", "autor": "Winston Churchill"},
+        {"texto": "Acredite que você pode, assim você já está no meio do caminho.", "autor": "Theodore Roosevelt"},
+        {"texto": "Tudo parece impossível até que seja feito.", "autor": "Nelson Mandela"},
+        {"texto": "A persistência é o caminho do êxito.", "autor": "Charles Chaplin"},
+        {"texto": "Se você quer algo que nunca teve, precisa fazer algo que nunca fez.", "autor": "Thomas Jefferson"},
+        {"texto": "O único lugar onde o sucesso vem antes do trabalho é no dicionário.", "autor": "Albert Einstein"},
+        {"texto": "Coragem é a resistência ao medo, domínio do medo – não ausência do medo.", "autor": "Mark Twain"},
+        {"texto": "Não encontre falhas, encontre soluções.", "autor": "Henry Ford"},
+        {"texto": "O futuro pertence àqueles que acreditam na beleza dos seus sonhos.", "autor": "Eleanor Roosevelt"},
+        {"texto": "Grandes mentes discutem ideias; mentes medianas discutem eventos; mentes pequenas discutem pessoas.", "autor": "Eleanor Roosevelt"},
+        {"texto": "Você perde 100% dos tiros que não dá.", "autor": "Wayne Gretzky"},
+        {"texto": "Transforme suas feridas em sabedoria.", "autor": "Oprah Winfrey"},
+        {"texto": "A única limitação para o nosso sucesso de amanhã são as nossas dúvidas de hoje.", "autor": "Franklin D. Roosevelt"},
+        {"texto": "O maior erro que você pode cometer é o de ficar o tempo todo com medo de cometer algum.", "autor": "Elbert Hubbard"},
+        {"texto": "Faça da sua vida um sonho, e de um sonho, uma realidade.", "autor": "Antoine de Saint-Exupéry"},
+        {"texto": "Não espere por oportunidades extraordinárias. Agarre ocasiões comuns e torne-as grandes.", "autor": "Orison Swett Marden"},
+        {"texto": "Sorte é o que acontece quando a preparação encontra a oportunidade.", "autor": "Sêneca"},
+        {"texto": "Não sonhe pequeno, pois não há magia na pequenez dos sonhos.", "autor": "Donald Trump"},
+        {"texto": "A melhor maneira de prever o futuro é criá-lo.", "autor": "Peter Drucker"},
+        {"texto": "Quem quer vencer um obstáculo deve armar-se da força do leão e da prudência da serpente.", "autor": "Píndaro"}
+    ]
+    
+    # Lista de dicas profissionais
+    dicas_profissionais = [
+        "Organizar é mais do que arrumar: é criar soluções práticas e duradouras.",
+        "Conheça as necessidades do cliente antes de iniciar qualquer organização.",
+        "Cada espaço tem um potencial único — descubra-o e valorize-o.",
+        "Setorizar é o segredo para uma organização funcional.",
+        "Antes de organizar, ajude o cliente a desapegar do que não faz mais sentido.",
+        "Produtos organizadores são aliados, mas não substituem um bom projeto de organização.",
+        "Priorize a funcionalidade, depois pense na estética.",
+        "A organização deve ser fácil de manter, não só bonita de ver.",
+        "Ouça atentamente o que o cliente quer — a organização deve refletir o estilo de vida dele.",
+        "Etiquetas são pequenas, mas fazem uma diferença enorme na manutenção da organização.",
+        "Todo item precisa ter seu lugar definido para evitar a bagunça no dia a dia.",
+        "Menos é mais: simplificar é um dos maiores luxos na organização.",
+        "Crie sistemas de organização que economizem tempo para quem usa o espaço.",
+        "Trabalhe com planejamento: cada espaço organizado deve ter começo, meio e fim claros.",
+        "O sucesso do seu trabalho é medido pela praticidade que o cliente sente depois.",
+        "Use materiais de qualidade — eles elevam o resultado e a satisfação do cliente.",
+        "Mantenha-se atualizada: técnicas e tendências de organização evoluem constantemente.",
+        "Seja discreta e respeitosa: cada cliente confia a você sua intimidade.",
+        "Organização não é impor regras, é criar soluções sob medida para cada realidade.",
+        "Um bom Personal Organizer transforma espaços e também transforma vidas."
+    ]
+    
+    # Escolher aleatoriamente entre mostrar uma frase motivacional ou uma dica
+    random.seed(int(time.time()) % 100000)
+    
+    if random.choice([True, False]):
+        # Mostrar uma frase motivacional
+        frase = random.choice(frases_motivacionais)
+        st.markdown(f"""
+        <div style="text-align: center; margin-bottom: 25px;">
+            <p style="font-style: italic; color: #1E366F; margin: 0; font-size: 1.1rem; font-weight: 500;">
+                "{frase['texto']}"
+            </p>
+            <p style="color: #4A6FA5; margin: 8px 0 0 0; font-size: 0.85rem; text-align: right; font-weight: 500;">
+                — {frase['autor']}
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        # Mostrar uma dica profissional
+        dica = random.choice(dicas_profissionais)
+        st.markdown(f"""
+        <div style="text-align: center; margin-bottom: 25px;">
+            <p style="color: #FF9800; font-weight: bold; font-size: 0.9rem; margin-bottom: 5px;">
+                💡 DICA PROFISSIONAL
+            </p>
+            <p style="color: #333; margin: 0; font-size: 1.05rem;">
+                {dica}
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
-    with col1:
-        st.subheader("📊 Resumo")
+    # Dashboard layout com cards modernos
+    # Primeira linha - 3 cartões de métricas principais
+    col_metricas1, col_metricas2, col_metricas3 = st.columns(3)
 
+    # Obter dados
+    try:
+        propostas = st.session_state.db.get_propostas()
+        # Contar propostas em elaboração ou aguardando aprovação como "em aberto"
+        if not propostas.empty:
+            propostas_em_aberto = len(propostas[
+                (propostas['status'] == 'Em elaboração') | 
+                (propostas['status'] == 'Aguardando aprovação')
+            ])
+        else:
+            propostas_em_aberto = 0
+    except Exception as e:
+        st.warning("Erro ao carregar propostas")
+        propostas = pd.DataFrame()
+        propostas_em_aberto = 0
+
+    # Financeiro
+    try:
+        financeiro = st.session_state.db.get_financeiro()
+        
+        # Valores a Receber
+        if not financeiro.empty:
+            # Considerar receitas e receitas a receber pendentes
+            valores_receber = financeiro[
+                ((financeiro['tipo'] == 'receita') | (financeiro['tipo'] == 'receita_a_receber')) & 
+                (financeiro['status'] == 'Pendente')
+            ]['valor'].sum()
+            
+            # Valores a Pagar (despesas pendentes)
+            valores_pagar = financeiro[
+                ((financeiro['tipo'] == 'despesa') | 
+                 (financeiro['tipo'] == 'despesa_a_pagar') |
+                 (financeiro['classificacao'] == 'contas_a_pagar')) & 
+                (financeiro['status'] == 'Pendente')
+            ]['valor'].sum()
+        else:
+            valores_receber = 0.0
+            valores_pagar = 0.0
+            
+        # Calcular saldo líquido
+        saldo_liquido = valores_receber - valores_pagar
+        
+    except Exception as e:
+        st.warning(f"Erro ao carregar dados financeiros: {str(e)}")
+        valores_receber = 0.0
+        valores_pagar = 0.0
+        saldo_liquido = 0.0
+
+    # Cartão 1: Total de Clientes
+    with col_metricas1:
         # Estatísticas básicas
         total_clientes = len(clientes) if not clientes.empty else 0
-        st.metric("Total de Clientes", total_clientes)
+        
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #1E366F, #2A4D8F); 
+             color: white; padding: 20px; border-radius: 10px; 
+             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <div style="font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center;">
+                <span style="background-color: rgba(255,255,255,0.2); 
+                       border-radius: 50%; width: 32px; height: 32px; 
+                       display: flex; align-items: center; justify-content: center;
+                       margin-right: 10px;">👥</span>
+                <span><strong>Clientes</strong></span>
+            </div>
+            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0;">{}</div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">Total de clientes cadastrados</div>
+        </div>
+        """.format(total_clientes), unsafe_allow_html=True)
 
-        # Propostas
-        try:
-            propostas = st.session_state.db.get_propostas()
-            
-            # Contar propostas em elaboração ou aguardando aprovação como "em aberto"
-            if not propostas.empty:
-                propostas_em_aberto = len(propostas[
-                    (propostas['status'] == 'Em elaboração') | 
-                    (propostas['status'] == 'Aguardando aprovação')
-                ])
-            else:
-                propostas_em_aberto = 0
-                
-            st.metric("Propostas em Aberto", propostas_em_aberto)
-        except Exception as e:
-            st.warning("Erro ao carregar propostas")
-            propostas = pd.DataFrame()
+    # Cartão 2: Propostas em Aberto
+    with col_metricas2:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #FF9800, #FF5722); 
+             color: white; padding: 20px; border-radius: 10px; 
+             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <div style="font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center;">
+                <span style="background-color: rgba(255,255,255,0.2); 
+                       border-radius: 50%; width: 32px; height: 32px; 
+                       display: flex; align-items: center; justify-content: center;
+                       margin-right: 10px;">📝</span>
+                <span><strong>Propostas</strong></span>
+            </div>
+            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0;">{}</div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">Propostas em aberto</div>
+        </div>
+        """.format(propostas_em_aberto), unsafe_allow_html=True)
 
-        # Financeiro
-        try:
-            financeiro = st.session_state.db.get_financeiro()
-            
-            # Valores a Receber
-            if not financeiro.empty:
-                # Considerar receitas e receitas a receber pendentes
-                valores_receber = financeiro[
-                    ((financeiro['tipo'] == 'receita') | (financeiro['tipo'] == 'receita_a_receber')) & 
-                    (financeiro['status'] == 'Pendente')
-                ]['valor'].sum()
-                
-                # Valores a Pagar (despesas pendentes)
-                valores_pagar = financeiro[
-                    (financeiro['tipo'] == 'despesa') & 
-                    (financeiro['status'] == 'Pendente')
-                ]['valor'].sum()
-            else:
-                valores_receber = 0.0
-                valores_pagar = 0.0
-                
-            # Exibir métricas
-            st.metric("Valores a Receber", f"R$ {valores_receber:,.2f}", 
-                     delta=f"Total: R$ {valores_receber:,.2f}", delta_color="normal")
-            
-            st.metric("Valores a Pagar", f"R$ {valores_pagar:,.2f}", 
-                     delta=f"-R$ {valores_pagar:,.2f}", delta_color="inverse")
-            
-            # Calcular saldo líquido
-            saldo_liquido = valores_receber - valores_pagar
-            delta_saldo = f"+R$ {saldo_liquido:,.2f}" if saldo_liquido >= 0 else f"-R$ {abs(saldo_liquido):,.2f}"
-            delta_color = "normal" if saldo_liquido >= 0 else "inverse"
-            
-            st.metric("Saldo Líquido", f"R$ {saldo_liquido:,.2f}", 
-                     delta=delta_saldo, delta_color=delta_color)
-            
-        except Exception as e:
-            st.warning(f"Erro ao carregar dados financeiros: {str(e)}")
+    # Cartão 3: Saldo Financeiro
+    with col_metricas3:
+        cor_fundo = "#4CAF50" if saldo_liquido >= 0 else "#F44336"
+        cor_secundaria = "#388E3C" if saldo_liquido >= 0 else "#D32F2F"
+        
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, {0}, {1}); 
+             color: white; padding: 20px; border-radius: 10px; 
+             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <div style="font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center;">
+                <span style="background-color: rgba(255,255,255,0.2); 
+                       border-radius: 50%; width: 32px; height: 32px; 
+                       display: flex; align-items: center; justify-content: center;
+                       margin-right: 10px;">💰</span>
+                <span><strong>Saldo</strong></span>
+            </div>
+            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0;">R$ {2:,.2f}</div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">
+                <span style="margin-right: 10px;">📥 R$ {3:,.2f}</span>
+                <span>📤 R$ {4:,.2f}</span>
+            </div>
+        </div>
+        """.format(cor_fundo, cor_secundaria, saldo_liquido, valores_receber, valores_pagar), unsafe_allow_html=True)
 
-    with col2:
+    # Segunda linha - Propostas em aberto e aniversariantes
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
         st.subheader("📋 Propostas em Aberto")
         if not propostas.empty:
             # Filtrar propostas em aberto (Em elaboração e Aguardando aprovação)
@@ -138,7 +270,7 @@ def show():
         else:
             st.info("Nenhuma proposta cadastrada.")
 
-    with col3:
+    with col2:
         st.subheader("🎂 Aniversariantes")
         hoje = datetime.now()
         

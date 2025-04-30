@@ -8,7 +8,21 @@ import traceback
 from datetime import datetime
 import pandas as pd
 import streamlit as st
-from utils.pdf_generator import gerar_pdf_fechamento
+
+# Importar a versão melhorada do gerador de PDF
+try:
+    # Forçar a importação do módulo melhorado
+    import utils.pdf_generator_melhorado
+    # Agora importar a função específica
+    from utils.pdf_generator_melhorado import gerar_pdf_fechamento
+    print("DEBUG: Usando o gerador de PDF melhorado!")
+except ImportError as e:
+    # Log detalhado do erro para diagnóstico
+    print(f"ERRO DETALHADO NA IMPORTAÇÃO: {str(e)}")
+    traceback.print_exc()
+    # Fallback para o gerador original em caso de erro
+    from utils.pdf_generator import gerar_pdf_fechamento
+    print("DEBUG: Usando o gerador de PDF original (fallback)!")
 
 def adicionar_acrescimo(db, proposta_id, tipo, fornecedor, descricao, valor):
     """
@@ -149,7 +163,7 @@ def gerar_pdf_proposta(db, proposta_id, custom_filename=None):
             - mensagem: Mensagem explicativa do resultado
             - filename: Caminho do arquivo gerado (ou None em caso de falha)
     """
-    print(f"DEBUG HELPER: Gerando PDF para proposta ID={proposta_id}")
+    print(f"DEBUG HELPER: Gerando PDF melhorado para proposta ID={proposta_id}")
     
     try:
         # Garantir que o diretório existe
@@ -209,15 +223,67 @@ def gerar_pdf_proposta(db, proposta_id, custom_filename=None):
             # Garantir que temos ID da proposta e nome do cliente
             proposta_id = proposta.get('id', 'sem_id')
             cliente_nome = cliente_dict.get('nome', 'sem_nome').replace(' ', '_').lower()
-            # Criando nome de arquivo com o formato solicitado: Proposta_#ID_NomeCliente.pdf
-            filename = f"pdfs/Proposta_{proposta_id}_{cliente_nome}.pdf"
             
-        # Gerar PDF
-        pdf_path = gerar_pdf_fechamento(proposta, cliente_dict, acrescimos, filename)
+            # Adicionar data atual para evitar sobrescrever arquivos
+            data_atual = datetime.now().strftime('%Y%m%d_%H%M%S')
+            
+            # Criando nome de arquivo com o formato: Proposta_#ID_NomeCliente_DATA.pdf
+            filename = f"pdfs/Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
+            
+        # Buscar informações adicionais para o PDF melhorado
+        # Buscar produtos da proposta se estiverem disponíveis
+        produtos = []
+        try:
+            # Usar o método get_produtos_organizadores que já existe para buscar os produtos
+            produtos_df = db.get_produtos_organizadores(proposta_id)
+            if produtos_df is not None and not produtos_df.empty:
+                produtos = produtos_df.to_dict('records')
+                print(f"DEBUG PDF: Encontrados {len(produtos)} produtos para a proposta")
+        except Exception as e:
+            print(f"DEBUG PDF ERROR: Erro ao buscar produtos: {str(e)}")
+            produtos = []
+            
+        # Obter dados do perfil do usuário para o PDF
+        try:
+            # Tentar importar o carregador de perfil
+            from utils.perfil_loader import carregar_perfil_usuario
+            perfil = carregar_perfil_usuario()
+            print(f"DEBUG PDF: Perfil do usuário carregado: {perfil.get('nome', 'N/A')}")
+        except Exception as e:
+            print(f"DEBUG PDF ERROR: Erro ao carregar perfil do usuário: {str(e)}")
+            perfil = {}
+            
+        # Adicionar dados do perfil à proposta para uso no PDF
+        proposta_dict = proposta
+        if hasattr(proposta, 'to_dict'):
+            proposta_dict = proposta.to_dict()
+        elif isinstance(proposta, pd.Series):
+            proposta_dict = proposta.to_dict()
+            # Garantir que campos críticos estejam presentes
+            print(f"DEBUG PDF: Convertendo Series para dict com campos: {list(proposta_dict.keys())}")
+        else:
+            # Se não for possível converter, garantir que seja um dicionário
+            proposta_dict = dict(proposta)
+            print(f"DEBUG PDF: Usando proposta como dict diretamente: {list(proposta_dict.keys())}")
+            
+        # Garantir que todos os campos importantes estejam presentes
+        campos_esperados = ['id', 'tipo_proposta', 'status', 'data_inicio', 'data_fim', 'prazo_entrega']
+        for campo in campos_esperados:
+            if campo not in proposta_dict:
+                print(f"DEBUG PDF: ALERTA - Campo '{campo}' não encontrado no dicionário da proposta!")
+            else:
+                print(f"DEBUG PDF: Campo '{campo}' encontrado com valor: {proposta_dict[campo]}")
+                
+        # Adicionar valores adicionais
+        proposta_dict['perfil'] = perfil
+        proposta_dict['produtos'] = produtos
+            
+        # Gerar PDF com novo layout
+        pdf_path = gerar_pdf_fechamento(proposta_dict, cliente_dict, acrescimos, filename)
         if not pdf_path or not os.path.exists(pdf_path):
             return False, "Não foi possível gerar o PDF.", None
             
-        return True, "PDF gerado com sucesso!", pdf_path
+        return True, "PDF gerado com sucesso com o novo layout profissional!", pdf_path
         
     except Exception as e:
         print(f"DEBUG HELPER CRITICAL: Erro ao gerar PDF: {str(e)}")

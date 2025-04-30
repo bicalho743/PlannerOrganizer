@@ -123,10 +123,10 @@ def reabrir_proposta_finalizada(proposta_id):
                 gerar_transacoes_automaticas=False
             )
         
-        if resultado.get('status') != 'sucesso':
+        if not resultado.get('status', False):
             return {
                 "status": "erro",
-                "mensagem": f"Erro ao atualizar proposta: {resultado.get('mensagem', 'Erro desconhecido')}"
+                "mensagem": f"Erro ao atualizar proposta: {resultado.get('message', 'Erro desconhecido')}"
             }
         
         # A remoção de lançamentos financeiros vai ser realizada pelo mecanismo de forcar_geracao
