@@ -8,6 +8,126 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
+# Função que será importada por outras partes do código
+def finalizar_proposta_seguro(proposta_id, usuario_id=None):
+    """
+    Função para finalizar propostas de forma segura, evitando problemas de tipo
+    Retorna uma tupla (sucesso, mensagem)
+    """
+    # Conectar ao banco de dados
+    conn = get_db_connection()
+    if not conn:
+        return False, "Não foi possível conectar ao banco de dados"
+    
+    try:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Verificar se a proposta existe e se já está finalizada
+        cursor.execute("""
+            SELECT * FROM propostas WHERE id = %s
+        """, (proposta_id,))
+        
+        proposta = cursor.fetchone()
+        
+        if not proposta:
+            return False, f"Proposta #{proposta_id} não encontrada"
+        
+        if proposta['status'] == 'Finalizada':
+            return True, f"Proposta #{proposta_id} já está finalizada"
+        
+        # Filtrar por usuario_id se fornecido
+        if usuario_id and proposta['usuario_id'] != usuario_id:
+            return False, "Você não tem permissão para finalizar esta proposta"
+        
+        # Finalizar proposta usando função SQL (se existir)
+        try:
+            # Verificar se a função finalizar_proposta existe no banco
+            cursor.execute("""
+                SELECT EXISTS(
+                    SELECT 1 FROM pg_proc WHERE proname = 'finalizar_proposta'
+                )
+            """)
+            func_exists = cursor.fetchone()['exists']
+            
+            if func_exists:
+                # Usar a função SQL para finalizar a proposta
+                cursor.execute("SELECT finalizar_proposta(%s)", (proposta_id,))
+                result = cursor.fetchone()
+                conn.commit()
+                return True, f"Proposta #{proposta_id} finalizada com sucesso"
+            else:
+                # Fazer a finalização manualmente se a função não existir
+                # Atualizar status da proposta
+                cursor.execute("""
+                    UPDATE propostas
+                    SET status = 'Finalizada', data_fim = CURRENT_DATE
+                    WHERE id = %s
+                """, (proposta_id,))
+                
+                # Criar lançamento financeiro
+                data_atual = datetime.now().date()
+                valor = float(proposta['valor_total']) if proposta['valor_total'] is not None else 0.0
+                descricao = f"Proposta #{proposta_id} - {proposta['descricao']}"
+                
+                # Verificar campos da tabela financeiro
+                cursor.execute("""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'financeiro'
+                """)
+                colunas = [row['column_name'] for row in cursor.fetchall()]
+                
+                # Inserir lançamento financeiro com os campos corretos
+                if 'forma_pagamento' in colunas:
+                    cursor.execute("""
+                        INSERT INTO financeiro 
+                        (descricao, valor, data, categoria, tipo, status, forma_pagamento, proposta_id, usuario_id)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id;
+                    """, (
+                        descricao, 
+                        valor, 
+                        data_atual, 
+                        'Serviços de Organização',
+                        'Receita',
+                        'Pendente',
+                        '',
+                        proposta_id,
+                        proposta['usuario_id']
+                    ))
+                else:
+                    cursor.execute("""
+                        INSERT INTO financeiro 
+                        (descricao, valor, data, categoria, tipo, status, proposta_id, usuario_id)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id;
+                    """, (
+                        descricao, 
+                        valor, 
+                        data_atual, 
+                        'Serviços de Organização',
+                        'Receita',
+                        'Pendente',
+                        proposta_id,
+                        proposta['usuario_id']
+                    ))
+                
+                conn.commit()
+                return True, f"Proposta #{proposta_id} finalizada com sucesso"
+            
+        except Exception as e:
+            conn.rollback()
+            return False, f"Erro ao finalizar proposta via SQL: {str(e)}"
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        return False, f"Erro ao finalizar proposta: {str(e)}"
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if conn:
+            conn.close()
+
 def get_db_connection():
     """Obtém uma conexão direta com o banco de dados PostgreSQL"""
     try:
