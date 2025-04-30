@@ -1,65 +1,307 @@
-# Solução para Problemas de Finalização de Propostas no Render
+# Solução para o problema `'finalizar_proposta_segura' is not defined`
 
-Este documento contém as instruções para resolver os problemas de finalização de propostas e exclusão de clientes no ambiente Render.
+Este documento explica como resolver o problema de função não definida que ocorre no Render, especificamente o erro:
+`name 'finalizar_proposta_segura' is not defined` ou `name 'finalizar_proposta_seguro' is not defined`.
 
-## Instruções de Aplicação
+## O problema
 
-1. Faça login no Console do Render (dashboard.render.com)
-2. Acesse seu serviço web onde o aplicativo está hospedado
-3. Vá para a guia "Shell" para acessar o console
-4. Execute o arquivo `fix_render_type_errors.py` com o comando:
-   ```
-   python fix_render_type_errors.py
-   ```
-5. Verifique se a saída do script mostra "CORREÇÃO CONCLUÍDA COM SUCESSO"
-6. Reinicie o serviço no Render para aplicar todas as alterações
+O erro ocorre porque:
 
-## O que Este Script Corrige
+1. O código está chamando uma função chamada `finalizar_proposta_seguro` (com "o" no final)
+2. A função definida no sistema é `finalizar_proposta_segura` (com "a" no final)
+3. Ou ambas as funções não existem no banco de dados
 
-1. **Finalização de Propostas**: Corrige o problema de propostas que não podem ser finalizadas na interface
-   - Cria uma função SQL `finalizar_proposta(proposta_id)` que pode ser chamada diretamente
-   - Usa o campo `data_fim` em vez de `data_finalizacao` que não existe no schema
+## A solução (duas opções)
 
-2. **Exclusão de Clientes**: Permite excluir clientes que possuem propostas associadas
-   - Cria uma função SQL `desassociar_propostas_cliente(cliente_id)` que transfere propostas para um cliente genérico
+### OPÇÃO 1: Script Python
 
-3. **Consistência de Dados**: 
-   - Cria um trigger para manter a relação entre propostas e lançamentos financeiros
-   - Garante que o campo `usuario_id` seja corretamente propagado
+1. Faça upload do arquivo `utils/finalizar_proposta_fix.py` para seu projeto no Render
+2. Execute o script `fix_proposta_simple.py` no console do Render
 
-4. **Normalização de Dados**:
-   - Corrige valores inconsistentes em propostas
-   - Preenche dados de clientes que estão nulos
-   - Corrige telefones com formato inválido
+```python
+import os
+import psycopg2
 
-## Uso da Solução
+def fix_database():
+    """Corrige os problemas no banco de dados do Render"""
+    # Conexão com o banco de dados
+    database_url = os.environ.get('DATABASE_URL')
+    conn = psycopg2.connect(database_url)
+    cursor = conn.cursor()
+    
+    # Criar a função SQL finalizar_proposta
+    sql_function = """
+    CREATE OR REPLACE FUNCTION finalizar_proposta(proposta_id_param INTEGER) 
+    RETURNS BOOLEAN AS $$
+    DECLARE
+        v_finalizada BOOLEAN;
+        v_valor NUMERIC;
+        v_forma_pagamento TEXT;
+        v_cliente_id INTEGER;
+        v_data_inicio DATE;
+        v_usuario_id TEXT;
+        v_categoria TEXT;
+        v_descricao TEXT;
+    BEGIN
+        -- Verificar se a proposta já está finalizada
+        SELECT (status = 'Finalizada') INTO v_finalizada 
+        FROM propostas 
+        WHERE id = proposta_id_param;
+        
+        IF v_finalizada THEN
+            RAISE NOTICE 'Proposta % já está finalizada', proposta_id_param;
+            RETURN TRUE;
+        END IF;
+        
+        -- Obter dados da proposta
+        SELECT 
+            valor_total, 
+            COALESCE(forma_pagamento, 'Não informada'),
+            cliente_id,
+            COALESCE(data_inicio, CURRENT_DATE),
+            usuario_id,
+            CONCAT('Proposta #', id, ' - ', COALESCE(nome_cliente, 'Cliente'))
+        INTO 
+            v_valor, 
+            v_forma_pagamento,
+            v_cliente_id,
+            v_data_inicio,
+            v_usuario_id,
+            v_descricao
+        FROM propostas 
+        WHERE id = proposta_id_param;
+        
+        -- Definir categoria para o lançamento financeiro
+        v_categoria := 'Serviços de Organização';
+        
+        -- Atualizar o status da proposta para Finalizada
+        UPDATE propostas 
+        SET 
+            status = 'Finalizada',
+            data_fim = CURRENT_DATE
+        WHERE id = proposta_id_param;
+        
+        -- Inserir lançamento financeiro (receita)
+        INSERT INTO financeiro (
+            descricao, 
+            valor, 
+            data, 
+            categoria, 
+            tipo, 
+            status, 
+            proposta_id,
+            usuario_id
+        ) VALUES (
+            v_descricao, 
+            v_valor, 
+            v_data_inicio, 
+            v_categoria, 
+            'Receita', 
+            'Pendente', 
+            proposta_id_param,
+            v_usuario_id
+        );
+        
+        RAISE NOTICE 'Proposta % finalizada com sucesso', proposta_id_param;
+        RETURN TRUE;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE NOTICE 'Erro ao finalizar proposta %: %', proposta_id_param, SQLERRM;
+            RETURN FALSE;
+    END;
+    $$ LANGUAGE plpgsql;
+    """
+    
+    cursor.execute(sql_function)
+    
+    # Criar wrappers para ambas variações do nome da função
+    sql_wrapper1 = """
+    CREATE OR REPLACE FUNCTION finalizar_proposta_segura(proposta_id_param INTEGER) 
+    RETURNS BOOLEAN AS $$
+    BEGIN
+        RETURN finalizar_proposta(proposta_id_param);
+    END;
+    $$ LANGUAGE plpgsql;
+    """
+    cursor.execute(sql_wrapper1)
+    
+    sql_wrapper2 = """
+    CREATE OR REPLACE FUNCTION finalizar_proposta_seguro(proposta_id_param INTEGER) 
+    RETURNS BOOLEAN AS $$
+    BEGIN
+        RETURN finalizar_proposta(proposta_id_param);
+    END;
+    $$ LANGUAGE plpgsql;
+    """
+    cursor.execute(sql_wrapper2)
+    
+    # Criar trigger para consistência de dados
+    sql_trigger = """
+    CREATE OR REPLACE FUNCTION atualizar_usuario_id_financeiro() RETURNS TRIGGER AS $$
+    BEGIN
+        IF NEW.proposta_id IS NOT NULL AND (NEW.usuario_id IS NULL OR NEW.usuario_id = '') THEN
+            NEW.usuario_id := (SELECT usuario_id FROM propostas WHERE id = NEW.proposta_id);
+        END IF;
+        RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+    
+    DROP TRIGGER IF EXISTS financeiro_usuario_id_trigger ON financeiro;
+    
+    CREATE TRIGGER financeiro_usuario_id_trigger
+    BEFORE INSERT OR UPDATE ON financeiro
+    FOR EACH ROW
+    EXECUTE FUNCTION atualizar_usuario_id_financeiro();
+    """
+    cursor.execute(sql_trigger)
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    print("CORREÇÃO CONCLUÍDA COM SUCESSO!")
 
-Após aplicar o script, você poderá:
-
-1. Finalizar uma proposta via SQL (se ainda houver problemas na interface):
-   ```sql
-   SELECT finalizar_proposta(ID_DA_PROPOSTA);
-   ```
-
-2. Excluir um cliente com propostas associadas:
-   ```sql
-   SELECT desassociar_propostas_cliente(ID_DO_CLIENTE);
-   -- Em seguida, exclua o cliente normalmente pela interface
-   ```
-
-## Verificar se a Solução foi Aplicada
-
-Execute estas consultas SQL para verificar se a solução foi aplicada:
-
-```sql
--- Verificar se a função finalizar_proposta existe
-SELECT exists(SELECT * FROM pg_proc WHERE proname = 'finalizar_proposta');
-
--- Verificar se a função desassociar_propostas_cliente existe
-SELECT exists(SELECT * FROM pg_proc WHERE proname = 'desassociar_propostas_cliente');
-
--- Verificar se o trigger de consistência existe
-SELECT exists(SELECT * FROM pg_trigger WHERE tgname = 'financeiro_usuario_id_trigger');
+# Executar a função
+fix_database()
 ```
 
-Se todas as consultas retornarem `true`, a solução foi aplicada corretamente.
+### OPÇÃO 2: SQL Direto
+
+1. Acesse o console SQL do seu banco de dados no Render ou via DBeaver
+2. Execute o seguinte SQL:
+
+```sql
+-- Função principal para finalizar proposta
+CREATE OR REPLACE FUNCTION finalizar_proposta(proposta_id_param INTEGER) 
+RETURNS BOOLEAN AS $$
+DECLARE
+    v_finalizada BOOLEAN;
+    v_valor NUMERIC;
+    v_forma_pagamento TEXT;
+    v_cliente_id INTEGER;
+    v_data_inicio DATE;
+    v_usuario_id TEXT;
+    v_categoria TEXT;
+    v_descricao TEXT;
+BEGIN
+    -- Verificar se a proposta já está finalizada
+    SELECT (status = 'Finalizada') INTO v_finalizada 
+    FROM propostas 
+    WHERE id = proposta_id_param;
+    
+    IF v_finalizada THEN
+        RAISE NOTICE 'Proposta % já está finalizada', proposta_id_param;
+        RETURN TRUE;
+    END IF;
+    
+    -- Obter dados da proposta
+    SELECT 
+        valor_total, 
+        COALESCE(forma_pagamento, 'Não informada'),
+        cliente_id,
+        COALESCE(data_inicio, CURRENT_DATE),
+        usuario_id,
+        CONCAT('Proposta #', id, ' - ', COALESCE(nome_cliente, 'Cliente'))
+    INTO 
+        v_valor, 
+        v_forma_pagamento,
+        v_cliente_id,
+        v_data_inicio,
+        v_usuario_id,
+        v_descricao
+    FROM propostas 
+    WHERE id = proposta_id_param;
+    
+    -- Definir categoria para o lançamento financeiro
+    v_categoria := 'Serviços de Organização';
+    
+    -- Atualizar o status da proposta para Finalizada
+    UPDATE propostas 
+    SET 
+        status = 'Finalizada',
+        data_fim = CURRENT_DATE
+    WHERE id = proposta_id_param;
+    
+    -- Inserir lançamento financeiro (receita)
+    INSERT INTO financeiro (
+        descricao, 
+        valor, 
+        data, 
+        categoria, 
+        tipo, 
+        status, 
+        proposta_id,
+        usuario_id
+    ) VALUES (
+        v_descricao, 
+        v_valor, 
+        v_data_inicio, 
+        v_categoria, 
+        'Receita', 
+        'Pendente', 
+        proposta_id_param,
+        v_usuario_id
+    );
+    
+    RAISE NOTICE 'Proposta % finalizada com sucesso', proposta_id_param;
+    RETURN TRUE;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE NOTICE 'Erro ao finalizar proposta %: %', proposta_id_param, SQLERRM;
+        RETURN FALSE;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Função auxilar finalizar_proposta_segura (com 'a' no final)
+CREATE OR REPLACE FUNCTION finalizar_proposta_segura(proposta_id_param INTEGER) 
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN finalizar_proposta(proposta_id_param);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Função auxiliar finalizar_proposta_seguro (com 'o' no final)
+CREATE OR REPLACE FUNCTION finalizar_proposta_seguro(proposta_id_param INTEGER) 
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN finalizar_proposta(proposta_id_param);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger para consistência de dados
+CREATE OR REPLACE FUNCTION atualizar_usuario_id_financeiro() 
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.proposta_id IS NOT NULL AND (NEW.usuario_id IS NULL OR NEW.usuario_id = '') THEN
+        NEW.usuario_id := (SELECT usuario_id FROM propostas WHERE id = NEW.proposta_id);
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Remover trigger se já existir (evita erros)
+DROP TRIGGER IF EXISTS financeiro_usuario_id_trigger ON financeiro;
+
+-- Criar trigger
+CREATE TRIGGER financeiro_usuario_id_trigger
+BEFORE INSERT OR UPDATE ON financeiro
+FOR EACH ROW
+EXECUTE FUNCTION atualizar_usuario_id_financeiro();
+```
+
+## Após aplicar a solução
+
+1. Reinicie o serviço no Render
+2. Teste finalizar uma proposta para verificar se o problema foi resolvido
+
+## Explicação técnica
+
+A solução cria três funções SQL no banco de dados:
+
+1. `finalizar_proposta`: Função principal que realmente realiza a finalização da proposta
+2. `finalizar_proposta_segura`: Alias para a função principal (com "a" no final)
+3. `finalizar_proposta_seguro`: Alias para a função principal (com "o" no final)
+
+Além disso, cria um trigger para garantir que ao criar um lançamento financeiro associado a uma proposta, o campo `usuario_id` seja corretamente preenchido.
+
+Com esta abordagem, independentemente de qual nome de função for chamado no código, a função correta será executada.
