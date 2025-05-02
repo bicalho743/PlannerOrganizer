@@ -645,16 +645,24 @@ def show():
                 ]
                 
                 if not propostas_em_execucao.empty:
-                    # Preparar DataFrame para exibição
+                    # Preparar DataFrame para exibição com tratamento de tipos para evitar erros Arrow
                     df_execucao = pd.DataFrame()
-                    df_execucao['Número'] = propostas_em_execucao['numero']  # Mostrar número em vez do ID
-                    df_execucao['Cliente'] = propostas_em_execucao['nome']
-                    df_execucao['Descrição'] = propostas_em_execucao['descricao']
-                    df_execucao['Valor (R$)'] = propostas_em_execucao['valor'].apply(lambda x: f"R$ {float(x):.2f}")
-                    df_execucao['Status Execução'] = propostas_em_execucao['status_execucao']
+                    df_execucao['Número'] = propostas_em_execucao['numero'].astype(str)  # Garantir que são string
+                    df_execucao['Cliente'] = propostas_em_execucao['nome'].astype(str)
+                    df_execucao['Descrição'] = propostas_em_execucao['descricao'].astype(str)
+                    
+                    # Tratar valor como coluna numérica primeiro (para formatação) e depois como string
+                    valor_formatado = propostas_em_execucao['valor'].apply(lambda x: float(x) if pd.notna(x) else 0.0)
+                    df_execucao['Valor'] = valor_formatado
+                    df_execucao['Valor (R$)'] = df_execucao['Valor'].apply(lambda x: f"R$ {x:.2f}")
+                    df_execucao = df_execucao.drop(columns=['Valor'])  # Remover coluna auxiliar
+                    # Tratar status também como string para evitar erros
+                    df_execucao['Status Execução'] = propostas_em_execucao['status_execucao'].astype(str)
+                    
+                    # Formatar datas como strings
                     df_execucao['Início Execução'] = propostas_em_execucao['data_inicio_execucao'].apply(
                         lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
-                    )
+                    ).astype(str)
                     
                     # Adicionar coluna para o botão de exclusão
                     df_execucao['ID'] = propostas_em_execucao['id']  # Manter o ID como coluna oculta para referência
