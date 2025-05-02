@@ -1291,7 +1291,7 @@ def show():
                                     col1, col2, col3 = st.columns([2, 2, 1])
                                     with col1:
                                         # Lista de IDs e nomes para o selectbox
-                                        options = [f"{row['id']} - {row['fornecedor']}" for _, row in df_fornecedores.iterrows()]
+                                        options = [f"{row['id']} - {row['Fornecedor']}" for _, row in df_fornecedores.iterrows()]
                                         selected_fornecedor = st.selectbox("Selecione um fornecedor para remover:", options, key=f"remover_fornecedor_{proposta_exec_id}")
                                     
                                     with col2:
