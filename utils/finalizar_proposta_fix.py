@@ -1,36 +1,27 @@
 """
 Módulo para finalização segura de propostas
 Este módulo implementa a função finalizar_proposta_sql que utiliza SQL direto
-para garantir a finalização correta de propostas e criação dos lançamentos financeiros
-necessários, mesmo em ambientes com problemas de tipo no SQLAlchemy/PostgreSQL.
+para garantir a finalização correta de propostas.
 """
 import os
-import sys
 import logging
 import psycopg2
-from datetime import datetime, date
-from typing import Union, Dict, Optional, Tuple, List, Any
+from datetime import datetime
+from typing import Dict, Any
 
-# Configurar logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def get_db_connection():
-    """Estabelece conexão direta com o banco de dados PostgreSQL"""
+    """Estabelece conexão com o banco de dados"""
     try:
         db_url = os.environ.get('DATABASE_URL')
         if not db_url:
-            logger.error("Variável de ambiente DATABASE_URL não encontrada")
+            logger.error("DATABASE_URL não encontrada")
             return None
-            
-        conn = psycopg2.connect(db_url)
-        conn.autocommit = True
-        return conn
+        return psycopg2.connect(db_url)
     except Exception as e:
-        logger.error(f"Erro ao conectar ao banco de dados: {str(e)}")
+        logger.error(f"Erro ao conectar ao banco: {str(e)}")
         return None
 
 def verificar_funcao_sql_existe(conn=None):
@@ -329,29 +320,48 @@ def desassociar_propostas_cliente_sql(cliente_id: int) -> int:
             conn.close()
         return 0
 
-# Função de compatibilidade para código existente
-def finalizar_proposta_segura(proposta_id, usuario_id=None):
+# Function replacement
+def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
     """Função de compatibilidade para código existente"""
-    resultado = finalizar_proposta_sql(proposta_id, usuario_id)
-    
-    # Montar retorno compatível com a assinatura das funções chamadoras
-    if resultado:
+    conn = get_db_connection()
+    if not conn:
+        return {"status": False, "mensagem": "Erro de conexão com banco"}
+
+    try:
+        cursor = conn.cursor()
+
+        # Atualizar status da proposta
+        cursor.execute("""
+            UPDATE propostas 
+            SET status = 'Finalizada',
+                data_finalizacao = CURRENT_DATE
+            WHERE id = %s
+            RETURNING id, valor, usuario_id;
+        """, (proposta_id,))
+
+        result = cursor.fetchone()
+        if not result:
+            return {"status": False, "mensagem": "Proposta não encontrada"}
+
+        proposta_id, valor, usuario_id = result
+
+        # Criar lançamento financeiro
+        cursor.execute("""
+            INSERT INTO financeiro 
+            (descricao, valor, data, categoria, tipo, status, proposta_id, usuario_id)
+            VALUES (%s, %s, CURRENT_DATE, 'Serviços', 'receita_a_receber', 'Pendente', %s, %s)
+        """, (f"Proposta #{proposta_id}", valor, proposta_id, usuario_id))
+
+        conn.commit()
         return {
             "status": True,
             "mensagem": "Proposta finalizada com sucesso",
-            "lancamentos": {
-                "gerados": 1,
-                "valores": {
-                    "base": 0,  # Valores serão definidos dinamicamente em uso real
-                    "produtos": 0,
-                    "fornecedores": 0,
-                    "assistentes": 0,
-                    "outros": 0
-                }
-            }
+            "lancamentos": {"gerados": 1}
         }
-    else:
-        return {
-            "status": False,
-            "mensagem": "Falha ao finalizar proposta"
-        }
+    except Exception as e:
+        logger.error(f"Erro ao finalizar proposta: {str(e)}")
+        conn.rollback()
+        return {"status": False, "mensagem": f"Erro: {str(e)}"}
+    finally:
+        if conn:
+            conn.close()
