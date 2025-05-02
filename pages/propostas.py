@@ -1153,33 +1153,47 @@ def show():
                                 if not outros_itens.empty:
                                     st.write("### Itens Adicionais")
                                     
-                                    for idx, item in outros_itens.iterrows():
-                                        with st.container():
-                                            col1, col2, col3 = st.columns([3, 1, 1])
-                                            
-                                            with col1:
-                                                # fornecedor é o nome do item
-                                                st.write(f"**{item['fornecedor']}**")
-                                                st.write(f"_{item['descricao'] if pd.notna(item['descricao']) else ''}_")
-                                            
-                                            with col2:
-                                                # No acréscimo só temos o valor total, não tem quantidade
-                                                st.write(f"R$ {float(item['valor']):.2f}")
-                                                st.write(f"Status: {item['status_pagamento']}")
-                                            
-                                            with col3:
-                                                # Botão para remover
-                                                if st.button(f"Remover", key=f"remove_outro_{item['id']}"):
-                                                    try:
-                                                        # Usar função apropriada para remover acréscimo
-                                                        st.session_state.db.remover_acrescimo(item['id'])
-                                                        st.success(f"Item removido com sucesso!")
-                                                        time.sleep(1)
-                                                        st.rerun()
-                                                    except Exception as e:
-                                                        st.error(f"Erro ao remover item: {str(e)}")
-                                            
-                                            st.divider()
+                                    # Formatar para exibição com coluna de ação
+                                    df_outros = pd.DataFrame()
+                                    df_outros['id'] = outros_itens['id']
+                                    df_outros['Nome'] = outros_itens['fornecedor']
+                                    df_outros['Descrição'] = outros_itens['descricao']
+                                    df_outros['Valor'] = outros_itens['valor'].apply(lambda x: f"R$ {float(x):.2f}")
+                                    df_outros['Status'] = outros_itens['status_pagamento']
+                                    
+                                    # Exibir a tabela
+                                    st.dataframe(df_outros.drop(columns=['id']), hide_index=True, use_container_width=True)
+                                    
+                                    # Adicionar área para remover item
+                                    col1, col2, col3 = st.columns([2, 2, 1])
+                                    with col1:
+                                        # Lista de IDs e nomes para o selectbox
+                                        options = [f"{row['id']} - {row['Nome']}" for _, row in df_outros.iterrows()]
+                                        selected_item = st.selectbox("Selecione um item para remover:", options, key=f"remover_outro_{proposta_exec_id}")
+                                    
+                                    with col2:
+                                        # Extrair ID do item selecionado
+                                        if selected_item:
+                                            acrescimo_id = int(selected_item.split(' - ')[0])
+                                            st.caption(f"ID: {acrescimo_id}")
+                                    
+                                    with col3:
+                                        # Botão de remover
+                                        if st.button("Remover", key=f"btn_remover_outro_{proposta_exec_id}", type="primary", use_container_width=True):
+                                            try:
+                                                # Remover o acréscimo
+                                                if st.session_state.db.remover_acrescimo(acrescimo_id):
+                                                    st.success("Item removido com sucesso!")
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                                else:
+                                                    st.error("Erro ao remover o item.")
+                                            except Exception as e:
+                                                st.error(f"Erro: {str(e)}")
+                                                
+                                    # Calcular e exibir o total
+                                    total_outros = outros_itens['valor'].sum()
+                                    st.info(f"Total Outros Itens: R$ {total_outros:.2f}")
                                 else:
                                     st.info("Nenhum item adicional foi cadastrado nesta proposta.")
                             except Exception as e:
