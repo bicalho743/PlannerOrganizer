@@ -114,11 +114,15 @@ def show():
                         # Botões de ação
                         col1, col2 = st.columns(2)
                         with col1:
+                            # Calculando o valor máximo com base nos IDs reais, não no número de registros
+                            id_maximo = int(registros['id'].max()) if not registros.empty else 1
+                            
                             cliente_id = st.number_input(
                                 "ID do cliente para ação:",
                                 min_value=1,
-                                max_value=len(registros) if not registros.empty else 1,
-                                step=1
+                                max_value=id_maximo,
+                                step=1,
+                                help="Digite o ID do cliente que deseja excluir"
                             )
 
                         with col2:
