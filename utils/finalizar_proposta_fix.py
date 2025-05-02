@@ -74,7 +74,7 @@ def buscar_proposta(proposta_id: int, conn=None) -> Dict[str, Any]:
         cursor.execute("""
             SELECT 
                 p.id, p.cliente_id, p.usuario_id, p.data_inicio, p.data_proposta,
-                p.data_finalizacao, p.valor, p.status, p.status_execucao,
+                p.data_fim, p.valor, p.status, p.status_execucao,
                 c.nome as cliente_nome
             FROM propostas p
             JOIN clientes c ON p.cliente_id = c.id
@@ -234,7 +234,7 @@ def finalizar_proposta_sql(proposta_id: int, usuario_id: Optional[str] = None) -
             UPDATE propostas 
             SET 
                 status = 'Finalizada',
-                data_finalizacao = %s,
+                data_fim = %s,
                 data_proposta = COALESCE(data_proposta, data_inicio, %s)
             WHERE id = %s
         """, (data_atual, data_atual, proposta_id))
@@ -323,33 +323,37 @@ def desassociar_propostas_cliente_sql(cliente_id: int) -> int:
 # Function replacement
 def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
     """Função de compatibilidade para código existente"""
+    logger.info(f"Iniciando finalização segura da proposta #{proposta_id}")
     conn = get_db_connection()
     if not conn:
+        logger.error("Erro de conexão com banco")
         return {"status": False, "mensagem": "Erro de conexão com banco"}
 
     try:
         cursor = conn.cursor()
 
-        # Atualizar status da proposta
+        # Atualizar status da proposta (usando data_fim em vez de data_finalizacao)
         cursor.execute("""
             UPDATE propostas 
             SET status = 'Finalizada',
-                data_finalizacao = CURRENT_DATE
+                data_fim = CURRENT_DATE
             WHERE id = %s
             RETURNING id, valor, usuario_id;
         """, (proposta_id,))
 
         result = cursor.fetchone()
         if not result:
+            logger.error(f"Proposta #{proposta_id} não encontrada")
             return {"status": False, "mensagem": "Proposta não encontrada"}
 
         proposta_id, valor, usuario_id = result
+        logger.info(f"Proposta #{proposta_id} encontrada. Valor: {valor}, Usuario: {usuario_id}")
 
         # Criar lançamento financeiro
         cursor.execute("""
             INSERT INTO financeiro 
             (descricao, valor, data, categoria, tipo, status, proposta_id, usuario_id)
-            VALUES (%s, %s, CURRENT_DATE, 'Serviços', 'receita_a_receber', 'Pendente', %s, %s)
+            VALUES (%s, %s, CURRENT_DATE, 'Serviços de Organização', 'receita_a_receber', 'Pendente', %s, %s)
         """, (f"Proposta #{proposta_id}", valor, proposta_id, usuario_id))
 
         conn.commit()
