@@ -1163,6 +1163,9 @@ def show():
                             try:
                                 fornecedores = st.session_state.db.get_fornecedores()
                                 
+                                # Obter fornecedores já adicionados à proposta
+                                fornecedores_proposta = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_id=proposta_exec_id, tipo="FORNECEDOR")
+                                
                                 if not fornecedores.empty:
                                     # Formulário para adicionar fornecedor à proposta
                                     with st.form(key=f"fornecedor_form_{proposta_exec_id}"):
@@ -1239,6 +1242,26 @@ def show():
                                 else:
                                     st.warning("Nenhum fornecedor cadastrado no sistema.")
                                     st.write("Vá para a seção de Cadastros para adicionar fornecedores.")
+                                
+                                # Exibir fornecedores já adicionados à proposta
+                                st.divider()
+                                if not fornecedores_proposta.empty:
+                                    st.write("### Fornecedores Adicionados")
+                                    
+                                    # Formatar para exibição
+                                    df_fornecedores = pd.DataFrame()
+                                    df_fornecedores['Fornecedor'] = fornecedores_proposta['fornecedor']
+                                    df_fornecedores['Descrição'] = fornecedores_proposta['descricao']
+                                    df_fornecedores['Valor'] = fornecedores_proposta['valor'].apply(lambda x: f"R$ {float(x):.2f}")
+                                    
+                                    st.dataframe(df_fornecedores, hide_index=True, use_container_width=True)
+                                    
+                                    # Calcular e exibir o total
+                                    total_fornecedores = fornecedores_proposta['valor'].sum()
+                                    st.info(f"Total Fornecedores: R$ {total_fornecedores:.2f}")
+                                else:
+                                    st.info("Nenhum fornecedor adicionado a esta proposta ainda.")
+                                
                             except Exception as e:
                                 st.error(f"Erro ao carregar fornecedores: {str(e)}")
                                 
@@ -1248,6 +1271,9 @@ def show():
                             # Obter lista de assistentes cadastrados
                             try:
                                 assistentes = st.session_state.db.get_assistentes()
+                                
+                                # Obter assistentes já adicionados à proposta
+                                assistentes_proposta = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_id=proposta_exec_id, tipo="ASSISTENTE")
                                 
                                 if not assistentes.empty:
                                     # Formulário para adicionar assistente à proposta
@@ -1282,6 +1308,26 @@ def show():
                                 else:
                                     st.warning("Nenhum assistente cadastrado no sistema.")
                                     st.write("Vá para a seção de Cadastros para adicionar assistentes.")
+                                
+                                # Exibir assistentes já adicionados à proposta
+                                st.divider()
+                                if not assistentes_proposta.empty:
+                                    st.write("### Assistentes Adicionados")
+                                    
+                                    # Formatar para exibição
+                                    df_assistentes = pd.DataFrame()
+                                    df_assistentes['Assistente'] = assistentes_proposta['fornecedor']
+                                    df_assistentes['Descrição'] = assistentes_proposta['descricao']
+                                    df_assistentes['Valor'] = assistentes_proposta['valor'].apply(lambda x: f"R$ {float(x):.2f}")
+                                    
+                                    st.dataframe(df_assistentes, hide_index=True, use_container_width=True)
+                                    
+                                    # Calcular e exibir o total
+                                    total_assistentes = assistentes_proposta['valor'].sum()
+                                    st.info(f"Total Assistentes: R$ {total_assistentes:.2f}")
+                                else:
+                                    st.info("Nenhum assistente adicionado a esta proposta ainda.")
+                                
                             except Exception as e:
                                 st.error(f"Erro ao carregar assistentes: {str(e)}")
                                 
