@@ -6,8 +6,8 @@ para garantir a finalização correta de propostas.
 import os
 import logging
 import psycopg2
-from datetime import datetime
-from typing import Dict, Any
+from datetime import datetime, date
+from typing import Dict, Any, Optional, List
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
