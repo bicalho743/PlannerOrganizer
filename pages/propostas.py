@@ -697,16 +697,62 @@ def show():
                     # Ações para propostas em execução
                     st.subheader("Gerenciar Execução")
                     
-                    # Obter lista de números de propostas para o select box
-                    numeros_propostas_execucao = propostas_em_execucao['numero'].tolist()
-                    numeros_propostas_execucao.sort()  # Ordenar para facilitar a seleção
+                    # Área de seleção com fundo colorido e estilo destacado
+                    st.markdown("""
+                    <style>
+                    .selecao-proposta {
+                        background-color: #f0f7ff;
+                        border: 1px solid #d0e1ff;
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin-bottom: 25px;
+                    }
+                    .selecao-proposta-titulo {
+                        color: #1E65B0;
+                        font-size: 16px;
+                        font-weight: 600;
+                        margin-bottom: 10px;
+                    }
+                    .area-trabalho {
+                        background-color: #fafafa;
+                        border: 1px solid #eaeaea;
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin-top: 15px;
+                    }
+                    .divisor-proposta {
+                        height: 3px;
+                        background: linear-gradient(90deg, #1E65B0, transparent);
+                        margin: 25px 0;
+                    }
+                    </style>
+                    <div class="selecao-proposta">
+                        <div class="selecao-proposta-titulo">📋 Selecione a Proposta em Execução</div>
+                    </div>
+                    """, unsafe_allow_html=True)
                     
-                    # Usar selectbox em vez de number_input para escolher pelo número da proposta
-                    proposta_exec_numero = st.selectbox(
-                        "Número da Proposta",
-                        numeros_propostas_execucao,
-                        key="numero_proposta_execucao_gerenciar"
-                    )
+                    # Dentro da área estilizada, colocar o seletor de propostas
+                    with st.container():
+                        # Obter lista de números de propostas para o select box
+                        numeros_propostas_execucao = propostas_em_execucao['numero'].tolist()
+                        numeros_propostas_execucao.sort()  # Ordenar para facilitar a seleção
+                        
+                        col1, col2 = st.columns([3, 1])
+                        
+                        with col1:
+                            # Usar selectbox em vez de number_input para escolher pelo número da proposta
+                            proposta_exec_numero = st.selectbox(
+                                "Número da Proposta",
+                                numeros_propostas_execucao,
+                                key="numero_proposta_execucao_gerenciar"
+                            )
+                        
+                        with col2:
+                            st.caption("Total de propostas:")
+                            st.info(f"{len(numeros_propostas_execucao)}")
+                    
+                    # Divisor entre a área de seleção e a área de trabalho
+                    st.markdown('<div class="divisor-proposta"></div>', unsafe_allow_html=True)
                     
                     # Buscar o ID correspondente ao número selecionado
                     proposta_exec_selecionada = propostas_em_execucao[propostas_em_execucao['numero'] == proposta_exec_numero]
@@ -716,6 +762,9 @@ def show():
                     proposta_exec = propostas_em_execucao[propostas_em_execucao['id'] == proposta_exec_id]
                     
                     if not proposta_exec.empty:
+                        # Iniciar área de trabalho da proposta
+                        st.markdown('<div class="area-trabalho">', unsafe_allow_html=True)
+                        
                         # Adicionar breadcrumbs para navegação
                         st.markdown(
                             f"""
@@ -2088,6 +2137,9 @@ def show():
                                         )
                                     except Exception as e:
                                         st.error(f"Erro ao gerar relatório interno: {str(e)}")
+                        
+                        # Fechamento da div da área de trabalho
+                        st.markdown('</div>', unsafe_allow_html=True)
                     else:
                         st.warning("Selecione uma proposta válida finalizada.")
                 else:
