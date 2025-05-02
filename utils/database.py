@@ -3427,6 +3427,50 @@ class Database:
                 
         return self._safe_query(query)
         
+    def remover_produto_organizador(self, produto_id):
+        """
+        Remove um produto organizador da proposta pelo ID
+        
+        Args:
+            produto_id (int): ID do produto organizador a ser removido
+            
+        Returns:
+            bool: True se removido com sucesso, False se não encontrou o produto
+        """
+        def query():
+            try:
+                # Converter para int para garantir tipo correto
+                produto_id_int = int(produto_id)
+                
+                # Verificar se o produto existe usando o ORM
+                produto = self.session.query(ProdutoOrganizador).filter_by(id=produto_id_int).first()
+                
+                if not produto:
+                    print(f"DEBUG: Produto Organizador ID={produto_id_int} não encontrado")
+                    return False
+                
+                # Verificar isolamento de dados através da proposta
+                if self.usuario_id:
+                    proposta = self.session.query(Proposta).filter_by(id=produto.proposta_id).first()
+                    if proposta and proposta.usuario_id != self.usuario_id:
+                        print(f"DEBUG: VIOLAÇÃO DE ISOLAMENTO! Tentativa de remover produto de outro usuário")
+                        raise ValueError("Você não tem permissão para remover este produto")
+                
+                # Excluir o produto
+                self.session.delete(produto)
+                self.session.flush()
+                
+                print(f"DEBUG: Produto Organizador ID={produto_id_int} removido com sucesso")
+                return True
+                
+            except Exception as e:
+                print(f"ERRO ao remover produto organizador: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                raise Exception(f"Erro ao remover produto organizador: {str(e)}")
+                
+        return self._safe_query(query)
+        
     def atualizar_status_pagamento_acrescimo(self, proposta_id, tipo, status):
         """Atualiza o status de pagamento de um acréscimo"""
         def query():

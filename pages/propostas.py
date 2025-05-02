@@ -1024,8 +1024,9 @@ def show():
                                     # Calcular valor total
                                     produtos['valor_total'] = produtos['valor'] * produtos['quantidade']
                                     
-                                    # Formatar para exibição
+                                    # Formatar para exibição com coluna de ID
                                     df_produtos = pd.DataFrame()
+                                    df_produtos['id'] = produtos['id']
                                     df_produtos['Nome'] = produtos['nome']
                                     df_produtos['Descrição'] = produtos['descricao']
                                     df_produtos['Valor Unit.'] = produtos['valor'].apply(lambda x: f"R$ {float(x):.2f}")
@@ -1033,7 +1034,35 @@ def show():
                                     df_produtos['Valor Total'] = produtos['valor_total'].apply(lambda x: f"R$ {float(x):.2f}")
                                     df_produtos['Cômodo'] = produtos['comodo']
                                     
-                                    st.dataframe(df_produtos)
+                                    # Exibir tabela sem a coluna ID
+                                    st.dataframe(df_produtos.drop(columns=['id']), hide_index=True, use_container_width=True)
+                                    
+                                    # Adicionar área para remover produto
+                                    col1, col2, col3 = st.columns([2, 2, 1])
+                                    with col1:
+                                        # Lista de IDs e nomes para o selectbox
+                                        options = [f"{row['id']} - {row['Nome']}" for _, row in df_produtos.iterrows()]
+                                        selected_produto = st.selectbox("Selecione um produto para remover:", options, key=f"remover_produto_{proposta_exec_id}")
+                                    
+                                    with col2:
+                                        # Extrair ID do item selecionado
+                                        if selected_produto:
+                                            produto_id = int(selected_produto.split(' - ')[0])
+                                            st.caption(f"ID: {produto_id}")
+                                    
+                                    with col3:
+                                        # Botão de remover
+                                        if st.button("Remover", key=f"btn_remover_produto_{proposta_exec_id}", type="primary", use_container_width=True):
+                                            try:
+                                                # Remover o produto
+                                                if st.session_state.db.remover_produto_organizador(produto_id):
+                                                    st.success("Produto removido com sucesso!")
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                                else:
+                                                    st.error("Erro ao remover o produto.")
+                                            except Exception as e:
+                                                st.error(f"Erro: {str(e)}")
                                     
                                     # Mostrar valor total da proposta
                                     valor_total_produtos = produtos['valor_total'].sum()
@@ -1248,13 +1277,42 @@ def show():
                                 if not fornecedores_proposta.empty:
                                     st.write("### Fornecedores Adicionados")
                                     
-                                    # Formatar para exibição
+                                    # Formatar para exibição com coluna de ação
                                     df_fornecedores = pd.DataFrame()
+                                    df_fornecedores['id'] = fornecedores_proposta['id']
                                     df_fornecedores['Fornecedor'] = fornecedores_proposta['fornecedor']
                                     df_fornecedores['Descrição'] = fornecedores_proposta['descricao']
                                     df_fornecedores['Valor'] = fornecedores_proposta['valor'].apply(lambda x: f"R$ {float(x):.2f}")
                                     
-                                    st.dataframe(df_fornecedores, hide_index=True, use_container_width=True)
+                                    # Exibir a tabela
+                                    st.dataframe(df_fornecedores.drop(columns=['id']), hide_index=True, use_container_width=True)
+                                    
+                                    # Adicionar área para remover fornecedor
+                                    col1, col2, col3 = st.columns([2, 2, 1])
+                                    with col1:
+                                        # Lista de IDs e nomes para o selectbox
+                                        options = [f"{row['id']} - {row['fornecedor']}" for _, row in df_fornecedores.iterrows()]
+                                        selected_fornecedor = st.selectbox("Selecione um fornecedor para remover:", options, key=f"remover_fornecedor_{proposta_exec_id}")
+                                    
+                                    with col2:
+                                        # Extrair ID do item selecionado
+                                        if selected_fornecedor:
+                                            acrescimo_id = int(selected_fornecedor.split(' - ')[0])
+                                            st.caption(f"ID: {acrescimo_id}")
+                                    
+                                    with col3:
+                                        # Botão de remover
+                                        if st.button("Remover", key=f"btn_remover_fornecedor_{proposta_exec_id}", type="primary", use_container_width=True):
+                                            try:
+                                                # Remover o acréscimo
+                                                if st.session_state.db.remover_acrescimo(acrescimo_id):
+                                                    st.success("Fornecedor removido com sucesso!")
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                                else:
+                                                    st.error("Erro ao remover o fornecedor.")
+                                            except Exception as e:
+                                                st.error(f"Erro: {str(e)}")
                                     
                                     # Calcular e exibir o total
                                     total_fornecedores = fornecedores_proposta['valor'].sum()
@@ -1314,13 +1372,42 @@ def show():
                                 if not assistentes_proposta.empty:
                                     st.write("### Assistentes Adicionados")
                                     
-                                    # Formatar para exibição
+                                    # Formatar para exibição com coluna de ação
                                     df_assistentes = pd.DataFrame()
+                                    df_assistentes['id'] = assistentes_proposta['id']
                                     df_assistentes['Assistente'] = assistentes_proposta['fornecedor']
                                     df_assistentes['Descrição'] = assistentes_proposta['descricao']
                                     df_assistentes['Valor'] = assistentes_proposta['valor'].apply(lambda x: f"R$ {float(x):.2f}")
                                     
-                                    st.dataframe(df_assistentes, hide_index=True, use_container_width=True)
+                                    # Exibir a tabela
+                                    st.dataframe(df_assistentes.drop(columns=['id']), hide_index=True, use_container_width=True)
+                                    
+                                    # Adicionar área para remover assistente
+                                    col1, col2, col3 = st.columns([2, 2, 1])
+                                    with col1:
+                                        # Lista de IDs e nomes para o selectbox
+                                        options = [f"{row['id']} - {row['Assistente']}" for _, row in df_assistentes.iterrows()]
+                                        selected_assistente = st.selectbox("Selecione um assistente para remover:", options, key=f"remover_assistente_{proposta_exec_id}")
+                                    
+                                    with col2:
+                                        # Extrair ID do item selecionado
+                                        if selected_assistente:
+                                            acrescimo_id = int(selected_assistente.split(' - ')[0])
+                                            st.caption(f"ID: {acrescimo_id}")
+                                    
+                                    with col3:
+                                        # Botão de remover
+                                        if st.button("Remover", key=f"btn_remover_assistente_{proposta_exec_id}", type="primary", use_container_width=True):
+                                            try:
+                                                # Remover o acréscimo
+                                                if st.session_state.db.remover_acrescimo(acrescimo_id):
+                                                    st.success("Assistente removido com sucesso!")
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                                else:
+                                                    st.error("Erro ao remover o assistente.")
+                                            except Exception as e:
+                                                st.error(f"Erro: {str(e)}")
                                     
                                     # Calcular e exibir o total
                                     total_assistentes = assistentes_proposta['valor'].sum()
