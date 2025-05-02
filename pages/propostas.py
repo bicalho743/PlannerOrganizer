@@ -811,81 +811,40 @@ def show():
                             unsafe_allow_html=True
                         )
                         
-                        # Mostrar informações da proposta com estilo moderno e cartão flutuante
-                        st.markdown(
-                            f"""
-                            <div class="proposta-header" style="margin-bottom: 20px;">
-                                <div style="display: flex; align-items: center; margin-bottom: 15px;">
-                                    <div style="background-color: #1E65B0; color: white; width: 40px; height: 40px; 
-                                                border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-                                                font-size: 18px; margin-right: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                        #{proposta_exec.iloc[0]['numero']}
-                                    </div>
-                                    <div>
-                                        <h2 style="margin: 0; color: #333; font-size: 1.5rem;">
-                                            {proposta_exec.iloc[0]['descricao']}
-                                        </h2>
-                                        <div style="font-size: 0.9rem; color: #777;">
-                                            Proposta em execução
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 15px; 
-                                            background-color: #f6f8fb; border-radius: 8px; padding: 12px; border: 1px solid #e0e7f2;">
-                                    <div style="padding: 8px 15px; background-color: white; border-radius: 6px; 
-                                                box-shadow: 0 1px 3px rgba(0,0,0,0.05); min-width: 180px;">
-                                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 4px;">Cliente</div>
-                                        <div style="font-weight: 600; color: #333;">
-                                            <i class="fas fa-user" style="color: #1E65B0; margin-right: 5px;"></i>
-                                            {proposta_exec.iloc[0]['nome']}
-                                        </div>
-                                    </div>
-                                    
-                                    <div style="padding: 8px 15px; background-color: white; border-radius: 6px; 
-                                                box-shadow: 0 1px 3px rgba(0,0,0,0.05); min-width: 150px;">
-                                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 4px;">Valor</div>
-                                        <div style="font-weight: 600; color: #333;">
-                                            <i class="fas fa-dollar-sign" style="color: #34A853; margin-right: 5px;"></i>
-                                            R$ {float(proposta_exec.iloc[0]['valor']):.2f}
-                                        </div>
-                                    </div>
-                                    
-                                    <div style="padding: 8px 15px; background-color: white; border-radius: 6px; 
-                                                box-shadow: 0 1px 3px rgba(0,0,0,0.05); min-width: 150px;">
-                                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 4px;">Status</div>
-                                        <div style="font-weight: 600; color: #333;">
-                                            <i class="fas fa-flag" style="color: #4285F4; margin-right: 5px;"></i>
-                                            {proposta_exec.iloc[0]['status']}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            """,
-                            unsafe_allow_html=True
-                        )
+                        # Mostrar informações da proposta usando componentes nativos do Streamlit
+                        # Título e número da proposta
+                        st.subheader(f"Proposta #{proposta_exec.iloc[0]['numero']} - {proposta_exec.iloc[0]['descricao']}")
+                        st.caption("Proposta em execução")
                         
-                        # Adicionar barra de progresso visual moderna
+                        # Criar cards usando colunas do Streamlit para evitar problemas com HTML
+                        st.markdown("### Detalhes da Proposta")
+                        
+                        col1, col2, col3 = st.columns(3)
+                        
+                        with col1:
+                            st.markdown("**Cliente**")
+                            st.info(f"{proposta_exec.iloc[0]['nome']}")
+                            
+                        with col2:
+                            st.markdown("**Valor**")
+                            st.success(f"R$ {float(proposta_exec.iloc[0]['valor']):.2f}")
+                            
+                        with col3:
+                            st.markdown("**Status**")
+                            st.info(f"{proposta_exec.iloc[0]['status'] if 'status' in proposta_exec.iloc[0] else 'Em execução'}")
+                        
+                        # Adicionar barra de progresso nativa do Streamlit
                         progresso = 50  # Valor exemplo, pode ser calculado com base em andamentos registrados
-                        st.markdown(
-                            f"""
-                            <div style="margin: 0 0 25px 0; background-color: white; padding: 15px; border-radius: 8px; 
-                                        border: 1px solid #eaeaea; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                                    <div style="font-weight: 600; color: #333; font-size: 0.95rem;">
-                                        <i class="fas fa-tasks" style="color: #1E65B0; margin-right: 6px;"></i>
-                                        Progresso da proposta
-                                    </div>
-                                    <div style="font-weight: 600; color: #1E65B0; font-size: 0.95rem;">{progresso}%</div>
-                                </div>
-                                <div style="width: 100%; height: 8px; background-color: #e9ecef; border-radius: 4px; overflow: hidden;">
-                                    <div style="height: 100%; width: {progresso}%; background: linear-gradient(90deg, #1E65B0, #4285F4); 
-                                                border-radius: 4px; transition: width 0.4s ease;"></div>
-                                </div>
-                            </div>
-                            """,
-                            unsafe_allow_html=True
-                        )
+                        
+                        st.markdown("### 📊 Progresso da Proposta")
+                        
+                        # Container para a barra e detalhes
+                        with st.container():
+                            # Usar um componente de progresso nativo
+                            st.progress(progresso/100)
+                            
+                            # Mostrar o percentual de progresso
+                            st.caption(f"Concluído: {progresso}%")
                         
                         # Adicionar estilos específicos para as abas de execução
                         st.markdown("""
