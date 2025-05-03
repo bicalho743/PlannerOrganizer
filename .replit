@@ -157,6 +157,18 @@ args = "Download Solucao"
 task = "workflow.run"
 args = "Download Solucao Standalone"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Download Fix Financial Entries"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Download Fix Duplicate Entries"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Download Fix Duplicated Entries"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -592,6 +604,33 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run download_fix_standalone.py --server.port 5001 --server.address 0.0.0.0 --server.headless true"
 waitForPort = 5001
+
+[[workflows.workflow]]
+name = "Download Fix Financial Entries"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run download_fix_financial_entries.py --server.port 8525 --server.address 0.0.0.0"
+waitForPort = 8525
+
+[[workflows.workflow]]
+name = "Download Fix Duplicate Entries"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run download_fix_duplicate_proposal_entries.py --server.port 8525 --server.address 0.0.0.0"
+waitForPort = 8525
+
+[[workflows.workflow]]
+name = "Download Fix Duplicated Entries"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run download_fix_duplicated_entries.py --server.port 8525 --server.address 0.0.0.0"
+waitForPort = 8525
 
 [[ports]]
 localPort = 443
