@@ -265,14 +265,29 @@ def finalizar_proposta_sql(proposta_id, usuario_id=None):
                     WHERE id = %s;
                 """, (data_atual, proposta_id))
             
-            # Verificar se já existe lançamento financeiro
+            # Verificar se já existe qualquer lançamento financeiro associado à proposta
             cursor.execute("""
-                SELECT id FROM financeiro 
-                WHERE proposta_id = %s AND tipo = 'receita_a_receber'
+                SELECT id, descricao, tipo FROM financeiro 
+                WHERE proposta_id = %s
             """, (proposta_id,))
             
-            lancamento = cursor.fetchone()
-            if not lancamento:
+            lancamentos = cursor.fetchall()
+            tem_lancamento = False
+            
+            # Se encontrou qualquer lançamento associado à proposta, marcar como verdadeiro
+            if lancamentos and len(lancamentos) > 0:
+                tem_lancamento = True
+                print(f"Lançamentos existentes para proposta #{proposta_id}:")
+                for lanc in lancamentos:
+                    try:
+                        lanc_id = lanc[0]
+                        lanc_desc = lanc[1] if len(lanc) > 1 else "Descrição não disponível"
+                        lanc_tipo = lanc[2] if len(lanc) > 2 else "Tipo não disponível"
+                        print(f"  ID={lanc_id}, Descrição={lanc_desc}, Tipo={lanc_tipo}")
+                    except (IndexError, TypeError):
+                        pass
+            
+            if not tem_lancamento:
                 # Criar lançamento financeiro
                 data_atual = datetime.now().date()
                 descricao = f"Proposta #{proposta_id} - {proposta['cliente_nome']}"
@@ -311,7 +326,8 @@ def finalizar_proposta_sql(proposta_id, usuario_id=None):
                         proposta['usuario_id']
                     ))
                 
-                lancamento_id = cursor.fetchone()['id']
+                result = cursor.fetchone()
+                lancamento_id = result['id'] if result and 'id' in result else 0
                 conn.commit()
                 return True, f"Proposta já estava finalizada, mas lançamento financeiro foi criado com ID: {lancamento_id}"
             else:
@@ -336,14 +352,29 @@ def finalizar_proposta_sql(proposta_id, usuario_id=None):
             conn.rollback()
             return False, f"Erro ao atualizar proposta #{proposta_id}"
         
-        # Verificar se já existe lançamento
+        # Verificar se já existe qualquer lançamento financeiro associado à proposta
         cursor.execute("""
-            SELECT id FROM financeiro 
-            WHERE proposta_id = %s AND tipo = 'receita_a_receber'
+            SELECT id, descricao, tipo FROM financeiro 
+            WHERE proposta_id = %s
         """, (proposta_id,))
         
-        lancamento = cursor.fetchone()
-        if not lancamento:
+        lancamentos = cursor.fetchall()
+        tem_lancamento = False
+        
+        # Se encontrou qualquer lançamento associado à proposta, marcar como verdadeiro
+        if lancamentos and len(lancamentos) > 0:
+            tem_lancamento = True
+            print(f"Lançamentos existentes para proposta #{proposta_id}:")
+            for lanc in lancamentos:
+                try:
+                    lanc_id = lanc[0]
+                    lanc_desc = lanc[1] if len(lanc) > 1 else "Descrição não disponível"
+                    lanc_tipo = lanc[2] if len(lanc) > 2 else "Tipo não disponível"
+                    print(f"  ID={lanc_id}, Descrição={lanc_desc}, Tipo={lanc_tipo}")
+                except (IndexError, TypeError):
+                    pass
+        
+        if not tem_lancamento:
             # Criar lançamento financeiro
             descricao = f"Proposta #{proposta_id} - {proposta['cliente_nome']}"
             
@@ -381,7 +412,8 @@ def finalizar_proposta_sql(proposta_id, usuario_id=None):
                     proposta['usuario_id']
                 ))
             
-            lancamento_id = cursor.fetchone()['id']
+            result = cursor.fetchone()
+            lancamento_id = result['id'] if result and 'id' in result else 0
         
         conn.commit()
         return True, f"Proposta #{proposta_id} finalizada com sucesso"

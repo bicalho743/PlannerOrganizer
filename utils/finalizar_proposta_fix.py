@@ -81,7 +81,13 @@ def buscar_proposta(proposta_id: int, conn=None) -> Dict[str, Any]:
             WHERE p.id = %s
         """, (proposta_id,))
         
-        columns = [desc[0] for desc in cursor.description]
+        # Verificação de segurança para cursor.description
+        columns = []
+        if cursor.description is not None:
+            columns = [desc[0] for desc in cursor.description]
+        else:
+            logger.warning(f"cursor.description é None ao buscar proposta #{proposta_id}")
+            
         result = cursor.fetchone()
         
         proposta = {}
@@ -111,17 +117,26 @@ def verificar_lancamento_financeiro_existe(proposta_id: int, conn=None) -> bool:
         
     try:
         cursor = conn.cursor()
+        # Verifica qualquer lançamento associado à proposta, independente do tipo
         cursor.execute("""
-            SELECT EXISTS (
-                SELECT 1 FROM financeiro 
-                WHERE proposta_id = %s AND tipo = 'receita_a_receber'
-            )
+            SELECT id, descricao, tipo FROM financeiro 
+            WHERE proposta_id = %s
         """, (proposta_id,))
         
-        result = cursor.fetchone()
+        lancamentos = cursor.fetchall()
         exists = False
-        if result and len(result) > 0:
-            exists = result[0]
+        
+        # Se encontrou qualquer lançamento associado à proposta, marcar como verdadeiro
+        if lancamentos and len(lancamentos) > 0:
+            exists = True
+            for lanc in lancamentos:
+                try:
+                    lanc_id = lanc[0]
+                    lanc_desc = lanc[1] if len(lanc) > 1 else "Descrição não disponível"
+                    lanc_tipo = lanc[2] if len(lanc) > 2 else "Tipo não disponível"
+                    logger.info(f"Lançamento existente: ID={lanc_id}, Descrição={lanc_desc}, Tipo={lanc_tipo}")
+                except (IndexError, TypeError):
+                    pass
             
         cursor.close()
         if close_conn:
@@ -349,13 +364,43 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
         proposta_id, valor, usuario_id = result
         logger.info(f"Proposta #{proposta_id} encontrada. Valor: {valor}, Usuario: {usuario_id}")
 
-        # Verificar se já existe um lançamento financeiro para esta proposta
+        # Obter nome do cliente para descrição do lançamento
         cursor.execute("""
-            SELECT COUNT(*) FROM financeiro 
-            WHERE proposta_id = %s AND tipo = 'receita_a_receber'
+            SELECT c.nome FROM clientes c
+            JOIN propostas p ON p.cliente_id = c.id
+            WHERE p.id = %s
         """, (proposta_id,))
         
-        tem_lancamento = cursor.fetchone()[0] > 0
+        cliente_nome = "Cliente não encontrado"
+        result = cursor.fetchone()
+        if result is not None:
+            try:
+                cliente_nome = result[0]
+            except (IndexError, TypeError):
+                logger.warning(f"Erro ao obter nome do cliente para proposta #{proposta_id}")
+            
+        descricao = f"Proposta #{proposta_id} - {cliente_nome}"
+        logger.info(f"Descrição do lançamento: {descricao}")
+        
+        # Verificar se já existe um lançamento financeiro para esta proposta (de qualquer tipo e descrição)
+        cursor.execute("""
+            SELECT id, descricao FROM financeiro 
+            WHERE proposta_id = %s
+        """, (proposta_id,))
+        
+        lancamentos = cursor.fetchall()
+        tem_lancamento = False
+        
+        # Se encontrou qualquer lançamento associado à proposta, marcar como verdadeiro
+        if lancamentos and len(lancamentos) > 0:
+            tem_lancamento = True
+            for lanc in lancamentos:
+                try:
+                    lanc_id = lanc[0]
+                    lanc_desc = lanc[1] if len(lanc) > 1 else "Descrição não disponível"
+                    logger.info(f"Encontrado lançamento existente: ID={lanc_id}, Descrição={lanc_desc}")
+                except (IndexError, TypeError):
+                    pass
         
         # Criar lançamento financeiro apenas se não existir
         if not tem_lancamento:
@@ -364,7 +409,7 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                 INSERT INTO financeiro 
                 (descricao, valor, data, categoria, tipo, status, proposta_id, usuario_id)
                 VALUES (%s, %s, CURRENT_DATE, 'Serviços de Organização', 'receita_a_receber', 'Pendente', %s, %s)
-            """, (f"Proposta #{proposta_id}", valor, proposta_id, usuario_id))
+            """, (descricao, valor, proposta_id, usuario_id))
         else:
             logger.info(f"Proposta #{proposta_id} já possui lançamento financeiro, pulando criação")
 
