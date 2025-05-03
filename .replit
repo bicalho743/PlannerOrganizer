@@ -173,6 +173,10 @@ args = "Download Fix Duplicated Entries"
 task = "workflow.run"
 args = "Download Finalizacao Fix"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Limpar Arquivos Dev"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -644,6 +648,15 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run download_finalizacao_fix.py --server.port 8535 --server.address 0.0.0.0"
 waitForPort = 8535
+
+[[workflows.workflow]]
+name = "Limpar Arquivos Dev"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run limpar_arquivos_dev.py --server.port 8800 --server.address 0.0.0.0"
+waitForPort = 8800
 
 [[ports]]
 localPort = 443

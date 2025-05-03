@@ -24,12 +24,59 @@ build/
 uploaded_files/
 pdfs/
 backups/
+backup_*/
+temp_*/
+tmp_*/
 *.bak
+*.backup
+*_backup*
+
+# Arquivos de dados
+*.csv
+*.xls
+*.xlsx
+*.json
+data/
 
 # Logs
 *.log
+log/
+logs/
+
+# Arquivos sensíveis
+*.key
+*_secret*
+*secret*
+firebase*.json
+*credentials*
+
+# Arquivos temporários do sistema
+*.zip
+*.tmp
+*.temp
+*.lock
+
+# Ferramentas de desenvolvimento e diagnóstico
+fix_*.py
+fix_*.sql
+fix_*.zip
+debug_*.py
+diagnostico_*.py
+test_*.py
+corrigir_*.py
+corrigir_*.sql
+download_*.py
+excluir_*.py
+limpar_*.py
+*_dev.py
+verificar_*.py
+testar_*.py
 
 # Outros
 .DS_Store
 .idea/
 .vscode/
+packaged_solution/
+solucao_render/
+deploy_render/
+downloads/

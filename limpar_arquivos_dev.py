@@ -4,8 +4,16 @@ Script para limpar arquivos de desenvolvimento e ferramentas de diagnóstico
 import os
 import shutil
 import logging
-import streamlit as st
 from datetime import datetime
+
+# Importar streamlit apenas se o módulo estiver disponível
+try:
+    import streamlit as st
+    STREAMLIT_DISPONIVEL = True
+except ImportError:
+    STREAMLIT_DISPONIVEL = False
+    st = None  # Para evitar erros de undefined
+    print("Streamlit não está disponível. Executando em modo CLI.")
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO,
@@ -43,11 +51,11 @@ class LimpadorArquivos:
             'fix_render_schema.py',
             'fix_render_type_errors.py',
             
-            # Ferramentas de importação/limpeza
+            # Ferramentas de importação/limpeza - mantendo importação de clientes e propostas
             'importacao_direta.py',
-            'importar_clientes.py',
-            'importar_propostas.py',
-            'importar_propostas_v2.py',
+            # 'importar_clientes.py',  # Mantido a pedido do usuário
+            # 'importar_propostas.py',  # Mantido a pedido do usuário
+            # 'importar_propostas_v2.py',  # Mantido a pedido do usuário
             'limpar_clientes.py',
             'limpar_propostas.py',
             'limpar_vendas.py',
@@ -221,58 +229,105 @@ class LimpadorArquivos:
         
         return True, f"Limpeza concluída com sucesso! Backup criado em {self.diretorio_backup}"
 
-# Interface Streamlit
+# Interface principal
 def main():
-    st.set_page_config(
-        page_title="Limpeza de Arquivos de Desenvolvimento",
-        page_icon="🧹",
-        layout="wide"
-    )
-    
-    st.title("🧹 Limpeza de Arquivos de Desenvolvimento")
-    
-    st.markdown("""
-    Este assistente irá limpar os arquivos de desenvolvimento e ferramentas de diagnóstico do sistema.
-    
-    ### O que será feito:
-    
-    1. **Backup dos arquivos** - Todos os arquivos serão copiados para um diretório de backup antes de serem removidos
-    2. **Desativação do modo desenvolvedor** - Flags de desenvolvimento serão desativadas nos arquivos de configuração
-    3. **Remoção de arquivos desnecessários** - Ferramentas de diagnóstico, importação e correção serão removidas
-    
-    ⚠️ **ATENÇÃO:** Este processo não pode ser desfeito automaticamente, mas os arquivos estarão disponíveis no backup.
-    """)
-    
+    """Função principal que pode rodar com ou sem interface Streamlit"""
     limpador = LimpadorArquivos()
     
-    st.subheader("Arquivos que serão removidos:")
-    
-    # Mostrar lista de arquivos que serão removidos, agrupados por categoria
-    categorias = {
-        "Ferramentas de diagnóstico e correção": [a for a in limpador.arquivos_para_excluir if a.startswith(('diagnostico', 'correcao', 'corrigir', 'check', 'fix', 'disable'))],
-        "Ferramentas de importação/limpeza": [a for a in limpador.arquivos_para_excluir if a.startswith(('importa', 'limpar', 'excluir', 'teste'))],
-        "Ferramentas de correção específicas": [a for a in limpador.arquivos_para_excluir if a.startswith(('ajustar', 'aplicar', 'atualizar', 'create', 'download', 'examinar', 'finalizar'))],
-        "Diretórios temporários e de backup": [a for a in limpador.arquivos_para_excluir if os.path.isdir(a) or a in ['backup_files', 'backups', 'solucao_render', 'temp_files', 'deploy_render', 'downloads', 'packaged_solution']]
-    }
-    
-    # Pedir confirmação
-    for categoria, arquivos in categorias.items():
-        with st.expander(f"{categoria} ({len(arquivos)} itens)"):
+    if STREAMLIT_DISPONIVEL:
+        # Interface Streamlit
+        st.set_page_config(
+            page_title="Limpeza de Arquivos de Desenvolvimento",
+            page_icon="🧹",
+            layout="wide"
+        )
+        
+        st.title("🧹 Limpeza de Arquivos de Desenvolvimento")
+        
+        st.markdown("""
+        Este assistente irá limpar os arquivos de desenvolvimento e ferramentas de diagnóstico do sistema.
+        
+        ### O que será feito:
+        
+        1. **Backup dos arquivos** - Todos os arquivos serão copiados para um diretório de backup antes de serem removidos
+        2. **Desativação do modo desenvolvedor** - Flags de desenvolvimento serão desativadas nos arquivos de configuração
+        3. **Remoção de arquivos desnecessários** - Ferramentas de diagnóstico, importação e correção serão removidas
+        
+        ⚠️ **ATENÇÃO:** Este processo não pode ser desfeito automaticamente, mas os arquivos estarão disponíveis no backup.
+        """)
+        
+        st.subheader("Arquivos que serão removidos:")
+        
+        # Mostrar lista de arquivos que serão removidos, agrupados por categoria
+        categorias = {
+            "Ferramentas de diagnóstico e correção": [a for a in limpador.arquivos_para_excluir if a.startswith(('diagnostico', 'correcao', 'corrigir', 'check', 'fix', 'disable'))],
+            "Ferramentas de importação/limpeza": [a for a in limpador.arquivos_para_excluir if a.startswith(('importa', 'limpar', 'excluir', 'teste'))],
+            "Ferramentas de correção específicas": [a for a in limpador.arquivos_para_excluir if a.startswith(('ajustar', 'aplicar', 'atualizar', 'create', 'download', 'examinar', 'finalizar'))],
+            "Diretórios temporários e de backup": [a for a in limpador.arquivos_para_excluir if os.path.isdir(a) or a in ['backup_files', 'backups', 'solucao_render', 'temp_files', 'deploy_render', 'downloads', 'packaged_solution']]
+        }
+        
+        # Pedir confirmação
+        for categoria, arquivos in categorias.items():
+            with st.expander(f"{categoria} ({len(arquivos)} itens)"):
+                for arquivo in arquivos:
+                    if os.path.exists(arquivo):
+                        st.text(f"✓ {arquivo}")
+                    else:
+                        st.text(f"✗ {arquivo} (não encontrado)")
+        
+        if st.button("Iniciar Limpeza de Arquivos", type="primary"):
+            with st.spinner("Limpando arquivos de desenvolvimento..."):
+                sucesso, mensagem = limpador.executar_limpeza()
+                
+                if sucesso:
+                    st.success(mensagem)
+                    st.balloons()
+                else:
+                    st.error(mensagem)
+    else:
+        # Interface de linha de comando
+        print("=" * 80)
+        print("🧹 LIMPEZA DE ARQUIVOS DE DESENVOLVIMENTO")
+        print("=" * 80)
+        print("\nEste script irá:")
+        print("1. Criar backup dos arquivos antes de removê-los")
+        print("2. Desativar flags de modo desenvolvedor nos arquivos de configuração")
+        print("3. Remover arquivos de desenvolvimento desnecessários")
+        print("\nArquivos que serão removidos:")
+        
+        # Agrupar arquivos por categoria para melhor visualização
+        categorias = {
+            "Ferramentas de diagnóstico e correção": [a for a in limpador.arquivos_para_excluir if a.startswith(('diagnostico', 'correcao', 'corrigir', 'check', 'fix', 'disable'))],
+            "Ferramentas de importação/limpeza": [a for a in limpador.arquivos_para_excluir if a.startswith(('importa', 'limpar', 'excluir', 'teste'))],
+            "Ferramentas de correção específicas": [a for a in limpador.arquivos_para_excluir if a.startswith(('ajustar', 'aplicar', 'atualizar', 'create', 'download', 'examinar', 'finalizar'))],
+            "Diretórios temporários e de backup": [a for a in limpador.arquivos_para_excluir if os.path.isdir(a) or a in ['backup_files', 'backups', 'solucao_render', 'temp_files', 'deploy_render', 'downloads', 'packaged_solution']]
+        }
+        
+        # Mostrar arquivos por categoria
+        for categoria, arquivos in categorias.items():
+            print(f"\n{categoria} ({len(arquivos)} itens):")
             for arquivo in arquivos:
                 if os.path.exists(arquivo):
-                    st.text(f"✓ {arquivo}")
+                    print(f"  ✓ {arquivo}")
                 else:
-                    st.text(f"✗ {arquivo} (não encontrado)")
-    
-    if st.button("Iniciar Limpeza de Arquivos", type="primary"):
-        with st.spinner("Limpando arquivos de desenvolvimento..."):
+                    print(f"  ✗ {arquivo} (não encontrado)")
+        
+        print("\nATENÇÃO: Este processo não pode ser desfeito automaticamente.")
+        print(f"Backups serão criados no diretório: {limpador.diretorio_backup}")
+        print("=" * 80)
+        
+        confirmacao = input("\nDeseja continuar? (digite 'SIM' para confirmar): ")
+        
+        if confirmacao.upper() == "SIM":
+            print("\nIniciando processo de limpeza...")
             sucesso, mensagem = limpador.executar_limpeza()
             
             if sucesso:
-                st.success(mensagem)
-                st.balloons()
+                print(f"\n✅ {mensagem}")
             else:
-                st.error(mensagem)
+                print(f"\n❌ {mensagem}")
+        else:
+            print("\nOperação cancelada pelo usuário.")
 
 if __name__ == "__main__":
     main()
