@@ -1,206 +1,267 @@
 """
-Script para aplicar a correção do erro 'name 'finalizar_proposta_segura' is not defined'
+Script para aplicar a correção do erro de lançamentos duplicados
 Este script modifica diretamente os arquivos necessários para corrigir o problema.
 """
 import os
 import logging
+import psycopg2
 
 # Configurar logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO,
+                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 def verificar_arquivo(caminho):
     """Verifica se um arquivo existe"""
-    if not os.path.exists(caminho):
-        logger.error(f"Arquivo não encontrado: {caminho}")
-        return False
-    return True
+    return os.path.exists(caminho)
 
 def ler_arquivo(caminho):
     """Lê o conteúdo de um arquivo"""
     try:
-        with open(caminho, 'r', encoding='utf-8') as file:
-            conteudo = file.read()
-        return conteudo
+        with open(caminho, 'r', encoding='utf-8') as f:
+            return f.read()
     except Exception as e:
-        logger.error(f"Erro ao ler arquivo {caminho}: {str(e)}")
+        logger.error(f"Erro ao ler arquivo {caminho}: {e}")
         return None
 
 def escrever_arquivo(caminho, conteudo):
     """Escreve conteúdo em um arquivo"""
     try:
-        with open(caminho, 'w', encoding='utf-8') as file:
-            file.write(conteudo)
+        with open(caminho, 'w', encoding='utf-8') as f:
+            f.write(conteudo)
         return True
     except Exception as e:
-        logger.error(f"Erro ao escrever arquivo {caminho}: {str(e)}")
+        logger.error(f"Erro ao escrever no arquivo {caminho}: {e}")
         return False
 
 def fazer_backup(caminho):
     """Cria um backup do arquivo"""
     try:
-        backup_path = f"{caminho}.bak"
         conteudo = ler_arquivo(caminho)
         if conteudo:
+            backup_path = f"{caminho}.bak"
             escrever_arquivo(backup_path, conteudo)
-            logger.info(f"Backup criado: {backup_path}")
+            logger.info(f"Backup criado em {backup_path}")
             return True
         return False
     except Exception as e:
-        logger.error(f"Erro ao criar backup de {caminho}: {str(e)}")
+        logger.error(f"Erro ao fazer backup do arquivo {caminho}: {e}")
         return False
 
-def corrigir_importacao_proposta():
-    """Corrige a importação da função finalizar_proposta_segura na página de propostas"""
-    arquivo_propostas = 'pages/propostas.py'
+def localizar_arquivo_finalizar_proposta():
+    """Localiza o arquivo com a função finalizar_proposta"""
+    possiveis_locais = [
+        "utils/proposta.py",
+        "utils/financeiro.py",
+        "utils/finalizar_proposta.py",
+        "pages/propostas.py"
+    ]
     
-    # Verificar se o arquivo existe
-    if not verificar_arquivo(arquivo_propostas):
+    for arquivo in possiveis_locais:
+        if verificar_arquivo(arquivo):
+            conteudo = ler_arquivo(arquivo)
+            if conteudo and ("def finalizar_proposta" in conteudo or 
+                            "def finalizar_proposta_segura" in conteudo):
+                return arquivo
+    
+    return None
+
+def criar_funcao_sql():
+    """Cria função SQL para verificar se já existe lançamento financeiro para uma proposta"""
+    try:
+        # Conectar ao banco de dados
+        db_url = os.environ.get('DATABASE_URL')
+        if not db_url:
+            logger.error("Variável DATABASE_URL não encontrada")
+            return False
+        
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        # Criar função SQL
+        sql = """
+        CREATE OR REPLACE FUNCTION ja_existe_lancamento_proposta(proposta_id_param INTEGER) 
+        RETURNS BOOLEAN AS $$
+        DECLARE
+            existe BOOLEAN;
+        BEGIN
+            SELECT EXISTS(
+                SELECT 1 FROM financeiro 
+                WHERE proposta_id = proposta_id_param
+                AND tipo = 'receita_a_receber'
+            ) INTO existe;
+            
+            RETURN existe;
+        END;
+        $$ LANGUAGE plpgsql;
+        """
+        
+        cursor.execute(sql)
+        conn.commit()
+        logger.info("Função SQL criada com sucesso")
+        
+        cursor.close()
+        conn.close()
+        return True
+    except Exception as e:
+        logger.error(f"Erro ao criar função SQL: {e}")
+        return False
+
+def modificar_funcao_finalizar(arquivo_path):
+    """Modifica a função finalizar_proposta para verificar se já existe lançamento antes de criar"""
+    if not verificar_arquivo(arquivo_path):
+        logger.error(f"Arquivo {arquivo_path} não encontrado")
         return False
     
-    # Ler o conteúdo atual
-    conteudo = ler_arquivo(arquivo_propostas)
+    conteudo = ler_arquivo(arquivo_path)
     if not conteudo:
         return False
     
-    # Fazer backup do arquivo
-    fazer_backup(arquivo_propostas)
+    # Fazer backup antes de modificar
+    fazer_backup(arquivo_path)
     
-    # Verificar se a importação incorreta existe
-    if 'from utils.finalizar_proposta_fix import finalizar_proposta_sql' in conteudo:
-        # Substituir a importação
+    # Verificar qual função estamos modificando
+    if "def finalizar_proposta_segura" in conteudo:
+        funcao_name = "finalizar_proposta_segura"
+    else:
+        funcao_name = "finalizar_proposta"
+    
+    logger.info(f"Modificando função {funcao_name} em {arquivo_path}")
+    
+    # Identificar o padrão usado para criar lançamentos financeiros
+    if "adicionar_lancamento_financeiro" in conteudo:
+        # Versão com função específica para adicionar lançamento
         novo_conteudo = conteudo.replace(
-            'from utils.finalizar_proposta_fix import finalizar_proposta_sql',
-            'from utils.finalizar_proposta_fix import finalizar_proposta_segura'
+            "adicionar_lancamento_financeiro(",
+            "# Verificar se já existe lançamento para esta proposta\n" +
+            "        cursor.execute(\"SELECT ja_existe_lancamento_proposta(%s)\", (proposta_id,))\n" +
+            "        ja_existe = cursor.fetchone()[0]\n" +
+            "        \n" +
+            "        # Criar lançamento financeiro apenas se não existir\n" +
+            "        if not ja_existe:\n" +
+            "            adicionar_lancamento_financeiro("
         )
         
-        # Salvar o arquivo corrigido
-        if escrever_arquivo(arquivo_propostas, novo_conteudo):
-            logger.info("Importação corrigida em pages/propostas.py")
-            return True
-        return False
-    
-    # Verificar se a função já está sendo importada corretamente
-    if 'from utils.finalizar_proposta_fix import finalizar_proposta_segura' in conteudo:
-        logger.info("Importação já está correta em pages/propostas.py")
-        return True
-    
-    logger.warning("Não encontrada a importação para correção em pages/propostas.py")
-    return False
-
-def implementar_funcao_segura():
-    """Implementa ou atualiza a função finalizar_proposta_segura"""
-    arquivo_fix = 'utils/finalizar_proposta_fix.py'
-    
-    # Verificar se o arquivo existe
-    if not verificar_arquivo(arquivo_fix):
-        return False
-    
-    # Ler o conteúdo atual
-    conteudo = ler_arquivo(arquivo_fix)
-    if not conteudo:
-        return False
-    
-    # Fazer backup do arquivo
-    fazer_backup(arquivo_fix)
-    
-    # Verificar se a função já existe
-    if 'def finalizar_proposta_segura(' in conteudo:
-        logger.info("Função finalizar_proposta_segura já existe")
-        
-        # Verificar se a função retorna um objeto com a estrutura correta
-        if '"status": True' in conteudo and '"lancamentos": {' in conteudo:
-            logger.info("Função finalizar_proposta_segura tem retorno adequado")
-            return True
-        
-        # Se a função existe mas o retorno não parece correto, atualizar
-        logger.warning("Melhorando retorno da função finalizar_proposta_segura")
-    
-    # Definição da função a ser adicionada
-    nova_funcao = """
-# Função de compatibilidade para código existente
-def finalizar_proposta_segura(proposta_id, usuario_id=None):
-    """Função de compatibilidade para código existente"""
-    resultado = finalizar_proposta_sql(proposta_id, usuario_id)
-    
-    # Montar retorno compatível com a assinatura das funções chamadoras
-    if resultado:
-        return {
-            "status": True,
-            "mensagem": "Proposta finalizada com sucesso",
-            "lancamentos": {
-                "gerados": 1,
-                "valores": {
-                    "base": 0,  # Valores serão definidos dinamicamente em uso real
-                    "produtos": 0,
-                    "fornecedores": 0,
-                    "assistentes": 0,
-                    "outros": 0
-                }
-            }
-        }
-    else:
-        return {
-            "status": False,
-            "mensagem": "Falha ao finalizar proposta"
-        }
-"""
-    
-    # Se a função já existe, remover a definição atual
-    if 'def finalizar_proposta_segura(' in conteudo:
+        # Adicionar indentação ao fechamento da condição if
+        linhas = novo_conteudo.split('\n')
+        for i, linha in enumerate(linhas):
+            if "adicionar_lancamento_financeiro(" in linha:
+                # Encontrar a linha com o fechamento do parêntese
+                j = i
+                parenteses = 1
+                while j < len(linhas) and parenteses > 0:
+                    j += 1
+                    if j < len(linhas):
+                        linha_atual = linhas[j]
+                        parenteses += linha_atual.count('(')
+                        parenteses -= linha_atual.count(')')
+                
+                if j < len(linhas):
+                    # Adicionar else após o fechamento do parêntese
+                    linhas[j] = linhas[j] + "\n        else:\n            logger.info(f\"Proposta #{proposta_id} já possui lançamento financeiro, não será criado outro\")"
+                    break
+                    
+        novo_conteudo = '\n'.join(linhas)
+    elif "INSERT INTO financeiro" in conteudo:
+        # Versão com SQL direto para adicionar lançamento
         linhas = conteudo.split('\n')
-        nova_linhas = []
-        skip = False
-        
-        for linha in linhas:
-            # Começar a ignorar quando encontrar a definição da função
-            if 'def finalizar_proposta_segura(' in linha:
-                skip = True
-                continue
-            
-            # Parar de ignorar quando encontrar outra função ou o final do arquivo
-            if skip and (linha.startswith('def ') or not linha.strip()):
-                skip = False
-            
-            # Adicionar a linha se não estiver ignorando
-            if not skip:
-                nova_linhas.append(linha)
-        
-        # Adicionar a nova definição
-        conteudo = '\n'.join(nova_linhas)
+        for i, linha in enumerate(linhas):
+            if "INSERT INTO financeiro" in linha:
+                # Encontrar o início do bloco SQL
+                inicio = i
+                # Voltar até encontrar o início do bloco
+                while inicio > 0 and "cursor.execute" not in linhas[inicio]:
+                    inicio -= 1
+                
+                # Adicionar a verificação antes do INSERT
+                indentacao = linhas[inicio][:linhas[inicio].find("cursor")]
+                linhas.insert(inicio, f"{indentacao}# Verificar se já existe lançamento para esta proposta")
+                linhas.insert(inicio+1, f"{indentacao}cursor.execute(\"SELECT ja_existe_lancamento_proposta(%s)\", (proposta_id,))")
+                linhas.insert(inicio+2, f"{indentacao}ja_existe = cursor.fetchone()[0]")
+                linhas.insert(inicio+3, f"{indentacao}")
+                linhas.insert(inicio+4, f"{indentacao}# Criar lançamento financeiro apenas se não existir")
+                linhas.insert(inicio+5, f"{indentacao}if not ja_existe:")
+                
+                # Adicionar indentação ao bloco SQL existente
+                j = inicio + 6
+                while j < len(linhas) and ("cursor.execute" in linhas[j] or "RETURNING" in linhas[j]):
+                    linhas[j] = indentacao + "    " + linhas[j].lstrip()
+                    j += 1
+                
+                # Adicionar else após o bloco SQL
+                linhas.insert(j, f"{indentacao}else:")
+                linhas.insert(j+1, f"{indentacao}    logger.info(f\"Proposta #{{proposta_id}} já possui lançamento financeiro, não será criado outro\")")
+                break
+                
+        novo_conteudo = '\n'.join(linhas)
+    else:
+        logger.error(f"Não foi possível identificar o padrão para modificar em {arquivo_path}")
+        return False
     
-    # Adicionar a função ao final do arquivo
-    novo_conteudo = conteudo + nova_funcao
+    # Garantir que o módulo logging esteja importado
+    if "import logging" not in novo_conteudo:
+        import_pos = novo_conteudo.find("import ")
+        if import_pos >= 0:
+            # Encontrar o final do bloco de importações
+            linhas = novo_conteudo.split('\n')
+            ultima_importacao = 0
+            for i, linha in enumerate(linhas):
+                if linha.startswith("import ") or linha.startswith("from "):
+                    ultima_importacao = i
+            
+            # Adicionar import logging após a última importação
+            linhas.insert(ultima_importacao + 1, "import logging")
+            linhas.insert(ultima_importacao + 2, "logger = logging.getLogger(__name__)")
+            novo_conteudo = '\n'.join(linhas)
+        else:
+            # Adicionar no início do arquivo
+            novo_conteudo = "import logging\nlogger = logging.getLogger(__name__)\n\n" + novo_conteudo
     
-    # Salvar o arquivo corrigido
-    if escrever_arquivo(arquivo_fix, novo_conteudo):
-        logger.info("Função finalizar_proposta_segura adicionada/atualizada")
+    # Salvar as alterações
+    if escrever_arquivo(arquivo_path, novo_conteudo):
+        logger.info(f"Arquivo {arquivo_path} modificado com sucesso")
         return True
+    else:
+        logger.error(f"Erro ao modificar arquivo {arquivo_path}")
+        return False
+
+def main():
+    """Função principal"""
+    print("Iniciando correção para evitar lançamentos duplicados na finalização...")
     
-    return False
+    # 1. Criar função SQL para verificar se já existe lançamento
+    print("Criando função SQL de verificação...")
+    if criar_funcao_sql():
+        print("✅ Função SQL criada com sucesso")
+    else:
+        print("❌ Erro ao criar função SQL")
+        return False
+    
+    # 2. Localizar arquivo com função finalizar_proposta
+    print("Localizando arquivo com função de finalização...")
+    arquivo_finalizar = localizar_arquivo_finalizar_proposta()
+    if not arquivo_finalizar:
+        print("❌ Não foi possível localizar o arquivo com a função de finalização")
+        
+        # Solicitar caminho manual
+        arquivo_finalizar = input("Por favor, informe o caminho do arquivo que contém a função finalizar_proposta: ")
+        if not arquivo_finalizar or not verificar_arquivo(arquivo_finalizar):
+            print("❌ Arquivo não encontrado")
+            return False
+    else:
+        print(f"✅ Arquivo encontrado: {arquivo_finalizar}")
+    
+    # 3. Modificar código para não criar lançamento na finalização
+    print("Modificando código de finalização...")
+    if modificar_funcao_finalizar(arquivo_finalizar):
+        print("✅ Código modificado com sucesso")
+        print("\n⭐ CORREÇÃO APLICADA COM SUCESSO! ⭐")
+        print(f"Backup do arquivo original em: {arquivo_finalizar}.bak")
+        print("Agora o sistema não criará lançamentos duplicados na finalização de propostas.")
+        return True
+    else:
+        print("❌ Erro ao modificar código")
+        return False
 
 if __name__ == "__main__":
-    print("🛠️ Iniciando correção do erro 'name 'finalizar_proposta_segura' is not defined'")
-    
-    # Corrigir a importação
-    resultado_importacao = corrigir_importacao_proposta()
-    if resultado_importacao:
-        print("✅ Importação corrigida em pages/propostas.py")
-    else:
-        print("❌ Falha ao corrigir importação em pages/propostas.py")
-    
-    # Implementar a função
-    resultado_implementacao = implementar_funcao_segura()
-    if resultado_implementacao:
-        print("✅ Função finalizar_proposta_segura implementada/atualizada em utils/finalizar_proposta_fix.py")
-    else:
-        print("❌ Falha ao implementar/atualizar função finalizar_proposta_segura")
-    
-    # Verificar resultados
-    if resultado_importacao and resultado_implementacao:
-        print("\n🎉 Correção concluída com sucesso!")
-        print("✓ Os arquivos necessários foram corrigidos")
-        print("✓ Backups foram criados (.bak)")
-        print("\n🔄 Reinicie a aplicação para aplicar as mudanças")
-    else:
-        print("\n⚠️ Ocorreram problemas durante a correção. Verifique os logs para mais detalhes.")
+    main()

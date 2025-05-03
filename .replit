@@ -169,6 +169,10 @@ args = "Download Fix Duplicate Entries"
 task = "workflow.run"
 args = "Download Fix Duplicated Entries"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Download Finalizacao Fix"
+
 [[workflows.workflow]]
 name = "Teste Importação"
 author = "agent"
@@ -631,6 +635,15 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run download_fix_duplicated_entries.py --server.port 8525 --server.address 0.0.0.0"
 waitForPort = 8525
+
+[[workflows.workflow]]
+name = "Download Finalizacao Fix"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run download_finalizacao_fix.py --server.port 8535 --server.address 0.0.0.0"
+waitForPort = 8535
 
 [[ports]]
 localPort = 443
