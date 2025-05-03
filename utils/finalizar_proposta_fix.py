@@ -349,12 +349,24 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
         proposta_id, valor, usuario_id = result
         logger.info(f"Proposta #{proposta_id} encontrada. Valor: {valor}, Usuario: {usuario_id}")
 
-        # Criar lançamento financeiro
+        # Verificar se já existe um lançamento financeiro para esta proposta
         cursor.execute("""
-            INSERT INTO financeiro 
-            (descricao, valor, data, categoria, tipo, status, proposta_id, usuario_id)
-            VALUES (%s, %s, CURRENT_DATE, 'Serviços de Organização', 'receita_a_receber', 'Pendente', %s, %s)
-        """, (f"Proposta #{proposta_id}", valor, proposta_id, usuario_id))
+            SELECT COUNT(*) FROM financeiro 
+            WHERE proposta_id = %s AND tipo = 'receita_a_receber'
+        """, (proposta_id,))
+        
+        tem_lancamento = cursor.fetchone()[0] > 0
+        
+        # Criar lançamento financeiro apenas se não existir
+        if not tem_lancamento:
+            logger.info(f"Criando lançamento financeiro para proposta #{proposta_id}")
+            cursor.execute("""
+                INSERT INTO financeiro 
+                (descricao, valor, data, categoria, tipo, status, proposta_id, usuario_id)
+                VALUES (%s, %s, CURRENT_DATE, 'Serviços de Organização', 'receita_a_receber', 'Pendente', %s, %s)
+            """, (f"Proposta #{proposta_id}", valor, proposta_id, usuario_id))
+        else:
+            logger.info(f"Proposta #{proposta_id} já possui lançamento financeiro, pulando criação")
 
         conn.commit()
         return {
