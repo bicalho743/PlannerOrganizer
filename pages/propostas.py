@@ -770,19 +770,12 @@ def show():
                         numeros_propostas_execucao = propostas_em_execucao['numero'].tolist()
                         numeros_propostas_execucao.sort()  # Ordenar para facilitar a seleção
                         
-                        col1, col2 = st.columns([3, 1])
-                        
-                        with col1:
-                            # Usar selectbox em vez de number_input para escolher pelo número da proposta
-                            proposta_exec_numero = st.selectbox(
-                                "Número da Proposta",
-                                numeros_propostas_execucao,
-                                key="numero_proposta_execucao_gerenciar"
-                            )
-                        
-                        with col2:
-                            st.caption("Total de propostas:")
-                            st.info(f"{len(numeros_propostas_execucao)}")
+                        # Simplificado - sem divisão de colunas e sem contador
+                        proposta_exec_numero = st.selectbox(
+                            "Número da Proposta",
+                            numeros_propostas_execucao,
+                            key="numero_proposta_execucao_gerenciar"
+                        )
                     
                     # Indicador de seta entre as áreas
                     st.markdown('<div class="card-arrow">↓</div>', unsafe_allow_html=True)
