@@ -42,7 +42,8 @@ def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
     # Verificar se é para gerar um relatório de serviço
     if proposta.get('status') == 'Concluída':
         print("DEBUG: Usando o gerador de relatório de serviço!")
-        from utils.pdf_generator_melhorado import gerar_pdf_relatorio_servico
+        # Usar a nova versão do relatório de serviço
+        from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
         return gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename)
     else:
         # Usar a versão melhorada com layout profissional
