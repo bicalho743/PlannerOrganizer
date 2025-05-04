@@ -116,7 +116,7 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         
         # Subtítulo com número da proposta e nome do cliente
         c.setFont("Helvetica", 11)
-        c.drawString(30, height-50, f"#{proposta['numero']} - {cliente['nome']}")
+        c.drawString(30, height-50, f"#{proposta.get('numero', proposta.get('id'))} - {cliente['nome']}")
         
         # Data no canto direito
         from datetime import datetime, timedelta
