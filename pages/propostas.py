@@ -2036,9 +2036,10 @@ def show():
                                         nome_cliente_formatado = cliente_dict['nome'].replace(' ', '_').replace('/', '_').replace('\\', '_')
                                         relatorio_path = f"pdfs/relatorio_{proposta_dict['numero']}_{nome_cliente_formatado}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
                                         
-                                        # Gerar o PDF
-                                        from utils.pdf_generator import gerar_pdf_cliente
-                                        pdf_path = gerar_pdf_cliente(proposta_dict, cliente_dict, acrescimos, relatorio_path)
+                                        # Gerar o PDF diretamente chamando o relatório de serviço para propostas finalizadas
+                                        print("DEBUG: Chamando diretamente o gerador de relatório de serviço novo!")
+                                        from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
+                                        pdf_path = gerar_pdf_relatorio_servico(proposta_dict, cliente_dict, acrescimos, relatorio_path)
                                         
                                         # Criar link para download
                                         with open(pdf_path, "rb") as pdf_file:

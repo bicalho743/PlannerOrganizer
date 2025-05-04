@@ -39,8 +39,13 @@ def gerar_pdf_cliente(proposta, cliente, acrescimos, filename):
     Returns:
         str: Caminho do arquivo PDF gerado
     """
+    # Mostrar detalhes da proposta para debug
+    print(f"DEBUG PDF: Status da proposta: {proposta.get('status')}")
+    print(f"DEBUG PDF: Tipo da proposta: {proposta.get('tipo_proposta')}")
+    print(f"DEBUG PDF: Data de geração: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+    
     # Verificar se é para gerar um relatório de serviço
-    if proposta.get('status') == 'Concluída':
+    if proposta.get('status') in ['Concluída', 'Finalizada']:
         print("DEBUG: Usando o gerador de relatório de serviço!")
         # Usar a nova versão do relatório de serviço
         from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
