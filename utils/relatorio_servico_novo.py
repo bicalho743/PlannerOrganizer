@@ -62,14 +62,15 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         c.setFont("Helvetica-Bold", 18)
         c.drawString(43, height-30, "Relatório de Serviço")
         
-        # Data no canto direito
+        # Data no canto direito (data atual)
         c.setFont("Helvetica", 10)
-        c.drawRightString(width-43, height-30, "Data: 28/04/2025")
+        data_atual = datetime.now().strftime('%d/%m/%Y')
+        c.drawRightString(width-43, height-30, f"Data: {data_atual}")
         
         # Subtítulo com número da proposta e nome do cliente
         c.setFont("Helvetica", 11)
         c.setFillColor(colors.white)
-        c.drawString(43, height-50, "#80 - Naely")
+        c.drawString(43, height-50, f"#{proposta.get('numero', 'N/A')} - {cliente.get('nome', 'Cliente')}")
         
         # ===== INFORMAÇÕES DO CLIENTE =====
         y = height - 110  # Começando abaixo do cabeçalho
@@ -85,11 +86,11 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         y -= 25
         c.setFillColor(cinza_texto)
         c.setFont("Helvetica", 10)
-        c.drawString(43, y, "Nome: Naely")
+        c.drawString(43, y, f"Nome: {cliente.get('nome', 'N/A')}")
         y -= 15
-        c.drawString(43, y, "Email: cliente1@email.com")
+        c.drawString(43, y, f"Email: {cliente.get('email', 'N/A')}")
         y -= 15
-        c.drawString(43, y, "Telefone: 31992477557")
+        c.drawString(43, y, f"Telefone: {cliente.get('telefone', 'N/A')}")
         
         # ===== INFORMAÇÕES DA PROPOSTA =====
         y -= 30
@@ -105,18 +106,30 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         c.setFont("Helvetica", 10)
         
         # Coluna da esquerda
-        c.drawString(43, y, "Tipo: Organização")
+        c.drawString(43, y, f"Tipo: {proposta.get('tipo_proposta', 'Organização')}")
         y -= 15
-        c.drawString(43, y, "Status: Concluída")
+        c.drawString(43, y, f"Status: {proposta.get('status', 'Concluída')}")
         
         # Coluna da direita
         coluna_direita = width / 2
         y_direita = y + 15  # Reinicia na altura da primeira linha da coluna esquerda
-        c.drawString(coluna_direita, y_direita, "Data Início: 28/04/2025")
+        
+        # Formatar datas se estiverem disponíveis
+        data_inicio = proposta.get('data_inicio', '28/04/2025')
+        data_fim = proposta.get('data_fim', '13/05/2025')
+        prazo = proposta.get('prazo_entrega', '15 dias')
+        
+        # Se as datas forem objetos datetime, formatar adequadamente
+        if hasattr(data_inicio, 'strftime'):
+            data_inicio = data_inicio.strftime('%d/%m/%Y')
+        if hasattr(data_fim, 'strftime'):
+            data_fim = data_fim.strftime('%d/%m/%Y')
+        
+        c.drawString(coluna_direita, y_direita, f"Data Início: {data_inicio}")
         y_direita -= 15
-        c.drawString(coluna_direita, y_direita, "Data Fim: 13/05/2025")
+        c.drawString(coluna_direita, y_direita, f"Data Fim: {data_fim}")
         y_direita -= 15
-        c.drawString(coluna_direita, y_direita, "Prazo de Entrega: 15 dias")
+        c.drawString(coluna_direita, y_direita, f"Prazo de Entrega: {prazo}")
         
         # Ajusta Y para o menor valor entre as duas colunas
         y = min(y, y_direita) - 15
@@ -131,6 +144,18 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         y -= 10
         c.setFillColor(azul_claro)
         c.rect(43, y-30, width-86, 30, fill=True, stroke=False)
+        
+        # Adicionar a descrição real da proposta dentro da área clara
+        # Limitar o tamanho do texto para caber na área
+        c.setFillColor(cinza_texto)
+        c.setFont("Helvetica", 9)
+        
+        # Obter a descrição da proposta, limitada a 100 caracteres
+        descricao = proposta.get('descricao', '')
+        if len(descricao) > 100:
+            descricao = descricao[:97] + '...'
+            
+        c.drawString(50, y-20, descricao)
         
         # ===== ITENS INCLUSOS (TABELA) =====
         y -= 40
@@ -157,20 +182,52 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         # Conteúdo da tabela
         y -= 15
         linha = 0
+        valor_total = proposta.get('valor', 0)
         
-        # Itens fixos conforme a especificação
-        itens_fixos = [
-            {"descricao": "Personal Organizer", "valor": 5000.00},
-            {"descricao": "M LEGGING (9 un.)", "valor": 348.30},
-            {"descricao": "PP COLMEIA INVISÍVEL (10 un.)", "valor": 256.00},
-            {"descricao": "Cabide - Acréscimo de OUTRO", "valor": 500.00},
-            {"descricao": "Uber - Acréscimo de OUTRO", "valor": 25.00},
-            {"descricao": "MULTICOISAS", "valor": 2000.00},
-            {"descricao": "Laluc", "valor": 2000.00}
-        ]
+        # Tentar usar os acréscimos reais da proposta
+        itens_reais = []
         
-        # Adicionar itens fixos
-        for item in itens_fixos:
+        # Sempre adicionar o serviço principal como primeiro item
+        itens_reais.append({
+            "descricao": f"Personal Organizer - {proposta.get('tipo_proposta', 'Organização')}",
+            "valor": valor_total
+        })
+        
+        # Adicionar os acréscimos se existirem
+        if acrescimos is not None and not acrescimos.empty:
+            for _, acrescimo in acrescimos.iterrows():
+                nome = acrescimo.get('descricao', '')
+                tipo = acrescimo.get('tipo', '')
+                fornecedor = acrescimo.get('fornecedor', '')
+                valor = acrescimo.get('valor', 0)
+                
+                if tipo and fornecedor:
+                    descricao_item = f"{fornecedor} - Acréscimo de {tipo.upper()}"
+                elif tipo:
+                    descricao_item = f"Acréscimo de {tipo.upper()}"
+                elif fornecedor:
+                    descricao_item = f"Fornecimento de {fornecedor}"
+                else:
+                    descricao_item = nome if nome else "Item adicional"
+                
+                itens_reais.append({
+                    "descricao": descricao_item,
+                    "valor": valor
+                })
+                
+                # Adicionar este valor ao total
+                valor_total += valor
+        
+        # Se não houver itens reais suficientes, usar os exemplos
+        if len(itens_reais) < 2:
+            # Adicionar pelo menos um item de exemplo adicional
+            itens_reais.append({
+                "descricao": "Item adicional (exemplo)",
+                "valor": 0
+            })
+        
+        # Adicionar itens à tabela
+        for item in itens_reais:
             # Alternância de cores para linhas
             if linha % 2 == 0:
                 # Sem cor de fundo para linhas pares
@@ -187,13 +244,13 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
             y -= 15
             linha += 1
         
-        # Linha de total com fundo azul escuro e valor fixo
+        # Linha de total com fundo azul escuro
         c.setFillColor(azul_tabela)
         c.rect(43, y-15, table_width, 15, fill=True, stroke=False)
         c.setFillColor(colors.white)
         c.setFont("Helvetica-Bold", 10)
         c.drawString(50, y-12, "Total:")
-        c.drawRightString(43 + desc_col_width + valor_col_width - 10, y-12, "R$ 10129.30")
+        c.drawRightString(43 + desc_col_width + valor_col_width - 10, y-12, f"R$ {valor_total:.2f}")
         
         # ===== OBSERVAÇÕES =====
         y -= 40
@@ -231,9 +288,10 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         y_rodape -= 12
         c.drawCentredString(width/2, y_rodape, "(11) 99999-9999 | www.plannerorganizer.com.br")
         
-        # Data de geração no rodapé com horário fixo como solicitado
+        # Data de geração no rodapé com a data e hora atual
         c.setFont("Helvetica", 7)
-        c.drawCentredString(width/2, 5, "Relatório gerado em 28/04/2025 às 07:52")
+        data_geracao = datetime.now().strftime('%d/%m/%Y às %H:%M')
+        c.drawCentredString(width/2, 5, f"Relatório gerado em {data_geracao}")
         
         # Salvar PDF
         c.save()
