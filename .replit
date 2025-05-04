@@ -19,10 +19,6 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Teste Importação"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Importar Propostas"
 
 [[workflows.workflow.tasks]]
@@ -39,10 +35,6 @@ args = "Importar Propostas V2"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Importação Direta"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Importação Direta V2"
 
 [[workflows.workflow.tasks]]
@@ -51,27 +43,11 @@ args = "Examinar Tabela Propostas"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Ajustar Data Proposta"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Limpar Propostas"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Sistema de Backup"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Exclusão Simples"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Limpar Vendas"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Download Ícones"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
@@ -91,106 +67,7 @@ args = "Planos Simples"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Planos Minimal"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Verificar Isolamento"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Verificação de Auth"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Criar ZIP para Deploy"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Criar ZIP dos arquivos alterados"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Download Alterações"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Download Fix Render DB"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Finalizar Proposta Direto"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Corrigir Finalizacao"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Download Fix Proposta"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Download Fix Render Console"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Download Fix Direto"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Download Solucao Final"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Start application"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Download Solucao Render"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Download Solucao"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Download Solucao Standalone"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Download Fix Financial Entries"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Download Fix Duplicate Entries"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Download Fix Duplicated Entries"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Download Finalizacao Fix"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Limpar Arquivos Dev"
-
-[[workflows.workflow]]
-name = "Teste Importação"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run teste_importacao.py --server.port 8502 --server.address 0.0.0.0 --server.headless true"
-waitForPort = 8502
 
 [[workflows.workflow]]
 name = "Importar Propostas"
@@ -253,21 +130,6 @@ args = "streamlit run importar_propostas_v2.py --server.port 8501 --server.addre
 waitForPort = 8501
 
 [[workflows.workflow]]
-name = "Importação Direta"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run importacao_direta.py --server.port 8504 --server.address 0.0.0.0"
-waitForPort = 8504
-
-[[workflows.workflow]]
 name = "Importação Direta V2"
 author = "agent"
 
@@ -296,21 +158,6 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run examinar_tabela_propostas.py --server.port 8515 --server.address 0.0.0.0"
 waitForPort = 8515
-
-[[workflows.workflow]]
-name = "Ajustar Data Proposta"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run ajustar_data_proposta.py --server.port 8520 --server.address 0.0.0.0"
-waitForPort = 8520
 
 [[workflows.workflow]]
 name = "Limpar Propostas"
@@ -343,35 +190,6 @@ args = "streamlit run criar_ponto_backup.py --server.port 8530 --server.address 
 waitForPort = 8530
 
 [[workflows.workflow]]
-name = "Exclusão Simples"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run excluir_vendas_standalone.py --server.port 8512 --server.address 0.0.0.0"
-waitForPort = 8512
-
-[[workflows.workflow]]
-name = "Limpar Vendas"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run limpar_vendas.py --server.port 8513 --server.address 0.0.0.0"
-
-[[workflows.workflow]]
 name = "Gerar Manual"
 author = 39445503
 mode = "sequential"
@@ -379,21 +197,6 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run gerar_manual.py --server.port 8550 --server.address 0.0.0.0 --server.headless true"
-
-[[workflows.workflow]]
-name = "Download Ícones"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run download_icons.py --server.port 8550 --server.address 0.0.0.0"
-waitForPort = 8550
 
 [[workflows.workflow]]
 name = "Login"
@@ -456,128 +259,6 @@ args = "streamlit run planos_simple.py --server.port 8800 --server.address 0.0.0
 waitForPort = 8800
 
 [[workflows.workflow]]
-name = "Planos Minimal"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run planos_minimal.py --server.port 8801 --server.address 0.0.0.0"
-waitForPort = 8801
-
-[[workflows.workflow]]
-name = "Verificar Isolamento"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run verificar_isolamento_dados.py --server.port 8550 --server.address 0.0.0.0"
-waitForPort = 8550
-
-[[workflows.workflow]]
-name = "Verificação de Auth"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run verificar_autenticacao.py --server.port 5002 --server.address 0.0.0.0"
-waitForPort = 5002
-
-[[workflows.workflow]]
-name = "Criar ZIP para Deploy"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run create_deployment_zip.py --server.port 8600 --server.address 0.0.0.0"
-waitForPort = 8600
-
-[[workflows.workflow]]
-name = "Criar ZIP dos arquivos alterados"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python3 -c \"import os, zipfile; zip_file = zipfile.ZipFile('alteracoes.zip', 'w'); zip_file.write('utils/database.py'); zip_file.write('pages/registrar.py'); zip_file.write('update_schema.sql'); zip_file.write('populate_usuario_id.sql'); zip_file.write('INSTRUCOES_RENDER_DATABASE.md'); zip_file.close(); print('Arquivos zipados com sucesso!')\""
-
-[[workflows.workflow]]
-name = "Download Alterações"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run download_alteracoes.py --server.port 8999 --server.address 0.0.0.0"
-waitForPort = 8999
-
-[[workflows.workflow]]
-name = "Download Fix Render DB"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run download_fix_render_db.py --server.port 7500 --server.address 0.0.0.0 --server.headless true"
-waitForPort = 7500
-
-[[workflows.workflow]]
-name = "Finalizar Proposta Direto"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run finalizar_proposta_direto.py --server.port 8800 --server.address 0.0.0.0"
-waitForPort = 8800
-
-[[workflows.workflow]]
-name = "Corrigir Finalizacao"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run corrigir_erro_finalizacao.py --server.port 5004 --server.address 0.0.0.0 --server.headless true"
-waitForPort = 5004
-
-[[workflows.workflow]]
-name = "Download Fix Proposta"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run download_fix_proposta.py --server.port 8511 --server.address 0.0.0.0"
-waitForPort = 8511
-
-[[workflows.workflow]]
-name = "Download Fix Render Console"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run download_fix_render_console.py --server.port 5003 --server.address 0.0.0.0"
-waitForPort = 5003
-
-[[workflows.workflow]]
-name = "Download Fix Direto"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run download_fix_direct.py --server.port 8700 --server.address 0.0.0.0 --server.headless true"
-waitForPort = 8700
-
-[[workflows.workflow]]
-name = "Download Solucao Final"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run download_fix_render_final.py --server.port 5002 --server.address 0.0.0.0"
-waitForPort = 5002
-
-[[workflows.workflow]]
 name = "Start application"
 author = "agent"
 
@@ -585,78 +266,6 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run app.py --server.port 5000 --server.address 0.0.0.0"
 waitForPort = 5000
-
-[[workflows.workflow]]
-name = "Download Solucao Render"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run download_solucao_render.py --server.port 5002 --server.address 0.0.0.0 --server.headless true"
-waitForPort = 5002
-
-[[workflows.workflow]]
-name = "Download Solucao"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run download_solucao_render.py --server.port 8800 --server.address 0.0.0.0 --server.headless true"
-waitForPort = 8800
-
-[[workflows.workflow]]
-name = "Download Solucao Standalone"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run download_fix_standalone.py --server.port 5001 --server.address 0.0.0.0 --server.headless true"
-waitForPort = 5001
-
-[[workflows.workflow]]
-name = "Download Fix Financial Entries"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run download_fix_financial_entries.py --server.port 8525 --server.address 0.0.0.0"
-waitForPort = 8525
-
-[[workflows.workflow]]
-name = "Download Fix Duplicate Entries"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run download_fix_duplicate_proposal_entries.py --server.port 8525 --server.address 0.0.0.0"
-waitForPort = 8525
-
-[[workflows.workflow]]
-name = "Download Fix Duplicated Entries"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run download_fix_duplicated_entries.py --server.port 8525 --server.address 0.0.0.0"
-waitForPort = 8525
-
-[[workflows.workflow]]
-name = "Download Finalizacao Fix"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run download_finalizacao_fix.py --server.port 8535 --server.address 0.0.0.0"
-waitForPort = 8535
-
-[[workflows.workflow]]
-name = "Limpar Arquivos Dev"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run limpar_arquivos_dev.py --server.port 8800 --server.address 0.0.0.0"
-waitForPort = 8800
 
 [[workflows.workflow]]
 name = "Deploy ZIP"
