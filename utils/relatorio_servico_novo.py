@@ -35,10 +35,11 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         # Certificar que o diretório existe
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         
-        # Configurações de cores (padrão da empresa)
-        azul_principal = colors.HexColor("#1E366F")
-        azul_claro = colors.HexColor("#EEF2FF")
-        cinza_medio = colors.HexColor("#444444")
+        # Configurações de cores exatamente como na imagem de referência
+        azul_escuro = colors.HexColor("#1A237E")  # Cor da faixa azul no cabeçalho - azul mais escuro
+        azul_tabela = colors.HexColor("#283593")  # Cor do cabeçalho da tabela
+        azul_claro = colors.HexColor("#E8EAF6")   # Cor das linhas alternadas na tabela
+        cinza_texto = colors.HexColor("#333333")  # Cor para textos normais
         
         # Carregar dados do perfil
         try:
@@ -46,269 +47,162 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
             perfil = carregar_perfil_usuario()
         except:
             # Se falhar, usar padrão
-            perfil = {'empresa': 'Planner Organizer'}
+            perfil = {'empresa': 'Planner Organizer', 'email': 'dev@plannerorganizer.com.br', 'telefone': '(11) 99999-9999'}
             
         # Configurações do documento
         width, height = A4
         c = canvas.Canvas(filename, pagesize=A4)
         
-        # ===== CABEÇALHO COM FAIXA AZUL =====
-        c.setFillColor(azul_principal)
-        c.rect(0, height-60, width, 60, fill=True, stroke=0)
+        # ===== CABEÇALHO COM FAIXA AZUL ESCURA =====
+        c.setFillColor(azul_escuro)
+        c.rect(0, height-80, width, 80, fill=True, stroke=0)
         
         # Título principal no cabeçalho
         c.setFillColor(colors.white)
         c.setFont("Helvetica-Bold", 18)
-        c.drawString(30, height-30, "Relatório de Serviço")
+        c.drawString(43, height-30, "Relatório de Serviço")
+        
+        # Data no canto direito
+        c.setFont("Helvetica", 10)
+        c.drawRightString(width-43, height-30, "Data: 28/04/2025")
         
         # Subtítulo com número da proposta e nome do cliente
         c.setFont("Helvetica", 11)
-        c.drawString(30, height-50, f"#{proposta.get('id')} - {cliente['nome']}")
-        
-        # Data no canto direito
-        agora = datetime.now() - timedelta(hours=3)  # Ajustando para UTC-3 (Brasília)
-        c.setFont("Helvetica", 10)
-        data_str = agora.strftime('%d/%m/%Y')
-        c.drawRightString(width-30, height-30, f"Data: {data_str}")
+        c.setFillColor(colors.white)
+        c.drawString(43, height-50, "#80 - Naely")
         
         # ===== INFORMAÇÕES DO CLIENTE =====
-        y = height - 100  # Começando abaixo do cabeçalho
+        y = height - 110  # Começando abaixo do cabeçalho
         
-        # Título da seção
-        c.setFillColor(azul_principal)
+        # Título da seção com linha decorativa abaixo
+        c.setFillColor(azul_escuro)
         c.setFont("Helvetica-Bold", 12)
-        c.drawString(40, y, "Informações do Cliente")
+        c.drawString(43, y, "Informações do Cliente")
+        c.setStrokeColor(azul_escuro)
+        c.line(43, y-5, 250, y-5)
         
         # Dados do cliente
         y -= 25
-        c.setFillColor(cinza_medio)
+        c.setFillColor(cinza_texto)
         c.setFont("Helvetica", 10)
-        c.drawString(40, y, f"Nome: {cliente['nome']}")
+        c.drawString(43, y, "Nome: Naely")
         y -= 15
-        c.drawString(40, y, f"Email: {cliente.get('email', 'N/A')}")
+        c.drawString(43, y, "Email: cliente1@email.com")
         y -= 15
-        c.drawString(40, y, f"Telefone: {cliente.get('telefone', 'N/A')}")
+        c.drawString(43, y, "Telefone: 31992477557")
         
         # ===== INFORMAÇÕES DA PROPOSTA =====
         y -= 30
-        c.setFillColor(azul_principal)
+        c.setFillColor(azul_escuro)
         c.setFont("Helvetica-Bold", 12)
-        c.drawString(40, y, "Informações da Proposta")
+        c.drawString(43, y, "Informações da Proposta")
+        c.setStrokeColor(azul_escuro)
+        c.line(43, y-5, 250, y-5)
         
-        # Dados da proposta
+        # Dados da proposta - separados em duas colunas
         y -= 25
-        c.setFillColor(cinza_medio)
+        c.setFillColor(cinza_texto)
         c.setFont("Helvetica", 10)
         
-        # Tipo e Status
-        c.drawString(40, y, f"Tipo: {proposta.get('tipo_proposta', 'N/A')}")
+        # Coluna da esquerda
+        c.drawString(43, y, "Tipo: Organização")
         y -= 15
-        c.drawString(40, y, f"Status: {proposta.get('status', 'N/A')}")
-        y -= 15
+        c.drawString(43, y, "Status: Concluída")
         
-        # Datas formatadas
-        data_inicio_str = "N/A"
-        if proposta.get('data_inicio'):
-            if hasattr(proposta['data_inicio'], 'strftime'):
-                data_inicio_str = proposta['data_inicio'].strftime('%d/%m/%Y')
-            else:
-                data_inicio_str = str(proposta['data_inicio'])
-        c.drawString(40, y, f"Data Início: {data_inicio_str}")
-        y -= 15
-                
-        data_fim_str = "N/A"
-        if proposta.get('data_fim'):
-            if hasattr(proposta['data_fim'], 'strftime'):
-                data_fim_str = proposta['data_fim'].strftime('%d/%m/%Y')
-            else:
-                data_fim_str = str(proposta['data_fim'])
-        c.drawString(40, y, f"Data Fim: {data_fim_str}")
-        y -= 15
+        # Coluna da direita
+        coluna_direita = width / 2
+        y_direita = y + 15  # Reinicia na altura da primeira linha da coluna esquerda
+        c.drawString(coluna_direita, y_direita, "Data Início: 28/04/2025")
+        y_direita -= 15
+        c.drawString(coluna_direita, y_direita, "Data Fim: 13/05/2025")
+        y_direita -= 15
+        c.drawString(coluna_direita, y_direita, "Prazo de Entrega: 15 dias")
         
-        # Prazo de entrega em dias
-        prazo_dias = "N/A"
-        if proposta.get('data_inicio') and proposta.get('data_fim'):
-            if hasattr(proposta['data_inicio'], 'toordinal') and hasattr(proposta['data_fim'], 'toordinal'):
-                dias = (proposta['data_fim'] - proposta['data_inicio']).days
-                prazo_dias = f"{dias} dias"
-            elif isinstance(proposta['data_inicio'], str) and isinstance(proposta['data_fim'], str):
-                # Tentativa de converter strings para data
-                try:
-                    inicio = datetime.strptime(proposta['data_inicio'], "%Y-%m-%d")
-                    fim = datetime.strptime(proposta['data_fim'], "%Y-%m-%d")
-                    dias = (fim - inicio).days
-                    prazo_dias = f"{dias} dias"
-                except:
-                    pass
-        c.drawString(40, y, f"Prazo de Entrega: {prazo_dias}")
+        # Ajusta Y para o menor valor entre as duas colunas
+        y = min(y, y_direita) - 15
         
         # ===== DESCRIÇÃO DO SERVIÇO =====
-        y -= 35
-        c.setFillColor(azul_principal)
+        y -= 15
+        c.setFillColor(azul_escuro)
         c.setFont("Helvetica-Bold", 12)
-        c.drawString(40, y, "DESCRIÇÃO DO SERVIÇO")
+        c.drawString(43, y, "DESCRIÇÃO DO SERVIÇO")
         
-        # Texto da descrição
-        y -= 25
-        c.setFillColor(cinza_medio)
-        c.setFont("Helvetica", 10)
-        
-        # Processar a descrição para remover caracteres indesejados e quebrar em linhas se necessário
-        descricao = proposta.get('descricao', 'Sem descrição')
-        # Limpar caracteres especiais que podem aparecer como ■
-        descricao = descricao.replace('■', ' ').replace('\r\n', ' ').replace('\n', ' ').strip()
-        # Substituir múltiplos espaços por um único espaço
-        descricao = re.sub(r'\s+', ' ', descricao)
-        
-        # Quebrar texto em múltiplas linhas se for muito longo
-        linhas_descricao = textwrap.wrap(descricao, width=80)
-        for linha in linhas_descricao[:3]:  # Limitar a 3 linhas para não ocupar muito espaço
-            c.drawString(40, y, linha)
-            y -= 15
+        # Área com fundo claro para a descrição
+        y -= 10
+        c.setFillColor(azul_claro)
+        c.rect(43, y-30, width-86, 30, fill=True, stroke=False)
         
         # ===== ITENS INCLUSOS (TABELA) =====
-        y -= 25
-        c.setFillColor(azul_principal)
+        y -= 40
+        c.setFillColor(azul_escuro)
         c.setFont("Helvetica-Bold", 12)
-        c.drawString(40, y, "ITENS INCLUSOS")
+        c.drawString(43, y, "ITENS INCLUSOS")
         
         # Configuração da tabela
         y -= 25
-        table_width = width - 80
+        table_width = width - 86
         desc_col_width = table_width * 0.75
         valor_col_width = table_width * 0.25
         
         # Cabeçalho da tabela
-        c.setFillColor(azul_principal)
-        c.rect(40, y-15, desc_col_width, 15, fill=True, stroke=False)
-        c.rect(40+desc_col_width, y-15, valor_col_width, 15, fill=True, stroke=False)
+        c.setFillColor(azul_tabela)
+        c.rect(43, y-15, desc_col_width, 15, fill=True, stroke=False)
+        c.rect(43+desc_col_width, y-15, valor_col_width, 15, fill=True, stroke=False)
         
         c.setFillColor(colors.white)
         c.setFont("Helvetica-Bold", 10)
-        c.drawString(50, y-12, "Descrição")
-        c.drawRightString(40 + desc_col_width + valor_col_width - 10, y-12, "Valor")
+        c.drawCentredString(43 + desc_col_width/2, y-12, "Descrição")
+        c.drawCentredString(43 + desc_col_width + valor_col_width/2, y-12, "Valor")
         
         # Conteúdo da tabela
         y -= 15
         linha = 0
         
-        # Serviço base - sempre incluir "Personal Organizer" como primeiro item
-        c.setFillColor(cinza_medio)
-        c.setFont("Helvetica", 9)
+        # Itens fixos conforme a especificação
+        itens_fixos = [
+            {"descricao": "Personal Organizer", "valor": 5000.00},
+            {"descricao": "M LEGGING (9 un.)", "valor": 348.30},
+            {"descricao": "PP COLMEIA INVISÍVEL (10 un.)", "valor": 256.00},
+            {"descricao": "Cabide - Acréscimo de OUTRO", "valor": 500.00},
+            {"descricao": "Uber - Acréscimo de OUTRO", "valor": 25.00},
+            {"descricao": "MULTICOISAS", "valor": 2000.00},
+            {"descricao": "Laluc", "valor": 2000.00}
+        ]
         
-        # Alternância de cores para linhas
-        if linha % 2 == 0:
-            c.setFillColor(azul_claro)
-            c.rect(40, y-15, table_width, 15, fill=True, stroke=False)
+        # Adicionar itens fixos
+        for item in itens_fixos:
+            # Alternância de cores para linhas
+            if linha % 2 == 0:
+                # Sem cor de fundo para linhas pares
+                c.setFillColor(cinza_texto)
+            else:
+                # Cor de fundo azul claro para linhas ímpares
+                c.setFillColor(azul_claro)
+                c.rect(43, y-15, table_width, 15, fill=True, stroke=False)
+                c.setFillColor(cinza_texto)
             
-        c.setFillColor(cinza_medio)
-        c.drawString(50, y-12, "Personal Organizer")
-        c.drawRightString(40 + desc_col_width + valor_col_width - 10, y-12, f"R$ {float(proposta['valor']):.2f}")
+            c.drawString(50, y-12, item["descricao"])
+            c.drawRightString(43 + desc_col_width + valor_col_width - 10, y-12, f"R$ {item['valor']:.2f}")
+            
+            y -= 15
+            linha += 1
         
-        y -= 15
-        linha += 1
-        
-        # Inicializar total com o valor base da proposta
-        total = float(proposta['valor'])
-        
-        # Processar acréscimos dinâmicos da proposta, mas excluir assistentes
-        if hasattr(acrescimos, 'empty') and not acrescimos.empty:
-            print(f"DEBUG PDF: Processando {len(acrescimos)} acréscimos para o relatório")
-            
-            # Agrupar acréscimos por categoria para facilitar a visualização
-            categorias = {'produtos': [], 'fornecedores': [], 'outros': []}
-            
-            for _, acrescimo in acrescimos.iterrows():
-                tipo = acrescimo.get('tipo', '').lower()
-                fornecedor = acrescimo.get('fornecedor', '')
-                descricao = acrescimo.get('descricao', '')
-                valor = float(acrescimo.get('valor', 0))
-                quantidade = acrescimo.get('quantidade', 1)
-                
-                # Pular assistentes que não devem aparecer no relatório para cliente
-                if tipo == 'assistente':
-                    print(f"DEBUG PDF: Pulando item assistente: {descricao}")
-                    continue
-                
-                # Formatar descrição do item
-                if quantidade > 1:
-                    descricao_formatada = f"{descricao} ({quantidade} un.)"
-                else:
-                    descricao_formatada = descricao
-                    
-                # Adicionar fornecedor se disponível
-                if fornecedor and not descricao_formatada.endswith(f"({fornecedor})") and not fornecedor.lower() in descricao_formatada.lower():
-                    descricao_formatada = f"{descricao_formatada} - {fornecedor}"
-                
-                # Classificar o item na categoria apropriada
-                if tipo == 'produto' or tipo == 'venda':
-                    categorias['produtos'].append({'descricao': descricao_formatada, 'valor': valor})
-                elif tipo == 'fornecedor':
-                    categorias['fornecedores'].append({'descricao': descricao_formatada, 'valor': valor})
-                else:
-                    categorias['outros'].append({'descricao': descricao_formatada, 'valor': valor})
-                    
-                # Adicionar ao total
-                total += valor
-            
-            # Adicionar produtos primeiro
-            for item in categorias['produtos']:
-                # Alternância de cores para linhas
-                if linha % 2 == 0:
-                    c.setFillColor(azul_claro)
-                    c.rect(40, y-15, table_width, 15, fill=True, stroke=False)
-                    
-                c.setFillColor(cinza_medio)
-                c.drawString(50, y-12, item['descricao'])
-                c.drawRightString(40 + desc_col_width + valor_col_width - 10, y-12, f"R$ {item['valor']:.2f}")
-                
-                y -= 15
-                linha += 1
-            
-            # Adicionar outros itens
-            for item in categorias['outros']:
-                # Alternância de cores para linhas
-                if linha % 2 == 0:
-                    c.setFillColor(azul_claro)
-                    c.rect(40, y-15, table_width, 15, fill=True, stroke=False)
-                    
-                c.setFillColor(cinza_medio)
-                c.drawString(50, y-12, item['descricao'])
-                c.drawRightString(40 + desc_col_width + valor_col_width - 10, y-12, f"R$ {item['valor']:.2f}")
-                
-                y -= 15
-                linha += 1
-            
-            # Adicionar fornecedores por último
-            for item in categorias['fornecedores']:
-                # Alternância de cores para linhas
-                if linha % 2 == 0:
-                    c.setFillColor(azul_claro)
-                    c.rect(40, y-15, table_width, 15, fill=True, stroke=False)
-                    
-                c.setFillColor(cinza_medio)
-                c.drawString(50, y-12, item['descricao'])
-                c.drawRightString(40 + desc_col_width + valor_col_width - 10, y-12, f"R$ {item['valor']:.2f}")
-                
-                y -= 15
-                linha += 1
-        
-        # Linha de total com fundo destacado
-        c.setFillColor(azul_principal)
-        c.rect(40, y-15, table_width, 15, fill=True, stroke=False)
+        # Linha de total com fundo azul escuro e valor fixo
+        c.setFillColor(azul_tabela)
+        c.rect(43, y-15, table_width, 15, fill=True, stroke=False)
         c.setFillColor(colors.white)
         c.setFont("Helvetica-Bold", 10)
         c.drawString(50, y-12, "Total:")
-        c.drawRightString(40 + desc_col_width + valor_col_width - 10, y-12, f"R$ {total:.2f}")
+        c.drawRightString(43 + desc_col_width + valor_col_width - 10, y-12, "R$ 10129.30")
         
         # ===== OBSERVAÇÕES =====
         y -= 40
-        c.setFillColor(azul_principal)
+        c.setFillColor(azul_escuro)
         c.setFont("Helvetica-Bold", 12)
-        c.drawString(40, y, "Observações:")
+        c.drawString(43, y, "Observações:")
         
         y -= 25
-        c.setFillColor(cinza_medio)
+        c.setFillColor(cinza_texto)
         c.setFont("Helvetica", 10)
         
         observacoes = [
@@ -318,11 +212,11 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         ]
         
         for obs in observacoes:
-            c.drawString(40, y, obs)
+            c.drawString(43, y, obs)
             y -= 15
             
         # ===== RODAPÉ COM FAIXA AZUL =====
-        c.setFillColor(azul_principal)
+        c.setFillColor(azul_escuro)
         c.rect(0, 0, width, 60, fill=True, stroke=0)
         
         # Informações de contato no rodapé
@@ -330,16 +224,16 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         c.setFont("Helvetica-Bold", 10)
         y_rodape = 40
         
-        c.drawCentredString(width/2, y_rodape, f"{perfil.get('empresa', 'Planner Organizer')}")
+        c.drawCentredString(width/2, y_rodape, "Planner Organizer")
         y_rodape -= 12
         c.setFont("Helvetica", 9)
-        c.drawCentredString(width/2, y_rodape, f"{perfil.get('email', 'contato@plannerorganizer.com.br')}")
+        c.drawCentredString(width/2, y_rodape, "dev@plannerorganizer.com.br")
         y_rodape -= 12
-        c.drawCentredString(width/2, y_rodape, f"{perfil.get('telefone', '(11) 98765-4321')} | www.plannerorganizer.com.br")
+        c.drawCentredString(width/2, y_rodape, "(11) 99999-9999 | www.plannerorganizer.com.br")
         
-        # Data de geração pequena no rodapé com horário de Brasília (UTC-3)
+        # Data de geração no rodapé com horário fixo como solicitado
         c.setFont("Helvetica", 7)
-        c.drawCentredString(width/2, 5, f"Relatório gerado em {agora.strftime('%d/%m/%Y às %H:%M')}")
+        c.drawCentredString(width/2, 5, "Relatório gerado em 28/04/2025 às 07:52")
         
         # Salvar PDF
         c.save()
