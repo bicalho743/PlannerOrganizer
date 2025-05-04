@@ -10,7 +10,7 @@ run = ["sh", "-c", "streamlit run app.py --server.port 5000 --server.address 0.0
 build = ["sh", "-c", "pip install -r requirements.txt"]
 
 [workflows]
-runButton = "Project"
+runButton = "Deploy ZIP"
 
 [[workflows.workflow]]
 name = "Project"
@@ -657,6 +657,15 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run limpar_arquivos_dev.py --server.port 8800 --server.address 0.0.0.0"
 waitForPort = 8800
+
+[[workflows.workflow]]
+name = "Deploy ZIP"
+author = 39445503
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run create_deployment_zip.py --server.port 8600 --server.address 0.0.0.0"
 
 [[ports]]
 localPort = 443

@@ -1,432 +1,622 @@
 """
-Módulo de integração com Stripe para processamento de pagamentos
-Este módulo fornece funcionalidades para:
-1. Configurar clientes no Stripe
-2. Criar e gerenciar assinaturas
-3. Processar webhooks do Stripe
-4. Atualizar status de planos no banco de dados
+Módulo para integração com o Stripe
+Este módulo fornece funções para gerenciar assinaturas, pagamentos e webhooks do Stripe.
 """
 import os
-import stripe
+import json
 import logging
-import jwt
 from datetime import datetime, timedelta
-from sqlalchemy.orm import Session
-from .database import Perfil
+from typing import Dict, Any, Optional, List, Tuple
+
+import stripe
+import jwt
+import streamlit as st
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
+from stripe.error import StripeError
+
+from utils.database import get_database_connection, get_engine
+from utils.firebase_auth import decode_firebase_token
 
 # Configurar logger
 logger = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
-# Obter API Key do ambiente
+# Configurar Stripe API
 STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
 STRIPE_PRICE_ID_MENSAL = os.environ.get('STRIPE_PRICE_ID_MENSAL')
 STRIPE_PRICE_ID_ANUAL = os.environ.get('STRIPE_PRICE_ID_ANUAL')
+APP_URL = os.environ.get('APP_URL', 'http://localhost:5000')
 
-# Definir os planos disponíveis
-PLANOS = {
-    'gratuito': {
-        'nome': 'Gratuito',
-        'descricao': 'Plano gratuito com recursos básicos',
-        'limite_clientes': 10,
-        'limite_propostas': 5,
-        'preco_mensal': 0,
-    },
-    'profissional': {
-        'nome': 'Profissional',
-        'descricao': 'Plano completo para profissionais',
-        'limite_clientes': 100,
-        'limite_propostas': 50,
-        'preco_mensal': 49.90,
-        'stripe_price_id_mensal': STRIPE_PRICE_ID_MENSAL,
-        'stripe_price_id_anual': STRIPE_PRICE_ID_ANUAL,
-    }
-}
+# Inicializar Stripe
+stripe.api_key = STRIPE_API_KEY
 
-def inicializar_stripe():
+def get_stripe_customer(usuario_id: str, email: str, nome: str) -> str:
     """
-    Inicializa a API do Stripe com a chave fornecida no ambiente
-    """
-    if not STRIPE_API_KEY:
-        logger.warning("STRIPE_API_KEY não está definida no ambiente. Pagamentos não funcionarão.")
-        return False
-    
-    stripe.api_key = STRIPE_API_KEY
-    return True
-
-def obter_ou_criar_cliente(perfil, session):
-    """
-    Obtém ou cria um cliente no Stripe e atualiza o perfil com o ID do cliente
+    Obtém ou cria um cliente no Stripe
     
     Args:
-        perfil: Objeto Perfil do usuário
-        session: Sessão do SQLAlchemy
+        usuario_id: ID do usuário no Firebase
+        email: Email do usuário
+        nome: Nome do usuário
         
     Returns:
-        dict: Objeto do cliente no Stripe
+        str: ID do cliente no Stripe
     """
-    # Verificar se o perfil já tem um cliente_stripe_id
-    if hasattr(perfil, 'cliente_stripe_id') and perfil.cliente_stripe_id:
-        try:
-            # Tentar obter o cliente existente
-            cliente = stripe.Customer.retrieve(perfil.cliente_stripe_id)
-            return cliente
-        except stripe.error.InvalidRequestError:
-            # Cliente não existe mais no Stripe, criar um novo
-            logger.warning(f"Cliente {perfil.cliente_stripe_id} não encontrado no Stripe. Criando novo.")
-            pass
-    
-    # Criar um novo cliente no Stripe
     try:
-        cliente = stripe.Customer.create(
-            email=perfil.email,
-            name=perfil.nome,
-            metadata={
-                'usuario_id': perfil.usuario_id,
-                'plano': perfil.plano
-            }
+        # Verificar se o cliente já existe no banco de dados
+        engine = get_engine()
+        with engine.connect() as conn:
+            query = text("""
+                SELECT stripe_customer_id 
+                FROM assinaturas 
+                WHERE usuario_id = :usuario_id 
+                LIMIT 1
+            """)
+            result = conn.execute(query, {"usuario_id": usuario_id}).fetchone()
+            
+            if result and result[0]:
+                # Cliente já existe, verificar se existe no Stripe
+                try:
+                    stripe.Customer.retrieve(result[0])
+                    return result[0]
+                except stripe.error.InvalidRequestError:
+                    # Cliente não existe mais no Stripe, criar novo
+                    pass
+        
+        # Criar novo cliente no Stripe
+        customer = stripe.Customer.create(
+            email=email,
+            name=nome,
+            metadata={"usuario_id": usuario_id}
         )
         
-        # Atualizar o perfil com o ID do cliente Stripe
-        if not hasattr(perfil, 'cliente_stripe_id'):
-            # Verificar se precisamos adicionar a coluna ao modelo
-            logger.warning("A coluna cliente_stripe_id não existe no modelo Perfil. A integração completa com o Stripe requer uma migração de banco.")
-        else:
-            perfil.cliente_stripe_id = cliente.id
-            session.commit()
+        return customer.id
         
-        return cliente
     except Exception as e:
-        logger.error(f"Erro ao criar cliente no Stripe: {e}")
+        logger.error(f"Erro ao obter/criar cliente Stripe: {str(e)}")
         raise
 
-def criar_sessao_checkout(perfil, plano, tipo_assinatura='mensal', session=None):
+def criar_checkout_session(
+    usuario_id: str, 
+    email: str, 
+    nome: str, 
+    plano: str = "mensal"
+) -> Dict[str, Any]:
     """
-    Cria uma sessão de checkout para assinatura no Stripe
+    Cria uma sessão de checkout do Stripe
     
     Args:
-        perfil: Objeto Perfil do usuário
-        plano: Identificador do plano ('profissional', etc)
-        tipo_assinatura: 'mensal' ou 'anual'
-        session: Sessão do SQLAlchemy
+        usuario_id: ID do usuário no Firebase
+        email: Email do usuário
+        nome: Nome do usuário
+        plano: Tipo de plano ('mensal' ou 'anual')
         
     Returns:
-        str: URL da sessão de checkout
+        Dict: Informações da sessão de checkout
     """
-    if plano not in PLANOS or plano == 'gratuito':
-        logger.error(f"Plano inválido: {plano}")
-        raise ValueError(f"Plano inválido: {plano}")
-    
-    # Obter as configurações do plano
-    config_plano = PLANOS[plano]
-    price_id = config_plano.get(f'stripe_price_id_{tipo_assinatura}')
-    
-    if not price_id:
-        logger.error(f"ID de preço não configurado para plano {plano} ({tipo_assinatura})")
-        raise ValueError(f"ID de preço não configurado para plano {plano}")
-    
-    # Obter ou criar cliente no Stripe
-    cliente = obter_ou_criar_cliente(perfil, session)
-    
-    # URL de retorno após o checkout
-    success_url = os.environ.get('APP_URL', 'https://www.plannerorganiza.com.br') + '/assinatura-confirmada'
-    cancel_url = os.environ.get('APP_URL', 'https://www.plannerorganiza.com.br') + '/planos'
-    
-    # Criar a sessão de checkout
     try:
+        # Obter ID do cliente no Stripe
+        customer_id = get_stripe_customer(usuario_id, email, nome)
+        
+        # Determinar o preço com base no plano
+        price_id = STRIPE_PRICE_ID_MENSAL if plano == "mensal" else STRIPE_PRICE_ID_ANUAL
+        
+        # Criar sessão de checkout
         checkout_session = stripe.checkout.Session.create(
-            customer=cliente.id,
+            customer=customer_id,
             payment_method_types=['card'],
             line_items=[{
                 'price': price_id,
                 'quantity': 1,
             }],
             mode='subscription',
-            success_url=success_url,
-            cancel_url=cancel_url,
+            success_url=f'{APP_URL}/pages/minha_assinatura?session_id={{CHECKOUT_SESSION_ID}}',
+            cancel_url=f'{APP_URL}/pages/minha_assinatura',
+            metadata={
+                'usuario_id': usuario_id
+            }
         )
-        return checkout_session.url
+        
+        return {
+            "id": checkout_session.id,
+            "url": checkout_session.url
+        }
+        
+    except stripe.error.StripeError as e:
+        logger.error(f"Erro ao criar sessão de checkout: {str(e)}")
+        return {"error": str(e)}
     except Exception as e:
-        logger.error(f"Erro ao criar sessão de checkout: {e}")
-        raise
+        logger.error(f"Erro inesperado ao criar sessão: {str(e)}")
+        return {"error": f"Erro inesperado: {str(e)}"}
 
-def processar_webhook(payload, sig_header, session):
+def criar_portal_cliente(usuario_id: str) -> Dict[str, Any]:
     """
-    Processa webhooks enviados pelo Stripe
+    Cria uma sessão do portal de clientes do Stripe
     
     Args:
-        payload: Dados do evento em raw bytes
-        sig_header: Cabeçalho de assinatura do Stripe
-        session: Sessão do SQLAlchemy
+        usuario_id: ID do usuário no Firebase
         
     Returns:
-        bool: True se processado com sucesso
+        Dict: Informações da sessão do portal
     """
     try:
-        evento = stripe.Webhook.construct_event(
+        # Obter ID do cliente no Stripe do banco de dados
+        engine = get_engine()
+        with engine.connect() as conn:
+            query = text("""
+                SELECT stripe_customer_id 
+                FROM assinaturas 
+                WHERE usuario_id = :usuario_id 
+                LIMIT 1
+            """)
+            result = conn.execute(query, {"usuario_id": usuario_id}).fetchone()
+            
+            if not result or not result[0]:
+                return {"error": "Usuário não possui assinatura ativa"}
+            
+            customer_id = result[0]
+        
+        # Criar sessão do portal
+        session = stripe.billing_portal.Session.create(
+            customer=customer_id,
+            return_url=f'{APP_URL}/pages/minha_assinatura',
+        )
+        
+        return {
+            "id": session.id,
+            "url": session.url
+        }
+        
+    except stripe.error.StripeError as e:
+        logger.error(f"Erro ao criar portal do cliente: {str(e)}")
+        return {"error": str(e)}
+    except Exception as e:
+        logger.error(f"Erro inesperado ao criar portal: {str(e)}")
+        return {"error": f"Erro inesperado: {str(e)}"}
+
+def processar_webhook(payload: bytes, sig_header: str) -> Dict[str, Any]:
+    """
+    Processa eventos de webhook do Stripe
+    
+    Args:
+        payload: Dados do evento
+        sig_header: Cabeçalho de assinatura
+        
+    Returns:
+        Dict: Resultado do processamento
+    """
+    try:
+        # Verificar assinatura do webhook
+        event = stripe.Webhook.construct_event(
             payload, sig_header, STRIPE_WEBHOOK_SECRET
         )
-    except ValueError as e:
-        # Payload inválido
-        logger.error(f"Erro de validação de webhook: {e}")
-        return False
-    except stripe.error.SignatureVerificationError as e:
-        # Assinatura inválida
-        logger.error(f"Erro de verificação de assinatura: {e}")
-        return False
-    
-    # Processar o evento
-    event_type = evento['type']
-    logger.info(f"Webhook do Stripe recebido: {event_type}")
-    
-    if event_type == 'checkout.session.completed':
-        # Processar checkout completado
-        return processar_checkout_completado(evento, session)
         
-    elif event_type == 'invoice.paid':
-        # Processar fatura paga (renovação de assinatura)
-        return processar_fatura_paga(evento, session)
+        event_data = event['data']
+        event_type = event['type']
         
-    elif event_type == 'customer.subscription.deleted':
-        # Processar cancelamento de assinatura
-        return processar_assinatura_cancelada(evento, session)
-    
-    # Outros tipos de eventos não são processados
-    return True
-
-def processar_checkout_completado(evento, session):
-    """
-    Processa um evento de checkout completado
-    
-    Args:
-        evento: Objeto do evento do Stripe
-        session: Sessão do SQLAlchemy
+        logger.info(f"Webhook recebido: {event_type}")
         
-    Returns:
-        bool: True se processado com sucesso
-    """
-    try:
-        # Obter dados da sessão de checkout
-        checkout_session = evento['data']['object']
+        # Processar diferentes tipos de eventos
+        if event_type == 'checkout.session.completed':
+            return _processar_checkout_completado(event_data['object'])
         
-        # Obter o ID do cliente
-        cliente_id = checkout_session.get('customer')
-        if not cliente_id:
-            logger.error("ID de cliente não encontrado no evento de checkout")
-            return False
+        elif event_type == 'invoice.paid':
+            return _processar_fatura_paga(event_data['object'])
         
-        # Buscar o perfil associado ao cliente
-        perfil = session.query(Perfil).filter_by(cliente_stripe_id=cliente_id).first()
-        if not perfil:
-            logger.error(f"Perfil não encontrado para cliente Stripe {cliente_id}")
-            return False
+        elif event_type == 'customer.subscription.updated':
+            return _processar_assinatura_atualizada(event_data['object'])
         
-        # Atualizar o plano do perfil para 'profissional'
-        perfil.plano = 'profissional'
+        elif event_type == 'customer.subscription.deleted':
+            return _processar_assinatura_cancelada(event_data['object'])
         
-        # Adicionar data de início e expiração da assinatura (se tiver a coluna)
-        if hasattr(perfil, 'assinatura_inicio'):
-            perfil.assinatura_inicio = datetime.now()
+        # Outros eventos não processados
+        return {"status": "success", "message": f"Evento {event_type} não processado"}
         
-        if hasattr(perfil, 'assinatura_expiracao'):
-            # Definir para 1 ano no futuro como padrão, será ajustado ao receber evento de fatura
-            perfil.assinatura_expiracao = datetime.now() + timedelta(days=365)
-        
-        session.commit()
-        logger.info(f"Assinatura ativada para usuário {perfil.usuario_id}")
-        return True
-    
+    except stripe.error.SignatureVerificationError:
+        logger.error("Assinatura de webhook inválida")
+        return {"status": "error", "message": "Assinatura inválida"}
     except Exception as e:
-        logger.error(f"Erro ao processar checkout completado: {e}")
-        session.rollback()
-        return False
+        logger.error(f"Erro ao processar webhook: {str(e)}")
+        return {"status": "error", "message": str(e)}
 
-def processar_fatura_paga(evento, session):
+def _processar_checkout_completado(session: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Processa um evento de fatura paga (renovação de assinatura)
+    Processa evento de checkout completado
     
     Args:
-        evento: Objeto do evento do Stripe
-        session: Sessão do SQLAlchemy
+        session: Dados da sessão de checkout
         
     Returns:
-        bool: True se processado com sucesso
+        Dict: Resultado do processamento
     """
     try:
-        # Obter dados da fatura
-        fatura = evento['data']['object']
+        usuario_id = session.get('metadata', {}).get('usuario_id')
+        customer_id = session.get('customer')
+        subscription_id = session.get('subscription')
         
-        # Obter o ID do cliente
-        cliente_id = fatura.get('customer')
-        if not cliente_id:
-            logger.error("ID de cliente não encontrado no evento de fatura")
-            return False
+        if not usuario_id or not customer_id or not subscription_id:
+            logger.error("Dados obrigatórios ausentes no evento de checkout")
+            return {"status": "error", "message": "Dados obrigatórios ausentes"}
         
-        # Buscar o perfil associado ao cliente
-        perfil = session.query(Perfil).filter_by(cliente_stripe_id=cliente_id).first()
-        if not perfil:
-            logger.error(f"Perfil não encontrado para cliente Stripe {cliente_id}")
-            return False
+        # Obter detalhes da assinatura
+        subscription = stripe.Subscription.retrieve(subscription_id)
+        plan_id = subscription['items']['data'][0]['plan']['id']
         
-        # Obter dados da assinatura para determinar o período
-        if fatura.get('subscription'):
-            try:
-                assinatura = stripe.Subscription.retrieve(fatura.get('subscription'))
-                periodo_fim = datetime.fromtimestamp(assinatura.current_period_end)
-                
-                # Atualizar a data de expiração se o modelo tiver o campo
-                if hasattr(perfil, 'assinatura_expiracao'):
-                    perfil.assinatura_expiracao = periodo_fim
-                    session.commit()
-                    logger.info(f"Data de expiração atualizada para {periodo_fim} para usuário {perfil.usuario_id}")
-            except Exception as e:
-                logger.error(f"Erro ao obter detalhes da assinatura: {e}")
-        
-        return True
-    
-    except Exception as e:
-        logger.error(f"Erro ao processar fatura paga: {e}")
-        session.rollback()
-        return False
-
-def processar_assinatura_cancelada(evento, session):
-    """
-    Processa um evento de assinatura cancelada
-    
-    Args:
-        evento: Objeto do evento do Stripe
-        session: Sessão do SQLAlchemy
-        
-    Returns:
-        bool: True se processado com sucesso
-    """
-    try:
-        # Obter dados da assinatura
-        assinatura = evento['data']['object']
-        
-        # Obter o ID do cliente
-        cliente_id = assinatura.get('customer')
-        if not cliente_id:
-            logger.error("ID de cliente não encontrado no evento de assinatura")
-            return False
-        
-        # Buscar o perfil associado ao cliente
-        perfil = session.query(Perfil).filter_by(cliente_stripe_id=cliente_id).first()
-        if not perfil:
-            logger.error(f"Perfil não encontrado para cliente Stripe {cliente_id}")
-            return False
-        
-        # Verificar se a assinatura foi realmente cancelada
-        if assinatura.get('status') == 'canceled':
-            # Atualizar o plano do perfil para 'gratuito'
-            perfil.plano = 'gratuito'
+        # Obter ID do plano no banco de dados
+        engine = get_engine()
+        with engine.connect() as conn:
+            # Buscar ou criar plano no banco de dados
+            query = text("""
+                SELECT id FROM planos 
+                WHERE stripe_price_id = :price_id 
+                LIMIT 1
+            """)
+            result = conn.execute(query, {"price_id": plan_id}).fetchone()
             
-            # Limpar datas de assinatura se o modelo tiver os campos
-            if hasattr(perfil, 'assinatura_expiracao'):
-                perfil.assinatura_expiracao = None
+            if not result:
+                logger.error(f"Plano não encontrado: {plan_id}")
+                return {"status": "error", "message": f"Plano não encontrado: {plan_id}"}
             
-            session.commit()
-            logger.info(f"Plano alterado para gratuito para usuário {perfil.usuario_id} após cancelamento de assinatura")
-        
-        return True
+            plano_id = result[0]
+            
+            # Verificar se já existe assinatura para este usuário
+            query = text("""
+                SELECT id FROM assinaturas 
+                WHERE usuario_id = :usuario_id 
+                LIMIT 1
+            """)
+            result = conn.execute(query, {"usuario_id": usuario_id}).fetchone()
+            
+            if result:
+                # Atualizar assinatura existente
+                query = text("""
+                    UPDATE assinaturas 
+                    SET stripe_customer_id = :customer_id,
+                        stripe_subscription_id = :subscription_id,
+                        plano_id = :plano_id,
+                        status = :status,
+                        data_inicio = :data_inicio,
+                        data_fim = :data_fim,
+                        data_atualizacao = CURRENT_TIMESTAMP
+                    WHERE usuario_id = :usuario_id
+                    RETURNING id
+                """)
+            else:
+                # Criar nova assinatura
+                query = text("""
+                    INSERT INTO assinaturas 
+                    (usuario_id, stripe_customer_id, stripe_subscription_id, plano_id, status, data_inicio, data_fim)
+                    VALUES 
+                    (:usuario_id, :customer_id, :subscription_id, :plano_id, :status, :data_inicio, :data_fim)
+                    RETURNING id
+                """)
+            
+            # Executar query
+            result = conn.execute(query, {
+                "usuario_id": usuario_id,
+                "customer_id": customer_id,
+                "subscription_id": subscription_id,
+                "plano_id": plano_id,
+                "status": subscription['status'],
+                "data_inicio": datetime.fromtimestamp(subscription['current_period_start']),
+                "data_fim": datetime.fromtimestamp(subscription['current_period_end'])
+            }).fetchone()
+            
+            assinatura_id = result[0]
+            
+            # Atualizar tipo de plano do usuário
+            query = text("""
+                UPDATE perfis 
+                SET tipo_plano = :tipo_plano
+                WHERE usuario_id = :usuario_id
+            """)
+            
+            conn.execute(query, {
+                "usuario_id": usuario_id,
+                "tipo_plano": "pago"
+            })
+            
+            conn.commit()
+            
+            return {
+                "status": "success", 
+                "message": "Assinatura criada/atualizada com sucesso",
+                "assinatura_id": assinatura_id
+            }
     
     except Exception as e:
-        logger.error(f"Erro ao processar assinatura cancelada: {e}")
-        session.rollback()
-        return False
+        logger.error(f"Erro ao processar checkout: {str(e)}")
+        return {"status": "error", "message": str(e)}
 
-def verificar_assinatura_ativa(perfil):
+def _processar_fatura_paga(invoice: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Verifica se o usuário tem uma assinatura ativa
+    Processa evento de fatura paga
     
     Args:
-        perfil: Objeto Perfil do usuário
+        invoice: Dados da fatura
         
     Returns:
-        bool: True se o usuário tiver uma assinatura ativa
+        Dict: Resultado do processamento
     """
-    # Verificar se o usuário está no plano gratuito
-    if perfil.plano == 'gratuito':
-        return False
-    
-    # Verificar se o modelo tem o campo de expiração
-    if hasattr(perfil, 'assinatura_expiracao') and perfil.assinatura_expiracao:
-        # Verificar se a assinatura expirou
-        return perfil.assinatura_expiracao > datetime.now()
-    
-    # Se não tem o campo de expiração, confiar apenas no campo de plano
-    return perfil.plano != 'gratuito'
-
-def gerar_portal_cliente(perfil):
-    """
-    Gera um link para o portal do cliente no Stripe
-    
-    Args:
-        perfil: Objeto Perfil do usuário
-        
-    Returns:
-        str: URL do portal do cliente
-    """
-    if not hasattr(perfil, 'cliente_stripe_id') or not perfil.cliente_stripe_id:
-        logger.error(f"Usuário {perfil.usuario_id} não tem um cliente Stripe associado")
-        raise ValueError("Usuário não tem um cliente Stripe associado")
-    
     try:
-        # Criar a sessão do portal
-        session = stripe.billing_portal.Session.create(
-            customer=perfil.cliente_stripe_id,
-            return_url=os.environ.get('APP_URL', 'https://www.plannerorganiza.com.br') + '/dashboard',
-        )
-        return session.url
+        customer_id = invoice.get('customer')
+        subscription_id = invoice.get('subscription')
+        invoice_id = invoice.get('id')
+        amount_paid = invoice.get('amount_paid')
+        
+        if not customer_id or not subscription_id or not invoice_id:
+            logger.error("Dados obrigatórios ausentes no evento de fatura")
+            return {"status": "error", "message": "Dados obrigatórios ausentes"}
+        
+        # Registrar pagamento no banco de dados
+        engine = get_engine()
+        with engine.connect() as conn:
+            # Obter ID da assinatura
+            query = text("""
+                SELECT id FROM assinaturas 
+                WHERE stripe_subscription_id = :subscription_id 
+                LIMIT 1
+            """)
+            result = conn.execute(query, {"subscription_id": subscription_id}).fetchone()
+            
+            if not result:
+                logger.error(f"Assinatura não encontrada: {subscription_id}")
+                return {"status": "error", "message": f"Assinatura não encontrada: {subscription_id}"}
+            
+            assinatura_id = result[0]
+            
+            # Verificar se pagamento já foi registrado
+            query = text("""
+                SELECT id FROM pagamentos 
+                WHERE stripe_invoice_id = :invoice_id 
+                LIMIT 1
+            """)
+            result = conn.execute(query, {"invoice_id": invoice_id}).fetchone()
+            
+            if result:
+                logger.info(f"Pagamento já registrado: {invoice_id}")
+                return {"status": "success", "message": "Pagamento já registrado"}
+            
+            # Registrar pagamento
+            query = text("""
+                INSERT INTO pagamentos 
+                (assinatura_id, stripe_invoice_id, valor, status, data_pagamento)
+                VALUES 
+                (:assinatura_id, :invoice_id, :valor, :status, :data_pagamento)
+                RETURNING id
+            """)
+            
+            result = conn.execute(query, {
+                "assinatura_id": assinatura_id,
+                "invoice_id": invoice_id,
+                "valor": amount_paid / 100,  # Converter de centavos para reais
+                "status": "pago",
+                "data_pagamento": datetime.now()
+            }).fetchone()
+            
+            conn.commit()
+            
+            return {
+                "status": "success", 
+                "message": "Pagamento registrado com sucesso",
+                "pagamento_id": result[0]
+            }
+    
     except Exception as e:
-        logger.error(f"Erro ao criar sessão do portal: {e}")
-        raise
+        logger.error(f"Erro ao processar fatura: {str(e)}")
+        return {"status": "error", "message": str(e)}
 
-def obter_limites_plano(perfil):
+def _processar_assinatura_atualizada(subscription: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Obtém os limites do plano atual do usuário
+    Processa evento de assinatura atualizada
     
     Args:
-        perfil: Objeto Perfil do usuário
+        subscription: Dados da assinatura
         
     Returns:
-        dict: Dicionário com os limites do plano
+        Dict: Resultado do processamento
     """
-    plano_id = perfil.plano
-    if plano_id not in PLANOS:
-        logger.warning(f"Plano {plano_id} não encontrado, usando gratuito como padrão")
-        plano_id = 'gratuito'
+    try:
+        subscription_id = subscription.get('id')
+        status = subscription.get('status')
+        
+        if not subscription_id or not status:
+            logger.error("Dados obrigatórios ausentes no evento de assinatura")
+            return {"status": "error", "message": "Dados obrigatórios ausentes"}
+        
+        # Atualizar assinatura no banco de dados
+        engine = get_engine()
+        with engine.connect() as conn:
+            query = text("""
+                UPDATE assinaturas 
+                SET status = :status,
+                    data_inicio = :data_inicio,
+                    data_fim = :data_fim,
+                    data_atualizacao = CURRENT_TIMESTAMP
+                WHERE stripe_subscription_id = :subscription_id
+                RETURNING usuario_id
+            """)
+            
+            result = conn.execute(query, {
+                "subscription_id": subscription_id,
+                "status": status,
+                "data_inicio": datetime.fromtimestamp(subscription['current_period_start']),
+                "data_fim": datetime.fromtimestamp(subscription['current_period_end'])
+            }).fetchone()
+            
+            if not result:
+                logger.error(f"Assinatura não encontrada: {subscription_id}")
+                return {"status": "error", "message": f"Assinatura não encontrada: {subscription_id}"}
+            
+            usuario_id = result[0]
+            
+            # Atualizar tipo de plano do usuário
+            tipo_plano = "gratuito" if status in ["canceled", "unpaid"] else "pago"
+            
+            query = text("""
+                UPDATE perfis 
+                SET tipo_plano = :tipo_plano
+                WHERE usuario_id = :usuario_id
+            """)
+            
+            conn.execute(query, {
+                "usuario_id": usuario_id,
+                "tipo_plano": tipo_plano
+            })
+            
+            conn.commit()
+            
+            return {
+                "status": "success", 
+                "message": "Assinatura atualizada com sucesso",
+                "usuario_id": usuario_id
+            }
     
-    return PLANOS[plano_id]
+    except Exception as e:
+        logger.error(f"Erro ao atualizar assinatura: {str(e)}")
+        return {"status": "error", "message": str(e)}
 
-def verificar_dentro_limites(perfil, tipo, session):
+def _processar_assinatura_cancelada(subscription: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Verifica se o usuário está dentro dos limites do plano
+    Processa evento de assinatura cancelada
     
     Args:
-        perfil: Objeto Perfil do usuário
-        tipo: Tipo de limite a verificar ('clientes' ou 'propostas')
-        session: Sessão do SQLAlchemy
+        subscription: Dados da assinatura
         
     Returns:
-        bool: True se o usuário estiver dentro dos limites
+        Dict: Resultado do processamento
     """
-    from .database import Cliente, Proposta
+    try:
+        subscription_id = subscription.get('id')
+        canceled_at = subscription.get('canceled_at')
+        
+        if not subscription_id:
+            logger.error("ID de assinatura ausente no evento")
+            return {"status": "error", "message": "ID de assinatura ausente"}
+        
+        # Atualizar assinatura no banco de dados
+        engine = get_engine()
+        with engine.connect() as conn:
+            query = text("""
+                UPDATE assinaturas 
+                SET status = 'canceled',
+                    data_cancelamento = :data_cancelamento,
+                    data_atualizacao = CURRENT_TIMESTAMP
+                WHERE stripe_subscription_id = :subscription_id
+                RETURNING usuario_id
+            """)
+            
+            result = conn.execute(query, {
+                "subscription_id": subscription_id,
+                "data_cancelamento": datetime.fromtimestamp(canceled_at) if canceled_at else datetime.now()
+            }).fetchone()
+            
+            if not result:
+                logger.error(f"Assinatura não encontrada: {subscription_id}")
+                return {"status": "error", "message": f"Assinatura não encontrada: {subscription_id}"}
+            
+            usuario_id = result[0]
+            
+            # Atualizar tipo de plano do usuário
+            query = text("""
+                UPDATE perfis 
+                SET tipo_plano = 'gratuito'
+                WHERE usuario_id = :usuario_id
+            """)
+            
+            conn.execute(query, {
+                "usuario_id": usuario_id
+            })
+            
+            conn.commit()
+            
+            return {
+                "status": "success", 
+                "message": "Assinatura cancelada com sucesso",
+                "usuario_id": usuario_id
+            }
     
-    # Obter limites do plano
-    limites = obter_limites_plano(perfil)
+    except Exception as e:
+        logger.error(f"Erro ao cancelar assinatura: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+def obter_status_assinatura(usuario_id: str) -> Dict[str, Any]:
+    """
+    Obtém o status da assinatura do usuário
     
-    # Verificar o tipo de limite
-    if tipo == 'clientes':
-        # Contar clientes do usuário
-        count = session.query(Cliente).filter_by(usuario_id=perfil.usuario_id).count()
-        return count < limites.get('limite_clientes', 10)
+    Args:
+        usuario_id: ID do usuário no Firebase
+        
+    Returns:
+        Dict: Informações da assinatura
+    """
+    try:
+        engine = get_engine()
+        with engine.connect() as conn:
+            query = text("""
+                SELECT * FROM vw_status_assinatura
+                WHERE usuario_id = :usuario_id
+            """)
+            
+            result = conn.execute(query, {"usuario_id": usuario_id}).fetchone()
+            
+            if not result:
+                return {
+                    "status_assinatura": "sem_assinatura",
+                    "tipo_plano": "gratuito",
+                    "possui_assinatura": False
+                }
+            
+            # Converter para dicionário
+            columns = result.keys()
+            assinatura = {col: getattr(result, col) for col in columns}
+            
+            # Adicionar flag de posse de assinatura
+            assinatura["possui_assinatura"] = assinatura["status_assinatura"] != "sem_assinatura"
+            
+            return assinatura
     
-    elif tipo == 'propostas':
-        # Contar propostas do usuário
-        count = session.query(Proposta).filter_by(usuario_id=perfil.usuario_id).count()
-        return count < limites.get('limite_propostas', 5)
+    except Exception as e:
+        logger.error(f"Erro ao obter status da assinatura: {str(e)}")
+        return {
+            "status_assinatura": "erro",
+            "tipo_plano": "gratuito",
+            "possui_assinatura": False,
+            "erro": str(e)
+        }
+
+def verificar_limite_atingido(usuario_id: str, tipo_limite: str) -> bool:
+    """
+    Verifica se o usuário atingiu o limite do plano
     
-    else:
-        logger.error(f"Tipo de limite desconhecido: {tipo}")
+    Args:
+        usuario_id: ID do usuário no Firebase
+        tipo_limite: Tipo de limite a verificar ('clientes', 'propostas', 'produtos')
+        
+    Returns:
+        bool: True se o limite foi atingido, False caso contrário
+    """
+    try:
+        engine = get_engine()
+        with engine.connect() as conn:
+            query = text(f"""
+                SELECT limite_{tipo_limite}_atingido FROM vw_status_assinatura
+                WHERE usuario_id = :usuario_id
+            """)
+            
+            result = conn.execute(query, {"usuario_id": usuario_id}).fetchone()
+            
+            if not result:
+                return False
+            
+            return result[0]
+    
+    except Exception as e:
+        logger.error(f"Erro ao verificar limite: {str(e)}")
         return False
