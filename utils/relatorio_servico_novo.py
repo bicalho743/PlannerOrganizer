@@ -71,10 +71,10 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         data_atual = datetime.now().strftime('%d/%m/%Y')
         c.drawRightString(width-43, height-30, f"Data: {data_atual}")
         
-        # Subtítulo com número da proposta e nome do cliente
+        # Subtítulo com ID da proposta e nome do cliente
         c.setFont("Helvetica", 11)
         c.setFillColor(colors.white)
-        c.drawString(43, height-50, f"#{proposta.get('numero', 'N/A')} - {cliente.get('nome', 'Cliente')}")
+        c.drawString(43, height-50, f"#{proposta.get('id', 'N/A')} - {cliente.get('nome', 'Cliente')}")
         
         # ===== INFORMAÇÕES DO CLIENTE =====
         y = height - 110  # Começando abaixo do cabeçalho
