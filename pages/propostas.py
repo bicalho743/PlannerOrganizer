@@ -629,9 +629,9 @@ def show():
             st.header("Propostas em Execução")
             
             if not propostas.empty:
-                # Filtrar propostas em execução
+                # Filtrar propostas em execução (usando o campo status_execucao)
                 propostas_em_execucao = propostas_com_clientes[
-                    propostas_com_clientes['status'] == 'Em execução'
+                    propostas_com_clientes['status_execucao'] == 'Em execução'
                 ]
                 
                 if not propostas_em_execucao.empty:
