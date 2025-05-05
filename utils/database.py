@@ -4763,6 +4763,16 @@ class Database:
                 
                 # Criar lançamento para produtos físicos no extrato (1 - Produtos a receber)
                 if valor_total_produtos_fisicos > 0:
+                    # Primeiro registrar a venda para obter o ID da venda
+                    venda_id = None
+                    try:
+                        # Criar registro de venda e obter o ID
+                        venda_id = self._registrar_venda_produtos(proposta, cliente, produtos_fisicos, forcar_geracao)
+                        print(f"DEBUG LANCAMENTOS: Venda registrada com ID {venda_id} para produtos da proposta #{proposta.numero}")
+                    except Exception as e:
+                        print(f"ERRO ao registrar venda de produtos: {str(e)}")
+                    
+                    # Depois criar o lançamento financeiro, já com a referência à venda
                     transacao_produtos = Transacao(
                         tipo="receita_a_receber",
                         descricao=f"Produtos da Proposta #{proposta.numero} - {cliente.nome}",
@@ -4771,8 +4781,8 @@ class Database:
                         categoria="Venda de Produtos",
                         subcategoria="Produtos",
                         tipo_receita="venda",
-                        origem_id=proposta.cliente_id,
-                        origem_tipo="cliente",
+                        origem_id=venda_id if venda_id else proposta.cliente_id,  # Usar ID da venda se disponível
+                        origem_tipo="venda" if venda_id else "cliente",  # Alterar o tipo de origem
                         tipo_conta="PF",
                         status="Pendente",
                         proposta_id=proposta_id_int,
@@ -4786,12 +4796,6 @@ class Database:
                     result["valor_produtos"] = valor_total_produtos_fisicos
                     result["lancamentos_gerados"] += 1  # Apenas um lançamento agora
                     print(f"DEBUG LANCAMENTOS: Lançamento de produtos criado: R$ {valor_total_produtos_fisicos:.2f}")
-                    
-                    # Adicionar à tabela de vendas somente os produtos físicos
-                    try:
-                        self._registrar_venda_produtos(proposta, cliente, produtos_fisicos, forcar_geracao)
-                    except Exception as e:
-                        print(f"ERRO ao registrar venda de produtos: {str(e)}")
                 
                 # Criar lançamento para serviços (separado dos produtos físicos)
                 if valor_total_servicos > 0:
@@ -4821,42 +4825,11 @@ class Database:
                     result["lancamentos_gerados"] += 1
                     print(f"DEBUG LANCAMENTOS: Lançamento de serviços criado: R$ {valor_total_servicos:.2f}")
                 
-                # Garantir que todos os lançamentos estão salvos antes de registrar a venda
+                # Garantir que todos os lançamentos estão salvos
                 self.session.flush()
                 
-                # Registrar venda somente para produtos físicos
-                if produtos_fisicos:
-                    try:
-                        # Verificar se já existe uma venda para esta proposta
-                        venda_existente = self.session.query(Venda).filter_by(proposta_id=proposta.id).first()
-                        
-                        if venda_existente and not forcar_geracao:
-                            print(f"DEBUG LANCAMENTOS: Já existe uma venda (ID: {venda_existente.id}) para esta proposta. Verificando se tem itens.")
-                            
-                            # Verificar se a venda tem itens
-                            itens = self.session.query(ItemVenda).filter_by(venda_id=venda_existente.id).count()
-                            print(f"DEBUG LANCAMENTOS: Venda existente tem {itens} itens.")
-                            
-                            if itens > 0:
-                                print(f"DEBUG LANCAMENTOS: Venda existente com itens. Pulando geração de nova venda.")
-                                # Não registrar nova venda, pois já existe uma com itens
-                            else:
-                                print(f"DEBUG LANCAMENTOS: Venda existente sem itens. Registrando produtos.")
-                                # Venda existe mas não tem itens, registrar os produtos
-                                self._registrar_venda_produtos(proposta, cliente, produtos_fisicos, True)
-                        else:
-                            # Não existe venda ou estamos forçando geração
-                            # Forçar commit para evitar problemas com o registro da venda
-                            self.session.commit()
-                            print(f"DEBUG LANCAMENTOS: Commit realizado antes de registrar a venda")
-                            
-                            # Registrar venda de produtos
-                            venda_id = self._registrar_venda_produtos(proposta, cliente, produtos_fisicos, forcar_geracao)
-                            print(f"DEBUG LANCAMENTOS: Venda registrada com ID: {venda_id}")
-                    except Exception as e:
-                        print(f"ERRO ao registrar venda de produtos: {str(e)}")
-                        import traceback
-                        traceback.print_exc()
+                # Não registramos novamente a venda, pois já foi feita antes da criação do lançamento financeiro
+                # Esta seção foi removida para evitar duplicação de registros de venda
                 
                 # Vamos adicionar processamento de itens tipo "OUTRO"
                 outros = self.session.query(AcrescimoProposta)\
