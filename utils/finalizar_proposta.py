@@ -93,41 +93,9 @@ def finalizar_proposta_segura(proposta_id):
                 print(f"DEBUG FINALIZAR: Existem {lancamentos_existentes} lançamentos para a proposta")
                 resultado["lancamentos"]["existentes"] = lancamentos_existentes
             
-            # Verificar se já existe uma transação de receita para o valor base da proposta
-            transacao_base_existente = session.query(Transacao).filter_by(
-                proposta_id=proposta.id, 
-                tipo="receita_a_receber",
-                origem_tipo="proposta"
-            ).first()
-            
-            if transacao_base_existente:
-                print(f"DEBUG FINALIZAR: Já existe lançamento de receita_a_receber para a proposta ID={proposta.id}, não criando novo lançamento base")
-                resultado["lancamentos"]["valores"]["base"] = proposta.valor
-                resultado["lancamentos"]["existentes_utilizados"] = True
-            else:
-                # Se não existe, cria um novo lançamento para o valor base da proposta
-                print(f"DEBUG FINALIZAR: Não encontrado lançamento de receita_a_receber para a proposta ID={proposta.id}, criando novo")
-                transacao_base = Transacao(
-                    tipo="Receita",
-                    descricao=f"Proposta #{proposta.numero} - {proposta.descricao}",
-                    valor=proposta.valor,
-                    categoria="Serviços de organização",
-                    subcategoria=proposta.tipo_proposta or "Serviço",
-                    tipo_receita="Serviço",
-                    data=datetime.now().date(),
-                    origem_id=proposta.id,
-                    origem_tipo="proposta",
-                    tipo_conta="PF",
-                    status="Pendente",
-                    proposta_id=proposta.id,
-                    classificacao="contas_a_receber",
-                    usuario_id=proposta.usuario_id
-                )
-                session.add(transacao_base)
-                
-                # Registrar valor no resultado
-                resultado["lancamentos"]["gerados"] += 1
-                resultado["lancamentos"]["valores"]["base"] = proposta.valor
+            # Não criar mais o lançamento base automático da proposta
+            # Vamos registrar apenas para fins de controle no resultado
+            resultado["lancamentos"]["valores"]["base"] = proposta.valor
             
             # 7. Buscar produtos, fornecedores, assistentes e outros itens
             produtos_proposta = session.query(ProdutoOrganizador).filter_by(proposta_id=proposta.id).all()
@@ -362,7 +330,6 @@ def finalizar_proposta_segura(proposta_id):
                     # Verificar se já existe uma transação para os produtos desta venda
                     transacao_produto_existente = session.query(Transacao).filter_by(
                         proposta_id=proposta.id,
-                        tipo="receita_a_receber",
                         origem_tipo="venda"
                     ).first()
                     
