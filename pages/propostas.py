@@ -259,14 +259,15 @@ def show():
                             
                             elif novo_status != proposta['status']:
                                 # Processar mudança de status
-                                data_aprovacao = None
+                                # Inicializar variáveis
+                                data_aprovacao_local = None
                                 data_inicio_execucao = None
                                 status_execucao = None
+                                gerar_transacoes = False
                                 
                                 # Definir parâmetros com base no novo status
-                                gerar_transacoes = False
                                 if novo_status == "Aprovada":
-                                    data_aprovacao = datetime.now().date()
+                                    data_aprovacao_local = datetime.now().date()
                                     # Automaticamente mudar para "Em execução" quando aprovada
                                     novo_status = "Em execução"
                                     # Usar a data de início da proposta como data de início de execução
@@ -280,16 +281,16 @@ def show():
                                     status_execucao = "Iniciada"
                                     
                                     # Se a proposta não foi aprovada, aprovar primeiro
-                                    if proposta['status'] != "Aprovada" and data_aprovacao is None:
-                                        data_aprovacao = datetime.now().date()
+                                    if proposta['status'] != "Aprovada":
+                                        data_aprovacao_local = datetime.now().date()
                                         gerar_transacoes = True
                                 
                                 # Atualizar o status
-                                if data_aprovacao:
+                                if data_aprovacao_local:
                                     resultado = st.session_state.db.update_proposta_status(
                                         proposta_id=proposta_id,
                                         novo_status=novo_status,
-                                        data_aprovacao=data_aprovacao
+                                        data_aprovacao=data_aprovacao_local
                                     )
                                     
                                     # Verificar se a atualização teve sucesso

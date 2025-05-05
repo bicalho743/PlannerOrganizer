@@ -1903,6 +1903,9 @@ class Database:
             dict: Dicionário com status da operação e mensagem
         """
         def query():
+            # Inicializar data_aprovacao localmente para garantir que existe
+            data_aprovacao_local = data_aprovacao
+            
             # Buscar a proposta por ID
             proposta = self.session.query(Proposta).filter(Proposta.id == proposta_id).first()
             
@@ -1915,14 +1918,14 @@ class Database:
             if (novo_status == "Aprovada" and proposta.status != "Aprovada") or (novo_status == "Em execução" and proposta.status != "Em execução"):
                 gerar_lancamentos = True
                 # Se entrando em execução, garantir que temos data de aprovação
-                if novo_status == "Em execução" and not proposta.data_aprovacao and not data_aprovacao:
-                    data_aprovacao = datetime.now().date()
+                if novo_status == "Em execução" and not proposta.data_aprovacao and not data_aprovacao_local:
+                    data_aprovacao_local = datetime.now().date()
                     print(f"DEBUG: Definindo data de aprovação para proposta {proposta_id} que entrou em execução")
             
             # Atualizar campos
             proposta.status = novo_status
-            if data_aprovacao:
-                proposta.data_aprovacao = data_aprovacao
+            if data_aprovacao_local:
+                proposta.data_aprovacao = data_aprovacao_local
                 
             # Definir campos adicionais se o status for "Em execução"
             if novo_status == "Em execução":
