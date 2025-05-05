@@ -35,15 +35,16 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         # Certificar que o diretório existe
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         
-        # Configurações de cores conforme especificação exata
-        azul_escuro = colors.HexColor("#1E366F")         # Título e Cabeçalhos - Azul escuro institucional
-        cinza_texto = colors.HexColor("#333333")         # Textos principais - Cinza escuro
-        cinza_claro = colors.HexColor("#CCCCCC")         # Linhas/Separadores - Cinza claro
-        azul_medio = colors.HexColor("#2D8CFF")          # Destaques financeiros
+        # Configurações de cores exatamente iguais ao relatório interno
+        cinza_claro = colors.HexColor("#f5f7fa")       # fundo
+        cinza_medio = colors.HexColor("#5A6A85")       # textos normais
+        azul_escuro = colors.HexColor("#1E366F")       # cabeçalho e títulos
+        azul_claro = colors.HexColor("#e9f2ff")        # blocos de destaque
+        azul_destaque = colors.HexColor("#d4e5fd")     # blocos de conteúdo
         
-        # Derivações e cores adicionais
-        azul_claro = colors.HexColor("#E8EAF6")          # Cor para blocos de conteúdo (mais suave)
-        azul_tabela = azul_escuro                        # Cor do cabeçalho da tabela
+        # Cor do cabeçalho da tabela (igual ao relatório interno)
+        azul_tabela = azul_escuro                      # Cor do cabeçalho da tabela
+        cinza_texto = cinza_medio                      # Usando o mesmo cinza do relatório interno
         
         # Carregar dados do perfil
         try:
@@ -57,52 +58,52 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         width, height = A4
         c = canvas.Canvas(filename, pagesize=A4)
         
-        # ===== CABEÇALHO COM FAIXA AZUL ESCURA =====
+        # ===== CABEÇALHO COM FAIXA AZUL ESCURA (mesma altura do relatório interno) =====
         c.setFillColor(azul_escuro)
-        c.rect(0, height-80, width, 80, fill=True, stroke=0)
+        c.rect(0, height-70, width, 70, fill=True, stroke=0)
         
-        # Título principal no cabeçalho
+        # Título principal no cabeçalho (mesmo estilo e posição do relatório interno)
         c.setFillColor(colors.white)
         c.setFont("Helvetica-Bold", 18)
-        c.drawString(43, height-30, "Relatório de Serviço")
+        c.drawString(30, height-30, "Relatório de Serviço")
         
-        # Data no canto direito (data atual)
+        # Data no canto direito (data atual) (mesma posição do relatório interno)
         c.setFont("Helvetica", 10)
         data_atual = datetime.now().strftime('%d/%m/%Y')
-        c.drawRightString(width-43, height-30, f"Data: {data_atual}")
+        c.drawRightString(width-30, height-30, f"Data: {data_atual}")
         
-        # Subtítulo com ID da proposta e nome do cliente
+        # Subtítulo com ID da proposta e nome do cliente (mesma posição do relatório interno)
         c.setFont("Helvetica", 11)
         c.setFillColor(colors.white)
-        c.drawString(43, height-50, f"#{proposta.get('id', 'N/A')} - {cliente.get('nome', 'Cliente')}")
+        c.drawString(30, height-50, f"#{proposta.get('id', 'N/A')} - {cliente.get('nome', 'Cliente')}")
         
         # ===== INFORMAÇÕES DO CLIENTE =====
-        y = height - 110  # Começando abaixo do cabeçalho
+        y = height - 90  # Começando abaixo do cabeçalho (mesma posição que relatório interno)
         
         # Título da seção com linha decorativa abaixo
         c.setFillColor(azul_escuro)
         c.setFont("Helvetica-Bold", 12)
-        c.drawString(43, y, "Informações do Cliente")
+        c.drawString(30, y, "Informações do Cliente")  # Mesma margem do relatório interno (30px)
         c.setStrokeColor(azul_escuro)
-        c.line(43, y-5, 250, y-5)
+        c.line(30, y-5, 250, y-5)  # Ajustando a linha para iniciar na mesma posição
         
         # Dados do cliente
         y -= 25
         c.setFillColor(cinza_texto)
         c.setFont("Helvetica", 10)
-        c.drawString(43, y, f"Nome: {cliente.get('nome', 'N/A')}")
+        c.drawString(30, y, f"Nome: {cliente.get('nome', 'N/A')}")  # Ajustando para mesma margem
         y -= 15
-        c.drawString(43, y, f"Email: {cliente.get('email', 'N/A')}")
+        c.drawString(30, y, f"Email: {cliente.get('email', 'N/A')}")
         y -= 15
-        c.drawString(43, y, f"Telefone: {cliente.get('telefone', 'N/A')}")
+        c.drawString(30, y, f"Telefone: {cliente.get('telefone', 'N/A')}")
         
         # ===== INFORMAÇÕES DA PROPOSTA =====
         y -= 30
         c.setFillColor(azul_escuro)
         c.setFont("Helvetica-Bold", 12)
-        c.drawString(43, y, "Informações da Proposta")
+        c.drawString(30, y, "Informações da Proposta")  # Mesma margem do relatório interno
         c.setStrokeColor(azul_escuro)
-        c.line(43, y-5, 250, y-5)
+        c.line(30, y-5, 250, y-5)  # Ajustando a linha para iniciar na mesma posição
         
         # Dados da proposta - separados em duas colunas
         y -= 25
@@ -110,9 +111,9 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         c.setFont("Helvetica", 10)
         
         # Coluna da esquerda
-        c.drawString(43, y, f"Tipo: {proposta.get('tipo_proposta', 'Organização')}")
+        c.drawString(30, y, f"Tipo: {proposta.get('tipo_proposta', 'Organização')}")  # Mesma margem
         y -= 15
-        c.drawString(43, y, f"Status: {proposta.get('status', 'Concluída')}")
+        c.drawString(30, y, f"Status: {proposta.get('status', 'Concluída')}")  # Mesma margem
         
         # Coluna da direita
         coluna_direita = width / 2
@@ -142,12 +143,12 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         y -= 15
         c.setFillColor(azul_escuro)
         c.setFont("Helvetica-Bold", 12)
-        c.drawString(43, y, "DESCRIÇÃO DO SERVIÇO")
+        c.drawString(30, y, "DESCRIÇÃO DO SERVIÇO")  # Ajustado para mesma margem do relatório interno
         
         # Área com fundo claro para a descrição
         y -= 10
         c.setFillColor(azul_claro)
-        c.rect(43, y-30, width-86, 30, fill=True, stroke=False)
+        c.rect(30, y-30, width-60, 30, fill=True, stroke=False)  # Ajustado para mesma margem/largura
         
         # Adicionar a descrição real da proposta dentro da área clara
         # Limitar o tamanho do texto para caber na área
@@ -159,29 +160,29 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         if len(descricao) > 100:
             descricao = descricao[:97] + '...'
             
-        c.drawString(50, y-20, descricao)
+        c.drawString(40, y-20, descricao)  # Ajustado para mesma margem
         
         # ===== ITENS INCLUSOS (TABELA) =====
         y -= 40
         c.setFillColor(azul_escuro)
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(43, y, "ITENS INCLUSOS")
+        c.setFont("Helvetica", 12)  # Removido negrito conforme solicitado
+        c.drawString(30, y, "ITENS INCLUSOS")  # Ajustado para mesma margem
         
         # Configuração da tabela
         y -= 25
-        table_width = width - 86
+        table_width = width - 60  # Mesma largura que o relatório interno
         desc_col_width = table_width * 0.75
         valor_col_width = table_width * 0.25
         
         # Cabeçalho da tabela
         c.setFillColor(azul_tabela)
-        c.rect(43, y-15, desc_col_width, 15, fill=True, stroke=False)
-        c.rect(43+desc_col_width, y-15, valor_col_width, 15, fill=True, stroke=False)
+        c.rect(30, y-15, desc_col_width, 15, fill=True, stroke=False)  # Mesma margem
+        c.rect(30+desc_col_width, y-15, valor_col_width, 15, fill=True, stroke=False)
         
         c.setFillColor(colors.white)
         c.setFont("Helvetica-Bold", 10)
-        c.drawCentredString(43 + desc_col_width/2, y-12, "Descrição")
-        c.drawCentredString(43 + desc_col_width + valor_col_width/2, y-12, "Valor")
+        c.drawCentredString(30 + desc_col_width/2, y-12, "Descrição")
+        c.drawCentredString(30 + desc_col_width + valor_col_width/2, y-12, "Valor")
         
         # Conteúdo da tabela
         y -= 15
@@ -258,35 +259,35 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         
         # Adicionar itens à tabela
         for item in itens_reais:
-            # Alternância de cores para linhas
+            # Alternância de cores para linhas (mesmo estilo do relatório interno)
             if linha % 2 == 0:
                 # Sem cor de fundo para linhas pares
                 c.setFillColor(cinza_texto)
             else:
-                # Cor de fundo azul claro para linhas ímpares
+                # Cor de fundo azul claro para linhas ímpares (mesmo azul claro do relatório interno)
                 c.setFillColor(azul_claro)
-                c.rect(43, y-15, table_width, 15, fill=True, stroke=False)
+                c.rect(30, y-15, table_width, 15, fill=True, stroke=False)  # Mesma margem
                 c.setFillColor(cinza_texto)
             
-            c.drawString(50, y-12, item["descricao"])
-            c.drawRightString(43 + desc_col_width + valor_col_width - 10, y-12, f"R$ {item['valor']:.2f}")
+            c.drawString(40, y-12, item["descricao"])  # Ajustado para mesma margem
+            c.drawRightString(30 + desc_col_width + valor_col_width - 10, y-12, f"R$ {item['valor']:.2f}")  # Ajustado
             
             y -= 15
             linha += 1
         
         # Linha de total com fundo azul escuro
         c.setFillColor(azul_tabela)
-        c.rect(43, y-15, table_width, 15, fill=True, stroke=False)
+        c.rect(30, y-15, table_width, 15, fill=True, stroke=False)  # Mesma margem
         c.setFillColor(colors.white)
         c.setFont("Helvetica-Bold", 10)
-        c.drawString(50, y-12, "Total:")
-        c.drawRightString(43 + desc_col_width + valor_col_width - 10, y-12, f"R$ {valor_total:.2f}")
+        c.drawString(40, y-12, "Total:")  # Ajustado para mesma margem
+        c.drawRightString(30 + desc_col_width + valor_col_width - 10, y-12, f"R$ {valor_total:.2f}")  # Ajustado
         
         # ===== OBSERVAÇÕES =====
         y -= 40
         c.setFillColor(azul_escuro)
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(43, y, "Observações:")
+        c.setFont("Helvetica", 12)  # Removido negrito conforme solicitado
+        c.drawString(30, y, "Observações:")  # Mesma margem
         
         y -= 25
         c.setFillColor(cinza_texto)
@@ -299,7 +300,7 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         ]
         
         for obs in observacoes:
-            c.drawString(43, y, obs)
+            c.drawString(30, y, obs)  # Mesma margem
             y -= 15
             
         # ===== RODAPÉ COM FAIXA AZUL =====
