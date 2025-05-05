@@ -206,7 +206,7 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         # NOVO: Obter produtos diretamente da tabela produtos_organizadores
         try:
             import psycopg2
-            import os
+            # Não precisamos importar 'os' aqui novamente, já foi importado no início do arquivo
             
             # Obter conexão do ambiente
             db_url = os.environ.get("DATABASE_URL")
