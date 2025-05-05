@@ -63,6 +63,14 @@ def reabrir_proposta_finalizada(proposta_id):
             conn = psycopg2.connect(db_url)
             cursor = conn.cursor()
             
+            # Excluir lançamentos do tipo "receita_a_receber_aprovacao" para evitar duplicidade
+            cursor.execute("""
+                DELETE FROM financeiro 
+                WHERE proposta_id = %s AND tipo = 'receita_a_receber_aprovacao'
+            """, (proposta_id,))
+            conn.commit()
+            
+            # Buscar lançamentos restantes
             cursor.execute("""
                 SELECT * FROM financeiro WHERE proposta_id = %s
             """, (proposta_id,))
