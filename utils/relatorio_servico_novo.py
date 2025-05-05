@@ -235,7 +235,7 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
                 # Adicionar este valor ao total
                 valor_total += valor
         
-        # Adicionar a linha de produtos - se encontrou produtos reais usa o valor, senão usa R$ 120,00
+        # Adicionar a linha de produtos apenas se encontrou produtos reais
         if produtos_encontrados:
             # Usar o valor total calculado dos produtos
             itens_reais.append({
@@ -245,16 +245,6 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
             # Adicionar o valor real dos produtos ao total
             valor_total += produtos_valor_total
             print(f"DEBUG PDF: Adicionando produtos reais com valor total de R$ {produtos_valor_total:.2f}")
-        else:
-            # Adicionar um produto fixo de R$ 120,00 caso não tenha encontrado produtos reais
-            valor_produtos_fixo = 120.00
-            itens_reais.append({
-                "descricao": "Produtos",
-                "valor": valor_produtos_fixo
-            })
-            # Adicionar o valor fixo ao total
-            valor_total += valor_produtos_fixo
-            print(f"DEBUG PDF: Adicionando produtos com valor fixo de R$ {valor_produtos_fixo:.2f}")
         
         # Se não houver itens reais suficientes, usar os exemplos
         if len(itens_reais) < 2:
