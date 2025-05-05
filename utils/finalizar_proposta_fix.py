@@ -393,7 +393,7 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
         
         # 1. Buscar acréscimos do tipo FORNECEDOR e gerar comissões
         cursor.execute("""
-            SELECT id, fornecedor, valor, percentual_comissao 
+            SELECT id, fornecedor, valor, percentual_comissao, fornecedor 
             FROM acrescimos_proposta 
             WHERE proposta_id = %s AND tipo = 'FORNECEDOR'
         """, (proposta_id,))
@@ -402,12 +402,18 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
         valor_total_fornecedores = 0
         
         for fornecedor in fornecedores:
-            id_fornecedor, desc_fornecedor, valor_fornecedor, percentual_comissao = fornecedor
+            id_fornecedor, desc_fornecedor, valor_fornecedor, percentual_comissao, nome_fornecedor = fornecedor
             if valor_fornecedor and float(valor_fornecedor) > 0:
                 valor_total_fornecedores += float(valor_fornecedor)
                 
+                # Se não há percentual definido mas existe um fornecedor específico, definir um valor padrão
+                if (not percentual_comissao or percentual_comissao == '') and nome_fornecedor:
+                    nome_fornecedor_lower = nome_fornecedor.lower() if nome_fornecedor else ''
+                    if 'multi' in nome_fornecedor_lower:
+                        percentual_comissao = 5.0  # 5% para Multicoisas
+                
                 # Se tiver percentual de comissão, criar lançamento
-                if percentual_comissao and float(percentual_comissao) > 0:
+                if percentual_comissao and str(percentual_comissao).strip() and float(percentual_comissao) > 0:
                     valor_comissao = float(valor_fornecedor) * (float(percentual_comissao) / 100)
                     
                     # Verificar se já existe transação para este fornecedor
