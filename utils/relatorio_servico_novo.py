@@ -201,6 +201,54 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         # Variáveis para rastrear produtos
         produtos_valor_total = 0
         produtos_encontrados = False
+        produtos_da_tabela = []  # Lista para armazenar produtos da tabela produtos_organizadores
+        
+        # NOVO: Obter produtos diretamente da tabela produtos_organizadores
+        try:
+            import psycopg2
+            import os
+            
+            # Obter conexão do ambiente
+            db_url = os.environ.get("DATABASE_URL")
+            if db_url:
+                conn = psycopg2.connect(db_url)
+                cursor = conn.cursor()
+                
+                # Buscar produtos associados à proposta diretamente
+                proposta_id = proposta.get('id')
+                if proposta_id:
+                    cursor.execute("""
+                        SELECT nome, descricao, quantidade, valor, comodo
+                        FROM produtos_organizadores
+                        WHERE proposta_id = %s
+                    """, (proposta_id,))
+                    
+                    produtos_tabela = cursor.fetchall()
+                    for produto in produtos_tabela:
+                        nome_produto, descricao_produto, quantidade, valor, comodo = produto
+                        valor_total_produto = float(valor) * int(quantidade)
+                        
+                        # Adicionar à lista de produtos com detalhes
+                        produtos_da_tabela.append({
+                            "nome": nome_produto,
+                            "descricao": descricao_produto,
+                            "quantidade": quantidade,
+                            "valor": valor_total_produto,
+                            "comodo": comodo
+                        })
+                        
+                        # Adicionar ao total de produtos
+                        produtos_valor_total += valor_total_produto
+                        produtos_encontrados = True
+                        print(f"DEBUG PDF: Encontrou produto na tabela: {nome_produto} - {quantidade} x R$ {valor:.2f} = R$ {valor_total_produto:.2f}")
+                
+                # Fechar cursor e conexão
+                cursor.close()
+                conn.close()
+        except Exception as e:
+            print(f"DEBUG PDF ERROR: Erro ao buscar produtos da proposta: {str(e)}")
+            import traceback
+            traceback.print_exc()
         
         # Adicionar os acréscimos se existirem, mas excluir assistentes
         if acrescimos is not None and not acrescimos.empty:
@@ -214,7 +262,7 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
                 if tipo and tipo.lower() == 'produto':
                     produtos_valor_total += valor
                     produtos_encontrados = True
-                    print(f"DEBUG PDF: Encontrou produto: {fornecedor} - R$ {valor:.2f}")
+                    print(f"DEBUG PDF: Encontrou produto nos acréscimos: {fornecedor} - R$ {valor:.2f}")
                     continue
                 
                 # Pular qualquer acréscimo de assistente, especialmente "andreia"
@@ -238,8 +286,24 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
                 # Adicionar este valor ao total
                 valor_total += valor
         
-        # Adicionar a linha de produtos apenas se encontrou produtos reais
-        if produtos_encontrados:
+        # NOVO: Adicionar produtos individuais da tabela produtos_organizadores
+        for produto in produtos_da_tabela:
+            # Formatar a descrição do produto incluindo a quantidade e cômodo se disponível
+            descricao_produto = f"{produto['nome']} ({produto['quantidade']}x)"
+            if produto['comodo'] and produto['comodo'].lower() != 'geral':
+                descricao_produto += f" - {produto['comodo']}"
+            
+            # Adicionar à lista de itens
+            itens_reais.append({
+                "descricao": descricao_produto,
+                "valor": produto['valor']
+            })
+            
+            # Não adicionar ao valor_total aqui, pois já adicionaremos o valor total de produtos abaixo
+        
+        # Adicionar a linha de produtos apenas se encontrou produtos reais mas não os detalhamos individualmente
+        # (mantemos apenas para compatibilidade com versões antigas)
+        if produtos_encontrados and len(produtos_da_tabela) == 0:
             # Usar o valor total calculado dos produtos
             itens_reais.append({
                 "descricao": "Produtos",
@@ -247,7 +311,11 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
             })
             # Adicionar o valor real dos produtos ao total
             valor_total += produtos_valor_total
-            print(f"DEBUG PDF: Adicionando produtos reais com valor total de R$ {produtos_valor_total:.2f}")
+            print(f"DEBUG PDF: Adicionando produtos consolidados com valor total de R$ {produtos_valor_total:.2f}")
+        elif produtos_encontrados:
+            # Se detalhamos os produtos individualmente, adicionar o valor total ao total geral
+            valor_total += produtos_valor_total
+            print(f"DEBUG PDF: Valor total de produtos incluídos: R$ {produtos_valor_total:.2f}")
         
         # Se não houver itens reais suficientes, usar os exemplos
         if len(itens_reais) < 2:
