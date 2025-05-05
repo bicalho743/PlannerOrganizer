@@ -346,6 +346,15 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
 
     try:
         cursor = conn.cursor()
+        lancamentos_gerados = 0
+        resultado = {
+            "status": True,
+            "mensagem": "Proposta finalizada com sucesso",
+            "lancamentos": {
+                "gerados": 0,
+                "valores": {}
+            }
+        }
 
         # Atualizar status da proposta (usando data_fim em vez de data_finalizacao)
         cursor.execute("""
@@ -353,7 +362,7 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
             SET status = 'Finalizada',
                 data_fim = CURRENT_DATE
             WHERE id = %s
-            RETURNING id, valor, usuario_id;
+            RETURNING id, valor, usuario_id, numero, descricao, cliente_id;
         """, (proposta_id,))
 
         result = cursor.fetchone()
@@ -361,7 +370,7 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
             logger.error(f"Proposta #{proposta_id} não encontrada")
             return {"status": False, "mensagem": "Proposta não encontrada"}
 
-        proposta_id, valor, usuario_id = result
+        proposta_id, valor, usuario_id, numero, descricao_proposta, cliente_id = result
         logger.info(f"Proposta #{proposta_id} encontrada. Valor: {valor}, Usuario: {usuario_id}")
 
         # Obter nome do cliente para descrição do lançamento
@@ -378,47 +387,254 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                 cliente_nome = result[0]
             except (IndexError, TypeError):
                 logger.warning(f"Erro ao obter nome do cliente para proposta #{proposta_id}")
-            
-        descricao = f"Proposta #{proposta_id} - {cliente_nome}"
-        logger.info(f"Descrição do lançamento: {descricao}")
         
-        # Verificar se já existe um lançamento financeiro para esta proposta (de qualquer tipo e descrição)
+        # Aqui apenas registramos o valor, não criamos mais o lançamento base automático
+        resultado["lancamentos"]["valores"]["base"] = valor
+        
+        # 1. Buscar acréscimos do tipo FORNECEDOR e gerar comissões
         cursor.execute("""
-            SELECT id, descricao FROM financeiro 
+            SELECT id, fornecedor, valor, percentual_comissao 
+            FROM acrescimos_proposta 
+            WHERE proposta_id = %s AND tipo = 'FORNECEDOR'
+        """, (proposta_id,))
+        
+        fornecedores = cursor.fetchall()
+        valor_total_fornecedores = 0
+        
+        for fornecedor in fornecedores:
+            id_fornecedor, desc_fornecedor, valor_fornecedor, percentual_comissao = fornecedor
+            if valor_fornecedor and float(valor_fornecedor) > 0:
+                valor_total_fornecedores += float(valor_fornecedor)
+                
+                # Se tiver percentual de comissão, criar lançamento
+                if percentual_comissao and float(percentual_comissao) > 0:
+                    valor_comissao = float(valor_fornecedor) * (float(percentual_comissao) / 100)
+                    
+                    # Verificar se já existe transação para este fornecedor
+                    cursor.execute("""
+                        SELECT id FROM financeiro 
+                        WHERE proposta_id = %s AND origem_tipo = 'comissao_fornecedor' AND origem_id = %s
+                    """, (proposta_id, id_fornecedor))
+                    
+                    if cursor.fetchone() is None and valor_comissao > 0:
+                        # Criar lançamento de comissão
+                        cursor.execute("""
+                            INSERT INTO financeiro 
+                            (descricao, valor, data, categoria, subcategoria, tipo, 
+                             tipo_receita, origem_id, origem_tipo, proposta_id, 
+                             tipo_conta, status, classificacao, usuario_id)
+                            VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        """, (
+                            f"Comissão de {percentual_comissao}% - {desc_fornecedor} - Proposta #{numero}",
+                            valor_comissao,
+                            "Comissão sobre fornecedores",
+                            "Comissão de Fornecedor",
+                            "Receita",
+                            "comissao",
+                            id_fornecedor,
+                            "comissao_fornecedor",
+                            proposta_id,
+                            "PF",
+                            "Pendente",
+                            "contas_a_receber",
+                            usuario_id
+                        ))
+                        lancamentos_gerados += 1
+        
+        resultado["lancamentos"]["valores"]["fornecedores"] = valor_total_fornecedores
+        
+        # 2. Buscar acréscimos do tipo OUTRO e gerar lançamentos
+        cursor.execute("""
+            SELECT id, descricao, valor 
+            FROM acrescimos_proposta 
+            WHERE proposta_id = %s AND tipo = 'OUTRO'
+        """, (proposta_id,))
+        
+        outros = cursor.fetchall()
+        valor_total_outros = 0
+        
+        for outro in outros:
+            id_outro, desc_outro, valor_outro = outro
+            if valor_outro and float(valor_outro) > 0:
+                valor_total_outros += float(valor_outro)
+                
+                # Verificar se já existe uma transação para este acréscimo
+                cursor.execute("""
+                    SELECT id FROM financeiro 
+                    WHERE proposta_id = %s AND origem_tipo = 'acrescimo_outro' AND origem_id = %s
+                """, (proposta_id, id_outro))
+                
+                if cursor.fetchone() is None:
+                    # Criar lançamento para o acréscimo
+                    cursor.execute("""
+                        INSERT INTO financeiro 
+                        (descricao, valor, data, categoria, subcategoria, tipo, 
+                         tipo_receita, origem_id, origem_tipo, proposta_id, 
+                         tipo_conta, status, classificacao, usuario_id)
+                        VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        f"{desc_outro} - Proposta #{numero}",
+                        valor_outro,
+                        "Serviços Adicionais",
+                        "Outros Acréscimos",
+                        "Receita",
+                        "Serviço",
+                        id_outro,
+                        "acrescimo_outro",
+                        proposta_id,
+                        "PF",
+                        "Pendente",
+                        "contas_a_receber",
+                        usuario_id
+                    ))
+                    lancamentos_gerados += 1
+        
+        resultado["lancamentos"]["valores"]["outros"] = valor_total_outros
+        
+        # 3. Buscar acréscimos do tipo ASSISTENTE e gerar lançamentos
+        cursor.execute("""
+            SELECT id, descricao, valor 
+            FROM acrescimos_proposta 
+            WHERE proposta_id = %s AND tipo = 'ASSISTENTE'
+        """, (proposta_id,))
+        
+        assistentes = cursor.fetchall()
+        valor_total_assistentes = 0
+        
+        for assistente in assistentes:
+            id_assistente, desc_assistente, valor_assistente = assistente
+            if valor_assistente and float(valor_assistente) > 0:
+                valor_total_assistentes += float(valor_assistente)
+                
+                # Verificar se já existe transação para este assistente
+                cursor.execute("""
+                    SELECT id FROM financeiro 
+                    WHERE proposta_id = %s AND origem_tipo = 'acrescimo_assistente' AND origem_id = %s
+                """, (proposta_id, id_assistente))
+                
+                if cursor.fetchone() is None:
+                    # Criar lançamento para o assistente
+                    cursor.execute("""
+                        INSERT INTO financeiro 
+                        (descricao, valor, data, categoria, subcategoria, tipo, 
+                         origem_id, origem_tipo, proposta_id, 
+                         tipo_conta, status, classificacao, usuario_id)
+                        VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        f"Assistente: {desc_assistente} - Proposta #{numero}",
+                        valor_assistente,
+                        "Pagamento Equipe/Assistentes",
+                        "Assistentes",
+                        "despesa_a_pagar",
+                        id_assistente,
+                        "acrescimo_assistente",
+                        proposta_id,
+                        "PF",
+                        "Pendente",
+                        "contas_a_pagar",
+                        usuario_id
+                    ))
+                    lancamentos_gerados += 1
+        
+        resultado["lancamentos"]["valores"]["assistentes"] = valor_total_assistentes
+        
+        # 4. Registrar produtos da proposta
+        cursor.execute("""
+            SELECT id, nome, valor, quantidade, produto_id
+            FROM produtos_proposta 
             WHERE proposta_id = %s
         """, (proposta_id,))
         
-        lancamentos = cursor.fetchall()
-        tem_lancamento = False
+        produtos = cursor.fetchall()
+        valor_total_produtos = 0
+        venda_id = None
         
-        # Se encontrou qualquer lançamento associado à proposta, marcar como verdadeiro
-        if lancamentos and len(lancamentos) > 0:
-            tem_lancamento = True
-            for lanc in lancamentos:
-                try:
-                    lanc_id = lanc[0]
-                    lanc_desc = lanc[1] if len(lanc) > 1 else "Descrição não disponível"
-                    logger.info(f"Encontrado lançamento existente: ID={lanc_id}, Descrição={lanc_desc}")
-                except (IndexError, TypeError):
-                    pass
-        
-        # Criar lançamento financeiro apenas se não existir
-        if not tem_lancamento:
-            logger.info(f"Criando lançamento financeiro para proposta #{proposta_id}")
+        if produtos and len(produtos) > 0:
+            # Calcular valor total
+            for produto in produtos:
+                id_prod, nome_prod, valor_prod, quantidade, produto_id = produto
+                if valor_prod and quantidade:
+                    valor_total_produtos += float(valor_prod) * float(quantidade)
+            
+            # Verificar se já existe uma venda
+            cursor.execute("""
+                SELECT id FROM vendas WHERE proposta_id = %s
+            """, (proposta_id,))
+            
+            venda_existente = cursor.fetchone()
+            
+            if venda_existente:
+                # Remover venda existente
+                venda_id = venda_existente[0]
+                cursor.execute("DELETE FROM itens_venda WHERE venda_id = %s", (venda_id,))
+                cursor.execute("DELETE FROM financeiro WHERE origem_id = %s AND origem_tipo = 'venda'", (venda_id,))
+                cursor.execute("DELETE FROM vendas WHERE id = %s", (venda_id,))
+            
+            # Criar nova venda
+            cursor.execute("""
+                INSERT INTO vendas
+                (cliente_id, proposta_id, data_venda, valor_total, status, forma_pagamento, observacoes, usuario_id)
+                VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (
+                cliente_id,
+                proposta_id,
+                valor_total_produtos,
+                "Concluída",
+                "Proposta",
+                f"Venda gerada automaticamente da proposta #{numero}",
+                usuario_id
+            ))
+            
+            venda_id = cursor.fetchone()[0]
+            
+            # Adicionar itens à venda
+            for produto in produtos:
+                id_prod, nome_prod, valor_prod, quantidade, produto_id = produto
+                if valor_prod and quantidade:
+                    subtotal = float(valor_prod) * float(quantidade)
+                    cursor.execute("""
+                        INSERT INTO itens_venda
+                        (venda_id, produto_id, quantidade, preco_unitario, subtotal, descricao)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (
+                        venda_id,
+                        produto_id,
+                        quantidade,
+                        valor_prod,
+                        subtotal,
+                        nome_prod
+                    ))
+            
+            # Criar lançamento financeiro para a venda
             cursor.execute("""
                 INSERT INTO financeiro 
-                (descricao, valor, data, categoria, tipo, status, proposta_id, usuario_id)
-                VALUES (%s, %s, CURRENT_DATE, 'Serviços de Organização', 'receita_a_receber', 'Pendente', %s, %s)
-            """, (descricao, valor, proposta_id, usuario_id))
-        else:
-            logger.info(f"Proposta #{proposta_id} já possui lançamento financeiro, pulando criação")
-
+                (descricao, valor, data, categoria, subcategoria, tipo, 
+                 tipo_receita, origem_id, origem_tipo, proposta_id, 
+                 tipo_conta, status, classificacao, usuario_id)
+                VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                f"Produtos da proposta #{numero}",
+                valor_total_produtos,
+                "Venda Produtos",
+                "Produtos",
+                "Receita",
+                "Venda",
+                venda_id,
+                "venda",
+                proposta_id,
+                "PF",
+                "Pendente",
+                "contas_a_receber",
+                usuario_id
+            ))
+            lancamentos_gerados += 1
+        
+        resultado["lancamentos"]["valores"]["produtos"] = valor_total_produtos
+        resultado["lancamentos"]["gerados"] = lancamentos_gerados
+        
         conn.commit()
-        return {
-            "status": True,
-            "mensagem": "Proposta finalizada com sucesso",
-            "lancamentos": {"gerados": 1}
-        }
+        return resultado
     except Exception as e:
         logger.error(f"Erro ao finalizar proposta: {str(e)}")
         conn.rollback()
