@@ -1834,53 +1834,156 @@ class Database:
                 # Obter usuario_id da proposta para garantir isolamento de dados
                 usuario_id = proposta.usuario_id if hasattr(proposta, 'usuario_id') else None
                 
-                # 1. Lançamento de receita a receber no extrato
+                # Verificação adicional para prevenção de erros
+                data_str = data_lancamento.strftime('%Y-%m-%d') if data_lancamento else datetime.now().strftime('%Y-%m-%d')
+                
                 if valor_base > 0:
-                    transacao_receita = Transacao(
-                        tipo="receita_a_receber_aprovacao",  # Usamos tipo específico para identificar
-                        descricao=f"Proposta #{proposta.numero} - {proposta.descricao[:50]}... - {cliente.nome} (Aprovação)",
-                        valor=valor_base,
-                        data=data_lancamento,
-                        categoria="Receita - serviços de organização",  # Alterado para exatamente "Receita - serviços de organização"
-                        subcategoria=proposta.tipo_proposta or "Organização",
-                        tipo_receita="organização",
-                        origem_id=proposta.cliente_id,
-                        origem_tipo="cliente",
-                        tipo_conta="PF",
-                        status="Pendente",
-                        proposta_id=proposta_id_int,
-                        classificacao="receita",
-                        usuario_id=usuario_id
-                    )
-                    self.session.add(transacao_receita)
-                    
-                    # 2. Lançamento nas contas a receber - mesmo valor mas tipo diferente
-                    transacao_contas_receber = Transacao(
-                        tipo="contas_a_receber",
-                        descricao=f"Valor a receber - Proposta #{proposta.numero} - {cliente.nome}",
-                        valor=valor_base,
-                        data=data_lancamento,
-                        categoria="Receita - serviços de organização",  # Alterado para exatamente "Receita - serviços de organização"
-                        subcategoria="Valor a receber",
-                        tipo_receita="organização",
-                        origem_id=proposta.cliente_id,
-                        origem_tipo="cliente",
-                        tipo_conta="PF",
-                        status="Pendente",
-                        proposta_id=proposta_id_int,
-                        classificacao="contas_a_receber",
-                        usuario_id=usuario_id
-                    )
-                    self.session.add(transacao_contas_receber)
-                    
-                    result["valor_base"] = valor_base
-                    result["lancamentos_gerados"] += 2  # Dois lançamentos: extrato e contas a receber
-                    print(f"DEBUG LANCAMENTOS APROVAÇÃO: Lançamentos de aprovação criados com sucesso")
+                    # Usar SQL direto para garantir que os lançamentos sejam salvos
+                    try:
+                        import psycopg2
+                        import os
+                        
+                        db_url = os.environ.get('DATABASE_URL')
+                        print(f"DEBUG SQL FINANCEIRO: Conectando ao banco via psycopg2")
+                        
+                        conn = psycopg2.connect(db_url)
+                        cursor = conn.cursor()
+                        
+                        # Sanitizar descrições
+                        descricao_receita = f"Proposta #{proposta.numero} - {proposta.descricao[:50]}... - {cliente.nome} (Aprovação)"
+                        descricao_receita = descricao_receita.replace("'", "''")
+                        
+                        descricao_contas_receber = f"Valor a receber - Proposta #{proposta.numero} - {cliente.nome}"
+                        descricao_contas_receber = descricao_contas_receber.replace("'", "''")
+                        
+                        # Tipo de proposta como subcategoria (ou "Organização" como padrão)
+                        subcategoria = proposta.tipo_proposta or "Organização"
+                        subcategoria = subcategoria.replace("'", "''")
+                        
+                        # 1. Lançamento de receita a receber no extrato
+                        sql_receita = f"""
+                        INSERT INTO financeiro (
+                            tipo, descricao, valor, data, categoria, subcategoria, 
+                            tipo_receita, origem_id, origem_tipo, tipo_conta, 
+                            status, proposta_id, classificacao, usuario_id
+                        ) VALUES (
+                            'receita_a_receber_aprovacao', 
+                            '{descricao_receita}', 
+                            {valor_base}, 
+                            '{data_str}', 
+                            'Receita - serviços de organização', 
+                            '{subcategoria}', 
+                            'organização', 
+                            {proposta.cliente_id}, 
+                            'cliente', 
+                            'PF', 
+                            'Pendente', 
+                            {proposta_id_int}, 
+                            'receita', 
+                            '{usuario_id or ''}'
+                        ) RETURNING id;
+                        """
+                        
+                        cursor.execute(sql_receita)
+                        id_receita = cursor.fetchone()[0]
+                        print(f"DEBUG SQL FINANCEIRO: Lançamento de receita criado com ID {id_receita}")
+                        
+                        # 2. Lançamento nas contas a receber
+                        sql_contas_receber = f"""
+                        INSERT INTO financeiro (
+                            tipo, descricao, valor, data, categoria, subcategoria, 
+                            tipo_receita, origem_id, origem_tipo, tipo_conta, 
+                            status, proposta_id, classificacao, usuario_id
+                        ) VALUES (
+                            'contas_a_receber', 
+                            '{descricao_contas_receber}', 
+                            {valor_base}, 
+                            '{data_str}', 
+                            'Receita - serviços de organização', 
+                            'Valor a receber', 
+                            'organização', 
+                            {proposta.cliente_id}, 
+                            'cliente', 
+                            'PF', 
+                            'Pendente', 
+                            {proposta_id_int}, 
+                            'contas_a_receber', 
+                            '{usuario_id or ''}'
+                        ) RETURNING id;
+                        """
+                        
+                        cursor.execute(sql_contas_receber)
+                        id_contas_receber = cursor.fetchone()[0]
+                        print(f"DEBUG SQL FINANCEIRO: Lançamento de contas a receber criado com ID {id_contas_receber}")
+                        
+                        # Garantir que tudo seja confirmado
+                        conn.commit()
+                        print(f"DEBUG SQL FINANCEIRO: Transação confirmada com sucesso!")
+                        
+                        # Fechar a conexão
+                        cursor.close()
+                        conn.close()
+                        
+                        result["valor_base"] = valor_base
+                        result["lancamentos_gerados"] = 2  # Dois lançamentos: extrato e contas a receber
+                        print(f"DEBUG LANCAMENTOS APROVAÇÃO: Lançamentos de aprovação criados com sucesso")
+                        
+                    except Exception as sql_error:
+                        print(f"ERRO EM SQL DIRETO: {str(sql_error)}")
+                        import traceback
+                        traceback.print_exc()
+                        
+                        # Em caso de falha no SQL direto, tentar o método ORM original como fallback
+                        print(f"DEBUG LANCAMENTOS APROVAÇÃO: Tentando método ORM como alternativa")
+                        
+                        # 1. Lançamento de receita a receber no extrato
+                        transacao_receita = Transacao(
+                            tipo="receita_a_receber_aprovacao",  # Usamos tipo específico para identificar
+                            descricao=f"Proposta #{proposta.numero} - {proposta.descricao[:50]}... - {cliente.nome} (Aprovação)",
+                            valor=valor_base,
+                            data=data_lancamento,
+                            categoria="Receita - serviços de organização",
+                            subcategoria=proposta.tipo_proposta or "Organização",
+                            tipo_receita="organização",
+                            origem_id=proposta.cliente_id,
+                            origem_tipo="cliente",
+                            tipo_conta="PF",
+                            status="Pendente",
+                            proposta_id=proposta_id_int,
+                            classificacao="receita",
+                            usuario_id=usuario_id
+                        )
+                        self.session.add(transacao_receita)
+                        
+                        # 2. Lançamento nas contas a receber - mesmo valor mas tipo diferente
+                        transacao_contas_receber = Transacao(
+                            tipo="contas_a_receber",
+                            descricao=f"Valor a receber - Proposta #{proposta.numero} - {cliente.nome}",
+                            valor=valor_base,
+                            data=data_lancamento,
+                            categoria="Receita - serviços de organização",
+                            subcategoria="Valor a receber",
+                            tipo_receita="organização",
+                            origem_id=proposta.cliente_id,
+                            origem_tipo="cliente",
+                            tipo_conta="PF",
+                            status="Pendente",
+                            proposta_id=proposta_id_int,
+                            classificacao="contas_a_receber",
+                            usuario_id=usuario_id
+                        )
+                        self.session.add(transacao_contas_receber)
+                        self.session.flush()  # Forçar um flush para detectar erros antes do commit
+                        
+                        result["valor_base"] = valor_base
+                        result["lancamentos_gerados"] += 2  # Dois lançamentos: extrato e contas a receber
+                        print(f"DEBUG LANCAMENTOS APROVAÇÃO (ORM): Lançamentos de aprovação criados com sucesso")
                 
                 return result
                 
             except Exception as e:
                 print(f"ERRO em gerar_lancamentos_proposta_aprovada: {str(e)}")
+                import traceback
                 traceback.print_exc()
                 raise
         
@@ -1934,8 +2037,8 @@ class Database:
             # Gerar lançamentos financeiros se a proposta mudou de "Em elaboração" para "Em execução"
             resultado = {"status": True, "message": f"Proposta {proposta_id} atualizada com status '{novo_status}'"}
             
-            # Simplificação: se mudou de um status de proposta em aberto para proposta em execução, gera os lançamentos
-            if status_antigo in ["Em elaboração", "Aguardando aprovação"] and novo_status == "Em execução":
+            # Gerar lançamentos quando a proposta muda para "Aprovada" ou "Em execução"
+            if status_antigo in ["Em elaboração", "Aguardando aprovação"] and (novo_status == "Em execução" or novo_status == "Aprovada"):
                 try:
                     # Gerar lançamentos financeiros para proposta aprovada (receita a receber e contas a receber)
                     self.gerar_lancamentos_proposta_aprovada(proposta_id)
