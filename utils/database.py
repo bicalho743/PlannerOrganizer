@@ -1913,14 +1913,8 @@ class Database:
                 # # print(f"DEBUG: Proposta com ID {proposta_id} não encontrada")
                 return {"status": False, "message": f"Proposta ID {proposta_id} não encontrada"}
             
-            # Verificar se a proposta está sendo aprovada ou entrando em execução
-            gerar_lancamentos = False
-            if (novo_status == "Aprovada" and proposta.status != "Aprovada") or (novo_status == "Em execução" and proposta.status != "Em execução"):
-                gerar_lancamentos = True
-                # Se entrando em execução, garantir que temos data de aprovação
-                if novo_status == "Em execução" and not proposta.data_aprovacao and not data_aprovacao_local:
-                    data_aprovacao_local = datetime.now().date()
-                    print(f"DEBUG: Definindo data de aprovação para proposta {proposta_id} que entrou em execução")
+            # Armazenar o status antigo para verificação simples
+            status_antigo = proposta.status
             
             # Atualizar campos
             proposta.status = novo_status
@@ -1937,17 +1931,18 @@ class Database:
             # Salvar as alterações para garantir que tudo esteja atualizado antes de gerar lançamentos
             self.session.flush()
             
-            # Gerar lançamentos financeiros se a proposta está sendo aprovada
+            # Gerar lançamentos financeiros se a proposta mudou de "Em elaboração" para "Em execução"
             resultado = {"status": True, "message": f"Proposta {proposta_id} atualizada com status '{novo_status}'"}
             
-            if gerar_lancamentos:
+            # Simplificação: se mudou de um status de proposta em aberto para proposta em execução, gera os lançamentos
+            if status_antigo in ["Em elaboração", "Aguardando aprovação"] and novo_status == "Em execução":
                 try:
                     # Gerar lançamentos financeiros para proposta aprovada (receita a receber e contas a receber)
                     self.gerar_lancamentos_proposta_aprovada(proposta_id)
-                    print(f"DEBUG: Lançamentos financeiros gerados para proposta aprovada {proposta_id}")
+                    print(f"DEBUG: Lançamentos financeiros gerados para proposta em execução {proposta_id}")
                     resultado["lancamentos"] = {"status": "success", "message": "Lançamentos financeiros gerados com sucesso"}
                 except Exception as e:
-                    print(f"ERRO ao gerar lançamentos para proposta aprovada: {str(e)}")
+                    print(f"ERRO ao gerar lançamentos para proposta em execução: {str(e)}")
                     resultado["lancamentos"] = {"status": "error", "message": f"Erro ao gerar lançamentos: {str(e)}"}
             
             # Registrar a mudança de status

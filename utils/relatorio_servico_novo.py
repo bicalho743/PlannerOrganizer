@@ -5,11 +5,11 @@ Módulo de geração de relatório de serviço para proposta finalizada
 Esta versão segue exatamente o layout solicitado pelo cliente
 """
 
-import os
-import traceback
 from datetime import datetime, timedelta
 import textwrap
 import re
+import os
+import traceback
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -247,8 +247,6 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
                 conn.close()
         except Exception as e:
             print(f"DEBUG PDF ERROR: Erro ao buscar produtos da proposta: {str(e)}")
-            import traceback
-            traceback.print_exc()
         
         # Adicionar os acréscimos se existirem, mas excluir assistentes
         if acrescimos is not None and not acrescimos.empty:
@@ -399,5 +397,4 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         return filename
     except Exception as e:
         print(f"DEBUG PDF ERROR: Erro ao gerar relatório de serviço: {str(e)}")
-        traceback.print_exc()
         raise Exception(f"Erro ao gerar relatório de serviço: {str(e)}")
