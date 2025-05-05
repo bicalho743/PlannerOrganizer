@@ -108,10 +108,10 @@ def finalizar_proposta_segura(proposta_id):
                 # Se não existe, cria um novo lançamento para o valor base da proposta
                 print(f"DEBUG FINALIZAR: Não encontrado lançamento de receita_a_receber para a proposta ID={proposta.id}, criando novo")
                 transacao_base = Transacao(
-                    tipo="receita_a_receber",
+                    tipo="Receita",
                     descricao=f"Proposta #{proposta.numero} - {proposta.descricao}",
                     valor=proposta.valor,
-                    categoria="Propostas",
+                    categoria="Serviços de organização",
                     subcategoria=proposta.tipo_proposta or "Serviço",
                     tipo_receita="Serviço",
                     data=datetime.now().date(),
@@ -120,7 +120,7 @@ def finalizar_proposta_segura(proposta_id):
                     tipo_conta="PF",
                     status="Pendente",
                     proposta_id=proposta.id,
-                    classificacao="receita_a_receber",
+                    classificacao="contas_a_receber",
                     usuario_id=proposta.usuario_id
                 )
                 session.add(transacao_base)
@@ -177,11 +177,11 @@ def finalizar_proposta_segura(proposta_id):
                             print(f"DEBUG FINALIZAR: Criando lançamento de comissão de {percentual_comissao}% para fornecedor {fornecedor.fornecedor}")
                             
                             transacao_comissao = Transacao(
-                                tipo="receita_a_receber",
+                                tipo="Receita",
                                 descricao=f"Comissão de {percentual_comissao}% - {fornecedor.fornecedor} - Proposta #{proposta.numero}",
                                 valor=valor_comissao,
                                 data=datetime.now().date(),
-                                categoria="Comissão sobre Fornecedores",
+                                categoria="Comissão sobre fornecedores",
                                 subcategoria="Comissão de Fornecedor",
                                 tipo_receita="comissao",
                                 origem_id=fornecedor.id,
@@ -189,7 +189,7 @@ def finalizar_proposta_segura(proposta_id):
                                 proposta_id=proposta.id,
                                 tipo_conta="PF",
                                 status="Pendente",
-                                classificacao="receita_a_receber",
+                                classificacao="contas_a_receber",
                                 usuario_id=proposta.usuario_id
                             )
                             session.add(transacao_comissao)
@@ -230,7 +230,7 @@ def finalizar_proposta_segura(proposta_id):
                         print(f"DEBUG FINALIZAR: Criando lançamento para acréscimo OUTRO: {outro.descricao} - R$ {valor_outro}")
                         
                         transacao_outro = Transacao(
-                            tipo="receita_a_receber",
+                            tipo="Receita",
                             descricao=f"{outro.descricao} - Proposta #{proposta.numero}",
                             valor=valor_outro,
                             data=datetime.now().date(),
@@ -242,7 +242,7 @@ def finalizar_proposta_segura(proposta_id):
                             proposta_id=proposta.id,
                             tipo_conta="PF",
                             status="Pendente",
-                            classificacao="receita_a_receber",
+                            classificacao="contas_a_receber",
                             usuario_id=proposta.usuario_id
                         )
                         session.add(transacao_outro)
@@ -377,10 +377,10 @@ def finalizar_proposta_segura(proposta_id):
                         # Registrar nova transação financeira para a venda
                         print(f"DEBUG FINALIZAR: Criando novo lançamento para produtos da proposta ID={proposta.id}")
                         transacao_venda = Transacao(
-                            tipo="receita_a_receber",
+                            tipo="Receita",
                             descricao=f"Produtos da proposta #{proposta.numero}",
                             valor=valor_total_produtos,
-                            categoria="Venda de Produtos",
+                            categoria="Venda Produtos",
                             subcategoria="Produtos",
                             tipo_receita="Venda",
                             data=datetime.now().date(),
@@ -389,7 +389,7 @@ def finalizar_proposta_segura(proposta_id):
                             proposta_id=proposta.id,
                             tipo_conta="PF",
                             status="Pendente",
-                            classificacao="receita_a_receber",
+                            classificacao="contas_a_receber",
                             usuario_id=proposta.usuario_id
                         )
                         session.add(transacao_venda)
