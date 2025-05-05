@@ -285,38 +285,38 @@ def show():
                                         data_aprovacao_local = datetime.now().date()
                                         gerar_transacoes = True
                                 
-                                # Atualizar o status
-                                if data_aprovacao_local:
-                                    resultado = st.session_state.db.update_proposta_status(
-                                        proposta_id=proposta_id,
-                                        novo_status=novo_status,
-                                        data_aprovacao=data_aprovacao_local
-                                    )
+                                # Atualizar o status - usar sempre update_proposta_status para garantir a geração de lançamentos
+                                # quando uma proposta é aprovada ou entra em execução
+                                resultado = st.session_state.db.update_proposta_status(
+                                    proposta_id=proposta_id,
+                                    novo_status=novo_status,
+                                    data_aprovacao=data_aprovacao_local
+                                )
+                                
+                                # Verificar se a atualização teve sucesso
+                                sucesso = resultado.get('status', False)
+                                
+                                # Verificar se há lançamentos gerados no resultado
+                                if sucesso and 'lancamentos' in resultado:
+                                    lancamento_status = resultado['lancamentos'].get('status', '')
                                     
-                                    # Verificar se a atualização teve sucesso
-                                    sucesso = resultado.get('status', False)
-                                    
-                                    # Após atualizar o status, se necessário gerar transações
-                                    if sucesso and gerar_transacoes:
-                                        try:
-                                            # Usar gerar_lancamentos_proposta_aprovada em vez de gerar_transacoes_proposta
-                                            resultado = st.session_state.db.gerar_lancamentos_proposta_aprovada(proposta_id, forcar_geracao=True)
-                                            print(f"DEBUG: Lançamentos de aprovação gerados para proposta {proposta_id}: {resultado}")
-                                            
-                                            # Adicionar mensagem explicativa para o usuário
-                                            st.info("Lançamentos financeiros de receita gerados automaticamente (Receita - serviços de organização)")
-                                        except Exception as e:
-                                            st.error(f"Erro ao gerar lançamentos financeiros: {str(e)}")
-                                else:
-                                    resultado = st.session_state.db.atualizar_proposta(
-                                        proposta_id=proposta_id,
-                                        status=novo_status,
-                                        data_inicio_execucao=data_inicio_execucao,
-                                        status_execucao=status_execucao
-                                    )
-                                    
-                                    # Verificar se a atualização teve sucesso
-                                    sucesso = resultado.get('status', False)
+                                    if lancamento_status == 'success':
+                                        st.info("Lançamentos financeiros de receita gerados automaticamente (Receita - serviços de organização)")
+                                    elif lancamento_status == 'error':
+                                        st.warning(f"Aviso: {resultado['lancamentos'].get('message', 'Erro ao gerar lançamentos')}")
+                                
+                                # Após atualizar o status, verificar se é necessário forçar a geração de transações
+                                # Isso é um backup para garantir que os lançamentos sejam criados
+                                if sucesso and gerar_transacoes:
+                                    try:
+                                        # Forçar geração dos lançamentos
+                                        resultado_lanc = st.session_state.db.gerar_lancamentos_proposta_aprovada(proposta_id, forcar_geracao=True)
+                                        print(f"DEBUG: Lançamentos extras de aprovação gerados para proposta {proposta_id}: {resultado_lanc}")
+                                        
+                                        # Adicionar mensagem explicativa para o usuário
+                                        st.info("Lançamentos financeiros de receita gerados/atualizados (Receita - serviços de organização)")
+                                    except Exception as e:
+                                        st.error(f"Erro ao gerar lançamentos financeiros extras: {str(e)}")
                                 
                                 if sucesso:
                                     st.success(f"Proposta {proposta_id} atualizada para '{novo_status}'!")
