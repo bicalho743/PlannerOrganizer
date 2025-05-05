@@ -193,13 +193,27 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
             "valor": valor_total
         })
         
-        # Adicionar os acréscimos se existirem
+        # Variáveis para rastrear produtos
+        produtos_valor_total = 0
+        produtos_encontrados = False
+        
+        # Adicionar os acréscimos se existirem, mas excluir assistentes
         if acrescimos is not None and not acrescimos.empty:
             for _, acrescimo in acrescimos.iterrows():
                 nome = acrescimo.get('descricao', '')
                 tipo = acrescimo.get('tipo', '')
                 fornecedor = acrescimo.get('fornecedor', '')
                 valor = acrescimo.get('valor', 0)
+                
+                # Se for tipo produto, adicionar ao total de produtos
+                if tipo == 'produto':
+                    produtos_valor_total += valor
+                    produtos_encontrados = True
+                    continue
+                
+                # Pular qualquer acréscimo de assistente, especialmente "andreia"
+                if tipo == 'assistente' or (fornecedor and fornecedor.lower() == 'andreia'):
+                    continue
                 
                 if tipo and fornecedor:
                     descricao_item = f"{fornecedor} - Acréscimo de {tipo.upper()}"
@@ -217,6 +231,16 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
                 
                 # Adicionar este valor ao total
                 valor_total += valor
+        
+        # Adicionar a linha de produtos se encontrou algum produto
+        if produtos_encontrados:
+            itens_reais.append({
+                "descricao": "Produtos",
+                "valor": produtos_valor_total
+            })
+            # Adicionar o valor dos produtos ao total
+            valor_total += produtos_valor_total
+            print(f"DEBUG PDF: Adicionando produtos com valor total de R$ {produtos_valor_total:.2f}")
         
         # Se não houver itens reais suficientes, usar os exemplos
         if len(itens_reais) < 2:
