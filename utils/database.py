@@ -1409,7 +1409,7 @@ class Database:
                 tipo="receita_a_receber",
                 descricao=f"Proposta #{proposta_id} - {descricao} - {nome_cliente}",
                 valor=valor,
-                categoria="Serviços de Organização",  # Alterado de "Propostas" para "Serviços de Organização"
+                categoria="Receita - serviços de organização",  # Alterado para exatamente "Receita - serviços de organização"
                 subcategoria=tipo_proposta,
                 tipo_receita="Projeto",
                 origem_id=proposta_id,
@@ -1834,7 +1834,7 @@ class Database:
                         descricao=f"Proposta #{proposta.numero} - {proposta.descricao[:50]}... - {cliente.nome} (Aprovação)",
                         valor=valor_base,
                         data=data_lancamento,
-                        categoria="Serviços de Organização",
+                        categoria="Receita - serviços de organização",  # Alterado para exatamente "Receita - serviços de organização"
                         subcategoria=proposta.tipo_proposta or "Organização",
                         tipo_receita="organização",
                         origem_id=proposta.cliente_id,
@@ -1853,7 +1853,7 @@ class Database:
                         descricao=f"Valor a receber - Proposta #{proposta.numero} - {cliente.nome}",
                         valor=valor_base,
                         data=data_lancamento,
-                        categoria="Cliente",
+                        categoria="Receita - serviços de organização",  # Alterado para exatamente "Receita - serviços de organização"
                         subcategoria="Valor a receber",
                         tipo_receita="organização",
                         origem_id=proposta.cliente_id,
