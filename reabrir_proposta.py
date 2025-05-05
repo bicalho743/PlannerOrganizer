@@ -58,7 +58,19 @@ def reabrir_proposta_finalizada(proposta_id):
         # Verificar se existem lançamentos financeiros associados
         lancamentos = []
         try:
-            lancamentos = db.get_lancamentos_by_proposta(proposta_id)
+            # Buscar diretamente do banco usando SQL em vez de usar método do Database
+            db_url = os.environ.get('DATABASE_URL')
+            conn = psycopg2.connect(db_url)
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT * FROM financeiro WHERE proposta_id = %s
+            """, (proposta_id,))
+            
+            # Converter resultado para lista
+            lancamentos = cursor.fetchall()
+            cursor.close()
+            conn.close()
         except Exception as e:
             logger.error(f"Erro ao buscar lançamentos financeiros: {e}")
             lancamentos = []
@@ -97,14 +109,26 @@ def reabrir_proposta_finalizada(proposta_id):
                 }
         except Exception as e:
             logger.error(f"Erro ao executar SQL para reabrir proposta: {e}")
-            # Tentar método alternativo com ORM
-            proposta_dict = {
-                'id': proposta_id,
-                'status': 'Aprovada',
-                'status_execucao': 'Em execução',
-                'data_finalizacao': None
-            }
-            db.update_proposta(proposta_dict)
+            # Se falhou na primeira tentativa, tentar sem o campo data_finalizacao
+            try:
+                db_url = os.environ.get('DATABASE_URL')
+                conn = psycopg2.connect(db_url)
+                cursor = conn.cursor()
+                
+                # Tentar atualizar sem o campo data_finalizacao
+                cursor.execute("""
+                    UPDATE propostas 
+                    SET status = 'Aprovada', 
+                        status_execucao = 'Em execução'
+                    WHERE id = %s
+                """, (proposta_id,))
+                
+                conn.commit()
+                cursor.close()
+                conn.close()
+            except Exception as e2:
+                logger.error(f"Segunda tentativa falhou: {e2}")
+                # Se ainda falhar, retornar erro
             
             return {
                 "status": "sucesso",
