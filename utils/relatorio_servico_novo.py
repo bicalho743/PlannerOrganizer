@@ -35,14 +35,15 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         # Certificar que o diretório existe
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         
-        # Configurações de cores iguais às do relatório interno
-        cinza_claro = colors.HexColor("#f5f7fa")       # fundo
-        cinza_medio = colors.HexColor("#5A6A85")       # textos normais
-        azul_escuro = colors.HexColor("#1E366F")       # cabeçalho e títulos
-        azul_claro = colors.HexColor("#e9f2ff")        # blocos de destaque
-        azul_destaque = colors.HexColor("#d4e5fd")     # blocos de conteúdo
-        azul_tabela = azul_escuro                      # cabeçalho da tabela
-        cinza_texto = cinza_medio                      # textos normais
+        # Configurações de cores conforme especificação exata
+        azul_escuro = colors.HexColor("#1E366F")         # Título e Cabeçalhos - Azul escuro institucional
+        cinza_texto = colors.HexColor("#333333")         # Textos principais - Cinza escuro
+        cinza_claro = colors.HexColor("#CCCCCC")         # Linhas/Separadores - Cinza claro
+        azul_medio = colors.HexColor("#2D8CFF")          # Destaques financeiros
+        
+        # Derivações e cores adicionais
+        azul_claro = colors.HexColor("#E8EAF6")          # Cor para blocos de conteúdo (mais suave)
+        azul_tabela = azul_escuro                        # Cor do cabeçalho da tabela
         
         # Carregar dados do perfil
         try:
@@ -208,10 +209,11 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
                 fornecedor = acrescimo.get('fornecedor', '')
                 valor = acrescimo.get('valor', 0)
                 
-                # Se for tipo produto, adicionar ao total de produtos
-                if tipo == 'produto':
+                # Se for tipo produto (maiúsculo ou minúsculo), adicionar ao total de produtos
+                if tipo and tipo.lower() == 'produto':
                     produtos_valor_total += valor
                     produtos_encontrados = True
+                    print(f"DEBUG PDF: Encontrou produto: {fornecedor} - R$ {valor:.2f}")
                     continue
                 
                 # Pular qualquer acréscimo de assistente, especialmente "andreia"
