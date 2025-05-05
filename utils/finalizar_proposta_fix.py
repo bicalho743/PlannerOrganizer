@@ -249,6 +249,7 @@ def finalizar_proposta_sql(proposta_id: int, usuario_id: Optional[str] = None) -
             UPDATE propostas 
             SET 
                 status = 'Finalizada',
+                status_execucao = 'Finalizada',
                 data_fim = %s,
                 data_proposta = COALESCE(data_proposta, data_inicio, %s)
             WHERE id = %s
@@ -360,6 +361,7 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
         cursor.execute("""
             UPDATE propostas 
             SET status = 'Finalizada',
+                status_execucao = 'Finalizada',
                 data_fim = CURRENT_DATE
             WHERE id = %s
             RETURNING id, valor, usuario_id, numero, descricao, cliente_id;

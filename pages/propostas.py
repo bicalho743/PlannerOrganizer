@@ -1881,9 +1881,11 @@ def show():
             
             if not propostas.empty:
                 # Filtrar propostas concluídas ou finalizadas
+                # Considerar tanto o status quanto o status_execucao
                 propostas_finalizadas = propostas_com_clientes[
-                    (propostas_com_clientes['status'] == 'Concluída') | 
-                    (propostas_com_clientes['status'] == 'Finalizada')
+                    ((propostas_com_clientes['status'] == 'Concluída') | 
+                    (propostas_com_clientes['status'] == 'Finalizada')) |
+                    (propostas_com_clientes['status_execucao'] == 'Finalizada')
                 ]
                 
                 if not propostas_finalizadas.empty:
