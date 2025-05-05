@@ -540,7 +540,7 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
         
         # 4. Registrar produtos da proposta
         cursor.execute("""
-            SELECT id, nome, valor, quantidade, produto_id
+            SELECT id, nome, valor, quantidade, id as produto_id
             FROM produtos_organizadores 
             WHERE proposta_id = %s
         """, (proposta_id,))
