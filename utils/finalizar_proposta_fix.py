@@ -526,13 +526,10 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                 if assistente_existente is None:
                     # Criar lançamento para o assistente
                     try:
-                        cursor.execute("""
-                            INSERT INTO financeiro 
-                            (descricao, valor, data, categoria, subcategoria, tipo, 
-                             origem_id, origem_tipo, proposta_id, 
-                             tipo_conta, status, classificacao, usuario_id)
-                            VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        """, (
+                        logger.info(f"Tentando criar lançamento para assistente com SQL: INSERT INTO financeiro (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, proposta_id, tipo_conta, status, classificacao, usuario_id)")
+                        
+                        # Lista de parâmetros para debug
+                        params = [
                             f"Assistente: {desc_assistente} - Proposta #{numero}",
                             valor_assistente,
                             "Pagamento Equipe/Assistentes",
@@ -545,10 +542,31 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                             "Pendente",
                             "contas_a_pagar",
                             usuario_id
-                        ))
-                        logger.info(f"Lançamento de despesa criado para assistente {desc_assistente} no valor de {valor_assistente}")
+                        ]
+                        logger.info(f"Parâmetros: {params}")
+                        
+                        # Executar a query
+                        cursor.execute("""
+                            INSERT INTO financeiro 
+                            (descricao, valor, data, categoria, subcategoria, tipo, 
+                             origem_id, origem_tipo, proposta_id, 
+                             tipo_conta, status, classificacao, usuario_id)
+                            VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            RETURNING id
+                        """, params)
+                        
+                        result = cursor.fetchone()
+                        if result:
+                            lancamento_id = result[0]
+                            logger.info(f"Lançamento de despesa criado para assistente {desc_assistente} no valor de {valor_assistente} com ID {lancamento_id}")
+                        else:
+                            logger.error(f"Nenhum ID retornado após inserção do lançamento para assistente {desc_assistente}")
+                        
                     except Exception as e:
                         logger.error(f"Erro ao criar lançamento para assistente {desc_assistente}: {str(e)}")
+                        # Imprimir o rastreamento completo da exceção
+                        import traceback
+                        logger.error(f"Traceback completo: {traceback.format_exc()}")
                     lancamentos_gerados += 1
         
         resultado["lancamentos"]["valores"]["assistentes"] = valor_total_assistentes
