@@ -35,11 +35,14 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         # Certificar que o diretório existe
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         
-        # Configurações de cores exatamente como na imagem de referência
-        azul_escuro = colors.HexColor("#1A237E")  # Cor da faixa azul no cabeçalho - azul mais escuro
-        azul_tabela = colors.HexColor("#283593")  # Cor do cabeçalho da tabela
-        azul_claro = colors.HexColor("#E8EAF6")   # Cor das linhas alternadas na tabela
-        cinza_texto = colors.HexColor("#333333")  # Cor para textos normais
+        # Configurações de cores iguais às do relatório interno
+        cinza_claro = colors.HexColor("#f5f7fa")       # fundo
+        cinza_medio = colors.HexColor("#5A6A85")       # textos normais
+        azul_escuro = colors.HexColor("#1E366F")       # cabeçalho e títulos
+        azul_claro = colors.HexColor("#e9f2ff")        # blocos de destaque
+        azul_destaque = colors.HexColor("#d4e5fd")     # blocos de conteúdo
+        azul_tabela = azul_escuro                      # cabeçalho da tabela
+        cinza_texto = cinza_medio                      # textos normais
         
         # Carregar dados do perfil
         try:
@@ -232,15 +235,26 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
                 # Adicionar este valor ao total
                 valor_total += valor
         
-        # Adicionar a linha de produtos se encontrou algum produto
+        # Adicionar a linha de produtos - se encontrou produtos reais usa o valor, senão usa R$ 120,00
         if produtos_encontrados:
+            # Usar o valor total calculado dos produtos
             itens_reais.append({
                 "descricao": "Produtos",
                 "valor": produtos_valor_total
             })
-            # Adicionar o valor dos produtos ao total
+            # Adicionar o valor real dos produtos ao total
             valor_total += produtos_valor_total
-            print(f"DEBUG PDF: Adicionando produtos com valor total de R$ {produtos_valor_total:.2f}")
+            print(f"DEBUG PDF: Adicionando produtos reais com valor total de R$ {produtos_valor_total:.2f}")
+        else:
+            # Adicionar um produto fixo de R$ 120,00 caso não tenha encontrado produtos reais
+            valor_produtos_fixo = 120.00
+            itens_reais.append({
+                "descricao": "Produtos",
+                "valor": valor_produtos_fixo
+            })
+            # Adicionar o valor fixo ao total
+            valor_total += valor_produtos_fixo
+            print(f"DEBUG PDF: Adicionando produtos com valor fixo de R$ {valor_produtos_fixo:.2f}")
         
         # Se não houver itens reais suficientes, usar os exemplos
         if len(itens_reais) < 2:
