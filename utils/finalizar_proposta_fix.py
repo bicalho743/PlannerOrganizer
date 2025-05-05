@@ -520,28 +520,35 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                     WHERE proposta_id = %s AND origem_tipo = 'acrescimo_assistente' AND origem_id = %s
                 """, (proposta_id, id_assistente))
                 
-                if cursor.fetchone() is None:
+                assistente_existente = cursor.fetchone()
+                logger.info(f"Verificando assistente {desc_assistente} (ID={id_assistente}): {'já existe' if assistente_existente else 'não existe'}")
+                
+                if assistente_existente is None:
                     # Criar lançamento para o assistente
-                    cursor.execute("""
-                        INSERT INTO financeiro 
-                        (descricao, valor, data, categoria, subcategoria, tipo, 
-                         origem_id, origem_tipo, proposta_id, 
-                         tipo_conta, status, classificacao, usuario_id)
-                        VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """, (
-                        f"Assistente: {desc_assistente} - Proposta #{numero}",
-                        valor_assistente,
-                        "Pagamento Equipe/Assistentes",
-                        "Assistentes",
-                        "despesa_a_pagar",
-                        id_assistente,
-                        "acrescimo_assistente",
-                        proposta_id,
-                        "PF",
-                        "Pendente",
-                        "contas_a_pagar",
-                        usuario_id
-                    ))
+                    try:
+                        cursor.execute("""
+                            INSERT INTO financeiro 
+                            (descricao, valor, data, categoria, subcategoria, tipo, 
+                             origem_id, origem_tipo, proposta_id, 
+                             tipo_conta, status, classificacao, usuario_id)
+                            VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        """, (
+                            f"Assistente: {desc_assistente} - Proposta #{numero}",
+                            valor_assistente,
+                            "Pagamento Equipe/Assistentes",
+                            "Assistentes",
+                            "Despesa",  # Alterado de "despesa_a_pagar" para "Despesa"
+                            id_assistente,
+                            "acrescimo_assistente",
+                            proposta_id,
+                            "PF",
+                            "Pendente",
+                            "contas_a_pagar",
+                            usuario_id
+                        ))
+                        logger.info(f"Lançamento de despesa criado para assistente {desc_assistente} no valor de {valor_assistente}")
+                    except Exception as e:
+                        logger.error(f"Erro ao criar lançamento para assistente {desc_assistente}: {str(e)}")
                     lancamentos_gerados += 1
         
         resultado["lancamentos"]["valores"]["assistentes"] = valor_total_assistentes
@@ -591,51 +598,59 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                 "Concluída",
                 "Proposta",
                 f"Venda gerada automaticamente da proposta #{numero}",
-                usuario_id
+                usuario_id or None
             ))
             
-            venda_id = cursor.fetchone()[0]
+            resultado_venda = cursor.fetchone()
+            if resultado_venda is not None:
+                venda_id = resultado_venda[0]
+            else:
+                logger.error("Erro: nenhum ID de venda retornado após inserção")
+                venda_id = None
             
-            # Adicionar itens à venda
-            for produto in produtos:
-                id_prod, nome_prod, valor_prod, quantidade, produto_id = produto
-                if valor_prod and quantidade:
-                    subtotal = float(valor_prod) * float(quantidade)
-                    cursor.execute("""
-                        INSERT INTO itens_venda
-                        (venda_id, produto_id, quantidade, preco_unitario, subtotal, descricao)
-                        VALUES (%s, NULL, %s, %s, %s, %s)
-                    """, (
-                        venda_id,
-                        quantidade,
-                        valor_prod,
-                        subtotal,
-                        nome_prod
-                    ))
+            # Adicionar itens à venda apenas se tiver um venda_id válido
+            if venda_id is not None:
+                for produto in produtos:
+                    id_prod, nome_prod, valor_prod, quantidade, produto_id = produto
+                    if valor_prod and quantidade:
+                        subtotal = float(valor_prod) * float(quantidade)
+                        cursor.execute("""
+                            INSERT INTO itens_venda
+                            (venda_id, produto_id, quantidade, preco_unitario, subtotal, descricao)
+                            VALUES (%s, NULL, %s, %s, %s, %s)
+                        """, (
+                            venda_id,
+                            quantidade,
+                            valor_prod,
+                            subtotal,
+                            nome_prod
+                        ))
             
-            # Criar lançamento financeiro para a venda
-            cursor.execute("""
-                INSERT INTO financeiro 
-                (descricao, valor, data, categoria, subcategoria, tipo, 
-                 tipo_receita, origem_id, origem_tipo, proposta_id, 
-                 tipo_conta, status, classificacao, usuario_id)
-                VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                f"Produtos da proposta #{numero}",
-                valor_total_produtos,
-                "Venda Produtos",
-                "Produtos",
-                "Receita",
-                "Venda",
-                venda_id,
-                "venda",
-                proposta_id,
-                "PF",
-                "Pendente",
-                "contas_a_receber",
-                usuario_id
-            ))
-            lancamentos_gerados += 1
+            # Criar lançamento financeiro para a venda apenas se tiver um venda_id válido
+            if venda_id is not None:
+                cursor.execute("""
+                    INSERT INTO financeiro 
+                    (descricao, valor, data, categoria, subcategoria, tipo, 
+                     tipo_receita, origem_id, origem_tipo, proposta_id, 
+                     tipo_conta, status, classificacao, usuario_id)
+                    VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    f"Produtos da proposta #{numero}",
+                    valor_total_produtos,
+                    "Venda Produtos",
+                    "Produtos",
+                    "Receita",
+                    "Venda",
+                    venda_id,
+                    "venda",
+                    proposta_id,
+                    "PF",
+                    "Pendente",
+                    "contas_a_receber",
+                    usuario_id
+                ))
+                lancamentos_gerados += 1
+                logger.info(f"Lançamento financeiro para produtos criado no valor de {valor_total_produtos}")
         
         resultado["lancamentos"]["valores"]["produtos"] = valor_total_produtos
         resultado["lancamentos"]["gerados"] = lancamentos_gerados
