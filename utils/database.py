@@ -2771,32 +2771,18 @@ class Database:
                 
                 # Continuar processando proposta aprovada
                 if proposta_aprovada and gerar_transacoes_automaticas:
-                    # Verificar se já existem transações para esta proposta
-                    transacoes_existentes = self.session.query(Transacao).filter_by(
-                        proposta_id=proposta_id_int
-                    ).count()
-                    
-                    if transacoes_existentes > 0:
-                        resultado["transacoes"] = {
-                            "status": "já existem transações",
-                            "count": transacoes_existentes,
-                            "message": f"Já existem {transacoes_existentes} transações para esta proposta."
-                        }
-                    else:
-                        # Buscar o cliente da proposta
-                        cliente = self.session.query(Cliente).filter_by(id=proposta.cliente_id).first()
-                        if not cliente:
+                    try:
+                        # Usar o método gerar_lancamentos_proposta_aprovada para consistência
+                        lancamentos_result = self.gerar_lancamentos_proposta_aprovada(proposta_id_int)
+                        
+                        # Verificar o resultado
+                        if lancamentos_result.get("status") == "já existe":
                             resultado["transacoes"] = {
-                                "status": "erro",
-                                "message": f"Cliente ID {proposta.cliente_id} não encontrado"
+                                "status": "já existem transações",
+                                "message": "Já existem lançamentos para esta proposta."
                             }
                         else:
-                            # Criar transação de receita
-                            receita_id = None
-                            if proposta.valor and proposta.valor > 0:
-                                receita_id = self._criar_transacao_receita(proposta, cliente)
-                            
-                            # Buscar acréscimos da proposta
+                            # Buscar acréscimos da proposta para despesas relacionadas
                             acrescimos = self.session.query(AcrescimoProposta).filter_by(proposta_id=proposta_id_int).all()
                             
                             # Criar transações de despesa para cada acréscimo
@@ -2806,13 +2792,25 @@ class Database:
                                     despesa_id = self._criar_transacao_despesa(acrescimo, proposta)
                                     despesa_ids.append(despesa_id)
                             
+                            # Adicionar informações de despesas ao resultado
+                            lancamentos_result["despesa_ids"] = despesa_ids
+                            lancamentos_result["total_despesas"] = len(despesa_ids)
+                            
                             resultado["transacoes"] = {
                                 "status": "sucesso",
-                                "receita_id": receita_id,
+                                "lancamentos_base": lancamentos_result,
                                 "despesa_ids": despesa_ids,
                                 "total_despesas": len(despesa_ids),
-                                "message": f"Transações financeiras geradas automaticamente para a proposta #{proposta.numero}"
+                                "message": f"Lançamentos financeiros gerados automaticamente para a proposta #{proposta.numero}"
                             }
+                    except Exception as e:
+                        print(f"ERRO ao gerar lançamentos para proposta aprovada: {str(e)}")
+                        import traceback
+                        traceback.print_exc()
+                        resultado["transacoes"] = {
+                            "status": "erro",
+                            "message": f"Erro ao gerar lançamentos: {str(e)}"
+                        }
                 
                 return resultado
             except Exception as e:
