@@ -1496,9 +1496,10 @@ class Database:
 
     def get_contas_receber(self):
         def query():
-            # Criar query base - garantir que receitas a receber de qualquer origem sejam exibidas
+            # Criar query base - garantir que receitas a receber e contas a receber com tipo Receita sejam exibidas na aba
             query = self.session.query(Transacao).filter(
-                Transacao.tipo.in_(['receita_a_receber']),
+                (Transacao.tipo.in_(['receita_a_receber', 'Receita'])) |  
+                (Transacao.classificacao == 'contas_a_receber')  # Inclui também pela classificação
             )
             
             # Aplicar filtro por usuário se disponível (multi-tenant)
