@@ -596,10 +596,9 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                     cursor.execute("""
                         INSERT INTO itens_venda
                         (venda_id, produto_id, quantidade, preco_unitario, subtotal, descricao)
-                        VALUES (%s, %s, %s, %s, %s, %s)
+                        VALUES (%s, NULL, %s, %s, %s, %s)
                     """, (
                         venda_id,
-                        produto_id,
                         quantidade,
                         valor_prod,
                         subtotal,
