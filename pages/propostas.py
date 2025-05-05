@@ -298,11 +298,14 @@ def show():
                                     # Após atualizar o status, se necessário gerar transações
                                     if sucesso and gerar_transacoes:
                                         try:
-                                            # Gerar transações financeiras (receita e despesas)
-                                            resultado = st.session_state.db.gerar_transacoes_proposta(proposta_id)
-                                            print(f"DEBUG: Transações geradas para proposta {proposta_id}: {resultado}")
+                                            # Usar gerar_lancamentos_proposta_aprovada em vez de gerar_transacoes_proposta
+                                            resultado = st.session_state.db.gerar_lancamentos_proposta_aprovada(proposta_id, forcar_geracao=True)
+                                            print(f"DEBUG: Lançamentos de aprovação gerados para proposta {proposta_id}: {resultado}")
+                                            
+                                            # Adicionar mensagem explicativa para o usuário
+                                            st.info("Lançamentos financeiros de receita gerados automaticamente (Receita - serviços de organização)")
                                         except Exception as e:
-                                            st.error(f"Erro ao gerar transações financeiras: {str(e)}")
+                                            st.error(f"Erro ao gerar lançamentos financeiros: {str(e)}")
                                 else:
                                     resultado = st.session_state.db.atualizar_proposta(
                                         proposta_id=proposta_id,

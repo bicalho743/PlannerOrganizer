@@ -1797,11 +1797,18 @@ class Database:
                 if lancamentos_existentes > 0:
                     if forcar_geracao:
                         print(f"DEBUG LANCAMENTOS APROVAÇÃO: Removendo {lancamentos_existentes} lançamentos existentes")
-                        # Remover lançamentos existentes
+                        # Remover todos os lançamentos existentes relacionados à aprovação
                         self.session.query(Transacao).filter_by(
                             proposta_id=proposta_id_int, 
                             tipo="receita_a_receber_aprovacao"
                         ).delete()
+                        
+                        # Também remover as contas a receber criadas automaticamente para esta proposta
+                        self.session.query(Transacao).filter_by(
+                            proposta_id=proposta_id_int, 
+                            tipo="contas_a_receber"
+                        ).delete()
+                        
                         self.session.flush()
                         print(f"DEBUG LANCAMENTOS APROVAÇÃO: Lançamentos existentes removidos com sucesso")
                     else:
@@ -1903,10 +1910,14 @@ class Database:
                 # # print(f"DEBUG: Proposta com ID {proposta_id} não encontrada")
                 return {"status": False, "message": f"Proposta ID {proposta_id} não encontrada"}
             
-            # Verificar se a proposta está sendo aprovada
+            # Verificar se a proposta está sendo aprovada ou entrando em execução
             gerar_lancamentos = False
-            if novo_status == "Aprovada" and proposta.status != "Aprovada":
+            if (novo_status == "Aprovada" and proposta.status != "Aprovada") or (novo_status == "Em execução" and proposta.status != "Em execução"):
                 gerar_lancamentos = True
+                # Se entrando em execução, garantir que temos data de aprovação
+                if novo_status == "Em execução" and not proposta.data_aprovacao and not data_aprovacao:
+                    data_aprovacao = datetime.now().date()
+                    print(f"DEBUG: Definindo data de aprovação para proposta {proposta_id} que entrou em execução")
             
             # Atualizar campos
             proposta.status = novo_status
@@ -1918,6 +1929,7 @@ class Database:
                 # Sempre usar a data de início da proposta como data de início de execução
                 proposta.data_inicio_execucao = proposta.data_inicio
                 proposta.status_execucao = "Iniciada"
+                print(f"DEBUG: Proposta {proposta_id} entrando em execução, data_inicio={proposta.data_inicio}")
             
             # Salvar as alterações para garantir que tudo esteja atualizado antes de gerar lançamentos
             self.session.flush()
