@@ -405,10 +405,7 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
         # Calcular 5% de comissão sobre o valor total dos fornecedores
         valor_comissao_total = float(valor_total_fornecedores_raw) * 0.05  # 5% como padrão
         
-        # Se não tiver fornecedores, usar o valor solicitado para a proposta #94
-        if proposta_id == 94 and valor_comissao_total == 0:
-            valor_comissao_total = 100.0  # Valor específico para proposta #94
-            logger.info(f"Usando valor fixo de R$100,00 para comissão da proposta #{proposta_id}")
+        logger.info(f"Calculando comissão sobre fornecedores: 5% de R${valor_total_fornecedores_raw:.2f} = R${valor_comissao_total:.2f}")
         
         # Criar lançamento de comissão sobre fornecedores com o valor calculado
         cursor.execute("""
@@ -452,10 +449,8 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
         resultado_assistentes = cursor.fetchone()
         valor_total_assistentes_raw = resultado_assistentes[0] if resultado_assistentes and resultado_assistentes[0] else 0
         
-        # Se não houver valor ou for proposta específica #94
-        if proposta_id == 94 and valor_total_assistentes_raw == 0:
-            valor_total_assistentes_raw = 500.0  # Valor específico para proposta #94
-            logger.info(f"Usando valor fixo de R$500,00 para pagamento de assistentes na proposta #{proposta_id}")
+        # Registrar o valor total dos assistentes no log
+        logger.info(f"Valor total calculado para assistentes na proposta #{proposta_id}: R${valor_total_assistentes_raw:.2f}")
         
         # Criar lançamento de pagamento equipe/assistentes com o valor calculado
         cursor.execute("""
