@@ -107,11 +107,12 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
             alignment=1  # Centralizado
         ))
         
-        # Título já está no cabeçalho, então não precisamos adicionar novamente ao corpo
-        # Informações do cliente (no cabeçalho, como no relatório interno)
-        story.append(Paragraph(f"Cliente: {cliente.get('nome', '-')}", styles['Subtitulo']))
+        # Não precisamos adicionar título ao corpo, já está no cabeçalho
         
-        # Adicionando venda número como no relatório interno
+        # Informações do cliente em fonte normal, sem destacar
+        story.append(Paragraph(f"Cliente: {cliente.get('nome', '-')}", styles['CorpoTexto']))
+        
+        # Adicionando venda número em fonte normal também
         story.append(Paragraph(f"Venda #{venda.get('id', '')}", styles['CorpoTexto']))
         story.append(Spacer(1, 5*mm))
         
@@ -244,14 +245,14 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
                     canvas.saveState()
                     page_width, page_height = A4
                     
-                    # Desenhar cabeçalho (mesmo padrão do relatório interno - faixa azul maior)
+                    # Desenhar cabeçalho (mesmo padrão do relatório interno - faixa azul no topo)
                     canvas.setFillColor(COR_AZUL)
                     canvas.rect(0, page_height - 70, page_width, 70, fill=1)
                     
-                    # Texto do cabeçalho à esquerda (como no relatório interno)
+                    # Texto do cabeçalho à esquerda (como no relatório interno) em caixa alta e baixa
                     canvas.setFont('Helvetica-Bold', 18)
                     canvas.setFillColor(colors.white)
-                    canvas.drawString(30, page_height - 30, "RELATÓRIO DE VENDAS")
+                    canvas.drawString(30, page_height - 30, "Relatório de Vendas")
                     
                     # Data no canto direito (mesma posição do relatório interno)
                     canvas.setFont('Helvetica', 10)
