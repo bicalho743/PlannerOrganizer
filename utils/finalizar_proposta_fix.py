@@ -543,7 +543,9 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                             "contas_a_pagar",
                             usuario_id
                         ]
-                        logger.info(f"Parâmetros: {params}")
+                        # Logar cada parâmetro individualmente para melhor legibilidade
+                        for i, param in enumerate(params):
+                            logger.info(f"Parâmetro {i+1}: {param}")
                         
                         # Executar a query
                         cursor.execute("""
