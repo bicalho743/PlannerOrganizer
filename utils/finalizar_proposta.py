@@ -168,6 +168,31 @@ def finalizar_proposta_segura(proposta_id):
                                 resultado["lancamentos"]["valores"]["comissoes"] = 0
                             
                             resultado["lancamentos"]["valores"]["comissoes"] += valor_comissao
+                    
+                    # Sempre gerar lançamento de comissão sobre fornecedor se não existir
+                    # Mesmo para fornecedores sem percentual, vamos criar um lançamento para pagamentos manuais
+                    elif not transacao_comissao_existente and valor_fornecedor > 0:
+                        print(f"DEBUG FINALIZAR: Criando lançamento de comissão genérica para fornecedor {fornecedor.fornecedor}")
+                        
+                        # Valor zero, será preenchido manualmente pelo usuário
+                        transacao_comissao_fornecedor = Transacao(
+                            tipo="Receita",
+                            descricao=f"Receita - comissão fornecedor {fornecedor.fornecedor} - Proposta #{proposta.numero}",
+                            valor=0.0,  # Valor zero, a ser preenchido manualmente
+                            data=datetime.now().date(),
+                            categoria="Comissão sobre fornecedores",
+                            subcategoria="Comissão de Fornecedor",
+                            tipo_receita="comissao",
+                            origem_id=fornecedor.id,
+                            origem_tipo="comissao_fornecedor_manual",
+                            proposta_id=proposta.id,
+                            tipo_conta="PF",
+                            status="Pendente",
+                            classificacao="contas_a_receber",
+                            usuario_id=proposta.usuario_id
+                        )
+                        session.add(transacao_comissao_fornecedor)
+                        resultado["lancamentos"]["gerados"] += 1
                 
                 # Registrar valor total de fornecedores no resultado
                 resultado["lancamentos"]["valores"]["fornecedores"] = valor_total_fornecedores
@@ -265,6 +290,36 @@ def finalizar_proposta_segura(proposta_id):
                 
                 # Registrar valor total de assistentes no resultado
                 resultado["lancamentos"]["valores"]["assistentes"] = valor_total_assistentes
+            
+            # Sempre criar um lançamento genérico de pagamento de equipe quando não houver
+            # assistentes específicos cadastrados ou quando o valor total for zero
+            transacao_equipe_existente = session.query(Transacao).filter_by(
+                proposta_id=proposta.id,
+                origem_tipo="despesa_equipe_generica"
+            ).first()
+            
+            if not transacao_equipe_existente and valor_total_assistentes == 0:
+                print(f"DEBUG FINALIZAR: Criando lançamento genérico de pagamento de equipe")
+                
+                # Valor zero, será preenchido manualmente pelo usuário
+                transacao_despesa_equipe = Transacao(
+                    tipo="despesa_a_pagar",
+                    descricao=f"Despesas - pagamento equipe/assistentes - Proposta #{proposta.numero}",
+                    valor=0.0,  # Valor zero, a ser preenchido manualmente
+                    data=datetime.now().date(),
+                    categoria="Pagamento Equipe/Assistentes",
+                    subcategoria="Equipe",
+                    tipo_receita=None,
+                    origem_id=proposta.id,
+                    origem_tipo="despesa_equipe_generica",
+                    proposta_id=proposta.id,
+                    tipo_conta="PF",
+                    status="Pendente",
+                    classificacao="contas_a_pagar",
+                    usuario_id=proposta.usuario_id
+                )
+                session.add(transacao_despesa_equipe)
+                resultado["lancamentos"]["gerados"] += 1
             
             # 8. Registrar venda dos produtos, se houver
             venda_id = None
