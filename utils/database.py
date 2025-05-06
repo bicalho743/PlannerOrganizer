@@ -1496,10 +1496,16 @@ class Database:
 
     def get_contas_receber(self):
         def query():
-            # Criar query base - garantir que receitas a receber e contas a receber com tipo Receita sejam exibidas na aba
+            # Atualizado para incluir transações do tipo Receita com status Pendente
             query = self.session.query(Transacao).filter(
-                (Transacao.tipo.in_(['receita_a_receber', 'Receita'])) |  
-                (Transacao.classificacao == 'contas_a_receber')  # Inclui também pela classificação
+                (
+                    # Todos os lançamentos com classificação contas_a_receber
+                    (Transacao.classificacao == 'contas_a_receber') |
+                    # Todos os lançamentos do tipo Receita com status Pendente
+                    ((Transacao.tipo == 'Receita') & (Transacao.status == 'Pendente')) |
+                    # Manter compatibilidade com tipos antigos
+                    (Transacao.tipo == 'receita_a_receber')
+                )
             )
             
             # Aplicar filtro por usuário se disponível (multi-tenant)
