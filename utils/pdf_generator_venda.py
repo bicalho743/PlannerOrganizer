@@ -244,18 +244,27 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
                     canvas.saveState()
                     page_width, page_height = A4
                     
-                    # Desenhar cabeçalho
+                    # Desenhar cabeçalho (mesmo padrão do relatório interno - faixa azul maior)
                     canvas.setFillColor(COR_AZUL)
-                    canvas.rect(0, page_height - 40*mm, page_width, 25*mm, fill=1)
+                    canvas.rect(0, page_height - 70, page_width, 70, fill=1)
                     
-                    # Texto do cabeçalho (padronizado com o relatório interno)
-                    canvas.setFont('Helvetica-Bold', 16)
+                    # Texto do cabeçalho à esquerda (como no relatório interno)
+                    canvas.setFont('Helvetica-Bold', 18)
                     canvas.setFillColor(colors.white)
-                    canvas.drawCentredString(page_width/2, page_height - 25*mm, "RELATÓRIO DE VENDAS")
+                    canvas.drawString(30, page_height - 30, "RELATÓRIO DE VENDAS")
                     
-                    # Linha fina abaixo do cabeçalho
-                    canvas.setStrokeColor(colors.white)
-                    canvas.line(20*mm, page_height - 40*mm, page_width - 20*mm, page_height - 40*mm)
+                    # Data no canto direito (mesma posição do relatório interno)
+                    canvas.setFont('Helvetica', 10)
+                    data_atual = datetime.now().strftime('%d/%m/%Y')
+                    canvas.drawRightString(page_width - 30, page_height - 30, f"Data: {data_atual}")
+                    
+                    # Informação do cliente na segunda linha (mesma posição do relatório interno)
+                    nome_cliente = doc.cliente_nome if hasattr(doc, 'cliente_nome') else ''
+                    venda_id = doc.venda_id if hasattr(doc, 'venda_id') else ''
+                    canvas.setFont('Helvetica', 11)
+                    canvas.drawString(30, page_height - 50, f"#{venda_id} - {nome_cliente}")
+                    
+                    # Linha fina abaixo do cabeçalho não é necessária com o novo layout
                     
                     # Adicionar rodapé
                     canvas.setFillColor(COR_AZUL)
@@ -281,10 +290,14 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
             pagesize=A4,
             rightMargin=20*mm,
             leftMargin=20*mm,
-            topMargin=40*mm,  # Margem superior maior para o cabeçalho
+            topMargin=70,  # Margem superior maior para acomodar o cabeçalho maior
             bottomMargin=20*mm,
             footer_text=footer_text
         )
+        
+        # Adicionar atributos para o cliente e venda
+        doc.cliente_nome = cliente.get('nome', '-')
+        doc.venda_id = venda.get('id', '')
         
         # Gerar PDF
         doc.build(story)
