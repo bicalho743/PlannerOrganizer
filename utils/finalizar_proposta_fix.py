@@ -393,6 +393,72 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
         # Aqui apenas registramos o valor, não criamos mais o lançamento base automático
         resultado["lancamentos"]["valores"]["base"] = valor
         
+        # Criar lançamento de comissão sobre fornecedores com valor zero
+        cursor.execute("""
+            SELECT id FROM financeiro 
+            WHERE proposta_id = %s 
+            AND categoria = 'Comissão sobre fornecedores'
+            AND descricao LIKE %s
+        """, (proposta_id, f"%Proposta #{numero}%"))
+        
+        if cursor.fetchone() is None:
+            cursor.execute("""
+                INSERT INTO financeiro 
+                (descricao, valor, data, categoria, subcategoria, 
+                tipo, tipo_receita, origem_id, origem_tipo, proposta_id, 
+                tipo_conta, status, classificacao, usuario_id)
+                VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                f"Comissão de fornecedores - Proposta #{numero} - {cliente_nome}",
+                0,  # Valor zero como placeholder
+                "Comissão sobre fornecedores",
+                "Fornecedores",
+                "Receita",
+                "comissao",
+                cliente_id,
+                "cliente",
+                proposta_id,
+                "PF",
+                "Pendente", 
+                "receita",
+                usuario_id
+            ))
+            lancamentos_gerados += 1
+            logger.info(f"Lançamento de comissão sobre fornecedores criado para proposta #{numero}")
+        
+        # Criar lançamento de pagamento equipe/assistentes com valor zero
+        cursor.execute("""
+            SELECT id FROM financeiro 
+            WHERE proposta_id = %s 
+            AND categoria = 'Pagamento Equipe/Assistentes'
+            AND subcategoria = 'Assistentes'
+            AND descricao LIKE %s
+        """, (proposta_id, f"%Proposta #{numero}%"))
+        
+        if cursor.fetchone() is None:
+            cursor.execute("""
+                INSERT INTO financeiro 
+                (descricao, valor, data, categoria, subcategoria, 
+                tipo, origem_id, origem_tipo, proposta_id, 
+                tipo_conta, status, classificacao, usuario_id)
+                VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                f"Pagamento Equipe/Assistentes - Proposta #{numero} - {cliente_nome}",
+                0,  # Valor zero como placeholder
+                "Pagamento Equipe/Assistentes",
+                "Assistentes",
+                "Despesa",
+                cliente_id,
+                "cliente",
+                proposta_id,
+                "PF",
+                "Pendente", 
+                "despesa_a_pagar",
+                usuario_id
+            ))
+            lancamentos_gerados += 1
+            logger.info(f"Lançamento de pagamento equipe/assistentes criado para proposta #{numero}")
+        
         # 1. Buscar acréscimos do tipo FORNECEDOR e gerar comissões
         cursor.execute("""
             SELECT id, fornecedor, valor, percentual_comissao, fornecedor 

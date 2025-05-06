@@ -1899,6 +1899,61 @@ class Database:
                         # Removido o lançamento de "Valor a receber" para evitar duplicidade
                         print(f"DEBUG SQL FINANCEIRO: Não criando mais lançamento de 'Valor a receber' para evitar duplicidade")
                         
+                        # 2. Lançamento de comissão sobre fornecedores (valor zero como placeholder)
+                        sql_comissao = f"""
+                        INSERT INTO financeiro (
+                            tipo, descricao, valor, data, categoria, subcategoria, 
+                            tipo_receita, origem_id, origem_tipo, tipo_conta, 
+                            status, proposta_id, classificacao, usuario_id
+                        ) VALUES (
+                            'Receita', 
+                            'Comissão de fornecedores - Proposta #{proposta.numero} - {cliente.nome}', 
+                            0, 
+                            '{data_str}', 
+                            'Comissão sobre fornecedores', 
+                            'Fornecedores', 
+                            'comissao', 
+                            {proposta.cliente_id}, 
+                            'cliente', 
+                            'PF', 
+                            'Pendente', 
+                            {proposta_id_int}, 
+                            'receita', 
+                            '{usuario_id or ''}'
+                        ) RETURNING id;
+                        """
+                        
+                        cursor.execute(sql_comissao)
+                        id_comissao = cursor.fetchone()[0]
+                        print(f"DEBUG SQL FINANCEIRO: Lançamento de comissão sobre fornecedores criado com ID {id_comissao}")
+                        
+                        # 3. Lançamento de despesa para equipe/assistentes (valor zero como placeholder)
+                        sql_assistentes = f"""
+                        INSERT INTO financeiro (
+                            tipo, descricao, valor, data, categoria, subcategoria, 
+                            origem_id, origem_tipo, tipo_conta, 
+                            status, proposta_id, classificacao, usuario_id
+                        ) VALUES (
+                            'Despesa', 
+                            'Pagamento Equipe/Assistentes - Proposta #{proposta.numero} - {cliente.nome}', 
+                            0, 
+                            '{data_str}', 
+                            'Pagamento Equipe/Assistentes', 
+                            'Assistentes', 
+                            {proposta.cliente_id}, 
+                            'cliente', 
+                            'PF', 
+                            'Pendente', 
+                            {proposta_id_int}, 
+                            'despesa_a_pagar', 
+                            '{usuario_id or ''}'
+                        ) RETURNING id;
+                        """
+                        
+                        cursor.execute(sql_assistentes)
+                        id_assistentes = cursor.fetchone()[0]
+                        print(f"DEBUG SQL FINANCEIRO: Lançamento de pagamento equipe/assistentes criado com ID {id_assistentes}")
+                        
                         # Garantir que tudo seja confirmado
                         conn.commit()
                         print(f"DEBUG SQL FINANCEIRO: Transação confirmada com sucesso!")
@@ -1908,8 +1963,8 @@ class Database:
                         conn.close()
                         
                         result["valor_base"] = valor_base
-                        result["lancamentos_gerados"] = 1  # Apenas um lançamento do tipo "Receita"
-                        print(f"DEBUG LANCAMENTOS APROVAÇÃO: Lançamento de aprovação criado com sucesso")
+                        result["lancamentos_gerados"] = 3  # Três lançamentos: receita principal, comissão e despesa
+                        print(f"DEBUG LANCAMENTOS APROVAÇÃO: Lançamentos criados com sucesso (Receita, Comissão, Despesa)")
                         
                     except Exception as sql_error:
                         print(f"ERRO EM SQL DIRETO: {str(sql_error)}")
@@ -1940,11 +1995,49 @@ class Database:
                         
                         # Removido o lançamento de "Valor a receber" para evitar duplicidade
                         print(f"DEBUG LANCAMENTOS APROVAÇÃO (ORM): Não criando mais lançamento de 'Valor a receber' para evitar duplicidade")
+                        
+                        # 2. Lançamento de comissão sobre fornecedores (valor zero como placeholder)
+                        transacao_comissao = Transacao(
+                            tipo="Receita",
+                            descricao=f"Comissão de fornecedores - Proposta #{proposta.numero} - {cliente.nome}",
+                            valor=0,
+                            data=data_lancamento,
+                            categoria="Comissão sobre fornecedores",
+                            subcategoria="Fornecedores",
+                            tipo_receita="comissao",
+                            origem_id=proposta.cliente_id,
+                            origem_tipo="cliente",
+                            tipo_conta="PF",
+                            status="Pendente",
+                            proposta_id=proposta_id_int,
+                            classificacao="receita",
+                            usuario_id=usuario_id
+                        )
+                        self.session.add(transacao_comissao)
+                        
+                        # 3. Lançamento de despesa para equipe/assistentes (valor zero como placeholder)
+                        transacao_assistentes = Transacao(
+                            tipo="Despesa",
+                            descricao=f"Pagamento Equipe/Assistentes - Proposta #{proposta.numero} - {cliente.nome}",
+                            valor=0,
+                            data=data_lancamento,
+                            categoria="Pagamento Equipe/Assistentes",
+                            subcategoria="Assistentes",
+                            origem_id=proposta.cliente_id,
+                            origem_tipo="cliente",
+                            tipo_conta="PF",
+                            status="Pendente",
+                            proposta_id=proposta_id_int,
+                            classificacao="despesa_a_pagar",
+                            usuario_id=usuario_id
+                        )
+                        self.session.add(transacao_assistentes)
+                        
                         self.session.flush()  # Forçar um flush para detectar erros antes do commit
                         
                         result["valor_base"] = valor_base
-                        result["lancamentos_gerados"] += 1  # Apenas um lançamento do tipo "Receita"
-                        print(f"DEBUG LANCAMENTOS APROVAÇÃO (ORM): Lançamento de aprovação criado com sucesso")
+                        result["lancamentos_gerados"] += 3  # Três lançamentos: receita principal, comissão e despesa
+                        print(f"DEBUG LANCAMENTOS APROVAÇÃO (ORM): Lançamentos criados com sucesso (Receita, Comissão, Despesa)")
                 
                 return result
                 
