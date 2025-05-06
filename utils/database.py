@@ -1868,7 +1868,7 @@ class Database:
                         subcategoria = proposta.tipo_proposta or "Organização"
                         subcategoria = subcategoria.replace("'", "''")
                         
-                        # 1. Apenas o lançamento Receita (removido o lançamento receita_a_receber_aprovacao)
+                        # 1. Apenas o lançamento com (Aprovação)
                         sql_receita = f"""
                         INSERT INTO financeiro (
                             tipo, descricao, valor, data, categoria, subcategoria, 
@@ -1894,35 +1894,10 @@ class Database:
                         
                         cursor.execute(sql_receita)
                         id_receita = cursor.fetchone()[0]
-                        print(f"DEBUG SQL FINANCEIRO: Lançamento de receita criado com ID {id_receita}")
+                        print(f"DEBUG SQL FINANCEIRO: Lançamento de receita com (Aprovação) criado com ID {id_receita}")
                         
-                        # 2. Lançamento nas contas a receber
-                        sql_contas_receber = f"""
-                        INSERT INTO financeiro (
-                            tipo, descricao, valor, data, categoria, subcategoria, 
-                            tipo_receita, origem_id, origem_tipo, tipo_conta, 
-                            status, proposta_id, classificacao, usuario_id
-                        ) VALUES (
-                            'Receita', 
-                            '{descricao_contas_receber}', 
-                            {valor_base}, 
-                            '{data_str}', 
-                            'Serviços de organização', 
-                            'Valor a receber', 
-                            'organização', 
-                            {proposta.cliente_id}, 
-                            'cliente', 
-                            'PF', 
-                            'Pendente', 
-                            {proposta_id_int}, 
-                            'contas_a_receber', 
-                            '{usuario_id or ''}'
-                        ) RETURNING id;
-                        """
-                        
-                        cursor.execute(sql_contas_receber)
-                        id_contas_receber = cursor.fetchone()[0]
-                        print(f"DEBUG SQL FINANCEIRO: Lançamento de contas a receber criado com ID {id_contas_receber}")
+                        # Removido o lançamento de "Valor a receber" para evitar duplicidade
+                        print(f"DEBUG SQL FINANCEIRO: Não criando mais lançamento de 'Valor a receber' para evitar duplicidade")
                         
                         # Garantir que tudo seja confirmado
                         conn.commit()
@@ -1933,8 +1908,8 @@ class Database:
                         conn.close()
                         
                         result["valor_base"] = valor_base
-                        result["lancamentos_gerados"] = 2  # Dois lançamentos: extrato e contas a receber
-                        print(f"DEBUG LANCAMENTOS APROVAÇÃO: Lançamentos de aprovação criados com sucesso")
+                        result["lancamentos_gerados"] = 1  # Apenas um lançamento do tipo "Receita"
+                        print(f"DEBUG LANCAMENTOS APROVAÇÃO: Lançamento de aprovação criado com sucesso")
                         
                     except Exception as sql_error:
                         print(f"ERRO EM SQL DIRETO: {str(sql_error)}")
@@ -1944,7 +1919,7 @@ class Database:
                         # Em caso de falha no SQL direto, tentar o método ORM original como fallback
                         print(f"DEBUG LANCAMENTOS APROVAÇÃO: Tentando método ORM como alternativa")
                         
-                        # 1. Lançamento de receita no extrato (tipo Receita em vez de receita_a_receber_aprovacao)
+                        # 1. Apenas o lançamento com (Aprovação) no método ORM
                         transacao_receita = Transacao(
                             tipo="Receita",  # Usamos tipo unificado para simplificar
                             descricao=f"Proposta #{proposta.numero} - {proposta.descricao[:50]}... - {cliente.nome} (Aprovação)",
@@ -1963,29 +1938,13 @@ class Database:
                         )
                         self.session.add(transacao_receita)
                         
-                        # 2. Lançamento nas contas a receber - mesmo valor mas tipo diferente
-                        transacao_contas_receber = Transacao(
-                            tipo="contas_a_receber",
-                            descricao=f"Valor a receber - Proposta #{proposta.numero} - {cliente.nome}",
-                            valor=valor_base,
-                            data=data_lancamento,
-                            categoria="Serviços de organização",
-                            subcategoria="Valor a receber",
-                            tipo_receita="organização",
-                            origem_id=proposta.cliente_id,
-                            origem_tipo="cliente",
-                            tipo_conta="PF",
-                            status="Pendente",
-                            proposta_id=proposta_id_int,
-                            classificacao="contas_a_receber",
-                            usuario_id=usuario_id
-                        )
-                        self.session.add(transacao_contas_receber)
+                        # Removido o lançamento de "Valor a receber" para evitar duplicidade
+                        print(f"DEBUG LANCAMENTOS APROVAÇÃO (ORM): Não criando mais lançamento de 'Valor a receber' para evitar duplicidade")
                         self.session.flush()  # Forçar um flush para detectar erros antes do commit
                         
                         result["valor_base"] = valor_base
-                        result["lancamentos_gerados"] += 2  # Dois lançamentos: extrato e contas a receber
-                        print(f"DEBUG LANCAMENTOS APROVAÇÃO (ORM): Lançamentos de aprovação criados com sucesso")
+                        result["lancamentos_gerados"] += 1  # Apenas um lançamento do tipo "Receita"
+                        print(f"DEBUG LANCAMENTOS APROVAÇÃO (ORM): Lançamento de aprovação criado com sucesso")
                 
                 return result
                 
