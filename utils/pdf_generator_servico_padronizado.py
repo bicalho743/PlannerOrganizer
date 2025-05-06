@@ -184,6 +184,9 @@ def gerar_pdf_servico_padronizado(proposta, cliente, itens_servico, filename):
             c.drawString(45, y + 3, "Nenhum item encontrado")
             y -= 16
 
+        # Adicionar mais espaço antes do total para evitar colagem com itens acima
+        y -= 5  # Adicionando 5 pontos extras de espaço
+        
         # Total
         c.setFillColor(AZUL_ESCURO)
         c.rect(40, y, 510, 18, fill=True)
