@@ -9,7 +9,12 @@ import psycopg2
 from datetime import datetime, date
 from typing import Dict, Any, Optional, List
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG, 
+                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                     handlers=[
+                         logging.StreamHandler(),
+                         logging.FileHandler('/tmp/finalizar_proposta_debug.log')
+                     ])
 logger = logging.getLogger(__name__)
 
 def get_db_connection():
@@ -506,17 +511,26 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                     if 'multi' in nome_fornecedor_lower:
                         percentual_comissao = 5.0  # 5% para Multicoisas
                 
-                # Se tiver percentual de comissão, criar lançamento
-                if percentual_comissao and str(percentual_comissao).strip() and float(percentual_comissao) > 0:
+                # Usar comissão padrão de 5% caso não esteja definido
+                if not percentual_comissao or not str(percentual_comissao).strip():
+                    percentual_comissao = 5.0
+                    logger.info(f"Usando taxa de comissão padrão de 5% para o fornecedor {nome_fornecedor}")
+                
+                # Calcular o valor da comissão
+                if float(percentual_comissao) > 0:
                     valor_comissao = float(valor_fornecedor) * (float(percentual_comissao) / 100)
+                    logger.info(f"Calculado valor de comissão: {valor_comissao} ({percentual_comissao}% de {valor_fornecedor})")
                     
                     # Verificar se já existe transação para este fornecedor
+                    logger.debug(f"Verificando transação existente para fornecedor {nome_fornecedor} (ID={id_fornecedor})")
                     cursor.execute("""
                         SELECT id FROM financeiro 
                         WHERE proposta_id = %s AND origem_tipo = 'comissao_fornecedor' AND origem_id = %s
                     """, (proposta_id, id_fornecedor))
+                    fornecedor_existente = cursor.fetchone()
+                    logger.debug(f"Transação para fornecedor {nome_fornecedor}: {'já existe' if fornecedor_existente else 'não existe'}")
                     
-                    if cursor.fetchone() is None and valor_comissao > 0:
+                    if fornecedor_existente is None and valor_comissao > 0:
                         # Criar lançamento de comissão
                         cursor.execute("""
                             INSERT INTO financeiro 
@@ -564,7 +578,10 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                     WHERE proposta_id = %s AND origem_tipo = 'acrescimo_outro' AND origem_id = %s
                 """, (proposta_id, id_outro))
                 
-                if cursor.fetchone() is None:
+                outro_existente = cursor.fetchone()
+                logger.debug(f"Transação para outro '{desc_outro}' (ID={id_outro}): {'já existe' if outro_existente else 'não existe'}")
+                
+                if outro_existente is None:
                     # Criar lançamento para o acréscimo
                     cursor.execute("""
                         INSERT INTO financeiro 
