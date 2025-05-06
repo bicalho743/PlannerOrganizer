@@ -107,9 +107,7 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
             alignment=1  # Centralizado
         ))
         
-        # Título do documento (seguindo o estilo do relatório interno)
-        story.append(Paragraph("RELATÓRIO DE VENDAS", styles['TituloPrincipal']))
-        
+        # Título já está no cabeçalho, então não precisamos adicionar novamente ao corpo
         # Informações do cliente (no cabeçalho, como no relatório interno)
         story.append(Paragraph(f"Cliente: {cliente.get('nome', '-')}", styles['Subtitulo']))
         
