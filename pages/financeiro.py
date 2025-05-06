@@ -721,7 +721,36 @@ def show():
     with tab6:
         st.subheader("Dashboard Financeiro")
 
-        if not financeiro.empty:
+        # Obter dados financeiros
+        financeiro_completo = st.session_state.db.get_financeiro()
+        
+        if not financeiro_completo.empty:
+            # Adicionar uma coluna para classificar os tipos de lançamento de forma simplificada
+            def simplificar_tipo(tipo):
+                if tipo in ['receita', 'receita_a_receber_aprovacao', 'Receita']:
+                    return 'receita'
+                elif tipo in ['despesa', 'despesa_a_pagar']:
+                    return 'despesa'
+                return tipo
+            
+            # Criar uma cópia para não alterar o DataFrame original
+            financeiro_analise = financeiro_completo.copy()
+            financeiro_analise['tipo_simplificado'] = financeiro_analise['tipo'].apply(simplificar_tipo)
+            
+            # Card com resumo geral (métricas)
+            st.subheader("Resumo Geral")
+            
+            # Calcular totais considerando todos os tipos de receita e despesa
+            total_receitas = financeiro_analise[financeiro_analise['tipo_simplificado'] == 'receita']['valor'].sum()
+            total_despesas = financeiro_analise[financeiro_analise['tipo_simplificado'] == 'despesa']['valor'].sum()
+            saldo = total_receitas - total_despesas
+            
+            # Exibir as métricas
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Total Receitas", f"R$ {total_receitas:.2f}")
+            col2.metric("Total Despesas", f"R$ {total_despesas:.2f}")
+            col3.metric("Saldo", f"R$ {saldo:.2f}")
+            
             # Resumo de Contas a Receber
             contas_receber = st.session_state.db.get_contas_receber()
             if not contas_receber.empty:
@@ -743,33 +772,33 @@ def show():
 
             # Gráfico de Receitas vs Despesas por Categoria
             fig1 = px.bar(
-                financeiro,
+                financeiro_analise,
                 x='categoria',
                 y='valor',
-                color='tipo',
+                color='tipo_simplificado',
                 title='Transações por Categoria',
-                labels={'valor': 'Valor (R$)', 'categoria': 'Categoria'}
+                labels={'valor': 'Valor (R$)', 'categoria': 'Categoria', 'tipo_simplificado': 'Tipo'}
             )
             st.plotly_chart(fig1, use_container_width=True)
 
             # Evolução Temporal
-            financeiro['data'] = pd.to_datetime(financeiro['data'])
-            dados_temporais = financeiro.groupby(
-                [pd.Grouper(key='data', freq='ME'), 'tipo']
+            financeiro_analise['data'] = pd.to_datetime(financeiro_analise['data'])
+            dados_temporais = financeiro_analise.groupby(
+                [pd.Grouper(key='data', freq='ME'), 'tipo_simplificado']
             )['valor'].sum().reset_index()
 
             fig2 = px.line(
                 dados_temporais,
                 x='data',
                 y='valor',
-                color='tipo',
+                color='tipo_simplificado',
                 title='Evolução Temporal',
-                labels={'valor': 'Valor (R$)', 'data': 'Data'}
+                labels={'valor': 'Valor (R$)', 'data': 'Data', 'tipo_simplificado': 'Tipo'}
             )
             st.plotly_chart(fig2, use_container_width=True)
 
             # Distribuição por Tipo de Receita
-            receitas = financeiro[financeiro['tipo'] == 'receita']
+            receitas = financeiro_analise[financeiro_analise['tipo_simplificado'] == 'receita']
             if not receitas.empty and 'tipo_receita' in receitas.columns:
                 fig3 = px.pie(
                     receitas,
