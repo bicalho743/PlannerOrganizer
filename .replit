@@ -10,7 +10,7 @@ run = ["sh", "-c", "streamlit run app.py --server.port 5000 --server.address 0.0
 build = ["sh", "-c", "pip install -r requirements.txt"]
 
 [workflows]
-runButton = "Deploy ZIP"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
@@ -68,6 +68,10 @@ args = "Planos Simples"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Start application"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Regenerar Lancamentos"
 
 [[workflows.workflow]]
 name = "Importar Propostas"
@@ -275,6 +279,15 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run create_deployment_zip.py --server.port 8600 --server.address 0.0.0.0"
+
+[[workflows.workflow]]
+name = "Regenerar Lancamentos"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run regenerar_lancamentos.py --server.port 8600 --server.address 0.0.0.0"
+waitForPort = 8600
 
 [[ports]]
 localPort = 443

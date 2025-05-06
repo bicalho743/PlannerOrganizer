@@ -349,6 +349,76 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
     if not conn:
         logger.error("Erro de conexão com banco")
         return {"status": False, "mensagem": "Erro de conexão com banco"}
+    
+    try:
+        cursor = conn.cursor()
+        lancamentos_gerados = 0
+        resultado = {
+            "status": True,
+            "mensagem": "Proposta finalizada com sucesso",
+            "lancamentos": {
+                "gerados": 0,
+                "valores": {}
+            }
+        }
+def gerar_lancamentos_proposta_ja_finalizada(proposta_id: int) -> Dict[str, Any]:
+    """
+    Função para gerar os lançamentos financeiros de uma proposta que já foi finalizada anteriormente.
+    Útil quando a proposta foi finalizada diretamente via SQL, sem passar pela lógica de negócios.
+    """
+    logger.info(f"Gerando lançamentos para proposta já finalizada #{proposta_id}")
+    conn = get_db_connection()
+    if not conn:
+        logger.error("Não foi possível conectar ao banco de dados")
+        return {"status": False, "mensagem": "Não foi possível conectar ao banco de dados"}
+    
+    try:
+        # Verificar se a proposta já está finalizada
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT status, status_execucao FROM propostas WHERE id = %s
+        """, (proposta_id,))
+        
+        result = cursor.fetchone()
+        if not result:
+            logger.error(f"Proposta #{proposta_id} não encontrada")
+            conn.close()
+            return {"status": False, "mensagem": f"Proposta #{proposta_id} não encontrada"}
+        
+        status, status_execucao = result
+        
+        # Se a proposta não estiver finalizada, retornar erro
+        if status != 'Finalizada' or status_execucao != 'Finalizada':
+            logger.warning(f"Proposta #{proposta_id} não está finalizada. Status atual: {status}/{status_execucao}")
+            conn.close()
+            return {"status": False, "mensagem": f"Proposta #{proposta_id} não está finalizada. Status atual: {status}/{status_execucao}"}
+        
+        # Verificar se já existem lançamentos para a proposta
+        cursor.execute("""
+            SELECT COUNT(*) FROM financeiro WHERE proposta_id = %s
+        """, (proposta_id,))
+        
+        count = cursor.fetchone()[0]
+        
+        # Apagar lançamentos existentes se houver
+        if count > 0:
+            logger.info(f"Removendo {count} lançamentos existentes para proposta #{proposta_id}")
+            cursor.execute("DELETE FROM financeiro WHERE proposta_id = %s", (proposta_id,))
+        
+        # Agora vamos criar novos lançamentos
+        resultado = finalizar_proposta_segura(proposta_id)
+        
+        conn.commit()
+        conn.close()
+        return resultado
+    except Exception as e:
+        logger.error(f"Erro ao gerar lançamentos para proposta finalizada #{proposta_id}: {str(e)}")
+        if conn:
+            conn.rollback()
+            conn.close()
+        return {"status": False, "mensagem": f"Erro: {str(e)}"}
+        
+# Original function continues here
 
     try:
         cursor = conn.cursor()

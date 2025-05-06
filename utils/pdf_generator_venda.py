@@ -107,13 +107,18 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
             alignment=1  # Centralizado
         ))
         
-        # Título do documento
-        story.append(Paragraph(f"RELATÓRIO DE VENDA #{venda.get('id', '')}", styles['TituloPrincipal']))
+        # Título do documento (seguindo o estilo do relatório interno)
+        story.append(Paragraph("RELATÓRIO DE VENDAS", styles['TituloPrincipal']))
         
-        # Informações do cliente
-        story.append(Paragraph("DADOS DO CLIENTE", styles['Subtitulo']))
+        # Informações do cliente (no cabeçalho, como no relatório interno)
+        story.append(Paragraph(f"Cliente: {cliente.get('nome', '-')}", styles['Subtitulo']))
+        
+        # Adicionando venda número como no relatório interno
+        story.append(Paragraph(f"Venda #{venda.get('id', '')}", styles['CorpoTexto']))
+        story.append(Spacer(1, 5*mm))
+        
+        # Informações adicionais do cliente
         data = [
-            ["Nome:", cliente.get('nome', '-')],
             ["Telefone:", cliente.get('telefone', '-')],
             ["Email:", cliente.get('email', '-')],
             ["Endereço:", f"{cliente.get('endereco', '-')}, {cliente.get('bairro', '-')}, {cliente.get('cidade', '-')}, {cliente.get('estado', '-')}"]
@@ -245,10 +250,10 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
                     canvas.setFillColor(COR_AZUL)
                     canvas.rect(0, page_height - 40*mm, page_width, 25*mm, fill=1)
                     
-                    # Texto do cabeçalho
+                    # Texto do cabeçalho (padronizado com o relatório interno)
                     canvas.setFont('Helvetica-Bold', 16)
                     canvas.setFillColor(colors.white)
-                    canvas.drawCentredString(page_width/2, page_height - 25*mm, "PLANNER ORGANIZER")
+                    canvas.drawCentredString(page_width/2, page_height - 25*mm, "RELATÓRIO DE VENDAS")
                     
                     # Linha fina abaixo do cabeçalho
                     canvas.setStrokeColor(colors.white)
