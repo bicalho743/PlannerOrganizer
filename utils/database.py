@@ -1995,12 +1995,12 @@ class Database:
         Atualiza o status de uma proposta e opcionalmente define a data de aprovação
         Se o status for "Em execução", automaticamente:
         - Define data_inicio_execucao para a data de início da proposta (não a data atual)
-        - Define status_execucao como "Iniciada"
+        - Define status_execucao como "Em execução" (anteriormente "Iniciada")
         - Cria transação financeira para cliente a receber
         
         Args:
             proposta_id: ID da proposta a ser atualizada
-            novo_status: Novo status da proposta
+            novo_status: Novo status da proposta 
             data_aprovacao: Data de aprovação (opcional)
         
         Returns:
@@ -2014,11 +2014,16 @@ class Database:
             proposta = self.session.query(Proposta).filter(Proposta.id == proposta_id).first()
             
             if proposta is None:
-                # # print(f"DEBUG: Proposta com ID {proposta_id} não encontrada")
+                print(f"DEBUG: Proposta com ID {proposta_id} não encontrada")
                 return {"status": False, "message": f"Proposta ID {proposta_id} não encontrada"}
             
             # Armazenar o status antigo para verificação simples
             status_antigo = proposta.status
+            
+            # Verificar se já existem lançamentos para esta proposta para evitar duplicidade
+            lancamentos_existentes = self.session.query(Transacao)\
+                .filter_by(proposta_id=proposta_id, tipo="receita_a_receber_aprovacao")\
+                .count()
             
             # Atualizar campos
             proposta.status = novo_status
@@ -2029,17 +2034,18 @@ class Database:
             if novo_status == "Em execução":
                 # Sempre usar a data de início da proposta como data de início de execução
                 proposta.data_inicio_execucao = proposta.data_inicio
-                proposta.status_execucao = "Iniciada"
-                print(f"DEBUG: Proposta {proposta_id} entrando em execução, data_inicio={proposta.data_inicio}")
+                # Alterar para "Em execução" em vez de "Iniciada" para consistência
+                proposta.status_execucao = "Em execução"
+                print(f"DEBUG: Proposta {proposta_id} entrando em execução, data_inicio={proposta.data_inicio}, status_execucao={proposta.status_execucao}")
             
             # Salvar as alterações para garantir que tudo esteja atualizado antes de gerar lançamentos
             self.session.flush()
             
-            # Gerar lançamentos financeiros se a proposta mudou de "Em elaboração" para "Em execução"
+            # Preparar objeto de resultado
             resultado = {"status": True, "message": f"Proposta {proposta_id} atualizada com status '{novo_status}'"}
             
-            # Gerar lançamentos quando a proposta muda para "Aprovada" ou "Em execução"
-            if status_antigo in ["Em elaboração", "Aguardando aprovação"] and (novo_status == "Em execução" or novo_status == "Aprovada"):
+            # Gerar lançamentos apenas se não existirem e a proposta estiver mudando para "Em execução" ou "Aprovada"
+            if lancamentos_existentes == 0 and status_antigo in ["Em elaboração", "Aguardando aprovação"] and (novo_status == "Em execução" or novo_status == "Aprovada"):
                 try:
                     # Gerar lançamentos financeiros para proposta aprovada (receita a receber e contas a receber)
                     self.gerar_lancamentos_proposta_aprovada(proposta_id)
@@ -2048,9 +2054,12 @@ class Database:
                 except Exception as e:
                     print(f"ERRO ao gerar lançamentos para proposta em execução: {str(e)}")
                     resultado["lancamentos"] = {"status": "error", "message": f"Erro ao gerar lançamentos: {str(e)}"}
+            elif lancamentos_existentes > 0:
+                print(f"DEBUG: Proposta {proposta_id} já possui {lancamentos_existentes} lançamentos. Pulando geração automática.")
+                resultado["lancamentos"] = {"status": "ignored", "message": "Proposta já possui lançamentos financeiros"}
             
             # Registrar a mudança de status
-            # # print(f"DEBUG: Proposta {proposta_id} atualizada com status '{novo_status}'")
+            print(f"DEBUG: Proposta {proposta_id} atualizada com status '{novo_status}', status_execucao='{proposta.status_execucao}'")
             return resultado
             
         return self._safe_query(query)

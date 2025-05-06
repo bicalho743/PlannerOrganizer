@@ -261,31 +261,23 @@ def show():
                                 # Processar mudança de status
                                 # Inicializar variáveis
                                 data_aprovacao_local = None
-                                data_inicio_execucao = None
-                                status_execucao = None
-                                gerar_transacoes = False
                                 
                                 # Definir parâmetros com base no novo status
                                 if novo_status == "Aprovada":
                                     data_aprovacao_local = datetime.now().date()
                                     # Automaticamente mudar para "Em execução" quando aprovada
+                                    # A função update_proposta_status cuidará de atualizar o status_execucao
                                     novo_status = "Em execução"
-                                    # Usar a data de início da proposta como data de início de execução
-                                    data_inicio_execucao = proposta['data_inicio'] if pd.notna(proposta['data_inicio']) else datetime.now().date()
-                                    status_execucao = "Iniciada"
-                                    gerar_transacoes = True
                                 
-                                elif novo_status == "Em execução":
-                                    # Usar a data de início da proposta como data de início de execução
-                                    data_inicio_execucao = proposta['data_inicio'] if pd.notna(proposta['data_inicio']) else datetime.now().date()
-                                    status_execucao = "Iniciada"
-                                    
-                                    # Se a proposta não foi aprovada, aprovar primeiro
-                                    # Definir data de aprovação se for necessário
-                                    if proposta['status'] != "Aprovada" and (novo_status == "Aprovada" or novo_status == "Em execução"):
-                                        data_aprovacao_local = datetime.now().date()
+                                # Se a proposta estiver indo para execução e não foi aprovada antes, definir data de aprovação
+                                elif novo_status == "Em execução" and proposta['status'] != "Aprovada":
+                                    data_aprovacao_local = datetime.now().date()
+                                
+                                # Log para depuração
+                                print(f"DEBUG UI: Alterando proposta {proposta_id} para status '{novo_status}', data_aprovacao={data_aprovacao_local}")
                                 
                                 # Atualizar o status usando sempre update_proposta_status
+                                # Esta função agora cuida de todas as atualizações de campos relacionados e verificações
                                 resultado = st.session_state.db.update_proposta_status(
                                     proposta_id=proposta_id,
                                     novo_status=novo_status,

@@ -55,33 +55,46 @@ def reabrir_proposta_finalizada(proposta_id):
                 "mensagem": "Esta proposta não está finalizada e não pode ser reaberta"
             }
         
-        # Verificar se existem lançamentos financeiros associados
-        lancamentos = []
+        # Contadores para o relatório final
+        lancamentos_encontrados = 0
+        lancamentos_excluidos = 0
+        
+        # Verificar e gerenciar lançamentos financeiros associados
         try:
             # Buscar diretamente do banco usando SQL em vez de usar método do Database
             db_url = os.environ.get('DATABASE_URL')
             conn = psycopg2.connect(db_url)
             cursor = conn.cursor()
             
-            # Excluir lançamentos do tipo "receita_a_receber_aprovacao" para evitar duplicidade
+            # Contar lançamentos financeiros associados à proposta
+            cursor.execute("""
+                SELECT COUNT(*) FROM financeiro WHERE proposta_id = %s
+            """, (proposta_id,))
+            lancamentos_encontrados = cursor.fetchone()[0]
+            logger.info(f"Encontrados {lancamentos_encontrados} lançamentos financeiros para proposta #{proposta_id}")
+            
+            # Remover lançamentos específicos relacionados à finalização,
+            # mantendo outros lançamentos importantes como receitas em aberto
             cursor.execute("""
                 DELETE FROM financeiro 
-                WHERE proposta_id = %s AND tipo = 'receita_a_receber_aprovacao'
+                WHERE proposta_id = %s 
+                AND (tipo = 'receita_a_receber_aprovacao' 
+                    OR categoria IN ('Comissão sobre fornecedores', 'Pagamento Equipe/assistentes'))
+                RETURNING id
             """, (proposta_id,))
+            
+            # Contar quantos lançamentos foram excluídos
+            resultado_exclusao = cursor.fetchall()
+            lancamentos_excluidos = len(resultado_exclusao)
+            logger.info(f"Excluídos {lancamentos_excluidos} lançamentos relacionados à finalização")
+            
+            # Confirmar as alterações
             conn.commit()
-            
-            # Buscar lançamentos restantes
-            cursor.execute("""
-                SELECT * FROM financeiro WHERE proposta_id = %s
-            """, (proposta_id,))
-            
-            # Converter resultado para lista
-            lancamentos = cursor.fetchall()
             cursor.close()
             conn.close()
         except Exception as e:
-            logger.error(f"Erro ao buscar lançamentos financeiros: {e}")
-            lancamentos = []
+            logger.error(f"Erro ao gerenciar lançamentos financeiros: {e}")
+            # Não interromper o processo por falha nesta etapa
         
         # Reabrir a proposta diretamente via SQL para garantir que funcione
         try:
@@ -91,24 +104,28 @@ def reabrir_proposta_finalizada(proposta_id):
             cursor = conn.cursor()
             
             # Atualizar status da proposta
+            data_atual = datetime.now().strftime('%Y-%m-%d')
             cursor.execute("""
                 UPDATE propostas 
                 SET status = 'Aprovada', 
                     status_execucao = 'Em execução',
-                    data_finalizacao = NULL
+                    data_finalizacao = NULL,
+                    data_atualizacao = %s
                 WHERE id = %s
-            """, (proposta_id,))
+            """, (data_atual, proposta_id))
             
             conn.commit()
             cursor.close()
             conn.close()
             
-            if len(lancamentos) > 0:
+            # Decidir o tipo de retorno com base nos lançamentos encontrados e excluídos
+            if lancamentos_encontrados > 0:
                 return {
                     "status": "sucesso_com_alerta",
                     "mensagem": f"Proposta #{proposta_id} reaberta com sucesso",
-                    "alerta": "Existem lançamentos financeiros associados a esta proposta.",
-                    "lancamentos_encontrados": len(lancamentos)
+                    "alerta": f"Foram excluídos {lancamentos_excluidos} de {lancamentos_encontrados} lançamentos financeiros.",
+                    "lancamentos_encontrados": lancamentos_encontrados,
+                    "lancamentos_excluidos": lancamentos_excluidos
                 }
             else:
                 return {
@@ -123,25 +140,36 @@ def reabrir_proposta_finalizada(proposta_id):
                 conn = psycopg2.connect(db_url)
                 cursor = conn.cursor()
                 
+                # Adicionar data de atualização para indicar que a proposta foi modificada
+                data_atual = datetime.now().strftime('%Y-%m-%d')
+                
                 # Tentar atualizar sem o campo data_finalizacao
                 cursor.execute("""
                     UPDATE propostas 
                     SET status = 'Aprovada', 
-                        status_execucao = 'Em execução'
+                        status_execucao = 'Em execução',
+                        data_atualizacao = %s
                     WHERE id = %s
-                """, (proposta_id,))
+                """, (data_atual, proposta_id))
                 
                 conn.commit()
                 cursor.close()
                 conn.close()
+                
+                # Retornar resultado com informações dos lançamentos
+                return {
+                    "status": "sucesso",
+                    "mensagem": f"Proposta #{proposta_id} reaberta com sucesso (método alternativo)",
+                    "lancamentos_encontrados": lancamentos_encontrados,
+                    "lancamentos_excluidos": lancamentos_excluidos
+                }
             except Exception as e2:
                 logger.error(f"Segunda tentativa falhou: {e2}")
                 # Se ainda falhar, retornar erro
-            
-            return {
-                "status": "sucesso",
-                "mensagem": f"Proposta #{proposta_id} reaberta com sucesso"
-            }
+                return {
+                    "status": "erro",
+                    "mensagem": f"Erro ao reabrir proposta: {str(e2)}"
+                }
     except Exception as e:
         logger.error(f"Erro ao reabrir proposta: {e}")
         return {
