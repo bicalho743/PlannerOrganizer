@@ -15,6 +15,9 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
+# Importar a nova versão padronizada do relatório de serviço
+from utils.pdf_generator_servico_padronizado import gerar_pdf_servico_padronizado
+
 
 def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
     """
@@ -29,6 +32,53 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
     Returns:
         str: Caminho do arquivo PDF gerado
     """
+    print(f"CHAMANDO NOVA VERSÃO DO RELATÓRIO DE SERVIÇO PADRONIZADO")
+    
+    # Usar a nova versão padronizada caso a variável de ambiente USE_NEW_SERVICE_REPORT esteja definida
+    # Isso permite facilmente alternar entre as versões
+    use_new_version = os.environ.get('USE_NEW_SERVICE_REPORT', 'true').lower() == 'true'
+    
+    if use_new_version:
+        try:
+            # Converter acréscimos para o formato esperado pela nova função
+            itens_servico = []
+            
+            # Primeiro item é sempre o valor base da proposta
+            itens_servico.append({
+                "descricao": f"Personal Organizer - {proposta.get('tipo_proposta', 'Organização')}",
+                "valor": proposta.get('valor', 0)
+            })
+            
+            # Adicionar acréscimos se existirem
+            if acrescimos is not None and not acrescimos.empty:
+                for _, acrescimo in acrescimos.iterrows():
+                    # Pular acréscimos de assistentes
+                    if acrescimo.get('tipo', '').lower() == 'assistente':
+                        continue
+                    
+                    # Obter descrição e valor
+                    descricao = acrescimo.get('descricao', '')
+                    if not descricao and acrescimo.get('fornecedor'):
+                        tipo = acrescimo.get('tipo', 'Item')
+                        fornecedor = acrescimo.get('fornecedor', '')
+                        descricao = f"{tipo.capitalize()}: {fornecedor}"
+                    
+                    # Adicionar item
+                    itens_servico.append({
+                        "descricao": descricao,
+                        "valor": acrescimo.get('valor', 0)
+                    })
+            
+            # Chamar a nova função de geração de PDF
+            return gerar_pdf_servico_padronizado(proposta, cliente, itens_servico, filename)
+        
+        except Exception as e:
+            print(f"ERRO ao gerar relatório padronizado: {str(e)}")
+            print("Voltando para a versão antiga do relatório de serviço")
+            traceback.print_exc()
+            # Se houver erro, continuar com a implementação original abaixo
+    
+    # Implementação original como fallback
     print(f"DEBUG PDF: Relatório de Serviço - Gerando para proposta #{proposta.get('id', 'N/A')}")
     
     try:

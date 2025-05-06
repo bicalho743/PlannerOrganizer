@@ -1,0 +1,122 @@
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import mm
+import os
+from datetime import datetime, timedelta
+
+# Cores e layout padrão
+AZUL_ESCURO = colors.HexColor("#1E366F")
+CINZA_TEXTO = colors.HexColor("#5A6A85")
+AZUL_CLARO = colors.HexColor("#e9f2ff")
+BRANCO = colors.white
+
+def gerar_pdf_servico_padronizado(proposta, cliente, itens_servico, filename):
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    c = canvas.Canvas(filename, pagesize=A4)
+    width, height = A4
+
+    # Cabeçalho azul escuro
+    c.setFillColor(AZUL_ESCURO)
+    c.rect(0, height - 60, width, 60, fill=True, stroke=0)
+    c.setFont("Helvetica-Bold", 18)
+    c.setFillColor(BRANCO)
+    c.drawString(30, height - 30, "Relatório de Serviço")
+
+    c.setFont("Helvetica", 10)
+    data_atual = (datetime.now() - timedelta(hours=3)).strftime('%d/%m/%Y')
+    c.drawRightString(width - 30, height - 30, f"Data: {data_atual}")
+    c.setFont("Helvetica", 11)
+    c.drawString(30, height - 50, f"#{proposta.get('id', 'N/A')} - {cliente.get('nome', '')}")
+
+    # Informações do cliente
+    y = height - 100
+    c.setFont("Helvetica-Bold", 12)
+    c.setFillColor(AZUL_ESCURO)
+    c.drawString(40, y, "Informações do Cliente")
+    y -= 20
+    c.setFont("Helvetica", 10)
+    c.setFillColor(CINZA_TEXTO)
+    c.drawString(40, y, f"Nome: {cliente.get('nome', '-')}")
+    y -= 15
+    c.drawString(40, y, f"Email: {cliente.get('email', '-')}")
+    y -= 15
+    c.drawString(40, y, f"Telefone: {cliente.get('telefone', '-')}")
+
+    # Informações da proposta
+    y -= 30
+    c.setFont("Helvetica-Bold", 12)
+    c.setFillColor(AZUL_ESCURO)
+    c.drawString(40, y, "Informações da Proposta")
+    y -= 20
+    c.setFont("Helvetica", 10)
+    c.setFillColor(CINZA_TEXTO)
+    c.drawString(40, y, f"Tipo: {proposta.get('tipo_proposta', '-')}")
+    y -= 15
+    c.drawString(40, y, f"Status: {proposta.get('status', '-')}")
+    y -= 15
+    c.drawString(40, y, f"Valor: R$ {float(proposta.get('valor', 0)):.2f}")
+
+    # Descrição
+    y -= 30
+    c.setFont("Helvetica-Bold", 12)
+    c.setFillColor(AZUL_ESCURO)
+    c.drawString(40, y, "Descrição do Serviço")
+    y -= 20
+    c.setFillColor(CINZA_TEXTO)
+    c.setFont("Helvetica", 10)
+    descricao = proposta.get('descricao', 'Sem descrição').replace('\n', ' ').strip()
+    for linha in descricao.split('. '):
+        c.drawString(45, y, linha.strip())
+        y -= 15
+
+    # Itens
+    y -= 20
+    c.setFont("Helvetica-Bold", 12)
+    c.setFillColor(AZUL_ESCURO)
+    c.drawString(40, y, "Itens Inclusos")
+    y -= 20
+
+    c.setFillColor(AZUL_ESCURO)
+    c.rect(40, y, 360, 18, fill=True)
+    c.setFillColor(BRANCO)
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(45, y + 4, "Descrição")
+    c.drawRightString(390, y + 4, "Valor")
+    y -= 18
+
+    total = 0
+    alternar = False
+    for item in itens_servico:
+        if alternar:
+            c.setFillColor(AZUL_CLARO)
+            c.rect(40, y, 360, 16, fill=True, stroke=0)
+        alternar = not alternar
+        c.setFillColor(CINZA_TEXTO)
+        c.setFont("Helvetica", 10)
+        c.drawString(45, y + 3, item.get('descricao', ''))
+        valor = float(item.get('valor', 0))
+        c.drawRightString(390, y + 3, f"R$ {valor:.2f}")
+        total += valor
+        y -= 16
+
+    # Total
+    c.setFillColor(AZUL_ESCURO)
+    c.rect(40, y, 360, 18, fill=True)
+    c.setFillColor(BRANCO)
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(45, y + 4, "Total")
+    c.drawRightString(390, y + 4, f"R$ {total:.2f}")
+    y -= 30
+
+    # Rodapé
+    c.setFillColor(AZUL_ESCURO)
+    c.rect(0, 0, width, 40, fill=True, stroke=0)
+    c.setFillColor(BRANCO)
+    c.setFont("Helvetica", 9)
+    c.drawCentredString(width / 2, 25, "Planner Organizer | contato@plannerorganizer.com.br | www.plannerorganizer.com.br")
+    c.setFont("Helvetica", 7)
+    c.drawCentredString(width / 2, 10, f"Gerado em {data_atual} às {(datetime.now() - timedelta(hours=3)).strftime('%H:%M')}")
+
+    c.save()
+    return filename
