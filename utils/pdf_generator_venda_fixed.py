@@ -106,7 +106,8 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
                 if isinstance(preco_unit_raw, str) and 'R$' in preco_unit_raw:
                     preco_unit_str = preco_unit_raw  # Mantém a string original para exibição
                     # Convertemos para cálculo
-                    valor_limpo = preco_unit_raw.replace("R$", "").replace(".", "").replace(",", ".").strip()
+                    # Apenas remover o R$ e converter vírgula em ponto, não remover os pontos dos milhares
+                    valor_limpo = preco_unit_raw.replace("R$", "").replace(",", ".").strip()
                     preco_unit = float(valor_limpo)
                 else:
                     preco_unit = float(preco_unit_raw)
@@ -117,7 +118,8 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
                 if isinstance(subtotal_raw, str) and 'R$' in subtotal_raw:
                     subtotal_str = subtotal_raw  # Mantém a string original para exibição
                     # Convertemos para cálculo
-                    valor_limpo = subtotal_raw.replace("R$", "").replace(".", "").replace(",", ".").strip()
+                    # Apenas remover o R$ e converter vírgula em ponto, não remover os pontos dos milhares
+                    valor_limpo = subtotal_raw.replace("R$", "").replace(",", ".").strip()
                     subtotal = float(valor_limpo)
                 else:
                     subtotal = float(subtotal_raw)
