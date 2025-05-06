@@ -1,10 +1,12 @@
 """
 Gerador de PDF para relatórios de venda com estilo consistente com o relatório interno
+Versão completamente nova para resolver problemas de formatação
 """
 import os
 import pandas as pd
 from datetime import datetime, timedelta
 import traceback
+import re
 
 # Importações do ReportLab para geração de PDF
 from reportlab.lib import colors
@@ -16,6 +18,54 @@ AZUL_ESCURO = colors.HexColor("#1E366F")
 AZUL_CLARO = colors.HexColor("#e9f2ff")
 CINZA_TEXTO = colors.HexColor("#5A6A85")
 BRANCO = colors.white
+
+
+def limpar_valor_monetario(valor):
+    """
+    Converte uma string de valor monetário em float,
+    removendo formatação e caracteres não numéricos.
+    
+    Args:
+        valor: String ou número representando um valor monetário
+        
+    Returns:
+        float: Valor convertido para float
+    """
+    # Se já for um número, apenas converter para float
+    if isinstance(valor, (int, float)):
+        return float(valor)
+    
+    # Se for None ou vazio, retornar zero
+    if valor is None or valor == '':
+        return 0.0
+    
+    # Converter para string se não for
+    if not isinstance(valor, str):
+        valor = str(valor)
+    
+    # Imprime o valor original para depuração
+    print(f"DEBUG VALOR ORIGINAL: '{valor}' (tipo: {type(valor)})")
+    
+    try:
+        # Remove todos os caracteres não numéricos, exceto ponto e vírgula
+        valor_limpo = re.sub(r'[^\d.,]', '', valor)
+        print(f"DEBUG VALOR LIMPO (1): '{valor_limpo}'")
+        
+        # Substitui vírgulas por pontos
+        valor_limpo = valor_limpo.replace(',', '.')
+        print(f"DEBUG VALOR LIMPO (2): '{valor_limpo}'")
+        
+        # Se tiver mais de um ponto, mantém apenas o último (formato brasileiro)
+        if valor_limpo.count('.') > 1:
+            partes = valor_limpo.split('.')
+            valor_limpo = ''.join(partes[:-1]) + '.' + partes[-1]
+            print(f"DEBUG VALOR LIMPO (3): '{valor_limpo}'")
+        
+        # Converte para float
+        return float(valor_limpo) if valor_limpo else 0.0
+    except Exception as e:
+        print(f"ERRO CONVERSÃO: {str(e)} para valor '{valor}'")
+        return 0.0  # Valor padrão em caso de erro
 
 
 def gerar_pdf_venda(venda, cliente, itens_venda, filename):
@@ -61,12 +111,16 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
         c.setFont("Helvetica-Bold", 12)
         c.drawString(40, y - 20, "DETALHES DA VENDA")
 
+        # Processar valor_total da venda para exibição
+        valor_total_str = venda.get('valor_total', '0.00')
+        valor_total_float = limpar_valor_monetario(valor_total_str)
+
         c.setFillColor(CINZA_TEXTO)
         c.setFont("Helvetica", 10)
         c.drawString(40, y - 40, f"Cliente: {cliente.get('nome', '-')}")
         c.drawString(40, y - 55, f"Status: {venda.get('status', '-')}")
         c.drawString(40, y - 70, f"Forma de Pagamento: {venda.get('forma_pagamento', '-')}")
-        c.drawString(40, y - 85, f"Valor Total: R$ {venda.get('valor_total', '0.00')}")
+        c.drawString(40, y - 85, f"Valor Total: R$ {valor_total_float:.2f}")
         y -= 130
         
         # Título da tabela
@@ -97,19 +151,9 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
                 produto = item.get("produto_nome", "")
                 quantidade = item.get("quantidade", 1)
                 
-                # Preço unitário com tratamento simplificado
-                preco_unit_raw = item.get("preco_unitario", 0)
-                if isinstance(preco_unit_raw, str):
-                    preco_unit = float(preco_unit_raw.replace("R$", "").replace(",", ".").strip())
-                else:
-                    preco_unit = float(preco_unit_raw)
-
-                # Subtotal com tratamento
-                subtotal_raw = item.get("subtotal", preco_unit * quantidade)
-                if isinstance(subtotal_raw, str):
-                    subtotal = float(subtotal_raw.replace("R$", "").replace(",", ".").strip())
-                else:
-                    subtotal = float(subtotal_raw)
+                # Processar valores monetários usando a função auxiliar
+                preco_unit = limpar_valor_monetario(item.get("preco_unitario", 0))
+                subtotal = limpar_valor_monetario(item.get("subtotal", preco_unit * quantidade))
                 
                 total += subtotal
 
