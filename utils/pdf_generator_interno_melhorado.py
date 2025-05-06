@@ -205,13 +205,15 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
             for _, acrescimo in acrescimos.iterrows():
                 tipo = acrescimo.get('tipo', '').lower() if hasattr(acrescimo, 'get') else ''
                 valor = float(acrescimo.get('valor', 0)) if hasattr(acrescimo, 'get') else 0
-                fornecedor_nome = acrescimo.get('fornecedor', '').lower() if hasattr(acrescimo, 'get') else ''
+                # Tratamento seguro para fornecedor que pode ser None
+                fornecedor_raw = acrescimo.get('fornecedor', '') if hasattr(acrescimo, 'get') else ''
+                fornecedor_nome = fornecedor_raw.lower() if fornecedor_raw else ''
                 
                 # Buscar o percentual de comissão diretamente da tabela de fornecedores
                 percentual_comissao = 0
                 if fornecedor_nome and tipo in ['fornecedor', 'produto', 'marcenaria']:
                     # Verificação direta para Multicoisas (que já sabemos que tem 5% de comissão)
-                    if 'multi' in fornecedor_nome.lower():
+                    if fornecedor_nome and 'multi' in fornecedor_nome:
                         percentual_comissao = 5.0
                         print(f"DEBUG PDF: Definindo comissão direta para {fornecedor_nome}: 5%")
                     else:
