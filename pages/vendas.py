@@ -164,23 +164,49 @@ def show():
                                                                 format_func=lambda x: f"{x} - {produtos_df[produtos_df['id'] == x]['nome'].iloc[0]}", 
                                                                 key="remover_produto")
                                 
-                                if st.button("Excluir Produto", type="primary", use_container_width=True):
+                                # Variável de estado para controlar o fluxo de exclusão
+                                if 'exclusao_confirmada' not in st.session_state:
+                                    st.session_state.exclusao_confirmada = False
+                                
+                                # Botão inicial de exclusão
+                                if st.button("Excluir Produto", type="primary", use_container_width=True, key="btn_excluir_produto"):
+                                    # Ativamos o modo de confirmação
+                                    st.session_state.exclusao_confirmada = True
+                                    st.rerun()
+                                
+                                # Exibir confirmação se o modo de confirmação estiver ativo
+                                if st.session_state.exclusao_confirmada:
                                     if produto_remover_id:
                                         produto_nome = produtos_df[produtos_df['id'] == produto_remover_id]['nome'].iloc[0]
                                         
-                                        # Confirmação
-                                        confirmacao = st.checkbox(f"Confirmo a exclusão do produto: {produto_nome}")
+                                        st.warning(f"Tem certeza que deseja excluir o produto: **{produto_nome}**?")
                                         
-                                        if confirmacao and st.button("Confirmar Exclusão", type="primary", use_container_width=True):
-                                            try:
-                                                result = st.session_state.db.delete_produto(produto_remover_id)
-                                                if result:
-                                                    st.success(f"Produto '{produto_nome}' excluído com sucesso!")
-                                                    st.rerun()
-                                                else:
-                                                    st.error("Falha ao excluir o produto.")
-                                            except Exception as e:
-                                                st.error(f"Erro ao excluir produto: {str(e)}")
+                                        col_confirm, col_cancel = st.columns(2)
+                                        with col_confirm:
+                                            if st.button("✓ Confirmar Exclusão", type="primary", use_container_width=True, key="btn_confirmar_exclusao"):
+                                                try:
+                                                    print(f"Tentando excluir produto ID: {produto_remover_id}")
+                                                    result = st.session_state.db.delete_produto(produto_remover_id)
+                                                    
+                                                    if result:
+                                                        st.success(f"Produto '{produto_nome}' excluído com sucesso!")
+                                                        # Resetar estado de confirmação
+                                                        st.session_state.exclusao_confirmada = False
+                                                        # Recarregar a página
+                                                        time.sleep(1)  # Pequena pausa para mostrar a mensagem
+                                                        st.rerun()
+                                                    else:
+                                                        st.error("Falha ao excluir o produto. Tente novamente.")
+                                                except Exception as e:
+                                                    st.error(f"Erro ao excluir produto: {str(e)}")
+                                                    import traceback
+                                                    print(traceback.format_exc())
+                                        
+                                        with col_cancel:
+                                            if st.button("✗ Cancelar", use_container_width=True, key="btn_cancelar_exclusao"):
+                                                # Resetar estado de confirmação
+                                                st.session_state.exclusao_confirmada = False
+                                                st.rerun()
                 except Exception as e:
                     st.error(f"Erro ao carregar produtos: {str(e)}")
 
