@@ -361,6 +361,19 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                 "valores": {}
             }
         }
+        # Retornar resultado padrão vazio se houver qualquer problema com a função
+        return resultado
+    except Exception as e:
+        logger.error(f"Erro ao finalizar proposta: {str(e)}")
+        return {
+            "status": False,
+            "mensagem": f"Erro ao finalizar proposta: {str(e)}",
+            "lancamentos": {
+                "gerados": 0,
+                "valores": {}
+            }
+        }
+
 def gerar_lancamentos_proposta_ja_finalizada(proposta_id: int) -> Dict[str, Any]:
     """
     Função para gerar os lançamentos financeiros de uma proposta que já foi finalizada anteriormente.
