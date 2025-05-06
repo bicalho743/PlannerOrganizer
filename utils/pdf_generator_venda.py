@@ -96,8 +96,21 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
             for _, item in itens_venda.iterrows():
                 produto = item.get("produto_nome", "")
                 quantidade = item.get("quantidade", 1)
-                preco_unit = float(item.get("preco_unitario", 0))
-                subtotal = float(item.get("subtotal", preco_unit * quantidade))
+                
+                # Tratar valores formatados como string
+                preco_unitario = item.get("preco_unitario", 0)
+                if isinstance(preco_unitario, str) and 'R$' in preco_unitario:
+                    preco_unit = float(preco_unitario.replace('R$', '').replace(',', '.').strip())
+                else:
+                    preco_unit = float(preco_unitario)
+                
+                # Tratar valores de subtotal da mesma forma
+                subtotal_valor = item.get("subtotal", preco_unit * quantidade)
+                if isinstance(subtotal_valor, str) and 'R$' in subtotal_valor:
+                    subtotal = float(subtotal_valor.replace('R$', '').replace(',', '.').strip())
+                else:
+                    subtotal = float(subtotal_valor)
+                
                 total += subtotal
 
                 if y < 80:
