@@ -97,19 +97,52 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
                 produto = item.get("produto_nome", "")
                 quantidade = item.get("quantidade", 1)
                 
-                # Tratar valores formatados como string
+                # Depurar os valores para entender exatamente o formato
                 preco_unitario = item.get("preco_unitario", 0)
-                if isinstance(preco_unitario, str) and 'R$' in preco_unitario:
-                    preco_unit = float(preco_unitario.replace('R$', '').replace(',', '.').strip())
-                else:
-                    preco_unit = float(preco_unitario)
+                print(f"DEBUG PRECO: {preco_unitario} (tipo: {type(preco_unitario)})")
                 
-                # Tratar valores de subtotal da mesma forma
-                subtotal_valor = item.get("subtotal", preco_unit * quantidade)
-                if isinstance(subtotal_valor, str) and 'R$' in subtotal_valor:
-                    subtotal = float(subtotal_valor.replace('R$', '').replace(',', '.').strip())
+                # Tratar valores formatados como string de forma mais robusta
+                if isinstance(preco_unitario, str):
+                    # Remover qualquer texto e manter apenas dígitos e pontos/vírgulas
+                    preco_limpo = ''.join([c for c in preco_unitario if c.isdigit() or c in '.,'])
+                    print(f"DEBUG PRECO LIMPO: {preco_limpo}")
+                    # Converter vírgula para ponto como separador decimal
+                    preco_limpo = preco_limpo.replace(',', '.')
+                    # Se houver mais de um ponto, manter apenas o último
+                    if preco_limpo.count('.') > 1:
+                        partes = preco_limpo.split('.')
+                        preco_limpo = ''.join(partes[:-1]) + '.' + partes[-1]
+                    try:
+                        preco_unit = float(preco_limpo)
+                    except:
+                        # Fallback para caso ainda haja problemas
+                        print(f"ERRO CONVERTING: {preco_limpo}")
+                        preco_unit = 0.0
                 else:
-                    subtotal = float(subtotal_valor)
+                    preco_unit = float(preco_unitario) if preco_unitario is not None else 0.0
+                
+                # Usar a mesma abordagem robusta para o subtotal
+                subtotal_valor = item.get("subtotal", preco_unit * quantidade)
+                print(f"DEBUG SUBTOTAL: {subtotal_valor} (tipo: {type(subtotal_valor)})")
+                
+                if isinstance(subtotal_valor, str):
+                    # Remover qualquer texto e manter apenas dígitos e pontos/vírgulas
+                    sub_limpo = ''.join([c for c in subtotal_valor if c.isdigit() or c in '.,'])
+                    print(f"DEBUG SUBTOTAL LIMPO: {sub_limpo}")
+                    # Converter vírgula para ponto como separador decimal
+                    sub_limpo = sub_limpo.replace(',', '.')
+                    # Se houver mais de um ponto, manter apenas o último
+                    if sub_limpo.count('.') > 1:
+                        partes = sub_limpo.split('.')
+                        sub_limpo = ''.join(partes[:-1]) + '.' + partes[-1]
+                    try:
+                        subtotal = float(sub_limpo)
+                    except:
+                        # Fallback para caso ainda haja problemas
+                        print(f"ERRO CONVERTING: {sub_limpo}")
+                        subtotal = 0.0
+                else:
+                    subtotal = float(subtotal_valor) if subtotal_valor is not None else 0.0
                 
                 total += subtotal
 
