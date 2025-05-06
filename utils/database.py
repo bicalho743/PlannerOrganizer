@@ -1799,9 +1799,10 @@ class Database:
                     if forcar_geracao:
                         print(f"DEBUG LANCAMENTOS APROVAÇÃO: Removendo {lancamentos_existentes} lançamentos existentes")
                         # Remover todos os lançamentos existentes relacionados à aprovação
+                        # Alterado para verificar Receita em vez de receita_a_receber_aprovacao
                         self.session.query(Transacao).filter_by(
                             proposta_id=proposta_id_int, 
-                            tipo="receita_a_receber_aprovacao"
+                            tipo="Receita"
                         ).delete()
                         
                         # Também remover as contas a receber criadas automaticamente para esta proposta
@@ -1861,14 +1862,14 @@ class Database:
                         subcategoria = proposta.tipo_proposta or "Organização"
                         subcategoria = subcategoria.replace("'", "''")
                         
-                        # 1. Lançamento de receita a receber no extrato
+                        # 1. Apenas o lançamento Receita (removido o lançamento receita_a_receber_aprovacao)
                         sql_receita = f"""
                         INSERT INTO financeiro (
                             tipo, descricao, valor, data, categoria, subcategoria, 
                             tipo_receita, origem_id, origem_tipo, tipo_conta, 
                             status, proposta_id, classificacao, usuario_id
                         ) VALUES (
-                            'receita_a_receber_aprovacao', 
+                            'Receita', 
                             '{descricao_receita}', 
                             {valor_base}, 
                             '{data_str}', 
@@ -1937,9 +1938,9 @@ class Database:
                         # Em caso de falha no SQL direto, tentar o método ORM original como fallback
                         print(f"DEBUG LANCAMENTOS APROVAÇÃO: Tentando método ORM como alternativa")
                         
-                        # 1. Lançamento de receita a receber no extrato
+                        # 1. Lançamento de receita no extrato (tipo Receita em vez de receita_a_receber_aprovacao)
                         transacao_receita = Transacao(
-                            tipo="receita_a_receber_aprovacao",  # Usamos tipo específico para identificar
+                            tipo="Receita",  # Usamos tipo unificado para simplificar
                             descricao=f"Proposta #{proposta.numero} - {proposta.descricao[:50]}... - {cliente.nome} (Aprovação)",
                             valor=valor_base,
                             data=data_lancamento,
@@ -2021,8 +2022,9 @@ class Database:
             status_antigo = proposta.status
             
             # Verificar se já existem lançamentos para esta proposta para evitar duplicidade
+            # Agora verificamos diretamente por lançamentos 'Receita' (não mais receita_a_receber_aprovacao)
             lancamentos_existentes = self.session.query(Transacao)\
-                .filter_by(proposta_id=proposta_id, tipo="receita_a_receber_aprovacao")\
+                .filter_by(proposta_id=proposta_id, tipo="Receita")\
                 .count()
             
             # Atualizar campos
