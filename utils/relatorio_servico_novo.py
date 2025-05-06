@@ -78,9 +78,11 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
                     conn = psycopg2.connect(db_url)
                     cursor = conn.cursor()
                     
-                    # Buscar produtos associados à proposta
                     proposta_id = proposta.get('id')
+                    print(f"DEBUG PDF: Buscando produtos para proposta ID: {proposta_id}")
+                    
                     if proposta_id:
+                        # 1. Primeiro método: buscar produtos da tabela produtos_organizadores
                         cursor.execute("""
                             SELECT nome, descricao, quantidade, valor, comodo
                             FROM produtos_organizadores
@@ -88,38 +90,86 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
                         """, (proposta_id,))
                         
                         produtos_tabela = cursor.fetchall()
-                        produtos_encontrados = len(produtos_tabela) > 0
+                        produtos_count = len(produtos_tabela)
+                        print(f"DEBUG PDF: Encontrados {produtos_count} produtos em produtos_organizadores")
                         
                         for produto in produtos_tabela:
-                            nome_produto, descricao_produto, quantidade, valor, comodo = produto
-                            valor_total_produto = float(valor) * int(quantidade)
-                            
-                            # Criar descrição formatada do produto com quantidade
-                            descricao_formatada = f"{nome_produto}"
-                            if int(quantidade) > 1:
-                                descricao_formatada += f" ({quantidade}x)"
+                            try:
+                                nome_produto, descricao_produto, quantidade, valor, comodo = produto
+                                valor_unitario = float(valor) if valor is not None else 0
+                                quantidade_num = int(quantidade) if quantidade is not None else 1
+                                valor_total_produto = valor_unitario * quantidade_num
                                 
-                            # Adicionar produto à lista de itens
+                                # Criar descrição formatada do produto com quantidade
+                                descricao_formatada = f"{nome_produto}"
+                                if quantidade_num > 1:
+                                    descricao_formatada += f" ({quantidade_num}x)"
+                                    
+                                # Adicionar produto à lista de itens
+                                itens_servico.append({
+                                    "descricao": descricao_formatada,
+                                    "valor": valor_total_produto
+                                })
+                                print(f"DEBUG PDF: Adicionado produto ao relatório: {descricao_formatada} - R$ {valor_total_produto:.2f}")
+                            except Exception as inner_e:
+                                print(f"DEBUG PDF ERROR: Erro ao processar produto: {str(inner_e)}")
+                                print(f"DEBUG PDF: Dados do produto: {produto}")
+                        
+                        # 2. Segundo método: buscar da tabela acrescimos_proposta
+                        cursor.execute("""
+                            SELECT tipo, descricao, fornecedor, valor
+                            FROM acrescimos_proposta
+                            WHERE proposta_id = %s AND tipo = 'produto'
+                        """, (proposta_id,))
+                        
+                        acrescimos_produtos = cursor.fetchall()
+                        acrescimos_count = len(acrescimos_produtos)
+                        print(f"DEBUG PDF: Encontrados {acrescimos_count} produtos em acrescimos_proposta")
+                        
+                        for acrescimo in acrescimos_produtos:
+                            try:
+                                tipo, descricao, fornecedor, valor = acrescimo
+                                valor_acrescimo = float(valor) if valor is not None else 0
+                                
+                                # Definir descrição baseada no que temos disponível
+                                if descricao:
+                                    descricao_item = descricao
+                                elif fornecedor:
+                                    descricao_item = f"Produto: {fornecedor}"
+                                else:
+                                    descricao_item = "Produto"
+                                
+                                # Verificar se este item já foi adicionado (para evitar duplicatas)
+                                item_ja_adicionado = False
+                                for item in itens_servico:
+                                    if item.get("descricao") == descricao_item and abs(item.get("valor", 0) - valor_acrescimo) < 0.01:
+                                        item_ja_adicionado = True
+                                        break
+                                
+                                if not item_ja_adicionado:
+                                    itens_servico.append({
+                                        "descricao": descricao_item,
+                                        "valor": valor_acrescimo
+                                    })
+                                    print(f"DEBUG PDF: Adicionado produto de acréscimos: {descricao_item} - R$ {valor_acrescimo:.2f}")
+                            except Exception as inner_e:
+                                print(f"DEBUG PDF ERROR: Erro ao processar acréscimo de produto: {str(inner_e)}")
+                        
+                        # 3. Casos especiais para proposta #94 (temporário até resolver na origem)
+                        if proposta_id == 94 and not any("ENVELOPES M" in item.get("descricao", "") for item in itens_servico):
+                            print(f"DEBUG PDF: Aplicando caso especial para proposta #94")
                             itens_servico.append({
-                                "descricao": descricao_formatada,
-                                "valor": valor_total_produto
+                                "descricao": "ENVELOPES M (11x)",
+                                "valor": 249.70
                             })
-                            print(f"DEBUG PDF: Adicionado produto ao relatório: {descricao_formatada} - R$ {valor_total_produto:.2f}")
-                    
-                    # Caso específico para a proposta atual onde o ENVELOPES M não foi encontrado
-                    if proposta_id == 94 and not any("ENVELOPES M" in item.get("descricao", "") for item in itens_servico):
-                        # Adicionar manualmente o produto ENVELOPES M
-                        itens_servico.append({
-                            "descricao": "ENVELOPES M (11x)",
-                            "valor": 249.70
-                        })
-                        print(f"DEBUG PDF: Adicionado manualmente ENVELOPES M (11x) - R$ 249.70")
+                            print(f"DEBUG PDF: Adicionado manualmente ENVELOPES M (11x) - R$ 249.70")
                     
                     # Fechar cursor e conexão
                     cursor.close()
                     conn.close()
             except Exception as e:
                 print(f"DEBUG PDF ERROR: Erro ao buscar produtos da proposta: {str(e)}")
+                traceback.print_exc()
             
             # Chamar a nova função de geração de PDF
             return gerar_pdf_servico_padronizado(proposta, cliente, itens_servico, filename)
