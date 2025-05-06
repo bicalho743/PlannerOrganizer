@@ -392,7 +392,7 @@ def show():
                                     pdf_filename = f"pdfs/venda_{venda_id}_{cliente_nome_formatado}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
                                     
                                     # Gerar o PDF
-                                    from utils.pdf_generator_venda import gerar_pdf_venda
+                                    from utils.pdf_generator_venda_fixed import gerar_pdf_venda
                                     pdf_path = gerar_pdf_venda(venda, cliente_dict, itens_df, pdf_filename)
                                     
                                     # Criar link para download
