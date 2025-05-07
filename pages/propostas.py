@@ -1873,7 +1873,6 @@ def show():
             if not propostas.empty:
                 # Mostrar todas as propostas, sem filtro de status
                 propostas_finalizadas = propostas_com_clientes
-                ]
                 
                 if not propostas_finalizadas.empty:
                     # Preparar DataFrame para exibição
