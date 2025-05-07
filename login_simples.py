@@ -343,6 +343,34 @@ def main():
         # Opção alternativa para pular o login durante testes
         if st.button("Pular login (apenas para testes)", use_container_width=True):
             st.session_state.authenticated = True
+            
+            # Configurar usuario_id para o modo de teste
+            test_usuario_id = "test-user-bypass-123"
+            st.session_state.usuario_id = test_usuario_id
+            
+            # Configurar dados básicos de usuário
+            st.session_state.usuario = {
+                'id': test_usuario_id,
+                'email': 'test@plannerorganizer.com',
+                'nome': 'Usuário de Teste',
+                'role': 'user',
+                'telefone': '',
+                'empresa': 'Planner Organizer'
+            }
+            
+            # Reinicializar o Database com o ID do usuário de teste
+            try:
+                from utils.database import Database
+                if 'db' in st.session_state:
+                    # Remover a instância antiga do Database
+                    del st.session_state.db
+                
+                print(f"DEBUG MULTI-TENANT: Reinicializando Database com usuario_id={test_usuario_id} para modo de teste")
+                # Criar nova instância com o ID do usuário
+                st.session_state.db = Database(usuario_id=test_usuario_id)
+            except Exception as db_error:
+                print(f"DEBUG MULTI-TENANT: Erro ao reinicializar Database para modo de teste: {str(db_error)}")
+            
             st.rerun()
     
     # Adicionar rodapé com links
