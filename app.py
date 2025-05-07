@@ -1225,10 +1225,37 @@ if not st.session_state.authenticated:
 # Inicialização do banco de dados
 if 'db' not in st.session_state:
     try:
-        st.session_state.db = Database()
+        # Verificar se há um ID de usuário na sessão
+        usuario_id = None
+        
+        # Verificar st.session_state.usuario_id (mais direto)
+        if 'usuario_id' in st.session_state:
+            usuario_id = st.session_state.usuario_id
+            print(f"DEBUG MULTI-TENANT: Encontrado usuario_id={usuario_id} na sessão (direto)")
+        
+        # Verificar st.session_state.user (Firebase Auth)
+        elif 'user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user:
+            usuario_id = st.session_state.user['localId']
+            print(f"DEBUG MULTI-TENANT: Encontrado usuario_id={usuario_id} no objeto user (Firebase Auth)")
+        
+        # Verificar st.session_state.usuario (alternativa)
+        elif 'usuario' in st.session_state and st.session_state.usuario:
+            if isinstance(st.session_state.usuario, dict) and 'id' in st.session_state.usuario:
+                usuario_id = st.session_state.usuario['id']
+                print(f"DEBUG MULTI-TENANT: Encontrado usuario_id={usuario_id} no objeto usuario")
+        
+        # Inicializar o Database com o ID do usuário quando disponível
+        if usuario_id:
+            print(f"DEBUG MULTI-TENANT: Inicializando Database com usuario_id={usuario_id}")
+            st.session_state.db = Database(usuario_id=usuario_id)
+        else:
+            print("DEBUG MULTI-TENANT: AVISO - Inicializando Database sem ID de usuário!")
+            # Quando não temos um ID de usuário, inicializamos sem filtro
+            st.session_state.db = Database()
+        
         # Removemos a mensagem de sucesso para manter o visual limpo
     except Exception as e:
-        st.error("Erro ao conectar com o banco de dados. O endpoint pode estar desabilitado.")
+        st.error(f"Erro ao conectar com o banco de dados: {str(e)}")
         st.warning("Se você estiver usando Neon PostgreSQL ou outro banco de dados serverless, você precisa reativar o endpoint.")
         
         # Mostrar informação sobre o DATABASE_URL (sem mostrar credenciais)

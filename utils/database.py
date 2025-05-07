@@ -51,15 +51,44 @@ def get_usuario_id_from_session():
     Returns:
         str: ID do usuário autenticado ou None se não há usuário na sessão
     """
+    # Debug: Imprimir conteúdo da sessão para diagnóstico
+    print(f"DEBUG SESSION: Verificando session_state para obter usuario_id")
+    
+    # Verificar session_state.user (padrão do Firebase)
     if 'user' in st.session_state and st.session_state.user:
+        print(f"DEBUG SESSION: st.session_state.user encontrado: {type(st.session_state.user)}")
+        
         # Usar o localId do Firebase como usuario_id
         if 'localId' in st.session_state.user:
-            return st.session_state.user['localId']
+            usuario_id = st.session_state.user['localId']
+            print(f"DEBUG SESSION: localId encontrado: {usuario_id}")
+            return usuario_id
         
         # Verificar alternativas
         if 'usuario_id' in st.session_state.user:
-            return st.session_state.user['usuario_id']
+            usuario_id = st.session_state.user['usuario_id']
+            print(f"DEBUG SESSION: usuario_id encontrado em user: {usuario_id}")
+            return usuario_id
+    
+    # Verificar session_state.usuario (para compatibilidade)
+    if 'usuario' in st.session_state and st.session_state.usuario:
+        print(f"DEBUG SESSION: st.session_state.usuario encontrado")
+        
+        if isinstance(st.session_state.usuario, dict):
+            # Verificar diferentes campos possíveis para ID
+            for campo in ['id', 'usuario_id', 'localId', 'uid']:
+                if campo in st.session_state.usuario:
+                    usuario_id = st.session_state.usuario[campo]
+                    print(f"DEBUG SESSION: Campo '{campo}' encontrado em usuario: {usuario_id}")
+                    return usuario_id
+    
+    # Verificar session_state.usuario_id diretamente (alternativa)
+    if 'usuario_id' in st.session_state:
+        usuario_id = st.session_state.usuario_id
+        print(f"DEBUG SESSION: usuario_id encontrado diretamente: {usuario_id}")
+        return usuario_id
             
+    print("DEBUG SESSION: Nenhum ID de usuário encontrado na sessão")
     return None
 
 class Perfil(Base):
@@ -442,19 +471,31 @@ class Database:
             self.session = Session()
             
             # Configurar o contexto de usuário para filtrar os dados
+            self.usuario_id = None
+            
+            # 1. Usar ID fornecido explicitamente (prioridade máxima)
             if usuario_id:
                 self.usuario_id = usuario_id
+                print(f"DEBUG TENANT: ID do usuário fornecido explicitamente: {self.usuario_id}")
             else:
-                # Tenta obter o ID do usuário da sessão do Streamlit
-                self.usuario_id = get_usuario_id_from_session()
+                # 2. Tentar obter o ID do usuário da sessão do Streamlit
+                session_usuario_id = get_usuario_id_from_session()
                 
+                if session_usuario_id:
+                    self.usuario_id = session_usuario_id
+                    print(f"DEBUG TENANT: ID do usuário obtido da sessão: {self.usuario_id}")
+            
+            # Status final do tenant
             if self.usuario_id:
-                print(f"Banco de dados inicializado para o usuário: {self.usuario_id}")
+                print(f"DEBUG TENANT: Banco de dados inicializado para o usuário: {self.usuario_id}")
+                print(f"DEBUG TENANT: Todas as consultas serão filtradas por usuario_id={self.usuario_id}")
             else:
-                print("Banco de dados inicializado sem contexto de usuário")
+                print("DEBUG TENANT: Banco de dados inicializado sem contexto de usuário (multi-tenant desativado)")
+                print("DEBUG TENANT: AVISO: Usuários poderão ver dados de outros usuários!")
                 
             # Verificar e criar perfil do usuário se necessário
-            if self.usuario_id and 'user' in st.session_state:
+            if self.usuario_id:
+                # Sempre que temos um ID de usuário válido, garantir que o perfil exista
                 self._ensure_user_profile()
                 
         except Exception as e:
@@ -754,7 +795,10 @@ class Database:
             query = self.session.query(Cliente)
             
             if self.usuario_id:
+                print(f"DEBUG GET_CLIENTES: Filtrando clientes por usuario_id={self.usuario_id}")
                 query = query.filter(Cliente.usuario_id == self.usuario_id)
+            else:
+                print("DEBUG GET_CLIENTES: AVISO - Buscando todos os clientes sem filtro de usuário!")
                 
             clientes = query.all()
             
@@ -987,10 +1031,14 @@ class Database:
                 
                 # Adicionar filtro por usuário se disponível
                 if self.usuario_id:
+                    print(f"DEBUG GET_PROPOSTAS: Filtrando propostas por usuario_id={self.usuario_id}")
                     query = query.filter(Proposta.usuario_id == self.usuario_id)
+                else:
+                    print("DEBUG GET_PROPOSTAS: AVISO - Buscando todas as propostas sem filtro de usuário!")
                 
                 # Executar consulta
                 propostas_com_clientes = query.all()
+                print(f"DEBUG GET_PROPOSTAS: Total de propostas encontradas: {len(propostas_com_clientes)}")
                 
                 result = []
                 for p, cliente_nome in propostas_com_clientes:

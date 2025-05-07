@@ -92,6 +92,11 @@ class FirebaseAuth:
             # Atualizar a sessão com os dados enriquecidos do usuário
             st.session_state.usuario = usuario_data
             
+            # Salvar o ID do usuário também diretamente na sessão para facilitar o acesso
+            # Isso garante que o ID do usuário esteja disponível em múltiplos pontos de verificação
+            st.session_state.usuario_id = user['localId']
+            print(f"DEBUG MULTI-TENANT: ID do usuário '{user['localId']}' salvo na sessão st.session_state.usuario_id")
+            
             # Tentar carregar perfil do banco de dados PostgreSQL se existir
             try:
                 from utils.database import Database
@@ -229,9 +234,14 @@ class FirebaseAuth:
                 
             if 'usuario' in st.session_state:
                 del st.session_state.usuario
+                
+            # Limpar explicitamente o ID do usuário
+            if 'usuario_id' in st.session_state:
+                print(f"DEBUG MULTI-TENANT: Removendo usuario_id={st.session_state.usuario_id} da sessão")
+                del st.session_state.usuario_id
             
             st.session_state.authenticated = False
-            print("Logout realizado. Sessão limpa.")
+            print("DEBUG MULTI-TENANT: Logout realizado. Sessão limpa.")
             
             return {'success': True}
         except Exception as e:
