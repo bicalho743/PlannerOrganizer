@@ -56,15 +56,15 @@ if st.session_state.show_politica:
 
 # Adicionar o cabeçalho personalizado
 header_html = """
-<div style="background-color: #1E366F; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; text-align: center; position: relative;">
+<div style="background: linear-gradient(120deg, #2E4057 0%, #4A6670 100%); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; text-align: center; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
     <h2 style="color: white; margin: 0; padding: 0; font-family: 'Poppins', sans-serif;">Planner Organizer</h2>
-    <a href="/planos_novo" style="position: absolute; top: 50%; right: 1rem; transform: translateY(-50%); background-color: #FF9800; color: white; padding: 0.5rem 1rem; border-radius: 2rem; text-decoration: none; font-weight: bold; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: all 0.3s ease;">
+    <a href="/planos_novo" style="position: absolute; top: 50%; right: 1rem; transform: translateY(-50%); background-color: #FF7043; color: white; padding: 0.5rem 1rem; border-radius: 2rem; text-decoration: none; font-weight: bold; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: all 0.3s ease;">
         💰 Planos e Assinaturas
     </a>
-    <p style="color: #E3F2FD; margin: 0.2rem 0 0 0; padding: 0; font-size: 0.9rem; font-family: 'Poppins', sans-serif;">
+    <p style="color: #F5F5F5; margin: 0.2rem 0 0 0; padding: 0; font-size: 0.9rem; font-family: 'Poppins', sans-serif;">
         Sistema Profissional de Gestão Personal Organizer
     </p>
-    <p style="color: #BBD8FF; margin: 0.5rem 0 0 0; padding: 0; font-size: 0.8rem; font-family: 'Poppins', sans-serif; font-style: italic;">
+    <p style="color: #E0E0E0; margin: 0.5rem 0 0 0; padding: 0; font-size: 0.8rem; font-family: 'Poppins', sans-serif; font-style: italic;">
         "Transforme sua organização em resultados: gerencie propostas, clientes e finanças com precisão profissional."
     </p>
 </div>
@@ -207,6 +207,29 @@ def main():
         # Tela normal de login
         st.title("Planner Organizer - Login")
         st.subheader("Sistema de Gestão para Personal Organizers")
+        
+        # Layout com duas colunas: imagem promocional e texto
+        col1, col2 = st.columns([3, 4])
+        
+        with col1:
+            # Adicionar a imagem promocional
+            st.image("professional_woman.png", use_column_width=True)
+        
+        with col2:
+            # Conteúdo promocional destacando benefícios do sistema
+            promo_html = """
+            <div style="background: linear-gradient(120deg, #FFF8E1 0%, #FFECB3 100%); padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #FF7043;">
+                <h3 style="color: #5D4037; margin-top: 0; font-size: 20px;">Cansada de planilhas e papéis?</h3>
+                <ul style="color: #5D4037; padding-left: 20px; margin-bottom: 5px;">
+                    <li><b>Organize</b> - Diga adeus às planilhas desorganizadas</li>
+                    <li><b>Centralize</b> - Todos os seus clientes em um só lugar</li>
+                    <li><b>Economize</b> - Reduza tempo com tarefas administrativas</li>
+                    <li><b>Profissionalize</b> - Impressione seus clientes com relatórios</li>
+                </ul>
+                <p style="font-style: italic; color: #795548; margin: 5px 0 0 0; font-size: 14px;">Planner Organizer: sua gestão profissional a um clique de distância.</p>
+            </div>
+            """
+            st.markdown(promo_html, unsafe_allow_html=True)
     
     # Login tradicional com email/senha
     with st.form("login_form"):
@@ -235,6 +258,26 @@ def main():
         </script>
         """
         st.components.v1.html(termos_js, height=0)
+        
+        # Botão de submissão estilizado para usar cor diferente do azul padrão
+        submit_button_style = """
+        <style>
+        div.stButton > button[kind="formSubmit"] {
+            background-color: #4A6670;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 0.5rem 1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        div.stButton > button[kind="formSubmit"]:hover {
+            background-color: #5D4037;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        </style>
+        """
+        st.markdown(submit_button_style, unsafe_allow_html=True)
         
         # Botão de submissão
         submit = st.form_submit_button("Entrar", use_container_width=True)
@@ -329,6 +372,40 @@ def main():
     - Usuário: admin
     - Senha: admin
     """)
+    
+    # Estilizar os outros botões
+    alt_buttons_style = """
+    <style>
+    /* Estilo para o botão Criar Nova Conta */
+    div.stButton:nth-of-type(1) > button {
+        background-color: #43A047;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    div.stButton:nth-of-type(1) > button:hover {
+        background-color: #388E3C;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    /* Estilo para o botão Pular Login */
+    div.stButton:nth-of-type(2) > button {
+        background-color: #757575;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    div.stButton:nth-of-type(2) > button:hover {
+        background-color: #616161;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    </style>
+    """
+    st.markdown(alt_buttons_style, unsafe_allow_html=True)
     
     # Botões para criar conta ou pular login
     col1, col2 = st.columns(2)
