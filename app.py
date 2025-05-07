@@ -122,14 +122,20 @@ if st.session_state.show_politica:
 # Verificar se a URL contém parâmetros de página específicos
 query_params = st.query_params
 if 'page' in query_params and query_params['page'][0] == 'planos':
-    # Implementação da página de planos usando o módulo que funcionava antes
+    # Implementação da página de planos usando o novo módulo planos_novo
     try:
-        from pages.planos_v2 import main
-        main()
+        from pages.planos_novo import main as planos_novo_main
+        planos_novo_main()
         st.stop()
     except Exception as e:
-        st.error(f"Erro ao carregar a página de planos: {str(e)}")
-        print(f"Erro ao carregar página de planos: {str(e)}")
+        # Fallback para a implementação anterior caso haja erro
+        try:
+            from pages.planos_v2 import main
+            main()
+            st.stop()
+        except Exception as e2:
+            st.error(f"Erro ao carregar a página de planos: {str(e2)}")
+            print(f"Erro ao carregar página de planos: {str(e2)}")
     
     # Verificação de login
     usuario_id, usuario_nome, usuario_email = verificar_login()
@@ -1682,7 +1688,7 @@ with st.sidebar.expander("🔧 Acesso Desenvolvedor", expanded=False):
         
         <h4 style="color: #1E366F; font-size: 1rem; margin-top: 1.2rem; margin-bottom: 0.8rem;">Ferramentas</h4>
         <div class="tools-links">
-            <a href="/?page=planos" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #FFF8E1; color: #FF9800; text-decoration: none; font-size: 0.85rem;">💰 Planos e Assinaturas</a>
+            <a href="/?page=planos" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #FFF8E1; color: #FF9800; text-decoration: none; font-size: 0.85rem; font-weight: bold;">💰 Planos e Assinaturas</a>
             <a href="/manual_sistema" target="_blank" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #E3F2FD; color: #1976D2; text-decoration: none; font-size: 0.85rem;">📘 Manual do Sistema</a>
             <a href="http://localhost:8530" target="_blank" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #E8F5E9; color: #388E3C; text-decoration: none; font-size: 0.85rem;">💾 Sistema de Backup</a>
         </div>

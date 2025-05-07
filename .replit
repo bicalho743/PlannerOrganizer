@@ -337,8 +337,8 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run pages/planos_novo.py --server.port 5010 --server.address 0.0.0.0"
-waitForPort = 5010
+args = "streamlit run pages/planos_novo.py --server.port 5015 --server.address 0.0.0.0"
+waitForPort = 5015
 
 [[ports]]
 localPort = 443

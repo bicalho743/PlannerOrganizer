@@ -114,11 +114,8 @@ with col1:
     </a>
     """, unsafe_allow_html=True)
     
-    # Botão de fallback caso o Stripe não carregue
-    if st.button("ASSINAR MENSAL (método alternativo)", type="primary", key="btn_mensal"):
-        api_url = f"{API_HOST}/api/checkout/mensal"
-        st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'{api_url}\'">', unsafe_allow_html=True)
-        st.success("✅ Redirecionando para checkout...")
+    # Espaçador para melhor layout
+    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 
 with col2:
     # Cabeçalho do plano anual
@@ -137,11 +134,8 @@ with col2:
     </a>
     """, unsafe_allow_html=True)
     
-    # Botão de fallback
-    if st.button("ASSINAR ANUAL (método alternativo)", type="primary", key="btn_anual"):
-        api_url = f"{API_HOST}/api/checkout/anual"
-        st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'{api_url}\'">', unsafe_allow_html=True)
-        st.success("✅ Redirecionando para checkout...")
+    # Espaçador para melhor layout
+    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 
 with col3:
     # Cabeçalho do plano vitalício
@@ -160,11 +154,8 @@ with col3:
     </a>
     """, unsafe_allow_html=True)
     
-    # Botão de fallback
-    if st.button("PLANO VITALÍCIO (método alternativo)", type="primary", key="btn_vitalicio"):
-        api_url = f"{API_HOST}/api/checkout/vitalicio"
-        st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'{api_url}\'">', unsafe_allow_html=True)
-        st.success("✅ Redirecionando para checkout...")
+    # Espaçador para melhor layout
+    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 
 # Fechando o container de planos
 st.markdown('</div>', unsafe_allow_html=True)
@@ -186,45 +177,23 @@ if st.button("INICIAR PERÍODO GRATUITO", type="secondary", use_container_width=
     st.info("✅ Iniciando período de teste gratuito...")
 
 # Seção de FAQ
-st.markdown("""
-<div style="margin-top: 3rem;">
-    <h3>Perguntas Frequentes</h3>
-    
-    <div style="margin-top: 1.5rem;">
-        <p style="font-weight: bold; color: #1E366F;">O que está incluído em cada plano?</p>
-        <p style="color: #555;">
-            Todos os planos incluem acesso completo a todas as funcionalidades do sistema, incluindo:
-            gerenciamento de clientes, propostas, finanças, relatórios e produtos. A diferença está apenas
-            na forma de pagamento.
-        </p>
-    </div>
-    
-    <div style="margin-top: 1.5rem;">
-        <p style="font-weight: bold; color: #1E366F;">Posso trocar de plano depois?</p>
-        <p style="color: #555;">
-            Sim, você pode fazer upgrade ou downgrade do seu plano a qualquer momento através
-            da área "Minha Assinatura" no painel administrativo.
-        </p>
-    </div>
-    
-    <div style="margin-top: 1.5rem;">
-        <p style="font-weight: bold; color: #1E366F;">Existe período de fidelidade?</p>
-        <p style="color: #555;">
-            Não, você pode cancelar sua assinatura a qualquer momento sem taxas adicionais.
-            No plano mensal e anual, você continuará com acesso até o final do período pago.
-        </p>
-    </div>
-    
-    <div style="margin-top: 1.5rem;">
-        <p style="font-weight: bold; color: #1E366F;">Como funciona o plano vitalício?</p>
-        <p style="color: #555;">
-            O plano vitalício é um pagamento único que lhe dá acesso ao sistema por tempo ilimitado.
-            Você terá acesso às atualizações e novas funcionalidades lançadas durante o primeiro ano.
-            Após esse período, atualizações maiores podem requerer uma taxa de upgrade.
-        </p>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+st.markdown("<h3 style='text-align: center; margin-top: 3rem;'>Perguntas Frequentes</h3>", unsafe_allow_html=True)
+
+# FAQ 1
+st.markdown("<div style='margin-top: 1.5rem;'><p style='font-weight: bold; color: #1E366F;'>O que está incluído em cada plano?</p></div>", unsafe_allow_html=True)
+st.markdown("<p style='color: #555;'>Todos os planos incluem acesso completo a todas as funcionalidades do sistema, incluindo: gerenciamento de clientes, propostas, finanças, relatórios e produtos. A diferença está apenas na forma de pagamento.</p>", unsafe_allow_html=True)
+
+# FAQ 2
+st.markdown("<div style='margin-top: 1.5rem;'><p style='font-weight: bold; color: #1E366F;'>Posso trocar de plano depois?</p></div>", unsafe_allow_html=True)
+st.markdown("<p style='color: #555;'>Sim, você pode fazer upgrade ou downgrade do seu plano a qualquer momento através da área \"Minha Assinatura\" no painel administrativo.</p>", unsafe_allow_html=True)
+
+# FAQ 3
+st.markdown("<div style='margin-top: 1.5rem;'><p style='font-weight: bold; color: #1E366F;'>Existe período de fidelidade?</p></div>", unsafe_allow_html=True)
+st.markdown("<p style='color: #555;'>Não, você pode cancelar sua assinatura a qualquer momento sem taxas adicionais. No plano mensal e anual, você continuará com acesso até o final do período pago.</p>", unsafe_allow_html=True)
+
+# FAQ 4
+st.markdown("<div style='margin-top: 1.5rem;'><p style='font-weight: bold; color: #1E366F;'>Como funciona o plano vitalício?</p></div>", unsafe_allow_html=True)
+st.markdown("<p style='color: #555;'>O plano vitalício é um pagamento único que lhe dá acesso ao sistema por tempo ilimitado. Você terá acesso às atualizações e novas funcionalidades lançadas durante o primeiro ano. Após esse período, atualizações maiores podem requerer uma taxa de upgrade.</p>", unsafe_allow_html=True)
 
 # Rodapé
 st.markdown("""
@@ -233,3 +202,12 @@ st.markdown("""
     Pagamentos processados com segurança pelo <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/stripe/stripe-original.svg" width="40" style="vertical-align: middle;"/>
 </div>
 """, unsafe_allow_html=True)
+
+def main():
+    """Função principal para permitir importação deste módulo por outros arquivos"""
+    # Já está tudo implementado acima, esta função serve apenas para permitir importação
+    pass
+
+# Executar a função main quando o script é executado diretamente
+if __name__ == "__main__":
+    main()
