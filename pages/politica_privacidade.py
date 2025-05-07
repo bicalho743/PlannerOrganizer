@@ -39,7 +39,7 @@ def get_politica_conteudo():
     
     <h2>3. Compartilhamento de Dados</h2>
     <p>
-    Os dados poderão ser compartilhados com serviços terceiros (como Firebase, Stripe ou ferramentas de e-mail) 
+    Os dados poderão ser compartilhados com serviços terceiros (como Firebase ou ferramentas de e-mail) 
     apenas quando necessário para o funcionamento do sistema. Nenhum dado é vendido ou divulgado a terceiros 
     sem autorização.
     </p>
@@ -114,7 +114,7 @@ def show():
     
     st.header("3. Compartilhamento de Dados")
     st.write("""
-    Os dados poderão ser compartilhados com serviços terceiros (como Firebase, Stripe ou ferramentas de e-mail) 
+    Os dados poderão ser compartilhados com serviços terceiros (como Firebase ou ferramentas de e-mail) 
     apenas quando necessário para o funcionamento do sistema. Nenhum dado é vendido ou divulgado a terceiros 
     sem autorização.
     """)
