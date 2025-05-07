@@ -58,7 +58,7 @@ if st.session_state.show_politica:
 header_html = """
 <div style="background-color: #1E366F; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; text-align: center; position: relative;">
     <h2 style="color: white; margin: 0; padding: 0; font-family: 'Poppins', sans-serif;">Planner Organizer</h2>
-    <a href="/planos" style="position: absolute; top: 50%; right: 1rem; transform: translateY(-50%); background-color: #FF9800; color: white; padding: 0.5rem 1rem; border-radius: 2rem; text-decoration: none; font-weight: bold; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: all 0.3s ease;">
+    <a href="/planos_novo" style="position: absolute; top: 50%; right: 1rem; transform: translateY(-50%); background-color: #FF9800; color: white; padding: 0.5rem 1rem; border-radius: 2rem; text-decoration: none; font-weight: bold; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: all 0.3s ease;">
         💰 Planos e Assinaturas
     </a>
     <p style="color: #E3F2FD; margin: 0.2rem 0 0 0; padding: 0; font-size: 0.9rem; font-family: 'Poppins', sans-serif;">
