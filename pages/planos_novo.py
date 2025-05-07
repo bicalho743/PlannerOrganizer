@@ -185,6 +185,7 @@ st.markdown("""
 
 # Botão do período gratuito
 if st.button("INICIAR PERÍODO GRATUITO", type="secondary", use_container_width=True):
+    # Usando a mesma API de iniciar teste, mas exibindo a mensagem de redirecionamento
     st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'/api/iniciar_teste\'">', unsafe_allow_html=True)
     st.info("✅ Iniciando período de teste gratuito...")
 

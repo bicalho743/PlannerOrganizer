@@ -372,17 +372,17 @@ st.markdown("""
 document.addEventListener('DOMContentLoaded', function() {
     // Botão Mensal
     document.getElementById('btn-mensal').addEventListener('click', function() {
-        window.location.href = '/api/checkout/mensal';
+        window.location.href = '/planos_novo';
     });
     
     // Botão Anual
     document.getElementById('btn-anual').addEventListener('click', function() {
-        window.location.href = '/api/checkout/anual';
+        window.location.href = '/planos_novo';
     });
     
     // Botão Vitalício
     document.getElementById('btn-vitalicio').addEventListener('click', function() {
-        window.location.href = '/api/checkout/vitalicio';
+        window.location.href = '/planos_novo';
     });
 });
 </script>
@@ -395,21 +395,18 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     if st.button("ASSINAR MENSAL", type="primary", key="py-mensal"):
-        api_url = f"{API_HOST}/api/checkout/mensal"
-        st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'{api_url}\'">', unsafe_allow_html=True)
-        st.info("✅ Redirecionando para checkout Stripe...")
+        st.markdown('<meta http-equiv="refresh" content="0;URL=\'/planos_novo\'">', unsafe_allow_html=True)
+        st.info("✅ Redirecionando para página de planos...")
 
 with col2:
     if st.button("ASSINAR ANUAL", type="primary", key="py-anual"):
-        api_url = f"{API_HOST}/api/checkout/anual"
-        st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'{api_url}\'">', unsafe_allow_html=True)
-        st.success("✅ Redirecionando para checkout Stripe...")
+        st.markdown('<meta http-equiv="refresh" content="0;URL=\'/planos_novo\'">', unsafe_allow_html=True)
+        st.success("✅ Redirecionando para página de planos...")
 
 with col3:
     if st.button("COMPRAR VITALÍCIO", type="primary", key="py-vitalicio"):
-        api_url = f"{API_HOST}/api/checkout/vitalicio"
-        st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'{api_url}\'">', unsafe_allow_html=True)
-        st.info("✅ Redirecionando para checkout Stripe...")
+        st.markdown('<meta http-equiv="refresh" content="0;URL=\'/planos_novo\'">', unsafe_allow_html=True)
+        st.info("✅ Redirecionando para página de planos...")
 
 # Testar período gratuito
 st.markdown("<br>", unsafe_allow_html=True)
@@ -417,4 +414,5 @@ st.markdown("### Não está pronto para assinar?")
 st.markdown("Experimente grátis por 7 dias sem necessidade de cartão de crédito.")
 
 if st.button("INICIAR TESTE GRATUITO", type="secondary"):
-    st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'/api/iniciar_teste\'">', unsafe_allow_html=True)
+    st.markdown('<meta http-equiv="refresh" content="0;URL=\'/planos_novo\'">', unsafe_allow_html=True)
+    st.info("✅ Redirecionando para página de planos...")
