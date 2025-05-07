@@ -121,33 +121,9 @@ if st.session_state.show_politica:
 
 # Verificar se a URL contém parâmetros de página específicos
 query_params = st.query_params
-if 'page' in query_params and query_params['page'][0] == 'planos':
-    # Página de planos temporariamente indisponível
-    st.title("Planos e Assinaturas")
-    st.info("A página de planos está temporariamente indisponível enquanto atualizamos nosso sistema de pagamentos.")
-    st.markdown("""
-    Estamos trabalhando em uma nova versão de nossos planos de assinatura para oferecer a melhor experiência possível.
-    Por favor, volte em breve!
-    """)
-    
-    if st.button("Voltar para a página inicial"):
-        st.switch_page("app.py")
-    
-    st.stop()
-
-elif 'page' in query_params and query_params['page'][0] == 'iniciar_teste':
-    # Página de teste gratuito temporariamente indisponível
-    st.title("Período de Teste Gratuito")
-    st.info("O sistema de períodos de teste está temporariamente indisponível enquanto atualizamos nosso sistema de assinaturas.")
-    st.markdown("""
-    Estamos trabalhando em uma nova versão do nosso sistema de assinaturas para oferecer uma melhor experiência.
-    Por favor, volte em breve para experimentar o Planner Organizer gratuitamente por 7 dias!
-    """)
-    
-    if st.button("Voltar para a página inicial"):
-        st.switch_page("app.py")
-    
-    st.stop()
+if 'page' in query_params and (query_params['page'][0] == 'planos' or query_params['page'][0] == 'iniciar_teste'):
+    # Redirecionar para a página principal
+    st.switch_page("app.py")
 
 # Inicialização da autenticação in-app
 if not st.session_state.authenticated:
