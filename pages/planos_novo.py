@@ -2,7 +2,15 @@ import streamlit as st
 import os
 
 # URL base para API
-API_HOST = os.environ.get('API_HOST', 'http://localhost:8000')
+# Obter a URL base da API do ambiente, se não existir, construir a partir do REPL_SLUG
+REPL_SLUG = os.environ.get('REPL_SLUG', '')
+API_HOST = os.environ.get('API_HOST')
+
+if not API_HOST:
+    if REPL_SLUG:
+        API_HOST = f"https://{REPL_SLUG}.replit.app"
+    else:
+        API_HOST = "http://localhost:8000"
 
 # Configurações da página
 st.set_page_config(
@@ -99,16 +107,12 @@ with col1:
     </div>
     """, unsafe_allow_html=True)
     
-    # Botão do Stripe para plano mensal
-    stripe_button_mensal = """
-    <script async src="https://js.stripe.com/v3/buy-button.js"></script>
-    <stripe-buy-button
-      buy-button-id="buy_btn_1RMAfFLWUPER7pUXfw1g2eae"
-      publishable-key="pk_live_51RFB2dLWUPER7pUXim2VuVkCESsrjNcHkDQuMJeDCvvW0ZsyFfqM2exfCTwSSe5O4R2TXBxHJtIpYSGBTAx2gBXT00gpAVYK1f"
-    >
-    </stripe-buy-button>
-    """
-    st.markdown(stripe_button_mensal, unsafe_allow_html=True)
+    # Botão alternativo para plano mensal (substituindo o Stripe para evitar erros)
+    st.markdown("""
+    <a href="/api/checkout/mensal" class="st-emotion-cache-19rxjzo edgvbvh10" style="background-color: #FF9800; color: white; text-align: center; padding: 12px; border-radius: 5px; font-weight: 600; display: block; text-decoration: none; width: 100%;">
+        ASSINAR PLANO MENSAL
+    </a>
+    """, unsafe_allow_html=True)
     
     # Botão de fallback caso o Stripe não carregue
     if st.button("ASSINAR MENSAL (método alternativo)", type="primary", key="btn_mensal"):
@@ -126,16 +130,12 @@ with col2:
     </div>
     """, unsafe_allow_html=True)
     
-    # Botão do Stripe para plano anual (usando o mesmo botão por enquanto)
-    stripe_button_anual = """
-    <script async src="https://js.stripe.com/v3/buy-button.js"></script>
-    <stripe-buy-button
-      buy-button-id="buy_btn_1RMAfFLWUPER7pUXfw1g2eae"
-      publishable-key="pk_live_51RFB2dLWUPER7pUXim2VuVkCESsrjNcHkDQuMJeDCvvW0ZsyFfqM2exfCTwSSe5O4R2TXBxHJtIpYSGBTAx2gBXT00gpAVYK1f"
-    >
-    </stripe-buy-button>
-    """
-    st.markdown(stripe_button_anual, unsafe_allow_html=True)
+    # Botão alternativo para plano anual
+    st.markdown("""
+    <a href="/api/checkout/anual" class="st-emotion-cache-19rxjzo edgvbvh10" style="background-color: #FF5722; color: white; text-align: center; padding: 12px; border-radius: 5px; font-weight: 600; display: block; text-decoration: none; width: 100%;">
+        ASSINAR PLANO ANUAL
+    </a>
+    """, unsafe_allow_html=True)
     
     # Botão de fallback
     if st.button("ASSINAR ANUAL (método alternativo)", type="primary", key="btn_anual"):
@@ -153,16 +153,12 @@ with col3:
     </div>
     """, unsafe_allow_html=True)
     
-    # Botão do Stripe para plano vitalício (usando o mesmo botão por enquanto)
-    stripe_button_vitalicio = """
-    <script async src="https://js.stripe.com/v3/buy-button.js"></script>
-    <stripe-buy-button
-      buy-button-id="buy_btn_1RMAfFLWUPER7pUXfw1g2eae"
-      publishable-key="pk_live_51RFB2dLWUPER7pUXim2VuVkCESsrjNcHkDQuMJeDCvvW0ZsyFfqM2exfCTwSSe5O4R2TXBxHJtIpYSGBTAx2gBXT00gpAVYK1f"
-    >
-    </stripe-buy-button>
-    """
-    st.markdown(stripe_button_vitalicio, unsafe_allow_html=True)
+    # Botão alternativo para plano vitalício
+    st.markdown("""
+    <a href="/api/checkout/vitalicio" class="st-emotion-cache-19rxjzo edgvbvh10" style="background-color: #FFC107; color: black; text-align: center; padding: 12px; border-radius: 5px; font-weight: 600; display: block; text-decoration: none; width: 100%;">
+        ADQUIRIR PLANO VITALÍCIO
+    </a>
+    """, unsafe_allow_html=True)
     
     # Botão de fallback
     if st.button("PLANO VITALÍCIO (método alternativo)", type="primary", key="btn_vitalicio"):
