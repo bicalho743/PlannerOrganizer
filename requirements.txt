@@ -30,3 +30,6 @@ streamlit-authenticator
 pandas
 psycopg2-binary
 streamlit
+sendgrid
+sendgrid
+stripe

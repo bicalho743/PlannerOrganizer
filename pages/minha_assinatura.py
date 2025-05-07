@@ -1,259 +1,500 @@
 """
-Página para gerenciar assinatura do Stripe
-Esta página permite ao usuário visualizar e gerenciar sua assinatura.
+Página para gerenciamento de assinatura do usuário
 """
 import streamlit as st
+import pandas as pd
 from datetime import datetime, timedelta
 import os
 
-from utils.auth import verificar_autenticacao
-from utils.stripe_integration import (
-    criar_checkout_session,
-    criar_portal_cliente,
-    obter_status_assinatura,
-    verificar_limite_atingido
+# Importações para autenticação
+from utils.firebase_auth import firebase_auth
+
+# Função auxiliar para verificar login
+def check_login():
+    """Verifica se o usuário está logado e retorna suas informações"""
+    if firebase_auth.is_authenticated():
+        return firebase_auth.get_current_user()
+    return None
+
+# Função auxiliar para realizar logout
+def logout():
+    """Realiza logout do usuário"""
+    return firebase_auth.logout()
+
+# Importações para stripe e assinaturas
+from utils.import_assinaturas import (
+    obter_assinatura_usuario,
+    cancelar_assinatura_stripe,
+    cancelar_assinatura,
+    mudar_plano_assinatura,
+    criar_sessao_checkout
 )
 
-# Configuração da página
-st.set_page_config(
-    page_title="Minha Assinatura",
-    page_icon="💳",
-    layout="wide"
-)
-
-# Verificar autenticação
-usuario = verificar_autenticacao()
-if not usuario:
-    st.warning("Você precisa estar logado para acessar esta página.")
-    st.stop()
-
-# Título da página
-st.title("Minha Assinatura")
-st.markdown("Gerencie sua assinatura e veja detalhes do seu plano atual.")
-
-# Função para formatar data
-def formatar_data(data):
-    if not data:
-        return "Não disponível"
-    return data.strftime("%d/%m/%Y")
-
-# Função para mostrar detalhes da assinatura
-def exibir_detalhes_assinatura(assinatura):
-    """Exibe os detalhes da assinatura do usuário"""
-    st.subheader("Detalhes da Assinatura")
+def show():
+    """Exibe a página de gerenciamento de assinatura"""
+    # Configuração da página
+    st.set_page_config(
+        page_title="Minha Assinatura - Planner Organiza",
+        page_icon="💳",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
     
-    status_map = {
-        "active": "Ativa",
-        "trialing": "Em período de teste",
-        "past_due": "Pagamento pendente",
-        "canceled": "Cancelada",
-        "unpaid": "Não paga",
-        "incomplete": "Incompleta",
-        "incomplete_expired": "Expirada",
-        "sem_assinatura": "Sem assinatura"
-    }
+    # Verificar login
+    user = check_login()
     
-    status_texto = status_map.get(assinatura.get("status_assinatura"), "Desconhecido")
-    tipo_plano = assinatura.get("tipo_plano", "gratuito").capitalize()
-    
-    # Criar colunas para mostrar detalhes
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown(f"**Status:** {status_texto}")
-        st.markdown(f"**Tipo de Plano:** {tipo_plano}")
-        
-        if assinatura.get("plano_nome"):
-            st.markdown(f"**Plano:** {assinatura.get('plano_nome')}")
-            
-            # Formatação do valor com R$
-            valor = assinatura.get("plano_valor", 0)
-            intervalo = "mensal" if assinatura.get("plano_intervalo") == "month" else "anual"
-            st.markdown(f"**Valor:** R$ {valor:.2f} ({intervalo})")
-        
-    with col2:
-        if assinatura.get("data_inicio"):
-            st.markdown(f"**Data de Início:** {formatar_data(assinatura.get('data_inicio'))}")
-            st.markdown(f"**Próxima Cobrança:** {formatar_data(assinatura.get('data_fim'))}")
-        
-        # Botão para gerenciar no portal do Stripe (somente se tiver assinatura ativa)
-        if assinatura.get("possui_assinatura") and assinatura.get("status_assinatura") not in ["canceled", "sem_assinatura"]:
-            st.markdown("---")
-            st.markdown("**Gerenciar sua assinatura** (alterar método de pagamento, cancelar, etc)")
-            
-            if st.button("Acessar Portal de Gerenciamento", type="primary"):
-                with st.spinner("Redirecionando para o portal..."):
-                    # Criar sessão do portal do cliente
-                    resultado = criar_portal_cliente(usuario["uid"])
-                    
-                    if "error" in resultado:
-                        st.error(f"Erro ao acessar portal: {resultado['error']}")
-                    else:
-                        # Redirecionar para o portal
-                        portal_url = resultado["url"]
-                        js = f"""
-                        <script>
-                        window.open("{portal_url}", "_blank");
-                        </script>
-                        """
-                        st.markdown(js, unsafe_allow_html=True)
-                        st.success("Portal aberto em uma nova janela!")
-
-# Função para mostrar uso atual
-def exibir_uso_atual(assinatura):
-    """Exibe o uso atual do plano em relação aos limites"""
-    st.subheader("Uso Atual")
-    
-    # Verificar se possui limites
-    if not assinatura.get("limite_clientes"):
-        st.info("Informações de uso disponíveis apenas para assinantes.")
+    if not user:
+        st.warning("Você precisa estar logado para acessar esta página.")
+        st.info("Redirecionando para a página de login...")
+        st.session_state['redirect'] = "/minha_assinatura"
+        st.button("Ir para Login", on_click=lambda: st._rerun())
         return
     
-    col1, col2, col3 = st.columns(3)
+    # Extrair dados do usuário
+    usuario_id = user.get('localId')
+    usuario_nome = user.get('displayName', 'Usuário')
+    usuario_email = user.get('email', 'email@exemplo.com')
     
-    # Clientes
-    with col1:
-        limite_clientes = assinatura.get("limite_clientes", 0)
-        contagem_clientes = assinatura.get("contagem_clientes", 0)
-        percentual_clientes = (contagem_clientes / limite_clientes * 100) if limite_clientes > 0 else 0
-        
-        st.markdown(f"### Clientes")
-        st.progress(min(percentual_clientes / 100, 1.0))
-        st.markdown(f"{contagem_clientes} de {limite_clientes} clientes utilizados ({percentual_clientes:.1f}%)")
-        
-        if verificar_limite_atingido(usuario["uid"], "clientes"):
-            st.warning("⚠️ Limite atingido")
+    # Cabeçalho
+    st.title("Minha Assinatura")
     
-    # Propostas
-    with col2:
-        limite_propostas = assinatura.get("limite_propostas", 0)
-        contagem_propostas = assinatura.get("contagem_propostas", 0)
-        percentual_propostas = (contagem_propostas / limite_propostas * 100) if limite_propostas > 0 else 0
-        
-        st.markdown(f"### Propostas")
-        st.progress(min(percentual_propostas / 100, 1.0))
-        st.markdown(f"{contagem_propostas} de {limite_propostas} propostas utilizadas ({percentual_propostas:.1f}%)")
-        
-        if verificar_limite_atingido(usuario["uid"], "propostas"):
-            st.warning("⚠️ Limite atingido")
-    
-    # Produtos
-    with col3:
-        limite_produtos = assinatura.get("limite_produtos", 0)
-        contagem_produtos = assinatura.get("contagem_produtos", 0)
-        percentual_produtos = (contagem_produtos / limite_produtos * 100) if limite_produtos > 0 else 0
-        
-        st.markdown(f"### Produtos")
-        st.progress(min(percentual_produtos / 100, 1.0))
-        st.markdown(f"{contagem_produtos} de {limite_produtos} produtos utilizados ({percentual_produtos:.1f}%)")
-        
-        if verificar_limite_atingido(usuario["uid"], "produtos"):
-            st.warning("⚠️ Limite atingido")
-
-# Função para mostrar planos disponíveis
-def exibir_planos_disponiveis(tipo_plano_atual):
-    """Exibe os planos disponíveis para assinatura"""
-    st.subheader("Planos Disponíveis")
-    
-    # Escolher plano
-    plano_tab1, plano_tab2 = st.tabs(["Plano Mensal", "Plano Anual"])
-    
-    with plano_tab1:
-        st.markdown("### Plano Inicial")
-        st.markdown("**R$ 29,90/mês**")
-        st.markdown("- Até 50 clientes")
-        st.markdown("- Até 100 propostas")
-        st.markdown("- Até 50 produtos")
-        st.markdown("- Todas as funcionalidades")
-        st.markdown("- Suporte por email")
-        
-        if tipo_plano_atual == "gratuito":
-            if st.button("Assinar Plano Mensal", key="assinar_mensal"):
-                with st.spinner("Preparando checkout..."):
-                    # Criar sessão de checkout
-                    resultado = criar_checkout_session(
-                        usuario_id=usuario["uid"],
-                        email=usuario["email"],
-                        nome=usuario["nome"],
-                        plano="mensal"
-                    )
-                    
-                    if "error" in resultado:
-                        st.error(f"Erro ao criar checkout: {resultado['error']}")
-                    else:
-                        # Redirecionar para o checkout
-                        checkout_url = resultado["url"]
-                        js = f"""
-                        <script>
-                        window.open("{checkout_url}", "_blank");
-                        </script>
-                        """
-                        st.markdown(js, unsafe_allow_html=True)
-                        st.success("Checkout aberto em uma nova janela!")
-    
-    with plano_tab2:
-        st.markdown("### Plano Inicial (Anual)")
-        st.markdown("**R$ 299,00/ano** (economia de 17%)")
-        st.markdown("- Até 50 clientes")
-        st.markdown("- Até 100 propostas")
-        st.markdown("- Até 50 produtos")
-        st.markdown("- Todas as funcionalidades")
-        st.markdown("- Suporte por email")
-        
-        if tipo_plano_atual == "gratuito":
-            if st.button("Assinar Plano Anual", key="assinar_anual"):
-                with st.spinner("Preparando checkout..."):
-                    # Criar sessão de checkout
-                    resultado = criar_checkout_session(
-                        usuario_id=usuario["uid"],
-                        email=usuario["email"],
-                        nome=usuario["nome"],
-                        plano="anual"
-                    )
-                    
-                    if "error" in resultado:
-                        st.error(f"Erro ao criar checkout: {resultado['error']}")
-                    else:
-                        # Redirecionar para o checkout
-                        checkout_url = resultado["url"]
-                        js = f"""
-                        <script>
-                        window.open("{checkout_url}", "_blank");
-                        </script>
-                        """
-                        st.markdown(js, unsafe_allow_html=True)
-                        st.success("Checkout aberto em uma nova janela!")
-
-def main():
-    # Verificar se existe uma sessão de checkout
-    query_params = st.experimental_get_query_params()
-    if "session_id" in query_params:
-        session_id = query_params["session_id"][0]
-        st.success("Assinatura realizada com sucesso! Obrigado por assinar nosso sistema.")
-        # Limpar parâmetros da URL
+    # Verificar status da URL
+    status = st.experimental_get_query_params().get('status', [None])[0]
+    if status == 'success':
+        st.success("Pagamento processado com sucesso! Sua assinatura foi ativada.")
+        # Limpar o parâmetro da URL para evitar mensagens repetidas
+        st.experimental_set_query_params()
+    elif status == 'cancel':
+        st.warning("Pagamento cancelado. Sua assinatura não foi alterada.")
+        # Limpar o parâmetro da URL para evitar mensagens repetidas
+        st.experimental_set_query_params()
+    elif status == 'trial_success':
+        st.success("Período de teste gratuito iniciado com sucesso! Você agora tem acesso a todas as funcionalidades do sistema por 7 dias.")
+        # Limpar o parâmetro da URL para evitar mensagens repetidas
         st.experimental_set_query_params()
     
-    # Obter status da assinatura
-    assinatura = obter_status_assinatura(usuario["uid"])
-    tipo_plano_atual = assinatura.get("tipo_plano", "gratuito")
+    # Obter informações da assinatura atual
+    resultado_assinatura = obter_assinatura_usuario(usuario_id)
     
-    # Exibir detalhes
-    exibir_detalhes_assinatura(assinatura)
+    # Se não tem assinatura, mostrar opções de inscrição
+    if not resultado_assinatura.get('sucesso'):
+        st.info("Você ainda não possui uma assinatura.")
+        
+        st.markdown("""
+        ## Escolha um plano para começar
+        
+        Assine o Planner Organiza e tenha acesso a todas as funcionalidades.
+        """)
+        
+        # Botão para ir para a página de planos
+        if st.button("Ver Planos Disponíveis", type="primary"):
+            st.session_state['redirect'] = "/planos"
+            st._rerun()
+            
+        return
     
+    # Extrair informações da assinatura
+    assinatura = resultado_assinatura.get('assinatura', {})
+    
+    # Informações da assinatura
+    with st.container():
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            st.markdown("## Detalhes da Assinatura")
+            
+            # Extração de dados do dicionário assinatura com valores padrão
+            plano_atual = assinatura.get('plano', 'Não definido')
+            status_assinatura = assinatura.get('status', 'Indefinido')
+            data_inicio = assinatura.get('data_inicio')
+            data_fim = assinatura.get('data_fim')
+            customer_id = assinatura.get('customer_id')
+            
+            # Calcular dias restantes
+            dias_restantes = float('inf')
+            if data_fim and isinstance(data_fim, datetime):
+                dias_restantes = (data_fim - datetime.now()).days
+                if dias_restantes < 0:
+                    dias_restantes = 0
+            
+            st.markdown(f"**Plano atual:** {plano_atual}")
+            
+            # Datas formatadas
+            if data_inicio:
+                data_inicio_formatada = data_inicio.strftime("%d/%m/%Y") if isinstance(data_inicio, datetime) else data_inicio
+                st.markdown(f"**Data de início:** {data_inicio_formatada}")
+            
+            st.markdown(f"**Status:** {status_assinatura}")
+            
+            if data_fim and status_assinatura == 'ativo':
+                data_fim_formatada = data_fim.strftime("%d/%m/%Y") if isinstance(data_fim, datetime) else data_fim
+                st.markdown(f"**Válido até:** {data_fim_formatada}")
+                
+                if plano_atual.lower() != 'vitalicio' and dias_restantes < float('inf'):
+                    # Mostrar contagem regressiva se estiver perto do vencimento
+                    if dias_restantes <= 7:
+                        st.warning(f"Sua assinatura expira em {dias_restantes} dias.")
+                    else:
+                        st.info(f"Tempo restante: {dias_restantes} dias")
+        
+        with col2:
+            # Se tiver customer_id, mostrar opção para gerenciar pagamentos no Stripe
+            if customer_id:
+                st.markdown("## Gerenciar Pagamentos")
+                
+                # URL para portal de clientes do Stripe
+                portal_url = criar_sessao_portal_cliente(customer_id)
+                
+                if portal_url:
+                    st.markdown(f"""
+                    <a href="{portal_url}" target="_blank" style="
+                        display: inline-block;
+                        background-color: #1E88E5;
+                        color: white;
+                        padding: 0.5rem 1rem;
+                        text-decoration: none;
+                        border-radius: 4px;
+                        text-align: center;
+                        margin-top: 1rem;
+                    ">Gerenciar Método de Pagamento</a>
+                    """, unsafe_allow_html=True)
+    
+    # Separador
     st.markdown("---")
     
-    # Exibir uso atual
-    exibir_uso_atual(assinatura)
+    # Opções da assinatura
+    st.markdown("## Opções da Assinatura")
     
-    st.markdown("---")
+    # Mostrar opções diferentes dependendo do status e plano
+    if status_assinatura == 'ativo':
+        # Opções diferentes para cada plano
+        if plano_atual.lower() == 'mensal':
+            with st.expander("Mudar para plano Anual (economia de 17%)"):
+                st.markdown("""
+                Ao mudar para o plano anual, você economiza aproximadamente 17% em comparação ao pagamento mensal.
+                
+                **Plano Anual:** R$ 97,00 por ano (equivalente a R$ 8,08 por mês)
+                """)
+                
+                if st.button("Mudar para Plano Anual"):
+                    # Criar checkout para upgrade
+                    price_id = os.environ.get('STRIPE_PRICE_ID_ANUAL')
+                    if price_id:
+                        success_url = os.environ.get('APP_URL', 'http://localhost:5000') + "/minha_assinatura?status=success"
+                        cancel_url = os.environ.get('APP_URL', 'http://localhost:5000') + "/minha_assinatura?status=cancel"
+                        
+                        resultado = criar_sessao_checkout(
+                            price_id=price_id,
+                            usuario_id=usuario_id,
+                            usuario_email=usuario_email,
+                            usuario_nome=usuario_nome,
+                            success_url=success_url,
+                            cancel_url=cancel_url
+                        )
+                        
+                        if resultado.get('success'):
+                            st.markdown(f"""
+                            <script>
+                                window.location.href = "{resultado.get('checkout_url')}";
+                            </script>
+                            """, unsafe_allow_html=True)
+                        else:
+                            st.error(f"Erro ao criar sessão de checkout: {resultado.get('message')}")
+            
+            with st.expander("Mudar para plano Vitalício (pague uma vez, use para sempre)"):
+                st.markdown("""
+                Com o plano vitalício, você faz um único pagamento e tem acesso permanente a todas as funcionalidades do sistema, incluindo atualizações futuras.
+                
+                **Plano Vitalício:** R$ 247,00 (pagamento único)
+                """)
+                
+                if st.button("Mudar para Plano Vitalício"):
+                    # Criar checkout para upgrade
+                    price_id = os.environ.get('STRIPE_PRICE_ID_VITALICIO')
+                    if price_id:
+                        success_url = os.environ.get('APP_URL', 'http://localhost:5000') + "/minha_assinatura?status=success"
+                        cancel_url = os.environ.get('APP_URL', 'http://localhost:5000') + "/minha_assinatura?status=cancel"
+                        
+                        resultado = criar_sessao_checkout(
+                            price_id=price_id,
+                            usuario_id=usuario_id,
+                            usuario_email=usuario_email,
+                            usuario_nome=usuario_nome,
+                            success_url=success_url,
+                            cancel_url=cancel_url
+                        )
+                        
+                        if resultado.get('success'):
+                            st.markdown(f"""
+                            <script>
+                                window.location.href = "{resultado.get('checkout_url')}";
+                            </script>
+                            """, unsafe_allow_html=True)
+                        else:
+                            st.error(f"Erro ao criar sessão de checkout: {resultado.get('message')}")
+        
+        elif plano_atual.lower() == 'anual':
+            with st.expander("Mudar para plano Vitalício (pague uma vez, use para sempre)"):
+                st.markdown("""
+                Com o plano vitalício, você faz um único pagamento e tem acesso permanente a todas as funcionalidades do sistema, incluindo atualizações futuras.
+                
+                **Plano Vitalício:** R$ 247,00 (pagamento único)
+                """)
+                
+                if st.button("Mudar para Plano Vitalício"):
+                    # Criar checkout para upgrade
+                    price_id = os.environ.get('STRIPE_PRICE_ID_VITALICIO')
+                    if price_id:
+                        success_url = os.environ.get('APP_URL', 'http://localhost:5000') + "/minha_assinatura?status=success"
+                        cancel_url = os.environ.get('APP_URL', 'http://localhost:5000') + "/minha_assinatura?status=cancel"
+                        
+                        resultado = criar_sessao_checkout(
+                            price_id=price_id,
+                            usuario_id=usuario_id,
+                            usuario_email=usuario_email,
+                            usuario_nome=usuario_nome,
+                            success_url=success_url,
+                            cancel_url=cancel_url
+                        )
+                        
+                        if resultado.get('success'):
+                            st.markdown(f"""
+                            <script>
+                                window.location.href = "{resultado.get('checkout_url')}";
+                            </script>
+                            """, unsafe_allow_html=True)
+                        else:
+                            st.error(f"Erro ao criar sessão de checkout: {resultado.get('message')}")
+        
+        elif plano_atual.lower() == 'vitalicio':
+            st.success("Você já possui o melhor plano disponível! Aproveite todas as funcionalidades vitalícias do Planner Organiza.")
+        
+        # Opção de cancelamento para planos não-vitalícios
+        if plano_atual.lower() != 'vitalicio':
+            with st.expander("Cancelar assinatura"):
+                st.markdown("""
+                ⚠️ **Atenção:** Ao cancelar sua assinatura, você perderá acesso às funcionalidades premium após o período atual pago.
+                """)
+                
+                motivo = st.selectbox(
+                    "Motivo do cancelamento",
+                    [
+                        "Selecione um motivo...",
+                        "Estou insatisfeito com o serviço",
+                        "Encontrei uma alternativa melhor",
+                        "É muito caro",
+                        "Não estou usando o suficiente",
+                        "Problemas técnicos",
+                        "Outro motivo"
+                    ]
+                )
+                
+                outro_motivo = ""
+                if motivo == "Outro motivo":
+                    outro_motivo = st.text_area("Por favor, descreva o motivo do cancelamento")
+                
+                cancelar = st.button("Confirmar Cancelamento", type="primary")
+                
+                if cancelar:
+                    if motivo == "Selecione um motivo...":
+                        st.error("Por favor, selecione um motivo para o cancelamento.")
+                    elif motivo == "Outro motivo" and not outro_motivo:
+                        st.error("Por favor, descreva o motivo do cancelamento.")
+                    else:
+                        motivo_final = outro_motivo if motivo == "Outro motivo" else motivo
+                        
+                        # Cancelar no Stripe primeiro
+                        subscription_id = assinatura.get('subscription_id')
+                        if subscription_id:
+                            resultado_stripe = cancelar_assinatura_stripe(subscription_id)
+                            
+                            if not resultado_stripe.get('success'):
+                                st.error(f"Erro ao cancelar assinatura no Stripe: {resultado_stripe.get('message')}")
+                                return
+                        
+                        # Cancelar no banco de dados
+                        resultado = cancelar_assinatura(usuario_id, motivo_final)
+                        
+                        if resultado.get('sucesso'):
+                            st.success("Assinatura cancelada com sucesso.")
+                            st.info("Você continuará tendo acesso até o final do período pago.")
+                            st.button("Atualizar página", on_click=lambda: st._rerun())
+                        else:
+                            st.error(f"Erro ao cancelar assinatura: {resultado.get('mensagem')}")
     
-    # Exibir planos disponíveis (somente para plano gratuito ou cancelado)
-    if tipo_plano_atual == "gratuito" or assinatura.get("status_assinatura") in ["canceled", "sem_assinatura"]:
-        exibir_planos_disponiveis(tipo_plano_atual)
+    elif status_assinatura == 'cancelado':
+        st.warning("Sua assinatura está cancelada.")
+        
+        # Botão para reativar
+        if st.button("Assinar Novamente", type="primary"):
+            st.session_state['redirect'] = "/planos"
+            st._rerun()
     
-    # Rodapé
-    st.markdown("---")
-    st.info("Os pagamentos são processados de forma segura pelo Stripe. Seus dados de cartão de crédito não são armazenados em nossos servidores.")
+    elif status_assinatura == 'expirado':
+        st.warning("Sua assinatura expirou.")
+        
+        # Botão para renovar
+        if st.button("Renovar Assinatura", type="primary"):
+            st.session_state['redirect'] = "/planos"
+            st._rerun()
+            
+    elif status_assinatura == 'trial':
+        # Calcular dias restantes do período de teste
+        dias_restantes_trial = float('inf')
+        if data_fim and isinstance(data_fim, datetime):
+            dias_restantes_trial = (data_fim - datetime.now()).days
+            if dias_restantes_trial < 0:
+                dias_restantes_trial = 0
+                
+        data_fim_formatada = data_fim.strftime("%d/%m/%Y") if isinstance(data_fim, datetime) else data_fim
+                
+        # Exibir informações do período de teste
+        st.info(f"Você está em um período de teste gratuito que termina em {data_fim_formatada}.")
+        
+        if dias_restantes_trial <= 2:
+            st.warning(f"Seu período de teste termina em {dias_restantes_trial} dias! Assine um plano para continuar tendo acesso.")
+        else:
+            st.success(f"Restam {dias_restantes_trial} dias de teste. Aproveite todas as funcionalidades!")
+        
+        # Adicionar container para botões de assinatura
+        st.markdown("### Escolha um plano para continuar após o período de teste")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("#### Mensal")
+            st.markdown("R$ 9,90/mês")
+            
+            # Botão para plano mensal
+            if st.button("Assinar Plano Mensal", key="trial_mensal"):
+                # Criar checkout para plano mensal
+                price_id = os.environ.get('STRIPE_PRICE_ID_MENSAL')
+                if price_id:
+                    success_url = os.environ.get('APP_URL', 'http://localhost:5000') + "/minha_assinatura?status=success"
+                    cancel_url = os.environ.get('APP_URL', 'http://localhost:5000') + "/minha_assinatura?status=cancel"
+                    
+                    resultado = criar_sessao_checkout(
+                        price_id=price_id,
+                        usuario_id=usuario_id,
+                        usuario_email=usuario_email,
+                        usuario_nome=usuario_nome,
+                        success_url=success_url,
+                        cancel_url=cancel_url
+                    )
+                    
+                    if resultado.get('success'):
+                        st.markdown(f"""
+                        <script>
+                            window.location.href = "{resultado.get('checkout_url')}";
+                        </script>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.error(f"Erro ao criar sessão de checkout: {resultado.get('message')}")
+                        
+        with col2:
+            st.markdown("#### Anual")
+            st.markdown("R$ 97,00/ano")
+            st.markdown("*Economia de 17%*")
+            
+            # Botão para plano anual
+            if st.button("Assinar Plano Anual", key="trial_anual"):
+                # Criar checkout para plano anual
+                price_id = os.environ.get('STRIPE_PRICE_ID_ANUAL')
+                if price_id:
+                    success_url = os.environ.get('APP_URL', 'http://localhost:5000') + "/minha_assinatura?status=success"
+                    cancel_url = os.environ.get('APP_URL', 'http://localhost:5000') + "/minha_assinatura?status=cancel"
+                    
+                    resultado = criar_sessao_checkout(
+                        price_id=price_id,
+                        usuario_id=usuario_id,
+                        usuario_email=usuario_email,
+                        usuario_nome=usuario_nome,
+                        success_url=success_url,
+                        cancel_url=cancel_url
+                    )
+                    
+                    if resultado.get('success'):
+                        st.markdown(f"""
+                        <script>
+                            window.location.href = "{resultado.get('checkout_url')}";
+                        </script>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.error(f"Erro ao criar sessão de checkout: {resultado.get('message')}")
+                        
+        with col3:
+            st.markdown("#### Vitalício")
+            st.markdown("R$ 247,00")
+            st.markdown("*Pague uma vez, use para sempre*")
+            
+            # Botão para plano vitalício
+            if st.button("Assinar Plano Vitalício", key="trial_vitalicio"):
+                # Criar checkout para plano vitalício
+                price_id = os.environ.get('STRIPE_PRICE_ID_VITALICIO')
+                if price_id:
+                    success_url = os.environ.get('APP_URL', 'http://localhost:5000') + "/minha_assinatura?status=success"
+                    cancel_url = os.environ.get('APP_URL', 'http://localhost:5000') + "/minha_assinatura?status=cancel"
+                    
+                    resultado = criar_sessao_checkout(
+                        price_id=price_id,
+                        usuario_id=usuario_id,
+                        usuario_email=usuario_email,
+                        usuario_nome=usuario_nome,
+                        success_url=success_url,
+                        cancel_url=cancel_url
+                    )
+                    
+                    if resultado.get('success'):
+                        st.markdown(f"""
+                        <script>
+                            window.location.href = "{resultado.get('checkout_url')}";
+                        </script>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.error(f"Erro ao criar sessão de checkout: {resultado.get('message')}")
+    
+    # Histórico de pagamentos
+    st.markdown("## Histórico de Transações")
+    
+    # Aqui iria o código para recuperar o histórico de pagamentos do Stripe
+    # Como isso exige comunicação com a API do Stripe, estamos simplificando
+    
+    if 'customer_id' in assinatura and customer_id:
+        st.info("Para visualizar seu histórico completo de transações, acesse o portal de gerenciamento de pagamentos.")
+    else:
+        st.info("Histórico de transações não disponível.")
+
+    # Verificar se existe redirecionamento e executar
+    if st.session_state.get('redirect'):
+        redirect_url = st.session_state.pop('redirect')
+        st.markdown(f"""
+        <script>
+            window.location.href = "{redirect_url}";
+        </script>
+        """, unsafe_allow_html=True)
+
+# Função auxiliar para criar sessão do portal de clientes do Stripe
+def criar_sessao_portal_cliente(customer_id):
+    """
+    Cria uma sessão do portal de clientes do Stripe
+    
+    Args:
+        customer_id: ID do cliente no Stripe
+        
+    Returns:
+        str: URL da sessão ou None em caso de erro
+    """
+    try:
+        from utils.import_assinaturas import criar_sessao_portal_cliente
+        resultado = criar_sessao_portal_cliente(customer_id)
+        
+        if resultado.get('success'):
+            return resultado.get('url')
+        
+        return None
+    except Exception as e:
+        print(f"Erro ao criar sessão do portal: {str(e)}")
+        return None
 
 if __name__ == "__main__":
-    main()
+    show()

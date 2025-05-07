@@ -1,85 +1,112 @@
 """
-Endpoint para receber webhooks do Stripe
-Este endpoint permite ao Stripe notificar o sistema sobre eventos como pagamentos, atualizações de assinatura, etc.
+Endpoint para processar webhooks do Stripe
 """
-import os
 import json
-import hmac
-import hashlib
-import logging
-from datetime import datetime
-
 import streamlit as st
-from sqlalchemy import text
-from sqlalchemy.orm import Session
+import time
 
-from utils.stripe_integration import processar_webhook
-
-# Configuração da página sem elementos visuais
-st.set_page_config(
-    page_title="Stripe Webhook",
-    page_icon="🔔",
-    layout="centered",
-    initial_sidebar_state="collapsed"
+# Importações para processamento de eventos do Stripe
+from utils.import_assinaturas import (
+    registrar_assinatura,
+    atualizar_status_assinatura,
+    cancelar_assinatura,
+    processar_webhook_evento
 )
 
-# Ocultar todos os elementos
-hide_streamlit_style = """
-<style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    .stDeployButton {display:none;}
-    #stDecoration {display:none;}
-    .main {padding-top: 0; padding-bottom: 0;}
-    header {display:none;}
-    [data-testid="stSidebar"] {display: none;}
-</style>
-"""
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
-# Configurar logger
-logger = logging.getLogger(__name__)
-handler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
-
-def main():
-    # Verificar método da requisição
-    request_method = os.environ.get('REQUEST_METHOD', 'GET')
+def show():
+    """Exibe o endpoint de webhooks do Stripe"""
+    # Configuração da página
+    st.set_page_config(
+        page_title="Webhook Stripe",
+        page_icon="🔄",
+        layout="centered",
+        initial_sidebar_state="collapsed"
+    )
     
-    if request_method == 'POST':
-        # Obter dados da requisição
+    # Ocultar elementos Streamlit
+    hide_streamlit_style = """
+        <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        </style>
+    """
+    st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+    
+    # Verificar se é realmente uma solicitação de webhook
+    if st.experimental_get_query_params().get('stripe_webhook') == ['true']:
+        # Exibir mensagem simples
+        st.markdown("## Endpoint de Webhook do Stripe")
+        st.info("Este endpoint processa eventos do Stripe automaticamente.")
+        
+        # Processar o webhook
         try:
-            payload = st.runtime.scriptrunner.get_script_run_ctx().form_data_proxy.get_body()
-            sig_header = os.environ.get('HTTP_STRIPE_SIGNATURE', '')
+            # Obter payload e cabeçalhos
+            request_data = json.loads(st.get_raw_json())
             
-            if not payload or not sig_header:
-                st.json({"status": "error", "message": "Dados de webhook ausentes"})
-                logger.error("Dados de webhook ausentes")
-                return
+            # Obter cabeçalho de assinatura
+            signature = st.request_headers().get('Stripe-Signature')
             
-            # Processar webhook
-            resultado = processar_webhook(payload, sig_header)
+            st.write("Processando evento...")
             
-            # Responder com resultado
-            st.json(resultado)
+            # Processar o evento
+            resultado_processamento = processar_webhook_evento(
+                payload=request_data,
+                sig_header=signature
+            )
             
-            # Registrar processamento
-            logger.info(f"Webhook processado: {resultado}")
+            # Atualizar banco de dados com base no evento
+            _atualizar_banco_de_dados(request_data, resultado_processamento)
+            
+            if resultado_processamento.get('success'):
+                st.success("Evento processado com sucesso!")
+            else:
+                st.error(f"Erro ao processar evento: {resultado_processamento.get('message')}")
+                
+            # Retornar status 200 para Stripe
+            st.response.status_code = 200
+            return
             
         except Exception as e:
-            logger.error(f"Erro ao processar webhook: {str(e)}")
-            st.json({"status": "error", "message": str(e)})
-    else:
-        # Método não suportado
-        st.json({"status": "error", "message": "Método não suportado"})
-        logger.warning(f"Método não suportado: {request_method}")
-        
-    # Retornar status code 200 para todas as requisições
-    # Isso é importante para o Stripe não reenviar eventos
-    os.environ['SCRIPT_RETURN_CODE'] = '200'
+            st.error(f"Erro ao processar webhook: {str(e)}")
+            import traceback
+            st.code(traceback.format_exc())
+            
+            # Ainda retornar 200 para evitar reenvios
+            st.response.status_code = 200
+            return
+    
+    # Página padrão (quando não for webhook)
+    st.title("Endpoint de Webhook Stripe")
+    st.write("""
+    Este é o endpoint para processamento de webhooks do Stripe.
+    
+    Você não deveria estar acessando esta página diretamente.
+    """)
 
+def _atualizar_banco_de_dados(request_data, resultado_processamento):
+    """
+    Atualiza o banco de dados com base no tipo de evento recebido
+    
+    Args:
+        request_data: Dados da requisição
+        resultado_processamento: Resultado do processamento do evento
+    """
+    try:
+        # Extrair tipo de evento
+        tipo_evento = request_data.get('type')
+        
+        # Registrar o evento no log
+        print(f"Evento Stripe recebido: {tipo_evento}")
+        print(f"Resultado do processamento: {resultado_processamento}")
+        
+        # Dependendo do tipo de evento, realizar ações adicionais
+        # Exemplo: Enviar e-mail de confirmação, atualizar UI, etc.
+        
+    except Exception as e:
+        print(f"Erro ao atualizar banco de dados: {str(e)}")
+        import traceback
+        traceback.print_exc()
+
+# Executar a função principal se for executado diretamente
 if __name__ == "__main__":
-    main()
+    show()

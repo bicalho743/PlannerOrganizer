@@ -1,5 +1,23 @@
 import streamlit as st
 
+def verificar_login():
+    """
+    Verifica se o usuário está logado e retorna informações básicas
+    
+    Returns:
+        tuple: (usuario_id, usuario_nome, usuario_email) ou (None, None, None) se não estiver logado
+    """
+    if 'authenticated' not in st.session_state or not st.session_state.authenticated:
+        return None, None, None
+    
+    # Informações básicas do usuário
+    usuario = st.session_state.get('usuario', {})
+    usuario_id = usuario.get('id', st.session_state.get('usuario_id'))
+    usuario_nome = usuario.get('nome', 'Usuário')
+    usuario_email = usuario.get('email', '')
+    
+    return usuario_id, usuario_nome, usuario_email
+
 def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True, 
                   com_destaque_plano_medio=True, stripe_ready=True, espacamento_reduzido=False):
     """
@@ -279,16 +297,13 @@ def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True
                     <li>Ideal para testar o sistema</li>
                 </ul>
             </div>
-            <button class="plano-button">ASSINAR MENSAL</button>
+            <button class="plano-button" onclick="window.location.href='/api/checkout/mensal'">ASSINAR MENSAL</button>
         </div>
         """
         st.markdown(plano_mensal, unsafe_allow_html=True)
         
-        # Botão funcional para Stripe (opcional)
-        if stripe_ready:
-            btn_mensal = st.button("Assinar Mensal", key="btn_mensal", type="primary", use_container_width=True)
-            if btn_mensal:
-                st.success("Redirecionando para pagamento do plano mensal...")
+        # Remover os botões do Streamlit duplicados
+        # Apenas deixamos o botão HTML estilizado
 
     with col2:
         plano_class = "plano-card plano-destaque" if com_destaque_plano_medio else "plano-card"
@@ -307,16 +322,13 @@ def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True
                     <li>Melhor custo-benefício</li>
                 </ul>
             </div>
-            <button class="plano-button">ASSINAR ANUAL</button>
+            <button class="plano-button" onclick="window.location.href='/api/checkout/anual'">ASSINAR ANUAL</button>
         </div>
         """
         st.markdown(plano_anual, unsafe_allow_html=True)
         
-        # Botão funcional para Stripe (opcional)
-        if stripe_ready:
-            btn_anual = st.button("Assinar Anual", key="btn_anual", type="primary", use_container_width=True)
-            if btn_anual:
-                st.success("Redirecionando para pagamento do plano anual...")
+        # Remover os botões do Streamlit duplicados
+        # Apenas deixamos o botão HTML estilizado
 
     with col3:
         plano_vitalicio = f"""
@@ -333,16 +345,13 @@ def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True
                     <li>Melhor para longo prazo</li>
                 </ul>
             </div>
-            <button class="plano-button">COMPRAR VITALÍCIO</button>
+            <button class="plano-button" onclick="window.location.href='/api/checkout/vitalicio'">COMPRAR VITALÍCIO</button>
         </div>
         """
         st.markdown(plano_vitalicio, unsafe_allow_html=True)
         
-        # Botão funcional para Stripe (opcional)
-        if stripe_ready:
-            btn_vitalicio = st.button("Comprar Vitalício", key="btn_vitalicio", type="primary", use_container_width=True)
-            if btn_vitalicio:
-                st.success("Redirecionando para pagamento do plano vitalício...")
+        # Remover os botões do Streamlit duplicados
+        # Apenas deixamos o botão HTML estilizado
     
     # Prova social
     if com_prova_social:
@@ -378,15 +387,19 @@ def mostrar_planos(com_titulo=True, com_prova_social=True, com_teste_gratis=True
                 Experimente o Planner Organizer gratuitamente por 7 dias.<br>
                 Sem compromisso. Cancele quando quiser.
             </p>
-            <button style="background-color: white; color: #1E366F; border: none; padding: 15px 40px; border-radius: 30px; font-weight: bold; font-size: 18px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
-                INICIAR PERÍODO GRATUITO
-            </button>
         </div>
         """, unsafe_allow_html=True)
         
-        # Botão funcional para Stripe (opcional)
-        if stripe_ready:
-            st.button("INICIAR PERÍODO GRATUITO", key="btn_teste", type="primary", use_container_width=True)
+        # Criando um link direto para a página de iniciar teste em vez de usar botão
+        st.markdown("""
+        <div style="text-align: center; margin-top: 10px;">
+            <a href="/?page=iniciar_teste" target="_self" style="background-color: #1E88E5; color: white; 
+               padding: 12px 24px; border-radius: 6px; text-align: center; text-decoration: none; 
+               display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer; font-weight: bold;">
+                INICIAR PERÍODO GRATUITO
+            </a>
+        </div>
+        """, unsafe_allow_html=True)
 
 def mostrar_planos_simples():
     """
@@ -413,7 +426,13 @@ def mostrar_planos_simples():
         st.markdown("- Todos os recursos")
         st.markdown("- Cancelamento fácil")
         st.markdown("- Ideal para começar")
-        st.button("Assinar Mensal", key="btn_mensal_simples", type="primary")  # aqui entraria o link do Stripe
+        if st.button("Assinar Mensal", key="btn_mensal_simples", type="primary"):
+            # Redirecionar para a API de checkout para o plano mensal
+            st.markdown("""
+            <script>
+                window.location.href = '/api/checkout/mensal';
+            </script>
+            """, unsafe_allow_html=True)
 
     with col2:
         st.markdown("""
@@ -427,12 +446,18 @@ def mostrar_planos_simples():
                 <li>Suporte prioritário</li>
             </ul>
             <div style='text-align:center; margin-top:10px;'>
-                <button style='background-color: #2d8cff; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor:pointer;'>Assinar Anual</button>
+                <button style='background-color: #2d8cff; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor:pointer;' onclick="window.location.href='/api/checkout/anual'">Assinar Anual</button>
             </div>
             </div>
         """, unsafe_allow_html=True)
         
-        st.button("Assinar Anual", key="btn_anual_simples", type="primary")
+        if st.button("Assinar Anual", key="btn_anual_simples", type="primary"):
+            # Redirecionar para a API de checkout para o plano anual
+            st.markdown("""
+            <script>
+                window.location.href = '/api/checkout/anual';
+            </script>
+            """, unsafe_allow_html=True)
 
     with col3:
         st.markdown("### 🏆 Acesso Vitalício")
@@ -440,7 +465,13 @@ def mostrar_planos_simples():
         st.markdown("- Acesso permanente ao sistema")
         st.markdown("- Sem mensalidade nunca mais")
         st.markdown("- Ideal para quem já decidiu")
-        st.button("Comprar Vitalício", key="btn_vitalicio_simples", type="primary")
+        if st.button("Comprar Vitalício", key="btn_vitalicio_simples", type="primary"):
+            # Redirecionar para a API de checkout para o plano vitalício
+            st.markdown("""
+            <script>
+                window.location.href = '/api/checkout/vitalicio';
+            </script>
+            """, unsafe_allow_html=True)
 
     # Prova social
     st.markdown("---")

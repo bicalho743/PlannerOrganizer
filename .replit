@@ -59,10 +59,6 @@ args = "Login Simples"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Planos Landing"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Planos Simples"
 
 [[workflows.workflow.tasks]]
@@ -72,6 +68,26 @@ args = "Start application"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Regenerar Lancamentos"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Planos Landing"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Iniciar Teste"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "API FastAPI"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Teste Planos"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Planos Leve"
 
 [[workflows.workflow]]
 name = "Importar Propostas"
@@ -225,27 +241,9 @@ author = "agent"
 agentRequireRestartOnSave = false
 
 [[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0.0 --server.headless true"
 waitForPort = 5001
-
-[[workflows.workflow]]
-name = "Planos Landing"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run planos_landing.py --server.port 5002 --server.address 0.0.0.0"
-waitForPort = 5002
 
 [[workflows.workflow]]
 name = "Planos Simples"
@@ -255,12 +253,9 @@ author = "agent"
 agentRequireRestartOnSave = false
 
 [[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run planos_simple.py --server.port 8800 --server.address 0.0.0.0"
-waitForPort = 8800
+args = "streamlit run planos_simple.py --server.port 5005 --server.address 0.0.0.0"
+waitForPort = 5005
 
 [[workflows.workflow]]
 name = "Start application"
@@ -288,6 +283,49 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run regenerar_lancamentos.py --server.port 8600 --server.address 0.0.0.0"
 waitForPort = 8600
+
+[[workflows.workflow]]
+name = "Planos Landing"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run planos_landing.py --server.port 5002 --server.address 0.0.0.0"
+waitForPort = 5002
+
+[[workflows.workflow]]
+name = "Iniciar Teste"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run pages/iniciar_teste.py --server.port 8520 --server.address 0.0.0.0"
+waitForPort = 8520
+
+[[workflows.workflow]]
+name = "API FastAPI"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "uvicorn api.main:api --host 0.0.0.0 --port 8000 --reload"
+
+[[workflows.workflow]]
+name = "Teste Planos"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run teste_planos.py --server.port 5010 --server.address 0.0.0.0"
+waitForPort = 5010
+
+[[workflows.workflow]]
+name = "Planos Leve"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run planos_leve.py --server.port 5005 --server.address 0.0.0.0"
 
 [[ports]]
 localPort = 443

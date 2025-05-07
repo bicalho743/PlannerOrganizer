@@ -1,0 +1,79 @@
+<!-- Plano Anual -->
+<div class="pricing-card">
+    <div class="highlight-badge">RECOMENDADO</div>
+    <div class="pricing-header">
+        <div class="pricing-title">
+            🔥 Plano Anual
+        </div>
+        <div class="pricing-price">
+            R$97,00
+        </div>
+        <div class="pricing-period">
+            por ano
+        </div>
+        <div class="savings-badge">
+            ECONOMIZE 17%
+        </div>
+    </div>
+    <div class="pricing-features">
+        <div class="pricing-feature">
+            <span style="color: #4CAF50; margin-right: 8px;">✓</span>
+            Acesso a todos os recursos
+        </div>
+        <div class="pricing-feature">
+            <span style="color: #4CAF50; margin-right: 8px;">✓</span>
+            Suporte prioritário
+        </div>
+        <div class="pricing-feature">
+            <span style="color: #4CAF50; margin-right: 8px;">✓</span>
+            Atualizações gratuitas
+        </div>
+        <div class="pricing-feature">
+            <span style="color: #4CAF50; margin-right: 8px;">✓</span>
+            Treinamento personalizado
+        </div>
+        <div class="pricing-feature">
+            <span style="color: #4CAF50; margin-right: 8px;">✓</span>
+            Melhor custo-benefício
+        </div>
+    </div>
+    <button class="pricing-button anual" id="btn-anual" type="button">ASSINAR ANUAL</button>
+</div>
+
+<!-- Plano Vitalício -->
+<div class="pricing-card">
+    <div class="pricing-header">
+        <div class="pricing-title">
+            🏆 Acesso Vitalício
+        </div>
+        <div class="pricing-price">
+            R$247,00
+        </div>
+        <div class="pricing-period">
+            pagamento único
+        </div>
+    </div>
+    <div class="pricing-features">
+        <div class="pricing-feature">
+            <span style="color: #4CAF50; margin-right: 8px;">✓</span>
+            Acesso permanente ao sistema
+        </div>
+        <div class="pricing-feature">
+            <span style="color: #4CAF50; margin-right: 8px;">✓</span>
+            Suporte prioritário
+        </div>
+        <div class="pricing-feature">
+            <span style="color: #4CAF50; margin-right: 8px;">✓</span>
+            Sem mensalidades futuras
+        </div>
+        <div class="pricing-feature">
+            <span style="color: #4CAF50; margin-right: 8px;">✓</span>
+            Todas as atualizações inclusas
+        </div>
+        <div class="pricing-feature">
+            <span style="color: #4CAF50; margin-right: 8px;">✓</span>
+            Melhor para longo prazo
+        </div>
+    </div>
+    <button class="pricing-button vitalicio" id="btn-vitalicio" type="button">COMPRAR VITALÍCIO</button>
+</div>

@@ -1,17 +1,5 @@
 import streamlit as st
 import os
-import requests
-import sys
-import logging
-
-# Configuração de logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-logger.info("Iniciando módulo planos_simple.py")
-
-# URL base da API
-API_URL = "https://plannerorganiza-dev.replit.app"
-logger.info(f"API_URL definida como: {API_URL}")
 
 # Configurações de preços do Stripe
 STRIPE_PRICE_ID_MENSAL = os.environ.get('STRIPE_PRICE_ID_MENSAL')
@@ -40,11 +28,6 @@ from utils.import_assinaturas import (
     obter_assinatura_usuario
 )
 
-# Função auxiliar para obter o token do Firebase
-def get_firebase_token():
-    """Recupera o token do Firebase da sessão"""
-    return st.session_state.get("firebase_token")
-
 # Função para iniciar período de teste
 def iniciar_periodo_teste(usuario_id, dias=7):
     """
@@ -58,27 +41,6 @@ def iniciar_periodo_teste(usuario_id, dias=7):
         dict: Resultado da operação
     """
     try:
-        # Primeiro, tenta iniciar o período de teste via API
-        headers = {"Authorization": f"Bearer {get_firebase_token()}"}
-        try:
-            # Tentar fazer a requisição para a API
-            response = requests.post(
-                f"{API_URL}/api/iniciar_teste", 
-                json={"usuario_id": usuario_id, "dias": dias},
-                headers=headers
-            )
-            
-            if response.status_code == 200:
-                resultado = response.json()
-                return resultado
-            else:
-                print(f"Erro na API: {response.status_code} - {response.text}")
-                # Se falhar, continuar com o método direto
-        except Exception as api_e:
-            print(f"Erro ao chamar API: {str(api_e)}")
-            # Se falhar, continuar com o método direto
-        
-        # Método alternativo direto (fallback)
         from utils.assinatura_db import registrar_assinatura
         from datetime import datetime, timedelta
         
@@ -311,47 +273,13 @@ def mostrar_pagina_planos():
             button_id = f"btn_{plano.lower().replace(' ', '_')}"
             
             # Definir URL da API com base no plano
-            endpoint = ""
+            api_url = ""
             if plano == "Mensal":
-                endpoint = "/api/checkout/mensal"
+                api_url = "/api/checkout/mensal"
             elif plano == "Anual":
-                endpoint = "/api/checkout/anual"
+                api_url = "/api/checkout/anual"
             elif plano == "Vitalício":
-                endpoint = "/api/checkout/vitalicio"
-                
-            # Função JavaScript para fazer a requisição com autenticação
-            js_code = f"""
-            function redirecionar_{plano.lower().replace(' ', '_')}() {{
-                const token = localStorage.getItem('firebase_token');
-                const apiUrl = window.location.origin;
-                
-                if (token) {{
-                    // Enviar com autenticação
-                    fetch(apiUrl + "{endpoint}", {{
-                        method: 'POST',
-                        headers: {{
-                            'Content-Type': 'application/json',
-                            'Authorization': 'Bearer ' + token
-                        }}
-                    }})
-                    .then(response => response.json())
-                    .then(data => {{
-                        if (data.url) {{
-                            window.location.href = data.url;
-                        }} else {{
-                            alert('Erro ao criar sessão de checkout: ' + (data.message || 'Erro desconhecido'));
-                        }}
-                    }})
-                    .catch(error => {{
-                        console.error('Erro:', error);
-                        alert('Erro ao processar pagamento. Por favor, tente novamente.');
-                    }});
-                }} else {{
-                    // Redirecionamento direto para URL da API (fallback sem token)
-                    window.location.href = apiUrl + "{endpoint}";
-                }}
-            }}
-            """
+                api_url = "/api/checkout/vitalicio"
             
             # Para planos anuais e vitalícios, adicionar informação sobre o teste gratuito
             trial_info = ""
@@ -368,10 +296,9 @@ def mostrar_pagina_planos():
             </a>
             {trial_info}
             <script>
-            {js_code}
-            document.getElementById("{button_id}").addEventListener("click", function() {{
-                redirecionar_{plano.lower().replace(' ', '_')}();
-            }});
+                document.getElementById("{button_id}").addEventListener("click", function() {{
+                    window.location.href = "{api_url}";
+                }});
             </script>
             """
     
@@ -508,20 +435,11 @@ def mostrar_pagina_planos():
                     return;
                 }
                 
-                const token = localStorage.getItem('firebase_token');
-                const headers = {
-                    'Content-Type': 'application/json'
-                };
-                
-                if (token) {
-                    headers['Authorization'] = 'Bearer ' + token;
-                }
-                
-                // Use o endpoint completo com o host atual para iniciar o teste
-                const apiUrl = window.location.origin;
-                fetch(apiUrl + "/api/iniciar_teste", {
+                fetch('/api/iniciar_teste', {
                     method: 'POST',
-                    headers: headers,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
                     credentials: 'include'
                 })
                 .then(function(response) { return response.json(); })
