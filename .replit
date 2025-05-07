@@ -63,19 +63,7 @@ args = "Start application"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Regenerar Lancamentos"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Iniciar Teste"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "API FastAPI"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Teste Planos"
 
 [[workflows.workflow]]
 name = "Importar Propostas"
@@ -214,12 +202,8 @@ author = "agent"
 agentRequireRestartOnSave = false
 
 [[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run login.py --server.port 5001 --server.address 0.0.0.0"
-waitForPort = 5001
 
 [[workflows.workflow]]
 name = "Login Simples"
@@ -230,8 +214,7 @@ agentRequireRestartOnSave = false
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0.0"
-waitForPort = 5001
+args = "streamlit run login_simples.py --server.port 5002 --server.address 0.0.0.0"
 
 [[workflows.workflow]]
 name = "Start application"
@@ -252,39 +235,12 @@ task = "shell.exec"
 args = "streamlit run create_deployment_zip.py --server.port 8600 --server.address 0.0.0.0"
 
 [[workflows.workflow]]
-name = "Regenerar Lancamentos"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run regenerar_lancamentos.py --server.port 8600 --server.address 0.0.0.0"
-waitForPort = 8600
-
-[[workflows.workflow]]
-name = "Iniciar Teste"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run pages/iniciar_teste.py --server.port 8520 --server.address 0.0.0.0"
-waitForPort = 8520
-
-[[workflows.workflow]]
 name = "API FastAPI"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "uvicorn api.main:api --host 0.0.0.0 --port 8000 --reload"
-
-[[workflows.workflow]]
-name = "Teste Planos"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run teste_planos.py --server.port 5010 --server.address 0.0.0.0"
-waitForPort = 5010
 
 [[ports]]
 localPort = 443
