@@ -89,6 +89,14 @@ args = "Teste Planos"
 task = "workflow.run"
 args = "Planos Leve"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Checkout Direto"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Teste Stripe Direto"
+
 [[workflows.workflow]]
 name = "Importar Propostas"
 author = "agent"
@@ -326,6 +334,24 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run planos_leve.py --server.port 5005 --server.address 0.0.0.0"
+
+[[workflows.workflow]]
+name = "Checkout Direto"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run planos_simple.py --server.port 5000 --server.address 0.0.0.0"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Teste Stripe Direto"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run teste_checkout_stripe.py --server.port 5010 --server.address 0.0.0.0"
+waitForPort = 5010
 
 [[ports]]
 localPort = 443
