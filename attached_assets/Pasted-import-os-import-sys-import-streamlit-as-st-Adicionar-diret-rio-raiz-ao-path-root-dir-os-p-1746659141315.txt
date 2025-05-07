@@ -1,0 +1,89 @@
+import os
+import sys
+import streamlit as st
+
+# Adicionar diretório raiz ao path
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if root_dir not in sys.path:
+    sys.path.append(root_dir)
+
+# Configuração da página
+st.set_page_config(
+    page_title="Sistema Personal Organizer",
+    page_icon="📋",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Estilo CSS atualizado para Landing Page - Design Sóbio
+st.markdown("""
+    <style>
+    body {
+        background-color: #F4F4F5;
+        font-family: 'Segoe UI', sans-serif;
+    }
+    .header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .main-title {
+        font-size: 2rem;
+        color: #1C1C1E;
+        font-weight: 700;
+    }
+    .sub-title {
+        font-size: 1rem;
+        color: #6C6C70;
+        margin-bottom: 2rem;
+    }
+    .card {
+        background-color: #FFFFFF;
+        padding: 1rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+    }
+    .card-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1C1C1E;
+    }
+    .button-primary {
+        background-color: #4F4F52;
+        color: #FFFFFF;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        text-align: center;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .button-primary:hover {
+        background-color: #3A3A3D;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# Cabeçalho da Landing Page
+st.markdown("""
+<div class="header">
+    <h1 class="main-title">Planner Organizer</h1>
+    <p class="sub-title">Sistema Profissional para Personal Organizers</p>
+</div>
+""", unsafe_allow_html=True)
+
+# Cartões de destaque
+st.markdown("""
+<div class="card">
+    <h2 class="card-title">+300% Aumento na produtividade</h2>
+</div>
+<div class="card">
+    <h2 class="card-title">-25% Redução de retrabalho</h2>
+</div>
+<div class="card">
+    <h2 class="card-title">+45% Aumento no faturamento</h2>
+</div>
+
+<a href="#" class="button-primary">Acesse sua conta</a>
+""", unsafe_allow_html=True)

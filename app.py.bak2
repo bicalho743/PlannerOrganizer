@@ -180,31 +180,32 @@ if not st.session_state.authenticated:
             st.session_state.login_page = "login"
             st.rerun()
     
-    # CSS personalizado para a landing page - Design Sóbrio
+    # CSS personalizado para a landing page
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
     
     body {
-        font-family: 'Segoe UI', sans-serif;
-        background-color: #F4F4F5;
-        color: #1C1C1E;
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #f9fafc, #eef5ff);
+        color: #333;
     }
     
     h1, h2, h3, h4 {
-        font-family: 'Segoe UI', sans-serif;
+        font-family: 'Poppins', sans-serif;
         font-weight: 600;
-        color: #1C1C1E;
+        color: #2d8cff;
     }
     
     .main-header {
-        color: #1C1C1E;
-        font-size: 2.3rem;
+        color: #2d8cff;
+        font-size: 2.5rem;
         font-weight: 700;
         margin-bottom: 0.5rem;
         line-height: 1.2;
         margin-top: 0 !important;
         padding-top: 0 !important;
+        text-shadow: 0px 2px 3px rgba(0,0,0,0.1);
     }
     
     .subheader {
@@ -238,29 +239,29 @@ if not st.session_state.authenticated:
     
     .feature-card {
         background-color: white;
-        border-radius: 10px;
+        border-radius: 12px;
         padding: 1.5rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.08);
         margin-bottom: 1.5rem;
-        border-left: 4px solid #4F4F52;
+        border-top: 4px solid #2d8cff;
         transition: all 0.3s ease;
     }
     
     .feature-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-        border-left: 4px solid #7D7D82;
+        box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+        border-top: 4px solid #ff6b6b;
     }
     
     .feature-icon {
         font-size: 2.5rem;
-        color: #4F4F52;
+        color: #2d8cff;
         margin-bottom: 1rem;
     }
     
     .feature-title {
         font-weight: 600;
-        color: #1C1C1E;
+        color: #2d8cff;
         margin-bottom: 0.5rem;
         font-size: 1.1rem;
     }
@@ -395,20 +396,20 @@ if not st.session_state.authenticated:
     }
     
     .call-to-action {
-        background: #4F4F52;
-        padding: 2rem;
-        border-radius: 10px;
+        background: linear-gradient(135deg, #2d8cff, #0063cc);
+        padding: 2.5rem;
+        border-radius: 16px;
         color: white;
         text-align: center;
-        margin-top: 2rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        margin-top: 2.5rem;
+        box-shadow: 0 12px 30px rgba(45,140,255,0.3);
         transform: rotate(0);
         transition: all 0.3s ease;
     }
     
     .call-to-action:hover {
         transform: scale(1.02);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 15px 35px rgba(45,140,255,0.4);
     }
     
     .brands-section {
@@ -421,78 +422,46 @@ if not st.session_state.authenticated:
     }
     
     .stat-card {
-        background: #FFFFFF;
-        border-radius: 10px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        background: linear-gradient(135deg, white, #f5f9ff);
+        border-radius: 12px;
+        padding: 1.8rem;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.08);
         text-align: center;
         margin-bottom: 1.5rem;
         transition: all 0.3s ease;
-        border-left: 4px solid #4F4F52;
+        border-bottom: 4px solid transparent;
     }
     
     .stat-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.12);
     }
     
     .stat-card:nth-child(1) {
-        border-left-color: #4F4F52;
+        border-bottom-color: #4CAF50;
     }
     
     .stat-card:nth-child(2) {
-        border-left-color: #7D7D82;
+        border-bottom-color: #ff6b6b;
     }
     
     .stat-card:nth-child(3) {
-        border-left-color: #A0A0A4;
+        border-bottom-color: #ffbb33;
     }
     
     .stat-number {
-        font-size: 2rem;
+        font-size: 2.2rem;
         font-weight: 700;
-        color: #1C1C1E;
+        background: linear-gradient(135deg, #2d8cff, #0063cc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
         margin-bottom: 0.8rem;
     }
     
     .stat-label {
-        color: #6C6C70;
-        font-size: 0.95rem;
+        color: #5A6A85;
+        font-size: 1rem;
         font-weight: 500;
-    }
-    
-    /* Estilos para a imagem promocional */
-    .promo-image-container {
-        position: relative;
-        margin-bottom: 2rem;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-    
-    .promo-image {
-        width: 100%;
-        display: block;
-    }
-    
-    .promo-overlay {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background-color: rgba(255, 255, 255, 0.9);
-        padding: 1rem;
-    }
-    
-    .promo-overlay-title {
-        font-weight: 600;
-        color: #1C1C1E;
-        margin-bottom: 0.5rem;
-    }
-    
-    .promo-overlay-text {
-        color: #6C6C70;
-        font-size: 0.9rem;
     }
     
     /* Estilo para os campos de formulário */
@@ -511,21 +480,21 @@ if not st.session_state.authenticated:
     
     /* Estilo para o botão de enviar */
     .stButton > button {
-        background: #4F4F52 !important;
+        background: linear-gradient(135deg, #2d8cff, #0063cc) !important;
         color: white !important;
-        border-radius: 8px !important;
+        border-radius: 12px !important;
         padding: 0.7rem 1.2rem !important;
         font-weight: 600 !important;
         font-size: 1rem !important;
         border: none !important;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+        box-shadow: 0 4px 10px rgba(45,140,255,0.3) !important;
         transition: all 0.3s ease !important;
     }
     
     .stButton > button:hover {
-        background: #3A3A3D !important;
+        background: linear-gradient(135deg, #0063cc, #004a99) !important;
         transform: translateY(-2px) !important;
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2) !important;
+        box-shadow: 0 6px 15px rgba(45,140,255,0.4) !important;
     }
     
     /* Removendo elementos da interface Streamlit */
@@ -644,22 +613,13 @@ if not st.session_state.authenticated:
             </div>
             ''', unsafe_allow_html=True)
             
-        # Imagem promocional
+        # Informações sobre o sistema sem mencionar planos
         st.markdown("<h2>Transforme Seu Negócio com o Planner Organizer</h2>", unsafe_allow_html=True)
-        
-        # Imagem da profissional frustrada com papéis/planilhas
-        st.image("professional_woman.png", caption="")
-        st.markdown('''
-        <div style="background-color: rgba(255, 255, 255, 0.9); padding: 15px; border-radius: 8px; margin-top: -20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-            <div style="font-weight: 600; color: #4F4F52; font-size: 16px; margin-bottom: 8px;">Chega de dores de cabeça!</div>
-            <div style="color: #6C6C70; font-size: 14px; line-height: 1.4;">Abandone as planilhas desorganizadas e os papéis espalhados. Gerencie seu negócio de forma profissional e sem estresse.</div>
-        </div>
-        ''', unsafe_allow_html=True)
         
         st.markdown('''
         <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-            <h3 style="color: #4F4F52; margin-top: 0;">Por que escolher o Planner Organizer?</h3>
-            <ul style="margin-bottom: 0; padding-left: 25px; color: #1C1C1E;">
+            <h3 style="color: #1E366F; margin-top: 0;">Por que escolher o Planner Organizer?</h3>
+            <ul style="margin-bottom: 0; padding-left: 25px;">
                 <li style="margin-bottom: 10px;">Interface intuitiva desenvolvida especificamente para organizadores profissionais</li>
                 <li style="margin-bottom: 10px;">Acesso de qualquer dispositivo, a qualquer momento</li>
                 <li style="margin-bottom: 10px;">Suporte técnico brasileiro especializado</li>
@@ -684,7 +644,7 @@ if not st.session_state.authenticated:
         
         # Título da seção de login
         st.markdown('''
-        <h2 style="text-align: center; color: #4F4F52; margin-top: 0; margin-bottom: 25px;">Acesse sua conta</h2>
+        <h2 style="text-align: center; color: #1E366F; margin-top: 0; margin-bottom: 25px;">Acesse sua conta</h2>
         ''', unsafe_allow_html=True)
         
         # Login apenas com e-mail (botões sociais removidos conforme solicitado)
@@ -806,14 +766,14 @@ if not st.session_state.authenticated:
     
     # Seção de marcas/clientes
     st.markdown('''
-    <div class="brands-section" style="background-color: #f7f7f8; border-radius: 10px; padding: 1.5rem;">
-        <p style="color: #4F4F52; font-size: 0.9rem; margin-bottom: 1rem; text-align: center; font-weight: 500;">CONFIADO POR PERSONAL ORGANIZERS DE TODO O BRASIL</p>
+    <div class="brands-section">
+        <p style="color: #5A6A85; font-size: 0.9rem; margin-bottom: 1rem;">CONFIADO POR PERSONAL ORGANIZERS DE TODO O BRASIL</p>
         <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
-            <span style="color: #4F4F52; font-weight: 600; margin: 0 1rem;">Organizze Bem</span>
-            <span style="color: #4F4F52; font-weight: 600; margin: 0 1rem;">Expert Closets</span>
-            <span style="color: #4F4F52; font-weight: 600; margin: 0 1rem;">TopOrder Solutions</span>
-            <span style="color: #4F4F52; font-weight: 600; margin: 0 1rem;">Clean & Order</span>
-            <span style="color: #4F4F52; font-weight: 600; margin: 0 1rem;">Plann.Smart</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Organizze Bem</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Expert Closets</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">TopOrder Solutions</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Clean & Order</span>
+            <span style="color: #1E366F; font-weight: 600; margin: 0 1rem;">Plann.Smart</span>
         </div>
     </div>
     ''', unsafe_allow_html=True)
