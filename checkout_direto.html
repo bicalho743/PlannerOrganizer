@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout Direto - Planner Organizer</title>
+    <style>
+        :root {
+            --primary-color: #1E366F;
+            --secondary-color: #2196F3;
+            --highlight-color: #FF5722;
+            --gold-color: #FFC107;
+            --success-color: #4CAF50;
+            --gray-text: #757575;
+            --light-bg: #f9f9f9;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 0;
+        }
+        
+        header h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        header p {
+            color: var(--gray-text);
+            font-size: 1.2rem;
+        }
+        
+        .plans-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .plan-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 30px;
+            width: 320px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .plan-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+        
+        .recommended-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background-color: var(--highlight-color);
+            color: white;
+            padding: 8px 0;
+            transform: rotate(45deg) translate(15px, -15px);
+            width: 200px;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .plan-title {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .plan-price {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+            text-align: center;
+            margin: 15px 0 5px;
+        }
+        
+        .plan-period {
+            color: var(--gray-text);
+            font-size: 1rem;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .savings-badge {
+            background-color: #E8F5E9;
+            color: var(--success-color);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: block;
+            margin: 10px auto;
+            text-align: center;
+            width: 80%;
+        }
+        
+        .features-list {
+            list-style-type: none;
+            margin: 25px 0;
+        }
+        
+        .features-list li {
+            margin: 15px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        
+        .features-list li:before {
+            content: "✓";
+            color: var(--success-color);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+        
+        .checkout-button {
+            display: block;
+            width: 100%;
+            padding: 15px 0;
+            background-color: var(--secondary-color);
+            color: white;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-decoration: none;
+            transition: background-color 0.3s, transform 0.2s;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .checkout-button:hover {
+            background-color: #1976D2;
+            transform: scale(1.05);
+        }
+        
+        .checkout-button.annual {
+            background-color: var(--highlight-color);
+        }
+        
+        .checkout-button.annual:hover {
+            background-color: #E64A19;
+        }
+        
+        .checkout-button.lifetime {
+            background-color: var(--gold-color);
+            color: #333;
+        }
+        
+        .checkout-button.lifetime:hover {
+            background-color: #FFA000;
+        }
+        
+        .trial-section {
+            text-align: center;
+            margin: 60px 0;
+            padding: 40px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .trial-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .trial-section p {
+            color: var(--gray-text);
+            max-width: 600px;
+            margin: 0 auto 25px;
+        }
+        
+        .trial-button {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        .trial-button:hover {
+            background-color: #152a5c;
+            transform: scale(1.05);
+        }
+        
+        footer {
+            margin-top: 50px;
+            padding: 30px 0;
+            text-align: center;
+            color: var(--gray-text);
+        }
+        
+        footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .plans-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .plan-card {
+                width: 100%;
+                max-width: 350px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Planner Organizer</h1>
+            <p>Escolha o plano ideal para sua organização</p>
+        </header>
+        
+        <div class="plans-container">
+            <!-- Plano Mensal - UTILIZANDO LINK DIRETO DO STRIPE (SEM JAVASCRIPT) -->
+            <div class="plan-card">
+                <h2 class="plan-title">Plano Mensal</h2>
+                <div class="plan-price">R$9,70</div>
+                <div class="plan-period">por mês</div>
+                
+                <ul class="features-list">
+                    <li>Acesso a todos os recursos</li>
+                    <li>Suporte por e-mail</li>
+                    <li>Cancelamento a qualquer momento</li>
+                    <li>Ideal para testar o sistema</li>
+                </ul>
+                
+                <!-- Link direto do Stripe (não requer JavaScript) -->
+                <a href="https://buy.stripe.com/test_28og2t34LeLJ6mQ144" class="checkout-button">
+                    ASSINAR MENSAL
+                </a>
+            </div>
+            
+            <!-- Plano Anual - UTILIZANDO LINK DIRETO DO STRIPE (SEM JAVASCRIPT) -->
+            <div class="plan-card">
+                <div class="recommended-badge">RECOMENDADO</div>
+                <h2 class="plan-title">Plano Anual</h2>
+                <div class="plan-price">R$97,00</div>
+                <div class="plan-period">por ano</div>
+                <div class="savings-badge">ECONOMIZE 17%</div>
+                
+                <ul class="features-list">
+                    <li>Acesso a todos os recursos</li>
+                    <li>Suporte prioritário</li>
+                    <li>Atualizações gratuitas</li>
+                    <li>Treinamento personalizado</li>
+                    <li>Melhor custo-benefício</li>
+                </ul>
+                
+                <!-- Link direto do Stripe (não requer JavaScript) -->
+                <a href="https://buy.stripe.com/test_7sI7vRcJ56T29z8dQQ" class="checkout-button annual">
+                    ASSINAR ANUAL
+                </a>
+            </div>
+            
+            <!-- Plano Vitalício - UTILIZANDO LINK DIRETO DO STRIPE (SEM JAVASCRIPT) -->
+            <div class="plan-card">
+                <h2 class="plan-title">Acesso Vitalício</h2>
+                <div class="plan-price">R$247,00</div>
+                <div class="plan-period">pagamento único</div>
+                
+                <ul class="features-list">
+                    <li>Acesso permanente ao sistema</li>
+                    <li>Suporte prioritário</li>
+                    <li>Sem mensalidades futuras</li>
+                    <li>Acesso a todas as atualizações</li>
+                    <li>Melhor para longo prazo</li>
+                </ul>
+                
+                <!-- Link direto do Stripe (não requer JavaScript) -->
+                <a href="https://buy.stripe.com/test_eVa2bv34L1Aw29yfYZ" class="checkout-button lifetime">
+                    COMPRAR VITALÍCIO
+                </a>
+            </div>
+        </div>
+        
+        <div class="trial-section">
+            <h2>Não está pronto para assinar?</h2>
+            <p>Experimente grátis por 7 dias sem necessidade de cartão de crédito.</p>
+            <a href="/pages/iniciar_teste" class="trial-button">INICIAR TESTE GRATUITO</a>
+        </div>
+        
+        <footer>
+            <p>Planner Organizer &copy; 2025 - Todos os direitos reservados</p>
+            <p>
+                <a href="/termos">Termos de Uso</a> • 
+                <a href="/privacidade">Política de Privacidade</a> • 
+                <a href="mailto:contato@plannerorganizer.com.br">Contato</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

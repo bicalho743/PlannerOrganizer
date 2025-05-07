@@ -76,6 +76,7 @@ API_HOST = ""  # URLs relativas na mesma aplicação
 # Remover a barra lateral
 st.markdown("""
 <style>
+    /* Remove a barra lateral */
     [data-testid="collapsedControl"] {display: none;}
     section[data-testid="stSidebar"] {display: none;}
     
@@ -155,60 +156,64 @@ st.markdown("""
         margin-bottom: 20px;
     }
     
-    .pricing-features {
-        margin-bottom: 25px;
-    }
-    
-    .pricing-feature {
-        display: flex;
-        align-items: flex-start;
-        margin: 10px 0;
-        font-size: 0.95rem;
-        color: #333;
-    }
-    
-    .pricing-feature svg {
-        flex-shrink: 0;
-        margin-right: 10px;
-        color: #4CAF50;
-        font-size: 1.1rem;
-    }
-    
-    .pricing-button {
-        display: block;
+    /* Estilo para links de compra */
+    .stripe-link {
+        display: inline-block;
+        width: 100%;
         background-color: #2196F3;
         color: white;
         text-align: center;
-        padding: 12px;
-        border-radius: 5px;
-        font-weight: 600;
-        margin-top: 20px;
-        transition: background-color 0.3s ease;
+        padding: 12px 0;
         text-decoration: none;
-        cursor: pointer;
-        border: none;
-        width: 100%;
+        border-radius: 5px;
+        font-weight: bold;
+        margin-top: 15px;
+        transition: background-color 0.3s;
     }
     
-    .pricing-button:hover {
+    .stripe-link:hover {
         background-color: #1976D2;
     }
     
-    .pricing-button.anual {
+    .stripe-link.mensal {
+        background-color: #2196F3;
+    }
+    
+    .stripe-link.anual {
         background-color: #FF5722;
     }
     
-    .pricing-button.anual:hover {
+    .stripe-link.anual:hover {
         background-color: #E64A19;
     }
     
-    .pricing-button.vitalicio {
+    .stripe-link.vitalicio {
         background-color: #FFC107;
         color: #333;
     }
     
-    .pricing-button.vitalicio:hover {
+    .stripe-link.vitalicio:hover {
         background-color: #FFA000;
+    }
+    
+    .feature-list {
+        text-align: left;
+        list-style-type: none;
+        padding: 0;
+        margin: 20px 0;
+    }
+    
+    .feature-list li {
+        margin: 10px 0;
+        padding-left: 25px;
+        position: relative;
+    }
+    
+    .feature-list li:before {
+        content: "✓";
+        color: #4CAF50;
+        position: absolute;
+        left: 0;
     }
     
     .savings-badge {
@@ -294,15 +299,10 @@ with col1:
         st.error(f"Erro ao gerar URL de checkout: {str(e)}")
         
     if url_checkout:
-        # Abordagem com botão Streamlit nativo
-        if st.button("ASSINAR MENSAL", key="mensal_btn", type="primary", use_container_width=True):
-            # Abre o URL em uma nova aba - usando JavaScript
-            js = f"""<script>window.open("{url_checkout}", "_blank");</script>"""
-            st.markdown(js, unsafe_allow_html=True)
-            st.success("✅ Redirecionando para página de pagamento...")
-            
-            # Solução alternativa caso o JavaScript não funcione
-            st.markdown(f"**Se o navegador não abrir automaticamente, [clique aqui]({url_checkout})**")
+        # Usando um link markdown simples sem nenhum JavaScript ou React
+        st.markdown(f"""
+        <a href="{url_checkout}" target="_blank" class="checkout-button mensal">ASSINAR MENSAL</a>
+        """, unsafe_allow_html=True)
     else:
         st.error("Não foi possível gerar o link de pagamento mensal")
 
@@ -334,15 +334,10 @@ with col2:
         st.error(f"Erro ao gerar URL de checkout: {str(e)}")
         
     if url_checkout:
-        # Abordagem com botão Streamlit nativo
-        if st.button("ASSINAR ANUAL", key="anual_btn", type="primary", use_container_width=True):
-            # Abre o URL em uma nova aba - usando JavaScript
-            js = f"""<script>window.open("{url_checkout}", "_blank");</script>"""
-            st.markdown(js, unsafe_allow_html=True)
-            st.success("✅ Redirecionando para página de pagamento...")
-            
-            # Solução alternativa caso o JavaScript não funcione
-            st.markdown(f"**Se o navegador não abrir automaticamente, [clique aqui]({url_checkout})**")
+        # Usando um link markdown simples sem nenhum JavaScript ou React
+        st.markdown(f"""
+        <a href="{url_checkout}" target="_blank" class="checkout-button anual">ASSINAR ANUAL</a>
+        """, unsafe_allow_html=True)
     else:
         st.error("Não foi possível gerar o link de pagamento anual")
 
@@ -372,15 +367,10 @@ with col3:
         st.error(f"Erro ao gerar URL de checkout: {str(e)}")
         
     if url_checkout:
-        # Abordagem com botão Streamlit nativo
-        if st.button("COMPRAR VITALÍCIO", key="vitalicio_btn", type="primary", use_container_width=True):
-            # Abre o URL em uma nova aba - usando JavaScript
-            js = f"""<script>window.open("{url_checkout}", "_blank");</script>"""
-            st.markdown(js, unsafe_allow_html=True)
-            st.success("✅ Redirecionando para página de pagamento...")
-            
-            # Solução alternativa caso o JavaScript não funcione
-            st.markdown(f"**Se o navegador não abrir automaticamente, [clique aqui]({url_checkout})**")
+        # Usando um link markdown simples sem nenhum JavaScript ou React
+        st.markdown(f"""
+        <a href="{url_checkout}" target="_blank" class="checkout-button vitalicio">COMPRAR VITALÍCIO</a>
+        """, unsafe_allow_html=True)
     else:
         st.error("Não foi possível gerar o link de pagamento vitalício")
 

@@ -10,11 +10,17 @@ from utils.assinatura_db import registrar_assinatura
 import os
 from datetime import datetime, timedelta
 
+# Importação do router de checkout
+from api.checkout import router as checkout_router
+
 api = FastAPI(
     title="Personal Organizer API",
     description="API para sistema de gestão Personal Organizer",
     version="1.0.0"
 )
+
+# Incluir o router de checkout
+api.include_router(checkout_router)
 
 db = Database()
 

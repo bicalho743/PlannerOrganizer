@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planos - Planner Organizer</title>
+  <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f7fa;
+    }
+    
+    .pricing-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 40px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .pricing-card {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 25px;
+      width: 290px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .pricing-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 12px rgba(0,0,0,0.2);
+    }
+    
+    .highlight-badge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background-color: #FF5722;
+      color: white;
+      padding: 5px 15px;
+      transform: rotate(45deg) translate(15px, -15px);
+      width: 150px;
+      text-align: center;
+      font-size: 0.8rem;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .pricing-title {
+      color: #1E366F;
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+    }
+    
+    .pricing-price {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #2196F3;
+      margin: 15px 0 5px;
+    }
+    
+    .pricing-period {
+      color: #757575;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+    
+    .feature-list {
+      text-align: left;
+      list-style-type: none;
+      padding: 0;
+      margin: 20px 0;
+    }
+    
+    .feature-list li {
+      margin: 10px 0;
+      padding-left: 25px;
+      position: relative;
+    }
+    
+    .feature-list li:before {
+      content: "✓";
+      color: #4CAF50;
+      position: absolute;
+      left: 0;
+    }
+    
+    .savings-badge {
+      background-color: #E8F5E9;
+      color: #2E7D32;
+      padding: 5px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: inline-block;
+      margin-top: 5px;
+    }
+    
+    .checkout-button {
+      display: block;
+      width: 100%;
+      padding: 12px 0;
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-top: 20px;
+    }
+    
+    .checkout-button:hover {
+      background-color: #1976D2;
+    }
+    
+    .checkout-button.anual {
+      background-color: #FF5722;
+    }
+    
+    .checkout-button.anual:hover {
+      background-color: #E64A19;
+    }
+    
+    .checkout-button.vitalicio {
+      background-color: #FFC107;
+      color: #333;
+    }
+    
+    .checkout-button.vitalicio:hover {
+      background-color: #FFA000;
+    }
+    
+    .error-message {
+      color: #D32F2F;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const StripeCheckoutApp = () => {
+      const [loading, setLoading] = React.useState({
+        mensal: false,
+        anual: false,
+        vitalicio: false
+      });
+      const [error, setError] = React.useState(null);
+      
+      const handleCheckout = async (planType) => {
+        try {
+          setLoading(prev => ({ ...prev, [planType]: true }));
+          setError(null);
+          
+          const response = await axios.post("/api/create-checkout-session", { 
+            plan_type: planType 
+          });
+          
+          // Redireciona para a URL de checkout do Stripe
+          window.location.href = response.data.url;
+        } catch (error) {
+          console.error("Erro ao redirecionar para o Stripe:", error);
+          setError("Erro ao iniciar o checkout. Tente novamente.");
+        } finally {
+          setLoading(prev => ({ ...prev, [planType]: false }));
+        }
+      };
+      
+      return (
+        <div className="pricing-container">
+          {/* Plano Mensal */}
+          <div className="pricing-card">
+            <h3 className="pricing-title">Plano Mensal</h3>
+            <div className="pricing-price">R$9,70</div>
+            <div className="pricing-period">por mês</div>
+            
+            <ul className="feature-list">
+              <li>Acesso a todos os recursos</li>
+              <li>Suporte por e-mail</li>
+              <li>Cancelamento a qualquer momento</li>
+              <li>Ideal para testar o sistema</li>
+            </ul>
+            
+            <button 
+              className="checkout-button"
+              onClick={() => handleCheckout('mensal')}
+              disabled={loading.mensal}
+            >
+              {loading.mensal ? 'PROCESSANDO...' : 'ASSINAR MENSAL'}
+            </button>
+          </div>
+          
+          {/* Plano Anual */}
+          <div className="pricing-card">
+            <div className="highlight-badge">RECOMENDADO</div>
+            <h3 className="pricing-title">Plano Anual</h3>
+            <div className="pricing-price">R$97,00</div>
+            <div className="pricing-period">por ano</div>
+            <div className="savings-badge">ECONOMIZE 17%</div>
+            
+            <ul className="feature-list">
+              <li>Acesso a todos os recursos</li>
+              <li>Suporte prioritário</li>
+              <li>Atualizações gratuitas</li>
+              <li>Treinamento personalizado</li>
+              <li>Melhor custo-benefício</li>
+            </ul>
+            
+            <button 
+              className="checkout-button anual"
+              onClick={() => handleCheckout('anual')}
+              disabled={loading.anual}
+            >
+              {loading.anual ? 'PROCESSANDO...' : 'ASSINAR ANUAL'}
+            </button>
+          </div>
+          
+          {/* Plano Vitalício */}
+          <div className="pricing-card">
+            <h3 className="pricing-title">Acesso Vitalício</h3>
+            <div className="pricing-price">R$247,00</div>
+            <div className="pricing-period">pagamento único</div>
+            
+            <ul className="feature-list">
+              <li>Acesso permanente ao sistema</li>
+              <li>Suporte prioritário</li>
+              <li>Sem mensalidades futuras</li>
+              <li>Todas as atualizações inclusas</li>
+              <li>Melhor para longo prazo</li>
+            </ul>
+            
+            <button 
+              className="checkout-button vitalicio"
+              onClick={() => handleCheckout('vitalicio')}
+              disabled={loading.vitalicio}
+            >
+              {loading.vitalicio ? 'PROCESSANDO...' : 'COMPRAR VITALÍCIO'}
+            </button>
+          </div>
+          
+          {error && <div className="error-message">{error}</div>}
+        </div>
+      );
+    };
+    
+    ReactDOM.render(<StripeCheckoutApp />, document.getElementById('root'));
+  </script>
+</body>
+</html>
