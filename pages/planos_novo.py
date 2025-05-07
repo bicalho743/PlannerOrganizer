@@ -86,9 +86,19 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# Cards de planos
 col1, col2, col3 = st.columns(3)
 
 with col1:
+    # Cabeçalho do plano mensal
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 0.5rem;">
+        <h4 style="margin-bottom: 0.2rem; color: #1E366F;">Plano Mensal</h4>
+        <p style="font-size: 1.5rem; font-weight: bold; color: #FF9800; margin: 0;">R$ 49,90<span style="font-size: 0.9rem; font-weight: normal; color: #777;"> /mês</span></p>
+        <p style="font-size: 0.8rem; color: #555; margin-top: 0;">Pagamento recorrente mensal</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     # Botão do Stripe para plano mensal
     stripe_button_mensal = """
     <script async src="https://js.stripe.com/v3/buy-button.js"></script>
@@ -107,6 +117,15 @@ with col1:
         st.success("✅ Redirecionando para checkout...")
 
 with col2:
+    # Cabeçalho do plano anual
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 0.5rem;">
+        <h4 style="margin-bottom: 0.2rem; color: #1E366F;">Plano Anual</h4>
+        <p style="font-size: 1.5rem; font-weight: bold; color: #FF9800; margin: 0;">R$ 399,90<span style="font-size: 0.9rem; font-weight: normal; color: #777;"> /ano</span></p>
+        <p style="font-size: 0.8rem; color: #555; margin-top: 0;">Economize R$ 198,90 (33%)</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     # Botão do Stripe para plano anual (usando o mesmo botão por enquanto)
     stripe_button_anual = """
     <script async src="https://js.stripe.com/v3/buy-button.js"></script>
@@ -125,6 +144,15 @@ with col2:
         st.success("✅ Redirecionando para checkout...")
 
 with col3:
+    # Cabeçalho do plano vitalício
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 0.5rem;">
+        <h4 style="margin-bottom: 0.2rem; color: #1E366F;">Plano Vitalício</h4>
+        <p style="font-size: 1.5rem; font-weight: bold; color: #FF9800; margin: 0;">R$ 999,90</p>
+        <p style="font-size: 0.8rem; color: #555; margin-top: 0;">Pagamento único, acesso permanente</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     # Botão do Stripe para plano vitalício (usando o mesmo botão por enquanto)
     stripe_button_vitalicio = """
     <script async src="https://js.stripe.com/v3/buy-button.js"></script>
