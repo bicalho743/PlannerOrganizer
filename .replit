@@ -89,18 +89,6 @@ args = "Teste Planos"
 task = "workflow.run"
 args = "Planos Leve"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Planos HTML"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Servidor de páginas HTML"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Planos Teste"
-
 [[workflows.workflow]]
 name = "Importar Propostas"
 author = "agent"
@@ -266,8 +254,8 @@ agentRequireRestartOnSave = false
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run planos_simplificado.py --server.port 5010 --server.address 0.0.0.0"
-waitForPort = 5010
+args = "streamlit run planos_simple.py --server.port 5005 --server.address 0.0.0.0"
+waitForPort = 5005
 
 [[workflows.workflow]]
 name = "Start application"
@@ -337,35 +325,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run planos_leve.py --server.port 5000 --server.address 0.0.0.0"
-waitForPort = 5000
-
-[[workflows.workflow]]
-name = "Planos HTML"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run planos_html.py --server.port 8550 --server.address 0.0.0.0"
-waitForPort = 8550
-
-[[workflows.workflow]]
-name = "Servidor de páginas HTML"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run serve_pages.py --server.port 5001 --server.address 0.0.0.0"
-waitForPort = 5001
-
-[[workflows.workflow]]
-name = "Planos Teste"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run planos_leve.py --server.port 5020 --server.address 0.0.0.0"
-waitForPort = 5020
+args = "streamlit run planos_leve.py --server.port 5005 --server.address 0.0.0.0"
 
 [[ports]]
 localPort = 443

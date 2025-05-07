@@ -16,67 +16,38 @@ STRIPE_PRICE_ID_MENSAL = os.environ.get('STRIPE_PRICE_ID_MENSAL')
 STRIPE_PRICE_ID_ANUAL = os.environ.get('STRIPE_PRICE_ID_ANUAL')
 STRIPE_PRICE_ID_VITALICIO = os.environ.get('STRIPE_PRICE_ID_VITALICIO')
 
-# Configuração do Stripe
-STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY")
-print(f"DEBUG: STRIPE_API_KEY presente: {'Sim' if STRIPE_API_KEY else 'Não'}")
-print(f"DEBUG: STRIPE_PRICE_ID_MENSAL: {STRIPE_PRICE_ID_MENSAL}")
-print(f"DEBUG: STRIPE_PRICE_ID_ANUAL: {STRIPE_PRICE_ID_ANUAL}")
-print(f"DEBUG: STRIPE_PRICE_ID_VITALICIO: {STRIPE_PRICE_ID_VITALICIO}")
+# URL base para API
+API_HOST = os.environ.get('API_HOST', 'http://localhost:8000')
 
-# Criamos URLs diretas de checkout do Stripe, sem precisar do nosso backend como intermediário
-def criar_url_checkout_stripe(price_id):
+# Função para criar sessão de checkout para usuários não logados
+def criar_checkout_anonimo(plano):
     """
-    Cria uma URL direta de checkout do Stripe sem passar pelo nosso backend
-    Isso resolve o problema de sessão no FastAPI
+    Cria uma sessão de checkout para usuários não logados
     """
-    import stripe
+    endpoint = ""
     
-    if not STRIPE_API_KEY:
-        print("ERRO: STRIPE_API_KEY não configurada!")
-        return None  # Retorna None para tratamento adequado
-    
-    if not price_id:
-        print("ERRO: price_id não fornecido!")
-        return None  # Retorna None para tratamento adequado
-    
-    # Configurar a API do Stripe com a chave
-    stripe.api_key = STRIPE_API_KEY
-    
-    # URLs de sucesso e cancelamento
-    success_url = "http://localhost:5000/minha_assinatura?status=success"
-    cancel_url = "http://localhost:5000/planos?status=cancel"
+    if plano == "mensal":
+        endpoint = f"{API_HOST}/api/checkout/mensal"
+    elif plano == "anual":
+        endpoint = f"{API_HOST}/api/checkout/anual"
+    elif plano == "vitalicio":
+        endpoint = f"{API_HOST}/api/checkout/vitalicio"
     
     try:
-        print(f"Tentando criar sessão Stripe para price_id: {price_id}")
-        # Criando a sessão diretamente com o Stripe
-        checkout_session = stripe.checkout.Session.create(
-            payment_method_types=["card"],
-            line_items=[{
-                "price": price_id,
-                "quantity": 1
-            }],
-            mode="subscription",
-            success_url=success_url,
-            cancel_url=cancel_url,
-        )
+        response = requests.get(endpoint)
+        data = response.json()
         
-        # Retornar a URL da sessão de checkout
-        print(f"Sessão Stripe criada com sucesso: {checkout_session.url[:30]}...")
-        return checkout_session.url
+        if response.status_code == 200 and data.get('success'):
+            return data.get('checkout_url')
+        else:
+            return None
     except Exception as e:
-        print(f"ERRO ao criar sessão de checkout Stripe: {str(e)}")
+        st.error(f"Erro ao criar sessão de checkout: {str(e)}")
         return None
-
-# Definir URL base para API (agora usando URLs relativas)
-API_HOST = ""  # URLs relativas na mesma aplicação
-
-# Não precisamos mais desta função, usaremos a função criar_url_checkout_stripe
-# que cria URLs de checkout diretamente com a API Stripe
 
 # Remover a barra lateral
 st.markdown("""
 <style>
-    /* Remove a barra lateral */
     [data-testid="collapsedControl"] {display: none;}
     section[data-testid="stSidebar"] {display: none;}
     
@@ -156,64 +127,60 @@ st.markdown("""
         margin-bottom: 20px;
     }
     
-    /* Estilo para links de compra */
-    .stripe-link {
-        display: inline-block;
-        width: 100%;
+    .pricing-features {
+        margin-bottom: 25px;
+    }
+    
+    .pricing-feature {
+        display: flex;
+        align-items: flex-start;
+        margin: 10px 0;
+        font-size: 0.95rem;
+        color: #333;
+    }
+    
+    .pricing-feature svg {
+        flex-shrink: 0;
+        margin-right: 10px;
+        color: #4CAF50;
+        font-size: 1.1rem;
+    }
+    
+    .pricing-button {
+        display: block;
         background-color: #2196F3;
         color: white;
         text-align: center;
-        padding: 12px 0;
-        text-decoration: none;
+        padding: 12px;
         border-radius: 5px;
-        font-weight: bold;
-        margin-top: 15px;
-        transition: background-color 0.3s;
+        font-weight: 600;
+        margin-top: 20px;
+        transition: background-color 0.3s ease;
+        text-decoration: none;
+        cursor: pointer;
+        border: none;
+        width: 100%;
     }
     
-    .stripe-link:hover {
+    .pricing-button:hover {
         background-color: #1976D2;
     }
     
-    .stripe-link.mensal {
-        background-color: #2196F3;
-    }
-    
-    .stripe-link.anual {
+    .pricing-button.anual {
         background-color: #FF5722;
     }
     
-    .stripe-link.anual:hover {
+    .pricing-button.anual:hover {
         background-color: #E64A19;
     }
     
-    .stripe-link.vitalicio {
+    .pricing-button.vitalicio {
         background-color: #FFC107;
         color: #333;
     }
     
-    .stripe-link.vitalicio:hover {
+    .pricing-button.vitalicio:hover {
         background-color: #FFA000;
-    }
-    
-    .feature-list {
-        text-align: left;
-        list-style-type: none;
-        padding: 0;
-        margin: 20px 0;
-    }
-    
-    .feature-list li {
-        margin: 10px 0;
-        padding-left: 25px;
-        position: relative;
-    }
-    
-    .feature-list li:before {
-        content: "✓";
-        color: #4CAF50;
-        position: absolute;
-        left: 0;
     }
     
     .savings-badge {
@@ -288,23 +255,10 @@ with col1:
         </ul>
     </div>
     """, unsafe_allow_html=True)
-    # Tentar gerar URL direta do Stripe para o plano mensal
-    url_checkout = None
-    try:
-        if STRIPE_PRICE_ID_MENSAL:
-            url_checkout = criar_url_checkout_stripe(STRIPE_PRICE_ID_MENSAL)
-        else:
-            st.error("ID do plano mensal não configurado")
-    except Exception as e:
-        st.error(f"Erro ao gerar URL de checkout: {str(e)}")
-        
-    if url_checkout:
-        # Usando um link markdown simples sem nenhum JavaScript ou React
-        st.markdown(f"""
-        <a href="{url_checkout}" target="_blank" class="checkout-button mensal">ASSINAR MENSAL</a>
-        """, unsafe_allow_html=True)
-    else:
-        st.error("Não foi possível gerar o link de pagamento mensal")
+    if st.button("ASSINAR MENSAL", type="primary", key="mensal_btn"):
+        api_url = f"{API_HOST}/api/checkout/mensal"
+        st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'{api_url}\'">', unsafe_allow_html=True)
+        st.success("✅ Redirecionando para checkout Stripe...")
 
 with col2:
     st.markdown("""
@@ -323,23 +277,10 @@ with col2:
         </ul>
     </div>
     """, unsafe_allow_html=True)
-    # Tentar gerar URL direta do Stripe para o plano anual
-    url_checkout = None
-    try:
-        if STRIPE_PRICE_ID_ANUAL:
-            url_checkout = criar_url_checkout_stripe(STRIPE_PRICE_ID_ANUAL)
-        else:
-            st.error("ID do plano anual não configurado")
-    except Exception as e:
-        st.error(f"Erro ao gerar URL de checkout: {str(e)}")
-        
-    if url_checkout:
-        # Usando um link markdown simples sem nenhum JavaScript ou React
-        st.markdown(f"""
-        <a href="{url_checkout}" target="_blank" class="checkout-button anual">ASSINAR ANUAL</a>
-        """, unsafe_allow_html=True)
-    else:
-        st.error("Não foi possível gerar o link de pagamento anual")
+    if st.button("ASSINAR ANUAL", type="primary", key="anual_btn"):
+        api_url = f"{API_HOST}/api/checkout/anual"
+        st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'{api_url}\'">', unsafe_allow_html=True)
+        st.success("✅ Redirecionando para checkout Stripe...")
 
 with col3:
     st.markdown("""
@@ -356,23 +297,10 @@ with col3:
         </ul>
     </div>
     """, unsafe_allow_html=True)
-    # Tentar gerar URL direta do Stripe para o plano vitalício
-    url_checkout = None
-    try:
-        if STRIPE_PRICE_ID_VITALICIO:
-            url_checkout = criar_url_checkout_stripe(STRIPE_PRICE_ID_VITALICIO)
-        else:
-            st.error("ID do plano vitalício não configurado")
-    except Exception as e:
-        st.error(f"Erro ao gerar URL de checkout: {str(e)}")
-        
-    if url_checkout:
-        # Usando um link markdown simples sem nenhum JavaScript ou React
-        st.markdown(f"""
-        <a href="{url_checkout}" target="_blank" class="checkout-button vitalicio">COMPRAR VITALÍCIO</a>
-        """, unsafe_allow_html=True)
-    else:
-        st.error("Não foi possível gerar o link de pagamento vitalício")
+    if st.button("COMPRAR VITALÍCIO", type="primary", key="vitalicio_btn"):
+        api_url = f"{API_HOST}/api/checkout/vitalicio"
+        st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'{api_url}\'">', unsafe_allow_html=True)
+        st.success("✅ Redirecionando para checkout Stripe...")
 
 # Rodapé
 st.markdown("""
@@ -393,10 +321,5 @@ st.markdown("<br>", unsafe_allow_html=True)
 st.markdown("### Não está pronto para assinar?")
 st.markdown("Experimente grátis por 7 dias sem necessidade de cartão de crédito.")
 
-# Para o botão de teste gratuito, vamos usar uma abordagem diferente
-# Neste caso, vamos usar um botão normal do Streamlit que redireciona para uma página simples
-# de cadastro para iniciar o teste
-
-if st.button("INICIAR TESTE GRATUITO", type="primary", key="teste_btn", use_container_width=False):
-    # Redirecionando para a página de teste, que não necessita de middleware
-    st.page_link("/pages/iniciar_teste.py", label="Iniciar teste gratuito", icon="🔄")
+if st.button("INICIAR TESTE GRATUITO", type="secondary"):
+    st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'/api/iniciar_teste\'">', unsafe_allow_html=True)
