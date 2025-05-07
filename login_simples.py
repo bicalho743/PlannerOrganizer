@@ -243,13 +243,33 @@ def main():
             # Credenciais de demonstração para testes
             if username.lower() == "admin" and password == "admin":
                 st.session_state.authenticated = True
+                
+                # Configurar usuario_id para o admin
+                demo_usuario_id = "admin-demo-user-123"
+                st.session_state.usuario_id = demo_usuario_id
+                
                 st.session_state.usuario = {
+                    'id': demo_usuario_id,  # Adicionar ID também no objeto usuario
                     'email': 'admin@plannerorganizer.com',
                     'nome': 'Administrador',
                     'role': 'admin',
                     'telefone': '',
                     'empresa': 'Planner Organizer'
                 }
+                
+                # Importante: Reinicializar o Database com o ID do usuário
+                try:
+                    from utils.database import Database
+                    if 'db' in st.session_state:
+                        # Remover a instância antiga do Database
+                        del st.session_state.db
+                    
+                    print(f"DEBUG MULTI-TENANT: Reinicializando Database com usuario_id={demo_usuario_id} para usuário demo")
+                    # Criar nova instância com o ID do usuário
+                    st.session_state.db = Database(usuario_id=demo_usuario_id)
+                except Exception as db_error:
+                    print(f"DEBUG MULTI-TENANT: Erro ao reinicializar Database para demo: {str(db_error)}")
+                
                 st.rerun()
             else:
                 # Autenticação Firebase com tratamento de erros
@@ -261,6 +281,24 @@ def main():
                     
                     if result["success"]:
                         st.session_state.authenticated = True
+                        
+                        # Garantir que o usuário_id esteja definido corretamente
+                        if 'user' in result and 'localId' in result['user']:
+                            usuario_id = result['user']['localId']
+                            
+                            # Importante: Reinicializar o Database com o ID do usuário
+                            try:
+                                from utils.database import Database
+                                if 'db' in st.session_state:
+                                    # Remover a instância antiga do Database
+                                    del st.session_state.db
+                                
+                                print(f"DEBUG MULTI-TENANT: Reinicializando Database com usuario_id={usuario_id} após login bem-sucedido")
+                                # Criar nova instância com o ID do usuário
+                                st.session_state.db = Database(usuario_id=usuario_id)
+                            except Exception as db_error:
+                                print(f"DEBUG MULTI-TENANT: Erro ao reinicializar Database: {str(db_error)}")
+                        
                         st.rerun()
                     else:
                         # Mostrar mensagem de erro amigável
