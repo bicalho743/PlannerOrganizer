@@ -2,8 +2,8 @@
 
 Sistema de gerenciamento de negócios com foco em propostas, clientes e finanças.
 
-**Versão atual: 2.3.1 (28-04-2025)**
-**Última atualização: Simplificação do filtro financeiro e melhoria na visualização de lucros**
+**Versão atual: 3.0.0 (07-05-2025)**
+**Última atualização: Otimização do sistema para produção e melhoria no desempenho**
 
 ## Funcionalidades
 
@@ -19,7 +19,16 @@ Sistema de gerenciamento de negócios com foco em propostas, clientes e finança
 
 - Python 3.11+
 - PostgreSQL
-- Dependências listadas no arquivo `pyproject.toml`
+- Dependências listadas no arquivo `requirements.txt`
+
+## Variáveis de Ambiente
+
+Para o sistema funcionar corretamente, você precisará configurar as seguintes variáveis de ambiente:
+
+- `DATABASE_URL`: URL de conexão com o banco de dados PostgreSQL
+- `JWT_SECRET`: Chave secreta para geração de tokens JWT
+- `FIREBASE_API_KEY`: Chave da API do Firebase (autenticação)
+- `SENDGRID_API_KEY`: (Opcional) Chave da API do SendGrid para envio de e-mails
 
 ## Como Executar Localmente
 
