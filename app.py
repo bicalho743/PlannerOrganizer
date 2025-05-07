@@ -637,19 +637,22 @@ if not st.session_state.authenticated:
             </div>
             ''', unsafe_allow_html=True)
             
-        # Seção de Planos e Preços
-        st.markdown("<h2>Escolha o Plano Ideal Para o Seu Negócio</h2>", unsafe_allow_html=True)
+        # Informações sobre o sistema sem mencionar planos
+        st.markdown("<h2>Transforme Seu Negócio com o Planner Organizer</h2>", unsafe_allow_html=True)
         
-        # Mostrar os planos com os parâmetros otimizados para landing page
-        # Usando formato com espaço reduzido e sem a seção de benefícios duplicada
-        mostrar_planos(
-            com_titulo=False,  # False porque já temos um título acima
-            com_prova_social=False,  # False para layout mais compacto
-            com_teste_gratis=True,  # True para exibir a opção de período gratuito
-            com_destaque_plano_medio=True,  # True para destacar o plano anual
-            stripe_ready=True,  # True para botões prontos para Stripe
-            espacamento_reduzido=True  # True para reduzir o espaçamento
-        )
+        st.markdown('''
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+            <h3 style="color: #1E366F; margin-top: 0;">Por que escolher o Planner Organizer?</h3>
+            <ul style="margin-bottom: 0; padding-left: 25px;">
+                <li style="margin-bottom: 10px;">Interface intuitiva desenvolvida especificamente para organizadores profissionais</li>
+                <li style="margin-bottom: 10px;">Acesso de qualquer dispositivo, a qualquer momento</li>
+                <li style="margin-bottom: 10px;">Suporte técnico brasileiro especializado</li>
+                <li style="margin-bottom: 10px;">Documentação completa e tutoriais em vídeo</li>
+                <li>Atualizações constantes com novas funcionalidades</li>
+            </ul>
+        </div>
+        '''
+        , unsafe_allow_html=True)
         
         # CTA (Call to Action)
         st.markdown('''
