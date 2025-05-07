@@ -31,11 +31,10 @@ def show():
     
     # Criar abas para organizar o conteúdo com ícones para cada uma
     st.markdown('<div class="main-tabs">', unsafe_allow_html=True)
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3, tab4 = st.tabs([
         "➕ Nova Proposta", 
         "📁 Propostas em Aberto", 
         "⚙️ Em Execução", 
-        "✅ Finalizadas", 
         "📋 Todas as Propostas"
     ])
     st.markdown('</div>', unsafe_allow_html=True)
@@ -1869,15 +1868,11 @@ def show():
         
         # ABA 4: FINALIZADAS
         with tab4:
-            st.header("Propostas Finalizadas")
+            st.header("Todas as Propostas")
             
             if not propostas.empty:
-                # Filtrar propostas concluídas ou finalizadas
-                # Considerar tanto o status quanto o status_execucao
-                propostas_finalizadas = propostas_com_clientes[
-                    ((propostas_com_clientes['status'] == 'Concluída') | 
-                    (propostas_com_clientes['status'] == 'Finalizada')) |
-                    (propostas_com_clientes['status_execucao'] == 'Finalizada')
+                # Mostrar todas as propostas, sem filtro de status
+                propostas_finalizadas = propostas_com_clientes
                 ]
                 
                 if not propostas_finalizadas.empty:
