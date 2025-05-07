@@ -97,6 +97,14 @@ args = "Checkout Direto"
 task = "workflow.run"
 args = "Teste Stripe Direto"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Login Landing"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "App Renovado"
+
 [[workflows.workflow]]
 name = "Importar Propostas"
 author = "agent"
@@ -352,6 +360,23 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run teste_checkout_stripe.py --server.port 5010 --server.address 0.0.0.0"
 waitForPort = 5010
+
+[[workflows.workflow]]
+name = "Login Landing"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run login_landing.py --server.port 5001 --server.address 0.0.0.0"
+
+[[workflows.workflow]]
+name = "App Renovado"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run app_renovado.py --server.port 5002 --server.address 0.0.0.0"
+waitForPort = 5002
 
 [[ports]]
 localPort = 443
