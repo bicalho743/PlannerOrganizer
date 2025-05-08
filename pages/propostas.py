@@ -34,7 +34,7 @@ def show():
     tab1, tab2, tab3 = st.tabs([
         "📝 Propostas", 
         "⚙️ Em Execução", 
-        "📋 Todas as Propostas"
+        "📋 Propostas Finalizadas"
     ])
     st.markdown('</div>', unsafe_allow_html=True)
     
@@ -1872,7 +1872,7 @@ def show():
         
         # ABA 4: FINALIZADAS
         with tab4:
-            st.header("Todas as Propostas")
+            st.header("Propostas Finalizadas")
             
             if not propostas.empty:
                 # Mostrar todas as propostas, sem filtro de status

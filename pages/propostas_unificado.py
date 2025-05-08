@@ -34,7 +34,7 @@ def show():
     tab1, tab2, tab3 = st.tabs([
         "📝 Propostas", 
         "⚙️ Em Execução", 
-        "📋 Todas as Propostas"
+        "📋 Propostas Finalizadas"
     ])
     st.markdown('</div>', unsafe_allow_html=True)
     
@@ -526,9 +526,9 @@ def show():
             else:
                 st.info("Não há propostas em execução no momento.")
     
-    # ABA 3: TODAS AS PROPOSTAS
+    # ABA 3: PROPOSTAS FINALIZADAS
     with tab3:
-        st.header("Todas as Propostas")
+        st.header("Propostas Finalizadas")
         
         if 'propostas_com_clientes' in locals() and not propostas.empty:
             # Interface para filtrar propostas
