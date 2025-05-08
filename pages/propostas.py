@@ -1875,9 +1875,9 @@ def show():
             st.header("Propostas Finalizadas")
             
             if not propostas.empty:
-                # Filtrar apenas propostas com status "Finalizada"
+                # Filtrar apenas propostas com status "Finalizada" ou "Recusada"
                 propostas_finalizadas = propostas_com_clientes[
-                    propostas_com_clientes['status'] == 'Finalizada'
+                    propostas_com_clientes['status'].isin(['Finalizada', 'Recusada'])
                 ]
                 
                 if not propostas_finalizadas.empty:
