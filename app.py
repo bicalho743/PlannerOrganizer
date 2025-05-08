@@ -143,6 +143,14 @@ if st.session_state.show_planos:
 query_params = st.query_params
 if 'page' in query_params:
     if query_params['page'][0] == 'planos':
+        # Ocultar a barra lateral completamente antes de carregar a página de planos
+        st.markdown("""
+        <style>
+        [data-testid="collapsedControl"] {display: none !important;}
+        section[data-testid="stSidebar"] {display: none !important;}
+        </style>
+        """, unsafe_allow_html=True)
+        
         # Redirecionar para a página de planos
         try:
             from pages.planos import show
@@ -699,10 +707,9 @@ if not st.session_state.authenticated:
         '''
         , unsafe_allow_html=True)
         
-        # CTA (Call to Action) com link para a página de planos em nova aba
-        # Substituindo o botão do Streamlit por um link HTML que abre em nova aba
+        # CTA (Call to Action) com link para a página de planos em nova aba usando window.open()
         st.markdown("""
-        <a href="/app?page=planos" target="_blank" id="planos-link" 
+        <a href="javascript:void(0);" onclick="window.open('/?page=planos', '_blank');" id="planos-link" 
            style="display: inline-block; background-color: #4F4F52; color: white; 
                   text-align: center; padding: 1rem 2rem; text-decoration: none; 
                   border-radius: 10px; width: 100%; font-size: 1.2rem; 
