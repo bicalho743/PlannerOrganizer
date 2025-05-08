@@ -1876,53 +1876,42 @@ def show():
             st.header("Propostas Finalizadas")
             
             if not propostas.empty:
-                # Resetar o DataFrame para evitar problemas de referência
-                propostas_finalizadas = None
+                # Filtrar propostas concluídas ou finalizadas
+                # Considerar tanto o status quanto o status_execucao
+                propostas_finalizadas = propostas_com_clientes[
+                    ((propostas_com_clientes['status'] == 'Concluída') | 
+                    (propostas_com_clientes['status'] == 'Finalizada') |
+                    (propostas_com_clientes['status'] == 'Recusada')) |
+                    (propostas_com_clientes['status_execucao'] == 'Finalizada')
+                ]
                 
-                # Filtrar apenas propostas com status exatamente igual a "Finalizada" ou "Recusada"
-                propostas_somente_finalizadas = propostas_com_clientes[
-                    (propostas_com_clientes['status'] == 'Finalizada') | 
-                    (propostas_com_clientes['status'] == 'Recusada')
-                ].copy()
-                
-                # Mostrar o total de propostas finalizadas para diagnóstico
-                st.write(f"Total de propostas finalizadas: {len(propostas_somente_finalizadas)}")
-                
-                # Se houver propostas finalizadas, exibir
-                if not propostas_somente_finalizadas.empty:
-                    # Preparar um DataFrame limpo apenas com as colunas necessárias
+                if not propostas_finalizadas.empty:
+                    # Preparar DataFrame para exibição
                     df_finalizadas = pd.DataFrame()
-                    df_finalizadas['ID'] = propostas_somente_finalizadas['id']
-                    df_finalizadas['Número'] = propostas_somente_finalizadas['numero']
-                    df_finalizadas['Cliente'] = propostas_somente_finalizadas['nome']
-                    df_finalizadas['Descrição'] = propostas_somente_finalizadas['descricao']
-                    df_finalizadas['Status'] = propostas_somente_finalizadas['status']
+                    # Manter o ID como coluna oculta para referência
+                    df_finalizadas['ID'] = propostas_finalizadas['id']
+                    df_finalizadas['Número'] = propostas_finalizadas['numero']
+                    df_finalizadas['Cliente'] = propostas_finalizadas['nome']
+                    df_finalizadas['Descrição'] = propostas_finalizadas['descricao']
                     
                     # Formatar valor como moeda
-                    df_finalizadas['Valor (R$)'] = propostas_somente_finalizadas['valor'].apply(
-                        lambda x: f"R$ {float(x) if pd.notna(x) else 0.0:.2f}"
+                    df_finalizadas['Valor (R$)'] = propostas_finalizadas['valor'].apply(
+                        lambda x: f"R$ {x:.2f}" if x else "R$ 0.00"
                     )
                     
-                    # Formatar datas
-                    df_finalizadas['Data Início'] = propostas_somente_finalizadas['data_inicio'].apply(
+                    # Adicionar coluna de data formatada
+                    df_finalizadas['Data'] = propostas_finalizadas['data_inicio'].apply(
                         lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
                     )
                     
-                    df_finalizadas['Tipo'] = propostas_somente_finalizadas['tipo_proposta']
+                    # Adicionar tipo de proposta
+                    df_finalizadas['Tipo'] = propostas_finalizadas['tipo_proposta']
                     
-                    # Adicionar debug para cada proposta (apenas durante solução de problemas)
-                    for idx, proposta in propostas_somente_finalizadas.iterrows():
-                        st.write(f"Proposta #{proposta['numero']} - Status: {proposta['status']}")
-                    
-                    # Exibir a tabela sem a coluna ID
+                    # Exibir tabela de propostas finalizadas
                     st.dataframe(df_finalizadas.drop(columns=['ID']), hide_index=True)
-                    
-                    # Guardar referência para uso nas seções abaixo
-                    propostas_finalizadas = propostas_somente_finalizadas
-                    
                 else:
-                    st.info("Não há propostas finalizadas no sistema.")
-                    # Criar DataFrame vazio para evitar erros abaixo
+                    st.info("Não há propostas finalizadas no momento.")
+                    # Criar DataFrame vazio para uso subsequente
                     propostas_finalizadas = pd.DataFrame()
             else:
                 st.info("Não há propostas cadastradas no sistema.")
@@ -1930,7 +1919,7 @@ def show():
                 
             # Verificar se temos propostas finalizadas antes de mostrar a interface para reabrir/excluir
             if not propostas_finalizadas.empty:
-                    with st.expander("Reabrir Proposta Finalizada"):
+                with st.expander("Reabrir Proposta Finalizada"):
                         # Obter lista de números de propostas finalizadas para o select box
                         numeros_propostas = propostas_finalizadas['numero'].tolist()
                         numeros_propostas.sort()  # Ordenar para facilitar a seleção
@@ -1973,8 +1962,8 @@ def show():
                                 except Exception as e:
                                     st.error(f"Erro ao reabrir proposta: {str(e)}")
                     
-                    # Adicionar área para exclusão de proposta
-                    with st.expander("Excluir Proposta Finalizada"):
+                # Adicionar área para exclusão de proposta
+                with st.expander("Excluir Proposta Finalizada"):
                         # Obter lista de números de propostas finalizadas para o select box
                         numeros_propostas = propostas_finalizadas['numero'].tolist()
                         numeros_propostas.sort()  # Ordenar para facilitar a seleção
@@ -2005,146 +1994,146 @@ def show():
                         else:
                             st.info("Selecione uma proposta válida para excluir.")
                     
-                    # Ações para propostas finalizadas
-                    st.subheader("Documentos")
+                # Ações para propostas finalizadas
+                st.subheader("Documentos")
+                
+                # Obter lista de números de propostas para o select box
+                numeros_propostas_finalizadas = propostas_finalizadas['numero'].tolist()
+                numeros_propostas_finalizadas.sort()  # Ordenar para facilitar a seleção
+                
+                proposta_numero = st.selectbox(
+                    "Selecione o número da proposta:",
+                    numeros_propostas_finalizadas,
+                    key="numero_proposta_finalizada_docs"
+                )
+                
+                # Verificar se a proposta existe
+                proposta_final = propostas_finalizadas[propostas_finalizadas['numero'] == proposta_numero]
+                
+                if not proposta_final.empty:
+                    st.write(f"Proposta #{proposta_final.iloc[0]['numero']} - {proposta_final.iloc[0]['descricao']}")
                     
-                    # Obter lista de números de propostas para o select box
-                    numeros_propostas_finalizadas = propostas_finalizadas['numero'].tolist()
-                    numeros_propostas_finalizadas.sort()  # Ordenar para facilitar a seleção
+                    col1, col2 = st.columns(2)
                     
-                    proposta_numero = st.selectbox(
-                        "Selecione o número da proposta:",
-                        numeros_propostas_finalizadas,
-                        key="numero_proposta_finalizada_docs"
-                    )
-                    
-                    # Verificar se a proposta existe
-                    proposta_final = propostas_finalizadas[propostas_finalizadas['numero'] == proposta_numero]
-                    
-                    if not proposta_final.empty:
-                        st.write(f"Proposta #{proposta_final.iloc[0]['numero']} - {proposta_final.iloc[0]['descricao']}")
+                    with col1:
+                        if st.button("Gerar Relatório para Cliente", key=f"relatorio_cliente_{proposta_numero}"):
+                            with st.spinner("Gerando relatório para cliente..."):
+                                try:
+                                    # Obter dados da proposta
+                                    proposta_dict = proposta_final.iloc[0].to_dict()
+                                    
+                                    # Obter dados do cliente
+                                    cliente = st.session_state.db.get_cliente_by_id(proposta_dict['cliente_id'])
+                                    cliente_dict = cliente.iloc[0].to_dict() if not cliente.empty else {'nome': 'Cliente não encontrado'}
+                                    
+                                    # Obter acréscimos da proposta
+                                    acrescimos = st.session_state.db.get_acrescimos_proposta(proposta_dict['id'])
+                                    
+                                    # Definir caminho do arquivo com o formato solicitado (relatório + número da proposta + nome do cliente)
+                                    nome_cliente_formatado = cliente_dict['nome'].replace(' ', '_').replace('/', '_').replace('\\', '_')
+                                    relatorio_path = f"pdfs/relatorio_{proposta_dict['numero']}_{nome_cliente_formatado}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                                    
+                                    # Gerar o PDF diretamente chamando o relatório de serviço para propostas finalizadas
+                                    print("DEBUG: Chamando diretamente o gerador de relatório de serviço novo!")
+                                    from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
+                                    pdf_path = gerar_pdf_relatorio_servico(proposta_dict, cliente_dict, acrescimos, relatorio_path)
+                                    
+                                    # Criar link para download
+                                    with open(pdf_path, "rb") as pdf_file:
+                                        pdf_bytes = pdf_file.read()
+                                    
+                                    # Mostrar mensagem de sucesso
+                                    st.success(f"Relatório para cliente gerado com sucesso!")
+                                    
+                                    # Criar botão de download com key única
+                                    download_key = f"download_cliente_{proposta_dict['numero']}_{datetime.now().strftime('%H%M%S')}"
+                                    st.download_button(
+                                        label="Download do Relatório",
+                                        data=pdf_bytes,
+                                        file_name=f"relatório_{proposta_dict['numero']}_{cliente_dict['nome']}.pdf",
+                                        mime="application/pdf",
+                                        key=download_key
+                                    )
+                                except Exception as e:
+                                    st.error(f"Erro ao gerar relatório para cliente: {str(e)}")
                         
-                        col1, col2 = st.columns(2)
-                        
-                        with col1:
-                            if st.button("Gerar Relatório para Cliente", key=f"relatorio_cliente_{proposta_numero}"):
-                                with st.spinner("Gerando relatório para cliente..."):
-                                    try:
-                                        # Obter dados da proposta
-                                        proposta_dict = proposta_final.iloc[0].to_dict()
+                    with col2:
+                        if st.button("Gerar Relatório Interno", key=f"relatorio_interno_{proposta_numero}"):
+                            with st.spinner("Gerando relatório interno..."):
+                                try:
+                                    # Obter dados da proposta
+                                    proposta_dict = proposta_final.iloc[0].to_dict()
+                                    
+                                    # Obter dados do cliente
+                                    cliente = st.session_state.db.get_cliente_by_id(proposta_dict['cliente_id'])
+                                    cliente_dict = cliente.iloc[0].to_dict() if not cliente.empty else {'nome': 'Cliente não encontrado'}
+                                    
+                                    # Obter acréscimos da proposta
+                                    acrescimos = st.session_state.db.get_acrescimos_proposta(proposta_dict['id'])
+                                    
+                                    # Obter transações financeiras relacionadas à proposta
+                                    # Filtrar para obter as comissões
+                                    financeiro = st.session_state.db.get_financeiro(include_all=True)
+                                    print(f"DEBUG: Total de transações financeiras: {len(financeiro)}")
+                                    
+                                    if not financeiro.empty:
+                                        print(f"DEBUG: Procurando comissões para proposta ID={proposta_dict['id']}")
+                                        print(f"DEBUG: Colunas disponíveis: {financeiro.columns.tolist()}")
                                         
-                                        # Obter dados do cliente
-                                        cliente = st.session_state.db.get_cliente_by_id(proposta_dict['cliente_id'])
-                                        cliente_dict = cliente.iloc[0].to_dict() if not cliente.empty else {'nome': 'Cliente não encontrado'}
-                                        
-                                        # Obter acréscimos da proposta
-                                        acrescimos = st.session_state.db.get_acrescimos_proposta(proposta_dict['id'])
-                                        
-                                        # Definir caminho do arquivo com o formato solicitado (relatório + número da proposta + nome do cliente)
-                                        nome_cliente_formatado = cliente_dict['nome'].replace(' ', '_').replace('/', '_').replace('\\', '_')
-                                        relatorio_path = f"pdfs/relatorio_{proposta_dict['numero']}_{nome_cliente_formatado}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-                                        
-                                        # Gerar o PDF diretamente chamando o relatório de serviço para propostas finalizadas
-                                        print("DEBUG: Chamando diretamente o gerador de relatório de serviço novo!")
-                                        from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
-                                        pdf_path = gerar_pdf_relatorio_servico(proposta_dict, cliente_dict, acrescimos, relatorio_path)
-                                        
-                                        # Criar link para download
-                                        with open(pdf_path, "rb") as pdf_file:
-                                            pdf_bytes = pdf_file.read()
-                                        
-                                        # Mostrar mensagem de sucesso
-                                        st.success(f"Relatório para cliente gerado com sucesso!")
-                                        
-                                        # Criar botão de download com key única
-                                        download_key = f"download_cliente_{proposta_dict['numero']}_{datetime.now().strftime('%H%M%S')}"
-                                        st.download_button(
-                                            label="Download do Relatório",
-                                            data=pdf_bytes,
-                                            file_name=f"relatório_{proposta_dict['numero']}_{cliente_dict['nome']}.pdf",
-                                            mime="application/pdf",
-                                            key=download_key
-                                        )
-                                    except Exception as e:
-                                        st.error(f"Erro ao gerar relatório para cliente: {str(e)}")
-                        
-                        with col2:
-                            if st.button("Gerar Relatório Interno", key=f"relatorio_interno_{proposta_numero}"):
-                                with st.spinner("Gerando relatório interno..."):
-                                    try:
-                                        # Obter dados da proposta
-                                        proposta_dict = proposta_final.iloc[0].to_dict()
-                                        
-                                        # Obter dados do cliente
-                                        cliente = st.session_state.db.get_cliente_by_id(proposta_dict['cliente_id'])
-                                        cliente_dict = cliente.iloc[0].to_dict() if not cliente.empty else {'nome': 'Cliente não encontrado'}
-                                        
-                                        # Obter acréscimos da proposta
-                                        acrescimos = st.session_state.db.get_acrescimos_proposta(proposta_dict['id'])
-                                        
-                                        # Obter transações financeiras relacionadas à proposta
-                                        # Filtrar para obter as comissões
-                                        financeiro = st.session_state.db.get_financeiro(include_all=True)
-                                        print(f"DEBUG: Total de transações financeiras: {len(financeiro)}")
-                                        
-                                        if not financeiro.empty:
-                                            print(f"DEBUG: Procurando comissões para proposta ID={proposta_dict['id']}")
-                                            print(f"DEBUG: Colunas disponíveis: {financeiro.columns.tolist()}")
+                                        # Verificar se proposta_id existe nas colunas
+                                        if 'proposta_id' in financeiro.columns:
+                                            # Mostrar alguns valores de proposta_id para debug
+                                            proposta_ids = financeiro['proposta_id'].dropna().unique()
+                                            print(f"DEBUG: Valores únicos de proposta_id: {proposta_ids}")
                                             
-                                            # Verificar se proposta_id existe nas colunas
-                                            if 'proposta_id' in financeiro.columns:
-                                                # Mostrar alguns valores de proposta_id para debug
-                                                proposta_ids = financeiro['proposta_id'].dropna().unique()
-                                                print(f"DEBUG: Valores únicos de proposta_id: {proposta_ids}")
+                                            # Filtrar por proposta_id
+                                            transacoes_proposta = financeiro[financeiro['proposta_id'] == proposta_dict['id']]
+                                            print(f"DEBUG: Transações desta proposta: {len(transacoes_proposta)}")
+                                            
+                                            # Mostrar todas as transações para esta proposta para debug
+                                            if not transacoes_proposta.empty:
+                                                print("DEBUG: Transações encontradas para esta proposta:")
+                                                for idx, tx in transacoes_proposta.iterrows():
+                                                    print(f"DEBUG: Transação {idx}: {tx['descricao']}, tipo={tx.get('tipo', 'N/A')}, categoria={tx.get('categoria', 'N/A')}, subcategoria={tx.get('subcategoria', 'N/A')}, valor={tx.get('valor', 0)}")
+                                        else:
+                                            print("DEBUG: Coluna 'proposta_id' não encontrada no DataFrame financeiro")
+                                            
+                                        # Filtrar as comissões - analisar valores categorizados como "Comissão de Fornecedor"
+                                        comissoes = financeiro[
+                                            (financeiro['proposta_id'] == proposta_dict['id']) & 
+                                            (
+                                                (financeiro['categoria'].str.lower().str.contains('comissão')) | 
+                                                (financeiro['categoria'].str.lower().str.contains('comissao')) | 
+                                                (financeiro['subcategoria'].str.lower().str.contains('comissão')) |
+                                                (financeiro['subcategoria'].str.lower().str.contains('comissao')) |
+                                                (financeiro['tipo_receita'].str.lower().str.contains('comissão')) |
+                                                (financeiro['tipo_receita'].str.lower().str.contains('comissao'))
+                                            )
+                                        ]
+                                        
+                                        # Converter comissões para o mesmo formato dos acréscimos
+                                        if not comissoes.empty:
+                                            print(f"DEBUG: Encontradas {len(comissoes)} comissões para a proposta {proposta_dict['id']}")
+                                            # Adicionar coluna 'comissao' para indicar que são registros de comissão
+                                            for _, comissao in comissoes.iterrows():
+                                                print(f"DEBUG: Comissão encontrada: {comissao['descricao']} - R$ {comissao['valor']}")
                                                 
-                                                # Filtrar por proposta_id
-                                                transacoes_proposta = financeiro[financeiro['proposta_id'] == proposta_dict['id']]
-                                                print(f"DEBUG: Transações desta proposta: {len(transacoes_proposta)}")
+                                                # Adicionar ao DataFrame de acréscimos
+                                                novo_acrescimo = {
+                                                    'id': comissao['id'], 
+                                                    'tipo': 'COMISSÃO',
+                                                    'fornecedor': comissao.get('origem_tipo', ''),
+                                                    'descricao': comissao['descricao'],
+                                                    'valor': comissao['valor'],
+                                                    'status_pagamento': comissao['status'],
+                                                    'data_cadastro': comissao['data'],
+                                                    'categoria': comissao['categoria'],
+                                                    'subcategoria': comissao['subcategoria'],
+                                                    'tipo_receita': comissao.get('tipo_receita', '')
+                                                }
                                                 
-                                                # Mostrar todas as transações para esta proposta para debug
-                                                if not transacoes_proposta.empty:
-                                                    print("DEBUG: Transações encontradas para esta proposta:")
-                                                    for idx, tx in transacoes_proposta.iterrows():
-                                                        print(f"DEBUG: Transação {idx}: {tx['descricao']}, tipo={tx.get('tipo', 'N/A')}, categoria={tx.get('categoria', 'N/A')}, subcategoria={tx.get('subcategoria', 'N/A')}, valor={tx.get('valor', 0)}")
-                                            else:
-                                                print("DEBUG: Coluna 'proposta_id' não encontrada no DataFrame financeiro")
-                                            
-                                            # Filtrar as comissões - analisar valores categorizados como "Comissão de Fornecedor"
-                                            comissoes = financeiro[
-                                                (financeiro['proposta_id'] == proposta_dict['id']) & 
-                                                (
-                                                    (financeiro['categoria'].str.lower().str.contains('comissão')) | 
-                                                    (financeiro['categoria'].str.lower().str.contains('comissao')) | 
-                                                    (financeiro['subcategoria'].str.lower().str.contains('comissão')) |
-                                                    (financeiro['subcategoria'].str.lower().str.contains('comissao')) |
-                                                    (financeiro['tipo_receita'].str.lower().str.contains('comissão')) |
-                                                    (financeiro['tipo_receita'].str.lower().str.contains('comissao'))
-                                                )
-                                            ]
-                                            
-                                            # Converter comissões para o mesmo formato dos acréscimos
-                                            if not comissoes.empty:
-                                                print(f"DEBUG: Encontradas {len(comissoes)} comissões para a proposta {proposta_dict['id']}")
-                                                # Adicionar coluna 'comissao' para indicar que são registros de comissão
-                                                for _, comissao in comissoes.iterrows():
-                                                    print(f"DEBUG: Comissão encontrada: {comissao['descricao']} - R$ {comissao['valor']}")
-                                                    
-                                                    # Adicionar ao DataFrame de acréscimos
-                                                    novo_acrescimo = {
-                                                        'id': comissao['id'], 
-                                                        'tipo': 'COMISSÃO',
-                                                        'fornecedor': comissao.get('origem_tipo', ''),
-                                                        'descricao': comissao['descricao'],
-                                                        'valor': comissao['valor'],
-                                                        'status_pagamento': comissao['status'],
-                                                        'data_cadastro': comissao['data'],
-                                                        'categoria': comissao['categoria'],
-                                                        'subcategoria': comissao['subcategoria'],
-                                                        'tipo_receita': comissao.get('tipo_receita', '')
-                                                    }
-                                                    
-                                                    # Adicionar ao DataFrame de acréscimos
-                                                    acrescimos = pd.concat([acrescimos, pd.DataFrame([novo_acrescimo])], ignore_index=True)
+                                                # Adicionar ao DataFrame de acréscimos
+                                                acrescimos = pd.concat([acrescimos, pd.DataFrame([novo_acrescimo])], ignore_index=True)
                                         
                                         # Definir caminho do arquivo
                                         # Nome do arquivo inclui o nome do cliente para fácil identificação
@@ -2171,8 +2160,8 @@ def show():
                                             mime="application/pdf",
                                             key=download_key
                                         )
-                                    except Exception as e:
-                                        st.error(f"Erro ao gerar relatório interno: {str(e)}")
+                                except Exception as e:
+                                    st.error(f"Erro ao gerar relatório interno: {str(e)}")
                         
                         # Fechamento da div da área de trabalho
                         st.markdown('</div>', unsafe_allow_html=True)
