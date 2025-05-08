@@ -619,8 +619,8 @@ def show():
             else:
                 st.info("Não há propostas cadastradas no sistema.")
         
-        # ABA 3: EM EXECUÇÃO
-        with tab3:
+        # ABA 2: EM EXECUÇÃO
+        with tab2:
             st.header("Propostas em Execução")
             
             if not propostas.empty:
