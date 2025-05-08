@@ -689,7 +689,7 @@ if not st.session_state.authenticated:
         <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
             <h3 style="color: #4F4F52; margin-top: 0;">Por que escolher o Planner Organizer?</h3>
             <ul style="margin-bottom: 0; padding-left: 25px; color: #1C1C1E;">
-                <li style="margin-bottom: 10px;">Interface intuitiva desenvolvida especificamente para organizadores profissionais</li>
+                <li style="margin-bottom: 10px;">Interface intuitiva desenvolvida especificamente para personal organizers</li>
                 <li style="margin-bottom: 10px;">Acesso de qualquer dispositivo, a qualquer momento</li>
                 <li style="margin-bottom: 10px;">Suporte técnico brasileiro especializado</li>
                 <li style="margin-bottom: 10px;">Documentação completa e tutoriais em vídeo</li>
@@ -879,10 +879,10 @@ if not st.session_state.authenticated:
         <p style="color: #4F4F52; font-size: 0.9rem; margin-bottom: 1rem; text-align: center; font-weight: 500;">CONFIADO POR PERSONAL ORGANIZERS DE TODO O BRASIL</p>
         <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
             <span style="color: #4F4F52; font-weight: 600; margin: 0 1rem;">Organizze Bem</span>
-            <span style="color: #4F4F52; font-weight: 600; margin: 0 1rem;">Expert Closets</span>
-            <span style="color: #4F4F52; font-weight: 600; margin: 0 1rem;">TopOrder Solutions</span>
-            <span style="color: #4F4F52; font-weight: 600; margin: 0 1rem;">Clean & Order</span>
-            <span style="color: #4F4F52; font-weight: 600; margin: 0 1rem;">Plann.Smart</span>
+            <span style="color: #4F4F52; font-weight: 600; margin: 0 1rem;">Armários Perfeitos</span>
+            <span style="color: #4F4F52; font-weight: 600; margin: 0 1rem;">Solução Organizada</span>
+            <span style="color: #4F4F52; font-weight: 600; margin: 0 1rem;">Limpeza & Ordem</span>
+            <span style="color: #4F4F52; font-weight: 600; margin: 0 1rem;">PlanejaSmart</span>
         </div>
     </div>
     ''', unsafe_allow_html=True)
