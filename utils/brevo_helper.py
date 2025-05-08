@@ -53,12 +53,17 @@ def adicionar_contato_brevo(email, nome_completo=""):
     # Adicionar à lista específica se configurada
     if lista_brevo_id:
         try:
-            # Tentar converter para inteiro
-            list_id = int(lista_brevo_id)
-            contato["listIds"] = [list_id]
+            # Tentar extrair o número do ID (remover caracteres como '#')
+            cleaned_id = ''.join(c for c in lista_brevo_id if c.isdigit())
+            if cleaned_id:
+                list_id = int(cleaned_id)
+                contato["listIds"] = [list_id]
+                logger.info(f"Usando ID da lista Brevo: {list_id} (original: '{lista_brevo_id}')")
+            else:
+                logger.warning(f"BREVO_LIST_ID não contém números: '{lista_brevo_id}'. Não usando lista específica.")
         except (ValueError, TypeError):
             # Se não for possível converter, registrar um erro mas continuar
-            logger.error(f"BREVO_LIST_ID inválido: '{lista_brevo_id}'. Deve ser um número inteiro.")
+            logger.error(f"BREVO_LIST_ID inválido após limpeza: '{lista_brevo_id}'. Deve ser possível extrair um número.")
             # Não usar listIds neste caso, apenas adicionar o contato
     
     try:
@@ -323,12 +328,17 @@ def exportar_contatos_para_brevo():
             # Adicionar à lista específica se configurada
             if lista_brevo_id:
                 try:
-                    # Tentar converter para inteiro
-                    list_id = int(lista_brevo_id)
-                    dados_contato["listIds"] = [list_id]
+                    # Tentar extrair o número do ID (remover caracteres como '#')
+                    cleaned_id = ''.join(c for c in lista_brevo_id if c.isdigit())
+                    if cleaned_id:
+                        list_id = int(cleaned_id)
+                        dados_contato["listIds"] = [list_id]
+                        logger.info(f"Usando ID da lista Brevo: {list_id} (original: '{lista_brevo_id}')")
+                    else:
+                        logger.warning(f"BREVO_LIST_ID não contém números: '{lista_brevo_id}'. Não usando lista específica.")
                 except (ValueError, TypeError):
                     # Se não for possível converter, registrar um erro mas continuar
-                    logger.error(f"BREVO_LIST_ID inválido: '{lista_brevo_id}'. Deve ser um número inteiro.")
+                    logger.error(f"BREVO_LIST_ID inválido após limpeza: '{lista_brevo_id}'. Deve ser possível extrair um número.")
                     # Não usar listIds neste caso, apenas adicionar o contato
             
             # Enviar para a API
