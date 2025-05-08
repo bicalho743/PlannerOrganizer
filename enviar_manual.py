@@ -64,9 +64,20 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def main():
-    # Verificar se o manual existe
-    manual_path = os.path.join("pdfs", "Manual_Planner_Organizer.pdf")
-    if not os.path.exists(manual_path):
+    # Verificar se o manual existe (tentando ambos os nomes de arquivo possíveis)
+    manual_paths = [
+        os.path.join("pdfs", "Manual_Planner_Organizer.pdf"),
+        os.path.join("pdfs", "manual_sistema.pdf")
+    ]
+    
+    # Encontrar o primeiro arquivo que existe
+    manual_path = None
+    for path in manual_paths:
+        if os.path.exists(path):
+            manual_path = path
+            break
+    
+    if not manual_path:
         st.error("⚠️ Manual Planner Organizer não encontrado. Por favor, verifique a pasta pdfs.")
         st.stop()
     

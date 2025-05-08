@@ -19,38 +19,6 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Importar Propostas"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Limpar Clientes"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Importar Clientes"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Importar Propostas V2"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Importação Direta V2"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Examinar Tabela Propostas"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Limpar Propostas"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Sistema de Backup"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Login"
 
 [[workflows.workflow.tasks]]
@@ -68,126 +36,6 @@ args = "API FastAPI"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Enviar Manual Sistema"
-
-[[workflows.workflow]]
-name = "Importar Propostas"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run importar_propostas.py --server.port 8505 --server.address 0.0.0.0"
-waitForPort = 8505
-
-[[workflows.workflow]]
-name = "Limpar Clientes"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run limpar_clientes.py --server.port 8506 --server.address 0.0.0.0"
-waitForPort = 8506
-
-[[workflows.workflow]]
-name = "Importar Clientes"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run importar_clientes.py --server.port 8507 --server.address 0.0.0.0"
-waitForPort = 8507
-
-[[workflows.workflow]]
-name = "Importar Propostas V2"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run importar_propostas_v2.py --server.port 8501 --server.address 0.0.0.0"
-waitForPort = 8501
-
-[[workflows.workflow]]
-name = "Importação Direta V2"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run propostas_direto.py --server.port 8510 --server.address 0.0.0.0"
-waitForPort = 8510
-
-[[workflows.workflow]]
-name = "Examinar Tabela Propostas"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run examinar_tabela_propostas.py --server.port 8515 --server.address 0.0.0.0"
-waitForPort = 8515
-
-[[workflows.workflow]]
-name = "Limpar Propostas"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run limpar_propostas.py --server.port 8509 --server.address 0.0.0.0"
-waitForPort = 8509
-
-[[workflows.workflow]]
-name = "Sistema de Backup"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run criar_ponto_backup.py --server.port 8530 --server.address 0.0.0.0"
-waitForPort = 8530
 
 [[workflows.workflow]]
 name = "Gerar Manual"
@@ -253,8 +101,8 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run enviar_manual.py --server.port 8520 --server.address 0.0.0.0"
-waitForPort = 8520
+args = "streamlit run enviar_manual.py --server.port 9000 --server.address 0.0.0.0"
+waitForPort = 9000
 
 [[ports]]
 localPort = 443
