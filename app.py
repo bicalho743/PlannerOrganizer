@@ -121,9 +121,18 @@ if st.session_state.show_politica:
 
 # Verificar se a URL contém parâmetros de página específicos
 query_params = st.query_params
-if 'page' in query_params and (query_params['page'][0] == 'planos' or query_params['page'][0] == 'iniciar_teste'):
-    # Redirecionar para a página principal
-    st.switch_page("app.py")
+if 'page' in query_params:
+    if query_params['page'][0] == 'planos':
+        # Redirecionar para a página de planos
+        try:
+            from pages.planos import show
+            show()
+            st.stop()
+        except ImportError as e:
+            st.error(f"Não foi possível carregar a página de planos: {e}")
+    elif query_params['page'][0] == 'iniciar_teste':
+        # Redirecionar para a página principal
+        st.switch_page("app.py")
 
 # Inicialização da autenticação in-app
 if not st.session_state.authenticated:
@@ -670,12 +679,14 @@ if not st.session_state.authenticated:
         '''
         , unsafe_allow_html=True)
         
-        # CTA (Call to Action)
+        # CTA (Call to Action) com link para a página de planos
         st.markdown('''
-        <div class="call-to-action">
-            <h2>Pronto para transformar seu negócio?</h2>
-            <p>Crie sua conta e comece a profissionalizar sua gestão de propostas e finanças.</p>
-        </div>
+        <a href="?page=planos" style="text-decoration: none; display: block;">
+            <div class="call-to-action">
+                <h2>Pronto para transformar seu negócio?</h2>
+                <p>Crie sua conta e comece a profissionalizar sua gestão de propostas e finanças.</p>
+            </div>
+        </a>
         ''', unsafe_allow_html=True)
     
     with right_col:
