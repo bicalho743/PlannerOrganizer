@@ -3,15 +3,18 @@ from sib_api_v3_sdk.rest import ApiException
 import os
 import json
 import logging
+import base64
 from datetime import datetime
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Configurar a API Key do Brevo (Sendinblue)
-api_key = os.getenv("BREVO_API_KEY")  # Defina a chave de API como variável de ambiente
-lista_brevo_id = os.getenv("BREVO_LIST_ID")  # ID da lista do Brevo onde os e-mails serão armazenados
+# CONFIGURAÇÕES GERAIS DO BREVO
+api_key = os.getenv("BREVO_API_KEY", "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")
+lista_brevo_id = os.getenv("BREVO_LIST_ID", "7")  # ID da lista do Brevo onde os e-mails serão armazenados
+EMAIL_REMETENTE = "contato@plannerorganizer.com.br"
+NOME_REMETENTE = "Equipe Planner Organizer"
 
 def adicionar_contato_brevo(email, nome_completo=""):
     """
@@ -49,7 +52,14 @@ def adicionar_contato_brevo(email, nome_completo=""):
     
     # Adicionar à lista específica se configurada
     if lista_brevo_id:
-        contato["listIds"] = [int(lista_brevo_id)]
+        try:
+            # Tentar converter para inteiro
+            list_id = int(lista_brevo_id)
+            contato["listIds"] = [list_id]
+        except (ValueError, TypeError):
+            # Se não for possível converter, registrar um erro mas continuar
+            logger.error(f"BREVO_LIST_ID inválido: '{lista_brevo_id}'. Deve ser um número inteiro.")
+            # Não usar listIds neste caso, apenas adicionar o contato
     
     try:
         api_instance.create_contact(contato)
@@ -63,6 +73,56 @@ def adicionar_contato_brevo(email, nome_completo=""):
         logger.error(f"❌ Erro ao adicionar e-mail na lista do Brevo: {e}")
         # Fallback: salvar localmente em caso de erro
         return salvar_email_localmente(email, nome_completo)
+
+# Função simplificada para enviar o manual por email
+def enviar_manual_email(destinatario_email, destinatario_nome="Novo Cliente"):
+    """
+    Envia o Manual do Sistema via email usando o Brevo.
+    Função simplificada que usa valores padrão para assunto e mensagem.
+    
+    Args:
+        destinatario_email (str): Email do destinatário
+        destinatario_nome (str): Nome do destinatário
+        
+    Returns:
+        dict: Resultado da operação
+    """
+    # Localizar o arquivo do manual
+    manual_path = None
+    possibilidades = [
+        os.path.join(os.getcwd(), "pdfs", "manual_sistema.pdf"),
+        os.path.join(os.getcwd(), "pdfs", "Manual_Planner_Organizer.pdf"),
+        os.path.join(os.getcwd(), "Manual_Planner_Organizer.pdf"),
+        os.path.join(os.getcwd(), "manual_sistema.pdf")
+    ]
+    
+    for caminho in possibilidades:
+        if os.path.exists(caminho):
+            manual_path = caminho
+            break
+    
+    if not manual_path:
+        return {
+            "success": False,
+            "message": "Manual do sistema não encontrado."
+        }
+    
+    mensagem_html = f"""
+    <h2>Obrigado por se cadastrar!</h2>
+    <p>Olá <strong>{destinatario_nome}</strong>,</p>
+    <p>Estamos felizes em tê-lo conosco! Como prometido, aqui está o seu manual em anexo.</p>
+    <p>Caso tenha dúvidas, estamos à disposição.</p>
+    <p>Atenciosamente,<br>Equipe Planner Organizer</p>
+    """
+    
+    # Chamar a função principal para enviar o email
+    return enviar_email_brevo(
+        destinatario_email=destinatario_email,
+        destinatario_nome=destinatario_nome,
+        assunto="Manual do Sistema Planner Organizer",
+        mensagem_html=mensagem_html,
+        anexo=manual_path
+    )
 
 def enviar_email_brevo(destinatario_email, destinatario_nome, assunto, mensagem_html, anexo=None):
     """
@@ -90,31 +150,34 @@ def enviar_email_brevo(destinatario_email, destinatario_nome, assunto, mensagem_
     api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
     email = sib_api_v3_sdk.SendSmtpEmail(
         to=[{"email": destinatario_email, "name": destinatario_nome}],
-        sender={"email": "contato@plannerorganizer.com.br", "name": "Planner Organizer"},
+        sender={"email": EMAIL_REMETENTE, "name": NOME_REMETENTE},
         subject=assunto,
         html_content=mensagem_html
     )
     
     # Adicionar anexo se fornecido
     if anexo and os.path.exists(anexo):
-        import base64
-        with open(anexo, "rb") as f:
-            email.attachment = [
-                {
-                    "content": base64.b64encode(f.read()).decode('utf-8'),
-                    "name": os.path.basename(anexo)
-                }
-            ]
+        try:
+            with open(anexo, "rb") as f:
+                content = base64.b64encode(f.read()).decode('utf-8')
+                email.attachment = [
+                    {
+                        "content": content,
+                        "name": os.path.basename(anexo)
+                    }
+                ]
+        except Exception as e:
+            logger.error(f"Erro ao ler o anexo {anexo}: {e}")
     
     try:
         api_response = api_instance.send_transac_email(email)
-        logger.info("✅ E-mail enviado com sucesso!")
+        logger.info(f"✅ E-mail enviado com sucesso para {destinatario_email}!")
         return {
             "success": True,
             "message": "E-mail enviado com sucesso!"
         }
     except ApiException as e:
-        logger.error(f"❌ Erro ao enviar o e-mail: {e}")
+        logger.error(f"❌ Erro ao enviar o e-mail para {destinatario_email}: {e}")
         return {
             "success": False,
             "message": f"Erro ao enviar e-mail: {str(e)}"
@@ -259,7 +322,14 @@ def exportar_contatos_para_brevo():
             
             # Adicionar à lista específica se configurada
             if lista_brevo_id:
-                dados_contato["listIds"] = [int(lista_brevo_id)]
+                try:
+                    # Tentar converter para inteiro
+                    list_id = int(lista_brevo_id)
+                    dados_contato["listIds"] = [list_id]
+                except (ValueError, TypeError):
+                    # Se não for possível converter, registrar um erro mas continuar
+                    logger.error(f"BREVO_LIST_ID inválido: '{lista_brevo_id}'. Deve ser um número inteiro.")
+                    # Não usar listIds neste caso, apenas adicionar o contato
             
             # Enviar para a API
             api_instance.create_contact(dados_contato)

@@ -1460,7 +1460,7 @@ with st.sidebar.expander("🔧 Acesso Desenvolvedor", expanded=False):
         <h4 style="color: #1E366F; font-size: 1rem; margin-top: 1.2rem; margin-bottom: 0.8rem;">Ferramentas</h4>
         <div class="tools-links">
             <a href="/manual_sistema" target="_blank" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #E3F2FD; color: #1976D2; text-decoration: none; font-size: 0.85rem;">📘 Manual do Sistema</a>
-            <a href="#" onclick="manualClick(); return false;" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #FFE0B2; color: #E65100; text-decoration: none; font-size: 0.85rem;">📧 Enviar Manual por Email</a>
+            <a href="/enviar_manual" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #FFE0B2; color: #E65100; text-decoration: none; font-size: 0.85rem;">📧 Enviar Manual por Email</a>
             <a href="http://localhost:8530" target="_blank" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #E8F5E9; color: #388E3C; text-decoration: none; font-size: 0.85rem;">💾 Sistema de Backup</a>
         </div>
         

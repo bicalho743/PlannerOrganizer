@@ -190,17 +190,80 @@ def main(set_config=True):
                         <p>Atenciosamente,<br>Equipe Planner Organizer</p>
                         """
                         
-                        # Tentamos enviar o e-mail, mas não interrompemos o fluxo se falhar
+                        # Tentamos enviar o e-mail com o manual do sistema, mas não interrompemos o fluxo se falhar
                         try:
-                            enviar_email_brevo(
-                                destinatario_email=email,
-                                destinatario_nome=nome,
-                                assunto="Bem-vindo ao Planner Organizer",
-                                mensagem_html=mensagem_html
-                            )
+                            # Localizar o arquivo do manual
+                            import os
+                            manual_path = None
+                            possibilidades = [
+                                os.path.join(os.getcwd(), "pdfs", "manual_sistema.pdf"),
+                                os.path.join(os.getcwd(), "Manual_Planner_Organizer.pdf"),
+                                os.path.join(os.getcwd(), "pdfs", "Manual_Planner_Organizer.pdf"),
+                                os.path.join(os.getcwd(), "manual_sistema.pdf")
+                            ]
+                            
+                            for caminho in possibilidades:
+                                if os.path.exists(caminho):
+                                    manual_path = caminho
+                                    st.info(f"Manual encontrado em: {caminho}")
+                                    break
+                            
+                            if manual_path:
+                                mensagem_html = f"""
+                                <h2>Bem-vindo ao Planner Organizer!</h2>
+                                <p>Olá <strong>{nome}</strong>,</p>
+                                <p>Obrigado pelo seu interesse no Planner Organizer. Recebemos seu e-mail e o adicionamos à nossa lista.</p>
+                                <p>Em anexo, você encontrará o Manual do Sistema com todas as funcionalidades do Planner Organizer.</p>
+                                <p>Entraremos em contato em breve com informações exclusivas sobre nossos planos e valores.</p>
+                                <p>Atenciosamente,<br>Equipe Planner Organizer</p>
+                                """
+                                
+                                # Enviar e-mail com o manual em anexo
+                                from utils.brevo_helper import enviar_manual_email
+                                result = enviar_manual_email(
+                                    destinatario_email=email,
+                                    destinatario_nome=nome
+                                )
+                                
+                                if result.get("success", False):
+                                    st.session_state.manual_enviado = True
+                                    st.success("✅ Manual enviado com sucesso para seu e-mail!")
+                                else:
+                                    st.session_state.manual_enviado = False
+                                    st.warning(f"⚠️ Houve um problema ao enviar o manual: {result.get('message', 'Erro desconhecido')}")
+                            else:
+                                # Enviar apenas e-mail de boas-vindas sem o manual
+                                mensagem_html = f"""
+                                <h2>Bem-vindo ao Planner Organizer!</h2>
+                                <p>Olá <strong>{nome}</strong>,</p>
+                                <p>Obrigado pelo seu interesse no Planner Organizer. Recebemos seu e-mail e o adicionamos à nossa lista.</p>
+                                <p>Entraremos em contato em breve com informações exclusivas sobre nossos planos e valores.</p>
+                                <p>Atenciosamente,<br>Equipe Planner Organizer</p>
+                                """
+                                
+                                # Falha ao encontrar o manual, enviar apenas email simples
+                                from utils.brevo_helper import enviar_email_brevo
+                                result = enviar_email_brevo(
+                                    destinatario_email=email,
+                                    destinatario_nome=nome,
+                                    assunto="Bem-vindo ao Planner Organizer",
+                                    mensagem_html=mensagem_html
+                                )
+                                
+                                if result.get("success", False):
+                                    st.success("✅ E-mail de boas-vindas enviado com sucesso!")
+                                else:
+                                    st.warning(f"⚠️ Falha ao enviar e-mail: {result.get('message', 'Erro desconhecido')}")
+                                
+                                st.warning("❌ Manual do sistema não encontrado. Arquivo procurado em: " + ", ".join(possibilidades))
+                                st.session_state.manual_enviado = False
+                                
                         except Exception as email_error:
-                            # Apenas logamos o erro, não mostramos para o usuário
-                            print(f"Erro ao enviar e-mail de confirmação: {email_error}")
+                            # Mostrar erro detalhado
+                            import traceback
+                            st.error(f"Erro ao enviar e-mail com manual: {email_error}")
+                            st.code(traceback.format_exc())
+                            st.session_state.manual_enviado = False
                     else:
                         st.session_state.form_status = "error_brevo"
                         st.session_state.error_msg = result.get("message", "Erro ao processar seu e-mail.")
@@ -214,7 +277,10 @@ def main(set_config=True):
         if hasattr(st.session_state, 'is_fallback') and st.session_state.is_fallback:
             st.success(f"Obrigado! Seu e-mail **{st.session_state.email_capturado}** foi salvo em nossa lista local. Entraremos em contato assim que nossos planos estiverem disponíveis.")
         else:
-            st.success(f"Obrigado! Seu e-mail **{st.session_state.email_capturado}** foi registrado com sucesso. Você receberá notificações sobre nossos planos assim que estiverem disponíveis.")
+            if hasattr(st.session_state, 'manual_enviado') and st.session_state.manual_enviado:
+                st.success(f"Obrigado! Seu e-mail **{st.session_state.email_capturado}** foi registrado com sucesso. **O Manual do Sistema foi enviado para seu email**. Você também receberá notificações sobre nossos planos assim que estiverem disponíveis.")
+            else:
+                st.success(f"Obrigado! Seu e-mail **{st.session_state.email_capturado}** foi registrado com sucesso. Você receberá notificações sobre nossos planos assim que estiverem disponíveis.")
         
         # Animação de sucesso
         st.markdown("""
