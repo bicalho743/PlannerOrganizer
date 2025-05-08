@@ -734,7 +734,7 @@ if not st.session_state.authenticated:
         # Isso garante que abrirá em nova aba de forma confiável
         
         # Usar uma abordagem com JavaScript puro para abrir em nova aba é mais confiável
-        current_url = st.experimental_get_query_params()
+        current_url = st.query_params
         base_url = f"https://{os.environ.get('REPLIT_SLUG', '')}--{os.environ.get('REPL_OWNER', '')}.repl.co"
         
         st.markdown(f"""
