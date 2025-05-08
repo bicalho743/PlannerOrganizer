@@ -1232,7 +1232,7 @@ try:
         from pages.cadastros import show
         show()
     elif st.session_state.current_page == "Propostas":
-        from pages.propostas import show
+        from pages.propostas_unificado import show
         show()
     elif st.session_state.current_page == "Vendas":
         from pages.vendas import show

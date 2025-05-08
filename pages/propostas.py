@@ -31,30 +31,34 @@ def show():
     
     # Criar abas para organizar o conteúdo com ícones para cada uma
     st.markdown('<div class="main-tabs">', unsafe_allow_html=True)
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "➕ Nova Proposta", 
-        "📁 Propostas em Aberto", 
+    tab1, tab2, tab3 = st.tabs([
+        "📝 Propostas", 
         "⚙️ Em Execução", 
         "📋 Todas as Propostas"
     ])
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # ABA 1: NOVA PROPOSTA
+    # ABA 1: PROPOSTAS (UNIFICADA)
     with tab1:
-        st.header("Nova Proposta")
+        st.header("Propostas")
         
-        # Obter a lista de clientes do banco de dados
-        try:
-            clientes = st.session_state.db.get_clientes()
-            if clientes.empty:
-                st.warning("Nenhum cliente cadastrado. Por favor, cadastre clientes primeiro.")
-            else:
-                # Opção para escolher entre nova proposta padrão ou proposta retroativa
-                tipo_cadastro = st.radio(
-                    "Tipo de cadastro:", 
-                    ["Nova proposta", "Cadastro retroativo"],
-                    horizontal=True
-                )
+        # Criar tabs dentro da primeira aba
+        proposta_tab1, proposta_tab2 = st.tabs(["Nova Proposta", "Gerenciar Propostas"])
+        
+        # SUBTAB 1: NOVA PROPOSTA
+        with proposta_tab1:
+            # Obter a lista de clientes do banco de dados
+            try:
+                clientes = st.session_state.db.get_clientes()
+                if clientes.empty:
+                    st.warning("Nenhum cliente cadastrado. Por favor, cadastre clientes primeiro.")
+                else:
+                    # Opção para escolher entre nova proposta padrão ou proposta retroativa
+                    tipo_cadastro = st.radio(
+                        "Tipo de cadastro:", 
+                        ["Nova proposta", "Cadastro retroativo"],
+                        horizontal=True
+                    )
                 
                 # Formulário para cadastro de nova proposta
                 with st.form(key="nova_proposta_form"):
@@ -188,8 +192,8 @@ def show():
                                 st.error("Erro ao salvar proposta.")
                         except Exception as e:
                             st.error(f"Erro ao salvar proposta: {str(e)}")
-        except Exception as e:
-            st.error(f"Erro ao carregar clientes: {str(e)}")
+            except Exception as e:
+                st.error(f"Erro ao carregar clientes: {str(e)}")
     
     # Carregar todas as propostas uma única vez para usar em várias abas
     try:
@@ -216,9 +220,9 @@ def show():
         else:
             propostas_com_clientes = propostas
             
-        # ABA 2: PROPOSTAS EM ABERTO
-        with tab2:
-            st.header("Propostas em Aberto")
+        # SUBTAB 2: GERENCIAR PROPOSTAS
+        with proposta_tab2:
+            st.subheader("Gerenciar Propostas")
             
             if not propostas.empty:
                 # Filtrar apenas propostas em elaboração ou aguardando aprovação
