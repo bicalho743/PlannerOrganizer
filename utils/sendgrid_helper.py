@@ -172,25 +172,84 @@ class SendGridHelper:
             logger.error("Tentativa de capturar e-mail sem API key configurada")
             return {"success": False, "error": "SendGrid API key não configurada"}
             
-        # Nome da lista para notificações de planos
-        list_name = "Planos - Lista de Espera"
+        try:
+            # Tenta salvar apenas o contato sem associá-lo a uma lista
+            # Isso evita problemas com permissões limitadas de API
+            contact_result = self.create_contact(email, first_name, last_name, {
+                "source": source,
+                "captured_at": "planner_organizer"
+            })
+            
+            # Se conseguiu salvar o contato, considera sucesso mesmo sem adicionar à lista
+            if contact_result.get("success", False):
+                logger.info(f"E-mail capturado com sucesso: {email}")
+                return {"success": True, "message": "E-mail capturado com sucesso"}
+            
+            # Verifica se o erro é 403 (Forbidden) - falta de permissão
+            error = contact_result.get("error", "")
+            if "403" in str(error):
+                # Implementar modo de fallback: salvar em um arquivo local
+                self._save_email_to_local_storage(email, first_name, last_name, source)
+                logger.warning(f"Fallback: E-mail {email} salvo em armazenamento local devido a permissões insuficientes na API")
+                return {"success": True, "message": "E-mail capturado em armazenamento local", "fallback": True}
+            
+            return contact_result
+                
+        except Exception as e:
+            logger.error(f"Erro ao capturar e-mail: {str(e)}")
+            # Tentar usar fallback
+            try:
+                self._save_email_to_local_storage(email, first_name, last_name, source)
+                logger.warning(f"Fallback: E-mail {email} salvo em armazenamento local após erro")
+                return {"success": True, "message": "E-mail capturado em armazenamento local", "fallback": True}
+            except Exception as inner_e:
+                logger.error(f"Erro ao salvar e-mail em armazenamento local: {str(inner_e)}")
+                return {"success": False, "error": f"Não foi possível processar seu e-mail: {str(e)}"}
+    
+    def _save_email_to_local_storage(self, email: str, first_name: str = "", last_name: str = "", source: str = ""):
+        """
+        Método auxiliar para salvar e-mails em um arquivo local quando a API do SendGrid não está disponível
+        ou não tem permissões suficientes.
         
-        # Campos personalizados para o contato
-        custom_fields = {
+        Args:
+            email: E-mail do contato
+            first_name: Nome do contato
+            last_name: Sobrenome do contato
+            source: Origem da captura do e-mail
+        """
+        import os
+        import json
+        from datetime import datetime
+        
+        data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+        os.makedirs(data_dir, exist_ok=True)
+        
+        contacts_file = os.path.join(data_dir, "captured_emails.json")
+        
+        # Carregar dados existentes
+        existing_data = []
+        if os.path.exists(contacts_file):
+            try:
+                with open(contacts_file, 'r', encoding='utf-8') as f:
+                    existing_data = json.load(f)
+            except Exception as e:
+                logger.error(f"Erro ao ler arquivo de contatos: {str(e)}")
+                existing_data = []
+        
+        # Adicionar novo contato
+        new_contact = {
+            "email": email,
+            "first_name": first_name,
+            "last_name": last_name,
             "source": source,
-            "captured_at": "planner_organizer"
+            "captured_at": datetime.now().isoformat(),
         }
         
-        # Obter ou criar a lista
-        list_result = self.get_or_create_list(list_name)
+        existing_data.append(new_contact)
         
-        if not list_result.get("success", False):
-            return list_result
-            
-        list_id = list_result.get("list_id")
-        
-        # Adicionar o contato à lista
-        return self.add_contact_to_list(email, list_id, first_name, last_name, custom_fields)
+        # Salvar dados atualizados
+        with open(contacts_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_data, f, ensure_ascii=False, indent=4)
 
 
 # Função auxiliar para uso fácil em outros módulos

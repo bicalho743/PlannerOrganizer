@@ -112,6 +112,13 @@ def show():
                     if result.get("success", False):
                         st.session_state.form_status = "success"
                         st.session_state.email_capturado = email
+                        
+                        # Verificar se foi usado o modo de fallback
+                        if result.get("fallback", False):
+                            st.session_state.is_fallback = True
+                        else:
+                            st.session_state.is_fallback = False
+                            
                         # Limpar os campos após o sucesso
                         st.session_state.signup_name = ""
                         st.session_state.signup_email = ""
@@ -124,7 +131,10 @@ def show():
     
     # Exibir mensagens com base no status do formulário
     if st.session_state.form_status == "success":
-        st.success(f"Obrigado! Seu e-mail **{st.session_state.email_capturado}** foi registrado com sucesso. Você receberá notificações sobre nossos planos assim que estiverem disponíveis.")
+        if hasattr(st.session_state, 'is_fallback') and st.session_state.is_fallback:
+            st.success(f"Obrigado! Seu e-mail **{st.session_state.email_capturado}** foi salvo em nossa lista local. Entraremos em contato assim que nossos planos estiverem disponíveis.")
+        else:
+            st.success(f"Obrigado! Seu e-mail **{st.session_state.email_capturado}** foi registrado com sucesso. Você receberá notificações sobre nossos planos assim que estiverem disponíveis.")
         
         # Animação de sucesso
         st.markdown("""
@@ -143,7 +153,8 @@ def show():
         st.error("Desculpe, ocorreu um erro ao processar seu e-mail. Por favor, tente novamente mais tarde.")
     elif st.session_state.form_status == "error_exception":
         st.error("Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.")
-        st.exception(st.session_state.error_msg)
+        if hasattr(st.session_state, 'error_msg'):
+            st.exception(st.session_state.error_msg)
     
     # Seção de informações adicionais
     st.markdown("""
