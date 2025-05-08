@@ -738,8 +738,8 @@ if not st.session_state.authenticated:
         base_url = f"https://{os.environ.get('REPLIT_SLUG', '')}--{os.environ.get('REPL_OWNER', '')}.repl.co"
         
         st.markdown(f"""
-        <a href="javascript:void(0);" 
-           onclick="window.open('/?planos_standalone_page=true', '_blank');" 
+        <a href="/?planos_standalone_page=true" 
+           target="_blank" 
            id="planos-link" 
            style="display: inline-block; background-color: #4F4F52; color: white; 
                   text-align: center; padding: 1rem 2rem; text-decoration: none; 
@@ -762,33 +762,7 @@ if not st.session_state.authenticated:
         </script>
         """, unsafe_allow_html=True)
         
-        # Mantendo um botão invisível para compatibilidade com estilos existentes
-        if st.button("Ver Planos e Preços", key="planos_cta_button", disabled=True, help=""):
-            pass  # Esse botão não faz nada, está apenas para manter a compatibilidade
-            
-        # Estilizar o botão para parecer um CTA
-        st.markdown('''
-        <style>
-        [data-testid="baseButton-secondary"][aria-label="Ver Planos e Preços"] {
-            background-color: #4F4F52 !important;
-            color: white !important;
-            width: 100% !important;
-            padding: 2rem !important;
-            margin-top: 0 !important;
-            border-radius: 10px !important;
-            text-align: center !important;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-            border: none !important;
-            font-size: 1.2rem !important;
-            transition: all 0.3s ease !important;
-        }
-        
-        [data-testid="baseButton-secondary"][aria-label="Ver Planos e Preços"]:hover {
-            transform: scale(1.02) !important;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2) !important;
-        }
-        </style>
-        ''', unsafe_allow_html=True)
+        # Removemos o botão duplicado e seu CSS associado
     
     with right_col:
         # Container de login sem espaçamento
