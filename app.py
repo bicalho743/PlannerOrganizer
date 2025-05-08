@@ -699,14 +699,33 @@ if not st.session_state.authenticated:
         '''
         , unsafe_allow_html=True)
         
-        # CTA (Call to Action) com link para a página de planos usando JavaScript
+        # CTA (Call to Action) com link para a página de planos
+        if st.button("Ver Planos e Preços", key="planos_cta_button"):
+            st.session_state.show_planos = True
+            st.rerun()
+            
+        # Estilizar o botão para parecer um CTA
         st.markdown('''
-        <a href="#" onclick="document.dispatchEvent(new CustomEvent('show_planos')); return false;" style="text-decoration: none; display: block;">
-            <div class="call-to-action">
-                <h2>Pronto para transformar seu negócio?</h2>
-                <p>Crie sua conta e comece a profissionalizar sua gestão de propostas e finanças.</p>
-            </div>
-        </a>
+        <style>
+        [data-testid="baseButton-secondary"][aria-label="Ver Planos e Preços"] {
+            background-color: #4F4F52 !important;
+            color: white !important;
+            width: 100% !important;
+            padding: 2rem !important;
+            margin-top: 0 !important;
+            border-radius: 10px !important;
+            text-align: center !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+            border: none !important;
+            font-size: 1.2rem !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        [data-testid="baseButton-secondary"][aria-label="Ver Planos e Preços"]:hover {
+            transform: scale(1.02) !important;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2) !important;
+        }
+        </style>
         ''', unsafe_allow_html=True)
     
     with right_col:
