@@ -1876,49 +1876,60 @@ def show():
             st.header("Propostas Finalizadas")
             
             if not propostas.empty:
-                # Filtrar apenas propostas realmente finalizadas ou recusadas 
-                # usando rigorosamente apenas os status corretos
-                propostas_finalizadas = propostas_com_clientes[
+                # Resetar o DataFrame para evitar problemas de referência
+                propostas_finalizadas = None
+                
+                # Filtrar apenas propostas com status exatamente igual a "Finalizada" ou "Recusada"
+                propostas_somente_finalizadas = propostas_com_clientes[
                     (propostas_com_clientes['status'] == 'Finalizada') | 
                     (propostas_com_clientes['status'] == 'Recusada')
-                ]
+                ].copy()
                 
-                if not propostas_finalizadas.empty:
-                    # Preparar DataFrame para exibição
+                # Mostrar o total de propostas finalizadas para diagnóstico
+                st.write(f"Total de propostas finalizadas: {len(propostas_somente_finalizadas)}")
+                
+                # Se houver propostas finalizadas, exibir
+                if not propostas_somente_finalizadas.empty:
+                    # Preparar um DataFrame limpo apenas com as colunas necessárias
                     df_finalizadas = pd.DataFrame()
-                    # Primeiro verificar que estamos realmente trabalhando com propostas finalizadas
-                    st.write(f"Total de propostas finalizadas: {len(propostas_finalizadas)}")
+                    df_finalizadas['ID'] = propostas_somente_finalizadas['id']
+                    df_finalizadas['Número'] = propostas_somente_finalizadas['numero']
+                    df_finalizadas['Cliente'] = propostas_somente_finalizadas['nome']
+                    df_finalizadas['Descrição'] = propostas_somente_finalizadas['descricao']
+                    df_finalizadas['Status'] = propostas_somente_finalizadas['status']
                     
-                    # Adicionar coluna de status explícita para depuração
-                    df_finalizadas['Status'] = propostas_finalizadas['status']
+                    # Formatar valor como moeda
+                    df_finalizadas['Valor (R$)'] = propostas_somente_finalizadas['valor'].apply(
+                        lambda x: f"R$ {float(x) if pd.notna(x) else 0.0:.2f}"
+                    )
                     
-                    # Manter o ID como coluna oculta para referência
-                    df_finalizadas['ID'] = propostas_finalizadas['id']
-                    df_finalizadas['Número'] = propostas_finalizadas['numero']
-                    df_finalizadas['Cliente'] = propostas_finalizadas['nome']
-                    df_finalizadas['Descrição'] = propostas_finalizadas['descricao']
-                    df_finalizadas['Valor (R$)'] = propostas_finalizadas['valor'].apply(lambda x: f"R$ {float(x):.2f}")
-                    
-                    # Formatar datas para exibição - removida coluna Início duplicada
-                    df_finalizadas['Início Execução'] = propostas_finalizadas['data_inicio_execucao'].apply(
+                    # Formatar datas
+                    df_finalizadas['Data Início'] = propostas_somente_finalizadas['data_inicio'].apply(
                         lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
                     )
                     
-                    # Adicionar coluna de Fim Execução (usando a data_fim)
-                    # Deixar em branco para propostas recusadas
-                    df_finalizadas['Fim Execução'] = propostas_finalizadas.apply(
-                        lambda row: '' if row['status'] == 'Recusada' else row['data_fim'].strftime('%d/%m/%Y') if pd.notna(row['data_fim']) else '',
-                        axis=1
-                    )
+                    df_finalizadas['Tipo'] = propostas_somente_finalizadas['tipo_proposta']
                     
-                    # Debug para verificar quais propostas estão sendo mostradas
-                    for idx, proposta in propostas_finalizadas.iterrows():
+                    # Adicionar debug para cada proposta (apenas durante solução de problemas)
+                    for idx, proposta in propostas_somente_finalizadas.iterrows():
                         st.write(f"Proposta #{proposta['numero']} - Status: {proposta['status']}")
                     
-                    # Exibir tabela sem mostrar a coluna ID
+                    # Exibir a tabela sem a coluna ID
                     st.dataframe(df_finalizadas.drop(columns=['ID']), hide_index=True)
                     
-                    # Adicionar área para reabrir proposta finalizada
+                    # Guardar referência para uso nas seções abaixo
+                    propostas_finalizadas = propostas_somente_finalizadas
+                    
+                else:
+                    st.info("Não há propostas finalizadas no sistema.")
+                    # Criar DataFrame vazio para evitar erros abaixo
+                    propostas_finalizadas = pd.DataFrame()
+            else:
+                st.info("Não há propostas cadastradas no sistema.")
+                propostas_finalizadas = pd.DataFrame()
+                
+            # Verificar se temos propostas finalizadas antes de mostrar a interface para reabrir/excluir
+            if not propostas_finalizadas.empty:
                     with st.expander("Reabrir Proposta Finalizada"):
                         # Obter lista de números de propostas finalizadas para o select box
                         numeros_propostas = propostas_finalizadas['numero'].tolist()
