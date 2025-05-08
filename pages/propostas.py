@@ -1875,8 +1875,10 @@ def show():
             st.header("Propostas Finalizadas")
             
             if not propostas.empty:
-                # Mostrar todas as propostas, sem filtro de status
-                propostas_finalizadas = propostas_com_clientes
+                # Filtrar apenas propostas com status "Finalizada"
+                propostas_finalizadas = propostas_com_clientes[
+                    propostas_com_clientes['status'] == 'Finalizada'
+                ]
                 
                 if not propostas_finalizadas.empty:
                     # Preparar DataFrame para exibição
