@@ -43,14 +43,18 @@ def clear_form():
     </script>
     """, unsafe_allow_html=True)
 
-def main():
-    # Configuração da página
-    st.set_page_config(
-        page_title="Planos de Assinatura - Planner Organizer",
-        page_icon="favicon.png",
-        layout="wide",
-        initial_sidebar_state="collapsed"
-    )
+def main(set_config=True):
+    # Configuração da página apenas quando executando como script principal
+    if set_config:
+        try:
+            st.set_page_config(
+                page_title="Planos de Assinatura - Planner Organizer",
+                page_icon="favicon.png",
+                layout="wide",
+                initial_sidebar_state="collapsed"
+            )
+        except Exception as e:
+            pass  # Silenciosamente ignora erros de configuração quando importado
     
     # Ocultar a barra lateral completamente
     st.markdown("""

@@ -179,8 +179,9 @@ if 'planos_standalone_page' in st.query_params:
     # Redirecionando para a página standalone de planos
     try:
         # Importar o arquivo standalone e executar sua função main
+        # Passamos set_config=False para evitar duplicação de set_page_config
         import planos_standalone
-        planos_standalone.main()
+        planos_standalone.main(set_config=False)
         st.stop()
     except ImportError as e:
         st.error(f"Não foi possível carregar a página standalone de planos: {e}")
