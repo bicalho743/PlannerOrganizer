@@ -272,7 +272,7 @@ if not st.session_state.authenticated:
     }
     
     .testimonial-card {
-        background: linear-gradient(135deg, #E3F2FD, #bbdefb);
+        background: linear-gradient(135deg, #f5f7fa, #e9eff6);
         padding: 1.8rem;
         border-radius: 12px;
         position: relative;
@@ -288,7 +288,7 @@ if not st.session_state.authenticated:
     
     .testimonial-text {
         font-style: italic;
-        color: #1E366F;
+        color: #4F4F52;
         margin-bottom: 1rem;
         font-size: 1.05rem;
         line-height: 1.6;
@@ -296,7 +296,7 @@ if not st.session_state.authenticated:
     
     .testimonial-author {
         font-weight: 600;
-        color: #1976D2;
+        color: #4F4F52;
         font-size: 1.05rem;
     }
     
@@ -639,7 +639,7 @@ if not st.session_state.authenticated:
                     e o controle financeiro me ajudaram a profissionalizar meu negócio."
                 </div>
                 <div class="testimonial-author">
-                    — Carlos Eduardo, Organizador Profissional
+                    — Fernanda Silva, Organizadora Profissional
                 </div>
             </div>
             ''', unsafe_allow_html=True)
