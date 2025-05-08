@@ -3,6 +3,7 @@ import os
 import sys
 import time
 import re
+from datetime import datetime
 
 # Adicionar diretório raiz ao path para poder importar os módulos de utils
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -12,9 +13,29 @@ if project_root not in sys.path:
 from utils.render_fix import inject_render_compatibility_fix
 from utils.sendgrid_helper import capture_email
 
+# Inicializar estados da sessão para controle do formulário
+def initialize_session_state():
+    if 'form_status' not in st.session_state:
+        st.session_state.form_status = None
+    
+    if 'form_processed' not in st.session_state:
+        st.session_state.form_processed = False
+    
+    if 'form_submit_time' not in st.session_state:
+        st.session_state.form_submit_time = None
+
+def clear_form():
+    # Usando esta técnica, o formulário será limpo apenas na próxima renderização da página
+    st.session_state.nome_reset = str(datetime.now())
+    st.session_state.email_reset = str(datetime.now())
+    st.session_state.form_processed = False
+
 def show():
     # Injetar script de compatibilidade para o Render (se necessário)
     inject_render_compatibility_fix()
+    
+    # Inicializar estado da sessão
+    initialize_session_state()
     
     # Configuração da página
     st.title("Planos de Assinatura")
@@ -79,15 +100,15 @@ def show():
     
     col1, col2 = st.columns(2)
     
+    # Usar keys dinâmicas para permitir resetar os campos após sucesso
+    nome_key = f"signup_name_{st.session_state.get('nome_reset', '')}"
+    email_key = f"signup_email_{st.session_state.get('email_reset', '')}"
+    
     with col1:
-        nome = st.text_input("Nome", key="signup_name")
+        nome = st.text_input("Nome", key=nome_key)
         
     with col2:
-        email = st.text_input("Email", key="signup_email")
-    
-    # Armazenar o estado de sucesso do formulário
-    if 'form_status' not in st.session_state:
-        st.session_state.form_status = None
+        email = st.text_input("Email", key=email_key)
     
     # Botão de envio centralizado
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -119,9 +140,9 @@ def show():
                         else:
                             st.session_state.is_fallback = False
                             
-                        # Limpar os campos após o sucesso
-                        st.session_state.signup_name = ""
-                        st.session_state.signup_email = ""
+                        # Limpar os campos usando a técnica de chaves dinâmicas
+                        clear_form()
+                        st.experimental_rerun()
                     else:
                         st.session_state.form_status = "error_sendgrid"
                         
