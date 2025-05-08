@@ -33,3 +33,4 @@ streamlit
 sendgrid
 sendgrid
 stripe
+requests

@@ -1,6 +1,8 @@
 import streamlit as st
 import os
 import sys
+import time
+import re
 
 # Adicionar diretório raiz ao path para poder importar os módulos de utils
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -8,6 +10,7 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 from utils.render_fix import inject_render_compatibility_fix
+from utils.sendgrid_helper import capture_email
 
 def show():
     # Injetar script de compatibilidade para o Render (se necessário)
@@ -123,17 +126,96 @@ def show():
         
         <div style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem; border-left: 4px solid #4CAF50; text-align: left;">
             <div style="font-weight: 600; color: #4F4F52; margin-bottom: 0.5rem; font-size: 1.2rem;">Quer ser notificado quando os planos estiverem disponíveis?</div>
-            <div style="color: #5A6A85; font-size: 1rem; line-height: 1.5;">
+            <div style="color: #5A6A85; font-size: 1rem; line-height: 1.5; margin-bottom: 1rem;">
                 Deixe seu e-mail conosco e informaremos assim que nossos planos de assinatura estiverem disponíveis,
                 com condições especiais para os primeiros assinantes.
             </div>
         </div>
-        
-        <a href="mailto:contato@plannerorganizer.com.br" style="display: inline-block; background-color: #4F4F52; color: white; padding: 0.8rem 2rem; border-radius: 5px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; text-decoration: none; margin-top: 1rem;">
-            Quero ser notificado
-        </a>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Adicionar formulário de captura de e-mail para integração com SendGrid
+    with st.container():
+        st.markdown("""
+        <div style="max-width: 800px; margin: 0 auto 2rem auto; background-color: #f7f7f8; padding: 1.5rem; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <h3 style="font-size: 1.3rem; color: #4F4F52; text-align: center; margin-bottom: 1rem;">Inscreva-se para receber notificações</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            nome = st.text_input("Nome", key="signup_name")
+            
+        with col2:
+            email = st.text_input("Email", key="signup_email")
+        
+        # Armazenar o estado de sucesso do formulário
+        if 'form_status' not in st.session_state:
+            st.session_state.form_status = None
+        
+        # Botão de envio centralizado
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("Quero ser notificado", use_container_width=True):
+                # Validar email
+                email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                
+                if not nome.strip():
+                    st.session_state.form_status = "error_nome"
+                elif not email.strip():
+                    st.session_state.form_status = "error_email_vazio"
+                elif not re.match(email_pattern, email):
+                    st.session_state.form_status = "error_email_invalido"
+                else:
+                    try:
+                        # Tentar capturar o e-mail usando o SendGrid
+                        result = capture_email(email, 
+                                              first_name=nome, 
+                                              source="planos_page_form")
+                        
+                        if result.get("success", False):
+                            st.session_state.form_status = "success"
+                            st.session_state.email_capturado = email
+                            # Limpar os campos após o sucesso
+                            st.session_state.signup_name = ""
+                            st.session_state.signup_email = ""
+                        else:
+                            st.session_state.form_status = "error_sendgrid"
+                            
+                    except Exception as e:
+                        st.session_state.form_status = "error_exception"
+                        st.session_state.error_msg = str(e)
+        
+        # Exibir mensagens com base no status do formulário
+        if st.session_state.form_status == "success":
+            st.success(f"Obrigado! Seu e-mail **{st.session_state.email_capturado}** foi registrado com sucesso. Você receberá notificações sobre nossos planos assim que estiverem disponíveis.")
+            
+            # Animação de sucesso
+            st.markdown("""
+            <div style="text-align: center; margin: 2rem 0;">
+                <div style="font-size: 64px; animation: bounceIn 1s;">✅</div>
+            </div>
+            <style>
+            @keyframes bounceIn {
+                0% { transform: scale(0.1); opacity: 0; }
+                60% { transform: scale(1.2); opacity: 1; }
+                100% { transform: scale(1); }
+            }
+            </style>
+            """, unsafe_allow_html=True)
+            
+        elif st.session_state.form_status == "error_nome":
+            st.error("Por favor, informe seu nome.")
+        elif st.session_state.form_status == "error_email_vazio":
+            st.error("Por favor, informe seu email.")
+        elif st.session_state.form_status == "error_email_invalido":
+            st.error("Por favor, informe um email válido.")
+        elif st.session_state.form_status == "error_sendgrid":
+            st.error("Desculpe, ocorreu um erro ao processar seu e-mail. Por favor, tente novamente mais tarde.")
+        elif st.session_state.form_status == "error_exception":
+            st.error("Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.")
+            st.exception(st.session_state.error_msg)
     
     # Seção de informações adicionais
     st.markdown("""
