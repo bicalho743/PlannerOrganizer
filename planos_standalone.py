@@ -11,7 +11,7 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 from utils.render_fix import inject_render_compatibility_fix
-from utils.sendgrid_helper import capture_email
+from utils.brevo_helper import adicionar_contato_brevo
 
 # Inicializar estados da sessão para controle do formulário
 def initialize_session_state():
@@ -159,14 +159,16 @@ def main(set_config=True):
                 st.session_state.form_status = "error_email_invalido"
             else:
                 try:
-                    # Tentar capturar o e-mail usando o SendGrid
-                    result = capture_email(email, 
-                                        first_name=nome, 
-                                        source="planos_page_form")
+                    # Tentar capturar o e-mail usando o Brevo
+                    result = adicionar_contato_brevo(
+                        email=email, 
+                        nome_completo=nome
+                    )
                     
                     if result.get("success", False):
                         st.session_state.form_status = "success"
                         st.session_state.email_capturado = email
+                        st.session_state.message = result.get("message", "")
                         
                         # Verificar se foi usado o modo de fallback
                         if result.get("fallback", False):
@@ -177,7 +179,8 @@ def main(set_config=True):
                         # Limpar os campos usando a técnica de chaves dinâmicas
                         clear_form()
                     else:
-                        st.session_state.form_status = "error_sendgrid"
+                        st.session_state.form_status = "error_brevo"
+                        st.session_state.error_msg = result.get("message", "Erro ao processar seu e-mail.")
                         
                 except Exception as e:
                     st.session_state.form_status = "error_exception"
@@ -203,8 +206,10 @@ def main(set_config=True):
         st.error("Por favor, informe seu email.")
     elif st.session_state.form_status == "error_email_invalido":
         st.error("Por favor, informe um email válido.")
-    elif st.session_state.form_status == "error_sendgrid":
+    elif st.session_state.form_status == "error_brevo":
         st.error("Desculpe, ocorreu um erro ao processar seu e-mail. Por favor, tente novamente mais tarde.")
+        if hasattr(st.session_state, 'error_msg'):
+            st.info(st.session_state.error_msg)
     elif st.session_state.form_status == "error_exception":
         st.error("Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.")
         if hasattr(st.session_state, 'error_msg'):
