@@ -674,7 +674,7 @@ if not st.session_state.authenticated:
         st.markdown('''
         <div class="call-to-action">
             <h2>Pronto para transformar seu negócio?</h2>
-            <p>Faça login agora e comece a profissionalizar sua gestão de propostas e finanças.</p>
+            <p>Crie sua conta e comece a profissionalizar sua gestão de propostas e finanças.</p>
         </div>
         ''', unsafe_allow_html=True)
     
