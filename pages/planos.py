@@ -143,9 +143,24 @@ def show():
     </div>
     """, unsafe_allow_html=True)
     
-    # Botão para voltar à página inicial
+    # Botão para voltar à página inicial com melhor tratamento de redirecionamento
     if st.button("Voltar para a página inicial"):
-        st.switch_page("app.py")
+        # Define o estado da sessão para não mostrar a página de planos
+        st.session_state.show_planos = False
+        
+        # Redireciona pela URL usando JavaScript (método mais confiável)
+        st.markdown("""
+        <script>
+            window.parent.location.href = "/";
+        </script>
+        """, unsafe_allow_html=True)
+        
+        # Adicionamos ambas as abordagens para garantir compatibilidade
+        try:
+            st.switch_page("app.py")
+        except Exception:
+            st.info("Redirecionando para a página inicial...")
+            st.stop()
 
 # Permitir que este arquivo seja executado diretamente
 if __name__ == "__main__":
