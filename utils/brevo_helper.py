@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 # CONFIGURAÇÕES GERAIS DO BREVO
 api_key = os.getenv("BREVO_API_KEY", "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")
 lista_brevo_id = os.getenv("BREVO_LIST_ID", "7")  # ID da lista do Brevo onde os e-mails serão armazenados
-EMAIL_REMETENTE = "contato@plannerorganizer.com.br"
+EMAIL_REMETENTE = "solanobicalho@yahoo.com.br"
 NOME_REMETENTE = "Equipe Planner Organizer"
 
 def adicionar_contato_brevo(email, nome_completo=""):
