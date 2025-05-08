@@ -624,9 +624,10 @@ def show():
             st.header("Propostas em Execução")
             
             if not propostas.empty:
-                # Filtrar propostas em execução (usando o campo status_execucao)
+                # Filtrar propostas em execução usando ambos os campos de status para garantir consistência
                 propostas_em_execucao = propostas_com_clientes[
-                    propostas_com_clientes['status_execucao'] == 'Em execução'
+                    (propostas_com_clientes['status'] == 'Em execução') &
+                    (propostas_com_clientes['status_execucao'] == 'Em execução')
                 ]
                 
                 if not propostas_em_execucao.empty:
@@ -1875,9 +1876,11 @@ def show():
             st.header("Propostas Finalizadas")
             
             if not propostas.empty:
-                # Filtrar apenas propostas com status "Finalizada" ou "Recusada"
+                # Filtrar apenas propostas realmente finalizadas ou recusadas 
+                # usando rigorosamente apenas os status corretos
                 propostas_finalizadas = propostas_com_clientes[
-                    propostas_com_clientes['status'].isin(['Finalizada', 'Recusada'])
+                    (propostas_com_clientes['status'] == 'Finalizada') | 
+                    (propostas_com_clientes['status'] == 'Recusada')
                 ]
                 
                 if not propostas_finalizadas.empty:
