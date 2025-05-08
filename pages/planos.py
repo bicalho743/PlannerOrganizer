@@ -103,33 +103,33 @@ def show():
     </style>
     """, unsafe_allow_html=True)
     
-    # Mensagem de página em construção
+    # Mensagem de página em construção com estilos inline
     st.markdown("""
-    <div class="construction-container">
-        <div class="construction-icon animated-icon">🏗️</div>
-        <div class="construction-title">Página em Construção</div>
-        <div class="construction-message">
+    <div style="background: linear-gradient(135deg, #f5f7fa, #e9eff6); padding: 3rem 2rem; border-radius: 16px; text-align: center; margin: 2rem auto; max-width: 800px; box-shadow: 0 8px 24px rgba(0,0,0,0.1);">
+        <div style="font-size: 5rem; margin-bottom: 1.5rem; color: #4F4F52; animation: pulse 2s infinite ease-in-out; display: inline-block;">🏗️</div>
+        <div style="font-size: 2.2rem; font-weight: 700; color: #4F4F52; margin-bottom: 1rem;">Página em Construção</div>
+        <div style="font-size: 1.2rem; color: #5A6A85; margin-bottom: 2rem; line-height: 1.6;">
             Estamos trabalhando para trazer os melhores planos e preços para sua experiência com o Planner Organizer.
             Em breve, você poderá escolher o plano que melhor atende às necessidades do seu negócio.
         </div>
         
-        <div class="construction-info">
-            <div class="construction-info-title">Enquanto isso...</div>
-            <div class="construction-info-text">
+        <div style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem; border-left: 4px solid #4CAF50; text-align: left;">
+            <div style="font-weight: 600; color: #4F4F52; margin-bottom: 0.5rem; font-size: 1.2rem;">Enquanto isso...</div>
+            <div style="color: #5A6A85; font-size: 1rem; line-height: 1.5;">
                 Você pode utilizar nossa versão de demonstração gratuitamente para conhecer todas as funcionalidades do sistema. 
                 Basta fazer login com as credenciais de demonstração disponíveis na página inicial.
             </div>
         </div>
         
-        <div class="construction-info">
-            <div class="construction-info-title">Quer ser notificado quando os planos estiverem disponíveis?</div>
-            <div class="construction-info-text">
+        <div style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem; border-left: 4px solid #4CAF50; text-align: left;">
+            <div style="font-weight: 600; color: #4F4F52; margin-bottom: 0.5rem; font-size: 1.2rem;">Quer ser notificado quando os planos estiverem disponíveis?</div>
+            <div style="color: #5A6A85; font-size: 1rem; line-height: 1.5;">
                 Deixe seu e-mail conosco e informaremos assim que nossos planos de assinatura estiverem disponíveis,
                 com condições especiais para os primeiros assinantes.
             </div>
         </div>
         
-        <a href="mailto:contato@plannerorganizer.com.br" class="contact-button">
+        <a href="mailto:contato@plannerorganizer.com.br" style="display: inline-block; background-color: #4F4F52; color: white; padding: 0.8rem 2rem; border-radius: 5px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; text-decoration: none; margin-top: 1rem;">
             Quero ser notificado
         </a>
     </div>
