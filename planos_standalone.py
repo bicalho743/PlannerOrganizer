@@ -178,6 +178,29 @@ def main(set_config=True):
                             
                         # Limpar os campos usando a técnica de chaves dinâmicas
                         clear_form()
+                        
+                        # Enviar e-mail de confirmação (se a API estiver configurada)
+                        from utils.brevo_helper import enviar_email_brevo
+                        mensagem_html = f"""
+                        <h2>Obrigado pelo seu interesse!</h2>
+                        <p>Olá <strong>{nome}</strong>,</p>
+                        <p>Recebemos seu e-mail e o adicionamos à nossa lista de interessados 
+                        no Planner Organizer. Entraremos em contato em breve com informações 
+                        exclusivas sobre nossos planos e valores.</p>
+                        <p>Atenciosamente,<br>Equipe Planner Organizer</p>
+                        """
+                        
+                        # Tentamos enviar o e-mail, mas não interrompemos o fluxo se falhar
+                        try:
+                            enviar_email_brevo(
+                                destinatario_email=email,
+                                destinatario_nome=nome,
+                                assunto="Bem-vindo ao Planner Organizer",
+                                mensagem_html=mensagem_html
+                            )
+                        except Exception as email_error:
+                            # Apenas logamos o erro, não mostramos para o usuário
+                            print(f"Erro ao enviar e-mail de confirmação: {email_error}")
                     else:
                         st.session_state.form_status = "error_brevo"
                         st.session_state.error_msg = result.get("message", "Erro ao processar seu e-mail.")
