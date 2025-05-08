@@ -1886,6 +1886,12 @@ def show():
                 if not propostas_finalizadas.empty:
                     # Preparar DataFrame para exibição
                     df_finalizadas = pd.DataFrame()
+                    # Primeiro verificar que estamos realmente trabalhando com propostas finalizadas
+                    st.write(f"Total de propostas finalizadas: {len(propostas_finalizadas)}")
+                    
+                    # Adicionar coluna de status explícita para depuração
+                    df_finalizadas['Status'] = propostas_finalizadas['status']
+                    
                     # Manter o ID como coluna oculta para referência
                     df_finalizadas['ID'] = propostas_finalizadas['id']
                     df_finalizadas['Número'] = propostas_finalizadas['numero']
@@ -1904,6 +1910,10 @@ def show():
                         lambda row: '' if row['status'] == 'Recusada' else row['data_fim'].strftime('%d/%m/%Y') if pd.notna(row['data_fim']) else '',
                         axis=1
                     )
+                    
+                    # Debug para verificar quais propostas estão sendo mostradas
+                    for idx, proposta in propostas_finalizadas.iterrows():
+                        st.write(f"Proposta #{proposta['numero']} - Status: {proposta['status']}")
                     
                     # Exibir tabela sem mostrar a coluna ID
                     st.dataframe(df_finalizadas.drop(columns=['ID']), hide_index=True)
