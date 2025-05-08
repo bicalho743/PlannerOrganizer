@@ -15,293 +15,137 @@ def show():
     
     # Configuração da página
     st.title("Planos de Assinatura")
-    st.subheader("Escolha o plano ideal para o seu negócio")
     
-    # CSS para os cartões de planos
+    # CSS para a mensagem de página em construção
     st.markdown("""
     <style>
-    .pricing-card {
-        background: white;
-        border-radius: 10px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        margin-bottom: 1.5rem;
-        transition: all 0.3s ease;
-        border-top: 4px solid #4F4F52;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .pricing-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    }
-    
-    .pricing-card.featured {
-        border-top: 4px solid #4CAF50;
-    }
-    
-    .pricing-card.premium {
-        border-top: 4px solid #FFC107;
-    }
-    
-    .plan-name {
-        font-size: 1.3rem;
-        font-weight: 600;
-        color: #1C1C1E;
-        margin-bottom: 0.5rem;
-    }
-    
-    .plan-price {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #1C1C1E;
-        margin: 1rem 0;
-    }
-    
-    .plan-period {
-        font-size: 0.9rem;
-        color: #6C6C70;
-        margin-bottom: 1.5rem;
-    }
-    
-    .plan-features {
-        list-style-type: none;
-        padding: 0;
-        margin: 0 0 1.5rem 0;
-        flex-grow: 1;
-    }
-    
-    .plan-features li {
-        margin-bottom: 0.8rem;
-        color: #4F4F52;
-        display: flex;
-        align-items: center;
-    }
-    
-    .plan-features li::before {
-        content: "✓";
-        color: #4CAF50;
-        font-weight: bold;
-        margin-right: 0.5rem;
-    }
-    
-    .plan-button {
+    .construction-container {
+        background: linear-gradient(135deg, #f5f7fa, #e9eff6);
+        padding: 3rem 2rem;
+        border-radius: 16px;
         text-align: center;
+        margin: 2rem auto;
+        max-width: 800px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+    
+    .construction-icon {
+        font-size: 5rem;
+        margin-bottom: 1.5rem;
+        color: #4F4F52;
+    }
+    
+    .construction-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #4F4F52;
+        margin-bottom: 1rem;
+    }
+    
+    .construction-message {
+        font-size: 1.2rem;
+        color: #5A6A85;
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+    
+    .construction-info {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+        border-left: 4px solid #4CAF50;
+        text-align: left;
+    }
+    
+    .construction-info-title {
+        font-weight: 600;
+        color: #4F4F52;
+        margin-bottom: 0.5rem;
+        font-size: 1.2rem;
+    }
+    
+    .construction-info-text {
+        color: #5A6A85;
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+    
+    .contact-button {
+        display: inline-block;
         background-color: #4F4F52;
         color: white;
-        padding: 0.8rem;
+        padding: 0.8rem 2rem;
         border-radius: 5px;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s ease;
-        display: block;
         text-decoration: none;
+        margin-top: 1rem;
     }
     
-    .plan-button:hover {
+    .contact-button:hover {
         background-color: #3A3A3D;
         transform: translateY(-2px);
     }
     
-    .plan-button.featured {
-        background-color: #4CAF50;
+    /* Animação do ícone em construção */
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
     }
     
-    .plan-button.featured:hover {
-        background-color: #3d8b40;
-    }
-    
-    .plan-button.premium {
-        background-color: #FFC107;
-        color: #333;
-    }
-    
-    .plan-button.premium:hover {
-        background-color: #e5ac06;
-    }
-    
-    .comparison-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 2rem;
-    }
-    
-    .comparison-table th,
-    .comparison-table td {
-        padding: 1rem;
-        text-align: center;
-        border-bottom: 1px solid #E0E0E0;
-    }
-    
-    .comparison-table th {
-        background-color: #F8F9FA;
-        font-weight: 600;
-        color: #4F4F52;
-    }
-    
-    .comparison-table tr:hover {
-        background-color: #F8F9FA;
-    }
-    
-    .check-icon {
-        color: #4CAF50;
-        font-weight: bold;
-    }
-    
-    .minus-icon {
-        color: #E0E0E0;
-    }
-    
-    @media (max-width: 768px) {
-        .pricing-card {
-            margin-bottom: 1rem;
-        }
+    .animated-icon {
+        animation: pulse 2s infinite ease-in-out;
+        display: inline-block;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Dividir em três colunas para os planos
-    col1, col2, col3 = st.columns(3)
-    
-    # Plano Básico
-    with col1:
-        st.markdown("""
-        <div class="pricing-card">
-            <div class="plan-name">Plano Básico</div>
-            <div class="plan-price">R$ 49,90</div>
-            <div class="plan-period">por mês</div>
-            <ul class="plan-features">
-                <li>Até 50 propostas</li>
-                <li>Até 30 clientes</li>
-                <li>Gestão de propostas</li>
-                <li>Controle financeiro básico</li>
-                <li>Relatórios mensais</li>
-            </ul>
-            <a href="#" class="plan-button">Assinar Agora</a>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Plano Profissional (Destacado)
-    with col2:
-        st.markdown("""
-        <div class="pricing-card featured">
-            <div class="plan-name">Plano Profissional</div>
-            <div class="plan-price">R$ 89,90</div>
-            <div class="plan-period">por mês</div>
-            <ul class="plan-features">
-                <li>Propostas ilimitadas</li>
-                <li>Clientes ilimitados</li>
-                <li>Gestão de propostas avançada</li>
-                <li>Controle financeiro completo</li>
-                <li>Relatórios personalizados</li>
-                <li>Suporte prioritário</li>
-                <li>Importação/Exportação de dados</li>
-            </ul>
-            <a href="#" class="plan-button featured">Assinar Agora</a>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Plano Premium
-    with col3:
-        st.markdown("""
-        <div class="pricing-card premium">
-            <div class="plan-name">Plano Premium</div>
-            <div class="plan-price">R$ 129,90</div>
-            <div class="plan-period">por mês</div>
-            <ul class="plan-features">
-                <li>Tudo do Plano Profissional</li>
-                <li>Módulo de automação</li>
-                <li>Integrações com outros sistemas</li>
-                <li>API para desenvolvedor</li>
-                <li>Painel de BI personalizado</li>
-                <li>Consultoria mensal</li>
-                <li>Acesso a novos recursos em beta</li>
-            </ul>
-            <a href="#" class="plan-button premium">Assinar Agora</a>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Tabela de comparação de recursos
-    st.subheader("Comparação de recursos")
-    
+    # Mensagem de página em construção
     st.markdown("""
-    <table class="comparison-table">
-        <tr>
-            <th>Recurso</th>
-            <th>Básico</th>
-            <th>Profissional</th>
-            <th>Premium</th>
-        </tr>
-        <tr>
-            <td>Gestão de Propostas</td>
-            <td><span class="check-icon">✓</span></td>
-            <td><span class="check-icon">✓</span></td>
-            <td><span class="check-icon">✓</span></td>
-        </tr>
-        <tr>
-            <td>Gestão de Clientes</td>
-            <td><span class="check-icon">✓</span></td>
-            <td><span class="check-icon">✓</span></td>
-            <td><span class="check-icon">✓</span></td>
-        </tr>
-        <tr>
-            <td>Controle Financeiro</td>
-            <td>Básico</td>
-            <td>Completo</td>
-            <td>Completo + Previsões</td>
-        </tr>
-        <tr>
-            <td>Relatórios</td>
-            <td>Limitados</td>
-            <td>Personalizados</td>
-            <td>Personalizados + BI</td>
-        </tr>
-        <tr>
-            <td>Importação/Exportação</td>
-            <td><span class="minus-icon">-</span></td>
-            <td><span class="check-icon">✓</span></td>
-            <td><span class="check-icon">✓</span></td>
-        </tr>
-        <tr>
-            <td>Automações</td>
-            <td><span class="minus-icon">-</span></td>
-            <td><span class="minus-icon">-</span></td>
-            <td><span class="check-icon">✓</span></td>
-        </tr>
-        <tr>
-            <td>Integrações</td>
-            <td><span class="minus-icon">-</span></td>
-            <td>Limitadas</td>
-            <td>Completas</td>
-        </tr>
-        <tr>
-            <td>Suporte</td>
-            <td>E-mail</td>
-            <td>E-mail + Chat</td>
-            <td>Prioritário + Telefone</td>
-        </tr>
-    </table>
+    <div class="construction-container">
+        <div class="construction-icon animated-icon">🏗️</div>
+        <div class="construction-title">Página em Construção</div>
+        <div class="construction-message">
+            Estamos trabalhando para trazer os melhores planos e preços para sua experiência com o Planner Organizer.
+            Em breve, você poderá escolher o plano que melhor atende às necessidades do seu negócio.
+        </div>
+        
+        <div class="construction-info">
+            <div class="construction-info-title">Enquanto isso...</div>
+            <div class="construction-info-text">
+                Você pode utilizar nossa versão de demonstração gratuitamente para conhecer todas as funcionalidades do sistema. 
+                Basta fazer login com as credenciais de demonstração disponíveis na página inicial.
+            </div>
+        </div>
+        
+        <div class="construction-info">
+            <div class="construction-info-title">Quer ser notificado quando os planos estiverem disponíveis?</div>
+            <div class="construction-info-text">
+                Deixe seu e-mail conosco e informaremos assim que nossos planos de assinatura estiverem disponíveis,
+                com condições especiais para os primeiros assinantes.
+            </div>
+        </div>
+        
+        <a href="mailto:contato@plannerorganizer.com.br" class="contact-button">
+            Quero ser notificado
+        </a>
+    </div>
     """, unsafe_allow_html=True)
     
-    # Perguntas frequentes
-    st.subheader("Perguntas Frequentes")
+    # Seção de informações adicionais
+    st.markdown("""
+    <div style="text-align: center; margin-top: 2rem; color: #5A6A85; font-size: 0.9rem;">
+        <p>Para mais informações ou para solicitar um orçamento personalizado, entre em contato com nossa equipe.</p>
+        <p>E-mail: contato@plannerorganizer.com.br | Telefone: (11) 4321-1234</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    with st.expander("Posso mudar de plano a qualquer momento?"):
-        st.write("Sim, você pode atualizar ou fazer downgrade do seu plano a qualquer momento. As alterações e cobranças serão proporcionais ao tempo restante da sua assinatura atual.")
-    
-    with st.expander("Como funciona o período de teste?"):
-        st.write("Oferecemos 14 dias de teste gratuito para todos os planos. Você só será cobrado após o término desse período se decidir continuar usando o sistema.")
-    
-    with st.expander("Quais formas de pagamento são aceitas?"):
-        st.write("Aceitamos cartões de crédito e débito das principais bandeiras, além de pagamento via PIX ou boleto bancário para assinaturas anuais.")
-    
-    with st.expander("Qual a política de reembolso?"):
-        st.write("Se você não estiver satisfeito com o serviço, oferecemos reembolso total até 7 dias após a primeira cobrança. Basta entrar em contato com nosso suporte.")
-    
-    with st.expander("Preciso de cartão de crédito para o período de teste?"):
-        st.write("Não é necessário informar dados de pagamento para iniciar o período de teste gratuito. Você só precisará fornecer esses dados se decidir continuar usando o sistema após o término do teste.")
+    # Botão para voltar à página inicial
+    if st.button("Voltar para a página inicial"):
+        st.switch_page("app.py")
 
 # Permitir que este arquivo seja executado diretamente
 if __name__ == "__main__":
