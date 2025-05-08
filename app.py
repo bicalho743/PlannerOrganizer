@@ -74,6 +74,10 @@ if "show_politica" not in st.session_state:
 # Verificar estado para mostrar página de planos
 if "show_planos" not in st.session_state:
     st.session_state.show_planos = False
+    
+# Verificar estado para mostrar página de envio de manual
+if "show_enviar_manual" not in st.session_state:
+    st.session_state.show_enviar_manual = False
 
 # Configuração inicial da página
 st.set_page_config(
@@ -108,6 +112,12 @@ def show_planos():
     """Mostra a página de planos"""
     st.session_state.show_planos = True
     st.rerun()
+    
+# Função para mostrar página de envio de manual
+def show_enviar_manual():
+    """Mostra a página de envio de manual"""
+    st.session_state.show_enviar_manual = True
+    st.rerun()
 
 # Mostrar termos de uso se solicitado
 if st.session_state.show_termos:
@@ -138,6 +148,17 @@ if st.session_state.show_planos:
     except ImportError as e:
         st.error(f"Não foi possível carregar a página de planos: {e}")
         st.session_state.show_planos = False
+        
+# Mostrar página de envio de manual se solicitado
+if st.session_state.show_enviar_manual:
+    try:
+        # Importar o módulo de envio de manual diretamente
+        import enviar_manual
+        enviar_manual.main()
+        st.stop()
+    except ImportError as e:
+        st.error(f"Não foi possível carregar a página de envio de manual: {e}")
+        st.session_state.show_enviar_manual = False
 
 # Verificar se a URL contém parâmetros de página específicos
 query_params = st.query_params
@@ -161,6 +182,12 @@ if 'page' in query_params:
     elif query_params['page'][0] == 'iniciar_teste':
         # Redirecionar para a página principal
         st.switch_page("app.py")
+        
+# Verificar se o parâmetro show_enviar_manual está presente na URL
+if 'show_enviar_manual' in query_params and query_params['show_enviar_manual'] == 'true':
+    # Ativar a página de envio de manual
+    st.session_state.show_enviar_manual = True
+    st.rerun()
 
 # Verificar se a requisição é para a página standalone de planos
 if 'planos_standalone_page' in st.query_params:
@@ -1433,8 +1460,16 @@ with st.sidebar.expander("🔧 Acesso Desenvolvedor", expanded=False):
         <h4 style="color: #1E366F; font-size: 1rem; margin-top: 1.2rem; margin-bottom: 0.8rem;">Ferramentas</h4>
         <div class="tools-links">
             <a href="/manual_sistema" target="_blank" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #E3F2FD; color: #1976D2; text-decoration: none; font-size: 0.85rem;">📘 Manual do Sistema</a>
+            <a href="#" onclick="manualClick(); return false;" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #FFE0B2; color: #E65100; text-decoration: none; font-size: 0.85rem;">📧 Enviar Manual por Email</a>
             <a href="http://localhost:8530" target="_blank" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #E8F5E9; color: #388E3C; text-decoration: none; font-size: 0.85rem;">💾 Sistema de Backup</a>
         </div>
+        
+        <script>
+        function manualClick() {
+            // Este script irá atualizar um parâmetro na URL para ativar a página de envio de manual
+            window.location.href = "/?show_enviar_manual=true";
+        }
+        </script>
         
         <p style="margin-top: 1rem; font-size: 0.8rem; color: #5A6A85; text-align: center;">
             Acesso exclusivo para desenvolvedores
