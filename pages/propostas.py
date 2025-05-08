@@ -1878,12 +1878,17 @@ def show():
             if not propostas.empty:
                 # Filtrar propostas concluídas ou finalizadas
                 # Considerar tanto o status quanto o status_execucao
+                # Aplicar condições mais restritas para filtrar apenas propostas finalizadas
                 propostas_finalizadas = propostas_com_clientes[
-                    ((propostas_com_clientes['status'] == 'Concluída') | 
-                    (propostas_com_clientes['status'] == 'Finalizada') |
-                    (propostas_com_clientes['status'] == 'Recusada')) |
-                    (propostas_com_clientes['status_execucao'] == 'Finalizada')
+                    # Garantir que ambos status e status_execucao sejam consistentes
+                    ((propostas_com_clientes['status'] == 'Finalizada') & 
+                     (propostas_com_clientes['status_execucao'] == 'Finalizada')) |
+                    # Incluir propostas recusadas
+                    (propostas_com_clientes['status'] == 'Recusada')
                 ]
+                
+                # Exibir debug para entender quais propostas estão sendo filtradas
+                st.write(f"Total de propostas finalizadas encontradas: {len(propostas_finalizadas)}")
                 
                 if not propostas_finalizadas.empty:
                     # Preparar DataFrame para exibição
