@@ -1870,8 +1870,8 @@ def show():
             else:
                 st.info("Não há propostas cadastradas no sistema.")
         
-        # ABA 4: FINALIZADAS
-        with tab4:
+        # ABA 3: FINALIZADAS
+        with tab3:
             st.header("Propostas Finalizadas")
             
             if not propostas.empty:
