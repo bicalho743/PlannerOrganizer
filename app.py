@@ -162,6 +162,29 @@ if 'page' in query_params:
         # Redirecionar para a página principal
         st.switch_page("app.py")
 
+# Verificar se a requisição é para a página standalone de planos
+if 'planos_standalone_page' in st.query_params:
+    # Remover completamente a barra lateral e outros elementos da UI
+    st.markdown("""
+    <style>
+    [data-testid="collapsedControl"] {display: none !important;}
+    section[data-testid="stSidebar"] {display: none !important;}
+    header {display: none !important;}
+    footer {display: none !important;}
+    [data-testid="stToolbar"] {display: none !important;}
+    .block-container {padding-top: 0 !important; max-width: 100% !important;}
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Redirecionando para a página standalone de planos
+    try:
+        # Importar o arquivo standalone e executar sua função main
+        import planos_standalone
+        planos_standalone.main()
+        st.stop()
+    except ImportError as e:
+        st.error(f"Não foi possível carregar a página standalone de planos: {e}")
+
 # Inicialização da autenticação in-app
 if not st.session_state.authenticated:
     # Ocultar completamente a barra lateral na página de login
@@ -707,9 +730,17 @@ if not st.session_state.authenticated:
         '''
         , unsafe_allow_html=True)
         
-        # CTA (Call to Action) com link para a página de planos em nova aba usando window.open()
-        st.markdown("""
-        <a href="javascript:void(0);" onclick="window.open('/?page=planos', '_blank');" id="planos-link" 
+        # CTA (Call to Action) com uma solução para abrir em nova aba usando javascript
+        # Isso garante que abrirá em nova aba de forma confiável
+        
+        # Usar uma abordagem com JavaScript puro para abrir em nova aba é mais confiável
+        current_url = st.experimental_get_query_params()
+        base_url = f"https://{os.environ.get('REPLIT_SLUG', '')}--{os.environ.get('REPL_OWNER', '')}.repl.co"
+        
+        st.markdown(f"""
+        <a href="javascript:void(0);" 
+           onclick="window.open('/?planos_standalone_page=true', '_blank');" 
+           id="planos-link" 
            style="display: inline-block; background-color: #4F4F52; color: white; 
                   text-align: center; padding: 1rem 2rem; text-decoration: none; 
                   border-radius: 10px; width: 100%; font-size: 1.2rem; 
@@ -719,15 +750,15 @@ if not st.session_state.authenticated:
         </a>
         <script>
             // JavaScript para adicionar efeito hover ao link
-            document.getElementById('planos-link').addEventListener('mouseenter', function() {
+            document.getElementById('planos-link').addEventListener('mouseenter', function() {{
                 this.style.transform = 'scale(1.02)';
                 this.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.2)';
-            });
+            }});
             
-            document.getElementById('planos-link').addEventListener('mouseleave', function() {
+            document.getElementById('planos-link').addEventListener('mouseleave', function() {{
                 this.style.transform = 'scale(1)';
                 this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-            });
+            }});
         </script>
         """, unsafe_allow_html=True)
         
