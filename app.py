@@ -699,10 +699,34 @@ if not st.session_state.authenticated:
         '''
         , unsafe_allow_html=True)
         
-        # CTA (Call to Action) com link para a página de planos
-        if st.button("Ver Planos e Preços", key="planos_cta_button"):
-            st.session_state.show_planos = True
-            st.rerun()
+        # CTA (Call to Action) com link para a página de planos em nova aba
+        # Substituindo o botão do Streamlit por um link HTML que abre em nova aba
+        st.markdown("""
+        <a href="/app?page=planos" target="_blank" id="planos-link" 
+           style="display: inline-block; background-color: #4F4F52; color: white; 
+                  text-align: center; padding: 1rem 2rem; text-decoration: none; 
+                  border-radius: 10px; width: 100%; font-size: 1.2rem; 
+                  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); font-weight: 600;
+                  transition: all 0.3s ease;">
+            Ver Planos e Preços
+        </a>
+        <script>
+            // JavaScript para adicionar efeito hover ao link
+            document.getElementById('planos-link').addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.02)';
+                this.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.2)';
+            });
+            
+            document.getElementById('planos-link').addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+            });
+        </script>
+        """, unsafe_allow_html=True)
+        
+        # Mantendo um botão invisível para compatibilidade com estilos existentes
+        if st.button("Ver Planos e Preços", key="planos_cta_button", disabled=True, help=""):
+            pass  # Esse botão não faz nada, está apenas para manter a compatibilidade
             
         # Estilizar o botão para parecer um CTA
         st.markdown('''

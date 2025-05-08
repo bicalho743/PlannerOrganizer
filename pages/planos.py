@@ -44,6 +44,14 @@ def clear_form():
     """, unsafe_allow_html=True)
 
 def show():
+    # Ocultar a barra lateral completamente
+    st.markdown("""
+    <style>
+    [data-testid="collapsedControl"] {display: none;}
+    section[data-testid="stSidebar"] {display: none;}
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Injetar script de compatibilidade para o Render (se necessário)
     inject_render_compatibility_fix()
     
