@@ -25,10 +25,23 @@ def initialize_session_state():
         st.session_state.form_submit_time = None
 
 def clear_form():
-    # Usando esta técnica, o formulário será limpo apenas na próxima renderização da página
-    st.session_state.nome_reset = str(datetime.now())
-    st.session_state.email_reset = str(datetime.now())
-    st.session_state.form_processed = False
+    """
+    Limpa o formulário alterando as chaves dos campos.
+    No Streamlit, não podemos modificar diretamente valores de widgets,
+    mas podemos usar diferentes chaves para que a próxima renderização mostre campos vazios.
+    """
+    # Gerar timestamp único para novas chaves
+    timestamp = str(datetime.now().timestamp())
+    st.session_state.nome_reset = timestamp
+    st.session_state.email_reset = timestamp
+    st.session_state.form_processed = True
+    
+    # Forçar nova renderização usando JavaScript
+    st.markdown("""
+    <script>
+        window.location.href = window.location.href;
+    </script>
+    """, unsafe_allow_html=True)
 
 def show():
     # Injetar script de compatibilidade para o Render (se necessário)
@@ -142,7 +155,6 @@ def show():
                             
                         # Limpar os campos usando a técnica de chaves dinâmicas
                         clear_form()
-                        st.experimental_rerun()
                     else:
                         st.session_state.form_status = "error_sendgrid"
                         
