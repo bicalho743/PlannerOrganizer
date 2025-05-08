@@ -70,6 +70,10 @@ if "show_termos" not in st.session_state:
 # Verificar estado para mostrar política de privacidade
 if "show_politica" not in st.session_state:
     st.session_state.show_politica = False
+    
+# Verificar estado para mostrar página de planos
+if "show_planos" not in st.session_state:
+    st.session_state.show_planos = False
 
 # Configuração inicial da página
 st.set_page_config(
@@ -98,6 +102,12 @@ def show_politica():
     """Mostra a página de política de privacidade"""
     st.session_state.show_politica = True
     st.rerun()
+    
+# Função para mostrar página de planos
+def show_planos():
+    """Mostra a página de planos"""
+    st.session_state.show_planos = True
+    st.rerun()
 
 # Mostrar termos de uso se solicitado
 if st.session_state.show_termos:
@@ -118,6 +128,16 @@ if st.session_state.show_politica:
     except ImportError as e:
         st.error(f"Não foi possível carregar a política de privacidade: {e}")
         st.session_state.show_politica = False
+        
+# Mostrar página de planos se solicitado
+if st.session_state.show_planos:
+    try:
+        from pages.planos import show
+        show()
+        st.stop()
+    except ImportError as e:
+        st.error(f"Não foi possível carregar a página de planos: {e}")
+        st.session_state.show_planos = False
 
 # Verificar se a URL contém parâmetros de página específicos
 query_params = st.query_params
@@ -679,9 +699,9 @@ if not st.session_state.authenticated:
         '''
         , unsafe_allow_html=True)
         
-        # CTA (Call to Action) com link para a página de planos
+        # CTA (Call to Action) com link para a página de planos usando JavaScript
         st.markdown('''
-        <a href="?page=planos" style="text-decoration: none; display: block;">
+        <a href="#" onclick="document.dispatchEvent(new CustomEvent('show_planos')); return false;" style="text-decoration: none; display: block;">
             <div class="call-to-action">
                 <h2>Pronto para transformar seu negócio?</h2>
                 <p>Crie sua conta e comece a profissionalizar sua gestão de propostas e finanças.</p>
@@ -697,6 +717,25 @@ if not st.session_state.authenticated:
         st.markdown('''
         <h2 style="text-align: center; color: #4F4F52; margin-top: 0; margin-bottom: 25px;">Acesse sua conta</h2>
         ''', unsafe_allow_html=True)
+        
+        # Componente oculto para capturar cliques nos links para planos
+        if st.checkbox("", key="planos_link", label_visibility="collapsed"):
+            show_planos()
+        
+        # JavaScript para interceptar cliques no link de planos
+        planos_js = """
+        <script>
+            document.addEventListener('show_planos', function() {
+                window.parent.postMessage({
+                    type: 'streamlit:setComponentValue',
+                    value: true,
+                    dataType: 'bool',
+                    componentId: 'planos_link'
+                }, '*');
+            });
+        </script>
+        """
+        st.components.v1.html(planos_js, height=0)
         
         # Login apenas com e-mail (botões sociais removidos conforme solicitado)
         
