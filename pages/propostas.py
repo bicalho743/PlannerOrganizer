@@ -625,10 +625,19 @@ def show():
             
             if not propostas.empty:
                 # Filtrar propostas em execução usando ambos os campos de status para garantir consistência
-                propostas_em_execucao = propostas_com_clientes[
-                    (propostas_com_clientes['status'] == 'Em execução') &
-                    (propostas_com_clientes['status_execucao'] == 'Em execução')
-                ]
+                # Reimplementar o filtro de forma mais clara
+                
+                # 1. Criar máscara para status de proposta em execução
+                mascara_status_execucao = propostas_com_clientes['status'] == 'Em execução'
+                
+                # 2. Criar máscara para status_execucao em execução
+                mascara_execucao = propostas_com_clientes['status_execucao'] == 'Em execução'
+                
+                # 3. Aplicar ambas as máscaras (AND) para garantir que apenas propostas realmente em execução sejam exibidas
+                mascara_em_execucao_completa = mascara_status_execucao & mascara_execucao
+                
+                # Aplicar o filtro
+                propostas_em_execucao = propostas_com_clientes[mascara_em_execucao_completa].copy()
                 
                 if not propostas_em_execucao.empty:
                     # Preparar DataFrame para exibição com tratamento de tipos para evitar erros Arrow
@@ -1875,51 +1884,67 @@ def show():
         with tab3:
             st.header("Propostas Finalizadas")
             
-            if not propostas.empty:
-                # Filtrar propostas concluídas ou finalizadas
-                # Considerar tanto o status quanto o status_execucao
-                # Aplicar condições mais restritas para filtrar apenas propostas finalizadas
-                propostas_finalizadas = propostas_com_clientes[
-                    # Garantir que ambos status e status_execucao sejam consistentes
-                    ((propostas_com_clientes['status'] == 'Finalizada') & 
-                     (propostas_com_clientes['status_execucao'] == 'Finalizada')) |
-                    # Incluir propostas recusadas
-                    (propostas_com_clientes['status'] == 'Recusada')
-                ]
-                
-                # Exibir debug para entender quais propostas estão sendo filtradas
-                st.write(f"Total de propostas finalizadas encontradas: {len(propostas_finalizadas)}")
-                
-                if not propostas_finalizadas.empty:
-                    # Preparar DataFrame para exibição
-                    df_finalizadas = pd.DataFrame()
-                    # Manter o ID como coluna oculta para referência
-                    df_finalizadas['ID'] = propostas_finalizadas['id']
-                    df_finalizadas['Número'] = propostas_finalizadas['numero']
-                    df_finalizadas['Cliente'] = propostas_finalizadas['nome']
-                    df_finalizadas['Descrição'] = propostas_finalizadas['descricao']
+            try:
+                # Primeiro verificar se temos propostas
+                if not propostas.empty:
+                    # Reimplementação do filtro para propostas finalizadas de maneira mais explícita
+                    # Criar máscaras de filtro separadamente para melhor controle e clareza
                     
-                    # Formatar valor como moeda
-                    df_finalizadas['Valor (R$)'] = propostas_finalizadas['valor'].apply(
-                        lambda x: f"R$ {x:.2f}" if x else "R$ 0.00"
-                    )
+                    # 1. Criar máscara para status de proposta finalizada
+                    mascara_status_finalizada = propostas_com_clientes['status'] == 'Finalizada'
                     
-                    # Adicionar coluna de data formatada
-                    df_finalizadas['Data'] = propostas_finalizadas['data_inicio'].apply(
-                        lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
-                    )
+                    # 2. Criar máscara para status_execucao finalizada
+                    mascara_status_execucao_finalizada = propostas_com_clientes['status_execucao'] == 'Finalizada'
                     
-                    # Adicionar tipo de proposta
-                    df_finalizadas['Tipo'] = propostas_finalizadas['tipo_proposta']
+                    # 3. Criar máscara para propostas recusadas
+                    mascara_recusada = propostas_com_clientes['status'] == 'Recusada'
                     
-                    # Exibir tabela de propostas finalizadas
-                    st.dataframe(df_finalizadas.drop(columns=['ID']), hide_index=True)
+                    # 4. Aplicar combinação de máscaras para filtrar apenas propostas realmente finalizadas
+                    # Uma proposta é considerada finalizada se:
+                    # - TANTO o status quanto o status_execucao forem "Finalizada" OU
+                    # - O status for "Recusada"
+                    mascara_finalizada_completa = (mascara_status_finalizada & mascara_status_execucao_finalizada) | mascara_recusada
+                    
+                    # Aplicar filtro para obter apenas propostas finalizadas
+                    propostas_finalizadas = propostas_com_clientes[mascara_finalizada_completa].copy()
+                    
+                    # LOG PARA DEBUG
+                    st.write(f"Total de propostas finalizadas encontradas: {len(propostas_finalizadas)}")
+                    
+                    # Verificar se temos propostas finalizadas
+                    if not propostas_finalizadas.empty:
+                        # Preparar DataFrame para exibição
+                        df_finalizadas = pd.DataFrame()
+                        # Manter o ID como coluna oculta para referência
+                        df_finalizadas['ID'] = propostas_finalizadas['id']
+                        df_finalizadas['Número'] = propostas_finalizadas['numero']
+                        df_finalizadas['Cliente'] = propostas_finalizadas['nome']
+                        df_finalizadas['Descrição'] = propostas_finalizadas['descricao']
+                        
+                        # Formatar valor como moeda
+                        df_finalizadas['Valor (R$)'] = propostas_finalizadas['valor'].apply(
+                            lambda x: f"R$ {x:.2f}" if x else "R$ 0.00"
+                        )
+                        
+                        # Adicionar coluna de data formatada
+                        df_finalizadas['Data'] = propostas_finalizadas['data_inicio'].apply(
+                            lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
+                        )
+                        
+                        # Adicionar tipo de proposta
+                        df_finalizadas['Tipo'] = propostas_finalizadas['tipo_proposta']
+                        
+                        # Exibir tabela de propostas finalizadas
+                        st.dataframe(df_finalizadas.drop(columns=['ID']), hide_index=True)
+                    else:
+                        st.info("Não há propostas finalizadas no momento.")
+                        # Criar DataFrame vazio para uso subsequente
+                        propostas_finalizadas = pd.DataFrame()
                 else:
-                    st.info("Não há propostas finalizadas no momento.")
-                    # Criar DataFrame vazio para uso subsequente
+                    st.info("Não há propostas cadastradas no sistema.")
                     propostas_finalizadas = pd.DataFrame()
-            else:
-                st.info("Não há propostas cadastradas no sistema.")
+            except Exception as e:
+                st.error(f"Erro ao processar propostas finalizadas: {str(e)}")
                 propostas_finalizadas = pd.DataFrame()
                 
             # Verificar se temos propostas finalizadas antes de mostrar a interface para reabrir/excluir
