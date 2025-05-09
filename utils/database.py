@@ -163,6 +163,7 @@ class Cliente(Base):
 class Fornecedor(Base):
     __tablename__ = 'fornecedores'
     id = Column(Integer, primary_key=True)
+    nome = Column(String, nullable=True)  # Adicionado campo nome
     descricao = Column(String, nullable=False)
     contato = Column(String)
     categoria = Column(String)
@@ -1754,6 +1755,7 @@ class Database:
             fornecedores = self.session.query(Fornecedor).all()
             return pd.DataFrame([{
                 'id': f.id,
+                'nome': f.nome,  # Adicionado campo "nome" que estava faltando
                 'descricao': f.descricao,
                 'contato': f.contato,
                 'categoria': f.categoria,
