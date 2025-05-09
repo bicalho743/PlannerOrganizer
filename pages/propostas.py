@@ -1882,28 +1882,39 @@ def show():
         
         # ABA 3: FINALIZADAS
         with tab3:
-            st.header("Propostas Finalizadas")
+            st.header("Propostas Finalizadas - VERSÃO ATUALIZADA")
             
-            # Função simplificada para carregar propostas finalizadas
-            def carregar_propostas_finalizadas():
-                # Obter todas as propostas
-                todas_propostas = st.session_state.db.get_propostas()
+            # AVISO DE DEBUG
+            st.warning("🔍 DEBUG: Usando código atualizado para filtrar propostas na aba 'Finalizadas'")
+            
+            # Obter todas as propostas diretamente
+            todas_propostas = st.session_state.db.get_propostas()
+            
+            # Mostrar contagem total para debug
+            st.info(f"Total de propostas no banco: {len(todas_propostas) if not todas_propostas.empty else 0}")
+            
+            # Filtro direto para debug
+            propostas_finalizadas = pd.DataFrame()
+            if not todas_propostas.empty:
+                # Filtrar visualmente cada registro para debug
+                st.subheader("Análise de Registros:")
+                for idx, p in todas_propostas.iterrows():
+                    status_match = p['status'] == 'Finalizada'
+                    exec_match = p['status_execucao'] == 'Finalizada'
+                    recusada_match = p['status'] == 'Recusada'
+                    
+                    if (status_match and exec_match) or recusada_match:
+                        st.success(f"✅ MATCH: Proposta #{p['numero']} - {p['cliente_nome']} - Status: {p['status']} - Exec: {p['status_execucao']}")
+                    else:
+                        st.error(f"❌ NO MATCH: Proposta #{p['numero']} - {p['cliente_nome']} - Status: {p['status']} - Exec: {p['status_execucao']}")
                 
-                # Filtrar apenas as propostas finalizadas
-                if not todas_propostas.empty:
-                    # Filtrar propostas com status='Finalizada' e status_execucao='Finalizada'
-                    # ou propostas com status='Recusada'
-                    propostas_fin = todas_propostas[
-                        ((todas_propostas['status'] == 'Finalizada') & (todas_propostas['status_execucao'] == 'Finalizada')) |
-                        (todas_propostas['status'] == 'Recusada')
-                    ]
-                    return propostas_fin
-                return pd.DataFrame()
+                # Aplicar filtro
+                propostas_finalizadas = todas_propostas[
+                    ((todas_propostas['status'] == 'Finalizada') & (todas_propostas['status_execucao'] == 'Finalizada')) |
+                    (todas_propostas['status'] == 'Recusada')
+                ]
             
-            # Carregar as propostas finalizadas
             try:
-                propostas_finalizadas = carregar_propostas_finalizadas()
-                
                 # Mostrar contagem para debug
                 st.write(f"Total de propostas finalizadas encontradas: {len(propostas_finalizadas)}")
                 
