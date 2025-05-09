@@ -1064,14 +1064,191 @@ def show():
                             st.error(f"Erro ao carregar assistentes: {str(e)}")
                     
                     with exec_tab6:
-                        st.subheader("🏁 FINALIZAR PROPOSTA")
+                        st.subheader("Finalizar Proposta")
                         
-                        st.warning("⚠️ **Atenção**: Finalizar uma proposta não poderá ser desfeito facilmente.")
-                        
-                        col1, col2 = st.columns(2)
-                        with col1:
+                        # Obter dados para apresentação
+                        try:
+                            # Dados básicos da proposta
+                            valor_base = float(proposta['valor']) if proposta['valor'] else 0
+                            data_inicio = proposta['data_inicio'] if 'data_inicio' in proposta else None
+                            data_aprovacao = proposta['data_aprovacao'] if 'data_aprovacao' in proposta else None
+                            
+                            # Obter produtos
+                            produtos_df = st.session_state.db.get_produtos_organizadores(proposta_selecionada_id)
+                            
+                            # Obter fornecedores
+                            fornecedores_df = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_selecionada_id, "FORNECEDOR")
+                            
+                            # Obter assistentes
+                            assistentes_df = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_selecionada_id, "ASSISTENTE")
+                            
+                            # Obter outros itens
+                            outros_df = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_selecionada_id, "OUTROS")
+                            
+                            # Calcular valores totais
+                            total_produtos = produtos_df['valor'].sum() * produtos_df['quantidade'].sum() if not produtos_df.empty else 0
+                            total_fornecedores = fornecedores_df['valor'].sum() if not fornecedores_df.empty else 0
+                            total_assistentes = assistentes_df['valor'].sum() if not assistentes_df.empty else 0
+                            total_outros = outros_df['valor'].sum() if not outros_df.empty else 0
+                            
+                            # Valor final
+                            total_geral = valor_base + total_produtos + total_fornecedores + total_assistentes + total_outros
+                            
+                            # SEÇÃO 1: DADOS BÁSICOS
+                            st.write("### Dados Básicos")
+                            
+                            # Criar tabela de dados básicos
+                            dados_basicos = {
+                                "Item": ["Número", "Cliente", "Descrição", "Data de Início", "Data de Aprovação", "Valor Base", "Status"],
+                                "Valor": [
+                                    proposta['numero'],
+                                    proposta['nome'],
+                                    proposta['descricao'],
+                                    data_inicio.strftime('%d/%m/%Y') if data_inicio else '-',
+                                    data_aprovacao.strftime('%d/%m/%Y') if data_aprovacao else '-',
+                                    f"R$ {valor_base:.2f}",
+                                    proposta['status_execucao'] if 'status_execucao' in proposta else proposta['status']
+                                ]
+                            }
+                            
+                            # Exibir tabela de dados básicos
+                            st.dataframe(pd.DataFrame(dados_basicos), hide_index=True, use_container_width=True)
+                            
+                            # SEÇÃO 2: PRODUTOS
+                            st.write("### Produtos")
+                            
+                            if not produtos_df.empty:
+                                # Preparar DataFrame para exibição
+                                produtos_display = produtos_df.copy()
+                                produtos_display['Valor Total'] = produtos_display['valor'] * produtos_display['quantidade']
+                                
+                                # Renomear colunas para exibição
+                                produtos_display = produtos_display[['id', 'nome', 'valor', 'quantidade', 'Valor Total', 'comodo']]
+                                produtos_display.columns = ['ID', 'Nome', 'Valor Unit.', 'Quantidade', 'Valor Total', 'Cômodo']
+                                
+                                # Formatar valores monetários
+                                produtos_display['Valor Unit.'] = produtos_display['Valor Unit.'].apply(lambda x: f"R$ {float(x):.2f}")
+                                produtos_display['Valor Total'] = produtos_display['Valor Total'].apply(lambda x: f"R$ {float(x):.2f}")
+                                
+                                # Exibir a tabela sem a coluna ID
+                                st.dataframe(produtos_display[['Nome', 'Valor Unit.', 'Quantidade', 'Valor Total', 'Cômodo']], hide_index=True, use_container_width=True)
+                                
+                                # Exibir total
+                                st.info(f"Total Produtos: R$ {total_produtos:.2f}")
+                            else:
+                                st.info("Nenhum produto adicionado a esta proposta.")
+                            
+                            # SEÇÃO 3: FORNECEDORES
+                            st.write("### Fornecedores")
+                            
+                            if not fornecedores_df.empty:
+                                # Preparar DataFrame para exibição
+                                fornecedores_display = fornecedores_df.copy()
+                                
+                                # Renomear colunas para exibição
+                                fornecedores_display = fornecedores_display[['id', 'fornecedor', 'descricao', 'valor']]
+                                fornecedores_display.columns = ['ID', 'Fornecedor', 'Descrição', 'Valor']
+                                
+                                # Formatar valores monetários
+                                fornecedores_display['Valor'] = fornecedores_display['Valor'].apply(lambda x: f"R$ {float(x):.2f}")
+                                
+                                # Exibir a tabela sem a coluna ID
+                                st.dataframe(fornecedores_display[['Fornecedor', 'Descrição', 'Valor']], hide_index=True, use_container_width=True)
+                                
+                                # Exibir total
+                                st.info(f"Total Fornecedores: R$ {total_fornecedores:.2f}")
+                            else:
+                                st.info("Nenhum fornecedor adicionado a esta proposta.")
+                            
+                            # SEÇÃO 4: ASSISTENTES
+                            st.write("### Assistentes")
+                            
+                            if not assistentes_df.empty:
+                                # Preparar DataFrame para exibição
+                                assistentes_display = assistentes_df.copy()
+                                
+                                # Renomear colunas para exibição
+                                assistentes_display = assistentes_display[['id', 'fornecedor', 'descricao', 'valor']]
+                                assistentes_display.columns = ['ID', 'Assistente', 'Descrição', 'Valor']
+                                
+                                # Formatar valores monetários
+                                assistentes_display['Valor'] = assistentes_display['Valor'].apply(lambda x: f"R$ {float(x):.2f}")
+                                
+                                # Exibir a tabela sem a coluna ID
+                                st.dataframe(assistentes_display[['Assistente', 'Descrição', 'Valor']], hide_index=True, use_container_width=True)
+                                
+                                # Exibir total
+                                st.info(f"Total Assistentes: R$ {total_assistentes:.2f}")
+                            else:
+                                st.info("Nenhum assistente adicionado a esta proposta.")
+                            
+                            # SEÇÃO 5: OUTROS ITENS
+                            st.write("### Outros Itens")
+                            
+                            if not outros_df.empty:
+                                # Preparar DataFrame para exibição
+                                outros_display = outros_df.copy()
+                                
+                                # Renomear colunas para exibição
+                                outros_display = outros_display[['id', 'fornecedor', 'descricao', 'valor']]
+                                outros_display.columns = ['ID', 'Item', 'Descrição', 'Valor']
+                                
+                                # Formatar valores monetários
+                                outros_display['Valor'] = outros_display['Valor'].apply(lambda x: f"R$ {float(x):.2f}")
+                                
+                                # Exibir a tabela sem a coluna ID
+                                st.dataframe(outros_display[['Item', 'Descrição', 'Valor']], hide_index=True, use_container_width=True)
+                                
+                                # Exibir total
+                                st.info(f"Total Outros Itens: R$ {total_outros:.2f}")
+                            else:
+                                st.info("Nenhum item adicional adicionado a esta proposta.")
+                            
+                            # SEÇÃO 6: RESUMO FINANCEIRO
+                            st.write("### Resumo Financeiro")
+                            
+                            resumo_financeiro = {
+                                "Item": ["Valor Personal Organizer", "Produtos", "Fornecedores", "Assistentes", "Outros", "Total Geral"],
+                                "Valor": [
+                                    f"R$ {valor_base:.2f}",
+                                    f"R$ {total_produtos:.2f}",
+                                    f"R$ {total_fornecedores:.2f}",
+                                    f"R$ {total_assistentes:.2f}",
+                                    f"R$ {total_outros:.2f}",
+                                    f"R$ {total_geral:.2f}"
+                                ]
+                            }
+                            
+                            st.dataframe(pd.DataFrame(resumo_financeiro), hide_index=True, use_container_width=True)
+                            
+                            # SEÇÃO 7: DISTRIBUIÇÃO DE VALORES (GRÁFICO DE PIZZA)
+                            st.write("### Distribuição de Valores")
+                            
+                            # Preparar dados para o gráfico
+                            labels = ['Valor Personal Organizer', 'Fornecedores', 'Assistentes (Custos)', 'Produtos']
+                            values = [valor_base, total_fornecedores, total_assistentes, total_produtos]
+                            
+                            # Criar o gráfico de pizza
+                            fig = go.Figure(data=[go.Pie(
+                                labels=labels,
+                                values=values,
+                                hole=.3,  # Criar gráfico tipo donut
+                                textinfo='label+value'
+                            )])
+                            
+                            fig.update_layout(
+                                title_text="Distribuição de Valores da Proposta",
+                                legend=dict(orientation="h", yanchor="bottom", y=-0.3)
+                            )
+                            
+                            # Exibir o gráfico
+                            st.plotly_chart(fig, use_container_width=True)
+                            
+                            # SEÇÃO 8: BOTÃO PARA FINALIZAR
+                            st.warning("⚠️ **Atenção**: Finalizar uma proposta não poderá ser desfeito facilmente.")
+                            
                             with st.form(key=f"form_finalizar_concluida_{proposta_selecionada_id}"):
-                                finalizar_concluida = st.form_submit_button("Finalizar como Concluída")
+                                finalizar_concluida = st.form_submit_button("Marcar como Concluída", use_container_width=True)
                                 if finalizar_concluida:
                                     try:
                                         # Chamar a função para finalizar proposta
@@ -1084,39 +1261,8 @@ def show():
                                     except Exception as e:
                                         st.error(f"❌ Erro ao finalizar proposta: {str(e)}")
                         
-                        with col2:
-                            with st.form(key=f"form_finalizar_recusada_{proposta_selecionada_id}"):
-                                finalizar_recusada = st.form_submit_button("Finalizar como Recusada")
-                                if finalizar_recusada:
-                                    try:
-                                        # Aqui poderia chamar uma função específica para recusar proposta
-                                        st.error("🚫 Proposta marcada como recusada.")
-                                        # Implementar lógica
-                                    except Exception as e:
-                                        st.error(f"❌ Erro ao recusar proposta: {str(e)}")
-                        
-                        # Adicionar uma seção para Resumo
-                        st.subheader("Resumo da Proposta")
-                        
-                        # Valores fictícios para demonstração
-                        total_produtos = 0
-                        total_acrescimos = 0
-                        valor_final = float(proposta['valor']) + total_acrescimos
-                        
-                        st.write(f"**Cliente:** {proposta['nome']}")
-                        st.write(f"**Valor Original:** R$ {float(proposta['valor']):,.2f}")
-                        st.write(f"**Acréscimos:** R$ {total_acrescimos:,.2f}")
-                        st.write(f"**Valor Final:** R$ {valor_final:,.2f}")
-                        
-                        # Visualização em gráfico
-                        fig = go.Figure()
-                        fig.add_trace(go.Bar(
-                            x=['Valor Original', 'Acréscimos', 'Valor Final'],
-                            y=[float(proposta['valor']), total_acrescimos, valor_final],
-                            marker_color=['#1f77b4', '#ff7f0e', '#2ca02c']
-                        ))
-                        fig.update_layout(title='Composição do Valor da Proposta')
-                        st.plotly_chart(fig)
+                        except Exception as e:
+                            st.error(f"Erro ao carregar dados para finalização: {str(e)}")
             else:
                 st.info("Não há propostas em execução no momento.")
     
