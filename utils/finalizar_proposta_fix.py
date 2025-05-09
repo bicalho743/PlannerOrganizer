@@ -266,8 +266,7 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
             UPDATE propostas 
             SET status = 'Finalizada',
                 status_execucao = 'Finalizada',
-                data_fim = CURRENT_DATE,
-                data_finalizacao = CURRENT_DATE
+                data_fim = CURRENT_DATE
             WHERE id = %s
             RETURNING id, valor, usuario_id, numero, descricao, cliente_id;
         """, (proposta_id,))
