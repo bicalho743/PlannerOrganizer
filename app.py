@@ -78,6 +78,10 @@ if "show_planos" not in st.session_state:
 # Verificar estado para mostrar página de envio de manual
 if "show_enviar_manual" not in st.session_state:
     st.session_state.show_enviar_manual = False
+    
+# Verificar estado para mostrar página de debug de propostas finalizadas
+if "show_debug_propostas_finalizadas" not in st.session_state:
+    st.session_state.show_debug_propostas_finalizadas = False
 
 # Configuração inicial da página
 st.set_page_config(
@@ -118,6 +122,123 @@ def show_enviar_manual():
     """Mostra a página de envio de manual"""
     st.session_state.show_enviar_manual = True
     st.rerun()
+    
+def debug_propostas_finalizadas():
+    """Página de debug para filtro de propostas finalizadas"""
+    import streamlit as st
+    import pandas as pd
+    from datetime import datetime
+    import os
+    from utils.database import Database
+    
+    # Configuração da página
+    st.set_page_config(
+        page_title="DEBUG - Propostas Finalizadas",
+        page_icon="🔍",
+        layout="wide"
+    )
+    
+    # TÍTULO DA PÁGINA
+    st.title("🔍 DIAGNÓSTICO DE PROPOSTAS FINALIZADAS")
+    st.warning("Esta é uma ferramenta de diagnóstico para resolver o problema de filtragem de propostas finalizadas.")
+    
+    # Inicializar banco de dados diretamente (sem usar session_state)
+    db = Database()
+    
+    # Bloco 1: Exibir todas as propostas para diagnóstico
+    st.header("📋 Todas as Propostas no Banco")
+    todas_propostas = db.get_propostas()
+    
+    # Mostrar total de propostas
+    st.info(f"Total de propostas no banco de dados: {len(todas_propostas) if not todas_propostas.empty else 0}")
+    
+    # Criar tabela com todas as propostas para diagnóstico
+    if not todas_propostas.empty:
+        # Selecionar apenas colunas relevantes para a análise
+        colunas_display = ['id', 'numero', 'cliente_nome', 'status', 'status_execucao', 'valor']
+        st.dataframe(todas_propostas[colunas_display])
+        
+        # Detalhamento de cada proposta com seu status
+        st.subheader("Detalhamento de Status por Proposta:")
+        for idx, p in todas_propostas.iterrows():
+            # Verificar se atende aos critérios de filtragem
+            status_match = p['status'] == 'Finalizada'
+            exec_match = p['status_execucao'] == 'Finalizada'
+            recusada_match = p['status'] == 'Recusada'
+            
+            if (status_match and exec_match) or recusada_match:
+                st.success(f"✅ PROPOSTA #{p['numero']} - {p['cliente_nome']} ATENDE AOS CRITÉRIOS")
+                st.write(f"- Status: {p['status']}")
+                st.write(f"- Status Execução: {p['status_execucao']}")
+            else:
+                st.error(f"❌ PROPOSTA #{p['numero']} - {p['cliente_nome']} NÃO ATENDE AOS CRITÉRIOS")
+                st.write(f"- Status: {p['status']}")
+                st.write(f"- Status Execução: {p['status_execucao']}")
+            st.write("---")
+    else:
+        st.error("Não foram encontradas propostas no banco de dados.")
+    
+    # Bloco 2: Testar filtragem diretamente
+    st.header("🔎 Teste de Filtragem")
+    
+    if not todas_propostas.empty:
+        # Aplicar o filtro direto
+        propostas_finalizadas = todas_propostas[
+            ((todas_propostas['status'] == 'Finalizada') & (todas_propostas['status_execucao'] == 'Finalizada')) |
+            (todas_propostas['status'] == 'Recusada')
+        ]
+        
+        # Mostrar resultado da filtragem
+        st.write(f"Total de propostas após filtragem: {len(propostas_finalizadas)}")
+        
+        if not propostas_finalizadas.empty:
+            st.success("Propostas que atendem aos critérios:")
+            st.dataframe(propostas_finalizadas[colunas_display])
+            
+            # Mostrar as propostas que DEVERIAM aparecer na aba
+            st.subheader("Propostas Finalizadas (Formato Final):")
+            for idx, proposta in propostas_finalizadas.iterrows():
+                with st.expander(f"{proposta['numero']} - {proposta['cliente_nome']} - {proposta['descricao']} (R$ {proposta['valor']:.2f})"):
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.write(f"**ID:** {proposta['id']}")
+                        st.write(f"**Cliente:** {proposta['cliente_nome']}")
+                        st.write(f"**Descrição:** {proposta['descricao']}")
+                        st.write(f"**Valor:** R$ {proposta['valor']:.2f}")
+                        
+                    with col2:
+                        st.write(f"**Tipo:** {proposta['tipo_proposta']}")
+                        st.write(f"**Status:** {proposta['status']}")
+                        st.write(f"**Status Execução:** {proposta['status_execucao']}")
+                        data_inicio_str = proposta['data_inicio'].strftime('%d/%m/%Y') if pd.notna(proposta['data_inicio']) else 'N/D'
+                        st.write(f"**Data Início:** {data_inicio_str}")
+                        data_fim_str = proposta['data_fim'].strftime('%d/%m/%Y') if pd.notna(proposta['data_fim']) else 'N/D'
+                        st.write(f"**Data Fim:** {data_fim_str}")
+        else:
+            st.warning("Nenhuma proposta atende aos critérios de filtragem!")
+    
+    st.divider()
+    
+    # Adicionar botão para atualizar a página
+    if st.button("🔄 Atualizar Dados"):
+        st.rerun()
+    
+    # Adicionar informação sobre a consulta SQL
+    st.divider()
+    st.subheader("Detalhes da Implementação")
+    st.code("""
+    # Código de filtro que estamos usando:
+    propostas_finalizadas = todas_propostas[
+        ((todas_propostas['status'] == 'Finalizada') & (todas_propostas['status_execucao'] == 'Finalizada')) |
+        (todas_propostas['status'] == 'Recusada')
+    ]
+    """, language="python")
+    
+    # Adicionar detalhes sobre o banco de dados
+    st.write("**Informações de conexão com o banco:**")
+    st.code(f"- Database URL: {'Usando variável de ambiente' if 'DATABASE_URL' in os.environ else 'Não configurada'}")
+    st.code(f"- Hora da consulta: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 # Mostrar termos de uso se solicitado
 if st.session_state.show_termos:

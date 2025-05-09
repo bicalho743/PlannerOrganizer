@@ -53,6 +53,10 @@ args = "Debug Finalizadas"
 task = "workflow.run"
 args = "Pagina Finalizadas"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Debug Tab Finalizadas Novo"
+
 [[workflows.workflow]]
 name = "Gerar Manual"
 author = 39445503
@@ -155,6 +159,15 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run pagina_finalizadas.py --server.port 5004 --server.address 0.0.0.0"
 waitForPort = 5004
+
+[[workflows.workflow]]
+name = "Debug Tab Finalizadas Novo"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run debug_tab_finalizadas_novo.py --server.port 5010 --server.address 0.0.0.0"
+waitForPort = 5010
 
 [[ports]]
 localPort = 443
