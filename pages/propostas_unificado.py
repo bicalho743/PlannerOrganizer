@@ -829,13 +829,16 @@ def show():
                         # Implementação de fornecedores
                         # Consultar os fornecedores da base
                         try:
+                            # Obter todos os fornecedores
                             fornecedores = st.session_state.db.get_fornecedores()
+                            
+                            # Verificar se temos algum fornecedor
                             if not fornecedores.empty:
                                 with st.form(key=f"form_fornecedor_{proposta_selecionada_id}"):
                                     fornecedor_selecionado = st.selectbox(
                                         "Selecione o fornecedor:", 
                                         options=fornecedores['id'].tolist(),
-                                        format_func=lambda x: fornecedores.loc[fornecedores['id'] == x, 'nome'].iloc[0]
+                                        format_func=lambda x: f"{fornecedores.loc[fornecedores['id'] == x, 'nome'].iloc[0]} ({fornecedores.loc[fornecedores['id'] == x, 'categoria'].iloc[0]})"
                                     )
                                     
                                     # Obter o percentual de comissão do fornecedor selecionado
@@ -906,6 +909,10 @@ def show():
                                         # Exibir a tabela
                                         st.dataframe(df_display)
                                         
+                                        # Calcular e mostrar valor total
+                                        valor_total_fornecedores = acrescimos['valor'].sum()
+                                        st.info(f"Valor Total dos Fornecedores: R$ {valor_total_fornecedores:.2f}")
+                                        
                                         # Formulário para remover fornecedores
                                         with st.form(key=f"form_remover_fornecedor_{proposta_selecionada_id}"):
                                             acrescimo_remover_id = st.selectbox(
@@ -932,9 +939,7 @@ def show():
                                                 except Exception as e:
                                                     st.error(f"Erro ao remover fornecedor: {str(e)}")
                                         
-                                        # Mostrar valor total
-                                        valor_total_fornecedores = acrescimos['valor'].sum()
-                                        st.info(f"Valor Total dos Fornecedores: R$ {valor_total_fornecedores:.2f}")
+                                        # Já mostramos o valor total acima, remover esta duplicidade
                                     else:
                                         st.info("Nenhum fornecedor adicionado a esta proposta ainda.")
                                 except Exception as e:

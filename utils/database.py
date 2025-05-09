@@ -1752,7 +1752,17 @@ class Database:
 
     def get_fornecedores(self):
         def query():
-            fornecedores = self.session.query(Fornecedor).all()
+            # Buscar todos os fornecedores, incluindo tanto categoria 'Fornecedor' quanto 'Produtos'
+            fornecedores = self.session.query(Fornecedor).filter(
+                (Fornecedor.categoria == 'Fornecedor') | 
+                (Fornecedor.categoria == 'Produtos')
+            ).order_by(Fornecedor.nome).all()
+            
+            # Verificar se temos fornecedores
+            if not fornecedores:
+                # Se não encontrar fornecedores com o filtro, buscar todos
+                fornecedores = self.session.query(Fornecedor).order_by(Fornecedor.nome).all()
+            
             return pd.DataFrame([{
                 'id': f.id,
                 'nome': f.nome,  # Adicionado campo "nome" que estava faltando
