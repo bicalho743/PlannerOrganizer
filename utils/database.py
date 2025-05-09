@@ -1216,11 +1216,11 @@ class Database:
             if force_reload:
                 # Criar uma nova sessão para garantir dados atualizados
                 from sqlalchemy.orm import Session as SQLSession
+                from sqlalchemy import text
+                import pandas as pd
+                
                 session = SQLSession(engine)
                 try:
-                    # Usar SQL direto para ignorar o cache do ORM
-                    from sqlalchemy import text
-                    
                     # Construir a consulta SQL diretamente
                     sql = """
                         SELECT * FROM financeiro 
@@ -1252,7 +1252,6 @@ class Database:
                     result = session.execute(text(sql), params)
                     
                     # Converter para DataFrame
-                    import pandas as pd
                     df = pd.DataFrame(result.fetchall())
                     
                     # Renomear colunas para o formato esperado
@@ -1633,11 +1632,11 @@ class Database:
             if force_reload:
                 # Criar uma nova sessão para garantir dados atualizados
                 from sqlalchemy.orm import Session as SQLSession
+                from sqlalchemy import text
+                import pandas as pd
+                
                 session = SQLSession(engine)
                 try:
-                    # Usar SQL direto para ignorar o cache do ORM
-                    from sqlalchemy import text
-                    
                     # Construir a consulta SQL diretamente
                     sql = """
                         SELECT * FROM financeiro 
@@ -1661,7 +1660,6 @@ class Database:
                     result = session.execute(text(sql), params)
                     
                     # Converter para DataFrame
-                    import pandas as pd
                     df = pd.DataFrame(result.fetchall())
                     
                     return df
