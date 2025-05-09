@@ -1752,36 +1752,58 @@ class Database:
 
     def get_fornecedores(self):
         def query():
-            # Buscar todos os fornecedores, incluindo tanto categoria 'Fornecedor' quanto 'Produtos'
-            fornecedores = self.session.query(Fornecedor).filter(
-                (Fornecedor.categoria == 'Fornecedor') | 
-                (Fornecedor.categoria == 'Produtos')
-            ).order_by(Fornecedor.nome).all()
-            
-            # Verificar se temos fornecedores
-            if not fornecedores:
-                # Se não encontrar fornecedores com o filtro, buscar todos
-                fornecedores = self.session.query(Fornecedor).order_by(Fornecedor.nome).all()
-            
-            return pd.DataFrame([{
-                'id': f.id,
-                'nome': f.nome,  # Adicionado campo "nome" que estava faltando
-                'descricao': f.descricao,
-                'contato': f.contato,
-                'categoria': f.categoria,
-                'estado': f.estado,
-                'cidade': f.cidade,
-                'bairro': f.bairro,
-                'endereco': f.endereco,
-                'pix': f.pix,
-                'recorrente': f.recorrente,
-                'observacoes': f.observacoes,
-                'valor': f.valor,
-                'data_vencimento': f.data_vencimento,
-                'data_pagamento': f.data_pagamento,
-                'status': f.status,
-                'percentual_comissao': f.percentual_comissao
-            } for f in fornecedores])
+            try:
+                print(f"DEBUG: Buscando fornecedores das categorias 'Fornecedor' e 'Produtos'")
+                
+                # Buscar todos os fornecedores, incluindo tanto categoria 'Fornecedor' quanto 'Produtos'
+                fornecedores = self.session.query(Fornecedor).filter(
+                    (Fornecedor.categoria == 'Fornecedor') | 
+                    (Fornecedor.categoria == 'Produtos')
+                ).order_by(Fornecedor.nome).all()
+                
+                print(f"DEBUG: Quantidade de fornecedores encontrados: {len(fornecedores)}")
+                if fornecedores:
+                    categorias = set(f.categoria for f in fornecedores)
+                    print(f"DEBUG: Categorias encontradas: {categorias}")
+                
+                # Verificar se temos fornecedores
+                if not fornecedores:
+                    print(f"DEBUG: Nenhum fornecedor encontrado. Buscando todos os fornecedores...")
+                    # Se não encontrar fornecedores com o filtro, buscar todos
+                    fornecedores = self.session.query(Fornecedor).order_by(Fornecedor.nome).all()
+                    print(f"DEBUG: Total de fornecedores sem filtro: {len(fornecedores)}")
+                
+                # Construir DataFrame com os dados
+                resultado = pd.DataFrame([{
+                    'id': f.id,
+                    'nome': f.nome,  # Adicionado campo "nome" que estava faltando
+                    'descricao': f.descricao,
+                    'contato': f.contato,
+                    'categoria': f.categoria,
+                    'estado': f.estado,
+                    'cidade': f.cidade,
+                    'bairro': f.bairro,
+                    'endereco': f.endereco,
+                    'pix': f.pix,
+                    'recorrente': f.recorrente,
+                    'observacoes': f.observacoes,
+                    'valor': f.valor,
+                    'data_vencimento': f.data_vencimento,
+                    'data_pagamento': f.data_pagamento,
+                    'status': f.status,
+                    'percentual_comissao': f.percentual_comissao
+                } for f in fornecedores])
+                
+                print(f"DEBUG: DataFrame criado com {len(resultado)} linhas")
+                if not resultado.empty:
+                    print(f"DEBUG: Categorias no DataFrame: {resultado['categoria'].unique()}")
+                
+                return resultado
+            except Exception as e:
+                print(f"ERRO ao obter fornecedores: {str(e)}")
+                # Em caso de erro, retornar DataFrame vazio
+                return pd.DataFrame()
+                
         return self._safe_query(query)
 
     def add_categoria_despesa(self, nome, descricao):
