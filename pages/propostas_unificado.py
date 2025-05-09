@@ -833,18 +833,114 @@ def show():
                             if not fornecedores.empty:
                                 with st.form(key=f"form_fornecedor_{proposta_selecionada_id}"):
                                     fornecedor_selecionado = st.selectbox(
-                                        "Selecione um fornecedor:", 
+                                        "Selecione o fornecedor:", 
                                         options=fornecedores['id'].tolist(),
                                         format_func=lambda x: fornecedores.loc[fornecedores['id'] == x, 'nome'].iloc[0]
                                     )
                                     
-                                    fornecedor_salvar = st.form_submit_button("Adicionar Fornecedor à Proposta")
+                                    # Obter o percentual de comissão do fornecedor selecionado
+                                    fornecedor_percentual = fornecedores.loc[fornecedores['id'] == fornecedor_selecionado, 'percentual_comissao'].iloc[0]
+                                    fornecedor_percentual = float(fornecedor_percentual) if fornecedor_percentual is not None else 0.0
+                                    
+                                    # Campo para o valor do fornecimento
+                                    valor_fornecimento = st.number_input("Valor do fornecimento (R$):", min_value=0.0, value=0.0, format="%.2f")
+                                    
+                                    # Calcular comissão
+                                    valor_comissao = valor_fornecimento * (fornecedor_percentual / 100) if valor_fornecimento > 0 else 0
+                                    
+                                    # Exibir informações sobre percentual e comissão
+                                    col1, col2 = st.columns(2)
+                                    with col1:
+                                        st.info(f"Percentual de comissão configurado para este fornecedor: {fornecedor_percentual:.2f}%")
+                                    with col2:
+                                        st.info(f"Comissão: R$ {valor_comissao:.2f}")
+                                    
+                                    # Mensagem sobre o percentual
+                                    st.caption("O percentual de comissão é definido no cadastro do fornecedor")
+                                    
+                                    # Campo para observações
+                                    observacoes = st.text_area("Observações:", height=100)
+                                    
+                                    fornecedor_salvar = st.form_submit_button("Adicionar Fornecedor")
                                     
                                     if fornecedor_salvar:
-                                        # Lógica para adicionar fornecedor
-                                        st.success("Fornecedor adicionado à proposta com sucesso!")
+                                        if valor_fornecimento <= 0:
+                                            st.error("O valor do fornecimento deve ser maior que zero.")
+                                        else:
+                                            try:
+                                                # Adicionar fornecedor à proposta
+                                                resultado = st.session_state.db.add_fornecedor_proposta(
+                                                    proposta_id=proposta_selecionada_id,
+                                                    fornecedor_id=fornecedor_selecionado,
+                                                    valor=valor_fornecimento,
+                                                    observacoes=observacoes
+                                                )
+                                                
+                                                if resultado and "acrescimo_id" in resultado:
+                                                    st.success("Fornecedor adicionado à proposta com sucesso!")
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                                else:
+                                                    st.error("Erro ao adicionar fornecedor. Verifique os dados e tente novamente.")
+                                            except Exception as e:
+                                                st.error(f"Erro ao adicionar fornecedor: {str(e)}")
+                                
+                                # Exibir fornecedores já adicionados
+                                try:
+                                    # Obter todos os acréscimos do tipo FORNECEDOR para esta proposta
+                                    acrescimos = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_selecionada_id, "FORNECEDOR")
+                                    
+                                    if not acrescimos.empty:
+                                        st.write("### Fornecedores adicionados")
+                                        
+                                        # Preparar os dados para exibição em uma tabela
+                                        df_display = acrescimos.copy()
+                                        
+                                        # Renomear colunas para exibição
+                                        df_display = df_display[['id', 'fornecedor', 'descricao', 'valor']]
+                                        df_display.columns = ['ID', 'Fornecedor', 'Observações', 'Valor']
+                                        
+                                        # Formatar valores monetários
+                                        df_display['Valor'] = df_display['Valor'].apply(lambda x: f"R$ {float(x):.2f}")
+                                        
+                                        # Exibir a tabela
+                                        st.dataframe(df_display)
+                                        
+                                        # Formulário para remover fornecedores
+                                        with st.form(key=f"form_remover_fornecedor_{proposta_selecionada_id}"):
+                                            acrescimo_remover_id = st.selectbox(
+                                                "Selecione um fornecedor para remover:",
+                                                options=acrescimos['id'].tolist(),
+                                                format_func=lambda x: f"{acrescimos.loc[acrescimos['id'] == x, 'fornecedor'].iloc[0]}"
+                                            )
+                                            
+                                            remover_fornecedor = st.form_submit_button("Remover Fornecedor")
+                                            
+                                            if remover_fornecedor:
+                                                try:
+                                                    # Chamar a função para remover o acréscimo
+                                                    resultado = st.session_state.db.remove_acrescimo_proposta(acrescimo_remover_id)
+                                                    
+                                                    if resultado:
+                                                        st.success("Fornecedor removido com sucesso!")
+                                                    else:
+                                                        st.error("Falha ao remover o fornecedor. Ele pode não existir mais no banco de dados.")
+                                                        
+                                                    # Recarregar a página
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                                except Exception as e:
+                                                    st.error(f"Erro ao remover fornecedor: {str(e)}")
+                                        
+                                        # Mostrar valor total
+                                        valor_total_fornecedores = acrescimos['valor'].sum()
+                                        st.info(f"Valor Total dos Fornecedores: R$ {valor_total_fornecedores:.2f}")
+                                    else:
+                                        st.info("Nenhum fornecedor adicionado a esta proposta ainda.")
+                                except Exception as e:
+                                    st.error(f"Erro ao carregar fornecedores da proposta: {str(e)}")
                             else:
-                                st.info("Não há fornecedores cadastrados.")
+                                st.info("Não há fornecedores cadastrados. Adicione fornecedores no menu Cadastros > Fornecedores.")
                         except Exception as e:
                             st.error(f"Erro ao carregar fornecedores: {str(e)}")
                     
