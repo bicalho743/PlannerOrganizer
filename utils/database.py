@@ -1212,12 +1212,14 @@ class Database:
         Returns:
             DataFrame: DataFrame com as transações
         """
+        # Importações no escopo da função principal
+        import pandas as pd
+        
         def query():
             if force_reload:
                 # Criar uma nova sessão para garantir dados atualizados
                 from sqlalchemy.orm import Session as SQLSession
                 from sqlalchemy import text
-                import pandas as pd
                 
                 session = SQLSession(engine)
                 try:
@@ -1628,12 +1630,14 @@ class Database:
         Returns:
             DataFrame: DataFrame com as contas a receber
         """
+        # Importações no escopo da função principal
+        import pandas as pd
+        
         def query():
             if force_reload:
                 # Criar uma nova sessão para garantir dados atualizados
                 from sqlalchemy.orm import Session as SQLSession
                 from sqlalchemy import text
-                import pandas as pd
                 
                 session = SQLSession(engine)
                 try:
