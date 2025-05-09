@@ -11,7 +11,8 @@ from utils.database import Fornecedor
 
 def show():
     # Título com estilo personalizado para ficar mais próximo do topo
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">📝 Propostas</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">📝 Propostas [TESTE DEBUG]</h1>', unsafe_allow_html=True)
+    st.info("Arquivo em uso: pages/propostas.py - Versão de teste")
     
     # Verificar se temos uma conexão com o banco de dados
     if not hasattr(st.session_state, 'db'):
