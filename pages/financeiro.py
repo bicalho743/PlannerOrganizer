@@ -419,9 +419,18 @@ def show():
             st.session_state.reload_contas_pagar = True
             st.rerun()
         
-        # Função para obter contas a pagar (despesas pendentes)
-        # O uso de force_reload=True vai recarregar direto do banco sem cache
-        contas_pagar = st.session_state.db.get_financeiro(force_reload=True)
+        # Definir se precisamos forçar o recarregamento
+        force_reload = True
+        
+        # Se o flag de recarregamento estiver ativo, garantir que estamos recarregando
+        if st.session_state.reload_contas_pagar:
+            force_reload = True
+            # Resetar o flag para o próximo carregamento
+            st.session_state.reload_contas_pagar = False
+            
+        # Carregar as contas a pagar (despesas pendentes)
+        # Forçar recarregamento para evitar dados desatualizados
+        contas_pagar = st.session_state.db.get_financeiro(force_reload=force_reload)
         if not contas_pagar.empty:
             # Filtrar por classificação contas_a_pagar ou tipo despesa com status pendente
             contas_pagar = contas_pagar[(
@@ -491,35 +500,32 @@ def show():
                                     with col_conf1:
                                         if st.button("✓ Confirmar", key=f"confirm_{pagar_key}"):
                                             try:
-                                                # Usar SQL direto para garantir atualização
-                                                from sqlalchemy import text
-                                                from utils.database import engine
+                                                # Usar o método da classe Database para atualizar transação mais seguramente
+                                                data_pagamento = datetime.now().date()
                                                 
-                                                with engine.connect() as conn:
-                                                    # Atualizar status para 'Pago' e a data de recebimento
-                                                    data_pagamento = datetime.now().date().isoformat()
+                                                # Atualizar status da transação usando método adequado do DB
+                                                result = st.session_state.db.atualizar_status_transacao(
+                                                    transacao_id=conta['id'],
+                                                    status='Pago',
+                                                    data_recebimento=data_pagamento
+                                                )
+                                                
+                                                if result:
+                                                    st.success(f"✅ Pagamento de {conta['descricao']} registrado com sucesso!")
                                                     
-                                                    # Execução direta de SQL
-                                                    conn.execute(text(f"""
-                                                        UPDATE financeiro 
-                                                        SET status = 'Pago', 
-                                                            data_recebimento = '{data_pagamento}'
-                                                        WHERE id = {conta['id']}
-                                                    """))
+                                                    # Forçar recarregamento dos dados na próxima exibição
+                                                    st.session_state.reload_contas_pagar = True
                                                     
-                                                    # Commit explícito
-                                                    conn.commit()
-                                                
-                                                st.success(f"✅ Pagamento de {conta['descricao']} registrado com sucesso!")
-                                                
-                                                # Limpar estado via session state
-                                                st.session_state[pagar_key] = False
-                                                
-                                                # Aguardar um pouco para exibir a mensagem de sucesso
-                                                time.sleep(1)
-                                                
-                                                # Recarregar a página para mostrar dados atualizados
-                                                st.rerun()
+                                                    # Limpar estado via session state
+                                                    st.session_state[pagar_key] = False
+                                                    
+                                                    # Aguardar um pouco para exibir a mensagem de sucesso
+                                                    time.sleep(1)
+                                                    
+                                                    # Recarregar a página para mostrar dados atualizados
+                                                    st.rerun()
+                                                else:
+                                                    st.error("Erro ao registrar pagamento. A transação não foi encontrada.")
                                             except Exception as e:
                                                 st.error(f"Erro ao registrar pagamento: {str(e)}")
                                     
@@ -551,31 +557,28 @@ def show():
                                     with col_canc1:
                                         if st.button("✓ Confirmar", key=f"confirm_{cancelar_key}"):
                                             try:
-                                                # Usar SQL direto para garantir atualização
-                                                from sqlalchemy import text
-                                                from utils.database import engine
+                                                # Usar o método da classe Database para atualizar transação mais seguramente
+                                                result = st.session_state.db.atualizar_status_transacao(
+                                                    transacao_id=conta['id'],
+                                                    status='Cancelado'
+                                                )
                                                 
-                                                with engine.connect() as conn:
-                                                    # Atualizar status para 'Cancelado'
-                                                    conn.execute(text(f"""
-                                                        UPDATE financeiro 
-                                                        SET status = 'Cancelado'
-                                                        WHERE id = {conta['id']}
-                                                    """))
+                                                if result:
+                                                    st.success(f"Pagamento de {conta['descricao']} cancelado com sucesso!")
                                                     
-                                                    # Commit explícito
-                                                    conn.commit()
-                                                
-                                                st.success(f"Pagamento de {conta['descricao']} cancelado com sucesso!")
-                                                
-                                                # Limpar estado via session state
-                                                st.session_state[cancelar_key] = False
-                                                
-                                                # Aguardar um pouco para exibir a mensagem de sucesso
-                                                time.sleep(1)
-                                                
-                                                # Recarregar a página para mostrar dados atualizados
-                                                st.rerun()
+                                                    # Forçar recarregamento dos dados na próxima exibição
+                                                    st.session_state.reload_contas_pagar = True
+                                                    
+                                                    # Limpar estado via session state
+                                                    st.session_state[cancelar_key] = False
+                                                    
+                                                    # Aguardar um pouco para exibir a mensagem de sucesso
+                                                    time.sleep(1)
+                                                    
+                                                    # Recarregar a página para mostrar dados atualizados
+                                                    st.rerun()
+                                                else:
+                                                    st.error("Erro ao cancelar pagamento. A transação não foi encontrada.")
                                             except Exception as e:
                                                 st.error(f"Erro ao cancelar pagamento: {str(e)}")
                                     
