@@ -1199,7 +1199,7 @@ class Database:
         
         return self._safe_query(query)
 
-    def get_financeiro(self, include_all=True, categorias=None, limit=1000):
+    def get_financeiro(self, include_all=True, categorias=None, limit=1000, force_reload=False):
         """
         Retorna os dados financeiros (transações) do usuário atual
         
@@ -1207,52 +1207,113 @@ class Database:
             include_all (bool): Se True, inclui todas as transações. Se False, inclui apenas transações pendentes
             categorias (list): Lista de categorias para filtrar
             limit (int): Limite de registros a serem retornados
+            force_reload (bool): Se True, cria uma nova sessão para evitar caching de dados
         
         Returns:
             DataFrame: DataFrame com as transações
         """
         def query():
-            # Criar query base
-            query = self.session.query(Transacao)
-            
-            # Aplicar filtro por usuário se disponível
-            if self.usuario_id:
-                query = query.filter(Transacao.usuario_id == self.usuario_id)
-            
-            # Aplicar filtros se necessário
-            if not include_all:
-                query = query.filter(Transacao.status == 'Pendente')
+            if force_reload:
+                # Criar uma nova sessão para garantir dados atualizados
+                from sqlalchemy.orm import Session as SQLSession
+                session = SQLSession(engine)
+                try:
+                    # Usar SQL direto para ignorar o cache do ORM
+                    from sqlalchemy import text
+                    
+                    # Construir a consulta SQL diretamente
+                    sql = """
+                        SELECT * FROM financeiro 
+                        WHERE 1=1 
+                    """
+                    
+                    # Adicionar filtro de usuário se necessário
+                    params = {}
+                    if self.usuario_id:
+                        sql += " AND usuario_id = :usuario_id"
+                        params['usuario_id'] = self.usuario_id
+                    
+                    # Adicionar filtro de status se necessário
+                    if not include_all:
+                        sql += " AND status = 'Pendente'"
+                    
+                    # Adicionar filtro de categorias se necessário
+                    if categorias:
+                        placeholders = ", ".join([f":cat{i}" for i in range(len(categorias))])
+                        sql += f" AND categoria IN ({placeholders})"
+                        for i, cat in enumerate(categorias):
+                            params[f"cat{i}"] = cat
+                    
+                    # Adicionar ordenação e limite
+                    sql += " ORDER BY data DESC"
+                    sql += f" LIMIT {limit}"
+                    
+                    # Executar a consulta
+                    result = session.execute(text(sql), params)
+                    
+                    # Converter para DataFrame
+                    import pandas as pd
+                    df = pd.DataFrame(result.fetchall())
+                    
+                    # Renomear colunas para o formato esperado
+                    if not df.empty:
+                        # Adicionar campos calculados
+                        if 'tipo' in df.columns and 'valor' in df.columns:
+                            df['receita'] = df.apply(
+                                lambda row: float(row['valor']) if row['tipo'] in ['receita', 'receita_a_receber'] else 0.0, 
+                                axis=1
+                            )
+                            df['despesa'] = df.apply(
+                                lambda row: float(row['valor']) if row['tipo'] == 'despesa' else 0.0, 
+                                axis=1
+                            )
+                    
+                    return df
+                finally:
+                    session.close()
+            else:
+                # Usar o método original com cache do ORM
+                # Criar query base
+                query = self.session.query(Transacao)
                 
-            if categorias:
-                query = query.filter(Transacao.categoria.in_(categorias))
-            
-            # Ordenar e limitar
-            transacoes = query.order_by(Transacao.data.desc()).limit(limit).all()
-            
-            # Converter para DataFrame
-            df = pd.DataFrame([{
-                'id': t.id,
-                'tipo': t.tipo,
-                'descricao': t.descricao,
-                'valor': float(t.valor) if hasattr(t, 'valor') and t.valor is not None else 0.0,
-                'data': t.data,
-                'categoria': t.categoria,
-                'subcategoria': t.subcategoria,
-                'tipo_receita': t.tipo_receita,
-                'origem_id': t.origem_id,
-                'origem_tipo': t.origem_tipo,
-                'tipo_conta': t.tipo_conta,
-                'status': t.status,
-                'data_recebimento': t.data_recebimento,
-                'proposta_id': t.proposta_id,
-                'classificacao': t.classificacao,
-                # Campos calculados para facilitar a análise
-                'receita': float(t.valor) if t.tipo in ['receita', 'receita_a_receber'] else 0.0,
-                'despesa': float(t.valor) if t.tipo == 'despesa' else 0.0,
-                'usuario_id': t.usuario_id
-            } for t in transacoes])
-            
-            return df
+                # Aplicar filtro por usuário se disponível
+                if self.usuario_id:
+                    query = query.filter(Transacao.usuario_id == self.usuario_id)
+                
+                # Aplicar filtros se necessário
+                if not include_all:
+                    query = query.filter(Transacao.status == 'Pendente')
+                    
+                if categorias:
+                    query = query.filter(Transacao.categoria.in_(categorias))
+                
+                # Ordenar e limitar
+                transacoes = query.order_by(Transacao.data.desc()).limit(limit).all()
+                
+                # Converter para DataFrame
+                df = pd.DataFrame([{
+                    'id': t.id,
+                    'tipo': t.tipo,
+                    'descricao': t.descricao,
+                    'valor': float(t.valor) if hasattr(t, 'valor') and t.valor is not None else 0.0,
+                    'data': t.data,
+                    'categoria': t.categoria,
+                    'subcategoria': t.subcategoria,
+                    'tipo_receita': t.tipo_receita,
+                    'origem_id': t.origem_id,
+                    'origem_tipo': t.origem_tipo,
+                    'tipo_conta': t.tipo_conta,
+                    'status': t.status,
+                    'data_recebimento': t.data_recebimento,
+                    'proposta_id': t.proposta_id,
+                    'classificacao': t.classificacao,
+                    # Campos calculados para facilitar a análise
+                    'receita': float(t.valor) if t.tipo in ['receita', 'receita_a_receber'] else 0.0,
+                    'despesa': float(t.valor) if t.tipo == 'despesa' else 0.0,
+                    'usuario_id': t.usuario_id
+                } for t in transacoes])
+                
+                return df
         return self._safe_query(query)
 
     def add_transacao(self, tipo, descricao, valor, categoria, tipo_receita=None, 
@@ -1558,42 +1619,90 @@ class Database:
             return False
         return self._safe_query(query)
 
-    def get_contas_receber(self):
-        def query():
-            # Atualizado para incluir transações do tipo Receita com status Pendente
-            query = self.session.query(Transacao).filter(
-                (
-                    # Todos os lançamentos com classificação contas_a_receber
-                    (Transacao.classificacao == 'contas_a_receber') |
-                    # Todos os lançamentos do tipo Receita com status Pendente
-                    ((Transacao.tipo == 'Receita') & (Transacao.status == 'Pendente')) |
-                    # Manter compatibilidade com tipos antigos
-                    (Transacao.tipo == 'receita_a_receber')
-                )
-            )
+    def get_contas_receber(self, force_reload=False):
+        """
+        Retorna as contas a receber (transações do tipo receita com status pendente)
+        
+        Args:
+            force_reload (bool): Se True, cria uma nova sessão para evitar caching de dados
             
-            # Aplicar filtro por usuário se disponível (multi-tenant)
-            if self.usuario_id:
-                query = query.filter(Transacao.usuario_id == self.usuario_id)
+        Returns:
+            DataFrame: DataFrame com as contas a receber
+        """
+        def query():
+            if force_reload:
+                # Criar uma nova sessão para garantir dados atualizados
+                from sqlalchemy.orm import Session as SQLSession
+                session = SQLSession(engine)
+                try:
+                    # Usar SQL direto para ignorar o cache do ORM
+                    from sqlalchemy import text
+                    
+                    # Construir a consulta SQL diretamente
+                    sql = """
+                        SELECT * FROM financeiro 
+                        WHERE (
+                            (classificacao = 'contas_a_receber') OR
+                            ((tipo = 'Receita' OR tipo = 'receita') AND status = 'Pendente') OR
+                            (tipo = 'receita_a_receber')
+                        )
+                    """
+                    
+                    # Adicionar filtro de usuário se necessário
+                    params = {}
+                    if self.usuario_id:
+                        sql += " AND usuario_id = :usuario_id"
+                        params['usuario_id'] = self.usuario_id
+                    
+                    # Adicionar ordenação
+                    sql += " ORDER BY data DESC"
+                    
+                    # Executar a consulta
+                    result = session.execute(text(sql), params)
+                    
+                    # Converter para DataFrame
+                    import pandas as pd
+                    df = pd.DataFrame(result.fetchall())
+                    
+                    return df
+                finally:
+                    session.close()
+            else:
+                # Uso do método original com cache do ORM
+                # Atualizado para incluir transações do tipo Receita com status Pendente
+                query = self.session.query(Transacao).filter(
+                    (
+                        # Todos os lançamentos com classificação contas_a_receber
+                        (Transacao.classificacao == 'contas_a_receber') |
+                        # Todos os lançamentos do tipo Receita com status Pendente
+                        ((Transacao.tipo == 'Receita') & (Transacao.status == 'Pendente')) |
+                        # Manter compatibilidade com tipos antigos
+                        (Transacao.tipo == 'receita_a_receber')
+                    )
+                )
                 
-            # Ordenar e obter resultados
-            contas = query.order_by(Transacao.data.desc()).all()
+                # Aplicar filtro por usuário se disponível (multi-tenant)
+                if self.usuario_id:
+                    query = query.filter(Transacao.usuario_id == self.usuario_id)
+                    
+                # Ordenar e obter resultados
+                contas = query.order_by(Transacao.data.desc()).all()
 
-            return pd.DataFrame([{
-                'id': t.id,
-                'descricao': t.descricao,
-                'valor': t.valor,
-                'data': t.data,
-                'categoria': t.categoria,
-                'subcategoria': t.subcategoria,
-                'tipo_receita': t.tipo_receita,
-                'origem_tipo': t.origem_tipo,
-                'tipo_conta': t.tipo_conta,
-                'status': t.status,
-                'data_recebimento': t.data_recebimento,
-                'proposta_id': t.proposta_id,
-                'classificacao': t.classificacao
-            } for t in contas])
+                return pd.DataFrame([{
+                    'id': t.id,
+                    'descricao': t.descricao,
+                    'valor': t.valor,
+                    'data': t.data,
+                    'categoria': t.categoria,
+                    'subcategoria': t.subcategoria,
+                    'tipo_receita': t.tipo_receita,
+                    'origem_tipo': t.origem_tipo,
+                    'tipo_conta': t.tipo_conta,
+                    'status': t.status,
+                    'data_recebimento': t.data_recebimento,
+                    'proposta_id': t.proposta_id,
+                    'classificacao': t.classificacao
+                } for t in contas])
         return self._safe_query(query)
 
     def add_fornecedor(self, descricao, contato, categoria, estado=None, cidade=None, 

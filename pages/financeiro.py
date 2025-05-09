@@ -397,21 +397,31 @@ def show():
     with tab4:
         st.subheader("Contas a Pagar")
         
+        # Inicializar flag para recarga forçada
+        if 'reload_contas_pagar' not in st.session_state:
+            st.session_state.reload_contas_pagar = False
+        
         # Adicionar link para o histórico
         col1, col2 = st.columns([3, 1])
         with col2:
             if st.button("Ver no Histórico", key="ver_historico_pagar"):
                 # Define uma variável na sessão para indicar que queremos filtrar o histórico para despesas pagas
                 st.session_state.filtro_historico = {
-                    "tipo": ["despesa", "despesa_a_pagar"],
+                    "tipo": ["despesa"],
                     "status": ["Pago", "Aprovado"]
                 }
                 # Redireciona para a aba Histórico
                 st.session_state.aba_atual = "Histórico"
                 st.rerun()
         
+        # Botão para forçar recarregamento dos dados
+        if st.button("🔄 Atualizar Contas", key="reload_button"):
+            st.session_state.reload_contas_pagar = True
+            st.rerun()
+        
         # Função para obter contas a pagar (despesas pendentes)
-        contas_pagar = st.session_state.db.get_financeiro()
+        # O uso de force_reload=True vai recarregar direto do banco sem cache
+        contas_pagar = st.session_state.db.get_financeiro(force_reload=True)
         if not contas_pagar.empty:
             # Filtrar por classificação contas_a_pagar ou tipo despesa com status pendente
             contas_pagar = contas_pagar[(
@@ -505,8 +515,11 @@ def show():
                                                 # Limpar estado via session state
                                                 st.session_state[pagar_key] = False
                                                 
+                                                # Aguardar um pouco para exibir a mensagem de sucesso
                                                 time.sleep(1)
-                                                st.rerun()
+                                                
+                                                # Recarregar a página para mostrar dados atualizados
+                                                st.experimental_rerun()
                                             except Exception as e:
                                                 st.error(f"Erro ao registrar pagamento: {str(e)}")
                                     
@@ -558,8 +571,11 @@ def show():
                                                 # Limpar estado via session state
                                                 st.session_state[cancelar_key] = False
                                                 
+                                                # Aguardar um pouco para exibir a mensagem de sucesso
                                                 time.sleep(1)
-                                                st.rerun()
+                                                
+                                                # Recarregar a página para mostrar dados atualizados
+                                                st.experimental_rerun()
                                             except Exception as e:
                                                 st.error(f"Erro ao cancelar pagamento: {str(e)}")
                                     
@@ -683,8 +699,8 @@ def show():
                 "status": ["Aprovado", "Recebido", "Pago", "Cancelado"]
             }
         
-        # Recuperar dados para histórico
-        historico = st.session_state.db.get_financeiro()
+        # Recuperar dados para histórico, forçando recarregamento do banco
+        historico = st.session_state.db.get_financeiro(force_reload=True)
         
         if not historico.empty:
             # Converter a coluna 'data' para datetime para manipulação
@@ -813,8 +829,8 @@ def show():
     with tab6:
         st.subheader("Dashboard Financeiro")
 
-        # Obter dados financeiros
-        financeiro_completo = st.session_state.db.get_financeiro()
+        # Obter dados financeiros com force_reload para evitar cache
+        financeiro_completo = st.session_state.db.get_financeiro(force_reload=True)
         
         if not financeiro_completo.empty:
             # Adicionar uma coluna para classificar os tipos de lançamento de forma simplificada
@@ -843,8 +859,8 @@ def show():
             col2.metric("Total Despesas", f"R$ {total_despesas:.2f}")
             col3.metric("Saldo", f"R$ {saldo:.2f}")
             
-            # Resumo de Contas a Receber
-            contas_receber = st.session_state.db.get_contas_receber()
+            # Resumo de Contas a Receber, com force_reload
+            contas_receber = st.session_state.db.get_contas_receber(force_reload=True)
             if not contas_receber.empty:
                 st.subheader("Resumo de Contas a Receber")
 
