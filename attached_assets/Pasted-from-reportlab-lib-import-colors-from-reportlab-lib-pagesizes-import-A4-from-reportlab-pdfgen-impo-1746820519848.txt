@@ -1,0 +1,113 @@
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from datetime import datetime, timedelta
+import os
+
+# Dados de exemplo para gerar o PDF de relatório de serviço
+proposta = {
+    "id": "1234",
+    "tipo_proposta": "Organização Pós-Mudança",
+    "status": "Concluída",
+    "valor": 1500.00,
+    "descricao": "Organização completa de cozinha, closet e área de serviço. Inclui categorização e otimização dos espaços."
+}
+
+cliente = {
+    "nome": "Juliana Castro",
+    "email": "juliana.castro@email.com",
+    "telefone": "(31) 98765-4321"
+}
+
+itens_servico = [
+    {"descricao": "Organização de Cozinha", "valor": 600.00},
+    {"descricao": "Organização de Closet", "valor": 500.00},
+    {"descricao": "Organização de Área de Serviço", "valor": 400.00}
+]
+
+# Caminho do arquivo PDF para teste
+filename = '/mnt/data/relatorio_servico_juliana_castro.pdf'
+
+def gerar_pdf_servico_padronizado(proposta, cliente, itens_servico, filename):
+    c = canvas.Canvas(filename, pagesize=A4)
+    width, height = A4
+
+    # Cabeçalho azul escuro
+    AZUL_ESCURO = colors.HexColor("#1E366F")
+    CINZA_TEXTO = colors.HexColor("#5A6A85")
+    BRANCO = colors.white
+
+    c.setFillColor(AZUL_ESCURO)
+    c.rect(0, height - 60, width, 60, fill=True, stroke=0)
+    c.setFont("Helvetica-Bold", 18)
+    c.setFillColor(BRANCO)
+    c.drawString(30, height - 30, "Relatório de Serviço")
+    c.setFont("Helvetica", 10)
+    data_atual = (datetime.now() - timedelta(hours=3)).strftime('%d/%m/%Y')
+    c.drawRightString(width - 30, height - 30, f"Data: {data_atual}")
+    c.setFont("Helvetica", 11)
+    c.drawString(30, height - 50, f"#{proposta.get('id', 'N/A')} - {cliente.get('nome', '')}")
+
+    # Informações do cliente
+    y = height - 100
+    c.setFont("Helvetica-Bold", 12)
+    c.setFillColor(AZUL_ESCURO)
+    c.drawString(40, y, "Informações do Cliente")
+    y -= 20
+    c.setFont("Helvetica", 10)
+    c.setFillColor(CINZA_TEXTO)
+    c.drawString(40, y, f"Nome: {cliente.get('nome', '-')}")
+    y -= 15
+    c.drawString(40, y, f"Email: {cliente.get('email', '-')}")
+    y -= 15
+    c.drawString(40, y, f"Telefone: {cliente.get('telefone', '-')}")
+
+    # Informações da proposta
+    y -= 30
+    c.setFont("Helvetica-Bold", 12)
+    c.setFillColor(AZUL_ESCURO)
+    c.drawString(40, y, "Informações da Proposta")
+    y -= 20
+    c.setFont("Helvetica", 10)
+    c.setFillColor(CINZA_TEXTO)
+    c.drawString(40, y, f"Tipo: {proposta.get('tipo_proposta', '-')}")
+    y -= 15
+    c.drawString(40, y, f"Status: {proposta.get('status', '-')}")
+    y -= 15
+    c.drawString(40, y, f"Valor: R$ {float(proposta.get('valor', 0)):.2f}")
+
+    # Itens de serviço
+    y -= 30
+    c.setFont("Helvetica-Bold", 12)
+    c.setFillColor(AZUL_ESCURO)
+    c.drawString(40, y, "Itens Inclusos")
+    y -= 20
+
+    total = 0
+    for item in itens_servico:
+        c.setFont("Helvetica", 10)
+        c.setFillColor(CINZA_TEXTO)
+        c.drawString(45, y, item.get('descricao', ''))
+        valor = float(item.get('valor', 0))
+        c.drawRightString(400, y, f"R$ {valor:.2f}")
+        total += valor
+        y -= 15
+
+    # Total
+    y -= 10
+    c.setFont("Helvetica-Bold", 12)
+    c.setFillColor(AZUL_ESCURO)
+    c.drawString(45, y, "Total")
+    c.drawRightString(400, y, f"R$ {total:.2f}")
+
+    # Rodapé
+    c.setFillColor(AZUL_ESCURO)
+    c.rect(0, 0, width, 40, fill=True, stroke=0)
+    c.setFillColor(BRANCO)
+    c.setFont("Helvetica", 9)
+    c.drawCentredString(width / 2, 25, "Planner Organizer | contato@plannerorganizer.com.br | www.plannerorganizer.com.br")
+    c.save()
+    return filename
+
+# Gerar o PDF para teste
+gerar_pdf_servico_padronizado(proposta, cliente, itens_servico, filename)

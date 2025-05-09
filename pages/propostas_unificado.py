@@ -483,13 +483,44 @@ def show():
                             # Coluna 4: Exportar para PDF
                             with col_export:
                                 if st.button("📄", key=f"pdf_{proposta_id}"):
-                                    st.download_button(
-                                        label="Baixar",
-                                        data="Arquivo PDF simulado",
-                                        file_name=f"proposta_{proposta['numero']}.pdf",
-                                        mime="application/pdf",
-                                        key=f"download_{proposta_id}"
-                                    )
+                                    try:
+                                        # Importar a função de geração de PDF
+                                        from utils.propostas_helper import gerar_pdf_proposta
+                                        
+                                        # Gerar o PDF
+                                        sucesso, mensagem, arquivo = gerar_pdf_proposta(
+                                            db=st.session_state.db,
+                                            proposta_id=proposta_id
+                                        )
+                                        
+                                        if sucesso and arquivo:
+                                            # Ler o arquivo para download
+                                            with open(arquivo, "rb") as file:
+                                                pdf_bytes = file.read()
+                                            
+                                            # Obter nome do cliente para usar no nome do arquivo
+                                            cliente_id = proposta['cliente_id']
+                                            cliente_df = st.session_state.db.get_cliente_by_id(cliente_id)
+                                            cliente_nome = "sem_nome"
+                                            if not cliente_df.empty:
+                                                nome_str = str(cliente_df.iloc[0]['nome']) if 'nome' in cliente_df.columns else "sem_nome"
+                                                cliente_nome = nome_str.replace(' ', '_').lower()
+                                            
+                                            # Mostrar mensagem de sucesso
+                                            st.success("PDF gerado com sucesso!")
+                                            
+                                            # Criar botão de download
+                                            st.download_button(
+                                                label="Baixar",
+                                                data=pdf_bytes,
+                                                file_name=f"Proposta_{proposta_id}_{cliente_nome}.pdf",
+                                                mime="application/pdf",
+                                                key=f"download_{proposta_id}"
+                                            )
+                                        else:
+                                            st.error(f"Erro ao gerar PDF: {mensagem}")
+                                    except Exception as e:
+                                        st.error(f"Erro ao gerar PDF: {str(e)}")
                             
                             # Coluna 5: Botão de exclusão (modo alternativo mais direto)
                             with col_excluir:
