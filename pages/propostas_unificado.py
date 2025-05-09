@@ -437,18 +437,45 @@ def show():
                                         elif novo_status == "Excluir":
                                             # Criar um botão de confirmação
                                             confirmar_key = f"confirm_del_{proposta_id}"
-                                            st.warning("⚠️ Tem certeza?")
-                                            if st.button("Confirmar", key=confirmar_key):
-                                                # Executar a exclusão diretamente em vez de usar o evento do session_state
-                                                st.info(f"Excluindo proposta ID: {proposta_id}...")
-                                                sucesso, mensagem = st.session_state.db.excluir_proposta(proposta_id)
-                                                if sucesso:
-                                                    st.success(f"Proposta {proposta_id} excluída com sucesso!")
-                                                    time.sleep(1)
+                                            st.warning("⚠️ Tem certeza que deseja excluir esta proposta?")
+                                            col1_conf, col2_conf = st.columns(2)
+                                            
+                                            with col1_conf:
+                                                if st.button("✓ Sim, excluir", key=confirmar_key):
+                                                    # Executar a exclusão diretamente com SQL
+                                                    try:
+                                                        from sqlalchemy import text
+                                                        from utils.database import engine
+                                                        
+                                                        with engine.connect() as conn:
+                                                            # 1. Excluir transações financeiras
+                                                            conn.execute(text(f"DELETE FROM financeiro WHERE proposta_id = {proposta_id}"))
+                                                            
+                                                            # 2. Excluir acréscimos
+                                                            conn.execute(text(f"DELETE FROM acrescimos_proposta WHERE proposta_id = {proposta_id}"))
+                                                            
+                                                            # 3. Excluir produtos da proposta
+                                                            conn.execute(text(f"DELETE FROM produtos_organizadores WHERE proposta_id = {proposta_id}"))
+                                                            
+                                                            # 4. Excluir andamento
+                                                            conn.execute(text(f"DELETE FROM andamento_propostas WHERE proposta_id = {proposta_id}"))
+                                                            
+                                                            # 5. Excluir a proposta
+                                                            conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
+                                                            
+                                                            # Confirmar alterações
+                                                            conn.commit()
+                                                        
+                                                        st.success(f"✅ Proposta #{proposta_id} excluída com sucesso!")
+                                                        time.sleep(1.5)
+                                                        st.rerun()
+                                                    except Exception as e:
+                                                        st.error(f"Erro ao excluir proposta: {str(e)}")
+                                                        time.sleep(2)
+                                            
+                                            with col2_conf:
+                                                if st.button("✗ Cancelar", key=f"cancel_{confirmar_key}"):
                                                     st.rerun()
-                                                else:
-                                                    st.error(f"Erro ao excluir proposta: {mensagem}")
-                                                    time.sleep(2)
                                         else:
                                             st.session_state[f"alterar_status_{proposta_id}"] = novo_status
                                             st.rerun()
@@ -466,20 +493,62 @@ def show():
                             
                             # Coluna 5: Botão de exclusão (modo alternativo mais direto)
                             with col_excluir:
-                                if st.button("🗑️", key=f"del_{proposta_id}"):
-                                    st.warning("⚠️ Tem certeza?")
-                                    confirmar_key = f"confirm_del_direct_{proposta_id}"
-                                    if st.button("Sim", key=confirmar_key):
-                                        # Executar a exclusão diretamente
-                                        st.info(f"Excluindo proposta ID: {proposta_id}...")
-                                        sucesso, mensagem = st.session_state.db.excluir_proposta(proposta_id)
-                                        if sucesso:
-                                            st.success(f"Proposta {proposta_id} excluída com sucesso!")
-                                            time.sleep(1)
+                                # Chave exclusiva para cada botão de exclusão
+                                excluir_key = f"del_{proposta_id}"
+                                confirmar_key = f"confirm_del_direct_{proposta_id}"
+                                
+                                # Inicializar estado para este botão específico
+                                if excluir_key not in st.session_state:
+                                    st.session_state[excluir_key] = False
+                                
+                                # Botão de exclusão
+                                if st.button("🗑️", key=excluir_key):
+                                    st.session_state[excluir_key] = True
+                                
+                                # Mostrar confirmação se o botão foi clicado
+                                if st.session_state[excluir_key]:
+                                    st.warning("⚠️ Tem certeza que deseja excluir esta proposta?")
+                                    col_confirm1, col_confirm2 = st.columns(2)
+                                    
+                                    with col_confirm1:
+                                        if st.button("✓ Sim, excluir", key=f"sim_{confirmar_key}"):
+                                            # Chamar função excluir direto
+                                            try:
+                                                # Criar conexão SQL Alchemy direta para garantir
+                                                from sqlalchemy import text
+                                                from utils.database import engine
+                                                
+                                                with engine.connect() as conn:
+                                                    # 1. Excluir transações financeiras
+                                                    conn.execute(text(f"DELETE FROM financeiro WHERE proposta_id = {proposta_id}"))
+                                                    
+                                                    # 2. Excluir acréscimos
+                                                    conn.execute(text(f"DELETE FROM acrescimos_proposta WHERE proposta_id = {proposta_id}"))
+                                                    
+                                                    # 3. Excluir produtos da proposta
+                                                    conn.execute(text(f"DELETE FROM produtos_organizadores WHERE proposta_id = {proposta_id}"))
+                                                    
+                                                    # 4. Excluir andamento
+                                                    conn.execute(text(f"DELETE FROM andamento_propostas WHERE proposta_id = {proposta_id}"))
+                                                    
+                                                    # 5. Excluir a proposta
+                                                    conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
+                                                    
+                                                    # Confirmar alterações
+                                                    conn.commit()
+                                                
+                                                st.success(f"✅ Proposta #{proposta_id} excluída com sucesso!")
+                                                # Limpar estado
+                                                st.session_state[excluir_key] = False
+                                                time.sleep(1.5)
+                                                st.rerun()
+                                            except Exception as e:
+                                                st.error(f"Erro ao excluir proposta: {str(e)}")
+                                    
+                                    with col_confirm2:
+                                        if st.button("✗ Cancelar", key=f"cancelar_{confirmar_key}"):
+                                            st.session_state[excluir_key] = False
                                             st.rerun()
-                                        else:
-                                            st.error(f"Erro ao excluir proposta: {mensagem}")
-                                            time.sleep(2)
                                                 
                 else:
                     st.info("Não há propostas em aberto no momento.")

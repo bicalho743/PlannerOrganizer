@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import base64
+import time
 from datetime import datetime
 
 def show():
@@ -459,23 +460,100 @@ def show():
                                 st.write(f"Data: {pd.to_datetime(conta['data']).strftime('%d/%m/%Y')}")
                             
                             with col2:
-                                if st.button("✅ Pagar", key=f"pagar_{conta['id']}"):
-                                    st.session_state.db.atualizar_status_transacao(
-                                        conta['id'],
-                                        'Pago',
-                                        datetime.now().date()
-                                    )
-                                    st.success(f"Pagamento de {conta['descricao']} registrado!")
-                                    st.rerun()
+                                # Chave única para cada botão de pagamento
+                                pagar_key = f"pagar_{conta['id']}"
+                                
+                                # Inicializar estado para este botão
+                                if pagar_key not in st.session_state:
+                                    st.session_state[pagar_key] = False
+                                
+                                if st.button("✅ Pagar", key=pagar_key):
+                                    st.session_state[pagar_key] = True
+                                
+                                # Se o botão foi clicado, mostrar confirmação
+                                if st.session_state[pagar_key]:
+                                    st.info(f"Confirmando pagamento de R$ {conta['valor']:.2f}")
+                                    
+                                    col_conf1, col_conf2 = st.columns(2)
+                                    with col_conf1:
+                                        if st.button("✓ Confirmar", key=f"confirm_{pagar_key}"):
+                                            try:
+                                                # Usar SQL direto para garantir atualização
+                                                from sqlalchemy import text
+                                                from utils.database import engine
+                                                
+                                                with engine.connect() as conn:
+                                                    # Atualizar status para 'Pago' e a data de recebimento
+                                                    data_pagamento = datetime.now().date().isoformat()
+                                                    
+                                                    # Execução direta de SQL
+                                                    conn.execute(text(f"""
+                                                        UPDATE financeiro 
+                                                        SET status = 'Pago', 
+                                                            data_recebimento = '{data_pagamento}'
+                                                        WHERE id = {conta['id']}
+                                                    """))
+                                                    
+                                                    # Commit explícito
+                                                    conn.commit()
+                                                
+                                                st.success(f"✅ Pagamento de {conta['descricao']} registrado com sucesso!")
+                                                st.session_state[pagar_key] = False
+                                                time.sleep(1)
+                                                st.rerun()
+                                            except Exception as e:
+                                                st.error(f"Erro ao registrar pagamento: {str(e)}")
+                                    
+                                    with col_conf2:
+                                        if st.button("✗ Cancelar", key=f"cancel_{pagar_key}"):
+                                            st.session_state[pagar_key] = False
+                                            st.rerun()
                             
                             with col3:
-                                if st.button("❌ Cancelar", key=f"cancelar_pagar_{conta['id']}"):
-                                    st.session_state.db.atualizar_status_transacao(
-                                        conta['id'],
-                                        'Cancelado'
-                                    )
-                                    st.success(f"Pagamento de {conta['descricao']} cancelado!")
-                                    st.rerun()
+                                # Chave única para cada botão de cancelamento
+                                cancelar_key = f"cancelar_pagar_{conta['id']}"
+                                
+                                # Inicializar estado para este botão
+                                if cancelar_key not in st.session_state:
+                                    st.session_state[cancelar_key] = False
+                                
+                                if st.button("❌ Cancelar", key=cancelar_key):
+                                    st.session_state[cancelar_key] = True
+                                
+                                # Se o botão foi clicado, mostrar confirmação
+                                if st.session_state[cancelar_key]:
+                                    st.warning(f"Confirmar cancelamento da conta: {conta['descricao']}")
+                                    
+                                    col_canc1, col_canc2 = st.columns(2)
+                                    with col_canc1:
+                                        if st.button("✓ Confirmar", key=f"confirm_{cancelar_key}"):
+                                            try:
+                                                # Usar SQL direto para garantir atualização
+                                                from sqlalchemy import text
+                                                from utils.database import engine
+                                                
+                                                with engine.connect() as conn:
+                                                    # Atualizar status para 'Cancelado'
+                                                    conn.execute(text(f"""
+                                                        UPDATE financeiro 
+                                                        SET status = 'Cancelado'
+                                                        WHERE id = {conta['id']}
+                                                    """))
+                                                    
+                                                    # Commit explícito
+                                                    conn.commit()
+                                                
+                                                st.success(f"Pagamento de {conta['descricao']} cancelado com sucesso!")
+                                                st.session_state[cancelar_key] = False
+                                                time.sleep(1)
+                                                st.rerun()
+                                            except Exception as e:
+                                                st.error(f"Erro ao cancelar pagamento: {str(e)}")
+                                    
+                                    with col_canc2:
+                                        if st.button("✗ Voltar", key=f"voltar_{cancelar_key}"):
+                                            st.session_state[cancelar_key] = False
+                                            st.rerun()
                             
                             st.divider()
                     
