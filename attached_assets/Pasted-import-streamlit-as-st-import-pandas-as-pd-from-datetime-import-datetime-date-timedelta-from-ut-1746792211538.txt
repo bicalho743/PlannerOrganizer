@@ -1,0 +1,81 @@
+import streamlit as st
+import pandas as pd
+from datetime import datetime, date, timedelta
+from utils.database import Database
+
+# Configuração da página
+st.set_page_config(
+    page_title="Planner Organiza - Propostas",
+    page_icon="📝",
+    layout="wide"
+)
+
+# Verificar login
+if "logged_in" not in st.session_state or not st.session_state.logged_in:
+    st.warning("Você precisa estar logado para acessar esta página.")
+    st.stop()
+
+# Função para carregar propostas com filtro por status
+def load_propostas(db, status=None):
+    propostas = db.get_propostas()
+    if status:
+        return [p for p in propostas if p.status == status]
+    return propostas
+
+# Função para atualizar o status da proposta
+def atualizar_status_proposta(db, proposta_id, novo_status):
+    proposta = db.get_proposta(proposta_id)
+    if proposta:
+        proposta.status = novo_status
+        db.update_proposta(proposta_id, status=novo_status)
+
+# Função principal
+def main():
+    st.title("📝 Propostas")
+    usuario_id = st.session_state.user_info.get('localId') if st.session_state.user_info else None
+    db = Database(usuario_id)
+
+    # Aba de Nova Proposta
+    st.subheader("Nova Proposta")
+    with st.form("nova_proposta"):
+        cliente = st.text_input("Nome do Cliente")
+        descricao = st.text_input("Descrição")
+        valor = st.number_input("Valor", min_value=0.0, format="%.2f")
+        status = st.selectbox("Status", ["Aguardando", "Aprovada", "Recusada"])
+        enviar = st.form_submit_button("Salvar Proposta")
+
+        if enviar:
+            db.create_proposta(cliente, descricao, valor, status)
+            st.success("Proposta criada com sucesso!")
+
+    # Tabela de Propostas
+    st.subheader("Todas as Propostas")
+    propostas = load_propostas(db)
+    df_propostas = pd.DataFrame([vars(p) for p in propostas])
+    st.dataframe(df_propostas)
+
+    for proposta in propostas:
+        with st.expander(f"{proposta.cliente_nome} - {proposta.descricao} (R$ {proposta.valor:.2f})"):
+            st.write(f"Status: {proposta.status}")
+            if proposta.status == "Aguardando":
+                if st.button("Aprovar", key=f"aprovar_{proposta.id}"):
+                    atualizar_status_proposta(db, proposta.id, "Aprovada")
+                    st.experimental_rerun()
+                if st.button("Recusar", key=f"recusar_{proposta.id}"):
+                    atualizar_status_proposta(db, proposta.id, "Recusada")
+                    st.experimental_rerun()
+
+            if proposta.status == "Em Execução":
+                if st.button("Marcar como Concluída", key=f"concluir_{proposta.id}"):
+                    atualizar_status_proposta(db, proposta.id, "Finalizada")
+                    st.experimental_rerun()
+
+    st.subheader("Gerar PDF da Proposta")
+    proposta_selecionada = st.selectbox("Selecione a Proposta para PDF", [p.id for p in propostas])
+    if st.button("Gerar PDF"):
+        # Código para gerar o PDF aqui
+        st.success("PDF gerado com sucesso!")
+
+# Executar a função principal
+if __name__ == "__main__":
+    main()
