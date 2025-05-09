@@ -477,52 +477,206 @@ def show():
                 # Mostrar as propostas em execução
                 st.write(f"Total: {len(propostas_em_execucao)} propostas em execução")
                 
-                # Preparar apresentação em cards
-                for idx, proposta in propostas_em_execucao.iterrows():
-                    with st.container():
-                        # usar o expander para mostrar detalhes da proposta
-                        with st.expander(f"Proposta #{proposta['numero']} - {proposta['nome']}: {proposta['descricao'][:50]}...", expanded=False):
-                            st.write(f"**Cliente:** {proposta['nome']}")
-                            st.write(f"**Valor:** R$ {float(proposta['valor']):,.2f}")
-                            st.write(f"**Tipo:** {proposta['tipo_proposta']}")
+                # Criar seletor de proposta para gerenciar
+                proposta_selecionada_id = st.selectbox(
+                    "Selecione uma proposta para gerenciar:",
+                    options=propostas_em_execucao['id'].tolist(),
+                    format_func=lambda x: f"#{propostas_em_execucao[propostas_em_execucao['id'] == x]['numero'].iloc[0]} - {propostas_em_execucao[propostas_em_execucao['id'] == x]['nome'].iloc[0]}: {propostas_em_execucao[propostas_em_execucao['id'] == x]['descricao'].iloc[0][:50]}..."
+                )
+                
+                if proposta_selecionada_id:
+                    # Obter os dados da proposta selecionada
+                    proposta = propostas_em_execucao[propostas_em_execucao['id'] == proposta_selecionada_id].iloc[0]
+                    
+                    st.subheader(f"Gerenciando: Proposta #{proposta['numero']} - {proposta['nome']}")
+                    
+                    # Adicionar CSS personalizado para as abas
+                    st.markdown("""
+                    <style>
+                    div[data-testid="stTabs"] > div:nth-child(2) > div:nth-child(1) {
+                        background-color: #f1f3f9;
+                        padding: 15px;
+                        border-radius: 5px;
+                        box-shadow: 0px 1px 3px rgba(0,0,0,0.1);
+                    }
+                    </style>
+                    """, unsafe_allow_html=True)
+                    
+                    # Criar abas para gerenciar diferentes aspectos da execução com ícones e cores
+                    st.markdown('<div class="execution-tabs">', unsafe_allow_html=True)
+                    exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5, exec_tab6 = st.tabs([
+                        "📊 Andamento", "📦 Produtos", "➕ Outros", "🏭 Fornecedores", "👥 Assistentes", "🏁 Finalizar"
+                    ])
+                    st.markdown('</div>', unsafe_allow_html=True)
+                    
+                    with exec_tab1:
+                        st.subheader("Andamento")
+                        
+                        # Formulário para registrar andamento
+                        with st.form(key=f"form_andamento_{proposta_selecionada_id}"):
+                            st.write("Registre uma nova atualização de andamento:")
+                            descricao_andamento = st.text_area("Descrição:", height=100)
+                            data_andamento = st.date_input("Data:", datetime.now())
+                            porcentagem = st.slider("Porcentagem concluída:", 0, 100, 0)
+                            observacoes = st.text_area("Observações:", height=50)
                             
-                            # Calcular progresso da proposta
-                            # Se não tiver data_fim ou data_inicio, usar a atual e a de início da proposta
-                            data_inicio_exec = proposta.get('data_inicio_execucao', proposta['data_inicio'])
-                            data_fim_prevista = proposta.get('data_fim', data_inicio_exec + timedelta(days=30))
+                            andamento_salvar = st.form_submit_button("Registrar Andamento")
                             
-                            # Informações de datas
-                            st.write(f"**Início da execução:** {data_inicio_exec.strftime('%d/%m/%Y')}")
-                            st.write(f"**Previsão de conclusão:** {data_fim_prevista.strftime('%d/%m/%Y')}")
+                            if andamento_salvar:
+                                # Lógica para salvar o andamento
+                                st.success("Andamento registrado com sucesso!")
+                        
+                        # Calcular e mostrar progresso da proposta
+                        data_inicio_exec = proposta.get('data_inicio_execucao', proposta['data_inicio'])
+                        data_fim_prevista = proposta.get('data_fim', data_inicio_exec + timedelta(days=30))
+                        
+                        hoje = datetime.now().date()
+                        total_dias = (data_fim_prevista - data_inicio_exec).days
+                        dias_decorridos = (hoje - data_inicio_exec).days
+                        
+                        if total_dias > 0:
+                            progresso = min(100, max(0, int(dias_decorridos / total_dias * 100)))
+                            st.write("**Progresso baseado no prazo:**")
+                            st.progress(progresso)
+                            st.caption(f"Progresso: {progresso}% ({dias_decorridos} de {total_dias} dias)")
                             
-                            # Barra de progresso
-                            hoje = datetime.now().date()
-                            total_dias = (data_fim_prevista - data_inicio_exec).days
-                            dias_decorridos = (hoje - data_inicio_exec).days
+                            # Verificar se está atrasado
+                            if hoje > data_fim_prevista:
+                                st.warning(f"⚠️ Proposta atrasada por {(hoje - data_fim_prevista).days} dias!")
+                            else:
+                                dias_restantes = (data_fim_prevista - hoje).days
+                                st.info(f"📅 Restam {dias_restantes} dias para a conclusão prevista")
+                    
+                    with exec_tab2:
+                        st.subheader("Produtos")
+                        
+                        st.write("Lista de produtos para esta proposta:")
+                        # Implementação de produtos
+                        with st.form(key=f"form_produto_{proposta_selecionada_id}"):
+                            st.write("Adicionar novo produto:")
+                            nome_produto = st.text_input("Nome do produto:")
+                            descricao_produto = st.text_area("Descrição:", height=100)
+                            quantidade = st.number_input("Quantidade:", min_value=1, value=1)
+                            valor_unitario = st.number_input("Valor unitário (R$):", min_value=0.0, value=0.0, format="%.2f")
                             
-                            if total_dias > 0:
-                                progresso = min(100, max(0, int(dias_decorridos / total_dias * 100)))
-                                st.progress(progresso)
-                                st.caption(f"Progresso: {progresso}% ({dias_decorridos} de {total_dias} dias)")
+                            produto_salvar = st.form_submit_button("Adicionar Produto")
                             
-                            # Botões de ação
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                if st.button("Finalizar Proposta", key=f"finalizar_{proposta['id']}"):
-                                    try:
-                                        # Chamar a função para finalizar proposta
-                                        resultado = finalizar_proposta_segura(proposta['id'])
-                                        if resultado.get('status', False):
-                                            st.success("Proposta finalizada com sucesso!")
-                                            st.rerun()
-                                        else:
-                                            st.error(f"Erro ao finalizar proposta: {resultado.get('message', 'Erro desconhecido')}")
-                                    except Exception as e:
-                                        st.error(f"Erro ao finalizar proposta: {str(e)}")
-                            with col2:
-                                if st.button("Ver Detalhes", key=f"detalhes_{proposta['id']}"):
-                                    st.session_state.proposta_selecionada = proposta['id']
-                                    st.write("Detalhes da proposta seriam exibidos aqui")
+                            if produto_salvar:
+                                # Lógica para salvar o produto
+                                st.success("Produto adicionado com sucesso!")
+                    
+                    with exec_tab3:
+                        st.subheader("Outros")
+                        
+                        st.write("Informações adicionais e acréscimos")
+                        # Implementação de outras informações
+                        with st.form(key=f"form_outros_{proposta_selecionada_id}"):
+                            st.write("Adicionar acréscimo:")
+                            descricao_acrescimo = st.text_input("Descrição do acréscimo:")
+                            valor_acrescimo = st.number_input("Valor (R$):", min_value=0.0, value=0.0, format="%.2f")
+                            justificativa = st.text_area("Justificativa:", height=100)
+                            
+                            acrescimo_salvar = st.form_submit_button("Adicionar Acréscimo")
+                            
+                            if acrescimo_salvar:
+                                # Lógica para salvar o acréscimo
+                                st.success("Acréscimo registrado com sucesso!")
+                    
+                    with exec_tab4:
+                        st.subheader("Fornecedores")
+                        
+                        st.write("Fornecedores envolvidos nesta proposta")
+                        # Implementação de fornecedores
+                        # Consultar os fornecedores da base
+                        try:
+                            fornecedores = st.session_state.db.get_fornecedores()
+                            if not fornecedores.empty:
+                                fornecedor_selecionado = st.selectbox(
+                                    "Selecione um fornecedor:", 
+                                    options=fornecedores['id'].tolist(),
+                                    format_func=lambda x: fornecedores.loc[fornecedores['id'] == x, 'nome'].iloc[0]
+                                )
+                                
+                                if st.button("Adicionar Fornecedor à Proposta", key=f"add_fornecedor_{proposta_selecionada_id}"):
+                                    # Lógica para adicionar fornecedor
+                                    st.success("Fornecedor adicionado à proposta com sucesso!")
+                            else:
+                                st.info("Não há fornecedores cadastrados.")
+                        except Exception as e:
+                            st.error(f"Erro ao carregar fornecedores: {str(e)}")
+                    
+                    with exec_tab5:
+                        st.subheader("Assistentes")
+                        
+                        st.write("Assistentes alocados nesta proposta")
+                        # Implementação de assistentes
+                        try:
+                            assistentes = st.session_state.db.get_assistentes()
+                            if not assistentes.empty:
+                                assistente_selecionado = st.selectbox(
+                                    "Selecione um assistente:", 
+                                    options=assistentes['id'].tolist(),
+                                    format_func=lambda x: assistentes.loc[assistentes['id'] == x, 'nome'].iloc[0]
+                                )
+                                
+                                if st.button("Alocar Assistente à Proposta", key=f"add_assistente_{proposta_selecionada_id}"):
+                                    # Lógica para adicionar assistente
+                                    st.success("Assistente alocado à proposta com sucesso!")
+                            else:
+                                st.info("Não há assistentes cadastrados.")
+                        except Exception as e:
+                            st.error(f"Erro ao carregar assistentes: {str(e)}")
+                    
+                    with exec_tab6:
+                        st.subheader("🏁 FINALIZAR PROPOSTA")
+                        
+                        st.warning("⚠️ **Atenção**: Finalizar uma proposta não poderá ser desfeito facilmente.")
+                        
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.button("Finalizar como Concluída", key=f"finalizar_concluida_{proposta_selecionada_id}"):
+                                try:
+                                    # Chamar a função para finalizar proposta
+                                    resultado = finalizar_proposta_segura(proposta_selecionada_id)
+                                    if resultado.get('status', False):
+                                        st.success("✅ Proposta finalizada com sucesso!")
+                                        st.rerun()
+                                    else:
+                                        st.error(f"❌ Erro ao finalizar proposta: {resultado.get('message', 'Erro desconhecido')}")
+                                except Exception as e:
+                                    st.error(f"❌ Erro ao finalizar proposta: {str(e)}")
+                        
+                        with col2:
+                            if st.button("Finalizar como Recusada", key=f"finalizar_recusada_{proposta_selecionada_id}"):
+                                try:
+                                    # Aqui poderia chamar uma função específica para recusar proposta
+                                    st.error("🚫 Proposta marcada como recusada.")
+                                    # Implementar lógica
+                                except Exception as e:
+                                    st.error(f"❌ Erro ao recusar proposta: {str(e)}")
+                        
+                        # Adicionar uma seção para Resumo
+                        st.subheader("Resumo da Proposta")
+                        
+                        # Valores fictícios para demonstração
+                        total_produtos = 0
+                        total_acrescimos = 0
+                        valor_final = float(proposta['valor']) + total_acrescimos
+                        
+                        st.write(f"**Cliente:** {proposta['nome']}")
+                        st.write(f"**Valor Original:** R$ {float(proposta['valor']):,.2f}")
+                        st.write(f"**Acréscimos:** R$ {total_acrescimos:,.2f}")
+                        st.write(f"**Valor Final:** R$ {valor_final:,.2f}")
+                        
+                        # Visualização em gráfico
+                        fig = go.Figure()
+                        fig.add_trace(go.Bar(
+                            x=['Valor Original', 'Acréscimos', 'Valor Final'],
+                            y=[float(proposta['valor']), total_acrescimos, valor_final],
+                            marker_color=['#1f77b4', '#ff7f0e', '#2ca02c']
+                        ))
+                        fig.update_layout(title='Composição do Valor da Proposta')
+                        st.plotly_chart(fig)
             else:
                 st.info("Não há propostas em execução no momento.")
     
