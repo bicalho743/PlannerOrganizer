@@ -41,6 +41,14 @@ args = "Enviar Manual Sistema"
 task = "workflow.run"
 args = "Enviar Manual Simples"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Debug Tab Finalizadas"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Debug Finalizadas"
+
 [[workflows.workflow]]
 name = "Gerar Manual"
 author = 39445503
@@ -116,6 +124,24 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run enviar_manual_simples.py --server.port 5003 --server.address 0.0.0.0"
 waitForPort = 5003
+
+[[workflows.workflow]]
+name = "Debug Tab Finalizadas"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run debug_tab_finalizadas.py --server.port 5004 --server.address 0.0.0.0"
+waitForPort = 5004
+
+[[workflows.workflow]]
+name = "Debug Finalizadas"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run debug_propostas_finalizadas.py --server.port 5005 --server.address 0.0.0.0"
+waitForPort = 5005
 
 [[ports]]
 localPort = 443

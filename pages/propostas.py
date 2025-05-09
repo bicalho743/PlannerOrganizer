@@ -1885,51 +1885,61 @@ def show():
             st.header("Propostas Finalizadas")
             
             try:
-                # Importar a função para carregar propostas finalizadas
-                from utils.filtro_propostas import get_propostas_finalizadas
+                # Obter todas as propostas do banco
+                propostas = st.session_state.db.get_propostas()
                 
-                # Usar a função especializada para obter apenas propostas realmente finalizadas
-                propostas_finalizadas = get_propostas_finalizadas(st.session_state.db)
-                
-                # LOG PARA DEBUG
-                st.write(f"Total de propostas finalizadas encontradas: {len(propostas_finalizadas)}")
-                
-                # Verificar se encontramos propostas finalizadas
-                if not propostas_finalizadas.empty:
-                    # Exibir propostas no formato expandível, como sugerido pelo usuário
-                    for idx, proposta in propostas_finalizadas.iterrows():
-                        # Criar um expander para cada proposta
-                        with st.expander(f"{proposta['numero']} - {proposta['cliente_nome']} - {proposta['descricao']} (R$ {proposta['valor']:.2f})"):
-                            col1, col2 = st.columns(2)
-                            
-                            with col1:
-                                st.write(f"**ID:** {proposta['id']}")
-                                st.write(f"**Cliente:** {proposta['cliente_nome']}")
-                                st.write(f"**Descrição:** {proposta['descricao']}")
-                                st.write(f"**Valor:** R$ {proposta['valor']:.2f}")
+                # Filtrar as propostas finalizadas diretamente
+                if not propostas.empty:
+                    # Filtrar propostas finalizadas (status='Finalizada' e status_execucao='Finalizada')
+                    # ou propostas recusadas (status='Recusada')
+                    propostas_finalizadas = propostas[
+                        ((propostas['status'] == 'Finalizada') & (propostas['status_execucao'] == 'Finalizada')) |
+                        (propostas['status'] == 'Recusada')
+                    ]
+                    
+                    # LOG PARA DEBUG
+                    st.write(f"Total de propostas finalizadas encontradas: {len(propostas_finalizadas)}")
+                    
+                    # Verificar se encontramos propostas finalizadas
+                    if not propostas_finalizadas.empty:
+                        # Exibir propostas no formato expandível, como sugerido pelo usuário
+                        for idx, proposta in propostas_finalizadas.iterrows():
+                            # Criar um expander para cada proposta
+                            with st.expander(f"{proposta['numero']} - {proposta['cliente_nome']} - {proposta['descricao']} (R$ {proposta['valor']:.2f})"):
+                                col1, col2 = st.columns(2)
                                 
-                            with col2:
-                                st.write(f"**Tipo:** {proposta['tipo_proposta']}")
-                                st.write(f"**Status:** {proposta['status']}")
-                                st.write(f"**Status Execução:** {proposta['status_execucao']}")
-                                data_inicio_str = proposta['data_inicio'].strftime('%d/%m/%Y') if pd.notna(proposta['data_inicio']) else 'N/D'
-                                st.write(f"**Data Início:** {data_inicio_str}")
-                                data_fim_str = proposta['data_fim'].strftime('%d/%m/%Y') if pd.notna(proposta['data_fim']) else 'N/D'
-                                st.write(f"**Data Fim:** {data_fim_str}")
-                            
-                            # Adicionar botões de ação na parte inferior do expander
-                            col_btn1, col_btn2 = st.columns(2)
-                            with col_btn1:
-                                if st.button("Gerar Relatório", key=f"rel_btn_{proposta['id']}"):
-                                    st.session_state.proposta_selec_relatorio = proposta['id']
-                                    st.rerun()
-                            
-                            with col_btn2:
-                                if st.button("Reabrir Proposta", key=f"reabrir_btn_{proposta['id']}"):
-                                    st.session_state.proposta_selec_reabrir = proposta['id']
-                                    st.rerun()
+                                with col1:
+                                    st.write(f"**ID:** {proposta['id']}")
+                                    st.write(f"**Cliente:** {proposta['cliente_nome']}")
+                                    st.write(f"**Descrição:** {proposta['descricao']}")
+                                    st.write(f"**Valor:** R$ {proposta['valor']:.2f}")
+                                    
+                                with col2:
+                                    st.write(f"**Tipo:** {proposta['tipo_proposta']}")
+                                    st.write(f"**Status:** {proposta['status']}")
+                                    st.write(f"**Status Execução:** {proposta['status_execucao']}")
+                                    data_inicio_str = proposta['data_inicio'].strftime('%d/%m/%Y') if pd.notna(proposta['data_inicio']) else 'N/D'
+                                    st.write(f"**Data Início:** {data_inicio_str}")
+                                    data_fim_str = proposta['data_fim'].strftime('%d/%m/%Y') if pd.notna(proposta['data_fim']) else 'N/D'
+                                    st.write(f"**Data Fim:** {data_fim_str}")
+                                
+                                # Adicionar botões de ação na parte inferior do expander
+                                col_btn1, col_btn2 = st.columns(2)
+                                with col_btn1:
+                                    if st.button("Gerar Relatório", key=f"rel_btn_{proposta['id']}"):
+                                        st.session_state.proposta_selec_relatorio = proposta['id']
+                                        st.rerun()
+                                
+                                with col_btn2:
+                                    if st.button("Reabrir Proposta", key=f"reabrir_btn_{proposta['id']}"):
+                                        st.session_state.proposta_selec_reabrir = proposta['id']
+                                        st.rerun()
+                    else:
+                        st.info("Não há propostas finalizadas no momento.")
+                        # Criar DataFrame vazio para uso subsequente
+                        propostas_finalizadas = pd.DataFrame()
                 else:
-                    st.info("Não há propostas finalizadas no momento.")
+                    st.info("Não há propostas cadastradas no sistema.")
                     # Criar DataFrame vazio para uso subsequente
                     propostas_finalizadas = pd.DataFrame()
             except Exception as e:
