@@ -519,7 +519,7 @@ def show():
                                                 time.sleep(1)
                                                 
                                                 # Recarregar a página para mostrar dados atualizados
-                                                st.experimental_rerun()
+                                                st.rerun()
                                             except Exception as e:
                                                 st.error(f"Erro ao registrar pagamento: {str(e)}")
                                     
@@ -575,7 +575,7 @@ def show():
                                                 time.sleep(1)
                                                 
                                                 # Recarregar a página para mostrar dados atualizados
-                                                st.experimental_rerun()
+                                                st.rerun()
                                             except Exception as e:
                                                 st.error(f"Erro ao cancelar pagamento: {str(e)}")
                                     

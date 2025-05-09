@@ -139,7 +139,7 @@ if proposta_selecionada != st.session_state.proposta_id:
     if not df_filtrado.empty:
         ultimo_status = df_filtrado.sort_values('data', ascending=False).iloc[0]
         st.session_state.status_atual = ultimo_status['status']
-    st.experimental_rerun()
+    st.rerun()
 
 # Layout principal
 st.markdown("## Visualização do Fluxo de Status")
