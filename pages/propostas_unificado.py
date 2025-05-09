@@ -439,8 +439,16 @@ def show():
                                             confirmar_key = f"confirm_del_{proposta_id}"
                                             st.warning("⚠️ Tem certeza?")
                                             if st.button("Confirmar", key=confirmar_key):
-                                                st.session_state[f"alterar_status_{proposta_id}"] = "Excluir"
-                                                st.rerun()
+                                                # Executar a exclusão diretamente em vez de usar o evento do session_state
+                                                st.info(f"Excluindo proposta ID: {proposta_id}...")
+                                                sucesso, mensagem = st.session_state.db.excluir_proposta(proposta_id)
+                                                if sucesso:
+                                                    st.success(f"Proposta {proposta_id} excluída com sucesso!")
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                                else:
+                                                    st.error(f"Erro ao excluir proposta: {mensagem}")
+                                                    time.sleep(2)
                                         else:
                                             st.session_state[f"alterar_status_{proposta_id}"] = novo_status
                                             st.rerun()
@@ -462,8 +470,16 @@ def show():
                                     st.warning("⚠️ Tem certeza?")
                                     confirmar_key = f"confirm_del_direct_{proposta_id}"
                                     if st.button("Sim", key=confirmar_key):
-                                        st.session_state[f"alterar_status_{proposta_id}"] = "Excluir"
-                                        st.rerun()
+                                        # Executar a exclusão diretamente
+                                        st.info(f"Excluindo proposta ID: {proposta_id}...")
+                                        sucesso, mensagem = st.session_state.db.excluir_proposta(proposta_id)
+                                        if sucesso:
+                                            st.success(f"Proposta {proposta_id} excluída com sucesso!")
+                                            time.sleep(1)
+                                            st.rerun()
+                                        else:
+                                            st.error(f"Erro ao excluir proposta: {mensagem}")
+                                            time.sleep(2)
                                                 
                 else:
                     st.info("Não há propostas em aberto no momento.")

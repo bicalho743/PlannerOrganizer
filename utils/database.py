@@ -1300,15 +1300,30 @@ class Database:
         return self._safe_query(query)
 
     def atualizar_status_transacao(self, transacao_id, status, data_recebimento=None):
-        def query():
+        print(f"DEBUG DATABASE: Atualizando status da transação ID: {transacao_id} para {status}")
+        
+        # Executar diretamente sem usar o _safe_query para ter mais controle
+        try:
             transacao = self.session.query(Transacao).filter_by(id=transacao_id).first()
+            print(f"DEBUG DATABASE: Transação encontrada: {transacao is not None}")
+            
             if transacao:
                 transacao.status = status
-                if status == 'Recebido':
+                if status == 'Recebido' or status == 'Pago':
                     transacao.data_recebimento = data_recebimento or datetime.now().date()
+                    print(f"DEBUG DATABASE: Data de recebimento definida: {transacao.data_recebimento}")
+                
+                # Commit explícito
+                self.session.commit()
+                print(f"DEBUG DATABASE: Commit realizado. Status atualizado com sucesso!")
                 return True
+            
+            print(f"DEBUG DATABASE: Transação ID {transacao_id} não encontrada")
             return False
-        return self._safe_query(query)
+        except Exception as e:
+            self.session.rollback()
+            print(f"DEBUG DATABASE ERROR: Erro ao atualizar status: {str(e)}")
+            return False
 
     def update_transacao(self, transacao_id, tipo, descricao, valor, categoria, tipo_receita=None,
                       subcategoria=None, classificacao=None, proposta_id=None):
