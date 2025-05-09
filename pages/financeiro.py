@@ -432,11 +432,15 @@ def show():
         # Forçar recarregamento para evitar dados desatualizados
         contas_pagar = st.session_state.db.get_financeiro(force_reload=force_reload)
         if not contas_pagar.empty:
-            # Filtrar por classificação contas_a_pagar ou tipo despesa com status pendente
-            contas_pagar = contas_pagar[(
-                (contas_pagar['classificacao'] == 'contas_a_pagar') | 
-                ((contas_pagar['tipo'] == 'despesa') & (contas_pagar['status'] == 'Pendente'))
-            )]
+            # Filtrar por classificação contas_a_pagar OU tipo despesa, sempre com status pendente
+            contas_pagar = contas_pagar[
+                (
+                    (contas_pagar['classificacao'] == 'contas_a_pagar') | 
+                    (contas_pagar['tipo'] == 'despesa') |
+                    (contas_pagar['tipo'] == 'despesa_a_pagar')
+                ) & 
+                (contas_pagar['status'] == 'Pendente')  # Garantir que status seja Pendente para todos os tipos
+            ]
             
             if not contas_pagar.empty:
                 # Adicionar filtro específico para assistentes
