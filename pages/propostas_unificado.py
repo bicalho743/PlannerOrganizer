@@ -531,23 +531,37 @@ def show():
         st.header("Propostas Finalizadas")
         
         if 'propostas_com_clientes' in locals() and not propostas.empty:
+            # Filtro específico para mostrar apenas propostas finalizadas
+            propostas_finalizadas = propostas_com_clientes[
+                ((propostas_com_clientes['status'] == 'Finalizada') & 
+                 (propostas_com_clientes['status_execucao'] == 'Concluída')) |
+                (propostas_com_clientes['status'] == 'Recusada')
+            ]
+            
+            # Mostrar contagem de propostas finalizadas
+            st.write(f"Total de propostas finalizadas encontradas: {len(propostas_finalizadas)}")
+            
+            if propostas_finalizadas.empty:
+                st.info("Não há propostas finalizadas no momento.")
+                return
+            
             # Interface para filtrar propostas
             col1, col2 = st.columns(2)
             with col1:
                 filtro_status = st.multiselect(
                     "Filtrar por status:",
-                    ["Em elaboração", "Aguardando aprovação", "Em execução", "Finalizada"],
+                    propostas_finalizadas['status'].unique().tolist(),
                     default=[]
                 )
             with col2:
                 filtro_cliente = st.multiselect(
                     "Filtrar por cliente:",
-                    clientes['nome'].unique() if not clientes.empty else [],
+                    propostas_finalizadas['nome'].unique().tolist() if not propostas_finalizadas.empty else [],
                     default=[]
                 )
             
-            # Aplicar filtros
-            propostas_filtradas = propostas_com_clientes.copy()
+            # Aplicar filtros adicionais
+            propostas_filtradas = propostas_finalizadas.copy()
             
             if filtro_status:
                 propostas_filtradas = propostas_filtradas[propostas_filtradas['status'].isin(filtro_status)]
@@ -592,6 +606,50 @@ def show():
                         file_name="propostas_exportadas.csv",
                         mime="text/csv"
                     )
+                
+                # Adicionar funcionalidade para reabrir propostas
+                with st.expander("Reabrir Proposta Finalizada"):
+                    # Obter lista de números de propostas finalizadas para o select box
+                    numeros_propostas = propostas_finalizadas['numero'].tolist()
+                    numeros_propostas.sort()  # Ordenar para facilitar a seleção
+                    
+                    proposta_numero = st.selectbox(
+                        "Selecione o número da proposta a reabrir:",
+                        numeros_propostas,
+                        key="numero_proposta_finalizada_reabrir"
+                    )
+                    
+                    proposta_reabrir = propostas_finalizadas[propostas_finalizadas['numero'] == proposta_numero]
+                    
+                    if not proposta_reabrir.empty:
+                        st.info(f"Você está prestes a reabrir a proposta #{proposta_numero} - {proposta_reabrir.iloc[0]['descricao']}")
+                        st.warning("Esta ação mudará o status da proposta para 'Em execução'.")
+                        
+                        if st.button("REABRIR PROPOSTA", key="confirmar_reabertura"):
+                            try:
+                                # Importar função de reabrir proposta
+                                from reabrir_proposta import reabrir_proposta_finalizada
+                                
+                                # Obter ID da proposta
+                                proposta_id = proposta_reabrir.iloc[0]['id']
+                                
+                                # Chamar função de reabertura
+                                resultado = reabrir_proposta_finalizada(proposta_id)
+                                
+                                if resultado.get('status') == 'sucesso':
+                                    st.success(resultado.get('mensagem'))
+                                    time.sleep(1)
+                                    st.rerun()
+                                elif resultado.get('status') == 'sucesso_com_alerta':
+                                    st.success(resultado.get('mensagem'))
+                                    st.warning(resultado.get('alerta'))
+                                    st.info(f"Encontrados {resultado.get('lancamentos_encontrados')} lançamentos financeiros.")
+                                    time.sleep(2)
+                                    st.rerun()
+                                else:
+                                    st.error(f"Erro ao reabrir proposta: {resultado.get('mensagem')}")
+                            except Exception as e:
+                                st.error(f"Erro ao reabrir proposta: {str(e)}")
             else:
                 st.info("Nenhuma proposta encontrada com os filtros selecionados.")
         else:
