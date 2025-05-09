@@ -591,15 +591,18 @@ def show():
                         try:
                             fornecedores = st.session_state.db.get_fornecedores()
                             if not fornecedores.empty:
-                                fornecedor_selecionado = st.selectbox(
-                                    "Selecione um fornecedor:", 
-                                    options=fornecedores['id'].tolist(),
-                                    format_func=lambda x: fornecedores.loc[fornecedores['id'] == x, 'nome'].iloc[0]
-                                )
-                                
-                                if st.button("Adicionar Fornecedor à Proposta", key=f"add_fornecedor_{proposta_selecionada_id}"):
-                                    # Lógica para adicionar fornecedor
-                                    st.success("Fornecedor adicionado à proposta com sucesso!")
+                                with st.form(key=f"form_fornecedor_{proposta_selecionada_id}"):
+                                    fornecedor_selecionado = st.selectbox(
+                                        "Selecione um fornecedor:", 
+                                        options=fornecedores['id'].tolist(),
+                                        format_func=lambda x: fornecedores.loc[fornecedores['id'] == x, 'nome'].iloc[0]
+                                    )
+                                    
+                                    fornecedor_salvar = st.form_submit_button("Adicionar Fornecedor à Proposta")
+                                    
+                                    if fornecedor_salvar:
+                                        # Lógica para adicionar fornecedor
+                                        st.success("Fornecedor adicionado à proposta com sucesso!")
                             else:
                                 st.info("Não há fornecedores cadastrados.")
                         except Exception as e:
@@ -613,15 +616,18 @@ def show():
                         try:
                             assistentes = st.session_state.db.get_assistentes()
                             if not assistentes.empty:
-                                assistente_selecionado = st.selectbox(
-                                    "Selecione um assistente:", 
-                                    options=assistentes['id'].tolist(),
-                                    format_func=lambda x: assistentes.loc[assistentes['id'] == x, 'nome'].iloc[0]
-                                )
-                                
-                                if st.button("Alocar Assistente à Proposta", key=f"add_assistente_{proposta_selecionada_id}"):
-                                    # Lógica para adicionar assistente
-                                    st.success("Assistente alocado à proposta com sucesso!")
+                                with st.form(key=f"form_assistente_{proposta_selecionada_id}"):
+                                    assistente_selecionado = st.selectbox(
+                                        "Selecione um assistente:", 
+                                        options=assistentes['id'].tolist(),
+                                        format_func=lambda x: assistentes.loc[assistentes['id'] == x, 'nome'].iloc[0]
+                                    )
+                                    
+                                    assistente_salvar = st.form_submit_button("Alocar Assistente à Proposta")
+                                    
+                                    if assistente_salvar:
+                                        # Lógica para adicionar assistente
+                                        st.success("Assistente alocado à proposta com sucesso!")
                             else:
                                 st.info("Não há assistentes cadastrados.")
                         except Exception as e:
@@ -634,26 +640,30 @@ def show():
                         
                         col1, col2 = st.columns(2)
                         with col1:
-                            if st.button("Finalizar como Concluída", key=f"finalizar_concluida_{proposta_selecionada_id}"):
-                                try:
-                                    # Chamar a função para finalizar proposta
-                                    resultado = finalizar_proposta_segura(proposta_selecionada_id)
-                                    if resultado.get('status', False):
-                                        st.success("✅ Proposta finalizada com sucesso!")
-                                        st.rerun()
-                                    else:
-                                        st.error(f"❌ Erro ao finalizar proposta: {resultado.get('message', 'Erro desconhecido')}")
-                                except Exception as e:
-                                    st.error(f"❌ Erro ao finalizar proposta: {str(e)}")
+                            with st.form(key=f"form_finalizar_concluida_{proposta_selecionada_id}"):
+                                finalizar_concluida = st.form_submit_button("Finalizar como Concluída")
+                                if finalizar_concluida:
+                                    try:
+                                        # Chamar a função para finalizar proposta
+                                        resultado = finalizar_proposta_segura(proposta_selecionada_id)
+                                        if resultado.get('status', False):
+                                            st.success("✅ Proposta finalizada com sucesso!")
+                                            st.rerun()
+                                        else:
+                                            st.error(f"❌ Erro ao finalizar proposta: {resultado.get('message', 'Erro desconhecido')}")
+                                    except Exception as e:
+                                        st.error(f"❌ Erro ao finalizar proposta: {str(e)}")
                         
                         with col2:
-                            if st.button("Finalizar como Recusada", key=f"finalizar_recusada_{proposta_selecionada_id}"):
-                                try:
-                                    # Aqui poderia chamar uma função específica para recusar proposta
-                                    st.error("🚫 Proposta marcada como recusada.")
-                                    # Implementar lógica
-                                except Exception as e:
-                                    st.error(f"❌ Erro ao recusar proposta: {str(e)}")
+                            with st.form(key=f"form_finalizar_recusada_{proposta_selecionada_id}"):
+                                finalizar_recusada = st.form_submit_button("Finalizar como Recusada")
+                                if finalizar_recusada:
+                                    try:
+                                        # Aqui poderia chamar uma função específica para recusar proposta
+                                        st.error("🚫 Proposta marcada como recusada.")
+                                        # Implementar lógica
+                                    except Exception as e:
+                                        st.error(f"❌ Erro ao recusar proposta: {str(e)}")
                         
                         # Adicionar uma seção para Resumo
                         st.subheader("Resumo da Proposta")
@@ -752,14 +762,17 @@ def show():
                 )
                 
                 # Adicionar opção para exportar
-                if st.button("Exportar para CSV"):
-                    csv = propostas_filtradas[['numero', 'nome', 'descricao', 'valor_formatado', 'status', 'data_formatada', 'tipo_proposta']].to_csv(index=False)
-                    st.download_button(
-                        label="Download CSV",
-                        data=csv,
-                        file_name="propostas_exportadas.csv",
-                        mime="text/csv"
-                    )
+                with st.form(key="exportar_csv_form"):
+                    exportar_csv = st.form_submit_button("Exportar para CSV")
+                    
+                    if exportar_csv:
+                        csv = propostas_filtradas[['numero', 'nome', 'descricao', 'valor_formatado', 'status', 'data_formatada', 'tipo_proposta']].to_csv(index=False)
+                        st.download_button(
+                            label="Download CSV",
+                            data=csv,
+                            file_name="propostas_exportadas.csv",
+                            mime="text/csv"
+                        )
                 
                 # Adicionar funcionalidade para reabrir propostas
                 with st.expander("Reabrir Proposta Finalizada"):
@@ -767,19 +780,22 @@ def show():
                     numeros_propostas = propostas_finalizadas['numero'].tolist()
                     numeros_propostas.sort()  # Ordenar para facilitar a seleção
                     
-                    proposta_numero = st.selectbox(
-                        "Selecione o número da proposta a reabrir:",
-                        numeros_propostas,
-                        key="numero_proposta_finalizada_reabrir"
-                    )
-                    
-                    proposta_reabrir = propostas_finalizadas[propostas_finalizadas['numero'] == proposta_numero]
-                    
-                    if not proposta_reabrir.empty:
-                        st.info(f"Você está prestes a reabrir a proposta #{proposta_numero} - {proposta_reabrir.iloc[0]['descricao']}")
-                        st.warning("Esta ação mudará o status da proposta para 'Em execução'.")
+                    with st.form(key="reabrir_proposta_form"):
+                        proposta_numero = st.selectbox(
+                            "Selecione o número da proposta a reabrir:",
+                            numeros_propostas,
+                            key="numero_proposta_finalizada_reabrir"
+                        )
                         
-                        if st.button("REABRIR PROPOSTA", key="confirmar_reabertura"):
+                        proposta_reabrir = propostas_finalizadas[propostas_finalizadas['numero'] == proposta_numero]
+                        
+                        if not proposta_reabrir.empty:
+                            st.info(f"Você está prestes a reabrir a proposta #{proposta_numero} - {proposta_reabrir.iloc[0]['descricao']}")
+                            st.warning("Esta ação mudará o status da proposta para 'Em execução'.")
+                        
+                        reabrir_proposta = st.form_submit_button("REABRIR PROPOSTA")
+                        
+                        if reabrir_proposta and not proposta_reabrir.empty:
                             try:
                                 # Importar função de reabrir proposta
                                 from reabrir_proposta import reabrir_proposta_finalizada
