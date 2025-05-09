@@ -348,19 +348,8 @@ def show():
         if not contas_receber.empty:
             contas_receber = contas_receber[contas_receber['status'] == 'Pendente']
             
-        # Adicionar link para o histórico
-        col1, col2 = st.columns([3, 1])
-        with col2:
-            if st.button("Ver no Histórico", key="ver_historico_receber"):
-                # Define uma variável na sessão para indicar que queremos filtrar o histórico para receitas recebidas
-                # Usando apenas 'receita' como filtro para compatibilidade com as opções do selectbox
-                st.session_state.filtro_historico = {
-                    "tipo": ["receita"],  # removido 'receita_a_receber' para compatibilidade
-                    "status": ["Recebido", "Aprovado"]
-                }
-                # Redireciona para a aba Histórico
-                st.session_state.aba_atual = "Histórico"
-                st.rerun()
+        # Exibir título da seção
+        st.write("Lista de Contas a Receber Pendentes:")
 
         if not contas_receber.empty:
             # Adicionar coluna de ações
@@ -410,18 +399,8 @@ def show():
         if 'reload_contas_pagar' not in st.session_state:
             st.session_state.reload_contas_pagar = False
         
-        # Adicionar link para o histórico
-        col1, col2 = st.columns([3, 1])
-        with col2:
-            if st.button("Ver no Histórico", key="ver_historico_pagar"):
-                # Define uma variável na sessão para indicar que queremos filtrar o histórico para despesas pagas
-                st.session_state.filtro_historico = {
-                    "tipo": ["despesa"],
-                    "status": ["Pago", "Aprovado"]
-                }
-                # Redireciona para a aba Histórico
-                st.session_state.aba_atual = "Histórico"
-                st.rerun()
+        # Exibir título da seção
+        st.write("Lista de Contas a Pagar Pendentes:")
         
         # Botão para forçar recarregamento dos dados
         if st.button("🔄 Atualizar Contas", key="reload_button"):
