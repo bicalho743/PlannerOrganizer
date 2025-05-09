@@ -402,11 +402,6 @@ def show():
         # Exibir título da seção
         st.write("Lista de Contas a Pagar Pendentes:")
         
-        # Botão para forçar recarregamento dos dados
-        if st.button("🔄 Atualizar Contas", key="reload_button"):
-            st.session_state.reload_contas_pagar = True
-            st.rerun()
-        
         # Definir se precisamos forçar o recarregamento
         force_reload = True
         
@@ -604,85 +599,9 @@ def show():
                 else:
                     st.info(f"Nenhuma conta a pagar encontrada do tipo {filtro_tipo.lower()}.")
             else:
-                st.info("Nenhuma conta a pagar pendente.")
-                
-                # Adicionar botão para ver histórico de pagamentos
-                if st.button("Ver Histórico de Pagamentos"):
-                    st.session_state.mostrar_historico_pagamentos = True
-                
-                # Exibir histórico se solicitado
-                if 'mostrar_historico_pagamentos' in st.session_state and st.session_state.mostrar_historico_pagamentos:
-                    historico = st.session_state.db.get_financeiro()
-                    if not historico.empty:
-                        historico = historico[(
-                            (historico['tipo'] == 'despesa') | 
-                            (historico['tipo'] == 'despesa_a_pagar') |
-                            (historico['classificacao'] == 'contas_a_pagar')
-                        ) & (historico['status'].isin(['Pago', 'Cancelado']))]
-                        
-                        if not historico.empty:
-                            st.subheader("Histórico de Pagamentos")
-                            # Converter coluna data para exibição
-                            historico['data_formatada'] = pd.to_datetime(historico['data']).dt.strftime('%d/%m/%Y')
-                            
-                            # Criar tabela para visualização
-                            st.dataframe(
-                                historico[['data_formatada', 'descricao', 'valor', 'categoria', 'status']].rename(
-                                    columns={'data_formatada': 'Data', 'descricao': 'Descrição', 
-                                            'valor': 'Valor (R$)', 'categoria': 'Categoria', 'status': 'Status'}
-                                ),
-                                use_container_width=True,
-                                hide_index=True
-                            )
-                        else:
-                            st.info("Nenhum registro de pagamento encontrado.")
+                st.info("Nenhuma conta a pagar pendente. Para visualizar contas pagas ou canceladas, consulte a aba Histórico.")
         else:
             st.info("Nenhuma transação financeira encontrada.")
-            
-        # Adicionar assistentes diretamente
-        with st.expander("💼 Cadastrar Pagamento para Assistente"):
-            assistentes = st.session_state.db.get_assistentes()
-            
-            if not assistentes.empty:
-                with st.form("cadastrar_pagamento_assistente"):
-                    assistente_selecionado = st.selectbox(
-                        "Selecione o Assistente",
-                        assistentes['nome'].tolist()
-                    )
-                    
-                    assistente_id = assistentes[assistentes['nome'] == assistente_selecionado]['id'].iloc[0]
-                    
-                    descricao = st.text_input(
-                        "Descrição do Serviço", 
-                        value=f"Pagamento para {assistente_selecionado}"
-                    )
-                    
-                    valor = st.number_input("Valor a Pagar (R$)", min_value=0.0, step=10.0)
-                    
-                    proposta_id = st.number_input("ID da Proposta (opcional)", value=0, min_value=0, step=1)
-                    
-                    if st.form_submit_button("Cadastrar Pagamento"):
-                        if valor > 0:
-                            try:
-                                st.session_state.db.add_transacao(
-                                    tipo="despesa_a_pagar",
-                                    descricao=descricao,
-                                    valor=valor,
-                                    categoria="Pagamento Equipe/Assistentes",
-                                    subcategoria="Assistentes",
-                                    origem_id=assistente_id,
-                                    origem_tipo="assistente",
-                                    proposta_id=proposta_id if proposta_id > 0 else None,
-                                    classificacao="contas_a_pagar"
-                                )
-                                st.success(f"Pagamento para {assistente_selecionado} cadastrado com sucesso!")
-                                st.rerun()
-                            except Exception as e:
-                                st.error(f"Erro ao cadastrar pagamento: {str(e)}")
-                        else:
-                            st.warning("Por favor, informe um valor válido para o pagamento.")
-            else:
-                st.warning("Nenhum assistente cadastrado. Adicione assistentes no menu Cadastros primeiro.")
 
     with tab5:
         st.subheader("Histórico Financeiro")
