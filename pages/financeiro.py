@@ -30,7 +30,8 @@ def show():
             descricao = st.text_input("Descrição")
             valor = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
 
-            if tipo in ["receita", "receita_a_receber"]:
+            # Apenas opção 'receita' é disponível no seletor, mas mantemos o mesmo comportamento
+            if tipo == "receita":
                 tipo_receita = st.selectbox(
                     "Tipo de Receita",
                     ["organização", "comissão", "venda"]
@@ -67,7 +68,8 @@ def show():
             categorias_receita = ["Serviços de Organização", "Venda de Produtos", "Comissão sobre Fornecedores", "Serviços Adicionais"]
             categorias_despesa = ["Pagamento Equipe/Assistentes", "Pagamento Parceiros/Fornecedores", "Custos Operacionais", "Custos Administrativos"]
             
-            if tipo == "receita" or tipo == "receita_a_receber":
+            # Simplificado para usar apenas as opções disponíveis no selectbox
+            if tipo == "receita":
                 categoria = st.selectbox(
                     "Categoria",
                     categorias_receita
@@ -172,6 +174,8 @@ def show():
             df_display['valor'] = df_display['valor'].apply(lambda x: f"R$ {x:.2f}")
             # Formatar o tipo para exibição (simplificar tipos)
             def formatar_tipo(tipo):
+                # Referências a 'receita_a_receber' mantidas apenas para compatibilidade
+                # com dados históricos no banco que possam conter este valor
                 if tipo == 'receita_a_receber':
                     return 'Receita'
                 elif tipo == 'receita':
@@ -237,6 +241,8 @@ def show():
 
             with st.form(key="edicao_transacao_form"):
                 # Mapeamento de tipo de transação para simplificar
+                # Mantida a referência a "receita_a_receber" apenas para compatibilidade com 
+                # dados históricos no banco que possam conter este valor
                 tipo_exibido = "receita" if transacao['tipo'] in ["receita", "receita_a_receber"] else "despesa"
                 
                 tipo = st.selectbox(
@@ -248,7 +254,8 @@ def show():
                 descricao = st.text_input("Descrição", value=transacao['descricao'])
                 valor = st.number_input("Valor (R$)", value=float(transacao['valor']), min_value=0.0, step=0.01)
 
-                if tipo in ["receita", "receita_a_receber"]:
+                # Simplificado para usar apenas a opção disponível no selectbox
+                if tipo == "receita":
                     tipo_receita = st.selectbox(
                         "Tipo de Receita",
                         ["organização", "comissão", "venda"],
@@ -260,7 +267,8 @@ def show():
                     tipo_receita = None
 
                 # Categorias baseadas no tipo da transação (receita ou despesa)
-                if tipo in ["receita", "receita_a_receber"]:
+                # Simplificado para usar apenas a opção disponível no selectbox
+                if tipo == "receita":
                     categorias_disponíveis = ["Serviços de Organização", "Venda de Produtos", "Comissão sobre Fornecedores", "Serviços Adicionais"]
                     # Tentar encontrar a categoria atual nas novas categorias
                     if transacao['categoria'] == "Serviço":
@@ -315,8 +323,8 @@ def show():
                 del st.session_state.transacao_em_edicao
                 st.rerun()
 
-        # Resumo financeiro
-        receitas = financeiro[financeiro['tipo'].isin(['receita', 'receita_a_receber'])]['valor'].sum() if not financeiro.empty else 0
+        # Resumo financeiro - simplificado para usar apenas 'receita' nas opções
+        receitas = financeiro[financeiro['tipo'] == 'receita']['valor'].sum() if not financeiro.empty else 0
         despesas = financeiro[
             (financeiro['tipo'].isin(['despesa', 'despesa_a_pagar'])) |
             (financeiro['classificacao'] == 'contas_a_pagar')
@@ -345,8 +353,9 @@ def show():
         with col2:
             if st.button("Ver no Histórico", key="ver_historico_receber"):
                 # Define uma variável na sessão para indicar que queremos filtrar o histórico para receitas recebidas
+                # Usando apenas 'receita' como filtro para compatibilidade com as opções do selectbox
                 st.session_state.filtro_historico = {
-                    "tipo": ["receita", "receita_a_receber"],
+                    "tipo": ["receita"],  # removido 'receita_a_receber' para compatibilidade
                     "status": ["Recebido", "Aprovado"]
                 }
                 # Redireciona para a aba Histórico
@@ -775,6 +784,8 @@ def show():
                 
                 # Formatar o tipo para exibição (simplificar tipos)
                 def formatar_tipo(tipo):
+                    # Referências a 'receita_a_receber' mantidas apenas para compatibilidade
+                    # com dados históricos no banco que possam conter este valor
                     if tipo == 'receita_a_receber':
                         return 'Receita'
                     elif tipo == 'receita':
@@ -842,6 +853,8 @@ def show():
         if not financeiro_completo.empty:
             # Adicionar uma coluna para classificar os tipos de lançamento de forma simplificada
             def simplificar_tipo(tipo):
+                # Referências a 'receita_a_receber_aprovacao' mantidas apenas para compatibilidade
+                # com dados históricos no banco que possam conter este valor
                 if tipo in ['receita', 'receita_a_receber_aprovacao', 'Receita']:
                     return 'receita'
                 elif tipo in ['despesa', 'despesa_a_pagar']:
