@@ -343,7 +343,18 @@ def desassociar_propostas_cliente_sql(cliente_id: int) -> int:
 
 # Function replacement
 def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
-    """Função de compatibilidade para código existente"""
+    """
+    Função de compatibilidade para código existente
+    
+    Implementa a finalização de propostas com geração de lançamentos financeiros:
+    
+    - Produtos: Receita - categoria venda de produtos
+    - Fornecedores: Receita - comissão sobre fornecedores
+    - Assistentes: Despesa - pagamento equipe/assistentes
+    - Outros: Receita - serviços adicionais
+    
+    Também registra vendas no módulo de vendas para produtos.
+    """
     logger.info(f"Iniciando finalização segura da proposta #{proposta_id}")
     conn = get_db_connection()
     if not conn:
@@ -361,9 +372,305 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                 "valores": {}
             }
         }
-        # Retornar resultado padrão vazio se houver qualquer problema com a função
+
+        # Atualizar status da proposta (usando data_fim em vez de data_finalizacao)
+        cursor.execute("""
+            UPDATE propostas 
+            SET status = 'Finalizada',
+                status_execucao = 'Finalizada',
+                data_fim = CURRENT_DATE
+            WHERE id = %s
+            RETURNING id, valor, usuario_id, numero, descricao, cliente_id;
+        """, (proposta_id,))
+
+        result = cursor.fetchone()
+        if not result:
+            logger.error(f"Proposta {proposta_id} não encontrada!")
+            raise Exception(f"Proposta {proposta_id} não encontrada!")
+            
+        proposta_info = {
+            'id': result[0],
+            'valor': result[1],
+            'usuario_id': result[2],
+            'numero': result[3],
+            'descricao': result[4],
+            'cliente_id': result[5]
+        }
+        
+        # Buscar nome do cliente para adicionar à descrição dos lançamentos
+        cursor.execute("SELECT nome FROM clientes WHERE id = %s", (proposta_info['cliente_id'],))
+        cliente_result = cursor.fetchone()
+        nome_cliente = cliente_result[0] if cliente_result else "Cliente"
+        
+        # 1. TRATAMENTO DOS PRODUTOS - Receita (venda de produtos) + Registro no módulo de vendas
+        cursor.execute("""
+            SELECT id, nome, valor, quantidade, id as produto_id
+            FROM produtos_organizadores 
+            WHERE proposta_id = %s
+        """, (proposta_id,))
+        
+        produtos = cursor.fetchall()
+        valor_total_produtos = 0
+        venda_id = None
+        
+        if produtos and len(produtos) > 0:
+            # Calcular valor total
+            for produto in produtos:
+                produto_id, produto_nome, produto_valor, produto_quantidade, _ = produto
+                if produto_valor and produto_quantidade:
+                    valor_produto_total = float(produto_valor) * float(produto_quantidade)
+                    valor_total_produtos += valor_produto_total
+            
+            if valor_total_produtos > 0:
+                # 1.1. Gerar lançamento financeiro para a venda de produtos
+                cursor.execute("""
+                    INSERT INTO financeiro 
+                    (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, 
+                     proposta_id, tipo_conta, status, classificacao, usuario_id)
+                    VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                """, (
+                    f"Venda de produtos - Proposta #{proposta_info['numero']} - {nome_cliente}",
+                    valor_total_produtos,
+                    "Venda de Produtos",  # Categoria
+                    "Produtos da Proposta",  # Subcategoria
+                    "Receita",  # Tipo
+                    proposta_id,  # origem_id
+                    "proposta_produtos",  # origem_tipo
+                    proposta_id,  # proposta_id
+                    "PF",  # tipo_conta
+                    "Pendente",  # status
+                    "contas_a_receber",  # classificacao
+                    proposta_info['usuario_id']  # usuario_id
+                ))
+                
+                lancamento_id = cursor.fetchone()[0]
+                logger.info(f"Lançamento financeiro de Venda de Produtos criado: #{lancamento_id}, Valor: R${valor_total_produtos:.2f}")
+                lancamentos_gerados += 1
+                
+                # 1.2. Criar entrada no módulo de vendas (tabela vendas)
+                cursor.execute("""
+                    INSERT INTO vendas 
+                    (proposta_id, cliente_id, data_venda, valor_total, status, usuario_id)
+                    VALUES (%s, %s, CURRENT_DATE, %s, %s, %s)
+                    RETURNING id
+                """, (
+                    proposta_id,
+                    proposta_info['cliente_id'],
+                    valor_total_produtos,
+                    "Concluída",
+                    proposta_info['usuario_id']
+                ))
+                
+                venda_id = cursor.fetchone()[0]
+                logger.info(f"Registro de venda criado: #{venda_id}, Valor: R${valor_total_produtos:.2f}")
+                
+                # 1.3. Registrar itens da venda (tabela itens_venda)
+                for produto in produtos:
+                    produto_id, produto_nome, produto_valor, produto_quantidade, _ = produto
+                    if produto_valor and produto_quantidade:
+                        valor_produto_total = float(produto_valor) * float(produto_quantidade)
+                        
+                        cursor.execute("""
+                            INSERT INTO itens_venda 
+                            (venda_id, produto_id, produto_nome, quantidade, valor_unitario, valor_total)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                        """, (
+                            venda_id,
+                            produto_id,
+                            produto_nome,
+                            produto_quantidade,
+                            produto_valor,
+                            valor_produto_total
+                        ))
+                        
+                logger.info(f"Todos os itens da venda foram registrados.")
+                
+                # Adicionar o valor dos produtos ao resultado
+                resultado["lancamentos"]["valores"]["produtos"] = valor_total_produtos
+        
+        # 2. TRATAMENTO DOS FORNECEDORES - Receita (comissão sobre fornecedores)
+        cursor.execute("""
+            SELECT id, fornecedor, descricao, valor, percentual_comissao 
+            FROM acrescimos_proposta 
+            WHERE proposta_id = %s AND tipo = 'FORNECEDOR'
+        """, (proposta_id,))
+        
+        fornecedores = cursor.fetchall()
+        valor_total_fornecedores = 0
+        
+        if fornecedores and len(fornecedores) > 0:
+            for fornecedor in fornecedores:
+                id_fornecedor, nome_fornecedor, desc_fornecedor, valor_fornecedor, percentual_comissao = fornecedor
+                if valor_fornecedor and float(valor_fornecedor) > 0:
+                    valor_total_fornecedores += float(valor_fornecedor)
+                    
+                    # 2.1. Gerar lançamento financeiro para comissão sobre fornecedor
+                    cursor.execute("""
+                        INSERT INTO financeiro 
+                        (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, 
+                         proposta_id, tipo_conta, status, classificacao, usuario_id)
+                        VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id
+                    """, (
+                        f"Comissão fornecedor {nome_fornecedor} - Proposta #{proposta_info['numero']} - {nome_cliente}",
+                        valor_fornecedor,  # Valor total do fornecedor como comissão
+                        "Comissão sobre fornecedores",  # Categoria
+                        "Comissão de Fornecedor",  # Subcategoria
+                        "Receita",  # Tipo
+                        id_fornecedor,  # origem_id
+                        "comissao_fornecedor",  # origem_tipo
+                        proposta_id,  # proposta_id
+                        "PF",  # tipo_conta
+                        "Pendente",  # status
+                        "contas_a_receber",  # classificacao
+                        proposta_info['usuario_id']  # usuario_id
+                    ))
+                    
+                    lancamento_id = cursor.fetchone()[0]
+                    logger.info(f"Lançamento financeiro de Comissão de Fornecedor criado: #{lancamento_id}, Valor: R${valor_fornecedor:.2f}")
+                    lancamentos_gerados += 1
+            
+            # Adicionar o valor dos fornecedores ao resultado
+            resultado["lancamentos"]["valores"]["fornecedores"] = valor_total_fornecedores
+        
+        # 3. TRATAMENTO DOS ASSISTENTES - Despesa (pagamento equipe/assistentes)
+        cursor.execute("""
+            SELECT id, fornecedor, descricao, valor 
+            FROM acrescimos_proposta 
+            WHERE proposta_id = %s AND tipo = 'ASSISTENTE'
+        """, (proposta_id,))
+        
+        assistentes = cursor.fetchall()
+        valor_total_assistentes = 0
+        
+        if assistentes and len(assistentes) > 0:
+            for assistente in assistentes:
+                id_assistente, nome_assistente, desc_assistente, valor_assistente = assistente
+                if valor_assistente and float(valor_assistente) > 0:
+                    valor_total_assistentes += float(valor_assistente)
+                    
+                    # 3.1. Gerar lançamento financeiro para pagamento de assistente
+                    cursor.execute("""
+                        INSERT INTO financeiro 
+                        (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, 
+                         proposta_id, tipo_conta, status, classificacao, usuario_id)
+                        VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id
+                    """, (
+                        f"Pagamento assistente {nome_assistente} - Proposta #{proposta_info['numero']} - {nome_cliente}",
+                        valor_assistente,
+                        "Pagamento Equipe/Assistentes",  # Categoria
+                        "Assistentes",  # Subcategoria
+                        "Despesa",  # Tipo
+                        id_assistente,  # origem_id
+                        "pagamento_assistente",  # origem_tipo
+                        proposta_id,  # proposta_id
+                        "PF",  # tipo_conta
+                        "Pendente",  # status
+                        "contas_a_pagar",  # classificacao
+                        proposta_info['usuario_id']  # usuario_id
+                    ))
+                    
+                    lancamento_id = cursor.fetchone()[0]
+                    logger.info(f"Lançamento financeiro de Pagamento de Assistente criado: #{lancamento_id}, Valor: R${valor_assistente:.2f}")
+                    lancamentos_gerados += 1
+            
+            # Adicionar o valor dos assistentes ao resultado
+            resultado["lancamentos"]["valores"]["assistentes"] = valor_total_assistentes
+        
+        # 4. TRATAMENTO DE OUTROS ITENS - Receita (serviços adicionais)
+        cursor.execute("""
+            SELECT id, fornecedor, descricao, valor 
+            FROM acrescimos_proposta 
+            WHERE proposta_id = %s AND tipo = 'OUTRO'
+        """, (proposta_id,))
+        
+        outros_itens = cursor.fetchall()
+        valor_total_outros = 0
+        
+        if outros_itens and len(outros_itens) > 0:
+            for outro in outros_itens:
+                id_outro, nome_outro, desc_outro, valor_outro = outro
+                if valor_outro and float(valor_outro) > 0:
+                    valor_total_outros += float(valor_outro)
+                    
+                    # 4.1. Gerar lançamento financeiro para outros itens (serviços adicionais)
+                    cursor.execute("""
+                        INSERT INTO financeiro 
+                        (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, 
+                         proposta_id, tipo_conta, status, classificacao, usuario_id)
+                        VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id
+                    """, (
+                        f"Serviço adicional: {desc_outro} - Proposta #{proposta_info['numero']} - {nome_cliente}",
+                        valor_outro,
+                        "Serviços Adicionais",  # Categoria
+                        "Outros Serviços",  # Subcategoria
+                        "Receita",  # Tipo
+                        id_outro,  # origem_id
+                        "servico_adicional",  # origem_tipo
+                        proposta_id,  # proposta_id
+                        "PF",  # tipo_conta
+                        "Pendente",  # status
+                        "contas_a_receber",  # classificacao
+                        proposta_info['usuario_id']  # usuario_id
+                    ))
+                    
+                    lancamento_id = cursor.fetchone()[0]
+                    logger.info(f"Lançamento financeiro de Serviço Adicional criado: #{lancamento_id}, Valor: R${valor_outro:.2f}")
+                    lancamentos_gerados += 1
+            
+            # Adicionar o valor de outros itens ao resultado
+            resultado["lancamentos"]["valores"]["outros"] = valor_total_outros
+        
+        # 5. TRATAMENTO DO VALOR BASE DA PROPOSTA - Receita (serviço principal)
+        if proposta_info['valor'] and float(proposta_info['valor']) > 0:
+            cursor.execute("""
+                INSERT INTO financeiro 
+                (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, 
+                 proposta_id, tipo_conta, status, classificacao, usuario_id)
+                VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (
+                f"Serviço organização - Proposta #{proposta_info['numero']} - {nome_cliente}",
+                proposta_info['valor'],
+                "Serviços de Organização",  # Categoria
+                "Serviço Principal",  # Subcategoria
+                "Receita",  # Tipo
+                proposta_id,  # origem_id
+                "proposta_base",  # origem_tipo
+                proposta_id,  # proposta_id
+                "PF",  # tipo_conta
+                "Pendente",  # status
+                "contas_a_receber",  # classificacao
+                proposta_info['usuario_id']  # usuario_id
+            ))
+            
+            lancamento_id = cursor.fetchone()[0]
+            logger.info(f"Lançamento financeiro de Serviço Principal criado: #{lancamento_id}, Valor: R${float(proposta_info['valor']):.2f}")
+            lancamentos_gerados += 1
+            
+            # Adicionar o valor base ao resultado
+            resultado["lancamentos"]["valores"]["base"] = float(proposta_info['valor'])
+        
+        # Finalização
+        logger.info(f"Proposta #{proposta_id} finalizada. {lancamentos_gerados} lançamentos financeiros gerados.")
+        conn.commit()
+        
+        # Atualizar os resultados
+        resultado["lancamentos"]["gerados"] = lancamentos_gerados
+        resultado["total_geral"] = (
+            float(resultado["lancamentos"]["valores"].get("base", 0)) +
+            float(resultado["lancamentos"]["valores"].get("produtos", 0)) +
+            float(resultado["lancamentos"]["valores"].get("fornecedores", 0)) +
+            float(resultado["lancamentos"]["valores"].get("outros", 0))
+        )
+        
         return resultado
     except Exception as e:
+        if conn:
+            conn.rollback()
         logger.error(f"Erro ao finalizar proposta: {str(e)}")
         return {
             "status": False,
