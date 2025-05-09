@@ -473,15 +473,16 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                         
                         cursor.execute("""
                             INSERT INTO itens_venda 
-                            (venda_id, produto_id, produto_nome, quantidade, valor_unitario, valor_total)
-                            VALUES (%s, %s, %s, %s, %s, %s)
+                            (venda_id, produto_id, descricao, quantidade, preco_unitario, subtotal, usuario_id)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s)
                         """, (
                             venda_id,
                             produto_id,
-                            produto_nome,
+                            produto_nome,  # Como descricao
                             produto_quantidade,
-                            produto_valor,
-                            valor_produto_total
+                            produto_valor,  # Como preco_unitario
+                            valor_produto_total,  # Como subtotal
+                            proposta_info['usuario_id']  # usuario_id
                         ))
                         
                 logger.info(f"Todos os itens da venda foram registrados.")
