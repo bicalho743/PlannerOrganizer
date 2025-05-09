@@ -32,7 +32,7 @@ def show():
     # Criar abas para organizar o conteúdo com ícones para cada uma
     st.markdown('<div class="main-tabs">', unsafe_allow_html=True)
     tab1, tab2, tab3 = st.tabs([
-        "📝 Propostas", 
+        "📝 Nova Proposta", 
         "⚙️ Em Execução", 
         "📋 Propostas Finalizadas"
     ])
@@ -64,9 +64,9 @@ def show():
         st.error(f"Erro ao carregar dados iniciais: {str(e)}")
         return
     
-    # ABA 1: PROPOSTAS (UNIFICADA)
+    # ABA 1: NOVA PROPOSTA
     with tab1:
-        st.header("Propostas")
+        st.header("Nova Proposta")
         
         # Criar tabs dentro da primeira aba
         proposta_tab1, proposta_tab2 = st.tabs(["Nova Proposta", "Gerenciar Propostas"])
