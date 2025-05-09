@@ -1753,30 +1753,26 @@ class Database:
     def get_fornecedores(self):
         def query():
             try:
-                print(f"DEBUG: Buscando fornecedores das categorias 'Fornecedor' e 'Produtos'")
+                print(f"DEBUG: Buscando todos os fornecedores")
                 
-                # Buscar todos os fornecedores, incluindo tanto categoria 'Fornecedor' quanto 'Produtos'
-                fornecedores = self.session.query(Fornecedor).filter(
-                    (Fornecedor.categoria == 'Fornecedor') | 
-                    (Fornecedor.categoria == 'Produtos')
-                ).order_by(Fornecedor.nome).all()
+                # Buscar todos os fornecedores sem filtro de categoria
+                fornecedores = self.session.query(Fornecedor).all()
                 
                 print(f"DEBUG: Quantidade de fornecedores encontrados: {len(fornecedores)}")
                 if fornecedores:
                     categorias = set(f.categoria for f in fornecedores)
                     print(f"DEBUG: Categorias encontradas: {categorias}")
-                
-                # Verificar se temos fornecedores
-                if not fornecedores:
-                    print(f"DEBUG: Nenhum fornecedor encontrado. Buscando todos os fornecedores...")
-                    # Se não encontrar fornecedores com o filtro, buscar todos
-                    fornecedores = self.session.query(Fornecedor).order_by(Fornecedor.nome).all()
-                    print(f"DEBUG: Total de fornecedores sem filtro: {len(fornecedores)}")
+                    
+                    # Mostrar os fornecedores encontrados
+                    for f in fornecedores:
+                        nome_display = f.nome if f.nome else f.descricao  # Usar descrição se nome estiver vazio
+                        print(f"DEBUG: ID={f.id}, Nome='{nome_display}', Categoria='{f.categoria}', Descrição='{f.descricao}'")
                 
                 # Construir DataFrame com os dados
                 resultado = pd.DataFrame([{
                     'id': f.id,
-                    'nome': f.nome,  # Adicionado campo "nome" que estava faltando
+                    # Usar descrição como nome se o campo nome estiver vazio
+                    'nome': f.nome if f.nome and str(f.nome).strip() else f.descricao,
                     'descricao': f.descricao,
                     'contato': f.contato,
                     'categoria': f.categoria,

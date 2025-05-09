@@ -835,14 +835,17 @@ def show():
                             # Verificar se temos algum fornecedor
                             if not fornecedores.empty:
                                 with st.form(key=f"form_fornecedor_{proposta_selecionada_id}"):
+                                    # Ordenar fornecedores por categoria e nome
+                                    fornecedores_ordenados = fornecedores.sort_values(by=['categoria', 'nome'])
+                                    
                                     fornecedor_selecionado = st.selectbox(
                                         "Selecione o fornecedor:", 
-                                        options=fornecedores['id'].tolist(),
-                                        format_func=lambda x: f"{fornecedores.loc[fornecedores['id'] == x, 'nome'].iloc[0]} ({fornecedores.loc[fornecedores['id'] == x, 'categoria'].iloc[0]})"
+                                        options=fornecedores_ordenados['id'].tolist(),
+                                        format_func=lambda x: f"{fornecedores_ordenados.loc[fornecedores_ordenados['id'] == x, 'nome'].iloc[0]} ({fornecedores_ordenados.loc[fornecedores_ordenados['id'] == x, 'categoria'].iloc[0]})"
                                     )
                                     
                                     # Obter o percentual de comissão do fornecedor selecionado
-                                    fornecedor_percentual = fornecedores.loc[fornecedores['id'] == fornecedor_selecionado, 'percentual_comissao'].iloc[0]
+                                    fornecedor_percentual = fornecedores_ordenados.loc[fornecedores_ordenados['id'] == fornecedor_selecionado, 'percentual_comissao'].iloc[0]
                                     fornecedor_percentual = float(fornecedor_percentual) if fornecedor_percentual is not None else 0.0
                                     
                                     # Campo para o valor do fornecimento
