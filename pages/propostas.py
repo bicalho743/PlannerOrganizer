@@ -1885,66 +1885,57 @@ def show():
             st.header("Propostas Finalizadas")
             
             try:
-                # Primeiro verificar se temos propostas
-                if not propostas.empty:
-                    # Reimplementação do filtro para propostas finalizadas de maneira mais explícita
-                    # Criar máscaras de filtro separadamente para melhor controle e clareza
-                    
-                    # 1. Criar máscara para status de proposta finalizada
-                    mascara_status_finalizada = propostas_com_clientes['status'] == 'Finalizada'
-                    
-                    # 2. Criar máscara para status_execucao finalizada
-                    mascara_status_execucao_finalizada = propostas_com_clientes['status_execucao'] == 'Finalizada'
-                    
-                    # 3. Criar máscara para propostas recusadas
-                    mascara_recusada = propostas_com_clientes['status'] == 'Recusada'
-                    
-                    # 4. Aplicar combinação de máscaras para filtrar apenas propostas realmente finalizadas
-                    # Uma proposta é considerada finalizada se:
-                    # - TANTO o status quanto o status_execucao forem "Finalizada" OU
-                    # - O status for "Recusada"
-                    mascara_finalizada_completa = (mascara_status_finalizada & mascara_status_execucao_finalizada) | mascara_recusada
-                    
-                    # Aplicar filtro para obter apenas propostas finalizadas
-                    propostas_finalizadas = propostas_com_clientes[mascara_finalizada_completa].copy()
-                    
-                    # LOG PARA DEBUG
-                    st.write(f"Total de propostas finalizadas encontradas: {len(propostas_finalizadas)}")
-                    
-                    # Verificar se temos propostas finalizadas
-                    if not propostas_finalizadas.empty:
-                        # Preparar DataFrame para exibição
-                        df_finalizadas = pd.DataFrame()
-                        # Manter o ID como coluna oculta para referência
-                        df_finalizadas['ID'] = propostas_finalizadas['id']
-                        df_finalizadas['Número'] = propostas_finalizadas['numero']
-                        df_finalizadas['Cliente'] = propostas_finalizadas['nome']
-                        df_finalizadas['Descrição'] = propostas_finalizadas['descricao']
-                        
-                        # Formatar valor como moeda
-                        df_finalizadas['Valor (R$)'] = propostas_finalizadas['valor'].apply(
-                            lambda x: f"R$ {x:.2f}" if x else "R$ 0.00"
-                        )
-                        
-                        # Adicionar coluna de data formatada
-                        df_finalizadas['Data'] = propostas_finalizadas['data_inicio'].apply(
-                            lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
-                        )
-                        
-                        # Adicionar tipo de proposta
-                        df_finalizadas['Tipo'] = propostas_finalizadas['tipo_proposta']
-                        
-                        # Exibir tabela de propostas finalizadas
-                        st.dataframe(df_finalizadas.drop(columns=['ID']), hide_index=True)
-                    else:
-                        st.info("Não há propostas finalizadas no momento.")
-                        # Criar DataFrame vazio para uso subsequente
-                        propostas_finalizadas = pd.DataFrame()
+                # Importar a função para carregar propostas finalizadas
+                from utils.filtro_propostas import get_propostas_finalizadas
+                
+                # Usar a função especializada para obter apenas propostas realmente finalizadas
+                propostas_finalizadas = get_propostas_finalizadas(st.session_state.db)
+                
+                # LOG PARA DEBUG
+                st.write(f"Total de propostas finalizadas encontradas: {len(propostas_finalizadas)}")
+                
+                # Verificar se encontramos propostas finalizadas
+                if not propostas_finalizadas.empty:
+                    # Exibir propostas no formato expandível, como sugerido pelo usuário
+                    for idx, proposta in propostas_finalizadas.iterrows():
+                        # Criar um expander para cada proposta
+                        with st.expander(f"{proposta['numero']} - {proposta['cliente_nome']} - {proposta['descricao']} (R$ {proposta['valor']:.2f})"):
+                            col1, col2 = st.columns(2)
+                            
+                            with col1:
+                                st.write(f"**ID:** {proposta['id']}")
+                                st.write(f"**Cliente:** {proposta['cliente_nome']}")
+                                st.write(f"**Descrição:** {proposta['descricao']}")
+                                st.write(f"**Valor:** R$ {proposta['valor']:.2f}")
+                                
+                            with col2:
+                                st.write(f"**Tipo:** {proposta['tipo_proposta']}")
+                                st.write(f"**Status:** {proposta['status']}")
+                                st.write(f"**Status Execução:** {proposta['status_execucao']}")
+                                data_inicio_str = proposta['data_inicio'].strftime('%d/%m/%Y') if pd.notna(proposta['data_inicio']) else 'N/D'
+                                st.write(f"**Data Início:** {data_inicio_str}")
+                                data_fim_str = proposta['data_fim'].strftime('%d/%m/%Y') if pd.notna(proposta['data_fim']) else 'N/D'
+                                st.write(f"**Data Fim:** {data_fim_str}")
+                            
+                            # Adicionar botões de ação na parte inferior do expander
+                            col_btn1, col_btn2 = st.columns(2)
+                            with col_btn1:
+                                if st.button("Gerar Relatório", key=f"rel_btn_{proposta['id']}"):
+                                    st.session_state.proposta_selec_relatorio = proposta['id']
+                                    st.rerun()
+                            
+                            with col_btn2:
+                                if st.button("Reabrir Proposta", key=f"reabrir_btn_{proposta['id']}"):
+                                    st.session_state.proposta_selec_reabrir = proposta['id']
+                                    st.rerun()
                 else:
-                    st.info("Não há propostas cadastradas no sistema.")
+                    st.info("Não há propostas finalizadas no momento.")
+                    # Criar DataFrame vazio para uso subsequente
                     propostas_finalizadas = pd.DataFrame()
             except Exception as e:
                 st.error(f"Erro ao processar propostas finalizadas: {str(e)}")
+                import traceback
+                traceback.print_exc()
                 propostas_finalizadas = pd.DataFrame()
                 
             # Verificar se temos propostas finalizadas antes de mostrar a interface para reabrir/excluir
