@@ -497,16 +497,20 @@ def show():
                                 excluir_key = f"del_{proposta_id}"
                                 confirmar_key = f"confirm_del_direct_{proposta_id}"
                                 
-                                # Inicializar estado para este botão específico
-                                if excluir_key not in st.session_state:
-                                    st.session_state[excluir_key] = False
+                                # Usar query params para gerenciar estado
+                                query_params = st.experimental_get_query_params()
+                                show_confirm = query_params.get(excluir_key, ['false'])[0] == 'true'
                                 
                                 # Botão de exclusão
-                                if st.button("🗑️", key=excluir_key):
-                                    st.session_state[excluir_key] = True
+                                if not show_confirm and st.button("🗑️", key=excluir_key):
+                                    # Definir para mostrar confirmação
+                                    params = st.experimental_get_query_params()
+                                    params[excluir_key] = 'true'
+                                    st.experimental_set_query_params(**params)
+                                    st.rerun()
                                 
                                 # Mostrar confirmação se o botão foi clicado
-                                if st.session_state[excluir_key]:
+                                if show_confirm:
                                     st.warning("⚠️ Tem certeza que deseja excluir esta proposta?")
                                     col_confirm1, col_confirm2 = st.columns(2)
                                     
@@ -547,7 +551,11 @@ def show():
                                     
                                     with col_confirm2:
                                         if st.button("✗ Cancelar", key=f"cancelar_{confirmar_key}"):
-                                            st.session_state[excluir_key] = False
+                                            # Limpar query params
+                                            params = st.experimental_get_query_params()
+                                            if excluir_key in params:
+                                                del params[excluir_key]
+                                            st.experimental_set_query_params(**params)
                                             st.rerun()
                                                 
                 else:

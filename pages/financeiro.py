@@ -463,15 +463,20 @@ def show():
                                 # Chave única para cada botão de pagamento
                                 pagar_key = f"pagar_{conta['id']}"
                                 
-                                # Inicializar estado para este botão
-                                if pagar_key not in st.session_state:
-                                    st.session_state[pagar_key] = False
+                                # Usar query params para gerenciar estado
+                                query_params = st.experimental_get_query_params()
+                                show_confirm_pay = query_params.get(pagar_key, ['false'])[0] == 'true'
                                 
-                                if st.button("✅ Pagar", key=pagar_key):
-                                    st.session_state[pagar_key] = True
+                                # Botão de pagamento
+                                if not show_confirm_pay and st.button("✅ Pagar", key=pagar_key):
+                                    # Definir para mostrar confirmação
+                                    params = st.experimental_get_query_params()
+                                    params[pagar_key] = 'true'
+                                    st.experimental_set_query_params(**params)
+                                    st.rerun()
                                 
                                 # Se o botão foi clicado, mostrar confirmação
-                                if st.session_state[pagar_key]:
+                                if show_confirm_pay:
                                     st.info(f"Confirmando pagamento de R$ {conta['valor']:.2f}")
                                     
                                     col_conf1, col_conf2 = st.columns(2)
@@ -498,7 +503,13 @@ def show():
                                                     conn.commit()
                                                 
                                                 st.success(f"✅ Pagamento de {conta['descricao']} registrado com sucesso!")
-                                                st.session_state[pagar_key] = False
+                                                
+                                                # Limpar estado via query params
+                                                params = st.experimental_get_query_params()
+                                                if pagar_key in params:
+                                                    del params[pagar_key]
+                                                st.experimental_set_query_params(**params)
+                                                
                                                 time.sleep(1)
                                                 st.rerun()
                                             except Exception as e:
@@ -506,22 +517,31 @@ def show():
                                     
                                     with col_conf2:
                                         if st.button("✗ Cancelar", key=f"cancel_{pagar_key}"):
-                                            st.session_state[pagar_key] = False
+                                            # Limpar query params
+                                            params = st.experimental_get_query_params()
+                                            if pagar_key in params:
+                                                del params[pagar_key]
+                                            st.experimental_set_query_params(**params)
                                             st.rerun()
                             
                             with col3:
                                 # Chave única para cada botão de cancelamento
                                 cancelar_key = f"cancelar_pagar_{conta['id']}"
                                 
-                                # Inicializar estado para este botão
-                                if cancelar_key not in st.session_state:
-                                    st.session_state[cancelar_key] = False
+                                # Usar query params para gerenciar estado
+                                query_params = st.experimental_get_query_params()
+                                show_confirm_cancel = query_params.get(cancelar_key, ['false'])[0] == 'true'
                                 
-                                if st.button("❌ Cancelar", key=cancelar_key):
-                                    st.session_state[cancelar_key] = True
+                                # Botão de cancelamento
+                                if not show_confirm_cancel and st.button("❌ Cancelar", key=cancelar_key):
+                                    # Definir para mostrar confirmação
+                                    params = st.experimental_get_query_params()
+                                    params[cancelar_key] = 'true'
+                                    st.experimental_set_query_params(**params)
+                                    st.rerun()
                                 
                                 # Se o botão foi clicado, mostrar confirmação
-                                if st.session_state[cancelar_key]:
+                                if show_confirm_cancel:
                                     st.warning(f"Confirmar cancelamento da conta: {conta['descricao']}")
                                     
                                     col_canc1, col_canc2 = st.columns(2)
@@ -544,7 +564,13 @@ def show():
                                                     conn.commit()
                                                 
                                                 st.success(f"Pagamento de {conta['descricao']} cancelado com sucesso!")
-                                                st.session_state[cancelar_key] = False
+                                                
+                                                # Limpar estado via query params
+                                                params = st.experimental_get_query_params()
+                                                if cancelar_key in params:
+                                                    del params[cancelar_key]
+                                                st.experimental_set_query_params(**params)
+                                                
                                                 time.sleep(1)
                                                 st.rerun()
                                             except Exception as e:
@@ -552,7 +578,11 @@ def show():
                                     
                                     with col_canc2:
                                         if st.button("✗ Voltar", key=f"voltar_{cancelar_key}"):
-                                            st.session_state[cancelar_key] = False
+                                            # Limpar query params
+                                            params = st.experimental_get_query_params()
+                                            if cancelar_key in params:
+                                                del params[cancelar_key]
+                                            st.experimental_set_query_params(**params)
                                             st.rerun()
                             
                             st.divider()
