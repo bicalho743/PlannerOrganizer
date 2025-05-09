@@ -518,7 +518,7 @@ def show():
                             descricao_andamento = st.text_area("Descrição:", height=100)
                             data_andamento = st.date_input("Data:", datetime.now())
                             porcentagem = st.slider("Porcentagem concluída:", 0, 100, 0)
-                            observacoes = st.text_area("Observações:", height=50)
+                            observacoes = st.text_area("Observações:", height=70)
                             
                             andamento_salvar = st.form_submit_button("Registrar Andamento")
                             
