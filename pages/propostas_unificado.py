@@ -285,8 +285,14 @@ def show():
                             novo_status = st.session_state[alterar_status_key]
                             
                             if novo_status == "Excluir":
+                                # Adicionar logs para debug
+                                print(f"DEBUG UI: Excluindo proposta ID: {proposta_id} (tipo: {type(proposta_id)})")
+                                st.info(f"Excluindo proposta {proposta_id}...")
+                                
                                 # Processar exclusão
                                 sucesso, mensagem = st.session_state.db.excluir_proposta(proposta_id)
+                                print(f"DEBUG UI: Resultado exclusão: sucesso={sucesso}, mensagem={mensagem}")
+                                
                                 if sucesso:
                                     st.success(f"Proposta {proposta_id} excluída com sucesso!")
                                     # Remover da sessão e recarregar
@@ -294,7 +300,8 @@ def show():
                                     st.rerun()
                                 else:
                                     st.error(f"Erro ao excluir proposta: {mensagem}")
-                                    del st.session_state[alterar_status_key]
+                                    # Manter o estado para debug (comentar esta linha se necessário)
+                                    # del st.session_state[alterar_status_key]
                             
                             # Lidar com os novos status unificados
                             elif novo_status == "Aprovada":

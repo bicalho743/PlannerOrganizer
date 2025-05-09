@@ -3610,92 +3610,101 @@ class Database:
 
     def excluir_proposta(self, proposta_id_param):
         """Exclui uma proposta e seus registros relacionados usando o ID da proposta"""
-        def query():
-            # Usar o parâmetro recebido dentro da função query
-            proposta_id = proposta_id_param
+        print(f"DEBUG DATABASE: Iniciando processo de exclusão da proposta ID: {proposta_id_param}")
+        
+        # Usar o parâmetro recebido diretamente
+        proposta_id = proposta_id_param
+        
+        # Converter para int se for string
+        try:
+            if isinstance(proposta_id, str):
+                proposta_id = int(proposta_id)
             
-            # Converter para int se for string
+            print(f"DEBUG DATABASE: Exclusão direta proposta ID: {proposta_id} - Tipo: {type(proposta_id)}")
+            
+            # Criar uma nova sessão para esta operação
             try:
-                if isinstance(proposta_id, str):
-                    proposta_id = int(proposta_id)
-                
-                print(f"DEBUG DATABASE: Excluindo proposta ID: {proposta_id} - Tipo: {type(proposta_id)}")
-                
                 # Verificar se a proposta existe
                 proposta = self.session.query(Proposta).filter_by(id=proposta_id).first()
                 print(f"DEBUG DATABASE: Proposta encontrada: {proposta is not None}")
                 
                 if proposta:
-                    try:
-                        # Excluir registros financeiros relacionados primeiro
-                        # Esta é a tabela que estava causando a violação de chave estrangeira
-                        transacoes = self.session.query(Transacao).filter_by(proposta_id=proposta_id).all()
-                        print(f"DEBUG DATABASE: {len(transacoes)} transações financeiras encontradas para exclusão")
-                        self.session.query(Transacao).filter_by(proposta_id=proposta_id).delete()
+                    # Excluir registros financeiros relacionados primeiro
+                    transacoes = self.session.query(Transacao).filter_by(proposta_id=proposta_id).all()
+                    print(f"DEBUG DATABASE: {len(transacoes)} transações financeiras encontradas para exclusão")
+                    self.session.query(Transacao).filter_by(proposta_id=proposta_id).delete()
+                
+                    # Excluir outros registros relacionados
+                    andamentos = self.session.query(AndamentoProposta).filter_by(proposta_id=proposta_id).all()
+                    print(f"DEBUG DATABASE: {len(andamentos)} andamentos encontrados para exclusão")
+                    self.session.query(AndamentoProposta).filter_by(proposta_id=proposta_id).delete()
                     
-                        # Excluir outros registros relacionados
-                        andamentos = self.session.query(AndamentoProposta).filter_by(proposta_id=proposta_id).all()
-                        print(f"DEBUG DATABASE: {len(andamentos)} andamentos encontrados para exclusão")
-                        self.session.query(AndamentoProposta).filter_by(proposta_id=proposta_id).delete()
+                    produtos = self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id).all()
+                    print(f"DEBUG DATABASE: {len(produtos)} produtos encontrados para exclusão")
+                    self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id).delete()
+                    
+                    # Usar SQL direto em vez de ORM para evitar problemas com a coluna percentual_comissao
+                    from sqlalchemy import text
+                    # Contar acréscimos primeiro
+                    count_result = self.session.execute(text(f"SELECT COUNT(*) FROM acrescimos_proposta WHERE proposta_id = {proposta_id}"))
+                    count = count_result.scalar()
+                    print(f"DEBUG DATABASE: {count} acréscimos encontrados para exclusão")
+                    
+                    # Usar SQL direto para excluir
+                    self.session.execute(text(f"DELETE FROM acrescimos_proposta WHERE proposta_id = {proposta_id}"))
+                    
+                    # Manter a sessão consistente
+                    self.session.flush()
+                    
+                    # Excluir vendas que foram geradas automaticamente a partir desta proposta
+                    # 1. Identificar vendas relacionadas
+                    vendas_result = self.session.execute(text(f"""
+                        SELECT id FROM vendas 
+                        WHERE proposta_id = {proposta_id} 
+                        OR observacoes LIKE '%Venda gerada%proposta%{proposta_id}%'
+                        OR observacoes LIKE '%Venda gerada%proposta%#{proposta.numero}%'
+                    """))
+                    
+                    vendas_ids = [row[0] for row in vendas_result]
+                    if vendas_ids:
+                        print(f"DEBUG DATABASE: Encontradas {len(vendas_ids)} vendas relacionadas à proposta para exclusão")
                         
-                        produtos = self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id).all()
-                        print(f"DEBUG DATABASE: {len(produtos)} produtos encontrados para exclusão")
-                        self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id).delete()
-                        
-                        # Usar SQL direto em vez de ORM para evitar problemas com a coluna percentual_comissao
-                        from sqlalchemy import text
-                        # Contar acréscimos primeiro
-                        count_result = self.session.execute(text(f"SELECT COUNT(*) FROM acrescimos_proposta WHERE proposta_id = {proposta_id}"))
-                        count = count_result.scalar()
-                        print(f"DEBUG DATABASE: {count} acréscimos encontrados para exclusão")
-                        
-                        # Usar SQL direto para excluir
-                        self.session.execute(text(f"DELETE FROM acrescimos_proposta WHERE proposta_id = {proposta_id}"))
-                        
-                        # Excluir vendas que foram geradas automaticamente a partir desta proposta
-                        # 1. Identificar vendas relacionadas
-                        vendas_result = self.session.execute(text(f"""
-                            SELECT id FROM vendas 
-                            WHERE proposta_id = {proposta_id} 
-                            OR observacoes LIKE '%Venda gerada%proposta%{proposta_id}%'
-                            OR observacoes LIKE '%Venda gerada%proposta%#{proposta.numero}%'
-                        """))
-                        
-                        vendas_ids = [row[0] for row in vendas_result]
-                        if vendas_ids:
-                            print(f"DEBUG DATABASE: Encontradas {len(vendas_ids)} vendas relacionadas à proposta para exclusão")
+                        # Para cada venda, excluir seus itens
+                        for venda_id in vendas_ids:
+                            # Excluir itens da venda
+                            self.session.execute(text(f"DELETE FROM itens_venda WHERE venda_id = {venda_id}"))
                             
-                            # Para cada venda, excluir seus itens
-                            for venda_id in vendas_ids:
-                                # Excluir itens da venda
-                                self.session.execute(text(f"DELETE FROM itens_venda WHERE venda_id = {venda_id}"))
-                                
-                                # Excluir transações relacionadas à venda
-                                self.session.execute(text(f"DELETE FROM financeiro WHERE origem_id = {venda_id} AND origem_tipo = 'venda'"))
-                                
-                                # Excluir a venda
-                                self.session.execute(text(f"DELETE FROM vendas WHERE id = {venda_id}"))
+                            # Excluir transações relacionadas à venda
+                            self.session.execute(text(f"DELETE FROM financeiro WHERE origem_id = {venda_id} AND origem_tipo = 'venda'"))
                             
-                            print(f"DEBUG DATABASE: Vendas relacionadas excluídas com sucesso")
+                            # Excluir a venda
+                            self.session.execute(text(f"DELETE FROM vendas WHERE id = {venda_id}"))
                         
-                        # Excluir a proposta
-                        print(f"DEBUG DATABASE: Excluindo proposta ID: {proposta_id}")
-                        self.session.delete(proposta)
-                        print(f"DEBUG DATABASE: Proposta excluída com sucesso")
-                        
-                        return True, "Proposta excluída com sucesso"
-                    except Exception as e:
-                        self.session.rollback()
-                        print(f"DEBUG DATABASE ERROR: Erro ao excluir proposta: {str(e)}")
-                        return False, f"Erro ao excluir proposta: {str(e)}"
+                        print(f"DEBUG DATABASE: Vendas relacionadas excluídas com sucesso")
+                    
+                    # Manter a sessão consistente
+                    self.session.flush()
+                    
+                    # Excluir a proposta
+                    print(f"DEBUG DATABASE: Excluindo proposta ID: {proposta_id}")
+                    self.session.delete(proposta)
+                    print(f"DEBUG DATABASE: Proposta marcada para exclusão")
+                    
+                    # Commit explícito para garantir que tudo seja salvo
+                    self.session.commit()
+                    print(f"DEBUG DATABASE: Commit realizado. Proposta excluída com sucesso!")
+                    
+                    return True, "Proposta excluída com sucesso"
                 else:
                     print(f"DEBUG DATABASE: Proposta ID {proposta_id} não encontrada")
                     return False, f"Proposta ID {proposta_id} não encontrada"
             except Exception as e:
-                print(f"DEBUG DATABASE ERROR: Erro ao processar ID da proposta: {str(e)}")
-                return False, f"Erro ao processar ID da proposta: {str(e)}"
-                
-        return self._safe_query(query)
+                self.session.rollback()
+                print(f"DEBUG DATABASE ERROR: Erro ao excluir proposta: {str(e)}")
+                return False, f"Erro ao excluir proposta: {str(e)}"
+        except Exception as e:
+            print(f"DEBUG DATABASE ERROR: Erro ao processar ID da proposta: {str(e)}")
+            return False, f"Erro ao processar ID da proposta: {str(e)}"
     
     def excluir_proposta_por_numero(self, numero_proposta):
         """
