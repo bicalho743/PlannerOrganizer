@@ -471,19 +471,44 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                     if produto_valor and produto_quantidade:
                         valor_produto_total = float(produto_valor) * float(produto_quantidade)
                         
+                        # Verificar se o produto existe na tabela produtos
                         cursor.execute("""
-                            INSERT INTO itens_venda 
-                            (venda_id, produto_id, descricao, quantidade, preco_unitario, subtotal, usuario_id)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s)
-                        """, (
-                            venda_id,
-                            produto_id,
-                            produto_nome,  # Como descricao
-                            produto_quantidade,
-                            produto_valor,  # Como preco_unitario
-                            valor_produto_total,  # Como subtotal
-                            proposta_info['usuario_id']  # usuario_id
-                        ))
+                            SELECT id FROM produtos WHERE id = %s
+                        """, (produto_id,))
+                        
+                        produto_existe = cursor.fetchone()
+                        
+                        if produto_existe:
+                            # Se o produto existe, adicionar normalmente
+                            cursor.execute("""
+                                INSERT INTO itens_venda 
+                                (venda_id, produto_id, descricao, quantidade, preco_unitario, subtotal, usuario_id)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            """, (
+                                venda_id,
+                                produto_id,
+                                produto_nome,  # Como descricao
+                                produto_quantidade,
+                                produto_valor,  # Como preco_unitario
+                                valor_produto_total,  # Como subtotal
+                                proposta_info['usuario_id']  # usuario_id
+                            ))
+                            logger.info(f"Item de venda adicionado: Produto #{produto_id} - {produto_nome}")
+                        else:
+                            # Se o produto não existe, adicionar sem o produto_id (colocar como NULL)
+                            logger.warning(f"Produto ID #{produto_id} não encontrado na tabela produtos, adicionando somente a descrição")
+                            cursor.execute("""
+                                INSERT INTO itens_venda 
+                                (venda_id, descricao, quantidade, preco_unitario, subtotal, usuario_id)
+                                VALUES (%s, %s, %s, %s, %s, %s)
+                            """, (
+                                venda_id,
+                                produto_nome,  # Como descricao
+                                produto_quantidade,
+                                produto_valor,  # Como preco_unitario
+                                valor_produto_total,  # Como subtotal
+                                proposta_info['usuario_id']  # usuario_id
+                            ))
                         
                 logger.info(f"Todos os itens da venda foram registrados.")
                 
