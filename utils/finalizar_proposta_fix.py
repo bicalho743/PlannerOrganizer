@@ -304,7 +304,7 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
         
         # 1. TRATAMENTO DOS PRODUTOS - Receita (venda de produtos) e registro no módulo de vendas
         cursor.execute("""
-            SELECT id, fornecedor, descricao, valor, quantidade 
+            SELECT id, fornecedor, descricao, valor 
             FROM acrescimos_proposta 
             WHERE proposta_id = %s AND tipo = 'PRODUTO'
         """, (proposta_id,))
@@ -315,9 +315,11 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
         if produtos and len(produtos) > 0:
             # 1.1. Gerar lançamento financeiro para vendas de produtos
             for produto in produtos:
-                produto_id, produto_nome, descricao_produto, produto_valor, produto_quantidade = produto
-                if produto_valor and produto_quantidade and float(produto_valor) > 0 and int(produto_quantidade) > 0:
-                    valor_produto_total = float(produto_valor) * float(produto_quantidade)
+                produto_id, produto_nome, descricao_produto, produto_valor = produto
+                if produto_valor and float(produto_valor) > 0:
+                    # Como não temos quantidade na tabela, consideramos 1 unidade
+                    produto_quantidade = 1
+                    valor_produto_total = float(produto_valor)
                     valor_total_produtos += valor_produto_total
             
             if valor_total_produtos > 0:
@@ -366,9 +368,11 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                 
                 # 1.3. Registrar itens da venda (tabela itens_venda)
                 for produto in produtos:
-                    produto_id, produto_nome, produto_valor, produto_quantidade, _ = produto
-                    if produto_valor and produto_quantidade:
-                        valor_produto_total = float(produto_valor) * float(produto_quantidade)
+                    produto_id, produto_nome, descricao_produto, produto_valor = produto
+                    if produto_valor and float(produto_valor) > 0:
+                        # Como não temos quantidade na tabela, consideramos 1 unidade
+                        produto_quantidade = 1
+                        valor_produto_total = float(produto_valor)
                         
                         # Verificar se o produto existe na tabela produtos
                         cursor.execute("""
