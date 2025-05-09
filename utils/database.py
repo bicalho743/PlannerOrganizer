@@ -3296,6 +3296,77 @@ class Database:
                 
         return self._safe_query(query)
         
+    def remove_acrescimo_proposta(self, acrescimo_id):
+        """
+        Remove um acréscimo de uma proposta
+        
+        Args:
+            acrescimo_id: ID do acréscimo a ser removido
+            
+        Returns:
+            bool: True se o acréscimo foi removido com sucesso, False caso contrário
+        """
+        # Primeiro tentar remover via SQL direto para evitar problemas de sessão
+        try:
+            import psycopg2
+            import os
+            
+            # Obter a string de conexão do ambiente
+            db_url = os.environ.get('DATABASE_URL')
+            if not db_url:
+                raise ValueError("DATABASE_URL não disponível no ambiente")
+                
+            # Conectar diretamente via psycopg2
+            conn = psycopg2.connect(db_url)
+            cursor = conn.cursor()
+            
+            # Executar DELETE
+            cursor.execute(
+                "DELETE FROM acrescimos_proposta WHERE id = %s", 
+                (acrescimo_id,)
+            )
+            
+            # Verificar se alguma linha foi afetada
+            affected_rows = cursor.rowcount
+            
+            # Confirmar a operação
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            # Se alguma linha foi afetada, a operação foi bem-sucedida
+            if affected_rows > 0:
+                print(f"Acréscimo ID {acrescimo_id} removido com sucesso via SQL direto")
+                return True
+            else:
+                print(f"Nenhum acréscimo encontrado com ID {acrescimo_id}")
+                return False
+                
+        except Exception as e:
+            print(f"Erro ao remover acréscimo via SQL direto: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            
+            # Se o SQL direto falhou, tentar via ORM
+            try:
+                def query():
+                    # Buscar o acréscimo
+                    acrescimo = self.session.query(AcrescimoProposta).filter_by(id=acrescimo_id).first()
+                    if not acrescimo:
+                        raise ValueError(f"Acréscimo não encontrado com ID {acrescimo_id}")
+                        
+                    # Remover o acréscimo
+                    self.session.delete(acrescimo)
+                    self.session.commit()
+                    
+                    return True
+                    
+                return self._safe_query(query)
+            except Exception as e2:
+                print(f"Erro ao remover acréscimo via ORM: {str(e2)}")
+                traceback.print_exc()
+                return False
+        
     def get_acrescimos_proposta_por_tipo(self, proposta_id, tipo):
         """
         Retorna os acréscimos de uma proposta filtrados por tipo

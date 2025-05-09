@@ -717,19 +717,110 @@ def show():
                     with exec_tab3:
                         st.subheader("Outros")
                         
-                        st.write("Informações adicionais e acréscimos")
-                        # Implementação de outras informações
+                        st.write("Adicionar itens adicionais que não estão no catálogo de produtos")
+                        
+                        # Formulário para adicionar outros itens
                         with st.form(key=f"form_outros_{proposta_selecionada_id}"):
-                            st.write("Adicionar acréscimo:")
-                            descricao_acrescimo = st.text_input("Descrição do acréscimo:")
-                            valor_acrescimo = st.number_input("Valor (R$):", min_value=0.0, value=0.0, format="%.2f")
-                            justificativa = st.text_area("Justificativa:", height=100)
+                            col1, col2 = st.columns(2)
                             
-                            acrescimo_salvar = st.form_submit_button("Adicionar Acréscimo")
+                            with col1:
+                                nome_item = st.text_input("Nome do Item:")
+                                descricao_item = st.text_input("Descrição:")
+                                comodo_area = st.text_input("Cômodo/Área:")
                             
-                            if acrescimo_salvar:
-                                # Lógica para salvar o acréscimo
-                                st.success("Acréscimo registrado com sucesso!")
+                            with col2:
+                                valor_unitario = st.number_input("Valor unitário (R$):", min_value=0.0, value=0.0, format="%.2f")
+                                quantidade = st.number_input("Quantidade:", min_value=1, value=1)
+                                valor_total = valor_unitario * quantidade
+                                st.write(f"Valor total: R$ {valor_total:.2f}")
+                            
+                            item_salvar = st.form_submit_button("Adicionar Item")
+                            
+                            if item_salvar:
+                                if not nome_item or valor_unitario <= 0:
+                                    st.error("Preencha o nome do item e um valor válido.")
+                                else:
+                                    try:
+                                        # Adicionar o item como um acréscimo do tipo OUTROS
+                                        resultado = st.session_state.db.add_acrescimo_proposta(
+                                            proposta_id=proposta_selecionada_id,
+                                            tipo="OUTROS",
+                                            valor=valor_total,
+                                            descricao=f"{nome_item} - {descricao_item}" if descricao_item else nome_item,
+                                            fornecedor=comodo_area if comodo_area else "Geral"
+                                        )
+                                        
+                                        if resultado and "acrescimo_id" in resultado:
+                                            st.success(f"Item '{nome_item}' adicionado com sucesso!")
+                                            time.sleep(1)
+                                            st.rerun()
+                                        else:
+                                            st.error("Erro ao adicionar item. Verifique os dados e tente novamente.")
+                                    except Exception as e:
+                                        st.error(f"Erro ao adicionar item: {str(e)}")
+                        
+                        # Exibir itens adicionados
+                        try:
+                            # Obter todos os acréscimos do tipo OUTROS para esta proposta
+                            acrescimos = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_selecionada_id, "OUTROS")
+                            
+                            if not acrescimos.empty:
+                                st.write("### Itens adicionados")
+                                
+                                # Preparar os dados para exibição em uma tabela
+                                df_display = acrescimos.copy()
+                                
+                                # Extrair o nome do item da descrição (assumindo formato "Nome - Descrição")
+                                df_display['nome_item'] = df_display['descricao'].apply(
+                                    lambda x: x.split(' - ')[0] if ' - ' in x else x
+                                )
+                                df_display['descricao_item'] = df_display['descricao'].apply(
+                                    lambda x: x.split(' - ')[1] if ' - ' in x else ''
+                                )
+                                
+                                # Renomear colunas para exibição
+                                df_display = df_display[['id', 'nome_item', 'descricao_item', 'valor', 'fornecedor']]
+                                df_display.columns = ['ID', 'Nome', 'Descrição', 'Valor Total', 'Cômodo/Área']
+                                
+                                # Formatar valores monetários
+                                df_display['Valor Total'] = df_display['Valor Total'].apply(lambda x: f"R$ {float(x):.2f}")
+                                
+                                # Exibir a tabela
+                                st.dataframe(df_display)
+                                
+                                # Formulário para remover itens
+                                with st.form(key=f"form_remover_outros_{proposta_selecionada_id}"):
+                                    acrescimo_remover_id = st.selectbox(
+                                        "Selecione um item para remover:",
+                                        options=acrescimos['id'].tolist(),
+                                        format_func=lambda x: acrescimos.loc[acrescimos['id'] == x, 'descricao'].iloc[0]
+                                    )
+                                    
+                                    remover_item = st.form_submit_button("Remover Item")
+                                    
+                                    if remover_item:
+                                        try:
+                                            # Chamar a função para remover o acréscimo
+                                            resultado = st.session_state.db.remove_acrescimo_proposta(acrescimo_remover_id)
+                                            
+                                            if resultado:
+                                                st.success("Item removido com sucesso!")
+                                            else:
+                                                st.error("Falha ao remover o item. Ele pode não existir mais no banco de dados.")
+                                                
+                                            # Recarregar a página
+                                            time.sleep(1)
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Erro ao remover item: {str(e)}")
+                                
+                                # Mostrar valor total
+                                valor_total_outros = acrescimos['valor'].sum()
+                                st.info(f"Valor Total dos Itens Adicionais: R$ {valor_total_outros:.2f}")
+                            else:
+                                st.info("Nenhum item adicional foi incluído nesta proposta.")
+                        except Exception as e:
+                            st.error(f"Erro ao carregar itens adicionais: {str(e)}")
                     
                     with exec_tab4:
                         st.subheader("Fornecedores")
