@@ -955,25 +955,111 @@ def show():
                     with exec_tab5:
                         st.subheader("Assistentes")
                         
-                        st.write("Assistentes alocados nesta proposta")
                         # Implementação de assistentes
                         try:
                             assistentes = st.session_state.db.get_assistentes()
+                            
                             if not assistentes.empty:
+                                # Formulário para adicionar assistente
                                 with st.form(key=f"form_assistente_{proposta_selecionada_id}"):
+                                    # Campo para selecionar assistente
                                     assistente_selecionado = st.selectbox(
-                                        "Selecione um assistente:", 
+                                        "Selecione o assistente:", 
                                         options=assistentes['id'].tolist(),
                                         format_func=lambda x: assistentes.loc[assistentes['id'] == x, 'nome'].iloc[0]
                                     )
                                     
-                                    assistente_salvar = st.form_submit_button("Alocar Assistente à Proposta")
+                                    # Campo para valor do serviço
+                                    valor_servico = st.number_input("Valor do serviço (R$):", min_value=0.0, value=0.0, format="%.2f")
                                     
+                                    # Campo para observações
+                                    observacoes = st.text_area("Observações:", height=100)
+                                    
+                                    # Botão para adicionar assistente
+                                    assistente_salvar = st.form_submit_button("Adicionar Assistente")
+                                    
+                                    # Processar o envio do formulário
                                     if assistente_salvar:
-                                        # Lógica para adicionar assistente
-                                        st.success("Assistente alocado à proposta com sucesso!")
+                                        if valor_servico <= 0:
+                                            st.error("O valor do serviço deve ser maior que zero.")
+                                        else:
+                                            try:
+                                                # Adicionar assistente à proposta
+                                                resultado = st.session_state.db.add_assistente_proposta(
+                                                    proposta_id=proposta_selecionada_id,
+                                                    assistente_id=assistente_selecionado,
+                                                    valor=valor_servico,
+                                                    observacoes=observacoes
+                                                )
+                                                
+                                                if resultado and "acrescimo_id" in resultado:
+                                                    st.success("Assistente adicionado à proposta com sucesso!")
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                                else:
+                                                    st.error("Erro ao adicionar assistente. Verifique os dados e tente novamente.")
+                                            except Exception as e:
+                                                st.error(f"Erro ao adicionar assistente: {str(e)}")
+                                
+                                # Exibir assistentes já adicionados
+                                try:
+                                    # Obter todos os acréscimos do tipo ASSISTENTE para esta proposta
+                                    acrescimos = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_selecionada_id, "ASSISTENTE")
+                                    
+                                    if not acrescimos.empty:
+                                        st.write("### Assistentes Adicionados")
+                                        
+                                        # Preparar os dados para exibição em uma tabela
+                                        df_display = acrescimos.copy()
+                                        
+                                        # Renomear colunas para exibição
+                                        df_display = df_display[['id', 'fornecedor', 'descricao', 'valor']]
+                                        df_display.columns = ['ID', 'Assistente', 'Descrição', 'Valor']
+                                        
+                                        # Formatar valores monetários
+                                        df_display['Valor'] = df_display['Valor'].apply(lambda x: f"R$ {float(x):.2f}")
+                                        
+                                        # Exibir a tabela
+                                        st.dataframe(df_display[['Assistente', 'Descrição', 'Valor']], hide_index=True)
+                                        
+                                        # Calcular e mostrar valor total
+                                        valor_total_assistentes = acrescimos['valor'].sum()
+                                        st.info(f"Valor Total dos Assistentes: R$ {valor_total_assistentes:.2f}")
+                                        
+                                        # Formulário para remover assistente
+                                        with st.form(key=f"form_remover_assistente_{proposta_selecionada_id}"):
+                                            st.write("Selecione um assistente para remover:")
+                                            
+                                            # Usar ID para identificação única
+                                            acrescimo_remover_id = st.selectbox(
+                                                "Selecione um assistente:",
+                                                options=acrescimos['id'].tolist(),
+                                                format_func=lambda x: f"{acrescimos.loc[acrescimos['id'] == x, 'fornecedor'].iloc[0]}"
+                                            )
+                                            
+                                            remover_assistente = st.form_submit_button("Remover")
+                                            
+                                            if remover_assistente:
+                                                try:
+                                                    # Chamar a função para remover o acréscimo
+                                                    resultado = st.session_state.db.remove_acrescimo_proposta(acrescimo_remover_id)
+                                                    
+                                                    if resultado:
+                                                        st.success("Assistente removido com sucesso!")
+                                                    else:
+                                                        st.error("Falha ao remover o assistente. Ele pode não existir mais no banco de dados.")
+                                                        
+                                                    # Recarregar a página
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                                except Exception as e:
+                                                    st.error(f"Erro ao remover assistente: {str(e)}")
+                                    else:
+                                        st.info("Nenhum assistente adicionado a esta proposta ainda.")
+                                except Exception as e:
+                                    st.error(f"Erro ao carregar assistentes da proposta: {str(e)}")
                             else:
-                                st.info("Não há assistentes cadastrados.")
+                                st.info("Não há assistentes cadastrados. Adicione assistentes no menu Cadastros > Assistentes.")
                         except Exception as e:
                             st.error(f"Erro ao carregar assistentes: {str(e)}")
                     
