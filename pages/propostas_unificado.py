@@ -550,20 +550,169 @@ def show():
                     with exec_tab2:
                         st.subheader("Produtos")
                         
-                        st.write("Lista de produtos para esta proposta:")
+                        st.write("Adição à Proposta")
                         # Implementação de produtos
                         with st.form(key=f"form_produto_{proposta_selecionada_id}"):
-                            st.write("Adicionar novo produto:")
-                            nome_produto = st.text_input("Nome do produto:")
-                            descricao_produto = st.text_area("Descrição:", height=100)
-                            quantidade = st.number_input("Quantidade:", min_value=1, value=1)
-                            valor_unitario = st.number_input("Valor unitário (R$):", min_value=0.0, value=0.0, format="%.2f")
+                            # Obter lista de produtos cadastrados no módulo de vendas
+                            produtos_cadastrados = st.session_state.db.get_produtos()
                             
-                            produto_salvar = st.form_submit_button("Adicionar Produto")
+                            if not produtos_cadastrados.empty:
+                                # Lista de opções para o selectbox com produto e preço
+                                opcoes_produtos = produtos_cadastrados['id'].tolist()
+                                
+                                # Função para formatar o nome do produto com preço
+                                def format_produto_option(produto_id):
+                                    produto = produtos_cadastrados.loc[produtos_cadastrados['id'] == produto_id]
+                                    if not produto.empty:
+                                        nome = produto['nome'].iloc[0]
+                                        preco = float(produto['preco_venda'].iloc[0])
+                                        return f"{nome} - R$ {preco:.2f}"
+                                    return "Produto não encontrado"
+                                
+                                # Crie o selectbox para selecionar produtos
+                                st.write("Selecione o produto:")
+                                produto_selecionado_id = st.selectbox(
+                                    "Selecione o produto:", 
+                                    options=opcoes_produtos,
+                                    format_func=format_produto_option,
+                                    key=f"select_produto_{proposta_selecionada_id}",
+                                    label_visibility="collapsed"
+                                )
+                                
+                                # Obter dados do produto selecionado
+                                produto = produtos_cadastrados.loc[produtos_cadastrados['id'] == produto_selecionado_id].iloc[0]
+                                
+                                # Mostrar descrição e categoria do produto selecionado
+                                st.write(f"Descrição: {produto['descricao']}")
+                                st.write(f"Categoria: {produto['categoria']}")
+                                
+                                # Campo de quantidade
+                                quantidade = st.number_input("Quantidade:", min_value=1, value=1)
+                                
+                                # Campo de cômodo/área
+                                comodo = st.text_input("Cômodo/Área:")
+                                
+                                # Checkbox para usar preço padrão
+                                usar_preco_padrao = st.checkbox("Usar preço padrão", value=True)
+                                
+                                # Campo de preço personalizado (habilitado apenas se não usar preço padrão)
+                                preco_padrao = float(produto['preco_venda'])
+                                
+                                if not usar_preco_padrao:
+                                    valor_unitario = st.number_input(
+                                        "Preço personalizado (R$):", 
+                                        min_value=0.0, 
+                                        value=preco_padrao, 
+                                        format="%.2f"
+                                    )
+                                else:
+                                    valor_unitario = preco_padrao
+                                
+                                produto_salvar = st.form_submit_button("Adicionar à Proposta")
+                                
+                                if produto_salvar:
+                                    try:
+                                        # Calcular valor total para exibição
+                                        valor_total = valor_unitario * quantidade
+                                        
+                                        # Obter os dados do produto selecionado
+                                        nome_produto = produto['nome']
+                                        descricao_produto = produto['descricao']
+                                        
+                                        # Definir cômodo padrão se vazio
+                                        comodo_final = comodo if comodo else "Geral"
+                                        
+                                        # Salvar o produto na tabela produtos_organizadores
+                                        produto_id = st.session_state.db.add_produto_organizador(
+                                            proposta_id=proposta_selecionada_id,
+                                            nome=nome_produto,
+                                            descricao=descricao_produto,
+                                            valor=valor_unitario,
+                                            quantidade=quantidade,
+                                            comodo=comodo_final
+                                        )
+                                        
+                                        st.success(f"Produto '{nome_produto}' adicionado com sucesso! Valor Total: R$ {valor_total:.2f}")
+                                        
+                                        # Recarregar a página após adicionar
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error(f"Erro ao adicionar produto: {str(e)}")
+                            else:
+                                st.warning("Não há produtos cadastrados no sistema. Adicione produtos no módulo de vendas.")
+                        
+                        # Exibir tabela de produtos da proposta
+                        st.write("Produtos da Proposta:")
+                        
+                        try:
+                            # Obter produtos da proposta do banco de dados
+                            produtos_proposta_raw = st.session_state.db.get_produtos_organizadores(proposta_id=proposta_selecionada_id)
                             
-                            if produto_salvar:
-                                # Lógica para salvar o produto
-                                st.success("Produto adicionado com sucesso!")
+                            # Se existem produtos, preparar o DataFrame para exibição
+                            if not produtos_proposta_raw.empty:
+                                # Renomear colunas para corresponder ao que precisamos exibir
+                                produtos_proposta = produtos_proposta_raw.rename(columns={
+                                    'valor': 'valor_unit'
+                                })
+                                
+                                # Calcular valor total para cada produto
+                                produtos_proposta['valor_total'] = produtos_proposta['valor_unit'] * produtos_proposta['quantidade']
+                            else:
+                                # Se não houver produtos, criar DataFrame vazio com as colunas necessárias
+                                produtos_proposta = pd.DataFrame(columns=[
+                                    'id', 'nome', 'descricao', 'valor_unit', 'quantidade', 'valor_total', 'comodo'
+                                ])
+                            
+                            if not produtos_proposta.empty:
+                                # Mostrar tabela de produtos
+                                st.dataframe(
+                                    produtos_proposta[['nome', 'descricao', 'valor_unit', 'quantidade', 'valor_total', 'comodo']],
+                                    column_config={
+                                        'nome': 'Nome',
+                                        'descricao': 'Descrição',
+                                        'valor_unit': st.column_config.NumberColumn('Valor Unit.', format="R$ %.2f"),
+                                        'quantidade': 'Quantidade',
+                                        'valor_total': st.column_config.NumberColumn('Valor Total', format="R$ %.2f"),
+                                        'comodo': 'Cômodo'
+                                    },
+                                    use_container_width=True,
+                                    hide_index=True
+                                )
+                                
+                                # Opção para remover produtos
+                                with st.form(key=f"form_remover_produto_{proposta_selecionada_id}"):
+                                    st.write("Selecione um produto para remover:")
+                                    produto_remover_id = st.selectbox(
+                                        "Selecione um produto para remover:",
+                                        options=produtos_proposta['id'].tolist(),
+                                        format_func=lambda x: f"{x} - {produtos_proposta.loc[produtos_proposta['id'] == x, 'nome'].iloc[0]}",
+                                        key=f"select_remover_produto_{proposta_selecionada_id}"
+                                    )
+                                    
+                                    remover_produto = st.form_submit_button("Remover")
+                                    
+                                    if remover_produto:
+                                        try:
+                                            # Chamar a função para remover o produto do banco de dados
+                                            resultado = st.session_state.db.remove_produto_organizador(produto_remover_id)
+                                            
+                                            if resultado:
+                                                st.success(f"Produto removido com sucesso!")
+                                            else:
+                                                st.error("Falha ao remover o produto. Ele pode não existir mais no banco de dados.")
+                                                
+                                            # Recarregar a página
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Erro ao remover produto: {str(e)}")
+                                
+                                # Mostrar valor total dos produtos
+                                valor_total_produtos = produtos_proposta['valor_total'].sum()
+                                st.info(f"Valor Total dos Produtos: R$ {valor_total_produtos:.2f}")
+                            else:
+                                st.info("Nenhum produto adicionado a esta proposta ainda.")
+                        except Exception as e:
+                            st.error(f"Erro ao carregar produtos da proposta: {str(e)}")
                     
                     with exec_tab3:
                         st.subheader("Outros")

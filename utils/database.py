@@ -2561,6 +2561,77 @@ class Database:
                 'data_cadastro': p.data_cadastro
             } for p in produtos])
         return self._safe_query(query)
+        
+    def remove_produto_organizador(self, produto_id):
+        """
+        Remove um produto de uma proposta
+        
+        Args:
+            produto_id: ID do produto a ser removido
+            
+        Returns:
+            bool: True se o produto foi removido com sucesso, False caso contrário
+        """
+        # Primeiro tentar remover via SQL direto para evitar problemas de sessão
+        try:
+            import psycopg2
+            import os
+            
+            # Obter a string de conexão do ambiente
+            db_url = os.environ.get('DATABASE_URL')
+            if not db_url:
+                raise ValueError("DATABASE_URL não disponível no ambiente")
+                
+            # Conectar diretamente via psycopg2
+            conn = psycopg2.connect(db_url)
+            cursor = conn.cursor()
+            
+            # Executar DELETE
+            cursor.execute(
+                "DELETE FROM produtos_organizadores WHERE id = %s", 
+                (produto_id,)
+            )
+            
+            # Verificar se alguma linha foi afetada
+            affected_rows = cursor.rowcount
+            
+            # Confirmar a operação
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            # Se alguma linha foi afetada, a operação foi bem-sucedida
+            if affected_rows > 0:
+                print(f"Produto ID {produto_id} removido com sucesso via SQL direto")
+                return True
+            else:
+                print(f"Nenhum produto encontrado com ID {produto_id}")
+                return False
+                
+        except Exception as e:
+            print(f"Erro ao remover produto via SQL direto: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            
+            # Se o SQL direto falhou, tentar via ORM
+            try:
+                def query():
+                    # Buscar o produto
+                    produto = self.session.query(ProdutoOrganizador).filter_by(id=produto_id).first()
+                    if not produto:
+                        raise ValueError(f"Produto não encontrado com ID {produto_id}")
+                        
+                    # Remover o produto
+                    self.session.delete(produto)
+                    self.session.commit()
+                    
+                    return True
+                    
+                return self._safe_query(query)
+            except Exception as e2:
+                print(f"Erro ao remover produto via ORM: {str(e2)}")
+                traceback.print_exc()
+                return False
 
     def add_produto_fornecedor(self, produto_id, fornecedor_id, valor, observacoes=None):
         """Adiciona um fornecedor e seu preço para um produto"""
