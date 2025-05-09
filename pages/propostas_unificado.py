@@ -1274,7 +1274,7 @@ def show():
             # Filtro específico para mostrar apenas propostas finalizadas
             propostas_finalizadas = propostas_com_clientes[
                 ((propostas_com_clientes['status'] == 'Finalizada') & 
-                 (propostas_com_clientes['status_execucao'] == 'Concluída')) |
+                 (propostas_com_clientes['status_execucao'] == 'Finalizada')) |
                 (propostas_com_clientes['status'] == 'Recusada')
             ]
             
