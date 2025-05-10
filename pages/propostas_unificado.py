@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import uuid
 import plotly.graph_objects as go
 from utils.database import Fornecedor
+from utils.propostas_helper import st_gerar_pdf_cliente, st_gerar_pdf_interno
 
 def show():
     # Título com estilo personalizado para ficar mais próximo do topo
@@ -1475,6 +1476,41 @@ def show():
                             file_name="propostas_exportadas.csv",
                             mime="text/csv"
                         )
+                
+                # Adicionar funcionalidade para gerar relatórios de propostas finalizadas
+                
+                with st.expander("Gerar Relatórios"):
+                    # Obter lista de números de propostas finalizadas para o select box
+                    numeros_propostas = propostas_filtradas['numero'].tolist()
+                    numeros_propostas.sort()  # Ordenar para facilitar a seleção
+                    
+                    proposta_numero = st.selectbox(
+                        "Selecione o número da proposta para gerar relatório:",
+                        numeros_propostas,
+                        key="numero_proposta_relatorio"
+                    )
+                    
+                    proposta_relatorio = propostas_filtradas[propostas_filtradas['numero'] == proposta_numero]
+                    
+                    if not proposta_relatorio.empty:
+                        st.info(f"Proposta selecionada: #{proposta_numero} - {proposta_relatorio.iloc[0]['descricao']}")
+                        
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.button("Relatório Cliente", key="gerar_relatorio_cliente"):
+                                try:
+                                    proposta_id = propostas_filtradas[propostas_filtradas['numero'] == proposta_numero].iloc[0]['id']
+                                    st_gerar_pdf_cliente(proposta_id)
+                                except Exception as e:
+                                    st.error(f"Erro ao gerar relatório para cliente: {str(e)}")
+                        
+                        with col2:
+                            if st.button("Relatório Interno", key="gerar_relatorio_interno"):
+                                try:
+                                    proposta_id = propostas_filtradas[propostas_filtradas['numero'] == proposta_numero].iloc[0]['id']
+                                    st_gerar_pdf_interno(proposta_id)
+                                except Exception as e:
+                                    st.error(f"Erro ao gerar relatório interno: {str(e)}")
                 
                 # Adicionar funcionalidade para reabrir propostas
                 with st.expander("Reabrir Proposta Finalizada"):
