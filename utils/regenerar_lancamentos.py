@@ -187,8 +187,10 @@ def regenerar_lancamentos(proposta_id: int) -> Dict[str, Any]:
                     percentual_comissao = 5.0
                     logger.info(f"Usando taxa de comissão padrão de 5% para o fornecedor {nome_fornecedor}")
                 
-                # Calcular o valor da comissão (5% para todos)
-                valor_comissao = float(valor_fornecedor) * 0.05
+                # Calcular o valor da comissão usando o percentual configurado
+                perc_comissao = float(percentual_comissao)
+                valor_comissao = float(valor_fornecedor) * (perc_comissao / 100.0)
+                logger.info(f"DEPURAÇÃO COMISSÃO: Valor Fornecedor={valor_fornecedor}, Percentual={perc_comissao}%, Valor Comissão Calculado={valor_comissao}")
                 
                 # Criar lançamento de comissão para este fornecedor
                 try:
@@ -218,40 +220,64 @@ def regenerar_lancamentos(proposta_id: int) -> Dict[str, Any]:
         
         # 3. Buscar acréscimos do tipo OUTRO
         cursor.execute("""
-            SELECT id, descricao, valor
+            SELECT id, descricao, valor, fornecedor
             FROM acrescimos_proposta 
             WHERE proposta_id = %s AND tipo = 'OUTRO'
         """, (proposta_id,))
         
         outros = cursor.fetchall()
         
+        # Log para depuração
+        logger.info(f"Regenerando lançamentos para {len(outros)} itens de serviços adicionais da proposta #{proposta_id}")
+        
         for outro in outros:
-            id_outro, desc_outro, valor_outro = outro
+            id_outro, desc_outro, valor_outro, fornecedor_outro = outro
+            
+            # Log detalhado para depuração
+            logger.info(f"Processando serviço adicional: ID={id_outro}, Fornecedor={fornecedor_outro}, Descrição={desc_outro}, Valor={valor_outro}")
+            
             if valor_outro and float(valor_outro) > 0:
-                try:
-                    cursor.execute("""
-                        INSERT INTO financeiro 
-                        (descricao, valor, data, categoria, subcategoria, 
-                        tipo, proposta_id, status, classificacao, usuario_id)
-                        VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id
-                    """, (
-                        f"Acréscimo de OUTRO - Proposta #{numero}",
-                        valor_outro,
-                        "Serviços Adicionais",
-                        "Outros Acréscimos",
-                        "Receita",
-                        proposta_id,
-                        "Pendente",
-                        "contas_a_receber",
-                        usuario_id
-                    ))
-                    
-                    id_lancamento = cursor.fetchone()[0]
-                    lancamentos_gerados += 1
-                    logger.info(f"Lançamento de acréscimo OUTRO criado (ID: {id_lancamento})")
-                except Exception as e:
-                    logger.error(f"Erro ao criar lançamento de acréscimo OUTRO: {str(e)}")
+                # Verificar se já existe lançamento para este serviço adicional
+                cursor.execute("""
+                    SELECT id FROM financeiro 
+                    WHERE proposta_id = %s 
+                    AND origem_tipo = 'servico_adicional' 
+                    AND origem_id = %s
+                """, (proposta_id, id_outro))
+                
+                transacao_servico_existente = cursor.fetchone()
+                
+                # Log do resultado da verificação
+                logger.info(f"Verificando lançamento para acréscimo OUTRO ID={id_outro}: {'Já existe' if transacao_servico_existente else 'Não existe'}")
+                
+                if not transacao_servico_existente:
+                    try:
+                        # Gerar lançamento financeiro para outros itens (serviços adicionais)
+                        cursor.execute("""
+                            INSERT INTO financeiro 
+                            (descricao, valor, data, categoria, subcategoria, 
+                            tipo, origem_id, origem_tipo, proposta_id, status, classificacao, usuario_id)
+                            VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            RETURNING id
+                        """, (
+                            f"Serviço adicional: {desc_outro} - Proposta #{numero} - {cliente_nome}",
+                            valor_outro,
+                            "Serviços Adicionais",
+                            "Outros Serviços",
+                            "Receita",
+                            id_outro,
+                            "servico_adicional",
+                            proposta_id,
+                            "Pendente",
+                            "contas_a_receber",
+                            usuario_id
+                        ))
+                        
+                        id_lancamento = cursor.fetchone()[0]
+                        lancamentos_gerados += 1
+                        logger.info(f"Lançamento de acréscimo OUTRO criado (ID: {id_lancamento})")
+                    except Exception as e:
+                        logger.error(f"Erro ao criar lançamento de acréscimo OUTRO: {str(e)}")
         
         # 4. Buscar acréscimos do tipo ASSISTENTE
         cursor.execute("""

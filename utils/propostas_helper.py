@@ -395,6 +395,236 @@ def st_gerar_pdf_proposta(proposta_id, custom_filename=None):
     except Exception as e:
         st.error(f"Erro: {str(e)}")
         return False, None
+        
+def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
+    """
+    Gera um PDF de relatório para cliente de uma proposta finalizada
+    
+    Args:
+        db: Conexão com o banco de dados
+        proposta_id: ID da proposta
+        custom_filename: Nome de arquivo personalizado (opcional)
+        
+    Returns:
+        tuple: (sucesso, mensagem, filename)
+            - sucesso: True se operação foi bem-sucedida
+            - mensagem: Mensagem explicativa do resultado
+            - filename: Caminho do arquivo gerado (ou None em caso de falha)
+    """
+    print(f"DEBUG HELPER: Gerando PDF Cliente para proposta ID={proposta_id}")
+    
+    try:
+        # Garantir que o diretório existe
+        if not os.path.exists('pdfs'):
+            os.makedirs('pdfs')
+            
+        # Buscar a proposta
+        proposta = None
+        try:
+            propostas = db.get_propostas()
+            if not propostas.empty:
+                proposta_found = propostas[propostas['id'] == int(proposta_id)]
+                if not proposta_found.empty:
+                    proposta = proposta_found.iloc[0].to_dict()
+        except Exception as e:
+            print(f"DEBUG HELPER ERROR: Erro ao buscar proposta: {str(e)}")
+            
+        # Verificar se proposta existe
+        if proposta is None:
+            return False, f"Proposta ID={proposta_id} não encontrada.", None
+            
+        # Buscar cliente
+        try:
+            # Obter clientes e procurar o cliente específico
+            clientes = db.get_clientes()
+            cliente = None
+            cliente_id = int(proposta['cliente_id'])
+            
+            if not clientes.empty:
+                cliente_found = clientes[clientes['id'] == cliente_id]
+                if not cliente_found.empty:
+                    cliente = cliente_found.iloc[0].to_dict()
+            
+            if cliente is None:
+                return False, f"Cliente ID={cliente_id} não encontrado.", None
+        except Exception as e:
+            print(f"DEBUG HELPER ERROR: Erro ao buscar cliente: {str(e)}")
+            return False, f"Erro ao buscar cliente: {str(e)}", None
+            
+        # Obter acréscimos
+        acrescimos = db.get_acrescimos_proposta(proposta_id)
+        if acrescimos is None:
+            acrescimos = pd.DataFrame()  # DataFrame vazio se não houver acréscimos
+            
+        # Nome do arquivo
+        if custom_filename:
+            filename = custom_filename
+        else:
+            # Garantir que temos ID da proposta e nome do cliente
+            cliente_nome = cliente.get('nome', 'sem_nome').replace(' ', '_').lower()
+            
+            # Adicionar data atual para evitar sobrescrever arquivos
+            data_atual = datetime.now().strftime('%Y%m%d_%H%M%S')
+            
+            # Criando nome de arquivo com o formato: Cliente_Proposta_#ID_NomeCliente_DATA.pdf
+            filename = f"pdfs/Cliente_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
+            
+        # Gerar o PDF para cliente
+        from utils.pdf_generator import gerar_pdf_cliente
+        filename = gerar_pdf_cliente(proposta, cliente, acrescimos, filename)
+        
+        return True, "PDF para cliente gerado com sucesso!", filename
+        
+    except Exception as e:
+        print(f"DEBUG HELPER CRITICAL: Erro ao gerar PDF cliente: {str(e)}")
+        traceback.print_exc()
+        return False, f"Erro ao gerar PDF cliente: {str(e)}", None
+
+def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
+    """
+    Gera um PDF de relatório interno para uma proposta finalizada
+    
+    Args:
+        db: Conexão com o banco de dados
+        proposta_id: ID da proposta
+        custom_filename: Nome de arquivo personalizado (opcional)
+        
+    Returns:
+        tuple: (sucesso, mensagem, filename)
+            - sucesso: True se operação foi bem-sucedida
+            - mensagem: Mensagem explicativa do resultado
+            - filename: Caminho do arquivo gerado (ou None em caso de falha)
+    """
+    print(f"DEBUG HELPER: Gerando PDF Interno para proposta ID={proposta_id}")
+    
+    try:
+        # Garantir que o diretório existe
+        if not os.path.exists('pdfs'):
+            os.makedirs('pdfs')
+            
+        # Buscar a proposta
+        proposta = None
+        try:
+            propostas = db.get_propostas()
+            if not propostas.empty:
+                proposta_found = propostas[propostas['id'] == int(proposta_id)]
+                if not proposta_found.empty:
+                    proposta = proposta_found.iloc[0].to_dict()
+        except Exception as e:
+            print(f"DEBUG HELPER ERROR: Erro ao buscar proposta: {str(e)}")
+            
+        # Verificar se proposta existe
+        if proposta is None:
+            return False, f"Proposta ID={proposta_id} não encontrada.", None
+            
+        # Buscar cliente
+        try:
+            # Obter clientes e procurar o cliente específico
+            clientes = db.get_clientes()
+            cliente = None
+            cliente_id = int(proposta['cliente_id'])
+            
+            if not clientes.empty:
+                cliente_found = clientes[clientes['id'] == cliente_id]
+                if not cliente_found.empty:
+                    cliente = cliente_found.iloc[0].to_dict()
+            
+            if cliente is None:
+                return False, f"Cliente ID={cliente_id} não encontrado.", None
+        except Exception as e:
+            print(f"DEBUG HELPER ERROR: Erro ao buscar cliente: {str(e)}")
+            return False, f"Erro ao buscar cliente: {str(e)}", None
+            
+        # Obter acréscimos
+        acrescimos = db.get_acrescimos_proposta(proposta_id)
+        if acrescimos is None:
+            acrescimos = pd.DataFrame()  # DataFrame vazio se não houver acréscimos
+            
+        # Nome do arquivo
+        if custom_filename:
+            filename = custom_filename
+        else:
+            # Garantir que temos ID da proposta e nome do cliente
+            cliente_nome = cliente.get('nome', 'sem_nome').replace(' ', '_').lower()
+            
+            # Adicionar data atual para evitar sobrescrever arquivos
+            data_atual = datetime.now().strftime('%Y%m%d_%H%M%S')
+            
+            # Criando nome de arquivo com o formato: Interno_Proposta_#ID_NomeCliente_DATA.pdf
+            filename = f"pdfs/Interno_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
+            
+        # Gerar o PDF interno
+        from utils.pdf_generator import gerar_pdf_interno
+        filename = gerar_pdf_interno(proposta, cliente, acrescimos, filename)
+        
+        return True, "PDF interno gerado com sucesso!", filename
+        
+    except Exception as e:
+        print(f"DEBUG HELPER CRITICAL: Erro ao gerar PDF interno: {str(e)}")
+        traceback.print_exc()
+        return False, f"Erro ao gerar PDF interno: {str(e)}", None
+
+def st_gerar_pdf_cliente(proposta_id, custom_filename=None):
+    """Versão para Streamlit da função gerar_pdf_cliente_proposta"""
+    try:
+        sucesso, mensagem, filename = gerar_pdf_cliente_proposta(
+            st.session_state.db, 
+            proposta_id, 
+            custom_filename
+        )
+        
+        if sucesso:
+            st.success(mensagem)
+            
+            # Botão para download do arquivo
+            with open(filename, "rb") as pdf:
+                # Usar o nome do arquivo original, garantindo que o nome fica correto no download
+                nome_arquivo = os.path.basename(filename)
+                st.download_button(
+                    label="⬇️ Baixar PDF do Cliente",
+                    data=pdf.read(),
+                    file_name=nome_arquivo,
+                    mime="application/pdf"
+                )
+            
+            return True, filename
+        else:
+            st.error(mensagem)
+            return False, None
+    except Exception as e:
+        st.error(f"Erro: {str(e)}")
+        return False, None
+
+def st_gerar_pdf_interno(proposta_id, custom_filename=None):
+    """Versão para Streamlit da função gerar_pdf_interno_proposta"""
+    try:
+        sucesso, mensagem, filename = gerar_pdf_interno_proposta(
+            st.session_state.db, 
+            proposta_id, 
+            custom_filename
+        )
+        
+        if sucesso:
+            st.success(mensagem)
+            
+            # Botão para download do arquivo
+            with open(filename, "rb") as pdf:
+                # Usar o nome do arquivo original, garantindo que o nome fica correto no download
+                nome_arquivo = os.path.basename(filename)
+                st.download_button(
+                    label="⬇️ Baixar PDF Interno",
+                    data=pdf.read(),
+                    file_name=nome_arquivo,
+                    mime="application/pdf"
+                )
+            
+            return True, filename
+        else:
+            st.error(mensagem)
+            return False, None
+    except Exception as e:
+        st.error(f"Erro: {str(e)}")
+        return False, None
 
 def st_marcar_proposta_como_paga(proposta_id):
     """Versão para Streamlit da função marcar_proposta_como_paga"""

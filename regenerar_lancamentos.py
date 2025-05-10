@@ -9,7 +9,7 @@ root_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(root_dir)
 
 from utils.database import Database
-from utils.regenerar_lancamentos import regenerar_lancamentos_proposta
+from utils.regenerar_lancamentos import regenerar_lancamentos
 
 st.set_page_config(
     page_title="Regenerar Lançamentos Financeiros",
@@ -95,9 +95,9 @@ if submit and proposta_id:
                 
             else:
                 # Regenerar lançamentos
-                resultado = regenerar_lancamentos_proposta(proposta_id)
+                resultado = regenerar_lancamentos(proposta_id)
                 
-                if resultado["sucesso"]:
+                if resultado["status"]:
                     st.success(f"Lançamentos regenerados com sucesso! {resultado['lancamentos_gerados']} lançamentos criados.")
                     
                     # Mostrar novos lançamentos

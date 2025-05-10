@@ -8,6 +8,9 @@ import time
 from utils.database import Database
 import os
 
+# Importar funções para geração de PDF
+from utils.propostas_helper import st_gerar_pdf_cliente, st_gerar_pdf_interno
+
 def show():
     # Título com estilo personalizado para ficar mais próximo do topo
     st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">📋 Propostas Finalizadas</h1>', unsafe_allow_html=True)
@@ -56,13 +59,24 @@ def show():
                         st.write(f"**Data Fim:** {data_fim_str}")
                     
                     # Adicionar botões de ação
-                    col_btn1, col_btn2 = st.columns(2)
+                    col_btn1, col_btn2, col_btn3, col_btn4 = st.columns(4)
+                    
                     with col_btn1:
+                        if st.button("Relatório Cliente", key=f"rel_cliente_btn_{proposta['id']}"):
+                            # Usar a função importada no início do arquivo
+                            st_gerar_pdf_cliente(proposta['id'])
+                    
+                    with col_btn2:
+                        if st.button("Relatório Interno", key=f"rel_interno_btn_{proposta['id']}"):
+                            # Usar a função importada no início do arquivo
+                            st_gerar_pdf_interno(proposta['id'])
+                            
+                    with col_btn3:
                         if st.button("Gerar Relatório", key=f"rel_btn_{proposta['id']}"):
                             st.session_state.proposta_selec_relatorio = proposta['id']
                             st.rerun()
                     
-                    with col_btn2:
+                    with col_btn4:
                         if st.button("Reabrir Proposta", key=f"reabrir_btn_{proposta['id']}"):
                             st.session_state.proposta_selec_reabrir = proposta['id']
                             st.rerun()

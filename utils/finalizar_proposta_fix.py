@@ -608,7 +608,9 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
         
         if outros_itens and len(outros_itens) > 0:
             for outro in outros_itens:
-                id_outro, nome_outro, desc_outro, valor_outro = outro
+                id_outro, fornecedor_outro, desc_outro, valor_outro = outro
+                # Para compatibilidade com código existente
+                nome_outro = fornecedor_outro
                 if valor_outro and float(valor_outro) > 0:
                     valor_total_outros += float(valor_outro)
                     
@@ -621,6 +623,8 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                     """, (proposta_id, id_outro))
                     
                     transacao_servico_existente = cursor.fetchone()
+                    
+                    logger.info(f"DEPURAÇÃO OUTROS: Verificando lançamento para acréscimo OUTRO ID={id_outro}, Descrição={desc_outro}, Valor={valor_outro}")
                     
                     if not transacao_servico_existente:
                         # Gerar lançamento financeiro para outros itens (serviços adicionais)
