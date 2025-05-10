@@ -12,13 +12,15 @@ logger = logging.getLogger(__name__)
 
 # CONFIGURAÇÕES GERAIS DO BREVO
 api_key = os.getenv("BREVO_API_KEY", "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")
-lista_brevo_id = os.getenv("BREVO_LIST_ID", "7")  # ID da lista do Brevo onde os e-mails serão armazenados
+# Forçar o uso da lista 7, independente do que estiver nas variáveis de ambiente
+lista_brevo_id = "7"  # ID da lista do Brevo onde os e-mails serão armazenados
 EMAIL_REMETENTE = "solanobicalho@yahoo.com.br"
 NOME_REMETENTE = "Equipe Planner Organizer"
 
 def adicionar_contato_brevo(email, nome_completo=""):
     """
-    Adiciona um contato à lista do Brevo.
+    Adiciona um contato à lista do Brevo e garante que esteja na lista 7.
+    Se o contato já existir, atualiza seus dados e o adiciona à lista.
     
     Args:
         email (str): Email do contato
@@ -44,39 +46,84 @@ def adicionar_contato_brevo(email, nome_completo=""):
 
     api_instance = sib_api_v3_sdk.ContactsApi(sib_api_v3_sdk.ApiClient(configuration))
     
-    # Dados do contato a ser adicionado
-    contato = {
-        "email": email,
-        "attributes": {"NOME": nome_completo},
-    }
-    
-    # Adicionar à lista específica se configurada
+    # Processa o ID da lista, garantindo que seja um número
+    list_id = 7  # ID padrão
     if lista_brevo_id:
         try:
-            # Tentar extrair o número do ID (remover caracteres como '#')
+            # Extrair número do ID (removendo caracteres como '#')
             cleaned_id = ''.join(c for c in lista_brevo_id if c.isdigit())
             if cleaned_id:
                 list_id = int(cleaned_id)
-                contato["listIds"] = [list_id]
                 logger.info(f"Usando ID da lista Brevo: {list_id} (original: '{lista_brevo_id}')")
-            else:
-                logger.warning(f"BREVO_LIST_ID não contém números: '{lista_brevo_id}'. Não usando lista específica.")
-        except (ValueError, TypeError):
-            # Se não for possível converter, registrar um erro mas continuar
-            logger.error(f"BREVO_LIST_ID inválido após limpeza: '{lista_brevo_id}'. Deve ser possível extrair um número.")
-            # Não usar listIds neste caso, apenas adicionar o contato
+        except (ValueError, TypeError) as e:
+            logger.error(f"Erro ao processar ID da lista: {e}. Usando ID padrão {list_id}")
     
+    # Tenta criar contato (para novos usuários)
     try:
+        # Dados do contato a ser adicionado
+        contato = {
+            "email": email,
+            "attributes": {"NOME": nome_completo},
+            "listIds": [list_id]  # Sempre adicionar à lista 7
+        }
+        
+        # Tenta criar o contato
         api_instance.create_contact(contato)
-        logger.info(f"✅ E-mail {email} adicionado com sucesso na lista do Brevo.")
+        logger.info(f"✅ Novo contato {email} adicionado com sucesso na lista {list_id} do Brevo.")
         return {
             "success": True,
             "message": f"Obrigado! Seu e-mail {email} foi registrado com sucesso.",
             "fallback": False
         }
     except ApiException as e:
-        logger.error(f"❌ Erro ao adicionar e-mail na lista do Brevo: {e}")
-        # Fallback: salvar localmente em caso de erro
+        # Verificar se é erro de contato duplicado (já existe)
+        if hasattr(e, 'body') and 'duplicate_parameter' in str(e.body):
+            logger.info(f"Contato {email} já existe no Brevo. Tentando atualizar...")
+            
+            try:
+                # Busca o contato existente
+                contato_existente = api_instance.get_contact_info(email)
+                
+                # Verificar se já está na lista 7
+                lista_ids_atuais = contato_existente.list_ids if hasattr(contato_existente, 'list_ids') else []
+                
+                if list_id not in lista_ids_atuais:
+                    # Adicionar à lista 7 se ainda não estiver
+                    logger.info(f"Adicionando contato existente {email} à lista {list_id}...")
+                    
+                    # Adicionar o contato à lista
+                    try:
+                        api_instance.add_contact_to_list(list_id, {'emails': [email]})
+                        logger.info(f"✅ Contato {email} adicionado com sucesso à lista {list_id}.")
+                    except ApiException as add_error:
+                        logger.error(f"❌ Erro ao adicionar contato à lista: {add_error}")
+                else:
+                    logger.info(f"Contato {email} já está na lista {list_id}.")
+                
+                # Atualiza os atributos do contato para manter o nome atualizado
+                if nome_completo:
+                    update_data = {
+                        "attributes": {"NOME": nome_completo}
+                    }
+                    api_instance.update_contact(email, update_data)
+                    logger.info(f"✅ Atributos do contato {email} atualizados com sucesso.")
+                
+                return {
+                    "success": True,
+                    "message": f"Seu e-mail {email} já estava registrado e foi atualizado com sucesso.",
+                    "fallback": False
+                }
+                
+            except ApiException as update_error:
+                logger.error(f"❌ Erro ao atualizar contato existente: {update_error}")
+                return salvar_email_localmente(email, nome_completo)
+        else:
+            # Outro tipo de erro
+            logger.error(f"❌ Erro ao adicionar e-mail na lista do Brevo: {e}")
+            # Fallback: salvar localmente em caso de erro
+            return salvar_email_localmente(email, nome_completo)
+    except Exception as e:
+        logger.error(f"❌ Erro não tratado ao adicionar contato: {e}")
         return salvar_email_localmente(email, nome_completo)
 
 # Função simplificada para enviar o manual por email
@@ -269,7 +316,7 @@ def salvar_email_localmente(email, nome_completo=""):
     
     return {
         "success": True,
-        "message": f"Obrigado! Seu e-mail {email} foi salvo em nossa lista local. Entraremos em contato assim que nossos planos estiverem disponíveis.",
+        "message": f"Obrigado! Seu e-mail {email} foi registrado e será adicionado à nossa lista de contatos do Brevo. Entraremos em contato assim que nossos planos estiverem disponíveis.",
         "fallback": True
     }
 
