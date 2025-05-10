@@ -741,10 +741,11 @@ class Database:
 
     def _safe_query(self, query_func):
         """
-        Wrapper para executar queries com tratamento de erro
+        Wrapper para executar queries com tratamento de erro e filtragem automática por usuário
         
         Esta função garante que as operações no banco de dados sejam executadas
         em uma transação segura, com tratamento adequado de erros e conversão de tipos.
+        Também aplica automaticamente o filtro de usuário para garantir compartimentalização multiusuário.
         """
         # Verificar se já existe uma transação em andamento
         nested_transaction = False
@@ -786,9 +787,36 @@ class Database:
                 # Se não conseguirmos verificar, consideramos que não está em transação
                 pass
             
-            # Executar a função de query
-            # print("DEBUG: Executando query")
-            result = query_func()
+            # INÍCIO DO PATCH PARA MULTIUSUÁRIO
+            # Verificar se o ID do usuário está definido para implementar o filtro multiusuário
+            if hasattr(self, 'usuario_id') and self.usuario_id:
+                # Verificamos se estamos obtendo registros de tabelas que precisam de isolamento
+                # Criar um wrapper para a função original
+                original_query = query_func
+                
+                def tenant_query_wrapper():
+                    # Executar a consulta original
+                    result = original_query()
+                    
+                    # Aplicar filtro multiusuário para DataFrames
+                    if isinstance(result, pd.DataFrame) and 'usuario_id' in result.columns:
+                        # Filtrar por usuario_id
+                        original_count = len(result)
+                        result = result[result['usuario_id'].fillna('') == self.usuario_id]
+                        filtered_count = len(result)
+                        
+                        # Registrar diagnóstico se houver diferença
+                        if original_count != filtered_count:
+                            print(f"MULTIUSUÁRIO: Filtrado {original_count-filtered_count} registros de outros usuários")
+                    
+                    return result
+                
+                # Substituir a função original pelo wrapper
+                result = tenant_query_wrapper()
+            else:
+                # Executar a função de query original se não tiver usuario_id
+                result = query_func()
+            # FIM DO PATCH PARA MULTIUSUÁRIO
             
             # Commit da transação somente se não for aninhada
             if not nested_transaction:
@@ -817,7 +845,16 @@ class Database:
                 # Converter colunas numéricas para tipos nativos Python
                 for col in result.select_dtypes(include=['int64', 'float64', 'Int64']).columns:
                     result[col] = result[col].astype(object).where(pd.notnull(result[col]), None)
-                # # print(f"DEBUG: DataFrame processado com {len(result)} registros")
+                
+                # VERIFICAÇÃO FINAL DE SEGURANÇA MULTIUSUÁRIO
+                # Garantir que nenhum registro de outro usuário seja retornado
+                # Esta é uma segunda camada de proteção, caso algum registro não tenha sido filtrado pelo wrapper
+                if hasattr(self, 'usuario_id') and self.usuario_id and 'usuario_id' in result.columns:
+                    original_count = len(result)
+                    result = result[result['usuario_id'].fillna('') == self.usuario_id]
+                    if original_count != len(result):
+                        print(f"ALERTA SEGURANÇA: Filtro secundário removeu {original_count - len(result)} registros de outros usuários")
+                # print(f"DEBUG: DataFrame processado com {len(result)} registros")
 
             # Se o resultado for um número, garantir que seja tipo nativo Python
             elif isinstance(result, (np.int64, np.float64)):
@@ -1103,12 +1140,27 @@ class Database:
                     Cliente, Proposta.cliente_id == Cliente.id
                 )
                 
-                # Adicionar filtro por usuário se disponível
+                # FIXADO: SEMPRE filtrar por usuário para garantir compartimentalização
+                # Se não tivermos usuario_id, usar o método get_usuario_id_from_session novamente
+                if not self.usuario_id:
+                    try:
+                        session_usuario_id = get_usuario_id_from_session()
+                        if session_usuario_id:
+                            self.usuario_id = session_usuario_id
+                            print(f"DEBUG GET_PROPOSTAS: Recuperado usuario_id={session_usuario_id} da sessão")
+                    except Exception as e:
+                        print(f"DEBUG GET_PROPOSTAS: Erro ao recuperar ID da sessão: {str(e)}")
+                
+                # Aplicar filtro de usuário
                 if self.usuario_id:
                     print(f"DEBUG GET_PROPOSTAS: Filtrando propostas por usuario_id={self.usuario_id}")
                     query = query.filter(Proposta.usuario_id == self.usuario_id)
                 else:
-                    print("DEBUG GET_PROPOSTAS: AVISO - Buscando todas as propostas sem filtro de usuário!")
+                    import uuid
+                    temp_id = f"temp-user-{uuid.uuid4().hex[:8]}"
+                    self.usuario_id = temp_id
+                    print(f"DEBUG GET_PROPOSTAS: Usando ID temporário {temp_id} para isolamento")
+                    query = query.filter(Proposta.usuario_id == self.usuario_id)
                 
                 # Executar consulta
                 propostas_com_clientes = query.all()
