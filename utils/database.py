@@ -4929,9 +4929,12 @@ class Database:
         
         Gera:
         1. Produtos a receber (valor total dos produtos)
-        2. Comissão a receber por fornecedor (com % registrado no cadastro) - APENAS para propostas concluídas
-        3. Assistentes a pagar (um registro por assistente) - APENAS para propostas concluídas
-        4. Cliente a receber (valor base da proposta)
+        2. Cliente a receber (valor base da proposta)
+        
+        Nota: A geração automática de lançamentos de comissão para fornecedores e 
+        pagamentos para assistentes foi removida conforme solicitado.
+        Os valores ainda são calculados para fins de relatório, mas nenhum lançamento
+        financeiro é criado para estes itens.
         
         Args:
             proposta_id: ID da proposta concluída
@@ -5263,46 +5266,13 @@ class Database:
                         if not percentual_comissao and fornecedor_cadastro and hasattr(fornecedor_cadastro, 'percentual_comissao'):
                             percentual_comissao = fornecedor_cadastro.percentual_comissao
                         
-                        # Se tiver percentual de comissão, calcular o valor e gerar o lançamento
+                        # Removidos os lançamentos de comissão sobre fornecedores conforme solicitado
                         if percentual_comissao and percentual_comissao > 0:
                             valor_comissao = valor_fornecedor * (percentual_comissao / 100)
                             
                             if valor_comissao > 0:
-                                # Verificar se já existe uma transação de comissão para este fornecedor nesta proposta
-                                comissao_existente = self.session.query(Transacao).filter(
-                                    Transacao.proposta_id == proposta_id_int,
-                                    Transacao.categoria == "Comissão",
-                                    Transacao.subcategoria == "Comissão de Fornecedor",
-                                    Transacao.descricao.like(f"%{nome_fornecedor}%")
-                                ).first()
-                                
-                                if comissao_existente:
-                                    print(f"DEBUG LANCAMENTOS: Comissão para {nome_fornecedor} já existe. ID={comissao_existente.id}. Pulando.")
-                                    continue
-                                
-                                # Transação no extrato
-                                transacao_comissao = Transacao(
-                                    tipo="receita_a_receber",
-                                    descricao=f"Comissão de {percentual_comissao}% - {nome_fornecedor} - Proposta #{proposta.numero}",
-                                    valor=valor_comissao,
-                                    data=data_lancamento,
-                                    categoria="Comissão",
-                                    subcategoria="Comissão de Fornecedor",
-                                    tipo_receita="comissao",
-                                    origem_id=fornecedor_cadastro.id if fornecedor_cadastro else None,
-                                    origem_tipo="fornecedor",
-                                    tipo_conta="PF",
-                                    status="Pendente",
-                                    proposta_id=proposta_id_int,
-                                    classificacao="receita",
-                                    usuario_id=usuario_id
-                                )
-                                self.session.add(transacao_comissao)
-                                
-                                # Removido o lançamento duplicado nas contas a receber
-                                
-                                result["lancamentos_gerados"] += 1
-                                print(f"DEBUG LANCAMENTOS: Lançamento de comissão criado: R$ {valor_comissao:.2f}")
+                                print(f"DEBUG LANCAMENTOS: Pulando lançamento de comissão para {nome_fornecedor}: R$ {valor_comissao:.2f} (lançamentos de comissão removidos)")
+                                continue
                 else:
                     print(f"DEBUG LANCAMENTOS: Pulando geração de lançamentos de comissão (proposta não está concluída).")
                 
@@ -5342,41 +5312,9 @@ class Database:
                             if valor_assistente > 0:
                                 nome_assistente = assistente_item.fornecedor  # o campo "fornecedor" armazena o nome do assistente
                                 
-                                # Verificar se já existe uma transação de pagamento para este assistente nesta proposta
-                                assistente_existente = self.session.query(Transacao).filter(
-                                    Transacao.proposta_id == proposta_id_int,
-                                    Transacao.categoria == "Assistente",
-                                    Transacao.subcategoria == "Pagamento de Serviço",
-                                    Transacao.descricao.like(f"%{nome_assistente}%")
-                                ).first()
-                                
-                                if assistente_existente:
-                                    print(f"DEBUG LANCAMENTOS: Pagamento para assistente {nome_assistente} já existe. ID={assistente_existente.id}. Pulando.")
-                                    continue
-                                
-                                # Transação no extrato
-                                transacao_assistente = Transacao(
-                                    tipo="despesa",
-                                    descricao=f"Pagamento Assistente {nome_assistente} - Proposta #{proposta.numero}",
-                                    valor=valor_assistente,
-                                    data=data_lancamento,
-                                    categoria="Assistente",
-                                    subcategoria="Pagamento de Serviço",
-                                    tipo_receita="assistente",  # Usaremos tipo_receita mesmo para despesas
-                                    origem_id=assistente_item.id,
-                                    origem_tipo="assistente",
-                                    tipo_conta="PF",
-                                    status="Pendente",
-                                    proposta_id=proposta_id_int,
-                                    classificacao="custo_direto",
-                                    usuario_id=usuario_id
-                                )
-                                self.session.add(transacao_assistente)
-                                
-                                # Removido o lançamento duplicado nas contas a pagar
-                                
-                                result["lancamentos_gerados"] += 1
-                                print(f"DEBUG LANCAMENTOS: Lançamento criado para assistente {nome_assistente}: R$ {valor_assistente:.2f}")
+                                # Removidos os lançamentos de pagamentos para assistentes conforme solicitado
+                                print(f"DEBUG LANCAMENTOS: Pulando lançamento de pagamento para assistente {nome_assistente}: R$ {valor_assistente:.2f} (lançamentos de assistentes removidos)")
+                                continue
                     else:
                         if transacoes_assistentes > 0:
                             print(f"DEBUG LANCAMENTOS: Já existem lançamentos para Assistentes a pagar ({transacoes_assistentes}). Pulando.")
@@ -5386,7 +5324,8 @@ class Database:
                 result["valor_fornecedores"] = valor_total_fornecedores
                 result["valor_assistentes"] = valor_total_assistentes
                 
-                # Resumo dos resultados
+                # Resumo dos resultados - valor monetário total (não confundir com o contador lancamentos_gerados)
+                # Mantendo a soma de todos os valores para compatibilidade com código existente
                 result["total_lancamentos"] = (
                     result["valor_base"] + 
                     result["valor_produtos"] + 
