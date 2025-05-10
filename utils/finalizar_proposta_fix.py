@@ -477,7 +477,7 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                     # Calcular o valor da comissão aplicando o percentual
                     # Valor padrão de comissão (5% se não for especificado)
                     perc_comissao = 5.0
-                    if percentual_comissao and float(percentual_comissao) > 0:
+                    if percentual_comissao and str(percentual_comissao).strip() and float(percentual_comissao) > 0:
                         perc_comissao = float(percentual_comissao)
                     
                     # Calcular o valor da comissão (percentual sobre o valor do fornecedor)
@@ -485,6 +485,10 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                     valor_comissao = valor_fornecedor_float * (perc_comissao / 100.0)
                     
                     logger.info(f"DEPURAÇÃO COMISSÃO: Valor Fornecedor={valor_fornecedor_float}, Percentual={perc_comissao}%, Valor Comissão Calculado={valor_comissao}")
+                    
+                    # Garantir que estamos criando o lançamento com o valor calculado correto
+                    # Forçando o tipo a float para garantir o cálculo
+                    valor_comissao = float(valor_comissao)
                     
                     valor_total_fornecedores += valor_comissao
                     
