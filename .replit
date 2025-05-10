@@ -89,6 +89,10 @@ args = "Teste Planos"
 task = "workflow.run"
 args = "Planos Leve"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Teste Brevo"
+
 [[workflows.workflow]]
 name = "Importar Propostas"
 author = "agent"
@@ -334,6 +338,15 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run pages/propostas.py --server.port 5050 --server.address 0.0.0.0"
+
+[[workflows.workflow]]
+name = "Teste Brevo"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run teste_brevo.py --server.port 5005 --server.address 0.0.0.0"
+waitForPort = 5005
 
 [[ports]]
 localPort = 443
