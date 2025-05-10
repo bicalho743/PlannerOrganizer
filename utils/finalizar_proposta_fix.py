@@ -302,6 +302,48 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
             "base": 0
         }
         
+        # 0. VERIFICAR E CRIAR LANÇAMENTO BASE (se não existir)
+        # Verificar se já existe um lançamento base para esta proposta
+        cursor.execute("""
+            SELECT id FROM financeiro 
+            WHERE proposta_id = %s AND origem_tipo = 'proposta_base'
+        """, (proposta_id,))
+        
+        lancamento_base_existente = cursor.fetchone()
+        
+        if not lancamento_base_existente:
+            # Criar lançamento base da proposta
+            logger.info(f"Criando lançamento base para proposta #{proposta_info['numero']} - R$ {proposta_info['valor']}")
+            
+            cursor.execute("""
+                INSERT INTO financeiro 
+                (descricao, valor, data, categoria, subcategoria, 
+                tipo, proposta_id, status, classificacao, usuario_id, origem_tipo, origem_id)
+                VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (
+                f"Proposta base #{proposta_info['numero']} - {nome_cliente}",
+                proposta_info['valor'],
+                "Serviços de organização",
+                "Valor a receber",
+                "Receita",
+                proposta_id,
+                "Pendente",
+                "contas_a_receber",
+                proposta_info['usuario_id'],
+                "proposta_base",
+                proposta_id
+            ))
+            
+            lancamento_id = cursor.fetchone()[0]
+            lancamentos_gerados += 1
+            logger.info(f"Lançamento principal criado (ID: {lancamento_id})")
+        else:
+            logger.info(f"Lançamento base da proposta já existe (ID: {lancamento_base_existente[0]})")
+            
+        # Registrar valor base no resultado para controle
+        resultado["lancamentos"]["valores"]["base"] = proposta_info['valor']
+        
         # 1. TRATAMENTO DOS PRODUTOS - Receita (venda de produtos) e registro no módulo de vendas
         cursor.execute("""
             SELECT id, fornecedor, descricao, valor 
@@ -441,12 +483,46 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                     
                     valor_total_fornecedores += valor_comissao
                     
-                    # 2.1. Não geramos mais lançamento financeiro para comissão sobre fornecedor
-                    # Apenas registramos o valor para fins de informação
-                    logger.info(f"Comissão sobre fornecedor {nome_fornecedor} calculada: R${valor_comissao:.2f} (lançamento não criado)")
+                    # 2.1. Criar lançamento financeiro para comissão sobre fornecedor
+                    logger.info(f"Criando lançamento para comissão sobre fornecedor {nome_fornecedor}: R${valor_comissao:.2f}")
                     
-                    # Mantenha a contabilização mas não gere o lançamento
-                    # O usuário deverá criar os lançamentos manualmente quando desejar
+                    # Verificar se já existe uma transação de comissão para este fornecedor
+                    cursor.execute("""
+                        SELECT id FROM financeiro 
+                        WHERE proposta_id = %s 
+                        AND origem_tipo = 'comissao_fornecedor' 
+                        AND descricao LIKE %s
+                    """, (proposta_id, f"%{nome_fornecedor}%"))
+                    
+                    transacao_comissao_existente = cursor.fetchone()
+                    
+                    if not transacao_comissao_existente:
+                        # Criar o lançamento de comissão
+                        cursor.execute("""
+                            INSERT INTO financeiro 
+                            (descricao, valor, data, categoria, subcategoria, 
+                            tipo, proposta_id, status, classificacao, usuario_id, origem_tipo, origem_id)
+                            VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            RETURNING id
+                        """, (
+                            f"Comissão de {percentual_comissao or 5}% - Fornecedor {nome_fornecedor} - Proposta #{proposta_info['numero']}",
+                            valor_comissao,
+                            "Comissão sobre fornecedores",
+                            "Comissão de Fornecedor",
+                            "Receita",
+                            proposta_id,
+                            "Pendente",
+                            "contas_a_receber",
+                            proposta_info['usuario_id'],
+                            "comissao_fornecedor",
+                            id_fornecedor
+                        ))
+                        
+                        lancamento_id = cursor.fetchone()[0]
+                        lancamentos_gerados += 1
+                        logger.info(f"Lançamento de comissão criado (ID: {lancamento_id}) para fornecedor {nome_fornecedor}")
+                    else:
+                        logger.info(f"Lançamento de comissão para fornecedor {nome_fornecedor} já existe (ID: {transacao_comissao_existente[0]})")
             
             # Adicionar o valor dos fornecedores ao resultado
             resultado["lancamentos"]["valores"]["fornecedores"] = valor_total_fornecedores
@@ -467,12 +543,46 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                 if valor_assistente and float(valor_assistente) > 0:
                     valor_total_assistentes += float(valor_assistente)
                     
-                    # 3.1. Não geramos mais lançamento financeiro para pagamento de assistente
-                    # Apenas registramos o valor para fins de informação
-                    logger.info(f"Pagamento para assistente {nome_assistente} registrado: R${valor_assistente:.2f} (lançamento não criado)")
+                    # 3.1. Criar lançamento financeiro para pagamento de assistente
+                    logger.info(f"Criando lançamento para assistente {nome_assistente}: R${valor_assistente:.2f}")
                     
-                    # Mantenha a contabilização mas não gere o lançamento
-                    # O usuário deverá criar os lançamentos manualmente quando desejar
+                    # Verificar se já existe uma transação para este assistente
+                    cursor.execute("""
+                        SELECT id FROM financeiro 
+                        WHERE proposta_id = %s 
+                        AND origem_tipo = 'acrescimo_assistente' 
+                        AND origem_id = %s
+                    """, (proposta_id, id_assistente))
+                    
+                    transacao_assistente_existente = cursor.fetchone()
+                    
+                    if not transacao_assistente_existente:
+                        # Criar o lançamento para o assistente
+                        cursor.execute("""
+                            INSERT INTO financeiro 
+                            (descricao, valor, data, categoria, subcategoria, 
+                            tipo, proposta_id, status, classificacao, usuario_id, origem_tipo, origem_id)
+                            VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            RETURNING id
+                        """, (
+                            f"Assistente: {nome_assistente or desc_assistente} - Proposta #{proposta_info['numero']}",
+                            valor_assistente,
+                            "Pagamento Equipe/Assistentes",
+                            "Assistentes", 
+                            "Despesa",
+                            proposta_id,
+                            "Pendente",
+                            "contas_a_pagar",
+                            proposta_info['usuario_id'],
+                            "acrescimo_assistente",
+                            id_assistente
+                        ))
+                        
+                        lancamento_id = cursor.fetchone()[0]
+                        lancamentos_gerados += 1
+                        logger.info(f"Lançamento para assistente criado (ID: {lancamento_id}) para {nome_assistente or desc_assistente}")
+                    else:
+                        logger.info(f"Lançamento para assistente {nome_assistente or desc_assistente} já existe (ID: {transacao_assistente_existente[0]})")
             
             # Adicionar o valor dos assistentes ao resultado
             resultado["lancamentos"]["valores"]["assistentes"] = valor_total_assistentes
@@ -493,64 +603,50 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                 if valor_outro and float(valor_outro) > 0:
                     valor_total_outros += float(valor_outro)
                     
-                    # 4.1. Gerar lançamento financeiro para outros itens (serviços adicionais)
+                    # 4.1. Verificar se já existe lançamento para este serviço adicional
                     cursor.execute("""
-                        INSERT INTO financeiro 
-                        (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, 
-                         proposta_id, tipo_conta, status, classificacao, usuario_id)
-                        VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id
-                    """, (
-                        f"Serviço adicional: {desc_outro} - Proposta #{proposta_info['numero']} - {nome_cliente}",
-                        valor_outro,
-                        "Serviços Adicionais",  # Categoria
-                        "Outros Serviços",  # Subcategoria
-                        "Receita",  # Tipo
-                        id_outro,  # origem_id
-                        "servico_adicional",  # origem_tipo
-                        proposta_id,  # proposta_id
-                        "PF",  # tipo_conta
-                        "Pendente",  # status
-                        "contas_a_receber",  # classificacao
-                        proposta_info['usuario_id']  # usuario_id
-                    ))
+                        SELECT id FROM financeiro 
+                        WHERE proposta_id = %s 
+                        AND origem_tipo = 'servico_adicional' 
+                        AND origem_id = %s
+                    """, (proposta_id, id_outro))
                     
-                    lancamento_id = cursor.fetchone()[0]
-                    logger.info(f"Lançamento financeiro de Serviço Adicional criado: #{lancamento_id}, Valor: R${valor_outro:.2f}")
-                    lancamentos_gerados += 1
+                    transacao_servico_existente = cursor.fetchone()
+                    
+                    if not transacao_servico_existente:
+                        # Gerar lançamento financeiro para outros itens (serviços adicionais)
+                        cursor.execute("""
+                            INSERT INTO financeiro 
+                            (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, 
+                             proposta_id, status, classificacao, usuario_id)
+                            VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            RETURNING id
+                        """, (
+                            f"Serviço adicional: {desc_outro} - Proposta #{proposta_info['numero']} - {nome_cliente}",
+                            valor_outro,
+                            "Serviços Adicionais",  # Categoria
+                            "Outros Serviços",  # Subcategoria
+                            "Receita",  # Tipo
+                            id_outro,  # origem_id
+                            "servico_adicional",  # origem_tipo
+                            proposta_id,  # proposta_id
+                            "Pendente",  # status
+                            "contas_a_receber",  # classificacao
+                            proposta_info['usuario_id']  # usuario_id
+                        ))
+                        
+                        lancamento_id = cursor.fetchone()[0]
+                        lancamentos_gerados += 1
+                        logger.info(f"Lançamento para serviço adicional criado (ID: {lancamento_id}) para {desc_outro}")
+                    else:
+                        logger.info(f"Lançamento para serviço adicional {desc_outro} já existe (ID: {transacao_servico_existente[0]})")
             
             # Adicionar o valor de outros itens ao resultado
             resultado["lancamentos"]["valores"]["outros"] = valor_total_outros
         
-        # 5. TRATAMENTO DO VALOR BASE DA PROPOSTA - Receita (serviço principal)
-        if proposta_info['valor'] and float(proposta_info['valor']) > 0:
-            cursor.execute("""
-                INSERT INTO financeiro 
-                (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, 
-                 proposta_id, tipo_conta, status, classificacao, usuario_id)
-                VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id
-            """, (
-                f"Serviço organização - Proposta #{proposta_info['numero']} - {nome_cliente}",
-                proposta_info['valor'],
-                "Serviços de Organização",  # Categoria
-                "Serviço Principal",  # Subcategoria
-                "Receita",  # Tipo
-                proposta_id,  # origem_id
-                "proposta_base",  # origem_tipo
-                proposta_id,  # proposta_id
-                "PF",  # tipo_conta
-                "Pendente",  # status
-                "contas_a_receber",  # classificacao
-                proposta_info['usuario_id']  # usuario_id
-            ))
-            
-            lancamento_id = cursor.fetchone()[0]
-            logger.info(f"Lançamento financeiro de Serviço Principal criado: #{lancamento_id}, Valor: R${float(proposta_info['valor']):.2f}")
-            lancamentos_gerados += 1
-            
-            # Adicionar o valor base ao resultado
-            resultado["lancamentos"]["valores"]["base"] = float(proposta_info['valor'])
+        # 5. TRATAMENTO DO VALOR BASE DA PROPOSTA - Já foi verificado e criado no início da função
+        # O valor da proposta base já está no resultado para controle
+        # resultado["lancamentos"]["valores"]["base"] = proposta_info['valor']
         
         # Finalização
         logger.info(f"Proposta #{proposta_id} finalizada. {lancamentos_gerados} lançamentos financeiros gerados.")

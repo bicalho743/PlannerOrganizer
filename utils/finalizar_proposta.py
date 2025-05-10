@@ -34,6 +34,8 @@ def finalizar_proposta_segura(proposta_id):
     engine = create_engine(database_url)
     session = SQLSession(bind=engine)
     
+    print(f"DEBUG FINALIZAR: Iniciando processo com sessão {id(session)}")
+    
     try:
         print(f"DEBUG FINALIZAR: Iniciando finalização segura da proposta ID={proposta_id}")
         
