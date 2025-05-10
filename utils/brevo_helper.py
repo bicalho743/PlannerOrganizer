@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # CONFIGURAÇÕES GERAIS DO BREVO
-api_key = os.getenv("BREVO_API_KEY", "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")
+api_key = os.getenv("BREVO_API_KEY", "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")
 # Forçar o uso da lista 7, independente do que estiver nas variáveis de ambiente
 lista_brevo_id = "7"  # ID da lista do Brevo onde os e-mails serão armazenados
 EMAIL_REMETENTE = "solanobicalho@yahoo.com.br"
@@ -47,7 +47,7 @@ def adicionar_contato_brevo(email, nome_completo=""):
     api_instance = sib_api_v3_sdk.ContactsApi(sib_api_v3_sdk.ApiClient(configuration))
     
     # Processa o ID da lista, garantindo que seja um número
-    list_id = 7  # ID padrão
+    list_id = 7  # ID padrão fixo da lista "Leads Planner Organizer"
     if lista_brevo_id:
         try:
             # Extrair número do ID (removendo caracteres como '#')
@@ -58,17 +58,36 @@ def adicionar_contato_brevo(email, nome_completo=""):
         except (ValueError, TypeError) as e:
             logger.error(f"Erro ao processar ID da lista: {e}. Usando ID padrão {list_id}")
     
+    # Dividir nome e sobrenome
+    partes_nome = nome_completo.split(' ', 1) if nome_completo else ["", ""]
+    primeiro_nome = partes_nome[0] if partes_nome else ""
+    sobrenome = partes_nome[1] if len(partes_nome) > 1 else ""
+    
+    # Preparar atributos do contato
+    atributos = {
+        "NOME": nome_completo,
+        "FIRSTNAME": primeiro_nome,
+        "LASTNAME": sobrenome,
+        "SOURCE": "Planner Organizer",
+        "ORIGEM": "Landing Page Planner Organizer"
+    }
+    
     # Tenta criar contato (para novos usuários)
     try:
-        # Dados do contato a ser adicionado
-        contato = {
-            "email": email,
-            "attributes": {"NOME": nome_completo},
-            "listIds": [list_id]  # Sempre adicionar à lista 7
-        }
+        # Criar objeto de contato do Brevo
+        create_contact = sib_api_v3_sdk.CreateContact()
         
-        # Tenta criar o contato
-        api_instance.create_contact(contato)
+        # Configurar os dados do contato
+        create_contact.email = email
+        create_contact.attributes = atributos
+        create_contact.list_ids = [list_id]  # Sempre adicionar à lista 7
+        
+        # Tentar adicionar updateEnabled = true (usando dict diretamente)
+        contact_dict = create_contact.to_dict()
+        contact_dict["updateEnabled"] = True
+        
+        # Tenta criar o contato via método do SDK
+        api_instance.create_contact(create_contact)
         logger.info(f"✅ Novo contato {email} adicionado com sucesso na lista {list_id} do Brevo.")
         return {
             "success": True,
@@ -77,7 +96,7 @@ def adicionar_contato_brevo(email, nome_completo=""):
         }
     except ApiException as e:
         # Verificar se é erro de contato duplicado (já existe)
-        if hasattr(e, 'body') and 'duplicate_parameter' in str(e.body):
+        if hasattr(e, 'body') and ('duplicate_parameter' in str(e.body) or 'Contact already exist' in str(e.body)):
             logger.info(f"Contato {email} já existe no Brevo. Tentando atualizar...")
             
             try:
@@ -100,13 +119,12 @@ def adicionar_contato_brevo(email, nome_completo=""):
                 else:
                     logger.info(f"Contato {email} já está na lista {list_id}.")
                 
-                # Atualiza os atributos do contato para manter o nome atualizado
-                if nome_completo:
-                    update_data = {
-                        "attributes": {"NOME": nome_completo}
-                    }
-                    api_instance.update_contact(email, update_data)
-                    logger.info(f"✅ Atributos do contato {email} atualizados com sucesso.")
+                # Atualiza os atributos do contato mesmo assim para manter os dados atualizados
+                update_data = {
+                    "attributes": atributos
+                }
+                api_instance.update_contact(email, update_data)
+                logger.info(f"✅ Atributos do contato {email} atualizados com sucesso.")
                 
                 return {
                     "success": True,
