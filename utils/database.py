@@ -4927,13 +4927,16 @@ class Database:
         """
         Gera lançamentos financeiros automáticos quando uma proposta é marcada como concluída
         
-        Gera:
+        Gera APENAS:
         1. Produtos a receber (valor total dos produtos)
-        2. Cliente a receber (valor base da proposta)
         
-        Nota: A geração automática de lançamentos de comissão para fornecedores e 
-        pagamentos para assistentes foi removida conforme solicitado.
-        Os valores ainda são calculados para fins de relatório, mas nenhum lançamento
+        Nota: A geração automática de lançamentos foi simplificada conforme solicitado:
+        - O lançamento de receita principal (valor base) é criado SOMENTE quando a proposta é aprovada, 
+          não quando é concluída.
+        - Lançamentos de comissão para fornecedores foram removidos.
+        - Lançamentos de pagamentos para assistentes foram removidos.
+        
+        Os valores ainda são calculados para fins de relatório, mas nenhum lançamento 
         financeiro é criado para estes itens.
         
         Args:
@@ -5006,7 +5009,7 @@ class Database:
                 # Converter proposta_id para inteiro nativo do Python para evitar problemas com numpy.int64
                 proposta_id_python_int = self._ensure_int(proposta_id_int)
                 
-                # 1. Lançamento do valor base (cliente a receber)
+                # 1. Valor base (apenas calculado para o resultado, sem criar lançamento)
                 valor_base = float(proposta.valor) if proposta.valor else 0
                 print(f"DEBUG LANCAMENTOS: Valor base da proposta: R$ {valor_base:.2f}")
                 
@@ -5018,31 +5021,22 @@ class Database:
                 if hasattr(proposta, 'data_fim') and proposta.data_fim:
                     data_lancamento = proposta.data_fim
                 
+                # Não criamos lançamento de valor base aqui, apenas armazenamos o valor para relatórios
+                # O lançamento de receita principal já deve ter sido criado quando a proposta foi aprovada
                 if valor_base > 0:
-                    # Transação no extrato financeiro
-                    transacao_base = Transacao(
-                        tipo="receita_a_receber",
-                        descricao=f"Proposta #{proposta.numero} - {proposta.descricao[:50]}... - {cliente.nome}",
-                        valor=valor_base,
-                        data=data_lancamento,
-                        categoria="Serviços de Organização",
-                        subcategoria=proposta.tipo_proposta or "Organização",
-                        tipo_receita="organizacao",
-                        origem_id=proposta.cliente_id,
-                        origem_tipo="cliente",
-                        tipo_conta="PF",
-                        status="Pendente",
-                        proposta_id=proposta_id_int,
-                        classificacao="receita",
-                        usuario_id=usuario_id
-                    )
-                    self.session.add(transacao_base)
+                    # Verificar se já existe uma transação para a receita principal desta proposta
+                    transacao_existente = self.session.query(Transacao).filter(
+                        Transacao.proposta_id == proposta_id_int,
+                        Transacao.categoria == "Serviços de Organização",
+                        Transacao.tipo_receita == "organizacao"
+                    ).first()
                     
-                    # Removido a transação duplicada nas contas a receber
+                    if transacao_existente:
+                        print(f"DEBUG LANCAMENTOS: Lançamento do valor base já existe. ID={transacao_existente.id}. Pulando.")
+                    else:
+                        print(f"DEBUG LANCAMENTOS: Nenhum lançamento de valor base encontrado. O lançamento deve ser criado ao aprovar a proposta, não ao concluí-la.")
                     
                     result["valor_base"] = valor_base
-                    result["lancamentos_gerados"] += 1
-                    print(f"DEBUG LANCAMENTOS: Lançamento do valor base criado")
                 
                 # 2. Produtos a receber
                 produtos = self.session.query(ProdutoOrganizador).filter_by(proposta_id=proposta_id_python_int).all()
