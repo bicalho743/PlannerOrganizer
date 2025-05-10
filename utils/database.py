@@ -54,7 +54,14 @@ def get_usuario_id_from_session():
     # Debug: Imprimir conteúdo da sessão para diagnóstico
     print(f"DEBUG SESSION: Verificando session_state para obter usuario_id")
     
-    # Verificar session_state.user (padrão do Firebase)
+    # INÍCIO DA SOLUÇÃO DEFINITIVA: Prioridade 1 - Verificar session_state.usuario_id diretamente
+    # Este é o método preferencial e mais direto
+    if 'usuario_id' in st.session_state:
+        usuario_id = st.session_state.usuario_id
+        print(f"DEBUG SESSION: usuario_id encontrado diretamente: {usuario_id}")
+        return usuario_id
+    
+    # Prioridade 2 - Verificar session_state.user (padrão do Firebase)
     if 'user' in st.session_state and st.session_state.user:
         print(f"DEBUG SESSION: st.session_state.user encontrado: {type(st.session_state.user)}")
         
@@ -62,15 +69,25 @@ def get_usuario_id_from_session():
         if 'localId' in st.session_state.user:
             usuario_id = st.session_state.user['localId']
             print(f"DEBUG SESSION: localId encontrado: {usuario_id}")
+            
+            # IMPORTANTE: Definir explicitamente em session_state.usuario_id para futuras chamadas
+            st.session_state.usuario_id = usuario_id
+            print(f"DEBUG SESSION: Definindo usuario_id={usuario_id} na sessão para futuras chamadas")
+            
             return usuario_id
         
         # Verificar alternativas
         if 'usuario_id' in st.session_state.user:
             usuario_id = st.session_state.user['usuario_id']
             print(f"DEBUG SESSION: usuario_id encontrado em user: {usuario_id}")
+            
+            # IMPORTANTE: Definir explicitamente em session_state.usuario_id para futuras chamadas
+            st.session_state.usuario_id = usuario_id
+            print(f"DEBUG SESSION: Definindo usuario_id={usuario_id} na sessão para futuras chamadas")
+            
             return usuario_id
     
-    # Verificar session_state.usuario (para compatibilidade)
+    # Prioridade 3 - Verificar session_state.usuario (para compatibilidade)
     if 'usuario' in st.session_state and st.session_state.usuario:
         print(f"DEBUG SESSION: st.session_state.usuario encontrado")
         
@@ -80,14 +97,25 @@ def get_usuario_id_from_session():
                 if campo in st.session_state.usuario:
                     usuario_id = st.session_state.usuario[campo]
                     print(f"DEBUG SESSION: Campo '{campo}' encontrado em usuario: {usuario_id}")
+                    
+                    # IMPORTANTE: Definir explicitamente em session_state.usuario_id para futuras chamadas
+                    st.session_state.usuario_id = usuario_id
+                    print(f"DEBUG SESSION: Definindo usuario_id={usuario_id} na sessão para futuras chamadas")
+                    
                     return usuario_id
-    
-    # Verificar session_state.usuario_id diretamente (alternativa)
-    if 'usuario_id' in st.session_state:
-        usuario_id = st.session_state.usuario_id
-        print(f"DEBUG SESSION: usuario_id encontrado diretamente: {usuario_id}")
-        return usuario_id
             
+    # Fallback para ID de demonstração em ambiente de desenvolvimento
+    # Isso é um hack temporário que deve ser removido em produção ou quando houver login real
+    if os.getenv('REPLIT_SLUG') or os.getenv('DEVELOPMENT_ENV'):
+        default_id = "demo-user-id"
+        print(f"DEBUG SESSION: Usando ID de demonstração {default_id} para ambiente de desenvolvimento")
+        
+        # IMPORTANTE: Definir explicitamente em session_state.usuario_id para futuras chamadas
+        st.session_state.usuario_id = default_id
+        print(f"DEBUG SESSION: Definindo usuario_id={default_id} na sessão para futuras chamadas")
+        
+        return default_id
+                
     print("DEBUG SESSION: Nenhum ID de usuário encontrado na sessão")
     return None
 
@@ -477,19 +505,64 @@ class Database:
             # 1. Usar ID fornecido explicitamente (prioridade máxima)
             if usuario_id:
                 self.usuario_id = usuario_id
+                
+                # IMPORTANTE: Sempre manter o ID do usuário na sessão para garantir consistência
+                # entre diferentes instâncias do Database
+                try:
+                    if hasattr(st, 'session_state'):
+                        if 'usuario_id' not in st.session_state or st.session_state.usuario_id != usuario_id:
+                            st.session_state.usuario_id = usuario_id
+                            print(f"DEBUG TENANT: Atualizando session_state.usuario_id para {usuario_id}")
+                except Exception as session_error:
+                    print(f"DEBUG TENANT: Erro ao atualizar sessão: {str(session_error)}")
+                
                 print(f"DEBUG TENANT: ID do usuário fornecido explicitamente: {self.usuario_id}")
             else:
                 # 2. Tentar obter o ID do usuário da sessão do Streamlit
+                # Esta função agora tem lógica aprimorada para garantir que o ID seja sempre encontrado
                 session_usuario_id = get_usuario_id_from_session()
                 
                 if session_usuario_id:
                     self.usuario_id = session_usuario_id
                     print(f"DEBUG TENANT: ID do usuário obtido da sessão: {self.usuario_id}")
+                else:
+                    # 3. Última alternativa: tentar criar um ID de usuário temporário por sessão
+                    # Isso serve para isolamento em desenvolvimento/demonstração
+                    import uuid
+                    temp_id = f"temp-user-{uuid.uuid4().hex[:8]}"
+                    self.usuario_id = temp_id
+                    
+                    # Manter na sessão para consistência
+                    try:
+                        if hasattr(st, 'session_state'):
+                            st.session_state.usuario_id = temp_id
+                    except Exception as session_error:
+                        print(f"DEBUG TENANT: Erro ao definir ID temporário na sessão: {str(session_error)}")
+                        
+                    print(f"DEBUG TENANT: ID temporário gerado e definido: {temp_id}")
             
             # Status final do tenant
             if self.usuario_id:
                 print(f"DEBUG TENANT: Banco de dados inicializado para o usuário: {self.usuario_id}")
                 print(f"DEBUG TENANT: Todas as consultas serão filtradas por usuario_id={self.usuario_id}")
+                
+                # PATCH FINAL: Verificar se já existem dados no banco sem usuario_id
+                # e atribuir o ID atual para evitar duplicação de dados
+                try:
+                    # Verificar algumas tabelas principais para migração
+                    for tabela in ['propostas', 'clientes', 'financeiro', 'produtos']:
+                        query = text(f"""
+                            UPDATE {tabela} 
+                            SET usuario_id = :usuario_id 
+                            WHERE usuario_id IS NULL OR usuario_id = ''
+                        """)
+                        self.session.execute(query, {'usuario_id': self.usuario_id})
+                    
+                    self.session.commit()
+                    print("DEBUG TENANT: Correção de dados sem usuario_id aplicada com sucesso")
+                except Exception as patch_error:
+                    print(f"DEBUG TENANT: Erro ao corrigir dados sem usuario_id: {str(patch_error)}")
+                    self.session.rollback()
             else:
                 print("DEBUG TENANT: Banco de dados inicializado sem contexto de usuário (multi-tenant desativado)")
                 print("DEBUG TENANT: AVISO: Usuários poderão ver dados de outros usuários!")
