@@ -280,8 +280,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run regenerar_lancamentos.py --server.port 8600 --server.address 0.0.0.0"
-waitForPort = 8600
+args = "streamlit run regenerar_lancamentos.py"
 
 [[workflows.workflow]]
 name = "Planos Landing"

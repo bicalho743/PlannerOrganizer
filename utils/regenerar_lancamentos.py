@@ -177,31 +177,10 @@ def regenerar_lancamentos(proposta_id: int) -> Dict[str, Any]:
                 # Calcular o valor da comissão (5% para todos)
                 valor_comissao = float(valor_fornecedor) * 0.05
                 
-                # Criar lançamento de comissão para este fornecedor
-                try:
-                    cursor.execute("""
-                        INSERT INTO financeiro 
-                        (descricao, valor, data, categoria, subcategoria, 
-                        tipo, proposta_id, status, classificacao, usuario_id)
-                        VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id
-                    """, (
-                        f"Comissão de 5% - Fornecedor {nome_fornecedor} - Proposta #{numero}",
-                        valor_comissao,
-                        "Comissão sobre fornecedores",
-                        "Comissão de Fornecedor",
-                        "Receita",
-                        proposta_id,
-                        "Pendente",
-                        "contas_a_receber",
-                        usuario_id
-                    ))
-                    
-                    id_lancamento = cursor.fetchone()[0]
-                    lancamentos_gerados += 1
-                    logger.info(f"Lançamento de comissão criado (ID: {id_lancamento}) para fornecedor {nome_fornecedor}")
-                except Exception as e:
-                    logger.error(f"Erro ao criar lançamento de comissão para fornecedor {nome_fornecedor}: {str(e)}")
+                # Não criamos mais lançamentos automáticos de comissão para fornecedores
+                # Apenas registramos o valor para fins informativos
+                logger.info(f"Comissão calculada para fornecedor {nome_fornecedor}: R$ {valor_comissao:.2f} (lançamento não criado)")
+                logger.info(f"Os lançamentos de comissão devem ser criados manualmente pelo usuário")
         
         # 3. Buscar acréscimos do tipo OUTRO
         cursor.execute("""
@@ -252,30 +231,10 @@ def regenerar_lancamentos(proposta_id: int) -> Dict[str, Any]:
         for assistente in assistentes:
             id_assistente, desc_assistente, valor_assistente = assistente
             if valor_assistente and float(valor_assistente) > 0:
-                try:
-                    cursor.execute("""
-                        INSERT INTO financeiro 
-                        (descricao, valor, data, categoria, subcategoria, 
-                        tipo, proposta_id, status, classificacao, usuario_id)
-                        VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id
-                    """, (
-                        f"Assistente: {desc_assistente} - Proposta #{numero}",
-                        valor_assistente,
-                        "Pagamento Equipe/Assistentes",
-                        "Assistentes", 
-                        "Despesa",
-                        proposta_id,
-                        "Pendente",
-                        "contas_a_pagar",
-                        usuario_id
-                    ))
-                    
-                    id_lancamento = cursor.fetchone()[0]
-                    lancamentos_gerados += 1
-                    logger.info(f"Lançamento de assistente criado (ID: {id_lancamento}) para {desc_assistente}")
-                except Exception as e:
-                    logger.error(f"Erro ao criar lançamento para assistente {desc_assistente}: {str(e)}")
+                # Não criamos mais lançamentos automáticos para assistentes
+                # Apenas registramos o valor para fins informativos
+                logger.info(f"Assistente {desc_assistente}: R$ {float(valor_assistente):.2f} (lançamento não criado)")
+                logger.info(f"Os lançamentos para assistentes devem ser criados manualmente pelo usuário")
         
         # 5. Verificar se existe venda associada a esta proposta
         cursor.execute("""

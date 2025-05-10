@@ -137,31 +137,15 @@ def finalizar_proposta_segura(proposta_id):
                         if fornecedor_cadastro and hasattr(fornecedor_cadastro, 'percentual_comissao'):
                             percentual_comissao = fornecedor_cadastro.percentual_comissao
                     
-                    # Se tiver percentual de comissão e não existir transação anterior, criar
+                    # Calculamos o valor da comissão para fins informativos, mas não criamos o lançamento
                     if percentual_comissao and percentual_comissao > 0 and not transacao_comissao_existente:
                         valor_comissao = valor_fornecedor * (percentual_comissao / 100)
                         
                         if valor_comissao > 0:
-                            print(f"DEBUG FINALIZAR: Criando lançamento de comissão de {percentual_comissao}% para fornecedor {fornecedor.fornecedor}")
+                            print(f"DEBUG FINALIZAR: Calculando comissão de {percentual_comissao}% para fornecedor {fornecedor.fornecedor}: R$ {valor_comissao:.2f} (lançamento não criado)")
                             
-                            transacao_comissao = Transacao(
-                                tipo="Receita",
-                                descricao=f"Comissão de {percentual_comissao}% - {fornecedor.fornecedor} - Proposta #{proposta.numero}",
-                                valor=valor_comissao,
-                                data=datetime.now().date(),
-                                categoria="Comissão sobre fornecedores",
-                                subcategoria="Comissão de Fornecedor",
-                                tipo_receita="comissao",
-                                origem_id=fornecedor.id,
-                                origem_tipo="comissao_fornecedor",
-                                proposta_id=proposta.id,
-                                tipo_conta="PF",
-                                status="Pendente",
-                                classificacao="contas_a_receber",
-                                usuario_id=proposta.usuario_id
-                            )
-                            session.add(transacao_comissao)
-                            resultado["lancamentos"]["gerados"] += 1
+                            # Não criamos mais o lançamento de comissão aqui
+                            # Apenas registramos o valor para o relatório
                             
                             # Adicionar valor das comissões ao resultado
                             if "comissoes" not in resultado["lancamentos"]["valores"]:
@@ -244,7 +228,7 @@ def finalizar_proposta_segura(proposta_id):
                 # Registrar valor total de outros acréscimos no resultado
                 resultado["lancamentos"]["valores"]["outros"] = valor_total_outros
                 
-            # 7.3 Buscar acréscimos do tipo ASSISTENTE e gerar lançamentos financeiros
+            # 7.3 Buscar acréscimos do tipo ASSISTENTE apenas para contabilização, mas não gerar lançamentos
             assistentes = session.query(AcrescimoProposta).filter_by(
                 proposta_id=proposta.id, 
                 tipo="ASSISTENTE"
@@ -259,34 +243,12 @@ def finalizar_proposta_segura(proposta_id):
                     valor_assistente = float(assistente.valor) if assistente.valor else 0
                     valor_total_assistentes += valor_assistente
                     
-                    # Verificar se já existe uma transação para este assistente
-                    transacao_assistente_existente = session.query(Transacao).filter_by(
-                        proposta_id=proposta.id,
-                        origem_tipo="acrescimo_assistente",
-                        origem_id=assistente.id
-                    ).first()
-                    
-                    if not transacao_assistente_existente and valor_assistente > 0:
-                        print(f"DEBUG FINALIZAR: Criando lançamento para assistente: {assistente.descricao} - R$ {valor_assistente}")
+                    # Apenas registramos os valores para o relatório, não criamos lançamentos automáticos
+                    if valor_assistente > 0:
+                        print(f"DEBUG FINALIZAR: Assistente: {assistente.descricao} - R$ {valor_assistente} (lançamento não criado)")
                         
-                        transacao_assistente = Transacao(
-                            tipo="despesa_a_pagar",
-                            descricao=f"Assistente: {assistente.descricao} - Proposta #{proposta.numero}",
-                            valor=valor_assistente,
-                            data=datetime.now().date(),
-                            categoria="Pagamento Equipe/Assistentes",
-                            subcategoria="Assistentes",
-                            tipo_receita=None,
-                            origem_id=assistente.id,
-                            origem_tipo="acrescimo_assistente",
-                            proposta_id=proposta.id,
-                            tipo_conta="PF",
-                            status="Pendente",
-                            classificacao="contas_a_pagar",
-                            usuario_id=proposta.usuario_id
-                        )
-                        session.add(transacao_assistente)
-                        resultado["lancamentos"]["gerados"] += 1
+                        # Não criamos mais lançamentos automáticos para assistentes
+                        # O usuário precisa criar manualmente
                 
                 # Registrar valor total de assistentes no resultado
                 resultado["lancamentos"]["valores"]["assistentes"] = valor_total_assistentes

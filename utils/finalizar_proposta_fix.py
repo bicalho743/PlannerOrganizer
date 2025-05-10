@@ -441,31 +441,12 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                     
                     valor_total_fornecedores += valor_comissao
                     
-                    # 2.1. Gerar lançamento financeiro para comissão sobre fornecedor
-                    cursor.execute("""
-                        INSERT INTO financeiro 
-                        (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, 
-                         proposta_id, tipo_conta, status, classificacao, usuario_id)
-                        VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id
-                    """, (
-                        f"Comissão fornecedor {nome_fornecedor} - Proposta #{proposta_info['numero']} - {nome_cliente}",
-                        valor_comissao,  # Valor da comissão calculada
-                        "Comissão sobre fornecedores",  # Categoria
-                        "Comissão de Fornecedor",  # Subcategoria
-                        "Receita",  # Tipo
-                        id_fornecedor,  # origem_id
-                        "comissao_fornecedor",  # origem_tipo
-                        proposta_id,  # proposta_id
-                        "PF",  # tipo_conta
-                        "Pendente",  # status
-                        "contas_a_receber",  # classificacao
-                        proposta_info['usuario_id']  # usuario_id
-                    ))
+                    # 2.1. Não geramos mais lançamento financeiro para comissão sobre fornecedor
+                    # Apenas registramos o valor para fins de informação
+                    logger.info(f"Comissão sobre fornecedor {nome_fornecedor} calculada: R${valor_comissao:.2f} (lançamento não criado)")
                     
-                    lancamento_id = cursor.fetchone()[0]
-                    logger.info(f"Lançamento financeiro de Comissão de Fornecedor criado: #{lancamento_id}, Valor: R${valor_comissao:.2f}")
-                    lancamentos_gerados += 1
+                    # Mantenha a contabilização mas não gere o lançamento
+                    # O usuário deverá criar os lançamentos manualmente quando desejar
             
             # Adicionar o valor dos fornecedores ao resultado
             resultado["lancamentos"]["valores"]["fornecedores"] = valor_total_fornecedores
@@ -486,31 +467,12 @@ def finalizar_proposta_segura(proposta_id: int) -> Dict[str, Any]:
                 if valor_assistente and float(valor_assistente) > 0:
                     valor_total_assistentes += float(valor_assistente)
                     
-                    # 3.1. Gerar lançamento financeiro para pagamento de assistente
-                    cursor.execute("""
-                        INSERT INTO financeiro 
-                        (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, 
-                         proposta_id, tipo_conta, status, classificacao, usuario_id)
-                        VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id
-                    """, (
-                        f"Pagamento assistente {nome_assistente} - Proposta #{proposta_info['numero']} - {nome_cliente}",
-                        valor_assistente,
-                        "Pagamento Equipe/Assistentes",  # Categoria
-                        "Assistentes",  # Subcategoria
-                        "Despesa",  # Tipo
-                        id_assistente,  # origem_id
-                        "pagamento_assistente",  # origem_tipo
-                        proposta_id,  # proposta_id
-                        "PF",  # tipo_conta
-                        "Pendente",  # status
-                        "contas_a_pagar",  # classificacao
-                        proposta_info['usuario_id']  # usuario_id
-                    ))
+                    # 3.1. Não geramos mais lançamento financeiro para pagamento de assistente
+                    # Apenas registramos o valor para fins de informação
+                    logger.info(f"Pagamento para assistente {nome_assistente} registrado: R${valor_assistente:.2f} (lançamento não criado)")
                     
-                    lancamento_id = cursor.fetchone()[0]
-                    logger.info(f"Lançamento financeiro de Pagamento de Assistente criado: #{lancamento_id}, Valor: R${valor_assistente:.2f}")
-                    lancamentos_gerados += 1
+                    # Mantenha a contabilização mas não gere o lançamento
+                    # O usuário deverá criar os lançamentos manualmente quando desejar
             
             # Adicionar o valor dos assistentes ao resultado
             resultado["lancamentos"]["valores"]["assistentes"] = valor_total_assistentes
