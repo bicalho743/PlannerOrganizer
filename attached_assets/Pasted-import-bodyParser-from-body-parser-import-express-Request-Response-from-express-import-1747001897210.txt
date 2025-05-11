@@ -1,0 +1,64 @@
+import bodyParser from "body-parser";
+import express, { Request, Response } from "express";
+import Stripe from "stripe";
+import admin from "firebase-admin";
+import { firestore } from "./firebase"; // ou ajuste conforme sua estrutura
+
+const app = express();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2023-10-16",
+});
+
+// Middleware para capturar o corpo bruto do webhook
+app.post("/api/webhook", bodyParser.raw({ type: "application/json" }), async (req: Request, res: Response) => {
+  const sig = req.headers["stripe-signature"];
+  const endpointSecret = "whsec_GXJLDCh03QNkhQOYRANC2vlneLItCfZ8";
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig as string, endpointSecret);
+  } catch (err: any) {
+    console.error("❌ Erro na verificação do webhook:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Evento de sucesso no pagamento ou fim do trial
+  if (event.type === "checkout.session.completed" || event.type === "invoice.paid") {
+    const session = event.data.object as any;
+    const email = session.customer_email || session.customer_details?.email;
+
+    if (!email) {
+      console.warn("⚠️ Email não encontrado na sessão");
+      return res.status(400).send("Email ausente na sessão do Stripe");
+    }
+
+    const userRef = firestore.collection("pendingUsers").doc(email);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      console.warn("⚠️ Usuário não encontrado no Firestore:", email);
+      return res.status(404).send("Usuário não encontrado");
+    }
+
+    const { password, name, planType, checkoutComplete } = userDoc.data();
+
+    if (!checkoutComplete) {
+      try {
+        await admin.auth().createUser({
+          email,
+          password,
+          displayName: name
+        });
+
+        await userRef.update({ checkoutComplete: true });
+
+        console.log("✅ Usuário criado no Firebase:", email);
+      } catch (err) {
+        console.error("❌ Erro ao criar usuário no Firebase:", err);
+      }
+    }
+  }
+
+  res.status(200).json({ received: true });
+});
