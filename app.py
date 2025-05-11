@@ -887,10 +887,36 @@ if not st.session_state.authenticated:
         base_url = f"https://{os.environ.get('REPLIT_SLUG', '')}--{os.environ.get('REPL_OWNER', '')}.repl.co"
         
         st.markdown(f"""
+        <!-- Seção de FAQ -->
+        <div style="margin-bottom: 30px; background-color: #f8f9fa; padding: 20px; border-radius: 10px;">
+            <h2 style="text-align: center; margin-bottom: 25px; color: #333;">Perguntas Frequentes</h2>
+            
+            <div style="margin-bottom: 20px;">
+                <h3 style="color: #026937; margin-bottom: 10px; font-size: 1.1rem;">Como o PersonalManager me ajuda a manter o contato com meus clientes?</h3>
+                <p style="color: #555; line-height: 1.6;">O sistema possui lembretes automáticos para datas importantes, como aniversários dos clientes e datas de follow-up. Você receberá notificações quando um cliente não contratar seus serviços por mais de 3 meses, permitindo que você faça contato no momento certo.</p>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <h3 style="color: #026937; margin-bottom: 10px; font-size: 1.1rem;">Preciso instalar algum software no meu computador?</h3>
+                <p style="color: #555; line-height: 1.6;">Não! O PersonalManager é um sistema totalmente baseado na web. Você pode acessá-lo de qualquer dispositivo (computador, tablet ou celular) com acesso à internet, sem necessidade de instalação.</p>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <h3 style="color: #026937; margin-bottom: 10px; font-size: 1.1rem;">Como funciona o período de teste gratuito?</h3>
+                <p style="color: #555; line-height: 1.6;">Você terá acesso completo a todas as funcionalidades do sistema por 7 dias, sem compromisso. Se decidir não continuar, basta cancelar antes do fim do período de teste e não será cobrado. Não solicitamos dados de cartão de crédito para o período de teste.</p>
+            </div>
+            
+            <div style="margin-bottom: 10px;">
+                <h3 style="color: #026937; margin-bottom: 10px; font-size: 1.1rem;">O sistema guarda histórico de atendimentos aos clientes?</h3>
+                <p style="color: #555; line-height: 1.6;">Sim! Você pode registrar cada atendimento realizado, com data, valores, tipo de serviço e observações. Isso cria um histórico completo que permite você analisar quais clientes estão inativos e precisam ser contatados novamente.</p>
+            </div>
+        </div>
+        
+        <!-- Botão Ver Planos e Preços (agora verde) -->
         <a href="/?planos_standalone_page=true" 
            target="_blank" 
            id="planos-link" 
-           style="display: inline-block; background-color: #4F4F52; color: white; 
+           style="display: inline-block; background-color: #026937; color: white; 
                   text-align: center; padding: 1rem 2rem; text-decoration: none; 
                   border-radius: 10px; width: 100%; font-size: 1.2rem; 
                   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); font-weight: 600;

@@ -11,11 +11,16 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # CONFIGURAÇÕES GERAIS DO BREVO
+# A chave usada no exemplo Node.js
 api_key = os.getenv("BREVO_API_KEY", "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")
 # Forçar o uso da lista 7, independente do que estiver nas variáveis de ambiente
 lista_brevo_id = "7"  # ID da lista do Brevo onde os e-mails serão armazenados
 EMAIL_REMETENTE = "solanobicalho@yahoo.com.br"
 NOME_REMETENTE = "Equipe Planner Organizer"
+
+# Imprimir configurações na inicialização para facilitar debug
+logger.info(f"🔑 Brevo API configurada. Lista ID: {lista_brevo_id}")
+logger.info(f"📧 E-mail remetente configurado: {EMAIL_REMETENTE}")
 
 def adicionar_contato_brevo(email, nome_completo=""):
     """
@@ -29,8 +34,12 @@ def adicionar_contato_brevo(email, nome_completo=""):
     Returns:
         dict: Resultado da operação com status e mensagens
     """
+    # Log detalhado para diagnóstico
+    logger.info(f"⭐ INICIANDO ADIÇÃO DE CONTATO: {email}, nome: {nome_completo}")
+    
     # Verificar se o email é válido
     if not email or '@' not in email:
+        logger.error(f"❌ E-mail inválido: {email}")
         return {
             "success": False,
             "message": "Email inválido."
@@ -38,32 +47,29 @@ def adicionar_contato_brevo(email, nome_completo=""):
     
     # Verificar se temos a API Key configurada
     if not api_key:
-        logger.warning("Chave da API Brevo não encontrada nas variáveis de ambiente.")
+        logger.warning("❌ Chave da API Brevo não encontrada nas variáveis de ambiente.")
         return salvar_email_localmente(email, nome_completo)
     
+    # Exibir versão parcial da chave para debug (sem mostrar a chave completa)
+    masked_key = api_key[:8] + "..." + api_key[-4:]
+    logger.info(f"🔑 Usando API KEY: {masked_key}")
+    
+    # Configuração da API
     configuration = sib_api_v3_sdk.Configuration()
     configuration.api_key['api-key'] = api_key
 
     api_instance = sib_api_v3_sdk.ContactsApi(sib_api_v3_sdk.ApiClient(configuration))
     
-    # Processa o ID da lista, garantindo que seja um número
-    list_id = 7  # ID padrão fixo da lista "Leads Planner Organizer"
-    if lista_brevo_id:
-        try:
-            # Extrair número do ID (removendo caracteres como '#')
-            cleaned_id = ''.join(c for c in lista_brevo_id if c.isdigit())
-            if cleaned_id:
-                list_id = int(cleaned_id)
-                logger.info(f"Usando ID da lista Brevo: {list_id} (original: '{lista_brevo_id}')")
-        except (ValueError, TypeError) as e:
-            logger.error(f"Erro ao processar ID da lista: {e}. Usando ID padrão {list_id}")
+    # Fixa o ID da lista como 7 para a lista "Leads Planner Organizer"
+    list_id = 7
+    logger.info(f"📋 Lista alvo: ID {list_id}")
     
     # Dividir nome e sobrenome
     partes_nome = nome_completo.split(' ', 1) if nome_completo else ["", ""]
     primeiro_nome = partes_nome[0] if partes_nome else ""
     sobrenome = partes_nome[1] if len(partes_nome) > 1 else ""
     
-    # Preparar atributos do contato
+    # Preparar atributos do contato - usando o formato do exemplo Node.js
     atributos = {
         "NOME": nome_completo,
         "FIRSTNAME": primeiro_nome,
@@ -72,7 +78,9 @@ def adicionar_contato_brevo(email, nome_completo=""):
         "ORIGEM": "Landing Page Planner Organizer"
     }
     
-    # Tenta criar contato (para novos usuários)
+    logger.info(f"📝 Atributos configurados: {atributos}")
+    
+    # ABORDAGEM 1: USANDO OBJETO CreateContact
     try:
         # Criar objeto de contato do Brevo
         create_contact = sib_api_v3_sdk.CreateContact()
@@ -82,13 +90,29 @@ def adicionar_contato_brevo(email, nome_completo=""):
         create_contact.attributes = atributos
         create_contact.list_ids = [list_id]  # Sempre adicionar à lista 7
         
-        # Tentar adicionar updateEnabled = true (usando dict diretamente)
-        contact_dict = create_contact.to_dict()
-        contact_dict["updateEnabled"] = True
+        # Log dos dados que serão enviados
+        logger.info(f"📤 Enviando dados para API Brevo: email={email}, list_ids=[{list_id}]")
         
         # Tenta criar o contato via método do SDK
         api_instance.create_contact(create_contact)
         logger.info(f"✅ Novo contato {email} adicionado com sucesso na lista {list_id} do Brevo.")
+        
+        # Verificar se o contato foi adicionado à lista correta
+        try:
+            # Busca o contato para confirmar
+            contato_info = api_instance.get_contact_info(email)
+            lista_ids = contato_info.list_ids if hasattr(contato_info, 'list_ids') else []
+            
+            if list_id in lista_ids:
+                logger.info(f"✅ Confirmado: contato {email} está na lista {list_id}.")
+            else:
+                logger.warning(f"⚠️ Contato adicionado mas não está na lista {list_id}. Listas atuais: {lista_ids}")
+                # Tenta adicionar explicitamente à lista 7
+                api_instance.add_contact_to_list(list_id, {'emails': [email]})
+                logger.info(f"🔄 Adicionado explicitamente o contato {email} à lista {list_id}.")
+        except Exception as check_error:
+            logger.error(f"❌ Erro ao verificar se contato foi adicionado à lista: {check_error}")
+        
         return {
             "success": True,
             "message": f"Obrigado! Seu e-mail {email} foi registrado com sucesso.",
@@ -96,8 +120,13 @@ def adicionar_contato_brevo(email, nome_completo=""):
         }
     except ApiException as e:
         # Verificar se é erro de contato duplicado (já existe)
-        if hasattr(e, 'body') and ('duplicate_parameter' in str(e.body) or 'Contact already exist' in str(e.body)):
-            logger.info(f"Contato {email} já existe no Brevo. Tentando atualizar...")
+        erro_duplicado = False
+        if hasattr(e, 'body'):
+            body_str = str(e.body).lower()
+            erro_duplicado = 'duplicate_parameter' in body_str or 'contact already exist' in body_str or 'already exists' in body_str
+            
+        if erro_duplicado:
+            logger.info(f"⚠️ Contato {email} já existe no Brevo. Tentando atualizar...")
             
             try:
                 # Busca o contato existente
@@ -108,7 +137,7 @@ def adicionar_contato_brevo(email, nome_completo=""):
                 
                 if list_id not in lista_ids_atuais:
                     # Adicionar à lista 7 se ainda não estiver
-                    logger.info(f"Adicionando contato existente {email} à lista {list_id}...")
+                    logger.info(f"📝 Adicionando contato existente {email} à lista {list_id}...")
                     
                     # Adicionar o contato à lista
                     try:
@@ -117,12 +146,13 @@ def adicionar_contato_brevo(email, nome_completo=""):
                     except ApiException as add_error:
                         logger.error(f"❌ Erro ao adicionar contato à lista: {add_error}")
                 else:
-                    logger.info(f"Contato {email} já está na lista {list_id}.")
+                    logger.info(f"✓ Contato {email} já está na lista {list_id}.")
                 
                 # Atualiza os atributos do contato mesmo assim para manter os dados atualizados
                 update_data = {
                     "attributes": atributos
                 }
+                logger.info(f"📝 Atualizando atributos do contato: {atributos}")
                 api_instance.update_contact(email, update_data)
                 logger.info(f"✅ Atributos do contato {email} atualizados com sucesso.")
                 
