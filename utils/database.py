@@ -547,21 +547,23 @@ class Database:
                 print(f"DEBUG TENANT: Todas as consultas serão filtradas por usuario_id={self.usuario_id}")
                 
                 # PATCH FINAL: Verificar se já existem dados no banco sem usuario_id
-                # e atribuir o ID atual para evitar duplicação de dados
+                # NÃO atribuir mais automaticamente o ID do usuário para registros sem proprietário
+                # Isso estava causando problemas de compartimentalização
+                
+                # Apenas mostrar quantos registros não têm proprietário para fins de diagnóstico
                 try:
-                    # Verificar algumas tabelas principais para migração
                     for tabela in ['propostas', 'clientes', 'financeiro', 'produtos']:
                         query = text(f"""
-                            UPDATE {tabela} 
-                            SET usuario_id = :usuario_id 
+                            SELECT COUNT(*) FROM {tabela} 
                             WHERE usuario_id IS NULL OR usuario_id = ''
                         """)
-                        self.session.execute(query, {'usuario_id': self.usuario_id})
+                        result = self.session.execute(query).scalar()
+                        if result > 0:
+                            print(f"DEBUG TENANT: {result} registros na tabela {tabela} sem proprietário definido")
                     
-                    self.session.commit()
-                    print("DEBUG TENANT: Correção de dados sem usuario_id aplicada com sucesso")
+                    print("DEBUG TENANT: Verificação de registros sem proprietário concluída")
                 except Exception as patch_error:
-                    print(f"DEBUG TENANT: Erro ao corrigir dados sem usuario_id: {str(patch_error)}")
+                    print(f"DEBUG TENANT: Erro ao verificar registros sem proprietário: {str(patch_error)}")
                     self.session.rollback()
             else:
                 print("DEBUG TENANT: Banco de dados inicializado sem contexto de usuário (multi-tenant desativado)")
@@ -906,17 +908,22 @@ class Database:
             
     def get_clientes(self):
         """
-        Retorna todos os clientes do usuário atual
+        Retorna todos os clientes do usuário atual - com filtro obrigatório por multilocação
         """
         def query():
-            # Aplicar filtro por usuário se disponível
+            # SEMPRE aplicar filtro por usuário para garantir isolamento de dados
             query = self.session.query(Cliente)
             
             if self.usuario_id:
                 print(f"DEBUG GET_CLIENTES: Filtrando clientes por usuario_id={self.usuario_id}")
+                # Filtro ESTRITO: apenas clientes explicitamente associados ao usuário atual
                 query = query.filter(Cliente.usuario_id == self.usuario_id)
             else:
-                print("DEBUG GET_CLIENTES: AVISO - Buscando todos os clientes sem filtro de usuário!")
+                # Comportamento de segurança: se não há ID de usuário, não retornar nenhum cliente
+                print("DEBUG GET_CLIENTES: SEGURANÇA - Sem ID de usuário, retornando lista vazia!")
+                return pd.DataFrame(columns=['id', 'nome', 'telefone', 'email', 'estado', 'cidade', 
+                                            'bairro', 'endereco', 'data_aniversario', 
+                                            'origem_cliente', 'data_cadastro', 'observacoes', 'usuario_id'])
                 
             clientes = query.all()
             
@@ -1066,6 +1073,11 @@ class Database:
             int: ID do cliente adicionado
         """
         def query():
+            # Verificar se temos um ID de usuário válido antes de continuar
+            if not self.usuario_id:
+                print("DEBUG ADD_CLIENTE: SEGURANÇA - Tentativa de criar cliente sem usuário válido!")
+                raise ValueError("ID de usuário não definido. Não é possível criar o cliente sem proprietário.")
+                
             # Obter o maior ID atual
             max_id = self.session.query(func.max(Cliente.id)).scalar()
 
@@ -1115,6 +1127,11 @@ class Database:
             int: ID do cliente adicionado
         """
         def query():
+            # Verificar se temos um ID de usuário válido antes de continuar
+            if not self.usuario_id:
+                print("DEBUG ADD_CLIENTE_WITH_ID: SEGURANÇA - Tentativa de criar cliente sem usuário válido!")
+                raise ValueError("ID de usuário não definido. Não é possível criar o cliente sem proprietário.")
+                
             cliente = Cliente(
                 id=id,  # Usar o ID especificado
                 nome=nome,
@@ -1158,16 +1175,18 @@ class Database:
                     except Exception as e:
                         print(f"DEBUG GET_PROPOSTAS: Erro ao recuperar ID da sessão: {str(e)}")
                 
-                # Aplicar filtro de usuário
+                # Aplicar filtro de usuário - com segurança aprimorada
                 if self.usuario_id:
                     print(f"DEBUG GET_PROPOSTAS: Filtrando propostas por usuario_id={self.usuario_id}")
+                    # Filtro ESTRITO: apenas propostas explicitamente associadas ao usuário atual
                     query = query.filter(Proposta.usuario_id == self.usuario_id)
                 else:
-                    import uuid
-                    temp_id = f"temp-user-{uuid.uuid4().hex[:8]}"
-                    self.usuario_id = temp_id
-                    print(f"DEBUG GET_PROPOSTAS: Usando ID temporário {temp_id} para isolamento")
-                    query = query.filter(Proposta.usuario_id == self.usuario_id)
+                    # Comportamento de segurança: se não há ID de usuário válido, retornar lista vazia
+                    print("DEBUG GET_PROPOSTAS: SEGURANÇA - Sem ID de usuário válido, retornando lista vazia!")
+                    colunas = ['id', 'numero', 'cliente_id', 'cliente_nome', 'descricao', 'valor', 
+                              'status', 'tipo_proposta', 'data_inicio', 'data_fim', 'status_pagamento_base',
+                              'prazo_entrega', 'data_proposta', 'status_execucao', 'usuario_id']
+                    return pd.DataFrame(columns=colunas)
                 
                 # Executar consulta
                 propostas_com_clientes = query.all()
@@ -1281,6 +1300,11 @@ class Database:
             raise ValueError(f"Erro ao converter valores: {str(e)}")
         
         def query():
+            # Verificar se temos um ID de usuário válido antes de continuar
+            if not self.usuario_id:
+                print("DEBUG ADD_PROPOSTA: SEGURANÇA - Tentativa de criar proposta sem usuário válido!")
+                raise ValueError("ID de usuário não definido. Não é possível criar a proposta sem proprietário.")
+                
             # Gerar próximo número de proposta igual ao ID (criar com ID=1 se for a primeira proposta)
             ultimo_id = self.session.query(func.max(Proposta.id)).scalar()
             proximo_id = 1 if ultimo_id is None else int(ultimo_id) + 1
@@ -1361,11 +1385,19 @@ class Database:
                         WHERE 1=1 
                     """
                     
-                    # Adicionar filtro de usuário se necessário
+                    # SEMPRE aplicar filtro por usuário para garantir isolamento de dados
                     params = {}
                     if self.usuario_id:
+                        print(f"DEBUG GET_FINANCEIRO: Filtrando transações por usuario_id={self.usuario_id}")
                         sql += " AND usuario_id = :usuario_id"
                         params['usuario_id'] = self.usuario_id
+                    else:
+                        # Comportamento de segurança: se não há ID de usuário válido, retornar lista vazia
+                        print("DEBUG GET_FINANCEIRO: SEGURANÇA - Sem ID de usuário válido, retornando lista vazia!")
+                        session.close()
+                        colunas = ['id', 'tipo', 'descricao', 'valor', 'data_vencimento', 'data_pagamento', 
+                                  'status', 'categoria', 'proposta_id', 'cliente_id', 'usuario_id']
+                        return pd.DataFrame(columns=colunas)
                     
                     # Adicionar filtro de status se necessário
                     if not include_all:
@@ -1474,6 +1506,11 @@ class Database:
             int: ID da transação adicionada
         """
         def query():
+            # Verificar se temos um ID de usuário válido antes de continuar
+            if not self.usuario_id:
+                print("DEBUG ADD_TRANSACAO: SEGURANÇA - Tentativa de criar transação financeira sem usuário válido!")
+                raise ValueError("ID de usuário não definido. Não é possível criar a transação sem proprietário.")
+                
             transacao = Transacao(
                 tipo=tipo,
                 descricao=descricao,
