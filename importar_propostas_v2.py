@@ -291,6 +291,12 @@ def importar_propostas_v2(arquivo, debug_mode=False, usar_cliente_id=False):
                 # Variáveis para processar proposta
                 proposta_data = {}
                 
+                # Adicionar o ID do usuário atual se estiver disponível na sessão
+                if 'usuario_id' in st.session_state and st.session_state.usuario_id:
+                    proposta_data['usuario_id'] = st.session_state.usuario_id
+                    if debug_mode:
+                        st.info(f"Usando usuario_id={st.session_state.usuario_id} para a proposta na linha {idx + 2}")
+                
                 # 5.1 Processar cliente_id
                 # Inicializar como None e atribuir mais tarde se tudo estiver correto
                 proposta_data['cliente_id'] = None

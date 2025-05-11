@@ -52,6 +52,12 @@ def salvar_proposta(db, cliente_id_arg, descricao_arg,
             ultimo_numero = session.query(func.max(Proposta.numero)).scalar()
             proximo_numero = 1 if ultimo_numero is None else int(ultimo_numero) + 1
             
+            # Verificar se existe ID de usuário na sessão
+            usuario_id = None
+            if 'usuario_id' in st.session_state:
+                usuario_id = st.session_state.usuario_id
+                print(f"DEBUG MULTI-TENANT: Usando usuario_id={usuario_id} para nova proposta via módulo direto")
+            
             # Criar objeto Proposta
             proposta = Proposta(
                 numero=proximo_numero,
@@ -62,7 +68,8 @@ def salvar_proposta(db, cliente_id_arg, descricao_arg,
                 tipo_proposta=tipo_proposta_arg,
                 data_inicio=data_inicio_arg,
                 data_fim=data_fim_arg,
-                prazo_entrega=prazo_entrega_arg
+                prazo_entrega=prazo_entrega_arg,
+                usuario_id=usuario_id
             )
             
             # Adicionar à sessão

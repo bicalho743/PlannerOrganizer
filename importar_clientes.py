@@ -113,6 +113,11 @@ def importar_clientes_com_id(arquivo, db):
                     'observacoes': str(row.get('observacoes', '')).strip() if pd.notna(row.get('observacoes')) else None
                 }
                 
+                # Adicionar o ID do usuário atual se estiver disponível na sessão
+                if 'usuario_id' in st.session_state and st.session_state.usuario_id:
+                    cliente_data['usuario_id'] = st.session_state.usuario_id
+                    print(f"DEBUG MULTI-TENANT: Atribuindo usuario_id={st.session_state.usuario_id} ao cliente {nome}")
+                
                 # Remover valores None
                 cliente_data = {k: v for k, v in cliente_data.items() if v is not None}
                 

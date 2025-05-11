@@ -800,9 +800,15 @@ class Database:
                     
                     # Aplicar filtro multiusuário para DataFrames
                     if isinstance(result, pd.DataFrame) and 'usuario_id' in result.columns:
-                        # Filtrar por usuario_id
+                        # Filtrar por usuario_id, com tratamento correto para nulos
                         original_count = len(result)
-                        result = result[result['usuario_id'].fillna('') == self.usuario_id]
+                        
+                        # Consideramos que registros pertencem ao usuário atual se:
+                        # 1. usuário_id é igual ao ID do usuário atual, OU
+                        # 2. usuário_id é nulo (comportamento legado)
+                        result = result[(result['usuario_id'] == self.usuario_id) | 
+                                        (result['usuario_id'].isna())]
+                                        
                         filtered_count = len(result)
                         
                         # Registrar diagnóstico se houver diferença
@@ -851,7 +857,8 @@ class Database:
                 # Esta é uma segunda camada de proteção, caso algum registro não tenha sido filtrado pelo wrapper
                 if hasattr(self, 'usuario_id') and self.usuario_id and 'usuario_id' in result.columns:
                     original_count = len(result)
-                    result = result[result['usuario_id'].fillna('') == self.usuario_id]
+                    # Mesma lógica de filtro melhorada: registros do usuário atual OU registros sem usuário_id (legados)
+                    result = result[(result['usuario_id'] == self.usuario_id) | (result['usuario_id'].isna())]
                     if original_count != len(result):
                         print(f"ALERTA SEGURANÇA: Filtro secundário removeu {original_count - len(result)} registros de outros usuários")
                 # print(f"DEBUG: DataFrame processado com {len(result)} registros")
