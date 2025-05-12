@@ -256,7 +256,7 @@ def show():
     <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #026937;">
         <h4 style="margin-top: 0; color: #026937;">Portal do Cliente Stripe</h4>
         <p>Gerencie sua assinatura, atualize seus dados de pagamento e visualize suas faturas.</p>
-        <a href="https://billing.stripe.com/p/login/5kA8vGa998pJdzi5kk" target="_blank">
+        <a href="https://dashboard.stripe.com/billing/portal" target="_blank">
             <button style="background-color: #026937; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">
                 Acessar Portal do Cliente
             </button>
