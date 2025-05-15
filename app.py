@@ -923,9 +923,9 @@ if not st.session_state.authenticated:
         """, unsafe_allow_html=True)
     
     with right_col:
-        # Título da seção de login, sem a caixa container
+        # Título da seção de login, mais próximo das caixas de preenchimento
         st.markdown('''
-        <h2 style="text-align: center; color: #4F4F52; margin-top: -50px; margin-bottom: 5px;">Acesse sua conta</h2>
+        <h2 style="text-align: center; color: #4F4F52; margin-top: 0; margin-bottom: 0;">Acesse sua conta</h2>
         ''', unsafe_allow_html=True)
         
         # JavaScript para interceptar cliques no link de planos
@@ -945,9 +945,9 @@ if not st.session_state.authenticated:
         
         # Login apenas com e-mail (botões sociais removidos conforme solicitado)
         
-        # Formulário simples
+        # Formulário simples - aproximando a mensagem do título
         st.markdown('''
-        <div style="text-align: center; margin-bottom: 20px; color: #5A6A85;">
+        <div style="text-align: center; margin-top: 5px; margin-bottom: 10px; color: #5A6A85;">
             Entre com seu e-mail e senha para acessar o sistema
         </div>
         ''', unsafe_allow_html=True)
