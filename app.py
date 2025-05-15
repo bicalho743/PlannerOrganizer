@@ -879,144 +879,43 @@ if not st.session_state.authenticated:
         current_url = st.query_params
         base_url = f"https://{os.environ.get('REPLIT_SLUG', '')}--{os.environ.get('REPL_OWNER', '')}.repl.co"
         
-        # Seção de FAQ - Usando JavaScript para criar perguntas expansíveis/retráteis
-        st.markdown("## Perguntas Frequentes", unsafe_allow_html=True)
+        # Seção de FAQ usando o componente nativo do Streamlit
+        st.markdown("## Perguntas Frequentes")
         
-        # CSS e JavaScript para criar o FAQ expansível
-        faq_style = """
-        <style>
-            .faq-container {
-                border: 1px solid #eee;
-                border-radius: 10px;
-                padding: 20px;
-                margin-bottom: 20px;
-                font-family: 'Helvetica', 'Arial', sans-serif;
-            }
-            .faq-item {
-                margin-bottom: 15px;
-                border-bottom: 1px solid #f0f0f0;
-            }
-            .faq-question {
-                cursor: pointer;
-                color: #026937;
-                font-weight: 600;
-                font-size: 1.1rem;
-                margin-bottom: 10px;
-                padding: 8px 0;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            .faq-question:hover {
-                color: #038d49;
-            }
-            .faq-question::after {
-                content: "+";
-                font-size: 1.3rem;
-                margin-left: 10px;
-            }
-            .faq-question.active::after {
-                content: "-";
-            }
-            .faq-answer {
-                color: #555;
-                line-height: 1.6;
-                padding: 0 10px;
-                max-height: 0;
-                overflow: hidden;
-                transition: all 0.4s ease;
-                opacity: 0;
-            }
-            .faq-answer.show {
-                max-height: 500px;
-                padding-bottom: 15px;
-                opacity: 1;
-            }
-        </style>
-        """
+        # Container para o FAQ com borda
+        faq_container = st.container(border=True)
         
-        # JavaScript separado para melhor controle
-        faq_script = """
-        <script>
-            // Função executada imediatamente após o carregamento da página
-            (function() {
-                // Adicionar esta função à janela global para ser acessível pelo onclick
-                window.toggleFAQ = function(id) {
-                    const question = document.getElementById('question-' + id);
-                    const answer = document.getElementById('answer-' + id);
-                    
-                    // Fechar todas as outras respostas
-                    const allAnswers = document.querySelectorAll('.faq-answer.show');
-                    const allQuestions = document.querySelectorAll('.faq-question.active');
-                    
-                    allAnswers.forEach(function(item) {
-                        if (item.id !== 'answer-' + id) {
-                            item.classList.remove('show');
-                        }
-                    });
-                    
-                    allQuestions.forEach(function(item) {
-                        if (item.id !== 'question-' + id) {
-                            item.classList.remove('active');
-                        }
-                    });
-                    
-                    // Alternar a resposta atual
-                    question.classList.toggle('active');
-                    answer.classList.toggle('show');
-                };
-            })();
-        </script>
-        """
-        
-        # HTML do FAQ com estrutura para expansão/retração
-        faq_html = """
-        <div class="faq-container">
-            <div class="faq-item">
-                <div class="faq-question" id="question-1" data-id="1" onclick="toggleFAQ(1)">
-                    Como o PersonalManager me ajuda a manter o contato com meus clientes?
-                </div>
-                <div class="faq-answer" id="answer-1">
-                    O sistema possui lembretes automáticos para datas importantes, como aniversários dos clientes e datas de follow-up. 
-                    Você receberá notificações quando um cliente não contratar seus serviços por mais de 3 meses, permitindo que você faça contato no momento certo.
-                </div>
-            </div>
+        with faq_container:
+            # Pergunta 1
+            with st.expander("Como o PersonalManager me ajuda a manter o contato com meus clientes?"):
+                st.markdown("""
+                O sistema possui lembretes automáticos para datas importantes, como aniversários dos clientes e datas de follow-up. 
+                Você receberá notificações quando um cliente não contratar seus serviços por mais de 3 meses, permitindo que você 
+                faça contato no momento certo.
+                """)
             
-            <div class="faq-item">
-                <div class="faq-question" id="question-2" data-id="2" onclick="toggleFAQ(2)">
-                    Preciso instalar algum software no meu computador?
-                </div>
-                <div class="faq-answer" id="answer-2">
-                    Não! O PersonalManager é um sistema totalmente baseado na web. Você pode acessá-lo de qualquer dispositivo 
-                    (computador, tablet ou celular) com acesso à internet, sem necessidade de instalação.
-                </div>
-            </div>
+            # Pergunta 2
+            with st.expander("Preciso instalar algum software no meu computador?"):
+                st.markdown("""
+                Não! O PersonalManager é um sistema totalmente baseado na web. Você pode acessá-lo de qualquer dispositivo 
+                (computador, tablet ou celular) com acesso à internet, sem necessidade de instalação.
+                """)
             
-            <div class="faq-item">
-                <div class="faq-question" id="question-3" data-id="3" onclick="toggleFAQ(3)">
-                    Como funciona o período de teste gratuito?
-                </div>
-                <div class="faq-answer" id="answer-3">
-                    Você terá acesso completo a todas as funcionalidades do sistema por 7 dias, sem compromisso. 
-                    Se decidir não continuar, basta cancelar antes do fim do período de teste e não será cobrado. 
-                    Não solicitamos dados de cartão de crédito para o período de teste.
-                </div>
-            </div>
+            # Pergunta 3
+            with st.expander("Como funciona o período de teste gratuito?"):
+                st.markdown("""
+                Você terá acesso completo a todas as funcionalidades do sistema por 7 dias, sem compromisso. 
+                Se decidir não continuar, basta cancelar antes do fim do período de teste e não será cobrado. 
+                Não solicitamos dados de cartão de crédito para o período de teste.
+                """)
             
-            <div class="faq-item">
-                <div class="faq-question" id="question-4" data-id="4" onclick="toggleFAQ(4)">
-                    O sistema guarda histórico de atendimentos aos clientes?
-                </div>
-                <div class="faq-answer" id="answer-4">
-                    Sim! Você pode registrar cada atendimento realizado, com data, valores, tipo de serviço e observações. 
-                    Isso cria um histórico completo que permite você analisar quais clientes estão inativos e precisam ser contatados novamente.
-                </div>
-            </div>
-        </div>
-        """
-        
-        # Renderizar o CSS, JavaScript e HTML do FAQ
-        st.markdown(faq_style + faq_script + faq_html, unsafe_allow_html=True)
+            # Pergunta 4
+            with st.expander("O sistema guarda histórico de atendimentos aos clientes?"):
+                st.markdown("""
+                Sim! Você pode registrar cada atendimento realizado, com data, valores, tipo de serviço e observações. 
+                Isso cria um histórico completo que permite você analisar quais clientes estão inativos e precisam ser 
+                contatados novamente.
+                """)
         
         # Botão "Ver Planos e Preços" em verde
         st.markdown("""
