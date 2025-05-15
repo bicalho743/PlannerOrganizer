@@ -509,14 +509,7 @@ if not st.session_state.authenticated:
         font-size: 1.05rem;
     }
     
-    .login-container {
-        background: linear-gradient(135deg, white, #f5f9ff);
-        border-radius: 16px;
-        padding: 1.5rem;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        border: 1px solid rgba(255,255,255,0.8);
-        margin-top: 0;
-    }
+    /* Container de login removido para eliminar a caixa branca */
     
     .login-header {
         text-align: center;
@@ -930,12 +923,9 @@ if not st.session_state.authenticated:
         """, unsafe_allow_html=True)
     
     with right_col:
-        # Container de login sem espaçamento e com menos margem no topo
-        st.markdown('<div class="login-container" style="margin-top: -30px;">', unsafe_allow_html=True)
-        
-        # Título da seção de login com menos espaço
+        # Título da seção de login, sem a caixa container
         st.markdown('''
-        <h2 style="text-align: center; color: #4F4F52; margin-top: 0; margin-bottom: 15px;">Acesse sua conta</h2>
+        <h2 style="text-align: center; color: #4F4F52; margin-top: -50px; margin-bottom: 5px;">Acesse sua conta</h2>
         ''', unsafe_allow_html=True)
         
         # JavaScript para interceptar cliques no link de planos
@@ -1037,7 +1027,7 @@ if not st.session_state.authenticated:
                 st.session_state.login_page = "registrar"
                 st.rerun()
         
-        st.markdown('</div>', unsafe_allow_html=True)
+        # A div do container de login foi removida, então não precisamos mais fechar
         
         # Opção para pular login em ambiente de desenvolvimento (apenas para devs)
         footer_container = st.container()
