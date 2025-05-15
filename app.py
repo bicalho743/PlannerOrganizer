@@ -930,17 +930,13 @@ if not st.session_state.authenticated:
         """, unsafe_allow_html=True)
     
     with right_col:
-        # Container de login sem espaçamento
-        st.markdown('<div class="login-container" style="margin-top: -10px;">', unsafe_allow_html=True)
+        # Container de login sem espaçamento e com menos margem no topo
+        st.markdown('<div class="login-container" style="margin-top: -30px;">', unsafe_allow_html=True)
         
-        # Título da seção de login
+        # Título da seção de login com menos espaço
         st.markdown('''
-        <h2 style="text-align: center; color: #4F4F52; margin-top: 0; margin-bottom: 25px;">Acesse sua conta</h2>
+        <h2 style="text-align: center; color: #4F4F52; margin-top: 0; margin-bottom: 15px;">Acesse sua conta</h2>
         ''', unsafe_allow_html=True)
-        
-        # Componente oculto para capturar cliques nos links para planos
-        if st.checkbox("", key="planos_link", label_visibility="collapsed"):
-            show_planos()
         
         # JavaScript para interceptar cliques no link de planos
         planos_js = """
