@@ -887,33 +887,33 @@ if not st.session_state.authenticated:
         
         with faq_container:
             # Pergunta 1
-            with st.expander("Como o PlannerOrganizer ajuda Juliana a manter contato com suas clientes?"):
+            with st.expander("Como o PlannerOrganizer ajuda a manter contato com as clientes?"):
                 st.markdown("""
                 O sistema possui lembretes automáticos para datas importantes, como aniversários das clientes e datas de follow-up. 
-                Juliana receberá notificações quando uma cliente não contratar seus serviços por mais de 3 meses, permitindo que ela 
+                Você receberá notificações quando uma cliente não contratar seus serviços por mais de 3 meses, permitindo que você 
                 faça contato no momento certo.
                 """)
             
             # Pergunta 2
-            with st.expander("Mariana precisa instalar algum software no computador dela?"):
+            with st.expander("Preciso instalar algum software no meu computador?"):
                 st.markdown("""
-                Não! O PlannerOrganizer é um sistema totalmente baseado na web. Mariana pode acessá-lo de qualquer dispositivo 
+                Não! O PlannerOrganizer é um sistema totalmente baseado na web. Você pode acessá-lo de qualquer dispositivo 
                 (computador, tablet ou celular) com acesso à internet, sem necessidade de instalação.
                 """)
             
             # Pergunta 3
-            with st.expander("Como funciona o período de teste gratuito para Débora, Personal Organizer?"):
+            with st.expander("Como funciona o período de teste gratuito?"):
                 st.markdown("""
-                Débora terá acesso completo a todas as funcionalidades do sistema por 7 dias, sem compromisso. 
-                Se ela decidir não continuar, basta cancelar antes do fim do período de teste e não será cobrada. 
+                Você terá acesso completo a todas as funcionalidades do sistema por 7 dias, sem compromisso. 
+                Se decidir não continuar, basta cancelar antes do fim do período de teste e não será cobrado(a). 
                 Não solicitamos dados de cartão de crédito para o período de teste.
                 """)
             
             # Pergunta 4
-            with st.expander("O sistema guarda histórico de atendimentos às clientes de Camila?"):
+            with st.expander("O sistema guarda histórico de atendimentos às clientes?"):
                 st.markdown("""
-                Sim! Camila pode registrar cada atendimento realizado, com data, valores, tipo de serviço e observações. 
-                Isso cria um histórico completo que permite a ela analisar quais clientes estão inativas e precisam ser 
+                Sim! Você pode registrar cada atendimento realizado, com data, valores, tipo de serviço e observações. 
+                Isso cria um histórico completo que permite analisar quais clientes estão inativas e precisam ser 
                 contatadas novamente.
                 """)
         
