@@ -895,24 +895,24 @@ if not st.session_state.authenticated:
                 """)
             
             # Pergunta 2
-            with st.expander("Fernanda precisa instalar algum software no computador dela?"):
+            with st.expander("Ana Paula precisa instalar algum software no computador dela?"):
                 st.markdown("""
-                Não! O PlannerOrganizer é um sistema totalmente baseado na web. Fernanda pode acessá-lo de qualquer dispositivo 
+                Não! O PlannerOrganizer é um sistema totalmente baseado na web. Ana Paula pode acessá-lo de qualquer dispositivo 
                 (computador, tablet ou celular) com acesso à internet, sem necessidade de instalação.
                 """)
             
             # Pergunta 3
-            with st.expander("Como funciona o período de teste gratuito para Carla, Personal Organizer?"):
+            with st.expander("Como funciona o período de teste gratuito para Ana Paula, Personal Organizer?"):
                 st.markdown("""
-                Carla terá acesso completo a todas as funcionalidades do sistema por 7 dias, sem compromisso. 
+                Ana Paula terá acesso completo a todas as funcionalidades do sistema por 7 dias, sem compromisso. 
                 Se ela decidir não continuar, basta cancelar antes do fim do período de teste e não será cobrada. 
                 Não solicitamos dados de cartão de crédito para o período de teste.
                 """)
             
             # Pergunta 4
-            with st.expander("O sistema guarda histórico de atendimentos às clientes de Patrícia?"):
+            with st.expander("O sistema guarda histórico de atendimentos às clientes de Ana Paula?"):
                 st.markdown("""
-                Sim! Patrícia pode registrar cada atendimento realizado, com data, valores, tipo de serviço e observações. 
+                Sim! Ana Paula pode registrar cada atendimento realizado, com data, valores, tipo de serviço e observações. 
                 Isso cria um histórico completo que permite a ela analisar quais clientes estão inativas e precisam ser 
                 contatadas novamente.
                 """)
