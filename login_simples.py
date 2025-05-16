@@ -378,7 +378,7 @@ def main():
     <style>
     /* Estilo para o botão Criar Nova Conta */
     div.stButton:nth-of-type(1) > button {
-        background-color: #43A047;
+        background-color: #0066FF;
         color: white;
         border: none;
         border-radius: 5px;
@@ -386,13 +386,13 @@ def main():
         transition: all 0.3s ease;
     }
     div.stButton:nth-of-type(1) > button:hover {
-        background-color: #388E3C;
+        background-color: #0052CC;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
     
     /* Estilo para o botão Pular Login */
     div.stButton:nth-of-type(2) > button {
-        background-color: #757575;
+        background-color: #0066FF;
         color: white;
         border: none;
         border-radius: 5px;
@@ -400,26 +400,30 @@ def main():
         transition: all 0.3s ease;
     }
     div.stButton:nth-of-type(2) > button:hover {
-        background-color: #616161;
+        background-color: #0052CC;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
     </style>
     """
     st.markdown(alt_buttons_style, unsafe_allow_html=True)
     
-    # Botões para criar conta ou pular login
+    # Botões para esqueceu sua senha e criar conta
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("Criar Nova Conta", use_container_width=True):
+        if st.button("Esqueceu sua senha?", use_container_width=True):
+            # Aqui poderia ir a lógica para recuperação de senha
+            st.info("Funcionalidade de recuperação de senha em implementação.")
+    
+    with col2:
+        if st.button("Criar uma conta", use_container_width=True):
             st.session_state.creating_account = True
             # Mostrará os termos de uso automaticamente no próximo rerun
             st.rerun()
-    
-    with col2:
-        # Opção alternativa para pular o login durante testes
-        if st.button("Pular login (apenas para testes)", use_container_width=True):
-            st.session_state.authenticated = True
+            
+    # Opção alternativa para pular o login durante testes (oculta em uma nova linha)
+    if st.button("Pular login (apenas para testes)", use_container_width=False, key="pular_login"):
+        st.session_state.authenticated = True
             
             # Configurar usuario_id para o modo de teste
             test_usuario_id = "test-user-bypass-123"
