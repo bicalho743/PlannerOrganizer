@@ -887,34 +887,42 @@ if not st.session_state.authenticated:
         
         with faq_container:
             # Pergunta 1
-            with st.expander("Como o PlannerOrganizer ajuda a manter contato com as clientes?"):
+            with st.expander("Como o PlannerOrganizer ajuda Raquel da Organizze Bem a manter contato com as clientes?"):
                 st.markdown("""
                 O sistema possui lembretes automáticos para datas importantes, como aniversários das clientes e datas de follow-up. 
-                Você receberá notificações quando uma cliente não contratar seus serviços por mais de 3 meses, permitindo que você 
+                Raquel receberá notificações quando uma cliente não contratar seus serviços por mais de 3 meses, permitindo que ela 
                 faça contato no momento certo.
                 """)
             
             # Pergunta 2
-            with st.expander("Preciso instalar algum software no meu computador?"):
+            with st.expander("Gabriela dos Armários Perfeitos precisa instalar algum software no computador dela?"):
                 st.markdown("""
-                Não! O PlannerOrganizer é um sistema totalmente baseado na web. Você pode acessá-lo de qualquer dispositivo 
+                Não! O PlannerOrganizer é um sistema totalmente baseado na web. Gabriela pode acessá-lo de qualquer dispositivo 
                 (computador, tablet ou celular) com acesso à internet, sem necessidade de instalação.
                 """)
             
             # Pergunta 3
-            with st.expander("Como funciona o período de teste gratuito?"):
+            with st.expander("Como funciona o período de teste gratuito para Bianca da Solução Organizada?"):
                 st.markdown("""
-                Você terá acesso completo a todas as funcionalidades do sistema por 7 dias, sem compromisso. 
-                Se decidir não continuar, basta cancelar antes do fim do período de teste e não será cobrado(a). 
+                Bianca terá acesso completo a todas as funcionalidades do sistema por 7 dias, sem compromisso. 
+                Se ela decidir não continuar, basta cancelar antes do fim do período de teste e não será cobrada. 
                 Não solicitamos dados de cartão de crédito para o período de teste.
                 """)
             
             # Pergunta 4
-            with st.expander("O sistema guarda histórico de atendimentos às clientes?"):
+            with st.expander("O sistema guarda histórico de atendimentos às clientes de Laura da Limpeza & Ordem?"):
                 st.markdown("""
-                Sim! Você pode registrar cada atendimento realizado, com data, valores, tipo de serviço e observações. 
-                Isso cria um histórico completo que permite analisar quais clientes estão inativas e precisam ser 
+                Sim! Laura pode registrar cada atendimento realizado, com data, valores, tipo de serviço e observações. 
+                Isso cria um histórico completo que permite a ela analisar quais clientes estão inativas e precisam ser 
                 contatadas novamente.
+                """)
+                
+            # Pergunta 5
+            with st.expander("Como Renata da PlanejaSmart organiza suas propostas no sistema?"):
+                st.markdown("""
+                Renata pode cadastrar todas as suas propostas com detalhes completos, acompanhar o status de cada uma 
+                (em elaboração, em execução, finalizada ou recusada), gerar relatórios e ter uma visão clara de sua 
+                taxa de conversão e rendimentos. O sistema facilita a organização de todo o fluxo de trabalho.
                 """)
         
         # Botão "Ver Planos e Preços" em verde
