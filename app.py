@@ -887,30 +887,30 @@ if not st.session_state.authenticated:
         
         with faq_container:
             # Pergunta 1
-            with st.expander("Como o PlannerOrganizer ajuda a Organizze Bem a manter contato com as clientes?"):
+            with st.expander("Como o sistema ajuda a manter contato com as clientes?"):
                 st.markdown("""
                 O sistema possui lembretes automáticos para datas importantes, como aniversários das clientes e datas de follow-up. 
-                A profissional receberá notificações quando uma cliente não contratar seus serviços por mais de 3 meses, permitindo que ela 
+                Você receberá notificações quando uma cliente não contratar seus serviços por mais de 3 meses, permitindo que 
                 faça contato no momento certo.
                 """)
             
             # Pergunta 2
-            with st.expander("Armários Perfeitos precisa instalar algum software no computador?"):
+            with st.expander("Preciso instalar algum software no meu computador?"):
                 st.markdown("""
-                Não! O PlannerOrganizer é um sistema totalmente baseado na web. Você pode acessá-lo de qualquer dispositivo 
+                Não! O sistema é totalmente baseado na web. Você pode acessá-lo de qualquer dispositivo 
                 (computador, tablet ou celular) com acesso à internet, sem necessidade de instalação.
                 """)
             
             # Pergunta 3
-            with st.expander("Como funciona o período de teste gratuito para Solução Organizada?"):
+            with st.expander("Como funciona o período de teste gratuito?"):
                 st.markdown("""
-                A empresa terá acesso completo a todas as funcionalidades do sistema por 7 dias, sem compromisso. 
-                Se decidir não continuar, basta cancelar antes do fim do período de teste e não será cobrada. 
+                Você terá acesso completo a todas as funcionalidades do sistema por 7 dias, sem compromisso. 
+                Se decidir não continuar, basta cancelar antes do fim do período de teste e não será cobrado(a). 
                 Não solicitamos dados de cartão de crédito para o período de teste.
                 """)
             
             # Pergunta 4
-            with st.expander("O sistema guarda histórico de atendimentos às clientes da Limpeza & Ordem?"):
+            with st.expander("O sistema guarda histórico de atendimentos às clientes?"):
                 st.markdown("""
                 Sim! Você pode registrar cada atendimento realizado, com data, valores, tipo de serviço e observações. 
                 Isso cria um histórico completo que permite analisar quais clientes estão inativas e precisam ser 
@@ -918,9 +918,9 @@ if not st.session_state.authenticated:
                 """)
                 
             # Pergunta 5
-            with st.expander("Como a PlanejaSmart organiza suas propostas no sistema?"):
+            with st.expander("Como organizar propostas no sistema?"):
                 st.markdown("""
-                A organização pode cadastrar todas as suas propostas com detalhes completos, acompanhar o status de cada uma 
+                Você pode cadastrar todas as suas propostas com detalhes completos, acompanhar o status de cada uma 
                 (em elaboração, em execução, finalizada ou recusada), gerar relatórios e ter uma visão clara de sua 
                 taxa de conversão e rendimentos. O sistema facilita a organização de todo o fluxo de trabalho.
                 """)
