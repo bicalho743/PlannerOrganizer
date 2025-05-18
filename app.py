@@ -1098,12 +1098,16 @@ if not st.session_state.authenticated:
                     
                     # Criar objeto de usuário para modo de desenvolvedor
                     st.session_state.usuario = {
+                        'id': 5,  # ID do usuário desenvolvedor no banco de dados
                         'email': 'dev@plannerorganizer.com.br',
                         'nome': 'Desenvolvedor',
                         'telefone': '(11) 99999-9999',
                         'empresa': 'Planner Organizer',
                         'role': 'dev'
                     }
+                    
+                    # Definir explicitamente o ID do usuário também em usuario_id
+                    st.session_state.usuario_id = 5
                     
                     st.rerun()
     
