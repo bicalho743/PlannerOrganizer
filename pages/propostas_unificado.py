@@ -618,25 +618,7 @@ def show():
                     # Adicionar título da proposta
                     st.subheader(f"Gerenciando: Proposta #{proposta['numero']} - {proposta['nome']}")
                     
-                    # Verificar se já existe um valor de porcentagem na proposta
-                    porcentagem_atual = 0
-                    try:
-                        # Verificar primeiro se existe o andamento mais recente
-                        andamentos = st.session_state.db.get_andamentos_proposta(proposta_selecionada_id)
-                        if not andamentos.empty:
-                            porcentagem_atual = andamentos['porcentagem'].iloc[-1]
-                    except:
-                        # Se houver qualquer erro, usar valor padrão
-                        porcentagem_atual = 0
-                    
-                    # Adicionar controle deslizante de progresso logo abaixo do título
-                    st.slider("Progresso da proposta:", 
-                              min_value=0, 
-                              max_value=100, 
-                              value=int(porcentagem_atual),
-                              key=f"slider_progresso_topo_{proposta_selecionada_id}")
-                    
-                    # Adicionar sequência de passos com ícones
+                    # Adicionar sequência de passos com ícones primeiro
                     st.markdown("""
                     <div style="margin-bottom: 20px; background-color: #f8f9fa; padding: 12px; border-radius: 8px;">
                         <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; font-size: 0.9rem;">
@@ -668,6 +650,24 @@ def show():
                     </div>
                     """, unsafe_allow_html=True)
                     
+                    # Verificar se já existe um valor de porcentagem na proposta
+                    porcentagem_atual = 0
+                    try:
+                        # Verificar primeiro se existe o andamento mais recente
+                        andamentos = st.session_state.db.get_andamentos_proposta(proposta_selecionada_id)
+                        if not andamentos.empty:
+                            porcentagem_atual = andamentos['porcentagem'].iloc[-1]
+                    except:
+                        # Se houver qualquer erro, usar valor padrão
+                        porcentagem_atual = 0
+                    
+                    # Adicionar controle deslizante de progresso logo abaixo dos ícones
+                    st.slider("Progresso da proposta:", 
+                              min_value=0, 
+                              max_value=100, 
+                              value=int(porcentagem_atual),
+                              key=f"slider_progresso_topo_{proposta_selecionada_id}")
+                    
                     # Adicionar CSS personalizado para as abas
                     st.markdown("""
                     <style>
@@ -695,14 +695,35 @@ def show():
                             st.write("Registre uma nova atualização de detalhes:")
                             descricao_andamento = st.text_area("Descrição:", height=100)
                             data_andamento = st.date_input("Data:", datetime.now())
-                            porcentagem = st.slider("Porcentagem concluída:", 0, 100, 0)
+                            # Usar o mesmo valor da barra superior como padrão para manter consistência
+                            try:
+                                slider_value = st.session_state[f"slider_progresso_topo_{proposta_selecionada_id}"]
+                            except:
+                                slider_value = 0
+                            # Ocultar o slider aqui, já que temos um equivalente no topo
                             observacoes = st.text_area("Observações:", height=70)
                             
                             andamento_salvar = st.form_submit_button("Registrar Andamento")
                             
                             if andamento_salvar:
+                                # Usar o valor do slider de progresso superior
+                                porcentagem = st.session_state.get(f"slider_progresso_topo_{proposta_selecionada_id}", 0)
+                                
                                 # Lógica para salvar o andamento
-                                st.success("Andamento registrado com sucesso!")
+                                try:
+                                    st.session_state.db.add_andamento(
+                                        proposta_id=proposta_selecionada_id,
+                                        descricao=descricao_andamento,
+                                        data=data_andamento,
+                                        porcentagem=porcentagem,
+                                        observacoes=observacoes
+                                    )
+                                    st.success(f"Andamento registrado com sucesso! Progresso: {porcentagem}%")
+                                    
+                                    # Recarregar a página para mostrar a atualização
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Erro ao registrar andamento: {str(e)}")
                         
                         # Calcular e mostrar progresso da proposta com tratamento seguro para datas
                         hoje = datetime.now().date()
