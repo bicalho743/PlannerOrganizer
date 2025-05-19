@@ -618,9 +618,6 @@ def show():
                     # Adicionar título da proposta
                     st.subheader(f"Gerenciando: Proposta #{proposta['numero']} - {proposta['nome']}")
                     
-                    # Adicionar controle deslizante de progresso logo abaixo do título
-                    col1, col2 = st.columns([4, 1])
-                    
                     # Verificar se já existe um valor de porcentagem na proposta
                     porcentagem_atual = 0
                     try:
@@ -632,33 +629,44 @@ def show():
                         # Se houver qualquer erro, usar valor padrão
                         porcentagem_atual = 0
                     
-                    # Criar o controle deslizante
-                    with col1:
-                        novo_progresso = st.slider("Progresso da proposta:", 
-                                                   min_value=0, 
-                                                   max_value=100, 
-                                                   value=int(porcentagem_atual),
-                                                   key=f"slider_progresso_topo_{proposta_selecionada_id}")
+                    # Adicionar controle deslizante de progresso logo abaixo do título
+                    st.slider("Progresso da proposta:", 
+                              min_value=0, 
+                              max_value=100, 
+                              value=int(porcentagem_atual),
+                              key=f"slider_progresso_topo_{proposta_selecionada_id}")
                     
-                    # Botão para atualizar o progresso
-                    with col2:
-                        if st.button("Atualizar", key=f"btn_atualizar_progresso_{proposta_selecionada_id}"):
-                            try:
-                                # Salvar o novo progresso como uma atualização de andamento
-                                nova_descricao = f"Progresso atualizado para {novo_progresso}%"
-                                st.session_state.db.add_andamento(
-                                    proposta_id=proposta_selecionada_id,
-                                    descricao=nova_descricao,
-                                    data=datetime.now().date(),
-                                    porcentagem=novo_progresso,
-                                    observacoes="Atualização via controle superior"
-                                )
-                                st.success(f"Progresso atualizado para {novo_progresso}%")
-                                
-                                # Recarregar a página para mostrar a atualização
-                                st.experimental_rerun()
-                            except Exception as e:
-                                st.error(f"Erro ao atualizar progresso: {str(e)}")
+                    # Adicionar sequência de passos com ícones
+                    st.markdown("""
+                    <div style="margin-bottom: 20px; background-color: #f8f9fa; padding: 12px; border-radius: 8px;">
+                        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; font-size: 0.9rem;">
+                            <div style="display: flex; align-items: center; margin: 5px 0;">
+                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">1</span>
+                                <span>📋 Definir Detalhes</span>
+                            </div>
+                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
+                            <div style="display: flex; align-items: center; margin: 5px 0;">
+                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">2</span>
+                                <span>📦 Produtos</span>
+                            </div>
+                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
+                            <div style="display: flex; align-items: center; margin: 5px 0;">
+                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">3</span>
+                                <span>🏗️ Fornecedores</span>
+                            </div>
+                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
+                            <div style="display: flex; align-items: center; margin: 5px 0;">
+                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">4</span>
+                                <span>👥 Assistentes</span>
+                            </div>
+                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
+                            <div style="display: flex; align-items: center; margin: 5px 0;">
+                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">5</span>
+                                <span>🎯 Finalização</span>
+                            </div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
                     
                     # Adicionar CSS personalizado para as abas
                     st.markdown("""
