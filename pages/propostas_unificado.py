@@ -653,16 +653,37 @@ def show():
                                 # Lógica para salvar o andamento
                                 st.success("Andamento registrado com sucesso!")
                         
-                        # Calcular e mostrar progresso da proposta
-                        data_inicio_exec = proposta.get('data_inicio_execucao', proposta['data_inicio'])
-                        data_fim_prevista = proposta.get('data_fim', data_inicio_exec + timedelta(days=30))
-                        
+                        # Calcular e mostrar progresso da proposta com tratamento seguro para datas
                         hoje = datetime.now().date()
-                        total_dias = (data_fim_prevista - data_inicio_exec).days
-                        dias_decorridos = (hoje - data_inicio_exec).days
                         
-                        if total_dias > 0:
-                            progresso = min(100, max(0, int(dias_decorridos / total_dias * 100)))
+                        # Obter data de início com valor padrão seguro
+                        data_inicio_exec = proposta.get('data_inicio_execucao')
+                        if data_inicio_exec is None:
+                            data_inicio_exec = proposta.get('data_inicio')
+                        # Garantir que temos uma data válida para o início
+                        if data_inicio_exec is None:
+                            data_inicio_exec = hoje - timedelta(days=1)  # Valor padrão seguro
+                            
+                        # Obter data de fim com valor padrão seguro  
+                        data_fim_prevista = proposta.get('data_fim')
+                        if data_fim_prevista is None:
+                            # Agora é seguro adicionar timedelta pois data_inicio_exec é garantido
+                            data_fim_prevista = data_inicio_exec + timedelta(days=30)
+                        
+                        # Calcular dias com verificações seguras
+                        try:
+                            total_dias = (data_fim_prevista - data_inicio_exec).days
+                            dias_decorridos = (hoje - data_inicio_exec).days
+                            
+                            if total_dias > 0:
+                                progresso = min(100, max(0, int(dias_decorridos / total_dias * 100)))
+                            else:
+                                progresso = 0
+                        except (TypeError, AttributeError):
+                            # Fallback seguro em caso de erro com datas
+                            total_dias = 30
+                            dias_decorridos = 0
+                            progresso = 0
                             st.write("**Progresso baseado no prazo:**")
                             st.progress(progresso)
                             st.caption(f"Progresso: {progresso}% ({dias_decorridos} de {total_dias} dias)")
