@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.finalizar_proposta_fix import finalizar_proposta_segura
+from utils.finalizar_proposta_wrapper import finalizar_proposta_segura
 from utils.finalizar_proposta_fix import finalizar_proposta_sql
 import pandas as pd
 import time

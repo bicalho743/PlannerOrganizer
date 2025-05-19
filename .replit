@@ -67,10 +67,6 @@ args = "Start application"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Regenerar Lancamentos"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Planos Landing"
 
 [[workflows.workflow.tasks]]
@@ -92,6 +88,10 @@ args = "Planos Leve"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Teste Brevo"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Regenerar Lancamentos"
 
 [[workflows.workflow]]
 name = "Importar Propostas"
@@ -280,15 +280,6 @@ task = "shell.exec"
 args = "streamlit run create_deployment_zip.py --server.port 8600 --server.address 0.0.0.0"
 
 [[workflows.workflow]]
-name = "Regenerar Lancamentos"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run regenerar_lancamentos.py --server.port 8550 --server.address 0.0.0.0"
-waitForPort = 8550
-
-[[workflows.workflow]]
 name = "Planos Landing"
 author = "agent"
 
@@ -348,6 +339,15 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run teste_brevo.py --server.port 5005 --server.address 0.0.0.0"
 waitForPort = 5005
+
+[[workflows.workflow]]
+name = "Regenerar Lancamentos"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run regenerar_lancamentos.py --server.port 8550 --server.address 0.0.0.0"
+waitForPort = 8550
 
 [[ports]]
 localPort = 443
