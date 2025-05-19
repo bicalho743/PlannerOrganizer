@@ -617,24 +617,113 @@ def show():
                     
                     st.subheader(f"Gerenciando: Proposta #{proposta['numero']} - {proposta['nome']}")
                     
-                    # Adicionar CSS personalizado para as abas
+                    # Adicionar CSS personalizado para as abas e o stepper horizontal
                     st.markdown("""
                     <style>
+                    /* Estilo base para o conteúdo das abas */
                     div[data-testid="stTabs"] > div:nth-child(2) > div:nth-child(1) {
                         background-color: #f1f3f9;
                         padding: 15px;
                         border-radius: 5px;
                         box-shadow: 0px 1px 3px rgba(0,0,0,0.1);
                     }
+                    
+                    /* Estilos para o stepper horizontal */
+                    .stepper-horizontal {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-top: 5px;
+                        margin-bottom: 20px;
+                        width: 100%;
+                        overflow-x: auto;
+                    }
+                    
+                    .step-item {
+                        flex: 1;
+                        text-align: center;
+                        padding: 8px 5px;
+                        background-color: #e9ecef;
+                        color: #495057;
+                        border-radius: 20px;
+                        margin: 0 5px;
+                        font-size: 14px;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        white-space: nowrap;
+                    }
+                    
+                    .step-active {
+                        background-color: #0066FF;
+                        color: white;
+                        font-weight: bold;
+                    }
+                    
+                    /* Ocultar a barra de navegação nativa do Streamlit */
+                    div[data-testid="stTabs"] > div:first-child {
+                        visibility: hidden;
+                        height: 0;
+                        position: absolute;
+                    }
                     </style>
                     """, unsafe_allow_html=True)
                     
-                    # Criar abas para gerenciar diferentes aspectos da execução com ícones e cores
-                    st.markdown('<div class="execution-tabs">', unsafe_allow_html=True)
+                    # Definir as etapas do stepper
+                    step_icons = ["📊", "📦", "➕", "🏭", "👥", "🏁"]
+                    step_names = ["Detalhes", "Produtos", "Outros", "Fornecedores", "Assistentes", "Finalizar"]
+                    
+                    # Inicializar o índice da aba atual se ainda não existir no estado
+                    if 'current_step_index' not in st.session_state:
+                        st.session_state.current_step_index = 0
+                    
+                    # Renderizar o stepper horizontal personalizado
+                    stepper_html = '<div class="stepper-horizontal">'
+                    
+                    for i, (icon, name) in enumerate(zip(step_icons, step_names)):
+                        active_class = "step-active" if i == st.session_state.current_step_index else ""
+                        stepper_html += f'<div class="step-item {active_class}" id="step-{i}">{icon} {name}</div>'
+                    
+                    stepper_html += '</div>'
+                    
+                    # Exibir o stepper personalizado
+                    st.markdown(stepper_html, unsafe_allow_html=True)
+                    
+                    # Adicionando JavaScript para permitir a navegação clicando nos passos
+                    st.markdown("""
+                    <script>
+                        // Função para alternar entre as abas ao clicar nos itens do stepper
+                        function setupStepperButtons() {
+                            const stepItems = document.querySelectorAll('.step-item');
+                            const tabButtons = document.querySelectorAll('div[data-testid="stTabs"] > div:first-child button');
+                            
+                            stepItems.forEach((item, index) => {
+                                item.addEventListener('click', () => {
+                                    if (tabButtons[index]) {
+                                        tabButtons[index].click();
+                                        
+                                        // Atualizar as classes ativas
+                                        stepItems.forEach(s => s.classList.remove('step-active'));
+                                        item.classList.add('step-active');
+                                    }
+                                });
+                            });
+                        }
+                        
+                        // Executar a configuração quando o DOM estiver pronto
+                        if (document.readyState === 'loading') {
+                            document.addEventListener('DOMContentLoaded', setupStepperButtons);
+                        } else {
+                            setupStepperButtons();
+                        }
+                        
+                        // Tentar novamente após um curto atraso (para garantir que todos os elementos estejam carregados)
+                        setTimeout(setupStepperButtons, 500);
+                    </script>
+                    """, unsafe_allow_html=True)
+                    
+                    # Manter as abas do Streamlit para a funcionalidade
                     exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5, exec_tab6 = st.tabs([
-                        "📊 Detalhes", "📦 Produtos", "➕ Outros", "🏭 Fornecedores", "👥 Assistentes", "🏁 Finalizar"
+                        "Detalhes", "Produtos", "Outros", "Fornecedores", "Assistentes", "Finalizar"
                     ])
-                    st.markdown('</div>', unsafe_allow_html=True)
                     
                     with exec_tab1:
                         st.subheader("Detalhes")
