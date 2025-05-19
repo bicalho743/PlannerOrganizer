@@ -632,16 +632,16 @@ def show():
                     # Criar abas para gerenciar diferentes aspectos da execução com ícones e cores
                     st.markdown('<div class="execution-tabs">', unsafe_allow_html=True)
                     exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5, exec_tab6 = st.tabs([
-                        "📊 Andamento", "📦 Produtos", "➕ Outros", "🏭 Fornecedores", "👥 Assistentes", "🏁 Finalizar"
+                        "📊 Detalhes", "📦 Produtos", "➕ Outros", "🏭 Fornecedores", "👥 Assistentes", "🏁 Finalizar"
                     ])
                     st.markdown('</div>', unsafe_allow_html=True)
                     
                     with exec_tab1:
-                        st.subheader("Andamento")
+                        st.subheader("Detalhes")
                         
-                        # Formulário para registrar andamento
+                        # Formulário para registrar detalhes
                         with st.form(key=f"form_andamento_{proposta_selecionada_id}"):
-                            st.write("Registre uma nova atualização de andamento:")
+                            st.write("Registre uma nova atualização de detalhes:")
                             descricao_andamento = st.text_area("Descrição:", height=100)
                             data_andamento = st.date_input("Data:", datetime.now())
                             porcentagem = st.slider("Porcentagem concluída:", 0, 100, 0)
