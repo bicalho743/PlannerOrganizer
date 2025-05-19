@@ -615,52 +615,20 @@ def show():
                     # Obter os dados da proposta selecionada
                     proposta = propostas_em_execucao[propostas_em_execucao['id'] == proposta_selecionada_id].iloc[0]
                     
-                    st.subheader(f"Gerenciando: Proposta #{proposta['numero']} - {proposta['nome']}")
-                    
-                    # Adicionar barra de progresso abaixo do título
-                    try:
-                        # Calcular a porcentagem de conclusão baseado em dados da proposta
-                        # Por padrão, uma proposta em execução tem 20% completos
-                        porcentagem = 20
-                        
-                        # Se tiver produtos cadastrados, mais 20%
-                        produtos_df = st.session_state.db.get_produtos_proposta(proposta_selecionada_id)
-                        if not produtos_df.empty:
-                            porcentagem += 20
-                        
-                        # Se tiver fornecedores cadastrados, mais 20%
-                        fornecedores_df = st.session_state.db.get_fornecedores_proposta(proposta_selecionada_id) 
-                        if not fornecedores_df.empty:
-                            porcentagem += 20
-                        
-                        # Se tiver assistentes cadastrados, mais 20%
-                        assistentes_df = st.session_state.db.get_assistentes_proposta(proposta_selecionada_id)
-                        if not assistentes_df.empty:
-                            porcentagem += 20
-                            
-                        # Adicionar +20% se tiver outros itens
-                        outros_df = st.session_state.db.get_outros_proposta(proposta_selecionada_id)
-                        if not outros_df.empty:
-                            porcentagem += 20
-                            
-                        # Limitar a 95% (100% apenas quando finalizada)
-                        porcentagem = min(porcentagem, 95)
-                        
-                        # Exibir barra de progresso com estilo personalizado
-                        st.markdown(f"""
-                        <div style="margin-bottom: 15px;">
-                            <div style="display: flex; align-items: center; margin-bottom: 5px;">
-                                <div style="flex-grow: 1; background-color: #e9ecef; height: 8px; border-radius: 4px; overflow: hidden;">
-                                    <div style="width: {porcentagem}%; height: 100%; background-color: #0066FF;"></div>
-                                </div>
-                                <div style="margin-left: 10px; font-size: 0.9rem; color: #495057;">
-                                    <strong>{porcentagem}%</strong> concluído
-                                </div>
+                    # Adicionar div contendo o título e a barra de progresso
+                    st.markdown(f"""
+                    <div style="margin-bottom: 15px;">
+                        <h3>Gerenciando: Proposta #{proposta['numero']} - {proposta['nome']}</h3>
+                        <div style="display: flex; align-items: center; margin-top: 8px; margin-bottom: 10px;">
+                            <div style="flex-grow: 1; background-color: #e9ecef; height: 8px; border-radius: 4px; overflow: hidden;">
+                                <div style="width: 40%; height: 100%; background-color: #0066FF;"></div>
+                            </div>
+                            <div style="margin-left: 10px; font-size: 0.9rem; color: #495057;">
+                                <strong>40%</strong> concluído
                             </div>
                         </div>
-                        """, unsafe_allow_html=True)
-                    except Exception as e:
-                        st.warning(f"Não foi possível calcular o progresso: {str(e)}")
+                    </div>
+                    """, unsafe_allow_html=True)
                     
                     # Adicionar CSS personalizado para as abas
                     st.markdown("""
