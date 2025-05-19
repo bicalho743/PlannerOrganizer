@@ -250,9 +250,13 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                             'endereco': str(row.get('endereco', '')).strip() if pd.notna(row.get('endereco')) else None,
                             'pix': str(row.get('pix', '')).strip() if pd.notna(row.get('pix')) else None,
                             'recorrente': bool(row.get('recorrente', False)) if pd.notna(row.get('recorrente')) else False,
-                            'observacoes': str(row.get('observacao', '')).strip() if pd.notna(row.get('observacao')) else None,
-                            'tipo_conta': tipo_conta
+                            'observacoes': str(row.get('observacoes', '')).strip() if pd.notna(row.get('observacoes')) else None,
+                            'tipo_conta': tipo_conta,
+                            'percentual_comissao': float(row.get('percentual_comissao', 0)) if pd.notna(row.get('percentual_comissao')) else 0.0
                         }
+                        
+                        # Debug log para visualizar os dados antes da inserção
+                        st.info(f"Dados do fornecedor a serem inseridos: {fornecedor_data}")
                         
                         # Remover valores None para evitar erros de not-null constraint
                         fornecedor_data = {k: v for k, v in fornecedor_data.items() if v is not None}
