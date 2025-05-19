@@ -191,13 +191,13 @@ class Cliente(Base):
 class Fornecedor(Base):
     __tablename__ = 'fornecedores'
     id = Column(Integer, primary_key=True)
-    nome = Column(String, nullable=True)  # Adicionado campo nome
-    descricao = Column(String, nullable=False)
+    # Removida coluna nome que não existe no banco de produção
+    descricao = Column(String, nullable=False)  # Este campo é usado como nome no banco de produção
     contato = Column(String)
     categoria = Column(String)
-    estado = Column(String)  # Novo campo
-    cidade = Column(String)  # Novo campo
-    bairro = Column(String)  # Novo campo
+    estado = Column(String)
+    cidade = Column(String)
+    bairro = Column(String)
     endereco = Column(String)
     pix = Column(String)
     recorrente = Column(Boolean, default=False)
@@ -206,8 +206,13 @@ class Fornecedor(Base):
     data_vencimento = Column(Date, nullable=True)
     data_pagamento = Column(Date, nullable=True)
     status = Column(String, nullable=True)
-    tipo_conta = Column(String, default='PF')  # Adicionado campo tipo_conta
+    tipo_conta = Column(String, default='PF')
     percentual_comissao = Column(Float, default=0.0)  # Percentual de comissão para o fornecedor
+    
+    # Propriedade para compatibilidade com código que usa f.nome
+    @property
+    def nome(self):
+        return self.descricao
 
 
 class Assistente(Base):
@@ -2060,14 +2065,13 @@ class Database:
                     
                     # Mostrar os fornecedores encontrados
                     for f in fornecedores:
-                        nome_display = f.nome if f.nome else f.descricao  # Usar descrição se nome estiver vazio
-                        print(f"DEBUG: ID={f.id}, Nome='{nome_display}', Categoria='{f.categoria}', Descrição='{f.descricao}'")
+                        print(f"DEBUG: ID={f.id}, Nome='{f.nome}', Categoria='{f.categoria}', Descrição='{f.descricao}'")
                 
                 # Construir DataFrame com os dados
                 resultado = pd.DataFrame([{
                     'id': f.id,
-                    # Usar descrição como nome se o campo nome estiver vazio
-                    'nome': f.nome if f.nome and str(f.nome).strip() else f.descricao,
+                    # Com a propriedade nome implementada, podemos usar diretamente
+                    'nome': f.nome,
                     'descricao': f.descricao,
                     'contato': f.contato,
                     'categoria': f.categoria,
