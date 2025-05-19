@@ -626,41 +626,15 @@ def show():
                         border-radius: 5px;
                         box-shadow: 0px 1px 3px rgba(0,0,0,0.1);
                     }
-                    
-                    /* Estilos para botões de tab com aparência melhorada */
-                    div[data-testid="stTabs"] > div:first-child {
-                        background-color: #f5f7fa;
-                        border-radius: 8px;
-                        padding: 4px;
-                        display: flex;
-                        justify-content: space-between;
-                    }
-                    
-                    div[data-testid="stTabs"] > div:first-child > button {
-                        border-radius: 8px;
-                        padding: 8px 16px;
-                        margin: 0 2px;
-                        background-color: transparent;
-                        transition: all 0.3s ease;
-                    }
-                    
-                    div[data-testid="stTabs"] > div:first-child > button[aria-selected="true"] {
-                        background-color: #0066FF !important;
-                        color: white !important;
-                        font-weight: bold;
-                    }
-                    
-                    div[data-testid="stTabs"] > div:first-child > button:hover:not([aria-selected="true"]) {
-                        background-color: #e2e8f0;
-                        color: #1e293b;
-                    }
                     </style>
                     """, unsafe_allow_html=True)
                     
                     # Criar abas para gerenciar diferentes aspectos da execução com ícones e cores
+                    st.markdown('<div class="execution-tabs">', unsafe_allow_html=True)
                     exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5, exec_tab6 = st.tabs([
                         "📊 Detalhes", "📦 Produtos", "➕ Outros", "🏭 Fornecedores", "👥 Assistentes", "🏁 Finalizar"
                     ])
+                    st.markdown('</div>', unsafe_allow_html=True)
                     
                     with exec_tab1:
                         st.subheader("Detalhes")
