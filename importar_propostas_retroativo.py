@@ -342,19 +342,31 @@ def importar_propostas_retroativas(arquivo, debug_mode=False):
                 if debug_mode:
                     st.write(f"Adicionando proposta: {proposta_data}")
                 
-                # Adicionar proposta com data retroativa
-                proposta_id = st.session_state.db.add_proposta_retroativa(**proposta_data)
-                
-                if proposta_id:
-                    # Se a proposta estiver finalizada, também finalizar no sistema
-                    if status == 'Finalizada':
-                        st.session_state.db.finalizar_proposta(proposta_id)
-                        
-                    sucessos += 1
+                try:
+                    # Verificar se o método já existe
+                    if not hasattr(st.session_state.db, 'add_proposta_retroativa'):
+                        st.warning("Adicionando método add_proposta_retroativa à instância do banco de dados...")
+                        # Forçar a adição do método ao objeto do banco de dados
+                        add_proposta_retroativa_to_db()
+                    
+                    # Adicionar proposta com data retroativa
+                    proposta_id = st.session_state.db.add_proposta_retroativa(**proposta_data)
+                    
+                    if proposta_id:
+                        # Se a proposta estiver finalizada, também finalizar no sistema
+                        if status == 'Finalizada':
+                            st.session_state.db.finalizar_proposta(proposta_id)
+                            
+                        sucessos += 1
+                        if debug_mode:
+                            st.success(f"Proposta {proposta_id} adicionada com sucesso para cliente {nome_encontrado}")
+                    else:
+                        erros.append(f"Erro ao adicionar proposta na linha {i+2}: não foi possível criar o registro.")
+                except Exception as e:
+                    erros.append(f"Erro ao adicionar proposta na linha {i+2}: {str(e)}")
                     if debug_mode:
-                        st.success(f"Proposta {proposta_id} adicionada com sucesso para cliente {nome_encontrado}")
-                else:
-                    erros.append(f"Erro ao adicionar proposta na linha {i+2}: não foi possível criar o registro.")
+                        st.error(f"Exceção ao adicionar proposta: {str(e)}")
+                        st.error(traceback.format_exc())
                     
             except Exception as e:
                 erros.append(f"Erro na linha {i+2}: {str(e)}")
