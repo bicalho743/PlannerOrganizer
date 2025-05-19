@@ -615,20 +615,50 @@ def show():
                     # Obter os dados da proposta selecionada
                     proposta = propostas_em_execucao[propostas_em_execucao['id'] == proposta_selecionada_id].iloc[0]
                     
-                    # Adicionar div contendo o título e a barra de progresso
-                    st.markdown(f"""
-                    <div style="margin-bottom: 15px;">
-                        <h3>Gerenciando: Proposta #{proposta['numero']} - {proposta['nome']}</h3>
-                        <div style="display: flex; align-items: center; margin-top: 8px; margin-bottom: 10px;">
-                            <div style="flex-grow: 1; background-color: #e9ecef; height: 8px; border-radius: 4px; overflow: hidden;">
-                                <div style="width: 40%; height: 100%; background-color: #0066FF;"></div>
-                            </div>
-                            <div style="margin-left: 10px; font-size: 0.9rem; color: #495057;">
-                                <strong>40%</strong> concluído
-                            </div>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    # Adicionar título da proposta
+                    st.subheader(f"Gerenciando: Proposta #{proposta['numero']} - {proposta['nome']}")
+                    
+                    # Adicionar controle deslizante de progresso logo abaixo do título
+                    col1, col2 = st.columns([4, 1])
+                    
+                    # Verificar se já existe um valor de porcentagem na proposta
+                    porcentagem_atual = 0
+                    try:
+                        # Verificar primeiro se existe o andamento mais recente
+                        andamentos = st.session_state.db.get_andamentos_proposta(proposta_selecionada_id)
+                        if not andamentos.empty:
+                            porcentagem_atual = andamentos['porcentagem'].iloc[-1]
+                    except:
+                        # Se houver qualquer erro, usar valor padrão
+                        porcentagem_atual = 0
+                    
+                    # Criar o controle deslizante
+                    with col1:
+                        novo_progresso = st.slider("Progresso da proposta:", 
+                                                   min_value=0, 
+                                                   max_value=100, 
+                                                   value=int(porcentagem_atual),
+                                                   key=f"slider_progresso_topo_{proposta_selecionada_id}")
+                    
+                    # Botão para atualizar o progresso
+                    with col2:
+                        if st.button("Atualizar", key=f"btn_atualizar_progresso_{proposta_selecionada_id}"):
+                            try:
+                                # Salvar o novo progresso como uma atualização de andamento
+                                nova_descricao = f"Progresso atualizado para {novo_progresso}%"
+                                st.session_state.db.add_andamento(
+                                    proposta_id=proposta_selecionada_id,
+                                    descricao=nova_descricao,
+                                    data=datetime.now().date(),
+                                    porcentagem=novo_progresso,
+                                    observacoes="Atualização via controle superior"
+                                )
+                                st.success(f"Progresso atualizado para {novo_progresso}%")
+                                
+                                # Recarregar a página para mostrar a atualização
+                                st.experimental_rerun()
+                            except Exception as e:
+                                st.error(f"Erro ao atualizar progresso: {str(e)}")
                     
                     # Adicionar CSS personalizado para as abas
                     st.markdown("""
