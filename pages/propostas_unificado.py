@@ -4,11 +4,13 @@ from utils.finalizar_proposta_fix import finalizar_proposta_sql
 import pandas as pd
 import time
 import os
+import io
 from datetime import datetime, timedelta
 import uuid
 import plotly.graph_objects as go
 from utils.database import Fornecedor
 from utils.propostas_helper import st_gerar_pdf_cliente, st_gerar_pdf_interno
+from importar_propostas_retroativo import importar_propostas_retroativas, add_proposta_retroativa_to_db
 
 def show():
     # Título com estilo personalizado para ficar mais próximo do topo
@@ -32,10 +34,11 @@ def show():
     
     # Criar abas para organizar o conteúdo com ícones para cada uma
     st.markdown('<div class="main-tabs">', unsafe_allow_html=True)
-    tab1, tab2, tab3 = st.tabs([
+    tab1, tab2, tab3, tab4 = st.tabs([
         "📝 Nova Proposta", 
         "⚙️ Em Execução", 
-        "📋 Propostas Finalizadas"
+        "📋 Propostas Finalizadas",
+        "🕒 Importar Retroativas"
     ])
     st.markdown('</div>', unsafe_allow_html=True)
     
@@ -1656,6 +1659,208 @@ def show():
         else:
             st.info("Não há propostas cadastradas no sistema.")
 
-# Permitir que este arquivo seja executado diretamente
+# ABA 4: IMPORTAR PROPOSTAS RETROATIVAS
+    with tab4:
+        st.header("Importar Propostas Retroativas")
+        
+        # Verificar se o método add_proposta_retroativa existe
+        if not hasattr(st.session_state.db, 'add_proposta_retroativa'):
+            add_proposta_retroativa_to_db()
+            st.success("Método de importação retroativa inicializado com sucesso!")
+        
+        st.write("""
+        Esta ferramenta permite importar propostas antigas com datas retroativas.
+        Útil para manter a cronologia completa dos projetos quando você precisa registrar 
+        propostas que foram criadas antes de começar a usar o sistema.
+        """)
+        
+        # Duas opções: formulário individual ou importação via CSV
+        retroativa_modo = st.radio(
+            "Método de importação:",
+            ["Formulário individual", "Importar via CSV"],
+            horizontal=True
+        )
+        
+        if retroativa_modo == "Formulário individual":
+            st.subheader("Formulário para Cadastro de Proposta Retroativa")
+            
+            # Obter lista de clientes
+            clientes = st.session_state.db.get_clientes()
+            cliente_options = [""] + sorted(clientes['nome'].tolist()) if not clientes.empty else [""]
+            
+            with st.form("form_proposta_retroativa"):
+                # Dados básicos
+                cliente_nome = st.selectbox("Cliente", cliente_options, key="retroativa_cliente")
+                descricao = st.text_area("Descrição da proposta", key="retroativa_descricao")
+                
+                # Valores
+                valor = st.number_input("Valor (R$)", min_value=0.0, format="%.2f", key="retroativa_valor")
+                
+                # Status e tipo
+                status = st.selectbox(
+                    "Status da proposta", 
+                    ["Em elaboração", "Em execução", "Finalizada", "Recusada"],
+                    key="retroativa_status"
+                )
+                
+                tipo_proposta = st.text_input("Tipo de proposta (opcional)", key="retroativa_tipo")
+                
+                # Datas
+                col1, col2 = st.columns(2)
+                with col1:
+                    data_criacao = st.date_input(
+                        "Data de criação", 
+                        value=datetime.now() - timedelta(days=30),  # Default para 30 dias atrás
+                        key="retroativa_data_criacao"
+                    )
+                    data_inicio = st.date_input(
+                        "Data de início (opcional)", 
+                        value=None,
+                        key="retroativa_data_inicio"
+                    )
+                
+                with col2:
+                    data_fim = st.date_input(
+                        "Data de término (opcional)", 
+                        value=None,
+                        key="retroativa_data_fim"
+                    )
+                    prazo_entrega = st.date_input(
+                        "Prazo de entrega (opcional)", 
+                        value=None,
+                        key="retroativa_prazo"
+                    )
+                
+                # Botão de submissão
+                submitted = st.form_submit_button("Cadastrar Proposta Retroativa")
+                
+            if submitted:
+                if not cliente_nome:
+                    st.error("Por favor, selecione um cliente.")
+                elif not descricao:
+                    st.error("Por favor, informe a descrição da proposta.")
+                elif valor <= 0:
+                    st.error("O valor da proposta deve ser maior que zero.")
+                else:
+                    try:
+                        # Encontrar o ID do cliente
+                        cliente_id = None
+                        if not clientes.empty:
+                            cliente_df = clientes[clientes['nome'] == cliente_nome]
+                            if not cliente_df.empty:
+                                cliente_id = cliente_df.iloc[0]['id']
+                        
+                        if not cliente_id:
+                            st.error(f"Cliente '{cliente_nome}' não encontrado no sistema.")
+                        else:
+                            # Preparar data
+                            proposta_data = {
+                                'cliente_id': cliente_id,
+                                'descricao': descricao,
+                                'valor': valor,
+                                'status': status
+                            }
+                            
+                            # Adicionar campos opcionais
+                            if tipo_proposta:
+                                proposta_data['tipo_proposta'] = tipo_proposta
+                            
+                            # Converter datas para string no formato YYYY-MM-DD
+                            if data_criacao:
+                                proposta_data['data_criacao'] = data_criacao.strftime('%Y-%m-%d')
+                            if data_inicio:
+                                proposta_data['data_inicio'] = data_inicio.strftime('%Y-%m-%d')
+                            if data_fim:
+                                proposta_data['data_fim'] = data_fim.strftime('%Y-%m-%d')
+                            if prazo_entrega:
+                                proposta_data['prazo_entrega'] = prazo_entrega.strftime('%Y-%m-%d')
+                            
+                            # Adicionar proposta com data retroativa
+                            proposta_id = st.session_state.db.add_proposta_retroativa(**proposta_data)
+                            
+                            if proposta_id:
+                                # Se a proposta estiver finalizada, também finalizar no sistema
+                                if status == 'Finalizada':
+                                    st.session_state.db.finalizar_proposta(proposta_id)
+                                
+                                st.success(f"Proposta retroativa cadastrada com sucesso! ID: {proposta_id}")
+                                
+                                # Limpar o formulário após sucesso (recarregar a página)
+                                st.rerun()
+                            else:
+                                st.error("Não foi possível cadastrar a proposta. Verifique os dados e tente novamente.")
+                    except Exception as e:
+                        st.error(f"Erro ao cadastrar proposta retroativa: {str(e)}")
+        
+        else:  # Importar via CSV
+            st.subheader("Importar Propostas Retroativas via CSV")
+            
+            with st.expander("Ver formato do arquivo CSV"):
+                st.write("""
+                O arquivo CSV deve conter as seguintes colunas:
+                - **cliente_nome**: Nome do cliente (deve existir no banco de dados)
+                - **descricao**: Descrição da proposta
+                - **valor**: Valor da proposta (use vírgula ou ponto como separador decimal)
+                - **status**: Status da proposta (Em elaboração, Em execução, Finalizada, Recusada)
+                - **tipo_proposta**: (opcional) Tipo da proposta
+                - **data_criacao**: (opcional) Data de criação no formato DD/MM/AAAA
+                - **data_inicio**: (opcional) Data de início no formato DD/MM/AAAA
+                - **data_fim**: (opcional) Data de término no formato DD/MM/AAAA
+                - **prazo_entrega**: (opcional) Prazo de entrega no formato DD/MM/AAAA
+                """)
+                
+                exemplo = """cliente_nome;descricao;valor;status;tipo_proposta;data_criacao;data_inicio;data_fim;prazo_entrega
+Fulano da Silva;Organização de armários;1500,00;Finalizada;Organização;01/01/2025;01/02/2025;10/02/2025;15/02/2025
+Ciclano dos Santos;Consultoria de decoração;2000,00;Recusada;Consultoria;15/01/2025;15/02/2025;20/02/2025;25/02/2025"""
+                st.code(exemplo)
+            
+            # Template para download
+            template_file = io.BytesIO()
+            template_df = pd.DataFrame([
+                {
+                    'cliente_nome': 'Maria da Silva',
+                    'descricao': 'Organização de armários',
+                    'valor': '1500,00',
+                    'status': 'Finalizada',
+                    'tipo_proposta': 'Organização',
+                    'data_criacao': '01/01/2025',
+                    'data_inicio': '01/02/2025',
+                    'data_fim': '10/02/2025',
+                    'prazo_entrega': '15/02/2025'
+                },
+                {
+                    'cliente_nome': 'João Santos',
+                    'descricao': 'Consultoria de decoração',
+                    'valor': '2000,00',
+                    'status': 'Recusada',
+                    'tipo_proposta': 'Consultoria',
+                    'data_criacao': '15/01/2025',
+                    'data_inicio': '15/02/2025',
+                    'data_fim': '20/02/2025',
+                    'prazo_entrega': '25/02/2025'
+                }
+            ])
+            template_df.to_csv(template_file, index=False, sep=';')
+            template_file.seek(0)
+            
+            st.download_button(
+                label="📄 Baixar Template CSV",
+                data=template_file,
+                file_name="template_propostas_retroativas.csv",
+                mime="text/csv"
+            )
+            
+            # Uploader de arquivo
+            uploaded_file = st.file_uploader("Selecione um arquivo CSV", type=["csv"], key="retroativa_csv_upload")
+            
+            # Opção de debug
+            debug_mode = st.checkbox("Modo de depuração (exibe informações detalhadas)", key="retroativa_debug_mode")
+            
+            if st.button("Importar Propostas Retroativas", key="btn_importar_retroativas"):
+                if uploaded_file is not None:
+                    importar_propostas_retroativas(uploaded_file, debug_mode)
+                else:
+                    st.error("Por favor, selecione um arquivo CSV para importar.")
+
 if __name__ == "__main__":
     show()
