@@ -281,11 +281,13 @@ def finalizar_proposta_improved(proposta_id: int) -> Dict[str, Any]:
                 resultado["lancamentos"]["valores"]["servicos_adicionais"] = valor_total_outros
         
         # Etapa 4: Comissões de fornecedores
+        # Buscar acréscimos do tipo Fornecedor
         cursor.execute("""
-            SELECT id, fornecedor, descricao, valor, percentual_comissao
-            FROM acrescimos_proposta 
-            WHERE proposta_id = %s AND tipo = 'FORNECEDOR'
-            AND percentual_comissao IS NOT NULL AND percentual_comissao > 0
+            SELECT a.id, a.fornecedor, a.descricao, a.valor, f.percentual_comissao, f.id as fornecedor_id
+            FROM acrescimos_proposta a
+            LEFT JOIN fornecedores f ON LOWER(a.fornecedor) = LOWER(f.descricao)
+            WHERE a.proposta_id = %s AND a.tipo = 'FORNECEDOR'
+            AND f.percentual_comissao IS NOT NULL AND f.percentual_comissao > 0
         """, (proposta_id,))
         
         fornecedores = cursor.fetchall()
@@ -294,7 +296,7 @@ def finalizar_proposta_improved(proposta_id: int) -> Dict[str, Any]:
         if fornecedores and len(fornecedores) > 0:
             # Gerar um lançamento para cada fornecedor com comissão
             for fornecedor in fornecedores:
-                forn_id, forn_nome, forn_descricao, forn_valor, percentual = fornecedor
+                forn_id, forn_nome, forn_descricao, forn_valor, percentual, fornecedor_cadastro_id = fornecedor
                 
                 if forn_valor and percentual and float(forn_valor) > 0 and float(percentual) > 0:
                     valor_comissao = float(forn_valor) * float(percentual) / 100
@@ -312,7 +314,7 @@ def finalizar_proposta_improved(proposta_id: int) -> Dict[str, Any]:
                         "Comissão sobre fornecedores",  # Categoria
                         "Comissão de Fornecedor",  # Subcategoria
                         "Receita",  # Tipo
-                        forn_id,  # origem_id
+                        forn_id,  # origem_id (mantemos o ID do acréscimo para rastreabilidade)
                         "comissao_fornecedor",  # origem_tipo
                         proposta_id,  # proposta_id
                         "Pendente",  # status
@@ -321,7 +323,7 @@ def finalizar_proposta_improved(proposta_id: int) -> Dict[str, Any]:
                     ))
                     
                     lancamento_id = cursor.fetchone()[0]
-                    logger.info(f"Lançamento financeiro de Comissão criado: #{lancamento_id}, Valor: R${valor_comissao:.2f}")
+                    logger.info(f"Lançamento financeiro de Comissão criado: #{lancamento_id}, Valor: R${valor_comissao:.2f}, Fornecedor: {forn_nome}")
                     lancamentos_gerados += 1
             
             resultado["lancamentos"]["valores"]["comissoes"] = valor_total_comissoes
