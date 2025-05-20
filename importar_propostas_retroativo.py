@@ -427,7 +427,29 @@ def add_proposta_retroativa_to_db():
             from sqlalchemy import text
             from utils.database import Proposta
             
+            # Gerar número único para a proposta
+            from sqlalchemy import func
+            
+            # Obter o maior número de proposta e incrementar
+            max_numero = self.session.query(func.max(Proposta.numero)).scalar() or 0
+            novo_numero = max_numero + 1
+            
+            # Converter prazo_entrega para formato de data se for string
+            prazo_entrega_formatado = prazo_entrega
+            if isinstance(prazo_entrega, str):
+                try:
+                    # Tentar converter de DD/MM/YYYY para objeto date
+                    from datetime import datetime
+                    data_parts = prazo_entrega.split('/')
+                    if len(data_parts) == 3:
+                        dia, mes, ano = int(data_parts[0]), int(data_parts[1]), int(data_parts[2])
+                        prazo_entrega_formatado = datetime(ano, mes, dia).date()
+                except Exception:
+                    # Se falhar, definir como None para evitar erro
+                    prazo_entrega_formatado = None
+            
             proposta = Proposta(
+                numero=novo_numero,
                 cliente_id=cliente_id,
                 descricao=descricao,
                 valor=valor,
@@ -435,7 +457,7 @@ def add_proposta_retroativa_to_db():
                 tipo_proposta=tipo_proposta,
                 data_inicio=data_inicio,
                 data_fim=data_fim,
-                prazo_entrega=prazo_entrega
+                prazo_entrega=prazo_entrega_formatado
             )
             
             # Adicionar o usuário atual como proprietário
