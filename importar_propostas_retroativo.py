@@ -16,6 +16,7 @@ if root_dir not in sys.path:
 
 # Importar função robusta para valores monetários
 from utils.importador import normalizar_valor_monetario
+from sqlalchemy import text
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -401,7 +402,7 @@ def importar_propostas_retroativas(arquivo, debug_mode=False):
 st.write("### Importar Propostas Retroativas")
 arquivo = st.file_uploader("Selecione o arquivo CSV com as propostas", type=["csv"])
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 with col1:
     debug_mode = st.checkbox("Modo debug (exibir detalhes)", value=False)
 
@@ -409,8 +410,46 @@ with col2:
     # Modo avançado permite importar propostas para clientes específicos por ID
     usar_cliente_id = st.checkbox("Usar ID do cliente em vez do nome", value=False, help="Para importação avançada")
 
+with col3:
+    resetar_numeracao = st.checkbox("Resetar numeração (iniciar do 1)", value=True, 
+                                     help="Marque esta opção para reiniciar a contagem de propostas a partir do número 1")
+
+# Função para resetar o contador de propostas no banco de dados
+def resetar_contador_propostas():
+    """
+    Reseta o contador de sequência para propostas no banco de dados,
+    permitindo que novas propostas comecem a partir do número 1
+    """
+    try:
+        # Usar a conexão do banco de dados já estabelecida
+        db = st.session_state.db
+        if not db:
+            return False, "Erro: Conexão com o banco de dados não disponível"
+            
+        # Obter o usuário atual para aplicar filtro de tenant
+        usuario_id = db.get_usuario_id()
+        
+        # Executar uma query SQL direta para resetar o contador
+        query = "ALTER SEQUENCE propostas_numero_seq RESTART WITH 1"
+        with db.engine.begin() as conn:
+            conn.execute(text(query))
+            
+        return True, "Contador de propostas resetado com sucesso! As próximas propostas começarão do número 1."
+    except Exception as e:
+        logger.error(f"Erro ao resetar contador: {str(e)}")
+        return False, f"Erro ao resetar contador: {str(e)}"
+
 if arquivo:
     if st.button("📥 Importar Propostas Retroativas"):
+        # Se a opção estiver marcada, resetar o contador antes de importar
+        if resetar_numeracao:
+            with st.spinner("Resetando contador de propostas..."):
+                sucesso, mensagem = resetar_contador_propostas()
+                if sucesso:
+                    st.success(mensagem)
+                else:
+                    st.error(mensagem)
+        
         with st.spinner("Importando..."):
             sucessos, erros = importar_propostas_retroativas(arquivo, debug_mode)
 
