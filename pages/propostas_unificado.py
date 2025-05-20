@@ -618,6 +618,38 @@ def show():
                     # Adicionar título da proposta
                     st.subheader(f"Gerenciando: Proposta #{proposta['numero']} - {proposta['nome']}")
                     
+                    # Adicionar sequência de passos com ícones primeiro
+                    st.markdown("""
+                    <div style="margin-bottom: 20px; background-color: #f8f9fa; padding: 12px; border-radius: 8px;">
+                        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; font-size: 0.9rem;">
+                            <div style="display: flex; align-items: center; margin: 5px 0;">
+                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">1</span>
+                                <span>📋 Definir Detalhes</span>
+                            </div>
+                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
+                            <div style="display: flex; align-items: center; margin: 5px 0;">
+                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">2</span>
+                                <span>📦 Produtos</span>
+                            </div>
+                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
+                            <div style="display: flex; align-items: center; margin: 5px 0;">
+                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">3</span>
+                                <span>🏗️ Fornecedores</span>
+                            </div>
+                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
+                            <div style="display: flex; align-items: center; margin: 5px 0;">
+                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">4</span>
+                                <span>👥 Assistentes</span>
+                            </div>
+                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
+                            <div style="display: flex; align-items: center; margin: 5px 0;">
+                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">5</span>
+                                <span>🎯 Finalização</span>
+                            </div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
                     # Verificar se já existe um valor de porcentagem na proposta
                     porcentagem_atual = 0
                     try:
@@ -628,6 +660,13 @@ def show():
                     except:
                         # Se houver qualquer erro, usar valor padrão
                         porcentagem_atual = 0
+                    
+                    # Adicionar controle deslizante de progresso logo abaixo dos ícones
+                    st.slider("Progresso da proposta:", 
+                              min_value=0, 
+                              max_value=100, 
+                              value=int(porcentagem_atual),
+                              key=f"slider_progresso_topo_{proposta_selecionada_id}")
                     
                     # Adicionar CSS personalizado para as abas
                     st.markdown("""
@@ -657,20 +696,18 @@ def show():
                             descricao_andamento = st.text_area("Descrição:", height=100)
                             data_andamento = st.date_input("Data:", datetime.now())
                             # Usar o mesmo valor da barra superior como padrão para manter consistência
-                            # Adicionamos um slider de progresso diretamente aqui para substituir o que foi removido
-                            porcentagem_slider = st.slider("Progresso da proposta:", 
-                                                      min_value=0, 
-                                                      max_value=100, 
-                                                      value=int(porcentagem_atual),
-                                                      key=f"slider_progresso_{proposta_selecionada_id}")
-                            
+                            try:
+                                slider_value = st.session_state[f"slider_progresso_topo_{proposta_selecionada_id}"]
+                            except:
+                                slider_value = 0
+                            # Ocultar o slider aqui, já que temos um equivalente no topo
                             observacoes = st.text_area("Observações:", height=70)
                             
                             andamento_salvar = st.form_submit_button("Registrar Andamento")
                             
                             if andamento_salvar:
-                                # Usar o valor do slider de progresso
-                                porcentagem = porcentagem_slider
+                                # Usar o valor do slider de progresso superior
+                                porcentagem = st.session_state.get(f"slider_progresso_topo_{proposta_selecionada_id}", 0)
                                 
                                 # Lógica para salvar o andamento
                                 try:
@@ -719,13 +756,16 @@ def show():
                             total_dias = 30
                             dias_decorridos = 0
                             progresso = 0
+                            st.write("**Progresso baseado no prazo:**")
+                            st.progress(progresso)
+                            st.caption(f"Progresso: {progresso}% ({dias_decorridos} de {total_dias} dias)")
                             
-                            # Mostrar informação sobre prazo previsto
+                            # Verificar se está atrasado
                             if hoje > data_fim_prevista:
                                 st.warning(f"⚠️ Proposta atrasada por {(hoje - data_fim_prevista).days} dias!")
                             else:
                                 dias_restantes = (data_fim_prevista - hoje).days
-                                st.info(f"📅 Prazo previsto: {data_fim_prevista.strftime('%d/%m/%Y')} - Restam {dias_restantes} dias")
+                                st.info(f"📅 Restam {dias_restantes} dias para a conclusão prevista")
                     
                     with exec_tab2:
                         st.subheader("Produtos")
