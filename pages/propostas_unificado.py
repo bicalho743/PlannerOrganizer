@@ -595,7 +595,147 @@ def show():
 
     # ABA 2: EM EXECUÇÃO
     with tab2:
-        st.header("Propostas em Execução")
+        # CSS de estilo para melhorar a aparência da página
+        st.markdown("""
+        <style>
+        .execucao-header {
+            color: #1E3A8A;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #E5E7EB;
+        }
+        
+        .execucao-total {
+            background-color: #F3F4F6;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 1.2rem;
+            color: #4B5563;
+            border-left: 4px solid #3B82F6;
+        }
+        
+        .proposta-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #E5E7EB;
+        }
+        
+        .proposta-header {
+            font-size: 1.4rem;
+            color: #1F2937;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #E5E7EB;
+        }
+        
+        .progress-container {
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: #DBEAFE;
+            border-radius: 3px;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #3B82F6;
+            border-radius: 3px;
+            transition: width 0.5s ease-in-out;
+        }
+        
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin-top: -15px;
+        }
+        
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 50px;
+            text-align: center;
+        }
+        
+        .step-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #E5E7EB;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #6B7280;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 2;
+            border: 2px solid #fff;
+            transition: all 0.3s ease;
+        }
+        
+        .step-active .step-circle {
+            background-color: #3B82F6;
+            color: white;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+        }
+        
+        .step-complete .step-circle {
+            background-color: #10B981;
+            color: white;
+        }
+        
+        .step-label {
+            font-size: 0.75rem;
+            color: #6B7280;
+            white-space: nowrap;
+            max-width: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .step-active .step-label {
+            color: #1E3A8A;
+            font-weight: 500;
+        }
+        
+        .step-complete .step-label {
+            color: #065F46;
+            font-weight: 500;
+        }
+        
+        .stepContent {
+            background-color: #F9FAFB;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 1rem;
+            border: 1px solid #E5E7EB;
+        }
+        
+        .selector-container {
+            background-color: #F3F4F6;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #E5E7EB;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        # Título da página com estilo melhorado
+        st.markdown("<h1 class='execucao-header'>Propostas em Execução</h1>", unsafe_allow_html=True)
         
         if 'propostas_com_clientes' in locals() and not propostas.empty:
             # Filtrar apenas propostas em execução
@@ -604,50 +744,55 @@ def show():
             ]
             
             if not propostas_em_execucao.empty:
-                # Mostrar as propostas em execução
-                st.write(f"Total: {len(propostas_em_execucao)} propostas em execução")
+                # Mostrar as propostas em execução com estilo melhorado
+                st.markdown(f"<div class='execucao-total'>📊 Total: {len(propostas_em_execucao)} propostas em execução</div>", unsafe_allow_html=True)
                 
-                # Criar seletor de proposta para gerenciar
+                # Seletor de proposta com estilo melhorado
+                st.markdown("<div class='selector-container'>", unsafe_allow_html=True)
                 proposta_selecionada_id = st.selectbox(
                     "Selecione uma proposta para gerenciar:",
                     options=propostas_em_execucao['id'].tolist(),
                     format_func=lambda x: f"#{propostas_em_execucao[propostas_em_execucao['id'] == x]['numero'].iloc[0]} - {propostas_em_execucao[propostas_em_execucao['id'] == x]['nome'].iloc[0]}: {propostas_em_execucao[propostas_em_execucao['id'] == x]['descricao'].iloc[0][:50]}..."
                 )
+                st.markdown("</div>", unsafe_allow_html=True)
                 
                 if proposta_selecionada_id:
                     # Obter os dados da proposta selecionada
                     proposta = propostas_em_execucao[propostas_em_execucao['id'] == proposta_selecionada_id].iloc[0]
                     
-                    # Adicionar título da proposta
-                    st.subheader(f"Gerenciando: Proposta #{proposta['numero']} - {proposta['nome']}")
+                    # Card principal da proposta com estilo melhorado
+                    st.markdown("<div class='proposta-card'>", unsafe_allow_html=True)
                     
-                    # Adicionar sequência de passos com ícones primeiro
+                    # Título da proposta com estilo melhorado
+                    st.markdown(f"<h2 class='proposta-header'>Proposta #{proposta['numero']} - {proposta['nome']}</h2>", unsafe_allow_html=True)
+                    
+                    # Barra de progresso e etapas visuais melhoradas
                     st.markdown("""
-                    <div style="margin-bottom: 20px; background-color: #f8f9fa; padding: 12px; border-radius: 8px;">
-                        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; font-size: 0.9rem;">
-                            <div style="display: flex; align-items: center; margin: 5px 0;">
-                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">1</span>
-                                <span>📋 Definir Detalhes</span>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 20%;"></div>
+                        </div>
+                        <div class="progress-steps">
+                            <div class="step step-active">
+                                <div class="step-circle">1</div>
+                                <div class="step-label">Detalhes</div>
                             </div>
-                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
-                            <div style="display: flex; align-items: center; margin: 5px 0;">
-                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">2</span>
-                                <span>📦 Produtos</span>
+                            <div class="step">
+                                <div class="step-circle">2</div>
+                                <div class="step-label">Produtos</div>
                             </div>
-                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
-                            <div style="display: flex; align-items: center; margin: 5px 0;">
-                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">3</span>
-                                <span>🏗️ Fornecedores</span>
+                            <div class="step">
+                                <div class="step-circle">3</div>
+                                <div class="step-label">Fornecedores</div>
                             </div>
-                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
-                            <div style="display: flex; align-items: center; margin: 5px 0;">
-                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">4</span>
-                                <span>👥 Assistentes</span>
+                            <div class="step">
+                                <div class="step-circle">4</div>
+                                <div class="step-label">Assistentes</div>
                             </div>
-                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
-                            <div style="display: flex; align-items: center; margin: 5px 0;">
-                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">5</span>
-                                <span>🎯 Finalização</span>
+                            <div class="step">
+                                <div class="step-circle">5</div>
+                                <div class="step-label">Finalização</div>
+                            </div>
                             </div>
                         </div>
                     </div>
