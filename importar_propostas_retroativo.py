@@ -425,7 +425,7 @@ def add_proposta_retroativa_to_db():
         """
         def query():
             from sqlalchemy import text
-            from models.models import Proposta
+            from utils.database import Proposta
             
             proposta = Proposta(
                 cliente_id=cliente_id,

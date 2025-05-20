@@ -1,0 +1,14 @@
+Processando linha 62 de 62...
+Adicionando proposta: {'cliente_id': 1, 'descricao': 'Organização', 'valor': 1400.0, 'status': 'Finalizada', 'tipo_proposta': 'consultoria', 'data_inicio': datetime.datetime(2023, 11, 4, 0, 0), 'data_fim': datetime.datetime(2023, 11, 10, 0, 0), 'prazo_entrega': '10/11/2023', 'data_criacao': datetime.datetime(2025, 5, 20, 0, 0)}
+
+Exceção ao adicionar proposta: Erro ao executar operação no banco de dados: No module named 'models'
+
+Traceback (most recent call last): File "/home/runner/workspace/utils/database.py", line 828, in _safe_query result = tenant_query_wrapper() ^^^^^^^^^^^^^^^^^^^^^^ File "/home/runner/workspace/utils/database.py", line 806, in tenant_query_wrapper result = original_query() ^^^^^^^^^^^^^^^^ File "/home/runner/workspace/importar_propostas_retroativo.py", line 428, in query from models.models import Proposta ModuleNotFoundError: No module named 'models'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last): File "/home/runner/workspace/importar_propostas_retroativo.py", line 353, in importar_propostas_retroativas proposta_id = st.session_state.db.add_proposta_retroativa(**proposta_data) ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ File "/home/runner/workspace/importar_propostas_retroativo.py", line 465, in add_proposta_retroativa return self._safe_query(query) ^^^^^^^^^^^^^^^^^^^^^^^ File "/home/runner/workspace/utils/database.py", line 906, in _safe_query raise Exception(f"Erro ao executar operação no banco de dados: {str(e)}") Exception: Erro ao executar operação no banco de dados: No module named 'models'
+
+Adicionando proposta: {'cliente_id': 3, 'descricao': 'Organização', 'valor': 1900.0, 'status': 'Recusada', 'tipo_proposta': 'Organização', 'data_inicio': datetime.datetime(2023, 11, 13, 0, 0), 'data_fim': datetime.datetime(2023, 11, 14, 0, 0), 'prazo_entrega': '14/11/2023', 'data_criacao': datetime.datetime(2025, 5, 20, 0, 0)}
+
+Exceção ao adicionar proposta: Erro ao executar operação no banco de dados: No module named 'models'
