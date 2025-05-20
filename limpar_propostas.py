@@ -61,3 +61,42 @@ def main():
 
 if __name__ == "__main__":
     main()
+import streamlit as st
+from utils.database import Database
+
+st.title("🧹 Limpar Propostas")
+
+st.warning("⚠️ ATENÇÃO: Esta ação irá remover todas as propostas do sistema!")
+st.write("Esta operação também removerá:")
+st.write("- Produtos associados às propostas")
+st.write("- Andamentos registrados")
+st.write("- Acréscimos vinculados")
+st.write("- Lançamentos financeiros gerados pelas propostas")
+
+if st.button("Confirmar Limpeza", type="primary"):
+    try:
+        db = Database()
+        
+        # Execute limpeza em ordem para respeitar foreign keys
+        with st.spinner("Limpando dados..."):
+            # Remover produtos e fornecedores associados
+            db.session.execute("DELETE FROM produtos_fornecedores")
+            db.session.execute("DELETE FROM produtos_organizadores WHERE proposta_id IN (SELECT id FROM propostas)")
+            
+            # Remover andamentos
+            db.session.execute("DELETE FROM andamento_propostas")
+            
+            # Remover acréscimos
+            db.session.execute("DELETE FROM acrescimos_proposta")
+            
+            # Remover lançamentos financeiros vinculados
+            db.session.execute("DELETE FROM financeiro WHERE proposta_id IS NOT NULL")
+            
+            # Finalmente remover as propostas
+            db.session.execute("DELETE FROM propostas")
+            
+            db.session.commit()
+            
+        st.success("✅ Todas as propostas foram removidas com sucesso!")
+    except Exception as e:
+        st.error(f"Erro ao limpar propostas: {str(e)}")
