@@ -93,22 +93,6 @@ args = "Teste Brevo"
 task = "workflow.run"
 args = "Regenerar Lancamentos"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Importar Propostas Retroativo"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Limpar Propostas Duplicadas"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Resetar Sequência"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Resetar Sequência Independente"
-
 [[workflows.workflow]]
 name = "Importar Propostas"
 author = "agent"
@@ -363,41 +347,6 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run regenerar_lancamentos.py --server.port 8550 --server.address 0.0.0.0"
-waitForPort = 8550
-
-[[workflows.workflow]]
-name = "Importar Propostas Retroativo"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run importar_propostas_retroativo.py --server.port 8520 --server.address 0.0.0.0"
-waitForPort = 8520
-
-[[workflows.workflow]]
-name = "Limpar Propostas Duplicadas"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run limpar_propostas_duplicadas.py --server.port 8525 --server.address 0.0.0.0"
-
-[[workflows.workflow]]
-name = "Resetar Sequência"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run resetar_sequencia.py --server.port 8540 --server.address 0.0.0.0"
-waitForPort = 8540
-
-[[workflows.workflow]]
-name = "Resetar Sequência Independente"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run resetar_sequence_independente.py --server.port 8550 --server.address 0.0.0.0"
 waitForPort = 8550
 
 [[ports]]

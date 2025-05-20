@@ -4,13 +4,11 @@ from utils.finalizar_proposta_fix import finalizar_proposta_sql
 import pandas as pd
 import time
 import os
-import io
 from datetime import datetime, timedelta
 import uuid
 import plotly.graph_objects as go
 from utils.database import Fornecedor
 from utils.propostas_helper import st_gerar_pdf_cliente, st_gerar_pdf_interno
-from importar_propostas_retroativo import importar_propostas_retroativas, add_proposta_retroativa_to_db
 
 def show():
     # Título com estilo personalizado para ficar mais próximo do topo
@@ -594,147 +592,7 @@ def show():
 
     # ABA 2: EM EXECUÇÃO
     with tab2:
-        # CSS de estilo para melhorar a aparência da página
-        st.markdown("""
-        <style>
-        .execucao-header {
-            color: #1E3A8A;
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid #E5E7EB;
-        }
-        
-        .execucao-total {
-            background-color: #F3F4F6;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            margin-bottom: 1.2rem;
-            color: #4B5563;
-            border-left: 4px solid #3B82F6;
-        }
-        
-        .proposta-card {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            border: 1px solid #E5E7EB;
-        }
-        
-        .proposta-header {
-            font-size: 1.4rem;
-            color: #1F2937;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #E5E7EB;
-        }
-        
-        .progress-container {
-            margin-top: 1.5rem;
-            margin-bottom: 1.5rem;
-            position: relative;
-        }
-        
-        .progress-bar {
-            height: 6px;
-            background-color: #DBEAFE;
-            border-radius: 3px;
-            margin-bottom: 1rem;
-            position: relative;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background-color: #3B82F6;
-            border-radius: 3px;
-            transition: width 0.5s ease-in-out;
-        }
-        
-        .progress-steps {
-            display: flex;
-            justify-content: space-between;
-            position: relative;
-            margin-top: -15px;
-        }
-        
-        .step {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 50px;
-            text-align: center;
-        }
-        
-        .step-circle {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background-color: #E5E7EB;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #6B7280;
-            margin-bottom: 5px;
-            position: relative;
-            z-index: 2;
-            border: 2px solid #fff;
-            transition: all 0.3s ease;
-        }
-        
-        .step-active .step-circle {
-            background-color: #3B82F6;
-            color: white;
-            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
-        }
-        
-        .step-complete .step-circle {
-            background-color: #10B981;
-            color: white;
-        }
-        
-        .step-label {
-            font-size: 0.75rem;
-            color: #6B7280;
-            white-space: nowrap;
-            max-width: 80px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .step-active .step-label {
-            color: #1E3A8A;
-            font-weight: 500;
-        }
-        
-        .step-complete .step-label {
-            color: #065F46;
-            font-weight: 500;
-        }
-        
-        .stepContent {
-            background-color: #F9FAFB;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 1rem;
-            border: 1px solid #E5E7EB;
-        }
-        
-        .selector-container {
-            background-color: #F3F4F6;
-            padding: 12px 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid #E5E7EB;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-        
-        # Título da página com estilo melhorado
-        st.markdown("<h1 class='execucao-header'>Propostas em Execução</h1>", unsafe_allow_html=True)
+        st.header("Propostas em Execução")
         
         if 'propostas_com_clientes' in locals() and not propostas.empty:
             # Filtrar apenas propostas em execução
@@ -743,32 +601,52 @@ def show():
             ]
             
             if not propostas_em_execucao.empty:
-                # Mostrar as propostas em execução com estilo melhorado
-                st.markdown(f"<div class='execucao-total'>📊 Total: {len(propostas_em_execucao)} propostas em execução</div>", unsafe_allow_html=True)
+                # Mostrar as propostas em execução
+                st.write(f"Total: {len(propostas_em_execucao)} propostas em execução")
                 
-                # Seletor de proposta com estilo melhorado
-                st.markdown("<div class='selector-container'>", unsafe_allow_html=True)
+                # Criar seletor de proposta para gerenciar
                 proposta_selecionada_id = st.selectbox(
                     "Selecione uma proposta para gerenciar:",
                     options=propostas_em_execucao['id'].tolist(),
                     format_func=lambda x: f"#{propostas_em_execucao[propostas_em_execucao['id'] == x]['numero'].iloc[0]} - {propostas_em_execucao[propostas_em_execucao['id'] == x]['nome'].iloc[0]}: {propostas_em_execucao[propostas_em_execucao['id'] == x]['descricao'].iloc[0][:50]}..."
                 )
-                st.markdown("</div>", unsafe_allow_html=True)
                 
                 if proposta_selecionada_id:
                     # Obter os dados da proposta selecionada
                     proposta = propostas_em_execucao[propostas_em_execucao['id'] == proposta_selecionada_id].iloc[0]
                     
-                    # Card principal da proposta com estilo melhorado
-                    st.markdown("<div class='proposta-card'>", unsafe_allow_html=True)
+                    # Adicionar título da proposta
+                    st.subheader(f"Gerenciando: Proposta #{proposta['numero']} - {proposta['nome']}")
                     
-                    # Título da proposta com estilo melhorado
-                    st.markdown(f"<h2 class='proposta-header'>Proposta #{proposta['numero']} - {proposta['nome']}</h2>", unsafe_allow_html=True)
-                    
-                    # Abas numeradas mais simples (sem barra de progresso)
+                    # Adicionar sequência de passos com ícones primeiro
                     st.markdown("""
-                    <div style="margin: 20px 0;">
-                        <h4 style="font-size: 1rem; color: #4B5563; margin-bottom: 10px;">Gerencie a proposta usando as abas abaixo:</h4>
+                    <div style="margin-bottom: 20px; background-color: #f8f9fa; padding: 12px; border-radius: 8px;">
+                        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; font-size: 0.9rem;">
+                            <div style="display: flex; align-items: center; margin: 5px 0;">
+                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">1</span>
+                                <span>📋 Definir Detalhes</span>
+                            </div>
+                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
+                            <div style="display: flex; align-items: center; margin: 5px 0;">
+                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">2</span>
+                                <span>📦 Produtos</span>
+                            </div>
+                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
+                            <div style="display: flex; align-items: center; margin: 5px 0;">
+                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">3</span>
+                                <span>🏗️ Fornecedores</span>
+                            </div>
+                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
+                            <div style="display: flex; align-items: center; margin: 5px 0;">
+                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">4</span>
+                                <span>👥 Assistentes</span>
+                            </div>
+                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
+                            <div style="display: flex; align-items: center; margin: 5px 0;">
+                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">5</span>
+                                <span>🎯 Finalização</span>
+                            </div>
+                        </div>
                     </div>
                     """, unsafe_allow_html=True)
                     
@@ -783,7 +661,12 @@ def show():
                         # Se houver qualquer erro, usar valor padrão
                         porcentagem_atual = 0
                     
-                    # Barra de progresso removida conforme solicitado
+                    # Adicionar controle deslizante de progresso logo abaixo dos ícones
+                    st.slider("Progresso da proposta:", 
+                              min_value=0, 
+                              max_value=100, 
+                              value=int(porcentagem_atual),
+                              key=f"slider_progresso_topo_{proposta_selecionada_id}")
                     
                     # Adicionar CSS personalizado para as abas
                     st.markdown("""
@@ -799,8 +682,8 @@ def show():
                     
                     # Criar abas para gerenciar diferentes aspectos da execução com ícones e cores
                     st.markdown('<div class="execution-tabs">', unsafe_allow_html=True)
-                    exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5 = st.tabs([
-                        "1 - Detalhes", "2 - Produtos", "3 - Outros", "4 - Fornecedores", "5 - Finalizar"
+                    exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5, exec_tab6 = st.tabs([
+                        "📊 Detalhes", "📦 Produtos", "➕ Outros", "🏭 Fornecedores", "👥 Assistentes", "🏁 Finalizar"
                     ])
                     st.markdown('</div>', unsafe_allow_html=True)
                     
@@ -1400,7 +1283,7 @@ def show():
                         except Exception as e:
                             st.error(f"Erro ao carregar assistentes: {str(e)}")
                     
-                    with exec_tab5:
+                    with exec_tab6:
                         st.subheader("Finalizar Proposta")
                         
                         # Obter dados para apresentação
@@ -1612,8 +1495,6 @@ def show():
             propostas_finalizadas = propostas_com_clientes[
                 ((propostas_com_clientes['status'] == 'Finalizada') & 
                  (propostas_com_clientes['status_execucao'] == 'Finalizada')) |
-                ((propostas_com_clientes['status'] == 'Concluída') & 
-                 (propostas_com_clientes['status_execucao'] == 'Finalizada')) |
                 (propostas_com_clientes['status'] == 'Recusada')
             ]
             
@@ -1774,6 +1655,7 @@ def show():
                 st.info("Nenhuma proposta encontrada com os filtros selecionados.")
         else:
             st.info("Não há propostas cadastradas no sistema.")
-def show_section_heading():
-    """Função auxiliar para mostrar cabeçalhos de seção"""
-    pass
+
+# Permitir que este arquivo seja executado diretamente
+if __name__ == "__main__":
+    show()

@@ -105,7 +105,9 @@ def finalizar_proposta_improved(proposta_id: int) -> Dict[str, Any]:
             cursor.execute("""
                 UPDATE propostas 
                 SET status = 'Concluída', 
-                    status_execucao = 'Finalizada'
+                    status_execucao = 'Finalizada',
+                    data_finalizacao = CURRENT_DATE,
+                    data_atualizacao = CURRENT_DATE
                 WHERE id = %s
             """, (proposta_id,))
             

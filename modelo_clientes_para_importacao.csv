@@ -1,4 +1,4 @@
-nome;telefone;cpf;email;estado;cidade;bairro;endereco;data_aniversario;origem_cliente;observacoes
-Maria Silva;(11) 98765-4321;123.456.789-00;maria@email.com;SP;São Paulo;Pinheiros;Rua dos Pinheiros, 123;15/Mai;Indicação;Cliente VIP
-José Santos;(21) 99999-8888;987.654.321-00;jose@email.com;RJ;Rio de Janeiro;Copacabana;Av Atlântica, 456;23/Ago;Instagram;Prefere atendimento pela manhã
-Ana Oliveira;(31) 97777-6666;456.789.123-00;ana@email.com;MG;Belo Horizonte;Savassi;Rua Pernambuco, 789;10/Jan;Facebook;Primeira organização
+id;nome;email;telefone;endereco;cpf;data_aniversario;origem_cliente;estado;cidade;bairro;observacoes
+1;Maria da Silva;maria@email.com;(11) 99999-1111;Rua das Flores, 123;123.456.789-00;01/01/1980;Indicação;SP;São Paulo;Jardins;Cliente VIP
+2;João Santos;joao@email.com;(11) 99999-2222;Av. Paulista, 1000;987.654.321-00;15/05/1985;Instagram;SP;São Paulo;Bela Vista;Prefere contato por WhatsApp
+3;Ana Oliveira;ana@email.com;(11) 99999-3333;Rua Augusta, 500;111.222.333-44;30/03/1990;Facebook;SP;São Paulo;Consolação;Atendimento prioritário
