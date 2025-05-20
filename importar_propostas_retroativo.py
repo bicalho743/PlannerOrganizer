@@ -355,7 +355,14 @@ def importar_propostas_retroativas(arquivo, debug_mode=False):
                     if proposta_id:
                         # Se a proposta estiver finalizada, também finalizar no sistema
                         if status == 'Finalizada':
-                            st.session_state.db.finalizar_proposta(proposta_id)
+                            try:
+                                # Importar função de finalização de proposta
+                                from utils.finalizar_proposta_wrapper import finalizar_proposta_segura
+                                resultado = finalizar_proposta_segura(proposta_id)
+                                if not resultado.get('status', False):
+                                    st.warning(f"Proposta {proposta_id} foi criada, mas não foi possível finalizá-la automaticamente: {resultado.get('mensagem', 'Erro desconhecido')}")
+                            except Exception as e:
+                                st.warning(f"Proposta {proposta_id} foi criada, mas não foi possível finalizá-la automaticamente: {str(e)}")
                             
                         sucessos += 1
                         if debug_mode:
