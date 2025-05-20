@@ -1773,7 +1773,6 @@ def show():
             else:
                 st.info("Nenhuma proposta encontrada com os filtros selecionados.")
         else:
-        else:
             st.info("Não há propostas cadastradas no sistema.")
 def show_section_heading():
     """Função auxiliar para mostrar cabeçalhos de seção"""
