@@ -105,6 +105,10 @@ args = "Limpar Propostas Duplicadas"
 task = "workflow.run"
 args = "Resetar Sequência"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Resetar Sequência Independente"
+
 [[workflows.workflow]]
 name = "Importar Propostas"
 author = "agent"
@@ -386,6 +390,15 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run resetar_sequencia.py --server.port 8540 --server.address 0.0.0.0"
 waitForPort = 8540
+
+[[workflows.workflow]]
+name = "Resetar Sequência Independente"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run resetar_sequence_independente.py --server.port 8550 --server.address 0.0.0.0"
+waitForPort = 8550
 
 [[ports]]
 localPort = 443
