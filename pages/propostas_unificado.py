@@ -34,11 +34,10 @@ def show():
     
     # Criar abas para organizar o conteúdo com ícones para cada uma
     st.markdown('<div class="main-tabs">', unsafe_allow_html=True)
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3 = st.tabs([
         "📝 Nova Proposta", 
         "⚙️ Em Execução", 
-        "📋 Propostas Finalizadas",
-        "🕒 Importar Retroativas"
+        "📋 Propostas Finalizadas"
     ])
     st.markdown('</div>', unsafe_allow_html=True)
     
@@ -766,35 +765,10 @@ def show():
                     # Título da proposta com estilo melhorado
                     st.markdown(f"<h2 class='proposta-header'>Proposta #{proposta['numero']} - {proposta['nome']}</h2>", unsafe_allow_html=True)
                     
-                    # Barra de progresso e etapas visuais melhoradas
+                    # Abas numeradas mais simples (sem barra de progresso)
                     st.markdown("""
-                    <div class="progress-container">
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 20%;"></div>
-                        </div>
-                        <div class="progress-steps">
-                            <div class="step step-active">
-                                <div class="step-circle">1</div>
-                                <div class="step-label">Detalhes</div>
-                            </div>
-                            <div class="step">
-                                <div class="step-circle">2</div>
-                                <div class="step-label">Produtos</div>
-                            </div>
-                            <div class="step">
-                                <div class="step-circle">3</div>
-                                <div class="step-label">Fornecedores</div>
-                            </div>
-                            <div class="step">
-                                <div class="step-circle">4</div>
-                                <div class="step-label">Assistentes</div>
-                            </div>
-                            <div class="step">
-                                <div class="step-circle">5</div>
-                                <div class="step-label">Finalização</div>
-                            </div>
-                            </div>
-                        </div>
+                    <div style="margin: 20px 0;">
+                        <h4 style="font-size: 1rem; color: #4B5563; margin-bottom: 10px;">Gerencie a proposta usando as abas abaixo:</h4>
                     </div>
                     """, unsafe_allow_html=True)
                     
@@ -809,12 +783,7 @@ def show():
                         # Se houver qualquer erro, usar valor padrão
                         porcentagem_atual = 0
                     
-                    # Adicionar controle deslizante de progresso logo abaixo dos ícones
-                    st.slider("Progresso da proposta:", 
-                              min_value=0, 
-                              max_value=100, 
-                              value=int(porcentagem_atual),
-                              key=f"slider_progresso_topo_{proposta_selecionada_id}")
+                    # Barra de progresso removida conforme solicitado
                     
                     # Adicionar CSS personalizado para as abas
                     st.markdown("""
@@ -830,8 +799,8 @@ def show():
                     
                     # Criar abas para gerenciar diferentes aspectos da execução com ícones e cores
                     st.markdown('<div class="execution-tabs">', unsafe_allow_html=True)
-                    exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5, exec_tab6 = st.tabs([
-                        "📊 Detalhes", "📦 Produtos", "➕ Outros", "🏭 Fornecedores", "👥 Assistentes", "🏁 Finalizar"
+                    exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5 = st.tabs([
+                        "1 - Detalhes", "2 - Produtos", "3 - Outros", "4 - Fornecedores", "5 - Finalizar"
                     ])
                     st.markdown('</div>', unsafe_allow_html=True)
                     
@@ -1431,7 +1400,7 @@ def show():
                         except Exception as e:
                             st.error(f"Erro ao carregar assistentes: {str(e)}")
                     
-                    with exec_tab6:
+                    with exec_tab5:
                         st.subheader("Finalizar Proposta")
                         
                         # Obter dados para apresentação
@@ -1806,80 +1775,8 @@ def show():
         else:
             st.info("Não há propostas cadastradas no sistema.")
 
-# ABA 4: IMPORTAR PROPOSTAS RETROATIVAS
-    with tab4:
-        st.header("Importar Propostas Retroativas")
-        
-        # Verificar se o método add_proposta_retroativa existe
-        if not hasattr(st.session_state.db, 'add_proposta_retroativa'):
-            add_proposta_retroativa_to_db()
-            st.success("Método de importação retroativa inicializado com sucesso!")
-        
-        st.write("""
-        Esta ferramenta permite importar propostas antigas com datas retroativas.
-        Útil para manter a cronologia completa dos projetos quando você precisa registrar 
-        propostas que foram criadas antes de começar a usar o sistema.
-        """)
-        
-        # Duas opções: formulário individual ou importação via CSV
-        retroativa_modo = st.radio(
-            "Método de importação:",
-            ["Formulário individual", "Importar via CSV"],
-            horizontal=True
-        )
-        
-        if retroativa_modo == "Formulário individual":
-            st.subheader("Formulário para Cadastro de Proposta Retroativa")
-            
-            # Obter lista de clientes
-            clientes = st.session_state.db.get_clientes()
-            cliente_options = [""] + sorted(clientes['nome'].tolist()) if not clientes.empty else [""]
-            
-            with st.form("form_proposta_retroativa"):
-                # Dados básicos
-                cliente_nome = st.selectbox("Cliente", cliente_options, key="retroativa_cliente")
-                descricao = st.text_area("Descrição da proposta", key="retroativa_descricao")
-                
-                # Valores
-                valor = st.number_input("Valor (R$)", min_value=0.0, format="%.2f", key="retroativa_valor")
-                
-                # Status e tipo
-                status = st.selectbox(
-                    "Status da proposta", 
-                    ["Em elaboração", "Em execução", "Finalizada", "Recusada"],
-                    key="retroativa_status"
-                )
-                
-                tipo_proposta = st.text_input("Tipo de proposta (opcional)", key="retroativa_tipo")
-                
-                # Datas
-                col1, col2 = st.columns(2)
-                with col1:
-                    data_criacao = st.date_input(
-                        "Data de criação", 
-                        value=datetime.now() - timedelta(days=30),  # Default para 30 dias atrás
-                        key="retroativa_data_criacao"
-                    )
-                    data_inicio = st.date_input(
-                        "Data de início (opcional)", 
-                        value=None,
-                        key="retroativa_data_inicio"
-                    )
-                
-                with col2:
-                    data_fim = st.date_input(
-                        "Data de término (opcional)", 
-                        value=None,
-                        key="retroativa_data_fim"
-                    )
-                    prazo_entrega = st.date_input(
-                        "Prazo de entrega (opcional)", 
-                        value=None,
-                        key="retroativa_prazo"
-                    )
-                
-                # Botão de submissão
-                submitted = st.form_submit_button("Cadastrar Proposta Retroativa")
+
+
                 
             if submitted:
                 if not cliente_nome:
