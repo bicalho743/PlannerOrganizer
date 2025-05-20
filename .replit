@@ -101,6 +101,10 @@ args = "Importar Propostas Retroativo"
 task = "workflow.run"
 args = "Limpar Propostas Duplicadas"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Resetar Sequência"
+
 [[workflows.workflow]]
 name = "Importar Propostas"
 author = "agent"
@@ -373,6 +377,15 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run limpar_propostas_duplicadas.py --server.port 8525 --server.address 0.0.0.0"
+
+[[workflows.workflow]]
+name = "Resetar Sequência"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run resetar_sequencia.py --server.port 8540 --server.address 0.0.0.0"
+waitForPort = 8540
 
 [[ports]]
 localPort = 443
