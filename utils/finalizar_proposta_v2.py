@@ -57,6 +57,8 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
     Returns:
         Dict com resultados da operação, incluindo detalhes dos lançamentos gerados
     """
+    # Log extra para depuração
+    print(f"===== FUNÇÃO FINALIZAR_PROPOSTA_V2 INICIADA PARA PROPOSTA #{proposta_id} =====")
     logger.info(f"[V2] Iniciando nova finalização da proposta #{proposta_id}")
     conn = get_db_connection()
     

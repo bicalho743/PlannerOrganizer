@@ -1471,8 +1471,11 @@ def show():
                                 finalizar_concluida = st.form_submit_button("Marcar como Concluída", use_container_width=True)
                                 if finalizar_concluida:
                                     try:
-                                        # Chamar a função para finalizar proposta
-                                        resultado = finalizar_proposta_segura(proposta_selecionada_id)
+                                        # Chamar a função para finalizar proposta (versão V2)
+                                        # Garantir que o ID seja convertido para inteiro
+                                        proposta_id_int = int(proposta_selecionada_id)
+                                        print(f"===== CHAMANDO FINALIZAR PROPOSTA COM ID={proposta_id_int} =====")
+                                        resultado = finalizar_proposta_segura(proposta_id_int)
                                         if resultado.get('status', False):
                                             st.success("✅ Proposta finalizada com sucesso!")
                                             st.rerun()

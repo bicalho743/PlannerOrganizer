@@ -27,6 +27,8 @@ def finalizar_proposta_segura_v2(proposta_id: int) -> Dict[str, Any]:
     Returns:
         Dict com status da operação e mensagens no formato esperado pelo front-end
     """
+    # Adicionar mensagem de log mais visível para depuração
+    print(f"===== WRAPPER V2 CHAMADO PARA FINALIZAR PROPOSTA #{proposta_id} =====")
     logger.info(f"Wrapper V2 chamado para finalizar proposta #{proposta_id}")
     
     try:
