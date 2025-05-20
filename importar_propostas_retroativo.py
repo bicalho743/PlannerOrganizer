@@ -467,12 +467,12 @@ def add_proposta_retroativa_to_db():
             self.session.add(proposta)
             self.session.flush()  # Para obter o ID
             
-            # Se uma data de criação foi especificada, atualizamos diretamente
+            # Se uma data de criação foi especificada, atualizamos a data_proposta (que é o campo equivalente)
             if data_criacao:
                 # Usar SQL direto para atualizar o timestamp
                 sql = text(f"""
                     UPDATE propostas
-                    SET data_criacao = :data_criacao
+                    SET data_proposta = :data_criacao
                     WHERE id = :id
                 """)
                 
