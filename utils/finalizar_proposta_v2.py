@@ -181,11 +181,15 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
         
         # Etapa 2: Produtos - Gerar lançamento para produtos
         # Buscar produtos no módulo de produtos (primeira opção)
+        # Primeiro, vamos verificar se há um problema de transação abortada e limpar
         try:
+            # Tentar limpar transações abortadas
+            conn.rollback()
+            
             cursor.execute("""
                 SELECT p.id, 'ESTOQUE' as fornecedor, 
                        COALESCE(p.nome, p.descricao) as descricao, 
-                       COALESCE(p.valor, p.preco, 0) as valor 
+                       COALESCE(p.preco_venda, p.preco_custo, 0) as valor 
                 FROM produtos p
                 JOIN itens_venda i ON p.id = i.produto_id
                 JOIN vendas v ON i.venda_id = v.id
@@ -195,6 +199,11 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
             logger.warning(f"Erro ao buscar produtos do estoque: {str(e)}")
             # Se falhar, retornamos uma lista vazia
             logger.info("Continuando com lista vazia de produtos do estoque")
+            # Garantir que a transação seja limpa
+            try:
+                conn.rollback()
+            except:
+                pass
         
         try:
             produtos_estoque = cursor.fetchall()
@@ -209,11 +218,23 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
             WHERE proposta_id = %s AND tipo = 'PRODUTO'
         """, (proposta_id,))
         
-        produtos_acrescimos = cursor.fetchall()
+        try:
+            produtos_acrescimos = cursor.fetchall()
+        except:
+            # Se houve erro na consulta, inicializar com lista vazia
+            produtos_acrescimos = []
+            
         valor_total_produtos = 0
         
         # Combinar produtos do estoque e produtos de acréscimos
+        # Garantir que ambas as listas não sejam None
+        if produtos_estoque is None:
+            produtos_estoque = []
+        if produtos_acrescimos is None:
+            produtos_acrescimos = []
+            
         produtos_combinados = produtos_estoque + produtos_acrescimos
+        logger.info(f"Produtos combinados: {len(produtos_combinados)} itens (estoque: {len(produtos_estoque)}, acréscimos: {len(produtos_acrescimos)})")
         
         if produtos_combinados and len(produtos_combinados) > 0:
             print(f"Total de produtos encontrados: {len(produtos_combinados)}")
