@@ -625,17 +625,12 @@ def show():
             st.header("Propostas em Execução")
             
             if not propostas.empty:
-                # Filtrar propostas em execução usando ambos os campos de status para garantir consistência
-                # Reimplementar o filtro de forma mais clara
+                # Filtrar propostas em execução usando apenas o campo status_execucao
+                # CORREÇÃO: ao reabrir propostas, o status fica como "Aprovada" mas o status_execucao fica "Em execução"
                 
-                # 1. Criar máscara para status de proposta em execução
-                mascara_status_execucao = propostas_com_clientes['status'] == 'Em execução'
-                
-                # 2. Criar máscara para status_execucao em execução
-                mascara_execucao = propostas_com_clientes['status_execucao'] == 'Em execução'
-                
-                # 3. Aplicar ambas as máscaras (AND) para garantir que apenas propostas realmente em execução sejam exibidas
-                mascara_em_execucao_completa = mascara_status_execucao & mascara_execucao
+                # Usar somente o status_execucao para filtrar propostas em execução
+                # Isso garante que propostas reabertas também sejam exibidas
+                mascara_em_execucao_completa = propostas_com_clientes['status_execucao'] == 'Em execução'
                 
                 # Aplicar o filtro
                 propostas_em_execucao = propostas_com_clientes[mascara_em_execucao_completa].copy()
