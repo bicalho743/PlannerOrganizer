@@ -359,7 +359,12 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
             for fornecedor in fornecedores:
                 forn_id, forn_nome, forn_descricao, forn_valor, percentual, fornecedor_cadastro_id = fornecedor
                 
-                if forn_valor and percentual and float(forn_valor) > 0 and float(percentual) > 0:
+                # Garantir que o percentual de comissão seja pelo menos 5% se for zero
+                if percentual is None or float(percentual) == 0:
+                    percentual = 5.0
+                    logger.info(f"Usando percentual padrão de 5% para fornecedor {forn_nome}")
+                
+                if forn_valor and float(forn_valor) > 0:
                     valor_comissao = float(forn_valor) * float(percentual) / 100
                     valor_total_comissoes += valor_comissao
                     
