@@ -1,5 +1,8 @@
 import streamlit as st
 from utils.finalizar_proposta_wrapper_v2 import finalizar_proposta_segura_v2 as finalizar_proposta_segura
+import logging
+# Configurar logging básico
+logging.basicConfig(level=logging.INFO)
 from utils.finalizar_proposta_fix import finalizar_proposta_sql
 import pandas as pd
 import time
