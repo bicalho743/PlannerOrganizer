@@ -3186,6 +3186,92 @@ class Database:
             except (ValueError, TypeError) as e:
                 raise Exception(f"Erro ao converter valores: {str(e)}")
         return self._safe_query(query)
+    
+    def update_proposta(self, proposta_id, 
+                       cliente_id=None, 
+                       descricao=None,
+                       valor=None, 
+                       status=None, 
+                       tipo_proposta=None,
+                       data_inicio=None, 
+                       data_fim=None, 
+                       prazo_entrega=None,
+                       data_proposta=None,
+                       previsao_dias=None,
+                       data_inicio_execucao=None,
+                       status_execucao=None,
+                       **kwargs):
+        """
+        Método para atualizar uma proposta existente.
+        Compatibilidade com o método update_proposta usado em algumas partes do código.
+        
+        Args:
+            proposta_id: ID da proposta a ser atualizada
+            cliente_id: ID do cliente (opcional)
+            descricao: Descrição da proposta (opcional)
+            valor: Valor da proposta (opcional)
+            status: Status da proposta (opcional)
+            tipo_proposta: Tipo da proposta (opcional)
+            data_inicio: Data de início (opcional)
+            data_fim: Data de fim (opcional)
+            prazo_entrega: Prazo de entrega (opcional)
+            data_proposta: Data da proposta (opcional)
+            previsao_dias: Previsão em dias (opcional)
+            data_inicio_execucao: Data de início da execução (opcional)
+            status_execucao: Status de execução (opcional)
+            **kwargs: Campos adicionais (opcional)
+            
+        Returns:
+            dict: Status e mensagem do resultado da operação
+        """
+        def query():
+            try:
+                # Converter ID para int
+                proposta_id_int = int(proposta_id)
+                
+                # Buscar a proposta
+                proposta = self.session.query(Proposta).filter_by(id=proposta_id_int).first()
+                if not proposta:
+                    return {"status": "error", "message": f"Proposta ID {proposta_id} não encontrada"}
+                
+                # Atualizar os campos fornecidos
+                if cliente_id is not None:
+                    proposta.cliente_id = cliente_id
+                if descricao is not None:
+                    proposta.descricao = descricao
+                if valor is not None:
+                    proposta.valor = float(valor)
+                if status is not None:
+                    proposta.status = status
+                if tipo_proposta is not None:
+                    proposta.tipo_proposta = tipo_proposta
+                if data_inicio is not None:
+                    proposta.data_inicio = data_inicio
+                if data_fim is not None:
+                    proposta.data_fim = data_fim
+                if prazo_entrega is not None:
+                    proposta.prazo_entrega = prazo_entrega
+                if data_proposta is not None:
+                    proposta.data_proposta = data_proposta
+                if previsao_dias is not None:
+                    proposta.previsao_dias = previsao_dias
+                if data_inicio_execucao is not None:
+                    proposta.data_inicio_execucao = data_inicio_execucao
+                if status_execucao is not None:
+                    proposta.status_execucao = status_execucao
+                
+                # Processar campos adicionais passados como kwargs
+                for key, value in kwargs.items():
+                    if hasattr(proposta, key):
+                        setattr(proposta, key, value)
+                
+                self.session.commit()
+                return {"status": "success", "message": f"Proposta {proposta_id} atualizada com sucesso"}
+            except Exception as e:
+                self.session.rollback()
+                return {"status": "error", "message": f"Erro ao atualizar proposta: {str(e)}"}
+        
+        return self._safe_query(query)
         
     def atualizar_proposta(self, proposta_id, descricao=None, valor=None, status=None, 
                           tipo_proposta=None, data_inicio=None, data_fim=None, prazo_entrega=None,
