@@ -2316,11 +2316,13 @@ def show():
                         data_inicio = row[6].strftime('%d/%m/%Y') if row[6] else "-" 
                         data_fim = row[7].strftime('%d/%m/%Y') if row[7] else "-"
                         
-                        # Tratar o valor como texto formatado
+                        # Tratar o valor como texto formatado no formato brasileiro
                         try:
-                            valor_fmt = f"R$ {float(row[8]):.2f}" if row[8] else "R$ 0,00"
+                            valor_numerico = float(row[8]) if row[8] else 0.0
+                            valor_fmt = f"R$ {valor_numerico:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
                         except (ValueError, TypeError):
                             valor_fmt = f"R$ {row[8]}" if row[8] else "R$ 0,00"
+                            valor_numerico = 0.0
                         
                         # Determinar a categoria de status para agrupamento/filtro
                         categoria_status = None
@@ -2346,6 +2348,7 @@ def show():
                             'data_inicio': data_inicio,
                             'data_fim': data_fim,
                             'valor': valor_fmt,
+                            'valor_numerico': valor_numerico,  # Valor numérico para ordenação/filtros
                             'data_criacao': row[9],
                             'tipo_proposta': row[10],
                             'categoria_status': categoria_status
@@ -2402,7 +2405,8 @@ def show():
                         # Preparar dados para exibição
                         colunas_exibir = [
                             'numero', 'cliente_nome', 'descricao', 'valor', 
-                            'categoria_status', 'data_inicio', 'data_fim'
+                            'categoria_status', 'status', 'status_execucao',
+                            'data_inicio', 'data_fim', 'data_criacao'
                         ]
                         
                         mapeamento_colunas = {
@@ -2410,22 +2414,25 @@ def show():
                             'cliente_nome': 'Cliente',
                             'descricao': 'Descrição',
                             'valor': 'Valor',
-                            'categoria_status': 'Status',
+                            'categoria_status': 'Categoria',
+                            'status': 'Status Proposta',
+                            'status_execucao': 'Status Execução',
                             'data_inicio': 'Data Início',
-                            'data_fim': 'Data Fim'
+                            'data_fim': 'Data Fim',
+                            'data_criacao': 'Data Criação'
                         }
                         
                         df_exibir = propostas_filtradas[colunas_exibir].rename(columns=mapeamento_colunas)
                         
                         # Colorir background das linhas com base no status
                         def highlight_status(row):
-                            if row['Status'] == 'Em execução':
+                            if row['Categoria'] == 'Em execução':
                                 return ['background-color: #e6f3ff'] * len(row)
-                            elif row['Status'] == 'Finalizadas':
+                            elif row['Categoria'] == 'Finalizadas':
                                 return ['background-color: #e6ffe6'] * len(row)
-                            elif row['Status'] == 'Recusadas':
+                            elif row['Categoria'] == 'Recusadas':
                                 return ['background-color: #ffe6e6'] * len(row)
-                            elif row['Status'] == 'Abertas':
+                            elif row['Categoria'] == 'Abertas':
                                 return ['background-color: #fff2e6'] * len(row)
                             return [''] * len(row)
                         
