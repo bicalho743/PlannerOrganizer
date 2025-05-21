@@ -213,6 +213,22 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
         except:
             # Se houve erro na consulta, inicializar com lista vazia
             produtos_estoque = []
+            
+        # Buscar produtos da tabela produtos_organizadores (nova opção)
+        try:
+            cursor.execute("""
+                SELECT id, 'ORGANIZACAO' as fornecedor, 
+                      nome as descricao, 
+                      valor * quantidade as valor 
+                FROM produtos_organizadores
+                WHERE proposta_id = %s
+            """, (proposta_id,))
+            
+            produtos_organizadores = cursor.fetchall()
+            logger.info(f"Encontrados {len(produtos_organizadores)} produtos em produtos_organizadores para proposta #{proposta_id}")
+        except Exception as e:
+            logger.warning(f"Erro ao buscar produtos de organização: {str(e)}")
+            produtos_organizadores = []
         
         # Buscar produtos adicionados como acréscimos (segunda opção)
         cursor.execute("""
@@ -229,15 +245,17 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
             
         valor_total_produtos = 0
         
-        # Combinar produtos do estoque e produtos de acréscimos
-        # Garantir que ambas as listas não sejam None
+        # Combinar produtos do estoque, produtos de organização e produtos de acréscimos
+        # Garantir que todas as listas não sejam None
         if produtos_estoque is None:
             produtos_estoque = []
+        if produtos_organizadores is None:
+            produtos_organizadores = []
         if produtos_acrescimos is None:
             produtos_acrescimos = []
             
-        produtos_combinados = produtos_estoque + produtos_acrescimos
-        logger.info(f"Produtos combinados: {len(produtos_combinados)} itens (estoque: {len(produtos_estoque)}, acréscimos: {len(produtos_acrescimos)})")
+        produtos_combinados = produtos_estoque + produtos_organizadores + produtos_acrescimos
+        logger.info(f"Produtos combinados: {len(produtos_combinados)} itens (estoque: {len(produtos_estoque)}, organização: {len(produtos_organizadores)}, acréscimos: {len(produtos_acrescimos)})")
         
         if produtos_combinados and len(produtos_combinados) > 0:
             print(f"Total de produtos encontrados: {len(produtos_combinados)}")
@@ -355,37 +373,67 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
         valor_total_comissoes = 0
         
         if fornecedores and len(fornecedores) > 0:
-            # Gerar um lançamento para cada fornecedor com comissão
+            # Gerar um lançamento para cada fornecedor, com diferentes estratégias
             for fornecedor in fornecedores:
                 forn_id, forn_nome, forn_descricao, forn_valor, percentual, fornecedor_cadastro_id = fornecedor
                 
-                # Usar apenas o percentual configurado no cadastro do fornecedor
-                if forn_valor and percentual and float(forn_valor) > 0 and float(percentual) > 0:
-                    valor_comissao = float(forn_valor) * float(percentual) / 100
-                    valor_total_comissoes += valor_comissao
+                if forn_valor and float(forn_valor) > 0:
+                    # Converter para números
+                    forn_valor = float(forn_valor)
+                    percentual = float(percentual) if percentual else 0
                     
-                    cursor.execute("""
-                        INSERT INTO financeiro 
-                        (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, 
-                         proposta_id, status, classificacao, usuario_id)
-                        VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id
-                    """, (
-                        f"Comissão de {percentual}% - Fornecedor {forn_nome} - Proposta #{proposta_info['numero']}",
-                        valor_comissao,
-                        "Comissão sobre fornecedores",  # Categoria
-                        "Comissão de Fornecedor",  # Subcategoria
-                        "Receita",  # Tipo
-                        forn_id,  # origem_id (mantemos o ID do acréscimo para rastreabilidade)
-                        "comissao_fornecedor",  # origem_tipo
-                        proposta_id,  # proposta_id
-                        "Pendente",  # status
-                        "contas_a_receber",  # classificacao
-                        proposta_info['usuario_id']  # usuario_id
-                    ))
+                    if percentual > 0:
+                        # Caso 1: Se tem percentual de comissão, gera lançamento de comissão
+                        valor_comissao = forn_valor * percentual / 100
+                        valor_total_comissoes += valor_comissao
+                        
+                        cursor.execute("""
+                            INSERT INTO financeiro 
+                            (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, 
+                            proposta_id, status, classificacao, usuario_id)
+                            VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            RETURNING id
+                        """, (
+                            f"Comissão de {percentual}% - Fornecedor {forn_nome} - Proposta #{proposta_info['numero']}",
+                            valor_comissao,
+                            "Comissão sobre fornecedores",  # Categoria
+                            "Comissão de Fornecedor",  # Subcategoria
+                            "Receita",  # Tipo
+                            forn_id,  # origem_id
+                            "comissao_fornecedor",  # origem_tipo
+                            proposta_id,  # proposta_id
+                            "Pendente",  # status
+                            "contas_a_receber",  # classificacao
+                            proposta_info['usuario_id']  # usuario_id
+                        ))
+                    else:
+                        # Caso 2: Se não tem percentual, gera lançamento do valor total como receita
+                        cursor.execute("""
+                            INSERT INTO financeiro 
+                            (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, 
+                            proposta_id, status, classificacao, usuario_id)
+                            VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            RETURNING id
+                        """, (
+                            f"Fornecedor: {forn_nome} - Proposta #{proposta_info['numero']} - {nome_cliente}",
+                            forn_valor,
+                            "Serviços de terceiros",  # Categoria
+                            "Fornecedor",  # Subcategoria
+                            "Receita",  # Tipo
+                            forn_id,  # origem_id
+                            "receita_fornecedor",  # origem_tipo
+                            proposta_id,  # proposta_id
+                            "Pendente",  # status
+                            "contas_a_receber",  # classificacao
+                            proposta_info['usuario_id']  # usuario_id
+                        ))
                     
                     lancamento_id = cursor.fetchone()[0]
-                    logger.info(f"Lançamento financeiro de Comissão criado: #{lancamento_id}, Valor: R${valor_comissao:.2f}, Fornecedor: {forn_nome}")
+                    if percentual > 0:
+                        valor_comissao = forn_valor * percentual / 100
+                        logger.info(f"Lançamento financeiro de Comissão criado: #{lancamento_id}, Valor: R${valor_comissao:.2f}, Fornecedor: {forn_nome}")
+                    else:
+                        logger.info(f"Lançamento financeiro de Fornecedor criado: #{lancamento_id}, Valor: R${forn_valor:.2f}, Fornecedor: {forn_nome}")
                     lancamentos_gerados += 1
             
             resultado["lancamentos"]["valores"]["comissoes"] = valor_total_comissoes
