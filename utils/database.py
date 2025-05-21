@@ -2269,24 +2269,35 @@ class Database:
                         ) RETURNING id;
                         """
                         
-                        cursor.execute(sql_receita)
-                        id_receita = cursor.fetchone()[0]
-                        print(f"DEBUG SQL FINANCEIRO: Lançamento de receita com (Aprovação) criado com ID {id_receita}")
-                        
-                        # Removido o lançamento de "Valor a receber" para evitar duplicidade
-                        print(f"DEBUG SQL FINANCEIRO: Não criando mais lançamento de 'Valor a receber' para evitar duplicidade")
-                        
-                        # Removidos os lançamentos de comissão sobre fornecedores e pagamento de equipe/assistentes
-                        # Mantemos apenas o lançamento principal de receita
-                        print(f"DEBUG SQL FINANCEIRO: Lançamentos de comissão e assistentes removidos conforme solicitado!")
-                        
-                        # Garantir que tudo seja confirmado
-                        conn.commit()
-                        print(f"DEBUG SQL FINANCEIRO: Transação confirmada com sucesso!")
-                        
-                        # Fechar a conexão
-                        cursor.close()
-                        conn.close()
+                        try:
+                            cursor.execute(sql_receita)
+                            id_receita_result = cursor.fetchone()
+                            if id_receita_result and len(id_receita_result) > 0:
+                                id_receita = id_receita_result[0]
+                                print(f"DEBUG SQL FINANCEIRO: Lançamento de receita com (Aprovação) criado com ID {id_receita}")
+                            else:
+                                print("DEBUG SQL FINANCEIRO: Nenhum ID retornado após inserção do lançamento")
+                            
+                            # Removido o lançamento de "Valor a receber" para evitar duplicidade
+                            print(f"DEBUG SQL FINANCEIRO: Não criando mais lançamento de 'Valor a receber' para evitar duplicidade")
+                            
+                            # Removidos os lançamentos de comissão sobre fornecedores e pagamento de equipe/assistentes
+                            # Mantemos apenas o lançamento principal de receita
+                            print(f"DEBUG SQL FINANCEIRO: Lançamentos de comissão e assistentes removidos conforme solicitado!")
+                            
+                            # Garantir que tudo seja confirmado
+                            conn.commit()
+                            print(f"DEBUG SQL FINANCEIRO: Transação confirmada com sucesso!")
+                        except Exception as cursor_error:
+                            print(f"DEBUG SQL FINANCEIRO: Erro ao executar SQL: {str(cursor_error)}")
+                            conn.rollback()
+                            raise
+                        finally:
+                            # Fechar a conexão apenas se ainda estiver aberta
+                            if not cursor.closed:
+                                cursor.close()
+                            if conn and not conn.closed:
+                                conn.close()
                         
                         result["valor_base"] = valor_base
                         result["lancamentos_gerados"] = 1  # Apenas um lançamento: receita principal
@@ -2397,11 +2408,13 @@ class Database:
             # Preparar objeto de resultado
             resultado = {"status": True, "message": f"Proposta {proposta_id} atualizada com status '{novo_status}'"}
             
-            # Gerar lançamentos apenas se não existirem e a proposta estiver mudando para "Em execução" ou "Aprovada"
-            if lancamentos_existentes == 0 and status_antigo in ["Em elaboração", "Aguardando aprovação"] and (novo_status == "Em execução" or novo_status == "Aprovada"):
+            # Gerar lançamentos quando a proposta estiver mudando para "Em execução" ou "Aprovada"
+            # Removida a verificação de lancamentos_existentes == 0 para garantir que o lançamento seja gerado
+            if status_antigo in ["Em elaboração", "Aguardando aprovação"] and (novo_status == "Em execução" or novo_status == "Aprovada"):
                 try:
-                    # Gerar lançamentos financeiros para proposta aprovada (receita a receber e contas a receber)
-                    self.gerar_lancamentos_proposta_aprovada(proposta_id)
+                    # Forçar regeneração de lançamentos para garantir que o valor base seja criado
+                    # O parâmetro forcar_geracao=True remove lançamentos existentes antes de criar novos
+                    resultado_lancamentos = self.gerar_lancamentos_proposta_aprovada(proposta_id, forcar_geracao=True)
                     print(f"DEBUG: Lançamentos financeiros gerados para proposta em execução {proposta_id}")
                     resultado["lancamentos"] = {"status": "success", "message": "Lançamentos financeiros gerados com sucesso"}
                 except Exception as e:
