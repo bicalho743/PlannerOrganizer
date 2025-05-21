@@ -70,7 +70,8 @@ def reabrir_proposta_finalizada(proposta_id):
             cursor.execute("""
                 SELECT COUNT(*) FROM financeiro WHERE proposta_id = %s
             """, (proposta_id,))
-            lancamentos_encontrados = cursor.fetchone()[0]
+            resultado = cursor.fetchone()
+            lancamentos_encontrados = resultado[0] if resultado else 0
             logger.info(f"Encontrados {lancamentos_encontrados} lançamentos financeiros para proposta #{proposta_id}")
             
             # Remover lançamentos específicos relacionados à finalização,
@@ -108,11 +109,9 @@ def reabrir_proposta_finalizada(proposta_id):
             cursor.execute("""
                 UPDATE propostas 
                 SET status = 'Aprovada', 
-                    status_execucao = 'Em execução',
-                    data_finalizacao = NULL,
-                    data_atualizacao = %s
+                    status_execucao = 'Em execução'
                 WHERE id = %s
-            """, (data_atual, proposta_id))
+            """, (proposta_id,))
             
             conn.commit()
             cursor.close()
@@ -147,10 +146,9 @@ def reabrir_proposta_finalizada(proposta_id):
                 cursor.execute("""
                     UPDATE propostas 
                     SET status = 'Aprovada', 
-                        status_execucao = 'Em execução',
-                        data_atualizacao = %s
+                        status_execucao = 'Em execução'
                     WHERE id = %s
-                """, (data_atual, proposta_id))
+                """, (proposta_id,))
                 
                 conn.commit()
                 cursor.close()
