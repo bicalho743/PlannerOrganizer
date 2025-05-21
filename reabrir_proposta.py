@@ -74,13 +74,12 @@ def reabrir_proposta_finalizada(proposta_id):
             lancamentos_encontrados = resultado[0] if resultado else 0
             logger.info(f"Encontrados {lancamentos_encontrados} lançamentos financeiros para proposta #{proposta_id}")
             
-            # Remover lançamentos específicos relacionados à finalização,
-            # mantendo outros lançamentos importantes como receitas em aberto
+            # Remover TODOS os lançamentos relacionados à finalização,
+            # mantendo apenas o lançamento do valor base (gerado na aprovação)
             cursor.execute("""
                 DELETE FROM financeiro 
                 WHERE proposta_id = %s 
-                AND (tipo = 'receita_a_receber_aprovacao' 
-                    OR categoria IN ('Comissão sobre fornecedores', 'Pagamento Equipe/assistentes'))
+                AND NOT (categoria = 'Serviços de organização' AND subcategoria = 'Valor a receber')
                 RETURNING id
             """, (proposta_id,))
             
