@@ -630,25 +630,43 @@ def show():
                 print(f"DEBUG STATUS: Valores únicos para status: {propostas['status'].unique().tolist()}")
                 print(f"DEBUG STATUS: Valores únicos para status_execucao: {propostas['status_execucao'].unique().tolist()}")
                 
-                # Filtrar propostas em execução usando apenas o campo status_execucao
-                # CORREÇÃO: ao reabrir propostas, o status fica como "Aprovada" mas o status_execucao fica "Em execução"
+                # PROBLEMA: O filtro não está funcionando corretamente para propostas reabertas
+                # Vamos modificar nossa abordagem e verificar primeiro o usuário_id das propostas
                 
-                # Usar somente o status_execucao para filtrar propostas em execução
-                # Isso garante que propostas reabertas também sejam exibidas
-                mascara_em_execucao_completa = propostas_com_clientes['status_execucao'] == 'Em execução'
+                # Verificar se temos o id do usuário logado
+                usuario_id_atual = None
+                if 'user' in st.session_state and 'usuario_id' in st.session_state.user:
+                    usuario_id_atual = st.session_state.user['usuario_id']
+                    print(f"DEBUG USUARIO: ID do usuário logado: {usuario_id_atual}")
+                else:
+                    print("DEBUG USUARIO: Nenhum usuário logado encontrado na session_state")
+                
+                # Mostrar todas as propostas com seus IDs e usuário para diagnóstico
+                print(f"DEBUG PROPOSTAS: Total encontradas: {len(propostas_com_clientes)}")
+                if not propostas_com_clientes.empty and len(propostas_com_clientes) > 0:
+                    print(f"DEBUG USUARIO_IDS: IDs de usuários nas propostas: {propostas_com_clientes['usuario_id'].unique().tolist()}")
+                
+                # Filtrar PRIMEIRO pelo usuário atual para evitar problemas de multi-tenant
+                if usuario_id_atual:
+                    propostas_filtradas = propostas_com_clientes[propostas_com_clientes['usuario_id'] == usuario_id_atual].copy()
+                    print(f"DEBUG FILTRO USUARIO: Propostas do usuário atual: {len(propostas_filtradas)}")
+                else:
+                    propostas_filtradas = propostas_com_clientes.copy()
+                
+                # Agora aplicar o filtro de status_execucao
+                mascara_em_execucao = propostas_filtradas['status_execucao'] == 'Em execução'
                 
                 # Imprimir quantidade de propostas que atendem ao filtro
-                print(f"DEBUG STATUS: Propostas com status_execucao='Em execução': {mascara_em_execucao_completa.sum()}")
+                print(f"DEBUG STATUS: Propostas com status_execucao='Em execução': {mascara_em_execucao.sum()}")
                 
                 # Aplicar o filtro
-                propostas_em_execucao = propostas_com_clientes[mascara_em_execucao_completa].copy()
+                propostas_em_execucao = propostas_filtradas[mascara_em_execucao].copy()
                 
-                # Log de diagnostico para as propostas filtradas
+                # Exibir os IDs das propostas filtradas para diagnóstico
                 if not propostas_em_execucao.empty:
-                    print(f"DEBUG ID: IDs das propostas em execução: {propostas_em_execucao['id'].tolist()}")
-                    print(f"DEBUG USUARIO: Valor de usuario_id nas propostas: {propostas_em_execucao['usuario_id'].iloc[0] if len(propostas_em_execucao) > 0 else 'N/A'}")
-                else:
-                    print("DEBUG STATUS: Nenhuma proposta atende aos critérios do filtro 'Em execução'")
+                    print(f"DEBUG ID: IDs das propostas em execução após filtro: {propostas_em_execucao['id'].tolist()}")
+                
+                # Removemos o código duplicado para evitar confusão
                 
                 if not propostas_em_execucao.empty:
                     # Preparar DataFrame para exibição com tratamento de tipos para evitar erros Arrow
