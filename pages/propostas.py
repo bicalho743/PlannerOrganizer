@@ -2276,10 +2276,14 @@ def show():
             st.header("Todas as Propostas")
             st.info("Esta aba mostra todas as propostas, independentemente do status.")
             
-            # Obter todas as propostas
+            # Obter todas as propostas usando o método existente e seguro
             try:
-                # Carregando todas as propostas do banco
+                # Usar o método padrão para obter todas as propostas
                 todas_propostas = st.session_state.db.get_propostas()
+                
+                # Converter todos os valores para string para evitar problemas de tipo
+                for col in todas_propostas.columns:
+                    todas_propostas[col] = todas_propostas[col].astype(str)
                 
                 # Verificar se temos propostas para exibir
                 if todas_propostas.empty:
@@ -2296,7 +2300,7 @@ def show():
                     
                     with col1:
                         # Extrair lista de status únicos para o filtro
-                        status_unicos = ['Todos'] + list(todas_propostas['status'].unique())
+                        status_unicos = ['Todos'] + list(todas_propostas['status'].astype(str).unique())
                         status_filtro = st.selectbox("Status da Proposta:", status_unicos, key="status_filtro_todas")
                     
                     with col2:
