@@ -2274,12 +2274,10 @@ def show():
         # ABA 4: TODAS AS PROPOSTAS
         with tab4:
             st.header("Todas as Propostas")
-            st.info("Esta aba mostra todas as propostas, independentemente do status.")
+            st.info("Esta aba mostra todas as propostas, independentemente do status - Abertas, Em execução, Finalizadas e Recusadas.")
             
-            # Criar uma versão muito simplificada da aba
             try:
-                # Usar consulta direta SQL em vez do método ORM para evitar problemas de tipo
-                # Criar uma consulta SQL simples para obter apenas os campos essenciais
+                # Obter as propostas diretamente via SQL para evitar problemas de tipos de dados
                 from sqlalchemy import text
                 with st.session_state.db.engine.connect() as conn:
                     result = conn.execute(
@@ -2291,9 +2289,11 @@ def show():
                             p.descricao, 
                             p.status, 
                             p.status_execucao,
-                            TO_CHAR(p.data_inicio, 'DD/MM/YYYY') as data_inicio_str,
-                            TO_CHAR(p.data_fim, 'DD/MM/YYYY') as data_fim_str,
-                            p.valor::text as valor_str
+                            p.data_inicio,
+                            p.data_fim,
+                            p.valor,
+                            TO_CHAR(p.data_criacao, 'DD/MM/YYYY') as data_criacao,
+                            COALESCE(p.tipo_proposta, '') as tipo_proposta
                         FROM 
                             propostas p
                         JOIN 
@@ -2306,27 +2306,198 @@ def show():
                         {"usuario_id": st.session_state.get('usuario_id', '')}
                     )
                     
-                    # Criar manualmente um DataFrame com os resultados
-                    rows = []
+                    # Processar os resultados
+                    todas_propostas_list = []
+                    
                     for row in result:
-                        rows.append({
+                        # Tratar as datas de forma segura
+                        data_inicio = row[6].strftime('%d/%m/%Y') if row[6] else "-" 
+                        data_fim = row[7].strftime('%d/%m/%Y') if row[7] else "-"
+                        
+                        # Tratar o valor como texto formatado
+                        try:
+                            valor_fmt = f"R$ {float(row[8]):.2f}" if row[8] else "R$ 0,00"
+                        except (ValueError, TypeError):
+                            valor_fmt = f"R$ {row[8]}" if row[8] else "R$ 0,00"
+                        
+                        # Determinar a categoria de status para agrupamento/filtro
+                        categoria_status = None
+                        if row[4] == 'Aberta' or row[4] == 'Em análise':
+                            categoria_status = 'Abertas'
+                        elif row[4] == 'Aprovada' and row[5] == 'Em execução':
+                            categoria_status = 'Em execução'
+                        elif row[4] == 'Aprovada' and row[5] == 'Finalizada':
+                            categoria_status = 'Finalizadas'
+                        elif row[4] == 'Recusada' or row[5] == 'Cancelada':
+                            categoria_status = 'Recusadas'
+                        else:
+                            categoria_status = 'Outras'
+                            
+                        # Adicionar à lista processada
+                        todas_propostas_list.append({
                             'id': row[0],
                             'numero': row[1],
                             'cliente_nome': row[2],
                             'descricao': row[3],
                             'status': row[4],
                             'status_execucao': row[5],
-                            'data_inicio': row[6],
-                            'data_fim': row[7],
-                            'valor': row[8]
+                            'data_inicio': data_inicio,
+                            'data_fim': data_fim,
+                            'valor': valor_fmt,
+                            'data_criacao': row[9],
+                            'tipo_proposta': row[10],
+                            'categoria_status': categoria_status
                         })
                     
                     import pandas as pd
-                    todas_propostas = pd.DataFrame(rows)
+                    todas_propostas = pd.DataFrame(todas_propostas_list)
                 
                 # Verificar se temos propostas para exibir
                 if todas_propostas.empty:
                     st.warning("Não há propostas cadastradas no sistema.")
+                else:
+                    # Mostrar quantidade total de propostas
+                    st.success(f"Total de propostas: {len(todas_propostas)}")
+                    
+                    # Criar seletores de filtro em colunas
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        # Filtro por status
+                        categorias_status = ['Todas'] + sorted(todas_propostas['categoria_status'].unique().tolist())
+                        status_filtro = st.selectbox("Status:", categorias_status, key="status_filtro_todas_v2")
+                    
+                    with col2:
+                        # Filtro por cliente
+                        clientes_unicos = ['Todos'] + sorted(todas_propostas['cliente_nome'].unique().tolist())
+                        cliente_filtro = st.selectbox("Cliente:", clientes_unicos, key="cliente_filtro_todas_v2")
+                    
+                    with col3:
+                        # Filtro por data (mês/ano)
+                        hoje = datetime.now()
+                        filtro_data_tipo = st.selectbox(
+                            "Filtro de período:", 
+                            ["Todos", "Últimos 30 dias", "Últimos 60 dias", "Últimos 90 dias", "Este ano"],
+                            key="periodo_filtro_todas_v2"
+                        )
+                    
+                    # Aplicar filtros
+                    propostas_filtradas = todas_propostas.copy()
+                    
+                    # Filtro por status
+                    if status_filtro != 'Todas':
+                        propostas_filtradas = propostas_filtradas[propostas_filtradas['categoria_status'] == status_filtro]
+                    
+                    # Filtro por cliente
+                    if cliente_filtro != 'Todos':
+                        propostas_filtradas = propostas_filtradas[propostas_filtradas['cliente_nome'] == cliente_filtro]
+                    
+                    # Mostrar quantidade após filtrar
+                    st.write(f"Propostas encontradas após filtros: {len(propostas_filtradas)}")
+                    
+                    # Exibir propostas em uma tabela
+                    if not propostas_filtradas.empty:
+                        # Preparar dados para exibição
+                        colunas_exibir = [
+                            'numero', 'cliente_nome', 'descricao', 'valor', 
+                            'categoria_status', 'data_inicio', 'data_fim'
+                        ]
+                        
+                        mapeamento_colunas = {
+                            'numero': 'Número',
+                            'cliente_nome': 'Cliente',
+                            'descricao': 'Descrição',
+                            'valor': 'Valor',
+                            'categoria_status': 'Status',
+                            'data_inicio': 'Data Início',
+                            'data_fim': 'Data Fim'
+                        }
+                        
+                        df_exibir = propostas_filtradas[colunas_exibir].rename(columns=mapeamento_colunas)
+                        
+                        # Colorir background das linhas com base no status
+                        def highlight_status(row):
+                            if row['Status'] == 'Em execução':
+                                return ['background-color: #e6f3ff'] * len(row)
+                            elif row['Status'] == 'Finalizadas':
+                                return ['background-color: #e6ffe6'] * len(row)
+                            elif row['Status'] == 'Recusadas':
+                                return ['background-color: #ffe6e6'] * len(row)
+                            elif row['Status'] == 'Abertas':
+                                return ['background-color: #fff2e6'] * len(row)
+                            return [''] * len(row)
+                        
+                        # Exibir tabela estilizada
+                        st.dataframe(
+                            df_exibir,
+                            hide_index=True,
+                            use_container_width=True
+                        )
+                        
+                        # Exibir detalhes de proposta específica
+                        st.subheader("Visualizar detalhes de proposta")
+                        
+                        col1, col2 = st.columns([1, 2])
+                        with col1:
+                            numero_proposta = st.selectbox("Selecione o número da proposta:", 
+                                                         sorted(propostas_filtradas['numero'].unique()), 
+                                                         key="selecao_proposta_todas")
+                        
+                        with col2:
+                            if st.button("Ver detalhes", key="ver_detalhes_todas"):
+                                if numero_proposta:
+                                    proposta_detalhes = propostas_filtradas[propostas_filtradas['numero'] == numero_proposta].iloc[0]
+                                    
+                                    # Mostrar detalhes em um card
+                                    with st.expander("Detalhes da Proposta", expanded=True):
+                                        col1, col2 = st.columns(2)
+                                        
+                                        with col1:
+                                            st.markdown(f"**Número:** {proposta_detalhes['numero']}")
+                                            st.markdown(f"**Cliente:** {proposta_detalhes['cliente_nome']}")
+                                            st.markdown(f"**Descrição:** {proposta_detalhes['descricao']}")
+                                            st.markdown(f"**Valor:** {proposta_detalhes['valor']}")
+                                            st.markdown(f"**Tipo de Proposta:** {proposta_detalhes['tipo_proposta']}")
+                                        
+                                        with col2:
+                                            st.markdown(f"**Status:** {proposta_detalhes['status']}")
+                                            st.markdown(f"**Status Execução:** {proposta_detalhes['status_execucao']}")
+                                            st.markdown(f"**Categoria:** {proposta_detalhes['categoria_status']}")
+                                            st.markdown(f"**Data Início:** {proposta_detalhes['data_inicio']}")
+                                            st.markdown(f"**Data Fim:** {proposta_detalhes['data_fim']}")
+                                            st.markdown(f"**Data Criação:** {proposta_detalhes['data_criacao']}")
+                                        
+                                        # Adicionar botões específicos
+                                        if proposta_detalhes['categoria_status'] == "Em execução":
+                                            if st.button("⚠️ Finalizar Proposta", key="finalizar_todas"):
+                                                st.warning("Para finalizar esta proposta, vá até a aba 'Em Execução'")
+                                        
+                                        if proposta_detalhes['categoria_status'] == "Finalizadas":
+                                            if st.button("🔄 Reabrir Proposta", key="reabrir_todas"):
+                                                st.warning("Para reabrir esta proposta, vá até a aba 'Propostas Finalizadas'")
+                        
+                        # Adicionar estatísticas
+                        st.subheader("Resumo por Status")
+                        status_contagem = propostas_filtradas['categoria_status'].value_counts().reset_index()
+                        status_contagem.columns = ['Status', 'Quantidade']
+                        
+                        # Gerar gráfico
+                        fig = go.Figure(data=[
+                            go.Bar(
+                                x=status_contagem['Status'],
+                                y=status_contagem['Quantidade'],
+                                marker_color=['#fff2e6', '#e6f3ff', '#e6ffe6', '#ffe6e6', '#f0f0f0']
+                            )
+                        ])
+                        
+                        fig.update_layout(
+                            title='Distribuição de Propostas por Status',
+                            xaxis_title='Status',
+                            yaxis_title='Quantidade',
+                            height=400
+                        )
+                        
+                        st.plotly_chart(fig, use_container_width=True)
                 else:
                     # Mostrar quantidade de propostas encontradas
                     st.success(f"Total de propostas encontradas: {len(todas_propostas)}")
