@@ -1962,9 +1962,12 @@ def show():
                     else:
                         st.error(f"❌ NO MATCH: Proposta #{p['numero']} - {p['cliente_nome']} - Status: {p['status']} - Exec: {p['status_execucao']}")
                 
-                # Aplicar filtro
+                # Aplicar filtro atualizado para capturar também propostas com status 'Cancelada'
                 propostas_finalizadas = todas_propostas[
                     ((todas_propostas['status'] == 'Finalizada') & (todas_propostas['status_execucao'] == 'Finalizada')) |
+                    ((todas_propostas['status'] == 'Finalizada') & (todas_propostas['status_execucao'] == 'Cancelada')) |
+                    (todas_propostas['status'] == 'Concluída') |
+                    ((todas_propostas['status'] == 'Finalizada') & (todas_propostas['status_execucao'] == 'Não iniciada')) |
                     (todas_propostas['status'] == 'Recusada')
                 ]
             
