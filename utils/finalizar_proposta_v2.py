@@ -115,14 +115,20 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
         
         # Verificar se já existem lançamentos para esta proposta
         cursor.execute("""
-            SELECT COUNT(*) FROM financeiro WHERE proposta_id = %s
+            SELECT COUNT(*) FROM financeiro 
+            WHERE proposta_id = %s AND origem_tipo IN 
+            ('comissao_fornecedor', 'venda_produtos', 'servicos_adicionais', 'pagamento_assistente')
         """, (proposta_id,))
         
         count = cursor.fetchone()[0]
         if count > 0:
             logger.warning(f"Proposta #{proposta_id} já possui {count} lançamentos financeiros")
-            # Limpar lançamentos existentes para evitar duplicações
-            cursor.execute("DELETE FROM financeiro WHERE proposta_id = %s", (proposta_id,))
+            # Limpar apenas os lançamentos que serão recriados, preservando o valor base
+            cursor.execute("""
+                DELETE FROM financeiro 
+                WHERE proposta_id = %s AND origem_tipo IN 
+                ('comissao_fornecedor', 'venda_produtos', 'servicos_adicionais', 'pagamento_assistente')
+            """, (proposta_id,))
             logger.info(f"Removidos {count} lançamentos existentes para proposta #{proposta_id}")
         
         # Dicionário para armazenar resultados
@@ -174,18 +180,34 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
             logger.warning(f"Proposta #{proposta_info['numero']} não possui lançamento de valor base!")
         
         # Etapa 2: Produtos - Gerar lançamento para produtos
+        # Buscar produtos no módulo de produtos (primeira opção)
+        cursor.execute("""
+            SELECT p.id, 'ESTOQUE' as fornecedor, p.nome as descricao, p.valor_venda as valor 
+            FROM produtos p
+            JOIN itens_venda i ON p.id = i.produto_id
+            JOIN vendas v ON i.venda_id = v.id
+            WHERE v.proposta_id = %s
+        """, (proposta_id,))
+        
+        produtos_estoque = cursor.fetchall()
+        
+        # Buscar produtos adicionados como acréscimos (segunda opção)
         cursor.execute("""
             SELECT id, fornecedor, descricao, valor
             FROM acrescimos_proposta 
             WHERE proposta_id = %s AND tipo = 'PRODUTO'
         """, (proposta_id,))
         
-        produtos = cursor.fetchall()
+        produtos_acrescimos = cursor.fetchall()
         valor_total_produtos = 0
         
-        if produtos and len(produtos) > 0:
-            # Calcular valor total de produtos
-            for produto in produtos:
+        # Combinar produtos do estoque e produtos de acréscimos
+        produtos_combinados = produtos_estoque + produtos_acrescimos
+        
+        if produtos_combinados and len(produtos_combinados) > 0:
+            print(f"Total de produtos encontrados: {len(produtos_combinados)}")
+            # Calcular valor total de todos os produtos
+            for produto in produtos_combinados:
                 produto_id, fornecedor, descricao, produto_valor = produto
                 # Garantir que temos valores válidos
                 produto_valor = float(produto_valor) if produto_valor else 0
@@ -282,12 +304,18 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
         
         # Etapa 4: Comissões de fornecedores
         # Buscar acréscimos do tipo Fornecedor
+        # Melhorada a consulta para pegar fornecedores com percentual
         cursor.execute("""
-            SELECT a.id, a.fornecedor, a.descricao, a.valor, f.percentual_comissao, f.id as fornecedor_id
+            SELECT a.id, a.fornecedor, a.descricao, a.valor, 
+                   COALESCE(f.percentual_comissao, 10) as percentual_comissao, 
+                   f.id as fornecedor_id
             FROM acrescimos_proposta a
-            LEFT JOIN fornecedores f ON LOWER(a.fornecedor) = LOWER(f.descricao)
+            LEFT JOIN fornecedores f ON (
+                LOWER(a.fornecedor) = LOWER(f.descricao) OR 
+                LOWER(a.fornecedor) = LOWER(f.nome) OR
+                LOWER(a.fornecedor) = LOWER(COALESCE(f.nome_fantasia, ''))
+            )
             WHERE a.proposta_id = %s AND a.tipo = 'FORNECEDOR'
-            AND f.percentual_comissao IS NOT NULL AND f.percentual_comissao > 0
         """, (proposta_id,))
         
         fornecedores = cursor.fetchall()
