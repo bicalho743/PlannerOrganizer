@@ -2276,14 +2276,53 @@ def show():
             st.header("Todas as Propostas")
             st.info("Esta aba mostra todas as propostas, independentemente do status.")
             
-            # Obter todas as propostas usando o método existente e seguro
+            # Criar uma versão muito simplificada da aba
             try:
-                # Usar o método padrão para obter todas as propostas
-                todas_propostas = st.session_state.db.get_propostas()
-                
-                # Converter todos os valores para string para evitar problemas de tipo
-                for col in todas_propostas.columns:
-                    todas_propostas[col] = todas_propostas[col].astype(str)
+                # Usar consulta direta SQL em vez do método ORM para evitar problemas de tipo
+                # Criar uma consulta SQL simples para obter apenas os campos essenciais
+                from sqlalchemy import text
+                with st.session_state.db.engine.connect() as conn:
+                    result = conn.execute(
+                        text("""
+                        SELECT 
+                            p.id, 
+                            p.numero, 
+                            c.nome as cliente_nome, 
+                            p.descricao, 
+                            p.status, 
+                            p.status_execucao,
+                            TO_CHAR(p.data_inicio, 'DD/MM/YYYY') as data_inicio_str,
+                            TO_CHAR(p.data_fim, 'DD/MM/YYYY') as data_fim_str,
+                            p.valor::text as valor_str
+                        FROM 
+                            propostas p
+                        JOIN 
+                            clientes c ON p.cliente_id = c.id
+                        WHERE 
+                            p.usuario_id = :usuario_id
+                        ORDER BY 
+                            p.numero DESC
+                        """),
+                        {"usuario_id": st.session_state.get('usuario_id', '')}
+                    )
+                    
+                    # Criar manualmente um DataFrame com os resultados
+                    rows = []
+                    for row in result:
+                        rows.append({
+                            'id': row[0],
+                            'numero': row[1],
+                            'cliente_nome': row[2],
+                            'descricao': row[3],
+                            'status': row[4],
+                            'status_execucao': row[5],
+                            'data_inicio': row[6],
+                            'data_fim': row[7],
+                            'valor': row[8]
+                        })
+                    
+                    import pandas as pd
+                    todas_propostas = pd.DataFrame(rows)
                 
                 # Verificar se temos propostas para exibir
                 if todas_propostas.empty:
