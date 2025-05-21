@@ -360,7 +360,7 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
         # Melhorada a consulta para pegar fornecedores com percentual
         cursor.execute("""
             SELECT a.id, a.fornecedor, a.descricao, a.valor, 
-                   COALESCE(f.percentual_comissao, 10) as percentual_comissao, 
+                   f.percentual_comissao, 
                    f.id as fornecedor_id
             FROM acrescimos_proposta a
             LEFT JOIN fornecedores f ON (
@@ -373,12 +373,17 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
         valor_total_comissoes = 0
         
         if fornecedores and len(fornecedores) > 0:
-            # Gerar um lançamento para cada fornecedor, com diferentes estratégias
+            # Gerar um lançamento para cada fornecedor
             for fornecedor in fornecedores:
-                forn_id, forn_nome, forn_descricao, forn_valor, percentual, fornecedor_cadastro_id = fornecedor
+                forn_id, forn_nome, forn_descricao, forn_valor, percentual_db, fornecedor_cadastro_id = fornecedor
                 
-                # Usar apenas o percentual configurado no cadastro do fornecedor
-                if forn_valor and percentual and float(forn_valor) > 0 and float(percentual) > 0:
+                # Usar percentual padrão de 5% se não estiver definido ou for zero
+                percentual = 5.0  # Percentual padrão
+                if percentual_db is not None and float(percentual_db) > 0:
+                    percentual = float(percentual_db)
+                
+                # Verificar apenas se o valor do fornecedor é maior que zero
+                if forn_valor and float(forn_valor) > 0:
                     forn_valor = float(forn_valor)
                     percentual = float(percentual)
                     valor_comissao = forn_valor * percentual / 100
