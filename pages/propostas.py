@@ -2341,8 +2341,17 @@ def show():
                         # Preparar dados para exibição
                         tabela_propostas = propostas_filtradas.copy()
                         
-                        # Formatar valores
-                        tabela_propostas['Valor'] = tabela_propostas['valor'].apply(lambda x: f"R$ {float(x):.2f}")
+                        # Formatar valores com proteção contra tipos incorretos
+                        def formatar_valor(x):
+                            try:
+                                if pd.isna(x):
+                                    return "R$ 0,00"
+                                return f"R$ {float(x):.2f}"
+                            except (ValueError, TypeError):
+                                # Se não for possível converter para float, retorna o valor original
+                                return str(x)
+                        
+                        tabela_propostas['Valor'] = tabela_propostas['valor'].apply(formatar_valor)
                         
                         # Formatar datas
                         if 'data_inicio' in tabela_propostas.columns:
@@ -2373,21 +2382,15 @@ def show():
                         # Criar dataframe para exibição
                         df_exibir = tabela_propostas[colunas_exibir].rename(columns=mapeamento_colunas)
                         
-                        # Exibir tabela interativa
+                        # Converter todas as colunas para string para evitar erros de renderização
+                        for col in df_exibir.columns:
+                            df_exibir[col] = df_exibir[col].astype(str)
+                        
+                        # Exibir tabela interativa com configuração simplificada
                         st.dataframe(
                             df_exibir,
                             hide_index=True,
-                            use_container_width=True,
-                            column_config={
-                                "Número": st.column_config.TextColumn("Número", width="small"),
-                                "Cliente": st.column_config.TextColumn("Cliente", width="medium"),
-                                "Descrição": st.column_config.TextColumn("Descrição", width="large"),
-                                "Valor": st.column_config.TextColumn("Valor", width="small"),
-                                "Status": st.column_config.TextColumn("Status", width="small"),
-                                "Status Execução": st.column_config.TextColumn("Status Execução", width="small"),
-                                "Data Início": st.column_config.TextColumn("Data Início", width="small"),
-                                "Data Fim": st.column_config.TextColumn("Data Fim", width="small")
-                            }
+                            use_container_width=True
                         )
                         
                         # Adicionar opção para visualizar detalhes de uma proposta
@@ -2422,17 +2425,29 @@ def show():
                                     st.markdown(f"**Número:** {proposta_detalhes['numero']}")
                                     st.markdown(f"**Cliente:** {proposta_detalhes['cliente_nome']}")
                                     st.markdown(f"**Descrição:** {proposta_detalhes['descricao']}")
-                                    st.markdown(f"**Valor:** R$ {float(proposta_detalhes['valor']):.2f}")
+                                    
+                                    # Formatação segura do valor
+                                    try:
+                                        valor_formatado = f"R$ {float(proposta_detalhes['valor']):.2f}"
+                                    except (ValueError, TypeError):
+                                        valor_formatado = str(proposta_detalhes['valor'])
+                                    st.markdown(f"**Valor:** {valor_formatado}")
                                 
                                 with col2:
                                     st.markdown(f"**Status:** {proposta_detalhes['status']}")
                                     st.markdown(f"**Status Execução:** {proposta_detalhes['status_execucao']}")
                                     
-                                    # Formatação de datas
-                                    data_inicio_str = proposta_detalhes['data_inicio'].strftime('%d/%m/%Y') if pd.notna(proposta_detalhes['data_inicio']) else '-'
+                                    # Formatação segura de datas
+                                    try:
+                                        data_inicio_str = proposta_detalhes['data_inicio'].strftime('%d/%m/%Y') if pd.notna(proposta_detalhes['data_inicio']) else '-'
+                                    except (AttributeError, TypeError):
+                                        data_inicio_str = str(proposta_detalhes['data_inicio'])
                                     st.markdown(f"**Data Início:** {data_inicio_str}")
                                     
-                                    data_fim_str = proposta_detalhes['data_fim'].strftime('%d/%m/%Y') if pd.notna(proposta_detalhes['data_fim']) else '-'
+                                    try:
+                                        data_fim_str = proposta_detalhes['data_fim'].strftime('%d/%m/%Y') if pd.notna(proposta_detalhes['data_fim']) else '-'
+                                    except (AttributeError, TypeError):
+                                        data_fim_str = str(proposta_detalhes['data_fim'])
                                     st.markdown(f"**Data Fim:** {data_fim_str}")
                                 
                                 # Botões de ação baseados no status da proposta
