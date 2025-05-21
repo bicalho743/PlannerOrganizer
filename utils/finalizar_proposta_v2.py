@@ -377,63 +377,35 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
             for fornecedor in fornecedores:
                 forn_id, forn_nome, forn_descricao, forn_valor, percentual, fornecedor_cadastro_id = fornecedor
                 
-                if forn_valor and float(forn_valor) > 0:
-                    # Converter para números
+                # Usar apenas o percentual configurado no cadastro do fornecedor
+                if forn_valor and percentual and float(forn_valor) > 0 and float(percentual) > 0:
                     forn_valor = float(forn_valor)
-                    percentual = float(percentual) if percentual else 0
+                    percentual = float(percentual)
+                    valor_comissao = forn_valor * percentual / 100
+                    valor_total_comissoes += valor_comissao
                     
-                    if percentual > 0:
-                        # Caso 1: Se tem percentual de comissão, gera lançamento de comissão
-                        valor_comissao = forn_valor * percentual / 100
-                        valor_total_comissoes += valor_comissao
-                        
-                        cursor.execute("""
-                            INSERT INTO financeiro 
-                            (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, 
-                            proposta_id, status, classificacao, usuario_id)
-                            VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                            RETURNING id
-                        """, (
-                            f"Comissão de {percentual}% - Fornecedor {forn_nome} - Proposta #{proposta_info['numero']}",
-                            valor_comissao,
-                            "Comissão sobre fornecedores",  # Categoria
-                            "Comissão de Fornecedor",  # Subcategoria
-                            "Receita",  # Tipo
-                            forn_id,  # origem_id
-                            "comissao_fornecedor",  # origem_tipo
-                            proposta_id,  # proposta_id
-                            "Pendente",  # status
-                            "contas_a_receber",  # classificacao
-                            proposta_info['usuario_id']  # usuario_id
-                        ))
-                    else:
-                        # Caso 2: Se não tem percentual, gera lançamento do valor total como receita
-                        cursor.execute("""
-                            INSERT INTO financeiro 
-                            (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, 
-                            proposta_id, status, classificacao, usuario_id)
-                            VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                            RETURNING id
-                        """, (
-                            f"Fornecedor: {forn_nome} - Proposta #{proposta_info['numero']} - {nome_cliente}",
-                            forn_valor,
-                            "Serviços de terceiros",  # Categoria
-                            "Fornecedor",  # Subcategoria
-                            "Receita",  # Tipo
-                            forn_id,  # origem_id
-                            "receita_fornecedor",  # origem_tipo
-                            proposta_id,  # proposta_id
-                            "Pendente",  # status
-                            "contas_a_receber",  # classificacao
-                            proposta_info['usuario_id']  # usuario_id
-                        ))
+                    cursor.execute("""
+                        INSERT INTO financeiro 
+                        (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, 
+                        proposta_id, status, classificacao, usuario_id)
+                        VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id
+                    """, (
+                        f"Comissão de {percentual}% - Fornecedor {forn_nome} - Proposta #{proposta_info['numero']}",
+                        valor_comissao,
+                        "Comissão sobre fornecedores",  # Categoria
+                        "Comissão de Fornecedor",  # Subcategoria
+                        "Receita",  # Tipo
+                        forn_id,  # origem_id
+                        "comissao_fornecedor",  # origem_tipo
+                        proposta_id,  # proposta_id
+                        "Pendente",  # status
+                        "contas_a_receber",  # classificacao
+                        proposta_info['usuario_id']  # usuario_id
+                    ))
                     
                     lancamento_id = cursor.fetchone()[0]
-                    if percentual > 0:
-                        valor_comissao = forn_valor * percentual / 100
-                        logger.info(f"Lançamento financeiro de Comissão criado: #{lancamento_id}, Valor: R${valor_comissao:.2f}, Fornecedor: {forn_nome}")
-                    else:
-                        logger.info(f"Lançamento financeiro de Fornecedor criado: #{lancamento_id}, Valor: R${forn_valor:.2f}, Fornecedor: {forn_nome}")
+                    logger.info(f"Lançamento financeiro de Comissão criado: #{lancamento_id}, Valor: R${valor_comissao:.2f}, Fornecedor: {forn_nome}")
                     lancamentos_gerados += 1
             
             resultado["lancamentos"]["valores"]["comissoes"] = valor_total_comissoes
