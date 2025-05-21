@@ -93,6 +93,10 @@ args = "Teste Brevo"
 task = "workflow.run"
 args = "Regenerar Lancamentos"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Teste Reabrir Proposta"
+
 [[workflows.workflow]]
 name = "Importar Propostas"
 author = "agent"
@@ -348,6 +352,15 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run regenerar_lancamentos.py --server.port 8550 --server.address 0.0.0.0"
 waitForPort = 8550
+
+[[workflows.workflow]]
+name = "Teste Reabrir Proposta"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run teste_reabrir_proposta.py --server.port 8570 --server.address 0.0.0.0"
+waitForPort = 8570
 
 [[ports]]
 localPort = 443

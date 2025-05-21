@@ -79,9 +79,14 @@ def reabrir_proposta_finalizada(proposta_id):
             cursor.execute("""
                 DELETE FROM financeiro 
                 WHERE proposta_id = %s 
-                AND NOT (categoria = 'Serviços de organização' AND subcategoria = 'Valor a receber')
+                AND id != (
+                    SELECT MIN(id) FROM financeiro 
+                    WHERE proposta_id = %s 
+                    AND tipo = 'Receita' 
+                    AND descricao LIKE '%Aprovação)%'
+                )
                 RETURNING id
-            """, (proposta_id,))
+            """, (proposta_id, proposta_id))
             
             # Contar quantos lançamentos foram excluídos
             resultado_exclusao = cursor.fetchall()
