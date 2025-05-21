@@ -103,15 +103,19 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
         
         # Verificar se a proposta já está com status finalizado
         if proposta_info['status_execucao'] != 'Finalizada':
-            # Atualizar status da proposta para finalizada - VERSÃO SIMPLIFICADA
+            # Atualizar status da proposta para finalizada - VERSÃO CORRIGIDA
             cursor.execute("""
                 UPDATE propostas 
-                SET status = 'Concluída', 
-                    status_execucao = 'Finalizada'
+                SET status = 'Finalizada', 
+                    status_execucao = 'Finalizada',
+                    data_fim_real = CURRENT_DATE
                 WHERE id = %s
             """, (proposta_id,))
             
-            logger.info(f"Proposta #{proposta_id} marcada como finalizada")
+            # Executar commit imediatamente para garantir que a mudança seja persistida
+            conn.commit()
+            
+            logger.info(f"Proposta #{proposta_id} marcada como finalizada com commit")
         
         # Verificar se já existem lançamentos para esta proposta
         cursor.execute("""
