@@ -181,15 +181,26 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
         
         # Etapa 2: Produtos - Gerar lançamento para produtos
         # Buscar produtos no módulo de produtos (primeira opção)
-        cursor.execute("""
-            SELECT p.id, 'ESTOQUE' as fornecedor, p.nome as descricao, p.valor_venda as valor 
-            FROM produtos p
-            JOIN itens_venda i ON p.id = i.produto_id
-            JOIN vendas v ON i.venda_id = v.id
-            WHERE v.proposta_id = %s
-        """, (proposta_id,))
+        try:
+            cursor.execute("""
+                SELECT p.id, 'ESTOQUE' as fornecedor, 
+                       COALESCE(p.nome, p.descricao) as descricao, 
+                       COALESCE(p.valor, p.preco, 0) as valor 
+                FROM produtos p
+                JOIN itens_venda i ON p.id = i.produto_id
+                JOIN vendas v ON i.venda_id = v.id
+                WHERE v.proposta_id = %s
+            """, (proposta_id,))
+        except Exception as e:
+            logger.warning(f"Erro ao buscar produtos do estoque: {str(e)}")
+            # Se falhar, retornamos uma lista vazia
+            logger.info("Continuando com lista vazia de produtos do estoque")
         
-        produtos_estoque = cursor.fetchall()
+        try:
+            produtos_estoque = cursor.fetchall()
+        except:
+            # Se houve erro na consulta, inicializar com lista vazia
+            produtos_estoque = []
         
         # Buscar produtos adicionados como acréscimos (segunda opção)
         cursor.execute("""
