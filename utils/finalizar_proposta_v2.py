@@ -343,9 +343,7 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
                    f.id as fornecedor_id
             FROM acrescimos_proposta a
             LEFT JOIN fornecedores f ON (
-                LOWER(a.fornecedor) = LOWER(f.descricao) OR 
-                LOWER(a.fornecedor) = LOWER(f.nome) OR
-                LOWER(a.fornecedor) = LOWER(COALESCE(f.nome_fantasia, ''))
+                LOWER(a.fornecedor) = LOWER(f.descricao)
             )
             WHERE a.proposta_id = %s AND a.tipo = 'FORNECEDOR'
         """, (proposta_id,))
