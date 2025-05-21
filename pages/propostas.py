@@ -625,6 +625,11 @@ def show():
             st.header("Propostas em Execução")
             
             if not propostas.empty:
+                # Adicionar log detalhado para diagnóstico
+                print(f"DEBUG STATUS: Total de propostas disponíveis: {len(propostas)}")
+                print(f"DEBUG STATUS: Valores únicos para status: {propostas['status'].unique().tolist()}")
+                print(f"DEBUG STATUS: Valores únicos para status_execucao: {propostas['status_execucao'].unique().tolist()}")
+                
                 # Filtrar propostas em execução usando apenas o campo status_execucao
                 # CORREÇÃO: ao reabrir propostas, o status fica como "Aprovada" mas o status_execucao fica "Em execução"
                 
@@ -632,8 +637,18 @@ def show():
                 # Isso garante que propostas reabertas também sejam exibidas
                 mascara_em_execucao_completa = propostas_com_clientes['status_execucao'] == 'Em execução'
                 
+                # Imprimir quantidade de propostas que atendem ao filtro
+                print(f"DEBUG STATUS: Propostas com status_execucao='Em execução': {mascara_em_execucao_completa.sum()}")
+                
                 # Aplicar o filtro
                 propostas_em_execucao = propostas_com_clientes[mascara_em_execucao_completa].copy()
+                
+                # Log de diagnostico para as propostas filtradas
+                if not propostas_em_execucao.empty:
+                    print(f"DEBUG ID: IDs das propostas em execução: {propostas_em_execucao['id'].tolist()}")
+                    print(f"DEBUG USUARIO: Valor de usuario_id nas propostas: {propostas_em_execucao['usuario_id'].iloc[0] if len(propostas_em_execucao) > 0 else 'N/A'}")
+                else:
+                    print("DEBUG STATUS: Nenhuma proposta atende aos critérios do filtro 'Em execução'")
                 
                 if not propostas_em_execucao.empty:
                     # Preparar DataFrame para exibição com tratamento de tipos para evitar erros Arrow
