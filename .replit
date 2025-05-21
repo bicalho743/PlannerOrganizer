@@ -97,6 +97,26 @@ args = "Regenerar Lancamentos"
 task = "workflow.run"
 args = "Teste Reabrir Proposta"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Todas as Propostas"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Visualizar Todas Propostas"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Visualizar Propostas"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Todas Propostas Simples"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Exportar Propostas"
+
 [[workflows.workflow]]
 name = "Importar Propostas"
 author = "agent"
@@ -361,6 +381,50 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run teste_reabrir_proposta.py --server.port 8570 --server.address 0.0.0.0"
 waitForPort = 8570
+
+[[workflows.workflow]]
+name = "Todas as Propostas"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run visualizar_todas_propostas.py --server.port 5002 --server.address 0.0.0.0"
+waitForPort = 5002
+
+[[workflows.workflow]]
+name = "Visualizar Todas Propostas"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run todas_propostas.py --server.port 5004 --server.address 0.0.0.0"
+waitForPort = 5004
+
+[[workflows.workflow]]
+name = "Visualizar Propostas"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run app_visualizar_propostas.py --server.port 5003 --server.address 0.0.0.0"
+waitForPort = 5003
+
+[[workflows.workflow]]
+name = "Todas Propostas Simples"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run todas_propostas_simples.py --server.port 5005 --server.address 0.0.0.0"
+
+[[workflows.workflow]]
+name = "Exportar Propostas"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run gerar_csv_propostas.py --server.port 5008 --server.address 0.0.0.0"
+waitForPort = 5008
 
 [[ports]]
 localPort = 443
