@@ -32,10 +32,11 @@ def show():
     
     # Criar abas para organizar o conteúdo com ícones para cada uma
     st.markdown('<div class="main-tabs">', unsafe_allow_html=True)
-    tab1, tab2, tab3 = st.tabs([
+    tab1, tab2, tab3, tab4 = st.tabs([
         "📝 Nova Proposta", 
         "⚙️ Em Execução", 
-        "📋 Propostas Finalizadas"
+        "📋 Propostas Finalizadas",
+        "🔍 Todas as Propostas"
     ])
     st.markdown('</div>', unsafe_allow_html=True)
     
@@ -2270,5 +2271,201 @@ def show():
             else:
                 st.info("Não há propostas cadastradas no sistema.")
         
+        # ABA 4: TODAS AS PROPOSTAS
+        with tab4:
+            st.header("Todas as Propostas")
+            st.info("Esta aba mostra todas as propostas, independentemente do status.")
+            
+            # Obter todas as propostas
+            try:
+                # Carregando todas as propostas do banco
+                todas_propostas = st.session_state.db.get_propostas()
+                
+                # Verificar se temos propostas para exibir
+                if todas_propostas.empty:
+                    st.warning("Não há propostas cadastradas no sistema.")
+                else:
+                    # Mostrar quantidade de propostas encontradas
+                    st.success(f"Total de propostas encontradas: {len(todas_propostas)}")
+                    
+                    # Adicionar filtragem por status
+                    st.subheader("Filtros")
+                    
+                    # Linha com filtros
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        # Extrair lista de status únicos para o filtro
+                        status_unicos = ['Todos'] + list(todas_propostas['status'].unique())
+                        status_filtro = st.selectbox("Status da Proposta:", status_unicos, key="status_filtro_todas")
+                    
+                    with col2:
+                        # Filtro por nome do cliente
+                        clientes_unicos = ['Todos'] + list(todas_propostas['cliente_nome'].unique())
+                        cliente_filtro = st.selectbox("Cliente:", clientes_unicos, key="cliente_filtro_todas")
+                    
+                    with col3:
+                        # Filtro por data (mês/ano)
+                        # Verificamos se a coluna existe
+                        if 'data_inicio' in todas_propostas.columns:
+                            # Extrair mês/ano para facilitar filtragem
+                            todas_propostas['mes_ano'] = todas_propostas['data_inicio'].apply(
+                                lambda x: f"{x.month}/{x.year}" if pd.notna(x) else "Sem data"
+                            )
+                            meses_anos = ['Todos'] + sorted(list(todas_propostas['mes_ano'].unique()))
+                            data_filtro = st.selectbox("Período:", meses_anos, key="periodo_filtro_todas")
+                        else:
+                            data_filtro = "Todos"
+                            st.warning("Dados de data não disponíveis para filtro.")
+                    
+                    # Aplicar filtros
+                    propostas_filtradas = todas_propostas.copy()
+                    
+                    # Filtro por status
+                    if status_filtro != 'Todos':
+                        propostas_filtradas = propostas_filtradas[propostas_filtradas['status'] == status_filtro]
+                    
+                    # Filtro por cliente
+                    if cliente_filtro != 'Todos':
+                        propostas_filtradas = propostas_filtradas[propostas_filtradas['cliente_nome'] == cliente_filtro]
+                    
+                    # Filtro por período
+                    if data_filtro != 'Todos' and 'mes_ano' in propostas_filtradas.columns:
+                        propostas_filtradas = propostas_filtradas[propostas_filtradas['mes_ano'] == data_filtro]
+                    
+                    # Mostrar quantidade após filtrar
+                    st.write(f"Propostas após filtros: {len(propostas_filtradas)}")
+                    
+                    # Exibir propostas em uma tabela interativa
+                    if not propostas_filtradas.empty:
+                        # Preparar dados para exibição
+                        tabela_propostas = propostas_filtradas.copy()
+                        
+                        # Formatar valores
+                        tabela_propostas['Valor'] = tabela_propostas['valor'].apply(lambda x: f"R$ {float(x):.2f}")
+                        
+                        # Formatar datas
+                        if 'data_inicio' in tabela_propostas.columns:
+                            tabela_propostas['Data Início'] = tabela_propostas['data_inicio'].apply(
+                                lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else '-'
+                            )
+                        
+                        if 'data_fim' in tabela_propostas.columns:
+                            tabela_propostas['Data Fim'] = tabela_propostas['data_fim'].apply(
+                                lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else '-'
+                            )
+                        
+                        # Selecionar colunas para exibição
+                        colunas_exibir = [
+                            'numero', 'cliente_nome', 'descricao', 'Valor', 
+                            'status', 'status_execucao', 'Data Início', 'Data Fim'
+                        ]
+                        
+                        # Renomear colunas para exibição mais amigável
+                        mapeamento_colunas = {
+                            'numero': 'Número',
+                            'cliente_nome': 'Cliente',
+                            'descricao': 'Descrição',
+                            'status': 'Status',
+                            'status_execucao': 'Status Execução'
+                        }
+                        
+                        # Criar dataframe para exibição
+                        df_exibir = tabela_propostas[colunas_exibir].rename(columns=mapeamento_colunas)
+                        
+                        # Exibir tabela interativa
+                        st.dataframe(
+                            df_exibir,
+                            hide_index=True,
+                            use_container_width=True,
+                            column_config={
+                                "Número": st.column_config.TextColumn("Número", width="small"),
+                                "Cliente": st.column_config.TextColumn("Cliente", width="medium"),
+                                "Descrição": st.column_config.TextColumn("Descrição", width="large"),
+                                "Valor": st.column_config.TextColumn("Valor", width="small"),
+                                "Status": st.column_config.TextColumn("Status", width="small"),
+                                "Status Execução": st.column_config.TextColumn("Status Execução", width="small"),
+                                "Data Início": st.column_config.TextColumn("Data Início", width="small"),
+                                "Data Fim": st.column_config.TextColumn("Data Fim", width="small")
+                            }
+                        )
+                        
+                        # Adicionar opção para visualizar detalhes de uma proposta
+                        st.subheader("Visualizar Detalhes")
+                        
+                        # Lista para selecionar proposta para visualizar
+                        numeros_propostas = propostas_filtradas['numero'].tolist()
+                        nomes_clientes = propostas_filtradas['cliente_nome'].tolist()
+                        
+                        # Criar opções para o selectbox com número e cliente
+                        opcoes_propostas = [f"{num} - {cli}" for num, cli in zip(numeros_propostas, nomes_clientes)]
+                        
+                        # Select box para escolher proposta
+                        proposta_selecionada = st.selectbox(
+                            "Selecione uma proposta para ver detalhes:",
+                            opcoes_propostas,
+                            key="proposta_selecionada_todas"
+                        )
+                        
+                        # Extrair número da proposta da seleção
+                        if proposta_selecionada:
+                            numero_proposta = int(proposta_selecionada.split(' - ')[0])
+                            
+                            # Filtrar para obter a proposta selecionada
+                            proposta_detalhes = propostas_filtradas[propostas_filtradas['numero'] == numero_proposta].iloc[0]
+                            
+                            # Mostrar detalhes em um card
+                            with st.expander("Detalhes da Proposta", expanded=True):
+                                col1, col2 = st.columns(2)
+                                
+                                with col1:
+                                    st.markdown(f"**Número:** {proposta_detalhes['numero']}")
+                                    st.markdown(f"**Cliente:** {proposta_detalhes['cliente_nome']}")
+                                    st.markdown(f"**Descrição:** {proposta_detalhes['descricao']}")
+                                    st.markdown(f"**Valor:** R$ {float(proposta_detalhes['valor']):.2f}")
+                                
+                                with col2:
+                                    st.markdown(f"**Status:** {proposta_detalhes['status']}")
+                                    st.markdown(f"**Status Execução:** {proposta_detalhes['status_execucao']}")
+                                    
+                                    # Formatação de datas
+                                    data_inicio_str = proposta_detalhes['data_inicio'].strftime('%d/%m/%Y') if pd.notna(proposta_detalhes['data_inicio']) else '-'
+                                    st.markdown(f"**Data Início:** {data_inicio_str}")
+                                    
+                                    data_fim_str = proposta_detalhes['data_fim'].strftime('%d/%m/%Y') if pd.notna(proposta_detalhes['data_fim']) else '-'
+                                    st.markdown(f"**Data Fim:** {data_fim_str}")
+                                
+                                # Botões de ação baseados no status da proposta
+                                col_btn1, col_btn2, col_btn3 = st.columns(3)
+                                
+                                with col_btn1:
+                                    # Botão para gerar relatório (disponível para qualquer status)
+                                    if st.button("Gerar Relatório", key=f"relatorio_todas_{proposta_detalhes['id']}"):
+                                        st.session_state.proposta_selec_relatorio = proposta_detalhes['id']
+                                        st.rerun()
+                                
+                                with col_btn2:
+                                    # Botão para editar (disponível para propostas em elaboração ou execução)
+                                    if proposta_detalhes['status'] in ['Em elaboração', 'Aprovada'] and \
+                                       proposta_detalhes['status_execucao'] != 'Finalizada':
+                                        if st.button("Editar Proposta", key=f"editar_todas_{proposta_detalhes['id']}"):
+                                            st.session_state.proposta_para_editar = proposta_detalhes['id']
+                                            st.session_state.modo_edicao_proposta = True
+                                            st.rerun()
+                                
+                                with col_btn3:
+                                    # Botão para reabrir (apenas para propostas finalizadas ou recusadas)
+                                    if proposta_detalhes['status'] in ['Finalizada', 'Recusada'] or \
+                                       proposta_detalhes['status_execucao'] in ['Finalizada', 'Cancelada']:
+                                        if st.button("Reabrir Proposta", key=f"reabrir_todas_{proposta_detalhes['id']}"):
+                                            st.session_state.proposta_selec_reabrir = proposta_detalhes['id']
+                                            st.rerun()
+                    else:
+                        st.warning("Nenhuma proposta encontrada com os filtros selecionados.")
+            except Exception as e:
+                st.error(f"Erro ao carregar propostas na aba 'Todas as Propostas': {str(e)}")
+                import traceback
+                st.error(traceback.format_exc())
+                
     except Exception as e:
         st.error(f"Erro ao carregar propostas: {str(e)}")
