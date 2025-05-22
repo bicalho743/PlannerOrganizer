@@ -898,18 +898,7 @@ def show():
                             st.markdown("**Status**")
                             st.info(f"{proposta_exec.iloc[0]['status'] if 'status' in proposta_exec.iloc[0] else 'Em execução'}")
                         
-                        # Adicionar barra de progresso nativa do Streamlit
-                        progresso = 50  # Valor exemplo, pode ser calculado com base em andamentos registrados
-                        
-                        st.markdown("### 📊 Progresso da Proposta")
-                        
-                        # Container para a barra e detalhes
-                        with st.container():
-                            # Usar um componente de progresso nativo
-                            st.progress(progresso/100)
-                            
-                            # Mostrar o percentual de progresso
-                            st.caption(f"Concluído: {progresso}%")
+
                         
                         # Adicionar estilos específicos para as abas de execução
                         st.markdown("""
@@ -925,94 +914,12 @@ def show():
                         
                         # Criar abas para gerenciar diferentes aspectos da execução com ícones e cores
                         st.markdown('<div class="execution-tabs">', unsafe_allow_html=True)
-                        exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5, exec_tab6 = st.tabs([
-                            "📊 Andamento", "📦 Produtos", "➕ Outros", "🏭 Fornecedores", "👥 Assistentes", "🏁 Finalizar"
+                        exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5 = st.tabs([
+                            "📦 Produtos", "➕ Outros", "🏭 Fornecedores", "👥 Assistentes", "🏁 Finalizar"
                         ])
                         st.markdown('</div>', unsafe_allow_html=True)
                         
                         with exec_tab1:
-                            st.subheader("Andamento")
-                            
-                            # Formulário para registrar andamento
-                            with st.form(key=f"andamento_form_{proposta_exec_id}"):
-                                status_andamento = st.selectbox(
-                                    "Status:",
-                                    ["Em andamento", "Aguardando cliente", "Aguardando material", "Pausa", "Etapa concluída"]
-                                )
-                                
-                                comodo = st.text_input("Cômodo/Área:", placeholder="Ex: Cozinha, Escritório, etc.")
-                                
-                                observacao = st.text_area("Observações:", height=100)
-                                
-                                if st.form_submit_button("Registrar Andamento"):
-                                    try:
-                                        andamento_id = st.session_state.db.add_andamento_proposta(
-                                            proposta_id=proposta_exec_id,
-                                            status=status_andamento,
-                                            observacao=observacao,
-                                            comodo=comodo
-                                        )
-                                        
-                                        if andamento_id:
-                                            st.success("Andamento registrado com sucesso!")
-                                            time.sleep(1)
-                                            st.rerun()
-                                        else:
-                                            st.error("Erro ao registrar andamento.")
-                                    except Exception as e:
-                                        st.error(f"Erro ao registrar andamento: {str(e)}")
-                            
-                            # Mostrar histórico de andamentos no formato de cartões
-                            try:
-                                andamentos = st.session_state.db.get_andamentos_proposta(proposta_exec_id)
-                                
-                                if not andamentos.empty:
-                                    st.markdown("""
-                                    <h3 style="margin-top: 2rem; border-bottom: 1px solid #e6e6e6; padding-bottom: 0.5rem;">
-                                        📋 Histórico de Andamento
-                                    </h3>
-                                    """, unsafe_allow_html=True)
-                                    
-                                    # Ordenar do mais recente para o mais antigo
-                                    andamentos = andamentos.sort_values(by='data', ascending=False)
-                                    
-                                    # Status e cores
-                                    status_colors = {
-                                        "Em andamento": "#4285F4", # Azul
-                                        "Aguardando cliente": "#FBBC05", # Amarelo
-                                        "Aguardando material": "#F4B400", # Laranja
-                                        "Pausa": "#EA4335", # Vermelho
-                                        "Etapa concluída": "#34A853" # Verde
-                                    }
-                                    
-                                    # Formatação avançada para mostrar dados como cartões
-                                    for idx, andamento in andamentos.iterrows():
-                                        status = andamento['status']
-                                        data = andamento['data'].strftime('%d/%m/%Y %H:%M') if pd.notna(andamento['data']) else ''
-                                        comodo = andamento['comodo'] if pd.notna(andamento['comodo']) else ''
-                                        observacao = andamento['observacao'] if pd.notna(andamento['observacao']) else ''
-                                        
-                                        # Cor para o status
-                                        cor_status = status_colors.get(status, "#1E366F")
-                                        
-                                        st.markdown(f"""
-                                        <div class="item-card" style="border-left: 4px solid {cor_status}; margin-bottom: 1rem;">
-                                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                                <strong style="color: {cor_status};">{status}</strong>
-                                                <span style="color: #666; font-size: 0.9rem;">{data}</span>
-                                            </div>
-                                            <div style="margin-bottom: 0.5rem;">
-                                                <strong>Cômodo/Área:</strong> {comodo if comodo else "N/A"}
-                                            </div>
-                                            <p style="margin: 0; font-style: italic; color: #555;">{observacao}</p>
-                                        </div>
-                                        """, unsafe_allow_html=True)
-                                else:
-                                    st.info("Nenhum registro de andamento para esta proposta.")
-                            except Exception as e:
-                                st.error(f"Erro ao carregar andamentos: {str(e)}")
-                        
-                        with exec_tab2:
                             st.subheader("Adição à Proposta")
                             
                             # Produtos do catálogo
