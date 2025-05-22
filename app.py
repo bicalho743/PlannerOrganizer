@@ -1016,52 +1016,11 @@ if not st.session_state.authenticated:
                             st.success("Login realizado com sucesso!")
                             st.rerun()
                         else:
-                            # Se falhou no Firebase, tentar com a conta de demo
-                            if email.lower() == "admin" and password == "admin":
-                                st.session_state.authenticated = True
-                                
-                                # Criar objeto de usuário para modo de demonstração
-                                st.session_state.usuario = {
-                                    'email': 'admin@plannerorganizer.com.br',
-                                    'nome': 'Administrador',
-                                    'telefone': '(11) 98765-4321',
-                                    'empresa': 'Planner Organizer',
-                                    'role': 'admin'
-                                }
-                                
-                                st.success("Login realizado com sucesso (modo demonstração)!")
-                                st.rerun()
-                            else:
-                                st.error(f"Erro de autenticação: {result['error']}")
-                # Fallback para login de demo se o Firebase não estiver disponível
-                elif email.lower() == "admin" and password == "admin":
-                    st.session_state.authenticated = True
-                    
-                    # Criar objeto de usuário para modo de demonstração
-                    st.session_state.usuario = {
-                        'email': 'admin@plannerorganizer.com.br',
-                        'nome': 'Administrador',
-                        'telefone': '(11) 98765-4321',
-                        'empresa': 'Planner Organizer',
-                        'role': 'admin'
-                    }
-                    
-                    with st.spinner("Autenticando..."):
-                        import time
-                        time.sleep(1)
-                    st.success("Login realizado com sucesso (modo demonstração)!")
-                    st.rerun()
+                            st.error(f"Erro de autenticação: {result['error']}")
                 else:
-                    st.error("Usuário ou senha incorretos")
+                    st.error("Credenciais inválidas. Verifique seu email e senha.")
         
-        # Informação de demonstração
-        st.markdown('''
-        <div style="margin-top: 0.8rem; text-align: center;">
-            <p style="color: #9E9E9E; font-size: 0.75rem;">
-                Para demonstração, use: admin / admin
-            </p>
-        </div>
-        ''', unsafe_allow_html=True)
+
         
         # Botões para navegação
         col1, col2 = st.columns(2)
