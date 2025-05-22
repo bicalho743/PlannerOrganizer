@@ -33,20 +33,35 @@ def reabrir_proposta_finalizada(proposta_id):
                 "mensagem": f"ID de proposta inválido: {proposta_id}"
             }
             
-        db = Database()
-        # Verificar se a proposta existe e está finalizada
-        # Buscamos todas as propostas e depois filtramos pelo ID
-        propostas = db.get_propostas()
-        proposta = propostas[propostas['id'] == proposta_id] if not propostas.empty else None
+        # Buscar a proposta diretamente do banco usando SQL
+        db_url = os.environ.get('DATABASE_URL')
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
         
-        if proposta is None or proposta.empty:
+        try:
+            cursor.execute("SELECT status, status_execucao FROM propostas WHERE id = %s", (proposta_id,))
+            resultado = cursor.fetchone()
+            
+            if not resultado:
+                cursor.close()
+                conn.close()
+                return {
+                    "status": "erro",
+                    "mensagem": "Proposta não encontrada"
+                }
+            
+            status, status_execucao = resultado
+            
+        except Exception as e:
+            cursor.close()
+            conn.close()
             return {
                 "status": "erro",
-                "mensagem": "Proposta não encontrada"
+                "mensagem": f"Erro ao buscar proposta: {str(e)}"
             }
-            
-        status = proposta.iloc[0].get('status', None)
-        status_execucao = proposta.iloc[0].get('status_execucao', None)
+        
+        cursor.close()
+        conn.close()
         
         # Debug para ver os valores
         print(f"DEBUG REABRIR: proposta_id={proposta_id}, status='{status}', status_execucao='{status_execucao}'")
