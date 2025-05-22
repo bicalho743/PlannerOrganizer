@@ -2091,8 +2091,14 @@ def show():
                         proposta_reabrir = propostas_finalizadas[propostas_finalizadas['numero'] == proposta_numero]
                         
                         if not proposta_reabrir.empty:
+                            proposta_status = proposta_reabrir.iloc[0]['status']
                             st.info(f"Você está prestes a reabrir a proposta #{proposta_numero} - {proposta_reabrir.iloc[0]['descricao']}")
-                            st.warning("Esta ação mudará o status da proposta para 'Em execução'.")
+                            
+                            # Mensagem diferente baseada no status atual
+                            if proposta_status == 'Recusada':
+                                st.warning("Esta proposta recusada voltará para 'Em elaboração' na aba Nova Proposta.")
+                            else:
+                                st.warning("Esta proposta finalizada voltará para 'Em execução' e seus lançamentos financeiros serão removidos.")
                             
                             if st.button("REABRIR PROPOSTA", key="confirmar_reabertura"):
                                 try:
