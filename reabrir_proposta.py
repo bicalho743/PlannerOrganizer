@@ -136,14 +136,25 @@ def reabrir_proposta_finalizada(proposta_id):
             conn = psycopg2.connect(db_url)
             cursor = conn.cursor()
             
-            # Atualizar status da proposta
+            # Atualizar status da proposta baseado no status anterior
             data_atual = datetime.now().strftime('%Y-%m-%d')
-            cursor.execute("""
-                UPDATE propostas 
-                SET status = 'Aprovada', 
-                    status_execucao = 'Em execução'
-                WHERE id = %s
-            """, (proposta_id,))
+            
+            # Se era uma proposta recusada, voltar para o status inicial
+            if status == 'Recusada':
+                cursor.execute("""
+                    UPDATE propostas 
+                    SET status = 'Em elaboração', 
+                        status_execucao = 'Não iniciada'
+                    WHERE id = %s
+                """, (proposta_id,))
+            else:
+                # Se era finalizada/concluída, voltar para execução
+                cursor.execute("""
+                    UPDATE propostas 
+                    SET status = 'Aprovada', 
+                        status_execucao = 'Em execução'
+                    WHERE id = %s
+                """, (proposta_id,))
             
             conn.commit()
             cursor.close()
@@ -175,12 +186,22 @@ def reabrir_proposta_finalizada(proposta_id):
                 data_atual = datetime.now().strftime('%Y-%m-%d')
                 
                 # Tentar atualizar sem o campo data_finalizacao
-                cursor.execute("""
-                    UPDATE propostas 
-                    SET status = 'Aprovada', 
-                        status_execucao = 'Em execução'
-                    WHERE id = %s
-                """, (proposta_id,))
+                # Se era uma proposta recusada, voltar para o status inicial
+                if status == 'Recusada':
+                    cursor.execute("""
+                        UPDATE propostas 
+                        SET status = 'Em elaboração', 
+                            status_execucao = 'Não iniciada'
+                        WHERE id = %s
+                    """, (proposta_id,))
+                else:
+                    # Se era finalizada/concluída, voltar para execução
+                    cursor.execute("""
+                        UPDATE propostas 
+                        SET status = 'Aprovada', 
+                            status_execucao = 'Em execução'
+                        WHERE id = %s
+                    """, (proposta_id,))
                 
                 conn.commit()
                 cursor.close()
