@@ -2262,7 +2262,8 @@ def show():
                         
                         # Fechamento da div da área de trabalho
                         st.markdown('</div>', unsafe_allow_html=True)
-                    else:
+                    
+                    if not proposta_selecionada_valida:
                         st.warning("Selecione uma proposta válida finalizada.")
                 else:
                     st.info("Não há propostas finalizadas no momento.")
@@ -2503,7 +2504,7 @@ def show():
                         )
                         
                         st.plotly_chart(fig, use_container_width=True)
-                else:
+                    
                     # Mostrar quantidade de propostas encontradas
                     st.success(f"Total de propostas encontradas: {len(todas_propostas)}")
                     
