@@ -30,13 +30,37 @@ def show():
     </style>
     """, unsafe_allow_html=True)
     
-    # Criar abas para organizar o conteúdo
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "📝 Nova Proposta", 
-        "⚙️ Em Execução", 
-        "📋 Propostas Finalizadas",
-        "🔍 Todas as Propostas"
-    ])
+    # Criar abas - versão simplificada para garantir que todas apareçam
+    try:
+        tab1, tab2, tab3, tab4 = st.tabs([
+            "📝 Nova Proposta", 
+            "⚙️ Em Execução", 
+            "📋 Propostas Finalizadas",
+            "🔍 Todas as Propostas"
+        ])
+    except Exception as e:
+        st.error(f"Erro ao criar abas: {e}")
+        # Fallback com selectbox se st.tabs falhar
+        aba_selecionada = st.selectbox("Escolha uma opção:", [
+            "📝 Nova Proposta", 
+            "⚙️ Em Execução", 
+            "📋 Propostas Finalizadas",
+            "🔍 Todas as Propostas"
+        ])
+        
+        # Simular tabs com condicionais
+        if aba_selecionada == "📝 Nova Proposta":
+            tab1 = True
+            tab2 = tab3 = tab4 = False
+        elif aba_selecionada == "⚙️ Em Execução":
+            tab2 = True
+            tab1 = tab3 = tab4 = False
+        elif aba_selecionada == "📋 Propostas Finalizadas":
+            tab3 = True
+            tab1 = tab2 = tab4 = False
+        else:  # Todas as Propostas
+            tab4 = True
+            tab1 = tab2 = tab3 = False
     
     # ABA 1: NOVA PROPOSTA
     with tab1:
