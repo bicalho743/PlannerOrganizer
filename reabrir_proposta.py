@@ -74,19 +74,37 @@ def reabrir_proposta_finalizada(proposta_id):
             lancamentos_encontrados = resultado[0] if resultado else 0
             logger.info(f"Encontrados {lancamentos_encontrados} lançamentos financeiros para proposta #{proposta_id}")
             
-            # Remover TODOS os lançamentos relacionados à finalização,
-            # mantendo apenas o lançamento do valor base (gerado na aprovação)
+            # Primeiro, verificar quais lançamentos existem
             cursor.execute("""
-                DELETE FROM financeiro 
+                SELECT id, descricao, tipo FROM financeiro 
                 WHERE proposta_id = %s 
-                AND id != (
-                    SELECT MIN(id) FROM financeiro 
+                ORDER BY id
+            """, (proposta_id,))
+            lancamentos_existentes = cursor.fetchall()
+            logger.info(f"Lançamentos encontrados: {lancamentos_existentes}")
+            
+            # Identificar o lançamento original (primeiro de receita com "Aprovação")
+            lancamento_original_id = None
+            for lanc_id, descricao, tipo in lancamentos_existentes:
+                if tipo == 'Receita' and 'Aprovação' in descricao:
+                    lancamento_original_id = lanc_id
+                    break
+            
+            if lancamento_original_id:
+                # Remover todos os lançamentos EXCETO o original
+                cursor.execute("""
+                    DELETE FROM financeiro 
                     WHERE proposta_id = %s 
-                    AND tipo = 'Receita' 
-                    AND descricao LIKE '%Aprovação)%'
-                )
-                RETURNING id
-            """, (proposta_id, proposta_id))
+                    AND id != %s
+                    RETURNING id
+                """, (proposta_id, lancamento_original_id))
+            else:
+                # Se não encontrar o original, remover todos os lançamentos
+                cursor.execute("""
+                    DELETE FROM financeiro 
+                    WHERE proposta_id = %s
+                    RETURNING id
+                """, (proposta_id,))
             
             # Contar quantos lançamentos foram excluídos
             resultado_exclusao = cursor.fetchall()
