@@ -915,7 +915,7 @@ def show():
                         # Criar abas para gerenciar diferentes aspectos da execução com ícones e cores
                         st.markdown('<div class="execution-tabs">', unsafe_allow_html=True)
                         exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5 = st.tabs([
-                            "📦 Produtos", "➕ Outros", "🏭 Fornecedores", "👥 Assistentes", "🏁 Finalizar"
+                            "1️⃣ 📦 Produtos", "2️⃣ ➕ Outros", "3️⃣ 🏭 Fornecedores", "4️⃣ 👥 Assistentes", "5️⃣ 🏁 Finalizar"
                         ])
                         st.markdown('</div>', unsafe_allow_html=True)
                         
