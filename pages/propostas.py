@@ -12,31 +12,37 @@ def show():
     
     db = st.session_state.db
     
-    # Criar as 4 abas de forma simples e direta
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "📝 Nova Proposta",
-        "⚙️ Em Execução", 
-        "📋 Propostas Finalizadas",
-        "🔍 Todas as Propostas"
-    ])
+    # Menu de navegação com selectbox para garantir que todas as opções apareçam
+    opcao_selecionada = st.selectbox(
+        "Escolha uma seção:",
+        [
+            "📝 Nova Proposta",
+            "⚙️ Em Execução", 
+            "📋 Propostas Finalizadas",
+            "🔍 Todas as Propostas"
+        ],
+        index=0
+    )
     
-    # ABA 1: Nova Proposta
-    with tab1:
+    st.markdown("---")
+    
+    # SEÇÃO 1: Nova Proposta
+    if opcao_selecionada == "📝 Nova Proposta":
         st.header("Nova Proposta")
-        st.info("Conteúdo da primeira aba será implementado")
+        st.info("Conteúdo da primeira seção será implementado")
     
-    # ABA 2: Em Execução
-    with tab2:
+    # SEÇÃO 2: Em Execução
+    elif opcao_selecionada == "⚙️ Em Execução":
         st.header("Em Execução")
-        st.info("Conteúdo da segunda aba será implementado")
+        st.info("Conteúdo da segunda seção será implementado")
     
-    # ABA 3: Propostas Finalizadas
-    with tab3:
+    # SEÇÃO 3: Propostas Finalizadas
+    elif opcao_selecionada == "📋 Propostas Finalizadas":
         st.header("Propostas Finalizadas")
-        st.info("Conteúdo da terceira aba será implementado")
+        st.info("Conteúdo da terceira seção será implementado")
     
-    # ABA 4: TODAS AS PROPOSTAS
-    with tab4:
+    # SEÇÃO 4: TODAS AS PROPOSTAS
+    elif opcao_selecionada == "🔍 Todas as Propostas":
         st.header("🔍 Todas as Propostas")
         st.success("🎉 SUCESSO! A 4ª aba está funcionando!")
         st.info("Esta aba mostra todas as propostas, independentemente do status - Abertas, Em execução, Finalizadas e Recusadas.")
