@@ -1076,40 +1076,7 @@ if not st.session_state.authenticated:
         
         # A div do container de login foi removida, então não precisamos mais fechar
         
-        # Opção para pular login em ambiente de desenvolvimento (apenas para devs)
-        footer_container = st.container()
-        with footer_container:
-            st.markdown('''
-            <div style="position: fixed; bottom: 10px; right: 10px; z-index: 999;">
-                <details style="background: transparent; border: none; color: #BDBDBD; font-size: 0.7rem;">
-                    <summary style="cursor: pointer; outline: none;">Dev</summary>
-                    <div style="padding: 10px; background: white; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-top: 5px;">
-                        <p style="margin: 0 0 10px 0; font-size: 0.8rem;">Acesso para desenvolvedores</p>
-                        <button id="dev-login-button" style="background: #E0E0E0; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Pular login</button>
-                    </div>
-                </details>
-            </div>
-            ''', unsafe_allow_html=True)
-            
-            col1, col2, col3 = st.columns([1, 1, 1])
-            with col3:
-                if st.button("Acesso Dev", key="dev_login_access", use_container_width=True):
-                    st.session_state.authenticated = True
-                    
-                    # Criar objeto de usuário para modo de desenvolvedor
-                    st.session_state.usuario = {
-                        'id': 5,  # ID do usuário desenvolvedor no banco de dados
-                        'email': 'dev@plannerorganizer.com.br',
-                        'nome': 'Desenvolvedor',
-                        'telefone': '(11) 99999-9999',
-                        'empresa': 'Planner Organizer',
-                        'role': 'dev'
-                    }
-                    
-                    # Definir explicitamente o ID do usuário também em usuario_id
-                    st.session_state.usuario_id = 5
-                    
-                    st.rerun()
+
     
     # Seção de marcas/clientes
     st.markdown('''
