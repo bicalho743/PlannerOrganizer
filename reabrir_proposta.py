@@ -111,6 +111,16 @@ def reabrir_proposta_finalizada(proposta_id):
             lancamentos_excluidos = len(resultado_exclusao)
             logger.info(f"Excluídos {lancamentos_excluidos} lançamentos relacionados à finalização")
             
+            # Excluir também vendas automáticas relacionadas à proposta
+            cursor.execute("""
+                DELETE FROM vendas 
+                WHERE proposta_id = %s
+                RETURNING id
+            """, (proposta_id,))
+            vendas_excluidas = cursor.fetchall()
+            vendas_excluidas_count = len(vendas_excluidas)
+            logger.info(f"Excluídas {vendas_excluidas_count} vendas automáticas relacionadas à proposta")
+            
             # Confirmar as alterações
             conn.commit()
             cursor.close()
