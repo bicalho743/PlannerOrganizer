@@ -1999,35 +1999,72 @@ def show():
                 st.write(f"Total de propostas finalizadas encontradas: {len(propostas_finalizadas)}")
                 
                 if not propostas_finalizadas.empty:
-                    # Exibir cada proposta em um expander
-                    for idx, proposta in propostas_finalizadas.iterrows():
-                        with st.expander(f"{proposta['numero']} - {proposta['cliente_nome']} - {proposta['descricao']} (R$ {proposta['valor']:.2f})"):
-                            col1, col2 = st.columns(2)
-                            
-                            with col1:
-                                st.write(f"**ID:** {proposta['id']}")
-                                st.write(f"**Cliente:** {proposta['cliente_nome']}")
-                                st.write(f"**Descrição:** {proposta['descricao']}")
-                                st.write(f"**Valor:** R$ {proposta['valor']:.2f}")
+                    # Separar propostas finalizadas das recusadas para melhor visualização
+                    propostas_concluidas = propostas_finalizadas[
+                        (propostas_finalizadas['status'] != 'Recusada')
+                    ]
+                    propostas_recusadas = propostas_finalizadas[
+                        (propostas_finalizadas['status'] == 'Recusada')
+                    ]
+                    
+                    # Mostrar propostas concluídas/finalizadas
+                    if not propostas_concluidas.empty:
+                        st.subheader("✅ Propostas Concluídas/Finalizadas")
+                        for idx, proposta in propostas_concluidas.iterrows():
+                            with st.expander(f"✅ {proposta['numero']} - {proposta['cliente_nome']} - {proposta['descricao']} (R$ {proposta['valor']:.2f})"):
+                                col1, col2 = st.columns(2)
                                 
-                            with col2:
-                                st.write(f"**Tipo:** {proposta['tipo_proposta']}")
-                                st.write(f"**Status:** {proposta['status']}")
-                                st.write(f"**Status Execução:** {proposta['status_execucao']}")
-                                data_inicio_str = proposta['data_inicio'].strftime('%d/%m/%Y') if pd.notna(proposta['data_inicio']) else 'N/D'
-                                st.write(f"**Data Início:** {data_inicio_str}")
-                                data_fim_str = proposta['data_fim'].strftime('%d/%m/%Y') if pd.notna(proposta['data_fim']) else 'N/D'
-                                st.write(f"**Data Fim:** {data_fim_str}")
-                            
-                            # Botões de ação
-                            col_btn1, col_btn2 = st.columns(2)
-                            with col_btn1:
-                                if st.button("Gerar Relatório", key=f"rel_btn_{proposta['id']}"):
-                                    st.session_state.proposta_selec_relatorio = proposta['id']
-                                    st.rerun()
-                            
-                            with col_btn2:
-                                if st.button("Reabrir Proposta", key=f"reabrir_btn_{proposta['id']}"):
+                                with col1:
+                                    st.write(f"**ID:** {proposta['id']}")
+                                    st.write(f"**Cliente:** {proposta['cliente_nome']}")
+                                    st.write(f"**Descrição:** {proposta['descricao']}")
+                                    st.write(f"**Valor:** R$ {proposta['valor']:.2f}")
+                                    
+                                with col2:
+                                    st.write(f"**Tipo:** {proposta['tipo_proposta']}")
+                                    st.write(f"**Status:** {proposta['status']}")
+                                    st.write(f"**Status Execução:** {proposta['status_execucao']}")
+                                    data_inicio_str = proposta['data_inicio'].strftime('%d/%m/%Y') if pd.notna(proposta['data_inicio']) else 'N/D'
+                                    st.write(f"**Data Início:** {data_inicio_str}")
+                                    data_fim_str = proposta['data_fim'].strftime('%d/%m/%Y') if pd.notna(proposta['data_fim']) else 'N/D'
+                                    st.write(f"**Data Fim:** {data_fim_str}")
+                                
+                                # Botões de ação
+                                col_btn1, col_btn2 = st.columns(2)
+                                with col_btn1:
+                                    if st.button("Gerar Relatório", key=f"rel_btn_{proposta['id']}"):
+                                        st.session_state.proposta_selec_relatorio = proposta['id']
+                                        st.rerun()
+                                
+                                with col_btn2:
+                                    if st.button("Reabrir Proposta", key=f"reabrir_btn_{proposta['id']}"):
+                                        st.session_state.proposta_selec_reabrir = proposta['id']
+                                        st.rerun()
+                    
+                    # Mostrar propostas recusadas
+                    if not propostas_recusadas.empty:
+                        st.subheader("❌ Propostas Recusadas")
+                        for idx, proposta in propostas_recusadas.iterrows():
+                            with st.expander(f"❌ {proposta['numero']} - {proposta['cliente_nome']} - {proposta['descricao']} (R$ {proposta['valor']:.2f})"):
+                                col1, col2 = st.columns(2)
+                                
+                                with col1:
+                                    st.write(f"**ID:** {proposta['id']}")
+                                    st.write(f"**Cliente:** {proposta['cliente_nome']}")
+                                    st.write(f"**Descrição:** {proposta['descricao']}")
+                                    st.write(f"**Valor:** R$ {proposta['valor']:.2f}")
+                                    
+                                with col2:
+                                    st.write(f"**Tipo:** {proposta['tipo_proposta']}")
+                                    st.write(f"**Status:** {proposta['status']}")
+                                    st.write(f"**Status Execução:** {proposta['status_execucao']}")
+                                    data_inicio_str = proposta['data_inicio'].strftime('%d/%m/%Y') if pd.notna(proposta['data_inicio']) else 'N/D'
+                                    st.write(f"**Data Início:** {data_inicio_str}")
+                                    data_fim_str = proposta['data_fim'].strftime('%d/%m/%Y') if pd.notna(proposta['data_fim']) else 'N/D'
+                                    st.write(f"**Data Fim:** {data_fim_str}")
+                                
+                                # Para propostas recusadas, mostrar apenas opção de reabrir
+                                if st.button("Reabrir Proposta", key=f"reabrir_recusada_{proposta['id']}"):
                                     st.session_state.proposta_selec_reabrir = proposta['id']
                                     st.rerun()
                 else:
