@@ -117,6 +117,10 @@ args = "Todas Propostas Simples"
 task = "workflow.run"
 args = "Exportar Propostas"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Teste 4 Abas"
+
 [[workflows.workflow]]
 name = "Importar Propostas"
 author = "agent"
@@ -425,6 +429,15 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run gerar_csv_propostas.py --server.port 5008 --server.address 0.0.0.0"
 waitForPort = 5008
+
+[[workflows.workflow]]
+name = "Teste 4 Abas"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run teste_4_abas.py --server.port 8580 --server.address 0.0.0.0"
+waitForPort = 8580
 
 [[ports]]
 localPort = 443

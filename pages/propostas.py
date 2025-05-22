@@ -30,7 +30,7 @@ def show():
     </style>
     """, unsafe_allow_html=True)
     
-    # Criar abas para organizar o conteúdo com ícones para cada uma
+    # Criar abas para organizar o conteúdo
     tab1, tab2, tab3, tab4 = st.tabs([
         "📝 Nova Proposta", 
         "⚙️ Em Execução", 
