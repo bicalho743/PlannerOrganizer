@@ -621,55 +621,7 @@ def show():
                     # Adicionar título da proposta
                     st.subheader(f"Gerenciando: Proposta #{proposta['numero']} - {proposta['nome']}")
                     
-                    # Adicionar sequência de passos com ícones primeiro
-                    st.markdown("""
-                    <div style="margin-bottom: 20px; background-color: #f8f9fa; padding: 12px; border-radius: 8px;">
-                        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; font-size: 0.9rem;">
-                            <div style="display: flex; align-items: center; margin: 5px 0;">
-                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">1</span>
-                                <span>📋 Definir Detalhes</span>
-                            </div>
-                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
-                            <div style="display: flex; align-items: center; margin: 5px 0;">
-                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">2</span>
-                                <span>📦 Produtos</span>
-                            </div>
-                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
-                            <div style="display: flex; align-items: center; margin: 5px 0;">
-                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">3</span>
-                                <span>🏗️ Fornecedores</span>
-                            </div>
-                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
-                            <div style="display: flex; align-items: center; margin: 5px 0;">
-                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">4</span>
-                                <span>👥 Assistentes</span>
-                            </div>
-                            <div style="margin: 0 5px; color: #adb5bd;">➡</div>
-                            <div style="display: flex; align-items: center; margin: 5px 0;">
-                                <span style="background-color: #e9ecef; color: #495057; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin-right: 5px; font-weight: bold;">5</span>
-                                <span>🎯 Finalização</span>
-                            </div>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # Verificar se já existe um valor de porcentagem na proposta
-                    porcentagem_atual = 0
-                    try:
-                        # Verificar primeiro se existe o andamento mais recente
-                        andamentos = st.session_state.db.get_andamentos_proposta(proposta_selecionada_id)
-                        if not andamentos.empty:
-                            porcentagem_atual = andamentos['porcentagem'].iloc[-1]
-                    except:
-                        # Se houver qualquer erro, usar valor padrão
-                        porcentagem_atual = 0
-                    
-                    # Adicionar controle deslizante de progresso logo abaixo dos ícones
-                    st.slider("Progresso da proposta:", 
-                              min_value=0, 
-                              max_value=100, 
-                              value=int(porcentagem_atual),
-                              key=f"slider_progresso_topo_{proposta_selecionada_id}")
+
                     
                     # Adicionar CSS personalizado para as abas
                     st.markdown("""
