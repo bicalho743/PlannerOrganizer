@@ -48,11 +48,11 @@ def reabrir_proposta_finalizada(proposta_id):
         status = proposta.iloc[0].get('status', None)
         status_execucao = proposta.iloc[0].get('status_execucao', None)
             
-        # Permitir reabrir propostas com status "Finalizada", "Concluída" ou ambos
-        if status not in ["Finalizada", "Concluída"] and status_execucao not in ["Finalizada", "Concluída"]:
+        # Permitir reabrir propostas com status "Finalizada", "Concluída" ou "Recusada"
+        if status not in ["Finalizada", "Concluída", "Recusada"] and status_execucao not in ["Finalizada", "Concluída", "Cancelada"]:
             return {
                 "status": "erro",
-                "mensagem": "Esta proposta não está finalizada e não pode ser reaberta"
+                "mensagem": "Esta proposta não está finalizada/recusada e não pode ser reaberta"
             }
         
         # Contadores para o relatório final
