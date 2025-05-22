@@ -133,7 +133,7 @@ def debug_propostas_finalizadas():
     
     # Configuração da página
     st.set_page_config(
-        page_title="DEBUG - Propostas Finalizadas",
+        page_title="Propostas Finalizadas",
         page_icon="🔍",
         layout="wide"
     )
@@ -1149,12 +1149,12 @@ if 'db' not in st.session_state:
         # Verificar st.session_state.usuario_id (mais direto)
         if 'usuario_id' in st.session_state:
             usuario_id = st.session_state.usuario_id
-            print(f"DEBUG MULTI-TENANT: Encontrado usuario_id={usuario_id} na sessão (direto)")
+
         
         # Verificar st.session_state.user (Firebase Auth)
         elif 'user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user:
             usuario_id = st.session_state.user['localId']
-            print(f"DEBUG MULTI-TENANT: Encontrado usuario_id={usuario_id} no objeto user (Firebase Auth)")
+
         
         # Verificar st.session_state.usuario (alternativa)
         elif 'usuario' in st.session_state and st.session_state.usuario:
