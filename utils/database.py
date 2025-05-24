@@ -1886,9 +1886,10 @@ class Database:
                   valor=None, data_vencimento=None, data_pagamento=None, status=None, tipo_conta='PF',
                   percentual_comissao=0.0):
         def query():
-            # DEBUG: Verificar o usuario_id antes de criar
-            print(f"DEBUG ADD_FORNECEDOR: self.usuario_id = {self.usuario_id}")
-            print(f"DEBUG ADD_FORNECEDOR: type(self.usuario_id) = {type(self.usuario_id)}")
+            # Verificar se temos um ID de usuário válido antes de continuar
+            if not self.usuario_id:
+                print("DEBUG ADD_FORNECEDOR: SEGURANÇA - Tentativa de criar fornecedor sem usuário válido!")
+                raise ValueError("ID de usuário não definido. Não é possível criar o fornecedor sem proprietário.")
             
             fornecedor = Fornecedor(
                 descricao=descricao,
@@ -1910,10 +1911,7 @@ class Database:
                 usuario_id=self.usuario_id  # Adicionar ID do usuário atual
             )
             
-            print(f"DEBUG ADD_FORNECEDOR: Fornecedor criado com usuario_id = {fornecedor.usuario_id}")
             self.session.add(fornecedor)
-            self.session.flush()  # Forçar o flush para ver o que acontece
-            print(f"DEBUG ADD_FORNECEDOR: Após flush, fornecedor.id = {fornecedor.id}, usuario_id = {fornecedor.usuario_id}")
             return fornecedor.id
         return self._safe_query(query)
 
@@ -2099,6 +2097,10 @@ class Database:
 
     def add_categoria_despesa(self, nome, descricao):
         def query():
+            # Verificar se temos um ID de usuário válido antes de continuar
+            if not self.usuario_id:
+                raise ValueError("ID de usuário não definido. Não é possível criar a categoria sem proprietário.")
+            
             categoria = CategoriaDespesa(
                 nome=nome,
                 descricao=descricao,
@@ -3098,6 +3100,10 @@ class Database:
 
     def add_assistente(self, nome, telefone, endereco=None, pix=None, observacoes=None):
         def query():
+            # Verificar se temos um ID de usuário válido antes de continuar
+            if not self.usuario_id:
+                raise ValueError("ID de usuário não definido. Não é possível criar o assistente sem proprietário.")
+            
             assistente = Assistente(
                 nome=nome,
                 telefone=telefone,
@@ -3135,6 +3141,10 @@ class Database:
                 estado=None, cidade=None, bairro=None, endereco=None, 
                 pix=None, observacoes=None):
         def query():
+            # Verificar se temos um ID de usuário válido antes de continuar
+            if not self.usuario_id:
+                raise ValueError("ID de usuário não definido. Não é possível criar o parceiro sem proprietário.")
+            
             parceiro = Parceiro(
                 nome=nome,
                 telefone=telefone,
