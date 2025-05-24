@@ -1886,6 +1886,10 @@ class Database:
                   valor=None, data_vencimento=None, data_pagamento=None, status=None, tipo_conta='PF',
                   percentual_comissao=0.0):
         def query():
+            # DEBUG: Verificar o usuario_id antes de criar
+            print(f"DEBUG ADD_FORNECEDOR: self.usuario_id = {self.usuario_id}")
+            print(f"DEBUG ADD_FORNECEDOR: type(self.usuario_id) = {type(self.usuario_id)}")
+            
             fornecedor = Fornecedor(
                 descricao=descricao,
                 contato=contato,
@@ -1905,7 +1909,11 @@ class Database:
                 percentual_comissao=percentual_comissao,
                 usuario_id=self.usuario_id  # Adicionar ID do usuário atual
             )
+            
+            print(f"DEBUG ADD_FORNECEDOR: Fornecedor criado com usuario_id = {fornecedor.usuario_id}")
             self.session.add(fornecedor)
+            self.session.flush()  # Forçar o flush para ver o que acontece
+            print(f"DEBUG ADD_FORNECEDOR: Após flush, fornecedor.id = {fornecedor.id}, usuario_id = {fornecedor.usuario_id}")
             return fornecedor.id
         return self._safe_query(query)
 
