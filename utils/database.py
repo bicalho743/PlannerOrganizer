@@ -2053,24 +2053,15 @@ class Database:
     def get_fornecedores(self):
         def query():
             try:
-                print(f"DEBUG: Buscando todos os fornecedores")
-                
-                # Buscar todos os fornecedores sem filtro de categoria
-                fornecedores = self.session.query(Fornecedor).all()
-                
-                print(f"DEBUG: Quantidade de fornecedores encontrados: {len(fornecedores)}")
-                if fornecedores:
-                    categorias = set(f.categoria for f in fornecedores)
-                    print(f"DEBUG: Categorias encontradas: {categorias}")
-                    
-                    # Mostrar os fornecedores encontrados
-                    for f in fornecedores:
-                        print(f"DEBUG: ID={f.id}, Nome='{f.nome}', Categoria='{f.categoria}', Descrição='{f.descricao}'")
+                # Buscar fornecedores filtrando por usuário
+                fornecedores = self.session.query(Fornecedor).filter(
+                    (Fornecedor.usuario_id == self.usuario_id) | 
+                    (Fornecedor.usuario_id.is_(None))
+                ).all()
                 
                 # Construir DataFrame com os dados
                 resultado = pd.DataFrame([{
                     'id': f.id,
-                    # Com a propriedade nome implementada, podemos usar diretamente
                     'nome': f.nome,
                     'descricao': f.descricao,
                     'contato': f.contato,
@@ -2086,17 +2077,13 @@ class Database:
                     'data_vencimento': f.data_vencimento,
                     'data_pagamento': f.data_pagamento,
                     'status': f.status,
-                    'percentual_comissao': f.percentual_comissao
+                    'percentual_comissao': f.percentual_comissao,
+                    'usuario_id': f.usuario_id
                 } for f in fornecedores])
-                
-                print(f"DEBUG: DataFrame criado com {len(resultado)} linhas")
-                if not resultado.empty:
-                    print(f"DEBUG: Categorias no DataFrame: {resultado['categoria'].unique()}")
                 
                 return resultado
             except Exception as e:
                 print(f"ERRO ao obter fornecedores: {str(e)}")
-                # Em caso de erro, retornar DataFrame vazio
                 return pd.DataFrame()
                 
         return self._safe_query(query)
@@ -2113,12 +2100,20 @@ class Database:
 
     def get_categorias_despesa(self):
         def query():
-            categorias = self.session.query(CategoriaDespesa).all()
-            return pd.DataFrame([{
-                'id': c.id,
-                'nome': c.nome,
-                'descricao': c.descricao
-            } for c in categorias])
+            try:
+                categorias = self.session.query(CategoriaDespesa).filter(
+                    (CategoriaDespesa.usuario_id == self.usuario_id) | 
+                    (CategoriaDespesa.usuario_id.is_(None))
+                ).all()
+                return pd.DataFrame([{
+                    'id': c.id,
+                    'nome': c.nome,
+                    'descricao': c.descricao,
+                    'usuario_id': c.usuario_id
+                } for c in categorias])
+            except Exception as e:
+                print(f"ERRO ao obter categorias de despesa: {str(e)}")
+                return pd.DataFrame()
         return self._safe_query(query)
 
     def add_andamento_proposta(self, proposta_id, status, observacao, comodo=None):
@@ -2794,28 +2789,32 @@ class Database:
         
         # Se falhou, tentar via ORM normal
         def query():
-            query = self.session.query(ProdutoOrganizador)
-            
-            # Aplicar filtros
-            if proposta_id:
-                # Converter explicitamente para int Python padrão
-                proposta_id_int = self._ensure_int(proposta_id)
-                query = query.filter_by(proposta_id=proposta_id_int)
+            try:
+                query = self.session.query(ProdutoOrganizador).filter(
+                    (ProdutoOrganizador.usuario_id == self.usuario_id) | 
+                    (ProdutoOrganizador.usuario_id.is_(None))
+                )
                 
-            # Não filtramos ProdutoOrganizador por usuario_id diretamente
-            # pois esta tabela não possui este campo
-            # A filtragem por usuário já é feita indiretamente via proposta_id
-                
-            produtos = query.all()
-            return pd.DataFrame([{
-                'id': p.id,
-                'nome': p.nome,
-                'descricao': p.descricao,
-                'valor': p.valor,
-                'quantidade': p.quantidade,
-                'comodo': p.comodo,
-                'data_cadastro': p.data_cadastro
-            } for p in produtos])
+                # Aplicar filtros
+                if proposta_id:
+                    # Converter explicitamente para int Python padrão
+                    proposta_id_int = self._ensure_int(proposta_id)
+                    query = query.filter_by(proposta_id=proposta_id_int)
+                    
+                produtos = query.all()
+                return pd.DataFrame([{
+                    'id': p.id,
+                    'nome': p.nome,
+                    'descricao': p.descricao,
+                    'valor': p.valor,
+                    'quantidade': p.quantidade,
+                    'comodo': p.comodo,
+                    'data_cadastro': p.data_cadastro,
+                    'usuario_id': p.usuario_id
+                } for p in produtos])
+            except Exception as e:
+                print(f"ERRO ao obter produtos organizadores: {str(e)}")
+                return pd.DataFrame()
         return self._safe_query(query)
         
     def remove_produto_organizador(self, produto_id):
@@ -3102,21 +3101,23 @@ class Database:
 
     def get_assistentes(self):
         def query():
-            # Criar uma nova sessão para evitar problemas com estado 'prepared'
-            # Isso resolve o erro "This session is in 'prepared' state"
-            session = Session()
             try:
-                assistentes = session.query(Assistente).all()
+                assistentes = self.session.query(Assistente).filter(
+                    (Assistente.usuario_id == self.usuario_id) | 
+                    (Assistente.usuario_id.is_(None))
+                ).all()
                 return pd.DataFrame([{
                     'id': a.id,
                     'nome': a.nome,
                     'telefone': a.telefone,
                     'endereco': a.endereco,
                     'pix': a.pix,
-                    'observacoes': a.observacoes
+                    'observacoes': a.observacoes,
+                    'usuario_id': a.usuario_id
                 } for a in assistentes])
-            finally:
-                session.close()
+            except Exception as e:
+                print(f"ERRO ao obter assistentes: {str(e)}")
+                return pd.DataFrame()
         return self._safe_query(query)
 
     def add_parceiro(self, nome, telefone, area_atuacao, tipo_parceria, 
@@ -3141,11 +3142,11 @@ class Database:
 
     def get_parceiros(self):
         def query():
-            # Criar uma nova sessão para evitar problemas com estado 'prepared'
-            # Isso resolve o erro "This session is in 'prepared' state"
-            session = Session()
             try:
-                parceiros = session.query(Parceiro).all()
+                parceiros = self.session.query(Parceiro).filter(
+                    (Parceiro.usuario_id == self.usuario_id) | 
+                    (Parceiro.usuario_id.is_(None))
+                ).all()
                 return pd.DataFrame([{
                     'id': p.id,
                     'nome': p.nome,
@@ -3158,10 +3159,12 @@ class Database:
                     'endereco': p.endereco,
                     'pix': p.pix,
                     'observacoes': p.observacoes,
-                    'data_cadastro': p.data_cadastro
+                    'data_cadastro': p.data_cadastro,
+                    'usuario_id': p.usuario_id
                 } for p in parceiros])
-            finally:
-                session.close()
+            except Exception as e:
+                print(f"ERRO ao obter parceiros: {str(e)}")
+                return pd.DataFrame()
         return self._safe_query(query)
 
     def __del__(self):
