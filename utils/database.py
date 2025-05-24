@@ -1902,7 +1902,8 @@ class Database:
                 data_pagamento=data_pagamento,
                 status=status,
                 tipo_conta=tipo_conta,
-                percentual_comissao=percentual_comissao
+                percentual_comissao=percentual_comissao,
+                usuario_id=self.usuario_id  # Adicionar ID do usuário atual
             )
             self.session.add(fornecedor)
             return fornecedor.id
@@ -2092,7 +2093,8 @@ class Database:
         def query():
             categoria = CategoriaDespesa(
                 nome=nome,
-                descricao=descricao
+                descricao=descricao,
+                usuario_id=self.usuario_id  # Adicionar ID do usuário atual
             )
             self.session.add(categoria)
             return categoria.id
@@ -3093,7 +3095,8 @@ class Database:
                 telefone=telefone,
                 endereco=endereco,
                 pix=pix,
-                observacoes=observacoes
+                observacoes=observacoes,
+                usuario_id=self.usuario_id  # Adicionar ID do usuário atual
             )
             self.session.add(assistente)
             return assistente.id
@@ -3134,7 +3137,8 @@ class Database:
                 bairro=bairro,
                 endereco=endereco,
                 pix=pix,
-                observacoes=observacoes
+                observacoes=observacoes,
+                usuario_id=self.usuario_id  # Adicionar ID do usuário atual
             )
             self.session.add(parceiro)
             return parceiro.id
