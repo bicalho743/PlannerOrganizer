@@ -227,6 +227,7 @@ class Fornecedor(Base):
     status = Column(String, nullable=True)
     tipo_conta = Column(String, default='PF')
     percentual_comissao = Column(Float, default=0.0)  # Percentual de comissão para o fornecedor
+    usuario_id = Column(String, nullable=True)  # CORREÇÃO: Adicionar campo usuario_id
     
     # Propriedade para compatibilidade com código que usa f.nome
     @property
