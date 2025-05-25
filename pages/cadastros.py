@@ -306,6 +306,10 @@ def show():
 
                 if submitted:
                     try:
+                        # DEBUG: Verificar dados do usuário na sessão antes de cadastrar fornecedor
+                        st.info(f"DEBUG FORNECEDOR: Tentando cadastrar fornecedor para usuário: {st.session_state.db.usuario_id}")
+                        st.info(f"DEBUG FORNECEDOR: Dados - Nome: {nome}, Telefone: {telefone}, Categoria: {categoria}")
+                        
                         st.session_state.db.add_fornecedor(
                             descricao=nome,
                             contato=telefone,
@@ -319,6 +323,7 @@ def show():
                         st.session_state['update_fornecedores'] = True
                     except Exception as e:
                         st.error(f"Erro ao cadastrar fornecedor: {str(e)}")
+                        st.error(f"DEBUG FORNECEDOR: Detalhes do erro - {type(e).__name__}: {str(e)}")
 
             # Lista de fornecedores
             st.subheader("Lista de Fornecedores")
