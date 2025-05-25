@@ -245,6 +245,7 @@ class Assistente(Base):
     pix = Column(String)
     data_cadastro = Column(Date, default=datetime.now().date())
     observacoes = Column(String)
+    usuario_id = Column(String, nullable=True)  # CORREÇÃO: Adicionar campo usuario_id
 
 class Parceiro(Base):
     __tablename__ = 'parceiros'
@@ -260,6 +261,7 @@ class Parceiro(Base):
     pix = Column(String)
     observacoes = Column(String)
     data_cadastro = Column(Date, default=datetime.now().date())
+    usuario_id = Column(String, nullable=True)  # CORREÇÃO: Adicionar campo usuario_id
 
 class CategoriaDespesa(Base):
     __tablename__ = 'categorias_despesa'
