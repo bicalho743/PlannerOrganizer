@@ -5847,11 +5847,9 @@ class Database:
                 # Criar novo andamento
                 andamento = AndamentoProposta(
                     proposta_id=int(proposta_id),
-                    descricao=descricao,
+                    observacao=descricao,  # Usar 'observacao' ao invés de 'descricao'
                     data=data,
-                    porcentagem=porcentagem,
-                    observacoes=observacoes,
-                    usuario_id=self.usuario_id
+                    status=f"Progresso: {porcentagem}%"  # Usar status para armazenar a porcentagem
                 )
                 
                 self.session.add(andamento)
