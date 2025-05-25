@@ -5823,3 +5823,43 @@ class Database:
         finally:
             # Sempre fechar a sessão local no final para liberar os recursos
             session_local.close()
+
+    def add_andamento(self, proposta_id, descricao, data, porcentagem=0, observacoes=""):
+        """
+        Adiciona um andamento para uma proposta
+        
+        Args:
+            proposta_id: ID da proposta
+            descricao: Descrição do andamento
+            data: Data do andamento
+            porcentagem: Porcentagem de progresso (opcional)
+            observacoes: Observações adicionais (opcional)
+            
+        Returns:
+            bool: True se sucesso, False se erro
+        """
+        def query():
+            try:
+                # Verificação de segurança
+                if not self.usuario_id:
+                    raise ValueError("Usuário não autenticado para registrar andamento")
+                
+                # Criar novo andamento
+                andamento = AndamentoProposta(
+                    proposta_id=int(proposta_id),
+                    descricao=descricao,
+                    data=data,
+                    porcentagem=porcentagem,
+                    observacoes=observacoes,
+                    usuario_id=self.usuario_id
+                )
+                
+                self.session.add(andamento)
+                self.session.commit()
+                return True
+                
+            except Exception as e:
+                self.session.rollback()
+                raise e
+        
+        return self._safe_query(query)
