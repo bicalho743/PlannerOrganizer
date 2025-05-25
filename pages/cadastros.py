@@ -306,9 +306,14 @@ def show():
 
                 if submitted:
                     try:
-                        # DEBUG: Verificar dados do usuário na sessão antes de cadastrar fornecedor
-                        st.info(f"DEBUG FORNECEDOR: Tentando cadastrar fornecedor para usuário: {st.session_state.db.usuario_id}")
-                        st.info(f"DEBUG FORNECEDOR: Dados - Nome: {nome}, Telefone: {telefone}, Categoria: {categoria}")
+                        # CORREÇÃO: Forçar o uso do ID real do usuário autenticado
+                        if hasattr(st.session_state, 'user') and st.session_state.user:
+                            # Usar o localId do Firebase como ID real
+                            if 'localId' in st.session_state.user:
+                                st.session_state.db.usuario_id = st.session_state.user['localId']
+                                st.info(f"✅ Usando ID real do usuário: {st.session_state.user['localId']}")
+                            else:
+                                st.warning("⚠️ ID do usuário não encontrado na sessão")
                         
                         st.session_state.db.add_fornecedor(
                             descricao=nome,
@@ -319,11 +324,11 @@ def show():
                             observacoes=observacoes,
                             percentual_comissao=percentual_comissao
                         )
-                        st.success("Fornecedor cadastrado com sucesso!")
+                        st.success("✅ Fornecedor cadastrado com sucesso!")
                         st.session_state['update_fornecedores'] = True
                     except Exception as e:
-                        st.error(f"Erro ao cadastrar fornecedor: {str(e)}")
-                        st.error(f"DEBUG FORNECEDOR: Detalhes do erro - {type(e).__name__}: {str(e)}")
+                        st.error(f"❌ Erro ao cadastrar fornecedor: {str(e)}")
+                        st.error(f"🔍 Detalhes técnicos: {type(e).__name__}: {str(e)}")
 
             # Lista de fornecedores
             st.subheader("Lista de Fornecedores")
