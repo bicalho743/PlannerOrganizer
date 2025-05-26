@@ -658,35 +658,35 @@ def show():
                         st.write("Registre uma nova atualização de detalhes:")
                         descricao_andamento = st.text_area("Descrição:", height=100)
                         data_andamento = st.date_input("Data:", datetime.now())
-                            # Usar o mesmo valor da barra superior como padrão para manter consistência
+                        # Usar o mesmo valor da barra superior como padrão para manter consistência
+                        try:
+                            slider_value = st.session_state[f"slider_progresso_topo_{proposta_selecionada_id}"]
+                        except:
+                            slider_value = 0
+                        # Ocultar o slider aqui, já que temos um equivalente no topo
+                        observacoes = st.text_area("Observações:", height=70)
+                        
+                        andamento_salvar = st.form_submit_button("Registrar Andamento")
+                        
+                        if andamento_salvar:
+                            # Usar o valor do slider de progresso superior
+                            porcentagem = st.session_state.get(f"slider_progresso_topo_{proposta_selecionada_id}", 0)
+                            
+                            # Lógica para salvar o andamento
                             try:
-                                slider_value = st.session_state[f"slider_progresso_topo_{proposta_selecionada_id}"]
-                            except:
-                                slider_value = 0
-                            # Ocultar o slider aqui, já que temos um equivalente no topo
-                            observacoes = st.text_area("Observações:", height=70)
-                            
-                            andamento_salvar = st.form_submit_button("Registrar Andamento")
-                            
-                            if andamento_salvar:
-                                # Usar o valor do slider de progresso superior
-                                porcentagem = st.session_state.get(f"slider_progresso_topo_{proposta_selecionada_id}", 0)
+                                st.session_state.db.add_andamento(
+                                    proposta_id=proposta_selecionada_id,
+                                    descricao=descricao_andamento,
+                                    data=data_andamento,
+                                    porcentagem=porcentagem,
+                                    observacoes=observacoes
+                                )
+                                st.success(f"Andamento registrado com sucesso! Progresso: {porcentagem}%")
                                 
-                                # Lógica para salvar o andamento
-                                try:
-                                    st.session_state.db.add_andamento(
-                                        proposta_id=proposta_selecionada_id,
-                                        descricao=descricao_andamento,
-                                        data=data_andamento,
-                                        porcentagem=porcentagem,
-                                        observacoes=observacoes
-                                    )
-                                    st.success(f"Andamento registrado com sucesso! Progresso: {porcentagem}%")
-                                    
-                                    # Recarregar a página para mostrar a atualização
-                                    st.rerun()
-                                except Exception as e:
-                                    st.error(f"Erro ao registrar andamento: {str(e)}")
+                                # Recarregar a página para mostrar a atualização
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Erro ao registrar andamento: {str(e)}")
                         
                         # EXIBIR ANDAMENTOS REGISTRADOS
                         st.markdown("---")
