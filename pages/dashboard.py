@@ -152,16 +152,16 @@ def show():
         if not financeiro.empty:
             # Considerar receitas, receitas a receber e lançamentos na classificação contas_a_receber pendentes
             valores_receber = financeiro[
-                (((financeiro['tipo'] == 'receita') | (financeiro['tipo'] == 'receita_a_receber') | 
-                  (financeiro['tipo'] == 'Receita')) | 
+                (((financeiro['tipo'] == 'Receita') | (financeiro['tipo'] == 'receita_a_receber') | 
+                  (financeiro['tipo'] == 'receita')) | 
                  (financeiro['classificacao'] == 'contas_a_receber')) & 
                 (financeiro['status'] == 'Pendente')
             ]['valor'].sum()
             
             # Valores a Pagar (despesas pendentes)
             valores_pagar = financeiro[
-                ((financeiro['tipo'] == 'despesa') | 
-                 (financeiro['tipo'] == 'despesa_a_pagar') |
+                (((financeiro['tipo'] == 'Despesa') | (financeiro['tipo'] == 'despesa_a_pagar') |
+                  (financeiro['tipo'] == 'despesa')) |
                  (financeiro['classificacao'] == 'contas_a_pagar')) & 
                 (financeiro['status'] == 'Pendente')
             ]['valor'].sum()
