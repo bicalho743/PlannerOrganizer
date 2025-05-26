@@ -716,11 +716,7 @@ def show():
                                     data_list.append(row_dict)
                                 andamentos_df = pd.DataFrame(data_list)
                             
-                            # Debug: verificar colunas disponíveis
-                            st.write(f"Debug - Colunas disponíveis: {list(andamentos_df.columns)}")
-                            if not andamentos_df.empty:
-                                st.write(f"Debug - Primeiras linhas:")
-                                st.dataframe(andamentos_df.head())
+                            # Informações de debug removidas - sistema funcionando corretamente
                             
                             if not andamentos_df.empty:
                                 # Ordenar por data (mais recente primeiro)
