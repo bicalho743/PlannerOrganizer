@@ -19,7 +19,8 @@ if "logged_in" not in st.session_state or not st.session_state.logged_in:
 db = Database()
 
 # Título da página
-st.title("📝 Propostas Finalizadas")
+st.title("🚨 TESTE DEFINITIVO - ARQUIVO CORRETO ENCONTRADO!")
+st.error("SE VOCÊ ESTÁ VENDO ESTA MENSAGEM, ESTE É O ARQUIVO CERTO!")
 
 # Função para carregar propostas finalizadas
 def carregar_propostas_finalizadas():
