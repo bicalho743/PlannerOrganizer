@@ -1537,6 +1537,19 @@ def show():
             todas_propostas = st.session_state.db.get_propostas()
             clientes = st.session_state.db.get_clientes()
             
+            # DEBUG: Mostrar informações detalhadas
+            st.write(f"🔍 **DEBUG:** Propostas carregadas: {len(todas_propostas)}")
+            st.write(f"🔍 **DEBUG:** Clientes carregados: {len(clientes)}")
+            
+            if not todas_propostas.empty:
+                st.write(f"🔍 **DEBUG:** Colunas propostas: {list(todas_propostas.columns)}")
+                st.write(f"🔍 **DEBUG:** Primeiras propostas:")
+                st.dataframe(todas_propostas[['id', 'numero', 'status', 'status_execucao', 'cliente_id']].head())
+            
+            if not clientes.empty:
+                st.write(f"🔍 **DEBUG:** Clientes disponíveis:")
+                st.dataframe(clientes[['id', 'nome']].head())
+            
             if not todas_propostas.empty and not clientes.empty:
                 # Fazer merge com clientes para ter os nomes
                 propostas_finalizadas = todas_propostas.merge(
@@ -1546,6 +1559,8 @@ def show():
                     suffixes=('', '_cliente')
                 )
                 
+                st.write(f"🔍 **DEBUG:** Após merge: {len(propostas_finalizadas)} propostas")
+                
                 # Mostrar contagem de propostas finalizadas
                 st.write(f"Total de propostas finalizadas encontradas: {len(propostas_finalizadas)}")
             else:
@@ -1553,6 +1568,8 @@ def show():
                 st.write("Total de propostas finalizadas encontradas: 0")
         except Exception as e:
             st.error(f"Erro ao carregar propostas: {str(e)}")
+            import traceback
+            st.code(traceback.format_exc())
             propostas_finalizadas = pd.DataFrame()
         
         if propostas_finalizadas.empty:

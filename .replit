@@ -125,6 +125,10 @@ args = "Teste 4 Abas"
 task = "workflow.run"
 args = "Debug Proposta 73"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Debug Propostas Todas"
+
 [[workflows.workflow]]
 name = "Importar Propostas"
 author = "agent"
@@ -451,6 +455,15 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run debug_proposta_73.py --server.port 8525 --server.address 0.0.0.0"
 waitForPort = 8525
+
+[[workflows.workflow]]
+name = "Debug Propostas Todas"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run debug_propostas_todas.py --server.port 8580 --server.address 0.0.0.0"
+waitForPort = 8580
 
 [[ports]]
 localPort = 443
