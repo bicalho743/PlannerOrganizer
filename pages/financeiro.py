@@ -323,21 +323,23 @@ def show():
                 del st.session_state.transacao_em_edicao
                 st.rerun()
 
-        # Resumo financeiro - usar mesma lógica do Dashboard Financeiro
+        # Resumo financeiro - usar EXATAMENTE a mesma lógica do Dashboard Central
         if not financeiro.empty:
-            # Aplicar função de simplificação igual ao Dashboard
-            def simplificar_tipo_pendencias(tipo):
-                if tipo in ['receita', 'receita_a_receber_aprovacao', 'Receita', 'receita_a_receber']:
-                    return 'receita'
-                elif tipo in ['despesa', 'despesa_a_pagar', 'Despesa']:
-                    return 'despesa'
-                return tipo
+            # Valores a Receber (mesma lógica do dashboard central)
+            receitas = financeiro[
+                (((financeiro['tipo'] == 'receita') | (financeiro['tipo'] == 'receita_a_receber') | 
+                  (financeiro['tipo'] == 'Receita')) | 
+                 (financeiro['classificacao'] == 'contas_a_receber')) & 
+                (financeiro['status'] == 'Pendente')
+            ]['valor'].sum()
             
-            financeiro_analise = financeiro.copy()
-            financeiro_analise['tipo_simplificado'] = financeiro_analise['tipo'].apply(simplificar_tipo_pendencias)
-            
-            receitas = financeiro_analise[financeiro_analise['tipo_simplificado'] == 'receita']['valor'].sum()
-            despesas = financeiro_analise[financeiro_analise['tipo_simplificado'] == 'despesa']['valor'].sum()
+            # Valores a Pagar (mesma lógica do dashboard central)
+            despesas = financeiro[
+                ((financeiro['tipo'] == 'despesa') | 
+                 (financeiro['tipo'] == 'despesa_a_pagar') |
+                 (financeiro['classificacao'] == 'contas_a_pagar')) & 
+                (financeiro['status'] == 'Pendente')
+            ]['valor'].sum()
         else:
             receitas = 0
             despesas = 0
@@ -779,9 +781,21 @@ def show():
             # Card com resumo geral (métricas)
             st.subheader("Resumo Geral")
             
-            # Calcular totais considerando todos os tipos de receita e despesa
-            total_receitas = financeiro_analise[financeiro_analise['tipo_simplificado'] == 'receita']['valor'].sum()
-            total_despesas = financeiro_analise[financeiro_analise['tipo_simplificado'] == 'despesa']['valor'].sum()
+            # Calcular totais usando EXATAMENTE a mesma lógica do Dashboard Central
+            total_receitas = financeiro_completo[
+                (((financeiro_completo['tipo'] == 'receita') | (financeiro_completo['tipo'] == 'receita_a_receber') | 
+                  (financeiro_completo['tipo'] == 'Receita')) | 
+                 (financeiro_completo['classificacao'] == 'contas_a_receber')) & 
+                (financeiro_completo['status'] == 'Pendente')
+            ]['valor'].sum()
+            
+            total_despesas = financeiro_completo[
+                ((financeiro_completo['tipo'] == 'despesa') | 
+                 (financeiro_completo['tipo'] == 'despesa_a_pagar') |
+                 (financeiro_completo['classificacao'] == 'contas_a_pagar')) & 
+                (financeiro_completo['status'] == 'Pendente')
+            ]['valor'].sum()
+            
             saldo = total_receitas - total_despesas
             
             # Exibir as métricas
