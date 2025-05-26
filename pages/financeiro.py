@@ -323,16 +323,26 @@ def show():
                 del st.session_state.transacao_em_edicao
                 st.rerun()
 
+        # DEBUG: Mostrar dados disponíveis
+        if not financeiro.empty:
+            st.write("**DEBUG - Tipos encontrados após filtro pendente:**")
+            tipos_debug = financeiro['tipo'].value_counts()
+            st.write(tipos_debug.to_dict())
+            st.write(f"**Total de registros após filtro: {len(financeiro)}**")
+        
         # Resumo financeiro - incluir todos os tipos de receita
         receitas = financeiro[
             (financeiro['tipo'].isin(['receita', 'receita_a_receber', 'Receita'])) |
             (financeiro['classificacao'] == 'contas_a_receber')
         ]['valor'].sum() if not financeiro.empty else 0
         despesas = financeiro[
-            (financeiro['tipo'].isin(['despesa', 'despesa_a_pagar'])) |
+            (financeiro['tipo'].isin(['despesa', 'despesa_a_pagar', 'Despesa'])) |
             (financeiro['classificacao'] == 'contas_a_pagar')
         ]['valor'].sum() if not financeiro.empty else 0
         saldo = receitas - despesas
+        
+        st.write(f"**DEBUG - Receitas calculadas: R$ {receitas:.2f}**")
+        st.write(f"**DEBUG - Despesas calculadas: R$ {despesas:.2f}**")
 
         col1, col2, col3 = st.columns(3)
         col1.metric("Total Receitas", f"R$ {receitas:.2f}")
