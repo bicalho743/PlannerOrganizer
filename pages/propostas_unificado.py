@@ -698,9 +698,11 @@ def show():
                                         col1, col2, col3 = st.columns([2, 1, 1])
                                         
                                         with col1:
-                                            st.markdown(f"**{andamento['descricao']}**")
-                                            if pd.notna(andamento.get('observacao')):
-                                                st.caption(f"📝 {andamento['observacao']}")
+                                            # Usar 'observacao' que é o campo correto no banco
+                                            st.markdown(f"**{andamento['observacao']}**")
+                                            # Se houver status, mostrar também
+                                            if pd.notna(andamento.get('status')):
+                                                st.caption(f"📊 Status: {andamento['status']}")
                                         
                                         with col2:
                                             data_formatada = andamento['data'].strftime('%d/%m/%Y') if pd.notna(andamento['data']) else 'N/A'
