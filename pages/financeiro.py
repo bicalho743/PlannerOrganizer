@@ -764,19 +764,7 @@ def show():
         financeiro_completo = st.session_state.db.get_financeiro(force_reload=True)
         
         if not financeiro_completo.empty:
-            # Adicionar uma coluna para classificar os tipos de lançamento de forma simplificada
-            def simplificar_tipo(tipo):
-                # Referências a 'receita_a_receber_aprovacao' mantidas apenas para compatibilidade
-                # com dados históricos no banco que possam conter este valor
-                if tipo in ['receita', 'receita_a_receber_aprovacao', 'Receita', 'receita_a_receber']:
-                    return 'receita'
-                elif tipo in ['despesa', 'despesa_a_pagar', 'Despesa']:
-                    return 'despesa'
-                return tipo
-            
-            # Criar uma cópia para não alterar o DataFrame original
-            financeiro_analise = financeiro_completo.copy()
-            financeiro_analise['tipo_simplificado'] = financeiro_analise['tipo'].apply(simplificar_tipo)
+            # Remover função de simplificação - usar diretamente os tipos do banco
             
             # Card com resumo geral (métricas)
             st.subheader("Resumo Geral")
