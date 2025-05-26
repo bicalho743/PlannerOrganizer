@@ -597,18 +597,32 @@ def show():
     with tab2:
         st.header("Propostas em Execução")
         
-        if not propostas.empty:
-            # Debug: Verificar os dados carregados
-            st.write("DEBUG: Colunas disponíveis:", list(propostas_com_clientes.columns))
-            if 'status_execucao' in propostas_com_clientes.columns:
-                st.write("DEBUG: Valores únicos em status_execucao:", propostas_com_clientes['status_execucao'].unique().tolist())
-                st.write("DEBUG: Propostas com status_execucao 'Em execução':", 
-                        propostas_com_clientes[propostas_com_clientes['status_execucao'] == 'Em execução']['numero'].tolist())
+        try:
+            st.write("DEBUG: Verificando dados disponíveis...")
+            st.write(f"DEBUG: Propostas vazias? {propostas.empty}")
+            st.write(f"DEBUG: Número total de propostas: {len(propostas) if not propostas.empty else 0}")
             
-            # Filtrar apenas propostas em execução - usar status_execucao correto
-            propostas_em_execucao = propostas_com_clientes[
-                propostas_com_clientes['status_execucao'] == 'Em execução'
-            ]
+            if not propostas.empty:
+                st.write("DEBUG: Dados de propostas carregados com sucesso!")
+                st.write("DEBUG: Colunas disponíveis:", list(propostas_com_clientes.columns))
+                
+                if 'status_execucao' in propostas_com_clientes.columns:
+                    st.write("DEBUG: Valores únicos em status_execucao:", propostas_com_clientes['status_execucao'].unique().tolist())
+                    st.write("DEBUG: Propostas com status_execucao 'Em execução':", 
+                            propostas_com_clientes[propostas_com_clientes['status_execucao'] == 'Em execução']['numero'].tolist())
+                else:
+                    st.error("DEBUG: Campo status_execucao não encontrado!")
+                
+                # Filtrar apenas propostas em execução - usar status_execucao correto
+                propostas_em_execucao = propostas_com_clientes[
+                    propostas_com_clientes['status_execucao'] == 'Em execução'
+                ]
+            else:
+                st.warning("DEBUG: Nenhuma proposta encontrada!")
+                propostas_em_execucao = pd.DataFrame()
+        except Exception as e:
+            st.error(f"DEBUG: Erro ao processar dados: {str(e)}")
+            propostas_em_execucao = pd.DataFrame()
             
             if not propostas_em_execucao.empty:
                 # Mostrar as propostas em execução
