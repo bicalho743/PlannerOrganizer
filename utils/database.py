@@ -432,6 +432,7 @@ class AcrescimoProposta(Base):
     status_pagamento = Column(String, default='Pendente')
     data_cadastro = Column(Date, default=datetime.now().date())
     percentual_comissao = Column(Float, nullable=True)  # Adicionado campo para percentual de comissão
+    usuario_id = Column(String, nullable=True)  # Campo para isolamento multi-tenant
 
     proposta = relationship("Proposta", back_populates="acrescimos")
 
