@@ -5843,16 +5843,28 @@ class Database:
                 
                 andamentos = andamentos_query.all()
                 
-                return pd.DataFrame([{
-                    'id': a.id,
-                    'proposta_id': a.proposta_id,
-                    'data': a.data,
-                    'status': a.status,
-                    'observacao': a.observacao,
-                    'descricao': a.observacao,  # Adicionar campo descricao para compatibilidade
-                    'comodo': a.comodo,
-                    'usuario_id': a.usuario_id
-                } for a in andamentos])
+                # Criar DataFrame com compatibilidade total
+                df_data = []
+                for a in andamentos:
+                    row = {
+                        'id': a.id,
+                        'proposta_id': a.proposta_id,
+                        'data': a.data,
+                        'status': a.status,
+                        'observacao': a.observacao,
+                        'descricao': a.observacao,  # Compatibilidade
+                        'comodo': a.comodo,
+                        'usuario_id': a.usuario_id
+                    }
+                    df_data.append(row)
+                
+                df = pd.DataFrame(df_data)
+                
+                # Se o DataFrame estiver vazio, criar com colunas corretas
+                if df.empty:
+                    df = pd.DataFrame(columns=['id', 'proposta_id', 'data', 'status', 'observacao', 'descricao', 'comodo', 'usuario_id'])
+                
+                return df
             except Exception as e:
                 print(f"ERRO ao obter andamentos: {str(e)}")
                 return pd.DataFrame()
