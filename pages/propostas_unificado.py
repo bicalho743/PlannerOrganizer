@@ -713,11 +713,17 @@ def show():
                                     # Renomear colunas para português
                                     column_mapping = {'data': 'Data', 'status': 'Status', 'observacao': 'Observação'}
                                     andamentos_resumo.columns = [column_mapping.get(col, col) for col in colunas_existentes]
-                                    st.dataframe(andamentos_resumo, hide_index=True, use_container_width=True)
+                                    
+                                    # Verificar se há dados reais para exibir
+                                    if len(andamentos_resumo) > 0:
+                                        st.dataframe(andamentos_resumo, hide_index=True, use_container_width=True)
                                 else:
                                     # Fallback: mostrar tabela completa se as colunas esperadas não existirem
-                                    st.dataframe(andamentos_df_raw, hide_index=True, use_container_width=True)
-                            # Se não há andamentos, não mostra nada - apenas a tabela vazia se existir
+                                    if len(andamentos_df_raw) > 0:
+                                        st.dataframe(andamentos_df_raw, hide_index=True, use_container_width=True)
+                            else:
+                                # Quando não há andamentos, mostrar uma mensagem discreta e limpa
+                                st.caption("💭 Ainda não há registros de andamento para esta proposta.")
                             
                             if False:  # Desabilitando a seção duplicada
                                 # Ordenar por data (mais recente primeiro)
