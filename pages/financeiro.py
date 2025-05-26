@@ -323,20 +323,20 @@ def show():
                 del st.session_state.transacao_em_edicao
                 st.rerun()
 
-        # Resumo financeiro - usar EXATAMENTE a mesma lógica do Dashboard Central
+        # Resumo financeiro - corrigir para usar os tipos reais do banco (com maiúscula)
         if not financeiro.empty:
-            # Valores a Receber (mesma lógica do dashboard central)
+            # Valores a Receber - usar tipos exatos do banco
             receitas = financeiro[
-                (((financeiro['tipo'] == 'receita') | (financeiro['tipo'] == 'receita_a_receber') | 
-                  (financeiro['tipo'] == 'Receita')) | 
+                (((financeiro['tipo'] == 'Receita') | (financeiro['tipo'] == 'receita_a_receber') | 
+                  (financeiro['tipo'] == 'receita')) | 
                  (financeiro['classificacao'] == 'contas_a_receber')) & 
                 (financeiro['status'] == 'Pendente')
             ]['valor'].sum()
             
-            # Valores a Pagar (mesma lógica do dashboard central)
+            # Valores a Pagar - usar tipos exatos do banco
             despesas = financeiro[
-                ((financeiro['tipo'] == 'despesa') | 
-                 (financeiro['tipo'] == 'despesa_a_pagar') |
+                (((financeiro['tipo'] == 'Despesa') | (financeiro['tipo'] == 'despesa_a_pagar') |
+                  (financeiro['tipo'] == 'despesa')) |
                  (financeiro['classificacao'] == 'contas_a_pagar')) & 
                 (financeiro['status'] == 'Pendente')
             ]['valor'].sum()
@@ -781,17 +781,17 @@ def show():
             # Card com resumo geral (métricas)
             st.subheader("Resumo Geral")
             
-            # Calcular totais usando EXATAMENTE a mesma lógica do Dashboard Central
+            # Calcular totais usando os tipos exatos do banco (com maiúscula)
             total_receitas = financeiro_completo[
-                (((financeiro_completo['tipo'] == 'receita') | (financeiro_completo['tipo'] == 'receita_a_receber') | 
-                  (financeiro_completo['tipo'] == 'Receita')) | 
+                (((financeiro_completo['tipo'] == 'Receita') | (financeiro_completo['tipo'] == 'receita_a_receber') | 
+                  (financeiro_completo['tipo'] == 'receita')) | 
                  (financeiro_completo['classificacao'] == 'contas_a_receber')) & 
                 (financeiro_completo['status'] == 'Pendente')
             ]['valor'].sum()
             
             total_despesas = financeiro_completo[
-                ((financeiro_completo['tipo'] == 'despesa') | 
-                 (financeiro_completo['tipo'] == 'despesa_a_pagar') |
+                (((financeiro_completo['tipo'] == 'Despesa') | (financeiro_completo['tipo'] == 'despesa_a_pagar') |
+                  (financeiro_completo['tipo'] == 'despesa')) |
                  (financeiro_completo['classificacao'] == 'contas_a_pagar')) & 
                 (financeiro_completo['status'] == 'Pendente')
             ]['valor'].sum()
