@@ -680,6 +680,45 @@ def show():
                                 except Exception as e:
                                     st.error(f"Erro ao registrar andamento: {str(e)}")
                         
+                        # EXIBIR ANDAMENTOS REGISTRADOS
+                        st.markdown("---")
+                        st.subheader("📋 Andamentos Registrados")
+                        
+                        try:
+                            # Buscar andamentos desta proposta usando o novo método
+                            andamentos_df = st.session_state.db.get_andamentos(proposta_id=proposta_selecionada_id)
+                            
+                            if not andamentos_df.empty:
+                                # Ordenar por data (mais recente primeiro)
+                                andamentos_df = andamentos_df.sort_values('data', ascending=False)
+                                
+                                # Exibir cada andamento em um container estilizado
+                                for idx, andamento in andamentos_df.iterrows():
+                                    with st.container():
+                                        col1, col2, col3 = st.columns([2, 1, 1])
+                                        
+                                        with col1:
+                                            st.markdown(f"**{andamento['descricao']}**")
+                                            if pd.notna(andamento.get('observacao')):
+                                                st.caption(f"📝 {andamento['observacao']}")
+                                        
+                                        with col2:
+                                            data_formatada = andamento['data'].strftime('%d/%m/%Y') if pd.notna(andamento['data']) else 'N/A'
+                                            st.markdown(f"📅 {data_formatada}")
+                                        
+                                        with col3:
+                                            progresso = andamento.get('porcentagem', 0) if pd.notna(andamento.get('porcentagem')) else 0
+                                            st.markdown(f"📊 {progresso}%")
+                                    
+                                    st.markdown("---")
+                            else:
+                                st.info("Nenhum andamento registrado ainda para esta proposta.")
+                                
+                        except Exception as e:
+                            st.error(f"Erro ao carregar andamentos: {str(e)}")
+                            import traceback
+                            st.text(traceback.format_exc())
+                        
                         # Calcular e mostrar progresso da proposta com tratamento seguro para datas
                         hoje = datetime.now().date()
                         
