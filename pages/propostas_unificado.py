@@ -608,10 +608,18 @@ def show():
                 st.write(f"Total: {len(propostas_em_execucao)} propostas em execução")
                 
                 # Criar seletor de proposta para gerenciar
+                def format_proposta(x):
+                    p = propostas_em_execucao[propostas_em_execucao['id'] == x].iloc[0]
+                    numero = p.get('numero', 'N/A')
+                    nome = p.get('nome', 'Sem nome')
+                    # Usar tanto 'descricao' quanto 'observacao' para compatibilidade
+                    descricao = p.get('descricao', p.get('observacao', 'Sem descrição'))
+                    return f"#{numero} - {nome}: {str(descricao)[:50]}..."
+                
                 proposta_selecionada_id = st.selectbox(
                     "Selecione uma proposta para gerenciar:",
                     options=propostas_em_execucao['id'].tolist(),
-                    format_func=lambda x: f"#{propostas_em_execucao[propostas_em_execucao['id'] == x]['numero'].iloc[0]} - {propostas_em_execucao[propostas_em_execucao['id'] == x]['nome'].iloc[0]}: {propostas_em_execucao[propostas_em_execucao['id'] == x]['descricao'].iloc[0][:50]}..."
+                    format_func=format_proposta
                 )
                 
                 if proposta_selecionada_id:
