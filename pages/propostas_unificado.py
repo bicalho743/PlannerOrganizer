@@ -705,13 +705,7 @@ def show():
                                         
                                         with col1:
                                             # Tratar tanto 'observacao' quanto 'descricao' para compatibilidade
-                                            texto = ""
-                                            if 'observacao' in andamento and pd.notna(andamento['observacao']):
-                                                texto = andamento['observacao']
-                                            elif 'descricao' in andamento and pd.notna(andamento['descricao']):
-                                                texto = andamento['descricao']
-                                            else:
-                                                texto = "Andamento sem descrição"
+                                            texto = andamento.get('observacao', andamento.get('descricao', 'Andamento sem descrição'))
                                             
                                             st.markdown(f"**{texto}**")
                                             # Se houver status, mostrar também
