@@ -696,25 +696,21 @@ def show():
                             # Buscar andamentos desta proposta usando o novo método
                             andamentos_df_raw = st.session_state.db.get_andamentos(proposta_id=proposta_selecionada_id)
                             
-                            # Debug temporário
-                            st.write(f"DEBUG: Proposta ID: {proposta_selecionada_id}")
-                            st.write(f"DEBUG: Andamentos encontrados: {len(andamentos_df_raw) if not andamentos_df_raw.empty else 0}")
-                            if not andamentos_df_raw.empty:
-                                st.write("DEBUG: Colunas disponíveis:", list(andamentos_df_raw.columns))
-                            
                             # Exibir apenas tabela resumida dos andamentos (apenas colunas relevantes)
-                            if not andamentos_df_raw.empty:
+                            if not andamentos_df_raw.empty and len(andamentos_df_raw) > 0:
                                 # Verificar se as colunas necessárias existem
                                 colunas_necessarias = ['data', 'status', 'observacao']
                                 colunas_existentes = [col for col in colunas_necessarias if col in andamentos_df_raw.columns]
                                 
-                                if len(colunas_existentes) == 3:
+                                if len(colunas_existentes) >= 2:  # Pelo menos data e status
                                     # Criar tabela resumida com apenas as colunas importantes
                                     andamentos_resumo = andamentos_df_raw[colunas_existentes].copy()
-                                    andamentos_resumo.columns = ['Data', 'Status', 'Observação']
+                                    # Renomear colunas para português
+                                    column_mapping = {'data': 'Data', 'status': 'Status', 'observacao': 'Observação'}
+                                    andamentos_resumo.columns = [column_mapping.get(col, col) for col in colunas_existentes]
                                     st.dataframe(andamentos_resumo, hide_index=True, use_container_width=True)
                                 else:
-                                    st.error(f"Colunas faltando: {set(colunas_necessarias) - set(colunas_existentes)}")
+                                    # Fallback: mostrar tabela completa se as colunas esperadas não existirem
                                     st.dataframe(andamentos_df_raw, hide_index=True, use_container_width=True)
                             else:
                                 st.info("Nenhum andamento registrado para esta proposta.")
@@ -751,8 +747,6 @@ def show():
                                             st.markdown(f"📊 {progresso}%")
                                     
                                     st.markdown("---")
-                            else:
-                                st.info("Nenhum andamento registrado ainda para esta proposta.")
                                 
                         except Exception as e:
                             st.error(f"Erro ao carregar andamentos: {str(e)}")
