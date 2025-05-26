@@ -709,11 +709,16 @@ def show():
                                             
                                             st.markdown(f"**{texto}**")
                                             # Se houver status, mostrar também
-                                            if pd.notna(andamento.get('status')):
-                                                st.caption(f"📊 Status: {andamento['status']}")
+                                            status = andamento.get('status', '')
+                                            if pd.notna(status) and status:
+                                                st.caption(f"📊 Status: {status}")
                                         
                                         with col2:
-                                            data_formatada = andamento['data'].strftime('%d/%m/%Y') if pd.notna(andamento['data']) else 'N/A'
+                                            data_andamento = andamento.get('data')
+                                            if pd.notna(data_andamento) and data_andamento:
+                                                data_formatada = data_andamento.strftime('%d/%m/%Y')
+                                            else:
+                                                data_formatada = 'N/A'
                                             st.markdown(f"📅 {data_formatada}")
                                         
                                         with col3:
