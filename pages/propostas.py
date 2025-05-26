@@ -1874,40 +1874,34 @@ def show():
         
         # ABA 3: FINALIZADAS
         with tab3:
-            st.header("Propostas Finalizadas - VERSÃO ATUALIZADA")
-            
-            # AVISO DE DEBUG
-            st.warning("🔍 DEBUG: Usando código atualizado para filtrar propostas na aba 'Finalizadas'")
+            st.title("🚨 TESTE FINAL - ARQUIVO CORRETO ENCONTRADO!")
+            st.error("SE VOCÊ ESTÁ VENDO ESTA MENSAGEM, ESTE É O ARQUIVO CERTO!")
             
             # Obter todas as propostas diretamente
             todas_propostas = st.session_state.db.get_propostas()
             
-            # Mostrar contagem total para debug
-            st.info(f"Total de propostas no banco: {len(todas_propostas) if not todas_propostas.empty else 0}")
+            st.success(f"🎯 MOSTRANDO TODAS AS {len(todas_propostas) if not todas_propostas.empty else 0} PROPOSTAS SEM FILTRO!")
             
-            # Filtro direto para debug
-            propostas_finalizadas = pd.DataFrame()
+            # PARA TESTE: mostrar TODAS as propostas sem filtro
+            propostas_finalizadas = todas_propostas
+            
             if not todas_propostas.empty:
-                # Filtrar visualmente cada registro para debug
-                st.subheader("Análise de Registros:")
+                st.subheader("📋 Todas as Propostas no Banco:")
                 for idx, p in todas_propostas.iterrows():
-                    status_match = p['status'] == 'Finalizada'
-                    exec_match = p['status_execucao'] == 'Finalizada'
-                    recusada_match = p['status'] == 'Recusada'
-                    
-                    if (status_match and exec_match) or recusada_match:
-                        st.success(f"✅ MATCH: Proposta #{p['numero']} - {p['cliente_nome']} - Status: {p['status']} - Exec: {p['status_execucao']}")
-                    else:
-                        st.error(f"❌ NO MATCH: Proposta #{p['numero']} - {p['cliente_nome']} - Status: {p['status']} - Exec: {p['status_execucao']}")
+                    st.write(f"• ID {p['id']}: {p['cliente_nome']} - Status: '{p['status']}' - Exec: '{p.get('status_execucao', 'N/A')}'")
                 
-                # Aplicar filtro atualizado para capturar também propostas com status 'Cancelada'
-                propostas_finalizadas = todas_propostas[
+                st.write("---")
+                st.info("Agora vou aplicar o filtro original para ver o que acontece:")
+                
+                # Aplicar o filtro original para comparação
+                filtro_original = todas_propostas[
                     ((todas_propostas['status'] == 'Finalizada') & (todas_propostas['status_execucao'] == 'Finalizada')) |
-                    ((todas_propostas['status'] == 'Finalizada') & (todas_propostas['status_execucao'] == 'Cancelada')) |
-                    (todas_propostas['status'] == 'Concluída') |
-                    ((todas_propostas['status'] == 'Finalizada') & (todas_propostas['status_execucao'] == 'Não iniciada')) |
                     (todas_propostas['status'] == 'Recusada')
                 ]
+                st.write(f"Filtro original captura: {len(filtro_original)} propostas")
+                
+                # Mas para exibição, usar TODAS as propostas
+                propostas_finalizadas = todas_propostas
             
             try:
                 # Mostrar contagem para debug
