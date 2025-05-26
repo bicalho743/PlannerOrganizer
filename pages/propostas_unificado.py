@@ -696,10 +696,18 @@ def show():
                             # Buscar andamentos desta proposta usando o novo método
                             andamentos_df_raw = st.session_state.db.get_andamentos(proposta_id=proposta_selecionada_id)
                             
+                            # Debug temporário
+                            st.write(f"🔍 DEBUG: DataFrame retornado: {type(andamentos_df_raw)}")
+                            if andamentos_df_raw is not None:
+                                st.write(f"🔍 DEBUG: Empty? {andamentos_df_raw.empty if hasattr(andamentos_df_raw, 'empty') else 'N/A'}")
+                                st.write(f"🔍 DEBUG: Len: {len(andamentos_df_raw) if hasattr(andamentos_df_raw, '__len__') else 'N/A'}")
+                            
                             # Verificar se há andamentos válidos
                             tem_andamentos = False
                             if andamentos_df_raw is not None and not andamentos_df_raw.empty:
                                 tem_andamentos = len(andamentos_df_raw) > 0
+                            
+                            st.write(f"🔍 DEBUG: tem_andamentos = {tem_andamentos}")
                             
                             # Exibir apenas tabela resumida dos andamentos (apenas colunas relevantes)
                             if tem_andamentos:
