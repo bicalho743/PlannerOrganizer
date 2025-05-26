@@ -323,12 +323,8 @@ def show():
                 del st.session_state.transacao_em_edicao
                 st.rerun()
 
-        # Resumo financeiro - corrigir para usar os tipos reais do banco (com maiúscula)
+        # Resumo financeiro - usar os tipos corretos do banco (maiúscula)
         if not financeiro.empty:
-            # DEBUG: Ver tipos únicos no DataFrame
-            st.write("🐛 DEBUG - Tipos únicos encontrados:", financeiro['tipo'].unique().tolist())
-            st.write("🐛 DEBUG - Status únicos encontrados:", financeiro['status'].unique().tolist())
-            
             # Valores a Receber - usar tipos exatos do banco
             receitas = financeiro[
                 (((financeiro['tipo'] == 'Receita') | (financeiro['tipo'] == 'receita_a_receber') | 
@@ -344,9 +340,6 @@ def show():
                  (financeiro['classificacao'] == 'contas_a_pagar')) & 
                 (financeiro['status'] == 'Pendente')
             ]['valor'].sum()
-            
-            st.write(f"🐛 DEBUG - Receitas calculadas: R$ {receitas:.2f}")
-            st.write(f"🐛 DEBUG - Despesas calculadas: R$ {despesas:.2f}")
         else:
             receitas = 0
             despesas = 0
@@ -818,35 +811,35 @@ def show():
                 )
                 st.plotly_chart(fig_receber, use_container_width=True)
 
-            # Gráfico de Receitas vs Despesas por Categoria
+            # Gráfico de Receitas vs Despesas por Categoria (usando dados originais)
             fig1 = px.bar(
-                financeiro_analise,
+                financeiro_completo,
                 x='categoria',
                 y='valor',
-                color='tipo_simplificado',
+                color='tipo',
                 title='Transações por Categoria',
-                labels={'valor': 'Valor (R$)', 'categoria': 'Categoria', 'tipo_simplificado': 'Tipo'}
+                labels={'valor': 'Valor (R$)', 'categoria': 'Categoria', 'tipo': 'Tipo'}
             )
             st.plotly_chart(fig1, use_container_width=True)
 
             # Evolução Temporal
-            financeiro_analise['data'] = pd.to_datetime(financeiro_analise['data'])
-            dados_temporais = financeiro_analise.groupby(
-                [pd.Grouper(key='data', freq='ME'), 'tipo_simplificado']
+            financeiro_completo['data'] = pd.to_datetime(financeiro_completo['data'])
+            dados_temporais = financeiro_completo.groupby(
+                [pd.Grouper(key='data', freq='ME'), 'tipo']
             )['valor'].sum().reset_index()
 
             fig2 = px.line(
                 dados_temporais,
                 x='data',
                 y='valor',
-                color='tipo_simplificado',
+                color='tipo',
                 title='Evolução Temporal',
-                labels={'valor': 'Valor (R$)', 'data': 'Data', 'tipo_simplificado': 'Tipo'}
+                labels={'valor': 'Valor (R$)', 'data': 'Data', 'tipo': 'Tipo'}
             )
             st.plotly_chart(fig2, use_container_width=True)
 
             # Distribuição por Tipo de Receita
-            receitas = financeiro_analise[financeiro_analise['tipo_simplificado'] == 'receita']
+            receitas = financeiro_completo[financeiro_completo['tipo'] == 'Receita']
             if not receitas.empty and 'tipo_receita' in receitas.columns:
                 fig3 = px.pie(
                     receitas,
