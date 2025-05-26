@@ -704,7 +704,6 @@ def show():
                         """)
                     
                     # Converter resultado para DataFrame
-                    import pandas as pd
                     columns = [desc[0] for desc in cursor.description]
                     propostas_em_execucao = pd.DataFrame(cursor.fetchall(), columns=columns)
                     
@@ -2316,7 +2315,6 @@ def show():
                             'categoria_status': categoria_status
                         })
                     
-                    import pandas as pd
                     todas_propostas = pd.DataFrame(todas_propostas_list)
                 
                 # Verificar se temos propostas para exibir
