@@ -1591,31 +1591,6 @@ def show():
             st.error(f"❌ Erro ao processar dados: {str(e)}")
             import traceback
             st.code(traceback.format_exc())
-                                
-                                # Obter ID da proposta
-                                proposta_id = proposta_reabrir.iloc[0]['id']
-                                
-                                # Chamar função de reabertura
-                                resultado = reabrir_proposta_finalizada(proposta_id)
-                                
-                                if resultado.get('status') == 'sucesso':
-                                    st.success(resultado.get('mensagem'))
-                                    time.sleep(1)
-                                    st.rerun()
-                                elif resultado.get('status') == 'sucesso_com_alerta':
-                                    st.success(resultado.get('mensagem'))
-                                    st.warning(resultado.get('alerta'))
-                                    st.info(f"Encontrados {resultado.get('lancamentos_encontrados')} lançamentos financeiros.")
-                                    time.sleep(2)
-                                    st.rerun()
-                                else:
-                                    st.error(f"Erro ao reabrir proposta: {resultado.get('mensagem')}")
-                            except Exception as e:
-                                st.error(f"Erro ao reabrir proposta: {str(e)}")
-            else:
-                st.info("Nenhuma proposta encontrada com os filtros selecionados.")
-        else:
-            st.info("Não há propostas cadastradas no sistema.")
 
 # Permitir que este arquivo seja executado diretamente
 if __name__ == "__main__":
