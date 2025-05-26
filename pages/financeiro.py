@@ -323,8 +323,11 @@ def show():
                 del st.session_state.transacao_em_edicao
                 st.rerun()
 
-        # Resumo financeiro - simplificado para usar apenas 'receita' nas opções
-        receitas = financeiro[financeiro['tipo'] == 'receita']['valor'].sum() if not financeiro.empty else 0
+        # Resumo financeiro - incluir todos os tipos de receita
+        receitas = financeiro[
+            (financeiro['tipo'].isin(['receita', 'receita_a_receber', 'Receita'])) |
+            (financeiro['classificacao'] == 'contas_a_receber')
+        ]['valor'].sum() if not financeiro.empty else 0
         despesas = financeiro[
             (financeiro['tipo'].isin(['despesa', 'despesa_a_pagar'])) |
             (financeiro['classificacao'] == 'contas_a_pagar')
@@ -766,34 +769,9 @@ def show():
             # Card com resumo geral (métricas)
             st.subheader("Resumo Geral")
             
-            # DEBUG: Vamos ver quais tipos estão presentes
-            st.write("**DEBUG - Tipos de transação encontrados:**")
-            tipos_unicos = financeiro_analise['tipo'].unique()
-            st.write(f"Tipos originais: {list(tipos_unicos)}")
-            
-            tipos_simplificados = financeiro_analise['tipo_simplificado'].unique()
-            st.write(f"Tipos simplificados: {list(tipos_simplificados)}")
-            
-            # Mostrar contagem por tipo
-            contagem_tipos = financeiro_analise['tipo_simplificado'].value_counts()
-            st.write(f"Contagem por tipo: {contagem_tipos.to_dict()}")
-            
             # Calcular totais considerando todos os tipos de receita e despesa
-            receitas_df = financeiro_analise[financeiro_analise['tipo_simplificado'] == 'receita']
-            despesas_df = financeiro_analise[financeiro_analise['tipo_simplificado'] == 'despesa']
-            
-            st.write(f"**DEBUG - Registros de receita encontrados: {len(receitas_df)}**")
-            if not receitas_df.empty:
-                st.write("Amostras de receitas:")
-                st.write(receitas_df[['tipo', 'descricao', 'valor']].head())
-            
-            st.write(f"**DEBUG - Registros de despesa encontrados: {len(despesas_df)}**")
-            if not despesas_df.empty:
-                st.write("Amostras de despesas:")
-                st.write(despesas_df[['tipo', 'descricao', 'valor']].head())
-            
-            total_receitas = receitas_df['valor'].sum()
-            total_despesas = despesas_df['valor'].sum()
+            total_receitas = financeiro_analise[financeiro_analise['tipo_simplificado'] == 'receita']['valor'].sum()
+            total_despesas = financeiro_analise[financeiro_analise['tipo_simplificado'] == 'despesa']['valor'].sum()
             saldo = total_receitas - total_despesas
             
             # Exibir as métricas
