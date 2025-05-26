@@ -696,36 +696,16 @@ def show():
                             # Buscar andamentos desta proposta usando o novo método
                             andamentos_df_raw = st.session_state.db.get_andamentos(proposta_id=proposta_selecionada_id)
                             
-                            # Criar DataFrame compatível garantindo que tenha as colunas necessárias
-                            if andamentos_df_raw.empty:
-                                andamentos_df = pd.DataFrame(columns=['id', 'proposta_id', 'data', 'status', 'observacao', 'descricao', 'comodo', 'usuario_id'])
-                            else:
-                                # Converter para dict e recriar DataFrame com todas as colunas necessárias
-                                data_list = []
-                                for _, row in andamentos_df_raw.iterrows():
-                                    row_dict = {
-                                        'id': row.get('id', None),
-                                        'proposta_id': row.get('proposta_id', None),
-                                        'data': row.get('data', None),
-                                        'status': row.get('status', ''),
-                                        'observacao': row.get('observacao', row.get('descricao', '')),
-                                        'descricao': row.get('descricao', row.get('observacao', '')),
-                                        'comodo': row.get('comodo', ''),
-                                        'usuario_id': row.get('usuario_id', None)
-                                    }
-                                    data_list.append(row_dict)
-                                andamentos_df = pd.DataFrame(data_list)
-                            
-                            # Exibir tabela resumida dos andamentos (apenas colunas relevantes)
-                            if not andamentos_df.empty:
+                            # Exibir apenas tabela resumida dos andamentos (apenas colunas relevantes)
+                            if not andamentos_df_raw.empty:
                                 # Criar tabela resumida com apenas as colunas importantes
-                                andamentos_resumo = andamentos_df[['data', 'status', 'observacao']].copy()
+                                andamentos_resumo = andamentos_df_raw[['data', 'status', 'observacao']].copy()
                                 andamentos_resumo.columns = ['Data', 'Status', 'Observação']
                                 st.dataframe(andamentos_resumo, hide_index=True, use_container_width=True)
                             else:
                                 st.info("Nenhum andamento registrado para esta proposta.")
                             
-                            if not andamentos_df.empty:
+                            if False:  # Desabilitando a seção duplicada
                                 # Ordenar por data (mais recente primeiro)
                                 andamentos_df = andamentos_df.sort_values('data', ascending=False)
                                 
