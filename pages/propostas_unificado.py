@@ -642,16 +642,16 @@ def show():
                 }
                 </style>
                 """, unsafe_allow_html=True)
-                    
-                    # Criar abas para gerenciar diferentes aspectos da execução com ícones e cores
-                    st.markdown('<div class="execution-tabs">', unsafe_allow_html=True)
-                    exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5, exec_tab6 = st.tabs([
-                        "📊 Detalhes", "📦 Produtos", "➕ Outros", "🏭 Fornecedores", "👥 Assistentes", "🏁 Finalizar"
-                    ])
-                    st.markdown('</div>', unsafe_allow_html=True)
-                    
-                    with exec_tab1:
-                        st.subheader("Detalhes")
+                
+                # Criar abas para gerenciar diferentes aspectos da execução com ícones e cores
+                st.markdown('<div class="execution-tabs">', unsafe_allow_html=True)
+                exec_tab1, exec_tab2, exec_tab3, exec_tab4, exec_tab5, exec_tab6 = st.tabs([
+                    "📊 Detalhes", "📦 Produtos", "➕ Outros", "🏭 Fornecedores", "👥 Assistentes", "🏁 Finalizar"
+                ])
+                st.markdown('</div>', unsafe_allow_html=True)
+                
+                with exec_tab1:
+                    st.subheader("Detalhes")
                         
                         # Formulário para registrar detalhes
                         with st.form(key=f"form_andamento_{proposta_selecionada_id}"):
