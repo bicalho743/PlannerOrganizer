@@ -652,12 +652,12 @@ def show():
                 
                 with exec_tab1:
                     st.subheader("Detalhes")
-                        
-                        # Formulário para registrar detalhes
-                        with st.form(key=f"form_andamento_{proposta_selecionada_id}"):
-                            st.write("Registre uma nova atualização de detalhes:")
-                            descricao_andamento = st.text_area("Descrição:", height=100)
-                            data_andamento = st.date_input("Data:", datetime.now())
+                    
+                    # Formulário para registrar detalhes
+                    with st.form(key=f"form_andamento_{proposta_selecionada_id}"):
+                        st.write("Registre uma nova atualização de detalhes:")
+                        descricao_andamento = st.text_area("Descrição:", height=100)
+                        data_andamento = st.date_input("Data:", datetime.now())
                             # Usar o mesmo valor da barra superior como padrão para manter consistência
                             try:
                                 slider_value = st.session_state[f"slider_progresso_topo_{proposta_selecionada_id}"]
