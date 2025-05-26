@@ -704,8 +704,16 @@ def show():
                                         col1, col2, col3 = st.columns([2, 1, 1])
                                         
                                         with col1:
-                                            # Usar 'observacao' que é o campo correto no banco
-                                            st.markdown(f"**{andamento['observacao']}**")
+                                            # Tratar tanto 'observacao' quanto 'descricao' para compatibilidade
+                                            texto = ""
+                                            if 'observacao' in andamento and pd.notna(andamento['observacao']):
+                                                texto = andamento['observacao']
+                                            elif 'descricao' in andamento and pd.notna(andamento['descricao']):
+                                                texto = andamento['descricao']
+                                            else:
+                                                texto = "Andamento sem descrição"
+                                            
+                                            st.markdown(f"**{texto}**")
                                             # Se houver status, mostrar também
                                             if pd.notna(andamento.get('status')):
                                                 st.caption(f"📊 Status: {andamento['status']}")
