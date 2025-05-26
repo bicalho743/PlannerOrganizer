@@ -325,6 +325,10 @@ def show():
 
         # Resumo financeiro - corrigir para usar os tipos reais do banco (com maiúscula)
         if not financeiro.empty:
+            # DEBUG: Ver tipos únicos no DataFrame
+            st.write("🐛 DEBUG - Tipos únicos encontrados:", financeiro['tipo'].unique().tolist())
+            st.write("🐛 DEBUG - Status únicos encontrados:", financeiro['status'].unique().tolist())
+            
             # Valores a Receber - usar tipos exatos do banco
             receitas = financeiro[
                 (((financeiro['tipo'] == 'Receita') | (financeiro['tipo'] == 'receita_a_receber') | 
@@ -340,6 +344,9 @@ def show():
                  (financeiro['classificacao'] == 'contas_a_pagar')) & 
                 (financeiro['status'] == 'Pendente')
             ]['valor'].sum()
+            
+            st.write(f"🐛 DEBUG - Receitas calculadas: R$ {receitas:.2f}")
+            st.write(f"🐛 DEBUG - Despesas calculadas: R$ {despesas:.2f}")
         else:
             receitas = 0
             despesas = 0
