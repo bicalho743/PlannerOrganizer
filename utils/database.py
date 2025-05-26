@@ -309,6 +309,7 @@ class ProdutoOrganizador(Base):
     quantidade = Column(Integer)
     comodo = Column(String, nullable=False)
     data_cadastro = Column(Date, default=datetime.now().date())
+    usuario_id = Column(String, nullable=True)  # Campo para isolamento multi-tenant
 
     proposta = relationship("Proposta", back_populates="produtos")
     fornecedores = relationship("ProdutoFornecedor", back_populates="produto", cascade="all, delete-orphan")
