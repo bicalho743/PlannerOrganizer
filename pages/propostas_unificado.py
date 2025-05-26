@@ -1531,16 +1531,33 @@ def show():
     with tab3:
         st.header("Propostas Finalizadas")
         
-        if 'propostas_com_clientes' in locals() and not propostas.empty:
-            # Mostrar TODAS as propostas independente do status
-            propostas_finalizadas = propostas_com_clientes.copy()
+        # Carregar TODAS as propostas diretamente do banco
+        try:
+            import pandas as pd
+            todas_propostas = st.session_state.db.get_propostas()
+            clientes = st.session_state.db.get_clientes()
             
-            # Mostrar contagem de propostas finalizadas
-            st.write(f"Total de propostas finalizadas encontradas: {len(propostas_finalizadas)}")
-            
-            if propostas_finalizadas.empty:
-                st.info("Não há propostas finalizadas no momento.")
-                return
+            if not todas_propostas.empty and not clientes.empty:
+                # Fazer merge com clientes para ter os nomes
+                propostas_finalizadas = todas_propostas.merge(
+                    clientes[['id', 'nome']], 
+                    left_on='cliente_id', 
+                    right_on='id', 
+                    suffixes=('', '_cliente')
+                )
+                
+                # Mostrar contagem de propostas finalizadas
+                st.write(f"Total de propostas finalizadas encontradas: {len(propostas_finalizadas)}")
+            else:
+                propostas_finalizadas = pd.DataFrame()
+                st.write("Total de propostas finalizadas encontradas: 0")
+        except Exception as e:
+            st.error(f"Erro ao carregar propostas: {str(e)}")
+            propostas_finalizadas = pd.DataFrame()
+        
+        if propostas_finalizadas.empty:
+            st.info("Não há propostas finalizadas no momento.")
+        else:
             
             # Interface para filtrar propostas
             col1, col2 = st.columns(2)
