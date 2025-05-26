@@ -10,9 +10,11 @@ import plotly.graph_objects as go
 from utils.database import Fornecedor
 
 def show():
+    # Importar pandas no início da função para garantir disponibilidade
+    import pandas as pd
+    
     # Título com estilo personalizado para ficar mais próximo do topo
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">📝 Propostas [TESTE DEBUG]</h1>', unsafe_allow_html=True)
-    st.info("Arquivo em uso: pages/propostas.py - Versão de teste")
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">📝 Propostas</h1>', unsafe_allow_html=True)
     
     # Verificar se temos uma conexão com o banco de dados
     if not hasattr(st.session_state, 'db'):
