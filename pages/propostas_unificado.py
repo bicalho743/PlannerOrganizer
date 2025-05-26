@@ -694,10 +694,30 @@ def show():
                         
                         try:
                             # Buscar andamentos desta proposta usando o novo método
-                            andamentos_df = st.session_state.db.get_andamentos(proposta_id=proposta_selecionada_id)
+                            andamentos_df_raw = st.session_state.db.get_andamentos(proposta_id=proposta_selecionada_id)
+                            
+                            # Criar DataFrame compatível garantindo que tenha as colunas necessárias
+                            if andamentos_df_raw.empty:
+                                andamentos_df = pd.DataFrame(columns=['id', 'proposta_id', 'data', 'status', 'observacao', 'descricao', 'comodo', 'usuario_id'])
+                            else:
+                                # Converter para dict e recriar DataFrame com todas as colunas necessárias
+                                data_list = []
+                                for _, row in andamentos_df_raw.iterrows():
+                                    row_dict = {
+                                        'id': row.get('id', None),
+                                        'proposta_id': row.get('proposta_id', None),
+                                        'data': row.get('data', None),
+                                        'status': row.get('status', ''),
+                                        'observacao': row.get('observacao', row.get('descricao', '')),
+                                        'descricao': row.get('descricao', row.get('observacao', '')),
+                                        'comodo': row.get('comodo', ''),
+                                        'usuario_id': row.get('usuario_id', None)
+                                    }
+                                    data_list.append(row_dict)
+                                andamentos_df = pd.DataFrame(data_list)
                             
                             # Debug: verificar colunas disponíveis
-                            st.write(f"Debug - Colunas disponíveis: {list(andamentos_df.columns) if not andamentos_df.empty else 'DataFrame vazio'}")
+                            st.write(f"Debug - Colunas disponíveis: {list(andamentos_df.columns)}")
                             if not andamentos_df.empty:
                                 st.write(f"Debug - Primeiras linhas:")
                                 st.dataframe(andamentos_df.head())
