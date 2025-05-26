@@ -1532,11 +1532,8 @@ def show():
         st.header("Propostas Finalizadas")
         
         if 'propostas_com_clientes' in locals() and not propostas.empty:
-            # Filtro específico para mostrar TODAS as propostas finalizadas
-            propostas_finalizadas = propostas_com_clientes[
-                (propostas_com_clientes['status'] == 'Finalizada') |
-                (propostas_com_clientes['status'] == 'Recusada')
-            ]
+            # Mostrar TODAS as propostas independente do status
+            propostas_finalizadas = propostas_com_clientes.copy()
             
             # Mostrar contagem de propostas finalizadas
             st.write(f"Total de propostas finalizadas encontradas: {len(propostas_finalizadas)}")
