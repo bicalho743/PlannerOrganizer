@@ -945,12 +945,12 @@ class Database:
             query = self.session.query(Cliente)
             
             if self.usuario_id:
-                print(f"DEBUG GET_CLIENTES: Filtrando clientes por usuario_id={self.usuario_id}")
+        
                 # Filtro ESTRITO: apenas clientes explicitamente associados ao usuário atual
                 query = query.filter(Cliente.usuario_id == self.usuario_id)
             else:
                 # Comportamento de segurança: se não há ID de usuário, não retornar nenhum cliente
-                print("DEBUG GET_CLIENTES: SEGURANÇA - Sem ID de usuário, retornando lista vazia!")
+
                 return pd.DataFrame(columns=['id', 'nome', 'telefone', 'email', 'estado', 'cidade', 
                                             'bairro', 'endereco', 'data_aniversario', 
                                             'origem_cliente', 'data_cadastro', 'observacoes', 'usuario_id'])
@@ -1418,7 +1418,7 @@ class Database:
                     # SEMPRE aplicar filtro por usuário para garantir isolamento de dados
                     params = {}
                     if self.usuario_id:
-                        print(f"DEBUG GET_FINANCEIRO: Filtrando transações por usuario_id={self.usuario_id}")
+        
                         sql += " AND usuario_id = :usuario_id"
                         params['usuario_id'] = self.usuario_id
                     else:
