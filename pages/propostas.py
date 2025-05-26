@@ -10,11 +10,9 @@ import plotly.graph_objects as go
 from utils.database import Fornecedor
 
 def show():
-    # Importar pandas no início da função para garantir disponibilidade
-    import pandas as pd
-    
     # Título com estilo personalizado para ficar mais próximo do topo
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">📝 Propostas</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">📝 Propostas [TESTE DEBUG]</h1>', unsafe_allow_html=True)
+    st.info("Arquivo em uso: pages/propostas.py - Versão de teste")
     
     # Verificar se temos uma conexão com o banco de dados
     if not hasattr(st.session_state, 'db'):
@@ -706,6 +704,7 @@ def show():
                         """)
                     
                     # Converter resultado para DataFrame
+                    import pandas as pd
                     columns = [desc[0] for desc in cursor.description]
                     propostas_em_execucao = pd.DataFrame(cursor.fetchall(), columns=columns)
                     
@@ -1875,23 +1874,40 @@ def show():
         
         # ABA 3: FINALIZADAS
         with tab3:
-            st.header("Propostas Finalizadas")
+            st.header("Propostas Finalizadas - VERSÃO ATUALIZADA")
             
-            # Obter todas as propostas
+            # AVISO DE DEBUG
+            st.warning("🔍 DEBUG: Usando código atualizado para filtrar propostas na aba 'Finalizadas'")
+            
+            # Obter todas as propostas diretamente
             todas_propostas = st.session_state.db.get_propostas()
             
-            # Aplicar filtro mais amplo para capturar propostas finalizadas
+            # Mostrar contagem total para debug
+            st.info(f"Total de propostas no banco: {len(todas_propostas) if not todas_propostas.empty else 0}")
+            
+            # Filtro direto para debug
+            propostas_finalizadas = pd.DataFrame()
             if not todas_propostas.empty:
-                # Filtro expandido para incluir mais casos de propostas finalizadas
+                # Filtrar visualmente cada registro para debug
+                st.subheader("Análise de Registros:")
+                for idx, p in todas_propostas.iterrows():
+                    status_match = p['status'] == 'Finalizada'
+                    exec_match = p['status_execucao'] == 'Finalizada'
+                    recusada_match = p['status'] == 'Recusada'
+                    
+                    if (status_match and exec_match) or recusada_match:
+                        st.success(f"✅ MATCH: Proposta #{p['numero']} - {p['cliente_nome']} - Status: {p['status']} - Exec: {p['status_execucao']}")
+                    else:
+                        st.error(f"❌ NO MATCH: Proposta #{p['numero']} - {p['cliente_nome']} - Status: {p['status']} - Exec: {p['status_execucao']}")
+                
+                # Aplicar filtro atualizado para capturar também propostas com status 'Cancelada'
                 propostas_finalizadas = todas_propostas[
-                    (todas_propostas['status'] == 'Finalizada') |
+                    ((todas_propostas['status'] == 'Finalizada') & (todas_propostas['status_execucao'] == 'Finalizada')) |
+                    ((todas_propostas['status'] == 'Finalizada') & (todas_propostas['status_execucao'] == 'Cancelada')) |
                     (todas_propostas['status'] == 'Concluída') |
-                    (todas_propostas['status'] == 'Recusada') |
-                    (todas_propostas['status_execucao'] == 'Finalizada') |
-                    (todas_propostas['status_execucao'] == 'Concluída')
+                    ((todas_propostas['status'] == 'Finalizada') & (todas_propostas['status_execucao'] == 'Não iniciada')) |
+                    (todas_propostas['status'] == 'Recusada')
                 ]
-            else:
-                propostas_finalizadas = todas_propostas
             
             try:
                 # Mostrar contagem para debug
@@ -2317,6 +2333,7 @@ def show():
                             'categoria_status': categoria_status
                         })
                     
+                    import pandas as pd
                     todas_propostas = pd.DataFrame(todas_propostas_list)
                 
                 # Verificar se temos propostas para exibir

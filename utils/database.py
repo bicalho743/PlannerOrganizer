@@ -1937,9 +1937,7 @@ class Database:
             )
             
             self.session.add(fornecedor)
-            self.session.flush()  # Força o banco a gerar o ID
-            fornecedor_id = fornecedor.id  # Captura o ID gerado
-            return fornecedor_id
+            return fornecedor.id
         return self._safe_query(query)
 
     def update_fornecedor(self, fornecedor_id, descricao=None, contato=None, categoria=None, 
@@ -3582,8 +3580,7 @@ class Database:
                         descricao=descricao_texto,
                         valor=valor_float,
                         status_pagamento=status_pagamento,
-                        data_cadastro=datetime.now().date(),
-                        usuario_id=self.usuario_id  # Adicionar ID do usuário atual
+                        data_cadastro=datetime.now().date()
                     )
                     
                     # Adicionar à sessão

@@ -1527,62 +1527,175 @@ def show():
             else:
                 st.info("Não há propostas em execução no momento.")
     
-    # ABA 3: PROPOSTAS FINALIZADAS  
+    # ABA 3: PROPOSTAS FINALIZADAS
     with tab3:
-        st.header("🔥 TESTE FINAL - TODAS AS PROPOSTAS")
-        st.warning("🚨 SE VOCÊ ESTÁ VENDO ESTA MENSAGEM, O ARQUIVO CORRETO ESTÁ SENDO USADO!")
+        st.header("Propostas Finalizadas")
         
-        try:
-            # Buscar TODAS as propostas do banco sem filtro
-            propostas_df = st.session_state.db.get_propostas()
-            clientes_df = st.session_state.db.get_clientes()
+        if 'propostas_com_clientes' in locals() and not propostas.empty:
+            # Filtro específico para mostrar apenas propostas finalizadas
+            propostas_finalizadas = propostas_com_clientes[
+                ((propostas_com_clientes['status'] == 'Finalizada') & 
+                 (propostas_com_clientes['status_execucao'] == 'Finalizada')) |
+                (propostas_com_clientes['status'] == 'Recusada')
+            ]
             
-            st.success(f"🎯 **{len(propostas_df)} propostas** carregadas do banco de dados")
-            st.info(f"👥 **{len(clientes_df)} clientes** encontrados")
+            # Mostrar contagem de propostas finalizadas
+            st.write(f"Total de propostas finalizadas encontradas: {len(propostas_finalizadas)}")
             
-            if len(propostas_df) > 0:
-                st.write("### 🔍 LISTA COMPLETA DE PROPOSTAS:")
+            if propostas_finalizadas.empty:
+                st.info("Não há propostas finalizadas no momento.")
+                return
+            
+            # Interface para filtrar propostas
+            col1, col2 = st.columns(2)
+            with col1:
+                filtro_status = st.multiselect(
+                    "Filtrar por status:",
+                    propostas_finalizadas['status'].unique().tolist(),
+                    default=[]
+                )
+            with col2:
+                filtro_cliente = st.multiselect(
+                    "Filtrar por cliente:",
+                    propostas_finalizadas['nome'].unique().tolist() if not propostas_finalizadas.empty else [],
+                    default=[]
+                )
+            
+            # Aplicar filtros adicionais
+            propostas_filtradas = propostas_finalizadas.copy()
+            
+            if filtro_status:
+                propostas_filtradas = propostas_filtradas[propostas_filtradas['status'].isin(filtro_status)]
+            
+            if filtro_cliente:
+                propostas_filtradas = propostas_filtradas[propostas_filtradas['nome'].isin(filtro_cliente)]
+            
+            # Mostrar resultados
+            if not propostas_filtradas.empty:
+                st.write(f"Total: {len(propostas_filtradas)} propostas encontradas")
                 
-                # Mostrar cada proposta individualmente para debug
-                for i, (idx, row) in enumerate(propostas_df.iterrows()):
-                    status = row.get('status', 'N/A')
-                    proposta_id = row.get('id', 'N/A')
-                    valor = row.get('valor', 0)
+                # Preparar colunas para exibição mais limpa
+                propostas_filtradas['data_formatada'] = propostas_filtradas['data_inicio'].apply(
+                    lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
+                )
+                propostas_filtradas['valor_formatado'] = propostas_filtradas['valor'].apply(
+                    lambda x: f"R$ {float(x):,.2f}" if pd.notna(x) else ''
+                )
+                
+                # Mostrar em DataEditor para facilitar a visualização
+                st.dataframe(
+                    propostas_filtradas[['numero', 'nome', 'descricao', 'valor_formatado', 'status', 'data_formatada', 'tipo_proposta']],
+                    column_config={
+                        'numero': 'Proposta #',
+                        'nome': 'Cliente',
+                        'descricao': 'Descrição',
+                        'valor_formatado': 'Valor',
+                        'status': 'Status',
+                        'data_formatada': 'Data Início',
+                        'tipo_proposta': 'Tipo'
+                    },
+                    use_container_width=True,
+                    hide_index=True
+                )
+                
+                # Adicionar opção para exportar
+                with st.form(key="exportar_csv_form"):
+                    exportar_csv = st.form_submit_button("Exportar para CSV")
                     
-                    st.write(f"**Proposta {i+1}:** ID={proposta_id}, Status='{status}', Valor=R${valor}")
+                    if exportar_csv:
+                        csv = propostas_filtradas[['numero', 'nome', 'descricao', 'valor_formatado', 'status', 'data_formatada', 'tipo_proposta']].to_csv(index=False)
+                        st.download_button(
+                            label="Download CSV",
+                            data=csv,
+                            file_name="propostas_exportadas.csv",
+                            mime="text/csv"
+                        )
                 
-                st.write("---")
+                # Adicionar funcionalidade para gerar relatórios de propostas finalizadas
                 
-                # Criar tabela simples
-                dados_simples = []
-                for idx, row in propostas_df.iterrows():
-                    dados_simples.append({
-                        'ID': row.get('id'),
-                        'Status': row.get('status'),
-                        'Valor': f"R$ {float(row.get('valor', 0)):,.2f}",
-                        'Descrição': str(row.get('descricao', ''))[:40]
-                    })
+                with st.expander("Gerar Relatórios"):
+                    # Obter lista de números de propostas finalizadas para o select box
+                    numeros_propostas = propostas_filtradas['numero'].tolist()
+                    numeros_propostas.sort()  # Ordenar para facilitar a seleção
+                    
+                    proposta_numero = st.selectbox(
+                        "Selecione o número da proposta para gerar relatório:",
+                        numeros_propostas,
+                        key="numero_proposta_relatorio"
+                    )
+                    
+                    proposta_relatorio = propostas_filtradas[propostas_filtradas['numero'] == proposta_numero]
+                    
+                    if not proposta_relatorio.empty:
+                        st.info(f"Proposta selecionada: #{proposta_numero} - {proposta_relatorio.iloc[0]['descricao']}")
+                        
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.button("Relatório Cliente", key="gerar_relatorio_cliente"):
+                                try:
+                                    proposta_id = propostas_filtradas[propostas_filtradas['numero'] == proposta_numero].iloc[0]['id']
+                                    st_gerar_pdf_cliente(proposta_id)
+                                except Exception as e:
+                                    st.error(f"Erro ao gerar relatório para cliente: {str(e)}")
+                        
+                        with col2:
+                            if st.button("Relatório Interno", key="gerar_relatorio_interno"):
+                                try:
+                                    proposta_id = propostas_filtradas[propostas_filtradas['numero'] == proposta_numero].iloc[0]['id']
+                                    st_gerar_pdf_interno(proposta_id)
+                                except Exception as e:
+                                    st.error(f"Erro ao gerar relatório interno: {str(e)}")
                 
-                # Exibir tabela
-                st.write("### 📊 TABELA CONSOLIDADA:")
-                import pandas as pd
-                df_final = pd.DataFrame(dados_simples)
-                st.dataframe(df_final, use_container_width=True)
-                
-                # Contar por status
-                st.write("### 📈 CONTAGEM POR STATUS:")
-                status_counts = propostas_df['status'].value_counts()
-                st.write(status_counts)
-                
-                st.success(f"✅ SUCESSO: {len(df_final)} propostas processadas!")
-                
+                # Adicionar funcionalidade para reabrir propostas
+                with st.expander("Reabrir Proposta Finalizada"):
+                    # Obter lista de números de propostas finalizadas para o select box
+                    numeros_propostas = propostas_finalizadas['numero'].tolist()
+                    numeros_propostas.sort()  # Ordenar para facilitar a seleção
+                    
+                    with st.form(key="reabrir_proposta_form"):
+                        proposta_numero = st.selectbox(
+                            "Selecione o número da proposta a reabrir:",
+                            numeros_propostas,
+                            key="numero_proposta_finalizada_reabrir"
+                        )
+                        
+                        proposta_reabrir = propostas_finalizadas[propostas_finalizadas['numero'] == proposta_numero]
+                        
+                        if not proposta_reabrir.empty:
+                            st.info(f"Você está prestes a reabrir a proposta #{proposta_numero} - {proposta_reabrir.iloc[0]['descricao']}")
+                            st.warning("Esta ação mudará o status da proposta para 'Em execução'.")
+                        
+                        reabrir_proposta = st.form_submit_button("REABRIR PROPOSTA")
+                        
+                        if reabrir_proposta and not proposta_reabrir.empty:
+                            try:
+                                # Importar função de reabrir proposta
+                                from reabrir_proposta import reabrir_proposta_finalizada
+                                
+                                # Obter ID da proposta
+                                proposta_id = proposta_reabrir.iloc[0]['id']
+                                
+                                # Chamar função de reabertura
+                                resultado = reabrir_proposta_finalizada(proposta_id)
+                                
+                                if resultado.get('status') == 'sucesso':
+                                    st.success(resultado.get('mensagem'))
+                                    time.sleep(1)
+                                    st.rerun()
+                                elif resultado.get('status') == 'sucesso_com_alerta':
+                                    st.success(resultado.get('mensagem'))
+                                    st.warning(resultado.get('alerta'))
+                                    st.info(f"Encontrados {resultado.get('lancamentos_encontrados')} lançamentos financeiros.")
+                                    time.sleep(2)
+                                    st.rerun()
+                                else:
+                                    st.error(f"Erro ao reabrir proposta: {resultado.get('mensagem')}")
+                            except Exception as e:
+                                st.error(f"Erro ao reabrir proposta: {str(e)}")
             else:
-                st.error("❌ Nenhuma proposta encontrada no banco")
-                
-        except Exception as e:
-            st.error(f"❌ ERRO: {str(e)}")
-            import traceback
-            st.code(traceback.format_exc())
+                st.info("Nenhuma proposta encontrada com os filtros selecionados.")
+        else:
+            st.info("Não há propostas cadastradas no sistema.")
 
 # Permitir que este arquivo seja executado diretamente
 if __name__ == "__main__":
