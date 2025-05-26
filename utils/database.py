@@ -3582,7 +3582,8 @@ class Database:
                         descricao=descricao_texto,
                         valor=valor_float,
                         status_pagamento=status_pagamento,
-                        data_cadastro=datetime.now().date()
+                        data_cadastro=datetime.now().date(),
+                        usuario_id=self.usuario_id  # Adicionar ID do usuário atual
                     )
                     
                     # Adicionar à sessão
