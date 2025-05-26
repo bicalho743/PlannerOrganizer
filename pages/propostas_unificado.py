@@ -630,20 +630,18 @@ def show():
                 
                 # Adicionar título da proposta
                 st.subheader(f"Gerenciando: Proposta #{proposta['numero']} - {proposta['nome']}")
-                    
-
-                    
-                    # Adicionar CSS personalizado para as abas
-                    st.markdown("""
-                    <style>
-                    div[data-testid="stTabs"] > div:nth-child(2) > div:nth-child(1) {
-                        background-color: #f1f3f9;
-                        padding: 15px;
-                        border-radius: 5px;
-                        box-shadow: 0px 1px 3px rgba(0,0,0,0.1);
-                    }
-                    </style>
-                    """, unsafe_allow_html=True)
+                
+                # Adicionar CSS personalizado para as abas
+                st.markdown("""
+                <style>
+                div[data-testid="stTabs"] > div:nth-child(2) > div:nth-child(1) {
+                    background-color: #f1f3f9;
+                    padding: 15px;
+                    border-radius: 5px;
+                    box-shadow: 0px 1px 3px rgba(0,0,0,0.1);
+                }
+                </style>
+                """, unsafe_allow_html=True)
                     
                     # Criar abas para gerenciar diferentes aspectos da execução com ícones e cores
                     st.markdown('<div class="execution-tabs">', unsafe_allow_html=True)
