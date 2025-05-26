@@ -1550,19 +1550,28 @@ def show():
             st.write(f"**✅ Propostas carregadas:** {len(propostas_raw)}")
             st.write(f"**✅ Clientes carregados:** {len(clientes_raw)}")
             
-            if not propostas_raw.empty and not clientes_raw.empty:
-                # Fazer merge
-                propostas_finalizadas = propostas_raw.merge(
-                    clientes_raw[['id', 'nome']], 
-                    left_on='cliente_id', 
-                    right_on='id', 
-                    suffixes=('', '_cliente')
-                )
+            if not propostas_raw.empty:
+                if not clientes_raw.empty:
+                    # Fazer LEFT JOIN para manter TODAS as propostas
+                    propostas_finalizadas = propostas_raw.merge(
+                        clientes_raw[['id', 'nome']], 
+                        left_on='cliente_id', 
+                        right_on='id', 
+                        how='left',  # LEFT JOIN - mantém todas as propostas
+                        suffixes=('', '_cliente')
+                    )
+                    
+                    # Preencher nomes vazios com "Cliente não encontrado"
+                    propostas_finalizadas['nome'] = propostas_finalizadas['nome'].fillna('Cliente não encontrado')
+                else:
+                    # Se não há clientes, usar propostas mesmo assim
+                    propostas_finalizadas = propostas_raw.copy()
+                    propostas_finalizadas['nome'] = 'Cliente não encontrado'
                 
-                st.write(f"**✅ Após merge:** {len(propostas_finalizadas)} propostas")
+                st.write(f"**✅ TODAS as propostas carregadas:** {len(propostas_finalizadas)}")
             else:
                 propostas_finalizadas = pd.DataFrame()
-                st.error("❌ Erro: Propostas ou clientes estão vazios!")
+                st.error("❌ Erro: Nenhuma proposta encontrada!")
                 
         except Exception as e:
             st.error(f"❌ Erro ao carregar dados: {str(e)}")
