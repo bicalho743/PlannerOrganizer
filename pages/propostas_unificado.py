@@ -1527,61 +1527,60 @@ def show():
             else:
                 st.info("Não há propostas em execução no momento.")
     
-    # ABA 3: PROPOSTAS FINALIZADAS
+    # ABA 3: PROPOSTAS FINALIZADAS  
     with tab3:
-        st.header("Todas as Propostas - DEBUG")
+        st.header("🔥 TESTE FINAL - TODAS AS PROPOSTAS")
+        st.warning("🚨 SE VOCÊ ESTÁ VENDO ESTA MENSAGEM, O ARQUIVO CORRETO ESTÁ SENDO USADO!")
         
         try:
-            # Buscar propostas diretamente do banco
+            # Buscar TODAS as propostas do banco sem filtro
             propostas_df = st.session_state.db.get_propostas()
             clientes_df = st.session_state.db.get_clientes()
             
-            st.success(f"🔢 **{len(propostas_df)} propostas** encontradas no banco")
-            st.info(f"👥 **{len(clientes_df)} clientes** encontrados no banco")
+            st.success(f"🎯 **{len(propostas_df)} propostas** carregadas do banco de dados")
+            st.info(f"👥 **{len(clientes_df)} clientes** encontrados")
             
             if len(propostas_df) > 0:
-                st.write("### 📋 Exibição Simples e Direta:")
+                st.write("### 🔍 LISTA COMPLETA DE PROPOSTAS:")
                 
-                # Preparar dados básicos - VERSÃO EXTREMAMENTE SIMPLES
-                dados_exibicao = []
-                
-                # Debug: mostrar cada proposta encontrada
-                st.write("**🔍 Debug - Propostas no DataFrame:**")
+                # Mostrar cada proposta individualmente para debug
                 for i, (idx, row) in enumerate(propostas_df.iterrows()):
-                    st.write(f"- Linha {i+1}: ID={row.get('id')}, Número={row.get('numero')}, Status='{row.get('status')}'")
+                    status = row.get('status', 'N/A')
+                    proposta_id = row.get('id', 'N/A')
+                    valor = row.get('valor', 0)
                     
-                    # Buscar nome do cliente
-                    cliente_nome = "N/A"
-                    if len(clientes_df) > 0:
-                        cliente_match = clientes_df[clientes_df['id'] == row.get('cliente_id')]
-                        if len(cliente_match) > 0:
-                            cliente_nome = cliente_match.iloc[0]['nome']
-                    
-                    # Preparar linha para tabela
-                    dados_exibicao.append({
-                        'ID': row.get('id', 'N/A'),
-                        'Número': row.get('numero', 'N/A'),
-                        'Cliente': cliente_nome,
-                        'Status': row.get('status', 'N/A'),
+                    st.write(f"**Proposta {i+1}:** ID={proposta_id}, Status='{status}', Valor=R${valor}")
+                
+                st.write("---")
+                
+                # Criar tabela simples
+                dados_simples = []
+                for idx, row in propostas_df.iterrows():
+                    dados_simples.append({
+                        'ID': row.get('id'),
+                        'Status': row.get('status'),
                         'Valor': f"R$ {float(row.get('valor', 0)):,.2f}",
-                        'Descrição': str(row.get('descricao', 'N/A'))[:50]
+                        'Descrição': str(row.get('descricao', ''))[:40]
                     })
                 
-                # Exibir tabela final
-                st.write("### 📊 Tabela Final:")
-                if dados_exibicao:
-                    import pandas as pd
-                    df_tabela = pd.DataFrame(dados_exibicao)
-                    st.dataframe(df_tabela, use_container_width=True)
-                    st.success(f"✅ **{len(df_tabela)} propostas** exibidas com sucesso!")
-                else:
-                    st.error("❌ Nenhum dado foi processado para exibição")
-                    
+                # Exibir tabela
+                st.write("### 📊 TABELA CONSOLIDADA:")
+                import pandas as pd
+                df_final = pd.DataFrame(dados_simples)
+                st.dataframe(df_final, use_container_width=True)
+                
+                # Contar por status
+                st.write("### 📈 CONTAGEM POR STATUS:")
+                status_counts = propostas_df['status'].value_counts()
+                st.write(status_counts)
+                
+                st.success(f"✅ SUCESSO: {len(df_final)} propostas processadas!")
+                
             else:
-                st.warning("⚠️ Nenhuma proposta encontrada no banco de dados")
+                st.error("❌ Nenhuma proposta encontrada no banco")
                 
         except Exception as e:
-            st.error(f"❌ Erro: {str(e)}")
+            st.error(f"❌ ERRO: {str(e)}")
             import traceback
             st.code(traceback.format_exc())
 
