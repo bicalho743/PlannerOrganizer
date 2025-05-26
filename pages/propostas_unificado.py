@@ -597,7 +597,7 @@ def show():
     with tab2:
         st.header("Propostas em Execução")
         
-        if 'propostas_com_clientes' in locals() and not propostas.empty:
+        if not propostas.empty:
             # Debug: Verificar os dados carregados
             st.write("DEBUG: Colunas disponíveis:", list(propostas_com_clientes.columns))
             if 'status_execucao' in propostas_com_clientes.columns:
