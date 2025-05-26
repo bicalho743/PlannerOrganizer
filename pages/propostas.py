@@ -1874,24 +1874,23 @@ def show():
         
         # ABA 3: FINALIZADAS
         with tab3:
-            st.title("🚨 TESTE FINAL - ARQUIVO CORRETO ENCONTRADO!")
-            st.error("SE VOCÊ ESTÁ VENDO ESTA MENSAGEM, ESTE É O ARQUIVO CERTO!")
+            st.header("Propostas Finalizadas")
             
-            # Obter todas as propostas diretamente
+            # Obter todas as propostas
             todas_propostas = st.session_state.db.get_propostas()
             
-            st.success(f"🎯 MOSTRANDO TODAS AS {len(todas_propostas) if not todas_propostas.empty else 0} PROPOSTAS SEM FILTRO!")
-            
-            # PARA TESTE: verificar se temos dados
+            # Aplicar filtro mais amplo para capturar propostas finalizadas
             if not todas_propostas.empty:
-                st.subheader("📋 Todas as Propostas no Banco:")
-                for idx, p in todas_propostas.iterrows():
-                    st.write(f"• ID {p['id']}: {p['cliente_nome']} - Status: '{p['status']}' - Exec: '{p.get('status_execucao', 'N/A')}'")
-                
-                # Para teste, mostrar TODAS as propostas sem filtro
-                propostas_finalizadas = todas_propostas
+                # Filtro expandido para incluir mais casos de propostas finalizadas
+                propostas_finalizadas = todas_propostas[
+                    (todas_propostas['status'] == 'Finalizada') |
+                    (todas_propostas['status'] == 'Concluída') |
+                    (todas_propostas['status'] == 'Recusada') |
+                    (todas_propostas['status_execucao'] == 'Finalizada') |
+                    (todas_propostas['status_execucao'] == 'Concluída')
+                ]
             else:
-                propostas_finalizadas = pd.DataFrame()
+                propostas_finalizadas = todas_propostas
             
             try:
                 # Mostrar contagem para debug
