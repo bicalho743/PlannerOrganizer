@@ -716,7 +716,14 @@ def show():
                                     data_list.append(row_dict)
                                 andamentos_df = pd.DataFrame(data_list)
                             
-                            # Informações de debug removidas - sistema funcionando corretamente
+                            # Exibir tabela resumida dos andamentos (apenas colunas relevantes)
+                            if not andamentos_df.empty:
+                                # Criar tabela resumida com apenas as colunas importantes
+                                andamentos_resumo = andamentos_df[['data', 'status', 'observacao']].copy()
+                                andamentos_resumo.columns = ['Data', 'Status', 'Observação']
+                                st.dataframe(andamentos_resumo, hide_index=True, use_container_width=True)
+                            else:
+                                st.info("Nenhum andamento registrado para esta proposta.")
                             
                             if not andamentos_df.empty:
                                 # Ordenar por data (mais recente primeiro)
