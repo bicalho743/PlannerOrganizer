@@ -598,17 +598,6 @@ def show():
         st.header("Propostas em Execução")
         
         if not propostas.empty:
-            # DEBUG: Adicionar logs para diagnosticar o problema
-            st.write("🔍 **DEBUG: Analisando dados...**")
-            st.write(f"Total de propostas carregadas: {len(propostas_com_clientes)}")
-            st.write("Valores únicos em status_execucao:", propostas_com_clientes['status_execucao'].unique().tolist())
-            
-            # Mostrar propostas com status_execucao 'Em execução'
-            execucao_propostas = propostas_com_clientes[propostas_com_clientes['status_execucao'] == 'Em execução']
-            st.write(f"Propostas com status 'Em execução': {len(execucao_propostas)}")
-            if not execucao_propostas.empty:
-                st.write("IDs das propostas em execução:", execucao_propostas['numero'].tolist())
-            
             # Filtrar apenas propostas em execução - usar status_execucao correto
             propostas_em_execucao = propostas_com_clientes[
                 propostas_com_clientes['status_execucao'] == 'Em execução'
@@ -616,31 +605,31 @@ def show():
         else:
             propostas_em_execucao = pd.DataFrame()
             
-            if not propostas_em_execucao.empty:
-                # Mostrar as propostas em execução
-                st.write(f"Total: {len(propostas_em_execucao)} propostas em execução")
+        if not propostas_em_execucao.empty:
+            # Mostrar as propostas em execução
+            st.write(f"Total: {len(propostas_em_execucao)} propostas em execução")
+            
+            # Criar seletor de proposta para gerenciar
+            def format_proposta(x):
+                p = propostas_em_execucao[propostas_em_execucao['id'] == x].iloc[0]
+                numero = p.get('numero', 'N/A')
+                nome = p.get('nome', 'Sem nome')
+                # Usar tanto 'descricao' quanto 'observacao' para compatibilidade
+                descricao = p.get('descricao', p.get('observacao', 'Sem descrição'))
+                return f"#{numero} - {nome}: {str(descricao)[:50]}..."
+            
+            proposta_selecionada_id = st.selectbox(
+                "Selecione uma proposta para gerenciar:",
+                options=propostas_em_execucao['id'].tolist(),
+                format_func=format_proposta
+            )
+            
+            if proposta_selecionada_id:
+                # Obter os dados da proposta selecionada
+                proposta = propostas_em_execucao[propostas_em_execucao['id'] == proposta_selecionada_id].iloc[0]
                 
-                # Criar seletor de proposta para gerenciar
-                def format_proposta(x):
-                    p = propostas_em_execucao[propostas_em_execucao['id'] == x].iloc[0]
-                    numero = p.get('numero', 'N/A')
-                    nome = p.get('nome', 'Sem nome')
-                    # Usar tanto 'descricao' quanto 'observacao' para compatibilidade
-                    descricao = p.get('descricao', p.get('observacao', 'Sem descrição'))
-                    return f"#{numero} - {nome}: {str(descricao)[:50]}..."
-                
-                proposta_selecionada_id = st.selectbox(
-                    "Selecione uma proposta para gerenciar:",
-                    options=propostas_em_execucao['id'].tolist(),
-                    format_func=format_proposta
-                )
-                
-                if proposta_selecionada_id:
-                    # Obter os dados da proposta selecionada
-                    proposta = propostas_em_execucao[propostas_em_execucao['id'] == proposta_selecionada_id].iloc[0]
-                    
-                    # Adicionar título da proposta
-                    st.subheader(f"Gerenciando: Proposta #{proposta['numero']} - {proposta['nome']}")
+                # Adicionar título da proposta
+                st.subheader(f"Gerenciando: Proposta #{proposta['numero']} - {proposta['nome']}")
                     
 
                     
