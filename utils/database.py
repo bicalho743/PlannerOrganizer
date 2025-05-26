@@ -5849,6 +5849,7 @@ class Database:
                     'data': a.data,
                     'status': a.status,
                     'observacao': a.observacao,
+                    'descricao': a.observacao,  # Adicionar campo descricao para compatibilidade
                     'comodo': a.comodo,
                     'usuario_id': a.usuario_id
                 } for a in andamentos])
