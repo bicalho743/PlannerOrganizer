@@ -3,10 +3,13 @@ headless = true
 address = "0.0.0.0"
 port = 5000
 enableCORS = true
-enableWebsocketCompression = true
+enableWebsocketCompression = false
 enableXsrfProtection = false
 maxUploadSize = 50
 fileWatcherType = "none"
+runOnSave = false
+allowRunOnSave = false
+baseUrlPath = ""
 
 [theme]
 primaryColor = "#1E88E5"
