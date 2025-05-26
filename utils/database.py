@@ -333,6 +333,7 @@ class AndamentoProposta(Base):
     status = Column(String)
     observacao = Column(String)
     comodo = Column(String)
+    usuario_id = Column(String)  # Adicionado campo usuario_id
 
     proposta = relationship("Proposta")
 
@@ -5824,6 +5825,38 @@ class Database:
             # Sempre fechar a sessão local no final para liberar os recursos
             session_local.close()
 
+    def get_andamentos(self, proposta_id=None):
+        """Busca andamentos filtrados por usuário"""
+        def query():
+            try:
+                # Base query para andamentos
+                andamentos_query = self.session.query(AndamentoProposta).filter(
+                    (AndamentoProposta.usuario_id == self.usuario_id) | 
+                    (AndamentoProposta.usuario_id.is_(None))
+                )
+                
+                # Se proposta_id especificado, filtrar por ele também
+                if proposta_id:
+                    andamentos_query = andamentos_query.filter(
+                        AndamentoProposta.proposta_id == proposta_id
+                    )
+                
+                andamentos = andamentos_query.all()
+                
+                return pd.DataFrame([{
+                    'id': a.id,
+                    'proposta_id': a.proposta_id,
+                    'data': a.data,
+                    'status': a.status,
+                    'observacao': a.observacao,
+                    'comodo': a.comodo,
+                    'usuario_id': a.usuario_id
+                } for a in andamentos])
+            except Exception as e:
+                print(f"ERRO ao obter andamentos: {str(e)}")
+                return pd.DataFrame()
+        return self._safe_query(query)
+
     def add_andamento(self, proposta_id, descricao, data, porcentagem=0, observacoes=""):
         """
         Adiciona um andamento para uma proposta
@@ -5849,7 +5882,8 @@ class Database:
                     proposta_id=int(proposta_id),
                     observacao=descricao,  # Usar 'observacao' ao invés de 'descricao'
                     data=data,
-                    status=f"Progresso: {porcentagem}%"  # Usar status para armazenar a porcentagem
+                    status=f"Progresso: {porcentagem}%",  # Usar status para armazenar a porcentagem
+                    usuario_id=self.usuario_id  # Incluir usuario_id para multi-tenant
                 )
                 
                 self.session.add(andamento)
