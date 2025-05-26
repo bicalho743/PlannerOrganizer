@@ -1539,13 +1539,13 @@ def show():
         try:
             import pandas as pd
             
-            # Criar nova instância do banco para evitar cache
-            from utils.database import Database
-            db_fresh = Database()
+            # Usar o mesmo banco da sessão para manter o mesmo usuario_id
+            propostas_raw = st.session_state.db.get_propostas()
+            clientes_raw = st.session_state.db.get_clientes()
             
-            # Buscar TODAS as propostas sem filtros
-            propostas_raw = db_fresh.get_propostas()
-            clientes_raw = db_fresh.get_clientes()
+            # Mostrar qual usuario_id está sendo usado
+            usuario_id_atual = getattr(st.session_state.db, 'usuario_id', 'DESCONHECIDO')
+            st.write(f"**🔑 Usuario ID sendo usado:** {usuario_id_atual}")
             
             st.write(f"**✅ Propostas carregadas:** {len(propostas_raw)}")
             st.write(f"**✅ Clientes carregados:** {len(clientes_raw)}")
