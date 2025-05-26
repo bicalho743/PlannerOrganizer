@@ -1,4 +1,0 @@
-id;nome;email;telefone;endereco;cpf;data_aniversario;origem_cliente;estado;cidade;bairro;observacoes
-1;Cliente Exemplo 1;cliente1@email.com;(11) 99999-9999;Rua Exemplo, 123;123.456.789-00;01/01/1980;Indicação;SP;São Paulo;Centro;Observações do cliente 1
-2;Cliente Exemplo 2;cliente2@email.com;(11) 88888-8888;Av. Teste, 456;987.654.321-00;15/05/1985;Site;RJ;Rio de Janeiro;Copacabana;Observações do cliente 2
-3;Cliente Exemplo 3;cliente3@email.com;(11) 77777-7777;Praça Central, 789;111.222.333-44;30/08/1990;Instagram;MG;Belo Horizonte;Savassi;Observações do cliente 3
