@@ -1529,66 +1529,59 @@ def show():
     
     # ABA 3: PROPOSTAS FINALIZADAS
     with tab3:
-        st.header("Propostas Finalizadas")
+        st.header("Todas as Propostas - DEBUG")
         
-        # SOLUÇÃO DEFINITIVA - BASEADA NO TESTE QUE FUNCIONOU
         try:
-            # Buscar dados diretos (sabemos que funciona)
-            propostas_raw = st.session_state.db.get_propostas()
-            clientes_raw = st.session_state.db.get_clientes()
+            # Buscar propostas diretamente do banco
+            propostas_df = st.session_state.db.get_propostas()
+            clientes_df = st.session_state.db.get_clientes()
             
-            st.success(f"✅ **{len(propostas_raw)} propostas** carregadas do banco")
-            st.info(f"📋 **{len(clientes_raw)} clientes** disponíveis")
+            st.success(f"🔢 **{len(propostas_df)} propostas** encontradas no banco")
+            st.info(f"👥 **{len(clientes_df)} clientes** encontrados no banco")
             
-            if len(propostas_raw) > 0:
-                # Processar cada proposta individualmente (método que funcionou no teste)
-                propostas_processadas = []
+            if len(propostas_df) > 0:
+                st.write("### 📋 Exibição Simples e Direta:")
                 
-                for idx, proposta in propostas_raw.iterrows():
-                    # Buscar cliente
-                    cliente_nome = "Cliente não encontrado"
-                    cliente_id = proposta.get('cliente_id')
+                # Preparar dados básicos - VERSÃO EXTREMAMENTE SIMPLES
+                dados_exibicao = []
+                
+                # Debug: mostrar cada proposta encontrada
+                st.write("**🔍 Debug - Propostas no DataFrame:**")
+                for i, (idx, row) in enumerate(propostas_df.iterrows()):
+                    st.write(f"- Linha {i+1}: ID={row.get('id')}, Número={row.get('numero')}, Status='{row.get('status')}'")
                     
-                    if cliente_id and len(clientes_raw) > 0:
-                        cliente_info = clientes_raw[clientes_raw['id'] == cliente_id]
-                        if len(cliente_info) > 0:
-                            cliente_nome = cliente_info.iloc[0]['nome']
+                    # Buscar nome do cliente
+                    cliente_nome = "N/A"
+                    if len(clientes_df) > 0:
+                        cliente_match = clientes_df[clientes_df['id'] == row.get('cliente_id')]
+                        if len(cliente_match) > 0:
+                            cliente_nome = cliente_match.iloc[0]['nome']
                     
-                    # Adicionar à lista processada
-                    propostas_processadas.append({
-                        'Proposta #': proposta.get('numero', 'N/A'),
+                    # Preparar linha para tabela
+                    dados_exibicao.append({
+                        'ID': row.get('id', 'N/A'),
+                        'Número': row.get('numero', 'N/A'),
                         'Cliente': cliente_nome,
-                        'Descrição': str(proposta.get('descricao', 'N/A'))[:60] + ("..." if len(str(proposta.get('descricao', 'N/A'))) > 60 else ""),
-                        'Status': proposta.get('status', 'N/A'),
-                        'Valor': f"R$ {float(proposta.get('valor', 0)):,.2f}",
-                        'Data Início': str(proposta.get('data_inicio', 'N/A'))[:10],
-                        'Tipo': proposta.get('tipo_proposta', 'N/A')
+                        'Status': row.get('status', 'N/A'),
+                        'Valor': f"R$ {float(row.get('valor', 0)):,.2f}",
+                        'Descrição': str(row.get('descricao', 'N/A'))[:50]
                     })
                 
-                # Criar DataFrame e exibir
-                import pandas as pd
-                df_final = pd.DataFrame(propostas_processadas)
-                
-                st.write(f"**📊 Listagem de {len(df_final)} propostas:**")
-                st.dataframe(df_final, use_container_width=True, height=500)
-                
-                # Estatísticas rápidas
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    finalizadas = len([p for p in propostas_processadas if p['Status'] == 'Finalizada'])
-                    st.metric("Finalizadas", finalizadas)
-                with col2:
-                    em_execucao = len([p for p in propostas_processadas if p['Status'] == 'Em execução'])
-                    st.metric("Em Execução", em_execucao)
-                with col3:
-                    em_elaboracao = len([p for p in propostas_processadas if p['Status'] == 'Em elaboração'])
-                    st.metric("Em Elaboração", em_elaboracao)
-                
+                # Exibir tabela final
+                st.write("### 📊 Tabela Final:")
+                if dados_exibicao:
+                    import pandas as pd
+                    df_tabela = pd.DataFrame(dados_exibicao)
+                    st.dataframe(df_tabela, use_container_width=True)
+                    st.success(f"✅ **{len(df_tabela)} propostas** exibidas com sucesso!")
+                else:
+                    st.error("❌ Nenhum dado foi processado para exibição")
+                    
             else:
-                st.warning("Nenhuma proposta encontrada no banco de dados")
+                st.warning("⚠️ Nenhuma proposta encontrada no banco de dados")
                 
         except Exception as e:
-            st.error(f"❌ Erro ao processar dados: {str(e)}")
+            st.error(f"❌ Erro: {str(e)}")
             import traceback
             st.code(traceback.format_exc())
 
