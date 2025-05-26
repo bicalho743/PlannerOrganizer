@@ -383,20 +383,20 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
                     
                     # Verificar se o valor do fornecedor é maior que zero
                     if forn_valor and float(forn_valor) > 0:
-                    forn_valor = float(forn_valor)
-                    percentual = float(percentual)
-                    valor_comissao = forn_valor * percentual / 100
-                    valor_total_comissoes += valor_comissao
-                    
-                    cursor.execute("""
-                        INSERT INTO financeiro 
-                        (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, 
-                        proposta_id, status, classificacao, usuario_id)
-                        VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id
-                    """, (
-                        f"Comissão de {percentual}% - Fornecedor {forn_nome} - Proposta #{proposta_info['numero']}",
-                        valor_comissao,
+                        forn_valor = float(forn_valor)
+                        percentual = float(percentual)
+                        valor_comissao = forn_valor * percentual / 100
+                        valor_total_comissoes += valor_comissao
+                        
+                        cursor.execute("""
+                            INSERT INTO financeiro 
+                            (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, 
+                            proposta_id, status, classificacao, usuario_id)
+                            VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            RETURNING id
+                        """, (
+                            f"Comissão de {percentual}% - Fornecedor {forn_nome} - Proposta #{proposta_info['numero']}",
+                            valor_comissao,
                         "Comissão sobre fornecedores",  # Categoria
                         "Comissão de Fornecedor",  # Subcategoria
                         "Receita",  # Tipo
