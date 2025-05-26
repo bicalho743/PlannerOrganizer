@@ -1882,26 +1882,16 @@ def show():
             
             st.success(f"🎯 MOSTRANDO TODAS AS {len(todas_propostas) if not todas_propostas.empty else 0} PROPOSTAS SEM FILTRO!")
             
-            # PARA TESTE: mostrar TODAS as propostas sem filtro
-            propostas_finalizadas = todas_propostas
-            
+            # PARA TESTE: verificar se temos dados
             if not todas_propostas.empty:
                 st.subheader("📋 Todas as Propostas no Banco:")
                 for idx, p in todas_propostas.iterrows():
                     st.write(f"• ID {p['id']}: {p['cliente_nome']} - Status: '{p['status']}' - Exec: '{p.get('status_execucao', 'N/A')}'")
                 
-                st.write("---")
-                st.info("Agora vou aplicar o filtro original para ver o que acontece:")
-                
-                # Aplicar o filtro original para comparação
-                filtro_original = todas_propostas[
-                    ((todas_propostas['status'] == 'Finalizada') & (todas_propostas['status_execucao'] == 'Finalizada')) |
-                    (todas_propostas['status'] == 'Recusada')
-                ]
-                st.write(f"Filtro original captura: {len(filtro_original)} propostas")
-                
-                # Mas para exibição, usar TODAS as propostas
+                # Para teste, mostrar TODAS as propostas sem filtro
                 propostas_finalizadas = todas_propostas
+            else:
+                propostas_finalizadas = pd.DataFrame()
             
             try:
                 # Mostrar contagem para debug
