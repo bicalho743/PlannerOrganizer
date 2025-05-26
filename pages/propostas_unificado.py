@@ -598,6 +598,13 @@ def show():
         st.header("Propostas em Execução")
         
         if 'propostas_com_clientes' in locals() and not propostas.empty:
+            # Debug: Verificar os dados carregados
+            st.write("DEBUG: Colunas disponíveis:", list(propostas_com_clientes.columns))
+            if 'status_execucao' in propostas_com_clientes.columns:
+                st.write("DEBUG: Valores únicos em status_execucao:", propostas_com_clientes['status_execucao'].unique().tolist())
+                st.write("DEBUG: Propostas com status_execucao 'Em execução':", 
+                        propostas_com_clientes[propostas_com_clientes['status_execucao'] == 'Em execução']['numero'].tolist())
+            
             # Filtrar apenas propostas em execução - usar status_execucao correto
             propostas_em_execucao = propostas_com_clientes[
                 propostas_com_clientes['status_execucao'] == 'Em execução'
