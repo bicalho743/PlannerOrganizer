@@ -1527,59 +1527,47 @@ def show():
             else:
                 st.info("Não há propostas em execução no momento.")
     
-    # ABA 3: PROPOSTAS FINALIZADAS
+    # ABA 3: PROPOSTAS FINALIZADAS - VERSÃO SIMPLIFICADA
     with tab3:
         st.header("Propostas Finalizadas")
         
-        # Limpar cache de propostas para forçar recarregamento
-        if 'propostas_cache' in st.session_state:
-            del st.session_state.propostas_cache
+        # SOLUÇÃO DEFINITIVA: Mostrar dados RAW direto do banco
+        import pandas as pd
         
-        # NOVA IMPLEMENTAÇÃO: Carregar dados diretamente sem usar variáveis existentes
         try:
-            import pandas as pd
-            
-            # Usar o mesmo banco da sessão para manter o mesmo usuario_id
+            # Buscar dados diretos
             propostas_raw = st.session_state.db.get_propostas()
-            clientes_raw = st.session_state.db.get_clientes()
             
-            # Mostrar qual usuario_id está sendo usado
-            usuario_id_atual = getattr(st.session_state.db, 'usuario_id', 'DESCONHECIDO')
-            st.write(f"**🔑 Usuario ID sendo usado:** {usuario_id_atual}")
-            
-            st.write(f"**✅ Propostas carregadas:** {len(propostas_raw)}")
-            st.write(f"**✅ Clientes carregados:** {len(clientes_raw)}")
+            st.write(f"**🔢 Total de propostas no banco:** {len(propostas_raw)}")
             
             if not propostas_raw.empty:
-                if not clientes_raw.empty:
-                    # Fazer LEFT JOIN para manter TODAS as propostas
-                    propostas_finalizadas = propostas_raw.merge(
-                        clientes_raw[['id', 'nome']], 
-                        left_on='cliente_id', 
-                        right_on='id', 
-                        how='left',  # LEFT JOIN - mantém todas as propostas
-                        suffixes=('', '_cliente')
-                    )
-                    
-                    # Preencher nomes vazios com "Cliente não encontrado"
-                    propostas_finalizadas['nome'] = propostas_finalizadas['nome'].fillna('Cliente não encontrado')
-                else:
-                    # Se não há clientes, usar propostas mesmo assim
-                    propostas_finalizadas = propostas_raw.copy()
-                    propostas_finalizadas['nome'] = 'Cliente não encontrado'
+                # Mostrar TODAS as propostas sem filtros ou joins complexos
+                st.write("**📋 TODAS AS PROPOSTAS:**")
                 
-                st.write(f"**✅ TODAS as propostas carregadas:** {len(propostas_finalizadas)}")
+                # Criar tabela simples com informações básicas
+                dados_simples = []
+                for _, proposta in propostas_raw.iterrows():
+                    dados_simples.append({
+                        'ID': proposta['id'],
+                        'Número': proposta.get('numero', 'N/A'),
+                        'Descrição': proposta.get('descricao', 'N/A'),
+                        'Status': proposta.get('status', 'N/A'),
+                        'Valor': f"R$ {float(proposta.get('valor', 0)):,.2f}",
+                        'Data': proposta.get('data_inicio', 'N/A')
+                    })
+                
+                df_simples = pd.DataFrame(dados_simples)
+                st.dataframe(df_simples, use_container_width=True)
+                
+                st.success(f"✅ Exibindo {len(df_simples)} propostas do banco de dados")
             else:
-                propostas_finalizadas = pd.DataFrame()
-                st.error("❌ Erro: Nenhuma proposta encontrada!")
+                st.error("❌ Nenhuma proposta encontrada no banco")
                 
         except Exception as e:
-            st.error(f"❌ Erro ao carregar dados: {str(e)}")
-            propostas_finalizadas = pd.DataFrame()
-        
-        if propostas_finalizadas.empty:
-            st.info("Não há propostas finalizadas no momento.")
-        else:
+            st.error(f"❌ Erro: {str(e)}")
+            
+        # NÃO PROCESSAR RESTO DO CÓDIGO ANTIGO
+        return
             
             # Interface para filtrar propostas
             col1, col2 = st.columns(2)
