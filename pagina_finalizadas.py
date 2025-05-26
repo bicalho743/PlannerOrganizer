@@ -26,20 +26,33 @@ def carregar_propostas_finalizadas():
     # Obter todas as propostas
     propostas = db.get_propostas()
     
-    # Filtrar apenas as propostas finalizadas
+    st.write("🔍 **DEBUG: Propostas carregadas do banco:**")
+    st.write(f"Total encontrado: {len(propostas) if not propostas.empty else 0}")
+    
     if not propostas.empty:
-        propostas_finalizadas = propostas[
-            ((propostas['status'] == 'Finalizada') & (propostas['status_execucao'] == 'Finalizada')) |
-            (propostas['status'] == 'Recusada')
-        ]
-        return propostas_finalizadas
+        st.write("Status das propostas no banco:")
+        for idx, p in propostas.iterrows():
+            st.write(f"- ID {p['id']}: Status='{p['status']}', Status Execução='{p.get('status_execucao', 'N/A')}'")
+        
+        # CORRIGIR O FILTRO - incluir TODAS as propostas para debug
+        st.write("---")
+        st.write("🎯 **Exibindo TODAS as propostas (sem filtro) para debug:**")
+        return propostas  # Retornar todas, não apenas finalizadas
+        
+        # O filtro original estava aqui (comentado para debug):
+        # propostas_finalizadas = propostas[
+        #     ((propostas['status'] == 'Finalizada') & (propostas['status_execucao'] == 'Finalizada')) |
+        #     (propostas['status'] == 'Recusada')
+        # ]
+        # return propostas_finalizadas
     return pd.DataFrame()
 
 # Carregar propostas finalizadas
 propostas_finalizadas = carregar_propostas_finalizadas()
 
 # Exibir contagem de propostas finalizadas
-st.write(f"Total de propostas finalizadas encontradas: {len(propostas_finalizadas)}")
+st.write(f"🎯 Total de propostas sendo exibidas: {len(propostas_finalizadas)}")
+st.success("✅ Agora todas as propostas devem aparecer!")
 
 # Verificar se temos propostas finalizadas
 if not propostas_finalizadas.empty:
