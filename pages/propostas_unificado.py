@@ -1527,86 +1527,56 @@ def show():
             else:
                 st.info("Não há propostas em execução no momento.")
     
-    # ABA 3: PROPOSTAS FINALIZADAS - VERSÃO SIMPLIFICADA
+    # ABA 3: PROPOSTAS FINALIZADAS
     with tab3:
         st.header("Propostas Finalizadas")
         
-        # SOLUÇÃO DEFINITIVA: Mostrar dados RAW direto do banco
-        import pandas as pd
-        
+        # VERSÃO SIMPLIFICADA E DEFINITIVA
         try:
-            # Buscar dados diretos
-            propostas_raw = st.session_state.db.get_propostas()
+            import pandas as pd
             
-            st.write(f"**🔢 Total de propostas no banco:** {len(propostas_raw)}")
+            # Buscar dados diretos do banco
+            propostas_todas = st.session_state.db.get_propostas()
+            clientes_todos = st.session_state.db.get_clientes()
             
-            if not propostas_raw.empty:
-                # Mostrar TODAS as propostas sem filtros ou joins complexos
-                st.write("**📋 TODAS AS PROPOSTAS:**")
+            st.write(f"**🔢 Total de propostas no banco:** {len(propostas_todas)}")
+            st.write(f"**👥 Total de clientes no banco:** {len(clientes_todos)}")
+            
+            if len(propostas_todas) > 0:
+                st.write("**📋 TODAS AS PROPOSTAS (sem filtros):**")
                 
-                # Criar tabela simples com informações básicas
+                # Criar dados simples para visualização
                 dados_simples = []
-                for _, proposta in propostas_raw.iterrows():
+                for _, prop in propostas_todas.iterrows():
+                    # Buscar nome do cliente
+                    cliente_nome = "Cliente não encontrado"
+                    if len(clientes_todos) > 0:
+                        cliente_match = clientes_todos[clientes_todos['id'] == prop.get('cliente_id')]
+                        if len(cliente_match) > 0:
+                            cliente_nome = cliente_match.iloc[0]['nome']
+                    
                     dados_simples.append({
-                        'ID': proposta['id'],
-                        'Número': proposta.get('numero', 'N/A'),
-                        'Descrição': proposta.get('descricao', 'N/A'),
-                        'Status': proposta.get('status', 'N/A'),
-                        'Valor': f"R$ {float(proposta.get('valor', 0)):,.2f}",
-                        'Data': proposta.get('data_inicio', 'N/A')
+                        'Número': prop.get('numero', 'N/A'),
+                        'Cliente': cliente_nome,
+                        'Descrição': prop.get('descricao', 'N/A')[:50] + '...' if len(str(prop.get('descricao', 'N/A'))) > 50 else prop.get('descricao', 'N/A'),
+                        'Status': prop.get('status', 'N/A'),
+                        'Valor': f"R$ {float(prop.get('valor', 0)):,.2f}",
+                        'Data': str(prop.get('data_inicio', 'N/A'))[:10]
                     })
                 
-                df_simples = pd.DataFrame(dados_simples)
-                st.dataframe(df_simples, use_container_width=True)
+                # Exibir tabela simples
+                df_exibicao = pd.DataFrame(dados_simples)
+                st.dataframe(df_exibicao, use_container_width=True, height=400)
                 
-                st.success(f"✅ Exibindo {len(df_simples)} propostas do banco de dados")
+                st.success(f"✅ Mostrando {len(df_exibicao)} propostas encontradas no banco")
+                
             else:
-                st.error("❌ Nenhuma proposta encontrada no banco")
+                st.warning("Nenhuma proposta encontrada no banco de dados")
                 
         except Exception as e:
-            st.error(f"❌ Erro: {str(e)}")
-            
-        # NÃO PROCESSAR RESTO DO CÓDIGO ANTIGO
-        return
-            
-            # Interface para filtrar propostas
-            col1, col2 = st.columns(2)
-            with col1:
-                filtro_status = st.multiselect(
-                    "Filtrar por status:",
-                    propostas_finalizadas['status'].unique().tolist(),
-                    default=[]
-                )
-            with col2:
-                filtro_cliente = st.multiselect(
-                    "Filtrar por cliente:",
-                    propostas_finalizadas['nome'].unique().tolist() if not propostas_finalizadas.empty else [],
-                    default=[]
-                )
-            
-            # Aplicar filtros adicionais
-            propostas_filtradas = propostas_finalizadas.copy()
-            
-            if filtro_status:
-                propostas_filtradas = propostas_filtradas[propostas_filtradas['status'].isin(filtro_status)]
-            
-            if filtro_cliente:
-                propostas_filtradas = propostas_filtradas[propostas_filtradas['nome'].isin(filtro_cliente)]
-            
-            # Mostrar resultados
-            if not propostas_filtradas.empty:
-                st.write(f"Total: {len(propostas_filtradas)} propostas encontradas")
-                
-                # Preparar colunas para exibição mais limpa
-                propostas_filtradas['data_formatada'] = propostas_filtradas['data_inicio'].apply(
-                    lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
-                )
-                propostas_filtradas['valor_formatado'] = propostas_filtradas['valor'].apply(
-                    lambda x: f"R$ {float(x):,.2f}" if pd.notna(x) else ''
-                )
-                
-                # Mostrar em DataEditor para facilitar a visualização
-                st.dataframe(
+            st.error(f"❌ Erro ao carregar dados: {str(e)}")
+            import traceback
+            st.code(traceback.format_exc())
                     propostas_filtradas[['numero', 'nome', 'descricao', 'valor_formatado', 'status', 'data_formatada', 'tipo_proposta']],
                     column_config={
                         'numero': 'Proposta #',
