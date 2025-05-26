@@ -756,9 +756,9 @@ def show():
             def simplificar_tipo(tipo):
                 # Referências a 'receita_a_receber_aprovacao' mantidas apenas para compatibilidade
                 # com dados históricos no banco que possam conter este valor
-                if tipo in ['receita', 'receita_a_receber_aprovacao', 'Receita']:
+                if tipo in ['receita', 'receita_a_receber_aprovacao', 'Receita', 'receita_a_receber']:
                     return 'receita'
-                elif tipo in ['despesa', 'despesa_a_pagar']:
+                elif tipo in ['despesa', 'despesa_a_pagar', 'Despesa']:
                     return 'despesa'
                 return tipo
             
