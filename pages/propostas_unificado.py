@@ -688,6 +688,12 @@ def show():
                             # Buscar andamentos desta proposta usando o novo método
                             andamentos_df = st.session_state.db.get_andamentos(proposta_id=proposta_selecionada_id)
                             
+                            # Debug: verificar colunas disponíveis
+                            st.write(f"Debug - Colunas disponíveis: {list(andamentos_df.columns) if not andamentos_df.empty else 'DataFrame vazio'}")
+                            if not andamentos_df.empty:
+                                st.write(f"Debug - Primeiras linhas:")
+                                st.dataframe(andamentos_df.head())
+                            
                             if not andamentos_df.empty:
                                 # Ordenar por data (mais recente primeiro)
                                 andamentos_df = andamentos_df.sort_values('data', ascending=False)
