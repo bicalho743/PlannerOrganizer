@@ -696,8 +696,13 @@ def show():
                             # Buscar andamentos desta proposta usando o novo método
                             andamentos_df_raw = st.session_state.db.get_andamentos(proposta_id=proposta_selecionada_id)
                             
+                            # Verificar se há andamentos válidos
+                            tem_andamentos = False
+                            if andamentos_df_raw is not None and not andamentos_df_raw.empty:
+                                tem_andamentos = len(andamentos_df_raw) > 0
+                            
                             # Exibir apenas tabela resumida dos andamentos (apenas colunas relevantes)
-                            if not andamentos_df_raw.empty and len(andamentos_df_raw) > 0:
+                            if tem_andamentos:
                                 # Verificar se as colunas necessárias existem
                                 colunas_necessarias = ['data', 'status', 'observacao']
                                 colunas_existentes = [col for col in colunas_necessarias if col in andamentos_df_raw.columns]
