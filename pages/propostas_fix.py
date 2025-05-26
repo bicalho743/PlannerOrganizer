@@ -562,35 +562,91 @@ def main():
         else:
             st.info("Nenhuma proposta em execução encontrada.")
     
-    # Tab 4: Finalizadas
+    # Tab 4: Finalizadas  
     with tab4:
-        propostas = load_propostas(db, status="Finalizada")
+        st.header("Todas as Propostas - DEBUG COMPLETO")
         
-        st.header("Propostas Finalizadas")
-        
-        if propostas:
-            for proposta in propostas:
-                with st.expander(f"{proposta.cliente_nome} - {proposta.descricao} (R$ {proposta.valor:.2f})"):
-                    col1, col2 = st.columns(2)
+        try:
+            # Buscar TODAS as propostas (não apenas finalizadas) para debug
+            todas_propostas = db.get_propostas()  # Sem filtro de status
+            clientes = db.get_clientes()
+            
+            st.success(f"🔢 **{len(todas_propostas)} propostas** encontradas no banco")
+            st.info(f"👥 **{len(clientes)} clientes** encontrados no banco")
+            
+            if todas_propostas:
+                st.write("### 🔍 Debug - Listagem Detalhada de Cada Proposta:")
+                
+                # Preparar dados para exibição
+                dados_para_tabela = []
+                
+                # Processar cada proposta individualmente
+                for i, proposta in enumerate(todas_propostas):
+                    # Debug: mostrar dados da proposta
+                    st.write(f"**Proposta {i+1}:**")
+                    st.write(f"- ID: {proposta.id}")
+                    st.write(f"- Número: {getattr(proposta, 'numero', 'N/A')}")
+                    st.write(f"- Status: '{proposta.status}'")
+                    st.write(f"- Cliente ID: {proposta.cliente_id}")
+                    st.write(f"- Valor: R$ {proposta.valor}")
+                    
+                    # Buscar nome do cliente
+                    cliente_nome = "Cliente não encontrado"
+                    if clientes:
+                        for cliente in clientes:
+                            if cliente.id == proposta.cliente_id:
+                                cliente_nome = cliente.nome
+                                break
+                    
+                    # Adicionar à lista para tabela
+                    dados_para_tabela.append({
+                        'ID': proposta.id,
+                        'Número': getattr(proposta, 'numero', f"PROP-{proposta.id}"),
+                        'Cliente': cliente_nome,
+                        'Status': proposta.status,
+                        'Valor': f"R$ {proposta.valor:.2f}",
+                        'Descrição': proposta.descricao[:50] + "..." if len(proposta.descricao) > 50 else proposta.descricao
+                    })
+                    
+                    st.write("---")
+                
+                # Exibir tabela consolidada
+                st.write("### 📊 Tabela Consolidada:")
+                if dados_para_tabela:
+                    df_tabela = pd.DataFrame(dados_para_tabela)
+                    st.dataframe(df_tabela, use_container_width=True, height=400)
+                    
+                    # Estatísticas por status
+                    st.write("### 📈 Estatísticas por Status:")
+                    col1, col2, col3, col4 = st.columns(4)
                     
                     with col1:
-                        st.write(f"**ID:** {proposta.id}")
-                        st.write(f"**Cliente:** {proposta.cliente_nome}")
-                        st.write(f"**Descrição:** {proposta.descricao}")
-                        st.write(f"**Valor:** R$ {proposta.valor:.2f}")
+                        finalizadas = len([p for p in todas_propostas if p.status == 'Finalizada'])
+                        st.metric("Finalizadas", finalizadas)
                     
                     with col2:
-                        st.write(f"**Tipo:** {proposta.tipo_proposta}")
-                        st.write(f"**Status:** {proposta.status}")
-                        st.write(f"**Data Início:** {proposta.data_inicio.strftime('%d/%m/%Y') if proposta.data_inicio else 'N/D'}")
-                        st.write(f"**Data Fim:** {proposta.data_fim.strftime('%d/%m/%Y') if proposta.data_fim else 'N/D'}")
+                        em_execucao = len([p for p in todas_propostas if p.status == 'Em execução'])
+                        st.metric("Em Execução", em_execucao)
                     
-                    # Botão para gerar relatórios
-                    if st.button(f"Ver Detalhes #{proposta.id}", key=f"view_{proposta.id}"):
-                        st.session_state.edit_proposta_id = proposta.id
-                        st.rerun()
-        else:
-            st.info("Nenhuma proposta finalizada encontrada.")
+                    with col3:
+                        em_elaboracao = len([p for p in todas_propostas if p.status == 'Em elaboração'])
+                        st.metric("Em Elaboração", em_elaboracao)
+                    
+                    with col4:
+                        em_analise = len([p for p in todas_propostas if p.status == 'Em análise'])
+                        st.metric("Em Análise", em_analise)
+                    
+                    st.success(f"✅ **{len(df_tabela)} propostas** processadas e exibidas com sucesso!")
+                else:
+                    st.error("❌ Erro: dados não foram processados corretamente")
+                    
+            else:
+                st.warning("⚠️ Nenhuma proposta encontrada no banco de dados")
+                
+        except Exception as e:
+            st.error(f"❌ Erro no debug: {str(e)}")
+            import traceback
+            st.code(traceback.format_exc())
     
     # Tab 5: Todas as Propostas
     with tab5:
