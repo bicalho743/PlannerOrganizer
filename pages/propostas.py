@@ -664,11 +664,19 @@ def show():
                     conn = psycopg2.connect(db_url)
                     cursor = conn.cursor()
                     
-                    # Obter ID do usuário da sessão se disponível
+                    # Obter ID do usuário da sessão - tentar múltiplas fontes
                     usuario_id_atual = None
-                    if hasattr(st.session_state, 'user') and 'usuario_id' in st.session_state.user:
+                    
+                    # Tentar diferentes locais onde o usuario_id pode estar armazenado
+                    if hasattr(st.session_state, 'usuario_id') and st.session_state.usuario_id:
+                        usuario_id_atual = st.session_state.usuario_id
+                        print(f"DEBUG ACESSO DIRETO: Usuário logado com ID {usuario_id_atual} (de st.session_state.usuario_id)")
+                    elif hasattr(st.session_state, 'user') and 'usuario_id' in st.session_state.user:
                         usuario_id_atual = st.session_state.user['usuario_id']
-                        print(f"DEBUG ACESSO DIRETO: Usuário logado com ID {usuario_id_atual}")
+                        print(f"DEBUG ACESSO DIRETO: Usuário logado com ID {usuario_id_atual} (de st.session_state.user)")
+                    elif hasattr(st.session_state, 'db') and hasattr(st.session_state.db, 'usuario_id'):
+                        usuario_id_atual = st.session_state.db.usuario_id
+                        print(f"DEBUG ACESSO DIRETO: Usuário logado com ID {usuario_id_atual} (de st.session_state.db)")
                     else:
                         print("DEBUG ACESSO DIRETO: Nenhum usuário logado na sessão")
                     
