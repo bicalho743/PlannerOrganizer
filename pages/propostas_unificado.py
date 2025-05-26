@@ -1532,10 +1532,9 @@ def show():
         st.header("Propostas Finalizadas")
         
         if 'propostas_com_clientes' in locals() and not propostas.empty:
-            # Filtro específico para mostrar apenas propostas finalizadas
+            # Filtro específico para mostrar TODAS as propostas finalizadas
             propostas_finalizadas = propostas_com_clientes[
-                ((propostas_com_clientes['status'] == 'Finalizada') & 
-                 (propostas_com_clientes['status_execucao'] == 'Finalizada')) |
+                (propostas_com_clientes['status'] == 'Finalizada') |
                 (propostas_com_clientes['status'] == 'Recusada')
             ]
             
