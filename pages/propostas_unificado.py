@@ -598,6 +598,17 @@ def show():
         st.header("Propostas em Execução")
         
         if not propostas.empty:
+            # DEBUG: Adicionar logs para diagnosticar o problema
+            st.write("🔍 **DEBUG: Analisando dados...**")
+            st.write(f"Total de propostas carregadas: {len(propostas_com_clientes)}")
+            st.write("Valores únicos em status_execucao:", propostas_com_clientes['status_execucao'].unique().tolist())
+            
+            # Mostrar propostas com status_execucao 'Em execução'
+            execucao_propostas = propostas_com_clientes[propostas_com_clientes['status_execucao'] == 'Em execução']
+            st.write(f"Propostas com status 'Em execução': {len(execucao_propostas)}")
+            if not execucao_propostas.empty:
+                st.write("IDs das propostas em execução:", execucao_propostas['numero'].tolist())
+            
             # Filtrar apenas propostas em execução - usar status_execucao correto
             propostas_em_execucao = propostas_com_clientes[
                 propostas_com_clientes['status_execucao'] == 'Em execução'
