@@ -26,6 +26,37 @@ def inject_ga4(measurement_id="G-E9KP3F40VT"):
     # Injeta o código GA4 no head da página
     components.html(ga4_code, height=0)
 
+def inject_gtm(gtm_id="GTM-NM45ZQCD"):
+    """
+    Injeta o código do Google Tag Manager na aplicação Streamlit
+    
+    Args:
+        gtm_id (str): ID do Google Tag Manager
+    """
+    
+    # Código GTM para o head
+    gtm_head_code = f"""
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){{w[l]=w[l]||[];w[l].push({{'gtm.start':
+    new Date().getTime(),event:'gtm.js'}});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    }})(window,document,'script','dataLayer','{gtm_id}');</script>
+    <!-- End Google Tag Manager -->
+    """
+    
+    # Código GTM para o body (noscript)
+    gtm_body_code = f"""
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={gtm_id}"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    """
+    
+    # Injeta ambos os códigos
+    components.html(gtm_head_code, height=0)
+    components.html(gtm_body_code, height=0)
+
 def track_page_view(page_name=None, page_title=None):
     """
     Rastreia uma visualização de página no GA4
@@ -87,10 +118,11 @@ def track_event(event_name, event_parameters=None):
 
 def initialize_ga4():
     """
-    Inicializa o Google Analytics 4 para a aplicação
+    Inicializa o Google Analytics 4 e Google Tag Manager para a aplicação
     Deve ser chamado no início de cada página
     """
-    # Injeta o GA4 apenas uma vez por sessão
+    # Injeta o GA4 e GTM apenas uma vez por sessão
     if 'ga4_initialized' not in st.session_state:
         inject_ga4()
+        inject_gtm()
         st.session_state.ga4_initialized = True
