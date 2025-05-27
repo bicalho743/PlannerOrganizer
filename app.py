@@ -46,6 +46,7 @@ if project_root not in sys.path:
 
 from utils.database import Database
 from utils.planos import verificar_login  # Importando apenas a função de verificação de login
+from utils.google_analytics import initialize_ga4, track_page_view
 
 # Importar módulo de autenticação Firebase (pode ser comentado para desabilitar temporariamente)
 try:
@@ -98,6 +99,13 @@ try:
     logger.info("Injetado script de compatibilidade para Render")
 except Exception as e:
     logger.error(f"Erro ao injetar script de compatibilidade: {e}")
+
+# Inicializar Google Analytics 4
+try:
+    initialize_ga4()
+    track_page_view("Home", "Planner Organizer - Página Principal")
+except Exception as e:
+    logger.error(f"Erro ao inicializar Google Analytics: {e}")
 
 # Função para mostrar termos de uso
 def show_termos():
