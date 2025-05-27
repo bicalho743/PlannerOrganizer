@@ -13,7 +13,6 @@ def inject_ga4(measurement_id="G-E9KP3F40VT"):
     """
     
     ga4_code = f"""
-    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id={measurement_id}"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -23,8 +22,8 @@ def inject_ga4(measurement_id="G-E9KP3F40VT"):
     </script>
     """
     
-    # Injeta o código GA4 no head da página
-    components.html(ga4_code, height=0)
+    # Injeta o código GA4 usando markdown com HTML unsafe
+    st.markdown(ga4_code, unsafe_allow_html=True)
 
 def inject_gtm(gtm_id="GTM-NM45ZQCD"):
     """
@@ -34,28 +33,19 @@ def inject_gtm(gtm_id="GTM-NM45ZQCD"):
         gtm_id (str): ID do Google Tag Manager
     """
     
-    # Código GTM para o head
-    gtm_head_code = f"""
-    <!-- Google Tag Manager -->
+    # Código GTM completo
+    gtm_code = f"""
     <script>(function(w,d,s,l,i){{w[l]=w[l]||[];w[l].push({{'gtm.start':
     new Date().getTime(),event:'gtm.js'}});var f=d.getElementsByTagName(s)[0],
     j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
     }})(window,document,'script','dataLayer','{gtm_id}');</script>
-    <!-- End Google Tag Manager -->
-    """
-    
-    # Código GTM para o body (noscript)
-    gtm_body_code = f"""
-    <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={gtm_id}"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
     """
     
-    # Injeta ambos os códigos
-    components.html(gtm_head_code, height=0)
-    components.html(gtm_body_code, height=0)
+    # Injeta o código GTM usando markdown com HTML unsafe
+    st.markdown(gtm_code, unsafe_allow_html=True)
 
 def track_page_view(page_name=None, page_title=None):
     """

@@ -46,7 +46,7 @@ if project_root not in sys.path:
 
 from utils.database import Database
 from utils.planos import verificar_login  # Importando apenas a função de verificação de login
-from utils.google_analytics import initialize_ga4, track_page_view
+from utils.analytics_injector import inject_analytics_tags, track_page_view
 
 # Importar módulo de autenticação Firebase (pode ser comentado para desabilitar temporariamente)
 try:
@@ -100,10 +100,10 @@ try:
 except Exception as e:
     logger.error(f"Erro ao injetar script de compatibilidade: {e}")
 
-# Inicializar Google Analytics 4
+# Inicializar Google Analytics 4 e Google Tag Manager
 try:
-    initialize_ga4()
-    track_page_view("Home", "Planner Organizer - Página Principal")
+    inject_analytics_tags()
+    track_page_view("Home")
 except Exception as e:
     logger.error(f"Erro ao inicializar Google Analytics: {e}")
 
