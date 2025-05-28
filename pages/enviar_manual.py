@@ -17,6 +17,18 @@ def main():
         page_icon="favicon.png",
         layout="centered"
     )
+    
+    # CSS para esconder completamente a barra lateral
+    st.markdown("""
+    <style>
+    [data-testid="collapsedControl"] {display: none !important;}
+    section[data-testid="stSidebar"] {display: none !important;}
+    header {display: none !important;}
+    footer {display: none !important;}
+    [data-testid="stToolbar"] {display: none !important;}
+    .block-container {padding-top: 1rem !important; max-width: 100% !important;}
+    </style>
+    """, unsafe_allow_html=True)
 
     # Título e descrição
     st.title("Manual do Sistema Planner Organizer")
