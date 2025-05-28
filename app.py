@@ -1002,7 +1002,7 @@ if not st.session_state.authenticated:
         
         # Botão "Ver Planos e Preços" em verde
         st.markdown("""
-        <a href="/?planos_standalone_page=true" 
+        <a href="https://promo.plannerorganiza.com.br/planos" 
            target="_blank" 
            id="planos-link" 
            style="display: inline-block; background-color: #026937; color: white; 
