@@ -905,24 +905,8 @@ if not st.session_state.authenticated:
         # Espaço para destacar os botões
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # DEBUG: Teste de botão simples
-        st.markdown("### 🎯 Call to Action")
-        
-        # Botão "Receba o Manual do Sistema" - Principal e destacado
-        manual_btn = st.button("📚 RECEBA O MANUAL DO SISTEMA", key="manual_cta_principal", use_container_width=True)
-        if manual_btn:
-            # Redireciona para a página de envio de manual usando session state
-            st.session_state.show_enviar_manual = True
-            st.rerun()
-        
-        # Espaço entre botões
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Botão "Ver Planos e Preços" - Secundário  
-        planos_btn = st.button("💰 Ver Planos e Preços", key="planos_cta_secundario", use_container_width=True, type="secondary")
-        if planos_btn:
-            st.session_state.show_planos = True
-            st.rerun()
+        # Botões CTA temporariamente desabilitados para resolver navegação
+        st.info("🔧 Botões CTA temporariamente em manutenção - voltarão em breve!")
         
         # Espaço antes do FAQ
         st.markdown("<br>", unsafe_allow_html=True)
