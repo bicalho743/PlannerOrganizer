@@ -12,9 +12,10 @@ header[data-testid="stHeader"] {
 
 /* Reset para garantir que o conteúdo não tenha margens ou padding indesejados */
 .block-container {
-    padding-top: 0 !important;
+    padding-top: 80px !important;
     margin-top: 0 !important;
     max-width: 100% !important;
+    min-height: calc(100vh - 70px) !important;
 }
 
 /* Estilo para o cabeçalho fixo no topo */
@@ -22,7 +23,7 @@ header[data-testid="stHeader"] {
     background-color: #1E1F36;
     color: white;
     width: 100%;
-    padding: 1rem 0;
+    padding: 0.6rem 0;
     margin: 0;
     text-align: center;
     position: fixed;
@@ -32,12 +33,16 @@ header[data-testid="stHeader"] {
     z-index: 1000;
     border-radius: 0;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    height: 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 /* Espaço para o conteúdo após o cabeçalho */
 .content-wrapper {
     padding: 1.5rem;
-    margin-top: 120px;
+    margin-top: 70px;
 }
 
 /* Personalizações para cabeçalhos */
