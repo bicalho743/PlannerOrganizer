@@ -324,11 +324,11 @@ if 'page' in query_params:
         # Redirecionar para a página principal
         st.switch_page("app.py")
         
-# Verificar se o parâmetro show_enviar_manual está presente na URL
-if 'show_enviar_manual' in query_params and query_params['show_enviar_manual'] == 'true':
-    # Ativar a página de envio de manual
-    st.session_state.show_enviar_manual = True
-    st.rerun()
+# Verificar se o parâmetro show_enviar_manual está presente na URL (DESABILITADO)
+# if 'show_enviar_manual' in query_params and query_params['show_enviar_manual'] == 'true':
+#     # Ativar a página de envio de manual
+#     st.session_state.show_enviar_manual = True
+#     st.rerun()
 
 # Verificar se a requisição é para a página standalone de planos
 if 'planos_standalone_page' in st.query_params:
