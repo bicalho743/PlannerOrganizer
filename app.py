@@ -1191,7 +1191,7 @@ st.markdown(f"""
     }}
 
     div.block-container {{
-        padding-top: 2rem !important;
+        padding-top: 85px !important;
     }}
 
     /* Estilo para botões do menu */
