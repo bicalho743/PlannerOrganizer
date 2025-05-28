@@ -10,71 +10,67 @@ def apply_modern_blue_theme():
     
     css = """
     <style>
-    /* Sidebar azul moderna */
-    section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%) !important;
+    /* TEMA AZUL MODERNO - FORÇA MÁXIMA */
+    
+    /* Sidebar azul com todas as variações de seletor */
+    section[data-testid="stSidebar"],
+    .css-1d391kg,
+    [data-testid="stSidebar"] {
+        background: #1e40af !important;
+        background-image: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%) !important;
     }
     
-    section[data-testid="stSidebar"] > div {
-        background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%) !important;
+    section[data-testid="stSidebar"] > div,
+    .css-1d391kg > div,
+    [data-testid="stSidebar"] > div {
+        background: #1e40af !important;
+        background-image: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%) !important;
     }
     
-    /* Texto branco na sidebar */
-    section[data-testid="stSidebar"] * {
+    /* Força texto branco em TUDO na sidebar */
+    section[data-testid="stSidebar"] *,
+    .css-1d391kg *,
+    [data-testid="stSidebar"] * {
         color: white !important;
     }
     
-    /* Botões da sidebar */
-    section[data-testid="stSidebar"] .stButton > button {
-        background: rgba(255, 255, 255, 0.1) !important;
+    /* Botões da sidebar com múltiplos seletores */
+    section[data-testid="stSidebar"] button,
+    .css-1d391kg button,
+    [data-testid="stSidebar"] button,
+    section[data-testid="stSidebar"] .stButton > button,
+    .css-1d391kg .stButton > button {
+        background: rgba(255, 255, 255, 0.15) !important;
         color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
         border-radius: 8px !important;
         width: 100% !important;
         text-align: left !important;
-        padding: 0.75rem 1rem !important;
-        margin: 0.25rem 0 !important;
+        padding: 12px 16px !important;
+        margin: 4px 0 !important;
         font-weight: 500 !important;
         transition: all 0.2s ease !important;
     }
     
-    section[data-testid="stSidebar"] .stButton > button:hover {
-        background: rgba(59, 130, 246, 0.4) !important;
-        transform: translateX(4px) !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+    /* Hover dos botões */
+    section[data-testid="stSidebar"] button:hover,
+    .css-1d391kg button:hover,
+    [data-testid="stSidebar"] button:hover {
+        background: rgba(59, 130, 246, 0.5) !important;
+        transform: translateX(6px) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
     }
     
-    /* Conteúdo principal */
-    .main {
-        background: #f8fafc !important;
+    /* Fundo principal */
+    .main,
+    [data-testid="stAppViewContainer"] .main {
+        background: #f1f5f9 !important;
     }
     
-    /* Botões principais azuis */
-    .stButton > button {
-        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 8px !important;
-        font-weight: 500 !important;
-        transition: all 0.2s ease !important;
-    }
-    
-    .stButton > button:hover {
-        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important;
-        transform: translateY(-1px) !important;
-    }
-    
-    /* Headers azuis */
-    h1, h2, h3 {
+    /* Títulos azuis */
+    h1, h2, h3, h4, h5, h6 {
         color: #1e40af !important;
         font-weight: 600 !important;
-    }
-    
-    /* Cards com bordas suaves */
-    .element-container {
-        background: white !important;
-        border-radius: 8px !important;
-        border: 1px solid #e2e8f0 !important;
     }
     </style>
     """
