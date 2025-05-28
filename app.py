@@ -924,7 +924,7 @@ if not st.session_state.authenticated:
             <p style="color: #5A6A85; font-size: 1.1rem; margin-bottom: 1.5rem;">
                 Receba gratuitamente o guia completo com todas as funcionalidades do Planner Organizer
             </p>
-            <a href="/manual_sistema" 
+            <a href="https://e793124a-608d-4baa-9b36-f1c10d18b5f4-00-er4f29bufe88.worf.replit.dev/enviar_manual" 
                target="_blank" 
                style="display: inline-block; background: linear-gradient(135deg, #026937, #02844a); 
                       color: white; text-align: center; padding: 1rem 2.5rem; text-decoration: none; 
