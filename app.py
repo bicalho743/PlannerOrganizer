@@ -81,6 +81,9 @@ if "show_planos" not in st.session_state:
 if "show_enviar_manual" not in st.session_state:
     st.session_state.show_enviar_manual = False
 
+# RESET FORÇADO - Temporário para resolver problema de navegação
+st.session_state.show_enviar_manual = False
+
 # Verificar query params para redirecionamento (temporariamente desabilitado)
 # if "page" in st.query_params:
 #     if st.query_params["page"] == "enviar_manual":
