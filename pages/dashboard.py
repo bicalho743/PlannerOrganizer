@@ -100,8 +100,21 @@ def show():
     if random.choice([True, False]):
         # Mostrar uma frase motivacional
         frase = random.choice(frases_motivacionais)
+        # CSS para forçar redução do espaçamento
+        st.markdown("""
+        <style>
+        .main .block-container {
+            padding-top: 85px !important;
+        }
+        .stApp > div:first-child {
+            padding-top: 0 !important;
+            margin-top: 0 !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
         st.markdown(f"""
-        <div style="text-align: center; margin: -40px 0 25px 0; padding-top: 0;">
+        <div style="text-align: center; margin: -60px 0 25px 0; padding-top: 0; position: relative; top: -20px;">
             <p style="font-style: italic; color: #1E366F; margin: 0; font-size: 1.1rem; font-weight: 500;">
                 "{frase['texto']}"
             </p>
@@ -113,8 +126,21 @@ def show():
     else:
         # Mostrar uma dica profissional
         dica = random.choice(dicas_profissionais)
+        # CSS para forçar redução do espaçamento
+        st.markdown("""
+        <style>
+        .main .block-container {
+            padding-top: 85px !important;
+        }
+        .stApp > div:first-child {
+            padding-top: 0 !important;
+            margin-top: 0 !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
         st.markdown(f"""
-        <div style="text-align: center; margin: -40px 0 25px 0; padding-top: 0;">
+        <div style="text-align: center; margin: -60px 0 25px 0; padding-top: 0; position: relative; top: -20px;">
             <p style="color: #FF9800; font-weight: bold; font-size: 0.9rem; margin-bottom: 5px;">
                 💡 DICA PROFISSIONAL
             </p>
