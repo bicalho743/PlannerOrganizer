@@ -1137,9 +1137,19 @@ st.markdown(f"""
     {custom_css}
     
     /* Estilo específico para a barra lateral */
-    section[data-testid="stSidebar"] {{
-        background-color: #F9FAFB;
+    section[data-testid="stSidebar"],
+    section[data-testid="stSidebar"] > div,
+    section[data-testid="stSidebar"] > div > div,
+    [data-testid="stSidebar"],
+    [data-testid="stSidebar"] > div {{
+        background-color: #2c2d3d !important;
+        background: #2c2d3d !important;
         border-right: 1px solid #E0E0E0;
+    }}
+    
+    /* Força cor nos elementos filhos da sidebar */
+    section[data-testid="stSidebar"] * {{
+        color: white !important;
     }}
 
     div.block-container {{
