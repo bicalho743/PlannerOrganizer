@@ -894,8 +894,12 @@ if not st.session_state.authenticated:
         # Espaço para destacar os botões
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Botão "Receba o Manual do Sistema" - Principal
-        if st.button("📚 Receba o Manual do Sistema", key="btn_manual_sistema", use_container_width=True, type="primary"):
+        # DEBUG: Teste de botão simples
+        st.markdown("### 🎯 Call to Action")
+        
+        # Botão "Receba o Manual do Sistema" - Principal e destacado
+        manual_btn = st.button("📚 RECEBA O MANUAL DO SISTEMA", key="manual_cta_principal", use_container_width=True)
+        if manual_btn:
             st.session_state.show_enviar_manual = True
             st.rerun()
         
@@ -903,7 +907,8 @@ if not st.session_state.authenticated:
         st.markdown("<br>", unsafe_allow_html=True)
         
         # Botão "Ver Planos e Preços" - Secundário  
-        if st.button("💰 Ver Planos e Preços", key="btn_ver_planos", use_container_width=True, type="secondary"):
+        planos_btn = st.button("💰 Ver Planos e Preços", key="planos_cta_secundario", use_container_width=True, type="secondary")
+        if planos_btn:
             st.session_state.show_planos = True
             st.rerun()
         
