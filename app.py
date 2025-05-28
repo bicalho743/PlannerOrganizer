@@ -101,9 +101,6 @@ try:
 except Exception as e:
     logger.error(f"Erro ao injetar script de compatibilidade: {e}")
 
-# Aplicar tema moderno azul
-apply_modern_blue_theme()
-
 # Inicializar Google Analytics 4 e Google Tag Manager
 try:
     inject_analytics_tags()
@@ -1398,6 +1395,9 @@ from utils.page_config import apply_page_header, apply_page_footer
 # Aplicar o cabeçalho e rodapé em todas as páginas 
 apply_page_header()
 apply_page_footer()
+
+# Aplicar tema moderno para usuários autenticados
+apply_modern_blue_theme()
 
 # Roteamento de páginas
 try:
