@@ -4,6 +4,12 @@
     margin: 0 !important;
 }
 
+/* Remover completamente o cabeçalho nativo do Streamlit */
+header[data-testid="stHeader"] {
+    display: none !important;
+    height: 0 !important;
+}
+
 /* Reset para garantir que o conteúdo não tenha margens ou padding indesejados */
 .block-container {
     padding-top: 0 !important;

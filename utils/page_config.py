@@ -14,10 +14,12 @@ def apply_page_header():
         margin-top: 0 !important;
     }
     
-    /* Garantir que o header do Streamlit não interfira */
+    /* Remover completamente o header do Streamlit */
     header[data-testid="stHeader"] {
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
     /* Remove espaços extras no topo do corpo da página */
