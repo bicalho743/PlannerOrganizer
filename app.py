@@ -957,55 +957,15 @@ if not st.session_state.authenticated:
         
         with col1:
             # Botão "Receba o Manual do Sistema"
-            st.markdown("""
-            <a href="/enviar_manual" 
-               target="_blank" 
-               id="manual-link" 
-               style="display: inline-block; background-color: #1E88E5; color: white; 
-                      text-align: center; padding: 1rem 1.5rem; text-decoration: none; 
-                      border-radius: 10px; width: 100%; font-size: 1.1rem; 
-                      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); font-weight: 600;
-                      transition: all 0.3s ease; margin-bottom: 1rem;">
-                📚 Receba o Manual do Sistema
-            </a>
-            """, unsafe_allow_html=True)
+            if st.button("📚 Receba o Manual do Sistema", use_container_width=True, type="primary"):
+                st.session_state.show_enviar_manual = True
+                st.rerun()
         
         with col2:
             # Botão "Ver Planos e Preços"
-            st.markdown("""
-            <a href="/?planos_standalone_page=true" 
-               target="_blank" 
-               id="planos-link" 
-               style="display: inline-block; background-color: #026937; color: white; 
-                      text-align: center; padding: 1rem 1.5rem; text-decoration: none; 
-                      border-radius: 10px; width: 100%; font-size: 1.1rem; 
-                      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); font-weight: 600;
-                      transition: all 0.3s ease; margin-bottom: 1rem;">
-                💰 Ver Planos e Preços
-            </a>
-        <script>
-            // JavaScript para adicionar efeito hover aos links
-            document.getElementById('manual-link').addEventListener('mouseenter', function() {
-                this.style.transform = 'scale(1.02)';
-                this.style.boxShadow = '0 8px 20px rgba(30, 136, 229, 0.3)';
-            });
-            
-            document.getElementById('manual-link').addEventListener('mouseleave', function() {
-                this.style.transform = 'scale(1)';
-                this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-            });
-            
-            document.getElementById('planos-link').addEventListener('mouseenter', function() {
-                this.style.transform = 'scale(1.02)';
-                this.style.boxShadow = '0 8px 20px rgba(2, 105, 55, 0.3)';
-            });
-            
-            document.getElementById('planos-link').addEventListener('mouseleave', function() {
-                this.style.transform = 'scale(1)';
-                this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-            });
-        </script>
-        """, unsafe_allow_html=True)
+            if st.button("💰 Ver Planos e Preços", use_container_width=True, type="secondary"):
+                st.session_state.show_planos = True
+                st.rerun()
     
     with right_col:
         # Título da seção de login, mais próximo das caixas de preenchimento
