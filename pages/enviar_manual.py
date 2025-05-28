@@ -11,6 +11,28 @@ if root_dir not in sys.path:
 from utils.brevo_helper import adicionar_contato_brevo, enviar_manual_email
 
 def main():
+    # CSS para ocultar completamente a sidebar na página do manual
+    st.markdown("""
+    <style>
+        /* Ocultar sidebar completamente */
+        .css-1d391kg, .css-1rs6os, .stSidebar, [data-testid="stSidebar"] {
+            display: none !important;
+        }
+        
+        /* Expandir conteúdo principal para ocupar toda a largura */
+        .main .block-container {
+            padding-left: 2rem !important;
+            padding-right: 2rem !important;
+            max-width: 100% !important;
+        }
+        
+        /* Estilo personalizado para a página do manual */
+        .stApp > header {
+            background-color: transparent;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Título e descrição
     st.title("Manual do Sistema Planner Organizer")
     st.markdown("""
