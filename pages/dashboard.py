@@ -104,7 +104,7 @@ def show():
         st.markdown("""
         <style>
         .main .block-container {
-            padding-top: 85px !important;
+            padding-top: 0px !important;
         }
         .stApp > div:first-child {
             padding-top: 0 !important;
@@ -130,7 +130,7 @@ def show():
         st.markdown("""
         <style>
         .main .block-container {
-            padding-top: 85px !important;
+            padding-top: 0px !important;
         }
         .stApp > div:first-child {
             padding-top: 0 !important;
