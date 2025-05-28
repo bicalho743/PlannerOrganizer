@@ -287,8 +287,8 @@ if st.session_state.show_planos:
         st.error(f"Não foi possível carregar a página de planos: {e}")
         st.session_state.show_planos = False
         
-# Mostrar página de envio de manual se solicitado
-if st.session_state.show_enviar_manual:
+# Mostrar página de envio de manual se solicitado (TEMPORARIAMENTE DESABILITADO)
+if False and st.session_state.show_enviar_manual:
     try:
         # Importar o módulo de envio de manual da pasta pages
         from pages.enviar_manual import main as enviar_manual_main
