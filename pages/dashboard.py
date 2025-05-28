@@ -101,7 +101,7 @@ def show():
         # Mostrar uma frase motivacional
         frase = random.choice(frases_motivacionais)
         st.markdown(f"""
-        <div style="text-align: center; margin: -20px 0 25px 0; padding-top: 0;">
+        <div style="text-align: center; margin: -40px 0 25px 0; padding-top: 0;">
             <p style="font-style: italic; color: #1E366F; margin: 0; font-size: 1.1rem; font-weight: 500;">
                 "{frase['texto']}"
             </p>
@@ -114,7 +114,7 @@ def show():
         # Mostrar uma dica profissional
         dica = random.choice(dicas_profissionais)
         st.markdown(f"""
-        <div style="text-align: center; margin: -20px 0 25px 0; padding-top: 0;">
+        <div style="text-align: center; margin: -40px 0 25px 0; padding-top: 0;">
             <p style="color: #FF9800; font-weight: bold; font-size: 0.9rem; margin-bottom: 5px;">
                 💡 DICA PROFISSIONAL
             </p>
