@@ -288,11 +288,14 @@ if st.session_state.show_planos:
 if st.session_state.show_enviar_manual:
     try:
         # Importar o módulo de envio de manual da pasta pages
-        from pages.enviar_manual import main
-        main()
+        import pages.enviar_manual as enviar_manual_module
+        enviar_manual_module.main()
         st.stop()
     except ImportError as e:
         st.error(f"Não foi possível carregar a página de envio de manual: {e}")
+        st.session_state.show_enviar_manual = False
+    except Exception as e:
+        st.error(f"Erro ao executar página de envio de manual: {e}")
         st.session_state.show_enviar_manual = False
 
 # Verificar se a URL contém parâmetros de página específicos
