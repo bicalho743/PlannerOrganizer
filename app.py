@@ -913,8 +913,28 @@ if not st.session_state.authenticated:
         # Espaço para destacar os botões
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Botões CTA temporariamente desabilitados para resolver navegação
-        st.info("🔧 Botões CTA temporariamente em manutenção - voltarão em breve!")
+        # Botões CTA reativados - versão simplificada
+        st.markdown("### 🎯 Call to Action")
+        
+        # Botão "Receba o Manual do Sistema" - usando link direto
+        st.markdown("""
+        <div style="text-align: center; margin: 20px 0;">
+            <a href="mailto:contato@plannerorganiza.com.br?subject=Solicitar Manual do Sistema&body=Olá! Gostaria de receber o Manual do Sistema Planner Organizer." 
+               style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #1976D2, #42A5F5); 
+               color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; 
+               box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3); transition: all 0.3s;">
+               📚 RECEBA O MANUAL DO SISTEMA
+            </a>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Espaço entre botões
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Botão "Ver Planos e Preços" - redireciona para seção de planos
+        if st.button("💰 Ver Planos e Preços", use_container_width=True, type="secondary"):
+            st.session_state.show_planos = True
+            st.rerun()
         
         # Espaço antes do FAQ
         st.markdown("<br>", unsafe_allow_html=True)
