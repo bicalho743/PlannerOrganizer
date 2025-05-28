@@ -112,6 +112,82 @@ input:focus, textarea:focus, .stTextInput > div > div > input:focus, .stTextArea
     border-right: 1px solid #eaeaea;
 }
 
+/* Botões da sidebar com transparência e animações */
+section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-weight: 500 !important;
+    border-radius: 12px !important;
+    margin: 4px 0 !important;
+    padding: 12px 16px !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+/* Efeito hover para os botões da sidebar */
+section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    color: rgba(255, 255, 255, 1) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Efeito de ondulação nos botões */
+section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%) !important;
+    transition: all 0.6s ease !important;
+    transform: translate(-50%, -50%) !important;
+    border-radius: 50% !important;
+    pointer-events: none !important;
+}
+
+section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover::before {
+    width: 300px !important;
+    height: 300px !important;
+}
+
+/* Botão ativo/selecionado */
+section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"].menu-active {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Texto dos botões da sidebar */
+section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] div {
+    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-size: 0.9rem !important;
+    letter-spacing: 0.5px !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Animação de entrada para os botões */
+section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
+    animation: slideInFromLeft 0.5s ease-out !important;
+}
+
+@keyframes slideInFromLeft {
+    0% {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
 /* Cards informativos */
 div[data-testid="stMetric"] {
     background-color: #FFFFFF;

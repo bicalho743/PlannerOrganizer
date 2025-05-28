@@ -39,6 +39,28 @@ def apply_page_header():
         background-color: #1E1F36 !important;
     }
     
+    /* Botões transparentes da sidebar com animações */
+    [data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: rgba(255, 255, 255, 0.8) !important;
+        backdrop-filter: blur(10px) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        border-radius: 12px !important;
+        margin: 4px 0 !important;
+        padding: 12px 16px !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+    
+    [data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover {
+        background-color: rgba(255, 255, 255, 0.15) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        color: rgba(255, 255, 255, 1) !important;
+        transform: translateY(-2px) scale(1.02) !important;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.1) !important;
+    }
+    
     /* Reduz espaçamento nos elementos da barra lateral */
     [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
         gap: 0 !important;

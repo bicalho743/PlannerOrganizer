@@ -1148,22 +1148,47 @@ st.markdown(f"""
     /* Estilo para botões do menu */
     div.stButton > button {{
         width: 100%;
-        background-color: #1E88E5 !important;
-        color: white !important;
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        color: rgba(255, 255, 255, 0.8) !important;
         font-weight: 500;
         text-align: left;
         padding: 0.75rem 1rem;
         margin-bottom: 0.5rem;
-        border-radius: 4px;
-        border: none;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-        transition: all 0.2s ease;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(10px);
+        position: relative;
+        overflow: hidden;
     }}
 
     div.stButton > button:hover {{
-        background-color: #1976D2 !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        transform: translateY(-1px);
+        background-color: rgba(255, 255, 255, 0.15) !important;
+        color: rgba(255, 255, 255, 1) !important;
+        border-color: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3), 0 0 20px rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px) scale(1.02);
+    }}
+
+    /* Efeito de ondulação nos botões do menu */
+    div.stButton > button::before {{
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+        transition: all 0.6s ease;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        pointer-events: none;
+    }}
+
+    div.stButton > button:hover::before {{
+        width: 300px;
+        height: 300px;
     }}
 
     /* Container para os botões */
