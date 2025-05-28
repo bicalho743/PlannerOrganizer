@@ -36,6 +36,7 @@ def apply_page_header():
     [data-testid="stSidebar"] {
         padding-top: 0 !important;
         margin-top: 0 !important;
+        background-color: #1E1F36 !important;
     }
     
     /* Reduz espaçamento nos elementos da barra lateral */

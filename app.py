@@ -1137,7 +1137,7 @@ st.markdown(f"""
     
     /* Estilo específico para a barra lateral */
     section[data-testid="stSidebar"] {{
-        background-color: #F9FAFB;
+        background-color: #1E1F36;
         border-right: 1px solid #E0E0E0;
     }}
 
