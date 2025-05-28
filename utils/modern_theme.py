@@ -5,27 +5,37 @@ import streamlit as st
 
 def apply_modern_blue_theme():
     """
-    Aplica o tema moderno azul com CSS simplificado
+    Aplica a cor personalizada #2c2d3d na sidebar com força máxima
     """
     
     css = """
     <style>
-    /* FORÇA EXTREMA PARA APLICAR CORES NA SIDEBAR */
+    /* FORÇA MÁXIMA PARA APLICAR COR #2c2d3d NA SIDEBAR */
     
-    /* Todos os possíveis seletores da sidebar */
+    /* Todos os possíveis seletores da sidebar com prioridade máxima */
     section[data-testid="stSidebar"],
     section[data-testid="stSidebar"] > div,
     section[data-testid="stSidebar"] > div > div,
+    section[data-testid="stSidebar"] > div > div > div,
     section[data-testid="stSidebar"] .css-1d391kg,
     .css-1d391kg,
     [data-testid="stSidebar"],
     [data-testid="stSidebar"] > div,
     div[data-testid="stSidebar"],
     .st-emotion-cache-1d391kg,
-    .st-emotion-cache-1cypcdb {
+    .st-emotion-cache-1cypcdb,
+    .css-1vq4p4l,
+    .css-1d3bhkq {
         background: #2c2d3d !important;
         background-color: #2c2d3d !important;
         background-image: none !important;
+    }
+    
+    /* Força extra com especificidade máxima */
+    body section[data-testid="stSidebar"],
+    html body section[data-testid="stSidebar"] {
+        background: #2c2d3d !important;
+        background-color: #2c2d3d !important;
     }
     
     /* Força máxima com JavaScript inline */

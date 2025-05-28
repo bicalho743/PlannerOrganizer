@@ -107,8 +107,13 @@ input:focus, textarea:focus, .stTextInput > div > div > input:focus, .stTextArea
 }
 
 /* Estilização para sidebar */
-.css-1vq4p4l, .css-1d3bhkq {
-    background-color: #F9FAFB !important;
+.css-1vq4p4l, .css-1d3bhkq,
+section[data-testid="stSidebar"],
+section[data-testid="stSidebar"] > div,
+[data-testid="stSidebar"],
+div[data-testid="stSidebar"] {
+    background-color: #2c2d3d !important;
+    background: #2c2d3d !important;
     border-right: 1px solid #eaeaea;
 }
 
