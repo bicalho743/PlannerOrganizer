@@ -10,7 +10,7 @@ def apply_page_header():
     <style>
     /* Reduzir o espaço acima do cabeçalho */
     .main .block-container {
-        padding-top: 120px !important;
+        padding-top: 80px !important;
         margin-top: 0 !important;
     }
     
