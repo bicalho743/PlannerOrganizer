@@ -37,12 +37,9 @@ def main():
     col_voltar, col_spacer = st.columns([1, 4])
     with col_voltar:
         if st.button("← Voltar", key="btn_voltar_manual", help="Voltar para a página principal"):
-            # Usar JavaScript para voltar na história do navegador
-            st.markdown("""
-            <script>
-                window.history.back();
-            </script>
-            """, unsafe_allow_html=True)
+            # Redirecionar para a página principal limpando os query params
+            st.query_params.clear()
+            st.rerun()
     
     # Título e descrição
     st.title("Manual do Sistema Planner Organizer")
