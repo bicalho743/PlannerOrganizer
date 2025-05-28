@@ -888,6 +888,29 @@ if not st.session_state.authenticated:
         current_url = st.query_params
         base_url = f"https://{os.environ.get('REPLIT_SLUG', '')}--{os.environ.get('REPL_OWNER', '')}.repl.co"
         
+        # Botões de ação antes do FAQ
+        st.markdown("---")
+        
+        # Espaço para destacar os botões
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Botão "Receba o Manual do Sistema"
+            if st.button("📚 Receba o Manual do Sistema", use_container_width=True, type="primary"):
+                st.session_state.show_enviar_manual = True
+                st.rerun()
+        
+        with col2:
+            # Botão "Ver Planos e Preços"
+            if st.button("💰 Ver Planos e Preços", use_container_width=True, type="secondary"):
+                st.session_state.show_planos = True
+                st.rerun()
+        
+        # Espaço antes do FAQ
+        st.markdown("<br>", unsafe_allow_html=True)
+        
         # Seção de FAQ usando o componente nativo do Streamlit
         st.markdown("## Perguntas Frequentes")
         
@@ -952,20 +975,7 @@ if not st.session_state.authenticated:
         with testimonial_cols[4]:
             st.markdown("**Mariana Costa**<br>*Personal Organizer*", unsafe_allow_html=True)
         
-        # Botões de ação
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Botão "Receba o Manual do Sistema"
-            if st.button("📚 Receba o Manual do Sistema", use_container_width=True, type="primary"):
-                st.session_state.show_enviar_manual = True
-                st.rerun()
-        
-        with col2:
-            # Botão "Ver Planos e Preços"
-            if st.button("💰 Ver Planos e Preços", use_container_width=True, type="secondary"):
-                st.session_state.show_planos = True
-                st.rerun()
+
     
     with right_col:
         # Título da seção de login, mais próximo das caixas de preenchimento
