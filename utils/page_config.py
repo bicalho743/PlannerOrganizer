@@ -71,6 +71,24 @@ def apply_page_header():
         color: rgba(255, 255, 255, 1) !important;
     }
     
+    /* Conteúdo dos expanders na sidebar com texto branco */
+    [data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent {
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+    
+    [data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent h3,
+    [data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent h4,
+    [data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent p,
+    [data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent li,
+    [data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent ul,
+    [data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent div {
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+    
+    [data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent strong {
+        color: rgba(255, 255, 255, 1) !important;
+    }
+    
     /* Reduz espaçamento nos elementos da barra lateral */
     [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
         gap: 0 !important;

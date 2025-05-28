@@ -67,6 +67,24 @@ section[data-testid="stSidebar"] [data-testid="stExpander"] summary:hover {
     color: rgba(255, 255, 255, 1) !important;
 }
 
+/* Conteúdo dos expanders na sidebar com texto branco */
+section[data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent h3,
+section[data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent h4,
+section[data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent p,
+section[data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent li,
+section[data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent ul,
+section[data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent div {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent strong {
+    color: rgba(255, 255, 255, 1) !important;
+}
+
 /* Estilização de caixas de texto e inputs */
 input, textarea, .stTextInput > div > div > input, .stTextArea > div > div > textarea {
     border-radius: 4px !important;
