@@ -898,13 +898,13 @@ if not st.session_state.authenticated:
         
         with col1:
             # Botão "Receba o Manual do Sistema"
-            if st.button("📚 Receba o Manual do Sistema", use_container_width=True, type="primary"):
+            if st.button("📚 Receba o Manual do Sistema", key="btn_manual_cta", use_container_width=True, type="primary"):
                 st.session_state.show_enviar_manual = True
                 st.rerun()
         
         with col2:
             # Botão "Ver Planos e Preços"
-            if st.button("💰 Ver Planos e Preços", use_container_width=True, type="secondary"):
+            if st.button("💰 Ver Planos e Preços", key="btn_planos_cta", use_container_width=True, type="secondary"):
                 st.session_state.show_planos = True
                 st.rerun()
         
