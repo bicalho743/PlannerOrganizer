@@ -23,8 +23,8 @@ def apply_modern_blue_theme():
     div[data-testid="stSidebar"],
     .st-emotion-cache-1d391kg,
     .st-emotion-cache-1cypcdb {
-        background: #1E1F36 !important;
-        background-color: #1E1F36 !important;
+        background: #2c2d3d !important;
+        background-color: #2c2d3d !important;
         background-image: none !important;
     }
     
@@ -35,14 +35,14 @@ def apply_modern_blue_theme():
         // Força a aplicação da cor via JavaScript
         const sidebar = document.querySelector('[data-testid="stSidebar"]');
         if (sidebar) {
-            sidebar.style.setProperty('background', '#1E1F36', 'important');
-            sidebar.style.setProperty('background-color', '#1E1F36', 'important');
+            sidebar.style.setProperty('background', '#2c2d3d', 'important');
+            sidebar.style.setProperty('background-color', '#2c2d3d', 'important');
             
             // Aplica em todos os filhos também
             const children = sidebar.querySelectorAll('*');
             children.forEach(child => {
                 if (child.style) {
-                    child.style.setProperty('background-color', '#1E1F36', 'important');
+                    child.style.setProperty('background-color', '#2c2d3d', 'important');
                 }
             });
         }
@@ -50,8 +50,8 @@ def apply_modern_blue_theme():
         // Procura por outros seletores comuns
         const altSidebars = document.querySelectorAll('.css-1d391kg, .st-emotion-cache-1d391kg');
         altSidebars.forEach(el => {
-            el.style.setProperty('background', '#1E1F36', 'important');
-            el.style.setProperty('background-color', '#1E1F36', 'important');
+            el.style.setProperty('background', '#2c2d3d', 'important');
+            el.style.setProperty('background-color', '#2c2d3d', 'important');
         });
     }, 100);
     </script>
