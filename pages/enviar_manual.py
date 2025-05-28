@@ -37,8 +37,11 @@ def main():
     col_voltar, col_spacer = st.columns([1, 4])
     with col_voltar:
         if st.button("← Voltar", key="btn_voltar_manual", help="Voltar para a página principal"):
-            # Redirecionar para a página principal limpando os query params
-            st.query_params.clear()
+            # Resetar estados de sessão para voltar à página principal
+            st.session_state.show_enviar_manual = False
+            st.session_state.show_planos = False
+            st.session_state.show_termos = False
+            st.session_state.show_politica = False
             st.rerun()
     
     # Título e descrição
