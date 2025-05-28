@@ -287,9 +287,9 @@ if st.session_state.show_planos:
 # Mostrar página de envio de manual se solicitado
 if st.session_state.show_enviar_manual:
     try:
-        # Importar o módulo de envio de manual diretamente
-        import enviar_manual
-        enviar_manual.main()
+        # Importar o módulo de envio de manual da pasta pages
+        from pages.enviar_manual import main
+        main()
         st.stop()
     except ImportError as e:
         st.error(f"Não foi possível carregar a página de envio de manual: {e}")
