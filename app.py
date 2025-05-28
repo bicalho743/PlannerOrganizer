@@ -1151,6 +1151,44 @@ st.markdown(f"""
     section[data-testid="stSidebar"] * {{
         color: white !important;
     }}
+    </style>
+    
+    <script>
+    // JavaScript agressivo para forçar cor #2c2d3d
+    function forceSidebarColor() {{
+        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+        if (sidebar) {{
+            sidebar.style.setProperty('background-color', '#2c2d3d', 'important');
+            sidebar.style.setProperty('background', '#2c2d3d', 'important');
+            
+            // Aplica em todos os elementos filhos
+            const allElements = sidebar.querySelectorAll('*');
+            allElements.forEach(element => {{
+                element.style.setProperty('background-color', '#2c2d3d', 'important');
+                element.style.setProperty('background', '#2c2d3d', 'important');
+            }});
+        }}
+        
+        // Força também nos seletores alternativos
+        const altSelectors = ['.css-1d391kg', '.st-emotion-cache-1d391kg', '.css-1vq4p4l'];
+        altSelectors.forEach(selector => {{
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(element => {{
+                element.style.setProperty('background-color', '#2c2d3d', 'important');
+                element.style.setProperty('background', '#2c2d3d', 'important');
+            }});
+        }});
+    }}
+    
+    // Executa imediatamente e a cada 500ms para garantir aplicação
+    forceSidebarColor();
+    setInterval(forceSidebarColor, 500);
+    
+    // Executa quando o DOM carrega
+    document.addEventListener('DOMContentLoaded', forceSidebarColor);
+    </script>
+    
+    <style>
 
     div.block-container {{
         padding-top: 2rem !important;
