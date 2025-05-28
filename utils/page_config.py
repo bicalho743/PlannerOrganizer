@@ -10,18 +10,18 @@ def apply_page_header():
     <style>
     /* Reduzir o espaço acima do cabeçalho */
     .main .block-container {
-        padding-top: 60px !important;
+        padding-top: 85px !important;
         margin-top: 0 !important;
     }
     
     /* Controlar o scroll para parar no cabeçalho */
     html, body {
-        scroll-padding-top: 55px !important;
+        scroll-padding-top: 80px !important;
     }
     
     /* Evitar que elementos fiquem escondidos atrás do cabeçalho */
     [data-testid="stAppViewContainer"] {
-        scroll-margin-top: 55px !important;
+        scroll-margin-top: 80px !important;
     }
     
     /* Remover completamente o header do Streamlit */
@@ -172,16 +172,16 @@ def apply_page_header():
     # Adicionando o cabeçalho usando a classe CSS definida em style.css
     st.markdown(f"""
     <div class="app-header">
-        <h2 style="color: rgba(255, 255, 255, 0.95); margin: 0; padding: 0; font-family: 'Poppins', sans-serif; font-size: 1.3rem; font-weight: 600;">Planner Organizer</h2>
-        <p style="color: rgba(255, 255, 255, 0.85); margin: 0.1rem 0 0 0; padding: 0; font-size: 0.8rem; font-family: 'Poppins', sans-serif;">
+        <h2 style="color: rgba(255, 255, 255, 0.95); margin: 0; padding: 0; font-family: 'Poppins', sans-serif; font-size: 1.6rem; font-weight: 600;">Planner Organizer</h2>
+        <p style="color: rgba(255, 255, 255, 0.85); margin: 0.1rem 0 0 0; padding: 0; font-size: 1rem; font-family: 'Poppins', sans-serif;">
             Sistema Profissional de Gestão Personal Organizer
         </p>
-        <p style="color: rgba(255, 255, 255, 0.75); margin: 0.2rem 0 0 0; padding: 0; font-size: 0.7rem; font-family: 'Poppins', sans-serif; font-style: italic;">
+        <p style="color: rgba(255, 255, 255, 0.75); margin: 0.2rem 0 0 0; padding: 0; font-size: 0.9rem; font-family: 'Poppins', sans-serif; font-style: italic;">
             "Transforme sua organização em resultados: gerencie propostas, clientes e finanças com precisão profissional."
         </p>
-        <div style="position: absolute; top: 45%; right: 1rem; transform: translateY(-50%); background-color: rgba(255, 255, 255, 0.15); padding: 0.3rem 0.8rem; border-radius: 1rem; text-align: center; border: 1px solid rgba(255, 255, 255, 0.2);">
-            <span style="color: rgba(255, 255, 255, 0.95); font-size: 0.8rem; font-family: 'Poppins', sans-serif; display: block; font-weight: 500;">Bem-vindo(a), {nome_usuario}</span>
-            <span style="color: rgba(255, 255, 255, 0.8); font-size: 0.7rem; font-family: 'Poppins', sans-serif; display: block; margin-top: 0.2rem;">📅 {data_formatada}</span>
+        <div style="position: absolute; top: 45%; right: 1rem; transform: translateY(-50%); background-color: rgba(255, 255, 255, 0.15); padding: 0.4rem 1rem; border-radius: 1rem; text-align: center; border: 1px solid rgba(255, 255, 255, 0.2);">
+            <span style="color: rgba(255, 255, 255, 0.95); font-size: 0.9rem; font-family: 'Poppins', sans-serif; display: block; font-weight: 500;">Bem-vindo(a), {nome_usuario}</span>
+            <span style="color: rgba(255, 255, 255, 0.8); font-size: 0.8rem; font-family: 'Poppins', sans-serif; display: block; margin-top: 0.2rem;">📅 {data_formatada}</span>
         </div>
     </div>
     
