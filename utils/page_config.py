@@ -10,7 +10,7 @@ def apply_page_header():
     <style>
     /* Reduzir o espaço acima do cabeçalho */
     .main .block-container {
-        padding-top: 0rem !important;
+        padding-top: 120px !important;
         margin-top: 0 !important;
     }
     
@@ -160,16 +160,16 @@ def apply_page_header():
     # Adicionando o cabeçalho usando a classe CSS definida em style.css
     st.markdown(f"""
     <div class="app-header">
-        <h2 style="color: white; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; font-size: 1.5rem; font-weight: 600;">Planner Organizer</h2>
-        <p style="color: #E3F2FD; margin: 0.15rem 0 0 0; padding: 0; font-size: 0.85rem; font-family: 'Poppins', sans-serif;">
+        <h2 style="color: rgba(255, 255, 255, 0.95); margin: 0; padding: 0; font-family: 'Poppins', sans-serif; font-size: 1.5rem; font-weight: 600;">Planner Organizer</h2>
+        <p style="color: rgba(255, 255, 255, 0.85); margin: 0.15rem 0 0 0; padding: 0; font-size: 0.85rem; font-family: 'Poppins', sans-serif;">
             Sistema Profissional de Gestão Personal Organizer
         </p>
-        <p style="color: #BBD8FF; margin: 0.3rem 0 0 0; padding: 0; font-size: 0.75rem; font-family: 'Poppins', sans-serif; font-style: italic;">
+        <p style="color: rgba(255, 255, 255, 0.75); margin: 0.3rem 0 0 0; padding: 0; font-size: 0.75rem; font-family: 'Poppins', sans-serif; font-style: italic;">
             "Transforme sua organização em resultados: gerencie propostas, clientes e finanças com precisão profissional."
         </p>
-        <div style="position: absolute; top: 45%; right: 1rem; transform: translateY(-50%); background-color: rgba(255, 255, 255, 0.2); padding: 0.3rem 0.8rem; border-radius: 1rem; text-align: center;">
-            <span style="color: white; font-size: 0.8rem; font-family: 'Poppins', sans-serif; display: block;">Bem-vindo(a), {nome_usuario}</span>
-            <span style="color: #BBD8FF; font-size: 0.7rem; font-family: 'Poppins', sans-serif; display: block; margin-top: 0.2rem;">📅 {data_formatada}</span>
+        <div style="position: absolute; top: 45%; right: 1rem; transform: translateY(-50%); background-color: rgba(255, 255, 255, 0.15); padding: 0.3rem 0.8rem; border-radius: 1rem; text-align: center; border: 1px solid rgba(255, 255, 255, 0.2);">
+            <span style="color: rgba(255, 255, 255, 0.95); font-size: 0.8rem; font-family: 'Poppins', sans-serif; display: block; font-weight: 500;">Bem-vindo(a), {nome_usuario}</span>
+            <span style="color: rgba(255, 255, 255, 0.8); font-size: 0.7rem; font-family: 'Poppins', sans-serif; display: block; margin-top: 0.2rem;">📅 {data_formatada}</span>
         </div>
     </div>
     
