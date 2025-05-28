@@ -894,19 +894,18 @@ if not st.session_state.authenticated:
         # Espaço para destacar os botões
         st.markdown("<br>", unsafe_allow_html=True)
         
-        col1, col2 = st.columns(2)
+        # Botão "Receba o Manual do Sistema" - Principal
+        if st.button("📚 Receba o Manual do Sistema", key="btn_manual_sistema", use_container_width=True, type="primary"):
+            st.session_state.show_enviar_manual = True
+            st.rerun()
         
-        with col1:
-            # Botão "Receba o Manual do Sistema"
-            if st.button("📚 Receba o Manual do Sistema", key="btn_manual_cta", use_container_width=True, type="primary"):
-                st.session_state.show_enviar_manual = True
-                st.rerun()
+        # Espaço entre botões
+        st.markdown("<br>", unsafe_allow_html=True)
         
-        with col2:
-            # Botão "Ver Planos e Preços"
-            if st.button("💰 Ver Planos e Preços", key="btn_planos_cta", use_container_width=True, type="secondary"):
-                st.session_state.show_planos = True
-                st.rerun()
+        # Botão "Ver Planos e Preços" - Secundário  
+        if st.button("💰 Ver Planos e Preços", key="btn_ver_planos", use_container_width=True, type="secondary"):
+            st.session_state.show_planos = True
+            st.rerun()
         
         # Espaço antes do FAQ
         st.markdown("<br>", unsafe_allow_html=True)
