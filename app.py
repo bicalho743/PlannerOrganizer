@@ -917,59 +917,24 @@ if not st.session_state.authenticated:
         current_url = st.query_params
         base_url = f"https://{os.environ.get('REPLIT_SLUG', '')}--{os.environ.get('REPL_OWNER', '')}.repl.co"
         
-        # Status do Sistema - Diagnóstico
-        with st.expander("🔧 Status do Sistema", expanded=False):
-            st.subheader("Diagnóstico de Componentes")
-            
-            # Verificar componentes críticos
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown("**Autenticação:**")
-                if firebase_auth is not None:
-                    st.success("✅ Firebase Auth - ATIVO")
-                else:
-                    st.warning("⚠️ Firebase Auth - INATIVO")
-                
-                st.markdown("**Banco de Dados:**")
-                try:
-                    db_url = os.getenv('DATABASE_URL', '')
-                    if db_url:
-                        st.success("✅ Database - CONFIGURADO")
-                    else:
-                        st.error("❌ Database - NÃO CONFIGURADO")
-                except:
-                    st.error("❌ Database - ERRO")
-            
-            with col2:
-                st.markdown("**Analytics:**")
-                if os.getenv('GA_MEASUREMENT_ID'):
-                    st.success("✅ Google Analytics - ATIVO")
-                else:
-                    st.warning("⚠️ Google Analytics - INATIVO")
-                
-                st.markdown("**Email:**")
-                if os.getenv('BREVO_API_KEY'):
-                    st.success("✅ Brevo Email - ATIVO")
-                else:
-                    st.warning("⚠️ Brevo Email - INATIVO")
-            
-            # Informações de ambiente
-            st.markdown("**Ambiente de Execução:**")
-            is_render = os.environ.get('RENDER') == 'true'
-            if is_render:
-                st.info("🌐 Rodando no Render")
-            else:
-                st.info("💻 Rodando localmente/Replit")
-            
-            # Status da aplicação
-            st.markdown("**Status da Aplicação:**")
-            st.success("✅ Streamlit - ATIVO")
-            st.success(f"✅ Porta 5000 - ATIVA")
-            
-            # Botão para recarregar diagnósticos
-            if st.button("🔄 Atualizar Diagnósticos"):
-                st.rerun()
+        # CTA para download do manual
+        st.markdown("""
+        <div style="text-align: center; margin: 2rem 0; padding: 2rem; background: linear-gradient(135deg, #f8f9fa, #e9f2ff); border-radius: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.05);">
+            <h3 style="color: #1E366F; margin-bottom: 1rem; font-size: 1.8rem;">📘 Manual Completo do Sistema</h3>
+            <p style="color: #5A6A85; font-size: 1.1rem; margin-bottom: 1.5rem;">
+                Receba gratuitamente o guia completo com todas as funcionalidades do Planner Organizer
+            </p>
+            <a href="/manual_sistema" 
+               target="_blank" 
+               style="display: inline-block; background: linear-gradient(135deg, #026937, #02844a); 
+                      color: white; text-align: center; padding: 1rem 2.5rem; text-decoration: none; 
+                      border-radius: 12px; font-size: 1.2rem; font-weight: 600;
+                      box-shadow: 0 6px 20px rgba(2, 105, 55, 0.3); 
+                      transition: all 0.3s ease; border: none;">
+                📥 Baixe o Manual Gratuitamente
+            </a>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Seção de FAQ usando o componente nativo do Streamlit
         st.markdown("## Perguntas Frequentes")
