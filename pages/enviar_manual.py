@@ -33,6 +33,17 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
+    # Botão Voltar no topo
+    col_voltar, col_spacer = st.columns([1, 4])
+    with col_voltar:
+        if st.button("← Voltar", key="btn_voltar_manual", help="Voltar para a página principal"):
+            # Usar JavaScript para voltar na história do navegador
+            st.markdown("""
+            <script>
+                window.history.back();
+            </script>
+            """, unsafe_allow_html=True)
+    
     # Título e descrição
     st.title("Manual do Sistema Planner Organizer")
     st.markdown("""
