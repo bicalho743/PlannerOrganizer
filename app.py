@@ -142,11 +142,9 @@ def show_planos():
     
 # Função para mostrar página de envio de manual
 def show_enviar_manual():
-    """Mostra a página de envio de manual - DESABILITADO TEMPORARIAMENTE"""
-    # FORÇAR RETORNO À PÁGINA PRINCIPAL
-    st.session_state.show_enviar_manual = False
-    st.error("🚧 Página do manual temporariamente desabilitada para manutenção")
-    return
+    """Mostra a página de envio de manual"""
+    from pages.enviar_manual import main
+    main()
     
 def debug_propostas_finalizadas():
     """Página de debug para filtro de propostas finalizadas"""
@@ -913,28 +911,23 @@ if not st.session_state.authenticated:
         # Espaço para destacar os botões
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Botões CTA reativados - versão simplificada
+        # Botões CTA funcionais para páginas distintas
         st.markdown("### 🎯 Call to Action")
         
-        # Botão "Receba o Manual do Sistema" - usando link direto
-        st.markdown("""
-        <div style="text-align: center; margin: 20px 0;">
-            <a href="mailto:contato@plannerorganiza.com.br?subject=Solicitar Manual do Sistema&body=Olá! Gostaria de receber o Manual do Sistema Planner Organizer." 
-               style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #1976D2, #42A5F5); 
-               color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; 
-               box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3); transition: all 0.3s;">
-               📚 RECEBA O MANUAL DO SISTEMA
-            </a>
-        </div>
-        """, unsafe_allow_html=True)
+        # Criar duas colunas para os botões
+        col1, col2 = st.columns(2)
         
-        # Espaço entre botões
-        st.markdown("<br>", unsafe_allow_html=True)
+        with col1:
+            # Botão "Receba o Manual do Sistema" - vai para página de captura de email
+            if st.button("📚 RECEBA O MANUAL", use_container_width=True, type="primary"):
+                st.session_state.show_enviar_manual = True
+                st.rerun()
         
-        # Botão "Ver Planos e Preços" - redireciona para seção de planos
-        if st.button("💰 Ver Planos e Preços", use_container_width=True, type="secondary"):
-            st.session_state.show_planos = True
-            st.rerun()
+        with col2:
+            # Botão "Ver Planos e Preços" - vai para página de planos
+            if st.button("💰 VER PLANOS", use_container_width=True, type="secondary"):
+                st.session_state.show_planos = True
+                st.rerun()
         
         # Espaço antes do FAQ
         st.markdown("<br>", unsafe_allow_html=True)
