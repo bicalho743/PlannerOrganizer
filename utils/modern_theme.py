@@ -12,19 +12,19 @@ def apply_modern_blue_theme():
     <style>
     /* TEMA AZUL MODERNO - FORÇA MÁXIMA */
     
-    /* Sidebar com a MESMA cor da barra de cabeçalho */
+    /* Sidebar com cor azul escura elegante */
     section[data-testid="stSidebar"],
     .css-1d391kg,
     [data-testid="stSidebar"] {
-        background: #2c5aa0 !important;
-        background-image: linear-gradient(180deg, #2c5aa0 0%, #1e3a8a 100%) !important;
+        background: #1E1F36 !important;
+        background-image: linear-gradient(180deg, #1E1F36 0%, #2c5aa0 100%) !important;
     }
     
     section[data-testid="stSidebar"] > div,
     .css-1d391kg > div,
     [data-testid="stSidebar"] > div {
-        background: #2c5aa0 !important;
-        background-image: linear-gradient(180deg, #2c5aa0 0%, #1e3a8a 100%) !important;
+        background: #1E1F36 !important;
+        background-image: linear-gradient(180deg, #1E1F36 0%, #2c5aa0 100%) !important;
     }
     
     /* Força texto branco em TUDO na sidebar */
