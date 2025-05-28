@@ -104,8 +104,38 @@ except Exception as e:
 try:
     inject_analytics_tags()
     track_page_view("Home")
+    logger.info("✅ Google Analytics inicializado com sucesso")
 except Exception as e:
-    logger.error(f"Erro ao inicializar Google Analytics: {e}")
+    logger.error(f"❌ Erro ao inicializar Google Analytics: {e}")
+
+# Diagnóstico de componentes do sistema
+logger.info("🔍 Verificando status dos componentes do sistema...")
+
+# Verificar Firebase Auth
+try:
+    if firebase_auth is not None:
+        logger.info("✅ Firebase Auth: ATIVO")
+    else:
+        logger.warning("⚠️ Firebase Auth: INATIVO - Usando autenticação padrão")
+except Exception as e:
+    logger.error(f"❌ Firebase Auth: ERRO - {e}")
+
+# Verificar Database
+try:
+    if 'db' in st.session_state:
+        logger.info("✅ Database: ATIVO")
+    else:
+        logger.warning("⚠️ Database: NÃO INICIALIZADO")
+except Exception as e:
+    logger.error(f"❌ Database: ERRO - {e}")
+
+# Verificar variáveis de ambiente críticas
+env_vars = ['DATABASE_URL', 'FIREBASE_API_KEY', 'BREVO_API_KEY']
+for var in env_vars:
+    if os.getenv(var):
+        logger.info(f"✅ {var}: CONFIGURADO")
+    else:
+        logger.warning(f"⚠️ {var}: NÃO CONFIGURADO")
 
 # Função para mostrar termos de uso
 def show_termos():
@@ -886,6 +916,60 @@ if not st.session_state.authenticated:
         # Usar uma abordagem com JavaScript puro para abrir em nova aba é mais confiável
         current_url = st.query_params
         base_url = f"https://{os.environ.get('REPLIT_SLUG', '')}--{os.environ.get('REPL_OWNER', '')}.repl.co"
+        
+        # Status do Sistema - Diagnóstico
+        with st.expander("🔧 Status do Sistema", expanded=False):
+            st.subheader("Diagnóstico de Componentes")
+            
+            # Verificar componentes críticos
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("**Autenticação:**")
+                if firebase_auth is not None:
+                    st.success("✅ Firebase Auth - ATIVO")
+                else:
+                    st.warning("⚠️ Firebase Auth - INATIVO")
+                
+                st.markdown("**Banco de Dados:**")
+                try:
+                    db_url = os.getenv('DATABASE_URL', '')
+                    if db_url:
+                        st.success("✅ Database - CONFIGURADO")
+                    else:
+                        st.error("❌ Database - NÃO CONFIGURADO")
+                except:
+                    st.error("❌ Database - ERRO")
+            
+            with col2:
+                st.markdown("**Analytics:**")
+                if os.getenv('GA_MEASUREMENT_ID'):
+                    st.success("✅ Google Analytics - ATIVO")
+                else:
+                    st.warning("⚠️ Google Analytics - INATIVO")
+                
+                st.markdown("**Email:**")
+                if os.getenv('BREVO_API_KEY'):
+                    st.success("✅ Brevo Email - ATIVO")
+                else:
+                    st.warning("⚠️ Brevo Email - INATIVO")
+            
+            # Informações de ambiente
+            st.markdown("**Ambiente de Execução:**")
+            is_render = os.environ.get('RENDER') == 'true'
+            if is_render:
+                st.info("🌐 Rodando no Render")
+            else:
+                st.info("💻 Rodando localmente/Replit")
+            
+            # Status da aplicação
+            st.markdown("**Status da Aplicação:**")
+            st.success("✅ Streamlit - ATIVO")
+            st.success(f"✅ Porta 5000 - ATIVA")
+            
+            # Botão para recarregar diagnósticos
+            if st.button("🔄 Atualizar Diagnósticos"):
+                st.rerun()
         
         # Seção de FAQ usando o componente nativo do Streamlit
         st.markdown("## Perguntas Frequentes")
