@@ -10,22 +10,51 @@ def apply_modern_blue_theme():
     
     css = """
     <style>
-    /* TEMA AZUL MODERNO - FORÇA MÁXIMA */
+    /* FORÇA EXTREMA PARA APLICAR CORES NA SIDEBAR */
     
-    /* Sidebar com cor azul escura elegante */
+    /* Todos os possíveis seletores da sidebar */
     section[data-testid="stSidebar"],
+    section[data-testid="stSidebar"] > div,
+    section[data-testid="stSidebar"] > div > div,
+    section[data-testid="stSidebar"] .css-1d391kg,
     .css-1d391kg,
-    [data-testid="stSidebar"] {
+    [data-testid="stSidebar"],
+    [data-testid="stSidebar"] > div,
+    div[data-testid="stSidebar"],
+    .st-emotion-cache-1d391kg,
+    .st-emotion-cache-1cypcdb {
         background: #1E1F36 !important;
-        background-image: linear-gradient(180deg, #1E1F36 0%, #2c5aa0 100%) !important;
+        background-color: #1E1F36 !important;
+        background-image: none !important;
     }
     
-    section[data-testid="stSidebar"] > div,
-    .css-1d391kg > div,
-    [data-testid="stSidebar"] > div {
-        background: #1E1F36 !important;
-        background-image: linear-gradient(180deg, #1E1F36 0%, #2c5aa0 100%) !important;
-    }
+    /* Força máxima com JavaScript inline */
+    </style>
+    <script>
+    setTimeout(function() {
+        // Força a aplicação da cor via JavaScript
+        const sidebar = document.querySelector('[data-testid="stSidebar"]');
+        if (sidebar) {
+            sidebar.style.setProperty('background', '#1E1F36', 'important');
+            sidebar.style.setProperty('background-color', '#1E1F36', 'important');
+            
+            // Aplica em todos os filhos também
+            const children = sidebar.querySelectorAll('*');
+            children.forEach(child => {
+                if (child.style) {
+                    child.style.setProperty('background-color', '#1E1F36', 'important');
+                }
+            });
+        }
+        
+        // Procura por outros seletores comuns
+        const altSidebars = document.querySelectorAll('.css-1d391kg, .st-emotion-cache-1d391kg');
+        altSidebars.forEach(el => {
+            el.style.setProperty('background', '#1E1F36', 'important');
+            el.style.setProperty('background-color', '#1E1F36', 'important');
+        });
+    }, 100);
+    </script>
     
     /* Força texto branco em TUDO na sidebar */
     section[data-testid="stSidebar"] *,
