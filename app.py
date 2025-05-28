@@ -47,6 +47,7 @@ if project_root not in sys.path:
 from utils.database import Database
 from utils.planos import verificar_login  # Importando apenas a função de verificação de login
 from utils.analytics_injector import inject_analytics_tags, track_page_view
+from utils.modern_theme import apply_modern_blue_theme
 
 # Importar módulo de autenticação Firebase (pode ser comentado para desabilitar temporariamente)
 try:
@@ -99,6 +100,9 @@ try:
     logger.info("Injetado script de compatibilidade para Render")
 except Exception as e:
     logger.error(f"Erro ao injetar script de compatibilidade: {e}")
+
+# Aplicar tema moderno azul
+apply_modern_blue_theme()
 
 # Inicializar Google Analytics 4 e Google Tag Manager
 try:
