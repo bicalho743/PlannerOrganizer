@@ -10,18 +10,18 @@ def apply_page_header():
     <style>
     /* Reduzir o espaço acima do cabeçalho */
     .main .block-container {
-        padding-top: 85px !important;
+        padding-top: 95px !important;
         margin-top: 0 !important;
     }
     
     /* Controlar o scroll para parar no cabeçalho */
     html, body {
-        scroll-padding-top: 80px !important;
+        scroll-padding-top: 90px !important;
     }
     
     /* Evitar que elementos fiquem escondidos atrás do cabeçalho */
     [data-testid="stAppViewContainer"] {
-        scroll-margin-top: 80px !important;
+        scroll-margin-top: 90px !important;
     }
     
     /* Remover completamente o header do Streamlit */

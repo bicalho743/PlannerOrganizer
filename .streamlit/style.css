@@ -12,10 +12,10 @@ header[data-testid="stHeader"] {
 
 /* Reset para garantir que o conteúdo não tenha margens ou padding indesejados */
 .block-container {
-    padding-top: 85px !important;
+    padding-top: 95px !important;
     margin-top: 0 !important;
     max-width: 100% !important;
-    min-height: calc(100vh - 85px) !important;
+    min-height: calc(100vh - 95px) !important;
 }
 
 /* Garantir que o scroll pare no cabeçalho */
@@ -51,8 +51,8 @@ body {
 /* Espaço para o conteúdo após o cabeçalho */
 .content-wrapper {
     padding: 1rem;
-    margin-top: 85px;
-    min-height: calc(100vh - 85px);
+    margin-top: 95px;
+    min-height: calc(100vh - 95px);
 }
 
 /* Personalizações para cabeçalhos */
