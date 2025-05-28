@@ -61,6 +61,16 @@ def apply_page_header():
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.1) !important;
     }
     
+    /* Títulos dos expanders na sidebar com texto branco */
+    [data-testid="stSidebar"] [data-testid="stExpander"] summary {
+        color: rgba(255, 255, 255, 0.9) !important;
+        font-weight: 500 !important;
+    }
+    
+    [data-testid="stSidebar"] [data-testid="stExpander"] summary:hover {
+        color: rgba(255, 255, 255, 1) !important;
+    }
+    
     /* Reduz espaçamento nos elementos da barra lateral */
     [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
         gap: 0 !important;

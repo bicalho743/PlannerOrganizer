@@ -57,6 +57,16 @@ h1 {
     box-shadow: 0 2px 5px rgba(0,0,0,0.15);
 }
 
+/* Títulos dos expanders na sidebar com texto branco */
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 500 !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary:hover {
+    color: rgba(255, 255, 255, 1) !important;
+}
+
 /* Estilização de caixas de texto e inputs */
 input, textarea, .stTextInput > div > div > input, .stTextArea > div > div > textarea {
     border-radius: 4px !important;
