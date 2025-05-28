@@ -81,8 +81,14 @@ if "show_planos" not in st.session_state:
 if "show_enviar_manual" not in st.session_state:
     st.session_state.show_enviar_manual = False
 
-# RESET FORÇADO - Temporário para resolver problema de navegação
+# RESET TOTAL - Forçar retorno à página principal
+for key in list(st.session_state.keys()):
+    if 'show_' in key and key != 'show_termos' and key != 'show_politica':
+        del st.session_state[key]
+
 st.session_state.show_enviar_manual = False
+st.session_state.show_planos = False
+st.session_state.show_debug_propostas_finalizadas = False
 
 # Verificar query params para redirecionamento (temporariamente desabilitado)
 # if "page" in st.query_params:
@@ -136,9 +142,11 @@ def show_planos():
     
 # Função para mostrar página de envio de manual
 def show_enviar_manual():
-    """Mostra a página de envio de manual"""
-    st.session_state.show_enviar_manual = True
-    st.rerun()
+    """Mostra a página de envio de manual - DESABILITADO TEMPORARIAMENTE"""
+    # FORÇAR RETORNO À PÁGINA PRINCIPAL
+    st.session_state.show_enviar_manual = False
+    st.error("🚧 Página do manual temporariamente desabilitada para manutenção")
+    return
     
 def debug_propostas_finalizadas():
     """Página de debug para filtro de propostas finalizadas"""
