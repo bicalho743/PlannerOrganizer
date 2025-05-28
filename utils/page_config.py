@@ -159,6 +159,54 @@ def apply_page_header():
              "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
     data_formatada = f"{data_atual.day} de {meses[data_atual.month-1]} de {data_atual.year}"
     
+    # Frases motivacionais e dicas profissionais
+    import random
+    import time
+    
+    frases_motivacionais = [
+        {"texto": "Se você quer algo que nunca teve, precisa fazer algo que nunca fez.", "autor": "Thomas Jefferson"},
+        {"texto": "O sucesso é ir de fracasso em fracasso sem perder o entusiasmo.", "autor": "Winston Churchill"},
+        {"texto": "Acredite que você pode, assim você já está no meio do caminho.", "autor": "Theodore Roosevelt"},
+        {"texto": "Tudo parece impossível até que seja feito.", "autor": "Nelson Mandela"},
+        {"texto": "A persistência é o caminho do êxito.", "autor": "Charles Chaplin"},
+        {"texto": "O único lugar onde o sucesso vem antes do trabalho é no dicionário.", "autor": "Albert Einstein"},
+        {"texto": "Coragem é a resistência ao medo, domínio do medo – não ausência do medo.", "autor": "Mark Twain"},
+        {"texto": "Não encontre falhas, encontre soluções.", "autor": "Henry Ford"},
+        {"texto": "O futuro pertence àqueles que acreditam na beleza dos seus sonhos.", "autor": "Eleanor Roosevelt"},
+        {"texto": "Grandes mentes discutem ideias; mentes medianas discutem eventos; mentes pequenas discutem pessoas.", "autor": "Eleanor Roosevelt"}
+    ]
+    
+    dicas_profissionais = [
+        "Trabalhe com planejamento: cada espaço organizado deve ter começo, meio e fim claros.",
+        "Antes de organizar, ajude o cliente a desapegar do que não faz mais sentido.",
+        "Produtos organizadores são aliados, mas não substituem um bom projeto de organização.",
+        "Priorize a funcionalidade, depois pense na estética.",
+        "A organização deve ser fácil de manter, não só bonita de ver.",
+        "Ouça atentamente o que o cliente quer — a organização deve refletir o estilo de vida dele.",
+        "Etiquetas são pequenas, mas fazem uma diferença enorme na manutenção da organização.",
+        "Todo item precisa ter seu lugar definido para evitar a bagunça no dia a dia.",
+        "Menos é mais: simplificar é um dos maiores luxos na organização.",
+        "Crie sistemas de organização que economizem tempo para quem usa o espaço."
+    ]
+    
+    # Escolher aleatoriamente entre frase motivacional ou dica profissional
+    random.seed(int(time.time()) % 100000)
+    
+    if random.choice([True, False]):
+        # Mostrar uma frase motivacional
+        frase = random.choice(frases_motivacionais)
+        quote_content = f"""
+            <p class="quote-text">"{frase['texto']}"</p>
+            <p class="quote-author">— {frase['autor']}</p>
+        """
+    else:
+        # Mostrar uma dica profissional
+        dica = random.choice(dicas_profissionais)
+        quote_content = f"""
+            <p style="color: #FF9800; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;">💡 DICA PROFISSIONAL</p>
+            <p class="quote-text">{dica}</p>
+        """
+
     # Adicionando o cabeçalho usando a classe CSS definida em style.css
     st.markdown(f"""
     <div class="app-header">
@@ -175,8 +223,38 @@ def apply_page_header():
         </div>
     </div>
     
-    <div class="content-wrapper">
+    <!-- Seção de frases motivacionais -->
+    <div id="motivational-quote" class="motivational-quote">
+        {quote_content}
+    </div>
+    
+    <div id="content-wrapper" class="content-wrapper">
         <!-- Início do conteúdo principal após o cabeçalho -->
+    """, unsafe_allow_html=True)
+    
+    # Script JavaScript para controlar a visibilidade das frases durante o scroll
+    st.markdown("""
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let lastScrollTop = 0;
+        const motivationalQuote = document.getElementById('motivational-quote');
+        const contentWrapper = document.getElementById('content-wrapper');
+        
+        window.addEventListener('scroll', function() {
+            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            if (scrollTop > 50) { // Esconde após rolar 50px
+                motivationalQuote.classList.add('hidden');
+                contentWrapper.classList.add('quote-hidden');
+            } else {
+                motivationalQuote.classList.remove('hidden');
+                contentWrapper.classList.remove('quote-hidden');
+            }
+            
+            lastScrollTop = scrollTop;
+        });
+    });
+    </script>
     """, unsafe_allow_html=True)
     
     # No final da função, fechamos a div de content-wrapper

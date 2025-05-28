@@ -34,10 +34,52 @@ header[data-testid="stHeader"] {
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
-/* Espaço para o conteúdo após o cabeçalho */
+/* Seção de frases motivacionais fixas */
+.motivational-quote {
+    position: fixed;
+    top: 70px; /* Logo abaixo do cabeçalho */
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #E3F2FD, #bbdefb);
+    padding: 1rem 2rem;
+    text-align: center;
+    z-index: 999;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.motivational-quote.hidden {
+    transform: translateY(-100%);
+    opacity: 0;
+}
+
+.motivational-quote .quote-text {
+    font-style: italic;
+    color: #1E366F;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.motivational-quote .quote-author {
+    color: #4A6FA5;
+    margin: 0.3rem 0 0 0;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* Espaço para o conteúdo após o cabeçalho e frases */
 .content-wrapper {
     padding: 1.5rem;
-    margin-top: 120px;
+    margin-top: 180px; /* Aumentado para dar espaço às frases */
+    transition: margin-top 0.3s ease-in-out;
+}
+
+.content-wrapper.quote-hidden {
+    margin-top: 120px; /* Volta ao valor original quando as frases estão escondidas */
 }
 
 /* Personalizações para cabeçalhos */
