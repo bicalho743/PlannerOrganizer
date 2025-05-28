@@ -952,23 +952,52 @@ if not st.session_state.authenticated:
         with testimonial_cols[4]:
             st.markdown("**Mariana Costa**<br>*Personal Organizer*", unsafe_allow_html=True)
         
-        # Botão "Ver Planos e Preços" em verde
-        st.markdown("""
-        <a href="/?planos_standalone_page=true" 
-           target="_blank" 
-           id="planos-link" 
-           style="display: inline-block; background-color: #026937; color: white; 
-                  text-align: center; padding: 1rem 2rem; text-decoration: none; 
-                  border-radius: 10px; width: 100%; font-size: 1.2rem; 
-                  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); font-weight: 600;
-                  transition: all 0.3s ease;">
-            Ver Planos e Preços
-        </a>
+        # Botões de ação
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Botão "Receba o Manual do Sistema"
+            st.markdown("""
+            <a href="/enviar_manual" 
+               target="_blank" 
+               id="manual-link" 
+               style="display: inline-block; background-color: #1E88E5; color: white; 
+                      text-align: center; padding: 1rem 1.5rem; text-decoration: none; 
+                      border-radius: 10px; width: 100%; font-size: 1.1rem; 
+                      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); font-weight: 600;
+                      transition: all 0.3s ease; margin-bottom: 1rem;">
+                📚 Receba o Manual do Sistema
+            </a>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            # Botão "Ver Planos e Preços"
+            st.markdown("""
+            <a href="/?planos_standalone_page=true" 
+               target="_blank" 
+               id="planos-link" 
+               style="display: inline-block; background-color: #026937; color: white; 
+                      text-align: center; padding: 1rem 1.5rem; text-decoration: none; 
+                      border-radius: 10px; width: 100%; font-size: 1.1rem; 
+                      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); font-weight: 600;
+                      transition: all 0.3s ease; margin-bottom: 1rem;">
+                💰 Ver Planos e Preços
+            </a>
         <script>
-            // JavaScript para adicionar efeito hover ao link
+            // JavaScript para adicionar efeito hover aos links
+            document.getElementById('manual-link').addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.02)';
+                this.style.boxShadow = '0 8px 20px rgba(30, 136, 229, 0.3)';
+            });
+            
+            document.getElementById('manual-link').addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+            });
+            
             document.getElementById('planos-link').addEventListener('mouseenter', function() {
                 this.style.transform = 'scale(1.02)';
-                this.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.2)';
+                this.style.boxShadow = '0 8px 20px rgba(2, 105, 55, 0.3)';
             });
             
             document.getElementById('planos-link').addEventListener('mouseleave', function() {
