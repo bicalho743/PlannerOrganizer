@@ -81,10 +81,10 @@ if "show_planos" not in st.session_state:
 if "show_enviar_manual" not in st.session_state:
     st.session_state.show_enviar_manual = False
 
-# Verificar query params para redirecionamento
-if "page" in st.query_params:
-    if st.query_params["page"] == "enviar_manual":
-        st.session_state.show_enviar_manual = True
+# Verificar query params para redirecionamento (temporariamente desabilitado)
+# if "page" in st.query_params:
+#     if st.query_params["page"] == "enviar_manual":
+#         st.session_state.show_enviar_manual = True
     
 # Verificar estado para mostrar página de debug de propostas finalizadas
 if "show_debug_propostas_finalizadas" not in st.session_state:
@@ -908,8 +908,8 @@ if not st.session_state.authenticated:
         # Botão "Receba o Manual do Sistema" - Principal e destacado
         manual_btn = st.button("📚 RECEBA O MANUAL DO SISTEMA", key="manual_cta_principal", use_container_width=True)
         if manual_btn:
-            # Redireciona para a página de envio de manual usando query params
-            st.query_params = {"page": "enviar_manual"}
+            # Redireciona para a página de envio de manual usando session state
+            st.session_state.show_enviar_manual = True
             st.rerun()
         
         # Espaço entre botões
