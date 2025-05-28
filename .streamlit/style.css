@@ -13,7 +13,7 @@
 
 /* Estilo para o cabeçalho fixo no topo */
 .app-header {
-    background-color: #1E1F36;
+    background-color: #1E366F;
     color: white;
     width: 100%;
     padding: 1rem 0;
@@ -107,13 +107,8 @@ input:focus, textarea:focus, .stTextInput > div > div > input:focus, .stTextArea
 }
 
 /* Estilização para sidebar */
-.css-1vq4p4l, .css-1d3bhkq,
-section[data-testid="stSidebar"],
-section[data-testid="stSidebar"] > div,
-[data-testid="stSidebar"],
-div[data-testid="stSidebar"] {
-    background-color: #2c2d3d !important;
-    background: #2c2d3d !important;
+.css-1vq4p4l, .css-1d3bhkq {
+    background-color: #F9FAFB !important;
     border-right: 1px solid #eaeaea;
 }
 

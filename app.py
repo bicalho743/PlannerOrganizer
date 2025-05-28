@@ -47,7 +47,6 @@ if project_root not in sys.path:
 from utils.database import Database
 from utils.planos import verificar_login  # Importando apenas a função de verificação de login
 from utils.analytics_injector import inject_analytics_tags, track_page_view
-from utils.modern_theme import apply_modern_blue_theme
 
 # Importar módulo de autenticação Firebase (pode ser comentado para desabilitar temporariamente)
 try:
@@ -80,20 +79,6 @@ if "show_planos" not in st.session_state:
 # Verificar estado para mostrar página de envio de manual
 if "show_enviar_manual" not in st.session_state:
     st.session_state.show_enviar_manual = False
-
-# RESET TOTAL - Forçar retorno à página principal
-for key in list(st.session_state.keys()):
-    if 'show_' in key and key != 'show_termos' and key != 'show_politica':
-        del st.session_state[key]
-
-st.session_state.show_enviar_manual = False
-st.session_state.show_planos = False
-st.session_state.show_debug_propostas_finalizadas = False
-
-# Verificar query params para redirecionamento (temporariamente desabilitado)
-# if "page" in st.query_params:
-#     if st.query_params["page"] == "enviar_manual":
-#         st.session_state.show_enviar_manual = True
     
 # Verificar estado para mostrar página de debug de propostas finalizadas
 if "show_debug_propostas_finalizadas" not in st.session_state:
@@ -143,8 +128,8 @@ def show_planos():
 # Função para mostrar página de envio de manual
 def show_enviar_manual():
     """Mostra a página de envio de manual"""
-    from pages.enviar_manual import main
-    main()
+    st.session_state.show_enviar_manual = True
+    st.rerun()
     
 def debug_propostas_finalizadas():
     """Página de debug para filtro de propostas finalizadas"""
@@ -293,18 +278,15 @@ if st.session_state.show_planos:
         st.error(f"Não foi possível carregar a página de planos: {e}")
         st.session_state.show_planos = False
         
-# Mostrar página de envio de manual se solicitado (TEMPORARIAMENTE DESABILITADO)
-if False and st.session_state.show_enviar_manual:
+# Mostrar página de envio de manual se solicitado
+if st.session_state.show_enviar_manual:
     try:
-        # Importar o módulo de envio de manual da pasta pages
-        from pages.enviar_manual import main as enviar_manual_main
-        enviar_manual_main()
+        # Importar o módulo de envio de manual diretamente
+        import enviar_manual
+        enviar_manual.main()
         st.stop()
     except ImportError as e:
         st.error(f"Não foi possível carregar a página de envio de manual: {e}")
-        st.session_state.show_enviar_manual = False
-    except Exception as e:
-        st.error(f"Erro ao executar página de envio de manual: {e}")
         st.session_state.show_enviar_manual = False
 
 # Verificar se a URL contém parâmetros de página específicos
@@ -330,11 +312,11 @@ if 'page' in query_params:
         # Redirecionar para a página principal
         st.switch_page("app.py")
         
-# Verificar se o parâmetro show_enviar_manual está presente na URL (DESABILITADO)
-# if 'show_enviar_manual' in query_params and query_params['show_enviar_manual'] == 'true':
-#     # Ativar a página de envio de manual
-#     st.session_state.show_enviar_manual = True
-#     st.rerun()
+# Verificar se o parâmetro show_enviar_manual está presente na URL
+if 'show_enviar_manual' in query_params and query_params['show_enviar_manual'] == 'true':
+    # Ativar a página de envio de manual
+    st.session_state.show_enviar_manual = True
+    st.rerun()
 
 # Verificar se a requisição é para a página standalone de planos
 if 'planos_standalone_page' in st.query_params:
@@ -905,33 +887,6 @@ if not st.session_state.authenticated:
         current_url = st.query_params
         base_url = f"https://{os.environ.get('REPLIT_SLUG', '')}--{os.environ.get('REPL_OWNER', '')}.repl.co"
         
-        # Botões de ação antes do FAQ
-        st.markdown("---")
-        
-        # Espaço para destacar os botões
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Botões CTA funcionais para páginas distintas
-        st.markdown("### 🎯 Call to Action")
-        
-        # Criar duas colunas para os botões
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Botão "Receba o Manual do Sistema" - vai para página de captura de email
-            if st.button("📚 RECEBA O MANUAL", use_container_width=True, type="primary"):
-                st.session_state.show_enviar_manual = True
-                st.rerun()
-        
-        with col2:
-            # Botão "Ver Planos e Preços" - vai para página de planos
-            if st.button("💰 VER PLANOS", use_container_width=True, type="secondary"):
-                st.session_state.show_planos = True
-                st.rerun()
-        
-        # Espaço antes do FAQ
-        st.markdown("<br>", unsafe_allow_html=True)
-        
         # Seção de FAQ usando o componente nativo do Streamlit
         st.markdown("## Perguntas Frequentes")
         
@@ -996,7 +951,31 @@ if not st.session_state.authenticated:
         with testimonial_cols[4]:
             st.markdown("**Mariana Costa**<br>*Personal Organizer*", unsafe_allow_html=True)
         
-
+        # Botão "Ver Planos e Preços" em verde
+        st.markdown("""
+        <a href="/?planos_standalone_page=true" 
+           target="_blank" 
+           id="planos-link" 
+           style="display: inline-block; background-color: #026937; color: white; 
+                  text-align: center; padding: 1rem 2rem; text-decoration: none; 
+                  border-radius: 10px; width: 100%; font-size: 1.2rem; 
+                  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); font-weight: 600;
+                  transition: all 0.3s ease;">
+            Ver Planos e Preços
+        </a>
+        <script>
+            // JavaScript para adicionar efeito hover ao link
+            document.getElementById('planos-link').addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.02)';
+                this.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.2)';
+            });
+            
+            document.getElementById('planos-link').addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+            });
+        </script>
+        """, unsafe_allow_html=True)
     
     with right_col:
         # Título da seção de login, mais próximo das caixas de preenchimento
@@ -1157,58 +1136,10 @@ st.markdown(f"""
     {custom_css}
     
     /* Estilo específico para a barra lateral */
-    section[data-testid="stSidebar"],
-    section[data-testid="stSidebar"] > div,
-    section[data-testid="stSidebar"] > div > div,
-    [data-testid="stSidebar"],
-    [data-testid="stSidebar"] > div {{
-        background-color: #2c2d3d !important;
-        background: #2c2d3d !important;
+    section[data-testid="stSidebar"] {{
+        background-color: #F9FAFB;
         border-right: 1px solid #E0E0E0;
     }}
-    
-    /* Força cor nos elementos filhos da sidebar */
-    section[data-testid="stSidebar"] * {{
-        color: white !important;
-    }}
-    </style>
-    
-    <script>
-    // JavaScript agressivo para forçar cor #2c2d3d
-    function forceSidebarColor() {{
-        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-        if (sidebar) {{
-            sidebar.style.setProperty('background-color', '#2c2d3d', 'important');
-            sidebar.style.setProperty('background', '#2c2d3d', 'important');
-            
-            // Aplica em todos os elementos filhos
-            const allElements = sidebar.querySelectorAll('*');
-            allElements.forEach(element => {{
-                element.style.setProperty('background-color', '#2c2d3d', 'important');
-                element.style.setProperty('background', '#2c2d3d', 'important');
-            }});
-        }}
-        
-        // Força também nos seletores alternativos
-        const altSelectors = ['.css-1d391kg', '.st-emotion-cache-1d391kg', '.css-1vq4p4l'];
-        altSelectors.forEach(selector => {{
-            const elements = document.querySelectorAll(selector);
-            elements.forEach(element => {{
-                element.style.setProperty('background-color', '#2c2d3d', 'important');
-                element.style.setProperty('background', '#2c2d3d', 'important');
-            }});
-        }});
-    }}
-    
-    // Executa imediatamente e a cada 500ms para garantir aplicação
-    forceSidebarColor();
-    setInterval(forceSidebarColor, 500);
-    
-    // Executa quando o DOM carrega
-    document.addEventListener('DOMContentLoaded', forceSidebarColor);
-    </script>
-    
-    <style>
 
     div.block-container {{
         padding-top: 2rem !important;
@@ -1463,9 +1394,6 @@ from utils.page_config import apply_page_header, apply_page_footer
 # Aplicar o cabeçalho e rodapé em todas as páginas 
 apply_page_header()
 apply_page_footer()
-
-# Aplicar tema moderno para usuários autenticados
-apply_modern_blue_theme()
 
 # Roteamento de páginas
 try:

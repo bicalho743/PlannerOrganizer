@@ -10,7 +10,7 @@ run = ["sh", "-c", "streamlit run app.py --server.port 5000 --server.address 0.0
 build = ["sh", "-c", "pip install -r requirements.txt"]
 
 [workflows]
-runButton = "Main Application"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
@@ -451,15 +451,6 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run debug_proposta_73.py --server.port 8525 --server.address 0.0.0.0"
 waitForPort = 8525
-
-[[workflows.workflow]]
-name = "Main Application"
-author = 39445503
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run app.py --server.port 5000 --server.address 0.0.0.0"
 
 [[ports]]
 localPort = 443
