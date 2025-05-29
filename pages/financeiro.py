@@ -348,9 +348,9 @@ def show():
         saldo = receitas - despesas
 
         col1, col2, col3 = st.columns(3)
-        col1.metric("Total Receitas", f"R$ {receitas:.2f}")
-        col2.metric("Total Despesas", f"R$ {despesas:.2f}")
-        col3.metric("Saldo", f"R$ {saldo:.2f}")
+        col1.metric("Total Receitas", format_currency_br(receitas))
+        col2.metric("Total Despesas", format_currency_br(despesas))
+        col3.metric("Saldo", format_currency_br(saldo))
         if financeiro.empty:
             st.info("Nenhuma transação encontrada.")
 
@@ -789,9 +789,9 @@ def show():
             
             # Exibir as métricas
             col1, col2, col3 = st.columns(3)
-            col1.metric("Total Receitas", f"R$ {total_receitas:.2f}")
-            col2.metric("Total Despesas", f"R$ {total_despesas:.2f}")
-            col3.metric("Saldo", f"R$ {saldo:.2f}")
+            col1.metric("Total Receitas", format_currency_br(total_receitas))
+            col2.metric("Total Despesas", format_currency_br(total_despesas))
+            col3.metric("Saldo", format_currency_br(saldo))
             
             # Resumo de Contas a Receber, com force_reload
             contas_receber = st.session_state.db.get_contas_receber(force_reload=True)
