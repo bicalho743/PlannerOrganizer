@@ -257,28 +257,4 @@ body, .main, [data-testid="stAppViewContainer"], .block-container {
     padding-bottom: 100px !important;  /* deve ser igual ou maior que a altura do rodapé */
 }
 
-/* Rodapé fixo na parte inferior da página */
-.footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background-color: #1E1F36;
-    color: white;
-    text-align: center;
-    padding: 12px 20px;
-    z-index: 1000;
-    font-size: 0.85rem;
-    box-shadow: 0 -1px 5px rgba(0,0,0,0.05);
-}
-
-.footer a {
-    color: white;
-    text-decoration: underline;
-    margin: 0 8px;
-    font-weight: 500;
-}
-
-.footer a:hover {
-    text-decoration: none;
-}
+/* Rodapé removido - apenas o do page_config.py será usado */

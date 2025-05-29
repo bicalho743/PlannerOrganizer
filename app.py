@@ -773,31 +773,7 @@ if not st.session_state.authenticated:
     footer {visibility: hidden;}
     .stDeployButton {visibility: hidden;}
     
-    /* Estilo do rodapé personalizado */
-    .footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background-color: #1E1F36;
-        color: white;
-        padding: 12px 20px;
-        text-align: center;
-        font-size: 13px;
-        z-index: 1000;
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-    }
-    
-    .footer a {
-        color: #4A90E2;
-        text-decoration: none;
-        margin: 0 5px;
-    }
-    
-    .footer a:hover {
-        color: #7AB8FF;
-        text-decoration: underline;
-    }
+    /* Rodapé removido do app.py - apenas page_config.py usado */
     </style>
     
 
