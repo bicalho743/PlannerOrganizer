@@ -485,7 +485,7 @@ def show():
                             
                             # Coluna 4: Exportar para PDF
                             with col_export:
-                                if st.button("📄", key=f"pdf_{proposta_id}"):
+                                if st.button("📄 PDF", key=f"pdf_{proposta_id}"):
                                     try:
                                         # Importar a função de geração de PDF
                                         from utils.propostas_helper import gerar_pdf_proposta
@@ -536,7 +536,7 @@ def show():
                                     st.session_state[excluir_key] = False
                                 
                                 # Botão de exclusão
-                                if st.button("🗑️", key=f"btn_{excluir_key}"):
+                                if st.button("🗑️ Excluir", key=f"btn_{excluir_key}"):
                                     # Alternar estado de confirmação
                                     st.session_state[excluir_key] = True
                                     st.rerun()
