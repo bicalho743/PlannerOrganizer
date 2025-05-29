@@ -1,3 +1,4 @@
+
 import streamlit as st
 
 def apply_page_header():
@@ -8,20 +9,10 @@ def apply_page_header():
     # e padronizar o espaçamento dos elementos da interface
     header_css = """
     <style>
-    /* Reduzir o espaço acima do cabeçalho */
+    /* Ajustes específicos do page_config - Simplificado */
     .main .block-container {
-        padding-top: 0px !important;
-        margin-top: 80px !important;
-    }
-    
-    /* Controlar o scroll para parar no cabeçalho */
-    html, body {
-        scroll-padding-top: 90px !important;
-    }
-    
-    /* Evitar que elementos fiquem escondidos atrás do cabeçalho */
-    [data-testid="stAppViewContainer"] {
-        scroll-margin-top: 90px !important;
+        padding-top: 85px !important;
+        margin-top: 0 !important;
     }
     
     /* Remover completamente o header do Streamlit */
@@ -184,13 +175,7 @@ def apply_page_header():
             <span style="color: rgba(255, 255, 255, 0.8); font-size: 0.8rem; font-family: 'Poppins', sans-serif; display: block; margin-top: 0.2rem;">📅 {data_formatada}</span>
         </div>
     </div>
-    
-    <div class="content-wrapper">
-        <!-- Início do conteúdo principal após o cabeçalho -->
     """, unsafe_allow_html=True)
-    
-    # No final da função, fechamos a div de content-wrapper
-    st.markdown("</div>", unsafe_allow_html=True)
 
 def apply_page_footer():
     """
