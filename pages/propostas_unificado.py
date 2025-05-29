@@ -2,7 +2,7 @@ import streamlit as st
 import logging
 # Configurar logging básico
 logging.basicConfig(level=logging.INFO)
-from utils.finalizar_proposta import finalizar_proposta_sql
+from utils.finalizar_proposta_v2 import finalizar_proposta_v2
 import pandas as pd
 import time
 import os
@@ -1512,7 +1512,7 @@ def show():
                                         # Garantir que o ID seja convertido para inteiro
                                         proposta_id_int = int(proposta_selecionada_id)
                                         print(f"===== CHAMANDO FINALIZAR PROPOSTA COM ID={proposta_id_int} =====")
-                                        resultado = finalizar_proposta_segura(proposta_id_int)
+                                        resultado = finalizar_proposta_v2(proposta_id_int)
                                         if resultado.get('status', False):
                                             st.success("✅ Proposta finalizada com sucesso!")
                                             st.rerun()
