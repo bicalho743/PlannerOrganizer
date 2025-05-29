@@ -4,6 +4,7 @@ import plotly.express as px
 import base64
 import time
 from datetime import datetime
+from utils.currency_formatter import format_currency_br
 
 def show():
     # Título com estilo personalizado para ficar mais próximo do topo
