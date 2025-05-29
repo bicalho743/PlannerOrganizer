@@ -2,6 +2,7 @@ import streamlit as st
 from datetime import datetime, timedelta
 import pandas as pd
 from utils.force_spacing_fix import apply_spacing_fix
+from utils.currency_formatter import format_currency_br
 
 # Função auxiliar para formatar datas com segurança
 def format_date_safe(date_obj, format_str='%d/%m/%Y'):
@@ -288,13 +289,13 @@ def show():
                        margin-right: 10px;">💰</span>
                 <span><strong>Saldo</strong></span>
             </div>
-            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0;">R$ {2:,.2f}</div>
+            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0;">{2}</div>
             <div style="font-size: 0.9rem; opacity: 0.9;">
-                <span style="margin-right: 10px;">📥 R$ {3:,.2f}</span>
-                <span>📤 R$ {4:,.2f}</span>
+                <span style="margin-right: 10px;">📥 {3}</span>
+                <span>📤 {4}</span>
             </div>
         </div>
-        """.format(cor_fundo, cor_secundaria, saldo_liquido, valores_receber, valores_pagar), unsafe_allow_html=True)
+        """.format(cor_fundo, cor_secundaria, format_currency_br(saldo_liquido), format_currency_br(valores_receber), format_currency_br(valores_pagar)), unsafe_allow_html=True)
 
     # Segunda linha - Propostas em aberto e aniversariantes
     col1, col2 = st.columns([2, 1])
