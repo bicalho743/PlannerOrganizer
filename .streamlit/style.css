@@ -1,26 +1,45 @@
-
-/* Estilos globais */
-.main {
-    padding: 0 !important;
-    margin: 0 !important;
+/* Reset e eliminação de espaçamentos desnecessários */
+body, .main, [data-testid="stAppViewContainer"], .main > div,
+[data-testid="stAppViewContainer"] > div:first-child,
+[data-testid="stAppViewContainer"] section.main {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
 }
 
-/* Remover completamente o cabeçalho nativo do Streamlit */
+/* Remoção do cabeçalho nativo do Streamlit */
 header[data-testid="stHeader"] {
     display: none !important;
     height: 0 !important;
 }
 
-/* Reset para garantir que o conteúdo não tenha margens ou padding indesejados */
+/* Cabeçalho fixo personalizado */
+.app-header {
+    background-color: #1E1F36;
+    color: white;
+    width: 100%;
+    padding: 1rem 0;
+    text-align: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Container principal */
 .block-container {
-    padding-top: 110px !important;
-    margin-top: 0 !important;
+    padding-top: 80px !important;
     max-width: 100% !important;
-    min-height: calc(100vh - 110px) !important;
+    min-height: calc(100vh - 80px) !important;
     position: relative;
 }
 
-/* Gradiente sutil de transição após o cabeçalho */
+/* Gradiente abaixo do cabeçalho */
 .block-container::before {
     content: '';
     position: absolute;
@@ -29,39 +48,11 @@ header[data-testid="stHeader"] {
     right: 0;
     height: 30px;
     background: linear-gradient(180deg, rgba(30, 31, 54, 0.05) 0%, transparent 100%);
-    pointer-events: none;
     z-index: 1;
+    pointer-events: none;
 }
 
-/* Estilo para o cabeçalho fixo no topo */
-.app-header {
-    background-color: #1E1F36;
-    color: white;
-    width: 100%;
-    padding: 1rem 0;
-    margin: 0;
-    text-align: center;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    border-radius: 0;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    height: 110px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-/* Espaço para o conteúdo após o cabeçalho */
-.content-wrapper {
-    padding: 1rem;
-    margin-top: 0;
-    min-height: calc(100vh - 110px);
-}
-
-/* Breadcrumb visual no espaço após o cabeçalho */
+/* Breadcrumb */
 .page-breadcrumb {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     padding: 8px 20px;
@@ -70,7 +61,6 @@ header[data-testid="stHeader"] {
     font-size: 0.85rem;
     color: #6c757d;
     position: relative;
-    overflow: hidden;
 }
 
 .page-breadcrumb::before {
@@ -94,7 +84,7 @@ header[data-testid="stHeader"] {
     color: #adb5bd;
 }
 
-/* Personalizações para cabeçalhos */
+/* Títulos */
 h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
     margin-bottom: 1rem;
@@ -108,7 +98,7 @@ h1 {
     padding-top: 0 !important;
 }
 
-/* Estilização de botões */
+/* Botões */
 .stButton > button {
     font-weight: 500;
     padding: 0.5rem 1rem;
@@ -122,114 +112,37 @@ h1 {
     box-shadow: 0 2px 5px rgba(0,0,0,0.15);
 }
 
-/* Títulos dos expanders na sidebar com texto branco */
-section[data-testid="stSidebar"] [data-testid="stExpander"] summary {
-    color: rgba(255, 255, 255, 0.9) !important;
-    font-weight: 500 !important;
-}
-
-section[data-testid="stSidebar"] [data-testid="stExpander"] summary:hover {
-    color: rgba(255, 255, 255, 1) !important;
-}
-
-/* Conteúdo dos expanders na sidebar com texto branco */
-section[data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent {
-    color: rgba(255, 255, 255, 0.9) !important;
-}
-
-section[data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent h3,
-section[data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent h4,
-section[data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent p,
-section[data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent li,
-section[data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent ul,
-section[data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent div {
-    color: rgba(255, 255, 255, 0.9) !important;
-}
-
-section[data-testid="stSidebar"] [data-testid="stExpander"] .streamlit-expanderContent strong {
-    color: rgba(255, 255, 255, 1) !important;
-}
-
-/* Estilização de caixas de texto e inputs */
-input, textarea, .stTextInput > div > div > input, .stTextArea > div > div > textarea {
-    border-radius: 4px !important;
-    border: 1px solid #E0E0E0 !important;
-    padding: 0.5rem !important;
-}
-
-input:focus, textarea:focus, .stTextInput > div > div > input:focus, .stTextArea > div > div > textarea:focus {
-    border-color: #1E88E5 !important;
-    box-shadow: 0 0 0 1px rgba(30,136,229,0.2) !important;
-}
-
-/* Estilização para tabelas */
-.stDataFrame {
-    border-radius: 6px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.dataframe {
-    border-collapse: collapse;
-}
-
-.dataframe th {
-    background-color: #F5F7FA;
-    font-weight: 600;
-    color: #1E366F;
-    padding: 0.75rem !important;
-    border-bottom: 2px solid #E0E0E0;
-}
-
-.dataframe td {
-    padding: 0.75rem !important;
-    border-bottom: 1px solid #eaeaea;
-}
-
-.dataframe tr:hover {
-    background-color: #F8F9FA;
-}
-
-/* Estilização para selectbox e outros controles */
-.stSelectbox {
-    min-width: 200px;
-}
-
-.stSelectbox > div > div > select {
-    border-radius: 4px !important;
-}
-
-/* Estilização para sidebar */
+/* Sidebar */
 .css-1vq4p4l, .css-1d3bhkq {
     background-color: #1E1F36 !important;
     border-right: 1px solid #eaeaea;
 }
 
-/* Botões da sidebar com transparência e animações */
 section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
     background-color: rgba(255, 255, 255, 0.05) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     color: rgba(255, 255, 255, 0.8) !important;
     backdrop-filter: blur(10px) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     font-weight: 500 !important;
     border-radius: 12px !important;
     margin: 4px 0 !important;
     padding: 12px 16px !important;
     position: relative !important;
     overflow: hidden !important;
+    animation: slideInFromLeft 0.5s ease-out !important;
+    font-family: "Poppins", sans-serif !important;
+    font-size: 0.9rem !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
 }
 
-/* Efeito hover para os botões da sidebar */
 section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover {
     background-color: rgba(255, 255, 255, 0.15) !important;
     border-color: rgba(255, 255, 255, 0.3) !important;
-    color: rgba(255, 255, 255, 1) !important;
+    color: #fff !important;
     transform: translateY(-2px) scale(1.02) !important;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.1) !important;
 }
 
-/* Efeito de ondulação nos botões */
 section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]::before {
     content: '' !important;
     position: absolute !important;
@@ -249,27 +162,6 @@ section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hove
     height: 300px !important;
 }
 
-/* Botão ativo/selecionado */
-section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"].menu-active {
-    background-color: rgba(255, 255, 255, 0.2) !important;
-    border-color: rgba(255, 255, 255, 0.4) !important;
-    color: #fff !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
-}
-
-/* Texto dos botões da sidebar */
-section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] div {
-    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-    font-size: 0.9rem !important;
-    letter-spacing: 0.5px !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* Animação de entrada para os botões */
-section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
-    animation: slideInFromLeft 0.5s ease-out !important;
-}
-
 @keyframes slideInFromLeft {
     0% {
         opacity: 0;
@@ -281,7 +173,7 @@ section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
     }
 }
 
-/* Cards informativos */
+/* Cards */
 div[data-testid="stMetric"] {
     background-color: #FFFFFF;
     border-radius: 6px;
@@ -295,40 +187,43 @@ div[data-testid="stMetric"] > div:first-child {
     font-weight: 600;
 }
 
-/* Estilização para alertas e mensagens */
-div[data-testid="stAlert"] {
-    border-radius: 4px;
-    padding: 1rem !important;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
+/* Inputs */
+input, textarea, .stTextInput > div > div > input, .stTextArea > div > div > textarea {
+    border-radius: 4px !important;
+    border: 1px solid #E0E0E0 !important;
+    padding: 0.5rem !important;
 }
 
-/* Personalizações específicas para diferentes tipos de containers */
-div[data-testid="stExpander"] {
-    border-radius: 4px;
-    border: 1px solid #eaeaea;
+input:focus, textarea:focus, .stTextInput > div > div > input:focus, .stTextArea > div > div > textarea:focus {
+    border-color: #1E88E5 !important;
+    box-shadow: 0 0 0 1px rgba(30,136,229,0.2) !important;
+}
+
+/* Tabelas */
+.stDataFrame {
+    border-radius: 6px;
     overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-div[data-testid="stExpander"] > div:first-child {
-    background-color: #F9FAFB;
-    padding: 0.75rem;
+.dataframe th {
+    background-color: #F5F7FA;
+    font-weight: 600;
+    color: #1E366F;
+    padding: 0.75rem !important;
+    border-bottom: 2px solid #E0E0E0;
+}
+
+.dataframe td {
+    padding: 0.75rem !important;
     border-bottom: 1px solid #eaeaea;
 }
 
-/* Estilização para widgets de data */
-div[data-baseweb="calendar"] {
-    border-radius: 4px;
-    overflow: hidden;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+.dataframe tr:hover {
+    background-color: #F8F9FA;
 }
 
-/* Ajustes de espaçamento gerais */
-.stTabs {
-    margin-top: 1rem;
-}
-
-/* Estilização para abas */
+/* Abas */
 button[role="tab"] {
     padding: 0.75rem 1.5rem !important;
     font-weight: 500;
@@ -341,168 +236,4 @@ button[role="tab"] {
     color: #1E88E5 !important;
     border-bottom-color: #1E88E5 !important;
     background-color: rgba(30, 136, 229, 0.05);
-}
-
-/* Estilos para abas principais de navegação */
-.main-tabs button[role="tab"] {
-    border-radius: 4px 4px 0 0;
-    border: 1px solid #eaeaea;
-    border-bottom: none;
-    margin-right: 2px;
-}
-
-.main-tabs [aria-selected="true"] {
-    background-color: #E6F3FF !important;
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
-}
-
-/* Estilos para as sub-abas (dentro da proposta) */
-.execution-tabs button[role="tab"] {
-    background-color: #f8f9fa;
-    border: none;
-    border-radius: 4px;
-    margin: 0 2px;
-    font-size: 0.9rem;
-}
-
-.execution-tabs [aria-selected="true"] {
-    background-color: #E3F2FD !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-/* Cores categorizadas para sub-abas */
-.execution-tabs [data-value="Andamento"][aria-selected="true"] {
-    background-color: #E3F2FD !important; /* Azul */
-}
-
-.execution-tabs [data-value="Produtos"][aria-selected="true"] {
-    background-color: #E8F5E9 !important; /* Verde */
-}
-
-.execution-tabs [data-value="Outros"][aria-selected="true"] {
-    background-color: #FFF8E1 !important; /* Amarelo */
-}
-
-.execution-tabs [data-value="Fornecedores"][aria-selected="true"] {
-    background-color: #FFF3E0 !important; /* Laranja */
-}
-
-.execution-tabs [data-value="Assistentes"][aria-selected="true"] {
-    background-color: #F3E5F5 !important; /* Roxo */
-}
-
-.execution-tabs [data-value="Finalizar"][aria-selected="true"] {
-    background-color: #FFEBEE !important; /* Vermelho */
-}
-
-/* Espaçamento específico para as páginas de Dashboard e Propostas */
-[data-testid="stAppViewContainer"] > div > div > div > div:first-child h1 {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
-
-/* Eliminar espaços extras no container principal */
-[data-testid="stAppViewContainer"] {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
-}
-
-/* Eliminar espaços no primeiro elemento do conteúdo */
-[data-testid="stAppViewContainer"] > div:first-child {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
-}
-
-/* Eliminar espaços na seção principal */
-[data-testid="stAppViewContainer"] section.main {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
-}
-
-/* Eliminar espaços no elemento raiz */
-.main > div {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
-}
-
-/* Breadcrumbs de navegação */
-.breadcrumb {
-    display: flex;
-    align-items: center;
-    font-size: 0.85rem;
-    color: #666;
-    margin-bottom: 1rem;
-    padding: 0.5rem;
-    background-color: #f9f9f9;
-    border-radius: 4px;
-}
-
-.breadcrumb span {
-    margin: 0 0.25rem;
-}
-
-/* Cartões de itens */
-.item-card {
-    background-color: white;
-    border-radius: 6px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    border: 1px solid #eaeaea;
-    transition: all 0.2s ease;
-}
-
-.item-card:hover {
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    transform: translateY(-2px);
-}
-
-/* Barra de progresso */
-.progress-container {
-    width: 100%;
-    background-color: #f1f1f1;
-    border-radius: 5px;
-    margin: 1rem 0;
-    overflow: hidden;
-}
-
-.progress-bar {
-    height: 10px;
-    background-color: #4CAF50;
-    border-radius: 5px;
-    transition: width 0.3s ease;
-}
-
-/* Sombreamento para containers de seções */
-.section-container {
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin: 1rem 0;
-    border: 1px solid #eaeaea;
-}
-
-/* Estilos para a tabela de detalhes da proposta */
-.proposal-details-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.proposal-details-table th {
-    text-align: left;
-    padding: 0.5rem;
-    background-color: #f5f5f5;
-    border-bottom: 1px solid #eaeaea;
-}
-
-.proposal-details-table td {
-    padding: 0.5rem;
-    border-bottom: 1px solid #eaeaea;
-}
-
-/* Ícones para as abas */
-.tab-icon {
-    margin-right: 0.5rem;
-    font-size: 1.1rem;
-    vertical-align: middle;
 }
