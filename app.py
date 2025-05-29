@@ -839,46 +839,7 @@ if not st.session_state.authenticated:
     }
     </style>
     
-    <script>
-    // Script para criar rodapé fixo com informações completas
-    (function() {
-        function createFooter() {
-            // Remove qualquer rodapé existente
-            const existingFooter = document.querySelector('.footer');
-            if (existingFooter) {
-                existingFooter.remove();
-            }
-            
-            // Cria o novo rodapé
-            const footer = document.createElement('div');
-            footer.className = 'footer';
-            footer.innerHTML = `
-                &copy; 2025 Planner Organizer. Todos os direitos reservados. | 
-                <a href="https://plannerorganiza.com.br/?show_termos=true" target="_blank">Termos de Uso</a> | 
-                <a href="https://plannerorganiza.com.br/?show_politica=true" target="_blank">Política de Privacidade</a> | 
-                Contato: <a href="mailto:contato@plannerorganiza.com.br">contato@plannerorganiza.com.br</a>
-            `;
-            
-            // Adiciona o rodapé ao body
-            document.body.appendChild(footer);
-        }
-        
-        // Executa quando o DOM estiver carregado
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', createFooter);
-        } else {
-            createFooter();
-        }
-        
-        // Re-executa após mudanças no Streamlit
-        setTimeout(createFooter, 1000);
-        setInterval(function() {
-            if (!document.querySelector('.footer')) {
-                createFooter();
-            }
-        }, 2000);
-    })();
-    </script>
+
     """,
                 unsafe_allow_html=True)
 
@@ -1837,14 +1798,12 @@ with st.sidebar.expander("🔧 Acesso Desenvolvedor", expanded=False):
 # A navegação é controlada pelos botões do menu principal
 # Os botões já atualizam st.session_state.current_page
 
-# O conteúdo principal já é exibido acima através da importação dos módulos
-# Não precisamos processar novamente os módulos
-if False:
-    module_name = st.session_state.current_page.lower()
-    try:
-        module = __import__(f"pages.{module_name}", fromlist=["show"])
-        module.show()
-    except ImportError as e:
-        st.error(f"Erro ao carregar módulo {module_name}: {str(e)}")
-# Não temos mais a opção de importação no menu
-import streamlit as st
+# Rodapé fixo
+st.markdown("""
+<div class="footer">
+    &copy; 2025 Planner Organizer. Todos os direitos reservados. | 
+    <a href="https://plannerorganiza.com.br/?show_termos=true" target="_blank">Termos de Uso</a> | 
+    <a href="https://plannerorganiza.com.br/?show_politica=true" target="_blank">Política de Privacidade</a> | 
+    Contato: <a href="mailto:contato@plannerorganiza.com.br">contato@plannerorganiza.com.br</a>
+</div>
+""", unsafe_allow_html=True)
