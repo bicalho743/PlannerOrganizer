@@ -120,11 +120,25 @@ h1 {
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     transition: all 0.2s ease;
+    min-width: fit-content;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    font-size: 0.875rem;
 }
 
 .stButton > button:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+/* Garantir que botões em colunas pequenas mostrem o texto */
+div[data-testid="column"] .stButton > button {
+    width: 100%;
+    min-width: 80px;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    line-height: 1.2;
 }
 
 /* Sidebar */

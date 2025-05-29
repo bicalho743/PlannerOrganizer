@@ -358,8 +358,8 @@ def show():
                     # Construir interface com seletores de status direto na tabela
                     st.write("Selecione uma proposta abaixo para editar ou alterar o status:")
                     
-                    # Layout com 5 colunas. A última vai conter o botão de exclusão
-                    col_num, col_info, col_status, col_export, col_excluir = st.columns([1, 4, 3, 1, 1])
+                    # Layout com 5 colunas. Aumentando espaço para PDF e Ações
+                    col_num, col_info, col_status, col_export, col_excluir = st.columns([1, 3, 2.5, 1.5, 1.5])
                     
                     with col_num:
                         st.markdown("**Número**")
@@ -380,7 +380,7 @@ def show():
                         # Criar container para a linha da proposta
                         with st.container():
                             # 5 colunas: Número, Info, Status Selector, Export, Excluir
-                            col_num, col_info, col_status, col_export, col_excluir = st.columns([1, 4, 3, 1, 1])
+                            col_num, col_info, col_status, col_export, col_excluir = st.columns([1, 3, 2.5, 1.5, 1.5])
                             
                             # Coluna 1: Número da proposta
                             with col_num:
