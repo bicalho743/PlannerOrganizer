@@ -263,14 +263,15 @@ body, .main, [data-testid="stAppViewContainer"], .block-container {
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 60px;
     background-color: #1E1F36;
     color: white;
     text-align: center;
-    line-height: 60px;  /* centraliza o texto verticalmente */
+    padding: 12px 20px;
     z-index: 1000;
     font-size: 0.85rem;
+    box-shadow: 0 -1px 5px rgba(0,0,0,0.05);
 }
+
 .footer a {
     color: white;
     text-decoration: underline;
@@ -281,4 +282,3 @@ body, .main, [data-testid="stAppViewContainer"], .block-container {
 .footer a:hover {
     text-decoration: none;
 }
-
