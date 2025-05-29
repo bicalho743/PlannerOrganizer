@@ -1,6 +1,7 @@
 import streamlit as st
 from datetime import datetime, timedelta
 import pandas as pd
+from utils.force_spacing_fix import apply_spacing_fix
 
 # Função auxiliar para formatar datas com segurança
 def format_date_safe(date_obj, format_str='%d/%m/%Y'):
@@ -23,6 +24,9 @@ def format_date_safe(date_obj, format_str='%d/%m/%Y'):
             return "Data indisponível"
 
 def show():
+    # Aplicar correção de espaçamento PRIMEIRO
+    apply_spacing_fix()
+    
     # Removido o título de Dashboard conforme solicitado
 
     # Add test data button in sidebar if database is empty

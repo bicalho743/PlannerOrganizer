@@ -1,5 +1,6 @@
 {pkgs}: {
   deps = [
+    pkgs.tree
     pkgs.zip
     pkgs.imagemagick
     pkgs.unzip
