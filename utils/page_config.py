@@ -227,7 +227,13 @@ def apply_page_footer():
     
     /* Adicionar espaço no final da página para evitar que o conteúdo fique escondido pelo rodapé */
     .main .block-container {
-        padding-bottom: 80px !important;
+        padding-bottom: 120px !important;
+        margin-bottom: 60px !important;
+    }
+    
+    /* Garantir que todo o conteúdo tenha espaço suficiente */
+    [data-testid="stAppViewContainer"] .main {
+        margin-bottom: 80px !important;
     }
     </style>
     """
