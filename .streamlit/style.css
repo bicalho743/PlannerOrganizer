@@ -13,7 +13,7 @@ header[data-testid="stHeader"] {
 /* Reset para garantir que o conteúdo não tenha margens ou padding indesejados */
 .block-container {
     padding-top: 0px !important;
-    margin-top: 80px !important;
+    margin-top: 85px !important;
     max-width: 100% !important;
     min-height: calc(100vh - 80px) !important;
 }
