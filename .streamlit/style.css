@@ -271,3 +271,14 @@ body, .main, [data-testid="stAppViewContainer"], .block-container {
     z-index: 1000;
     font-size: 0.85rem;
 }
+.footer a {
+    color: white;
+    text-decoration: underline;
+    margin: 0 8px;
+    font-weight: 500;
+}
+
+.footer a:hover {
+    text-decoration: none;
+}
+
