@@ -15,7 +15,7 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
     <style>
     /* Ajustes específicos do page_config - Simplificado */
     .main .block-container {
-        padding-top: 65px !important;
+        padding-top: 95px !important;
         margin-top: 0 !important;
     }
     
