@@ -800,46 +800,7 @@ if not st.session_state.authenticated:
     }
     </style>
     
-    <script>
-    // Script para criar rodapé fixo com informações completas
-    (function() {
-        function createFooter() {
-            // Remove qualquer rodapé existente
-            const existingFooter = document.querySelector('.footer');
-            if (existingFooter) {
-                existingFooter.remove();
-            }
-            
-            // Cria o novo rodapé
-            const footer = document.createElement('div');
-            footer.className = 'footer';
-            footer.innerHTML = `
-                &copy; 2025 Planner Organizer. Todos os direitos reservados. | 
-                <a href="https://plannerorganiza.com.br/?show_termos=true" target="_blank">Termos de Uso</a> | 
-                <a href="https://plannerorganiza.com.br/?show_politica=true" target="_blank">Política de Privacidade</a> | 
-                Contato: <a href="mailto:contato@plannerorganiza.com.br">contato@plannerorganiza.com.br</a>
-            `;
-            
-            // Adiciona o rodapé ao body
-            document.body.appendChild(footer);
-        }
-        
-        // Executa quando o DOM estiver carregado
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', createFooter);
-        } else {
-            createFooter();
-        }
-        
-        // Re-executa após mudanças no Streamlit
-        setTimeout(createFooter, 1000);
-        setInterval(function() {
-            if (!document.querySelector('.footer')) {
-                createFooter();
-            }
-        }, 2000);
-    })();
-    </script>
+
     """, unsafe_allow_html=True)
     
     # Layout principal com duas colunas
