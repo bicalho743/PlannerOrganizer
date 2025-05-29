@@ -234,13 +234,12 @@ def apply_page_footer():
     
     /* Adicionar espaço no final da página para evitar que o conteúdo fique escondido pelo rodapé */
     .main .block-container {
-        padding-bottom: 120px !important;
-        margin-bottom: 30px !important;
-       
+        padding-bottom: 60px !important;
+        margin-bottom: 0px !important;
     }
     /* Garantir que todo o conteúdo tenha espaço suficiente */
     [data-testid="stAppViewContainer"] .main {
-        margin-bottom: 30px !important;
+        margin-bottom: 0px !important;
     }
     </style>
     """
@@ -254,7 +253,7 @@ def apply_page_footer():
         © 2025 Planner Organizer. Todos os direitos reservados. | 
         <a href="https://plannerorganiza.com.br/?show_termos=true" target="_blank">Termos de Uso</a> | 
         <a href="https://plannerorganiza.com.br/?show_politica=true" target="_blank">Política de Privacidade</a> | 
-        Contato: <a href="mailto:contato@plannerorganiza.com.br">contato@plannerorganiza.com.br</a>
+        Contato: contato@plannerorganiza.com.br
     </div>
     """
     
