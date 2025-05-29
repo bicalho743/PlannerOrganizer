@@ -485,7 +485,20 @@ def show():
                             
                             # Coluna 4: Exportar para PDF
                             with col_export:
-                                if st.button("📄 PDF", key=f"pdf_{proposta_id}"):
+                                # Adicionar CSS inline para garantir que o texto apareça
+                                st.markdown("""
+                                <style>
+                                div[data-testid="column"] button[kind="secondary"] {
+                                    width: 100% !important;
+                                    min-width: 80px !important;
+                                    font-size: 0.8rem !important;
+                                    padding: 0.4rem 0.6rem !important;
+                                    white-space: nowrap !important;
+                                    overflow: visible !important;
+                                }
+                                </style>
+                                """, unsafe_allow_html=True)
+                                if st.button("📄 PDF", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta"):
                                     try:
                                         # Importar a função de geração de PDF
                                         from utils.propostas_helper import gerar_pdf_proposta
@@ -527,6 +540,20 @@ def show():
                             
                             # Coluna 5: Botão de exclusão (modo alternativo mais direto)
                             with col_excluir:
+                                # Adicionar CSS inline para garantir que o texto apareça
+                                st.markdown("""
+                                <style>
+                                div[data-testid="column"] button[kind="secondary"] {
+                                    width: 100% !important;
+                                    min-width: 80px !important;
+                                    font-size: 0.8rem !important;
+                                    padding: 0.4rem 0.6rem !important;
+                                    white-space: nowrap !important;
+                                    overflow: visible !important;
+                                }
+                                </style>
+                                """, unsafe_allow_html=True)
+                                
                                 # Chave exclusiva para cada botão de exclusão
                                 excluir_key = f"del_{proposta_id}"
                                 confirmar_key = f"confirm_del_direct_{proposta_id}"
@@ -536,7 +563,7 @@ def show():
                                     st.session_state[excluir_key] = False
                                 
                                 # Botão de exclusão
-                                if st.button("🗑️ Excluir", key=f"btn_{excluir_key}"):
+                                if st.button("🗑️ Excluir", key=f"btn_{excluir_key}", help="Excluir proposta"):
                                     # Alternar estado de confirmação
                                     st.session_state[excluir_key] = True
                                     st.rerun()
