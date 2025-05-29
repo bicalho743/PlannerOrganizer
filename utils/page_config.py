@@ -241,9 +241,9 @@ def apply_page_footer():
     # HTML do rodapé
     footer_html = """
     <div class="footer-container">
-        &copy; 2025 Planner Organizer | 
-        <a href="#" onclick="window.open('/pages/termos_de_uso', '_blank')">Termos de Uso</a> | 
-        <a href="#" onclick="window.open('/pages/politica_privacidade', '_blank')">Política de Privacidade</a> | 
+        &copy; 2025 Planner Organizer. Todos os direitos reservados. | 
+        <a href="https://plannerorganiza.com.br/?show_termos=true" target="_blank">Termos de Uso</a> | 
+        <a href="https://plannerorganiza.com.br/?show_politica=true" target="_blank">Política de Privacidade</a> | 
         Contato: <a href="mailto:contato@plannerorganiza.com.br">contato@plannerorganiza.com.br</a>
     </div>
     """
