@@ -1675,3 +1675,10 @@ if False:
     except ImportError as e:
         st.error(f"Erro ao carregar módulo {module_name}: {str(e)}")
 # Não temos mais a opção de importação no menu
+import streamlit as st
+
+st.markdown("""
+    <div class="footer">
+        © 2025 Planner Organizer. Todos os direitos reservados.
+    </div>
+""", unsafe_allow_html=True)

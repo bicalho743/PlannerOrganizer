@@ -15,7 +15,7 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
     <style>
     /* Ajustes específicos do page_config - Simplificado */
     .main .block-container {
-        padding-top: 110px !important;
+        padding-top: 60px !important;
         margin-top: 0 !important;
     }
     
@@ -244,7 +244,7 @@ def apply_page_footer():
         &copy; 2025 Planner Organizer | 
         <a href="?show_termos=true" target="_blank">Termos de Uso</a> | 
         <a href="?show_politica=true" target="_blank">Política de Privacidade</a> | 
-        Contato: contato@plannerorganizer.com.br
+        Contato: <a href="mailto:contato@plannerorganiza.com.br">contato@plannerorganiza.com.br</a>
     </div>
     """
     

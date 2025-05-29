@@ -12,12 +12,13 @@ header[data-testid="stHeader"] {
     height: 0 !important;
 }
 
-/* Cabeçalho fixo personalizado */
+/* Cabeçalho fixo personalizado (altura automática, sem cortar texto) */
 .app-header {
     background-color: #1E1F36;
     color: white;
     width: 100%;
-    padding: 1rem 0;
+    min-height: 60px; /* altura mínima */
+    padding: 0.5rem 0; /* espaçamento interno mais suave */
     text-align: center;
     position: fixed;
     top: 0;
@@ -25,19 +26,33 @@ header[data-testid="stHeader"] {
     right: 0;
     z-index: 1000;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    height: 80px;
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
-/* Container principal */
+/* Ajuste global: reduz ainda mais o espaço após o cabeçalho */
 .block-container {
-    padding-top: 80px !important;
+    padding-top: 55px !important;  /* Ajustado para um espaçamento mínimo confortável */
+    min-height: calc(100vh - 55px) !important;
     max-width: 100% !important;
-    min-height: calc(100vh - 80px) !important;
     position: relative;
 }
+
+/* Remove margem dos primeiros elementos de qualquer página */
+.block-container > *:first-child {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Evita espaço desnecessário acima de títulos */
+.block-container h1,
+.block-container h2,
+.block-container h3 {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
 
 /* Gradiente abaixo do cabeçalho */
 .block-container::before {
@@ -236,4 +251,23 @@ button[role="tab"] {
     color: #1E88E5 !important;
     border-bottom-color: #1E88E5 !important;
     background-color: rgba(30, 136, 229, 0.05);
+}
+/* Espaçamento para evitar que o rodapé sobreponha o conteúdo */
+body, .main, [data-testid="stAppViewContainer"], .block-container {
+    padding-bottom: 100px !important;  /* deve ser igual ou maior que a altura do rodapé */
+}
+
+/* Rodapé fixo na parte inferior da página */
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background-color: #1E1F36;
+    color: white;
+    text-align: center;
+    line-height: 60px;  /* centraliza o texto verticalmente */
+    z-index: 1000;
+    font-size: 0.85rem;
 }
