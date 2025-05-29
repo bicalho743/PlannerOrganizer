@@ -206,12 +206,14 @@ def apply_page_footer():
         left: 0;
         right: 0;
         background-color: #f5f7fa;
-        padding: 10px 20px;
+        padding: 12px 20px;
         text-align: center;
         border-top: 1px solid #eaeaea;
         font-size: 0.85rem;
         color: #5A6A85;
         z-index: 999;
+        height: 45px;
+        box-sizing: border-box;
     }
     
     .footer-container a {
@@ -225,7 +227,7 @@ def apply_page_footer():
     
     /* Adicionar espaço no final da página para evitar que o conteúdo fique escondido pelo rodapé */
     .main .block-container {
-        padding-bottom: 50px;
+        padding-bottom: 80px !important;
     }
     </style>
     """
