@@ -1,9 +1,13 @@
 
 import streamlit as st
 
-def apply_page_header():
+def apply_page_header(page_title=None, breadcrumb_items=None):
     """
     Aplica um cabeçalho padronizado em todas as páginas do sistema
+    
+    Args:
+        page_title: Título da página atual
+        breadcrumb_items: Lista de itens para o breadcrumb ['Home', 'Seção', 'Página Atual']
     """
     # CSS para colocar o cabeçalho mais próximo do topo da página
     # e padronizar o espaçamento dos elementos da interface
@@ -11,7 +15,7 @@ def apply_page_header():
     <style>
     /* Ajustes específicos do page_config - Simplificado */
     .main .block-container {
-        padding-top: 85px !important;
+        padding-top: 65px !important;
         margin-top: 0 !important;
     }
     
@@ -176,6 +180,18 @@ def apply_page_header():
         </div>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Adicionar breadcrumb se fornecido
+    if breadcrumb_items:
+        breadcrumb_html = '<div class="page-breadcrumb">'
+        for i, item in enumerate(breadcrumb_items):
+            breadcrumb_html += f'<span class="breadcrumb-item">{item}</span>'
+        breadcrumb_html += '</div>'
+        st.markdown(breadcrumb_html, unsafe_allow_html=True)
+    elif page_title:
+        # Se não houver breadcrumb, mas houver título, criar um breadcrumb simples
+        breadcrumb_html = f'<div class="page-breadcrumb"><span class="breadcrumb-item">📊 {page_title}</span></div>'
+        st.markdown(breadcrumb_html, unsafe_allow_html=True)
 
 def apply_page_footer():
     """
