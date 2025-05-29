@@ -114,7 +114,14 @@ def show():
         """, unsafe_allow_html=True)
         
         st.markdown(f"""
-        <div style="text-align: center; margin: -60px 0 25px 0; padding-top: 0; position: relative; top: -20px;">
+        <style>
+        /* Força o conteúdo a ficar colado no cabeçalho */
+        [data-testid="stAppViewContainer"] > .main > .block-container {{
+            padding-top: 5px !important;
+            margin-top: 75px !important;
+        }}
+        </style>
+        <div style="text-align: center; margin: -20px 0 25px 0; padding-top: 0; position: relative; top: 0px;">
             <p style="font-style: italic; color: #1E366F; margin: 0; font-size: 1.1rem; font-weight: 500;">
                 "{frase['texto']}"
             </p>
@@ -140,7 +147,14 @@ def show():
         """, unsafe_allow_html=True)
         
         st.markdown(f"""
-        <div style="text-align: center; margin: -60px 0 25px 0; padding-top: 0; position: relative; top: -20px;">
+        <style>
+        /* Força o conteúdo a ficar colado no cabeçalho */
+        [data-testid="stAppViewContainer"] > .main > .block-container {{
+            padding-top: 5px !important;
+            margin-top: 75px !important;
+        }}
+        </style>
+        <div style="text-align: center; margin: -20px 0 25px 0; padding-top: 0; position: relative; top: 0px;">
             <p style="color: #FF9800; font-weight: bold; font-size: 0.9rem; margin-bottom: 5px;">
                 💡 DICA PROFISSIONAL
             </p>
