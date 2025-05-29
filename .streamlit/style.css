@@ -252,33 +252,54 @@ button[role="tab"] {
     border-bottom-color: #1E88E5 !important;
     background-color: rgba(30, 136, 229, 0.05);
 }
-/* Espaçamento para evitar que o rodapé sobreponha o conteúdo */
+/* Espaçamento inferior mínimo para não cortar conteúdo */
 body, .main, [data-testid="stAppViewContainer"], .block-container {
-    padding-bottom: 100px !important;  /* deve ser igual ou maior que a altura do rodapé */
+    padding-bottom: 0px !important;
+    margin-bottom: 30px !important;
+    background-color: white !important; /* ou cor de fundo da página */
 }
 
-/* Rodapé fixo na parte inferior da página */
+.block-container::after {
+    content: '';
+    display: none;
+}
+
+
+/* Rodapé fixo reduzido */
 .footer {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    background-color: #1E1F36;
+    background-color: #1E1F36; /* azul escuro */
     color: white;
     text-align: center;
-    padding: 12px 20px;
+    padding: 6px 12px;
     z-index: 1000;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     box-shadow: 0 -1px 5px rgba(0,0,0,0.05);
 }
 
-.footer a {
+/* Rodapé fixo com altura definida e espaçamento */
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 36px;
+    background-color: #1E1F36;
     color: white;
-    text-decoration: underline;
-    margin: 0 8px;
-    font-weight: 500;
+    font-size: 12px;
+    text-align: center;
+    line-height: 36px;
+    padding: 0 12px;
+    z-index: 1000;
+    box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.1);
 }
 
-.footer a:hover {
-    text-decoration: none;
+/* Espaço extra no final da página para não cortar conteúdo */
+body::after {
+    content: '';
+    display: block;
+    height: 40px;
 }

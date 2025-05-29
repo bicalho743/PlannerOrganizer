@@ -1,5 +1,5 @@
-
 import streamlit as st
+
 
 def apply_page_header(page_title=None, breadcrumb_items=None):
     """
@@ -133,37 +133,42 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
     }
     </style>
     """
-    
+
     # Aplicar CSS para ajustar espaçamento
     st.markdown(header_css, unsafe_allow_html=True)
-    
+
     # Obter nome do usuário da sessão
     nome_usuario = "Usuário"
-    
+
     # Verificar se o objeto de usuário existe na sessão (chave 'usuario')
     if "usuario" in st.session_state and st.session_state.usuario:
-        if isinstance(st.session_state.usuario, dict) and "nome" in st.session_state.usuario:
+        if isinstance(st.session_state.usuario,
+                      dict) and "nome" in st.session_state.usuario:
             nome_usuario = st.session_state.usuario["nome"]
         elif hasattr(st.session_state.usuario, "nome"):
             nome_usuario = st.session_state.usuario.nome
-    
+
     # Log para debug (temporário)
-    print(f"Dados do usuário na sessão: {st.session_state.get('usuario', 'Não encontrado')}")
-    
+    print(
+        f"Dados do usuário na sessão: {st.session_state.get('usuario', 'Não encontrado')}"
+    )
+
     # Componente de "Bem-vindo(a)" no canto superior direito
     welcome_html = f"""
     <div class="user-welcome">
         Bem-vindo(a), {nome_usuario}
     </div>
     """
-    
+
     # Obter a data atual formatada em português
     from datetime import datetime
     data_atual = datetime.now()
-    meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", 
-             "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+    meses = [
+        "janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho",
+        "agosto", "setembro", "outubro", "novembro", "dezembro"
+    ]
     data_formatada = f"{data_atual.day} de {meses[data_atual.month-1]} de {data_atual.year}"
-    
+
     # Adicionando o cabeçalho usando a classe CSS definida em style.css
     st.markdown(f"""
     <div class="app-header">
@@ -171,16 +176,15 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         <p style="color: rgba(255, 255, 255, 0.85); margin: 0.1rem 0 0 0; padding: 0; font-size: 1rem; font-family: 'Poppins', sans-serif;">
             Sistema Profissional de Gestão Personal Organizer
         </p>
-        <p style="color: rgba(255, 255, 255, 0.75); margin: 0.2rem 0 0 0; padding: 0; font-size: 0.9rem; font-family: 'Poppins', sans-serif; font-style: italic;">
-            "Transforme sua organização em resultados: gerencie propostas, clientes e finanças com precisão profissional."
-        </p>
+
         <div style="position: absolute; top: 45%; right: 1rem; transform: translateY(-50%); background-color: rgba(255, 255, 255, 0.15); padding: 0.4rem 1rem; border-radius: 1rem; text-align: center; border: 1px solid rgba(255, 255, 255, 0.2);">
             <span style="color: rgba(255, 255, 255, 0.95); font-size: 0.9rem; font-family: 'Poppins', sans-serif; display: block; font-weight: 500;">Bem-vindo(a), {nome_usuario}</span>
             <span style="color: rgba(255, 255, 255, 0.8); font-size: 0.8rem; font-family: 'Poppins', sans-serif; display: block; margin-top: 0.2rem;">📅 {data_formatada}</span>
         </div>
     </div>
-    """, unsafe_allow_html=True)
-    
+    """,
+                unsafe_allow_html=True)
+
     # Adicionar breadcrumb se fornecido
     if breadcrumb_items:
         breadcrumb_html = '<div class="page-breadcrumb">'
@@ -193,50 +197,13 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         breadcrumb_html = f'<div class="page-breadcrumb"><span class="breadcrumb-item">📊 {page_title}</span></div>'
         st.markdown(breadcrumb_html, unsafe_allow_html=True)
 
-def apply_page_footer():
-    """
-    Aplica um rodapé padronizado em todas as páginas do sistema
-    """
-    # CSS para posicionar o rodapé na parte inferior da página
-    footer_css = """
-    <style>
-    .footer-container {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background-color: #f5f7fa;
-        padding: 12px 20px;
-        text-align: center;
-        border-top: 1px solid #eaeaea;
-        font-size: 0.85rem;
-        color: #5A6A85;
-        z-index: 999;
-        height: 45px;
-        box-sizing: border-box;
-    }
-    
-    .footer-container a {
-        color: #1E366F;
-        text-decoration: none;
-    }
-    
-    .footer-container a:hover {
-        text-decoration: underline;
-    }
-    
-    /* Adicionar espaço no final da página para evitar que o conteúdo fique escondido pelo rodapé */
-    .main .block-container {
-        padding-bottom: 120px !important;
-        margin-bottom: 60px !important;
-    }
-    
-    /* Garantir que todo o conteúdo tenha espaço suficiente */
-    [data-testid="stAppViewContainer"] .main {
-        margin-bottom: 80px !important;
-    }
-    </style>
-    """
-    
-    # Rodapé removido - usando apenas o fixo do CSS
 
+def apply_page_footer():
+    st.markdown("""
+    <div class="footer">
+        © 2025 Planner Organizer |
+        <a href="?show_termos=true" target="_blank">Termos de Uso</a> |
+        <a href="?show_politica=true" target="_blank">Política de Privacidade</a> |
+        <a href="mailto:contato@plannerorganiza.com.br">contato@plannerorganiza.com.br</a>
+    </div>
+    """, unsafe_allow_html=True)
