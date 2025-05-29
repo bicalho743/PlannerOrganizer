@@ -485,31 +485,40 @@ def show():
                             
                             # Coluna 4: Exportar para PDF
                             with col_export:
-                                # CSS para botões com cores padronizadas
+                                # Aplicar JavaScript para estilizar os botões após renderização
                                 st.markdown("""
-                                <style>
-                                div[data-testid="column"] button[kind="secondary"] {
-                                    width: 100% !important;
-                                    min-width: 80px !important;
-                                    font-size: 0.8rem !important;
-                                    padding: 0.4rem 0.6rem !important;
-                                    white-space: nowrap !important;
-                                    overflow: visible !important;
-                                    background: linear-gradient(135deg, #4CAF50, #45a049) !important;
-                                    color: white !important;
-                                    border: none !important;
-                                    border-radius: 6px !important;
-                                    font-weight: 500 !important;
-                                    transition: all 0.3s ease !important;
-                                }
-                                div[data-testid="column"] button[kind="secondary"]:hover {
-                                    background: linear-gradient(135deg, #45a049, #3d8b40) !important;
-                                    transform: translateY(-1px) !important;
-                                    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
-                                }
-                                </style>
+                                <script>
+                                setTimeout(function() {
+                                    // Estilizar botões PDF (verde)
+                                    const pdfButtons = document.querySelectorAll('button[kind="primary"]');
+                                    pdfButtons.forEach(btn => {
+                                        if (btn.textContent.includes('PDF')) {
+                                            btn.style.background = 'linear-gradient(135deg, #4CAF50, #45a049)';
+                                            btn.style.color = 'white';
+                                            btn.style.border = 'none';
+                                            btn.style.borderRadius = '6px';
+                                            btn.style.fontWeight = '500';
+                                            btn.style.transition = 'all 0.3s ease';
+                                        }
+                                    });
+                                    
+                                    // Estilizar botões Excluir (vermelho)
+                                    const deleteButtons = document.querySelectorAll('button[kind="secondary"]');
+                                    deleteButtons.forEach(btn => {
+                                        if (btn.textContent.includes('Excluir')) {
+                                            btn.style.background = 'linear-gradient(135deg, #f44336, #d32f2f)';
+                                            btn.style.color = 'white';
+                                            btn.style.border = 'none';
+                                            btn.style.borderRadius = '6px';
+                                            btn.style.fontWeight = '500';
+                                            btn.style.transition = 'all 0.3s ease';
+                                        }
+                                    });
+                                }, 100);
+                                </script>
                                 """, unsafe_allow_html=True)
-                                if st.button("📄 PDF", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta"):
+                                
+                                if st.button("📄 PDF", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta", type="primary"):
                                     try:
                                         # Importar a função de geração de PDF
                                         from utils.propostas_helper import gerar_pdf_proposta
@@ -551,30 +560,6 @@ def show():
                             
                             # Coluna 5: Botão de exclusão (modo alternativo mais direto)
                             with col_excluir:
-                                # CSS para botão de exclusão com cor vermelha
-                                st.markdown("""
-                                <style>
-                                div[data-testid="column"] button[kind="secondary"] {
-                                    width: 100% !important;
-                                    min-width: 80px !important;
-                                    font-size: 0.8rem !important;
-                                    padding: 0.4rem 0.6rem !important;
-                                    white-space: nowrap !important;
-                                    overflow: visible !important;
-                                    background: linear-gradient(135deg, #f44336, #d32f2f) !important;
-                                    color: white !important;
-                                    border: none !important;
-                                    border-radius: 6px !important;
-                                    font-weight: 500 !important;
-                                    transition: all 0.3s ease !important;
-                                }
-                                div[data-testid="column"] button[kind="secondary"]:hover {
-                                    background: linear-gradient(135deg, #d32f2f, #c62828) !important;
-                                    transform: translateY(-1px) !important;
-                                    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
-                                }
-                                </style>
-                                """, unsafe_allow_html=True)
                                 
                                 # Chave exclusiva para cada botão de exclusão
                                 excluir_key = f"del_{proposta_id}"
@@ -585,7 +570,7 @@ def show():
                                     st.session_state[excluir_key] = False
                                 
                                 # Botão de exclusão
-                                if st.button("🗑️ Excluir", key=f"btn_{excluir_key}", help="Excluir proposta"):
+                                if st.button("🗑️ Excluir", key=f"btn_{excluir_key}", help="Excluir proposta", type="secondary"):
                                     # Alternar estado de confirmação
                                     st.session_state[excluir_key] = True
                                     st.rerun()
