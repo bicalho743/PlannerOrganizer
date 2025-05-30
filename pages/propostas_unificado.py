@@ -485,59 +485,62 @@ def show():
                             
                             # Coluna 4: Exportar para PDF
                             with col_export:
-                                # CSS específico para botão verde
-                                st.markdown("""
+                                # CSS global aplicado a todos os botões desta coluna
+                                st.markdown(f"""
                                 <style>
-                                .green-button button {
+                                div[data-testid="column"]:nth-child(4) button {{
                                     background: linear-gradient(135deg, #4CAF50, #45a049) !important;
                                     color: white !important;
                                     border: none !important;
                                     border-radius: 6px !important;
                                     font-weight: 500 !important;
-                                }
+                                    width: 100% !important;
+                                }}
+                                div[data-testid="column"]:nth-child(4) button:hover {{
+                                    background: linear-gradient(135deg, #45a049, #3d8b40) !important;
+                                }}
                                 </style>
                                 """, unsafe_allow_html=True)
                                 
-                                with st.container():
-                                    if st.button("Gerar Proposta", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta"):
-                                        try:
-                                            # Importar a função de geração de PDF
-                                            from utils.propostas_helper import gerar_pdf_proposta
+                                if st.button("Gerar Proposta", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta"):
+                                    try:
+                                        # Importar a função de geração de PDF
+                                        from utils.propostas_helper import gerar_pdf_proposta
+                                        
+                                        # Gerar o PDF
+                                        sucesso, mensagem, arquivo = gerar_pdf_proposta(
+                                            db=st.session_state.db,
+                                            proposta_id=proposta_id
+                                        )
+                                        
+                                        if sucesso and arquivo:
+                                            # Ler o arquivo para download
+                                            with open(arquivo, "rb") as file:
+                                                pdf_bytes = file.read()
                                             
-                                            # Gerar o PDF
-                                            sucesso, mensagem, arquivo = gerar_pdf_proposta(
-                                                db=st.session_state.db,
-                                                proposta_id=proposta_id
+                                            # Obter nome do cliente para usar no nome do arquivo
+                                            cliente_id = proposta['cliente_id']
+                                            cliente_df = st.session_state.db.get_cliente_by_id(cliente_id)
+                                            cliente_nome = "sem_nome"
+                                            if not cliente_df.empty:
+                                                nome_str = str(cliente_df.iloc[0]['nome']) if 'nome' in cliente_df.columns else "sem_nome"
+                                                cliente_nome = nome_str.replace(' ', '_').lower()
+                                            
+                                            # Mostrar mensagem de sucesso
+                                            st.success("PDF gerado com sucesso!")
+                                            
+                                            # Criar botão de download
+                                            st.download_button(
+                                                label="Baixar",
+                                                data=pdf_bytes,
+                                                file_name=f"Proposta_{proposta_id}_{cliente_nome}.pdf",
+                                                mime="application/pdf",
+                                                key=f"download_{proposta_id}"
                                             )
-                                            
-                                            if sucesso and arquivo:
-                                                # Ler o arquivo para download
-                                                with open(arquivo, "rb") as file:
-                                                    pdf_bytes = file.read()
-                                                
-                                                # Obter nome do cliente para usar no nome do arquivo
-                                                cliente_id = proposta['cliente_id']
-                                                cliente_df = st.session_state.db.get_cliente_by_id(cliente_id)
-                                                cliente_nome = "sem_nome"
-                                                if not cliente_df.empty:
-                                                    nome_str = str(cliente_df.iloc[0]['nome']) if 'nome' in cliente_df.columns else "sem_nome"
-                                                    cliente_nome = nome_str.replace(' ', '_').lower()
-                                                
-                                                # Mostrar mensagem de sucesso
-                                                st.success("PDF gerado com sucesso!")
-                                                
-                                                # Criar botão de download
-                                                st.download_button(
-                                                    label="Baixar",
-                                                    data=pdf_bytes,
-                                                    file_name=f"Proposta_{proposta_id}_{cliente_nome}.pdf",
-                                                    mime="application/pdf",
-                                                    key=f"download_{proposta_id}"
-                                                )
-                                            else:
-                                                st.error(f"Erro ao gerar PDF: {mensagem}")
-                                        except Exception as e:
-                                            st.error(f"Erro ao gerar PDF: {str(e)}")
+                                        else:
+                                            st.error(f"Erro ao gerar PDF: {mensagem}")
+                                    except Exception as e:
+                                        st.error(f"Erro ao gerar PDF: {str(e)}")
                             
                             # Coluna 5: Botão de exclusão (modo alternativo mais direto)
                             with col_excluir:
@@ -547,15 +550,19 @@ def show():
                                 confirmar_key = f"confirm_del_direct_{proposta_id}"
                                 
                                 # CSS específico para botão vermelho
-                                st.markdown("""
+                                st.markdown(f"""
                                 <style>
-                                .red-button button {
+                                div[data-testid="column"]:nth-child(5) button {{
                                     background: linear-gradient(135deg, #f44336, #d32f2f) !important;
                                     color: white !important;
                                     border: none !important;
                                     border-radius: 6px !important;
                                     font-weight: 500 !important;
-                                }
+                                    width: 100% !important;
+                                }}
+                                div[data-testid="column"]:nth-child(5) button:hover {{
+                                    background: linear-gradient(135deg, #d32f2f, #c62828) !important;
+                                }}
                                 </style>
                                 """, unsafe_allow_html=True)
                                 
