@@ -141,8 +141,15 @@ div[data-testid="column"] .stButton > button {
     line-height: 1.2;
 }
 
-/* Botões específicos com cores - PDF (verde) */
-div[data-testid="column"] .stButton > button[kind="primary"] {
+/* Estilização específica para botões baseada no conteúdo */
+/* Botões que contêm "PDF" - verde */
+div[data-testid="column"] .stButton > button {
+    position: relative;
+}
+
+div[data-testid="column"] .stButton > button:has-text("PDF"),
+button[title*="PDF"],
+button[aria-label*="PDF"] {
     background: linear-gradient(135deg, #4CAF50, #45a049) !important;
     color: white !important;
     border: none !important;
@@ -151,14 +158,18 @@ div[data-testid="column"] .stButton > button[kind="primary"] {
     transition: all 0.3s ease !important;
 }
 
-div[data-testid="column"] .stButton > button[kind="primary"]:hover {
+div[data-testid="column"] .stButton > button:has-text("PDF"):hover,
+button[title*="PDF"]:hover,
+button[aria-label*="PDF"]:hover {
     background: linear-gradient(135deg, #45a049, #3d8b40) !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
 }
 
-/* Botões específicos com cores - Excluir (vermelho) */
-div[data-testid="column"] .stButton > button[kind="secondary"]:contains("Excluir") {
+/* Botões que contêm "Excluir" - vermelho */
+div[data-testid="column"] .stButton > button:has-text("Excluir"),
+button[title*="Excluir"],
+button[aria-label*="Excluir"] {
     background: linear-gradient(135deg, #f44336, #d32f2f) !important;
     color: white !important;
     border: none !important;
@@ -167,47 +178,9 @@ div[data-testid="column"] .stButton > button[kind="secondary"]:contains("Excluir
     transition: all 0.3s ease !important;
 }
 
-div[data-testid="column"] .stButton > button[kind="secondary"]:contains("Excluir"):hover {
-    background: linear-gradient(135deg, #d32f2f, #c62828) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
-}
-
-/* Classe específica para botões PDF */
-.btn-pdf {
-    background: linear-gradient(135deg, #4CAF50, #45a049) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 6px !important;
-    font-weight: 500 !important;
-    transition: all 0.3s ease !important;
-    width: 100% !important;
-    min-width: 80px !important;
-    padding: 0.4rem 0.6rem !important;
-    font-size: 0.8rem !important;
-}
-
-.btn-pdf:hover {
-    background: linear-gradient(135deg, #45a049, #3d8b40) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
-}
-
-/* Classe específica para botões Excluir */
-.btn-delete {
-    background: linear-gradient(135deg, #f44336, #d32f2f) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 6px !important;
-    font-weight: 500 !important;
-    transition: all 0.3s ease !important;
-    width: 100% !important;
-    min-width: 80px !important;
-    padding: 0.4rem 0.6rem !important;
-    font-size: 0.8rem !important;
-}
-
-.btn-delete:hover {
+div[data-testid="column"] .stButton > button:has-text("Excluir"):hover,
+button[title*="Excluir"]:hover,
+button[aria-label*="Excluir"]:hover {
     background: linear-gradient(135deg, #d32f2f, #c62828) !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;

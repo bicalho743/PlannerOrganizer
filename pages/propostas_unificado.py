@@ -485,40 +485,22 @@ def show():
                             
                             # Coluna 4: Exportar para PDF
                             with col_export:
-                                # Aplicar JavaScript para estilizar os botões após renderização
-                                st.markdown("""
-                                <script>
-                                setTimeout(function() {
-                                    // Estilizar botões PDF (verde)
-                                    const pdfButtons = document.querySelectorAll('button[kind="primary"]');
-                                    pdfButtons.forEach(btn => {
-                                        if (btn.textContent.includes('PDF')) {
-                                            btn.style.background = 'linear-gradient(135deg, #4CAF50, #45a049)';
-                                            btn.style.color = 'white';
-                                            btn.style.border = 'none';
-                                            btn.style.borderRadius = '6px';
-                                            btn.style.fontWeight = '500';
-                                            btn.style.transition = 'all 0.3s ease';
-                                        }
-                                    });
-                                    
-                                    // Estilizar botões Excluir (vermelho)
-                                    const deleteButtons = document.querySelectorAll('button[kind="secondary"]');
-                                    deleteButtons.forEach(btn => {
-                                        if (btn.textContent.includes('Excluir')) {
-                                            btn.style.background = 'linear-gradient(135deg, #f44336, #d32f2f)';
-                                            btn.style.color = 'white';
-                                            btn.style.border = 'none';
-                                            btn.style.borderRadius = '6px';
-                                            btn.style.fontWeight = '500';
-                                            btn.style.transition = 'all 0.3s ease';
-                                        }
-                                    });
-                                }, 100);
-                                </script>
+                                # CSS específico para este botão
+                                st.markdown(f"""
+                                <style>
+                                button[key="pdf_{proposta_id}"],
+                                div[data-testid="stButton"] button:nth-of-type(1):has-text("PDF") {{
+                                    background: linear-gradient(135deg, #4CAF50, #45a049) !important;
+                                    color: white !important;
+                                    border: none !important;
+                                    border-radius: 6px !important;
+                                    font-weight: 500 !important;
+                                    transition: all 0.3s ease !important;
+                                }}
+                                </style>
                                 """, unsafe_allow_html=True)
                                 
-                                if st.button("📄 PDF", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta", type="primary"):
+                                if st.button("📄 PDF", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta"):
                                     try:
                                         # Importar a função de geração de PDF
                                         from utils.propostas_helper import gerar_pdf_proposta
@@ -565,12 +547,31 @@ def show():
                                 excluir_key = f"del_{proposta_id}"
                                 confirmar_key = f"confirm_del_direct_{proposta_id}"
                                 
+                                # CSS específico para botão excluir
+                                st.markdown(f"""
+                                <style>
+                                button[key="btn_{excluir_key}"] {{
+                                    background: linear-gradient(135deg, #f44336, #d32f2f) !important;
+                                    color: white !important;
+                                    border: none !important;
+                                    border-radius: 6px !important;
+                                    font-weight: 500 !important;
+                                    transition: all 0.3s ease !important;
+                                }}
+                                button[key="btn_{excluir_key}"]:hover {{
+                                    background: linear-gradient(135deg, #d32f2f, #c62828) !important;
+                                    transform: translateY(-1px) !important;
+                                    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+                                }}
+                                </style>
+                                """, unsafe_allow_html=True)
+                                
                                 # Usar variáveis de sessão simples para gerenciar estado
                                 if excluir_key not in st.session_state:
                                     st.session_state[excluir_key] = False
                                 
                                 # Botão de exclusão
-                                if st.button("🗑️ Excluir", key=f"btn_{excluir_key}", help="Excluir proposta", type="secondary"):
+                                if st.button("🗑️ Excluir", key=f"btn_{excluir_key}", help="Excluir proposta"):
                                     # Alternar estado de confirmação
                                     st.session_state[excluir_key] = True
                                     st.rerun()
