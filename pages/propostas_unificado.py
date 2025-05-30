@@ -502,6 +502,26 @@ def show():
                                 </style>
                                 """, unsafe_allow_html=True)
                                 
+                                # CSS para botão verde "Gerar Proposta"
+                                st.markdown(f"""
+                                <style>
+                                div[data-testid="stVerticalBlock"] > div[style*="flex-direction: column"] > div[data-testid="stVerticalBlock"] > div.stButton > button[data-testid="stBaseButton-secondary"][key="pdf_{proposta_id}"] {{
+                                    background-color: #28a745 !important;
+                                    color: white !important;
+                                    border: none !important;
+                                    border-radius: 8px !important;
+                                    padding: 8px 16px !important;
+                                    font-weight: 500 !important;
+                                    transition: all 0.3s ease !important;
+                                }}
+                                div[data-testid="stVerticalBlock"] > div[style*="flex-direction: column"] > div[data-testid="stVerticalBlock"] > div.stButton > button[data-testid="stBaseButton-secondary"][key="pdf_{proposta_id}"]:hover {{
+                                    background-color: #218838 !important;
+                                    transform: translateY(-1px) !important;
+                                    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3) !important;
+                                }}
+                                </style>
+                                """, unsafe_allow_html=True)
+                                
                                 if st.button("Gerar Proposta", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta"):
                                     try:
                                         # Importar a função de geração de PDF
@@ -570,6 +590,26 @@ def show():
                                 if excluir_key not in st.session_state:
                                     st.session_state[excluir_key] = False
                                 
+                                # CSS para botão vermelho "Excluir"
+                                st.markdown(f"""
+                                <style>
+                                div[data-testid="stVerticalBlock"] > div[style*="flex-direction: column"] > div[data-testid="stVerticalBlock"] > div.stButton > button[data-testid="stBaseButton-secondary"][key="btn_{excluir_key}"] {{
+                                    background-color: #dc3545 !important;
+                                    color: white !important;
+                                    border: none !important;
+                                    border-radius: 8px !important;
+                                    padding: 8px 16px !important;
+                                    font-weight: 500 !important;
+                                    transition: all 0.3s ease !important;
+                                }}
+                                div[data-testid="stVerticalBlock"] > div[style*="flex-direction: column"] > div[data-testid="stVerticalBlock"] > div.stButton > button[data-testid="stBaseButton-secondary"][key="btn_{excluir_key}"]:hover {{
+                                    background-color: #c82333 !important;
+                                    transform: translateY(-1px) !important;
+                                    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3) !important;
+                                }}
+                                </style>
+                                """, unsafe_allow_html=True)
+                                
                                 # Botão de exclusão
                                 if st.button("🗑️ Excluir", key=f"btn_{excluir_key}", help="Excluir proposta"):
                                     # Alternar estado de confirmação
@@ -603,6 +643,23 @@ def show():
                                         }
                                         </style>
                                         """, unsafe_allow_html=True)
+                                        # CSS para botão de confirmação "Sim, excluir"
+                                        st.markdown(f"""
+                                        <style>
+                                        div.stButton > button[data-testid="stBaseButton-secondary"][key="sim_{confirmar_key}"] {{
+                                            background-color: #dc3545 !important;
+                                            color: white !important;
+                                            border: none !important;
+                                            border-radius: 6px !important;
+                                            padding: 8px 16px !important;
+                                            font-weight: 500 !important;
+                                        }}
+                                        div.stButton > button[data-testid="stBaseButton-secondary"][key="sim_{confirmar_key}"]:hover {{
+                                            background-color: #c82333 !important;
+                                        }}
+                                        </style>
+                                        """, unsafe_allow_html=True)
+                                        
                                         if st.button("✓ Sim, excluir", key=f"sim_{confirmar_key}"):
                                             # Chamar função excluir direto
                                             try:
@@ -659,6 +716,23 @@ def show():
                                         }
                                         </style>
                                         """, unsafe_allow_html=True)
+                                        # CSS para botão de cancelar
+                                        st.markdown(f"""
+                                        <style>
+                                        div.stButton > button[data-testid="stBaseButton-secondary"][key="cancelar_{confirmar_key}"] {{
+                                            background-color: #6c757d !important;
+                                            color: white !important;
+                                            border: none !important;
+                                            border-radius: 6px !important;
+                                            padding: 8px 16px !important;
+                                            font-weight: 500 !important;
+                                        }}
+                                        div.stButton > button[data-testid="stBaseButton-secondary"][key="cancelar_{confirmar_key}"]:hover {{
+                                            background-color: #5a6268 !important;
+                                        }}
+                                        </style>
+                                        """, unsafe_allow_html=True)
+                                        
                                         if st.button("✗ Cancelar", key=f"cancelar_{confirmar_key}"):
                                             # Limpar estado de sessão
                                             st.session_state[excluir_key] = False
