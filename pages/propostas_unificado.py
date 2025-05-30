@@ -485,60 +485,59 @@ def show():
                             
                             # Coluna 4: Exportar para PDF
                             with col_export:
-                                # CSS específico para este botão
-                                st.markdown(f"""
+                                # CSS específico para botão verde
+                                st.markdown("""
                                 <style>
-                                button[key="pdf_{proposta_id}"],
-                                div[data-testid="stButton"] button:nth-of-type(1):has-text("PDF") {{
+                                .green-button button {
                                     background: linear-gradient(135deg, #4CAF50, #45a049) !important;
                                     color: white !important;
                                     border: none !important;
                                     border-radius: 6px !important;
                                     font-weight: 500 !important;
-                                    transition: all 0.3s ease !important;
-                                }}
+                                }
                                 </style>
                                 """, unsafe_allow_html=True)
                                 
-                                if st.button("📄 PDF", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta"):
-                                    try:
-                                        # Importar a função de geração de PDF
-                                        from utils.propostas_helper import gerar_pdf_proposta
-                                        
-                                        # Gerar o PDF
-                                        sucesso, mensagem, arquivo = gerar_pdf_proposta(
-                                            db=st.session_state.db,
-                                            proposta_id=proposta_id
-                                        )
-                                        
-                                        if sucesso and arquivo:
-                                            # Ler o arquivo para download
-                                            with open(arquivo, "rb") as file:
-                                                pdf_bytes = file.read()
+                                with st.container():
+                                    if st.button("Gerar Proposta", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta"):
+                                        try:
+                                            # Importar a função de geração de PDF
+                                            from utils.propostas_helper import gerar_pdf_proposta
                                             
-                                            # Obter nome do cliente para usar no nome do arquivo
-                                            cliente_id = proposta['cliente_id']
-                                            cliente_df = st.session_state.db.get_cliente_by_id(cliente_id)
-                                            cliente_nome = "sem_nome"
-                                            if not cliente_df.empty:
-                                                nome_str = str(cliente_df.iloc[0]['nome']) if 'nome' in cliente_df.columns else "sem_nome"
-                                                cliente_nome = nome_str.replace(' ', '_').lower()
-                                            
-                                            # Mostrar mensagem de sucesso
-                                            st.success("PDF gerado com sucesso!")
-                                            
-                                            # Criar botão de download
-                                            st.download_button(
-                                                label="Baixar",
-                                                data=pdf_bytes,
-                                                file_name=f"Proposta_{proposta_id}_{cliente_nome}.pdf",
-                                                mime="application/pdf",
-                                                key=f"download_{proposta_id}"
+                                            # Gerar o PDF
+                                            sucesso, mensagem, arquivo = gerar_pdf_proposta(
+                                                db=st.session_state.db,
+                                                proposta_id=proposta_id
                                             )
-                                        else:
-                                            st.error(f"Erro ao gerar PDF: {mensagem}")
-                                    except Exception as e:
-                                        st.error(f"Erro ao gerar PDF: {str(e)}")
+                                            
+                                            if sucesso and arquivo:
+                                                # Ler o arquivo para download
+                                                with open(arquivo, "rb") as file:
+                                                    pdf_bytes = file.read()
+                                                
+                                                # Obter nome do cliente para usar no nome do arquivo
+                                                cliente_id = proposta['cliente_id']
+                                                cliente_df = st.session_state.db.get_cliente_by_id(cliente_id)
+                                                cliente_nome = "sem_nome"
+                                                if not cliente_df.empty:
+                                                    nome_str = str(cliente_df.iloc[0]['nome']) if 'nome' in cliente_df.columns else "sem_nome"
+                                                    cliente_nome = nome_str.replace(' ', '_').lower()
+                                                
+                                                # Mostrar mensagem de sucesso
+                                                st.success("PDF gerado com sucesso!")
+                                                
+                                                # Criar botão de download
+                                                st.download_button(
+                                                    label="Baixar",
+                                                    data=pdf_bytes,
+                                                    file_name=f"Proposta_{proposta_id}_{cliente_nome}.pdf",
+                                                    mime="application/pdf",
+                                                    key=f"download_{proposta_id}"
+                                                )
+                                            else:
+                                                st.error(f"Erro ao gerar PDF: {mensagem}")
+                                        except Exception as e:
+                                            st.error(f"Erro ao gerar PDF: {str(e)}")
                             
                             # Coluna 5: Botão de exclusão (modo alternativo mais direto)
                             with col_excluir:
@@ -547,22 +546,16 @@ def show():
                                 excluir_key = f"del_{proposta_id}"
                                 confirmar_key = f"confirm_del_direct_{proposta_id}"
                                 
-                                # CSS específico para botão excluir
-                                st.markdown(f"""
+                                # CSS específico para botão vermelho
+                                st.markdown("""
                                 <style>
-                                button[key="btn_{excluir_key}"] {{
+                                .red-button button {
                                     background: linear-gradient(135deg, #f44336, #d32f2f) !important;
                                     color: white !important;
                                     border: none !important;
                                     border-radius: 6px !important;
                                     font-weight: 500 !important;
-                                    transition: all 0.3s ease !important;
-                                }}
-                                button[key="btn_{excluir_key}"]:hover {{
-                                    background: linear-gradient(135deg, #d32f2f, #c62828) !important;
-                                    transform: translateY(-1px) !important;
-                                    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
-                                }}
+                                }
                                 </style>
                                 """, unsafe_allow_html=True)
                                 
