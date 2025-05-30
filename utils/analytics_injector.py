@@ -41,6 +41,20 @@ def inject_analytics_tags():
     fbq('track', 'PageView');
     </script>
     
+    <!-- Brevo Tracking -->
+    <script src="https://cdn.brevo.com/js/sdk-loader.js" async></script>
+    <script>
+        // Version: 2.0
+        window.Brevo = window.Brevo || [];
+        Brevo.push([
+            "init",
+            {
+            client_key: "awheq5vyxe050fhs5oxcejmb",
+            // Optional: Add other initialization options, see documentation
+            }
+        ]);
+    </script>
+    
     <!-- Noscript tags -->
     <noscript>
         <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NM45ZQCD"
@@ -60,6 +74,9 @@ def inject_analytics_tags():
         }
         if (typeof fbq !== 'undefined') {
             console.log('Facebook Pixel carregado com sucesso');
+        }
+        if (typeof Brevo !== 'undefined') {
+            console.log('Brevo tracking carregado com sucesso');
         }
     }, 2000);
     </script>
