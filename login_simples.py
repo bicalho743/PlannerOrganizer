@@ -43,7 +43,7 @@ if "creating_account" not in st.session_state:
 
 # Mostrar termos de uso se solicitado ou se estiver criando conta pela primeira vez
 if st.session_state.show_termos or (st.session_state.creating_account and "termos_viewed" not in st.session_state):
-    st.session_state.termos_viewed = True  # Marcar que os termos já foram vistos
+    st.session_state.termos_viewed = True
     from pages.termos_de_uso import show
     show()
     st.stop()
@@ -61,15 +61,10 @@ header_html = """
     <a href="/planos_novo" style="position: absolute; top: 50%; right: 1rem; transform: translateY(-50%); background-color: #FF7043; color: white; padding: 0.5rem 1rem; border-radius: 2rem; text-decoration: none; font-weight: bold; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: all 0.3s ease;">
         💰 Planos e Assinaturas
     </a>
-    <p style="color: #F5F5F5; margin: 0.2rem 0 0 0; padding: 0; font-size: 0.9rem; font-family: 'Poppins', sans-serif;">
-        Sistema Profissional de Gestão Personal Organizer
-    </p>
-    <p style="color: #E0E0E0; margin: 0.5rem 0 0 0; padding: 0; font-size: 0.8rem; font-family: 'Poppins', sans-serif; font-style: italic;">
-        "Transforme sua organização em resultados: gerencie propostas, clientes e finanças com precisão profissional."
-    </p>
 </div>
 """
 st.markdown(header_html, unsafe_allow_html=True)
+
 
 # Remover o menu hamburguer e rodapé
 hide_menu_style = """
