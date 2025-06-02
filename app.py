@@ -47,6 +47,7 @@ if project_root not in sys.path:
 from utils.database import Database
 from utils.planos import verificar_login  # Importando apenas a função de verificação de login
 from utils.analytics_injector import inject_analytics_tags, track_page_view, inject_seo_meta_tags
+from utils.ga4_injector import setup_google_analytics
 
 # Importar módulo de autenticação Firebase (pode ser comentado para desabilitar temporariamente)
 try:

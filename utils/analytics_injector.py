@@ -94,26 +94,30 @@ def inject_analytics_tags():
     </script>
     """
     
-    # Injeta o código no head usando components.html
-    components.html(analytics_code, height=0)
+    # Injeta o código diretamente no HTML da página
+    st.markdown(analytics_code, unsafe_allow_html=True)
     
-    # Adiciona script adicional para garantir carregamento
-    st.markdown("""
+    # Script adicional para verificar carregamento
+    verification_script = """
     <script>
-    // Verifica se o Google Analytics carregou
-    window.addEventListener('load', function() {
-        if (typeof gtag !== 'undefined') {
-            console.log('Google Analytics carregado com sucesso');
-            gtag('event', 'ga_loaded', {
-                'event_category': 'system',
-                'event_label': 'analytics_ready'
-            });
-        } else {
-            console.warn('Google Analytics não foi carregado');
-        }
+    // Aguarda o carregamento da página e verifica GA
+    window.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            if (typeof gtag !== 'undefined') {
+                console.log('✅ Google Analytics carregado com sucesso');
+                gtag('event', 'ga_verification', {
+                    'event_category': 'system',
+                    'event_label': 'analytics_ready',
+                    'value': 1
+                });
+            } else {
+                console.warn('❌ Google Analytics não foi carregado');
+            }
+        }, 2000);
     });
     </script>
-    """, unsafe_allow_html=True)
+    """
+    st.markdown(verification_script, unsafe_allow_html=True)
 
 def inject_seo_meta_tags(page_title="Planner Organizer | Sistema para Personal Organizers", 
                         description="Organize clientes, propostas e finanças em um só lugar. Sistema completo para Personal Organizers. Teste grátis por 7 dias!",
