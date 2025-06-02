@@ -1,0 +1,38 @@
+Adaptadores para numpy.int* registrados com sucesso para PostgreSQL
+2025-06-02 16:50:49,644 - __main__ - INFO - Adaptadores para numpy.int* registrados com sucesso
+2025-06-02 16:50:49,644 - __main__ - INFO - Adicionado /home/runner/workspace ao sys.path
+Iniciando motor de banco com caching desativado para resolver problemas de esquema
+2025-06-02 16:50:51,553 - utils.render_fix - INFO - Injetando script de compatibilidade para Render
+2025-06-02 16:50:51,699 - __main__ - INFO - Injetado script de compatibilidade para Render
+2025-06-02 16:50:51,700 - __main__ - INFO - ✅ Google Analytics inicializado com sucesso
+2025-06-02 16:50:51,700 - __main__ - INFO - ✅ Meta tags de SEO implementados com sucesso
+2025-06-02 16:50:51,700 - __main__ - INFO - 🔍 Verificando status dos componentes do sistema...
+2025-06-02 16:50:51,700 - __main__ - INFO - ✅ Firebase Auth: ATIVO
+2025-06-02 16:50:51,700 - __main__ - WARNING - ⚠️ Database: NÃO INICIALIZADO
+2025-06-02 16:50:51,700 - __main__ - INFO - ✅ DATABASE_URL: CONFIGURADO
+2025-06-02 16:50:51,700 - __main__ - INFO - ✅ FIREBASE_API_KEY: CONFIGURADO
+2025-06-02 16:50:51,700 - __main__ - INFO - ✅ BREVO_API_KEY: CONFIGURADO
+Adaptadores para numpy.int* registrados com sucesso para PostgreSQL
+2025-06-02 16:52:36,303 - __main__ - INFO - Adaptadores para numpy.int* registrados com sucesso
+2025-06-02 16:52:36,304 - utils.render_fix - INFO - Injetando script de compatibilidade para Render
+2025-06-02 16:52:36,304 - __main__ - INFO - Injetado script de compatibilidade para Render
+2025-06-02 16:52:36,304 - __main__ - INFO - ✅ Google Analytics inicializado com sucesso
+2025-06-02 16:52:36,305 - __main__ - INFO - ✅ Meta tags de SEO implementados com sucesso
+2025-06-02 16:52:36,305 - __main__ - INFO - 🔍 Verificando status dos componentes do sistema...
+2025-06-02 16:52:36,305 - __main__ - INFO - ✅ Firebase Auth: ATIVO
+2025-06-02 16:52:36,305 - __main__ - WARNING - ⚠️ Database: NÃO INICIALIZADO
+2025-06-02 16:52:36,305 - __main__ - INFO - ✅ DATABASE_URL: CONFIGURADO
+2025-06-02 16:52:36,305 - __main__ - INFO - ✅ FIREBASE_API_KEY: CONFIGURADO
+2025-06-02 16:52:36,305 - __main__ - INFO - ✅ BREVO_API_KEY: CONFIGURADO
+Adaptadores para numpy.int* registrados com sucesso para PostgreSQL
+2025-06-02 16:52:41,826 - __main__ - INFO - Adaptadores para numpy.int* registrados com sucesso
+2025-06-02 16:52:41,827 - utils.render_fix - INFO - Injetando script de compatibilidade para Render
+2025-06-02 16:52:41,827 - __main__ - INFO - Injetado script de compatibilidade para Render
+2025-06-02 16:52:41,827 - __main__ - INFO - ✅ Google Analytics inicializado com sucesso
+2025-06-02 16:52:41,829 - __main__ - INFO - ✅ Meta tags de SEO implementados com sucesso
+2025-06-02 16:52:41,829 - __main__ - INFO - 🔍 Verificando status dos componentes do sistema...
+2025-06-02 16:52:41,829 - __main__ - INFO - ✅ Firebase Auth: ATIVO
+2025-06-02 16:52:41,829 - __main__ - WARNING - ⚠️ Database: NÃO INICIALIZADO
+2025-06-02 16:52:41,830 - __main__ - INFO - ✅ DATABASE_URL: CONFIGURADO
+2025-06-02 16:52:41,830 - __main__ - INFO - ✅ FIREBASE_API_KEY: CONFIGURADO
+2025-06-02 16:52:41,830 - __main__ - INFO - ✅ BREVO_API_KEY: CONFIGURADO

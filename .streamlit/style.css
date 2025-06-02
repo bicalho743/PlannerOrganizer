@@ -192,6 +192,43 @@ button[aria-label*="Excluir"]:hover {
     border-right: 1px solid #eaeaea;
 }
 
+/* Mobile sidebar responsiveness */
+@media (max-width: 768px) {
+    /* Ensure sidebar is accessible on mobile */
+    section[data-testid="stSidebar"] {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 999999 !important;
+    }
+    
+    /* Make sidebar toggle button more visible on mobile */
+    button[title="View app in fullscreen"] {
+        display: none !important;
+    }
+    
+    /* Sidebar collapse button styling */
+    button[data-testid="collapsedControl"] {
+        background-color: #2E4A99 !important;
+        color: white !important;
+        border: none !important;
+        padding: 8px !important;
+        border-radius: 8px !important;
+        font-size: 18px !important;
+        position: fixed !important;
+        top: 80px !important;
+        left: 10px !important;
+        z-index: 1000000 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    /* Ensure main content doesn't overlap sidebar button */
+    .main .block-container {
+        padding-left: 60px !important;
+        padding-top: 1rem !important;
+    }
+}
+
 section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
     background-color: rgba(255, 255, 255, 0.05) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;

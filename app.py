@@ -49,6 +49,7 @@ from utils.planos import verificar_login  # Importando apenas a função de veri
 from utils.analytics_injector import inject_analytics_tags, track_page_view, inject_seo_meta_tags
 from utils.ga4_injector import setup_google_analytics
 from utils.html_head_injector import inject_head_content
+from utils.mobile_sidebar_fix import inject_mobile_sidebar_fix
 
 # Importar módulo de autenticação Firebase (pode ser comentado para desabilitar temporariamente)
 try:
@@ -105,6 +106,7 @@ except Exception as e:
 # Inicializar Google Analytics 4 com injeção direta no head
 try:
     inject_head_content()
+    inject_mobile_sidebar_fix()
     track_page_view("Home")
     logger.info("✅ Google Analytics inicializado com sucesso")
 except Exception as e:
