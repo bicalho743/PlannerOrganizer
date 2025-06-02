@@ -433,6 +433,188 @@ def inject_local_business_schema():
     
     components.html(local_business_schema, height=0)
 
+def inject_performance_optimizations():
+    """
+    Injeta otimizações de performance para melhorar velocidade da página
+    """
+    performance_optimizations = """
+    <style>
+    /* Otimizações de performance CSS */
+    * {
+        box-sizing: border-box;
+    }
+    
+    /* Lazy loading para imagens */
+    img {
+        loading: lazy;
+        max-width: 100%;
+        height: auto;
+    }
+    
+    /* Otimização de fontes */
+    @font-face {
+        font-display: swap;
+    }
+    
+    /* Redução de reflows */
+    .main > div {
+        contain: layout style paint;
+    }
+    
+    /* Aceleração de hardware para animações */
+    .header-gradient {
+        transform: translateZ(0);
+        will-change: transform;
+    }
+    
+    /* Otimização de scroll */
+    .main {
+        scroll-behavior: smooth;
+    }
+    </style>
+    
+    <script>
+    // Lazy loading para elementos não críticos
+    if ('IntersectionObserver' in window) {
+        const lazyElements = document.querySelectorAll('[data-lazy]');
+        const lazyObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    const element = entry.target;
+                    element.src = element.dataset.src;
+                    element.removeAttribute('data-lazy');
+                    lazyObserver.unobserve(element);
+                }
+            });
+        });
+        
+        lazyElements.forEach((element) => {
+            lazyObserver.observe(element);
+        });
+    }
+    
+    // Preload recursos críticos
+    const criticalResources = [
+        '/app-icon.svg',
+        'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap'
+    ];
+    
+    criticalResources.forEach(resource => {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.href = resource;
+        link.as = resource.includes('.css') ? 'style' : 'image';
+        document.head.appendChild(link);
+    });
+    
+    // Minificação de scripts inline
+    document.addEventListener('DOMContentLoaded', function() {
+        // Remove comentários desnecessários do DOM
+        const walker = document.createTreeWalker(
+            document.body,
+            NodeFilter.SHOW_COMMENT,
+            null,
+            false
+        );
+        
+        const comments = [];
+        let node;
+        while (node = walker.nextNode()) {
+            comments.push(node);
+        }
+        
+        comments.forEach(comment => {
+            if (!comment.nodeValue.includes('SEO') && !comment.nodeValue.includes('Analytics')) {
+                comment.parentNode.removeChild(comment);
+            }
+        });
+    });
+    
+    // Compressão de dados do localStorage
+    if (typeof(Storage) !== "undefined") {
+        const originalSetItem = localStorage.setItem;
+        localStorage.setItem = function(key, value) {
+            try {
+                const compressed = LZString ? LZString.compress(value) : value;
+                originalSetItem.call(this, key, compressed);
+            } catch (e) {
+                originalSetItem.call(this, key, value);
+            }
+        };
+    }
+    </script>
+    
+    <!-- Preconnect para recursos externos -->
+    <link rel="preconnect" href="https://www.google-analytics.com">
+    <link rel="preconnect" href="https://connect.facebook.net">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- DNS prefetch para domínios externos -->
+    <link rel="dns-prefetch" href="//api.brevo.com">
+    <link rel="dns-prefetch" href="//firebaseio.com">
+    """
+    
+    components.html(performance_optimizations, height=0)
+
+def inject_compression_headers():
+    """
+    Injeta headers para compressão e cache
+    """
+    compression_headers = """
+    <meta http-equiv="Content-Encoding" content="gzip">
+    <meta http-equiv="Cache-Control" content="public, max-age=31536000">
+    <meta http-equiv="Expires" content="31536000">
+    
+    <script>
+    // Service Worker para cache e compressão
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                console.log('SW registrado: ', registration.scope);
+            }, function(err) {
+                console.log('SW falhou: ', err);
+            });
+        });
+    }
+    
+    // Compressão de imagens automática
+    function compressImage(file, quality = 0.8) {
+        return new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                
+                canvas.toBlob(resolve, 'image/webp', quality);
+            };
+            
+            img.src = URL.createObjectURL(file);
+        });
+    }
+    
+    // Otimização de requests
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+        const [resource, config] = args;
+        const optimizedConfig = {
+            ...config,
+            headers: {
+                ...config?.headers,
+                'Accept-Encoding': 'gzip, deflate, br'
+            }
+        };
+        return originalFetch(resource, optimizedConfig);
+    };
+    </script>
+    """
+    
+    components.html(compression_headers, height=0)
+
 def track_page_view(page_name="Home"):
     """
     Rastreia uma visualização de página no Google Analytics e Facebook Pixel

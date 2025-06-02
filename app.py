@@ -46,7 +46,7 @@ if project_root not in sys.path:
 
 from utils.database import Database
 from utils.planos import verificar_login  # Importando apenas a função de verificação de login
-from utils.analytics_injector import inject_analytics_tags, track_page_view, inject_seo_meta_tags, inject_seo_headings, inject_structured_data, inject_organization_schema, inject_optimized_images, inject_performance_meta_tags, inject_local_business_schema
+from utils.analytics_injector import inject_analytics_tags, track_page_view, inject_seo_meta_tags, inject_seo_headings, inject_structured_data, inject_organization_schema, inject_optimized_images, inject_performance_meta_tags, inject_local_business_schema, inject_performance_optimizations, inject_compression_headers
 
 # Importar módulo de autenticação Firebase (pode ser comentado para desabilitar temporariamente)
 try:
@@ -121,7 +121,9 @@ try:
     inject_optimized_images()
     inject_performance_meta_tags()
     inject_local_business_schema()
-    logger.info("✅ Meta tags de SEO implementados com sucesso")
+    inject_performance_optimizations()
+    inject_compression_headers()
+    logger.info("✅ Meta tags de SEO e otimizações de performance implementados com sucesso")
 except Exception as e:
     logger.error(f"❌ Erro ao implementar meta tags de SEO: {e}")
 
