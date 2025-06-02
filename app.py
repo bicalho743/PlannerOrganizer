@@ -46,7 +46,7 @@ if project_root not in sys.path:
 
 from utils.database import Database
 from utils.planos import verificar_login  # Importando apenas a função de verificação de login
-from utils.analytics_injector import inject_analytics_tags, track_page_view, inject_seo_meta_tags, inject_seo_headings, inject_structured_data, inject_organization_schema, inject_optimized_images, inject_performance_meta_tags, inject_local_business_schema, inject_performance_optimizations, inject_compression_headers
+from utils.analytics_injector import inject_analytics_tags, track_page_view, inject_seo_meta_tags, inject_seo_headings
 
 # Importar módulo de autenticação Firebase (pode ser comentado para desabilitar temporariamente)
 try:
@@ -92,73 +92,6 @@ st.set_page_config(
     initial_sidebar_state="auto"
 )
 
-# Solução específica para espaçamento do Streamlit
-st.markdown("""
-<style>
-/* SOLUÇÃO ESPECÍFICA PARA STREAMLIT */
-.stApp > header {
-    background-color: transparent;
-}
-
-header[data-testid="stHeader"] {
-    display: none;
-}
-
-.main > div.block-container {
-    padding-top: 1rem;
-    padding-bottom: 10rem;
-    padding-left: 5rem;
-    padding-right: 5rem;
-}
-
-.main > div.block-container > div {
-    padding-top: 0rem;
-}
-
-/* Força posição absolute no topo */
-.main {
-    position: relative;
-    top: -80px !important;
-    z-index: 999;
-}
-
-/* Esconde header e força container para cima */
-div[data-testid="stAppViewContainer"] {
-    margin-top: -80px !important;
-}
-
-/* Remove espaçamento superior específico */
-div[data-testid="stAppViewContainer"] > section > div > div > div {
-    padding-top: 0 !important;
-}
-</style>
-
-<script>
-// Força ajuste específico do Streamlit após carregamento
-window.addEventListener('load', function() {
-    setTimeout(function() {
-        const mainContainer = document.querySelector('.main');
-        const appContainer = document.querySelector('[data-testid="stAppViewContainer"]');
-        
-        if (mainContainer) {
-            mainContainer.style.marginTop = '-60px';
-            mainContainer.style.position = 'relative';
-            mainContainer.style.zIndex = '999';
-        }
-        
-        if (appContainer) {
-            appContainer.style.marginTop = '-60px';
-        }
-        
-        // Remove qualquer header
-        const headers = document.querySelectorAll('header[data-testid="stHeader"]');
-        headers.forEach(h => h.style.display = 'none');
-        
-    }, 100);
-});
-</script>
-""", unsafe_allow_html=True)
-
 # Importar e aplicar correção para problemas de carregamento de módulos JavaScript
 try:
     from utils.render_fix import inject_render_compatibility_fix
@@ -177,20 +110,9 @@ except Exception as e:
 
 # Implementar meta tags de SEO otimizados
 try:
-    inject_seo_meta_tags(
-        page_title="Planner Organizer | Sistema de Gestão para Personal Organizer",
-        description="Planner Organizer é o sistema ideal para personal organizers que desejam profissionalizar a gestão, criar propostas personalizadas e organizar seus atendimentos. Teste grátis por 7 dias!",
-        keywords="personal organizer, sistema organizador, gestão clientes, propostas, organização profissional, planner, organizador pessoal, gestão para personal organizer"
-    )
+    inject_seo_meta_tags()
     inject_seo_headings()
-    inject_structured_data()
-    inject_organization_schema()
-    inject_optimized_images()
-    inject_performance_meta_tags()
-    inject_local_business_schema()
-    inject_performance_optimizations()
-    inject_compression_headers()
-    logger.info("✅ Meta tags de SEO e otimizações de performance implementados com sucesso")
+    logger.info("✅ Meta tags de SEO implementados com sucesso")
 except Exception as e:
     logger.error(f"❌ Erro ao implementar meta tags de SEO: {e}")
 
