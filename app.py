@@ -101,9 +101,9 @@ try:
 except Exception as e:
     logger.error(f"Erro ao injetar script de compatibilidade: {e}")
 
-# Inicializar Google Analytics 4 e Google Tag Manager
+# Inicializar Google Analytics 4 com implementação robusta
 try:
-    inject_analytics_tags()
+    setup_google_analytics()
     track_page_view("Home")
     logger.info("✅ Google Analytics inicializado com sucesso")
 except Exception as e:
