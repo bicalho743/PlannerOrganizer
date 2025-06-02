@@ -160,16 +160,131 @@ def inject_seo_headings():
     """
     seo_headings = """
     <div style="display: none; position: absolute; left: -9999px;">
-        <h1>Sistema para Personal Organizers - Planner Organizer</h1>
-        <h2>Gerencie Clientes e Propostas</h2>
-        <h3>Organização Profissional Completa</h3>
-        <h3>Controle Financeiro</h3>
-        <h3>Gestão de Propostas</h3>
-        <h3>Cadastro de Clientes</h3>
+        <h1>Planner Organizer: sistema de gestão para Personal Organizer</h1>
+        <h2>Organização profissional com tecnologia</h2>
+        <h2>Um sistema de propostas feito para você</h2>
+        <h2>Gestão completa para Personal Organizer</h2>
+        <h2>Por que escolher o Planner Organizer?</h2>
+        <h2>Planner Organizer: tecnologia a favor da sua organização</h2>
+        <p>Se você é uma <strong>personal organizer</strong> e busca mais eficiência, praticidade e organização no seu dia a dia, o <strong>Planner Organizer</strong> foi feito para você.</p>
+        <p>A profissão de personal organizer exige controle, planejamento e visão estratégica. Pensando nisso, o Planner Organizer oferece uma plataforma completa e intuitiva.</p>
+        <p>Chega de planilhas confusas ou anotações soltas. Com o <strong>sistema de propostas</strong> do Planner Organizer, você cria, envia e acompanha propostas com agilidade.</p>
     </div>
     """
     
     st.markdown(seo_headings, unsafe_allow_html=True)
+
+def inject_structured_data():
+    """
+    Injeta dados estruturados JSON-LD para melhorar SEO
+    """
+    structured_data = """
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Planner Organizer",
+        "description": "Sistema completo de gestão para Personal Organizers. Organize clientes, propostas e finanças em um só lugar.",
+        "url": "https://plannerorganizer.com.br",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "BRL",
+            "description": "Teste grátis por 7 dias"
+        },
+        "creator": {
+            "@type": "Organization",
+            "@id": "https://plannerorganizer.com.br",
+            "name": "Planner Organizer",
+            "description": "Especialistas em soluções para Personal Organizers"
+        },
+        "featureList": [
+            "Gestão de clientes",
+            "Sistema de propostas",
+            "Controle financeiro",
+            "Relatórios inteligentes",
+            "Acesso mobile"
+        ],
+        "audience": {
+            "@type": "Audience",
+            "audienceType": "Personal Organizers"
+        },
+        "inLanguage": "pt-BR",
+        "geo": {
+            "@type": "Place",
+            "addressCountry": "BR"
+        }
+    }
+    </script>
+    """
+    
+    components.html(structured_data, height=0)
+
+def inject_breadcrumbs(page_name="Home"):
+    """
+    Injeta breadcrumbs estruturados para melhorar navegação e SEO
+    """
+    breadcrumb_schema = f"""
+    <script type="application/ld+json">
+    {{
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {{
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Planner Organizer",
+                "item": "https://plannerorganizer.com.br"
+            }},
+            {{
+                "@type": "ListItem",
+                "position": 2,
+                "name": "{page_name}",
+                "item": "https://plannerorganizer.com.br/{page_name.lower()}"
+            }}
+        ]
+    }}
+    </script>
+    """
+    
+    components.html(breadcrumb_schema, height=0)
+
+def inject_organization_schema():
+    """
+    Injeta schema de organização para melhorar SEO local
+    """
+    organization_schema = """
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Planner Organizer",
+        "url": "https://plannerorganizer.com.br",
+        "logo": "https://plannerorganizer.com.br/app-icon.svg",
+        "description": "Sistema completo de gestão para Personal Organizers no Brasil",
+        "areaServed": {
+            "@type": "Country",
+            "name": "Brasil"
+        },
+        "serviceType": "Software de Gestão",
+        "audience": {
+            "@type": "Audience",
+            "audienceType": "Personal Organizers"
+        },
+        "offers": {
+            "@type": "Offer",
+            "name": "Teste Grátis",
+            "description": "7 dias de teste gratuito",
+            "price": "0",
+            "priceCurrency": "BRL"
+        }
+    }
+    </script>
+    """
+    
+    components.html(organization_schema, height=0)
 
 def track_page_view(page_name="Home"):
     """

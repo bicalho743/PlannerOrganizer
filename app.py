@@ -46,7 +46,7 @@ if project_root not in sys.path:
 
 from utils.database import Database
 from utils.planos import verificar_login  # Importando apenas a função de verificação de login
-from utils.analytics_injector import inject_analytics_tags, track_page_view, inject_seo_meta_tags, inject_seo_headings
+from utils.analytics_injector import inject_analytics_tags, track_page_view, inject_seo_meta_tags, inject_seo_headings, inject_structured_data, inject_organization_schema
 
 # Importar módulo de autenticação Firebase (pode ser comentado para desabilitar temporariamente)
 try:
@@ -110,8 +110,14 @@ except Exception as e:
 
 # Implementar meta tags de SEO otimizados
 try:
-    inject_seo_meta_tags()
+    inject_seo_meta_tags(
+        page_title="Planner Organizer | Sistema de Gestão para Personal Organizer",
+        description="Planner Organizer é o sistema ideal para personal organizers que desejam profissionalizar a gestão, criar propostas personalizadas e organizar seus atendimentos. Teste grátis por 7 dias!",
+        keywords="personal organizer, sistema organizador, gestão clientes, propostas, organização profissional, planner, organizador pessoal, gestão para personal organizer"
+    )
     inject_seo_headings()
+    inject_structured_data()
+    inject_organization_schema()
     logger.info("✅ Meta tags de SEO implementados com sucesso")
 except Exception as e:
     logger.error(f"❌ Erro ao implementar meta tags de SEO: {e}")
