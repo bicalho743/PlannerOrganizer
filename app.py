@@ -92,64 +92,104 @@ st.set_page_config(
     initial_sidebar_state="auto"
 )
 
-# CSS para eliminar completamente o espaço em branco no topo
+# CSS AGRESSIVO para eliminar espaço em branco
 st.markdown("""
 <style>
-/* RESET TOTAL - ELIMINA ESPAÇO BRANCO */
+/* RESET ULTRA AGRESSIVO */
+* {
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+}
+
 html, body {
     margin: 0 !important;
     padding: 0 !important;
+    height: 100vh !important;
 }
 
-/* Remove header nativo do Streamlit */
-header[data-testid="stHeader"] {
+/* Remove header nativo */
+header[data-testid="stHeader"],
+.stAppToolbar,
+.stToolbar {
     display: none !important;
     height: 0 !important;
+    position: absolute !important;
+    top: -9999px !important;
 }
 
-/* Zerar todos os containers */
+/* Força containers a zero */
 .main, [data-testid="stAppViewContainer"], 
 .block-container, [data-testid="block-container"],
-.element-container, [data-testid="element-container"] {
+.element-container, [data-testid="element-container"],
+section.main, .main .block-container {
     margin: 0 !important;
     padding: 0 !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    top: 0 !important;
 }
 
-/* Zerar primeiro elemento */
-.main > div:first-child,
-.block-container > div:first-child,
-.element-container:first-child {
+/* Remove espaços de qualquer div */
+div {
     margin-top: 0 !important;
     padding-top: 0 !important;
 }
 
-/* CSS aplicado com JavaScript para garantir */
+/* CSS específico do Streamlit */
+.css-1d391kg, .css-1q8dd3e, .css-18e3th9, .css-1rs6os {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+.st-emotion-cache-1rs6os {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
 </style>
 
 <script>
-// Força remoção de espaços via JavaScript
-document.addEventListener('DOMContentLoaded', function() {
-    function removeTopSpacing() {
-        const elements = [
-            '.main', '[data-testid="stAppViewContainer"]', 
-            '.block-container', '.element-container'
-        ];
-        
-        elements.forEach(selector => {
-            const elems = document.querySelectorAll(selector);
-            elems.forEach(elem => {
-                elem.style.margin = '0';
-                elem.style.padding = '0';
-                elem.style.marginTop = '0';
-                elem.style.paddingTop = '0';
-            });
-        });
-    }
+function forceRemoveSpacing() {
+    // Remove todos os espaços superiores
+    const allElements = document.querySelectorAll('*');
+    allElements.forEach(elem => {
+        if (elem.style) {
+            elem.style.marginTop = '0px';
+            elem.style.paddingTop = '0px';
+        }
+    });
     
-    removeTopSpacing();
-    setTimeout(removeTopSpacing, 100);
-    setTimeout(removeTopSpacing, 500);
-});
+    // Força container principal
+    const containers = document.querySelectorAll('.main, [data-testid="stAppViewContainer"], .block-container');
+    containers.forEach(container => {
+        container.style.marginTop = '0px';
+        container.style.paddingTop = '0px';
+        container.style.top = '0px';
+    });
+    
+    // Remove header se existir
+    const headers = document.querySelectorAll('header, .stAppToolbar, .stToolbar');
+    headers.forEach(header => {
+        header.style.display = 'none';
+        header.style.height = '0px';
+    });
+}
+
+// Executa imediatamente
+forceRemoveSpacing();
+
+// Executa após carregamento
+document.addEventListener('DOMContentLoaded', forceRemoveSpacing);
+
+// Executa múltiplas vezes para garantir
+setTimeout(forceRemoveSpacing, 50);
+setTimeout(forceRemoveSpacing, 200);
+setTimeout(forceRemoveSpacing, 500);
+setTimeout(forceRemoveSpacing, 1000);
+
+// Observer para mudanças no DOM
+const observer = new MutationObserver(forceRemoveSpacing);
+observer.observe(document.body, { childList: true, subtree: true });
 </script>
 """, unsafe_allow_html=True)
 
