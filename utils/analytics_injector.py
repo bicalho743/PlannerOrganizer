@@ -439,6 +439,29 @@ def inject_performance_optimizations():
     """
     performance_optimizations = """
     <style>
+    /* RESET TOTAL para eliminar espaço branco */
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 100% !important;
+    }
+    
+    /* Streamlit containers reset */
+    .main, [data-testid="stAppViewContainer"], 
+    .block-container, [data-testid="block-container"],
+    .element-container, [data-testid="element-container"] {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Remove qualquer espaçamento superior */
+    .main > div:first-child,
+    .block-container > div:first-child,
+    .element-container:first-child {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    
     /* Otimizações de performance CSS */
     * {
         box-sizing: border-box;

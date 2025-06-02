@@ -92,6 +92,67 @@ st.set_page_config(
     initial_sidebar_state="auto"
 )
 
+# CSS para eliminar completamente o espaço em branco no topo
+st.markdown("""
+<style>
+/* RESET TOTAL - ELIMINA ESPAÇO BRANCO */
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Remove header nativo do Streamlit */
+header[data-testid="stHeader"] {
+    display: none !important;
+    height: 0 !important;
+}
+
+/* Zerar todos os containers */
+.main, [data-testid="stAppViewContainer"], 
+.block-container, [data-testid="block-container"],
+.element-container, [data-testid="element-container"] {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Zerar primeiro elemento */
+.main > div:first-child,
+.block-container > div:first-child,
+.element-container:first-child {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* CSS aplicado com JavaScript para garantir */
+</style>
+
+<script>
+// Força remoção de espaços via JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    function removeTopSpacing() {
+        const elements = [
+            '.main', '[data-testid="stAppViewContainer"]', 
+            '.block-container', '.element-container'
+        ];
+        
+        elements.forEach(selector => {
+            const elems = document.querySelectorAll(selector);
+            elems.forEach(elem => {
+                elem.style.margin = '0';
+                elem.style.padding = '0';
+                elem.style.marginTop = '0';
+                elem.style.paddingTop = '0';
+            });
+        });
+    }
+    
+    removeTopSpacing();
+    setTimeout(removeTopSpacing, 100);
+    setTimeout(removeTopSpacing, 500);
+});
+</script>
+""", unsafe_allow_html=True)
+
 # Importar e aplicar correção para problemas de carregamento de módulos JavaScript
 try:
     from utils.render_fix import inject_render_compatibility_fix
