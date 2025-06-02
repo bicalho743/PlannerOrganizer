@@ -17,8 +17,8 @@ header[data-testid="stHeader"] {
     background-color: #1E1F36;
     color: white;
     width: 100%;
-    min-height: 60px; /* altura mínima */
-    padding: 0.5rem 0; /* espaçamento interno mais suave */
+    min-height: 50px; /* altura mínima reduzida */
+    padding: 0.3rem 0; /* espaçamento interno reduzido */
     text-align: center;
     position: fixed;
     top: 0;
@@ -33,8 +33,8 @@ header[data-testid="stHeader"] {
 
 /* Ajuste global: reduz ainda mais o espaço após o cabeçalho */
 .block-container {
-    padding-top: 55px !important;  /* Ajustado para um espaçamento mínimo confortável */
-    min-height: calc(100vh - 55px) !important;
+    padding-top: 10px !important;  /* Espaçamento mínimo para evitar sobreposição */
+    min-height: calc(100vh - 10px) !important;
     max-width: 100% !important;
     position: relative;
 }
