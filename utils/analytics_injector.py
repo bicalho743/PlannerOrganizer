@@ -1,5 +1,5 @@
 """
-Script para injetar códigos de analytics diretamente no HTML da página
+Script para injetar códigos de analytics e meta tags de SEO diretamente no HTML da página
 """
 import streamlit as st
 import streamlit.components.v1 as components
@@ -84,6 +84,92 @@ def inject_analytics_tags():
     
     # Injeta o código no head usando components.html
     components.html(analytics_code, height=0)
+
+def inject_seo_meta_tags(page_title="Planner Organizer | Sistema para Personal Organizers", 
+                        description="Organize clientes, propostas e finanças em um só lugar. Sistema completo para Personal Organizers. Teste grátis por 7 dias!",
+                        keywords="personal organizer, sistema organizador, gestão clientes, propostas, organização profissional"):
+    """
+    Injeta meta tags de SEO otimizados na página
+    
+    Args:
+        page_title (str): Título da página para SEO
+        description (str): Meta description para SEO
+        keywords (str): Palavras-chave para SEO
+    """
+    
+    seo_meta_tags = f"""
+    <script>
+    // Atualizar título da página
+    document.title = "{page_title}";
+    
+    // Remover meta tags existentes se houver
+    var existingMeta = document.querySelectorAll('meta[name="description"], meta[name="keywords"], meta[property^="og:"], meta[name="twitter:"]');
+    existingMeta.forEach(function(meta) {{
+        meta.remove();
+    }});
+    
+    // Criar e adicionar novos meta tags
+    var metaTags = [
+        // Meta básicos
+        {{ name: 'description', content: '{description}' }},
+        {{ name: 'keywords', content: '{keywords}' }},
+        {{ name: 'author', content: 'Planner Organizer' }},
+        {{ name: 'robots', content: 'index, follow' }},
+        {{ name: 'viewport', content: 'width=device-width, initial-scale=1.0' }},
+        
+        // Open Graph para redes sociais
+        {{ property: 'og:title', content: '{page_title}' }},
+        {{ property: 'og:description', content: '{description}' }},
+        {{ property: 'og:type', content: 'website' }},
+        {{ property: 'og:url', content: window.location.href }},
+        {{ property: 'og:site_name', content: 'Planner Organizer' }},
+        {{ property: 'og:locale', content: 'pt_BR' }},
+        
+        // Twitter Cards
+        {{ name: 'twitter:card', content: 'summary_large_image' }},
+        {{ name: 'twitter:title', content: '{page_title}' }},
+        {{ name: 'twitter:description', content: '{description}' }},
+        
+        // Meta tags específicos para Brasil
+        {{ name: 'geo.region', content: 'BR' }},
+        {{ name: 'geo.country', content: 'Brazil' }},
+        {{ name: 'language', content: 'Portuguese' }}
+    ];
+    
+    metaTags.forEach(function(tagInfo) {{
+        var meta = document.createElement('meta');
+        if (tagInfo.name) {{
+            meta.name = tagInfo.name;
+        }} else if (tagInfo.property) {{
+            meta.setAttribute('property', tagInfo.property);
+        }}
+        meta.content = tagInfo.content;
+        document.head.appendChild(meta);
+    }});
+    
+    console.log('SEO Meta tags injetados com sucesso');
+    </script>
+    """
+    
+    # Injeta os meta tags no head
+    components.html(seo_meta_tags, height=0)
+
+def inject_seo_headings():
+    """
+    Injeta headings estruturados para melhorar SEO
+    """
+    seo_headings = """
+    <div style="display: none; position: absolute; left: -9999px;">
+        <h1>Sistema para Personal Organizers - Planner Organizer</h1>
+        <h2>Gerencie Clientes e Propostas</h2>
+        <h3>Organização Profissional Completa</h3>
+        <h3>Controle Financeiro</h3>
+        <h3>Gestão de Propostas</h3>
+        <h3>Cadastro de Clientes</h3>
+    </div>
+    """
+    
+    st.markdown(seo_headings, unsafe_allow_html=True)
 
 def track_page_view(page_name="Home"):
     """

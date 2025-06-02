@@ -46,7 +46,7 @@ if project_root not in sys.path:
 
 from utils.database import Database
 from utils.planos import verificar_login  # Importando apenas a função de verificação de login
-from utils.analytics_injector import inject_analytics_tags, track_page_view
+from utils.analytics_injector import inject_analytics_tags, track_page_view, inject_seo_meta_tags
 
 # Importar módulo de autenticação Firebase (pode ser comentado para desabilitar temporariamente)
 try:
@@ -86,7 +86,7 @@ if "show_debug_propostas_finalizadas" not in st.session_state:
 
 # Configuração inicial da página
 st.set_page_config(
-    page_title="Planner Organizer - Sistema Profissional",
+    page_title="Planner Organizer | Sistema para Personal Organizers",
     page_icon="favicon.png",
     layout="wide",
     initial_sidebar_state="auto"
@@ -107,6 +107,13 @@ try:
     logger.info("✅ Google Analytics inicializado com sucesso")
 except Exception as e:
     logger.error(f"❌ Erro ao inicializar Google Analytics: {e}")
+
+# Implementar meta tags de SEO otimizados
+try:
+    inject_seo_meta_tags()
+    logger.info("✅ Meta tags de SEO implementados com sucesso")
+except Exception as e:
+    logger.error(f"❌ Erro ao implementar meta tags de SEO: {e}")
 
 # Diagnóstico de componentes do sistema
 logger.info("🔍 Verificando status dos componentes do sistema...")
