@@ -286,6 +286,153 @@ def inject_organization_schema():
     
     components.html(organization_schema, height=0)
 
+def inject_optimized_images():
+    """
+    Injeta CSS para otimizar imagens com alt text para SEO
+    """
+    image_optimization = """
+    <style>
+    /* Otimização de imagens para SEO */
+    img {
+        max-width: 100%;
+        height: auto;
+        loading: lazy;
+    }
+    
+    /* Imagens específicas do sistema */
+    .logo-planner {
+        alt: "Logo Planner Organizer - Sistema de gestão para personal organizers";
+    }
+    
+    .dashboard-image {
+        alt: "Dashboard financeiro para personal organizer no Planner Organizer";
+    }
+    
+    .propostas-image {
+        alt: "Sistema de propostas profissionais para personal organizers";
+    }
+    
+    .clientes-image {
+        alt: "Gestão de clientes para personal organizer - Planner Organizer";
+    }
+    
+    .relatorios-image {
+        alt: "Relatórios inteligentes para personal organizer no Planner Organizer";
+    }
+    </style>
+    
+    <script>
+    // Adiciona alt text otimizado automaticamente para imagens sem descrição
+    document.addEventListener('DOMContentLoaded', function() {
+        const images = document.querySelectorAll('img:not([alt])');
+        images.forEach(function(img) {
+            if (img.src.includes('dashboard')) {
+                img.alt = 'Dashboard financeiro para personal organizer no Planner Organizer';
+            } else if (img.src.includes('proposta')) {
+                img.alt = 'Sistema de propostas profissionais para personal organizers';
+            } else if (img.src.includes('cliente')) {
+                img.alt = 'Gestão de clientes para personal organizer - Planner Organizer';
+            } else if (img.src.includes('relatorio')) {
+                img.alt = 'Relatórios inteligentes para personal organizer no Planner Organizer';
+            } else {
+                img.alt = 'Planner Organizer - Sistema completo para personal organizers';
+            }
+        });
+    });
+    </script>
+    """
+    
+    components.html(image_optimization, height=0)
+
+def inject_performance_meta_tags():
+    """
+    Injeta meta tags para melhorar performance e SEO técnico
+    """
+    performance_tags = """
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    <meta name="googlebot" content="index, follow">
+    <meta name="bingbot" content="index, follow">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#667eea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Planner Organizer">
+    
+    <!-- Preload recursos críticos -->
+    <link rel="preload" href="/app-icon.svg" as="image" type="image/svg+xml">
+    <link rel="dns-prefetch" href="//www.google-analytics.com">
+    <link rel="dns-prefetch" href="//connect.facebook.net">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://plannerorganizer.com.br/">
+    
+    <!-- Sitemap -->
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml">
+    """
+    
+    components.html(performance_tags, height=0)
+
+def inject_local_business_schema():
+    """
+    Injeta schema específico para negócio local brasileiro
+    """
+    local_business_schema = """
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "@id": "https://plannerorganizer.com.br",
+        "name": "Planner Organizer",
+        "url": "https://plannerorganizer.com.br",
+        "description": "Sistema de gestão completo para Personal Organizers no Brasil. Gerencie clientes, propostas e finanças em uma plataforma intuitiva.",
+        "foundingDate": "2024",
+        "areaServed": {
+            "@type": "Country",
+            "name": "Brasil",
+            "sameAs": "https://pt.wikipedia.org/wiki/Brasil"
+        },
+        "serviceType": "Software de Gestão Empresarial",
+        "priceRange": "Teste grátis por 7 dias",
+        "paymentAccepted": "Cartão de Crédito, PIX, Boleto",
+        "currenciesAccepted": "BRL",
+        "openingHours": "Mo-Su 00:00-23:59",
+        "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": "Serviços para Personal Organizers",
+            "itemListElement": [
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Sistema de Gestão de Clientes",
+                        "description": "Organize e gerencie todos os seus clientes em um só lugar"
+                    }
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Gerador de Propostas",
+                        "description": "Crie propostas profissionais personalizadas rapidamente"
+                    }
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Controle Financeiro",
+                        "description": "Acompanhe receitas, despesas e lucros do seu negócio"
+                    }
+                }
+            ]
+        }
+    }
+    </script>
+    """
+    
+    components.html(local_business_schema, height=0)
+
 def track_page_view(page_name="Home"):
     """
     Rastreia uma visualização de página no Google Analytics e Facebook Pixel
