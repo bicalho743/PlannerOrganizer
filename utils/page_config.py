@@ -11,7 +11,7 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
     # CSS para ajustar espaçamento e visual
     header_css = """
     <style>
-    .main .block-container { padding-top: 60px !important; margin-top: 0 !important; }
+    .main .block-container { padding-top: 20px !important; margin-top: 0 !important; }
     header[data-testid="stHeader"] { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; }
     [data-testid="stAppViewContainer"] > div:first-child { padding-top: 0 !important; margin-top: 0 !important; }
     [data-testid="stAppViewContainer"] > section:first-of-type { padding-top: 0 !important; margin-top: 0 !important; }

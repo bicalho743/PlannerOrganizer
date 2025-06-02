@@ -33,8 +33,8 @@ header[data-testid="stHeader"] {
 
 /* Ajuste global: reduz ainda mais o espaço após o cabeçalho */
 .block-container {
-    padding-top: 55px !important;  /* Ajustado para um espaçamento mínimo confortável */
-    min-height: calc(100vh - 55px) !important;
+    padding-top: 10px !important;  /* Espaçamento mínimo para página de login */
+    min-height: calc(100vh - 10px) !important;
     max-width: 100% !important;
     position: relative;
 }
