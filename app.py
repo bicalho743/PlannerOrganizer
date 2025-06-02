@@ -48,6 +48,7 @@ from utils.database import Database
 from utils.planos import verificar_login  # Importando apenas a função de verificação de login
 from utils.analytics_injector import inject_analytics_tags, track_page_view, inject_seo_meta_tags
 from utils.ga4_injector import setup_google_analytics
+from utils.html_head_injector import inject_head_content
 
 # Importar módulo de autenticação Firebase (pode ser comentado para desabilitar temporariamente)
 try:
@@ -101,9 +102,9 @@ try:
 except Exception as e:
     logger.error(f"Erro ao injetar script de compatibilidade: {e}")
 
-# Inicializar Google Analytics 4 com implementação robusta
+# Inicializar Google Analytics 4 com injeção direta no head
 try:
-    setup_google_analytics()
+    inject_head_content()
     track_page_view("Home")
     logger.info("✅ Google Analytics inicializado com sucesso")
 except Exception as e:
