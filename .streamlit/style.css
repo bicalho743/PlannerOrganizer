@@ -12,13 +12,13 @@ header[data-testid="stHeader"] {
     height: 0 !important;
 }
 
-/* Cabeçalho fixo personalizado - versão compacta */
+/* Cabeçalho fixo personalizado (altura automática, sem cortar texto) */
 .app-header {
     background-color: #1E1F36;
     color: white;
     width: 100%;
-    min-height: 40px; /* altura ainda menor */
-    padding: 0.2rem 0; /* espaçamento interno mínimo */
+    min-height: 60px; /* altura mínima */
+    padding: 0.5rem 0; /* espaçamento interno mais suave */
     text-align: center;
     position: fixed;
     top: 0;
@@ -31,11 +31,10 @@ header[data-testid="stHeader"] {
     justify-content: center;
 }
 
-/* Ajuste global: eliminar completamente o espaço após o cabeçalho */
+/* Ajuste global: reduz ainda mais o espaço após o cabeçalho */
 .block-container {
-    padding-top: 0px !important;  /* Sem espaçamento */
-    margin-top: 0px !important;   /* Sem margem */
-    min-height: 100vh !important;
+    padding-top: 55px !important;  /* Ajustado para um espaçamento mínimo confortável */
+    min-height: calc(100vh - 55px) !important;
     max-width: 100% !important;
     position: relative;
 }
@@ -51,25 +50,6 @@ header[data-testid="stHeader"] {
 .block-container h2,
 .block-container h3 {
     margin-top: 0 !important;
-    padding-top: 0 !important;
-}
-
-/* Forçar todos os elementos a ficarem no topo */
-.stApp > header {
-    display: none !important;
-}
-
-.main .block-container {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
-}
-
-/* CSS adicional para forçar posicionamento */
-[data-testid="stAppViewContainer"] {
-    padding-top: 0 !important;
-}
-
-[data-testid="stAppViewContainer"] .main {
     padding-top: 0 !important;
 }
 
