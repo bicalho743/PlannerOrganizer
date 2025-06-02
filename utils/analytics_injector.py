@@ -17,7 +17,19 @@ def inject_analytics_tags():
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-E9KP3F40VT');
+      gtag('config', 'G-E9KP3F40VT', {
+        page_title: document.title,
+        page_location: window.location.href,
+        custom_map: {'custom_parameter': 'streamlit_app'}
+      });
+      
+      // Força o envio de page_view
+      setTimeout(function() {
+        gtag('event', 'page_view', {
+          page_title: document.title,
+          page_location: window.location.href
+        });
+      }, 1000);
     </script>
     
     <!-- Google Tag Manager -->
@@ -84,6 +96,24 @@ def inject_analytics_tags():
     
     # Injeta o código no head usando components.html
     components.html(analytics_code, height=0)
+    
+    # Adiciona script adicional para garantir carregamento
+    st.markdown("""
+    <script>
+    // Verifica se o Google Analytics carregou
+    window.addEventListener('load', function() {
+        if (typeof gtag !== 'undefined') {
+            console.log('Google Analytics carregado com sucesso');
+            gtag('event', 'ga_loaded', {
+                'event_category': 'system',
+                'event_label': 'analytics_ready'
+            });
+        } else {
+            console.warn('Google Analytics não foi carregado');
+        }
+    });
+    </script>
+    """, unsafe_allow_html=True)
 
 def inject_seo_meta_tags(page_title="Planner Organizer | Sistema para Personal Organizers", 
                         description="Organize clientes, propostas e finanças em um só lugar. Sistema completo para Personal Organizers. Teste grátis por 7 dias!",
