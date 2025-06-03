@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 from utils.force_spacing_fix import apply_spacing_fix
 from utils.currency_formatter import format_currency_br
+from utils.simple_mobile_fix import apply_mobile_sidebar_fix
 
 # Função auxiliar para formatar datas com segurança
 def format_date_safe(date_obj, format_str='%d/%m/%Y'):
@@ -27,6 +28,8 @@ def format_date_safe(date_obj, format_str='%d/%m/%Y'):
 def show():
     # Aplicar correção de espaçamento PRIMEIRO
     apply_spacing_fix()
+    # Aplicar correção mobile para sidebar
+    apply_mobile_sidebar_fix()
     
     # Removido o título de Dashboard conforme solicitado
 
