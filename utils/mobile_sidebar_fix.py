@@ -12,13 +12,26 @@ def inject_mobile_sidebar_fix():
     mobile_fix_html = """
     <style>
     /* Força a exibição da sidebar em todos os dispositivos */
-    section[data-testid="stSidebar"] {
+    section[data-testid="stSidebar"],
+    .css-1d391kg,
+    .css-1v3fvcr,
+    .css-17lntkn,
+    .css-1vq4p4l {
         display: block !important;
         visibility: visible !important;
         position: relative !important;
         width: auto !important;
         min-width: 250px !important;
         background-color: #1E1F36 !important;
+    }
+    
+    /* Force sidebar visibility on all screen sizes */
+    @media screen {
+        section[data-testid="stSidebar"] {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
     }
     
     /* Mobile specific fixes */
