@@ -106,7 +106,6 @@ except Exception as e:
 # Inicializar Google Analytics 4 com injeção direta no head
 try:
     inject_head_content()
-    apply_mobile_sidebar_fix()
     track_page_view("Home")
     logger.info("✅ Google Analytics inicializado com sucesso")
 except Exception as e:

@@ -5,12 +5,16 @@ import streamlit as st
 
 def apply_mobile_sidebar_fix():
     """
-    Aplica CSS simples para forçar a sidebar a aparecer em mobile
+    Aplica CSS simples para forçar a sidebar a aparecer em mobile apenas quando logado
     """
+    
+    # Só aplicar se o usuário estiver logado
+    if not hasattr(st.session_state, 'user_info') or not st.session_state.user_info:
+        return
     
     st.markdown("""
     <style>
-    /* Força sidebar sempre visível */
+    /* Força sidebar sempre visível quando logado */
     section[data-testid="stSidebar"] {
         display: block !important;
         visibility: visible !important;
