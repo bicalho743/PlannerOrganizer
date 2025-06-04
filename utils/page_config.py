@@ -30,18 +30,40 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
     /* Responsividade do cabeçalho */
     @media (max-width: 768px) {
         .app-header {
-            padding: 0.3rem 0.8rem;
-            min-height: 45px;
+            padding: 0.4rem 0.6rem;
+            min-height: 55px;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
         }
-        .app-header h1 {
-            font-size: 1.2rem !important;
-            line-height: 1.3 !important;
-            margin: 0 !important;
+        .app-header > div:first-child {
+            flex: 1;
+            min-width: 0;
         }
-        .app-header h3 {
-            font-size: 0.9rem !important;
+        .app-header h2 {
+            font-size: 1.0rem !important;
             line-height: 1.2 !important;
             margin: 0 !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .app-header p {
+            font-size: 0.7rem !important;
+            line-height: 1.1 !important;
+            margin: 0 !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .app-header > div:last-child {
+            flex-shrink: 0;
+            padding: 0.25rem 0.5rem !important;
+            margin-left: 0.5rem !important;
+        }
+        .app-header > div:last-child span {
+            font-size: 0.6rem !important;
+            line-height: 1.1 !important;
         }
     }
 
@@ -112,13 +134,15 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
 
     st.markdown(f"""
     <div class="app-header">
-        <h2 style="color: rgba(255,255,255,0.95); margin: 0; padding: 0; font-family: 'Poppins', sans-serif; font-size: 1.6rem; font-weight: 600;">Planner Organizer</h2>
-        <p style="color: rgba(255,255,255,0.85); margin: 0.1rem 0 0 0; padding: 0; font-size: 1rem; font-family: 'Poppins', sans-serif;">
-            Sistema Profissional de Gestão Personal Organizer
-        </p>
-        <div style="position: absolute; top: 45%; right: 1rem; transform: translateY(-50%); background-color: rgba(255,255,255,0.15); padding: 0.4rem 1rem; border-radius: 1rem; text-align: center; border: 1px solid rgba(255,255,255,0.2);">
-            <span style="color: rgba(255,255,255,0.95); font-size: 0.9rem; font-family: 'Poppins', sans-serif; display: block; font-weight: 500;">Bem-vindo(a), {nome_usuario}</span>
-            <span style="color: rgba(255,255,255,0.8); font-size: 0.8rem; font-family: 'Poppins', sans-serif; display: block; margin-top: 0.2rem;">📅 {data_formatada}</span>
+        <div style="flex: 1;">
+            <h2 style="color: rgba(255,255,255,0.95); margin: 0; padding: 0; font-family: 'Poppins', sans-serif; font-size: 1.3rem; font-weight: 600; line-height: 1.2;">Planner Organizer</h2>
+            <p style="color: rgba(255,255,255,0.85); margin: 0; padding: 0; font-size: 0.8rem; font-family: 'Poppins', sans-serif; line-height: 1.2;">
+                Sistema Profissional de Gestão Personal Organizer
+            </p>
+        </div>
+        <div style="background-color: rgba(255,255,255,0.15); padding: 0.3rem 0.8rem; border-radius: 0.8rem; text-align: center; border: 1px solid rgba(255,255,255,0.2); margin-left: 1rem;">
+            <span style="color: rgba(255,255,255,0.95); font-size: 0.75rem; font-family: 'Poppins', sans-serif; display: block; font-weight: 500;">Bem-vindo(a), {nome_usuario}</span>
+            <span style="color: rgba(255,255,255,0.8); font-size: 0.7rem; font-family: 'Poppins', sans-serif; display: block;">📅 {data_formatada}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
