@@ -11,6 +11,54 @@ def show():
         st.error("Erro: Conexão com banco de dados não inicializada")
         return
 
+    # CSS específico para botões do módulo de vendas
+    st.markdown("""
+    <style>
+    /* Garantir que botões do módulo de vendas tenham cores adequadas */
+    .stButton > button {
+        background-color: #262730 !important;
+        color: #FAFAFA !important;
+        border: 1px solid #454545 !important;
+        border-radius: 6px !important;
+        font-weight: 500 !important;
+        padding: 0.375rem 0.75rem !important;
+        font-size: 0.875rem !important;
+        line-height: 1.25rem !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    .stButton > button:hover {
+        background-color: #3B4252 !important;
+        border-color: #5E81AC !important;
+        color: #ECEFF4 !important;
+    }
+    
+    /* Botões primários com cor azul */
+    .stButton > button[kind="primary"] {
+        background-color: #0E4B99 !important;
+        color: #FFFFFF !important;
+        border-color: #0E4B99 !important;
+    }
+    
+    .stButton > button[kind="primary"]:hover {
+        background-color: #1B5EAB !important;
+        border-color: #1B5EAB !important;
+    }
+    
+    /* Botão de excluir com cor vermelha */
+    .stButton > button:contains("EXCLUIR") {
+        background-color: #BF616A !important;
+        color: #FFFFFF !important;
+        border-color: #BF616A !important;
+    }
+    
+    .stButton > button:contains("EXCLUIR"):hover {
+        background-color: #D08770 !important;
+        border-color: #D08770 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     # Título com estilo personalizado para ficar mais próximo do topo
     st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">🛒 Vendas</h1>', unsafe_allow_html=True)
 

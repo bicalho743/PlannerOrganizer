@@ -110,10 +110,30 @@ def apply_mobile_sidebar_fix():
         
         /* Garantir que botões da página principal mantenham estilo padrão */
         div[data-testid="stMainBlockContainer"] button[data-testid="baseButton-primary"],
-        div[data-testid="stMainBlockContainer"] button[data-testid="baseButton-secondary"] {
-            background-color: unset !important;
-            color: unset !important;
-            border: unset !important;
+        div[data-testid="stMainBlockContainer"] button[data-testid="baseButton-secondary"],
+        .main button[data-testid="baseButton-primary"],
+        .main button[data-testid="baseButton-secondary"] {
+            background-color: revert !important;
+            color: revert !important;
+            border: revert !important;
+            font-size: revert !important;
+            font-weight: revert !important;
+            padding: revert !important;
+            margin: revert !important;
+            border-radius: revert !important;
+            height: revert !important;
+            line-height: revert !important;
+            text-align: revert !important;
+            white-space: revert !important;
+            text-overflow: revert !important;
+            overflow: revert !important;
+            transition: revert !important;
+        }
+        
+        /* Forçar reset completo de botões fora da sidebar */
+        section[data-testid="stMain"] button,
+        div[data-testid="stTabs"] button {
+            all: revert !important;
         }
         
         /* Textos e labels da sidebar */
