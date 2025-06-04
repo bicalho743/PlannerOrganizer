@@ -146,8 +146,4 @@ def apply_page_footer():
         Contato: contato@plannerorganiza.com.br
     </div>
     """
-    st.markdown(footer_html, unsafe_allow_html=True)   
-  /* Corrige o espaço entre o cabeçalho fixo e o conteúdo */
-.block-container {
-    padding-top: 80px !important;  /* igual ou maior que a altura do cabeçalho fixo */
-}
+    st.markdown(footer_html, unsafe_allow_html=True)
