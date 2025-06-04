@@ -19,19 +19,22 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         right: 0;
         z-index: 999;
         background-color: #1E1F36;
-        padding: 0.4rem 1rem;
+        padding: 0.3rem 0.8rem;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         font-family: "Poppins", sans-serif;
-        min-height: 50px;
+        min-height: 45px;
+        max-height: 45px;
         display: flex;
         align-items: center;
+        justify-content: space-between;
     }
     
     /* Responsividade do cabeçalho */
     @media (max-width: 768px) {
         .app-header {
-            padding: 0.4rem 0.6rem;
-            min-height: 55px;
+            padding: 0.2rem 0.5rem;
+            min-height: 35px;
+            max-height: 35px;
             flex-direction: row;
             justify-content: space-between;
             align-items: center;
