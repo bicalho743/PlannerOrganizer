@@ -20,19 +20,6 @@ def apply_mobile_sidebar_fix():
     
     st.markdown("""
     <style>
-    /* Esconde elementos de debug/desenvolvimento */
-    section[data-testid="stSidebar"] [data-testid="stExpander"],
-    section[data-testid="stSidebar"] .streamlit-expanderHeader,
-    section[data-testid="stSidebar"] details,
-    section[data-testid="stSidebar"] summary {
-        display: none !important;
-    }
-    
-    /* Esconde elementos técnicos específicos */
-    section[data-testid="stSidebar"] div[data-testid]:not([data-testid="stSidebar"]):not([data-testid="baseButton-secondary"]) {
-        display: none !important;
-    }
-    
     /* Força sidebar sempre visível quando logado */
     section[data-testid="stSidebar"] {
         display: block !important;
@@ -45,11 +32,20 @@ def apply_mobile_sidebar_fix():
         z-index: 100 !important;
     }
     
-    /* Mostra apenas botões do menu */
-    section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
+    /* Garante que container dos botões seja visível */
+    section[data-testid="stSidebar"] .nav-buttons {
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
+    }
+    
+    /* Mostra todos os botões do menu */
+    section[data-testid="stSidebar"] button {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 100% !important;
+        margin: 4px 0 !important;
     }
     
     /* Força exibição em todos os tamanhos de tela */
@@ -59,28 +55,11 @@ def apply_mobile_sidebar_fix():
             visibility: visible !important;
             opacity: 1 !important;
         }
-        
-        /* Container da sidebar - apenas botões */
-        section[data-testid="stSidebar"] > div:first-child {
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-        
-        /* Esconde navegação nativa do Streamlit */
-        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] {
-            display: none !important;
-        }
     }
     
     /* Mobile específico */
     @media (max-width: 768px) {
-        /* Layout flexível para mobile */
-        .main {
-            display: flex !important;
-            flex-direction: row !important;
-        }
-        
+        /* Força sidebar visível em mobile */
         section[data-testid="stSidebar"] {
             display: block !important;
             visibility: visible !important;
@@ -96,6 +75,13 @@ def apply_mobile_sidebar_fix():
             height: auto !important;
             background-color: #1E1F36 !important;
             overflow-y: auto !important;
+            z-index: 100 !important;
+        }
+        
+        /* Layout flexível para mobile */
+        .main {
+            display: flex !important;
+            flex-direction: row !important;
         }
         
         /* Conteúdo principal ajustado */
@@ -107,16 +93,22 @@ def apply_mobile_sidebar_fix():
             width: auto !important;
         }
         
-        /* Força apenas elementos do menu funcional */
-        section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
+        /* Força visibilidade de todos os botões */
+        section[data-testid="stSidebar"] button {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
+            width: 100% !important;
+            margin: 4px 0 !important;
+            padding: 12px 16px !important;
+            text-align: left !important;
         }
         
-        /* Esconde todo o resto */
-        section[data-testid="stSidebar"] > div > div:not(.nav-buttons) {
-            display: none !important;
+        /* Garante que div dos botões seja visível */
+        section[data-testid="stSidebar"] div {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
     }
     
