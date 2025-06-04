@@ -25,7 +25,8 @@ def apply_mobile_sidebar_fix():
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
-        background-color: #1E1F36 !important;
+        background-color: #2E3440 !important;
+        border-right: 1px solid #4C566A !important;
     }
     
     /* Mobile específico */
@@ -46,7 +47,8 @@ def apply_mobile_sidebar_fix():
             min-width: 180px !important;
             max-width: 180px !important;
             height: 100vh !important;
-            background-color: #1E1F36 !important;
+            background-color: #2E3440 !important;
+            border-right: 1px solid #4C566A !important;
             z-index: 50 !important;
             flex-shrink: 0 !important;
             order: 1 !important;
@@ -83,25 +85,45 @@ def apply_mobile_sidebar_fix():
             opacity: 1 !important;
             width: 100% !important;
             margin: 0 !important;
-            padding: 6px 8px !important;
-            font-size: 0.7rem !important;
-            border-radius: 4px !important;
+            padding: 8px 10px !important;
+            font-size: 0.75rem !important;
+            font-weight: 500 !important;
+            border-radius: 6px !important;
             height: auto !important;
-            line-height: 1.2 !important;
+            line-height: 1.3 !important;
             text-align: center !important;
             white-space: nowrap !important;
             text-overflow: ellipsis !important;
             overflow: hidden !important;
+            background-color: #3B4252 !important;
+            color: #ECEFF4 !important;
+            border: 1px solid #4C566A !important;
+            transition: all 0.2s ease !important;
         }
         
-        /* Botão para esconder/mostrar sidebar */
-        section[data-testid="stSidebar"] .sidebar-toggle {
-            position: absolute !important;
-            top: 10px !important;
-            right: -15px !important;
-            width: 30px !important;
-            height: 30px !important;
-            background-color: #1E1F36 !important;
+        section[data-testid="stSidebar"] button:hover {
+            background-color: #434C5E !important;
+            color: #88C0D0 !important;
+            border-color: #5E81AC !important;
+        }
+        
+        /* Textos e labels da sidebar */
+        section[data-testid="stSidebar"] .stMarkdown,
+        section[data-testid="stSidebar"] label,
+        section[data-testid="stSidebar"] p,
+        section[data-testid="stSidebar"] span {
+            color: #D8DEE9 !important;
+            font-size: 0.8rem !important;
+        }
+        
+        /* Botão toggle para esconder/mostrar sidebar */
+        .sidebar-toggle-btn {
+            position: fixed !important;
+            top: 50% !important;
+            left: 160px !important;
+            width: 40px !important;
+            height: 40px !important;
+            background-color: #5E81AC !important;
             border: none !important;
             border-radius: 50% !important;
             color: white !important;
@@ -109,7 +131,15 @@ def apply_mobile_sidebar_fix():
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            z-index: 100 !important;
+            z-index: 1000 !important;
+            font-size: 1.2rem !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .sidebar-toggle-btn:hover {
+            background-color: #81A1C1 !important;
+            transform: scale(1.1) !important;
         }
     }
     </style>
