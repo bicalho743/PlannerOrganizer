@@ -211,6 +211,36 @@ def apply_mobile_sidebar_fix():
             padding-top: 0 !important;
             margin-top: 0 !important;
         }
+        
+        /* Ocultar elementos vazios que criam espaçamento */
+        .stVerticalBlock > div:empty {
+            display: none !important;
+        }
+        
+        /* Remover padding de divs vazias */
+        div[data-testid="stVerticalBlock"] > div[data-testid="element-container"]:empty {
+            display: none !important;
+        }
+        
+        /* Ocultar elementos com apenas espaço em branco */
+        .element-container:empty,
+        .stMarkdown:empty,
+        .stText:empty {
+            display: none !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* Forçar elementos vazios a não ocupar espaço */
+        [data-testid="element-container"]:empty {
+            display: none !important;
+        }
+        
+        /* Remover espaçamento de containers vazios */
+        .block-container > div:empty {
+            display: none !important;
+        }
     }
     </style>
     """, unsafe_allow_html=True)
