@@ -20,6 +20,19 @@ def apply_mobile_sidebar_fix():
     
     st.markdown("""
     <style>
+    /* Esconde elementos de debug/desenvolvimento */
+    section[data-testid="stSidebar"] [data-testid="stExpander"],
+    section[data-testid="stSidebar"] .streamlit-expanderHeader,
+    section[data-testid="stSidebar"] details,
+    section[data-testid="stSidebar"] summary {
+        display: none !important;
+    }
+    
+    /* Esconde elementos técnicos específicos */
+    section[data-testid="stSidebar"] div[data-testid]:not([data-testid="stSidebar"]):not([data-testid="baseButton-secondary"]) {
+        display: none !important;
+    }
+    
     /* Força sidebar sempre visível quando logado */
     section[data-testid="stSidebar"] {
         display: block !important;
@@ -32,6 +45,13 @@ def apply_mobile_sidebar_fix():
         z-index: 100 !important;
     }
     
+    /* Mostra apenas botões do menu */
+    section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
     /* Força exibição em todos os tamanhos de tela */
     @media screen {
         section[data-testid="stSidebar"] {
@@ -40,17 +60,16 @@ def apply_mobile_sidebar_fix():
             opacity: 1 !important;
         }
         
-        /* Container da sidebar */
-        section[data-testid="stSidebar"] > div {
+        /* Container da sidebar - apenas botões */
+        section[data-testid="stSidebar"] > div:first-child {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
         }
         
-        /* Widget da sidebar */
-        section[data-testid="stSidebar"] .css-1d391kg {
-            display: block !important;
-            visibility: visible !important;
+        /* Esconde navegação nativa do Streamlit */
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] {
+            display: none !important;
         }
     }
     
@@ -88,16 +107,16 @@ def apply_mobile_sidebar_fix():
             width: auto !important;
         }
         
-        /* Força todos os elementos internos da sidebar */
-        section[data-testid="stSidebar"] * {
+        /* Força apenas elementos do menu funcional */
+        section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
         }
         
-        /* Remove hidden classes */
-        section[data-testid="stSidebar"].css-1vq4p4l {
-            display: block !important;
+        /* Esconde todo o resto */
+        section[data-testid="stSidebar"] > div > div:not(.nav-buttons) {
+            display: none !important;
         }
     }
     
