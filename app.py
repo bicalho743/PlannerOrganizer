@@ -1484,6 +1484,10 @@ from utils.page_config import apply_page_header, apply_page_footer
 apply_page_header()
 apply_page_footer()
 
+# Aplicar correção mobile para sidebar
+from utils.simple_mobile_fix import apply_mobile_sidebar_fix
+apply_mobile_sidebar_fix()
+
 # Roteamento de páginas
 try:
     if st.session_state.current_page == "Dashboard":

@@ -19,9 +19,30 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         right: 0;
         z-index: 999;
         background-color: #1E1F36;
-        padding: 0.6rem 1.5rem;
+        padding: 0.4rem 1rem;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         font-family: "Poppins", sans-serif;
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+    }
+    
+    /* Responsividade do cabeçalho */
+    @media (max-width: 768px) {
+        .app-header {
+            padding: 0.3rem 0.8rem;
+            min-height: 45px;
+        }
+        .app-header h1 {
+            font-size: 1.2rem !important;
+            line-height: 1.3 !important;
+            margin: 0 !important;
+        }
+        .app-header h3 {
+            font-size: 0.9rem !important;
+            line-height: 1.2 !important;
+            margin: 0 !important;
+        }
     }
 
     /* Ajusta o conteúdo para não ficar escondido */
