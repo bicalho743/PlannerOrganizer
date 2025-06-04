@@ -79,9 +79,8 @@ def apply_mobile_sidebar_fix():
             padding: 8px 4px !important;
         }
         
-        /* Aplicar estilos apenas aos botões da navegação da sidebar */
-        section[data-testid="stSidebar"] .nav-buttons button,
-        section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
+        /* Aplicar estilos APENAS aos botões de navegação da sidebar */
+        section[data-testid="stSidebar"] div[data-testid="column"] button[data-testid="baseButton-secondary"] {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
@@ -103,11 +102,18 @@ def apply_mobile_sidebar_fix():
             transition: all 0.2s ease !important;
         }
         
-        section[data-testid="stSidebar"] .nav-buttons button:hover,
-        section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover {
+        section[data-testid="stSidebar"] div[data-testid="column"] button[data-testid="baseButton-secondary"]:hover {
             background-color: #434C5E !important;
             color: #88C0D0 !important;
             border-color: #5E81AC !important;
+        }
+        
+        /* Garantir que botões da página principal mantenham estilo padrão */
+        div[data-testid="stMainBlockContainer"] button[data-testid="baseButton-primary"],
+        div[data-testid="stMainBlockContainer"] button[data-testid="baseButton-secondary"] {
+            background-color: unset !important;
+            color: unset !important;
+            border: unset !important;
         }
         
         /* Textos e labels da sidebar */
