@@ -33,7 +33,8 @@ header[data-testid="stHeader"] {
 
 /* Ajuste global: reduz ainda mais o espaço após o cabeçalho */
 .block-container {
-    padding-top: 10px !important;  /* Espaçamento mínimo para página de login */
+    padding-top: 0px !important;  /* Remove espaçamento superior */
+    margin-top: 0px !important;   /* Remove margem superior */
     min-height: calc(100vh - 10px) !important;
     max-width: 100% !important;
     position: relative;
@@ -54,17 +55,9 @@ header[data-testid="stHeader"] {
 }
 
 
-/* Gradiente abaixo do cabeçalho */
+/* Gradiente abaixo do cabeçalho - removido para reduzir espaçamento */
 .block-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 30px;
-    background: linear-gradient(180deg, rgba(30, 31, 54, 0.05) 0%, transparent 100%);
-    z-index: 1;
-    pointer-events: none;
+    display: none;
 }
 
 /* Breadcrumb */
