@@ -30,75 +30,86 @@ def apply_mobile_sidebar_fix():
     
     /* Mobile específico */
     @media (max-width: 768px) {
-        /* Layout principal em coluna */
+        /* Layout principal em linha - sidebar lateral */
         .main {
             display: flex !important;
-            flex-direction: column !important;
+            flex-direction: row !important;
         }
         
-        /* Sidebar como barra de navegação horizontal no topo */
+        /* Sidebar lateral mais fina */
         section[data-testid="stSidebar"] {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
             position: relative !important;
-            width: 100% !important;
-            max-width: 100vw !important;
-            height: 60px !important;
-            max-height: 60px !important;
+            width: 180px !important;
+            min-width: 180px !important;
+            max-width: 180px !important;
+            height: 100vh !important;
             background-color: #1E1F36 !important;
             z-index: 50 !important;
-            overflow: hidden !important;
+            flex-shrink: 0 !important;
             order: 1 !important;
         }
         
-        /* Conteúdo principal abaixo da sidebar */
+        /* Conteúdo principal ao lado da sidebar */
         .main .block-container {
             order: 2 !important;
-            padding-top: 10px !important;
-            width: 100% !important;
-            max-width: 100% !important;
+            flex: 1 !important;
+            padding: 10px !important;
+            width: calc(100vw - 180px) !important;
+            max-width: calc(100vw - 180px) !important;
         }
         
-        /* Container da sidebar com altura controlada */
+        /* Container da sidebar */
         section[data-testid="stSidebar"] > div {
-            height: 60px !important;
-            max-height: 60px !important;
-            overflow: hidden !important;
             width: 100% !important;
+            height: 100% !important;
+            overflow-y: auto !important;
+            padding: 8px !important;
         }
         
-        /* Botões do menu em layout horizontal compacto */
+        /* Botões do menu em layout vertical */
         section[data-testid="stSidebar"] .nav-buttons {
             display: flex !important;
-            flex-wrap: wrap !important;
-            gap: 3px !important;
-            padding: 5px !important;
-            height: 50px !important;
-            max-height: 50px !important;
-            overflow: hidden !important;
-            align-items: center !important;
-            justify-content: flex-start !important;
+            flex-direction: column !important;
+            gap: 4px !important;
+            padding: 8px 4px !important;
         }
         
         section[data-testid="stSidebar"] button {
-            display: inline-block !important;
+            display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
-            width: auto !important;
-            min-width: 60px !important;
-            max-width: 85px !important;
+            width: 100% !important;
             margin: 0 !important;
-            padding: 3px 6px !important;
-            font-size: 0.65rem !important;
-            border-radius: 3px !important;
-            flex: 0 0 auto !important;
-            height: 24px !important;
-            line-height: 1.1 !important;
+            padding: 6px 8px !important;
+            font-size: 0.7rem !important;
+            border-radius: 4px !important;
+            height: auto !important;
+            line-height: 1.2 !important;
             text-align: center !important;
-            overflow: hidden !important;
             white-space: nowrap !important;
             text-overflow: ellipsis !important;
+            overflow: hidden !important;
+        }
+        
+        /* Botão para esconder/mostrar sidebar */
+        section[data-testid="stSidebar"] .sidebar-toggle {
+            position: absolute !important;
+            top: 10px !important;
+            right: -15px !important;
+            width: 30px !important;
+            height: 30px !important;
+            background-color: #1E1F36 !important;
+            border: none !important;
+            border-radius: 50% !important;
+            color: white !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 100 !important;
         }
     }
     </style>
