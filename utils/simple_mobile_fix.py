@@ -170,6 +170,47 @@ def apply_mobile_sidebar_fix():
             background-color: #81A1C1 !important;
             transform: scale(1.1) !important;
         }
+        
+        /* Reduzir espaçamento entre cabeçalho e conteúdo */
+        .stApp > header {
+            height: 35px !important;
+            background-color: transparent !important;
+        }
+        
+        /* Reduzir espaçamento do topo drasticamente */
+        .main .block-container {
+            padding-top: 0.5rem !important;
+            padding-bottom: 1rem !important;
+            margin-top: 0 !important;
+        }
+        
+        /* Remover margens e espaçamentos desnecessários */
+        .stApp {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        
+        /* Garantir que não há espaços invisíveis */
+        div[data-testid="stMainBlockContainer"] {
+            padding-top: 0.5rem !important;
+            margin-top: 0 !important;
+        }
+        
+        /* Remover espaçamentos de elementos vazios */
+        .element-container:empty {
+            display: none !important;
+        }
+        
+        /* Reduzir espaçamento entre elementos */
+        .element-container {
+            margin-bottom: 0.5rem !important;
+        }
+        
+        /* Remover espaços vazios no topo das páginas */
+        section[data-testid="stMain"] > div:first-child {
+            padding-top: 0 !important;
+            margin-top: 0 !important;
+        }
     }
     </style>
     """, unsafe_allow_html=True)
