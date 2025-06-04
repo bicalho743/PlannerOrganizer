@@ -20,6 +20,16 @@ def apply_mobile_sidebar_fix():
     
     st.markdown("""
     <style>
+    /* Esconde elementos de debug/desenvolvimento */
+    section[data-testid="stSidebar"] [data-testid="stExpander"],
+    section[data-testid="stSidebar"] .streamlit-expanderHeader,
+    section[data-testid="stSidebar"] details,
+    section[data-testid="stSidebar"] summary,
+    section[data-testid="stSidebar"] .element-container:has(details),
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] {
+        display: none !important;
+    }
+    
     /* Força sidebar sempre visível quando logado */
     section[data-testid="stSidebar"] {
         display: block !important;
@@ -40,7 +50,7 @@ def apply_mobile_sidebar_fix():
     }
     
     /* Mostra todos os botões do menu */
-    section[data-testid="stSidebar"] button {
+    section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
@@ -48,67 +58,67 @@ def apply_mobile_sidebar_fix():
         margin: 4px 0 !important;
     }
     
-    /* Força exibição em todos os tamanhos de tela */
-    @media screen {
-        section[data-testid="stSidebar"] {
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-    }
-    
     /* Mobile específico */
     @media (max-width: 768px) {
+        /* Layout em coluna para mobile - sidebar fica acima do conteúdo */
+        .main {
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        
         /* Força sidebar visível em mobile */
         section[data-testid="stSidebar"] {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
             position: relative !important;
-            width: 250px !important;
-            min-width: 250px !important;
-            max-width: 250px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: auto !important;
             flex-shrink: 0 !important;
             transform: none !important;
             left: 0 !important;
             top: 0 !important;
             height: auto !important;
+            max-height: 250px !important;
             background-color: #1E1F36 !important;
             overflow-y: auto !important;
             z-index: 100 !important;
-        }
-        
-        /* Layout flexível para mobile */
-        .main {
-            display: flex !important;
-            flex-direction: row !important;
+            order: 1 !important;
         }
         
         /* Conteúdo principal ajustado */
         .main .block-container {
             flex: 1 !important;
-            padding-left: 10px !important;
-            padding-right: 10px !important;
-            max-width: none !important;
-            width: auto !important;
+            padding: 10px !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            order: 2 !important;
         }
         
         /* Força visibilidade de todos os botões */
-        section[data-testid="stSidebar"] button {
-            display: block !important;
+        section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
+            display: inline-block !important;
             visibility: visible !important;
             opacity: 1 !important;
-            width: 100% !important;
-            margin: 4px 0 !important;
-            padding: 12px 16px !important;
-            text-align: left !important;
+            width: auto !important;
+            margin: 2px 4px !important;
+            padding: 8px 12px !important;
+            font-size: 0.8rem !important;
+            border-radius: 6px !important;
         }
         
-        /* Garante que div dos botões seja visível */
-        section[data-testid="stSidebar"] div {
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
+        /* Layout horizontal dos botões em mobile */
+        section[data-testid="stSidebar"] .nav-buttons {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 4px !important;
+            padding: 8px !important;
+        }
+        
+        /* Esconde elementos de debug específicos para mobile */
+        section[data-testid="stSidebar"] > div > div:not(.nav-buttons):not([data-testid="baseButton-secondary"]) {
+            display: none !important;
         }
     }
     
@@ -117,6 +127,19 @@ def apply_mobile_sidebar_fix():
         section[data-testid="stSidebar"] {
             display: block !important;
             width: 260px !important;
+        }
+        
+        .main {
+            display: flex !important;
+            flex-direction: row !important;
+        }
+    }
+    
+    /* Desktop */
+    @media (min-width: 1025px) {
+        .main {
+            display: flex !important;
+            flex-direction: row !important;
         }
     }
     </style>
