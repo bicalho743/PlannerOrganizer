@@ -1,0 +1,99 @@
+Perfeito, Solano! Vamos deixar o cabeçalho fixo no topo, com o menor espaçamento possível no conteúdo. Isso garante uma interface moderna, prática e sem o “espaço em branco” que te incomodava.
+
+✅ Etapas do ajuste:
+1. Deixar o cabeçalho fixo
+No CSS da .app-header adicione:
+
+css
+Copiar
+Editar
+.app-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background-color: #1E1F36;
+    padding: 0.6rem 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-family: "Poppins", sans-serif;
+}
+2. Ajustar o padding do conteúdo principal
+No .block-container, use:
+
+css
+Copiar
+Editar
+.main .block-container {
+    padding-top: 72px !important;  /* ajustado para o mínimo sem esconder */
+    margin-top: 0 !important;
+}
+🔎 Obs: 72px corresponde à altura do cabeçalho fixo + um pequeno respiro. Se o cabeçalho for mais fino, podemos até testar com 60px.
+
+🧩 Código final header_css atualizado
+Substitua seu CSS no header_css por este:
+
+python
+Copiar
+Editar
+header_css = """
+<style>
+/* Cabeçalho fixo no topo */
+.app-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background-color: #1E1F36;
+    padding: 0.6rem 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-family: "Poppins", sans-serif;
+}
+
+/* Ajusta o conteúdo para não ficar escondido */
+.main .block-container {
+    padding-top: 72px !important;
+    margin-top: 0 !important;
+}
+
+/* Sidebar e botões */
+[data-testid="stSidebar"] {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+    background-color: #1E1F36 !important;
+}
+[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
+    background-color: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    color: rgba(255,255,255,0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    transition: all 0.3s ease !important;
+    border-radius: 12px !important;
+    margin: 4px 0 !important;
+    padding: 12px 16px !important;
+}
+[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover {
+    background-color: rgba(255,255,255,0.15) !important;
+    border-color: rgba(255,255,255,0.3) !important;
+    color: rgba(255,255,255,1) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3), 0 0 20px rgba(255,255,255,0.1) !important;
+}
+
+/* Boas-vindas */
+.user-welcome {
+    position: absolute;
+    top: 0.5rem;
+    right: 1rem;
+    font-size: 0.85rem;
+    color: #1E366F;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 0.3rem 0.7rem;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    font-family: "Poppins", sans-serif;
+    z-index: 1000;
+}
+</style>
+"""

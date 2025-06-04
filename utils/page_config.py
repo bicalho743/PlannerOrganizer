@@ -11,11 +11,36 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
     # CSS para ajustar espaçamento e visual
     header_css = """
     <style>
-    .main .block-container { padding-top: 5px !important; margin-top: 0 !important; }
+    /* Cabeçalho fixo no topo */
+    .app-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 999;
+        background-color: #1E1F36;
+        padding: 0.6rem 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        font-family: "Poppins", sans-serif;
+    }
+
+    /* Ajusta o conteúdo para não ficar escondido */
+    .main .block-container {
+        padding-top: 72px !important;
+        margin-top: 0 !important;
+    }
+
+    /* Remove header nativo do Streamlit */
     header[data-testid="stHeader"] { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; }
     [data-testid="stAppViewContainer"] > div:first-child { padding-top: 0 !important; margin-top: 0 !important; }
     [data-testid="stAppViewContainer"] > section:first-of-type { padding-top: 0 !important; margin-top: 0 !important; }
-    [data-testid="stSidebar"] { padding-top: 0 !important; margin-top: 0 !important; background-color: #1E1F36 !important; }
+
+    /* Sidebar e botões */
+    [data-testid="stSidebar"] {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+        background-color: #1E1F36 !important;
+    }
     [data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
         background-color: rgba(255,255,255,0.05) !important;
         border: 1px solid rgba(255,255,255,0.1) !important;
@@ -33,11 +58,17 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         transform: translateY(-2px) scale(1.02) !important;
         box-shadow: 0 8px 25px rgba(0,0,0,0.3), 0 0 20px rgba(255,255,255,0.1) !important;
     }
+
+    /* Boas-vindas */
     .user-welcome {
-        position: absolute; top: 0.5rem; right: 1rem;
-        font-size: 0.85rem; color: #1E366F;
+        position: absolute;
+        top: 0.5rem;
+        right: 1rem;
+        font-size: 0.85rem;
+        color: #1E366F;
         background-color: rgba(255, 255, 255, 0.9);
-        padding: 0.3rem 0.7rem; border-radius: 1rem;
+        padding: 0.3rem 0.7rem;
+        border-radius: 1rem;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         font-family: "Poppins", sans-serif;
         z-index: 1000;
@@ -115,4 +146,8 @@ def apply_page_footer():
         Contato: contato@plannerorganiza.com.br
     </div>
     """
-    st.markdown(footer_html, unsafe_allow_html=True)
+    st.markdown(footer_html, unsafe_allow_html=True)   
+  /* Corrige o espaço entre o cabeçalho fixo e o conteúdo */
+.block-container {
+    padding-top: 80px !important;  /* igual ou maior que a altura do cabeçalho fixo */
+}
