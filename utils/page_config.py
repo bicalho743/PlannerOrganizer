@@ -26,7 +26,7 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
 
     /* Ajusta o conteúdo para não ficar escondido */
     .main .block-container {
-        padding-top: 50px !important;
+        padding-top: 45px !important;
         margin-top: 0 !important;
     }
 
