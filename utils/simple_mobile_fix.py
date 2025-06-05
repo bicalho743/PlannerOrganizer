@@ -241,6 +241,49 @@ def apply_mobile_sidebar_fix():
         .block-container > div:empty {
             display: none !important;
         }
+        
+        /* Corrigir botões na aba Nova Venda */
+        button[kind="secondary"] {
+            background-color: #f0f2f6 !important;
+            color: #262730 !important;
+            border: 1px solid #d1d5db !important;
+        }
+        
+        button[kind="secondary"]:hover {
+            background-color: #e5e7eb !important;
+            border-color: #9ca3af !important;
+        }
+        
+        /* Garantir que texto dos botões seja visível */
+        .stButton > button {
+            color: inherit !important;
+            font-weight: 500 !important;
+        }
+        
+        /* Botão Limpar Carrinho específico */
+        .stButton > button[kind="secondary"] p {
+            color: #262730 !important;
+            font-weight: 500 !important;
+            margin: 0 !important;
+        }
+        
+        /* Botão Finalizar Venda */
+        .stButton > button[kind="primary"] {
+            background-color: #1f77b4 !important;
+            color: white !important;
+            border: none !important;
+        }
+        
+        .stButton > button[kind="primary"] p {
+            color: white !important;
+            font-weight: 500 !important;
+            margin: 0 !important;
+        }
+        
+        /* Forçar visibilidade do texto em todos os botões */
+        button * {
+            color: inherit !important;
+        }
     }
     </style>
     """, unsafe_allow_html=True)
