@@ -493,7 +493,7 @@ def show():
                         st.dataframe(itens_df[['produto_nome', 'quantidade', 'preco_unitario', 'subtotal', 'lucro']], hide_index=True)
                         
                         # Botão para gerar PDF
-                        if st.button("📄 Gerar Relatório de Venda", key=f"gerar_pdf_venda_{venda_id}"):
+                        if st.button("Gerar Relatório de Venda", type="primary", key=f"gerar_pdf_venda_{venda_id}"):
                             with st.spinner("Gerando relatório de venda..."):
                                 try:
                                     # Obter dados do cliente
