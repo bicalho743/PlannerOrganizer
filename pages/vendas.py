@@ -375,6 +375,42 @@ def show():
                         st.rerun()
                 
                 with col2:
+                    # JavaScript para corrigir botões invisíveis
+                    st.markdown("""
+                    <script>
+                    setTimeout(function() {
+                        // Encontrar todos os botões
+                        const buttons = document.querySelectorAll('button[data-testid="baseButton-secondary"], button[data-testid="baseButton-primary"]');
+                        
+                        buttons.forEach(button => {
+                            // Aplicar estilos diretamente
+                            if (button.textContent.includes('Limpar') || button.textContent.includes('Finalizar')) {
+                                button.style.backgroundColor = '#f8f9fa';
+                                button.style.color = '#212529';
+                                button.style.border = '1px solid #dee2e6';
+                                button.style.fontWeight = '500';
+                                button.style.minHeight = '38px';
+                                
+                                // Se for botão primário (Finalizar)
+                                if (button.textContent.includes('Finalizar')) {
+                                    button.style.backgroundColor = '#007bff';
+                                    button.style.color = 'white';
+                                    button.style.border = '1px solid #007bff';
+                                }
+                                
+                                // Garantir que o texto seja visível
+                                const textElements = button.querySelectorAll('p, span, div');
+                                textElements.forEach(el => {
+                                    el.style.color = 'inherit';
+                                    el.style.opacity = '1';
+                                    el.style.visibility = 'visible';
+                                });
+                            }
+                        });
+                    }, 500);
+                    </script>
+                    """, unsafe_allow_html=True)
+                    
                     if st.button("Finalizar Venda", type="primary", use_container_width=True):
                         try:
                             # Preparar itens para API

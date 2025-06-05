@@ -408,3 +408,6 @@ div[data-testid="stFileUploader"] button:hover {
 .stButton > button[kind="primary"] div {
     color: white !important;
 }
+
+/* JavaScript para corrigir botões invisíveis */
+/* Esta solução será implementada via script */
