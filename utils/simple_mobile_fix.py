@@ -292,6 +292,42 @@ def apply_mobile_sidebar_fix():
             opacity: 1 !important;
             visibility: visible !important;
         }
+        
+        /* Abordagem mais agressiva para botões problemáticos */
+        div[data-testid="stColumns"] .stButton > button {
+            background-color: #f0f2f6 !important;
+            color: #262730 !important;
+            border: 1px solid #d1d5db !important;
+            min-height: 38px !important;
+            font-weight: 500 !important;
+        }
+        
+        div[data-testid="stColumns"] .stButton > button[kind="primary"] {
+            background-color: #1f77b4 !important;
+            color: white !important;
+            border: none !important;
+        }
+        
+        /* Forçar cor do texto em ALL elementos internos */
+        div[data-testid="stColumns"] .stButton > button > * {
+            color: #262730 !important;
+        }
+        
+        div[data-testid="stColumns"] .stButton > button[kind="primary"] > * {
+            color: white !important;
+        }
+        
+        /* CSS super específico para os botões de vendas */
+        .stButton > button[data-baseweb="button"] {
+            background: #f0f2f6 !important;
+            color: #262730 !important;
+            border: 1px solid #d1d5db !important;
+        }
+        
+        .stButton > button[data-baseweb="button"][kind="primary"] {
+            background: #1f77b4 !important;
+            color: white !important;
+        }
     }
     </style>
     """, unsafe_allow_html=True)
