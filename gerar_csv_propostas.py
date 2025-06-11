@@ -4,47 +4,31 @@ from datetime import datetime
 import os
 
 # Configuração da página
-try:
-    st.set_page_config(
-        page_title="Exportar Propostas para CSV",
-        page_icon="📊",
-        layout="wide"
-    )
-except:
-    # Ignorar se já foi configurado
-    pass
+st.set_page_config(
+    page_title="Exportar Propostas para CSV",
+    page_icon="📊",
+    layout="wide"
+)
 
 # Título e descrição
 st.title("Exportar Todas as Propostas")
 st.write("Esta ferramenta exporta todas as propostas do sistema para um arquivo CSV que você pode abrir no Excel.")
 
-# Função para inicializar banco apenas quando necessário
-def get_database():
-    """Inicializa o banco de dados apenas quando necessário"""
-    if 'db' not in st.session_state:
-        try:
-            from utils.database import Database
-            st.session_state.db = Database()
-        except Exception as e:
-            st.error(f"Erro ao conectar com o banco de dados: {str(e)}")
-            st.session_state.db = None
-    return st.session_state.db
+# Inicializar banco de dados
+from utils.database import Database
+
+if 'db' not in st.session_state:
+    st.session_state.db = Database()
 
 # Função para exportar propostas
 def exportar_propostas():
     try:
-        # Obter instância do banco
-        db = get_database()
-        if db is None:
-            st.error("Banco de dados não disponível.")
-            return (None, None)
-        
         # Obter todas as propostas do banco
-        propostas = db.get_propostas()
+        propostas = st.session_state.db.get_propostas()
         
         if propostas.empty:
             st.warning("Não há propostas para exportar.")
-            return (None, None)
+            return None
         
         # Adicionar categoria para melhor visualização
         def categorizar_proposta(row):
@@ -63,18 +47,9 @@ def exportar_propostas():
         propostas['categoria'] = propostas.apply(categorizar_proposta, axis=1)
         
         # Formatar valor para exibição
-        def formatar_valor_seguro(valor):
-            try:
-                if pd.notna(valor) and valor is not None:
-                    # Converter para float se necessário
-                    valor_float = float(valor)
-                    return f"R$ {valor_float:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
-                else:
-                    return "R$ 0,00"
-            except (ValueError, TypeError):
-                return "R$ 0,00"
-        
-        propostas['valor_formatado'] = propostas['valor'].apply(formatar_valor_seguro)
+        propostas['valor_formatado'] = propostas['valor'].apply(
+            lambda x: f"R$ {float(x):,.2f}".replace(',', '.').replace('.', ',') if pd.notna(x) else "R$ 0,00"
+        )
         
         # Formatar datas
         propostas['data_inicio_formatada'] = propostas['data_inicio'].apply(
@@ -96,11 +71,11 @@ def exportar_propostas():
         caminho_arquivo = os.path.join(pasta_destino, nome_arquivo)
         propostas.to_csv(caminho_arquivo, index=False, encoding='utf-8-sig')
         
-        return (caminho_arquivo, propostas)
+        return caminho_arquivo, propostas
     
     except Exception as e:
         st.error(f"Erro ao exportar propostas: {str(e)}")
-        return (None, None)
+        return None, None
 
 # Interface principal
 col1, col2 = st.columns([2, 1])
@@ -118,14 +93,9 @@ with col2:
     st.subheader("Ações:")
     if st.button("📊 Exportar Todas as Propostas", type="primary"):
         with st.spinner("Exportando propostas..."):
-            resultado = exportar_propostas()
+            caminho_arquivo, propostas = exportar_propostas()
             
-            if resultado and len(resultado) == 2:
-                caminho_arquivo, propostas = resultado
-            else:
-                caminho_arquivo, propostas = None, None
-            
-            if caminho_arquivo and propostas is not None:
+            if caminho_arquivo:
                 st.success(f"✅ Exportação concluída! Total de propostas: {len(propostas)}")
                 
                 # Oferecer download do arquivo
@@ -159,24 +129,18 @@ with col2:
                 
                 # Exibir dataframe estilizado
                 try:
-                    if not propostas.empty and all(col in propostas.columns for col in colunas_exibir):
-                        df_exibir = propostas[colunas_exibir].rename(columns=mapeamento_colunas)
-                        st.dataframe(df_exibir, hide_index=True, use_container_width=True)
-                        
-                        # Mostrar contagem por categoria
-                        st.subheader("Distribuição por status")
-                        contagem = propostas['categoria'].value_counts().reset_index()
-                        contagem.columns = ['Status', 'Quantidade']
-                        st.bar_chart(contagem, x='Status', y='Quantidade')
-                    else:
-                        st.dataframe(propostas, use_container_width=True)
+                    df_exibir = propostas[colunas_exibir].rename(columns=mapeamento_colunas)
+                    st.dataframe(df_exibir, hide_index=True, use_container_width=True)
+                    
+                    # Mostrar contagem por categoria
+                    st.subheader("Distribuição por status")
+                    contagem = propostas['categoria'].value_counts().reset_index()
+                    contagem.columns = ['Status', 'Quantidade']
+                    st.bar_chart(contagem, x='Status', y='Quantidade')
                     
                 except Exception as e:
                     st.error(f"Erro ao exibir dados: {str(e)}")
-                    if propostas is not None and not propostas.empty:
-                        st.dataframe(propostas, use_container_width=True)
-            else:
-                st.error("Falha na exportação das propostas.")
+                    st.dataframe(propostas, use_container_width=True)
 
 # Botão para voltar ao dashboard
 if st.button("Voltar ao Dashboard"):

@@ -130,15 +130,12 @@ try:
 except Exception as e:
     logger.error(f"❌ Firebase Auth: ERRO - {e}")
 
-# Verificar Database (inicializar se necessário para diagnóstico)
+# Verificar Database
 try:
-    if 'db' in st.session_state and st.session_state.db:
+    if 'db' in st.session_state:
         logger.info("✅ Database: ATIVO")
     else:
-        # Inicializar database temporariamente para verificação
-        from utils.database import Database
-        temp_db = Database()
-        logger.info("✅ Database: CONEXÃO VERIFICADA")
+        logger.warning("⚠️ Database: NÃO INICIALIZADO")
 except Exception as e:
     logger.error(f"❌ Database: ERRO - {e}")
 
@@ -1609,7 +1606,7 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
             # Botão para fechar
             if st.button("Fechar", key="fechar_termos", use_container_width=True):
                 st.session_state.mostrar_termos = False
-                st.rerun()
+                st.experimental_rerun()
     
     if st.session_state.mostrar_politica:
         # Criar um modal/dialog para a política de privacidade
@@ -1626,7 +1623,7 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
             # Botão para fechar
             if st.button("Fechar", key="fechar_politica", use_container_width=True):
                 st.session_state.mostrar_politica = False
-                st.rerun()
+                st.experimental_rerun()
     
     # Botão para download dos ícones do sistema
     try:

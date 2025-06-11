@@ -20,3 +20,5 @@ font = "sans serif"
 
 [browser]
 gatherUsageStats = false
+serverAddress = ""
+serverPort = 0

@@ -5,71 +5,33 @@ import os
 import sys
 
 # Configuração da página
-try:
-    st.set_page_config(
-        page_title="Todas as Propostas",
-        page_icon="📊",
-        layout="wide"
-    )
-except:
-    # Ignorar se já foi configurado
-    pass
+st.set_page_config(
+    page_title="Todas as Propostas",
+    page_icon="📊",
+    layout="wide"
+)
 
 # Adicionar diretório raiz ao path
-try:
-    root_dir = os.path.dirname(os.path.abspath(__file__))
-    if root_dir not in sys.path:
-        sys.path.append(root_dir)
-except NameError:
-    # Se __file__ não estiver definido, usar diretório atual
-    root_dir = os.getcwd()
-    if root_dir not in sys.path:
-        sys.path.append(root_dir)
+root_dir = os.path.dirname(os.path.abspath(__file__))
+if root_dir not in sys.path:
+    sys.path.append(root_dir)
 
 # Importar módulos necessários
 from utils.database import Database
+from utils.auth import check_authentication
 
-# Verificar autenticação (simplificado para evitar problemas de dependência)
-try:
-    from utils.auth import check_authentication
-    if not check_authentication():
-        st.error("Você precisa estar logado para acessar esta página.")
-        st.stop()
-except ImportError:
-    # Se não houver módulo de autenticação, permitir acesso direto para debugging
-    # A autenticação será verificada no app principal
-    pass
+# Verificar autenticação
+if not check_authentication():
+    st.error("Você precisa estar logado para acessar esta página.")
+    st.stop()
 
 # Título da página
 st.title("Todas as Propostas")
 st.markdown("### Visualização completa de todas as propostas cadastradas no sistema")
 
 # Inicializar banco de dados
-try:
-    if 'db' not in st.session_state:
-        # Verificar se há usuario_id na sessão para inicialização correta do banco
-        usuario_id = None
-        try:
-            if 'usuario_id' in st.session_state:
-                usuario_id = st.session_state.usuario_id
-            elif 'user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user:
-                usuario_id = st.session_state.user['localId']
-                st.session_state.usuario_id = usuario_id
-        except:
-            # Se não conseguir acessar session_state, continuar sem usuario_id
-            pass
-        
-        st.session_state.db = Database(usuario_id=usuario_id)
-except Exception as e:
-    # Tentar inicializar sem session_state se necessário
-    try:
-        if 'db' not in locals():
-            db = Database()
-            st.session_state.db = db
-    except Exception as fallback_error:
-        st.error(f"Erro ao inicializar banco de dados: {str(e)}")
-        st.error(f"Erro no fallback: {str(fallback_error)}")
-        st.stop()
+if 'db' not in st.session_state:
+    st.session_state.db = Database()
 
 try:
     # Carregar todas as propostas do banco de dados
@@ -244,8 +206,12 @@ try:
         
         # Botão para voltar ao dashboard
         if st.button("Voltar para o Dashboard"):
-            st.info("Redirecionando para o dashboard...")
-            st.rerun()
+            js = """
+            <script>
+            window.location.href = '/';
+            </script>
+            """
+            st.components.v1.html(js)
 
 except Exception as e:
     st.error(f"Ocorreu um erro ao carregar as propostas: {str(e)}")

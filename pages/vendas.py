@@ -148,16 +148,8 @@ def show():
                         # Exibir tabela com opções de edição/exclusão
                         st.dataframe(produtos_df[colunas_exibir], hide_index=True)
                         
-                        # Implementação personalizada da barra "Gerenciar Produtos"
-                        if 'gerenciar_produtos_expanded' not in st.session_state:
-                            st.session_state.gerenciar_produtos_expanded = False
-                        
-                        # Botão personalizado para expandir/recolher
-                        if st.button("🔧 Gerenciar Produtos", type="primary", use_container_width=True, key="toggle_gerenciar_produtos"):
-                            st.session_state.gerenciar_produtos_expanded = not st.session_state.gerenciar_produtos_expanded
-                        
-                        # Conteúdo expansível
-                        if st.session_state.gerenciar_produtos_expanded:
+                        # Área para editar/excluir produtos
+                        with st.expander("Gerenciar Produtos"):
                             col_edit1, col_edit2 = st.columns(2)
                             
                             with col_edit1:
@@ -190,7 +182,7 @@ def show():
                                         categoria_edit = st.text_input("Categoria", value=produto_selecionado.get('categoria', ''))
                                         estoque_edit = st.number_input("Estoque", value=int(produto_selecionado['estoque']), min_value=0)
                                         
-                                        submit_edit = st.form_submit_button("Atualizar Produto", type="primary")
+                                        submit_edit = st.form_submit_button("Atualizar Produto")
                                         
                                         if submit_edit:
                                             try:
@@ -326,7 +318,6 @@ def show():
                 
                 with col3:
                     if produto_id:
-                        produto = produtos_df[produtos_df['id'] == produto_id].iloc[0]
                         preco_venda_str = produto['preco_venda'].replace('R$ ', '').replace(',', '.') if isinstance(produto['preco_venda'], str) else produto['preco_venda']
                         preco_venda = float(preco_venda_str)
                         preco_unitario = st.number_input("Preço Unitário (R$)", min_value=0.01, value=preco_venda, format="%.2f")
