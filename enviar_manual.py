@@ -2,7 +2,13 @@
 Módulo para envio de manual do sistema
 """
 import streamlit as st
-from utils.brevo_helper import adicionar_email_lista_brevo, enviar_email_manual
+import os
+import sys
+
+# Adicionar o diretório principal ao path
+root_dir = os.path.dirname(os.path.abspath(__file__))
+if root_dir not in sys.path:
+    sys.path.append(root_dir)
 
 def main():
     """Função principal da página de envio de manual"""
@@ -18,6 +24,9 @@ def main():
         if submitted:
             if email and nome:
                 try:
+                    # Importar as funções quando necessário para evitar erros de inicialização
+                    from enviar_manual_simples import adicionar_email_lista_brevo, enviar_email_manual
+                    
                     # Adicionar à lista do Brevo
                     adicionar_email_lista_brevo(email, nome)
                     

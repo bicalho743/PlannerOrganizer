@@ -1609,7 +1609,7 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
             # Botão para fechar
             if st.button("Fechar", key="fechar_termos", use_container_width=True):
                 st.session_state.mostrar_termos = False
-                st.experimental_rerun()
+                st.rerun()
     
     if st.session_state.mostrar_politica:
         # Criar um modal/dialog para a política de privacidade
@@ -1626,7 +1626,7 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
             # Botão para fechar
             if st.button("Fechar", key="fechar_politica", use_container_width=True):
                 st.session_state.mostrar_politica = False
-                st.experimental_rerun()
+                st.rerun()
     
     # Botão para download dos ícones do sistema
     try:
