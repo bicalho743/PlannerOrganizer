@@ -18,28 +18,29 @@ except:
 st.title("Exportar Todas as Propostas")
 st.write("Esta ferramenta exporta todas as propostas do sistema para um arquivo CSV que você pode abrir no Excel.")
 
-# Inicializar banco de dados de forma simplificada
-@st.cache_resource
+# Função para inicializar banco apenas quando necessário
 def get_database():
-    """Inicializa o banco de dados com cache para melhor performance"""
-    try:
-        from utils.database import Database
-        return Database()
-    except Exception as e:
-        st.error(f"Erro ao conectar com o banco de dados: {str(e)}")
-        return None
-
-# Obter instância do banco
-db = get_database()
-if db is None:
-    st.error("Não foi possível conectar ao banco de dados.")
-    st.stop()
+    """Inicializa o banco de dados apenas quando necessário"""
+    if 'db' not in st.session_state:
+        try:
+            from utils.database import Database
+            st.session_state.db = Database()
+        except Exception as e:
+            st.error(f"Erro ao conectar com o banco de dados: {str(e)}")
+            st.session_state.db = None
+    return st.session_state.db
 
 # Função para exportar propostas
 def exportar_propostas():
     try:
+        # Obter instância do banco
+        db = get_database()
+        if db is None:
+            st.error("Banco de dados não disponível.")
+            return (None, None)
+        
         # Obter todas as propostas do banco
-        propostas = st.session_state.db.get_propostas()
+        propostas = db.get_propostas()
         
         if propostas.empty:
             st.warning("Não há propostas para exportar.")
