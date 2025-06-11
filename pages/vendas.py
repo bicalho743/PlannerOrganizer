@@ -148,43 +148,38 @@ def show():
                         # Exibir tabela com opções de edição/exclusão
                         st.dataframe(produtos_df[colunas_exibir], hide_index=True)
                         
-                        # Usando um container customizado em vez do expander nativo
+                        # Área para editar/excluir produtos - usando st.expander mas com CSS customizado
                         st.markdown("""
-                        <div style="
-                            background-color: #007bff; 
-                            color: white; 
-                            padding: 12px 16px; 
-                            border-radius: 6px 6px 0 0; 
-                            font-weight: 500;
-                            margin-bottom: 0;
-                            cursor: pointer;
-                            user-select: none;
-                        " onclick="
-                            var content = this.nextElementSibling;
-                            if (content.style.display === 'none') {
-                                content.style.display = 'block';
-                                this.innerHTML = '🔽 Gerenciar Produtos';
-                            } else {
-                                content.style.display = 'none';
-                                this.innerHTML = '▶️ Gerenciar Produtos';
-                            }
-                        ">
-                            ▶️ Gerenciar Produtos
-                        </div>
+                        <style>
+                        /* Forçar o estilo do expander para corresponder ao botão primary */
+                        div[data-testid="stExpander"] > div:first-child {
+                            background-color: #0d6efd !important;
+                            color: white !important;
+                            font-weight: 500 !important;
+                            padding: 12px 16px !important;
+                            border-radius: 6px !important;
+                            border: 1px solid #0d6efd !important;
+                        }
+                        div[data-testid="stExpander"] > div:first-child:hover {
+                            background-color: #0b5ed7 !important;
+                            border-color: #0a58ca !important;
+                        }
+                        div[data-testid="stExpander"] summary {
+                            color: white !important;
+                            font-weight: 500 !important;
+                        }
+                        div[data-testid="stExpander"] div[data-testid="stExpanderDetails"] {
+                            background-color: #f8f9fa;
+                            border: 1px solid #dee2e6;
+                            border-top: none;
+                            border-radius: 0 0 6px 6px;
+                            padding: 16px;
+                        }
+                        </style>
                         """, unsafe_allow_html=True)
                         
-                        # Container colapsável
-                        with st.container():
-                            st.markdown("""
-                            <div id="gerenciar-produtos" style="
-                                display: none;
-                                background-color: #f8f9fa;
-                                border: 1px solid #dee2e6;
-                                border-top: none;
-                                border-radius: 0 0 6px 6px;
-                                padding: 16px;
-                            ">
-                            """, unsafe_allow_html=True)
+                        # Área para editar/excluir produtos
+                        with st.expander("Gerenciar Produtos"):
                             col_edit1, col_edit2 = st.columns(2)
                             
                             with col_edit1:
@@ -298,9 +293,6 @@ def show():
                                     # Resetar estado de confirmação
                                     st.session_state.exclusao_confirmada = False
                                     st.rerun()
-                            
-                            # Fechar a div do container customizado
-                            st.markdown("</div>", unsafe_allow_html=True)
                 except Exception as e:
                     st.error(f"Erro ao carregar produtos: {str(e)}")
 
