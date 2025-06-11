@@ -148,6 +148,30 @@ def show():
                         # Exibir tabela com opções de edição/exclusão
                         st.dataframe(produtos_df[colunas_exibir], hide_index=True)
                         
+                        # CSS para dar cor ao expander "Gerenciar Produtos"
+                        st.markdown("""
+                        <style>
+                        div[data-testid="stExpander"] {
+                            background-color: #f8f9fa;
+                            border: 1px solid #dee2e6;
+                            border-radius: 6px;
+                        }
+                        div[data-testid="stExpander"] > div:first-child {
+                            background-color: #007bff !important;
+                            color: white !important;
+                            font-weight: 500;
+                            padding: 8px 12px;
+                            border-radius: 5px 5px 0 0;
+                        }
+                        div[data-testid="stExpander"] > div:first-child:hover {
+                            background-color: #0056b3 !important;
+                        }
+                        div[data-testid="stExpander"] summary {
+                            color: white !important;
+                        }
+                        </style>
+                        """, unsafe_allow_html=True)
+                        
                         # Área para editar/excluir produtos
                         with st.expander("Gerenciar Produtos"):
                             col_edit1, col_edit2 = st.columns(2)
