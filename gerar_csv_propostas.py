@@ -4,11 +4,15 @@ from datetime import datetime
 import os
 
 # Configuração da página
-st.set_page_config(
-    page_title="Exportar Propostas para CSV",
-    page_icon="📊",
-    layout="wide"
-)
+try:
+    st.set_page_config(
+        page_title="Exportar Propostas para CSV",
+        page_icon="📊",
+        layout="wide"
+    )
+except:
+    # Ignorar se já foi configurado
+    pass
 
 # Título e descrição
 st.title("Exportar Todas as Propostas")
@@ -17,8 +21,20 @@ st.write("Esta ferramenta exporta todas as propostas do sistema para um arquivo 
 # Inicializar banco de dados
 from utils.database import Database
 
-if 'db' not in st.session_state:
-    st.session_state.db = Database()
+try:
+    if 'db' not in st.session_state:
+        # Verificar se há usuario_id na sessão para inicialização correta do banco
+        usuario_id = None
+        if 'usuario_id' in st.session_state:
+            usuario_id = st.session_state.usuario_id
+        elif 'user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user:
+            usuario_id = st.session_state.user['localId']
+            st.session_state.usuario_id = usuario_id
+        
+        st.session_state.db = Database(usuario_id=usuario_id)
+except Exception as e:
+    st.error(f"Erro ao inicializar banco de dados: {str(e)}")
+    st.stop()
 
 # Função para exportar propostas
 def exportar_propostas():

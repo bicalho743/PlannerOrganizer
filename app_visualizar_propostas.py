@@ -5,11 +5,15 @@ import os
 import sys
 
 # Configuração da página
-st.set_page_config(
-    page_title="Todas as Propostas",
-    page_icon="📊",
-    layout="wide"
-)
+try:
+    st.set_page_config(
+        page_title="Todas as Propostas",
+        page_icon="📊",
+        layout="wide"
+    )
+except:
+    # Ignorar se já foi configurado
+    pass
 
 # Adicionar diretório raiz ao path
 root_dir = os.path.dirname(os.path.abspath(__file__))
@@ -26,16 +30,30 @@ try:
         st.error("Você precisa estar logado para acessar esta página.")
         st.stop()
 except ImportError:
-    # Se não houver módulo de autenticação, continuar sem verificação
-    pass
+    # Se não houver módulo de autenticação, verificar se usuário está autenticado via session_state
+    if 'authenticated' in st.session_state and not st.session_state.authenticated:
+        st.error("Você precisa estar logado para acessar esta página.")
+        st.stop()
 
 # Título da página
 st.title("Todas as Propostas")
 st.markdown("### Visualização completa de todas as propostas cadastradas no sistema")
 
 # Inicializar banco de dados
-if 'db' not in st.session_state:
-    st.session_state.db = Database()
+try:
+    if 'db' not in st.session_state:
+        # Verificar se há usuario_id na sessão para inicialização correta do banco
+        usuario_id = None
+        if 'usuario_id' in st.session_state:
+            usuario_id = st.session_state.usuario_id
+        elif 'user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user:
+            usuario_id = st.session_state.user['localId']
+            st.session_state.usuario_id = usuario_id
+        
+        st.session_state.db = Database(usuario_id=usuario_id)
+except Exception as e:
+    st.error(f"Erro ao inicializar banco de dados: {str(e)}")
+    st.stop()
 
 try:
     # Carregar todas as propostas do banco de dados
