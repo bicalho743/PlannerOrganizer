@@ -190,7 +190,7 @@ def show():
                                         categoria_edit = st.text_input("Categoria", value=produto_selecionado.get('categoria', ''))
                                         estoque_edit = st.number_input("Estoque", value=int(produto_selecionado['estoque']), min_value=0)
                                         
-                                        submit_edit = st.form_submit_button("Atualizar Produto")
+                                        submit_edit = st.form_submit_button("Atualizar Produto", type="primary")
                                         
                                         if submit_edit:
                                             try:
@@ -326,6 +326,7 @@ def show():
                 
                 with col3:
                     if produto_id:
+                        produto = produtos_df[produtos_df['id'] == produto_id].iloc[0]
                         preco_venda_str = produto['preco_venda'].replace('R$ ', '').replace(',', '.') if isinstance(produto['preco_venda'], str) else produto['preco_venda']
                         preco_venda = float(preco_venda_str)
                         preco_unitario = st.number_input("Preço Unitário (R$)", min_value=0.01, value=preco_venda, format="%.2f")
