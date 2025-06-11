@@ -117,18 +117,6 @@ args = "Todas Propostas Simples"
 task = "workflow.run"
 args = "Exportar Propostas"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Teste 4 Abas"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Debug Proposta 73"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Teste Google Analytics"
-
 [[workflows.workflow]]
 name = "Importar Propostas"
 author = "agent"
@@ -437,33 +425,6 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run gerar_csv_propostas.py --server.port 5008 --server.address 0.0.0.0"
 waitForPort = 5008
-
-[[workflows.workflow]]
-name = "Teste 4 Abas"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run teste_4_abas.py --server.port 8580 --server.address 0.0.0.0"
-waitForPort = 8580
-
-[[workflows.workflow]]
-name = "Debug Proposta 73"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run debug_proposta_73.py --server.port 8525 --server.address 0.0.0.0"
-waitForPort = 8525
-
-[[workflows.workflow]]
-name = "Teste Google Analytics"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run test_google_analytics.py --server.port 8600 --server.address 0.0.0.0"
-waitForPort = 8600
 
 [[ports]]
 localPort = 443
