@@ -148,32 +148,43 @@ def show():
                         # Exibir tabela com opções de edição/exclusão
                         st.dataframe(produtos_df[colunas_exibir], hide_index=True)
                         
-                        # CSS para dar cor ao expander "Gerenciar Produtos"
+                        # Usando um container customizado em vez do expander nativo
                         st.markdown("""
-                        <style>
-                        div[data-testid="stExpander"] {
-                            background-color: #f8f9fa;
-                            border: 1px solid #dee2e6;
-                            border-radius: 6px;
-                        }
-                        div[data-testid="stExpander"] > div:first-child {
-                            background-color: #007bff !important;
-                            color: white !important;
+                        <div style="
+                            background-color: #007bff; 
+                            color: white; 
+                            padding: 12px 16px; 
+                            border-radius: 6px 6px 0 0; 
                             font-weight: 500;
-                            padding: 8px 12px;
-                            border-radius: 5px 5px 0 0;
-                        }
-                        div[data-testid="stExpander"] > div:first-child:hover {
-                            background-color: #0056b3 !important;
-                        }
-                        div[data-testid="stExpander"] summary {
-                            color: white !important;
-                        }
-                        </style>
+                            margin-bottom: 0;
+                            cursor: pointer;
+                            user-select: none;
+                        " onclick="
+                            var content = this.nextElementSibling;
+                            if (content.style.display === 'none') {
+                                content.style.display = 'block';
+                                this.innerHTML = '🔽 Gerenciar Produtos';
+                            } else {
+                                content.style.display = 'none';
+                                this.innerHTML = '▶️ Gerenciar Produtos';
+                            }
+                        ">
+                            ▶️ Gerenciar Produtos
+                        </div>
                         """, unsafe_allow_html=True)
                         
-                        # Área para editar/excluir produtos
-                        with st.expander("Gerenciar Produtos"):
+                        # Container colapsável
+                        with st.container():
+                            st.markdown("""
+                            <div id="gerenciar-produtos" style="
+                                display: none;
+                                background-color: #f8f9fa;
+                                border: 1px solid #dee2e6;
+                                border-top: none;
+                                border-radius: 0 0 6px 6px;
+                                padding: 16px;
+                            ">
+                            """, unsafe_allow_html=True)
                             col_edit1, col_edit2 = st.columns(2)
                             
                             with col_edit1:
@@ -287,6 +298,9 @@ def show():
                                     # Resetar estado de confirmação
                                     st.session_state.exclusao_confirmada = False
                                     st.rerun()
+                            
+                            # Fechar a div do container customizado
+                            st.markdown("</div>", unsafe_allow_html=True)
                 except Exception as e:
                     st.error(f"Erro ao carregar produtos: {str(e)}")
 
