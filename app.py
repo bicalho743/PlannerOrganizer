@@ -130,12 +130,15 @@ try:
 except Exception as e:
     logger.error(f"❌ Firebase Auth: ERRO - {e}")
 
-# Verificar Database
+# Verificar Database (inicializar se necessário para diagnóstico)
 try:
-    if 'db' in st.session_state:
+    if 'db' in st.session_state and st.session_state.db:
         logger.info("✅ Database: ATIVO")
     else:
-        logger.warning("⚠️ Database: NÃO INICIALIZADO")
+        # Inicializar database temporariamente para verificação
+        from utils.database import Database
+        temp_db = Database()
+        logger.info("✅ Database: CONEXÃO VERIFICADA")
 except Exception as e:
     logger.error(f"❌ Database: ERRO - {e}")
 

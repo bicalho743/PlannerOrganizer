@@ -25,16 +25,27 @@ try:
     if 'db' not in st.session_state:
         # Verificar se há usuario_id na sessão para inicialização correta do banco
         usuario_id = None
-        if 'usuario_id' in st.session_state:
-            usuario_id = st.session_state.usuario_id
-        elif 'user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user:
-            usuario_id = st.session_state.user['localId']
-            st.session_state.usuario_id = usuario_id
+        try:
+            if 'usuario_id' in st.session_state:
+                usuario_id = st.session_state.usuario_id
+            elif 'user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user:
+                usuario_id = st.session_state.user['localId']
+                st.session_state.usuario_id = usuario_id
+        except:
+            # Se não conseguir acessar session_state, continuar sem usuario_id
+            pass
         
         st.session_state.db = Database(usuario_id=usuario_id)
 except Exception as e:
-    st.error(f"Erro ao inicializar banco de dados: {str(e)}")
-    st.stop()
+    # Tentar inicializar sem session_state se necessário
+    try:
+        if 'db' not in locals():
+            db = Database()
+            st.session_state.db = db
+    except Exception as fallback_error:
+        st.error(f"Erro ao inicializar banco de dados: {str(e)}")
+        st.error(f"Erro no fallback: {str(fallback_error)}")
+        st.stop()
 
 # Função para exportar propostas
 def exportar_propostas():
