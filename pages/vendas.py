@@ -148,26 +148,40 @@ def show():
                         # Exibir tabela com opções de edição/exclusão
                         st.dataframe(produtos_df[colunas_exibir], hide_index=True)
                         
-                        # Área para editar/excluir produtos - usando st.expander mas com CSS customizado
+                        # CSS mais específico para garantir que o estilo seja aplicado
                         st.markdown("""
                         <style>
-                        /* Forçar o estilo do expander para corresponder ao botão primary */
-                        div[data-testid="stExpander"] > div:first-child {
+                        /* CSS específico para o expander Gerenciar Produtos */
+                        div[data-testid="stExpander"] > div[data-testid="stExpanderHeader"] {
                             background-color: #0d6efd !important;
                             color: white !important;
                             font-weight: 500 !important;
                             padding: 12px 16px !important;
                             border-radius: 6px !important;
                             border: 1px solid #0d6efd !important;
+                            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24) !important;
                         }
-                        div[data-testid="stExpander"] > div:first-child:hover {
+                        
+                        div[data-testid="stExpander"] > div[data-testid="stExpanderHeader"]:hover {
                             background-color: #0b5ed7 !important;
                             border-color: #0a58ca !important;
                         }
+                        
                         div[data-testid="stExpander"] summary {
                             color: white !important;
                             font-weight: 500 !important;
+                            font-size: 16px !important;
                         }
+                        
+                        div[data-testid="stExpander"] summary span {
+                            color: white !important;
+                        }
+                        
+                        /* Forçar com !important e seletores mais específicos */
+                        div[data-testid="stExpander"] > div:first-child > summary {
+                            color: white !important;
+                        }
+                        
                         div[data-testid="stExpander"] div[data-testid="stExpanderDetails"] {
                             background-color: #f8f9fa;
                             border: 1px solid #dee2e6;
@@ -176,6 +190,35 @@ def show():
                             padding: 16px;
                         }
                         </style>
+                        
+                        <script>
+                        setTimeout(function() {
+                            // JavaScript para forçar os estilos se o CSS não funcionar
+                            const expanders = document.querySelectorAll('[data-testid="stExpander"]');
+                            expanders.forEach(expander => {
+                                const header = expander.querySelector('[data-testid="stExpanderHeader"]');
+                                const summary = expander.querySelector('summary');
+                                
+                                if (header && summary && summary.textContent.includes('Gerenciar Produtos')) {
+                                    header.style.backgroundColor = '#0d6efd';
+                                    header.style.color = 'white';
+                                    header.style.fontWeight = '500';
+                                    header.style.padding = '12px 16px';
+                                    header.style.borderRadius = '6px';
+                                    header.style.border = '1px solid #0d6efd';
+                                    
+                                    summary.style.color = 'white';
+                                    summary.style.fontWeight = '500';
+                                    
+                                    // Forçar cor do texto em todos os elementos filhos
+                                    const allChildren = summary.querySelectorAll('*');
+                                    allChildren.forEach(child => {
+                                        child.style.color = 'white';
+                                    });
+                                }
+                            });
+                        }, 500);
+                        </script>
                         """, unsafe_allow_html=True)
                         
                         # Área para editar/excluir produtos
