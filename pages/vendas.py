@@ -324,7 +324,7 @@ def show():
                     else:
                         preco_unitario = st.number_input("Preço Unitário (R$)", min_value=0.01, value=0.01, format="%.2f", disabled=True)
             
-                if produto_id and st.button("Adicionar ao Carrinho", use_container_width=True):
+                if produto_id and st.button("Adicionar ao Carrinho", type="primary", use_container_width=True):
                     produto = produtos_df[produtos_df['id'] == produto_id].iloc[0]
                     
                     # Adicionar ao carrinho
