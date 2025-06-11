@@ -28,7 +28,7 @@ def exportar_propostas():
         
         if propostas.empty:
             st.warning("Não há propostas para exportar.")
-            return None
+            return (None, None)
         
         # Adicionar categoria para melhor visualização
         def categorizar_proposta(row):
@@ -47,9 +47,18 @@ def exportar_propostas():
         propostas['categoria'] = propostas.apply(categorizar_proposta, axis=1)
         
         # Formatar valor para exibição
-        propostas['valor_formatado'] = propostas['valor'].apply(
-            lambda x: f"R$ {float(x):,.2f}".replace(',', '.').replace('.', ',') if pd.notna(x) else "R$ 0,00"
-        )
+        def formatar_valor_seguro(valor):
+            try:
+                if pd.notna(valor) and valor is not None:
+                    # Converter para float se necessário
+                    valor_float = float(valor)
+                    return f"R$ {valor_float:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+                else:
+                    return "R$ 0,00"
+            except (ValueError, TypeError):
+                return "R$ 0,00"
+        
+        propostas['valor_formatado'] = propostas['valor'].apply(formatar_valor_seguro)
         
         # Formatar datas
         propostas['data_inicio_formatada'] = propostas['data_inicio'].apply(
@@ -71,11 +80,11 @@ def exportar_propostas():
         caminho_arquivo = os.path.join(pasta_destino, nome_arquivo)
         propostas.to_csv(caminho_arquivo, index=False, encoding='utf-8-sig')
         
-        return caminho_arquivo, propostas
+        return (caminho_arquivo, propostas)
     
     except Exception as e:
         st.error(f"Erro ao exportar propostas: {str(e)}")
-        return None, None
+        return (None, None)
 
 # Interface principal
 col1, col2 = st.columns([2, 1])
@@ -93,9 +102,14 @@ with col2:
     st.subheader("Ações:")
     if st.button("📊 Exportar Todas as Propostas", type="primary"):
         with st.spinner("Exportando propostas..."):
-            caminho_arquivo, propostas = exportar_propostas()
+            resultado = exportar_propostas()
             
-            if caminho_arquivo:
+            if resultado and len(resultado) == 2:
+                caminho_arquivo, propostas = resultado
+            else:
+                caminho_arquivo, propostas = None, None
+            
+            if caminho_arquivo and propostas is not None:
                 st.success(f"✅ Exportação concluída! Total de propostas: {len(propostas)}")
                 
                 # Oferecer download do arquivo
@@ -129,18 +143,24 @@ with col2:
                 
                 # Exibir dataframe estilizado
                 try:
-                    df_exibir = propostas[colunas_exibir].rename(columns=mapeamento_colunas)
-                    st.dataframe(df_exibir, hide_index=True, use_container_width=True)
-                    
-                    # Mostrar contagem por categoria
-                    st.subheader("Distribuição por status")
-                    contagem = propostas['categoria'].value_counts().reset_index()
-                    contagem.columns = ['Status', 'Quantidade']
-                    st.bar_chart(contagem, x='Status', y='Quantidade')
+                    if not propostas.empty and all(col in propostas.columns for col in colunas_exibir):
+                        df_exibir = propostas[colunas_exibir].rename(columns=mapeamento_colunas)
+                        st.dataframe(df_exibir, hide_index=True, use_container_width=True)
+                        
+                        # Mostrar contagem por categoria
+                        st.subheader("Distribuição por status")
+                        contagem = propostas['categoria'].value_counts().reset_index()
+                        contagem.columns = ['Status', 'Quantidade']
+                        st.bar_chart(contagem, x='Status', y='Quantidade')
+                    else:
+                        st.dataframe(propostas, use_container_width=True)
                     
                 except Exception as e:
                     st.error(f"Erro ao exibir dados: {str(e)}")
-                    st.dataframe(propostas, use_container_width=True)
+                    if propostas is not None and not propostas.empty:
+                        st.dataframe(propostas, use_container_width=True)
+            else:
+                st.error("Falha na exportação das propostas.")
 
 # Botão para voltar ao dashboard
 if st.button("Voltar ao Dashboard"):

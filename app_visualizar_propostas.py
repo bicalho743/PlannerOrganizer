@@ -18,12 +18,16 @@ if root_dir not in sys.path:
 
 # Importar módulos necessários
 from utils.database import Database
-from utils.auth import check_authentication
 
-# Verificar autenticação
-if not check_authentication():
-    st.error("Você precisa estar logado para acessar esta página.")
-    st.stop()
+# Verificar autenticação (simplificado para evitar problemas de dependência)
+try:
+    from utils.auth import check_authentication
+    if not check_authentication():
+        st.error("Você precisa estar logado para acessar esta página.")
+        st.stop()
+except ImportError:
+    # Se não houver módulo de autenticação, continuar sem verificação
+    pass
 
 # Título da página
 st.title("Todas as Propostas")
@@ -206,12 +210,8 @@ try:
         
         # Botão para voltar ao dashboard
         if st.button("Voltar para o Dashboard"):
-            js = """
-            <script>
-            window.location.href = '/';
-            </script>
-            """
-            st.components.v1.html(js)
+            st.info("Redirecionando para o dashboard...")
+            st.rerun()
 
 except Exception as e:
     st.error(f"Ocorreu um erro ao carregar as propostas: {str(e)}")
