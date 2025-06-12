@@ -277,11 +277,38 @@ def show():
                     # Criar uma cópia das propostas para manipulação
                     propostas_display = propostas_em_aberto.copy()
                     
-                    # Converter valores para exibição
-                    propostas_display['valor_formatado'] = propostas_display['valor'].apply(lambda x: f"R$ {float(x):.2f}")
-                    propostas_display['data_inicio_formatada'] = propostas_display['data_inicio'].apply(
-                        lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) else ''
-                    )
+                    # Converter valores para exibição com tratamento de erro
+                    def safe_convert_valor(x):
+                        try:
+                            if pd.isna(x) or x is None:
+                                return "R$ 0,00"
+                            # Tentar converter para float primeiro
+                            if isinstance(x, str):
+                                # Remover caracteres não numéricos exceto vírgulas e pontos
+                                x_clean = ''.join(c for c in str(x) if c.isdigit() or c in '.,')
+                                if ',' in x_clean and '.' in x_clean:
+                                    # Formato brasileiro: 1.234,56
+                                    x_clean = x_clean.replace('.', '').replace(',', '.')
+                                elif ',' in x_clean:
+                                    # Assumir vírgula como decimal
+                                    x_clean = x_clean.replace(',', '.')
+                                return f"R$ {float(x_clean):.2f}"
+                            return f"R$ {float(x):.2f}"
+                        except (ValueError, TypeError):
+                            return "R$ 0,00"
+                    
+                    def safe_convert_date(x):
+                        try:
+                            if pd.notna(x) and x is not None:
+                                if hasattr(x, 'strftime'):
+                                    return x.strftime('%d/%m/%Y')
+                                return str(x)
+                            return ''
+                        except:
+                            return ''
+                    
+                    propostas_display['valor_formatado'] = propostas_display['valor'].apply(safe_convert_valor)
+                    propostas_display['data_inicio_formatada'] = propostas_display['data_inicio'].apply(safe_convert_date)
                     
                     # Processar alterações de status pendentes
                     for idx, proposta in propostas_display.iterrows():
@@ -644,23 +671,36 @@ def show():
                                 if excluir_key not in st.session_state:
                                     st.session_state[excluir_key] = False
                                 
-                                # CSS específico para o botão de exclusão
+                                # CSS específico para o botão de exclusão usando múltiplos seletores
                                 st.markdown(f"""
                                 <style>
-                                div[data-testid="stButton"] > button[key="btn_{excluir_key}"] {{
+                                /* Seletor mais específico para botões de exclusão */
+                                button[data-testid*="baseButton"]:not([kind="primary"]):not([kind="secondary"]) {{
                                     background: linear-gradient(135deg, #dc3545, #c82333) !important;
                                     color: white !important;
                                     border: none !important;
                                     border-radius: 6px !important;
                                     font-weight: 500 !important;
                                     transition: all 0.3s ease !important;
-                                    width: 100% !important;
-                                    margin-top: 26px !important;
                                 }}
-                                div[data-testid="stButton"] > button[key="btn_{excluir_key}"]:hover {{
+                                
+                                /* Hover para botões de exclusão */
+                                button[data-testid*="baseButton"]:not([kind="primary"]):not([kind="secondary"]):hover {{
                                     background: linear-gradient(135deg, #c82333, #b71c1c) !important;
                                     transform: translateY(-1px) !important;
                                     box-shadow: 0 3px 6px rgba(220, 53, 69, 0.4) !important;
+                                }}
+                                
+                                /* Força cor vermelha para todos os botões que contenham "Excluir" */
+                                button:contains("Excluir") {{
+                                    background-color: #dc3545 !important;
+                                    color: white !important;
+                                    border: 1px solid #dc3545 !important;
+                                }}
+                                
+                                /* Alinhamento vertical - adicionar espaçamento no topo */
+                                div[data-testid="column"]:last-child .stButton {{
+                                    margin-top: 26px !important;
                                 }}
                                 </style>
                                 """, unsafe_allow_html=True)
