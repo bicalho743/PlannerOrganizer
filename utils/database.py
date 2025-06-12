@@ -1245,9 +1245,17 @@ class Database:
                             cliente_id = None
                             
                         try:
-                            valor = float(p.valor) if p.valor is not None else 0.0
-                        except (ValueError, TypeError):
-                            print(f"Erro ao converter valor para float: {p.valor}")
+                            # Limpeza mais robusta do valor monetário
+                            if p.valor is None:
+                                valor = 0.0
+                            elif isinstance(p.valor, str):
+                                # Remove caracteres não numéricos exceto pontos e vírgulas
+                                valor_limpo = p.valor.replace('R$', '').replace(' ', '').replace('.', '').replace(',', '.')
+                                valor = float(valor_limpo) if valor_limpo else 0.0
+                            else:
+                                valor = float(p.valor)
+                        except (ValueError, TypeError) as e:
+                            print(f"Erro ao converter valor para float: {p.valor} - {str(e)}")
                             valor = 0.0
                             
                         try:

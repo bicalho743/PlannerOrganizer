@@ -201,10 +201,11 @@ def debug_propostas_finalizadas():
     # Mostrar total de propostas
     st.info(f"Total de propostas no banco de dados: {len(todas_propostas) if not todas_propostas.empty else 0}")
     
+    # Selecionar apenas colunas relevantes para a análise
+    colunas_display = ['id', 'numero', 'cliente_nome', 'status', 'status_execucao', 'valor']
+    
     # Criar tabela com todas as propostas para diagnóstico
     if not todas_propostas.empty:
-        # Selecionar apenas colunas relevantes para a análise
-        colunas_display = ['id', 'numero', 'cliente_nome', 'status', 'status_execucao', 'valor']
         st.dataframe(todas_propostas[colunas_display])
         
         # Detalhamento de cada proposta com seu status
@@ -242,7 +243,31 @@ def debug_propostas_finalizadas():
         
         if not propostas_finalizadas.empty:
             st.success("Propostas que atendem aos critérios:")
-            st.dataframe(propostas_finalizadas[colunas_display])
+            # Converter dados para tipos compatíveis com Arrow antes de exibir
+            try:
+                # Verificar se as colunas existem no dataframe
+                available_cols = [col for col in colunas_display if col in propostas_finalizadas.columns]
+                if available_cols:
+                    df_display = propostas_finalizadas[available_cols].copy()
+                    
+                    # Garantir que valores monetários sejam convertidos corretamente
+                    if 'valor' in df_display.columns:
+                        df_display['valor'] = pd.to_numeric(df_display['valor'], errors='coerce')
+                        df_display['valor'] = df_display['valor'].fillna(0.0)
+                    
+                    # Converter todas as colunas object para string para evitar problemas de tipo misto
+                    for col in df_display.columns:
+                        if df_display[col].dtype == 'object':
+                            df_display[col] = df_display[col].astype(str)
+                    
+                    st.dataframe(df_display)
+                else:
+                    st.warning("Colunas para exibição não encontradas no dataframe")
+            except Exception as e:
+                st.error(f"Erro ao exibir tabela: {e}")
+                st.write("Dados das propostas:")
+                for idx, row in propostas_finalizadas.iterrows():
+                    st.write(f"• {row.get('numero', 'N/A')} - {row.get('cliente_nome', 'N/A')} - R$ {row.get('valor', 0):.2f}")
             
             # Mostrar as propostas que DEVERIAM aparecer na aba
             st.subheader("Propostas Finalizadas (Formato Final):")
