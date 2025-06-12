@@ -148,6 +148,31 @@ def show():
                         # Exibir tabela com opções de edição/exclusão
                         st.dataframe(produtos_df[colunas_exibir], hide_index=True)
                         
+                        # CSS para colorir a barra do expander em azul
+                        st.markdown("""
+                        <style>
+                        /* Estilizar o expander "Gerenciar Produtos" */
+                        div[data-testid="stExpander"] details summary {
+                            background-color: #007bff !important;
+                            color: white !important;
+                            border-radius: 4px !important;
+                            padding: 8px 12px !important;
+                            font-weight: 500 !important;
+                            border: 1px solid #007bff !important;
+                        }
+                        
+                        div[data-testid="stExpander"] details summary:hover {
+                            background-color: #0056b3 !important;
+                            color: white !important;
+                        }
+                        
+                        /* Ícone do expander */
+                        div[data-testid="stExpander"] details summary svg {
+                            color: white !important;
+                        }
+                        </style>
+                        """, unsafe_allow_html=True)
+                        
                         # Área para editar/excluir produtos
                         with st.expander("Gerenciar Produtos"):
                             col_edit1, col_edit2 = st.columns(2)
