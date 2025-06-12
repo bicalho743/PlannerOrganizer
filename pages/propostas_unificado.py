@@ -346,6 +346,13 @@ def show():
                 align-items: center !important;
             }
 
+            /* Força alinhamento vertical uniforme */
+            div[data-testid="column"] {
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: flex-start !important;
+            }
+
             /* Alinhamento das colunas de ação */
             [data-testid="column"]:nth-child(4) .element-container,
             [data-testid="column"]:nth-child(5) .element-container {
@@ -414,11 +421,13 @@ def show():
                     # Primeiro, garantir que todas as colunas numéricas sejam do tipo correto
                     for col in ['id', 'numero', 'cliente_id', 'previsao_dias']:
                         if col in propostas_display.columns:
-                            propostas_display[col] = pd.to_numeric(propostas_display[col], errors='coerce').fillna(0).astype(int)
+                            propostas_display[col] = pd.to_numeric(propostas_display[col], errors='coerce').fillna(0).astype('int64')
                     
-                    # Tratar a coluna valor especificamente
+                    # Tratar a coluna valor especificamente para evitar problemas de Arrow
                     if 'valor' in propostas_display.columns:
-                        propostas_display['valor'] = pd.to_numeric(propostas_display['valor'], errors='coerce').fillna(0.0)
+                        # Converter todos os valores para string primeiro, depois para numeric
+                        propostas_display['valor'] = propostas_display['valor'].astype(str)
+                        propostas_display['valor'] = pd.to_numeric(propostas_display['valor'], errors='coerce').fillna(0.0).astype('float64')
                     
                     # Conversões seguras para colunas de texto
                     propostas_display['valor_formatado'] = propostas_display['valor'].apply(safe_convert_valor)
