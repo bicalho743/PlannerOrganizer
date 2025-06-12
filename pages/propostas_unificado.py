@@ -275,28 +275,28 @@ def show():
                 justify-content: flex-start !important;
             }
             
-            /* Força cor vermelha em botões com emoji de lixeira */
-            button:contains("🗑️") {
+            /* CSS mais específico para botões de exclusão */
+            .stButton button[data-testid="baseButton-secondary"] {
                 background-color: #dc3545 !important;
                 color: white !important;
                 border: 1px solid #dc3545 !important;
             }
             
-            button:contains("🗑️"):hover {
+            .stButton button[data-testid="baseButton-secondary"]:hover {
                 background-color: #c82333 !important;
                 border-color: #c82333 !important;
             }
             
-            /* Seletor mais específico para botões secundários com texto "Excluir" */
-            button[kind="secondary"] {
-                background-color: #dc3545 !important;
+            /* CSS para botões primários (Gerar Proposta) */
+            .stButton button[data-testid="baseButton-primary"] {
+                background-color: #007bff !important;
                 color: white !important;
-                border: 1px solid #dc3545 !important;
+                border: 1px solid #007bff !important;
             }
             
-            button[kind="secondary"]:hover {
-                background-color: #c82333 !important;
-                border-color: #c82333 !important;
+            .stButton button[data-testid="baseButton-primary"]:hover {
+                background-color: #0056b3 !important;
+                border-color: #0056b3 !important;
             }
             
             /* Alinhamento vertical das colunas */
@@ -309,15 +309,20 @@ def show():
             }
             
             /* Alinhamento específico do selectbox */
-            div[data-testid="stSelectbox"] > div {
-                margin-top: 26px !important;
+            div[data-testid="stSelectbox"] {
+                margin-top: 10px !important;
             }
             
             /* Força altura consistente para selectbox */
-            .stSelectbox > div > div > div {
+            .stSelectbox > div {
                 min-height: 40px !important;
                 display: flex !important;
                 align-items: center !important;
+            }
+            
+            /* Alinhamento das colunas de ação */
+            [data-testid="column"]:nth-child(4) .element-container {
+                margin-top: 10px !important;
             }
             </style>
             """, unsafe_allow_html=True)
@@ -633,7 +638,7 @@ def show():
                                 
                                 with btn_col:
                                     # Adicionar espaçamento vertical para alinhamento com o selectbox
-                                    st.markdown('<div style="height: 26px;"></div>', unsafe_allow_html=True)
+                                    st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True)
                                     # Botão de salvar alteração
                                     if st.button("Salvar", key=f"btn_save_{proposta_id}", type="primary", use_container_width=True):
                                         if novo_status == status_unificado:
@@ -687,8 +692,8 @@ def show():
                             # Coluna 4: Exportar para PDF
                             with col_export:
                                 # Adicionar espaçamento vertical para alinhamento com o selectbox
-                                st.markdown('<div style="height: 26px;"></div>', unsafe_allow_html=True)
-                                if st.button("Gerar Proposta", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta", type="secondary", use_container_width=True):
+                                st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True)
+                                if st.button("Gerar Proposta", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta", type="primary", use_container_width=True):
                                     try:
                                         # Importar a função de geração de PDF
                                         from utils.propostas_helper import gerar_pdf_proposta
@@ -738,44 +743,53 @@ def show():
                                 if excluir_key not in st.session_state:
                                     st.session_state[excluir_key] = False
                                 
-                                # Script para aplicar cores específicas aos botões via JavaScript
+                                # CSS e JavaScript para cores dos botões
                                 st.markdown(f"""
+                                <style>
+                                [data-testid="column"]:nth-child(5) .stButton button {{
+                                    background-color: #dc3545 !important;
+                                    color: white !important;
+                                    border: 1px solid #dc3545 !important;
+                                }}
+                                [data-testid="column"]:nth-child(5) .stButton button:hover {{
+                                    background-color: #c82333 !important;
+                                    border-color: #c82333 !important;
+                                }}
+                                </style>
                                 <script>
                                 setTimeout(function() {{
-                                    const buttons = document.querySelectorAll('button[data-testid^="baseButton"]');
-                                    buttons.forEach(function(button) {{
-                                        if (button.textContent.includes('Excluir')) {{
-                                            button.style.backgroundColor = '#dc3545';
-                                            button.style.color = 'white';
-                                            button.style.border = '1px solid #dc3545';
-                                            button.onmouseover = function() {{
-                                                this.style.backgroundColor = '#c82333';
-                                                this.style.borderColor = '#c82333';
-                                            }};
-                                            button.onmouseout = function() {{
-                                                this.style.backgroundColor = '#dc3545';
-                                                this.style.borderColor = '#dc3545';
-                                            }};
-                                        }} else if (button.textContent.includes('Gerar Proposta')) {{
-                                            button.style.backgroundColor = '#007bff';
-                                            button.style.color = 'white';
-                                            button.style.border = '1px solid #007bff';
-                                            button.onmouseover = function() {{
-                                                this.style.backgroundColor = '#0056b3';
-                                                this.style.borderColor = '#0056b3';
-                                            }};
-                                            button.onmouseout = function() {{
-                                                this.style.backgroundColor = '#007bff';
-                                                this.style.borderColor = '#007bff';
-                                            }};
-                                        }}
+                                    // Localizar botões por posição e texto
+                                    const columns = document.querySelectorAll('[data-testid="column"]');
+                                    columns.forEach(function(col, index) {{
+                                        const buttons = col.querySelectorAll('button');
+                                        buttons.forEach(function(btn) {{
+                                            if (btn.textContent.includes('Excluir')) {{
+                                                btn.style.cssText = 'background-color: #dc3545 !important; color: white !important; border: 1px solid #dc3545 !important;';
+                                            }} else if (btn.textContent.includes('Gerar Proposta')) {{
+                                                btn.style.cssText = 'background-color: #007bff !important; color: white !important; border: 1px solid #007bff !important;';
+                                            }}
+                                        }});
                                     }});
-                                }}, 100);
+                                }}, 200);
                                 </script>
                                 <div style="height: 26px;"></div>
                                 """, unsafe_allow_html=True)
                                 
-                                # Botão de exclusão
+                                # Botão de exclusão com estilo personalizado
+                                st.markdown(f"""
+                                <style>
+                                button[data-testid="{f'excluir_{proposta_id}'}"] {{
+                                    background-color: #dc3545 !important;
+                                    color: white !important;
+                                    border: 1px solid #dc3545 !important;
+                                }}
+                                button[data-testid="{f'excluir_{proposta_id}'}"]:hover {{
+                                    background-color: #c82333 !important;
+                                    border-color: #c82333 !important;
+                                }}
+                                </style>
+                                """, unsafe_allow_html=True)
+                                
                                 if st.button("Excluir", key=f"excluir_{proposta_id}", help="Excluir proposta", 
                                            type="secondary", use_container_width=True):
                                     # Alternar estado de confirmação
