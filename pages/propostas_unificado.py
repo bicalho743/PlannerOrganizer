@@ -408,18 +408,31 @@ def show():
                         except:
                             return ''
 
-                    # Conversões seguras com tratamento de tipos
-                    propostas_display['valor_formatado'] = propostas_display['valor'].astype(str).apply(safe_convert_valor)
-                    propostas_display['data_inicio_formatada'] = propostas_display['data_inicio'].astype(str).apply(safe_convert_date)
+                    # Criar uma cópia limpa para evitar problemas de referência
+                    propostas_display = propostas_em_aberto.copy()
+                    
+                    # Primeiro, garantir que todas as colunas numéricas sejam do tipo correto
+                    for col in ['id', 'numero', 'cliente_id', 'previsao_dias']:
+                        if col in propostas_display.columns:
+                            propostas_display[col] = pd.to_numeric(propostas_display[col], errors='coerce').fillna(0).astype(int)
+                    
+                    # Tratar a coluna valor especificamente
+                    if 'valor' in propostas_display.columns:
+                        propostas_display['valor'] = pd.to_numeric(propostas_display['valor'], errors='coerce').fillna(0.0)
+                    
+                    # Conversões seguras para colunas de texto
+                    propostas_display['valor_formatado'] = propostas_display['valor'].apply(safe_convert_valor)
+                    propostas_display['data_inicio_formatada'] = propostas_display['data_inicio'].apply(safe_convert_date)
 
-                    # Converter todas as colunas para tipos compatíveis com Arrow
+                    # Converter todas as colunas restantes para string de forma segura
                     for col in propostas_display.columns:
-                        if propostas_display[col].dtype == 'object':
-                            propostas_display[col] = propostas_display[col].astype(str).replace('nan', '')
-                        elif propostas_display[col].dtype == 'float64':
+                        if col not in ['id', 'numero', 'cliente_id', 'previsao_dias', 'valor'] and propostas_display[col].dtype == 'object':
+                            propostas_display[col] = propostas_display[col].fillna('').astype(str)
+                        elif propostas_display[col].dtype == 'float64' and col != 'valor':
                             propostas_display[col] = propostas_display[col].fillna(0.0)
-                        elif propostas_display[col].dtype == 'int64':
-                            propostas_display[col] = propostas_display[col].fillna(0)
+                        elif propostas_display[col].dtype in ['datetime64[ns]', 'datetime']:
+                            # Converter datas para string
+                            propostas_display[col] = propostas_display[col].apply(safe_convert_date)
 
                     # Processar alterações de status pendentes
                     for idx, proposta in propostas_display.iterrows():
