@@ -67,7 +67,7 @@ def show():
         st.header("Nova Proposta")
         
         # Criar tabs dentro da primeira aba
-        proposta_tab1, proposta_tab2 = st.tabs(["Nova Proposta", "Gerenciar Propostas"])
+        proposta_tab1, proposta_tab2 = st.tabs(["1.1 - Nova Proposta", "1.2 - Gerenciar Propostas"])
         
         # SUBTAB 1: NOVA PROPOSTA
         with proposta_tab1:
