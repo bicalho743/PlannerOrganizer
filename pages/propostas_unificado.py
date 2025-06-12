@@ -489,22 +489,7 @@ def show():
                             
                             # Coluna 4: Exportar para PDF
                             with col_export:
-                                # CSS global aplicado a todos os botões desta coluna
-                                st.markdown(f"""
-                                <style>
-                                div[data-testid="column"]:nth-child(4) button {{
-                                    background: linear-gradient(135deg, #4CAF50, #45a049) !important;
-                                    color: white !important;
-                                    border: none !important;
-                                    border-radius: 6px !important;
-                                    font-weight: 500 !important;
-                                    width: 100% !important;
-                                }}
-                                div[data-testid="column"]:nth-child(4) button:hover {{
-                                    background: linear-gradient(135deg, #45a049, #3d8b40) !important;
-                                }}
-                                </style>
-                                """, unsafe_allow_html=True)
+
                                 
 
                                 
@@ -550,18 +535,31 @@ def show():
                             
                             # Coluna 5: Botão de exclusão (modo alternativo mais direto)
                             with col_excluir:
+                                # CSS para botão de exclusão vermelho
+                                st.markdown(f"""
+                                <style>
+                                button[data-testid="stBaseButton-secondary"][key="btn_del_{proposta_id}"] {{
+                                    background-color: #dc3545 !important;
+                                    color: white !important;
+                                    border: 1px solid #dc3545 !important;
+                                    border-radius: 0.375rem !important;
+                                    font-weight: 500 !important;
+                                    width: 100% !important;
+                                }}
+                                button[data-testid="stBaseButton-secondary"][key="btn_del_{proposta_id}"]:hover {{
+                                    background-color: #c82333 !important;
+                                    border-color: #c82333 !important;
+                                }}
+                                </style>
+                                """, unsafe_allow_html=True)
                                 
                                 # Chave exclusiva para cada botão de exclusão
                                 excluir_key = f"del_{proposta_id}"
                                 confirmar_key = f"confirm_del_direct_{proposta_id}"
                                 
-
-                                
                                 # Usar variáveis de sessão simples para gerenciar estado
                                 if excluir_key not in st.session_state:
                                     st.session_state[excluir_key] = False
-                                
-
                                 
                                 # Botão de exclusão
                                 if st.button("Excluir", key=f"btn_{excluir_key}", help="Excluir proposta", use_container_width=True):
