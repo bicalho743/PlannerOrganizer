@@ -265,6 +265,60 @@ def show():
         
         # SUBTAB 2: GERENCIAR PROPOSTAS
         with proposta_tab2:
+            # CSS global para corrigir alinhamento e cores dos botões
+            st.markdown("""
+            <style>
+            /* Força alinhamento vertical uniforme */
+            div[data-testid="column"] {
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: flex-start !important;
+            }
+            
+            /* Alinhamento específico para botões de ação */
+            div[data-testid="column"]:nth-child(4) .stButton,
+            div[data-testid="column"]:nth-child(5) .stButton {
+                margin-top: 26px !important;
+            }
+            
+            /* Força altura uniforme nos botões */
+            .stButton > button {
+                height: 40px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            
+            /* Alinhamento dos selectbox */
+            .stSelectbox > div > div {
+                margin-top: 0px !important;
+            }
+            
+            /* Estilo para botões HTML personalizados */
+            .custom-delete-btn {
+                background: linear-gradient(135deg, #dc3545, #c82333) !important;
+                color: white !important;
+                border: none !important;
+                border-radius: 6px !important;
+                padding: 8px 16px !important;
+                font-weight: 500 !important;
+                cursor: pointer !important;
+                width: 100% !important;
+                height: 40px !important;
+                transition: all 0.3s ease !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            
+            .custom-delete-btn:hover {
+                background: linear-gradient(135deg, #c82333, #b71c1c) !important;
+                transform: translateY(-1px) !important;
+                box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3) !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+            
             st.subheader("Gerenciar Propostas")
             
             if not propostas.empty:
@@ -671,42 +725,28 @@ def show():
                                 if excluir_key not in st.session_state:
                                     st.session_state[excluir_key] = False
                                 
-                                # CSS específico para o botão de exclusão usando múltiplos seletores
+                                # CSS específico para este botão de exclusão
                                 st.markdown(f"""
                                 <style>
-                                /* Seletor mais específico para botões de exclusão */
-                                button[data-testid*="baseButton"]:not([kind="primary"]):not([kind="secondary"]) {{
-                                    background: linear-gradient(135deg, #dc3545, #c82333) !important;
-                                    color: white !important;
-                                    border: none !important;
-                                    border-radius: 6px !important;
-                                    font-weight: 500 !important;
-                                    transition: all 0.3s ease !important;
-                                }}
-                                
-                                /* Hover para botões de exclusão */
-                                button[data-testid*="baseButton"]:not([kind="primary"]):not([kind="secondary"]):hover {{
-                                    background: linear-gradient(135deg, #c82333, #b71c1c) !important;
-                                    transform: translateY(-1px) !important;
-                                    box-shadow: 0 3px 6px rgba(220, 53, 69, 0.4) !important;
-                                }}
-                                
-                                /* Força cor vermelha para todos os botões que contenham "Excluir" */
-                                button:contains("Excluir") {{
+                                button[kind="secondary"]:has-text("🗑️ Excluir") {{
                                     background-color: #dc3545 !important;
                                     color: white !important;
                                     border: 1px solid #dc3545 !important;
                                 }}
                                 
-                                /* Alinhamento vertical - adicionar espaçamento no topo */
-                                div[data-testid="column"]:last-child .stButton {{
-                                    margin-top: 26px !important;
+                                button[kind="secondary"]:has-text("🗑️ Excluir"):hover {{
+                                    background-color: #c82333 !important;
+                                    border-color: #c82333 !important;
                                 }}
                                 </style>
                                 """, unsafe_allow_html=True)
                                 
-                                # Botão de exclusão estilizado
-                                if st.button("Excluir", key=f"btn_{excluir_key}", help="Excluir proposta", use_container_width=True):
+                                # Adicionar espaçamento para alinhamento
+                                st.markdown('<div style="height: 26px;"></div>', unsafe_allow_html=True)
+                                
+                                # Botão de exclusão com emoji para identificação única
+                                if st.button("🗑️ Excluir", key=f"excluir_{proposta_id}", help="Excluir proposta", 
+                                           type="secondary", use_container_width=True):
                                     # Alternar estado de confirmação
                                     st.session_state[excluir_key] = True
                                     st.rerun()
