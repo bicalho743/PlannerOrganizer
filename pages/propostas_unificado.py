@@ -353,42 +353,7 @@ def show():
                 justify-content: flex-start !important;
             }
 
-            /* CSS para TODOS os botões em azul - cor padrão do "Salvar Proposta" */
-            .stButton button {
-                background-color: #3c5aa6 !important;
-                color: white !important;
-                border: 1px solid #3c5aa6 !important;
-                font-weight: 500 !important;
-            }
-
-            .stButton button:hover {
-                background-color: #2e4282 !important;
-                border-color: #2e4282 !important;
-            }
-
-            /* Força botões em colunas específicas */
-            [data-testid="column"] button {
-                background-color: #3c5aa6 !important;
-                color: white !important;
-                border: 1px solid #3c5aa6 !important;
-            }
-
-            [data-testid="column"] button:hover {
-                background-color: #2e4282 !important;
-                border-color: #2e4282 !important;
-            }
-
-            /* Específico para botões de formulário */
-            button[kind="primary"], button[kind="secondary"] {
-                background-color: #3c5aa6 !important;
-                color: white !important;
-                border: 1px solid #3c5aa6 !important;
-            }
-
-            button[kind="primary"]:hover, button[kind="secondary"]:hover {
-                background-color: #2e4282 !important;
-                border-color: #2e4282 !important;
-            }
+            /* REMOVIDO - CSS muito amplo que afetava sidebar e abas */
             </style>
             """, unsafe_allow_html=True)
 
@@ -638,23 +603,21 @@ def show():
                         min-width: fit-content !important;
                     }
 
-                    /* TODOS OS BOTÕES COM A MESMA COR AZUL */
-                    .stButton > button[kind="primary"],
-                    .stButton > button[kind="secondary"],
-                    .stButton > button,
-                    div[data-testid="column"] button,
-                    button {
+                    /* APENAS BOTÕES DA ÁREA DE CONTEÚDO - EXCLUIR SIDEBAR E ABAS */
+                    div[data-testid="stMainBlockContainer"] .stButton > button,
+                    div[data-testid="stMainBlockContainer"] div[data-testid="column"] button,
+                    div[data-testid="stMainBlockContainer"] button[kind="primary"],
+                    div[data-testid="stMainBlockContainer"] button[kind="secondary"] {
                         background-color: #4472C4 !important;
                         color: white !important;
                         border-color: #4472C4 !important;
                         border: 1px solid #4472C4 !important;
                     }
 
-                    .stButton > button[kind="primary"]:hover,
-                    .stButton > button[kind="secondary"]:hover,
-                    .stButton > button:hover,
-                    div[data-testid="column"] button:hover,
-                    button:hover {
+                    div[data-testid="stMainBlockContainer"] .stButton > button:hover,
+                    div[data-testid="stMainBlockContainer"] div[data-testid="column"] button:hover,
+                    div[data-testid="stMainBlockContainer"] button[kind="primary"]:hover,
+                    div[data-testid="stMainBlockContainer"] button[kind="secondary"]:hover {
                         background-color: #2e4282 !important;
                         border-color: #2e4282 !important;
                         transform: translateY(-1px) !important;
