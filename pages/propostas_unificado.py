@@ -390,7 +390,7 @@ def show():
                 border-color: #2e4282 !important;
             }
             </style>
-            """)
+            """, unsafe_allow_html=True)
 
             st.subheader("Gerenciar Propostas")
 
@@ -479,8 +479,20 @@ def show():
                             # IDs devem ser inteiros
                             propostas_display[col] = propostas_display[col].apply(lambda x: int(clean_numeric_value(x, 0)))
                         elif col in ['valor', 'previsao_dias']:
-                            # Valores numéricos podem ser float
-                            propostas_display[col] = propostas_display[col].apply(lambda x: clean_numeric_value(x, 0.0))
+                            # Valores numéricos podem ser float - limpeza especial para valor
+                            if col == 'valor':
+                                # Para a coluna valor, forçar conversão para 0.0 se contém nomes
+                                def clean_valor_especial(x):
+                                    if pd.isna(x) or x is None:
+                                        return 0.0
+                                    val_str = str(x).strip().lower()
+                                    # Se contém nomes de pessoas ou palavras, retorna 0
+                                    if any(palavra in val_str for palavra in ['seisa', 'cassia', 'almeida', 'silva', 'santos', 'oliveira', 'souza']):
+                                        return 0.0
+                                    return clean_numeric_value(x, 0.0)
+                                propostas_display[col] = propostas_display[col].apply(clean_valor_especial)
+                            else:
+                                propostas_display[col] = propostas_display[col].apply(lambda x: clean_numeric_value(x, 0.0))
                         elif propostas_display[col].dtype in ['datetime64[ns]', 'datetime'] or 'data' in col.lower():
                             # Colunas de data - converter para string formatada
                             propostas_display[col] = propostas_display[col].apply(safe_convert_date)
