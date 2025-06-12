@@ -1193,8 +1193,15 @@ if 'db' not in st.session_state:
         st.stop()
 
 # Carregar CSS customizado do arquivo style.css
-with open('.streamlit/style.css', 'r') as f:
-    custom_css = f.read()
+try:
+    with open('.streamlit/style.css', 'r') as f:
+        custom_css = f.read()
+except FileNotFoundError:
+    logger.warning("Arquivo style.css não encontrado, usando CSS padrão")
+    custom_css = ""
+except Exception as e:
+    logger.error(f"Erro ao carregar CSS: {e}")
+    custom_css = ""
 
 # Adicionar estilo CSS personalizado para tema profissional
 st.markdown(f"""
