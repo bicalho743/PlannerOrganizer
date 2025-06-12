@@ -159,6 +159,56 @@ button[aria-label*="PDF"]:hover {
     box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
 }
 
+/* Botões de ação do módulo propostas - azul */
+div[data-testid="column"] .stButton > button:has-text("Registrar Andamento"),
+div[data-testid="column"] .stButton > button:has-text("Adicionar à Proposta"),
+div[data-testid="column"] .stButton > button:has-text("Adicionar Item"),
+div[data-testid="column"] .stButton > button:has-text("Adicionar Fornecedor"),
+div[data-testid="column"] .stButton > button:has-text("Adicionar Assistente"),
+div[data-testid="column"] .stButton > button:has-text("Marcar como Concluída"),
+button[title*="Registrar Andamento"],
+button[title*="Adicionar à Proposta"],
+button[title*="Adicionar Item"],
+button[title*="Adicionar Fornecedor"],
+button[title*="Adicionar Assistente"],
+button[title*="Marcar como Concluída"],
+button[aria-label*="Registrar Andamento"],
+button[aria-label*="Adicionar à Proposta"],
+button[aria-label*="Adicionar Item"],
+button[aria-label*="Adicionar Fornecedor"],
+button[aria-label*="Adicionar Assistente"],
+button[aria-label*="Marcar como Concluída"] {
+    background: linear-gradient(135deg, #2196F3, #1976D2) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+}
+
+div[data-testid="column"] .stButton > button:has-text("Registrar Andamento"):hover,
+div[data-testid="column"] .stButton > button:has-text("Adicionar à Proposta"):hover,
+div[data-testid="column"] .stButton > button:has-text("Adicionar Item"):hover,
+div[data-testid="column"] .stButton > button:has-text("Adicionar Fornecedor"):hover,
+div[data-testid="column"] .stButton > button:has-text("Adicionar Assistente"):hover,
+div[data-testid="column"] .stButton > button:has-text("Marcar como Concluída"):hover,
+button[title*="Registrar Andamento"]:hover,
+button[title*="Adicionar à Proposta"]:hover,
+button[title*="Adicionar Item"]:hover,
+button[title*="Adicionar Fornecedor"]:hover,
+button[title*="Adicionar Assistente"]:hover,
+button[title*="Marcar como Concluída"]:hover,
+button[aria-label*="Registrar Andamento"]:hover,
+button[aria-label*="Adicionar à Proposta"]:hover,
+button[aria-label*="Adicionar Item"]:hover,
+button[aria-label*="Adicionar Fornecedor"]:hover,
+button[aria-label*="Adicionar Assistente"]:hover,
+button[aria-label*="Marcar como Concluída"]:hover {
+    background: linear-gradient(135deg, #1976D2, #1565C0) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+}
+
 /* Botões que contêm "Excluir" - vermelho */
 div[data-testid="column"] .stButton > button:has-text("Excluir"),
 button[title*="Excluir"],

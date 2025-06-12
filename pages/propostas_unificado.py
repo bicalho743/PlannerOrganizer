@@ -390,6 +390,15 @@ def show():
                                 return 0.0
                         
                         propostas_display['valor'] = propostas_display['valor'].apply(early_clean_valor)
+                    
+                    # FORÇA CONVERSÃO PARA STRING PARA EVITAR PROBLEMAS DE ARROW - TODAS AS COLUNAS
+                    for col in propostas_display.columns:
+                        if col in ['valor', 'id', 'cliente_id']:
+                            # Para colunas numéricas, garantir que são strings válidas
+                            propostas_display[col] = propostas_display[col].astype(str)
+                        else:
+                            # Para outras colunas, garantir que não há valores mistos
+                            propostas_display[col] = propostas_display[col].fillna('').astype(str)
 
                     # Converter valores para exibição com tratamento de erro
                     def safe_convert_valor(x):
