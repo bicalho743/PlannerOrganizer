@@ -1059,12 +1059,15 @@ def show():
                     box-shadow: 0px 1px 3px rgba(0,0,0,0.1);
                 }
                 
-                /* MÚLTIPLAS ESTRATÉGIAS PARA GARANTIR ESTILO DOS BOTÕES */
+                /* ESTILO ESPECÍFICO APENAS PARA BOTÕES DE FORMULÁRIO NA ABA EM EXECUÇÃO */
                 
-                /* Estratégia 1: Por tipo de elemento */
-                button[kind="formSubmit"], 
-                button[data-testid*="form"], 
-                button[type="submit"] {
+                /* Aplicar apenas a botões dentro de abas de execução */
+                .execution-tabs button[kind="formSubmit"],
+                .execution-tabs button[data-testid*="form"], 
+                .execution-tabs button[type="submit"],
+                .execution-tabs .stFormSubmitButton button,
+                .execution-tabs div[data-testid="stForm"] button,
+                .execution-tabs form button {
                     background: linear-gradient(135deg, #2196F3, #1976D2) !important;
                     color: white !important;
                     border: none !important;
@@ -1074,84 +1077,77 @@ def show():
                     padding: 8px 16px !important;
                 }
                 
-                /* Estratégia 2: Por classes Streamlit */
-                .stButton button, 
-                .stFormSubmitButton button,
-                div[data-testid="stForm"] button {
-                    background: linear-gradient(135deg, #2196F3, #1976D2) !important;
-                    color: white !important;
-                    border: none !important;
-                    border-radius: 6px !important;
-                    font-weight: 500 !important;
-                    padding: 8px 16px !important;
-                }
-                
-                /* Estratégia 3: Seletores universais para botões em formulários */
-                form button {
-                    background: linear-gradient(135deg, #2196F3, #1976D2) !important;
-                    color: white !important;
-                    border: none !important;
-                    border-radius: 6px !important;
-                    font-weight: 500 !important;
-                }
-                
-                /* Estados hover para todas as estratégias */
-                button[kind="formSubmit"]:hover,
-                button[data-testid*="form"]:hover,
-                button[type="submit"]:hover,
-                .stButton button:hover,
-                .stFormSubmitButton button:hover,
-                div[data-testid="stForm"] button:hover,
-                form button:hover {
+                /* Estados hover apenas para botões na aba de execução */
+                .execution-tabs button[kind="formSubmit"]:hover,
+                .execution-tabs button[data-testid*="form"]:hover,
+                .execution-tabs button[type="submit"]:hover,
+                .execution-tabs .stFormSubmitButton button:hover,
+                .execution-tabs div[data-testid="stForm"] button:hover,
+                .execution-tabs form button:hover {
                     background: linear-gradient(135deg, #1976D2, #1565C0) !important;
                     transform: translateY(-1px) !important;
                     box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
                 }
+                
+                /* Garantir que a sidebar mantenha o estilo original */
+                .css-1d391kg button,
+                .css-1544g2n button,
+                [data-testid="stSidebar"] button {
+                    background: inherit !important;
+                    color: inherit !important;
+                    border: inherit !important;
+                    border-radius: inherit !important;
+                    font-weight: inherit !important;
+                    padding: inherit !important;
+                }
                 </style>
                 
                 <script>
-                // JavaScript para aplicar estilos após o carregamento da página
-                setTimeout(function() {
-                    const buttons = document.querySelectorAll('button');
-                    buttons.forEach(function(btn) {
-                        if (btn.textContent.includes('Registrar') || 
-                            btn.textContent.includes('Adicionar') || 
-                            btn.textContent.includes('Marcar') ||
-                            btn.type === 'submit') {
-                            btn.style.background = 'linear-gradient(135deg, #2196F3, #1976D2)';
-                            btn.style.color = 'white';
-                            btn.style.border = 'none';
-                            btn.style.borderRadius = '6px';
-                            btn.style.fontWeight = '500';
-                            btn.style.padding = '8px 16px';
-                        }
-                    });
-                }, 1000);
+                // JavaScript para aplicar estilos apenas a botões dentro da aba de execução
+                function styleExecutionTabButtons() {
+                    const executionTabs = document.querySelector('.execution-tabs');
+                    if (executionTabs) {
+                        const buttons = executionTabs.querySelectorAll('button');
+                        buttons.forEach(function(btn) {
+                            // Não estilizar botões da sidebar ou navegação
+                            if (!btn.closest('[data-testid="stSidebar"]') && 
+                                !btn.closest('.css-1d391kg') &&
+                                (btn.textContent.includes('Registrar') || 
+                                 btn.textContent.includes('Adicionar') || 
+                                 btn.textContent.includes('Marcar') ||
+                                 btn.type === 'submit')) {
+                                btn.style.background = 'linear-gradient(135deg, #2196F3, #1976D2)';
+                                btn.style.color = 'white';
+                                btn.style.border = 'none';
+                                btn.style.borderRadius = '6px';
+                                btn.style.fontWeight = '500';
+                                btn.style.padding = '8px 16px';
+                            }
+                        });
+                    }
+                }
                 
-                // Observador para aplicar estilos a novos botões
+                // Aplicar estilos após carregamento
+                setTimeout(styleExecutionTabButtons, 1000);
+                
+                // Observador mais específico para a aba de execução
                 const observer = new MutationObserver(function(mutations) {
                     mutations.forEach(function(mutation) {
                         mutation.addedNodes.forEach(function(node) {
-                            if (node.nodeType === 1) {
-                                const buttons = node.querySelectorAll ? node.querySelectorAll('button') : [];
-                                buttons.forEach(function(btn) {
-                                    if (btn.textContent.includes('Registrar') || 
-                                        btn.textContent.includes('Adicionar') || 
-                                        btn.textContent.includes('Marcar') ||
-                                        btn.type === 'submit') {
-                                        btn.style.background = 'linear-gradient(135deg, #2196F3, #1976D2)';
-                                        btn.style.color = 'white';
-                                        btn.style.border = 'none';
-                                        btn.style.borderRadius = '6px';
-                                        btn.style.fontWeight = '500';
-                                        btn.style.padding = '8px 16px';
-                                    }
-                                });
+                            if (node.nodeType === 1 && node.closest && node.closest('.execution-tabs')) {
+                                styleExecutionTabButtons();
                             }
                         });
                     });
                 });
-                observer.observe(document.body, { childList: true, subtree: true });
+                
+                // Observar apenas mudanças dentro da aba de execução
+                setTimeout(function() {
+                    const executionTabs = document.querySelector('.execution-tabs');
+                    if (executionTabs) {
+                        observer.observe(executionTabs, { childList: true, subtree: true });
+                    }
+                }, 500);
                 </script>
                 """, unsafe_allow_html=True)
 
