@@ -359,6 +359,55 @@ def show():
                                     st.error(f"Erro ao recusar proposta {proposta_id}")
                                     del st.session_state[alterar_status_key]
                     
+                    # CSS para alinhar todos os botões da tabela
+                    st.markdown("""
+                    <style>
+                    /* Alinhar todos os botões na mesma altura */
+                    .stButton > button {
+                        height: 2.5rem !important;
+                        margin-top: 0 !important;
+                        margin-bottom: 0 !important;
+                        padding: 0.5rem 1rem !important;
+                        font-size: 0.875rem !important;
+                        font-weight: 500 !important;
+                        border-radius: 0.375rem !important;
+                        border: 1px solid transparent !important;
+                        transition: all 0.2s ease !important;
+                    }
+                    
+                    /* Botão primário (azul) */
+                    .stButton > button[kind="primary"] {
+                        background-color: #007bff !important;
+                        color: white !important;
+                        border-color: #007bff !important;
+                    }
+                    
+                    .stButton > button[kind="primary"]:hover {
+                        background-color: #0056b3 !important;
+                        border-color: #0056b3 !important;
+                    }
+                    
+                    /* Botão secundário padrão */
+                    .stButton > button[kind="secondary"] {
+                        background-color: #6c757d !important;
+                        color: white !important;
+                        border-color: #6c757d !important;
+                    }
+                    
+                    .stButton > button[kind="secondary"]:hover {
+                        background-color: #545b62 !important;
+                        border-color: #545b62 !important;
+                    }
+                    
+                    /* Alinhar containers de botões */
+                    .stButton {
+                        display: flex !important;
+                        align-items: center !important;
+                        height: 2.5rem !important;
+                    }
+                    </style>
+                    """, unsafe_allow_html=True)
+                    
                     # Construir interface com seletores de status direto na tabela
                     st.write("Selecione uma proposta abaixo para editar ou alterar o status:")
                     
@@ -535,24 +584,6 @@ def show():
                             
                             # Coluna 5: Botão de exclusão (modo alternativo mais direto)
                             with col_excluir:
-                                # CSS para botão de exclusão vermelho
-                                st.markdown(f"""
-                                <style>
-                                button[data-testid="stBaseButton-secondary"][key="btn_del_{proposta_id}"] {{
-                                    background-color: #dc3545 !important;
-                                    color: white !important;
-                                    border: 1px solid #dc3545 !important;
-                                    border-radius: 0.375rem !important;
-                                    font-weight: 500 !important;
-                                    width: 100% !important;
-                                }}
-                                button[data-testid="stBaseButton-secondary"][key="btn_del_{proposta_id}"]:hover {{
-                                    background-color: #c82333 !important;
-                                    border-color: #c82333 !important;
-                                }}
-                                </style>
-                                """, unsafe_allow_html=True)
-                                
                                 # Chave exclusiva para cada botão de exclusão
                                 excluir_key = f"del_{proposta_id}"
                                 confirmar_key = f"confirm_del_direct_{proposta_id}"
@@ -561,8 +592,8 @@ def show():
                                 if excluir_key not in st.session_state:
                                     st.session_state[excluir_key] = False
                                 
-                                # Botão de exclusão
-                                if st.button("Excluir", key=f"btn_{excluir_key}", help="Excluir proposta", use_container_width=True):
+                                # Botão de exclusão com tipo secondary
+                                if st.button("Excluir", key=f"btn_{excluir_key}", help="Excluir proposta", use_container_width=True, type="secondary"):
                                     # Alternar estado de confirmação
                                     st.session_state[excluir_key] = True
                                     st.rerun()
