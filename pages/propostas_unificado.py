@@ -171,7 +171,7 @@ def show():
                             gerar_financeiro = st.checkbox("Gerar lançamentos financeiros", value=True)
                         
                         # Botão para salvar
-                        submitted = st.form_submit_button("Salvar Proposta")
+                        submitted = st.form_submit_button("Salvar Proposta", type="primary")
                         
                         if submitted:
                             try:
