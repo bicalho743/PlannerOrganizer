@@ -275,46 +275,37 @@ def show():
                 justify-content: flex-start !important;
             }
             
-            /* Alinhamento específico para botões de ação */
-            div[data-testid="column"]:nth-child(4) .stButton,
-            div[data-testid="column"]:nth-child(5) .stButton {
+            /* Força cor vermelha em botões com emoji de lixeira */
+            button:contains("🗑️") {
+                background-color: #dc3545 !important;
+                color: white !important;
+                border: 1px solid #dc3545 !important;
+            }
+            
+            button:contains("🗑️"):hover {
+                background-color: #c82333 !important;
+                border-color: #c82333 !important;
+            }
+            
+            /* Seletor mais específico para botões secundários com texto "Excluir" */
+            button[kind="secondary"] {
+                background-color: #dc3545 !important;
+                color: white !important;
+                border: 1px solid #dc3545 !important;
+            }
+            
+            button[kind="secondary"]:hover {
+                background-color: #c82333 !important;
+                border-color: #c82333 !important;
+            }
+            
+            /* Alinhamento vertical das colunas */
+            .element-container:has(.stButton) {
                 margin-top: 26px !important;
             }
             
-            /* Força altura uniforme nos botões */
-            .stButton > button {
-                height: 40px !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-            }
-            
-            /* Alinhamento dos selectbox */
-            .stSelectbox > div > div {
+            .element-container:has(.stSelectbox) + .element-container:has(.stButton) {
                 margin-top: 0px !important;
-            }
-            
-            /* Estilo para botões HTML personalizados */
-            .custom-delete-btn {
-                background: linear-gradient(135deg, #dc3545, #c82333) !important;
-                color: white !important;
-                border: none !important;
-                border-radius: 6px !important;
-                padding: 8px 16px !important;
-                font-weight: 500 !important;
-                cursor: pointer !important;
-                width: 100% !important;
-                height: 40px !important;
-                transition: all 0.3s ease !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-            }
-            
-            .custom-delete-btn:hover {
-                background: linear-gradient(135deg, #c82333, #b71c1c) !important;
-                transform: translateY(-1px) !important;
-                box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3) !important;
             }
             </style>
             """, unsafe_allow_html=True)
