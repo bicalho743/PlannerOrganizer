@@ -80,9 +80,9 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         justify-content: space-between;
     }
 
-    /* Ajuste do conteúdo principal - cálculo dinâmico */
+    /* Ajuste do conteúdo principal - colado no cabeçalho */
     .main .block-container {
-        margin-top: calc(var(--header-height, 60px) + 8px) !important;
+        margin-top: calc(var(--header-height, 60px) + 2px) !important;
         padding-top: 0 !important;
     }
 
@@ -120,7 +120,7 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
             --header-height: 50px;
         }
         .main .block-container {
-            margin-top: calc(var(--header-height, 50px) + 4px) !important;
+            margin-top: calc(var(--header-height, 50px) + 1px) !important;
         }
     }
 
