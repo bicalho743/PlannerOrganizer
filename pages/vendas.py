@@ -148,24 +148,29 @@ def show():
                         # Exibir tabela com opções de edição/exclusão
                         st.dataframe(produtos_df[colunas_exibir], hide_index=True)
                         
-                        # CSS para colorir a barra do expander com exatamente a mesma cor dos botões primary
+                        # CSS para colorir a barra do expander com cor sólida idêntica aos botões primary
                         st.markdown("""
                         <style>
                         /* Estilizar o expander "Gerenciar Produtos" */
                         div[data-testid="stExpander"] details summary {
+                            background: #007bff !important;
                             background-color: #007bff !important;
+                            background-image: none !important;
                             color: white !important;
-                            border-radius: 0.5rem !important;
-                            padding: 0.5rem 0.75rem !important;
+                            border-radius: 0.375rem !important;
+                            padding: 0.375rem 0.75rem !important;
                             font-weight: 400 !important;
                             border: 1px solid #007bff !important;
-                            box-shadow: 0 2px 4px 0 rgba(0,0,0,0.1) !important;
+                            font-size: 1rem !important;
+                            line-height: 1.5 !important;
                         }
                         
                         div[data-testid="stExpander"] details summary:hover {
+                            background: #0056b3 !important;
                             background-color: #0056b3 !important;
+                            background-image: none !important;
+                            border-color: #0056b3 !important;
                             color: white !important;
-                            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2) !important;
                         }
                         
                         /* Ícone do expander */
