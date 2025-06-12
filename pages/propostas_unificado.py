@@ -362,17 +362,17 @@ def show():
                     # CSS para alinhar todos os botões da tabela
                     st.markdown("""
                     <style>
-                    /* Alinhar todos os botões na mesma altura */
+                    /* Alinhar todos os botões na mesma altura com espaçamento adequado */
                     .stButton > button {
                         height: 2.5rem !important;
-                        margin-top: 0 !important;
-                        margin-bottom: 0 !important;
+                        margin: 0.25rem 0.125rem !important;
                         padding: 0.5rem 1rem !important;
                         font-size: 0.875rem !important;
                         font-weight: 500 !important;
                         border-radius: 0.375rem !important;
                         border: 1px solid transparent !important;
                         transition: all 0.2s ease !important;
+                        min-width: fit-content !important;
                     }
                     
                     /* Botão primário (azul) */
@@ -387,7 +387,7 @@ def show():
                         border-color: #0056b3 !important;
                     }
                     
-                    /* Botão secundário padrão */
+                    /* Botão secundário (cinza) */
                     .stButton > button[kind="secondary"] {
                         background-color: #6c757d !important;
                         color: white !important;
@@ -399,11 +399,36 @@ def show():
                         border-color: #545b62 !important;
                     }
                     
+                    /* Botão de exclusão (vermelho) - usando seletor por texto */
+                    .stButton > button:not([kind="primary"]):not([kind="secondary"]) {
+                        background-color: #dc3545 !important;
+                        color: white !important;
+                        border-color: #dc3545 !important;
+                    }
+                    
+                    .stButton > button:not([kind="primary"]):not([kind="secondary"]):hover {
+                        background-color: #c82333 !important;
+                        border-color: #bd2130 !important;
+                    }
+                    
+                    /* Exceção para botões que contêm "Baixar" */
+                    .stButton > button:not([kind="primary"]):not([kind="secondary"]):contains("Baixar") {
+                        background-color: #28a745 !important;
+                        color: white !important;
+                        border-color: #28a745 !important;
+                    }
+                    
                     /* Alinhar containers de botões */
                     .stButton {
                         display: flex !important;
                         align-items: center !important;
                         height: 2.5rem !important;
+                        margin-bottom: 0.25rem !important;
+                    }
+                    
+                    /* Espaçamento entre colunas de botões */
+                    .stColumns > div {
+                        padding: 0 0.25rem !important;
                     }
                     </style>
                     """, unsafe_allow_html=True)
@@ -471,8 +496,8 @@ def show():
                                 except ValueError:
                                     status_index = 0
                                 
-                                # Criar duas colunas para o seletor e o botão
-                                status_col, btn_col = st.columns([3, 1])
+                                # Criar duas colunas para o seletor e o botão com espaçamento adequado
+                                status_col, btn_col = st.columns([2.5, 1.2])
                                 
                                 with status_col:
                                     # Seletor de status
@@ -486,8 +511,10 @@ def show():
                                     )
                                 
                                 with btn_col:
+                                    # Adicionar espaçamento vertical para alinhamento
+                                    st.write("")
                                     # Botão de salvar alteração
-                                    if st.button("Salvar", key=f"btn_save_{proposta_id}", type="primary"):
+                                    if st.button("Salvar", key=f"btn_save_{proposta_id}", type="primary", use_container_width=True):
                                         if novo_status == status_unificado:
                                             st.success("✓ Sem alterações")
                                         elif novo_status == "Excluir":
@@ -538,11 +565,9 @@ def show():
                             
                             # Coluna 4: Exportar para PDF
                             with col_export:
-
-                                
-
-                                
-                                if st.button("Gerar Proposta", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta", type="primary"):
+                                # Adicionar espaçamento vertical para alinhamento
+                                st.write("")
+                                if st.button("Gerar Proposta", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta", type="secondary", use_container_width=True):
                                     try:
                                         # Importar a função de geração de PDF
                                         from utils.propostas_helper import gerar_pdf_proposta
@@ -592,8 +617,10 @@ def show():
                                 if excluir_key not in st.session_state:
                                     st.session_state[excluir_key] = False
                                 
-                                # Botão de exclusão com tipo secondary
-                                if st.button("Excluir", key=f"btn_{excluir_key}", help="Excluir proposta", use_container_width=True, type="secondary"):
+                                # Adicionar espaçamento vertical para alinhamento
+                                st.write("")
+                                # Botão de exclusão estilizado
+                                if st.button("Excluir", key=f"btn_{excluir_key}", help="Excluir proposta", use_container_width=True):
                                     # Alternar estado de confirmação
                                     st.session_state[excluir_key] = True
                                     st.rerun()
