@@ -353,13 +353,20 @@ def show():
                 justify-content: flex-start !important;
             }
 
-            /* Alinhamento das colunas de ação */
-            [data-testid="column"]:nth-child(4) .element-container,
-            [data-testid="column"]:nth-child(5) .element-container {
-                margin-top: 0px !important;
+            /* CSS para TODOS os botões em azul - cor padrão do "Salvar Proposta" */
+            .stButton button {
+                background-color: #3c5aa6 !important;
+                color: white !important;
+                border: 1px solid #3c5aa6 !important;
+                font-weight: 500 !important;
             }
 
-            /* Garantir que todos os botões das abas de propostas sejam azuis */
+            .stButton button:hover {
+                background-color: #2e4282 !important;
+                border-color: #2e4282 !important;
+            }
+
+            /* Força botões em colunas específicas */
             [data-testid="column"] button {
                 background-color: #3c5aa6 !important;
                 color: white !important;
@@ -367,6 +374,18 @@ def show():
             }
 
             [data-testid="column"] button:hover {
+                background-color: #2e4282 !important;
+                border-color: #2e4282 !important;
+            }
+
+            /* Específico para botões de formulário */
+            button[kind="primary"], button[kind="secondary"] {
+                background-color: #3c5aa6 !important;
+                color: white !important;
+                border: 1px solid #3c5aa6 !important;
+            }
+
+            button[kind="primary"]:hover, button[kind="secondary"]:hover {
                 background-color: #2e4282 !important;
                 border-color: #2e4282 !important;
             }
@@ -425,9 +444,22 @@ def show():
                     
                     # Tratar a coluna valor especificamente para evitar problemas de Arrow
                     if 'valor' in propostas_display.columns:
-                        # Converter todos os valores para string primeiro, depois para numeric
-                        propostas_display['valor'] = propostas_display['valor'].astype(str)
-                        propostas_display['valor'] = pd.to_numeric(propostas_display['valor'], errors='coerce').fillna(0.0).astype('float64')
+                        def clean_valor(val):
+                            """Limpa e converte valores para float, tratando casos especiais"""
+                            if pd.isna(val):
+                                return 0.0
+                            val_str = str(val).strip()
+                            # Se contém letras ou caracteres não numéricos, retorna 0
+                            if not val_str.replace('.', '').replace(',', '').replace('-', '').replace(' ', '').isdigit():
+                                return 0.0
+                            try:
+                                # Substitui vírgula por ponto e converte
+                                val_clean = val_str.replace(',', '.')
+                                return float(val_clean)
+                            except:
+                                return 0.0
+                        
+                        propostas_display['valor'] = propostas_display['valor'].apply(clean_valor).astype('float64')
                     
                     # Conversões seguras para colunas de texto
                     propostas_display['valor_formatado'] = propostas_display['valor'].apply(safe_convert_valor)
