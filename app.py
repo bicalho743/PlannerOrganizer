@@ -1667,7 +1667,7 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
     if st.button("📘 Gerar Manual do Sistema", use_container_width=True):
         with st.spinner("Gerando manual em PDF..."):
             try:
-                from gerar_manual import gerar_manual_sistema
+                from pages.manual_sistema import gerar_manual_sistema
                 pdf_path = gerar_manual_sistema()
                 
                 # Ler o arquivo PDF para download
