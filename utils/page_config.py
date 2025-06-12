@@ -2,16 +2,67 @@ import streamlit as st
 
 def apply_page_header(page_title=None, breadcrumb_items=None):
     """
-    Aplica um cabeçalho padronizado em todas as páginas do sistema
+    Aplica um cabeçalho padronizado em todas as páginas do sistema.
 
     Args:
         page_title: Título da página atual
-        breadcrumb_items: Lista de itens para o breadcrumb ['Home', 'Ção', 'Página Atual']
+        breadcrumb_items: Lista de itens para o breadcrumb ['Home', 'Seção', 'Página Atual']
     """
-    # CSS para ajustar espaçamento e visual
-    header_css = """
+
+    # SOLUÇÃO CONSOLIDADA: Juntar todos os scripts HTML em um único bloco
+    combined_html = """
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Sistema Profissional de Gestão Personal Organizer - Planner Organizer">
+    <meta name="keywords" content="personal organizer, gestão, organização, planejamento">
+    <meta name="author" content="Planner Organizer">
+    <meta property="og:title" content="Planner Organizer - Sistema Profissional">
+    <meta property="og:description" content="Sistema completo para Personal Organizers">
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+
+    <!-- Facebook Pixel -->
+    <script>
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', 'YOUR_PIXEL_ID');
+      fbq('track', 'PageView');
+    </script>
+
+    <!-- Module Fix for Render -->
+    <script>
+      if (typeof window !== 'undefined') {
+        window.global = window;
+        if (typeof process === 'undefined') {
+          window.process = { env: {} };
+        }
+      }
+    </script>
+    """
+
+    # Injetar tudo de uma vez só
+    st.components.v1.html(combined_html, height=0, width=0)
+
+    # CSS para esconder o contêiner dos iframes
+    st.markdown("""
     <style>
-    /* Cabeçalho fixo no topo */
+    /* Esconder contêineres de iframes */
+    iframe[title='st.iframe'] { display: none !important; }
+    iframe[title='st.iframe'] + div { display: none !important; }
+
+    /* Cabeçalho fixo otimizado */
     .app-header {
         position: fixed;
         top: 0;
@@ -22,71 +73,64 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         padding: 0.3rem 0.8rem;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         font-family: "Poppins", sans-serif;
-        min-height: 45px;
-        max-height: 45px;
+        min-height: 60px;
+        max-height: 60px;
         display: flex;
         align-items: center;
         justify-content: space-between;
     }
-    
-    /* Responsividade do cabeçalho */
-    @media (max-width: 768px) {
-        .app-header {
-            padding: 0.2rem 0.5rem;
-            min-height: 35px;
-            max-height: 35px;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .app-header > div:first-child {
-            flex: 1;
-            min-width: 0;
-        }
-        .app-header h2 {
-            font-size: 1.0rem !important;
-            line-height: 1.2 !important;
-            margin: 0 !important;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .app-header p {
-            font-size: 0.7rem !important;
-            line-height: 1.1 !important;
-            margin: 0 !important;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .app-header > div:last-child {
-            flex-shrink: 0;
-            padding: 0.25rem 0.5rem !important;
-            margin-left: 0.5rem !important;
-        }
-        .app-header > div:last-child span {
-            font-size: 0.6rem !important;
-            line-height: 1.1 !important;
-        }
-    }
 
-    /* Ajusta o conteúdo para não ficar escondido */
+    /* Ajuste do conteúdo principal - cálculo dinâmico */
     .main .block-container {
-        padding-top: 30px !important;
-        margin-top: 0 !important;
+        margin-top: calc(var(--header-height, 60px) + 8px) !important;
+        padding-top: 0 !important;
     }
 
     /* Remove header nativo do Streamlit */
-    header[data-testid="stHeader"] { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; }
-    [data-testid="stAppViewContainer"] > div:first-child { padding-top: 0 !important; margin-top: 0 !important; }
-    [data-testid="stAppViewContainer"] > section:first-of-type { padding-top: 0 !important; margin-top: 0 !important; }
+    header[data-testid="stHeader"] { 
+        display: none !important; 
+        height: 0 !important; 
+        margin: 0 !important; 
+        padding: 0 !important; 
+    }
 
-    /* Sidebar e botões */
+    /* Reset completo de espaçamentos */
+    [data-testid="stAppViewContainer"] > div:first-child,
+    [data-testid="stAppViewContainer"] > section:first-of-type,
+    [data-testid="stAppViewContainer"] {
+        padding-top: 0 !important; 
+        margin-top: 0 !important; 
+    }
+
+    /* Esconder elementos vazios que criam espaçamento */
+    .element-container:empty,
+    .stElementContainer:empty,
+    [data-testid="element-container"]:empty {
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Responsividade do cabeçalho */
+    @media (max-width: 768px) {
+        .app-header {
+            min-height: 50px;
+            max-height: 50px;
+            --header-height: 50px;
+        }
+        .main .block-container {
+            margin-top: calc(var(--header-height, 50px) + 4px) !important;
+        }
+    }
+
+    /* Sidebar */
     [data-testid="stSidebar"] {
         padding-top: 0 !important;
         margin-top: 0 !important;
         background-color: #1E1F36 !important;
     }
+
     [data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
         background-color: rgba(255,255,255,0.05) !important;
         border: 1px solid rgba(255,255,255,0.1) !important;
@@ -97,6 +141,7 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         margin: 4px 0 !important;
         padding: 12px 16px !important;
     }
+
     [data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover {
         background-color: rgba(255,255,255,0.15) !important;
         border-color: rgba(255,255,255,0.3) !important;
@@ -120,8 +165,7 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         z-index: 1000;
     }
     </style>
-    """
-    st.markdown(header_css, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
     nome_usuario = "Usuário"
     if "usuario" in st.session_state and st.session_state.usuario:
