@@ -371,10 +371,16 @@ def show():
                     
                     # LIMPEZA ROBUSTA PARA PREVENIR ERRO DO ARROW - aplicar a TODAS as colunas
                     print("DEBUG ARROW: Aplicando limpeza robusta a todas as colunas...")
+                    
+                    # PRIMEIRO: Detectar e renomear colunas problemáticas para padronizar
+                    if 'Valor' in propostas_display.columns:
+                        print("DEBUG ARROW: Encontrada coluna 'Valor' (maiúscula) - renomeando para 'valor'")
+                        propostas_display = propostas_display.rename(columns={'Valor': 'valor'})
+                    
                     for col in propostas_display.columns:
                         print(f"DEBUG ARROW: Limpando coluna {col}")
                         if col.lower() == 'valor':
-                            # Limpeza específica para coluna valor
+                            # Limpeza específica para coluna valor - converter tudo para string limpa
                             def clean_valor_column(x):
                                 if pd.isna(x) or x is None:
                                     return "0.00"
@@ -395,6 +401,12 @@ def show():
                         else:
                             # Limpeza geral para outras colunas
                             propostas_display[col] = propostas_display[col].fillna('').astype(str)
+                    
+                    # ÚLTIMO PASSO: Forçar conversão de TODAS as colunas para string para garantir compatibilidade Arrow
+                    print("DEBUG ARROW: Forçando conversão final para string...")
+                    for col in propostas_display.columns:
+                        propostas_display[col] = propostas_display[col].astype(str)
+                        print(f"DEBUG ARROW: Coluna {col} convertida para tipo: {propostas_display[col].dtype}")
                     
                     # FORÇA CONVERSÃO PARA STRING PARA EVITAR PROBLEMAS DE ARROW - TODAS AS COLUNAS
                     for col in propostas_display.columns:
@@ -1047,44 +1059,100 @@ def show():
                     box-shadow: 0px 1px 3px rgba(0,0,0,0.1);
                 }
                 
-                /* Estilo específico para botões na aba EM EXECUÇÃO */
-                button[kind="formSubmit"]:contains("Registrar Andamento"),
-                button[kind="formSubmit"]:contains("Adicionar à Proposta"),
-                button[kind="formSubmit"]:contains("Adicionar Item"),
-                button[kind="formSubmit"]:contains("Adicionar Fornecedor"),
-                button[kind="formSubmit"]:contains("Adicionar Assistente"),
-                button[kind="formSubmit"]:contains("Marcar como Concluída"),
-                .stButton > button:has-text("Registrar Andamento"),
-                .stButton > button:has-text("Adicionar à Proposta"),
-                .stButton > button:has-text("Adicionar Item"),
-                .stButton > button:has-text("Adicionar Fornecedor"),
-                .stButton > button:has-text("Adicionar Assistente"),
-                .stButton > button:has-text("Marcar como Concluída") {
+                /* MÚLTIPLAS ESTRATÉGIAS PARA GARANTIR ESTILO DOS BOTÕES */
+                
+                /* Estratégia 1: Por tipo de elemento */
+                button[kind="formSubmit"], 
+                button[data-testid*="form"], 
+                button[type="submit"] {
                     background: linear-gradient(135deg, #2196F3, #1976D2) !important;
                     color: white !important;
                     border: none !important;
                     border-radius: 6px !important;
                     font-weight: 500 !important;
                     transition: all 0.3s ease !important;
+                    padding: 8px 16px !important;
                 }
                 
-                button[kind="formSubmit"]:contains("Registrar Andamento"):hover,
-                button[kind="formSubmit"]:contains("Adicionar à Proposta"):hover,
-                button[kind="formSubmit"]:contains("Adicionar Item"):hover,
-                button[kind="formSubmit"]:contains("Adicionar Fornecedor"):hover,
-                button[kind="formSubmit"]:contains("Adicionar Assistente"):hover,
-                button[kind="formSubmit"]:contains("Marcar como Concluída"):hover,
-                .stButton > button:has-text("Registrar Andamento"):hover,
-                .stButton > button:has-text("Adicionar à Proposta"):hover,
-                .stButton > button:has-text("Adicionar Item"):hover,
-                .stButton > button:has-text("Adicionar Fornecedor"):hover,
-                .stButton > button:has-text("Adicionar Assistente"):hover,
-                .stButton > button:has-text("Marcar como Concluída"):hover {
+                /* Estratégia 2: Por classes Streamlit */
+                .stButton button, 
+                .stFormSubmitButton button,
+                div[data-testid="stForm"] button {
+                    background: linear-gradient(135deg, #2196F3, #1976D2) !important;
+                    color: white !important;
+                    border: none !important;
+                    border-radius: 6px !important;
+                    font-weight: 500 !important;
+                    padding: 8px 16px !important;
+                }
+                
+                /* Estratégia 3: Seletores universais para botões em formulários */
+                form button {
+                    background: linear-gradient(135deg, #2196F3, #1976D2) !important;
+                    color: white !important;
+                    border: none !important;
+                    border-radius: 6px !important;
+                    font-weight: 500 !important;
+                }
+                
+                /* Estados hover para todas as estratégias */
+                button[kind="formSubmit"]:hover,
+                button[data-testid*="form"]:hover,
+                button[type="submit"]:hover,
+                .stButton button:hover,
+                .stFormSubmitButton button:hover,
+                div[data-testid="stForm"] button:hover,
+                form button:hover {
                     background: linear-gradient(135deg, #1976D2, #1565C0) !important;
                     transform: translateY(-1px) !important;
                     box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
                 }
                 </style>
+                
+                <script>
+                // JavaScript para aplicar estilos após o carregamento da página
+                setTimeout(function() {
+                    const buttons = document.querySelectorAll('button');
+                    buttons.forEach(function(btn) {
+                        if (btn.textContent.includes('Registrar') || 
+                            btn.textContent.includes('Adicionar') || 
+                            btn.textContent.includes('Marcar') ||
+                            btn.type === 'submit') {
+                            btn.style.background = 'linear-gradient(135deg, #2196F3, #1976D2)';
+                            btn.style.color = 'white';
+                            btn.style.border = 'none';
+                            btn.style.borderRadius = '6px';
+                            btn.style.fontWeight = '500';
+                            btn.style.padding = '8px 16px';
+                        }
+                    });
+                }, 1000);
+                
+                // Observador para aplicar estilos a novos botões
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        mutation.addedNodes.forEach(function(node) {
+                            if (node.nodeType === 1) {
+                                const buttons = node.querySelectorAll ? node.querySelectorAll('button') : [];
+                                buttons.forEach(function(btn) {
+                                    if (btn.textContent.includes('Registrar') || 
+                                        btn.textContent.includes('Adicionar') || 
+                                        btn.textContent.includes('Marcar') ||
+                                        btn.type === 'submit') {
+                                        btn.style.background = 'linear-gradient(135deg, #2196F3, #1976D2)';
+                                        btn.style.color = 'white';
+                                        btn.style.border = 'none';
+                                        btn.style.borderRadius = '6px';
+                                        btn.style.fontWeight = '500';
+                                        btn.style.padding = '8px 16px';
+                                    }
+                                });
+                            }
+                        });
+                    });
+                });
+                observer.observe(document.body, { childList: true, subtree: true });
+                </script>
                 """, unsafe_allow_html=True)
 
                 # Criar abas para gerenciar diferentes aspectos da execução com ícones e cores
