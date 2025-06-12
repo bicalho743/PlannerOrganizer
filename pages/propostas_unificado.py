@@ -310,7 +310,7 @@ def show():
             
             /* Alinhamento específico do selectbox */
             div[data-testid="stSelectbox"] {
-                margin-top: 10px !important;
+                margin-top: 0px !important;
             }
             
             /* Força altura consistente para selectbox */
@@ -321,8 +321,21 @@ def show():
             }
             
             /* Alinhamento das colunas de ação */
-            [data-testid="column"]:nth-child(4) .element-container {
-                margin-top: 10px !important;
+            [data-testid="column"]:nth-child(4) .element-container,
+            [data-testid="column"]:nth-child(5) .element-container {
+                margin-top: 0px !important;
+            }
+            
+            /* CSS global para botões de exclusão - tipo secondary na última coluna */
+            [data-testid="column"]:last-child button[kind="secondary"] {
+                background-color: #dc3545 !important;
+                color: white !important;
+                border: 1px solid #dc3545 !important;
+            }
+            
+            [data-testid="column"]:last-child button[kind="secondary"]:hover {
+                background-color: #c82333 !important;
+                border-color: #c82333 !important;
             }
             </style>
             """, unsafe_allow_html=True)
@@ -637,8 +650,6 @@ def show():
                                     )
                                 
                                 with btn_col:
-                                    # Adicionar espaçamento vertical para alinhamento com o selectbox
-                                    st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True)
                                     # Botão de salvar alteração
                                     if st.button("Salvar", key=f"btn_save_{proposta_id}", type="primary", use_container_width=True):
                                         if novo_status == status_unificado:
@@ -691,8 +702,6 @@ def show():
                             
                             # Coluna 4: Exportar para PDF
                             with col_export:
-                                # Adicionar espaçamento vertical para alinhamento com o selectbox
-                                st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True)
                                 if st.button("Gerar Proposta", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta", type="primary", use_container_width=True):
                                     try:
                                         # Importar a função de geração de PDF
@@ -743,52 +752,7 @@ def show():
                                 if excluir_key not in st.session_state:
                                     st.session_state[excluir_key] = False
                                 
-                                # CSS e JavaScript para cores dos botões
-                                st.markdown(f"""
-                                <style>
-                                [data-testid="column"]:nth-child(5) .stButton button {{
-                                    background-color: #dc3545 !important;
-                                    color: white !important;
-                                    border: 1px solid #dc3545 !important;
-                                }}
-                                [data-testid="column"]:nth-child(5) .stButton button:hover {{
-                                    background-color: #c82333 !important;
-                                    border-color: #c82333 !important;
-                                }}
-                                </style>
-                                <script>
-                                setTimeout(function() {{
-                                    // Localizar botões por posição e texto
-                                    const columns = document.querySelectorAll('[data-testid="column"]');
-                                    columns.forEach(function(col, index) {{
-                                        const buttons = col.querySelectorAll('button');
-                                        buttons.forEach(function(btn) {{
-                                            if (btn.textContent.includes('Excluir')) {{
-                                                btn.style.cssText = 'background-color: #dc3545 !important; color: white !important; border: 1px solid #dc3545 !important;';
-                                            }} else if (btn.textContent.includes('Gerar Proposta')) {{
-                                                btn.style.cssText = 'background-color: #007bff !important; color: white !important; border: 1px solid #007bff !important;';
-                                            }}
-                                        }});
-                                    }});
-                                }}, 200);
-                                </script>
-                                <div style="height: 26px;"></div>
-                                """, unsafe_allow_html=True)
-                                
-                                # Botão de exclusão com estilo personalizado
-                                st.markdown(f"""
-                                <style>
-                                button[data-testid="{f'excluir_{proposta_id}'}"] {{
-                                    background-color: #dc3545 !important;
-                                    color: white !important;
-                                    border: 1px solid #dc3545 !important;
-                                }}
-                                button[data-testid="{f'excluir_{proposta_id}'}"]:hover {{
-                                    background-color: #c82333 !important;
-                                    border-color: #c82333 !important;
-                                }}
-                                </style>
-                                """, unsafe_allow_html=True)
+
                                 
                                 if st.button("Excluir", key=f"excluir_{proposta_id}", help="Excluir proposta", 
                                            type="secondary", use_container_width=True):
