@@ -370,30 +370,37 @@ def show():
                     propostas_display = propostas_em_aberto.copy()
                     
                     # LIMPEZA PRECOCE PARA PREVENIR ERRO DO ARROW - aplicar antes de qualquer processamento
-                    if 'valor' in propostas_display.columns:
+                    # Verificar ambas as variações: 'valor' e 'Valor'
+                    valor_col = None
+                    for col in propostas_display.columns:
+                        if col.lower() == 'valor':
+                            valor_col = col
+                            break
+                    
+                    if valor_col:
                         def early_clean_valor(x):
                             if pd.isna(x) or x is None:
-                                return 0.0
+                                return "0"
                             val_str = str(x).strip().lower()
                             # Se contém nomes ou palavras não numéricas, converter para 0
                             if any(palavra in val_str for palavra in ['seisa', 'cassia', 'almeida', 'silva', 'santos', 'marguiori', 'alessandra']):
-                                return 0.0
+                                return "0"
                             if val_str.replace(' ', '').isalpha():  # Se é só letras
-                                return 0.0
+                                return "0"
                             try:
-                                # Tentar converter para número
+                                # Tentar converter para número e retornar como string
                                 val_clean = ''.join(c for c in str(x) if c.isdigit() or c in '.,')
                                 if val_clean:
-                                    return float(val_clean.replace(',', '.'))
-                                return 0.0
+                                    return str(float(val_clean.replace(',', '.')))
+                                return "0"
                             except:
-                                return 0.0
+                                return "0"
                         
-                        propostas_display['valor'] = propostas_display['valor'].apply(early_clean_valor)
+                        propostas_display[valor_col] = propostas_display[valor_col].apply(early_clean_valor)
                     
                     # FORÇA CONVERSÃO PARA STRING PARA EVITAR PROBLEMAS DE ARROW - TODAS AS COLUNAS
                     for col in propostas_display.columns:
-                        if col in ['valor', 'id', 'cliente_id']:
+                        if col.lower() in ['valor', 'id', 'cliente_id'] or col in ['Valor', 'ID', 'Cliente_ID']:
                             # Para colunas numéricas, garantir que são strings válidas
                             propostas_display[col] = propostas_display[col].astype(str)
                         else:
