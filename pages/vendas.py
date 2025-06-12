@@ -4,12 +4,8 @@ from datetime import datetime
 import numpy as np
 import time
 import os
-from utils.simple_mobile_fix import apply_mobile_sidebar_fix
 
 def show():
-    # Aplicar correção mobile para sidebar
-    apply_mobile_sidebar_fix()
-    
     # Verificar se o db está na sessão
     if 'db' not in st.session_state:
         st.error("Erro: Conexão com banco de dados não inicializada")
