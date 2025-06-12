@@ -1561,39 +1561,78 @@ st.sidebar.markdown('<div style="margin: 1.5rem 0;"><hr style="border: none; hei
 st.sidebar.markdown("""
 <style>
 /* Estilo específico para o expander de informações do sistema */
-.streamlit-expanderContent {
-    background-color: rgba(255, 255, 255, 0.05) !important;
+div[data-testid="stExpander"] .streamlit-expanderContent {
+    background-color: rgba(255, 255, 255, 0.08) !important;
     border-radius: 8px !important;
-    padding: 12px !important;
+    padding: 16px !important;
+    margin: 8px 0 !important;
 }
 
-/* Melhorar contraste do texto no expander */
-.streamlit-expanderContent h3 {
+/* Melhorar contraste do texto no expander - todos os elementos */
+div[data-testid="stExpander"] .streamlit-expanderContent * {
+    color: #ffffff !important;
+}
+
+div[data-testid="stExpander"] .streamlit-expanderContent h1,
+div[data-testid="stExpander"] .streamlit-expanderContent h2,
+div[data-testid="stExpander"] .streamlit-expanderContent h3,
+div[data-testid="stExpander"] .streamlit-expanderContent h4,
+div[data-testid="stExpander"] .streamlit-expanderContent h5,
+div[data-testid="stExpander"] .streamlit-expanderContent h6 {
     color: #ffffff !important;
     font-weight: 600 !important;
-    margin-bottom: 8px !important;
+    margin-bottom: 12px !important;
+    margin-top: 16px !important;
 }
 
-.streamlit-expanderContent p,
-.streamlit-expanderContent li {
-    color: #e0e0e0 !important;
-    line-height: 1.5 !important;
+div[data-testid="stExpander"] .streamlit-expanderContent p,
+div[data-testid="stExpander"] .streamlit-expanderContent li,
+div[data-testid="stExpander"] .streamlit-expanderContent span,
+div[data-testid="stExpander"] .streamlit-expanderContent div {
+    color: #e8e8e8 !important;
+    line-height: 1.6 !important;
 }
 
-.streamlit-expanderContent strong {
+div[data-testid="stExpander"] .streamlit-expanderContent strong,
+div[data-testid="stExpander"] .streamlit-expanderContent b {
     color: #ffffff !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
 }
 
 /* Estilo para o cabeçalho do expander */
-.streamlit-expanderHeader {
+div[data-testid="stExpander"] .streamlit-expanderHeader {
     color: #ffffff !important;
-    font-weight: 500 !important;
+    font-weight: 600 !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 6px !important;
+    padding: 8px 12px !important;
 }
 
-/* Garantir que emojis sejam visíveis */
-.streamlit-expanderContent .emoji {
-    filter: brightness(1.2) !important;
+/* Garantir que listas tenham boa visibilidade */
+div[data-testid="stExpander"] .streamlit-expanderContent ul,
+div[data-testid="stExpander"] .streamlit-expanderContent ol {
+    margin: 8px 0 !important;
+    padding-left: 20px !important;
+}
+
+div[data-testid="stExpander"] .streamlit-expanderContent ul li,
+div[data-testid="stExpander"] .streamlit-expanderContent ol li {
+    color: #e8e8e8 !important;
+    margin-bottom: 4px !important;
+}
+
+/* Estilo específico para emojis e ícones */
+div[data-testid="stExpander"] .streamlit-expanderContent .emoji {
+    filter: brightness(1.3) contrast(1.1) !important;
+}
+
+/* Forçar cor branca em todos os elementos markdown */
+div[data-testid="stExpander"] [data-testid="stMarkdownContainer"] {
+    color: #ffffff !important;
+}
+
+div[data-testid="stExpander"] [data-testid="stMarkdownContainer"] * {
+    color: inherit !important;
 }
 </style>
 """, unsafe_allow_html=True)
