@@ -1557,6 +1557,47 @@ except Exception as e:
 # Divisor antes das informações do sistema
 st.sidebar.markdown('<div style="margin: 1.5rem 0;"><hr style="border: none; height: 1px; background-color: #E0E0E0;"></div>', unsafe_allow_html=True)
 
+# CSS para melhorar a visibilidade do texto no expander do sistema
+st.sidebar.markdown("""
+<style>
+/* Estilo específico para o expander de informações do sistema */
+.streamlit-expanderContent {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+}
+
+/* Melhorar contraste do texto no expander */
+.streamlit-expanderContent h3 {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    margin-bottom: 8px !important;
+}
+
+.streamlit-expanderContent p,
+.streamlit-expanderContent li {
+    color: #e0e0e0 !important;
+    line-height: 1.5 !important;
+}
+
+.streamlit-expanderContent strong {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+/* Estilo para o cabeçalho do expander */
+.streamlit-expanderHeader {
+    color: #ffffff !important;
+    font-weight: 500 !important;
+}
+
+/* Garantir que emojis sejam visíveis */
+.streamlit-expanderContent .emoji {
+    filter: brightness(1.2) !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # Usando um expander para as informações do sistema
 with st.sidebar.expander("ℹ️ Informações do Sistema"):
     st.markdown("### Planner Organizer")
