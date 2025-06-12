@@ -369,34 +369,32 @@ def show():
                     # Criar uma cópia das propostas para manipulação
                     propostas_display = propostas_em_aberto.copy()
                     
-                    # LIMPEZA PRECOCE PARA PREVENIR ERRO DO ARROW - aplicar antes de qualquer processamento
-                    # Verificar ambas as variações: 'valor' e 'Valor'
-                    valor_col = None
+                    # LIMPEZA ROBUSTA PARA PREVENIR ERRO DO ARROW - aplicar a TODAS as colunas
+                    print("DEBUG ARROW: Aplicando limpeza robusta a todas as colunas...")
                     for col in propostas_display.columns:
+                        print(f"DEBUG ARROW: Limpando coluna {col}")
                         if col.lower() == 'valor':
-                            valor_col = col
-                            break
-                    
-                    if valor_col:
-                        def early_clean_valor(x):
-                            if pd.isna(x) or x is None:
-                                return "0"
-                            val_str = str(x).strip().lower()
-                            # Se contém nomes ou palavras não numéricas, converter para 0
-                            if any(palavra in val_str for palavra in ['seisa', 'cassia', 'almeida', 'silva', 'santos', 'marguiori', 'alessandra']):
-                                return "0"
-                            if val_str.replace(' ', '').isalpha():  # Se é só letras
-                                return "0"
-                            try:
-                                # Tentar converter para número e retornar como string
-                                val_clean = ''.join(c for c in str(x) if c.isdigit() or c in '.,')
-                                if val_clean:
-                                    return str(float(val_clean.replace(',', '.')))
-                                return "0"
-                            except:
-                                return "0"
-                        
-                        propostas_display[valor_col] = propostas_display[valor_col].apply(early_clean_valor)
+                            # Limpeza específica para coluna valor
+                            def clean_valor_column(x):
+                                if pd.isna(x) or x is None:
+                                    return "0.00"
+                                val_str = str(x).strip().lower()
+                                # Se contém nomes, converter para 0
+                                if any(palavra in val_str for palavra in ['seisa', 'cassia', 'almeida', 'silva', 'santos', 'marguiori', 'alessandra']):
+                                    return "0.00"
+                                if val_str.replace(' ', '').isalpha():
+                                    return "0.00"
+                                try:
+                                    val_clean = ''.join(c for c in str(x) if c.isdigit() or c in '.,')
+                                    if val_clean:
+                                        return f"{float(val_clean.replace(',', '.')):.2f}"
+                                    return "0.00"
+                                except:
+                                    return "0.00"
+                            propostas_display[col] = propostas_display[col].apply(clean_valor_column)
+                        else:
+                            # Limpeza geral para outras colunas
+                            propostas_display[col] = propostas_display[col].fillna('').astype(str)
                     
                     # FORÇA CONVERSÃO PARA STRING PARA EVITAR PROBLEMAS DE ARROW - TODAS AS COLUNAS
                     for col in propostas_display.columns:
@@ -1039,7 +1037,7 @@ def show():
                 # Adicionar título da proposta
                 st.subheader(f"Gerenciando: Proposta #{proposta['numero']} - {proposta['nome']}")
 
-                # Adicionar CSS personalizado para as abas
+                # Adicionar CSS personalizado para as abas e botões
                 st.markdown("""
                 <style>
                 div[data-testid="stTabs"] > div:nth-child(2) > div:nth-child(1) {
@@ -1047,6 +1045,44 @@ def show():
                     padding: 15px;
                     border-radius: 5px;
                     box-shadow: 0px 1px 3px rgba(0,0,0,0.1);
+                }
+                
+                /* Estilo específico para botões na aba EM EXECUÇÃO */
+                button[kind="formSubmit"]:contains("Registrar Andamento"),
+                button[kind="formSubmit"]:contains("Adicionar à Proposta"),
+                button[kind="formSubmit"]:contains("Adicionar Item"),
+                button[kind="formSubmit"]:contains("Adicionar Fornecedor"),
+                button[kind="formSubmit"]:contains("Adicionar Assistente"),
+                button[kind="formSubmit"]:contains("Marcar como Concluída"),
+                .stButton > button:has-text("Registrar Andamento"),
+                .stButton > button:has-text("Adicionar à Proposta"),
+                .stButton > button:has-text("Adicionar Item"),
+                .stButton > button:has-text("Adicionar Fornecedor"),
+                .stButton > button:has-text("Adicionar Assistente"),
+                .stButton > button:has-text("Marcar como Concluída") {
+                    background: linear-gradient(135deg, #2196F3, #1976D2) !important;
+                    color: white !important;
+                    border: none !important;
+                    border-radius: 6px !important;
+                    font-weight: 500 !important;
+                    transition: all 0.3s ease !important;
+                }
+                
+                button[kind="formSubmit"]:contains("Registrar Andamento"):hover,
+                button[kind="formSubmit"]:contains("Adicionar à Proposta"):hover,
+                button[kind="formSubmit"]:contains("Adicionar Item"):hover,
+                button[kind="formSubmit"]:contains("Adicionar Fornecedor"):hover,
+                button[kind="formSubmit"]:contains("Adicionar Assistente"):hover,
+                button[kind="formSubmit"]:contains("Marcar como Concluída"):hover,
+                .stButton > button:has-text("Registrar Andamento"):hover,
+                .stButton > button:has-text("Adicionar à Proposta"):hover,
+                .stButton > button:has-text("Adicionar Item"):hover,
+                .stButton > button:has-text("Adicionar Fornecedor"):hover,
+                .stButton > button:has-text("Adicionar Assistente"):hover,
+                .stButton > button:has-text("Marcar como Concluída"):hover {
+                    background: linear-gradient(135deg, #1976D2, #1565C0) !important;
+                    transform: translateY(-1px) !important;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
                 }
                 </style>
                 """, unsafe_allow_html=True)
