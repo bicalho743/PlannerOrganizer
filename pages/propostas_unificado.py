@@ -307,6 +307,18 @@ def show():
             .element-container:has(.stSelectbox) + .element-container:has(.stButton) {
                 margin-top: 0px !important;
             }
+            
+            /* Alinhamento específico do selectbox */
+            div[data-testid="stSelectbox"] > div {
+                margin-top: 26px !important;
+            }
+            
+            /* Força altura consistente para selectbox */
+            .stSelectbox > div > div > div {
+                min-height: 40px !important;
+                display: flex !important;
+                align-items: center !important;
+            }
             </style>
             """, unsafe_allow_html=True)
             
@@ -726,11 +738,11 @@ def show():
                                 if excluir_key not in st.session_state:
                                     st.session_state[excluir_key] = False
                                 
-                                # Script para aplicar cor vermelha ao botão de exclusão via JavaScript
+                                # Script para aplicar cores específicas aos botões via JavaScript
                                 st.markdown(f"""
                                 <script>
                                 setTimeout(function() {{
-                                    const buttons = document.querySelectorAll('button[data-testid="baseButton-secondary"]');
+                                    const buttons = document.querySelectorAll('button[data-testid^="baseButton"]');
                                     buttons.forEach(function(button) {{
                                         if (button.textContent.includes('Excluir')) {{
                                             button.style.backgroundColor = '#dc3545';
@@ -743,6 +755,18 @@ def show():
                                             button.onmouseout = function() {{
                                                 this.style.backgroundColor = '#dc3545';
                                                 this.style.borderColor = '#dc3545';
+                                            }};
+                                        }} else if (button.textContent.includes('Gerar Proposta')) {{
+                                            button.style.backgroundColor = '#007bff';
+                                            button.style.color = 'white';
+                                            button.style.border = '1px solid #007bff';
+                                            button.onmouseover = function() {{
+                                                this.style.backgroundColor = '#0056b3';
+                                                this.style.borderColor = '#0056b3';
+                                            }};
+                                            button.onmouseout = function() {{
+                                                this.style.backgroundColor = '#007bff';
+                                                this.style.borderColor = '#007bff';
                                             }};
                                         }}
                                     }});
