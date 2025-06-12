@@ -25,8 +25,8 @@ def apply_mobile_sidebar_fix():
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
-        background-color: #ffffff !important;
-        border-right: 1px solid #e0e4e8 !important;
+        background-color: #2E3440 !important;
+        border-right: 1px solid #4C566A !important;
     }
     
     /* Mobile específico */
@@ -47,8 +47,8 @@ def apply_mobile_sidebar_fix():
             min-width: 180px !important;
             max-width: 180px !important;
             height: 100vh !important;
-            background-color: #ffffff !important;
-            border-right: 1px solid #e0e4e8 !important;
+            background-color: #2E3440 !important;
+            border-right: 1px solid #4C566A !important;
             z-index: 50 !important;
             flex-shrink: 0 !important;
             order: 1 !important;
@@ -79,44 +79,33 @@ def apply_mobile_sidebar_fix():
             padding: 8px 4px !important;
         }
         
-        /* Aplicar estilos APENAS aos botões de navegação da sidebar - PADRÃO CONSISTENTE */
-        section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
+        /* Aplicar estilos APENAS aos botões de navegação da sidebar */
+        section[data-testid="stSidebar"] div[data-testid="column"] button[data-testid="baseButton-secondary"] {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
             width: 100% !important;
-            margin: 3px 0 !important;
-            padding: 10px 15px !important;
-            font-size: 0.92rem !important;
+            margin: 0 !important;
+            padding: 8px 10px !important;
+            font-size: 0.75rem !important;
             font-weight: 500 !important;
-            border-radius: 8px !important;
-            height: 42px !important;
-            line-height: 1.2 !important;
-            text-align: left !important;
+            border-radius: 6px !important;
+            height: auto !important;
+            line-height: 1.3 !important;
+            text-align: center !important;
             white-space: nowrap !important;
             text-overflow: ellipsis !important;
             overflow: hidden !important;
-            background-color: #f5f7fa !important;
-            color: #1E366F !important;
-            border: 1px solid #e0e4e8 !important;
+            background-color: #3B4252 !important;
+            color: #ECEFF4 !important;
+            border: 1px solid #4C566A !important;
             transition: all 0.2s ease !important;
-            font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
         }
         
-        section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover {
-            background-color: #E3F2FD !important;
-            color: #1976D2 !important;
-            border-color: #1E366F !important;
-            transform: translateY(-2px) !important;
-            box-shadow: 0 4px 8px rgba(30, 54, 111, 0.15) !important;
-        }
-        
-        /* Botão ativo/selecionado */
-        section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"].menu-active {
-            background-color: #E3F2FD !important;
-            color: #1976D2 !important;
-            border-color: #1E366F !important;
-            box-shadow: 0 2px 5px rgba(30, 54, 111, 0.15) !important;
+        section[data-testid="stSidebar"] div[data-testid="column"] button[data-testid="baseButton-secondary"]:hover {
+            background-color: #434C5E !important;
+            color: #88C0D0 !important;
+            border-color: #5E81AC !important;
         }
         
         /* Garantir que botões da página principal mantenham estilo padrão */
@@ -152,8 +141,8 @@ def apply_mobile_sidebar_fix():
         section[data-testid="stSidebar"] label,
         section[data-testid="stSidebar"] p,
         section[data-testid="stSidebar"] span {
-            color: #1E366F !important;
-            font-size: 0.9rem !important;
+            color: #D8DEE9 !important;
+            font-size: 0.8rem !important;
         }
         
         /* Botão toggle para esconder/mostrar sidebar */
@@ -253,7 +242,92 @@ def apply_mobile_sidebar_fix():
             display: none !important;
         }
         
-        /* Não interferir com botões fora da sidebar - remover estilos globais */
+        /* Corrigir TODOS os botões do Streamlit */
+        .stButton > button {
+            background-color: #f0f2f6 !important;
+            color: #262730 !important;
+            border: 1px solid #d1d5db !important;
+            font-weight: 500 !important;
+        }
+        
+        .stButton > button:hover {
+            background-color: #e5e7eb !important;
+            border-color: #9ca3af !important;
+        }
+        
+        /* Botão primário (Finalizar Venda) */
+        .stButton > button[kind="primary"],
+        .stButton > button[data-baseweb="button"][kind="primary"] {
+            background-color: #1f77b4 !important;
+            color: white !important;
+            border: none !important;
+        }
+        
+        .stButton > button[kind="primary"]:hover,
+        .stButton > button[data-baseweb="button"][kind="primary"]:hover {
+            background-color: #1565c0 !important;
+        }
+        
+        /* Forçar visibilidade do texto */
+        .stButton > button p,
+        .stButton > button span,
+        .stButton > button div {
+            color: inherit !important;
+            font-weight: 500 !important;
+            margin: 0 !important;
+        }
+        
+        /* Botão primário - texto branco */
+        .stButton > button[kind="primary"] p,
+        .stButton > button[kind="primary"] span,
+        .stButton > button[kind="primary"] div,
+        .stButton > button[data-baseweb="button"][kind="primary"] p,
+        .stButton > button[data-baseweb="button"][kind="primary"] span,
+        .stButton > button[data-baseweb="button"][kind="primary"] div {
+            color: white !important;
+        }
+        
+        /* Garantir que nenhum elemento filho seja transparente */
+        .stButton > button * {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+        
+        /* Abordagem mais agressiva para botões problemáticos */
+        div[data-testid="stColumns"] .stButton > button {
+            background-color: #f0f2f6 !important;
+            color: #262730 !important;
+            border: 1px solid #d1d5db !important;
+            min-height: 38px !important;
+            font-weight: 500 !important;
+        }
+        
+        div[data-testid="stColumns"] .stButton > button[kind="primary"] {
+            background-color: #1f77b4 !important;
+            color: white !important;
+            border: none !important;
+        }
+        
+        /* Forçar cor do texto em ALL elementos internos */
+        div[data-testid="stColumns"] .stButton > button > * {
+            color: #262730 !important;
+        }
+        
+        div[data-testid="stColumns"] .stButton > button[kind="primary"] > * {
+            color: white !important;
+        }
+        
+        /* CSS super específico para os botões de vendas */
+        .stButton > button[data-baseweb="button"] {
+            background: #f0f2f6 !important;
+            color: #262730 !important;
+            border: 1px solid #d1d5db !important;
+        }
+        
+        .stButton > button[data-baseweb="button"][kind="primary"] {
+            background: #1f77b4 !important;
+            color: white !important;
+        }
     }
     </style>
     """, unsafe_allow_html=True)
