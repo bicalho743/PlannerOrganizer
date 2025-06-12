@@ -438,7 +438,7 @@ def show():
                                 
                                 with btn_col:
                                     # Botão de salvar alteração
-                                    if st.button("Salvar", key=f"btn_save_{proposta_id}"):
+                                    if st.button("Salvar", key=f"btn_save_{proposta_id}", type="primary"):
                                         if novo_status == status_unificado:
                                             st.success("✓ Sem alterações")
                                         elif novo_status == "Excluir":
@@ -448,7 +448,7 @@ def show():
                                             col1_conf, col2_conf = st.columns(2)
                                             
                                             with col1_conf:
-                                                if st.button("✓ Sim, excluir", key=confirmar_key):
+                                                if st.button("✓ Sim, excluir", key=confirmar_key, type="primary"):
                                                     # Executar a exclusão diretamente com SQL
                                                     try:
                                                         from sqlalchemy import text
@@ -481,7 +481,7 @@ def show():
                                                         time.sleep(2)
                                             
                                             with col2_conf:
-                                                if st.button("✗ Cancelar", key=f"cancel_{confirmar_key}"):
+                                                if st.button("✗ Cancelar", key=f"cancel_{confirmar_key}", type="secondary"):
                                                     st.rerun()
                                         else:
                                             st.session_state[f"alterar_status_{proposta_id}"] = novo_status
@@ -506,22 +506,20 @@ def show():
                                 </style>
                                 """, unsafe_allow_html=True)
                                 
-                                # CSS para botão verde "Gerar Proposta"
+                                # CSS para botão azul "Gerar Proposta" - padronizado
                                 st.markdown(f"""
                                 <style>
-                                div[data-testid="stVerticalBlock"] > div[style*="flex-direction: column"] > div[data-testid="stVerticalBlock"] > div.stButton > button[data-testid="stBaseButton-secondary"][key="pdf_{proposta_id}"] {{
-                                    background-color: #28a745 !important;
+                                div[data-testid="column"]:nth-child(4) button {{
+                                    background-color: #007bff !important;
                                     color: white !important;
-                                    border: none !important;
-                                    border-radius: 8px !important;
-                                    padding: 8px 16px !important;
+                                    border: 1px solid #007bff !important;
+                                    border-radius: 0.375rem !important;
                                     font-weight: 500 !important;
-                                    transition: all 0.3s ease !important;
+                                    width: 100% !important;
                                 }}
-                                div[data-testid="stVerticalBlock"] > div[style*="flex-direction: column"] > div[data-testid="stVerticalBlock"] > div.stButton > button[data-testid="stBaseButton-secondary"][key="pdf_{proposta_id}"]:hover {{
-                                    background-color: #218838 !important;
-                                    transform: translateY(-1px) !important;
-                                    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3) !important;
+                                div[data-testid="column"]:nth-child(4) button:hover {{
+                                    background-color: #0056b3 !important;
+                                    border-color: #0056b3 !important;
                                 }}
                                 </style>
                                 """, unsafe_allow_html=True)
@@ -573,19 +571,20 @@ def show():
                                 excluir_key = f"del_{proposta_id}"
                                 confirmar_key = f"confirm_del_direct_{proposta_id}"
                                 
-                                # CSS específico para botão vermelho
+                                # CSS para botão vermelho "Excluir" - padronizado
                                 st.markdown(f"""
                                 <style>
                                 div[data-testid="column"]:nth-child(5) button {{
-                                    background: linear-gradient(135deg, #f44336, #d32f2f) !important;
+                                    background-color: #dc3545 !important;
                                     color: white !important;
-                                    border: none !important;
-                                    border-radius: 6px !important;
+                                    border: 1px solid #dc3545 !important;
+                                    border-radius: 0.375rem !important;
                                     font-weight: 500 !important;
                                     width: 100% !important;
                                 }}
                                 div[data-testid="column"]:nth-child(5) button:hover {{
-                                    background: linear-gradient(135deg, #d32f2f, #c62828) !important;
+                                    background-color: #c82333 !important;
+                                    border-color: #c82333 !important;
                                 }}
                                 </style>
                                 """, unsafe_allow_html=True)
