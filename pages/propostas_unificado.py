@@ -352,8 +352,18 @@ def show():
                         except:
                             return ''
                     
-                    propostas_display['valor_formatado'] = propostas_display['valor'].apply(safe_convert_valor)
-                    propostas_display['data_inicio_formatada'] = propostas_display['data_inicio'].apply(safe_convert_date)
+                    # Conversões seguras com tratamento de tipos
+                    propostas_display['valor_formatado'] = propostas_display['valor'].astype(str).apply(safe_convert_valor)
+                    propostas_display['data_inicio_formatada'] = propostas_display['data_inicio'].astype(str).apply(safe_convert_date)
+                    
+                    # Converter todas as colunas para tipos compatíveis com Arrow
+                    for col in propostas_display.columns:
+                        if propostas_display[col].dtype == 'object':
+                            propostas_display[col] = propostas_display[col].astype(str).replace('nan', '')
+                        elif propostas_display[col].dtype == 'float64':
+                            propostas_display[col] = propostas_display[col].fillna(0.0)
+                        elif propostas_display[col].dtype == 'int64':
+                            propostas_display[col] = propostas_display[col].fillna(0)
                     
                     # Processar alterações de status pendentes
                     for idx, proposta in propostas_display.iterrows():
@@ -716,27 +726,33 @@ def show():
                                 if excluir_key not in st.session_state:
                                     st.session_state[excluir_key] = False
                                 
-                                # CSS específico para este botão de exclusão
+                                # Script para aplicar cor vermelha ao botão de exclusão via JavaScript
                                 st.markdown(f"""
-                                <style>
-                                button[kind="secondary"]:has-text("🗑️ Excluir") {{
-                                    background-color: #dc3545 !important;
-                                    color: white !important;
-                                    border: 1px solid #dc3545 !important;
-                                }}
-                                
-                                button[kind="secondary"]:has-text("🗑️ Excluir"):hover {{
-                                    background-color: #c82333 !important;
-                                    border-color: #c82333 !important;
-                                }}
-                                </style>
+                                <script>
+                                setTimeout(function() {{
+                                    const buttons = document.querySelectorAll('button[data-testid="baseButton-secondary"]');
+                                    buttons.forEach(function(button) {{
+                                        if (button.textContent.includes('Excluir')) {{
+                                            button.style.backgroundColor = '#dc3545';
+                                            button.style.color = 'white';
+                                            button.style.border = '1px solid #dc3545';
+                                            button.onmouseover = function() {{
+                                                this.style.backgroundColor = '#c82333';
+                                                this.style.borderColor = '#c82333';
+                                            }};
+                                            button.onmouseout = function() {{
+                                                this.style.backgroundColor = '#dc3545';
+                                                this.style.borderColor = '#dc3545';
+                                            }};
+                                        }}
+                                    }});
+                                }}, 100);
+                                </script>
+                                <div style="height: 26px;"></div>
                                 """, unsafe_allow_html=True)
                                 
-                                # Adicionar espaçamento para alinhamento
-                                st.markdown('<div style="height: 26px;"></div>', unsafe_allow_html=True)
-                                
-                                # Botão de exclusão com emoji para identificação única
-                                if st.button("🗑️ Excluir", key=f"excluir_{proposta_id}", help="Excluir proposta", 
+                                # Botão de exclusão
+                                if st.button("Excluir", key=f"excluir_{proposta_id}", help="Excluir proposta", 
                                            type="secondary", use_container_width=True):
                                     # Alternar estado de confirmação
                                     st.session_state[excluir_key] = True
