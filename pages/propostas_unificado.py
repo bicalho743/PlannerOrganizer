@@ -399,16 +399,35 @@ def show():
                         border-color: #545b62 !important;
                     }
                     
-                    /* Botão de exclusão (vermelho) - usando seletor por texto */
-                    .stButton > button:not([kind="primary"]):not([kind="secondary"]) {
+                    /* Botão de exclusão (vermelho) - seletor mais específico */
+                    div[data-testid="column"] button:not([kind="primary"]):not([kind="secondary"]) {
                         background-color: #dc3545 !important;
                         color: white !important;
                         border-color: #dc3545 !important;
+                        font-weight: 500 !important;
                     }
                     
-                    .stButton > button:not([kind="primary"]):not([kind="secondary"]):hover {
+                    div[data-testid="column"] button:not([kind="primary"]):not([kind="secondary"]):hover {
                         background-color: #c82333 !important;
                         border-color: #bd2130 !important;
+                        transform: translateY(-1px) !important;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+                    }
+                    
+                    /* Estilo específico para botões "Excluir" */
+                    .stButton > button[data-testid*="btn_del"]:not([kind="primary"]):not([kind="secondary"]) {
+                        background: linear-gradient(135deg, #dc3545, #c82333) !important;
+                        color: white !important;
+                        border: none !important;
+                        border-radius: 6px !important;
+                        font-weight: 500 !important;
+                        transition: all 0.3s ease !important;
+                    }
+                    
+                    .stButton > button[data-testid*="btn_del"]:not([kind="primary"]):not([kind="secondary"]):hover {
+                        background: linear-gradient(135deg, #c82333, #b71c1c) !important;
+                        transform: translateY(-1px) !important;
+                        box-shadow: 0 3px 6px rgba(220, 53, 69, 0.4) !important;
                     }
                     
                     /* Exceção para botões que contêm "Baixar" */
@@ -418,17 +437,25 @@ def show():
                         border-color: #28a745 !important;
                     }
                     
-                    /* Alinhar containers de botões */
-                    .stButton {
+                    /* Alinhar containers de botões e selectbox */
+                    .stButton, .stSelectbox {
                         display: flex !important;
                         align-items: center !important;
                         height: 2.5rem !important;
                         margin-bottom: 0.25rem !important;
                     }
                     
+                    /* Alinhamento vertical para selectbox */
+                    .stSelectbox > div {
+                        margin-top: 0 !important;
+                        margin-bottom: 0 !important;
+                    }
+                    
                     /* Espaçamento entre colunas de botões */
                     .stColumns > div {
                         padding: 0 0.25rem !important;
+                        display: flex !important;
+                        align-items: center !important;
                     }
                     </style>
                     """, unsafe_allow_html=True)
@@ -511,8 +538,8 @@ def show():
                                     )
                                 
                                 with btn_col:
-                                    # Adicionar espaçamento vertical para alinhamento
-                                    st.write("")
+                                    # Adicionar espaçamento vertical para alinhamento com o selectbox
+                                    st.markdown('<div style="height: 26px;"></div>', unsafe_allow_html=True)
                                     # Botão de salvar alteração
                                     if st.button("Salvar", key=f"btn_save_{proposta_id}", type="primary", use_container_width=True):
                                         if novo_status == status_unificado:
@@ -565,8 +592,8 @@ def show():
                             
                             # Coluna 4: Exportar para PDF
                             with col_export:
-                                # Adicionar espaçamento vertical para alinhamento
-                                st.write("")
+                                # Adicionar espaçamento vertical para alinhamento com o selectbox
+                                st.markdown('<div style="height: 26px;"></div>', unsafe_allow_html=True)
                                 if st.button("Gerar Proposta", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta", type="secondary", use_container_width=True):
                                     try:
                                         # Importar a função de geração de PDF
@@ -617,8 +644,27 @@ def show():
                                 if excluir_key not in st.session_state:
                                     st.session_state[excluir_key] = False
                                 
-                                # Adicionar espaçamento vertical para alinhamento
-                                st.write("")
+                                # CSS específico para o botão de exclusão
+                                st.markdown(f"""
+                                <style>
+                                div[data-testid="stButton"] > button[key="btn_{excluir_key}"] {{
+                                    background: linear-gradient(135deg, #dc3545, #c82333) !important;
+                                    color: white !important;
+                                    border: none !important;
+                                    border-radius: 6px !important;
+                                    font-weight: 500 !important;
+                                    transition: all 0.3s ease !important;
+                                    width: 100% !important;
+                                    margin-top: 26px !important;
+                                }}
+                                div[data-testid="stButton"] > button[key="btn_{excluir_key}"]:hover {{
+                                    background: linear-gradient(135deg, #c82333, #b71c1c) !important;
+                                    transform: translateY(-1px) !important;
+                                    box-shadow: 0 3px 6px rgba(220, 53, 69, 0.4) !important;
+                                }}
+                                </style>
+                                """, unsafe_allow_html=True)
+                                
                                 # Botão de exclusão estilizado
                                 if st.button("Excluir", key=f"btn_{excluir_key}", help="Excluir proposta", use_container_width=True):
                                     # Alternar estado de confirmação
