@@ -403,6 +403,28 @@ def show():
                 if not propostas_em_aberto.empty:
                     # Criar uma cópia das propostas para manipulação
                     propostas_display = propostas_em_aberto.copy()
+                    
+                    # LIMPEZA PRECOCE PARA PREVENIR ERRO DO ARROW - aplicar antes de qualquer processamento
+                    if 'valor' in propostas_display.columns:
+                        def early_clean_valor(x):
+                            if pd.isna(x) or x is None:
+                                return 0.0
+                            val_str = str(x).strip().lower()
+                            # Se contém nomes ou palavras não numéricas, converter para 0
+                            if any(palavra in val_str for palavra in ['seisa', 'cassia', 'almeida', 'silva', 'santos', 'marguiori', 'alessandra']):
+                                return 0.0
+                            if val_str.replace(' ', '').isalpha():  # Se é só letras
+                                return 0.0
+                            try:
+                                # Tentar converter para número
+                                val_clean = ''.join(c for c in str(x) if c.isdigit() or c in '.,')
+                                if val_clean:
+                                    return float(val_clean.replace(',', '.'))
+                                return 0.0
+                            except:
+                                return 0.0
+                        
+                        propostas_display['valor'] = propostas_display['valor'].apply(early_clean_valor)
 
                     # Converter valores para exibição com tratamento de erro
                     def safe_convert_valor(x):
@@ -487,7 +509,12 @@ def show():
                                         return 0.0
                                     val_str = str(x).strip().lower()
                                     # Se contém nomes de pessoas ou palavras, retorna 0
-                                    if any(palavra in val_str for palavra in ['seisa', 'cassia', 'almeida', 'silva', 'santos', 'oliveira', 'souza']):
+                                    palavras_nomes = ['seisa', 'cassia', 'almeida', 'silva', 'santos', 'oliveira', 'souza', 
+                                                     'marguiori', 'alessandra', 'de ', ' de', 'da ', ' da', 'dos ', ' dos']
+                                    if any(palavra in val_str for palavra in palavras_nomes):
+                                        return 0.0
+                                    # Se contém apenas letras (sem números), provavelmente é nome
+                                    if val_str.isalpha() or any(char.isalpha() for char in val_str) and not any(char.isdigit() for char in val_str):
                                         return 0.0
                                     return clean_numeric_value(x, 0.0)
                                 propostas_display[col] = propostas_display[col].apply(clean_valor_especial)
@@ -611,67 +638,30 @@ def show():
                         min-width: fit-content !important;
                     }
 
-                    /* Botão primário (azul) */
-                    .stButton > button[kind="primary"] {
-                        background-color: #007bff !important;
+                    /* TODOS OS BOTÕES COM A MESMA COR AZUL */
+                    .stButton > button[kind="primary"],
+                    .stButton > button[kind="secondary"],
+                    .stButton > button,
+                    div[data-testid="column"] button,
+                    button {
+                        background-color: #4472C4 !important;
                         color: white !important;
-                        border-color: #007bff !important;
+                        border-color: #4472C4 !important;
+                        border: 1px solid #4472C4 !important;
                     }
 
-                    .stButton > button[kind="primary"]:hover {
-                        background-color: #0056b3 !important;
-                        border-color: #0056b3 !important;
-                    }
-
-                    /* Botão secundário (cinza) */
-                    .stButton > button[kind="secondary"] {
-                        background-color: #6c757d !important;
-                        color: white !important;
-                        border-color: #6c757d !important;
-                    }
-
-                    .stButton > button[kind="secondary"]:hover {
-                        background-color: #545b62 !important;
-                        border-color: #545b62 !important;
-                    }
-
-                    /* Botão de exclusão (vermelho) - seletor mais específico */
-                    div[data-testid="column"] button:not([kind="primary"]):not([kind="secondary"]) {
-                        background-color: #dc3545 !important;
-                        color: white !important;
-                        border-color: #dc3545 !important;
-                        font-weight: 500 !important;
-                    }
-
-                    div[data-testid="column"] button:not([kind="primary"]):not([kind="secondary"]):hover {
-                        background-color: #c82333 !important;
-                        border-color: #bd2130 !important;
+                    .stButton > button[kind="primary"]:hover,
+                    .stButton > button[kind="secondary"]:hover,
+                    .stButton > button:hover,
+                    div[data-testid="column"] button:hover,
+                    button:hover {
+                        background-color: #2e4282 !important;
+                        border-color: #2e4282 !important;
                         transform: translateY(-1px) !important;
                         box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
                     }
 
-                    /* Estilo específico para botões "Excluir" */
-                    .stButton > button[data-testid*="btn_del"]:not([kind="primary"]):not([kind="secondary"]) {
-                        background: linear-gradient(135deg, #dc3545, #c82333) !important;
-                        color: white !important;
-                        border: none !important;
-                        border-radius: 6px !important;
-                        font-weight: 500 !important;
-                        transition: all 0.3s ease !important;
-                    }
-
-                    .stButton > button[data-testid*="btn_del"]:not([kind="primary"]):not([kind="secondary"]):hover {
-                        background: linear-gradient(135deg, #c82333, #b71c1c) !important;
-                        transform: translateY(-1px) !important;
-                        box-shadow: 0 3px 6px rgba(220, 53, 69, 0.4) !important;
-                    }
-
-                    /* Exceção para botões que contêm "Baixar" */
-                    .stButton > button:not([kind="primary"]):not([kind="secondary"]):contains("Baixar") {
-                        background-color: #28a745 !important;
-                        color: white !important;
-                        border-color: #28a745 !important;
-                    }
+                    /* REMOVER TODOS OS ESTILOS ESPECIAIS - TODOS OS BOTÕES AZUIS */
 
                     /* Alinhar containers de botões e selectbox */
                     .stButton, .stSelectbox {
