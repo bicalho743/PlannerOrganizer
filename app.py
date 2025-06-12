@@ -20,12 +20,13 @@ if is_render:
         # Verificar se o script render_startup.py existe e executá-lo
         if os.path.exists('render_startup.py'):
             logger.info("Executando render_startup.py...")
-            import render_startup
+            # Import opcional para render_startup
+            exec(open('render_startup.py').read())
             logger.info("Script render_startup.py executado com sucesso")
         else:
-            logger.warning("Script render_startup.py não encontrado")
+            logger.info("Script render_startup.py não encontrado - continuando sem inicialização específica do Render")
     except Exception as e:
-        logger.error(f"Erro ao executar script de inicialização do Render: {str(e)}")
+        logger.warning(f"Aviso: Script de inicialização do Render não pôde ser executado: {str(e)}")
 
 # Corrigir o problema de adaptação de tipos numpy.int64 para PostgreSQL
 try:
@@ -322,10 +323,12 @@ if st.session_state.show_planos:
 if st.session_state.show_enviar_manual:
     try:
         # Importar o módulo de envio de manual diretamente
-        import enviar_manual
-        enviar_manual.main()
+        if os.path.exists('enviar_manual.py'):
+            exec(open('enviar_manual.py').read())
+        else:
+            st.error("Módulo de envio de manual não encontrado")
         st.stop()
-    except ImportError as e:
+    except Exception as e:
         st.error(f"Não foi possível carregar a página de envio de manual: {e}")
         st.session_state.show_enviar_manual = False
 
@@ -1512,8 +1515,10 @@ try:
         from pages.perfil import show
         show()
     elif st.session_state.current_page == "Admin":
-        from src.hidden_pages.admin import show
-        show()
+        # Admin page placeholder - module not yet implemented
+        st.title("⚙️ Administração")
+        st.info("Módulo de administração em desenvolvimento.")
+        st.write("Esta seção estará disponível em breve com funcionalidades administrativas.")
 except Exception as e:
     st.error(f"Erro ao carregar página: {str(e)}")
 
