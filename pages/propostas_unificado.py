@@ -434,46 +434,78 @@ def show():
                         except:
                             return ''
 
-                    # Criar uma cópia limpa para evitar problemas de referência
-                    propostas_display = propostas_em_aberto.copy()
+                    # Criar uma cópia completamente limpa para evitar problemas de referência
+                    propostas_display = propostas_em_aberto.copy().reset_index(drop=True)
                     
-                    # Primeiro, garantir que todas as colunas numéricas sejam do tipo correto
-                    for col in ['id', 'numero', 'cliente_id', 'previsao_dias']:
-                        if col in propostas_display.columns:
-                            propostas_display[col] = pd.to_numeric(propostas_display[col], errors='coerce').fillna(0).astype('int64')
-                    
-                    # Tratar a coluna valor especificamente para evitar problemas de Arrow
-                    if 'valor' in propostas_display.columns:
-                        def clean_valor(val):
-                            """Limpa e converte valores para float, tratando casos especiais"""
-                            if pd.isna(val):
-                                return 0.0
-                            val_str = str(val).strip()
-                            # Se contém letras ou caracteres não numéricos, retorna 0
-                            if not val_str.replace('.', '').replace(',', '').replace('-', '').replace(' ', '').isdigit():
-                                return 0.0
-                            try:
-                                # Substitui vírgula por ponto e converte
-                                val_clean = val_str.replace(',', '.')
-                                return float(val_clean)
-                            except:
-                                return 0.0
+                    # Função robusta para limpar valores numéricos
+                    def clean_numeric_value(val, default=0):
+                        """Limpa e converte valores para números, tratando qualquer tipo de entrada"""
+                        if pd.isna(val) or val is None:
+                            return default
                         
-                        propostas_display['valor'] = propostas_display['valor'].apply(clean_valor).astype('float64')
+                        # Se já é um número, retornar
+                        if isinstance(val, (int, float)):
+                            return float(val) if not pd.isna(val) else default
+                        
+                        # Converter para string e limpar
+                        val_str = str(val).strip().lower()
+                        
+                        # Se está vazio ou é 'nan', retornar default
+                        if not val_str or val_str in ['nan', 'none', 'null', '']:
+                            return default
+                        
+                        # Tentar extrair apenas números, pontos e vírgulas
+                        import re
+                        numeric_part = re.findall(r'[\d.,]+', val_str)
+                        if not numeric_part:
+                            return default
+                        
+                        try:
+                            # Pegar a primeira parte numérica encontrada
+                            clean_val = numeric_part[0]
+                            # Substituir vírgula por ponto para decimais
+                            clean_val = clean_val.replace(',', '.')
+                            # Se tem múltiplos pontos, manter apenas o último como decimal
+                            parts = clean_val.split('.')
+                            if len(parts) > 2:
+                                clean_val = ''.join(parts[:-1]) + '.' + parts[-1]
+                            return float(clean_val)
+                        except (ValueError, IndexError):
+                            return default
                     
-                    # Conversões seguras para colunas de texto
+                    # Limpar e fixar todas as colunas de forma robusta
+                    for col in propostas_display.columns:
+                        if col in ['id', 'numero', 'cliente_id']:
+                            # IDs devem ser inteiros
+                            propostas_display[col] = propostas_display[col].apply(lambda x: int(clean_numeric_value(x, 0)))
+                        elif col in ['valor', 'previsao_dias']:
+                            # Valores numéricos podem ser float
+                            propostas_display[col] = propostas_display[col].apply(lambda x: clean_numeric_value(x, 0.0))
+                        elif propostas_display[col].dtype in ['datetime64[ns]', 'datetime'] or 'data' in col.lower():
+                            # Colunas de data - converter para string formatada
+                            propostas_display[col] = propostas_display[col].apply(safe_convert_date)
+                        else:
+                            # Todas as outras colunas - garantir que sejam strings limpas
+                            propostas_display[col] = propostas_display[col].apply(
+                                lambda x: str(x).strip() if pd.notna(x) and x is not None else ''
+                            )
+                    
+                    # Garantir tipos finais corretos para Arrow
+                    propostas_display['id'] = propostas_display['id'].astype('int64')
+                    propostas_display['numero'] = propostas_display['numero'].astype('int64')
+                    propostas_display['cliente_id'] = propostas_display['cliente_id'].astype('int64')
+                    propostas_display['valor'] = propostas_display['valor'].astype('float64')
+                    propostas_display['previsao_dias'] = propostas_display['previsao_dias'].astype('float64')
+                    
+                    # Criar colunas formatadas para exibição
                     propostas_display['valor_formatado'] = propostas_display['valor'].apply(safe_convert_valor)
                     propostas_display['data_inicio_formatada'] = propostas_display['data_inicio'].apply(safe_convert_date)
-
-                    # Converter todas as colunas restantes para string de forma segura
+                    
+                    # Verificar se há colunas problemáticas restantes
                     for col in propostas_display.columns:
-                        if col not in ['id', 'numero', 'cliente_id', 'previsao_dias', 'valor'] and propostas_display[col].dtype == 'object':
-                            propostas_display[col] = propostas_display[col].fillna('').astype(str)
-                        elif propostas_display[col].dtype == 'float64' and col != 'valor':
-                            propostas_display[col] = propostas_display[col].fillna(0.0)
-                        elif propostas_display[col].dtype in ['datetime64[ns]', 'datetime']:
-                            # Converter datas para string
-                            propostas_display[col] = propostas_display[col].apply(safe_convert_date)
+                        if propostas_display[col].dtype == 'object':
+                            # Garantir que todas as colunas object sejam strings válidas
+                            propostas_display[col] = propostas_display[col].astype(str)
 
                     # Processar alterações de status pendentes
                     for idx, proposta in propostas_display.iterrows():
