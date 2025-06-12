@@ -730,8 +730,7 @@ def show():
                             with col_export:
                                 if st.button("Gerar Proposta", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta", type="primary", use_container_width=True):
                                     try:
-                                        # Importar a função de geração de PDF
-                                        from utils.propostas_helper import gerar_pdf_proposta
+                                        # Importar a função de geração de PDF                                        from utils.propostas_helper import gerar_pdf_proposta
 
                                         # Gerar o PDF
                                         sucesso, mensagem, arquivo = gerar_pdf_proposta(
@@ -1416,7 +1415,7 @@ def show():
                                     # Ordenar fornecedores por categoria e nome
                                     fornecedores_ordenados = fornecedores.sort_values(by=['categoria', 'nome'])
 
-                                                                        fornecedor_selecionado = st.selectbox(
+                                    fornecedor_selecionado = st.selectbox(
                                         "Selecione o fornecedor:", 
                                         options=fornecedores_ordenados['id'].tolist(),
                                         format_func=lambda x: f"{fornecedores_ordenados.loc[fornecedores_ordenados['id'] == x, 'nome'].iloc[0]} ({fornecedores_ordenados.loc[fornecedores_ordenados['id'] == x, 'categoria'].iloc[0]})"
