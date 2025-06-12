@@ -207,7 +207,7 @@ def show():
                                         categoria_edit = st.text_input("Categoria", value=produto_selecionado.get('categoria', ''))
                                         estoque_edit = st.number_input("Estoque", value=int(produto_selecionado['estoque']), min_value=0)
                                         
-                                        submit_edit = st.form_submit_button("Atualizar Produto")
+                                        submit_edit = st.form_submit_button("Atualizar Produto", type="primary")
                                         
                                         if submit_edit:
                                             try:
