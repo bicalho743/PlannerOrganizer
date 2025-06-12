@@ -506,25 +506,9 @@ def show():
                                 </style>
                                 """, unsafe_allow_html=True)
                                 
-                                # CSS para botão azul "Gerar Proposta" - padronizado
-                                st.markdown(f"""
-                                <style>
-                                div[data-testid="column"]:nth-child(4) button {{
-                                    background-color: #007bff !important;
-                                    color: white !important;
-                                    border: 1px solid #007bff !important;
-                                    border-radius: 0.375rem !important;
-                                    font-weight: 500 !important;
-                                    width: 100% !important;
-                                }}
-                                div[data-testid="column"]:nth-child(4) button:hover {{
-                                    background-color: #0056b3 !important;
-                                    border-color: #0056b3 !important;
-                                }}
-                                </style>
-                                """, unsafe_allow_html=True)
+
                                 
-                                if st.button("Gerar Proposta", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta"):
+                                if st.button("Gerar Proposta", key=f"pdf_{proposta_id}", help="Gerar PDF da proposta", type="primary"):
                                     try:
                                         # Importar a função de geração de PDF
                                         from utils.propostas_helper import gerar_pdf_proposta
@@ -571,50 +555,16 @@ def show():
                                 excluir_key = f"del_{proposta_id}"
                                 confirmar_key = f"confirm_del_direct_{proposta_id}"
                                 
-                                # CSS para botão vermelho "Excluir" - padronizado
-                                st.markdown(f"""
-                                <style>
-                                div[data-testid="column"]:nth-child(5) button {{
-                                    background-color: #dc3545 !important;
-                                    color: white !important;
-                                    border: 1px solid #dc3545 !important;
-                                    border-radius: 0.375rem !important;
-                                    font-weight: 500 !important;
-                                    width: 100% !important;
-                                }}
-                                div[data-testid="column"]:nth-child(5) button:hover {{
-                                    background-color: #c82333 !important;
-                                    border-color: #c82333 !important;
-                                }}
-                                </style>
-                                """, unsafe_allow_html=True)
+
                                 
                                 # Usar variáveis de sessão simples para gerenciar estado
                                 if excluir_key not in st.session_state:
                                     st.session_state[excluir_key] = False
                                 
-                                # CSS para botão vermelho "Excluir"
-                                st.markdown(f"""
-                                <style>
-                                div[data-testid="stVerticalBlock"] > div[style*="flex-direction: column"] > div[data-testid="stVerticalBlock"] > div.stButton > button[data-testid="stBaseButton-secondary"][key="btn_{excluir_key}"] {{
-                                    background-color: #dc3545 !important;
-                                    color: white !important;
-                                    border: none !important;
-                                    border-radius: 8px !important;
-                                    padding: 8px 16px !important;
-                                    font-weight: 500 !important;
-                                    transition: all 0.3s ease !important;
-                                }}
-                                div[data-testid="stVerticalBlock"] > div[style*="flex-direction: column"] > div[data-testid="stVerticalBlock"] > div.stButton > button[data-testid="stBaseButton-secondary"][key="btn_{excluir_key}"]:hover {{
-                                    background-color: #c82333 !important;
-                                    transform: translateY(-1px) !important;
-                                    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3) !important;
-                                }}
-                                </style>
-                                """, unsafe_allow_html=True)
+
                                 
                                 # Botão de exclusão
-                                if st.button("🗑️ Excluir", key=f"btn_{excluir_key}", help="Excluir proposta"):
+                                if st.button("Excluir", key=f"btn_{excluir_key}", help="Excluir proposta", use_container_width=True):
                                     # Alternar estado de confirmação
                                     st.session_state[excluir_key] = True
                                     st.rerun()
