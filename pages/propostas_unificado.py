@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 import uuid
 import plotly.graph_objects as go
 from utils.database import Fornecedor
-from utils.propostas_helper import st_gerar_pdf_cliente, st_gerar_pdf_interno
+from utils.propostas_helper import st_gerar_pdf_cliente, st_gerar_pdf_interno, gerar_pdf_proposta
 from utils.simple_mobile_fix import apply_mobile_sidebar_fix
 
 def show():
@@ -423,6 +423,28 @@ def show():
 
                     # Criar uma cópia completamente limpa para evitar problemas de referência
                     propostas_display = propostas_em_aberto.copy().reset_index(drop=True)
+                    
+                    # APLICAR LIMPEZA PRECOCE NA CÓPIA FINAL TAMBÉM
+                    if 'valor' in propostas_display.columns:
+                        def final_clean_valor(x):
+                            if pd.isna(x) or x is None:
+                                return 0.0
+                            val_str = str(x).strip().lower()
+                            # Se contém nomes ou palavras não numéricas, converter para 0
+                            if any(palavra in val_str for palavra in ['seisa', 'cassia', 'almeida', 'silva', 'santos', 'marguiori', 'alessandra']):
+                                return 0.0
+                            if val_str.replace(' ', '').isalpha():  # Se é só letras
+                                return 0.0
+                            try:
+                                # Tentar converter para número
+                                val_clean = ''.join(c for c in str(x) if c.isdigit() or c in '.,')
+                                if val_clean:
+                                    return float(val_clean.replace(',', '.'))
+                                return 0.0
+                            except:
+                                return 0.0
+                        
+                        propostas_display['valor'] = propostas_display['valor'].apply(final_clean_valor)
                     
                     # Função robusta para limpar valores numéricos
                     def clean_numeric_value(val, default=0):
