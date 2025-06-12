@@ -33,29 +33,29 @@ def show():
     # Criar abas - versão simplificada para garantir que todas apareçam
     try:
         tab1, tab2, tab3, tab4 = st.tabs([
-            "📝 Nova Proposta", 
-            "⚙️ Em Execução", 
-            "📋 Propostas Finalizadas",
+            "1 - Nova Proposta", 
+            "2 - Em Execução", 
+            "3 - Propostas Finalizadas",
             "🔍 Todas as Propostas"
         ])
     except Exception as e:
         st.error(f"Erro ao criar abas: {e}")
         # Fallback com selectbox se st.tabs falhar
         aba_selecionada = st.selectbox("Escolha uma opção:", [
-            "📝 Nova Proposta", 
-            "⚙️ Em Execução", 
-            "📋 Propostas Finalizadas",
+            "1 - Nova Proposta", 
+            "2 - Em Execução", 
+            "3 - Propostas Finalizadas",
             "🔍 Todas as Propostas"
         ])
         
         # Simular tabs com condicionais
-        if aba_selecionada == "📝 Nova Proposta":
+        if aba_selecionada == "1 - Nova Proposta":
             tab1 = True
             tab2 = tab3 = tab4 = False
-        elif aba_selecionada == "⚙️ Em Execução":
+        elif aba_selecionada == "2 - Em Execução":
             tab2 = True
             tab1 = tab3 = tab4 = False
-        elif aba_selecionada == "📋 Propostas Finalizadas":
+        elif aba_selecionada == "3 - Propostas Finalizadas":
             tab3 = True
             tab1 = tab2 = tab4 = False
         else:  # Todas as Propostas

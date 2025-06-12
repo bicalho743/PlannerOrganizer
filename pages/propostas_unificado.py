@@ -39,9 +39,9 @@ def show():
     # Criar abas para organizar o conteúdo com ícones para cada uma
     st.markdown('<div class="main-tabs">', unsafe_allow_html=True)
     tab1, tab2, tab3 = st.tabs([
-        "📝 Nova Proposta", 
-        "⚙️ Em Execução", 
-        "📋 Propostas Finalizadas"
+        "1 - Nova Proposta", 
+        "2 - Em Execução", 
+        "3 - Propostas Finalizadas"
     ])
     st.markdown('</div>', unsafe_allow_html=True)
     
