@@ -1089,16 +1089,47 @@ def show():
                     box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
                 }
                 
-                /* Garantir que a sidebar mantenha o estilo original */
+                /* Garantir que a sidebar mantenha o estilo original - PROTEÇÃO COMPLETA */
                 .css-1d391kg button,
                 .css-1544g2n button,
-                [data-testid="stSidebar"] button {
-                    background: inherit !important;
+                [data-testid="stSidebar"] button,
+                [data-testid="stSidebar"] .streamlit-expanderHeader,
+                [data-testid="stSidebar"] [data-testid="stExpanderToggleIcon"],
+                .sidebar button,
+                .sidebar .streamlit-expanderHeader {
+                    background: transparent !important;
                     color: inherit !important;
                     border: inherit !important;
                     border-radius: inherit !important;
                     font-weight: inherit !important;
                     padding: inherit !important;
+                    box-shadow: none !important;
+                    transform: none !important;
+                }
+
+                /* Excluir especificamente expanders da sidebar do estilo azul */
+                [data-testid="stSidebar"] [data-testid="stExpander"],
+                [data-testid="stSidebar"] .streamlit-expanderHeader,
+                .sidebar [data-testid="stExpander"],
+                .sidebar .streamlit-expanderHeader {
+                    background: transparent !important;
+                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                }
+
+                /* Restringir estilo azul APENAS ao conteúdo principal */
+                [data-testid="stMainBlockContainer"] .execution-tabs button[kind="formSubmit"],
+                [data-testid="stMainBlockContainer"] .execution-tabs button[data-testid*="form"], 
+                [data-testid="stMainBlockContainer"] .execution-tabs button[type="submit"],
+                [data-testid="stMainBlockContainer"] .execution-tabs .stFormSubmitButton button,
+                [data-testid="stMainBlockContainer"] .execution-tabs div[data-testid="stForm"] button,
+                [data-testid="stMainBlockContainer"] .execution-tabs form button {
+                    background: linear-gradient(135deg, #2196F3, #1976D2) !important;
+                    color: white !important;
+                    border: none !important;
+                    border-radius: 6px !important;
+                    font-weight: 500 !important;
+                    transition: all 0.3s ease !important;
+                    padding: 8px 16px !important;
                 }
                 </style>
                 
