@@ -6,8 +6,9 @@ import streamlit.components.v1 as components
 
 def inject_mobile_sidebar_fix():
     """
-    Injeta CSS e JavaScript específico para corrigir a visualização da sidebar em mobile
+    DESATIVADO - CSS da sidebar agora é controlado centralmente pelo .streamlit/style.css
     """
+    return  # Função desativada para evitar conflitos
     
     mobile_fix_html = """
     <style>

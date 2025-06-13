@@ -12,13 +12,13 @@ header[data-testid="stHeader"] {
     height: 0 !important;
 }
 
-/* Cabeçalho fixo personalizado (altura automática, sem cortar texto) */
+/* Cabeçalho fixo personalizado */
 .app-header {
     background-color: #1E1F36;
     color: white;
     width: 100%;
-    min-height: 60px; /* altura mínima */
-    padding: 0.5rem 0; /* espaçamento interno mais suave */
+    min-height: 60px;
+    padding: 0.5rem 0;
     text-align: center;
     position: fixed;
     top: 0;
@@ -31,22 +31,20 @@ header[data-testid="stHeader"] {
     justify-content: center;
 }
 
-/* Ajuste global: reduz ainda mais o espaço após o cabeçalho */
+/* Ajuste global */
 .block-container {
-    padding-top: 0px !important;  /* Remove espaçamento superior */
-    margin-top: 0px !important;   /* Remove margem superior */
+    padding-top: 0px !important;
+    margin-top: 0px !important;
     min-height: calc(100vh - 10px) !important;
     max-width: 100% !important;
     position: relative;
 }
 
-/* Remove margem dos primeiros elementos de qualquer página */
 .block-container > *:first-child {
     margin-top: 0 !important;
     padding-top: 0 !important;
 }
 
-/* Evita espaço desnecessário acima de títulos */
 .block-container h1,
 .block-container h2,
 .block-container h3 {
@@ -54,10 +52,78 @@ header[data-testid="stHeader"] {
     padding-top: 0 !important;
 }
 
+/* SIDEBAR - ESTILOS UNIFICADOS E CONSISTENTES */
+section[data-testid="stSidebar"] {
+    background-color: #1E1F36 !important;
+    border-right: 1px solid #4C566A !important;
+    min-width: 250px !important;
+}
 
-/* Gradiente abaixo do cabeçalho - removido para reduzir espaçamento */
-.block-container::before {
-    display: none;
+/* Container da sidebar */
+section[data-testid="stSidebar"] > div {
+    background-color: #1E1F36 !important;
+    padding: 1rem !important;
+}
+
+/* BOTÕES DA SIDEBAR - ESTILO UNIFICADO PARA TODOS */
+section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"],
+section[data-testid="stSidebar"] .stButton > button,
+section[data-testid="stSidebar"] button {
+    width: 100% !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    padding: 12px 16px !important;
+    margin: 4px 0 !important;
+    font-weight: 500 !important;
+    font-size: 0.9rem !important;
+    text-align: left !important;
+    transition: all 0.3s ease !important;
+    backdrop-filter: blur(10px) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+/* Hover para todos os botões da sidebar */
+section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover,
+section[data-testid="stSidebar"] .stButton > button:hover,
+section[data-testid="stSidebar"] button:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #fff !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Efeito de ripple para botões da sidebar */
+section[data-testid="stSidebar"] button::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%) !important;
+    transition: all 0.6s ease !important;
+    transform: translate(-50%, -50%) !important;
+    border-radius: 50% !important;
+    pointer-events: none !important;
+}
+
+section[data-testid="stSidebar"] button:hover::before {
+    width: 300px !important;
+    height: 300px !important;
+}
+
+/* Texto dentro dos botões da sidebar */
+section[data-testid="stSidebar"] button p,
+section[data-testid="stSidebar"] button span,
+section[data-testid="stSidebar"] button div {
+    color: inherit !important;
+    font-weight: 500 !important;
+    margin: 0 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
 }
 
 /* Breadcrumb */
@@ -106,23 +172,51 @@ h1 {
     padding-top: 0 !important;
 }
 
-/* Botões */
-.stButton > button {
-    font-weight: 500;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    transition: all 0.2s ease;
-    min-width: fit-content;
-    white-space: nowrap;
-    overflow: visible;
-    text-overflow: clip;
-    font-size: 0.875rem;
+/* BOTÕES DA ÁREA PRINCIPAL - NÃO APLICAR ESTILO DA SIDEBAR */
+.main .stButton > button,
+div[data-testid="stMainBlockContainer"] .stButton > button,
+div[data-testid="stMain"] .stButton > button {
+    background-color: #f8f9fa !important;
+    color: #262730 !important;
+    border: 1px solid #dee2e6 !important;
+    font-weight: 500 !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 4px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+    transition: all 0.2s ease !important;
+    min-width: fit-content !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    font-size: 0.875rem !important;
+    backdrop-filter: none !important;
+    text-shadow: none !important;
+    transform: none !important;
 }
 
-.stButton > button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+.main .stButton > button:hover,
+div[data-testid="stMainBlockContainer"] .stButton > button:hover,
+div[data-testid="stMain"] .stButton > button:hover {
+    background-color: #e9ecef !important;
+    border-color: #adb5bd !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15) !important;
+}
+
+/* Botões primários da área principal */
+.main .stButton > button[kind="primary"],
+div[data-testid="stMainBlockContainer"] .stButton > button[kind="primary"],
+div[data-testid="stMain"] .stButton > button[kind="primary"] {
+    background-color: #007bff !important;
+    color: white !important;
+    border: 1px solid #007bff !important;
+}
+
+.main .stButton > button[kind="primary"]:hover,
+div[data-testid="stMainBlockContainer"] .stButton > button[kind="primary"]:hover,
+div[data-testid="stMain"] .stButton > button[kind="primary"]:hover {
+    background-color: #0056b3 !important;
+    border-color: #0056b3 !important;
 }
 
 /* Garantir que botões em colunas pequenas mostrem o texto */
@@ -134,123 +228,30 @@ div[data-testid="column"] .stButton > button {
     line-height: 1.2;
 }
 
-/* Estilização específica para botões baseada no conteúdo */
-/* Botões que contêm "PDF" - verde */
-div[data-testid="column"] .stButton > button {
-    position: relative;
-}
-
-div[data-testid="column"] .stButton > button:has-text("PDF"),
-button[title*="PDF"],
-button[aria-label*="PDF"] {
+/* Botões específicos por ação - APENAS ÁREA PRINCIPAL */
+.main button[title*="PDF"]:not([data-testid="stSidebar"] button),
+.main button[aria-label*="PDF"]:not([data-testid="stSidebar"] button) {
     background: linear-gradient(135deg, #4CAF50, #45a049) !important;
     color: white !important;
     border: none !important;
-    border-radius: 6px !important;
-    font-weight: 500 !important;
-    transition: all 0.3s ease !important;
 }
 
-div[data-testid="column"] .stButton > button:has-text("PDF"):hover,
-button[title*="PDF"]:hover,
-button[aria-label*="PDF"]:hover {
-    background: linear-gradient(135deg, #45a049, #3d8b40) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
-}
-
-/* Botões de ação do módulo propostas - azul */
-div[data-testid="column"] .stButton > button:has-text("Registrar Andamento"),
-div[data-testid="column"] .stButton > button:has-text("Adicionar à Proposta"),
-div[data-testid="column"] .stButton > button:has-text("Adicionar Item"),
-div[data-testid="column"] .stButton > button:has-text("Adicionar Fornecedor"),
-div[data-testid="column"] .stButton > button:has-text("Adicionar Assistente"),
-div[data-testid="column"] .stButton > button:has-text("Marcar como Concluída"),
-button[title*="Registrar Andamento"],
-button[title*="Adicionar à Proposta"],
-button[title*="Adicionar Item"],
-button[title*="Adicionar Fornecedor"],
-button[title*="Adicionar Assistente"],
-button[title*="Marcar como Concluída"],
-button[aria-label*="Registrar Andamento"],
-button[aria-label*="Adicionar à Proposta"],
-button[aria-label*="Adicionar Item"],
-button[aria-label*="Adicionar Fornecedor"],
-button[aria-label*="Adicionar Assistente"],
-button[aria-label*="Marcar como Concluída"] {
-    background: linear-gradient(135deg, #2196F3, #1976D2) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 6px !important;
-    font-weight: 500 !important;
-    transition: all 0.3s ease !important;
-}
-
-div[data-testid="column"] .stButton > button:has-text("Registrar Andamento"):hover,
-div[data-testid="column"] .stButton > button:has-text("Adicionar à Proposta"):hover,
-div[data-testid="column"] .stButton > button:has-text("Adicionar Item"):hover,
-div[data-testid="column"] .stButton > button:has-text("Adicionar Fornecedor"):hover,
-div[data-testid="column"] .stButton > button:has-text("Adicionar Assistente"):hover,
-div[data-testid="column"] .stButton > button:has-text("Marcar como Concluída"):hover,
-button[title*="Registrar Andamento"]:hover,
-button[title*="Adicionar à Proposta"]:hover,
-button[title*="Adicionar Item"]:hover,
-button[title*="Adicionar Fornecedor"]:hover,
-button[title*="Adicionar Assistente"]:hover,
-button[title*="Marcar como Concluída"]:hover,
-button[aria-label*="Registrar Andamento"]:hover,
-button[aria-label*="Adicionar à Proposta"]:hover,
-button[aria-label*="Adicionar Item"]:hover,
-button[aria-label*="Adicionar Fornecedor"]:hover,
-button[aria-label*="Adicionar Assistente"]:hover,
-button[aria-label*="Marcar como Concluída"]:hover {
-    background: linear-gradient(135deg, #1976D2, #1565C0) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
-}
-
-/* Botões que contêm "Excluir" - vermelho */
-div[data-testid="column"] .stButton > button:has-text("Excluir"),
-button[title*="Excluir"],
-button[aria-label*="Excluir"] {
+.main button[title*="Excluir"]:not([data-testid="stSidebar"] button),
+.main button[aria-label*="Excluir"]:not([data-testid="stSidebar"] button) {
     background: linear-gradient(135deg, #f44336, #d32f2f) !important;
     color: white !important;
     border: none !important;
-    border-radius: 6px !important;
-    font-weight: 500 !important;
-    transition: all 0.3s ease !important;
-}
-
-div[data-testid="column"] .stButton > button:has-text("Excluir"):hover,
-button[title*="Excluir"]:hover,
-button[aria-label*="Excluir"]:hover {
-    background: linear-gradient(135deg, #d32f2f, #c62828) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
-}
-
-/* Sidebar */
-.css-1vq4p4l, .css-1d3bhkq {
-    background-color: #1E1F36 !important;
-    border-right: 1px solid #eaeaea;
 }
 
 /* Mobile sidebar responsiveness */
 @media (max-width: 768px) {
-    /* Ensure sidebar is accessible on mobile */
     section[data-testid="stSidebar"] {
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
         z-index: 999999 !important;
     }
-    
-    /* Make sidebar toggle button more visible on mobile */
-    button[title="View app in fullscreen"] {
-        display: none !important;
-    }
-    
-    /* Sidebar collapse button styling */
+
     button[data-testid="collapsedControl"] {
         background-color: #2E4A99 !important;
         color: white !important;
@@ -264,66 +265,10 @@ button[aria-label*="Excluir"]:hover {
         z-index: 1000000 !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
     }
-    
-    /* Ensure main content doesn't overlap sidebar button */
+
     .main .block-container {
         padding-left: 60px !important;
         padding-top: 1rem !important;
-    }
-}
-
-section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    color: rgba(255, 255, 255, 0.8) !important;
-    backdrop-filter: blur(10px) !important;
-    font-weight: 500 !important;
-    border-radius: 12px !important;
-    margin: 4px 0 !important;
-    padding: 12px 16px !important;
-    position: relative !important;
-    overflow: hidden !important;
-    animation: slideInFromLeft 0.5s ease-out !important;
-    font-family: "Poppins", sans-serif !important;
-    font-size: 0.9rem !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
-}
-
-section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover {
-    background-color: rgba(255, 255, 255, 0.15) !important;
-    border-color: rgba(255, 255, 255, 0.3) !important;
-    color: #fff !important;
-    transform: translateY(-2px) scale(1.02) !important;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.1) !important;
-}
-
-section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 50% !important;
-    left: 50% !important;
-    width: 0 !important;
-    height: 0 !important;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%) !important;
-    transition: all 0.6s ease !important;
-    transform: translate(-50%, -50%) !important;
-    border-radius: 50% !important;
-    pointer-events: none !important;
-}
-
-section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover::before {
-    width: 300px !important;
-    height: 300px !important;
-}
-
-@keyframes slideInFromLeft {
-    0% {
-        opacity: 0;
-        transform: translateX(-20px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateX(0);
     }
 }
 
@@ -391,16 +336,13 @@ button[role="tab"] {
     border-bottom-color: #1E88E5 !important;
     background-color: rgba(30, 136, 229, 0.05);
 }
-/* Espaçamento para evitar que o rodapé sobreponha o conteúdo */
+
+/* Espaçamento para rodapé */
 body, .main, [data-testid="stAppViewContainer"], .block-container {
-    padding-bottom: 52px !important;  /* deve ser igual ou maior que a altura do rodapé */
+    padding-bottom: 52px !important;
 }
 
-/* Rodapé removido - apenas o do page_config.py será usado */
-
-/* Adicione seus estilos CSS personalizados aqui */
-
-/* Estilo para botão Select (file uploader e outros) - VERMELHO */
+/* Estilo para file uploader */
 div[data-testid="stFileUploader"] button {
     background-color: #dc3545 !important;
     color: white !important;
@@ -417,27 +359,17 @@ div[data-testid="stFileUploader"] button:hover {
     box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3) !important;
 }
 
-/* Correção específica para botões na página de vendas */
-.stButton > button {
-    background-color: #f8f9fa !important;
-    color: #262730 !important;
-    border: 1px solid #dee2e6 !important;
-    font-weight: 500 !important;
-    min-height: 38px !important;
-}
-
-.stButton > button[kind="primary"] {
+/* CSS específico para botões de formulário */
+.stForm button[data-testid="baseButton-primary"] {
     background-color: #007bff !important;
     color: white !important;
     border: 1px solid #007bff !important;
+    font-weight: 500 !important;
+    border-radius: 0.375rem !important;
+    padding: 0.375rem 0.75rem !important;
 }
 
-.stButton > button:hover {
-    background-color: #e9ecef !important;
-    border-color: #adb5bd !important;
-}
-
-.stButton > button[kind="primary"]:hover {
+.stForm button[data-testid="baseButton-primary"]:hover {
     background-color: #0056b3 !important;
     border-color: #0056b3 !important;
 }
@@ -458,37 +390,3 @@ div[data-testid="stFileUploader"] button:hover {
 .stButton > button[kind="primary"] div {
     color: white !important;
 }
-
-/* CSS específico para botões de formulário (form_submit_button) */
-.stForm button[data-testid="baseButton-primary"] {
-    background-color: #007bff !important;
-    color: white !important;
-    border: 1px solid #007bff !important;
-    font-weight: 500 !important;
-    border-radius: 0.375rem !important;
-    padding: 0.375rem 0.75rem !important;
-}
-
-.stForm button[data-testid="baseButton-primary"]:hover {
-    background-color: #0056b3 !important;
-    border-color: #0056b3 !important;
-}
-
-/* Forçar estilo em todos os botões primary */
-button[kind="primary"], 
-button[data-testid="baseButton-primary"],
-.stForm button[data-testid="baseButton-primary"] {
-    background-color: #007bff !important;
-    color: white !important;
-    border: 1px solid #007bff !important;
-}
-
-button[kind="primary"]:hover,
-button[data-testid="baseButton-primary"]:hover,
-.stForm button[data-testid="baseButton-primary"]:hover {
-    background-color: #0056b3 !important;
-    border-color: #0056b3 !important;
-}
-
-/* JavaScript para corrigir botões invisíveis */
-/* Esta solução será implementada via script */

@@ -1089,15 +1089,7 @@ def show():
                     box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
                 }
                 
-                /* Garantir que a sidebar mantenha o estilo original - PROTEÇÃO COMPLETA */
-                .css-1d391kg button,
-                .css-1544g2n button,
-                [data-testid="stSidebar"] button,
-                [data-testid="stSidebar"] .streamlit-expanderHeader,
-                [data-testid="stSidebar"] [data-testid="stExpanderToggleIcon"],
-                .sidebar button,
-                .sidebar .streamlit-expanderHeader {
-                    background: transparent !important;
+                /* Sidebar está sendo controlada pelo CSS global - removendo conflitos */
                     color: inherit !important;
                     border: inherit !important;
                     border-radius: inherit !important;

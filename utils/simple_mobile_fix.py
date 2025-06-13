@@ -5,18 +5,9 @@ import streamlit as st
 
 def apply_mobile_sidebar_fix():
     """
-    Aplica CSS simples para forçar a sidebar a aparecer em mobile apenas quando logado
+    DESATIVADO - CSS da sidebar agora é controlado centralmente pelo .streamlit/style.css
     """
-    
-    # Só aplicar se o usuário estiver logado (verificar diferentes variáveis de estado)
-    is_authenticated = (
-        hasattr(st.session_state, 'authenticated') and st.session_state.authenticated or
-        hasattr(st.session_state, 'user_info') and st.session_state.user_info or
-        hasattr(st.session_state, 'usuario') and st.session_state.usuario
-    )
-    
-    if not is_authenticated:
-        return
+    return  # Função desativada para evitar conflitos
     
     st.markdown("""
     <style>

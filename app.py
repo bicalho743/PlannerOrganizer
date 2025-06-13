@@ -1228,27 +1228,20 @@ except Exception as e:
     logger.error(f"Erro ao carregar CSS: {e}")
     custom_css = ""
 
-# Adicionar estilo CSS personalizado para tema profissional
+# Aplicar apenas CSS customizado do arquivo
 st.markdown(f"""
     <style>
     {custom_css}
-    
-    /* Estilo específico para a barra lateral */
-    section[data-testid="stSidebar"] {{
-        background-color: #1E1F36;
-        border-right: 1px solid #E0E0E0;
-    }}
+    </style>
+    """, unsafe_allow_html=True)
 
+# CSS mínimo adicional apenas para ajustes específicos não cobertos pelo arquivo CSS
+st.markdown("""
+    <style>
     div.block-container {{
-        padding-top: 0px !important;
         margin-top: 80px !important;
     }}
-
-    /* Estilo para botões do menu */
-    div.stButton > button {{
-        width: 100%;
-        background-color: rgba(255, 255, 255, 0.05) !important;
-        color: rgba(255, 255, 255, 0.8) !important;
+    </style> rgba(255, 255, 255, 0.8) !important;
         font-weight: 500;
         text-align: left;
         padding: 0.75rem 1rem;
