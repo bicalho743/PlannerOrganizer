@@ -635,67 +635,7 @@ def show():
                                     st.error(f"Erro ao recusar proposta {proposta_id}")
                                     del st.session_state[alterar_status_key]
 
-                    # CSS para alinhar todos os botões da tabela
-                    st.markdown("""
-                    <style>
-                    /* Alinhar todos os botões na mesma altura com espaçamento adequado */
-                    .stButton > button {
-                        height: 2.5rem !important;
-                        margin: 0.25rem 0.125rem !important;
-                        padding: 0.5rem 1rem !important;
-                        font-size: 0.875rem !important;
-                        font-weight: 500 !important;
-                        border-radius: 0.375rem !important;
-                        border: 1px solid transparent !important;
-                        transition: all 0.2s ease !important;
-                        min-width: fit-content !important;
-                    }
-
-                    /* APENAS BOTÕES DA ÁREA DE CONTEÚDO - EXCLUIR SIDEBAR E ABAS */
-                    div[data-testid="stMainBlockContainer"] .stButton > button,
-                    div[data-testid="stMainBlockContainer"] div[data-testid="column"] button,
-                    div[data-testid="stMainBlockContainer"] button[kind="primary"],
-                    div[data-testid="stMainBlockContainer"] button[kind="secondary"] {
-                        background-color: #4472C4 !important;
-                        color: white !important;
-                        border-color: #4472C4 !important;
-                        border: 1px solid #4472C4 !important;
-                    }
-
-                    div[data-testid="stMainBlockContainer"] .stButton > button:hover,
-                    div[data-testid="stMainBlockContainer"] div[data-testid="column"] button:hover,
-                    div[data-testid="stMainBlockContainer"] button[kind="primary"]:hover,
-                    div[data-testid="stMainBlockContainer"] button[kind="secondary"]:hover {
-                        background-color: #2e4282 !important;
-                        border-color: #2e4282 !important;
-                        transform: translateY(-1px) !important;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
-                    }
-
-                    /* REMOVER TODOS OS ESTILOS ESPECIAIS - TODOS OS BOTÕES AZUIS */
-
-                    /* Alinhar containers de botões e selectbox */
-                    .stButton, .stSelectbox {
-                        display: flex !important;
-                        align-items: center !important;
-                        height: 2.5rem !important;
-                        margin-bottom: 0.25rem !important;
-                    }
-
-                    /* Alinhamento vertical para selectbox */
-                    .stSelectbox > div {
-                        margin-top: 0 !important;
-                        margin-bottom: 0 !important;
-                    }
-
-                    /* Espaçamento entre colunas de botões */
-                    .stColumns > div {
-                        padding: 0 0.25rem !important;
-                        display: flex !important;
-                        align-items: center !important;
-                    }
-                    </style>
-                    """, unsafe_allow_html=True)
+                    # CSS removido para evitar conflitos com estilos globais da sidebar
 
                     # Construir interface com seletores de status direto na tabela
                     st.write("Selecione uma proposta abaixo para editar ou alterar o status:")
@@ -890,27 +830,7 @@ def show():
                                     col_confirm1, col_confirm2 = st.columns(2)
 
                                     with col_confirm1:
-                                        # CSS para botão de confirmação (vermelho)
-                                        st.markdown("""
-                                        <style>
-                                        div[data-testid="column"] button[kind="secondary"] {
-                                            width: 100% !important;
-                                            font-size: 0.75rem !important;
-                                            padding: 0.3rem 0.5rem !important;
-                                            background: linear-gradient(135deg, #f44336, #d32f2f) !important;
-                                            color: white !important;
-                                            border: none !important;
-                                            border-radius: 4px !important;
-                                            font-weight: 500 !important;
-                                            transition: all 0.3s ease !important;
-                                        }
-                                        div[data-testid="column"] button[kind="secondary"]:hover {
-                                            background: linear-gradient(135deg, #d32f2f, #c62828) !important;
-                                            transform: translateY(-1px) !important;
-                                            box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
-                                        }
-                                        </style>
-                                        """, unsafe_allow_html=True)
+                                        # CSS removido para evitar conflitos com sidebar
                                         # CSS para botão de confirmação "Sim, excluir"
                                         st.markdown(f"""
                                         <style>
