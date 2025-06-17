@@ -806,125 +806,40 @@ def show():
                                     except Exception as e:
                                         st.error(f"Erro ao gerar PDF: {str(e)}")
 
-                            # Coluna 5: Botão de exclusão (modo alternativo mais direto)
+                            # Coluna 5: Botão de exclusão direta
                             with col_excluir:
-                                # Chave exclusiva para cada botão de exclusão
-                                excluir_key = f"del_{proposta_id}"
-                                confirmar_key = f"confirm_del_direct_{proposta_id}"
-
-                                # Usar variáveis de sessão simples para gerenciar estado
-                                if excluir_key not in st.session_state:
-                                    st.session_state[excluir_key] = False
-
-
-
                                 if st.button("Excluir", key=f"excluir_{proposta_id}", help="Excluir proposta", 
                                            type="secondary", use_container_width=True):
-                                    # Alternar estado de confirmação
-                                    st.session_state[excluir_key] = True
-                                    st.rerun()
+                                    # Excluir diretamente sem confirmação
+                                    try:
+                                        # Criar conexão SQL Alchemy direta para garantir
+                                        from sqlalchemy import text
+                                        from utils.database import engine
 
-                                # Mostrar confirmação se o botão foi clicado
-                                if st.session_state.get(excluir_key, False):
-                                    st.warning("⚠️ Tem certeza que deseja excluir esta proposta?")
-                                    col_confirm1, col_confirm2 = st.columns(2)
+                                        with engine.connect() as conn:
+                                            # 1. Excluir transações financeiras
+                                            conn.execute(text(f"DELETE FROM financeiro WHERE proposta_id = {proposta_id}"))
 
-                                    with col_confirm1:
-                                        # CSS removido para evitar conflitos com sidebar
-                                        # CSS para botão de confirmação "Sim, excluir"
-                                        st.markdown(f"""
-                                        <style>
-                                        div.stButton > button[data-testid="stBaseButton-secondary"][key="sim_{confirmar_key}"] {{
-                                            background-color: #dc3545 !important;
-                                            color: white !important;
-                                            border: none !important;
-                                            border-radius: 6px !important;
-                                            padding: 8px 16px !important;
-                                            font-weight: 500 !important;
-                                        }}
-                                        div.stButton > button[data-testid="stBaseButton-secondary"][key="sim_{confirmar_key}"]:hover {{
-                                            background-color: #c82333 !important;
-                                        }}
-                                        </style>
-                                        """, unsafe_allow_html=True)
+                                            # 2. Excluir acréscimos
+                                            conn.execute(text(f"DELETE FROM acrescimos_proposta WHERE proposta_id = {proposta_id}"))
 
-                                        if st.button("✓ Sim, excluir", key=f"sim_{confirmar_key}"):
-                                            # Chamar função excluir direto
-                                            try:
-                                                # Criar conexão SQL Alchemy direta para garantir
-                                                from sqlalchemy import text
-                                                from utils.database import engine
+                                            # 3. Excluir produtos da proposta
+                                            conn.execute(text(f"DELETE FROM produtos_organizadores WHERE proposta_id = {proposta_id}"))
 
-                                                with engine.connect() as conn:
-                                                    # 1. Excluir transações financeiras
-                                                    conn.execute(text(f"DELETE FROM financeiro WHERE proposta_id = {proposta_id}"))
+                                            # 4. Excluir andamento
+                                            conn.execute(text(f"DELETE FROM andamento_propostas WHERE proposta_id = {proposta_id}"))
 
-                                                    # 2. Excluir acréscimos
-                                                    conn.execute(text(f"DELETE FROM acrescimos_proposta WHERE proposta_id = {proposta_id}"))
+                                            # 5. Excluir a proposta
+                                            conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
 
-                                                    # 3. Excluir produtos da proposta
-                                                    conn.execute(text(f"DELETE FROM produtos_organizadores WHERE proposta_id = {proposta_id}"))
+                                            # Confirmar alterações
+                                            conn.commit()
 
-                                                    # 4. Excluir andamento
-                                                    conn.execute(text(f"DELETE FROM andamento_propostas WHERE proposta_id = {proposta_id}"))
-
-                                                    # 5. Excluir a proposta
-                                                    conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
-
-                                                    # Confirmar alterações
-                                                    conn.commit()
-
-                                                st.success(f"✅ Proposta #{proposta_id} excluída com sucesso!")
-                                                # Limpar estado
-                                                st.session_state[excluir_key] = False
-                                                time.sleep(1.5)
-                                                st.rerun()
-                                            except Exception as e:
-                                                st.error(f"Erro ao excluir proposta: {str(e)}")
-
-                                    with col_confirm2:
-                                        # CSS para botão de cancelar (cinza)
-                                        st.markdown("""
-                                        <style>
-                                        div[data-testid="column"] button[kind="secondary"] {
-                                            width: 100% !important;
-                                            font-size: 0.75rem !important;
-                                            padding: 0.3rem 0.5rem !important;
-                                            background: linear-gradient(135deg, #757575, #616161) !important;
-                                            color: white !important;
-                                            border: none !important;
-                                            border-radius: 4px !important;
-                                            font-weight: 500 !important;
-                                            transition: all 0.3s ease !important;
-                                        }
-                                        div[data-testid="column"] button[kind="secondary"]:hover {
-                                            background: linear-gradient(135deg, #616161, #424242) !important;
-                                            transform: translateY(-1px) !important;
-                                            box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
-                                        }
-                                        </style>
-                                        """, unsafe_allow_html=True)
-                                        # CSS para botão de cancelar
-                                        st.markdown(f"""
-                                        <style>
-                                        div.stButton > button[data-testid="stBaseButton-secondary"][key="cancelar_{confirmar_key}"] {{
-                                            background-color: #6c757d !important;
-                                            color: white !important;
-                                            border: none !important;
-                                            border-radius: 6px !important;
-                                            padding: 8px 16px !important;
-                                            font-weight: 500 !important;
-                                        }}
-                                        div.stButton > button[data-testid="stBaseButton-secondary"][key="cancelar_{confirmar_key}"]:hover {{
-                                            background-color: #5a6268 !important;
-                                        }}
-                                        </style>
-                                        """, unsafe_allow_html=True)
-
-                                        if st.button("✗ Cancelar", key=f"cancelar_{confirmar_key}"):
-                                            # Limpar estado de sessão
-                                            st.session_state[excluir_key] = False
-                                            st.rerun()
+                                        st.success(f"✅ Proposta #{proposta_id} excluída com sucesso!")
+                                        time.sleep(1.5)
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error(f"Erro ao excluir proposta: {str(e)}")
 
                 else:
                     st.info("Não há propostas em aberto no momento.")
