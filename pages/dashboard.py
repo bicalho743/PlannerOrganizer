@@ -190,15 +190,41 @@ def show():
     # Obter dados
     try:
         propostas = st.session_state.db.get_propostas()
-        # Contar propostas em elaboração ou aguardando aprovação como "em aberto"
+        
+        # Limpar dados de propostas para evitar erro Arrow
         if not propostas.empty:
+            # Debug: verificar dados problemáticos na coluna valor
+            problematic_values = propostas[propostas['valor'].astype(str).str.contains(r'[a-zA-Z]', na=False)]
+            if not problematic_values.empty:
+                print(f"DEBUG DASHBOARD: Valores problemáticos encontrados na coluna 'valor': {problematic_values[['id', 'valor']].to_dict('records')}")
+                
+            # Limpar coluna valor - converter nomes para 0
+            def clean_valor_dashboard(x):
+                if pd.isna(x):
+                    return 0.0
+                val_str = str(x).strip().lower()
+                # Se contém letras (nomes), retorna 0
+                if any(char.isalpha() for char in val_str):
+                    return 0.0
+                try:
+                    return float(str(x).replace(',', '.'))
+                except:
+                    return 0.0
+                    
+            propostas['valor'] = propostas['valor'].apply(clean_valor_dashboard)
+            
+            # Contar propostas em elaboração ou aguardando aprovação como "em aberto"
             propostas_em_aberto = len(propostas[
                 (propostas['status'] == 'Em elaboração') | 
                 (propostas['status'] == 'Aguardando aprovação')
             ])
+            
+            print(f"DEBUG DASHBOARD: {propostas_em_aberto} propostas em aberto encontradas")
         else:
             propostas_em_aberto = 0
+            print("DEBUG DASHBOARD: Nenhuma proposta encontrada")
     except Exception as e:
+        print(f"DEBUG DASHBOARD: Erro ao carregar propostas: {str(e)}")
         st.warning("Erro ao carregar propostas")
         propostas = pd.DataFrame()
         propostas_em_aberto = 0
