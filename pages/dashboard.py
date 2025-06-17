@@ -339,19 +339,63 @@ def show():
             ].sort_values('data_inicio', ascending=False)
             
             if not propostas_abertas.empty:
-                for _, proposta in propostas_abertas.head(5).iterrows():
-                    status_emoji = "🔄" if proposta['status'] == 'Em elaboração' else "⏳"
+                print(f"DEBUG DASHBOARD: Exibindo {len(propostas_abertas)} propostas abertas")
+                for idx, proposta in propostas_abertas.head(5).iterrows():
+                    print(f"DEBUG DASHBOARD: Proposta {idx}: {proposta.to_dict()}")
                     
-                    with st.expander(f"{status_emoji} #{proposta['numero']} - {proposta['descricao'][:40]}..."):
-                        st.write(f"**Cliente:** {proposta.get('cliente_nome', 'N/A')}")
-                        st.write(f"**Valor:** R$ {float(proposta['valor']):,.2f}")
-                        st.write(f"**Status:** {proposta['status']}")
+                    status_emoji = "🔄" if proposta['status'] == 'Em elaboração' else "⏳"
+                    numero = proposta.get('numero', 'N/A')
+                    descricao = proposta.get('descricao', 'Sem descrição')
+                    
+                    # Criar título do expander com dados seguros
+                    titulo_descricao = descricao[:40] + "..." if len(str(descricao)) > 40 else str(descricao)
+                    titulo_expander = f"{status_emoji} #{numero} - {titulo_descricao}"
+                    
+                    with st.expander(titulo_expander):
+                        # Cliente
+                        cliente_nome = proposta.get('cliente_nome', 'N/A')
+                        if pd.isna(cliente_nome) or str(cliente_nome).strip() == '':
+                            cliente_nome = 'Cliente não informado'
+                        st.write(f"**Cliente:** {cliente_nome}")
                         
-                        if pd.notna(proposta.get('data_inicio')):
-                            st.write(f"**Data Início:** {format_date_safe(proposta['data_inicio'])}")
+                        # Valor
+                        try:
+                            valor = float(proposta['valor']) if not pd.isna(proposta['valor']) else 0.0
+                            st.write(f"**Valor:** R$ {valor:,.2f}")
+                        except (ValueError, TypeError):
+                            st.write(f"**Valor:** R$ 0,00")
+                        
+                        # Status
+                        st.write(f"**Status:** {proposta.get('status', 'N/A')}")
+                        
+                        # Data início
+                        data_inicio = proposta.get('data_inicio')
+                        if pd.notna(data_inicio) and str(data_inicio).strip() != '':
+                            st.write(f"**Data Início:** {format_date_safe(data_inicio)}")
+                        else:
+                            st.write("**Data Início:** Não informada")
                             
-                        if pd.notna(proposta.get('previsao_dias')) and proposta.get('previsao_dias') > 0:
-                            st.write(f"**Prazo:** {proposta['previsao_dias']} dias")
+                        # Prazo
+                        previsao_dias = proposta.get('previsao_dias')
+                        if pd.notna(previsao_dias) and str(previsao_dias).strip() != '':
+                            try:
+                                dias = int(float(previsao_dias))
+                                if dias > 0:
+                                    st.write(f"**Prazo:** {dias} dias")
+                            except (ValueError, TypeError):
+                                pass
+                        
+                        # Status de execução se disponível
+                        status_execucao = proposta.get('status_execucao')
+                        if pd.notna(status_execucao) and str(status_execucao).strip() != '':
+                            st.write(f"**Status Execução:** {status_execucao}")
+                            
+                        # Observações se disponível
+                        observacoes = proposta.get('observacoes')
+                        if pd.notna(observacoes) and str(observacoes).strip() != '':
+                            st.write(f"**Observações:** {observacoes[:100]}...")
+                            
+                print(f"DEBUG DASHBOARD: Finalizada exibição das propostas abertas")
             else:
                 st.info("Nenhuma proposta em elaboração ou aguardando aprovação.")
         else:
