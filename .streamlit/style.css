@@ -56,7 +56,9 @@ header[data-testid="stHeader"] {
 section[data-testid="stSidebar"] {
     background-color: #1E1F36 !important;
     border-right: 1px solid #4C566A !important;
-    min-width: 250px !important;
+    min-width: 200px !important;
+    width: 200px !important;
+    max-width: 200px !important;
 }
 
 /* Container da sidebar */
