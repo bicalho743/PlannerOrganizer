@@ -126,6 +126,35 @@ section[data-testid="stSidebar"] button div {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
 }
 
+/* Botão "Informações do Sistema" - estilo específico azul */
+section[data-testid="stSidebar"] button[aria-label*="Informações"],
+section[data-testid="stSidebar"] button[title*="Informações"],
+section[data-testid="stSidebar"] .stButton > button[aria-label*="Informações"],
+section[data-testid="stSidebar"] .stButton > button[title*="Informações"],
+section[data-testid="stSidebar"] button:has(div:contains("ℹ️")),
+section[data-testid="stSidebar"] button:has(span:contains("ℹ️")),
+section[data-testid="stSidebar"] button:has(*:contains("Informações do Sistema")),
+section[data-testid="stSidebar"] .stButton > button:has(*:contains("Informações do Sistema")) {
+    background: linear-gradient(135deg, #2196F3, #1976D2) !important;
+    color: white !important;
+    border: 1px solid #1976D2 !important;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3) !important;
+}
+
+section[data-testid="stSidebar"] button[aria-label*="Informações"]:hover,
+section[data-testid="stSidebar"] button[title*="Informações"]:hover,
+section[data-testid="stSidebar"] .stButton > button[aria-label*="Informações"]:hover,
+section[data-testid="stSidebar"] .stButton > button[title*="Informações"]:hover,
+section[data-testid="stSidebar"] button:has(div:contains("ℹ️")):hover,
+section[data-testid="stSidebar"] button:has(span:contains("ℹ️")):hover,
+section[data-testid="stSidebar"] button:has(*:contains("Informações do Sistema")):hover,
+section[data-testid="stSidebar"] .stButton > button:has(*:contains("Informações do Sistema")):hover {
+    background: linear-gradient(135deg, #1976D2, #1565C0) !important;
+    border-color: #1565C0 !important;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4) !important;
+    transform: translateY(-1px) !important;
+}
+
 /* Breadcrumb */
 .page-breadcrumb {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
