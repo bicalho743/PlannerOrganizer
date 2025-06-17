@@ -1238,183 +1238,21 @@ st.markdown(f"""
 # CSS mínimo adicional apenas para ajustes específicos não cobertos pelo arquivo CSS
 st.markdown("""
     <style>
-    div.block-container {{
+    div.block-container {
         margin-top: 80px !important;
-    }}
-    </style> rgba(255, 255, 255, 0.8) !important;
-        font-weight: 500;
-        text-align: left;
-        padding: 0.75rem 1rem;
-        margin-bottom: 0.5rem;
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        backdrop-filter: blur(10px);
-        position: relative;
-        overflow: hidden;
-    }}
-
-    div.stButton > button:hover {{
-        background-color: rgba(255, 255, 255, 0.15) !important;
-        color: rgba(255, 255, 255, 1) !important;
-        border-color: rgba(255, 255, 255, 0.3);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.3), 0 0 20px rgba(255, 255, 255, 0.1);
-        transform: translateY(-2px) scale(1.02);
-    }}
-
-    /* Efeito de ondulação nos botões do menu */
-    div.stButton > button::before {{
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
-        transition: all 0.6s ease;
-        transform: translate(-50%, -50%);
-        border-radius: 50%;
-        pointer-events: none;
-    }}
-
-    div.stButton > button:hover::before {{
-        width: 300px;
-        height: 300px;
-    }}
-
-    /* Container para os botões */
-    div.nav-buttons {{
-        padding: 1rem;
-        margin: 0 -1rem;
-    }}
+    }
     
     /* Esconde os links nativos do Streamlit na barra lateral */
-    section[data-testid="stSidebar"] .element-container:has(svg[xmlns="http://www.w3.org/2000/svg"]) {{
+    section[data-testid="stSidebar"] .element-container:has(svg[xmlns="http://www.w3.org/2000/svg"]) {
         display: none;
-    }}
+    }
     
     /* Esconde o seletor de páginas nativo do Streamlit */
-    [data-testid="stSidebarNav"] {{
+    [data-testid="stSidebarNav"] {
         display: none !important;
-    }}
+    }
     
-    /* Estilos para os links de navegação personalizados */
-    .navigation-links a {{
-        display: block;
-        padding: 8px 12px;
-        margin: 4px 0;
-        text-decoration: none;
-        color: #1E366F;
-        border-radius: 4px;
-        transition: all 0.2s ease;
-    }}
-    
-    .navigation-links a:hover {{
-        background-color: #E3F2FD;
-        color: #1976D2 !important;
-    }}
-    
-    /* Esconde o botão de hamburger do Streamlit */
-    button[kind="header"] {{
-        display: none !important;
-    }}
-    
-    /* Remove excesso de padding na barra lateral */
-    .st-emotion-cache-16txtl3 {{
-        padding-top: 1rem !important;
-    }}
-    
-    /* Título no topo */
-    h1 {{
-        margin-top: 2rem !important;
-        margin-bottom: 1.5rem;
-        color: #1E366F;
-        font-weight: 600;
-        padding-top: 1rem;
-    }}
-    
-    /* Expanders na sidebar */
-    .sidebar .st-expander {{
-        border: 1px solid #E0E0E0;
-        border-radius: 4px;
-        margin-bottom: 1rem;
-    }}
-    
-    /* Cabeçalho do expander */
-    .sidebar .st-expander > div:first-child {{
-        background-color: #F5F7FA;
-        padding: 0.75rem;
-    }}
-    
-    /* Estilização dos botões do menu principal para padronização */
-    .sidebar button[data-testid="baseButton-secondary"] {{
-        margin-top: 3px !important;
-        margin-bottom: 3px !important;
-        padding: 10px 15px !important;
-        background-color: #f5f7fa !important;
-        border: 1px solid #e0e4e8 !important;
-        border-radius: 8px !important;
-        font-size: 0.92rem !important;
-        font-weight: 500 !important;
-        color: #1E366F !important;
-        transition: all 0.2s ease !important;
-        font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-        text-align: left !important;
-        height: 42px !important;
-        line-height: 1.2 !important;
-        letter-spacing: normal !important;
-    }}
-    
-    /* Botão selecionado/ativo */
-    .sidebar button[data-testid="baseButton-secondary"].menu-active {{
-        background-color: #E3F2FD !important;
-        border-color: #1E366F !important;
-        box-shadow: 0 2px 5px rgba(30, 54, 111, 0.15) !important;
-    }}
-    
-    /* Hover dos botões do menu */
-    .sidebar button[data-testid="baseButton-secondary"]:hover {{
-        background-color: #E3F2FD !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 4px 8px rgba(30, 54, 111, 0.15) !important;
-    }}
-    
-    /* Container dos botões com padding reduzido */
-    .nav-buttons {{
-        padding-top: 0.2rem !important;
-        padding-bottom: 0.2rem !important;
-        margin-top: 0 !important;
-    }}
-    
-    /* Aplicar tamanho fixo para os ícones e alinhamento consistente */
-    .sidebar button[data-testid="baseButton-secondary"] div {{
-        display: flex !important;
-        align-items: center !important;
-        justify-content: flex-start !important;
-    }}
-    
-    /* Garantir que todos os ícones tenham espaço e alinhamento uniforme */
-    .sidebar button[data-testid="baseButton-secondary"] div::before {{
-        content: "" !important;
-        width: 24px !important;
-        display: inline-block !important;
-        text-align: center !important;
-        margin-right: 8px !important;
-    }}
-    
-    /* Ajustar espaço entre a barra lateral e o conteúdo principal */
-    [data-testid="stSidebar"] {{
-        padding-top: 0 !important;
-        margin-top: 0 !important;
-    }}
-    
-    /* Reduzir espaço entre os itens da barra lateral */
-    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] > div {{
-        padding-top: 0 !important;
-        margin-top: 0 !important;
-        gap: 0.5rem !important;
-    }}
+
     </style>
 """, unsafe_allow_html=True)
 
