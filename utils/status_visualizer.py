@@ -304,10 +304,10 @@ def mostrar_gauge_progresso(status_atual):
             'axis': {'range': [0, 100]},
             'bar': {'color': STATUS_PROPOSTAS.get(status_atual, {}).get('cor', '#777777')},
             'steps': [
-                {'range': [0, 25], 'color': '#3498db20'},
-                {'range': [25, 50], 'color': '#f39c1220'},
-                {'range': [50, 75], 'color': '#9b59b620'},
-                {'range': [75, 100], 'color': '#2ecc7120'}
+                {'range': [0, 25], 'color': 'rgba(52, 152, 219, 0.2)'},
+                {'range': [25, 50], 'color': 'rgba(243, 156, 18, 0.2)'},
+                {'range': [50, 75], 'color': 'rgba(155, 89, 182, 0.2)'},
+                {'range': [75, 100], 'color': 'rgba(46, 204, 113, 0.2)'}
             ],
             'threshold': {
                 'line': {'color': STATUS_PROPOSTAS.get(status_atual, {}).get('cor', '#777777'), 'width': 4},

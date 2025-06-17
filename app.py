@@ -1751,44 +1751,7 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
     except Exception as e:
         st.warning(f"Pacote de ícones não disponível")
 
-# Links de navegação ocultos em um expander para desenvolvedores
-with st.sidebar.expander("🔧 Acesso Desenvolvedor", expanded=False):
-    st.markdown("""
-    <div style="padding: 0.5rem; background-color: white; border-radius: 4px;">
-        <h4 style="color: #1E366F; font-size: 1rem; margin-bottom: 0.8rem;">Navegação Rápida</h4>
-        
-        <div class="navigation-links">
-            <a href="/" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #F5F7FA; color: #1E366F; text-decoration: none; font-size: 0.85rem;">Home (App)</a>
-            <a href="/cadastros" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #F5F7FA; color: #1E366F; text-decoration: none; font-size: 0.85rem;">Cadastros</a>
-            <a href="/dashboard" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #F5F7FA; color: #1E366F; text-decoration: none; font-size: 0.85rem;">Dashboard</a>
-            <a href="/dashboard_fixed" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #F5F7FA; color: #1E366F; text-decoration: none; font-size: 0.85rem;">Dashboard (Fixed)</a>
-            <a href="/financeiro" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #F5F7FA; color: #1E366F; text-decoration: none; font-size: 0.85rem;">Financeiro</a>
-            <a href="/propostas" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #F5F7FA; color: #1E366F; text-decoration: none; font-size: 0.85rem;">Propostas</a>
-            <a href="/relatorios" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #F5F7FA; color: #1E366F; text-decoration: none; font-size: 0.85rem;">Relatórios</a>
-            <a href="/vendas" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #F5F7FA; color: #1E366F; text-decoration: none; font-size: 0.85rem;">Vendas</a>
-        </div>
-        
-        <h4 style="color: #1E366F; font-size: 1rem; margin-top: 1.2rem; margin-bottom: 0.8rem;">Ferramentas</h4>
-        <div class="tools-links">
-            <a href="/manual_sistema" target="_blank" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #E3F2FD; color: #1976D2; text-decoration: none; font-size: 0.85rem;">📘 Manual do Sistema</a>
-            <a href="/enviar_manual" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #FFE0B2; color: #E65100; text-decoration: none; font-size: 0.85rem;">📧 Enviar Manual por Email</a>
-            <a href="http://localhost:8530" target="_blank" style="display: block; padding: 8px 12px; margin: 4px 0; border-radius: 4px; background-color: #E8F5E9; color: #388E3C; text-decoration: none; font-size: 0.85rem;">💾 Sistema de Backup</a>
-        </div>
-        
-        <script>
-        function manualClick() {
-            // Este script irá atualizar um parâmetro na URL para ativar a página de envio de manual
-            window.location.href = "/?show_enviar_manual=true";
-        }
-        </script>
-        
-        <p style="margin-top: 1rem; font-size: 0.8rem; color: #5A6A85; text-align: center;">
-            Acesso exclusivo para desenvolvedores
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Sem botão de importação conforme solicitado
+# Menu de desenvolvedor removido - acesso direto aos módulos através do menu principal
 
 # A navegação é controlada pelos botões do menu principal
 # Os botões já atualizam st.session_state.current_page
