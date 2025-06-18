@@ -371,7 +371,7 @@ body, .main, [data-testid="stAppViewContainer"], .block-container {
     padding-bottom: 52px !important;
 }
 
-/* EXPANDERS - Corrigir visibilidade do texto */
+/* EXPANDERS - Corrigir visibilidade do texto com seletores mais específicos */
 div[data-testid="stExpander"] {
     background-color: #FFFFFF !important;
     border: 1px solid #E0E4E7 !important;
@@ -379,8 +379,10 @@ div[data-testid="stExpander"] {
     margin: 0.5rem 0 !important;
 }
 
-/* Cabeçalho do expander */
-div[data-testid="stExpander"] > div:first-child {
+/* Cabeçalho do expander - múltiplos seletores */
+div[data-testid="stExpander"] > div:first-child,
+div[data-testid="stExpander"] summary,
+div[data-testid="stExpander"] button {
     background-color: #F8F9FA !important;
     color: #262730 !important;
     padding: 0.75rem 1rem !important;
@@ -388,19 +390,25 @@ div[data-testid="stExpander"] > div:first-child {
     font-weight: 500 !important;
 }
 
-/* Conteúdo do expander */
-div[data-testid="stExpander"] > div:last-child {
+/* Conteúdo do expander - múltiplos seletores */
+div[data-testid="stExpander"] > div:last-child,
+div[data-testid="stExpander"] .streamlit-expanderContent,
+div[data-testid="stExpander"] [data-testid="stExpanderDetails"] {
     background-color: #FFFFFF !important;
     color: #262730 !important;
     padding: 1rem !important;
     border-radius: 0 0 8px 8px !important;
 }
 
-/* Texto dentro do expander */
+/* Forçar cor do texto em todos os elementos dentro do expander */
+div[data-testid="stExpander"] *,
 div[data-testid="stExpander"] p,
 div[data-testid="stExpander"] div,
-div[data-testid="stExpander"] span {
+div[data-testid="stExpander"] span,
+div[data-testid="stExpander"] .stMarkdown,
+div[data-testid="stExpander"] .stText {
     color: #262730 !important;
+    background-color: transparent !important;
 }
 
 /* Texto em negrito no expander */
@@ -408,6 +416,15 @@ div[data-testid="stExpander"] strong,
 div[data-testid="stExpander"] b {
     color: #1E366F !important;
     font-weight: 600 !important;
+}
+
+/* Seletor ainda mais específico para o conteúdo dos expanders */
+.main div[data-testid="stExpander"] div[data-testid="stMarkdownContainer"] {
+    color: #262730 !important;
+}
+
+.main div[data-testid="stExpander"] div[data-testid="stMarkdownContainer"] p {
+    color: #262730 !important;
 }
 
 /* Estilo para file uploader */

@@ -356,44 +356,56 @@ def show():
                         cliente_nome = proposta.get('cliente_nome', 'N/A')
                         if pd.isna(cliente_nome) or str(cliente_nome).strip() == '':
                             cliente_nome = 'Cliente não informado'
-                        st.write(f"**Cliente:** {cliente_nome}")
                         
                         # Valor
                         try:
                             valor = float(proposta['valor']) if not pd.isna(proposta['valor']) else 0.0
-                            st.write(f"**Valor:** R$ {valor:,.2f}")
+                            valor_formatado = f"R$ {valor:,.2f}".replace(',', '.')
                         except (ValueError, TypeError):
-                            st.write(f"**Valor:** R$ 0,00")
-                        
-                        # Status
-                        st.write(f"**Status:** {proposta.get('status', 'N/A')}")
+                            valor_formatado = "R$ 0,00"
                         
                         # Data início
                         data_inicio = proposta.get('data_inicio')
                         if pd.notna(data_inicio) and str(data_inicio).strip() != '':
-                            st.write(f"**Data Início:** {format_date_safe(data_inicio)}")
+                            data_inicio_str = format_date_safe(data_inicio)
                         else:
-                            st.write("**Data Início:** Não informada")
+                            data_inicio_str = "Não informada"
                             
                         # Prazo
+                        prazo_str = ""
                         previsao_dias = proposta.get('previsao_dias')
                         if pd.notna(previsao_dias) and str(previsao_dias).strip() != '':
                             try:
                                 dias = int(float(previsao_dias))
                                 if dias > 0:
-                                    st.write(f"**Prazo:** {dias} dias")
+                                    prazo_str = f"{dias} dias"
                             except (ValueError, TypeError):
                                 pass
                         
-                        # Status de execução se disponível
-                        status_execucao = proposta.get('status_execucao')
-                        if pd.notna(status_execucao) and str(status_execucao).strip() != '':
-                            st.write(f"**Status Execução:** {status_execucao}")
+                        # Status de execução
+                        status_execucao = proposta.get('status_execucao', 'N/A')
+                        if pd.isna(status_execucao) or str(status_execucao).strip() == '':
+                            status_execucao = 'N/A'
                             
-                        # Observações se disponível
-                        observacoes = proposta.get('observacoes')
-                        if pd.notna(observacoes) and str(observacoes).strip() != '':
-                            st.write(f"**Observações:** {observacoes[:100]}...")
+                        # Observações
+                        observacoes = proposta.get('observacoes', '')
+                        if pd.isna(observacoes) or str(observacoes).strip() == '':
+                            observacoes = 'Nenhuma observação'
+                        else:
+                            observacoes = str(observacoes)[:100] + "..." if len(str(observacoes)) > 100 else str(observacoes)
+                        
+                        # Usar HTML com estilos inline para garantir visibilidade
+                        st.markdown(f"""
+                        <div style='color: #262730; background-color: #FFFFFF; padding: 10px; border-radius: 5px;'>
+                            <p style='color: #262730; margin: 5px 0;'><strong style='color: #1E366F;'>Cliente:</strong> {cliente_nome}</p>
+                            <p style='color: #262730; margin: 5px 0;'><strong style='color: #1E366F;'>Valor:</strong> {valor_formatado}</p>
+                            <p style='color: #262730; margin: 5px 0;'><strong style='color: #1E366F;'>Status:</strong> {proposta.get('status', 'N/A')}</p>
+                            <p style='color: #262730; margin: 5px 0;'><strong style='color: #1E366F;'>Data Início:</strong> {data_inicio_str}</p>
+                            {f"<p style='color: #262730; margin: 5px 0;'><strong style='color: #1E366F;'>Prazo:</strong> {prazo_str}</p>" if prazo_str else ""}
+                            <p style='color: #262730; margin: 5px 0;'><strong style='color: #1E366F;'>Status Execução:</strong> {status_execucao}</p>
+                            <p style='color: #262730; margin: 5px 0;'><strong style='color: #1E366F;'>Observações:</strong> {observacoes}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
                             
                 print(f"DEBUG DASHBOARD: Finalizada exibição das propostas abertas")
             else:
