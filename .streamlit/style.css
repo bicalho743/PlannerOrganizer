@@ -6,6 +6,16 @@ body, .main, [data-testid="stAppViewContainer"], .main > div,
     margin-top: 0 !important;
 }
 
+/* Correção da cor do texto nos expanders */
+.streamlit-expanderHeader,
+.streamlit-expanderContent,
+[data-testid="stExpander"] p,
+[data-testid="stExpander"] div,
+[data-testid="stExpander"] span,
+[data-testid="stExpander"] [data-testid="stMarkdownContainer"] {
+    color: #262730 !important;
+}
+
 /* Remoção do cabeçalho nativo do Streamlit */
 header[data-testid="stHeader"] {
     display: none !important;
