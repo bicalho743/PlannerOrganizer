@@ -56,9 +56,7 @@ header[data-testid="stHeader"] {
 section[data-testid="stSidebar"] {
     background-color: #1E1F36 !important;
     border-right: 1px solid #4C566A !important;
-    min-width: 235px !important;
-    width: 235px !important;
-    max-width: 235px !important;
+    min-width: 250px !important;
 }
 
 /* Container da sidebar */
@@ -371,6 +369,45 @@ button[role="tab"] {
 /* Espaçamento para rodapé */
 body, .main, [data-testid="stAppViewContainer"], .block-container {
     padding-bottom: 52px !important;
+}
+
+/* EXPANDERS - Corrigir visibilidade do texto */
+div[data-testid="stExpander"] {
+    background-color: #FFFFFF !important;
+    border: 1px solid #E0E4E7 !important;
+    border-radius: 8px !important;
+    margin: 0.5rem 0 !important;
+}
+
+/* Cabeçalho do expander */
+div[data-testid="stExpander"] > div:first-child {
+    background-color: #F8F9FA !important;
+    color: #262730 !important;
+    padding: 0.75rem 1rem !important;
+    border-radius: 8px 8px 0 0 !important;
+    font-weight: 500 !important;
+}
+
+/* Conteúdo do expander */
+div[data-testid="stExpander"] > div:last-child {
+    background-color: #FFFFFF !important;
+    color: #262730 !important;
+    padding: 1rem !important;
+    border-radius: 0 0 8px 8px !important;
+}
+
+/* Texto dentro do expander */
+div[data-testid="stExpander"] p,
+div[data-testid="stExpander"] div,
+div[data-testid="stExpander"] span {
+    color: #262730 !important;
+}
+
+/* Texto em negrito no expander */
+div[data-testid="stExpander"] strong,
+div[data-testid="stExpander"] b {
+    color: #1E366F !important;
+    font-weight: 600 !important;
 }
 
 /* Estilo para file uploader */
