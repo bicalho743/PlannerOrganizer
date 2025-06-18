@@ -351,61 +351,78 @@ def show():
                     titulo_descricao = descricao[:40] + "..." if len(str(descricao)) > 40 else str(descricao)
                     titulo_expander = f"{status_emoji} #{numero} - {titulo_descricao}"
                     
-                    with st.expander(titulo_expander):
-                        # Cliente
-                        cliente_nome = proposta.get('cliente_nome', 'N/A')
-                        if pd.isna(cliente_nome) or str(cliente_nome).strip() == '':
-                            cliente_nome = 'Cliente não informado'
+                    # Criar um container personalizado sem usar st.expander
+                    container = st.container()
+                    with container:
+                        # Botão para expandir/contrair usando session state
+                        expander_key = f"expander_{proposta['id']}"
+                        if expander_key not in st.session_state:
+                            st.session_state[expander_key] = False
                         
-                        # Valor
-                        try:
-                            valor = float(proposta['valor']) if not pd.isna(proposta['valor']) else 0.0
-                            valor_formatado = f"R$ {valor:,.2f}".replace(',', '.')
-                        except (ValueError, TypeError):
-                            valor_formatado = "R$ 0,00"
+                        # Criar cabeçalho clicável
+                        col1, col2 = st.columns([10, 1])
+                        with col1:
+                            if st.button(titulo_expander, key=f"btn_{proposta['id']}", help="Clique para ver detalhes"):
+                                st.session_state[expander_key] = not st.session_state[expander_key]
                         
-                        # Data início
-                        data_inicio = proposta.get('data_inicio')
-                        if pd.notna(data_inicio) and str(data_inicio).strip() != '':
-                            data_inicio_str = format_date_safe(data_inicio)
-                        else:
-                            data_inicio_str = "Não informada"
+                        # Mostrar conteúdo se expandido
+                        if st.session_state[expander_key]:
+                            # Cliente
+                            cliente_nome = proposta.get('cliente_nome', 'N/A')
+                            if pd.isna(cliente_nome) or str(cliente_nome).strip() == '':
+                                cliente_nome = 'Cliente não informado'
                             
-                        # Prazo
-                        prazo_str = ""
-                        previsao_dias = proposta.get('previsao_dias')
-                        if pd.notna(previsao_dias) and str(previsao_dias).strip() != '':
+                            # Valor
                             try:
-                                dias = int(float(previsao_dias))
-                                if dias > 0:
-                                    prazo_str = f"{dias} dias"
+                                valor = float(proposta['valor']) if not pd.isna(proposta['valor']) else 0.0
+                                valor_formatado = f"R$ {valor:,.2f}".replace(',', '.')
                             except (ValueError, TypeError):
-                                pass
-                        
-                        # Status de execução
-                        status_execucao = proposta.get('status_execucao', 'N/A')
-                        if pd.isna(status_execucao) or str(status_execucao).strip() == '':
-                            status_execucao = 'N/A'
+                                valor_formatado = "R$ 0,00"
                             
-                        # Observações
-                        observacoes = proposta.get('observacoes', '')
-                        if pd.isna(observacoes) or str(observacoes).strip() == '':
-                            observacoes = 'Nenhuma observação'
-                        else:
-                            observacoes = str(observacoes)[:100] + "..." if len(str(observacoes)) > 100 else str(observacoes)
-                        
-                        # Usar HTML com estilos inline para garantir visibilidade
-                        st.markdown(f"""
-                        <div style='color: #262730; background-color: #FFFFFF; padding: 10px; border-radius: 5px;'>
-                            <p style='color: #262730; margin: 5px 0;'><strong style='color: #1E366F;'>Cliente:</strong> {cliente_nome}</p>
-                            <p style='color: #262730; margin: 5px 0;'><strong style='color: #1E366F;'>Valor:</strong> {valor_formatado}</p>
-                            <p style='color: #262730; margin: 5px 0;'><strong style='color: #1E366F;'>Status:</strong> {proposta.get('status', 'N/A')}</p>
-                            <p style='color: #262730; margin: 5px 0;'><strong style='color: #1E366F;'>Data Início:</strong> {data_inicio_str}</p>
-                            {f"<p style='color: #262730; margin: 5px 0;'><strong style='color: #1E366F;'>Prazo:</strong> {prazo_str}</p>" if prazo_str else ""}
-                            <p style='color: #262730; margin: 5px 0;'><strong style='color: #1E366F;'>Status Execução:</strong> {status_execucao}</p>
-                            <p style='color: #262730; margin: 5px 0;'><strong style='color: #1E366F;'>Observações:</strong> {observacoes}</p>
-                        </div>
-                        """, unsafe_allow_html=True)
+                            # Data início
+                            data_inicio = proposta.get('data_inicio')
+                            if pd.notna(data_inicio) and str(data_inicio).strip() != '':
+                                data_inicio_str = format_date_safe(data_inicio)
+                            else:
+                                data_inicio_str = "Não informada"
+                                
+                            # Prazo
+                            prazo_str = ""
+                            previsao_dias = proposta.get('previsao_dias')
+                            if pd.notna(previsao_dias) and str(previsao_dias).strip() != '':
+                                try:
+                                    dias = int(float(previsao_dias))
+                                    if dias > 0:
+                                        prazo_str = f"{dias} dias"
+                                except (ValueError, TypeError):
+                                    pass
+                            
+                            # Status de execução
+                            status_execucao = proposta.get('status_execucao', 'N/A')
+                            if pd.isna(status_execucao) or str(status_execucao).strip() == '':
+                                status_execucao = 'N/A'
+                                
+                            # Observações
+                            observacoes = proposta.get('observacoes', '')
+                            if pd.isna(observacoes) or str(observacoes).strip() == '':
+                                observacoes = 'Nenhuma observação'
+                            else:
+                                observacoes = str(observacoes)[:100] + "..." if len(str(observacoes)) > 100 else str(observacoes)
+                            
+                            # Mostrar informações em um container com fundo
+                            st.markdown(f"""
+                            <div style='background-color: #F8F9FA; border: 1px solid #E0E4E7; border-radius: 8px; padding: 15px; margin: 10px 0;'>
+                                <div style='color: #262730; font-family: sans-serif;'>
+                                    <p style='margin: 8px 0; font-size: 14px;'><strong style='color: #1E366F;'>Cliente:</strong> <span style='color: #262730;'>{cliente_nome}</span></p>
+                                    <p style='margin: 8px 0; font-size: 14px;'><strong style='color: #1E366F;'>Valor:</strong> <span style='color: #262730;'>{valor_formatado}</span></p>
+                                    <p style='margin: 8px 0; font-size: 14px;'><strong style='color: #1E366F;'>Status:</strong> <span style='color: #262730;'>{proposta.get('status', 'N/A')}</span></p>
+                                    <p style='margin: 8px 0; font-size: 14px;'><strong style='color: #1E366F;'>Data Início:</strong> <span style='color: #262730;'>{data_inicio_str}</span></p>
+                                    {f"<p style='margin: 8px 0; font-size: 14px;'><strong style='color: #1E366F;'>Prazo:</strong> <span style='color: #262730;'>{prazo_str}</span></p>" if prazo_str else ""}
+                                    <p style='margin: 8px 0; font-size: 14px;'><strong style='color: #1E366F;'>Status Execução:</strong> <span style='color: #262730;'>{status_execucao}</span></p>
+                                    <p style='margin: 8px 0; font-size: 14px;'><strong style='color: #1E366F;'>Observações:</strong> <span style='color: #262730;'>{observacoes}</span></p>
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
                             
                 print(f"DEBUG DASHBOARD: Finalizada exibição das propostas abertas")
             else:
