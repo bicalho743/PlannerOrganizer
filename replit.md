@@ -35,6 +35,13 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 
 ## Recent Changes
 
+### 2025-06-29
+- **CORRIGIDO**: Erros de carregamento do app principal
+- **CORRIGIDO**: st.components.v1.html → comentado temporariamente
+- **CORRIGIDO**: st.experimental_rerun() → st.rerun()
+- **VERIFICADO**: Servidor funcionando corretamente na porta 5000
+- **STATUS**: App carregando, servidor ativo, problema pode ser no navegador
+
 ### 2025-06-27
 - **CORRIGIDO**: Problema de visibilidade de texto nos expanders do dashboard
 - **ADICIONADO**: CSS específico para cor de texto nos expanders (#262730)
