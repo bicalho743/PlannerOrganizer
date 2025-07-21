@@ -50,6 +50,8 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **CORRIGIDO**: Importações PDF usando gerar_pdf_proposta disponível
 - **MELHORADO**: Selectbox propostas mostra cliente e descrição
 - **CORRIGIDO**: Botões download PDF com cores e largura completa
+- **ATUALIZADO**: Geração de relatório usando utils/relatorio_servico_novo.py para formato "relatório_1"
+- **CORRIGIDO**: Importações PDF agora usam gerar_pdf_relatorio_servico do módulo correto
 
 ### 2025-06-27
 - **CORRIGIDO**: Problema de visibilidade de texto nos expanders do dashboard
