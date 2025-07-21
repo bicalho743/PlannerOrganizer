@@ -592,7 +592,9 @@ def st_gerar_pdf_cliente(proposta_id, custom_filename=None):
                     label="⬇️ Baixar PDF do Cliente",
                     data=pdf.read(),
                     file_name=nome_arquivo,
-                    mime="application/pdf"
+                    mime="application/pdf",
+                    type="primary",
+                    use_container_width=True
                 )
             
             return True, filename
@@ -623,7 +625,9 @@ def st_gerar_pdf_interno(proposta_id, custom_filename=None):
                     label="⬇️ Baixar PDF Interno",
                     data=pdf.read(),
                     file_name=nome_arquivo,
-                    mime="application/pdf"
+                    mime="application/pdf",
+                    type="secondary",
+                    use_container_width=True
                 )
             
             return True, filename

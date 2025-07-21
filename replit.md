@@ -46,6 +46,10 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **MELHORADO**: Interface de edição com cabeçalhos organizados
 - **CORRIGIDO**: Cálculo total produtos em propostas (linha 1716)
 - **REDUZIDO**: Tamanho da imagem em enviar_manual.py de 300px para 150px
+- **CORRIGIDO**: Botões relatórios com type="primary" e "secondary" + use_container_width=True
+- **CORRIGIDO**: Importações PDF usando gerar_pdf_proposta disponível
+- **MELHORADO**: Selectbox propostas mostra cliente e descrição
+- **CORRIGIDO**: Botões download PDF com cores e largura completa
 
 ### 2025-06-27
 - **CORRIGIDO**: Problema de visibilidade de texto nos expanders do dashboard

@@ -1966,7 +1966,7 @@ def show():
 
                 # Adicionar opção para exportar
                 with st.form(key="exportar_csv_form"):
-                    exportar_csv = st.form_submit_button("Exportar para CSV")
+                    exportar_csv = st.form_submit_button("Exportar para CSV", type="primary", use_container_width=True)
 
                     if exportar_csv:
                         csv = propostas_filtradas[['numero', 'nome', 'descricao', 'valor_formatado', 'status', 'data_formatada', 'tipo_proposta']].to_csv(index=False)
@@ -1980,15 +1980,26 @@ def show():
                 # Adicionar funcionalidade para gerar relatórios de propostas finalizadas
 
                 with st.expander("Gerar Relatórios"):
-                    # Obter lista de números de propostas finalizadas para o select box
-                    numeros_propostas = propostas_filtradas['numero'].tolist()
-                    numeros_propostas.sort()  # Ordenar para facilitar a seleção
+                    # Criar opções mais descritivas para o selectbox
+                    opcoes_propostas = []
+                    mapa_opcoes = {}
+                    
+                    for _, proposta in propostas_filtradas.iterrows():
+                        cliente_nome = proposta.get('nome', 'Cliente não informado')
+                        descricao = proposta.get('descricao', 'Sem descrição')[:50] + ('...' if len(str(proposta.get('descricao', ''))) > 50 else '')
+                        opcao = f"#{proposta['numero']} - {cliente_nome} - {descricao}"
+                        opcoes_propostas.append(opcao)
+                        mapa_opcoes[opcao] = proposta['numero']
+                    
+                    opcoes_propostas.sort()
 
-                    proposta_numero = st.selectbox(
-                        "Selecione o número da proposta para gerar relatório:",
-                        numeros_propostas,
-                        key="numero_proposta_relatorio"
+                    proposta_opcao = st.selectbox(
+                        "Selecione a proposta para gerar relatório:",
+                        opcoes_propostas,
+                        key="opcao_proposta_relatorio"
                     )
+                    
+                    proposta_numero = mapa_opcoes.get(proposta_opcao)
 
                     proposta_relatorio = propostas_filtradas[propostas_filtradas['numero'] == proposta_numero]
 
