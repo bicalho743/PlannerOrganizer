@@ -59,6 +59,8 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **CORRIGIDO**: Valor de comissão em PDF interno calcula valor real ao invés de fixo R$ 100
 - **MELHORADO**: CSS para botões com visibilidade forçada e cores adequadas
 - **ATUALIZADO**: Nova imagem profissional (professional_business_woman.png) com tamanho otimizado
+- **CORRIGIDO**: Cores dos botões - Primary: #007BFF (azul brilhante), Secondary: #2B547E (azul escuro)
+- **MELHORADO**: CSS específico para botões dentro de expanders com cores corretas
 
 ### 2025-06-27
 - **CORRIGIDO**: Problema de visibilidade de texto nos expanders do dashboard
