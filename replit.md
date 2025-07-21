@@ -56,6 +56,8 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **ADICIONADO**: Estilos específicos para baseButton-primary e baseButton-secondary
 - **CORRIGIDO**: Relatório interno usa pdf_generator_interno_melhorado.py com análise financeira completa
 - **ATUALIZADO**: Geração PDF interno com custo total cliente e receita líquida projeto
+- **CORRIGIDO**: Valor de comissão em PDF interno calcula valor real ao invés de fixo R$ 100
+- **MELHORADO**: CSS para botões com visibilidade forçada e cores adequadas
 
 ### 2025-06-27
 - **CORRIGIDO**: Problema de visibilidade de texto nos expanders do dashboard

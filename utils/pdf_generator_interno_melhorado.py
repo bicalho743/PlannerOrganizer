@@ -374,19 +374,18 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
         # Dados da tabela
         row_height = 20
         
-        # Corrigir valor das comissões para R$ 100,00 conforme solicitado
-        # (Problema identificado onde o relatório mostrava valor incorreto)
-        valor_comissao_corrigido = 100.00
+        # Usar o valor real das comissões calculadas (não fixar em R$ 100)
+        valor_comissao_real = total_comissoes
         
-        # Recalcular o ganho líquido com o valor corrigido de comissão
-        meu_ganho_corrigido = valor_base + valor_comissao_corrigido + lucro_produtos_total - custos_assistentes
+        # Calcular o ganho líquido com o valor real de comissão
+        meu_ganho_real = valor_base + valor_comissao_real + lucro_produtos_total - custos_assistentes
         
         rows = [
             ["Personal Organizer", f"R$ {valor_base:.2f}"],
-            ["Comissões", f"R$ {valor_comissao_corrigido:.2f}"],
+            ["Comissões", f"R$ {valor_comissao_real:.2f}"],
             ["Lucro em Produtos", f"R$ {lucro_produtos_total:.2f}"],
             ["Pagamento Assistentes", f"R$ -{custos_assistentes:.2f}"],
-            ["RECEITA LÍQUIDA TOTAL", f"R$ {meu_ganho_corrigido:.2f}"]
+            ["RECEITA LÍQUIDA TOTAL", f"R$ {meu_ganho_real:.2f}"]
         ]
         
         for i, row in enumerate(rows):
