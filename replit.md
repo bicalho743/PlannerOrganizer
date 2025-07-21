@@ -44,6 +44,7 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **ADICIONADO**: Métodos update_item_venda() e remove_item_venda() no banco
 - **REMOVIDO**: Botões de salvar - não são mais necessários
 - **MELHORADO**: Interface de edição com cabeçalhos organizados
+- **CORRIGIDO**: Cálculo total produtos em propostas (linha 1716)
 
 ### 2025-06-27
 - **CORRIGIDO**: Problema de visibilidade de texto nos expanders do dashboard

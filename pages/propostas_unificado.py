@@ -1710,7 +1710,7 @@ def show():
                             outros_df = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_selecionada_id, "OUTROS")
 
                             # Calcular valores totais
-                            total_produtos = produtos_df['valor'].sum() * produtos_df['quantidade'].sum() if not produtos_df.empty else 0
+                            total_produtos = (produtos_df['valor'] * produtos_df['quantidade']).sum() if not produtos_df.empty else 0
                             total_fornecedores = fornecedores_df['valor'].sum() if not fornecedores_df.empty else 0
                             total_assistentes = assistentes_df['valor'].sum() if not assistentes_df.empty else 0
                             total_outros = outros_df['valor'].sum() if not outros_df.empty else 0
