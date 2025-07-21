@@ -4582,6 +4582,52 @@ class Database:
             } for i in itens])
         return self._safe_query(query)
         
+    def update_item_venda(self, item_id, nova_quantidade, novo_preco):
+        """Atualiza a quantidade e preço de um item da venda"""
+        def query():
+            item = self.session.query(ItemVenda).filter_by(id=item_id).first()
+            if not item:
+                raise ValueError(f"Item não encontrado com ID {item_id}")
+            
+            # Atualizar valores
+            item.quantidade = nova_quantidade
+            item.preco_unitario = novo_preco
+            item.subtotal = nova_quantidade * novo_preco
+            
+            # Atualizar valor total da venda
+            venda = item.venda
+            if venda:
+                total = sum(i.subtotal for i in venda.itens)
+                venda.valor_total = total
+            
+            return True
+        return self._safe_query(query)
+        
+    def remove_item_venda(self, item_id):
+        """Remove um item da venda"""
+        def query():
+            item = self.session.query(ItemVenda).filter_by(id=item_id).first()
+            if not item:
+                raise ValueError(f"Item não encontrado com ID {item_id}")
+            
+            # Obter a venda antes de remover o item
+            venda = item.venda
+            
+            # Estornar produto ao estoque se houver
+            if item.produto:
+                item.produto.estoque += item.quantidade
+            
+            # Remover o item
+            self.session.delete(item)
+            
+            # Atualizar valor total da venda
+            if venda:
+                total = sum(i.subtotal for i in venda.itens if i.id != item_id)
+                venda.valor_total = total
+            
+            return True
+        return self._safe_query(query)
+        
     def cancelar_venda(self, venda_id):
         """Cancela uma venda e estorna os produtos para o estoque"""
         def query():

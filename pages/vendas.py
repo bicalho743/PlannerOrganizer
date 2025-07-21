@@ -539,8 +539,105 @@ def show():
                         
                         st.dataframe(itens_df[['produto_nome', 'quantidade', 'preco_unitario', 'subtotal', 'lucro']], hide_index=True)
                         
-                        # Botão para gerar PDF
-                        if st.button("Gerar Relatório de Venda", type="primary", key=f"gerar_pdf_venda_{venda_id}"):
+                        # Botões de ação
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            # Botão para editar venda
+                            if st.button("Editar Venda", type="secondary", key=f"editar_venda_{venda_id}", use_container_width=True):
+                                st.session_state[f'editando_venda_{venda_id}'] = True
+                                st.rerun()
+                        
+                        with col2:
+                            # Botão para gerar PDF
+                            gerar_pdf_btn = st.button("Gerar Relatório de Venda", type="primary", key=f"gerar_pdf_venda_{venda_id}", use_container_width=True)
+                        
+                        # Modo de edição da venda
+                        if st.session_state.get(f'editando_venda_{venda_id}', False):
+                            st.subheader("Editando Itens da Venda")
+                            st.warning("Modo de edição ativo. Faça as alterações nos itens abaixo:")
+                            
+                            # Preparar dados originais para edição (sem formatação)
+                            itens_originais = st.session_state.db.get_itens_venda(venda_id)
+                            
+                            # Lista editável dos itens
+                            itens_editados = []
+                            for i, item in itens_originais.iterrows():
+                                col1, col2, col3, col4, col5, col6 = st.columns([3, 1, 1.5, 1.5, 1, 1])
+                                
+                                with col1:
+                                    st.write(f"**{item['produto_nome']}**")
+                                
+                                with col2:
+                                    nova_quantidade = st.number_input(
+                                        "Qtd", 
+                                        min_value=1, 
+                                        value=int(item['quantidade']),
+                                        key=f"edit_qty_{venda_id}_{i}"
+                                    )
+                                
+                                with col3:
+                                    novo_preco = st.number_input(
+                                        "Preço Unit.",
+                                        min_value=0.01, 
+                                        value=float(item['preco_unitario']),
+                                        format="%.2f",
+                                        key=f"edit_price_{venda_id}_{i}"
+                                    )
+                                
+                                with col4:
+                                    novo_subtotal = nova_quantidade * novo_preco
+                                    st.write(f"R$ {novo_subtotal:.2f}")
+                                
+                                with col5:
+                                    # Botão para atualizar item específico
+                                    if st.button("✅", key=f"save_item_{venda_id}_{i}", help="Salvar alterações do item"):
+                                        try:
+                                            st.session_state.db.update_item_venda(
+                                                item['id'], 
+                                                nova_quantidade, 
+                                                novo_preco
+                                            )
+                                            st.success(f"Item '{item['produto_nome']}' atualizado!")
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Erro ao atualizar item: {str(e)}")
+                                
+                                with col6:
+                                    # Botão para remover item
+                                    if st.button("🗑️", key=f"remove_item_{venda_id}_{i}", help="Remover item da venda"):
+                                        try:
+                                            st.session_state.db.remove_item_venda(item['id'])
+                                            st.success(f"Item '{item['produto_nome']}' removido!")
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Erro ao remover item: {str(e)}")
+                                
+                                # Armazenar item editado
+                                itens_editados.append({
+                                    'id': item['id'],
+                                    'produto_nome': item['produto_nome'],
+                                    'quantidade': nova_quantidade,
+                                    'preco_unitario': novo_preco,
+                                    'subtotal': novo_subtotal
+                                })
+                            
+                            # Botões de controle da edição
+                            col1, col2 = st.columns(2)
+                            
+                            with col1:
+                                if st.button("Cancelar Edição", type="secondary", key=f"cancelar_edicao_{venda_id}"):
+                                    st.session_state[f'editando_venda_{venda_id}'] = False
+                                    st.rerun()
+                            
+                            with col2:
+                                if st.button("Finalizar Edição", type="primary", key=f"finalizar_edicao_{venda_id}"):
+                                    st.session_state[f'editando_venda_{venda_id}'] = False
+                                    st.success("Edição finalizada!")
+                                    st.rerun()
+                        
+                        # Processar geração de PDF se o botão foi clicado
+                        if gerar_pdf_btn:
                             with st.spinner("Gerando relatório de venda..."):
                                 try:
                                     # Obter dados do cliente
