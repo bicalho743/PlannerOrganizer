@@ -208,7 +208,7 @@ def main():
         
         with col1:
             # Adicionar a imagem promocional
-            st.image("professional_woman.png", use_column_width=True)
+            st.image("professional_business_woman.png", use_column_width=True)
         
         with col2:
             # Conteúdo promocional destacando benefícios do sistema
