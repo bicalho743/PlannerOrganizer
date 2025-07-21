@@ -1897,7 +1897,7 @@ def show():
     with tab3:
         st.header("Propostas Finalizadas")
 
-        if 'propostas_com_clientes' in locals() and not propostas.empty:
+        if not propostas.empty:
             # Filtro específico para mostrar apenas propostas finalizadas
             propostas_finalizadas = propostas_com_clientes[
                 ((propostas_com_clientes['status'] == 'Finalizada') & 
@@ -1997,7 +1997,7 @@ def show():
 
                         col1, col2 = st.columns(2)
                         with col1:
-                            if st.button("Relatório Cliente", key="gerar_relatorio_cliente"):
+                            if st.button("Relatório Cliente", key="gerar_relatorio_cliente", type="primary", use_container_width=True):
                                 try:
                                     proposta_id = propostas_filtradas[propostas_filtradas['numero'] == proposta_numero].iloc[0]['id']
                                     st_gerar_pdf_cliente(proposta_id)
@@ -2005,7 +2005,7 @@ def show():
                                     st.error(f"Erro ao gerar relatório para cliente: {str(e)}")
 
                         with col2:
-                            if st.button("Relatório Interno", key="gerar_relatorio_interno"):
+                            if st.button("Relatório Interno", key="gerar_relatorio_interno", type="secondary", use_container_width=True):
                                 try:
                                     proposta_id = propostas_filtradas[propostas_filtradas['numero'] == proposta_numero].iloc[0]['id']
                                     st_gerar_pdf_interno(proposta_id)

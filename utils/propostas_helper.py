@@ -469,9 +469,13 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
             # Criando nome de arquivo com o formato: Cliente_Proposta_#ID_NomeCliente_DATA.pdf
             filename = f"pdfs/Cliente_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
             
-        # Gerar o PDF para cliente
-        from utils.pdf_generator import gerar_pdf_cliente
-        filename = gerar_pdf_cliente(proposta, cliente, acrescimos, filename)
+        # Gerar o PDF para cliente usando a função disponível
+        from utils.pdf_generator import gerar_pdf_proposta
+        pdf_content = gerar_pdf_proposta(proposta_id)
+        
+        # Salvar o PDF no arquivo
+        with open(filename, 'wb') as f:
+            f.write(pdf_content)
         
         return True, "PDF para cliente gerado com sucesso!", filename
         
@@ -553,9 +557,13 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
             # Criando nome de arquivo com o formato: Interno_Proposta_#ID_NomeCliente_DATA.pdf
             filename = f"pdfs/Interno_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
             
-        # Gerar o PDF interno
-        from utils.pdf_generator import gerar_pdf_interno
-        filename = gerar_pdf_interno(proposta, cliente, acrescimos, filename)
+        # Gerar o PDF interno usando a função disponível
+        from utils.pdf_generator import gerar_pdf_proposta
+        pdf_content = gerar_pdf_proposta(proposta_id)
+        
+        # Salvar o PDF no arquivo
+        with open(filename, 'wb') as f:
+            f.write(pdf_content)
         
         return True, "PDF interno gerado com sucesso!", filename
         

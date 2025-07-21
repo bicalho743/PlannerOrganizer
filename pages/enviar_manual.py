@@ -49,7 +49,7 @@ def main():
             img_path = os.path.join(root_dir, "professional_woman.png")
             if os.path.exists(img_path):
                 image = Image.open(img_path)
-                st.image(image, width=300)
+                st.image(image, width=150)
             else:
                 st.info("Imagem ilustrativa não encontrada.")
         except Exception as e:

@@ -45,6 +45,7 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **REMOVIDO**: Botões de salvar - não são mais necessários
 - **MELHORADO**: Interface de edição com cabeçalhos organizados
 - **CORRIGIDO**: Cálculo total produtos em propostas (linha 1716)
+- **REDUZIDO**: Tamanho da imagem em enviar_manual.py de 300px para 150px
 
 ### 2025-06-27
 - **CORRIGIDO**: Problema de visibilidade de texto nos expanders do dashboard
