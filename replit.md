@@ -64,6 +64,10 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **CORRIGIDO**: Botão "Limpar Carrinho" no módulo vendas com cor #3a75c4 específica
 - **MODIFICADO**: Interface de vendas com três botões: "EDITAR VENDAS", "GERAR RELATÓRIO DE VENDAS", "EXCLUIR VENDAS"
 - **REMOVIDO**: Expander "Gerenciar Vendas" substituído por confirmação inline de exclusão
+- **PADRONIZADO**: Todos os três botões de vendas com type="primary" (cor azul)
+- **CORRIGIDO**: Visibilidade de texto em labels/rótulos com cor #1e1e1e e font-weight: 600
+- **ADICIONADO**: Fundo cinza claro (#f8f9fa) em todos os campos de entrada
+- **MELHORADO**: Contraste geral de texto no módulo de vendas
 
 ### 2025-06-27
 - **CORRIGIDO**: Problema de visibilidade de texto nos expanders do dashboard

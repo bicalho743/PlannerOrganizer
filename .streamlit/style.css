@@ -673,3 +673,146 @@ details[open] form button,
     color: white !important;
     border: 1px solid #1f4e79 !important;
 }
+
+/* === CORREÇÕES ESPECÍFICAS PARA MÓDULO DE VENDAS === */
+
+/* Labels/Rótulos com melhor contraste */
+.stTextInput > label,
+.stTextArea > label,
+.stSelectbox > label,
+.stNumberInput > label,
+.stSelectbox > div > label,
+label[data-testid="stWidgetLabel"],
+p[data-testid="stWidgetLabel"],
+.element-container p,
+.stTextInput p,
+.stTextArea p,
+.stSelectbox p,
+.stNumberInput p,
+.stForm p {
+    color: #1e1e1e !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    margin-bottom: 0.25rem !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Campos de entrada com fundo cinza claro */
+.stTextInput input,
+.stTextArea textarea,
+.stSelectbox select,
+.stNumberInput input,
+div[data-baseweb="select"] > div,
+div[data-baseweb="textarea"] textarea,
+input[type="text"],
+input[type="number"],
+textarea,
+select {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 0.375rem !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.875rem !important;
+}
+
+/* Campos de entrada em foco */
+.stTextInput input:focus,
+.stTextArea textarea:focus,
+.stSelectbox select:focus,
+.stNumberInput input:focus,
+div[data-baseweb="select"] > div:focus,
+div[data-baseweb="textarea"] textarea:focus,
+input[type="text"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+select:focus {
+    background-color: #ffffff !important;
+    border-color: #3a75c4 !important;
+    box-shadow: 0 0 0 0.2rem rgba(58, 117, 196, 0.25) !important;
+}
+
+/* Placeholder text */
+.stTextInput input::placeholder,
+.stTextArea textarea::placeholder,
+input[type="text"]::placeholder,
+input[type="number"]::placeholder,
+textarea::placeholder {
+    color: #6c757d !important;
+    opacity: 0.8 !important;
+}
+
+/* Selectbox dropdown */
+div[data-baseweb="select"] > div > div {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+/* Selectbox options */
+div[data-baseweb="popover"] div[role="option"] {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
+
+div[data-baseweb="popover"] div[role="option"]:hover {
+    background-color: #e9ecef !important;
+}
+
+/* Melhor contraste para texto em geral */
+.main p,
+.main div,
+.main span,
+.element-container p,
+.element-container div,
+.element-container span {
+    color: #212529 !important;
+}
+
+/* Cabeçalhos e subtítulos */
+.main h1,
+.main h2,
+.main h3,
+.main h4,
+.main h5,
+.main h6 {
+    color: #1e1e1e !important;
+    font-weight: 600 !important;
+}
+
+/* Subheader específico */
+.stSubheader {
+    color: #1e1e1e !important;
+    font-weight: 600 !important;
+}
+
+/* Markdown text */
+div[data-testid="stMarkdownContainer"] p,
+div[data-testid="stMarkdownContainer"] div,
+.stMarkdown p,
+.stMarkdown div {
+    color: #212529 !important;
+}
+
+/* Labels dentro de colunas */
+div[data-testid="column"] p,
+div[data-testid="column"] label,
+div[data-testid="column"] span {
+    color: #1e1e1e !important;
+    font-weight: 500 !important;
+}
+
+/* Número inputs com botões +/- */
+.stNumberInput button {
+    background-color: #3a75c4 !important;
+    color: white !important;
+    border: 1px solid #3a75c4 !important;
+    font-weight: 500 !important;
+}
+
+.stNumberInput button:hover {
+    background-color: #2e5a9a !important;
+    border-color: #2e5a9a !important;
+}
