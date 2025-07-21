@@ -553,9 +553,9 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
             # Criando nome de arquivo com o formato: Interno_Proposta_#ID_NomeCliente_DATA.pdf
             filename = f"pdfs/Interno_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
             
-        # Gerar o PDF interno usando o relatório de serviço padronizado
-        from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
-        gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename)
+        # Gerar o PDF interno usando o gerador com análise financeira completa
+        from utils.pdf_generator_interno_melhorado import gerar_pdf_interno_melhorado
+        gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename)
         
         return True, "PDF interno gerado com sucesso!", filename
         

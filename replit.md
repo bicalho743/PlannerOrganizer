@@ -54,6 +54,8 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **CORRIGIDO**: Importações PDF agora usam gerar_pdf_relatorio_servico do módulo correto
 - **CORRIGIDO**: CSS adicionado para botões primários e secundários com cores visíveis
 - **ADICIONADO**: Estilos específicos para baseButton-primary e baseButton-secondary
+- **CORRIGIDO**: Relatório interno usa pdf_generator_interno_melhorado.py com análise financeira completa
+- **ATUALIZADO**: Geração PDF interno com custo total cliente e receita líquida projeto
 
 ### 2025-06-27
 - **CORRIGIDO**: Problema de visibilidade de texto nos expanders do dashboard
