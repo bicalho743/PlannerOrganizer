@@ -246,16 +246,16 @@ div[data-testid="stMain"] .stButton > button:hover {
 .main .stButton > button[kind="primary"],
 div[data-testid="stMainBlockContainer"] .stButton > button[kind="primary"],
 div[data-testid="stMain"] .stButton > button[kind="primary"] {
-    background-color: #007bff !important;
+    background-color: #3a75c4 !important;
     color: white !important;
-    border: 1px solid #007bff !important;
+    border: 1px solid #3a75c4 !important;
 }
 
 .main .stButton > button[kind="primary"]:hover,
 div[data-testid="stMainBlockContainer"] .stButton > button[kind="primary"]:hover,
 div[data-testid="stMain"] .stButton > button[kind="primary"]:hover {
-    background-color: #0056b3 !important;
-    border-color: #0056b3 !important;
+    background-color: #2e5a9a !important;
+    border-color: #2e5a9a !important;
 }
 
 /* Garantir que botões em colunas pequenas mostrem o texto */
@@ -456,17 +456,17 @@ div[data-testid="stFileUploader"] button:hover {
 
 /* CSS específico para botões de formulário */
 .stForm button[data-testid="baseButton-primary"] {
-    background-color: #007bff !important;
+    background-color: #3a75c4 !important;
     color: white !important;
-    border: 1px solid #007bff !important;
+    border: 1px solid #3a75c4 !important;
     font-weight: 500 !important;
     border-radius: 0.375rem !important;
     padding: 0.375rem 0.75rem !important;
 }
 
 .stForm button[data-testid="baseButton-primary"]:hover {
-    background-color: #0056b3 !important;
-    border-color: #0056b3 !important;
+    background-color: #2e5a9a !important;
+    border-color: #2e5a9a !important;
 }
 
 /* Forçar visibilidade do texto em botões */
@@ -489,17 +489,17 @@ div[data-testid="stFileUploader"] button:hover {
 /* BOTÕES COM TIPO ESPECÍFICO - CORRIGE OS BOTÕES DE RELATÓRIO */
 button[data-testid="baseButton-primary"],
 .stButton > button[data-testid="baseButton-primary"] {
-    background-color: #007bff !important;
+    background-color: #3a75c4 !important;
     color: white !important;
-    border: 1px solid #007bff !important;
+    border: 1px solid #3a75c4 !important;
     font-weight: 500 !important;
     border-radius: 0.375rem !important;
 }
 
 button[data-testid="baseButton-primary"]:hover,
 .stButton > button[data-testid="baseButton-primary"]:hover {
-    background-color: #0056b3 !important;
-    border-color: #0056b3 !important;
+    background-color: #2e5a9a !important;
+    border-color: #2e5a9a !important;
 }
 
 button[data-testid="baseButton-secondary"],
@@ -585,9 +585,9 @@ button[kind="secondary"],
 div[data-testid="element-container"] button,
 div[data-testid="column"] button,
 .element-container button {
-    background: #007BFF !important;
+    background: #3a75c4 !important;
     color: white !important;
-    border: 1px solid #007BFF !important;
+    border: 1px solid #3a75c4 !important;
     padding: 0.375rem 0.75rem !important;
     font-size: 14px !important;
     font-weight: 500 !important;
@@ -623,9 +623,9 @@ div[data-testid="stExpander"] button,
 div[data-testid="stExpander"] .stButton > button,
 details[open] button,
 .streamlit-expanderContent button {
-    background: #007BFF !important;
+    background: #3a75c4 !important;
     color: white !important;
-    border: 1px solid #007BFF !important;
+    border: 1px solid #3a75c4 !important;
     padding: 0.375rem 0.75rem !important;
     font-size: 14px !important;
     font-weight: 500 !important;
