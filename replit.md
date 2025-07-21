@@ -35,6 +35,15 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 
 ## Recent Changes
 
+### 2025-07-21
+- **CORRIGIDO**: Erros de API do Streamlit impedindo carregamento
+- **ATUALIZADO**: st.experimental_rerun() → st.rerun()
+- **CORRIGIDO**: st.components.v1.html → components.html com importação correta
+- **IMPLEMENTADO**: Edição de produtos no carrinho - módulo vendas
+- **ADICIONADO**: Campos editáveis para quantidade e preço unitário
+- **ADICIONADO**: Botões de atualizar (✏️) e remover (🗑️) para cada item no carrinho
+- **MELHORADO**: Interface organizada com cabeçalhos claros no carrinho
+
 ### 2025-06-27
 - **CORRIGIDO**: Problema de visibilidade de texto nos expanders do dashboard
 - **ADICIONADO**: CSS específico para cor de texto nos expanders (#262730)
