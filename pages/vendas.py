@@ -107,14 +107,14 @@ def show():
                         <style>
                         /* Estilizar o expander "Gerenciar Produtos" */
                         div[data-testid="stExpander"] details summary {
-                            background: #007bff !important;
-                            background-color: #007bff !important;
+                            background: #3a75c4 !important;
+                            background-color: #3a75c4 !important;
                             background-image: none !important;
                             color: white !important;
                             border-radius: 0.375rem !important;
                             padding: 0.375rem 0.75rem !important;
                             font-weight: 400 !important;
-                            border: 1px solid #007bff !important;
+                            border: 1px solid #3a75c4 !important;
                             font-size: 1rem !important;
                             line-height: 1.5 !important;
                         }
@@ -440,9 +440,9 @@ def show():
                                 
                                 // Se for botão primário (Finalizar)
                                 if (button.textContent.includes('Finalizar')) {
-                                    button.style.backgroundColor = '#007bff';
+                                    button.style.backgroundColor = '#3a75c4';
                                     button.style.color = 'white';
-                                    button.style.border = '1px solid #007bff';
+                                    button.style.border = '1px solid #3a75c4';
                                 }
                                 
                                 // Garantir que o texto seja visível
