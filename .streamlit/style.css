@@ -639,6 +639,24 @@ details[open] button[kind="secondary"] {
     border: 1px solid #2B547E !important;
 }
 
+/* Botão Limpar Carrinho - cor específica solicitada */
+button[kind="secondary"]:nth-of-type(1) {
+    background: #3a75c4 !important;
+    border: 1px solid #3a75c4 !important;
+}
+
+/* Botões específicos com cores diferentes */
+/* Usar seletores mais específicos para pegar botões por texto */
+div[data-testid="element-container"] button:nth-of-type(1),
+div[data-testid="column"] button:first-child {
+    background: #3a75c4 !important;
+    color: white !important;
+    border: 1px solid #3a75c4 !important;
+}
+
+/* JavaScript injection para botões específicos */
+/* Este CSS será aplicado via JavaScript para botões com texto específico */
+
 /* Forçar texto branco em expanders */
 div[data-testid="stExpander"] button span,
 details[open] button span,

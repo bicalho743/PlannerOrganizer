@@ -61,6 +61,7 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **ATUALIZADO**: Nova imagem profissional (professional_business_woman.png) com tamanho otimizado
 - **CORRIGIDO**: Cores dos botões - Primary: #3a75c4 (azul brilhante), Secondary: #2B547E (azul escuro)
 - **MELHORADO**: CSS específico para botões dentro de expanders com cores corretas
+- **CORRIGIDO**: Botão "Limpar Carrinho" no módulo vendas com cor #3a75c4 específica
 
 ### 2025-06-27
 - **CORRIGIDO**: Problema de visibilidade de texto nos expanders do dashboard

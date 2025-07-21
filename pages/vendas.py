@@ -417,7 +417,7 @@ def show():
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    if st.button("Limpar Carrinho", use_container_width=True):
+                    if st.button("Limpar Carrinho", type="secondary", use_container_width=True):
                         st.session_state.produtos_venda = []
                         st.rerun()
                 
