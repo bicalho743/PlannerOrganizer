@@ -329,16 +329,77 @@ def show():
             if st.session_state.produtos_venda:
                 st.subheader("Produtos no Carrinho")
                 
-                carrinho_df = pd.DataFrame(st.session_state.produtos_venda)
-                valor_total = carrinho_df['subtotal'].sum()
+                # Cabeçalhos da tabela
+                col1, col2, col3, col4, col5, col6 = st.columns([3, 1, 1.5, 1.5, 1, 1])
+                with col1:
+                    st.write("**Produto**")
+                with col2:
+                    st.write("**Qtd**")
+                with col3:
+                    st.write("**Preço Unit.**")
+                with col4:
+                    st.write("**Subtotal**")
+                with col5:
+                    st.write("**Editar**")
+                with col6:
+                    st.write("**Remover**")
                 
-                # Formatar para exibição
-                carrinho_df['preco_unitario'] = carrinho_df['preco_unitario'].map('R$ {:.2f}'.format)
-                carrinho_df['subtotal'] = carrinho_df['subtotal'].map('R$ {:.2f}'.format)
+                st.markdown("---")
                 
-                st.dataframe(carrinho_df[['nome', 'quantidade', 'preco_unitario', 'subtotal']], hide_index=True)
+                # Lista editável de produtos no carrinho
+                for i, item in enumerate(st.session_state.produtos_venda):
+                    col1, col2, col3, col4, col5, col6 = st.columns([3, 1, 1.5, 1.5, 1, 1])
+                    
+                    with col1:
+                        st.write(f"{item['nome']}")
+                    
+                    with col2:
+                        # Campo editável de quantidade
+                        nova_quantidade = st.number_input(
+                            "Qtd", 
+                            min_value=1, 
+                            value=item['quantidade'],
+                            key=f"qty_{i}",
+                            label_visibility="collapsed"
+                        )
+                    
+                    with col3:
+                        # Campo editável de preço unitário
+                        novo_preco = st.number_input(
+                            "Preço Unit.",
+                            min_value=0.01, 
+                            value=item['preco_unitario'],
+                            format="%.2f",
+                            key=f"price_{i}",
+                            label_visibility="collapsed"
+                        )
+                    
+                    with col4:
+                        # Subtotal calculado automaticamente
+                        novo_subtotal = nova_quantidade * novo_preco
+                        st.write(f"R$ {novo_subtotal:.2f}")
+                    
+                    with col5:
+                        # Botão para atualizar o item
+                        if st.button("✏️", key=f"edit_{i}", help="Atualizar item", use_container_width=True):
+                            st.session_state.produtos_venda[i]['quantidade'] = nova_quantidade
+                            st.session_state.produtos_venda[i]['preco_unitario'] = novo_preco
+                            st.session_state.produtos_venda[i]['subtotal'] = novo_subtotal
+                            st.success(f"Item '{item['nome']}' atualizado!")
+                            st.rerun()
+                    
+                    with col6:
+                        # Botão para remover o item
+                        if st.button("🗑️", key=f"remove_{i}", help="Remover item", use_container_width=True):
+                            st.session_state.produtos_venda.pop(i)
+                            st.success(f"Item '{item['nome']}' removido do carrinho!")
+                            st.rerun()
+                
+                # Calcular valor total
+                valor_total = sum([item['quantidade'] * item['preco_unitario'] for item in st.session_state.produtos_venda])
                 
                 # Totais e finalização
+                st.markdown("---")
                 st.info(f"Valor Total da Venda: **R$ {valor_total:.2f}**")
                 
                 col1, col2 = st.columns(2)
