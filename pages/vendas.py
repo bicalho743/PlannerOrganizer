@@ -544,7 +544,7 @@ def show():
                         
                         with col1:
                             # Botão para editar venda
-                            if st.button("EDITAR VENDAS", type="secondary", key=f"editar_venda_{venda_id}", use_container_width=True):
+                            if st.button("EDITAR VENDAS", type="primary", key=f"editar_venda_{venda_id}", use_container_width=True):
                                 st.session_state[f'editando_venda_{venda_id}'] = True
                                 st.rerun()
                         
@@ -554,7 +554,7 @@ def show():
                         
                         with col3:
                             # Botão para excluir venda
-                            if st.button("EXCLUIR VENDAS", type="secondary", key=f"excluir_venda_{venda_id}", use_container_width=True):
+                            if st.button("EXCLUIR VENDAS", type="primary", key=f"excluir_venda_{venda_id}", use_container_width=True):
                                 # Marcar venda para exclusão
                                 st.session_state[f'confirmar_exclusao_venda_{venda_id}'] = True
                                 st.rerun()
