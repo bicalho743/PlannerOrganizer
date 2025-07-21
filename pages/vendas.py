@@ -561,66 +561,80 @@ def show():
                             itens_originais = st.session_state.db.get_itens_venda(venda_id)
                             
                             # Lista editável dos itens
-                            itens_editados = []
                             for i, item in itens_originais.iterrows():
-                                col1, col2, col3, col4, col5, col6 = st.columns([3, 1, 1.5, 1.5, 1, 1])
-                                
-                                with col1:
-                                    st.write(f"**{item['produto_nome']}**")
-                                
-                                with col2:
-                                    nova_quantidade = st.number_input(
-                                        "Qtd", 
-                                        min_value=1, 
-                                        value=int(item['quantidade']),
-                                        key=f"edit_qty_{venda_id}_{i}"
-                                    )
-                                
-                                with col3:
-                                    novo_preco = st.number_input(
-                                        "Preço Unit.",
-                                        min_value=0.01, 
-                                        value=float(item['preco_unitario']),
-                                        format="%.2f",
-                                        key=f"edit_price_{venda_id}_{i}"
-                                    )
-                                
-                                with col4:
-                                    novo_subtotal = nova_quantidade * novo_preco
-                                    st.write(f"R$ {novo_subtotal:.2f}")
-                                
-                                with col5:
-                                    # Botão para atualizar item específico
-                                    if st.button("✅", key=f"save_item_{venda_id}_{i}", help="Salvar alterações do item"):
+                                # Função para salvar quantidade alterada
+                                def salvar_quantidade():
+                                    key_qty = f"edit_qty_{venda_id}_{i}"
+                                    key_price = f"edit_price_{venda_id}_{i}"
+                                    if key_qty in st.session_state and key_price in st.session_state:
                                         try:
                                             st.session_state.db.update_item_venda(
                                                 item['id'], 
-                                                nova_quantidade, 
-                                                novo_preco
+                                                st.session_state[key_qty], 
+                                                st.session_state[key_price]
                                             )
                                             st.success(f"Item '{item['produto_nome']}' atualizado!")
                                             st.rerun()
                                         except Exception as e:
                                             st.error(f"Erro ao atualizar item: {str(e)}")
                                 
-                                with col6:
+                                # Função para salvar preço alterado
+                                def salvar_preco():
+                                    key_qty = f"edit_qty_{venda_id}_{i}"
+                                    key_price = f"edit_price_{venda_id}_{i}"
+                                    if key_qty in st.session_state and key_price in st.session_state:
+                                        try:
+                                            st.session_state.db.update_item_venda(
+                                                item['id'], 
+                                                st.session_state[key_qty], 
+                                                st.session_state[key_price]
+                                            )
+                                            st.success(f"Item '{item['produto_nome']}' atualizado!")
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Erro ao atualizar item: {str(e)}")
+
+                                col1, col2, col3, col4, col5 = st.columns([3, 1, 1.5, 1.5, 1])
+                                
+                                with col1:
+                                    st.write(f"**{item['produto_nome']}**")
+                                
+                                with col2:
+                                    st.markdown("**Qtd**")
+                                    nova_quantidade = st.number_input(
+                                        "Quantidade", 
+                                        min_value=1, 
+                                        value=int(item['quantidade']),
+                                        key=f"edit_qty_{venda_id}_{i}",
+                                        on_change=salvar_quantidade,
+                                        label_visibility="collapsed"
+                                    )
+                                
+                                with col3:
+                                    st.markdown("**Preço Unit.**")
+                                    novo_preco = st.number_input(
+                                        "Preço Unitário",
+                                        min_value=0.01, 
+                                        value=float(item['preco_unitario']),
+                                        format="%.2f",
+                                        key=f"edit_price_{venda_id}_{i}",
+                                        on_change=salvar_preco,
+                                        label_visibility="collapsed"
+                                    )
+                                
+                                with col4:
+                                    novo_subtotal = nova_quantidade * novo_preco
+                                    st.markdown("**R$ {:.2f}**".format(novo_subtotal))
+                                
+                                with col5:
                                     # Botão para remover item
-                                    if st.button("🗑️", key=f"remove_item_{venda_id}_{i}", help="Remover item da venda"):
+                                    if st.button("🗑️", key=f"remove_item_{venda_id}_{i}", help="Remover item da venda", use_container_width=True):
                                         try:
                                             st.session_state.db.remove_item_venda(item['id'])
                                             st.success(f"Item '{item['produto_nome']}' removido!")
                                             st.rerun()
                                         except Exception as e:
                                             st.error(f"Erro ao remover item: {str(e)}")
-                                
-                                # Armazenar item editado
-                                itens_editados.append({
-                                    'id': item['id'],
-                                    'produto_nome': item['produto_nome'],
-                                    'quantidade': nova_quantidade,
-                                    'preco_unitario': novo_preco,
-                                    'subtotal': novo_subtotal
-                                })
                             
                             # Botões de controle da edição
                             col1, col2 = st.columns(2)
