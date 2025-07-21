@@ -1087,7 +1087,7 @@ if not st.session_state.authenticated:
             });
         </script>
         """
-        # components.html(planos_js, height=0)  # Temporariamente comentado para resolver erro de carregamento
+        st.components.v1.html(planos_js, height=0)
         
         # Login apenas com e-mail (botões sociais removidos conforme solicitado)
         
@@ -1554,7 +1554,7 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
             # Botão para fechar
             if st.button("Fechar", key="fechar_termos", use_container_width=True):
                 st.session_state.mostrar_termos = False
-                st.rerun()
+                st.experimental_rerun()
     
     if st.session_state.mostrar_politica:
         # Criar um modal/dialog para a política de privacidade
@@ -1571,7 +1571,7 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
             # Botão para fechar
             if st.button("Fechar", key="fechar_politica", use_container_width=True):
                 st.session_state.mostrar_politica = False
-                st.rerun()
+                st.experimental_rerun()
     
     # Botão para download dos ícones do sistema
     try:
