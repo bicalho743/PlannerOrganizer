@@ -578,3 +578,67 @@ button:hover {
     background-color: #0d3b66 !important;
     border-color: #0d3b66 !important;
 }
+
+/* Regras específicas para botões problemáticos */
+button[kind="primary"],
+button[kind="secondary"],
+div[data-testid="element-container"] button,
+div[data-testid="column"] button,
+.element-container button {
+    background: #1f4e79 !important;
+    color: white !important;
+    border: 1px solid #1f4e79 !important;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    border-radius: 0.375rem !important;
+}
+
+/* Forçar cor em TODOS os elementos de texto dentro de botões */
+button *,
+.stButton button *,
+div[data-testid="stButton"] button * {
+    color: white !important;
+    font-weight: 500 !important;
+}
+
+/* Botões específicos por texto (último recurso) */
+button:contains("Gerar"),
+button:contains("Relatório"),
+button:contains("Reabrir"),
+button:contains("Exportar") {
+    background: #1f4e79 !important;
+    color: white !important;
+    border: 1px solid #1f4e79 !important;
+}
+
+/* CSS específico para botões dentro de expanders */
+div[data-testid="stExpander"] button,
+div[data-testid="stExpander"] .stButton > button,
+details[open] button,
+.streamlit-expanderContent button {
+    background: #1f4e79 !important;
+    color: white !important;
+    border: 1px solid #1f4e79 !important;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    border-radius: 0.375rem !important;
+}
+
+/* Forçar texto branco em expanders */
+div[data-testid="stExpander"] button span,
+details[open] button span,
+.streamlit-expanderContent button span {
+    color: white !important;
+    font-weight: 500 !important;
+}
+
+/* Botões de formulário dentro de expanders */
+div[data-testid="stExpander"] form button,
+details[open] form button,
+.streamlit-expanderContent form button {
+    background: #1f4e79 !important;
+    color: white !important;
+    border: 1px solid #1f4e79 !important;
+}
