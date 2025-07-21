@@ -1087,8 +1087,7 @@ if not st.session_state.authenticated:
             });
         </script>
         """
-        import streamlit.components.v1 as components
-        components.html(planos_js, height=0)
+        # components.html(planos_js, height=0)  # Temporariamente comentado para resolver erro de carregamento
         
         # Login apenas com e-mail (botões sociais removidos conforme solicitado)
         
