@@ -517,6 +517,44 @@ button[data-testid="baseButton-secondary"]:hover,
     border-color: #5a6268 !important;
 }
 
+/* CORREÇÃO ESPECÍFICA PARA BOTÕES DA ÁREA PRINCIPAL - TEXTO BRANCO FORÇADO */
+div[data-testid="stMainBlockContainer"] button[data-testid="baseButton-primary"],
+div[data-testid="stMainBlockContainer"] button[data-testid="baseButton-secondary"],
+div[data-testid="stMain"] button[data-testid="baseButton-primary"],
+div[data-testid="stMain"] button[data-testid="baseButton-secondary"],
+.main button[data-testid="baseButton-primary"],
+.main button[data-testid="baseButton-secondary"] {
+    color: #ffffff !important;
+    background-color: #3a75c4 !important;
+    border: 1px solid #3a75c4 !important;
+    font-weight: 600 !important;
+}
+
+div[data-testid="stMainBlockContainer"] button[data-testid="baseButton-primary"]:hover,
+div[data-testid="stMainBlockContainer"] button[data-testid="baseButton-secondary"]:hover,
+div[data-testid="stMain"] button[data-testid="baseButton-primary"]:hover,
+div[data-testid="stMain"] button[data-testid="baseButton-secondary"]:hover,
+.main button[data-testid="baseButton-primary"]:hover,
+.main button[data-testid="baseButton-secondary"]:hover {
+    color: #ffffff !important;
+    background-color: #2B547E !important;
+    border: 1px solid #2B547E !important;
+}
+
+/* Forçar texto branco em todos os botões da aplicação principal */
+.main button,
+div[data-testid="stMainBlockContainer"] button,
+div[data-testid="stMain"] button {
+    color: #ffffff !important;
+}
+
+/* Tabs com botões azuis */
+.stTabs button[role="tab"] {
+    background-color: #3a75c4 !important;
+    color: #ffffff !important;
+    border: 1px solid #3a75c4 !important;
+}
+
 /* Forçar texto visível nos botões primários e secundários */
 button[data-testid="baseButton-primary"] p,
 button[data-testid="baseButton-primary"] span,

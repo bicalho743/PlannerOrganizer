@@ -166,22 +166,41 @@ def show():
                             font-weight: 600 !important;
                         }
                         
-                        /* Botões com texto branco */
-                        button[data-testid="baseButton-primary"],
-                        button[data-testid="baseButton-secondary"],
-                        .stButton button {
+                        /* Botões com texto branco - CSS mais específico */
+                        div[data-testid="column"] button[data-testid="baseButton-primary"],
+                        div[data-testid="column"] button[data-testid="baseButton-secondary"],
+                        div.stButton > button,
+                        button[kind="primary"],
+                        button[kind="secondary"],
+                        .stButton button,
+                        .stForm button {
                             color: #ffffff !important;
                             background-color: #3a75c4 !important;
                             border: 1px solid #3a75c4 !important;
                             font-weight: 600 !important;
                         }
                         
-                        button[data-testid="baseButton-primary"]:hover,
-                        button[data-testid="baseButton-secondary"]:hover,
-                        .stButton button:hover {
+                        div[data-testid="column"] button[data-testid="baseButton-primary"]:hover,
+                        div[data-testid="column"] button[data-testid="baseButton-secondary"]:hover,
+                        div.stButton > button:hover,
+                        button[kind="primary"]:hover,
+                        button[kind="secondary"]:hover,
+                        .stButton button:hover,
+                        .stForm button:hover {
                             color: #ffffff !important;
                             background-color: #2B547E !important;
                             border: 1px solid #2B547E !important;
+                        }
+                        
+                        /* Forçar cor branca em todos os botões */
+                        button {
+                            color: #ffffff !important;
+                        }
+                        
+                        /* Tabs também */
+                        .stTabs button {
+                            color: #ffffff !important;
+                            background-color: #3a75c4 !important;
                         }
                         </style>
                         """, unsafe_allow_html=True)
