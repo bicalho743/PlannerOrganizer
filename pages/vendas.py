@@ -131,6 +131,40 @@ def show():
                         div[data-testid="stExpander"] details summary svg {
                             color: white !important;
                         }
+                        
+                        /* Corrigir visibilidade do texto nos selectbox */
+                        .stSelectbox > div > div > div {
+                            color: #1e1e1e !important;
+                            background-color: #f8f9fa !important;
+                        }
+                        
+                        .stSelectbox select {
+                            color: #1e1e1e !important;
+                            background-color: #f8f9fa !important;
+                        }
+                        
+                        /* Dropdown options */
+                        .stSelectbox [data-baseweb="select"] > div {
+                            color: #1e1e1e !important;
+                            background-color: #ffffff !important;
+                        }
+                        
+                        /* Text in selectbox */
+                        .stSelectbox [data-testid="stSelectbox"] > div > div {
+                            color: #1e1e1e !important;
+                        }
+                        
+                        /* Input fields visibility */
+                        .stTextInput input, .stTextArea textarea, .stNumberInput input {
+                            color: #1e1e1e !important;
+                            background-color: #f8f9fa !important;
+                        }
+                        
+                        /* Labels visibility */
+                        label, .stSelectbox > label, .stTextInput > label, .stTextArea > label, .stNumberInput > label {
+                            color: #1e1e1e !important;
+                            font-weight: 600 !important;
+                        }
                         </style>
                         """, unsafe_allow_html=True)
                         
