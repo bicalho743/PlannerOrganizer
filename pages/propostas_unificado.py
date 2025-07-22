@@ -2038,6 +2038,41 @@ def show():
                         opcoes_propostas.append(opcao)
                         mapa_opcoes_reabrir[opcao] = numero
 
+                    # Injetar CSS específico para este selectbox
+                    st.markdown("""
+                    <style>
+                    div[data-testid="stSelectbox"] > label > div[data-testid="stMarkdownContainer"] > p {
+                        color: #1e1e1e !important;
+                        font-weight: 600 !important;
+                        margin-bottom: 8px !important;
+                    }
+                    div[data-testid="stSelectbox"] [data-baseweb="select"] {
+                        border: 2px solid #3a75c4 !important;
+                        background-color: #ffffff !important;
+                    }
+                    div[data-testid="stSelectbox"] [data-baseweb="select"] > div {
+                        color: #1e1e1e !important;
+                        background-color: #ffffff !important;
+                        font-weight: 600 !important;
+                        font-size: 16px !important;
+                        padding: 8px 12px !important;
+                    }
+                    div[data-testid="stSelectbox"] [data-baseweb="menu"] [role="option"] {
+                        color: #1e1e1e !important;
+                        background-color: #ffffff !important;
+                        font-weight: 500 !important;
+                        font-size: 14px !important;
+                        padding: 10px 12px !important;
+                        border-bottom: 1px solid #f0f0f0 !important;
+                    }
+                    div[data-testid="stSelectbox"] [data-baseweb="menu"] [role="option"]:hover {
+                        color: #ffffff !important;
+                        background-color: #3a75c4 !important;
+                        font-weight: 600 !important;
+                    }
+                    </style>
+                    """, unsafe_allow_html=True)
+                    
                     # Seleção da proposta com formato mais claro
                     proposta_opcao = st.selectbox(
                         "Selecione o número da proposta a reabrir:",

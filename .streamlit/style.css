@@ -894,40 +894,61 @@ section[data-testid="stSidebar"] .stButton > button:active {
     transform: translateY(-2px) scale(1.02) !important;
 }
 
-/* CORREÇÃO CRÍTICA - SELECTBOX VISIBILIDADE */
-/* Corrigir texto invisível nos selectbox */
-.stSelectbox > div > div > div > div {
+/* CORREÇÃO CRÍTICA - SELECTBOX VISIBILIDADE MÁXIMA */
+/* Forçar visibilidade completa do texto nos selectbox */
+.stSelectbox * {
     color: #1e1e1e !important;
-    background-color: #ffffff !important;
+    background-color: transparent !important;
     font-weight: 500 !important;
 }
 
-/* Opções do selectbox dropdown */
-.stSelectbox [data-baseweb="menu"] {
+/* Container principal do selectbox */
+.stSelectbox > div {
+    background-color: #ffffff !important;
+    border: 1px solid #cccccc !important;
+}
+
+/* Input do selectbox - texto selecionado */
+.stSelectbox div[data-baseweb="select"] > div {
     color: #1e1e1e !important;
     background-color: #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+}
+
+/* Opções do dropdown */
+.stSelectbox [data-baseweb="menu"] {
+    background-color: #ffffff !important;
+    border: 1px solid #cccccc !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
 }
 
 .stSelectbox [data-baseweb="menu"] [role="option"] {
     color: #1e1e1e !important;
     background-color: #ffffff !important;
-    font-weight: 400 !important;
-    padding: 8px 12px !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    padding: 10px 12px !important;
 }
 
 .stSelectbox [data-baseweb="menu"] [role="option"]:hover {
     color: #ffffff !important;
     background-color: #3a75c4 !important;
+    font-weight: 600 !important;
 }
 
-/* Texto selecionado no selectbox */
-.stSelectbox > div > div:first-child > div:first-child {
+/* Seta do selectbox */
+.stSelectbox [data-baseweb="select"] svg {
+    color: #1e1e1e !important;
+}
+
+/* Forçar todos os elementos de texto dentro do selectbox */
+.stSelectbox span,
+.stSelectbox div,
+.stSelectbox p {
     color: #1e1e1e !important;
     font-weight: 500 !important;
-}
-
-/* Placeholder do selectbox */
-.stSelectbox [data-baseweb="select"] [data-baseweb="input"] {
-    color: #1e1e1e !important;
-    background-color: #ffffff !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
