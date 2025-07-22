@@ -853,3 +853,43 @@ div[data-testid="column"] span {
     background-color: #2e5a9a !important;
     border-color: #2e5a9a !important;
 }
+
+/* CORREÇÃO CRÍTICA - PADRONIZAR TODOS OS BOTÕES DA SIDEBAR */
+/* Sobrescrever qualquer estilo diferenciado para manter consistência visual */
+section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"],
+section[data-testid="stSidebar"] .stButton > button {
+    width: 100% !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    padding: 12px 16px !important;
+    margin: 4px 0 !important;
+    font-weight: 500 !important;
+    font-size: 0.9rem !important;
+    text-align: left !important;
+    transition: all 0.3s ease !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+/* Hover unificado para todos os botões da sidebar */
+section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover,
+section[data-testid="stSidebar"] .stButton > button:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #fff !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Remove estilos diferenciados de botões ativos/focados */
+section[data-testid="stSidebar"] button:focus,
+section[data-testid="stSidebar"] button:active,
+section[data-testid="stSidebar"] .stButton > button:focus,
+section[data-testid="stSidebar"] .stButton > button:active {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: inset 2px 0 0 #4CAF50 !important;
+    transform: translateY(-2px) scale(1.02) !important;
+}
