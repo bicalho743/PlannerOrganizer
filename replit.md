@@ -35,6 +35,17 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 
 ## Recent Changes
 
+### 2025-07-22
+- **CORRIGIDO**: Loops infinitos de inicialização causados por st.rerun() desnecessários
+- **REMOVIDO**: st.rerun() das funções show_termos(), show_politica(), show_planos(), show_enviar_manual()
+- **REMOVIDO**: st.rerun() em handlers de erro de importação de páginas
+- **REMOVIDO**: st.rerun() em botão "Atualizar Dados" do debug de propostas
+- **LIMPO**: Workflows desnecessários - mantidos apenas "API FastAPI" e "Start application"
+- **ESTABILIZADO**: Aplicação principal rodando estável na porta 5000 com HTTP 200 OK
+- **VERIFICADO**: Login funcionando corretamente com Firebase Auth
+- **CONFIRMADO**: Sistema multi-tenant operacional com filtragem por usuario_id
+- **TESTADO**: Dashboard carregando propostas em aberto corretamente
+
 ### 2025-07-21
 - **CORRIGIDO**: Erros de API do Streamlit impedindo carregamento
 - **ATUALIZADO**: st.experimental_rerun() → st.rerun()
@@ -81,8 +92,15 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - Mantida funcionalidade de expansão/contração das propostas
 
 ## Known Issues
-- Alguns workflows com arquivos inexistentes (debug_proposta_73.py, etc.)
-- Warnings de ScriptRunContext em modo bare (podem ser ignorados)
+- Warnings de ScriptRunContext em modo bare (podem ser ignorados - não afetam funcionalidade)
+- Erro de permissão Firebase ao carregar perfil (não impede login/funcionamento)
+
+## System Status
+- ✅ Aplicação principal estável na porta 5000
+- ✅ Firebase Authentication funcionando
+- ✅ PostgreSQL conectado e operacional
+- ✅ Sistema multi-tenant ativo
+- ✅ Dashboard e módulos carregando corretamente
 
 ## Database Schema
 Multi-tenant com filtragem por usuario_id:
