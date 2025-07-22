@@ -19,158 +19,11 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Importar Propostas"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Limpar Clientes"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Importação Direta V2"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Examinar Tabela Propostas"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Sistema de Backup"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Planos Simples"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Start application"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Planos Landing"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Iniciar Teste"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "API FastAPI"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Teste Planos"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Planos Leve"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Teste Brevo"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Regenerar Lancamentos"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Teste Reabrir Proposta"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Todas as Propostas"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Visualizar Todas Propostas"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Teste 4 Abas"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Debug Proposta 73"
-
-[[workflows.workflow]]
-name = "Importar Propostas"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run importar_propostas.py --server.port 8505 --server.address 0.0.0.0"
-waitForPort = 8505
-
-[[workflows.workflow]]
-name = "Limpar Clientes"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run limpar_clientes.py --server.port 8506 --server.address 0.0.0.0"
-waitForPort = 8506
-
-[[workflows.workflow]]
-name = "Importação Direta V2"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run propostas_direto.py --server.port 8510 --server.address 0.0.0.0"
-waitForPort = 8510
-
-[[workflows.workflow]]
-name = "Examinar Tabela Propostas"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run examinar_tabela_propostas.py --server.port 8515 --server.address 0.0.0.0"
-waitForPort = 8515
-
-[[workflows.workflow]]
-name = "Sistema de Backup"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run criar_ponto_backup.py --server.port 8530 --server.address 0.0.0.0"
-waitForPort = 8530
+args = "Start application"
 
 [[workflows.workflow]]
 name = "Gerar Manual"
@@ -182,42 +35,6 @@ task = "shell.exec"
 args = "streamlit run gerar_manual.py --server.port 8550 --server.address 0.0.0.0 --server.headless true"
 
 [[workflows.workflow]]
-name = "Login"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run login.py --server.port 5001 --server.address 0.0.0.0"
-waitForPort = 5001
-
-[[workflows.workflow]]
-name = "Planos Simples"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run planos_simple.py --server.port 5005 --server.address 0.0.0.0"
-waitForPort = 5005
-
-[[workflows.workflow]]
-name = "Start application"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run app.py --server.port 5000 --server.address 0.0.0.0"
-waitForPort = 5000
-
-[[workflows.workflow]]
 name = "Deploy ZIP"
 author = 39445503
 mode = "sequential"
@@ -227,47 +44,12 @@ task = "shell.exec"
 args = "streamlit run create_deployment_zip.py --server.port 8600 --server.address 0.0.0.0"
 
 [[workflows.workflow]]
-name = "Planos Landing"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run planos_landing.py --server.port 5002 --server.address 0.0.0.0"
-waitForPort = 5002
-
-[[workflows.workflow]]
-name = "Iniciar Teste"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run pages/iniciar_teste.py --server.port 8520 --server.address 0.0.0.0"
-waitForPort = 8520
-
-[[workflows.workflow]]
 name = "API FastAPI"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "uvicorn api.main:api --host 0.0.0.0 --port 8000 --reload"
-
-[[workflows.workflow]]
-name = "Teste Planos"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run teste_planos.py --server.port 5010 --server.address 0.0.0.0"
-waitForPort = 5010
-
-[[workflows.workflow]]
-name = "Planos Leve"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run planos_leve.py --server.port 5005 --server.address 0.0.0.0"
 
 [[workflows.workflow]]
 name = "Debug Propostas"
@@ -279,67 +61,13 @@ task = "shell.exec"
 args = "streamlit run pages/propostas.py --server.port 5050 --server.address 0.0.0.0"
 
 [[workflows.workflow]]
-name = "Teste Brevo"
+name = "Start application"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run teste_brevo.py --server.port 5005 --server.address 0.0.0.0"
-waitForPort = 5005
-
-[[workflows.workflow]]
-name = "Regenerar Lancamentos"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run regenerar_lancamentos.py --server.port 8550 --server.address 0.0.0.0"
-waitForPort = 8550
-
-[[workflows.workflow]]
-name = "Teste Reabrir Proposta"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run teste_reabrir_proposta.py --server.port 8570 --server.address 0.0.0.0"
-waitForPort = 8570
-
-[[workflows.workflow]]
-name = "Todas as Propostas"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run visualizar_todas_propostas.py --server.port 5002 --server.address 0.0.0.0"
-waitForPort = 5002
-
-[[workflows.workflow]]
-name = "Visualizar Todas Propostas"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run todas_propostas.py --server.port 5004 --server.address 0.0.0.0"
-waitForPort = 5004
-
-[[workflows.workflow]]
-name = "Teste 4 Abas"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run teste_4_abas.py --server.port 8580 --server.address 0.0.0.0"
-waitForPort = 8580
-
-[[workflows.workflow]]
-name = "Debug Proposta 73"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run debug_proposta_73.py --server.port 8525 --server.address 0.0.0.0"
-waitForPort = 8525
+args = "streamlit run app.py --server.port 5000 --server.address 0.0.0.0"
+waitForPort = 5000
 
 [[ports]]
 localPort = 443

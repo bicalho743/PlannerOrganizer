@@ -152,25 +152,21 @@ for var in env_vars:
 def show_termos():
     """Mostra a página de termos de uso"""
     st.session_state.show_termos = True
-    st.rerun()
 
 # Função para mostrar política de privacidade
 def show_politica():
     """Mostra a página de política de privacidade"""
     st.session_state.show_politica = True
-    st.rerun()
     
 # Função para mostrar página de planos
 def show_planos():
     """Mostra a página de planos"""
     st.session_state.show_planos = True
-    st.rerun()
     
 # Função para mostrar página de envio de manual
 def show_enviar_manual():
     """Mostra a página de envio de manual"""
     st.session_state.show_enviar_manual = True
-    st.rerun()
     
 def debug_propostas_finalizadas():
     """Página de debug para filtro de propostas finalizadas"""
@@ -296,7 +292,7 @@ def debug_propostas_finalizadas():
     
     # Adicionar botão para atualizar a página
     if st.button("🔄 Atualizar Dados"):
-        st.rerun()
+        pass  # Removido st.rerun() para evitar loops
     
     # Adicionar informação sobre a consulta SQL
     st.divider()
@@ -384,7 +380,6 @@ if 'page' in query_params:
 if 'show_enviar_manual' in query_params and query_params['show_enviar_manual'] == 'true':
     # Ativar a página de envio de manual
     st.session_state.show_enviar_manual = True
-    st.rerun()
 
 # Verificar se a requisição é para a página standalone de planos
 if 'planos_standalone_page' in st.query_params:
@@ -451,7 +446,6 @@ if not st.session_state.authenticated:
             st.error(f"Não foi possível carregar o módulo de registro: {e}")
             # Resetar para página de login
             st.session_state.login_page = "login"
-            st.rerun()
     
     elif st.session_state.login_page == "recuperar_senha":
         try:
@@ -463,7 +457,6 @@ if not st.session_state.authenticated:
             st.error(f"Não foi possível carregar o módulo de recuperação de senha: {e}")
             # Resetar para página de login
             st.session_state.login_page = "login"
-            st.rerun()
     
     # CSS personalizado para a landing page - Design Sóbrio
     st.markdown("""
