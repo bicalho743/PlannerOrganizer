@@ -893,3 +893,41 @@ section[data-testid="stSidebar"] .stButton > button:active {
     box-shadow: inset 2px 0 0 #4CAF50 !important;
     transform: translateY(-2px) scale(1.02) !important;
 }
+
+/* CORREÇÃO CRÍTICA - SELECTBOX VISIBILIDADE */
+/* Corrigir texto invisível nos selectbox */
+.stSelectbox > div > div > div > div {
+    color: #1e1e1e !important;
+    background-color: #ffffff !important;
+    font-weight: 500 !important;
+}
+
+/* Opções do selectbox dropdown */
+.stSelectbox [data-baseweb="menu"] {
+    color: #1e1e1e !important;
+    background-color: #ffffff !important;
+}
+
+.stSelectbox [data-baseweb="menu"] [role="option"] {
+    color: #1e1e1e !important;
+    background-color: #ffffff !important;
+    font-weight: 400 !important;
+    padding: 8px 12px !important;
+}
+
+.stSelectbox [data-baseweb="menu"] [role="option"]:hover {
+    color: #ffffff !important;
+    background-color: #3a75c4 !important;
+}
+
+/* Texto selecionado no selectbox */
+.stSelectbox > div > div:first-child > div:first-child {
+    color: #1e1e1e !important;
+    font-weight: 500 !important;
+}
+
+/* Placeholder do selectbox */
+.stSelectbox [data-baseweb="select"] [data-baseweb="input"] {
+    color: #1e1e1e !important;
+    background-color: #ffffff !important;
+}

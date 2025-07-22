@@ -2025,26 +2025,34 @@ def show():
 
                 # Adicionar funcionalidade para reabrir propostas
                 with st.expander("Reabrir Proposta Finalizada"):
-                    # Obter lista de números de propostas finalizadas para o select box
-                    numeros_propostas = propostas_finalizadas['numero'].tolist()
-                    numeros_propostas.sort()  # Ordenar para facilitar a seleção
+                    # Criar mapeamento de opções mais legíveis
+                    opcoes_propostas = []
+                    mapa_opcoes_reabrir = {}
+                    
+                    for _, prop in propostas_finalizadas.iterrows():
+                        numero = prop['numero']
+                        cliente_nome = prop.get('cliente_nome', 'Sem cliente')
+                        descricao = prop.get('descricao', 'Sem descrição')[:50] + "..." if len(str(prop.get('descricao', ''))) > 50 else prop.get('descricao', 'Sem descrição')
+                        
+                        opcao = f"#{numero} - {cliente_nome}: {descricao}"
+                        opcoes_propostas.append(opcao)
+                        mapa_opcoes_reabrir[opcao] = numero
 
-                    with st.form(key="reabrir_proposta_form"):
-                        proposta_numero = st.selectbox(
-                            "Selecione o número da proposta a reabrir:",
-                            numeros_propostas,
-                            key="numero_proposta_finalizada_reabrir"
-                        )
+                    # Seleção da proposta com formato mais claro
+                    proposta_opcao = st.selectbox(
+                        "Selecione o número da proposta a reabrir:",
+                        opcoes_propostas,
+                        key="opcao_proposta_reabrir"
+                    )
+                    
+                    proposta_numero = mapa_opcoes_reabrir.get(proposta_opcao)
+                    proposta_reabrir = propostas_finalizadas[propostas_finalizadas['numero'] == proposta_numero]
 
-                        proposta_reabrir = propostas_finalizadas[propostas_finalizadas['numero'] == proposta_numero]
-
-                        if not proposta_reabrir.empty:
-                            st.info(f"Você está prestes a reabrir a proposta #{proposta_numero} - {proposta_reabrir.iloc[0]['descricao']}")
-                            st.warning("Esta ação mudará o status da proposta para 'Em execução'.")
-
-                        reabrir_proposta = st.form_submit_button("REABRIR PROPOSTA")
-
-                        if reabrir_proposta and not proposta_reabrir.empty:
+                    if not proposta_reabrir.empty:
+                        st.info(f"Você está prestes a reabrir a proposta #{proposta_numero} - {proposta_reabrir.iloc[0]['descricao']}")
+                        st.warning("Esta ação mudará o status da proposta para 'Em execução'.")
+                        
+                        if st.button("REABRIR PROPOSTA", key="btn_reabrir_proposta", type="primary", use_container_width=True):
                             try:
                                 # Importar função de reabrir proposta
                                 from reabrir_proposta import reabrir_proposta_finalizada
@@ -2069,6 +2077,8 @@ def show():
                                     st.error(f"Erro ao reabrir proposta: {resultado.get('mensagem')}")
                             except Exception as e:
                                 st.error(f"Erro ao reabrir proposta: {str(e)}")
+                    else:
+                        st.warning("Selecione uma proposta válida para reabrir.")
             else:
                 st.info("Nenhuma proposta encontrada com os filtros selecionados.")
         else:
