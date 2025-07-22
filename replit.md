@@ -45,6 +45,9 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **VERIFICADO**: Login funcionando corretamente com Firebase Auth
 - **CONFIRMADO**: Sistema multi-tenant operacional com filtragem por usuario_id
 - **TESTADO**: Dashboard carregando propostas em aberto corretamente
+- **CORRIGIDO**: Visibilidade de texto em selectbox do módulo vendas/produtos (#1e1e1e em fundo #f8f9fa)
+- **CORRIGIDO**: Botões com texto branco (#ffffff) em fundo azul (#3a75c4) para melhor contraste
+- **PADRONIZADO**: CSS para botões primary/secondary com hover em azul escuro (#2B547E)
 
 ### 2025-07-21
 - **CORRIGIDO**: Erros de API do Streamlit impedindo carregamento

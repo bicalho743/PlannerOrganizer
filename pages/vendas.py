@@ -165,6 +165,24 @@ def show():
                             color: #1e1e1e !important;
                             font-weight: 600 !important;
                         }
+                        
+                        /* Botões com texto branco */
+                        button[data-testid="baseButton-primary"],
+                        button[data-testid="baseButton-secondary"],
+                        .stButton button {
+                            color: #ffffff !important;
+                            background-color: #3a75c4 !important;
+                            border: 1px solid #3a75c4 !important;
+                            font-weight: 600 !important;
+                        }
+                        
+                        button[data-testid="baseButton-primary"]:hover,
+                        button[data-testid="baseButton-secondary"]:hover,
+                        .stButton button:hover {
+                            color: #ffffff !important;
+                            background-color: #2B547E !important;
+                            border: 1px solid #2B547E !important;
+                        }
                         </style>
                         """, unsafe_allow_html=True)
                         
