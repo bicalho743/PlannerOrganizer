@@ -1384,47 +1384,51 @@ st.sidebar.markdown('<div style="margin: 1.5rem 0;"><hr style="border: none; hei
 # CSS para melhorar a visibilidade do texto no expander do sistema
 st.sidebar.markdown("""
 <style>
-/* Estilo específico para o expander de informações do sistema */
-div[data-testid="stExpander"] .streamlit-expanderContent {
+/* Estilo específico para o expander de informações do sistema na sidebar */
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent {
     background-color: rgba(255, 255, 255, 0.08) !important;
     border-radius: 8px !important;
     padding: 16px !important;
     margin: 8px 0 !important;
 }
 
-/* Melhorar contraste do texto no expander - todos os elementos */
-div[data-testid="stExpander"] .streamlit-expanderContent * {
-    color: #ffffff !important;
+/* Melhorar contraste do texto no expander - FORÇAR cor escura para visibilidade */
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent * {
+    color: #2c3e50 !important;
+    background-color: transparent !important;
 }
 
-div[data-testid="stExpander"] .streamlit-expanderContent h1,
-div[data-testid="stExpander"] .streamlit-expanderContent h2,
-div[data-testid="stExpander"] .streamlit-expanderContent h3,
-div[data-testid="stExpander"] .streamlit-expanderContent h4,
-div[data-testid="stExpander"] .streamlit-expanderContent h5,
-div[data-testid="stExpander"] .streamlit-expanderContent h6 {
-    color: #ffffff !important;
-    font-weight: 600 !important;
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent h1,
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent h2,
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent h3,
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent h4,
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent h5,
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent h6 {
+    color: #1a252f !important;
+    font-weight: 700 !important;
     margin-bottom: 12px !important;
     margin-top: 16px !important;
+    background-color: transparent !important;
 }
 
-div[data-testid="stExpander"] .streamlit-expanderContent p,
-div[data-testid="stExpander"] .streamlit-expanderContent li,
-div[data-testid="stExpander"] .streamlit-expanderContent span,
-div[data-testid="stExpander"] .streamlit-expanderContent div {
-    color: #e8e8e8 !important;
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent p,
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent li,
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent span,
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent div {
+    color: #34495e !important;
     line-height: 1.6 !important;
+    background-color: transparent !important;
 }
 
-div[data-testid="stExpander"] .streamlit-expanderContent strong,
-div[data-testid="stExpander"] .streamlit-expanderContent b {
-    color: #ffffff !important;
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent strong,
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent b {
+    color: #1a252f !important;
     font-weight: 700 !important;
+    background-color: transparent !important;
 }
 
 /* Estilo para o cabeçalho do expander */
-div[data-testid="stExpander"] .streamlit-expanderHeader {
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderHeader {
     color: #ffffff !important;
     font-weight: 600 !important;
     background-color: rgba(255, 255, 255, 0.05) !important;
@@ -1433,30 +1437,34 @@ div[data-testid="stExpander"] .streamlit-expanderHeader {
 }
 
 /* Garantir que listas tenham boa visibilidade */
-div[data-testid="stExpander"] .streamlit-expanderContent ul,
-div[data-testid="stExpander"] .streamlit-expanderContent ol {
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent ul,
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent ol {
     margin: 8px 0 !important;
     padding-left: 20px !important;
 }
 
-div[data-testid="stExpander"] .streamlit-expanderContent ul li,
-div[data-testid="stExpander"] .streamlit-expanderContent ol li {
-    color: #e8e8e8 !important;
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent ul li,
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent ol li {
+    color: #34495e !important;
     margin-bottom: 4px !important;
+    background-color: transparent !important;
 }
 
-/* Estilo específico para emojis e ícones */
-div[data-testid="stExpander"] .streamlit-expanderContent .emoji {
-    filter: brightness(1.3) contrast(1.1) !important;
+/* Forçar cor escura em todos os elementos markdown dentro da sidebar */
+section[data-testid="stSidebar"] div[data-testid="stExpander"] [data-testid="stMarkdownContainer"] {
+    color: #2c3e50 !important;
+    background-color: transparent !important;
 }
 
-/* Forçar cor branca em todos os elementos markdown */
-div[data-testid="stExpander"] [data-testid="stMarkdownContainer"] {
-    color: #ffffff !important;
+section[data-testid="stSidebar"] div[data-testid="stExpander"] [data-testid="stMarkdownContainer"] * {
+    color: #2c3e50 !important;
+    background-color: transparent !important;
 }
 
-div[data-testid="stExpander"] [data-testid="stMarkdownContainer"] * {
-    color: inherit !important;
+/* Fundo branco para melhor contraste */
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
 }
 </style>
 """, unsafe_allow_html=True)
