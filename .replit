@@ -27,14 +27,6 @@ args = "Limpar Clientes"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Importar Clientes"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Importar Propostas V2"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Importação Direta V2"
 
 [[workflows.workflow.tasks]]
@@ -43,19 +35,11 @@ args = "Examinar Tabela Propostas"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Limpar Propostas"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Sistema de Backup"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Login"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Login Simples"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
@@ -107,27 +91,11 @@ args = "Visualizar Todas Propostas"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Visualizar Propostas"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Todas Propostas Simples"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Exportar Propostas"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Teste 4 Abas"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Debug Proposta 73"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Teste Google Analytics"
 
 [[workflows.workflow]]
 name = "Importar Propostas"
@@ -160,36 +128,6 @@ args = "streamlit run limpar_clientes.py --server.port 8506 --server.address 0.0
 waitForPort = 8506
 
 [[workflows.workflow]]
-name = "Importar Clientes"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run importar_clientes.py --server.port 8507 --server.address 0.0.0.0"
-waitForPort = 8507
-
-[[workflows.workflow]]
-name = "Importar Propostas V2"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run importar_propostas_v2.py --server.port 8501 --server.address 0.0.0.0"
-waitForPort = 8501
-
-[[workflows.workflow]]
 name = "Importação Direta V2"
 author = "agent"
 
@@ -218,21 +156,6 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "streamlit run examinar_tabela_propostas.py --server.port 8515 --server.address 0.0.0.0"
 waitForPort = 8515
-
-[[workflows.workflow]]
-name = "Limpar Propostas"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run limpar_propostas.py --server.port 8509 --server.address 0.0.0.0"
-waitForPort = 8509
 
 [[workflows.workflow]]
 name = "Sistema de Backup"
@@ -271,18 +194,6 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run login.py --server.port 5001 --server.address 0.0.0.0"
-waitForPort = 5001
-
-[[workflows.workflow]]
-name = "Login Simples"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run login_simples.py --server.port 5001 --server.address 0.0.0.0"
 waitForPort = 5001
 
 [[workflows.workflow]]
@@ -413,32 +324,6 @@ args = "streamlit run todas_propostas.py --server.port 5004 --server.address 0.0
 waitForPort = 5004
 
 [[workflows.workflow]]
-name = "Visualizar Propostas"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run app_visualizar_propostas.py --server.port 5003 --server.address 0.0.0.0"
-waitForPort = 5003
-
-[[workflows.workflow]]
-name = "Todas Propostas Simples"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run todas_propostas_simples.py --server.port 5005 --server.address 0.0.0.0"
-
-[[workflows.workflow]]
-name = "Exportar Propostas"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run gerar_csv_propostas.py --server.port 5008 --server.address 0.0.0.0"
-waitForPort = 5008
-
-[[workflows.workflow]]
 name = "Teste 4 Abas"
 author = "agent"
 
@@ -455,15 +340,6 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run debug_proposta_73.py --server.port 8525 --server.address 0.0.0.0"
 waitForPort = 8525
-
-[[workflows.workflow]]
-name = "Teste Google Analytics"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run test_google_analytics.py --server.port 8600 --server.address 0.0.0.0"
-waitForPort = 8600
 
 [[ports]]
 localPort = 443
