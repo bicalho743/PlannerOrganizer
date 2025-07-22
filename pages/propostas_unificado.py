@@ -2038,39 +2038,79 @@ def show():
                         opcoes_propostas.append(opcao)
                         mapa_opcoes_reabrir[opcao] = numero
 
-                    # Injetar CSS específico para este selectbox
-                    st.markdown("""
+                    # Solução completa para selectbox - CSS + JavaScript
+                    st.markdown(f"""
                     <style>
-                    div[data-testid="stSelectbox"] > label > div[data-testid="stMarkdownContainer"] > p {
-                        color: #1e1e1e !important;
-                        font-weight: 600 !important;
-                        margin-bottom: 8px !important;
-                    }
-                    div[data-testid="stSelectbox"] [data-baseweb="select"] {
+                    /* Forçar visibilidade específica para selectbox de reabertura */
+                    div[data-testid="stSelectbox"] [data-baseweb="select"] {{
                         border: 2px solid #3a75c4 !important;
                         background-color: #ffffff !important;
-                    }
-                    div[data-testid="stSelectbox"] [data-baseweb="select"] > div {
+                        min-height: 45px !important;
+                    }}
+                    div[data-testid="stSelectbox"] [data-baseweb="select"] > div {{
                         color: #1e1e1e !important;
                         background-color: #ffffff !important;
-                        font-weight: 600 !important;
+                        font-weight: 700 !important;
                         font-size: 16px !important;
-                        padding: 8px 12px !important;
-                    }
-                    div[data-testid="stSelectbox"] [data-baseweb="menu"] [role="option"] {
+                        padding: 12px 16px !important;
+                        line-height: 1.4 !important;
+                        text-shadow: none !important;
+                        opacity: 1 !important;
+                        visibility: visible !important;
+                    }}
+                    /* Forçar todos os elementos de texto */
+                    div[data-testid="stSelectbox"] span,
+                    div[data-testid="stSelectbox"] div,
+                    div[data-testid="stSelectbox"] * {{
                         color: #1e1e1e !important;
-                        background-color: #ffffff !important;
-                        font-weight: 500 !important;
-                        font-size: 14px !important;
-                        padding: 10px 12px !important;
-                        border-bottom: 1px solid #f0f0f0 !important;
-                    }
-                    div[data-testid="stSelectbox"] [data-baseweb="menu"] [role="option"]:hover {
-                        color: #ffffff !important;
-                        background-color: #3a75c4 !important;
                         font-weight: 600 !important;
-                    }
+                        text-shadow: none !important;
+                        opacity: 1 !important;
+                        visibility: visible !important;
+                    }}
                     </style>
+                    
+                    <script>
+                    setTimeout(function() {{
+                        // Forçar visibilidade do texto no selectbox via JavaScript
+                        const selectElements = document.querySelectorAll('[data-baseweb="select"] > div');
+                        selectElements.forEach(function(element) {{
+                            element.style.color = '#1e1e1e';
+                            element.style.fontWeight = '700';
+                            element.style.fontSize = '16px';
+                            element.style.opacity = '1';
+                            element.style.visibility = 'visible';
+                            element.style.textShadow = 'none';
+                            element.style.background = '#ffffff';
+                            
+                            // Garantir que todos os filhos também sejam visíveis
+                            const childElements = element.querySelectorAll('*');
+                            childElements.forEach(function(child) {{
+                                child.style.color = '#1e1e1e';
+                                child.style.opacity = '1';
+                                child.style.visibility = 'visible';
+                            }});
+                        }});
+                    }}, 500);
+                    
+                    // Observador para aplicar estilos quando elementos são atualizados
+                    const observer = new MutationObserver(function(mutations) {{
+                        mutations.forEach(function(mutation) {{
+                            const selectElements = document.querySelectorAll('[data-baseweb="select"] > div');
+                            selectElements.forEach(function(element) {{
+                                element.style.color = '#1e1e1e';
+                                element.style.fontWeight = '700';
+                                element.style.opacity = '1';
+                                element.style.visibility = 'visible';
+                            }});
+                        }});
+                    }});
+                    
+                    observer.observe(document.body, {{
+                        childList: true,
+                        subtree: true
+                    }});
+                    </script>
                     """, unsafe_allow_html=True)
                     
                     # Seleção da proposta com formato mais claro
@@ -2079,6 +2119,27 @@ def show():
                         opcoes_propostas,
                         key="opcao_proposta_reabrir"
                     )
+                    
+                    # JavaScript adicional após o selectbox ser renderizado
+                    st.markdown("""
+                    <script>
+                    // Aplicar estilos imediatamente após renderização
+                    setTimeout(function() {
+                        const selectboxes = document.querySelectorAll('[data-testid="stSelectbox"]');
+                        selectboxes.forEach(function(selectbox) {
+                            const selectElement = selectbox.querySelector('[data-baseweb="select"] > div');
+                            if (selectElement) {
+                                selectElement.style.color = '#1e1e1e !important';
+                                selectElement.style.fontWeight = '700';
+                                selectElement.style.fontSize = '16px';
+                                selectElement.style.background = '#ffffff';
+                                selectElement.style.opacity = '1';
+                                selectElement.style.visibility = 'visible';
+                            }
+                        });
+                    }, 100);
+                    </script>
+                    """, unsafe_allow_html=True)
                     
                     proposta_numero = mapa_opcoes_reabrir.get(proposta_opcao)
                     proposta_reabrir = propostas_finalizadas[propostas_finalizadas['numero'] == proposta_numero]
