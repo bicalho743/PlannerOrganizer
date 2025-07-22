@@ -1466,6 +1466,24 @@ section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expand
     background-color: rgba(255, 255, 255, 0.95) !important;
     border: 1px solid rgba(255, 255, 255, 0.3) !important;
 }
+
+/* Corrigir botões dentro do expander para ter texto branco */
+section[data-testid="stSidebar"] div[data-testid="stExpander"] button[data-testid="baseButton-primary"],
+section[data-testid="stSidebar"] div[data-testid="stExpander"] button[data-testid="baseButton-secondary"],
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .stDownloadButton button {
+    color: #ffffff !important;
+    background-color: #3a75c4 !important;
+    border: 1px solid #3a75c4 !important;
+    font-weight: 600 !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="stExpander"] button[data-testid="baseButton-primary"]:hover,
+section[data-testid="stSidebar"] div[data-testid="stExpander"] button[data-testid="baseButton-secondary"]:hover,
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .stDownloadButton button:hover {
+    color: #ffffff !important;
+    background-color: #2B547E !important;
+    border: 1px solid #2B547E !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
