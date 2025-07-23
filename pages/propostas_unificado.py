@@ -11,12 +11,9 @@ import uuid
 import plotly.graph_objects as go
 from utils.database import Fornecedor
 from utils.propostas_helper import st_gerar_pdf_cliente, st_gerar_pdf_interno, gerar_pdf_proposta
-from utils.simple_mobile_fix import apply_mobile_sidebar_fix
+
 
 def show():
-    # Aplicar correção mobile para sidebar
-    apply_mobile_sidebar_fix()
-
     # Título com estilo personalizado para ficar mais próximo do topo
     st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">📝 Propostas</h1>', unsafe_allow_html=True)
 
