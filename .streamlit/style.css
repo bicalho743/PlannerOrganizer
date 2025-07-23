@@ -77,7 +77,7 @@ section[data-testid="stSidebar"] > div {
 
 /* PADRONIZAÇÃO CRÍTICA - ESPAÇAMENTO CONSISTENTE DOS BOTÕES DA SIDEBAR */
 section[data-testid="stSidebar"] .stButton {
-    margin: 2px 0 !important;
+    margin: 3px 0 !important;
     padding: 0 !important;
 }
 
@@ -85,9 +85,9 @@ section[data-testid="stSidebar"] .stButton {
 section[data-testid="stSidebar"] .stButton,
 section[data-testid="stSidebar"] div[data-testid="column"] .stButton,
 section[data-testid="stSidebar"] [data-testid="column"] .stButton {
-    margin: 2px 0 !important;
-    margin-top: 2px !important;
-    margin-bottom: 2px !important;
+    margin: 3px 0 !important;
+    margin-top: 3px !important;
+    margin-bottom: 3px !important;
     padding: 0 !important;
 }
 
@@ -99,22 +99,25 @@ section[data-testid="stSidebar"] [data-testid="column"] button {
     margin: 0 !important;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
-    padding: 8px 12px !important;
+    padding: 10px 14px !important;
     width: 100% !important;
-    height: 38px !important;
+    height: 42px !important;
     font-size: 0.875rem !important;
     font-weight: 500 !important;
     line-height: 1.2 !important;
-    border-radius: 6px !important;
+    border-radius: 8px !important;
     background: rgba(255, 255, 255, 0.08) !important;
     color: rgba(255, 255, 255, 0.95) !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    transition: all 0.2s ease !important;
+    transition: all 0.3s ease !important;
     text-align: center !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 }
 
@@ -160,6 +163,22 @@ section[data-testid="stSidebar"] .stButton > button:has(*:contains("Informaçõe
     box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3) !important;
 }
 
+/* Botão "Sair do Sistema" - estilo específico vermelho */
+section[data-testid="stSidebar"] button[aria-label*="Sair"],
+section[data-testid="stSidebar"] button[title*="Sair"],
+section[data-testid="stSidebar"] .stButton > button[aria-label*="Sair"],
+section[data-testid="stSidebar"] .stButton > button[title*="Sair"],
+section[data-testid="stSidebar"] button:has(div:contains("🚪")),
+section[data-testid="stSidebar"] button:has(span:contains("🚪")),
+section[data-testid="stSidebar"] button:has(*:contains("Sair do Sistema")),
+section[data-testid="stSidebar"] .stButton > button:has(*:contains("Sair do Sistema")) {
+    background: linear-gradient(135deg, #dc3545, #c82333) !important;
+    color: white !important;
+    border: 1px solid #c82333 !important;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3) !important;
+    margin-top: 10px !important;
+}
+
 section[data-testid="stSidebar"] button[aria-label*="Informações"]:hover,
 section[data-testid="stSidebar"] button[title*="Informações"]:hover,
 section[data-testid="stSidebar"] .stButton > button[aria-label*="Informações"]:hover,
@@ -171,6 +190,21 @@ section[data-testid="stSidebar"] .stButton > button:has(*:contains("Informaçõe
     background: linear-gradient(135deg, #1976D2, #1565C0) !important;
     border-color: #1565C0 !important;
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Hover para o botão "Sair do Sistema" */
+section[data-testid="stSidebar"] button[aria-label*="Sair"]:hover,
+section[data-testid="stSidebar"] button[title*="Sair"]:hover,
+section[data-testid="stSidebar"] .stButton > button[aria-label*="Sair"]:hover,
+section[data-testid="stSidebar"] .stButton > button[title*="Sair"]:hover,
+section[data-testid="stSidebar"] button:has(div:contains("🚪")):hover,
+section[data-testid="stSidebar"] button:has(span:contains("🚪")):hover,
+section[data-testid="stSidebar"] button:has(*:contains("Sair do Sistema")):hover,
+section[data-testid="stSidebar"] .stButton > button:has(*:contains("Sair do Sistema")):hover {
+    background: linear-gradient(135deg, #c82333, #a71e2a) !important;
+    border-color: #a71e2a !important;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4) !important;
     transform: translateY(-1px) !important;
 }
 
@@ -1162,17 +1196,21 @@ div[data-testid="column"] span {
 section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"],
 section[data-testid="stSidebar"] .stButton > button {
     width: 100% !important;
-    background: rgba(255, 255, 255, 0.05) !important;
-    color: rgba(255, 255, 255, 0.9) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
     border-radius: 8px !important;
-    padding: 12px 16px !important;
-    margin: 4px 0 !important;
+    padding: 10px 14px !important;
+    margin: 3px 0 !important;
     font-weight: 500 !important;
-    font-size: 0.9rem !important;
-    text-align: left !important;
+    font-size: 0.875rem !important;
+    text-align: center !important;
     transition: all 0.3s ease !important;
     backdrop-filter: blur(10px) !important;
+    height: 42px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 /* Hover unificado para todos os botões da sidebar */
