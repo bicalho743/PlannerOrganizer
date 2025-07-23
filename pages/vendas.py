@@ -11,7 +11,55 @@ def show():
         st.error("Erro: Conexão com banco de dados não inicializada")
         return
 
-    # CSS removido para evitar conflitos com estilos globais da sidebar
+    # CSS específico para forçar estilo da sidebar nos alertas do módulo Vendas
+    st.markdown("""
+    <style>
+    /* FORÇAR ESTILO SIDEBAR PARA ALERTAS - MÓDULO VENDAS */
+    div[data-testid="stAlert"] {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        background-image: none !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        border-radius: 8px !important;
+        margin: 0.5rem 0 !important;
+        backdrop-filter: blur(10px) !important;
+    }
+    
+    div[data-testid="stAlert"] * {
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+    
+    div[data-testid="stAlert"] svg {
+        fill: rgba(255, 255, 255, 0.9) !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+    </style>
+    
+    <script>
+    // JavaScript específico para módulo Vendas
+    function forceVendasAlertStyle() {
+        const alerts = document.querySelectorAll('[data-testid="stAlert"]');
+        alerts.forEach(alert => {
+            // Resetar completamente o estilo
+            alert.removeAttribute('style');
+            alert.style.cssText = 'background-color: rgba(255, 255, 255, 0.05) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 8px !important; backdrop-filter: blur(10px) !important; margin: 0.5rem 0 !important;';
+            
+            // Forçar texto branco
+            const allElements = alert.querySelectorAll('*');
+            allElements.forEach(elem => {
+                elem.style.color = 'rgba(255, 255, 255, 0.9)';
+            });
+        });
+    }
+    
+    // Executar imediatamente e repetir
+    setTimeout(forceVendasAlertStyle, 100);
+    setTimeout(forceVendasAlertStyle, 500);
+    setTimeout(forceVendasAlertStyle, 1000);
+    setInterval(forceVendasAlertStyle, 2000);
+    </script>
+    """, unsafe_allow_html=True)
 
     # Título com estilo personalizado para ficar mais próximo do topo
     st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">🛒 Vendas</h1>', unsafe_allow_html=True)
