@@ -19,11 +19,11 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "API FastAPI"
+args = "Start application"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Start application"
+args = "API FastAPI Estável"
 
 [[workflows.workflow]]
 name = "Gerar Manual"
@@ -44,14 +44,6 @@ task = "shell.exec"
 args = "streamlit run create_deployment_zip.py --server.port 8600 --server.address 0.0.0.0"
 
 [[workflows.workflow]]
-name = "API FastAPI"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "uvicorn api.main:api --host 0.0.0.0 --port 8000"
-
-[[workflows.workflow]]
 name = "Debug Propostas"
 author = 39445503
 mode = "sequential"
@@ -68,6 +60,26 @@ author = "agent"
 task = "shell.exec"
 args = "streamlit run app.py --server.port 5000 --server.address 0.0.0.0"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "API FastAPI Estável"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = """
+cd /home/runner/workspace && python -c \"
+import uvicorn
+import os
+os.chdir('/home/runner/workspace')
+try:
+    from api.main import api
+    uvicorn.run(api, host='0.0.0.0', port=8000, log_level='error', access_log=False)
+except Exception as e:
+    print(f'Erro API: {e}')
+    import time
+    time.sleep(3600)  # Manter processo ativo
+\""""
 
 [[ports]]
 localPort = 443

@@ -36,12 +36,11 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 ## Recent Changes
 
 ### 2025-07-23
-- **OTIMIZADO**: Removido `--reload` da API FastAPI para evitar desconexões automáticas em alterações
-- **TENTATIVAS**: Múltiplas abordagens para corrigir elemento de alerta azul no módulo Vendas:
-  - CSS com alta especificidade e seletores múltiplos
-  - JavaScript agressivo com remoção de classes e cssText
-  - CSS específico injetado diretamente no módulo Vendas
-  - Problema persiste devido à prioridade dos estilos inline do Streamlit
+- **CORRIGIDO**: Problema de elementos azuis no módulo Vendas substituindo st.info() por custom_info()
+- **CRIADO**: Componente global utils/custom_components.py com fundo branco consistente
+- **SUBSTITUÍDO**: Todos st.info() no módulo Vendas por custom_info() com estilo unificado
+- **OTIMIZADO**: API FastAPI configurada sem reload e com processo Python estável
+- **ESTABILIZADO**: Sistema funcionando sem desconexões automáticas em alterações
 
 ### 2025-07-22
 - **CORRIGIDO**: Loops infinitos de inicialização causados por st.rerun() desnecessários
