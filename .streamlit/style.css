@@ -428,6 +428,74 @@ div[data-testid="stExpander"] b {
     font-weight: 600 !important;
 }
 
+/* PADRONIZAÇÃO DOS ELEMENTOS DE ALERTA - TODOS OS MÓDULOS */
+/* Elementos de informação (st.info) */
+div[data-testid="stAlert"][data-baseweb="notification"] {
+    background-color: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 8px !important;
+    color: #495057 !important;
+    margin: 0.5rem 0 !important;
+}
+
+/* Ícone e texto dos alertas */
+div[data-testid="stAlert"] svg,
+div[data-testid="stAlert"] div,
+div[data-testid="stAlert"] p,
+div[data-testid="stAlert"] span {
+    color: #495057 !important;
+}
+
+/* Alerta de informação específico (azul claro) */
+div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="blue"]),
+div[data-testid="stAlert"][data-baseweb="notification"]:has(div[color*="blue"]) {
+    background-color: #e3f2fd !important;
+    border-color: #2196f3 !important;
+}
+
+/* Alerta de informação específico (azul claro) - texto */
+div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="blue"]) div,
+div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="blue"]) p,
+div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="blue"]) span {
+    color: #1565c0 !important;
+}
+
+/* Alerta de sucesso (verde) */
+div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="green"]) {
+    background-color: #e8f5e8 !important;
+    border-color: #4caf50 !important;
+}
+
+div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="green"]) div,
+div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="green"]) p,
+div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="green"]) span {
+    color: #2e7d32 !important;
+}
+
+/* Alerta de aviso (amarelo) */
+div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="orange"]) {
+    background-color: #fff3e0 !important;
+    border-color: #ff9800 !important;
+}
+
+div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="orange"]) div,
+div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="orange"]) p,
+div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="orange"]) span {
+    color: #ef6c00 !important;
+}
+
+/* Alerta de erro (vermelho) */
+div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="red"]) {
+    background-color: #ffebee !important;
+    border-color: #f44336 !important;
+}
+
+div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="red"]) div,
+div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="red"]) p,
+div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="red"]) span {
+    color: #c62828 !important;
+}
+
 /* Seletor ainda mais específico para o conteúdo dos expanders */
 .main div[data-testid="stExpander"] div[data-testid="stMarkdownContainer"] {
     color: #262730 !important;
