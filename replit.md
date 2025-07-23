@@ -35,6 +35,14 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 
 ## Recent Changes
 
+### 2025-07-23
+- **OTIMIZADO**: Removido `--reload` da API FastAPI para evitar desconexões automáticas em alterações
+- **TENTATIVAS**: Múltiplas abordagens para corrigir elemento de alerta azul no módulo Vendas:
+  - CSS com alta especificidade e seletores múltiplos
+  - JavaScript agressivo com remoção de classes e cssText
+  - CSS específico injetado diretamente no módulo Vendas
+  - Problema persiste devido à prioridade dos estilos inline do Streamlit
+
 ### 2025-07-22
 - **CORRIGIDO**: Loops infinitos de inicialização causados por st.rerun() desnecessários
 - **REMOVIDO**: st.rerun() das funções show_termos(), show_politica(), show_planos(), show_enviar_manual()
