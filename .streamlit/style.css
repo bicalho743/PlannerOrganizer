@@ -429,7 +429,11 @@ div[data-testid="stExpander"] b {
 }
 
 /* PADRONIZAÇÃO DOS ELEMENTOS DE ALERTA - TODOS OS MÓDULOS */
-/* Forçar todos os alertas para o estilo padrão da sidebar */
+/* Forçar todos os alertas para o estilo padrão da sidebar - ALTA ESPECIFICIDADE */
+.main div[data-testid="stAlert"],
+section[data-testid="stMain"] div[data-testid="stAlert"],
+div[data-testid="stMainBlockContainer"] div[data-testid="stAlert"],
+.stTabs div[data-testid="stAlert"],
 div[data-testid="stAlert"] {
     background-color: rgba(255, 255, 255, 0.05) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -438,7 +442,17 @@ div[data-testid="stAlert"] {
     backdrop-filter: blur(10px) !important;
 }
 
-/* Forçar texto com cor similar à sidebar */
+/* Forçar texto com cor similar à sidebar - ALTA ESPECIFICIDADE */
+.main div[data-testid="stAlert"] svg,
+.main div[data-testid="stAlert"] div,
+.main div[data-testid="stAlert"] p,
+.main div[data-testid="stAlert"] span,
+.main div[data-testid="stAlert"] *,
+section[data-testid="stMain"] div[data-testid="stAlert"] svg,
+section[data-testid="stMain"] div[data-testid="stAlert"] div,
+section[data-testid="stMain"] div[data-testid="stAlert"] p,
+section[data-testid="stMain"] div[data-testid="stAlert"] span,
+section[data-testid="stMain"] div[data-testid="stAlert"] *,
 div[data-testid="stAlert"] svg,
 div[data-testid="stAlert"] div,
 div[data-testid="stAlert"] p,
@@ -447,8 +461,21 @@ div[data-testid="stAlert"] * {
     color: rgba(255, 255, 255, 0.9) !important;
 }
 
-/* Remover todas as cores azuis/brancas de alertas de informação */
+/* Remover todas as cores azuis/brancas de alertas de informação - ALTA ESPECIFICIDADE */
+.main div[data-testid="stAlert"][data-baseweb="notification"],
+section[data-testid="stMain"] div[data-testid="stAlert"][data-baseweb="notification"],
+div[data-testid="stMainBlockContainer"] div[data-testid="stAlert"][data-baseweb="notification"],
+.stTabs div[data-testid="stAlert"][data-baseweb="notification"],
 div[data-testid="stAlert"][data-baseweb="notification"] {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* FORÇAR OVERRIDE DE QUALQUER COR AZUL ESPECÍFICA */
+div[data-testid="stAlert"][style*="background-color"],
+div[data-testid="stAlert"][style*="background"],
+div[data-testid="stAlert"]:has([style*="color: rgb(13, 110, 253)"]),
+div[data-testid="stAlert"]:has([style*="background"]) {
     background-color: rgba(255, 255, 255, 0.05) !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
 }
@@ -487,28 +514,50 @@ div[data-testid="stAlert"]:has(.css-1x8cf1d[data-testid="errorIcon"]) * {
 </style>
 
 <script>
-// Função para aplicar estilo da sidebar aos alertas
+// Função para aplicar estilo da sidebar aos alertas - VERSÃO AGRESSIVA
 function forceSidebarStyleAlerts() {
     const alerts = document.querySelectorAll('[data-testid="stAlert"]');
     alerts.forEach(alert => {
-        // Forçar estilo similar à sidebar
-        alert.style.setProperty('background-color', 'rgba(255, 255, 255, 0.05)', 'important');
-        alert.style.setProperty('border-color', 'rgba(255, 255, 255, 0.1)', 'important');
-        alert.style.setProperty('border-width', '1px', 'important');
-        alert.style.setProperty('border-style', 'solid', 'important');
-        alert.style.setProperty('border-radius', '8px', 'important');
-        alert.style.setProperty('backdrop-filter', 'blur(10px)', 'important');
+        // Remover qualquer classe que possa estar causando cor azul
+        alert.classList.remove('stAlert-info', 'alert-info', 'info');
         
-        // Forçar cor de texto similar à sidebar
+        // Forçar estilo similar à sidebar COM MÁXIMA PRIORIDADE
+        alert.style.cssText = `
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 8px !important;
+            margin: 0.5rem 0 !important;
+            backdrop-filter: blur(10px) !important;
+            background-image: none !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+        `;
+        
+        // Forçar cor de texto similar à sidebar COM MÁXIMA PRIORIDADE
         const textElements = alert.querySelectorAll('*');
         textElements.forEach(element => {
-            element.style.setProperty('color', 'rgba(255, 255, 255, 0.9)', 'important');
+            element.style.cssText += 'color: rgba(255, 255, 255, 0.9) !important;';
+            
+            // Remover especificamente cores azuis
+            if (element.style.color && element.style.color.includes('blue')) {
+                element.style.setProperty('color', 'rgba(255, 255, 255, 0.9)', 'important');
+            }
+            if (element.style.backgroundColor && element.style.backgroundColor.includes('blue')) {
+                element.style.setProperty('background-color', 'transparent', 'important');
+            }
         });
         
         // Ajustar ícones com cor similar
         const svgs = alert.querySelectorAll('svg');
         svgs.forEach(svg => {
             svg.style.setProperty('fill', 'rgba(255, 255, 255, 0.9)', 'important');
+            svg.style.setProperty('color', 'rgba(255, 255, 255, 0.9)', 'important');
+        });
+        
+        // Verificar se há elementos filhos com cores azuis específicas
+        const blueElements = alert.querySelectorAll('[style*="color: rgb(13, 110, 253)"], [style*="background-color: rgb("], [class*="info"]');
+        blueElements.forEach(elem => {
+            elem.style.setProperty('color', 'rgba(255, 255, 255, 0.9)', 'important');
+            elem.style.setProperty('background-color', 'transparent', 'important');
         });
     });
 }
