@@ -429,72 +429,111 @@ div[data-testid="stExpander"] b {
 }
 
 /* PADRONIZAÇÃO DOS ELEMENTOS DE ALERTA - TODOS OS MÓDULOS */
-/* Elementos de informação (st.info) */
-div[data-testid="stAlert"][data-baseweb="notification"] {
+/* Forçar todos os alertas para cores neutras primeiro */
+div[data-testid="stAlert"] {
     background-color: #f8f9fa !important;
     border: 1px solid #dee2e6 !important;
     border-radius: 8px !important;
-    color: #495057 !important;
     margin: 0.5rem 0 !important;
 }
 
-/* Ícone e texto dos alertas */
+/* Forçar texto neutro em todos os alertas */
 div[data-testid="stAlert"] svg,
 div[data-testid="stAlert"] div,
 div[data-testid="stAlert"] p,
-div[data-testid="stAlert"] span {
+div[data-testid="stAlert"] span,
+div[data-testid="stAlert"] * {
     color: #495057 !important;
 }
 
-/* Alerta de informação específico (azul claro) */
-div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="blue"]),
-div[data-testid="stAlert"][data-baseweb="notification"]:has(div[color*="blue"]) {
-    background-color: #e3f2fd !important;
-    border-color: #2196f3 !important;
+/* Remover todas as cores azuis de alertas de informação */
+div[data-testid="stAlert"][data-baseweb="notification"] {
+    background-color: #f8f9fa !important;
+    border-color: #dee2e6 !important;
 }
 
-/* Alerta de informação específico (azul claro) - texto */
-div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="blue"]) div,
-div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="blue"]) p,
-div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="blue"]) span {
-    color: #1565c0 !important;
-}
-
-/* Alerta de sucesso (verde) */
-div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="green"]) {
+/* Estilo específico para alertas de sucesso apenas */
+div[data-testid="stAlert"]:has(.css-1x8cf1d[data-testid="successIcon"]) {
     background-color: #e8f5e8 !important;
     border-color: #4caf50 !important;
 }
 
-div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="green"]) div,
-div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="green"]) p,
-div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="green"]) span {
+div[data-testid="stAlert"]:has(.css-1x8cf1d[data-testid="successIcon"]) * {
     color: #2e7d32 !important;
 }
 
-/* Alerta de aviso (amarelo) */
-div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="orange"]) {
+/* Estilo específico para alertas de aviso apenas */
+div[data-testid="stAlert"]:has(.css-1x8cf1d[data-testid="warningIcon"]) {
     background-color: #fff3e0 !important;
     border-color: #ff9800 !important;
 }
 
-div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="orange"]) div,
-div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="orange"]) p,
-div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="orange"]) span {
+div[data-testid="stAlert"]:has(.css-1x8cf1d[data-testid="warningIcon"]) * {
     color: #ef6c00 !important;
 }
 
-/* Alerta de erro (vermelho) */
-div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="red"]) {
+/* Estilo específico para alertas de erro apenas */
+div[data-testid="stAlert"]:has(.css-1x8cf1d[data-testid="errorIcon"]) {
     background-color: #ffebee !important;
     border-color: #f44336 !important;
 }
 
-div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="red"]) div,
-div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="red"]) p,
-div[data-testid="stAlert"][data-baseweb="notification"]:has(svg[fill*="red"]) span {
+div[data-testid="stAlert"]:has(.css-1x8cf1d[data-testid="errorIcon"]) * {
     color: #c62828 !important;
 }
+
+/* JavaScript para forçar mudança de cores dos alertas */
+</style>
+
+<script>
+// Função para aplicar cores neutras aos alertas
+function forceNeutralAlerts() {
+    const alerts = document.querySelectorAll('[data-testid="stAlert"]');
+    alerts.forEach(alert => {
+        // Forçar fundo cinza neutro para todos os alertas
+        alert.style.setProperty('background-color', '#f8f9fa', 'important');
+        alert.style.setProperty('border-color', '#dee2e6', 'important');
+        alert.style.setProperty('border-width', '1px', 'important');
+        alert.style.setProperty('border-style', 'solid', 'important');
+        alert.style.setProperty('border-radius', '8px', 'important');
+        
+        // Forçar cor de texto neutra
+        const textElements = alert.querySelectorAll('*');
+        textElements.forEach(element => {
+            element.style.setProperty('color', '#495057', 'important');
+        });
+        
+        // Remover especificamente cores azuis de ícones
+        const svgs = alert.querySelectorAll('svg');
+        svgs.forEach(svg => {
+            svg.style.setProperty('fill', '#495057', 'important');
+        });
+    });
+}
+
+// Aplicar ao carregar
+document.addEventListener('DOMContentLoaded', forceNeutralAlerts);
+
+// Observar mudanças no DOM para aplicar aos novos alertas
+const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.addedNodes.length > 0) {
+            setTimeout(forceNeutralAlerts, 100);
+        }
+    });
+});
+
+// Iniciar observação
+observer.observe(document.body, {
+    childList: true,
+    subtree: true
+});
+
+// Aplicar periodicamente para garantir
+setInterval(forceNeutralAlerts, 2000);
+</script>
+
+<style>
 
 /* Seletor ainda mais específico para o conteúdo dos expanders */
 .main div[data-testid="stExpander"] div[data-testid="stMarkdownContainer"] {
