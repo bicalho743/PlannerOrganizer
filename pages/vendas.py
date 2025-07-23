@@ -4,6 +4,7 @@ from datetime import datetime
 import numpy as np
 import time
 import os
+from utils.custom_components import custom_info
 
 def show():
     # Verificar se o db está na sessão
@@ -61,22 +62,7 @@ def show():
     </script>
     """, unsafe_allow_html=True)
 
-    # Função para criar info com estilo da sidebar
-    def sidebar_info(message):
-        st.markdown(f"""
-        <div style="
-            background-color: rgba(255, 255, 255, 0.05) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            border-radius: 8px !important;
-            padding: 0.75rem 1rem !important;
-            margin: 0.5rem 0 !important;
-            backdrop-filter: blur(10px) !important;
-            color: rgba(255, 255, 255, 0.9) !important;
-            font-weight: 500 !important;
-        ">
-            ℹ️ {message}
-        </div>
-        """, unsafe_allow_html=True)
+    # Removido função local - usando componente global custom_info
 
     # Título com estilo personalizado para ficar mais próximo do topo
     st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">🛒 Vendas</h1>', unsafe_allow_html=True)
@@ -149,7 +135,7 @@ def show():
                 try:
                     produtos_df = st.session_state.db.get_produtos()
                     if produtos_df.empty:
-                        sidebar_info("Nenhum produto cadastrado.")
+                        custom_info("Nenhum produto cadastrado.")
                     else:
                         # Configurar colunas para exibição
                         produtos_df['lucro'] = produtos_df['preco_venda'] - produtos_df['preco_custo']
@@ -536,7 +522,7 @@ def show():
                 
                 # Totais e finalização
                 st.markdown("---")
-                sidebar_info(f"Valor Total da Venda: **R$ {valor_total:.2f}**")
+                custom_info(f"Valor Total da Venda: **R$ {valor_total:.2f}**")
                 
                 col1, col2 = st.columns(2)
                 
@@ -620,7 +606,7 @@ def show():
                         except Exception as e:
                             st.error(f"Erro ao registrar venda: {str(e)}")
             else:
-                sidebar_info("Nenhum produto adicionado ao carrinho.")
+                custom_info("Nenhum produto adicionado ao carrinho.")
 
     # === Aba de Histórico de Vendas ===
     with tab_historico:
@@ -630,7 +616,7 @@ def show():
             vendas_df = st.session_state.db.get_vendas()
             
             if vendas_df.empty:
-                sidebar_info("Nenhuma venda registrada.")
+                custom_info("Nenhuma venda registrada.")
             else:
                 # Formatar dados para exibição
                 vendas_df['valor_total'] = vendas_df['valor_total'].map('R$ {:.2f}'.format)
@@ -698,7 +684,7 @@ def show():
                         # Confirmação de exclusão da venda
                         if st.session_state.get(f'confirmar_exclusao_venda_{venda_id}', False):
                             st.warning(f"⚠️ **Tem certeza que deseja excluir a Venda #{venda_id}?**")
-                            sidebar_info(f"**Cliente:** {venda['cliente_nome']} | **Valor:** {venda['valor_total']} | **Data:** {venda['data_venda']}")
+                            custom_info(f"**Cliente:** {venda['cliente_nome']} | **Valor:** {venda['valor_total']} | **Data:** {venda['data_venda']}")
                             
                             col1, col2 = st.columns(2)
                             with col1:
