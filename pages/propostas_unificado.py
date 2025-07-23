@@ -253,97 +253,8 @@ def show():
 
         # SUBTAB 2: GERENCIAR PROPOSTAS
         with proposta_tab2:
-            # CSS global para corrigir alinhamento e cores dos botões
-            st.markdown("""
-            <style>
-            /* Força alinhamento vertical uniforme */
-            div[data-testid="column"] {
-                display: flex !important;
-                flex-direction: column !important;
-                justify-content: flex-start !important;
-            }
-
-            /* CSS para TODOS os botões em azul - cor padrão do "Salvar Proposta" */
-            .stButton button {
-                background-color: #3c5aa6 !important;
-                color: white !important;
-                border: 1px solid #3c5aa6 !important;
-                font-weight: 500 !important;
-            }
-
-            .stButton button:hover {
-                background-color: #2e4282 !important;
-                border-color: #2e4282 !important;
-                color: white !important;
-            }
-
-            /* CSS mais específico para botões secundários */
-            .stButton button[data-testid="baseButton-secondary"] {
-                background-color: #3c5aa6 !important;
-                color: white !important;
-                border: 1px solid #3c5aa6 !important;
-            }
-
-            .stButton button[data-testid="baseButton-secondary"]:hover {
-                background-color: #2e4282 !important;
-                border-color: #2e4282 !important;
-            }
-
-            /* CSS para botões primários */
-            .stButton button[data-testid="baseButton-primary"] {
-                background-color: #3c5aa6 !important;
-                color: white !important;
-                border: 1px solid #3c5aa6 !important;
-            }
-
-            .stButton button[data-testid="baseButton-primary"]:hover {
-                background-color: #2e4282 !important;
-                border-color: #2e4282 !important;
-            }
-
-            /* Força todos os botões para a mesma cor azul */
-            button[kind="primary"], button[kind="secondary"] {
-                background-color: #3c5aa6 !important;
-                color: white !important;
-                border: 1px solid #3c5aa6 !important;
-            }
-
-            button[kind="primary"]:hover, button[kind="secondary"]:hover {
-                background-color: #2e4282 !important;
-                border-color: #2e4282 !important;
-            }
-
-            /* Alinhamento vertical das colunas */
-            .element-container:has(.stButton) {
-                margin-top: 26px !important;
-            }
-
-            .element-container:has(.stSelectbox) + .element-container:has(.stButton) {
-                margin-top: 0px !important;
-            }
-
-            /* Alinhamento específico do selectbox */
-            div[data-testid="stSelectbox"] {
-                margin-top: 0px !important;
-            }
-
-            /* Força altura consistente para selectbox */
-            .stSelectbox > div {
-                min-height: 40px !important;
-                display: flex !important;
-                align-items: center !important;
-            }
-
-            /* Força alinhamento vertical uniforme */
-            div[data-testid="column"] {
-                display: flex !important;
-                flex-direction: column !important;
-                justify-content: flex-start !important;
-            }
-
-            /* REMOVIDO - CSS muito amplo que afetava sidebar e abas */
-            </style>
-            """, unsafe_allow_html=True)
+            # Container com classe CSS padronizada
+            st.markdown('<div class="propostas-container">', unsafe_allow_html=True)
 
             st.subheader("Gerenciar Propostas")
 
@@ -356,15 +267,15 @@ def show():
                 if not propostas_em_aberto.empty:
                     # Criar uma cópia das propostas para manipulação
                     propostas_display = propostas_em_aberto.copy()
-                    
+
                     # LIMPEZA ROBUSTA PARA PREVENIR ERRO DO ARROW - aplicar a TODAS as colunas
                     print("DEBUG ARROW: Aplicando limpeza robusta a todas as colunas...")
-                    
+
                     # PRIMEIRO: Detectar e renomear colunas problemáticas para padronizar
                     if 'Valor' in propostas_display.columns:
                         print("DEBUG ARROW: Encontrada coluna 'Valor' (maiúscula) - renomeando para 'valor'")
                         propostas_display = propostas_display.rename(columns={'Valor': 'valor'})
-                    
+
                     for col in propostas_display.columns:
                         print(f"DEBUG ARROW: Limpando coluna {col}")
                         if col.lower() == 'valor':
@@ -389,13 +300,13 @@ def show():
                         else:
                             # Limpeza geral para outras colunas
                             propostas_display[col] = propostas_display[col].fillna('').astype(str)
-                    
+
                     # ÚLTIMO PASSO: Forçar conversão de TODAS as colunas para string para garantir compatibilidade Arrow
                     print("DEBUG ARROW: Forçando conversão final para string...")
                     for col in propostas_display.columns:
                         propostas_display[col] = propostas_display[col].astype(str)
                         print(f"DEBUG ARROW: Coluna {col} convertida para tipo: {propostas_display[col].dtype}")
-                    
+
                     # FORÇA CONVERSÃO PARA STRING PARA EVITAR PROBLEMAS DE ARROW - TODAS AS COLUNAS
                     for col in propostas_display.columns:
                         if col.lower() in ['valor', 'id', 'cliente_id'] or col in ['Valor', 'ID', 'Cliente_ID']:
@@ -437,7 +348,7 @@ def show():
 
                     # Criar uma cópia completamente limpa para evitar problemas de referência
                     propostas_display = propostas_em_aberto.copy().reset_index(drop=True)
-                    
+
                     # APLICAR LIMPEZA PRECOCE NA CÓPIA FINAL TAMBÉM
                     if 'valor' in propostas_display.columns:
                         def final_clean_valor(x):
@@ -457,32 +368,32 @@ def show():
                                 return 0.0
                             except:
                                 return 0.0
-                        
+
                         propostas_display['valor'] = propostas_display['valor'].apply(final_clean_valor)
-                    
+
                     # Função robusta para limpar valores numéricos
                     def clean_numeric_value(val, default=0):
                         """Limpa e converte valores para números, tratando qualquer tipo de entrada"""
                         if pd.isna(val) or val is None:
                             return default
-                        
+
                         # Se já é um número, retornar
                         if isinstance(val, (int, float)):
                             return float(val) if not pd.isna(val) else default
-                        
+
                         # Converter para string e limpar
                         val_str = str(val).strip().lower()
-                        
+
                         # Se está vazio ou é 'nan', retornar default
                         if not val_str or val_str in ['nan', 'none', 'null', '']:
                             return default
-                        
+
                         # Tentar extrair apenas números, pontos e vírgulas
                         import re
                         numeric_part = re.findall(r'[\d.,]+', val_str)
                         if not numeric_part:
                             return default
-                        
+
                         try:
                             # Pegar a primeira parte numérica encontrada
                             clean_val = numeric_part[0]
@@ -495,7 +406,7 @@ def show():
                             return float(clean_val)
                         except (ValueError, IndexError):
                             return default
-                    
+
                     # Limpar e fixar todas as colunas de forma robusta
                     for col in propostas_display.columns:
                         if col in ['id', 'numero', 'cliente_id']:
@@ -529,18 +440,18 @@ def show():
                             propostas_display[col] = propostas_display[col].apply(
                                 lambda x: str(x).strip() if pd.notna(x) and x is not None else ''
                             )
-                    
+
                     # Garantir tipos finais corretos para Arrow
                     propostas_display['id'] = propostas_display['id'].astype('int64')
                     propostas_display['numero'] = propostas_display['numero'].astype('int64')
                     propostas_display['cliente_id'] = propostas_display['cliente_id'].astype('int64')
                     propostas_display['valor'] = propostas_display['valor'].astype('float64')
                     propostas_display['previsao_dias'] = propostas_display['previsao_dias'].astype('float64')
-                    
+
                     # Criar colunas formatadas para exibição
                     propostas_display['valor_formatado'] = propostas_display['valor'].apply(safe_convert_valor)
                     propostas_display['data_inicio_formatada'] = propostas_display['data_inicio'].apply(safe_convert_date)
-                    
+
                     # Verificar se há colunas problemáticas restantes
                     for col in propostas_display.columns:
                         if propostas_display[col].dtype == 'object':
@@ -881,9 +792,9 @@ def show():
                     border-radius: 5px;
                     box-shadow: 0px 1px 3px rgba(0,0,0,0.1);
                 }
-                
+
                 /* ESTILO ESPECÍFICO APENAS PARA BOTÕES DE FORMULÁRIO NA ABA EM EXECUÇÃO */
-                
+
                 /* Aplicar apenas a botões dentro de abas de execução */
                 .execution-tabs button[kind="formSubmit"],
                 .execution-tabs button[data-testid*="form"], 
@@ -899,7 +810,7 @@ def show():
                     transition: all 0.3s ease !important;
                     padding: 8px 16px !important;
                 }
-                
+
                 /* Estados hover apenas para botões na aba de execução */
                 .execution-tabs button[kind="formSubmit"]:hover,
                 .execution-tabs button[data-testid*="form"]:hover,
@@ -911,7 +822,7 @@ def show():
                     transform: translateY(-1px) !important;
                     box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
                 }
-                
+
                 /* Sidebar está sendo controlada pelo CSS global - removendo conflitos */
                     color: inherit !important;
                     border: inherit !important;
@@ -947,7 +858,7 @@ def show():
                     padding: 8px 16px !important;
                 }
                 </style>
-                
+
                 <script>
                 // JavaScript para aplicar estilos apenas a botões dentro da aba de execução
                 function styleExecutionTabButtons() {
@@ -972,10 +883,10 @@ def show():
                         });
                     }
                 }
-                
+
                 // Aplicar estilos após carregamento
                 setTimeout(styleExecutionTabButtons, 1000);
-                
+
                 // Observador mais específico para a aba de execução
                 const observer = new MutationObserver(function(mutations) {
                     mutations.forEach(function(mutation) {
@@ -986,7 +897,7 @@ def show():
                         });
                     });
                 });
-                
+
                 // Observar apenas mudanças dentro da aba de execução
                 setTimeout(function() {
                     const executionTabs = document.querySelector('.execution-tabs');
@@ -1971,14 +1882,14 @@ def show():
                     # Criar opções mais descritivas para o selectbox
                     opcoes_propostas = []
                     mapa_opcoes = {}
-                    
+
                     for _, proposta in propostas_filtradas.iterrows():
                         cliente_nome = proposta.get('nome', 'Cliente não informado')
                         descricao = proposta.get('descricao', 'Sem descrição')[:50] + ('...' if len(str(proposta.get('descricao', ''))) > 50 else '')
                         opcao = f"#{proposta['numero']} - {cliente_nome} - {descricao}"
                         opcoes_propostas.append(opcao)
                         mapa_opcoes[opcao] = proposta['numero']
-                    
+
                     opcoes_propostas.sort()
 
                     proposta_opcao = st.selectbox(
@@ -1986,7 +1897,7 @@ def show():
                         opcoes_propostas,
                         key="opcao_proposta_relatorio"
                     )
-                    
+
                     proposta_numero = mapa_opcoes.get(proposta_opcao)
 
                     proposta_relatorio = propostas_filtradas[propostas_filtradas['numero'] == proposta_numero]
@@ -2016,25 +1927,25 @@ def show():
                     # Criar mapeamento de opções mais legíveis
                     opcoes_propostas = []
                     mapa_opcoes_reabrir = {}
-                    
+
                     for _, prop in propostas_finalizadas.iterrows():
                         numero = prop['numero']
                         cliente_nome = prop.get('cliente_nome', 'Sem cliente')
                         descricao = prop.get('descricao', 'Sem descrição')[:50] + "..." if len(str(prop.get('descricao', ''))) > 50 else prop.get('descricao', 'Sem descrição')
-                        
+
                         opcao = f"#{numero} - {cliente_nome}: {descricao}"
                         opcoes_propostas.append(opcao)
                         mapa_opcoes_reabrir[opcao] = numero
 
                     # CSS inline removido para usar estilos globais
-                    
+
                     # Seleção da proposta com formato mais claro
                     proposta_opcao = st.selectbox(
                         "Selecione o número da proposta a reabrir:",
                         opcoes_propostas,
                         key="opcao_proposta_reabrir"
                     )
-                    
+
                     # JavaScript adicional após o selectbox ser renderizado
                     st.markdown("""
                     <script>
@@ -2055,14 +1966,14 @@ def show():
                     }, 100);
                     </script>
                     """, unsafe_allow_html=True)
-                    
+
                     proposta_numero = mapa_opcoes_reabrir.get(proposta_opcao)
                     proposta_reabrir = propostas_finalizadas[propostas_finalizadas['numero'] == proposta_numero]
 
                     if not proposta_reabrir.empty:
                         st.info(f"Você está prestes a reabrir a proposta #{proposta_numero} - {proposta_reabrir.iloc[0]['descricao']}")
                         st.warning("Esta ação mudará o status da proposta para 'Em execução'.")
-                        
+
                         if st.button("REABRIR PROPOSTA", key="btn_reabrir_proposta", type="primary", use_container_width=True):
                             try:
                                 # Importar função de reabrir proposta
@@ -2094,6 +2005,9 @@ def show():
                 st.info("Nenhuma proposta encontrada com os filtros selecionados.")
         else:
             st.info("Não há propostas cadastradas no sistema.")
+
+        # Fechar container CSS
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # Permitir que este arquivo seja executado diretamente
 if __name__ == "__main__":

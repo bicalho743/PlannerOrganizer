@@ -370,19 +370,155 @@ input:focus, textarea:focus, .stTextInput > div > div > input:focus, .stTextArea
     background-color: #F8F9FA;
 }
 
-/* Abas */
+/* ABAS - ESTILO UNIFICADO PARA TODOS OS MÓDULOS */
 button[role="tab"] {
     padding: 0.75rem 1.5rem !important;
     font-weight: 500;
     position: relative;
     transition: all 0.2s ease-in-out;
+    background-color: #f8f9fa !important;
+    color: #1E366F !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 6px 6px 0 0 !important;
+    margin-right: 2px !important;
+}
+
+button[role="tab"]:hover {
+    background-color: #e9ecef !important;
+    color: #1E366F !important;
 }
 
 .stTabs [aria-selected="true"] {
     font-weight: 600;
-    color: #1E88E5 !important;
-    border-bottom-color: #1E88E5 !important;
-    background-color: rgba(30, 136, 229, 0.05);
+    color: #1E366F !important;
+    background-color: #ffffff !important;
+    border-bottom-color: #ffffff !important;
+    border-bottom: 2px solid #3a75c4 !important;
+}
+
+/* MÓDULO PROPOSTAS - ESTILOS ESPECÍFICOS */
+.propostas-container {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin: 1rem 0;
+}
+
+.propostas-header {
+    background: linear-gradient(135deg, #1E366F 0%, #3a75c4 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px 8px 0 0;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+/* PROPOSTAS - BOTÕES PADRONIZADOS */
+.propostas-container .stButton > button,
+.main .propostas-container button {
+    background-color: #3a75c4 !important;
+    color: white !important;
+    border: 1px solid #3a75c4 !important;
+    font-weight: 500 !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 6px !important;
+    transition: all 0.3s ease !important;
+    min-height: 38px !important;
+}
+
+.propostas-container .stButton > button:hover,
+.main .propostas-container button:hover {
+    background-color: #2e5a9a !important;
+    border-color: #2e5a9a !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(58, 117, 196, 0.3) !important;
+}
+
+/* PROPOSTAS - BOTÕES SECUNDÁRIOS */
+.propostas-container button[kind="secondary"] {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+}
+
+.propostas-container button[kind="secondary"]:hover {
+    background-color: #5a6268 !important;
+    border-color: #5a6268 !important;
+}
+
+/* PROPOSTAS - BOTÕES DE AÇÃO ESPECÍFICOS */
+.propostas-container button[title*="PDF"],
+.propostas-container button[aria-label*="PDF"] {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+}
+
+.propostas-container button[title*="PDF"]:hover,
+.propostas-container button[aria-label*="PDF"]:hover {
+    background-color: #218838 !important;
+    border-color: #218838 !important;
+}
+
+.propostas-container button[title*="Excluir"],
+.propostas-container button[aria-label*="Excluir"] {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+}
+
+.propostas-container button[title*="Excluir"]:hover,
+.propostas-container button[aria-label*="Excluir"]:hover {
+    background-color: #c82333 !important;
+    border-color: #c82333 !important;
+}
+
+/* PROPOSTAS - LAYOUT DE COLUNAS ALINHADO */
+.propostas-container div[data-testid="column"] {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+}
+
+/* PROPOSTAS - ESPAÇAMENTO CONSISTENTE */
+.propostas-container .element-container {
+    margin: 0.5rem 0 !important;
+}
+
+.propostas-container .stForm {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    margin: 1rem 0;
+}
+
+/* PROPOSTAS - TABELAS PADRONIZADAS */
+.propostas-container .stDataFrame {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 1rem 0;
+}
+
+.propostas-container .stDataFrame table {
+    margin: 0 !important;
+}
+
+.propostas-container .stDataFrame th {
+    background-color: #1E366F !important;
+    color: white !important;
+    font-weight: 600 !important;
+    padding: 0.75rem !important;
+    border: none !important;
+}
+
+.propostas-container .stDataFrame td {
+    padding: 0.75rem !important;
+    border-bottom: 1px solid #eee !important;
+    color: #262730 !important;
+}
+
+.propostas-container .stDataFrame tr:hover {
+    background-color: #f8f9fa !important;
 }
 
 /* Espaçamento para rodapé */

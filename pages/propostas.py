@@ -19,16 +19,8 @@ def show():
         st.error("Erro: Conexão com banco de dados não disponível")
         return
     
-    # Adicionar classes CSS para melhorar a aparência das abas
-    st.markdown("""
-    <style>
-    div[data-testid="stTabs"] > div:first-child {
-        background-color: #f8f9fa;
-        border-radius: 4px;
-        padding: 0.2rem;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    # Container com classe CSS padronizada
+    st.markdown('<div class="propostas-container">', unsafe_allow_html=True)
     
     # Criar abas - versão simplificada para garantir que todas apareçam
     try:
