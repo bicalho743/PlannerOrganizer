@@ -429,27 +429,28 @@ div[data-testid="stExpander"] b {
 }
 
 /* PADRONIZAÇÃO DOS ELEMENTOS DE ALERTA - TODOS OS MÓDULOS */
-/* Forçar todos os alertas para cores neutras primeiro */
+/* Forçar todos os alertas para o estilo padrão da sidebar */
 div[data-testid="stAlert"] {
-    background-color: #f8f9fa !important;
-    border: 1px solid #dee2e6 !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 8px !important;
     margin: 0.5rem 0 !important;
+    backdrop-filter: blur(10px) !important;
 }
 
-/* Forçar texto neutro em todos os alertas */
+/* Forçar texto com cor similar à sidebar */
 div[data-testid="stAlert"] svg,
 div[data-testid="stAlert"] div,
 div[data-testid="stAlert"] p,
 div[data-testid="stAlert"] span,
 div[data-testid="stAlert"] * {
-    color: #495057 !important;
+    color: rgba(255, 255, 255, 0.9) !important;
 }
 
-/* Remover todas as cores azuis de alertas de informação */
+/* Remover todas as cores azuis/brancas de alertas de informação */
 div[data-testid="stAlert"][data-baseweb="notification"] {
-    background-color: #f8f9fa !important;
-    border-color: #dee2e6 !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* Estilo específico para alertas de sucesso apenas */
@@ -486,39 +487,40 @@ div[data-testid="stAlert"]:has(.css-1x8cf1d[data-testid="errorIcon"]) * {
 </style>
 
 <script>
-// Função para aplicar cores neutras aos alertas
-function forceNeutralAlerts() {
+// Função para aplicar estilo da sidebar aos alertas
+function forceSidebarStyleAlerts() {
     const alerts = document.querySelectorAll('[data-testid="stAlert"]');
     alerts.forEach(alert => {
-        // Forçar fundo cinza neutro para todos os alertas
-        alert.style.setProperty('background-color', '#f8f9fa', 'important');
-        alert.style.setProperty('border-color', '#dee2e6', 'important');
+        // Forçar estilo similar à sidebar
+        alert.style.setProperty('background-color', 'rgba(255, 255, 255, 0.05)', 'important');
+        alert.style.setProperty('border-color', 'rgba(255, 255, 255, 0.1)', 'important');
         alert.style.setProperty('border-width', '1px', 'important');
         alert.style.setProperty('border-style', 'solid', 'important');
         alert.style.setProperty('border-radius', '8px', 'important');
+        alert.style.setProperty('backdrop-filter', 'blur(10px)', 'important');
         
-        // Forçar cor de texto neutra
+        // Forçar cor de texto similar à sidebar
         const textElements = alert.querySelectorAll('*');
         textElements.forEach(element => {
-            element.style.setProperty('color', '#495057', 'important');
+            element.style.setProperty('color', 'rgba(255, 255, 255, 0.9)', 'important');
         });
         
-        // Remover especificamente cores azuis de ícones
+        // Ajustar ícones com cor similar
         const svgs = alert.querySelectorAll('svg');
         svgs.forEach(svg => {
-            svg.style.setProperty('fill', '#495057', 'important');
+            svg.style.setProperty('fill', 'rgba(255, 255, 255, 0.9)', 'important');
         });
     });
 }
 
 // Aplicar ao carregar
-document.addEventListener('DOMContentLoaded', forceNeutralAlerts);
+document.addEventListener('DOMContentLoaded', forceSidebarStyleAlerts);
 
 // Observar mudanças no DOM para aplicar aos novos alertas
 const observer = new MutationObserver(function(mutations) {
     mutations.forEach(function(mutation) {
         if (mutation.addedNodes.length > 0) {
-            setTimeout(forceNeutralAlerts, 100);
+            setTimeout(forceSidebarStyleAlerts, 100);
         }
     });
 });
@@ -530,7 +532,7 @@ observer.observe(document.body, {
 });
 
 // Aplicar periodicamente para garantir
-setInterval(forceNeutralAlerts, 2000);
+setInterval(forceSidebarStyleAlerts, 2000);
 </script>
 
 <style>
