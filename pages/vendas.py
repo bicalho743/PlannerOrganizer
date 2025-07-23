@@ -4,7 +4,7 @@ from datetime import datetime
 import numpy as np
 import time
 import os
-from utils.custom_components import custom_info
+from utils.custom_components import custom_info, custom_warning
 
 def show():
     # Verificar se o db está na sessão
@@ -335,9 +335,9 @@ def show():
         produtos_df = st.session_state.db.get_produtos()
         
         if clientes_df.empty:
-            st.warning("É necessário cadastrar clientes para registrar vendas.")
+            custom_warning("É necessário cadastrar clientes para registrar vendas.")
         elif produtos_df.empty:
-            st.warning("É necessário cadastrar produtos para registrar vendas.")
+            custom_warning("É necessário cadastrar produtos para registrar vendas.")
         else:
             # Inicializar sessão state para produtos da venda
             if 'produtos_venda' not in st.session_state:
@@ -359,7 +359,7 @@ def show():
                     produtos_disponiveis = produtos_df[produtos_df['estoque'] > 0]
                     
                     if produtos_disponiveis.empty:
-                        st.warning("Não há produtos em estoque disponíveis para venda.")
+                        custom_info("Não há produtos em estoque disponíveis para venda.")
                         produto_id = None
                     else:
                         produto_id = st.selectbox(
