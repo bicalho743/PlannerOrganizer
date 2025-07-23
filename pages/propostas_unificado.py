@@ -22,16 +22,7 @@ def show():
         st.error("Erro: Conexão com banco de dados não disponível")
         return
 
-    # Adicionar classes CSS para melhorar a aparência das abas
-    st.markdown("""
-    <style>
-    div[data-testid="stTabs"] > div:first-child {
-        background-color: #f8f9fa;
-        border-radius: 4px;
-        padding: 0.2rem;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    # CSS de abas removido para padronização global
 
     # Criar abas para organizar o conteúdo com ícones para cada uma
     st.markdown('<div class="main-tabs">', unsafe_allow_html=True)
@@ -2035,80 +2026,7 @@ def show():
                         opcoes_propostas.append(opcao)
                         mapa_opcoes_reabrir[opcao] = numero
 
-                    # Solução completa para selectbox - CSS + JavaScript
-                    st.markdown(f"""
-                    <style>
-                    /* Forçar visibilidade específica para selectbox de reabertura */
-                    div[data-testid="stSelectbox"] [data-baseweb="select"] {{
-                        border: 2px solid #3a75c4 !important;
-                        background-color: #ffffff !important;
-                        min-height: 45px !important;
-                    }}
-                    div[data-testid="stSelectbox"] [data-baseweb="select"] > div {{
-                        color: #1e1e1e !important;
-                        background-color: #ffffff !important;
-                        font-weight: 700 !important;
-                        font-size: 16px !important;
-                        padding: 12px 16px !important;
-                        line-height: 1.4 !important;
-                        text-shadow: none !important;
-                        opacity: 1 !important;
-                        visibility: visible !important;
-                    }}
-                    /* Forçar todos os elementos de texto */
-                    div[data-testid="stSelectbox"] span,
-                    div[data-testid="stSelectbox"] div,
-                    div[data-testid="stSelectbox"] * {{
-                        color: #1e1e1e !important;
-                        font-weight: 600 !important;
-                        text-shadow: none !important;
-                        opacity: 1 !important;
-                        visibility: visible !important;
-                    }}
-                    </style>
-                    
-                    <script>
-                    setTimeout(function() {{
-                        // Forçar visibilidade do texto no selectbox via JavaScript
-                        const selectElements = document.querySelectorAll('[data-baseweb="select"] > div');
-                        selectElements.forEach(function(element) {{
-                            element.style.color = '#1e1e1e';
-                            element.style.fontWeight = '700';
-                            element.style.fontSize = '16px';
-                            element.style.opacity = '1';
-                            element.style.visibility = 'visible';
-                            element.style.textShadow = 'none';
-                            element.style.background = '#ffffff';
-                            
-                            // Garantir que todos os filhos também sejam visíveis
-                            const childElements = element.querySelectorAll('*');
-                            childElements.forEach(function(child) {{
-                                child.style.color = '#1e1e1e';
-                                child.style.opacity = '1';
-                                child.style.visibility = 'visible';
-                            }});
-                        }});
-                    }}, 500);
-                    
-                    // Observador para aplicar estilos quando elementos são atualizados
-                    const observer = new MutationObserver(function(mutations) {{
-                        mutations.forEach(function(mutation) {{
-                            const selectElements = document.querySelectorAll('[data-baseweb="select"] > div');
-                            selectElements.forEach(function(element) {{
-                                element.style.color = '#1e1e1e';
-                                element.style.fontWeight = '700';
-                                element.style.opacity = '1';
-                                element.style.visibility = 'visible';
-                            }});
-                        }});
-                    }});
-                    
-                    observer.observe(document.body, {{
-                        childList: true,
-                        subtree: true
-                    }});
-                    </script>
-                    """, unsafe_allow_html=True)
+                    # CSS inline removido para usar estilos globais
                     
                     # Seleção da proposta com formato mais claro
                     proposta_opcao = st.selectbox(

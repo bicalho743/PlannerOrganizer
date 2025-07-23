@@ -81,55 +81,36 @@ section[data-testid="stSidebar"] .stButton {
     padding: 0 !important;
 }
 
-section[data-testid="stSidebar"] .stButton > button {
-    margin: 0 !important;
-    padding: 8px 12px !important;
-    width: 100% !important;
-    height: 38px !important;
-    font-size: 0.875rem !important;
-    font-weight: 500 !important;
-    line-height: 1.2 !important;
-    border-radius: 6px !important;
-    background: rgba(255, 255, 255, 0.08) !important;
-    color: rgba(255, 255, 255, 0.95) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    transition: all 0.2s ease !important;
-    text-align: center !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    box-sizing: border-box !important;
-}
-}
-
-/* SOBRESCREVER CSS ANTERIOR COM PADRONIZAÇÃO MAIS ESPECÍFICA */
-section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"],
+/* FORÇA ABSOLUTA - SOBRESCREVER TODOS OS ESTILOS CONFLITANTES */
 section[data-testid="stSidebar"] .stButton > button,
-section[data-testid="stSidebar"] button {
+section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"],
+section[data-testid="stSidebar"] button[kind="secondary"] {
+    margin: 2px 0 !important;
+    padding: 8px 12px !important;
     width: 100% !important;
+    height: 38px !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    line-height: 1.2 !important;
+    border-radius: 6px !important;
     background: rgba(255, 255, 255, 0.08) !important;
     color: rgba(255, 255, 255, 0.95) !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    border-radius: 6px !important;
-    padding: 8px 12px !important;
-    margin: 2px 0 !important;
-    height: 38px !important;
-    font-weight: 500 !important;
-    font-size: 0.875rem !important;
-    line-height: 1.2 !important;
-    text-align: center !important;
     transition: all 0.2s ease !important;
-    position: relative !important;
-    overflow: hidden !important;
+    text-align: center !important;
     white-space: nowrap !important;
+    overflow: hidden !important;
     text-overflow: ellipsis !important;
     box-sizing: border-box !important;
 }
+}
 
-/* Hover simplificado para todos os botões da sidebar */
-section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover,
+/* REMOVIDO - CSS duplicado que estava causando conflitos */
+
+/* Hover padronizado para todos os botões da sidebar */
 section[data-testid="stSidebar"] .stButton > button:hover,
-section[data-testid="stSidebar"] button:hover {
+section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover,
+section[data-testid="stSidebar"] button[kind="secondary"]:hover {
     background: rgba(255, 255, 255, 0.15) !important;
     color: #fff !important;
     border-color: rgba(255, 255, 255, 0.3) !important;
