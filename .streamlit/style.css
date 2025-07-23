@@ -75,56 +75,69 @@ section[data-testid="stSidebar"] > div {
     padding: 1rem !important;
 }
 
-/* BOTÕES DA SIDEBAR - ESTILO UNIFICADO PARA TODOS */
+/* PADRONIZAÇÃO CRÍTICA - ESPAÇAMENTO CONSISTENTE DOS BOTÕES DA SIDEBAR */
+section[data-testid="stSidebar"] .stButton {
+    margin: 2px 0 !important;
+    padding: 0 !important;
+}
+
+section[data-testid="stSidebar"] .stButton > button {
+    margin: 0 !important;
+    padding: 8px 12px !important;
+    width: 100% !important;
+    height: 38px !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    line-height: 1.2 !important;
+    border-radius: 6px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    transition: all 0.2s ease !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    box-sizing: border-box !important;
+}
+}
+
+/* SOBRESCREVER CSS ANTERIOR COM PADRONIZAÇÃO MAIS ESPECÍFICA */
 section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"],
 section[data-testid="stSidebar"] .stButton > button,
 section[data-testid="stSidebar"] button {
     width: 100% !important;
-    background: rgba(255, 255, 255, 0.05) !important;
-    color: rgba(255, 255, 255, 0.9) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-radius: 8px !important;
-    padding: 12px 16px !important;
-    margin: 4px 0 !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 6px !important;
+    padding: 8px 12px !important;
+    margin: 2px 0 !important;
+    height: 38px !important;
     font-weight: 500 !important;
-    font-size: 0.9rem !important;
-    text-align: left !important;
-    transition: all 0.3s ease !important;
-    backdrop-filter: blur(10px) !important;
+    font-size: 0.875rem !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    transition: all 0.2s ease !important;
     position: relative !important;
     overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    box-sizing: border-box !important;
 }
 
-/* Hover para todos os botões da sidebar */
+/* Hover simplificado para todos os botões da sidebar */
 section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover,
 section[data-testid="stSidebar"] .stButton > button:hover,
 section[data-testid="stSidebar"] button:hover {
     background: rgba(255, 255, 255, 0.15) !important;
     color: #fff !important;
     border-color: rgba(255, 255, 255, 0.3) !important;
-    transform: translateY(-2px) scale(1.02) !important;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.1) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* Efeito de ripple para botões da sidebar */
-section[data-testid="stSidebar"] button::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 50% !important;
-    left: 50% !important;
-    width: 0 !important;
-    height: 0 !important;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%) !important;
-    transition: all 0.6s ease !important;
-    transform: translate(-50%, -50%) !important;
-    border-radius: 50% !important;
-    pointer-events: none !important;
-}
-
-section[data-testid="stSidebar"] button:hover::before {
-    width: 300px !important;
-    height: 300px !important;
-}
+/* Removido efeito ripple desnecessário para simplicidade */
 
 /* Texto dentro dos botões da sidebar */
 section[data-testid="stSidebar"] button p,
