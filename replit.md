@@ -41,6 +41,10 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **SUBSTITUÍDO**: Todos st.info() no módulo Vendas por custom_info() com estilo unificado
 - **OTIMIZADO**: API FastAPI configurada sem reload e com processo Python estável
 - **ESTABILIZADO**: Sistema funcionando sem desconexões automáticas em alterações
+- **CORRIGIDO**: Espaçamento inconsistente dos botões da sidebar entre módulos Dashboard/Propostas
+- **REMOVIDO**: CSS conflitante inline dos módulos Vendas e Propostas
+- **APLICADO**: Força absoluta CSS + JavaScript para espaçamento uniforme de 2px entre botões
+- **PADRONIZADO**: Altura fixa de 38px para todos os botões da navegação lateral
 
 ### 2025-07-22
 - **CORRIGIDO**: Loops infinitos de inicialização causados por st.rerun() desnecessários

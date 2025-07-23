@@ -333,11 +333,20 @@ def inject_render_compatibility_fix():
                 if (sidebarButtons && sidebarButtons.length > 0) {
                     logDebug(`Encontrados ${sidebarButtons.length} botões do menu para estilizar`);
                     
-                    // Padronização removida - controlada pelo CSS global
+                    // Força JavaScript adicional para espaçamento consistente
                     sidebarButtons.forEach(button => {
-                        // Aplicar apenas espaçamento consistente
-                        button.style.margin = '2px 0';
+                        // Aplicar espaçamento forçado
+                        button.style.margin = '0';
+                        button.style.marginTop = '0';
+                        button.style.marginBottom = '0';
                         button.style.height = '38px';
+                        
+                        // Forçar container pai também
+                        if (button.parentElement && button.parentElement.classList.contains('stButton')) {
+                            button.parentElement.style.margin = '2px 0';
+                            button.parentElement.style.marginTop = '2px';
+                            button.parentElement.style.marginBottom = '2px';
+                        }
                         button.style.fontWeight = '500';
                         button.style.color = '#1E366F';
                         button.style.transition = 'all 0.2s ease';

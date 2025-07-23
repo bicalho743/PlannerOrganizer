@@ -81,11 +81,24 @@ section[data-testid="stSidebar"] .stButton {
     padding: 0 !important;
 }
 
-/* FORÇA ABSOLUTA - SOBRESCREVER TODOS OS ESTILOS CONFLITANTES */
+/* FORÇA ABSOLUTA MÁXIMA - CORRIGIR ESPAÇAMENTO INCONSISTENTE */
+section[data-testid="stSidebar"] .stButton,
+section[data-testid="stSidebar"] div[data-testid="column"] .stButton,
+section[data-testid="stSidebar"] [data-testid="column"] .stButton {
+    margin: 2px 0 !important;
+    margin-top: 2px !important;
+    margin-bottom: 2px !important;
+    padding: 0 !important;
+}
+
 section[data-testid="stSidebar"] .stButton > button,
 section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"],
-section[data-testid="stSidebar"] button[kind="secondary"] {
-    margin: 2px 0 !important;
+section[data-testid="stSidebar"] button[kind="secondary"],
+section[data-testid="stSidebar"] div[data-testid="column"] button,
+section[data-testid="stSidebar"] [data-testid="column"] button {
+    margin: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
     padding: 8px 12px !important;
     width: 100% !important;
     height: 38px !important;
@@ -110,7 +123,9 @@ section[data-testid="stSidebar"] button[kind="secondary"] {
 /* Hover padronizado para todos os botões da sidebar */
 section[data-testid="stSidebar"] .stButton > button:hover,
 section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover,
-section[data-testid="stSidebar"] button[kind="secondary"]:hover {
+section[data-testid="stSidebar"] button[kind="secondary"]:hover,
+section[data-testid="stSidebar"] div[data-testid="column"] button:hover,
+section[data-testid="stSidebar"] [data-testid="column"] button:hover {
     background: rgba(255, 255, 255, 0.15) !important;
     color: #fff !important;
     border-color: rgba(255, 255, 255, 0.3) !important;
