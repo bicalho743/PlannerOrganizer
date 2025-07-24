@@ -238,29 +238,43 @@ def show():
                             with col_edit1:
                                 # Editar produto
                                 st.subheader("Editar Produto")
-                                # USAR RADIO BUTTONS PARA EDIÇÃO DE PRODUTOS
-                                st.write("**Selecione o produto:**")
+                                # SELECTBOX MELHORADO PARA EDIÇÃO DE PRODUTOS
+                                st.html("""
+                                <style>
+                                .produto-edit-selectbox div[data-testid="stSelectbox"] *,
+                                .produto-edit-selectbox [data-baseweb="select"] *,
+                                .produto-edit-selectbox [data-baseweb="input"] * {
+                                    color: #000000 !important;
+                                    background-color: #ffffff !important;
+                                    font-weight: 600 !important;
+                                    text-shadow: 1px 1px 1px #ffffff !important;
+                                }
+                                </style>
                                 
-                                produtos_edit_opcoes = []
-                                for _, produto in produtos_df.iterrows():
-                                    opcao = f"{produto['id']} - {produto['nome']}"
-                                    produtos_edit_opcoes.append(opcao)
+                                <script>
+                                setTimeout(function() {
+                                    const editSelectbox = document.querySelector('.produto-edit-selectbox');
+                                    if (editSelectbox) {
+                                        const allElements = editSelectbox.querySelectorAll('*');
+                                        allElements.forEach(el => {
+                                            el.style.setProperty('color', '#000000', 'important');
+                                            el.style.setProperty('background-color', '#ffffff', 'important');
+                                            el.style.setProperty('font-weight', '600', 'important');
+                                        });
+                                    }
+                                }, 100);
+                                </script>
+                                """)
                                 
-                                if len(produtos_edit_opcoes) > 0:
-                                    produto_edit_selecionado = st.radio(
-                                        "Produtos para edição:",
-                                        options=produtos_edit_opcoes,
-                                        key="radio_produtos_edit",
-                                        label_visibility="collapsed"
-                                    )
+                                with st.container():
+                                    st.markdown('<div class="produto-edit-selectbox">', unsafe_allow_html=True)
                                     
-                                    # Extrair o ID do produto selecionado
-                                    if produto_edit_selecionado:
-                                        produto_id = int(produto_edit_selecionado.split(" - ")[0])
-                                    else:
-                                        produto_id = None
-                                else:
-                                    produto_id = None
+                                    produto_id = st.selectbox("Selecione o produto", 
+                                                            options=produtos_df['id'].tolist(),
+                                                            format_func=lambda x: f"{x} - {produtos_df[produtos_df['id'] == x]['nome'].iloc[0]}",
+                                                            key="selectbox_produto_edit")
+                                    
+                                    st.markdown('</div>', unsafe_allow_html=True)
 
                                 if produto_id:
                                     produto_selecionado = produtos_df[produtos_df['id'] == produto_id].iloc[0]
@@ -310,29 +324,43 @@ def show():
                             with col_edit2:
                                 # Excluir produto
                                 st.subheader("Excluir Produto")
-                                # USAR RADIO BUTTONS PARA EXCLUSÃO DE PRODUTOS
-                                st.write("**Selecione o produto para excluir:**")
+                                # SELECTBOX MELHORADO PARA EXCLUSÃO DE PRODUTOS
+                                st.html("""
+                                <style>
+                                .produto-remove-selectbox div[data-testid="stSelectbox"] *,
+                                .produto-remove-selectbox [data-baseweb="select"] *,
+                                .produto-remove-selectbox [data-baseweb="input"] * {
+                                    color: #000000 !important;
+                                    background-color: #ffffff !important;
+                                    font-weight: 600 !important;
+                                    text-shadow: 1px 1px 1px #ffffff !important;
+                                }
+                                </style>
                                 
-                                produtos_remover_opcoes = []
-                                for _, produto in produtos_df.iterrows():
-                                    opcao = f"{produto['id']} - {produto['nome']}"
-                                    produtos_remover_opcoes.append(opcao)
+                                <script>
+                                setTimeout(function() {
+                                    const removeSelectbox = document.querySelector('.produto-remove-selectbox');
+                                    if (removeSelectbox) {
+                                        const allElements = removeSelectbox.querySelectorAll('*');
+                                        allElements.forEach(el => {
+                                            el.style.setProperty('color', '#000000', 'important');
+                                            el.style.setProperty('background-color', '#ffffff', 'important');
+                                            el.style.setProperty('font-weight', '600', 'important');
+                                        });
+                                    }
+                                }, 100);
+                                </script>
+                                """)
                                 
-                                if len(produtos_remover_opcoes) > 0:
-                                    produto_remover_selecionado = st.radio(
-                                        "Produtos para exclusão:",
-                                        options=produtos_remover_opcoes,
-                                        key="radio_produtos_remover",
-                                        label_visibility="collapsed"
-                                    )
+                                with st.container():
+                                    st.markdown('<div class="produto-remove-selectbox">', unsafe_allow_html=True)
                                     
-                                    # Extrair o ID do produto selecionado
-                                    if produto_remover_selecionado:
-                                        produto_remover_id = int(produto_remover_selecionado.split(" - ")[0])
-                                    else:
-                                        produto_remover_id = None
-                                else:
-                                    produto_remover_id = None
+                                    produto_remover_id = st.selectbox("Selecione o produto para excluir", 
+                                                                    options=produtos_df['id'].tolist(),
+                                                                    format_func=lambda x: f"{x} - {produtos_df[produtos_df['id'] == x]['nome'].iloc[0]}", 
+                                                                    key="selectbox_produto_remove")
+                                    
+                                    st.markdown('</div>', unsafe_allow_html=True)
 
                                 # Variável de estado para controlar o fluxo de exclusão
                                 if 'exclusao_confirmada' not in st.session_state:
@@ -405,29 +433,45 @@ def show():
             if 'produtos_venda' not in st.session_state:
                 st.session_state.produtos_venda = []
 
-            # Selecionar cliente - USAR RADIO BUTTONS
-            st.write("**Selecione o Cliente:**")
+            # SELECTBOX MELHORADO PARA CLIENTES
+            st.html("""
+            <style>
+            .cliente-selectbox div[data-testid="stSelectbox"] *,
+            .cliente-selectbox [data-baseweb="select"] *,
+            .cliente-selectbox [data-baseweb="input"] * {
+                color: #000000 !important;
+                background-color: #ffffff !important;
+                font-weight: 600 !important;
+                text-shadow: 1px 1px 1px #ffffff !important;
+            }
+            </style>
             
-            clientes_opcoes = []
-            for _, cliente in clientes_df.iterrows():
-                opcao = f"{cliente['id']} - {cliente['nome']}"
-                clientes_opcoes.append(opcao)
+            <script>
+            setTimeout(function() {
+                const clienteSelectbox = document.querySelector('.cliente-selectbox');
+                if (clienteSelectbox) {
+                    const allElements = clienteSelectbox.querySelectorAll('*');
+                    allElements.forEach(el => {
+                        el.style.setProperty('color', '#000000', 'important');
+                        el.style.setProperty('background-color', '#ffffff', 'important');
+                        el.style.setProperty('font-weight', '600', 'important');
+                    });
+                }
+            }, 100);
+            </script>
+            """)
             
-            if len(clientes_opcoes) > 0:
-                cliente_selecionado = st.radio(
-                    "Clientes disponíveis:",
-                    options=clientes_opcoes,
-                    key="radio_clientes",
-                    label_visibility="collapsed"
+            with st.container():
+                st.markdown('<div class="cliente-selectbox">', unsafe_allow_html=True)
+                
+                cliente_id = st.selectbox(
+                    "Selecione o Cliente", 
+                    options=clientes_df['id'].tolist(),
+                    format_func=lambda x: f"{x} - {clientes_df[clientes_df['id'] == x]['nome'].iloc[0]}",
+                    key="selectbox_cliente_nova_venda"
                 )
                 
-                # Extrair o ID do cliente selecionado
-                if cliente_selecionado:
-                    cliente_id = int(cliente_selecionado.split(" - ")[0])
-                else:
-                    cliente_id = None
-            else:
-                cliente_id = None
+                st.markdown('</div>', unsafe_allow_html=True)
 
             # Adicionar produtos à venda
             with st.expander("Adicionar Produto", expanded=True):
@@ -441,29 +485,45 @@ def show():
                         custom_info("Não há produtos em estoque disponíveis para venda.")
                         produto_id = None
                     else:
-                        # USAR RADIO BUTTONS PARA PRODUTOS
-                        st.write("**Selecione o Produto:**")
+                        # SELECTBOX MELHORADO PARA PRODUTOS
+                        st.html("""
+                        <style>
+                        .produto-selectbox div[data-testid="stSelectbox"] *,
+                        .produto-selectbox [data-baseweb="select"] *,
+                        .produto-selectbox [data-baseweb="input"] * {
+                            color: #000000 !important;
+                            background-color: #ffffff !important;
+                            font-weight: 600 !important;
+                            text-shadow: 1px 1px 1px #ffffff !important;
+                        }
+                        </style>
                         
-                        produtos_opcoes = []
-                        for _, produto in produtos_disponiveis.iterrows():
-                            opcao = f"{produto['id']} - {produto['nome']}"
-                            produtos_opcoes.append(opcao)
+                        <script>
+                        setTimeout(function() {
+                            const produtoSelectbox = document.querySelector('.produto-selectbox');
+                            if (produtoSelectbox) {
+                                const allElements = produtoSelectbox.querySelectorAll('*');
+                                allElements.forEach(el => {
+                                    el.style.setProperty('color', '#000000', 'important');
+                                    el.style.setProperty('background-color', '#ffffff', 'important');
+                                    el.style.setProperty('font-weight', '600', 'important');
+                                });
+                            }
+                        }, 100);
+                        </script>
+                        """)
                         
-                        if len(produtos_opcoes) > 0:
-                            produto_selecionado = st.radio(
-                                "Produtos disponíveis:",
-                                options=produtos_opcoes,
-                                key="radio_produtos",
-                                label_visibility="collapsed"
+                        with st.container():
+                            st.markdown('<div class="produto-selectbox">', unsafe_allow_html=True)
+                            
+                            produto_id = st.selectbox(
+                                "Selecione o Produto",
+                                options=produtos_disponiveis['id'].tolist(),
+                                format_func=lambda x: f"{x} - {produtos_disponiveis[produtos_disponiveis['id'] == x]['nome'].iloc[0]}",
+                                key="selectbox_produto_nova_venda"
                             )
                             
-                            # Extrair o ID do produto selecionado
-                            if produto_selecionado:
-                                produto_id = int(produto_selecionado.split(" - ")[0])
-                            else:
-                                produto_id = None
-                        else:
-                            produto_id = None
+                            st.markdown('</div>', unsafe_allow_html=True)
 
                 with col2:
                     if produto_id:
@@ -745,30 +805,63 @@ def show():
                 # Detalhes da venda selecionada
                 st.subheader("Detalhes da Venda")
                 
-                # SOLUÇÃO ALTERNATIVA - USAR RADIO BUTTONS EM VEZ DE SELECTBOX
-                st.write("**Selecione uma venda para ver detalhes:**")
+                # SOLUÇÃO MELHORADA - SELECTBOX COM CSS ESPECÍFICO FORÇADO
+                st.html("""
+                <style>
+                /* CSS ULTRA ESPECÍFICO PARA ESTE SELECTBOX */
+                .venda-selectbox div[data-testid="stSelectbox"] *,
+                .venda-selectbox [data-baseweb="select"] *,
+                .venda-selectbox [data-baseweb="input"] * {
+                    color: #000000 !important;
+                    background-color: #ffffff !important;
+                    font-weight: 600 !important;
+                    text-shadow: 1px 1px 1px #ffffff !important;
+                }
+                </style>
                 
-                # Criar lista de opções mais amigável
-                vendas_opcoes = []
-                for _, venda in vendas_df.iterrows():
-                    opcao = f"Venda {venda['id']} - {venda['cliente_nome']} ({venda['data_venda']})"
-                    vendas_opcoes.append(opcao)
+                <script>
+                // JavaScript específico para selectbox de vendas
+                setTimeout(function() {
+                    const vendaSelectbox = document.querySelector('.venda-selectbox');
+                    if (vendaSelectbox) {
+                        const allElements = vendaSelectbox.querySelectorAll('*');
+                        allElements.forEach(el => {
+                            el.style.setProperty('color', '#000000', 'important');
+                            el.style.setProperty('background-color', '#ffffff', 'important');
+                            el.style.setProperty('font-weight', '600', 'important');
+                            el.style.setProperty('text-shadow', '1px 1px 1px #ffffff', 'important');
+                        });
+                    }
+                }, 100);
                 
-                if len(vendas_opcoes) > 0:
-                    venda_selecionada = st.radio(
-                        "Vendas disponíveis:",
-                        options=vendas_opcoes,
-                        key="radio_vendas",
-                        label_visibility="collapsed"
+                setInterval(function() {
+                    const vendaSelectbox = document.querySelector('.venda-selectbox');
+                    if (vendaSelectbox) {
+                        const textElements = vendaSelectbox.querySelectorAll('span, div, input');
+                        textElements.forEach(el => {
+                            if (el.textContent || el.value) {
+                                el.style.setProperty('color', '#000000', 'important');
+                                el.style.setProperty('background-color', '#ffffff', 'important');
+                                el.style.setProperty('font-weight', '600', 'important');
+                            }
+                        });
+                    }
+                }, 100);
+                </script>
+                """)
+                
+                # Container com classe específica para CSS
+                with st.container():
+                    st.markdown('<div class="venda-selectbox">', unsafe_allow_html=True)
+                    
+                    venda_id = st.selectbox(
+                        "Selecione uma venda para ver detalhes",
+                        options=vendas_df['id'].tolist(),
+                        format_func=lambda x: f"Venda {x} - {vendas_df[vendas_df['id'] == x]['cliente_nome'].iloc[0]} ({vendas_df[vendas_df['id'] == x]['data_venda'].iloc[0]})",
+                        key="selectbox_venda_detalhes"
                     )
                     
-                    # Extrair o ID da venda selecionada
-                    if venda_selecionada:
-                        venda_id = int(venda_selecionada.split(" - ")[0].replace("Venda ", ""))
-                    else:
-                        venda_id = None
-                else:
-                    venda_id = None
+                    st.markdown('</div>', unsafe_allow_html=True)
 
                 if venda_id:
                     venda = vendas_df[vendas_df['id'] == venda_id].iloc[0]
