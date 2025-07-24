@@ -45,6 +45,9 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **REMOVIDO**: CSS conflitante inline dos módulos Vendas e Propostas
 - **APLICADO**: Força absoluta CSS + JavaScript para espaçamento uniforme de 2px entre botões
 - **PADRONIZADO**: Altura fixa de 38px para todos os botões da navegação lateral
+- **CORRIGIDO**: Loop infinito causado por st.rerun() desnecessários no app.py
+- **REMOVIDO**: st.rerun() dos botões de navegação do login que causavam loop
+- **ESTABILIZADO**: Aplicação carregando normalmente sem loops de inicialização
 
 ### 2025-07-22
 - **CORRIGIDO**: Loops infinitos de inicialização causados por st.rerun() desnecessários

@@ -1106,7 +1106,6 @@ if not st.session_state.authenticated:
                         if result['success']:
                             st.session_state.authenticated = True
                             st.success("Login realizado com sucesso!")
-                            st.rerun()
                         else:
                             st.error(f"Erro de autenticação: {result['error']}")
                 else:
@@ -1119,11 +1118,9 @@ if not st.session_state.authenticated:
         with col1:
             if st.button("Esqueceu sua senha?", key="btn_recuperar_senha", use_container_width=True):
                 st.session_state.login_page = "recuperar_senha"
-                st.rerun()
         with col2:
             if st.button("Criar uma conta", key="btn_criar_conta", use_container_width=True):
                 st.session_state.login_page = "registrar"
-                st.rerun()
         
         # A div do container de login foi removida, então não precisamos mais fechar
         
