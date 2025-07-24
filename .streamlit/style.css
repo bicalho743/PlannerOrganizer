@@ -124,6 +124,150 @@ section[data-testid="stSidebar"] [data-testid="column"] button {
 
 /* REMOVIDO - CSS duplicado que estava causando conflitos */
 
+/* ====== CORREÇÃO CRÍTICA - VISIBILIDADE DOS SELECTBOX ====== */
+/* Garantir que o texto seja sempre visível nos selectbox */
+.stSelectbox > div > div,
+.stSelectbox > div > div > div,
+.stSelectbox [data-baseweb="select"],
+.stSelectbox [data-baseweb="select"] > div,
+.stSelectbox [data-baseweb="select"] > div > div,
+.stSelectbox [data-baseweb="select"] span,
+div[data-testid="stSelectbox"],
+div[data-testid="stSelectbox"] *,
+div[data-testid="stSelectbox"] div,
+div[data-testid="stSelectbox"] span,
+div[data-testid="stSelectbox"] input,
+div[data-testid="stSelectbox"] select {
+    color: #1e1e1e !important;
+    background-color: #ffffff !important;
+    font-weight: 500 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Container do selectbox */
+.stSelectbox,
+div[data-testid="stSelectbox"] {
+    background-color: #ffffff !important;
+}
+
+/* Dropdown expandido */
+.stSelectbox [data-baseweb="select"] ul,
+.stSelectbox [data-baseweb="select"] li {
+    color: #1e1e1e !important;
+    background-color: #ffffff !important;
+}
+
+/* Label do selectbox */
+.stSelectbox > label,
+div[data-testid="stSelectbox"] > label {
+    color: #1e1e1e !important;
+    font-weight: 600 !important;
+}
+
+/* Input interno do selectbox */
+.stSelectbox input,
+div[data-testid="stSelectbox"] input {
+    color: #1e1e1e !important;
+    background-color: #ffffff !important;
+}
+
+/* Texto selecionado */
+.stSelectbox [data-baseweb="select"] [data-baseweb="input"],
+div[data-testid="stSelectbox"] [data-baseweb="input"] {
+    color: #1e1e1e !important;
+    background-color: transparent !important;
+}
+
+/* Placeholder text */
+.stSelectbox [data-baseweb="select"] [data-baseweb="input"] input::placeholder {
+    color: #6c757d !important;
+    opacity: 0.7 !important;
+}
+
+/* Seta dropdown */
+.stSelectbox [data-baseweb="select"] svg {
+    color: #1e1e1e !important;
+}
+
+/* JavaScript para correção em tempo real dos selectbox */
+</style>
+
+<script>
+// Função global para corrigir visibilidade dos selectbox
+function fixSelectboxVisibility() {
+    const selectboxes = document.querySelectorAll('[data-testid="stSelectbox"], .stSelectbox');
+    
+    selectboxes.forEach(selectbox => {
+        // Corrigir todos os elementos de texto dentro do selectbox
+        const allElements = selectbox.querySelectorAll('*');
+        allElements.forEach(el => {
+            if (el.tagName === 'SPAN' || el.tagName === 'DIV' || el.tagName === 'INPUT') {
+                el.style.color = '#1e1e1e';
+                el.style.backgroundColor = '#ffffff';
+                el.style.fontWeight = '500';
+                el.style.opacity = '1';
+                el.style.visibility = 'visible';
+            }
+        });
+        
+        // Forçar estilo no container principal
+        selectbox.style.backgroundColor = '#ffffff';
+        
+        // Corrigir especificamente o input interno
+        const inputs = selectbox.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.style.color = '#1e1e1e';
+            input.style.backgroundColor = '#ffffff';
+            input.style.fontWeight = '500';
+        });
+        
+        // Corrigir especificamente os elementos baseweb
+        const basewebElements = selectbox.querySelectorAll('[data-baseweb="select"] *');
+        basewebElements.forEach(el => {
+            el.style.color = '#1e1e1e';
+            el.style.backgroundColor = '#ffffff';
+        });
+    });
+}
+
+// Executar correção periodicamente
+setInterval(fixSelectboxVisibility, 500);
+
+// Executar na inicialização
+document.addEventListener('DOMContentLoaded', fixSelectboxVisibility);
+
+// Observar mudanças no DOM para aplicar correções quando necessário
+const observer = new MutationObserver(function(mutations) {
+    let shouldFix = false;
+    mutations.forEach(function(mutation) {
+        if (mutation.type === 'childList' || mutation.type === 'attributes') {
+            // Verificar se algum selectbox foi adicionado ou modificado
+            const addedNodes = Array.from(mutation.addedNodes);
+            if (addedNodes.some(node => 
+                node.nodeType === 1 && 
+                (node.querySelector && node.querySelector('[data-testid="stSelectbox"]'))
+            )) {
+                shouldFix = true;
+            }
+        }
+    });
+    
+    if (shouldFix) {
+        setTimeout(fixSelectboxVisibility, 100);
+    }
+});
+
+observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['style', 'class']
+});
+</script>
+
+<style>
+
 /* Hover padronizado para todos os botões da sidebar */
 section[data-testid="stSidebar"] .stButton > button:hover,
 section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover,
