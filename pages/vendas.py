@@ -135,26 +135,41 @@ def show():
                             color: white !important;
                         }
 
-                        /* Corrigir visibilidade do texto nos selectbox */
-                        .stSelectbox > div > div > div {
-                            color: #1e1e1e !important;
-                            background-color: #f8f9fa !important;
-                        }
-
-                        .stSelectbox select {
-                            color: #1e1e1e !important;
-                            background-color: #f8f9fa !important;
-                        }
-
-                        /* Dropdown options */
-                        .stSelectbox [data-baseweb="select"] > div {
+                        /* CORREÇÃO EXTREMA - SELECTBOX INVISÍVEL */
+                        /* Força máxima para todos os elementos de selectbox */
+                        div[data-testid="stSelectbox"],
+                        div[data-testid="stSelectbox"] *,
+                        div[data-testid="stSelectbox"] div,
+                        div[data-testid="stSelectbox"] span,
+                        div[data-testid="stSelectbox"] input,
+                        div[data-testid="stSelectbox"] p,
+                        .stSelectbox,
+                        .stSelectbox *,
+                        .stSelectbox div,
+                        .stSelectbox span,
+                        .stSelectbox input,
+                        .stSelectbox p {
                             color: #1e1e1e !important;
                             background-color: #ffffff !important;
+                            font-weight: 500 !important;
+                            opacity: 1 !important;
+                            visibility: visible !important;
                         }
 
-                        /* Text in selectbox */
-                        .stSelectbox [data-testid="stSelectbox"] > div > div {
+                        /* Elementos baseweb - força absoluta */
+                        div[data-testid="stSelectbox"] [data-baseweb="select"],
+                        div[data-testid="stSelectbox"] [data-baseweb="select"] *,
+                        div[data-testid="stSelectbox"] [data-baseweb="input"],
+                        div[data-testid="stSelectbox"] [data-baseweb="input"] *,
+                        .stSelectbox [data-baseweb="select"],
+                        .stSelectbox [data-baseweb="select"] *,
+                        .stSelectbox [data-baseweb="input"],
+                        .stSelectbox [data-baseweb="input"] * {
                             color: #1e1e1e !important;
+                            background-color: #ffffff !important;
+                            font-weight: 500 !important;
+                            opacity: 1 !important;
+                            visibility: visible !important;
                         }
 
                         /* Input fields visibility */
@@ -529,60 +544,75 @@ def show():
                             }
                         });
 
-                        // Corrigir selectbox - FORÇAR TEXTO VISÍVEL
-                        const selectboxes = document.querySelectorAll('[data-testid="stSelectbox"]');
-                        selectboxes.forEach(selectbox => {
-                            // Encontrar todos os elementos de texto dentro do selectbox
-                            const textElements = selectbox.querySelectorAll('*');
-                            textElements.forEach(el => {
-                                if (el.textContent && el.textContent.trim() !== '') {
-                                    el.style.color = '#1e1e1e !important';
-                                    el.style.fontWeight = '500';
-                                    el.style.opacity = '1';
-                                    el.style.visibility = 'visible';
-                                }
+                        // CORREÇÃO EXTREMA - SELECTBOX INVISÍVEL - FORÇA MÁXIMA
+                        function forceSelectboxVisibility() {
+                            // Buscar por TODOS os selectbox possíveis
+                            const allSelectboxes = document.querySelectorAll(
+                                '[data-testid="stSelectbox"], .stSelectbox, div[data-testid="stSelectbox"], ' +
+                                '[role="combobox"], [role="listbox"], select'
+                            );
+                            
+                            allSelectboxes.forEach(selectbox => {
+                                // FORÇA ABSOLUTA - aplicar estilo com setProperty
+                                const allChildren = selectbox.querySelectorAll('*');
+                                allChildren.forEach(el => {
+                                    el.style.setProperty('color', '#1e1e1e', 'important');
+                                    el.style.setProperty('background-color', '#ffffff', 'important');
+                                    el.style.setProperty('font-weight', '500', 'important');
+                                    el.style.setProperty('opacity', '1', 'important');
+                                    el.style.setProperty('visibility', 'visible', 'important');
+                                    
+                                    // Remover qualquer text-shadow ou sombra que possa ocultar o texto
+                                    el.style.setProperty('text-shadow', 'none', 'important');
+                                    el.style.setProperty('box-shadow', 'none', 'important');
+                                });
+                                
+                                // Container principal
+                                selectbox.style.setProperty('background-color', '#ffffff', 'important');
+                                selectbox.style.setProperty('color', '#1e1e1e', 'important');
+                                
+                                // Buscar por elementos específicos que podem conter texto
+                                const textContainers = selectbox.querySelectorAll(
+                                    'span, div, input, p, label, [data-baseweb="select"], [data-baseweb="input"]'
+                                );
+                                
+                                textContainers.forEach(el => {
+                                    if (el.textContent || el.value) {
+                                        el.style.setProperty('color', '#1e1e1e', 'important');
+                                        el.style.setProperty('background-color', '#ffffff', 'important');
+                                        el.style.setProperty('font-weight', '500', 'important');
+                                    }
+                                });
                             });
-
-                            // Específico para o input interno
-                            const inputs = selectbox.querySelectorAll('input');
-                            inputs.forEach(input => {
-                                input.style.color = '#1e1e1e !important';
-                                input.style.fontWeight = '500';
-                            });
-
-                            // Específico para spans e divs com texto
-                            const spans = selectbox.querySelectorAll('span, div');
-                            spans.forEach(span => {
-                                if (span.textContent && span.textContent.trim() !== '') {
-                                    span.style.color = '#1e1e1e !important';
-                                    span.style.fontWeight = '500';
-                                }
-                            });
-                        });
+                        }
+                        
+                        // Executar imediatamente
+                        forceSelectboxVisibility();
                     }, 500);
 
-                    // Observar mudanças no DOM para aplicar correções quando selectbox mudar
-                    const observer = new MutationObserver(function(mutations) {
-                        mutations.forEach(function(mutation) {
-                            if (mutation.type === 'childList') {
-                                const selectboxes = document.querySelectorAll('[data-testid="stSelectbox"]');
-                                selectboxes.forEach(selectbox => {
-                                    const textElements = selectbox.querySelectorAll('*');
-                                    textElements.forEach(el => {
-                                        if (el.textContent && el.textContent.trim() !== '') {
-                                            el.style.color = '#1e1e1e !important';
-                                            el.style.fontWeight = '500';
-                                        }
-                                    });
-                                });
+                        // Executar periodicamente para garantir persistência
+                        setInterval(forceSelectboxVisibility, 100);
+                        
+                        // Observar mudanças no DOM 
+                        const observer = new MutationObserver(function(mutations) {
+                            let shouldFix = false;
+                            mutations.forEach(function(mutation) {
+                                if (mutation.type === 'childList' || mutation.type === 'attributes') {
+                                    shouldFix = true;
+                                }
+                            });
+                            
+                            if (shouldFix) {
+                                setTimeout(forceSelectboxVisibility, 50);
                             }
                         });
-                    });
 
-                    observer.observe(document.body, {
-                        childList: true,
-                        subtree: true
-                    });
+                        observer.observe(document.body, {
+                            childList: true,
+                            subtree: true,
+                            attributes: true,
+                            attributeFilter: ['style', 'class']
+                        });
                     </script>
                     """, unsafe_allow_html=True)
 

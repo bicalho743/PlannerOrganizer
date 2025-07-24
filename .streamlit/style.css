@@ -125,19 +125,31 @@ section[data-testid="stSidebar"] [data-testid="column"] button {
 /* REMOVIDO - CSS duplicado que estava causando conflitos */
 
 /* ====== CORREÇÃO CRÍTICA - VISIBILIDADE DOS SELECTBOX ====== */
-/* Garantir que o texto seja sempre visível nos selectbox */
-.stSelectbox > div > div,
-.stSelectbox > div > div > div,
-.stSelectbox [data-baseweb="select"],
-.stSelectbox [data-baseweb="select"] > div,
-.stSelectbox [data-baseweb="select"] > div > div,
-.stSelectbox [data-baseweb="select"] span,
+/* MÁXIMA ESPECIFICIDADE - FORÇA ABSOLUTA PARA SELECTBOX */
+
+/* Todos os containers de selectbox */
 div[data-testid="stSelectbox"],
+.stSelectbox,
+[data-testid="stSelectbox"] {
+    background-color: #ffffff !important;
+}
+
+/* TODOS os elementos dentro de selectbox - FORÇA MÁXIMA */
 div[data-testid="stSelectbox"] *,
 div[data-testid="stSelectbox"] div,
 div[data-testid="stSelectbox"] span,
 div[data-testid="stSelectbox"] input,
-div[data-testid="stSelectbox"] select {
+div[data-testid="stSelectbox"] p,
+.stSelectbox *,
+.stSelectbox div,
+.stSelectbox span,
+.stSelectbox input,
+.stSelectbox p,
+[data-testid="stSelectbox"] *,
+[data-testid="stSelectbox"] div,
+[data-testid="stSelectbox"] span,
+[data-testid="stSelectbox"] input,
+[data-testid="stSelectbox"] p {
     color: #1e1e1e !important;
     background-color: #ffffff !important;
     font-weight: 500 !important;
@@ -145,94 +157,107 @@ div[data-testid="stSelectbox"] select {
     visibility: visible !important;
 }
 
-/* Container do selectbox */
-.stSelectbox,
-div[data-testid="stSelectbox"] {
-    background-color: #ffffff !important;
-}
-
-/* Dropdown expandido */
-.stSelectbox [data-baseweb="select"] ul,
-.stSelectbox [data-baseweb="select"] li {
+/* Elementos baseweb específicos */
+div[data-testid="stSelectbox"] [data-baseweb="select"],
+div[data-testid="stSelectbox"] [data-baseweb="select"] *,
+div[data-testid="stSelectbox"] [data-baseweb="select"] div,
+div[data-testid="stSelectbox"] [data-baseweb="select"] span,
+div[data-testid="stSelectbox"] [data-baseweb="input"],
+div[data-testid="stSelectbox"] [data-baseweb="input"] *,
+.stSelectbox [data-baseweb="select"],
+.stSelectbox [data-baseweb="select"] *,
+.stSelectbox [data-baseweb="select"] div,
+.stSelectbox [data-baseweb="select"] span,
+.stSelectbox [data-baseweb="input"],
+.stSelectbox [data-baseweb="input"] * {
     color: #1e1e1e !important;
     background-color: #ffffff !important;
+    font-weight: 500 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
-/* Label do selectbox */
+/* Labels */
+div[data-testid="stSelectbox"] > label,
 .stSelectbox > label,
-div[data-testid="stSelectbox"] > label {
+[data-testid="stSelectbox"] > label {
     color: #1e1e1e !important;
     font-weight: 600 !important;
 }
 
-/* Input interno do selectbox */
-.stSelectbox input,
-div[data-testid="stSelectbox"] input {
+/* Dropdown menu quando expandido */
+div[data-testid="stSelectbox"] ul,
+div[data-testid="stSelectbox"] li,
+.stSelectbox ul,
+.stSelectbox li {
     color: #1e1e1e !important;
     background-color: #ffffff !important;
 }
 
-/* Texto selecionado */
-.stSelectbox [data-baseweb="select"] [data-baseweb="input"],
-div[data-testid="stSelectbox"] [data-baseweb="input"] {
+/* Setas e ícones */
+div[data-testid="stSelectbox"] svg,
+.stSelectbox svg {
     color: #1e1e1e !important;
-    background-color: transparent !important;
-}
-
-/* Placeholder text */
-.stSelectbox [data-baseweb="select"] [data-baseweb="input"] input::placeholder {
-    color: #6c757d !important;
-    opacity: 0.7 !important;
-}
-
-/* Seta dropdown */
-.stSelectbox [data-baseweb="select"] svg {
-    color: #1e1e1e !important;
+    fill: #1e1e1e !important;
 }
 
 /* JavaScript para correção em tempo real dos selectbox */
 </style>
 
 <script>
-// Função global para corrigir visibilidade dos selectbox
+// Função global para corrigir visibilidade dos selectbox - VERSÃO EXTREMA
 function fixSelectboxVisibility() {
-    const selectboxes = document.querySelectorAll('[data-testid="stSelectbox"], .stSelectbox');
+    // Encontrar TODOS os selectbox possíveis
+    const selectboxes = document.querySelectorAll('[data-testid="stSelectbox"], .stSelectbox, div[data-testid="stSelectbox"]');
     
     selectboxes.forEach(selectbox => {
-        // Corrigir todos os elementos de texto dentro do selectbox
+        // FORÇA MÁXIMA - aplicar em TODOS os elementos filhos
         const allElements = selectbox.querySelectorAll('*');
         allElements.forEach(el => {
-            if (el.tagName === 'SPAN' || el.tagName === 'DIV' || el.tagName === 'INPUT') {
-                el.style.color = '#1e1e1e';
-                el.style.backgroundColor = '#ffffff';
-                el.style.fontWeight = '500';
-                el.style.opacity = '1';
-                el.style.visibility = 'visible';
+            // Aplicar estilos forçados
+            el.style.setProperty('color', '#1e1e1e', 'important');
+            el.style.setProperty('background-color', '#ffffff', 'important');
+            el.style.setProperty('font-weight', '500', 'important');
+            el.style.setProperty('opacity', '1', 'important');
+            el.style.setProperty('visibility', 'visible', 'important');
+            
+            // Se tiver texto, garantir que seja visível
+            if (el.textContent && el.textContent.trim() !== '') {
+                el.style.setProperty('color', '#1e1e1e', 'important');
+                el.style.setProperty('text-shadow', 'none', 'important');
             }
         });
         
-        // Forçar estilo no container principal
-        selectbox.style.backgroundColor = '#ffffff';
+        // Container principal
+        selectbox.style.setProperty('background-color', '#ffffff', 'important');
         
-        // Corrigir especificamente o input interno
-        const inputs = selectbox.querySelectorAll('input');
-        inputs.forEach(input => {
-            input.style.color = '#1e1e1e';
-            input.style.backgroundColor = '#ffffff';
-            input.style.fontWeight = '500';
+        // Buscar por padrões específicos do Streamlit
+        const baseweb = selectbox.querySelectorAll('[data-baseweb]');
+        baseweb.forEach(el => {
+            el.style.setProperty('color', '#1e1e1e', 'important');
+            el.style.setProperty('background-color', '#ffffff', 'important');
         });
         
-        // Corrigir especificamente os elementos baseweb
-        const basewebElements = selectbox.querySelectorAll('[data-baseweb="select"] *');
-        basewebElements.forEach(el => {
-            el.style.color = '#1e1e1e';
-            el.style.backgroundColor = '#ffffff';
+        // Buscar inputs e spans especificamente
+        const textElements = selectbox.querySelectorAll('input, span, div, p');
+        textElements.forEach(el => {
+            if (el.textContent || el.value) {
+                el.style.setProperty('color', '#1e1e1e', 'important');
+                el.style.setProperty('background-color', '#ffffff', 'important');
+            }
         });
+    });
+    
+    // EXTRA: Buscar por qualquer elemento que possa ser um selectbox
+    const possibleSelectboxes = document.querySelectorAll('div[role="combobox"], div[role="listbox"], select');
+    possibleSelectboxes.forEach(el => {
+        el.style.setProperty('color', '#1e1e1e', 'important');
+        el.style.setProperty('background-color', '#ffffff', 'important');
     });
 }
 
-// Executar correção periodicamente
-setInterval(fixSelectboxVisibility, 500);
+// Executar correção mais frequentemente
+setInterval(fixSelectboxVisibility, 200);
 
 // Executar na inicialização
 document.addEventListener('DOMContentLoaded', fixSelectboxVisibility);
