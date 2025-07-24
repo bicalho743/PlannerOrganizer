@@ -119,6 +119,110 @@ try:
 except Exception as e:
     logger.error(f"❌ Erro ao implementar meta tags de SEO: {e}")
 
+# CORREÇÃO CRÍTICA - INJETAR CSS GLOBAL PARA SELECTBOX
+st.html("""
+<style>
+/* FORÇA ABSOLUTA GLOBAL PARA TODOS OS SELECTBOX */
+div[data-testid="stSelectbox"],
+div[data-testid="stSelectbox"] *,
+div[data-testid="stSelectbox"] div,
+div[data-testid="stSelectbox"] span,
+div[data-testid="stSelectbox"] input,
+div[data-testid="stSelectbox"] p,
+.stSelectbox,
+.stSelectbox *,
+.stSelectbox div,
+.stSelectbox span,
+.stSelectbox input,
+.stSelectbox p {
+    color: #1e1e1e !important;
+    background-color: #ffffff !important;
+    font-weight: 500 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    text-shadow: none !important;
+}
+
+/* Elementos baseweb específicos */
+div[data-testid="stSelectbox"] [data-baseweb="select"],
+div[data-testid="stSelectbox"] [data-baseweb="select"] *,
+div[data-testid="stSelectbox"] [data-baseweb="input"],
+div[data-testid="stSelectbox"] [data-baseweb="input"] *,
+.stSelectbox [data-baseweb="select"],
+.stSelectbox [data-baseweb="select"] *,
+.stSelectbox [data-baseweb="input"],
+.stSelectbox [data-baseweb="input"] * {
+    color: #1e1e1e !important;
+    background-color: #ffffff !important;
+    font-weight: 500 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Labels dos selectbox */
+div[data-testid="stSelectbox"] > label,
+.stSelectbox > label {
+    color: #1e1e1e !important;
+    font-weight: 600 !important;
+}
+
+/* Dropdown expandido */
+div[data-testid="stSelectbox"] ul,
+div[data-testid="stSelectbox"] li,
+.stSelectbox ul,
+.stSelectbox li {
+    color: #1e1e1e !important;
+    background-color: #ffffff !important;
+}
+</style>
+
+<script>
+// JAVASCRIPT GLOBAL PARA CORRIGIR SELECTBOX EM TEMPO REAL
+function forceGlobalSelectboxVisibility() {
+    // Buscar TODOS os selectbox na página
+    const selectboxes = document.querySelectorAll(
+        '[data-testid="stSelectbox"], .stSelectbox, div[data-testid="stSelectbox"]'
+    );
+    
+    selectboxes.forEach(selectbox => {
+        // Aplicar estilo a TODOS os elementos filhos
+        const allElements = selectbox.querySelectorAll('*');
+        allElements.forEach(el => {
+            // Força absoluta com setProperty
+            el.style.setProperty('color', '#1e1e1e', 'important');
+            el.style.setProperty('background-color', '#ffffff', 'important');
+            el.style.setProperty('font-weight', '500', 'important');
+            el.style.setProperty('opacity', '1', 'important');
+            el.style.setProperty('visibility', 'visible', 'important');
+            el.style.setProperty('text-shadow', 'none', 'important');
+        });
+        
+        // Container principal
+        selectbox.style.setProperty('background-color', '#ffffff', 'important');
+        selectbox.style.setProperty('color', '#1e1e1e', 'important');
+    });
+}
+
+// Executar imediatamente
+forceGlobalSelectboxVisibility();
+
+// Executar a cada 50ms para garantir persistência
+setInterval(forceGlobalSelectboxVisibility, 50);
+
+// Observer para mudanças no DOM
+const globalObserver = new MutationObserver(function(mutations) {
+    setTimeout(forceGlobalSelectboxVisibility, 10);
+});
+
+globalObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['style', 'class']
+});
+</script>
+""")
+
 # Diagnóstico de componentes do sistema
 logger.info("🔍 Verificando status dos componentes do sistema...")
 

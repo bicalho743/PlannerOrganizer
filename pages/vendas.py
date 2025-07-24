@@ -7,6 +7,14 @@ import os
 from utils.custom_components import custom_info, custom_warning
 
 def show():
+    # CORREÇÃO CRÍTICA - APLICAR FIX PARA SELECTBOX
+    try:
+        from utils.selectbox_fix import inject_selectbox_fix, apply_selectbox_theme_override
+        inject_selectbox_fix()
+        apply_selectbox_theme_override()
+    except ImportError:
+        pass
+    
     # Verificar se o db está na sessão
     if 'db' not in st.session_state:
         st.error("Erro: Conexão com banco de dados não inicializada")
