@@ -496,7 +496,7 @@ def show():
                         st.rerun()
 
                 with col2:
-                    # JavaScript para corrigir botões invisíveis
+                    # JavaScript para corrigir botões e selectbox invisíveis
                     st.markdown("""
                     <script>
                     setTimeout(function() {
@@ -528,7 +528,61 @@ def show():
                                 });
                             }
                         });
+
+                        // Corrigir selectbox - FORÇAR TEXTO VISÍVEL
+                        const selectboxes = document.querySelectorAll('[data-testid="stSelectbox"]');
+                        selectboxes.forEach(selectbox => {
+                            // Encontrar todos os elementos de texto dentro do selectbox
+                            const textElements = selectbox.querySelectorAll('*');
+                            textElements.forEach(el => {
+                                if (el.textContent && el.textContent.trim() !== '') {
+                                    el.style.color = '#1e1e1e !important';
+                                    el.style.fontWeight = '500';
+                                    el.style.opacity = '1';
+                                    el.style.visibility = 'visible';
+                                }
+                            });
+
+                            // Específico para o input interno
+                            const inputs = selectbox.querySelectorAll('input');
+                            inputs.forEach(input => {
+                                input.style.color = '#1e1e1e !important';
+                                input.style.fontWeight = '500';
+                            });
+
+                            // Específico para spans e divs com texto
+                            const spans = selectbox.querySelectorAll('span, div');
+                            spans.forEach(span => {
+                                if (span.textContent && span.textContent.trim() !== '') {
+                                    span.style.color = '#1e1e1e !important';
+                                    span.style.fontWeight = '500';
+                                }
+                            });
+                        });
                     }, 500);
+
+                    // Observar mudanças no DOM para aplicar correções quando selectbox mudar
+                    const observer = new MutationObserver(function(mutations) {
+                        mutations.forEach(function(mutation) {
+                            if (mutation.type === 'childList') {
+                                const selectboxes = document.querySelectorAll('[data-testid="stSelectbox"]');
+                                selectboxes.forEach(selectbox => {
+                                    const textElements = selectbox.querySelectorAll('*');
+                                    textElements.forEach(el => {
+                                        if (el.textContent && el.textContent.trim() !== '') {
+                                            el.style.color = '#1e1e1e !important';
+                                            el.style.fontWeight = '500';
+                                        }
+                                    });
+                                });
+                            }
+                        });
+                    });
+
+                    observer.observe(document.body, {
+                        childList: true,
+                        subtree: true
+                    });
                     </script>
                     """, unsafe_allow_html=True)
 

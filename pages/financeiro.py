@@ -70,7 +70,7 @@ def show():
             # Definir categorias de acordo com o padrão solicitado
             categorias_receita = ["Serviços de Organização", "Venda de Produtos", "Comissão sobre Fornecedores", "Serviços Adicionais"]
             categorias_despesa = ["Pagamento Equipe/Assistentes", "Pagamento Parceiros/Fornecedores", "Custos Operacionais", "Custos Administrativos"]
-            
+
             # Simplificado para usar apenas as opções disponíveis no selectbox
             if tipo == "receita":
                 categoria = st.selectbox(
@@ -119,7 +119,7 @@ def show():
             categorias_receita = ["Serviços de Organização", "Venda de Produtos", "Comissão sobre Fornecedores", "Serviços Adicionais"]
             categorias_despesa = ["Pagamento Equipe/Assistentes", "Pagamento Parceiros/Fornecedores", "Custos Operacionais", "Custos Administrativos"]
             todas_categorias = categorias_receita + categorias_despesa
-            
+
             categoria_filtro = st.multiselect(
                 "Categoria",
                 todas_categorias
@@ -133,20 +133,20 @@ def show():
         if not financeiro.empty:
             # Converter a coluna 'data' para datetime
             financeiro['data'] = pd.to_datetime(financeiro['data'])
-            
+
             # Filtrar apenas transações pendentes
             financeiro = financeiro[financeiro['status'] == 'Pendente']
-            
+
             # Filtrar para evitar duplicação de pagamentos de assistentes
             # Primeiro identificamos todos os assistentes que têm transações tanto com categoria antiga quanto nova
             if 'categoria' in financeiro.columns:
                 # Caso 1: Identificar duplicações de pagamentos de assistentes
                 duplicados_assistentes = []
-                
+
                 # Separar transações com diferentes categorias de assistentes
                 assistentes_pagamento_equipe = financeiro[financeiro['categoria'] == 'Pagamento Equipe/Assistentes']
                 assistentes_pagamento = financeiro[financeiro['categoria'] == 'Pagamento de Assistente']
-                
+
                 # Se existem registros em ambas categorias
                 if not assistentes_pagamento_equipe.empty and not assistentes_pagamento.empty:
                     # Para cada transação com categoria 'Pagamento de Assistente'
@@ -160,7 +160,7 @@ def show():
                             ]
                             if not duplicados.empty:
                                 duplicados_assistentes.append(row['id'])
-                
+
                 # Remover as transações duplicadas (manter apenas a versão padronizada)
                 if duplicados_assistentes:
                     financeiro = financeiro[~financeiro['id'].isin(duplicados_assistentes)]
@@ -189,7 +189,7 @@ def show():
                     return 'Despesa'
                 else:
                     return tipo.title()
-                    
+
             df_display['tipo'] = df_display['tipo'].apply(formatar_tipo)
 
             # Exibir tabela
@@ -247,7 +247,7 @@ def show():
                 # Mantida a referência a "receita_a_receber" apenas para compatibilidade com 
                 # dados históricos no banco que possam conter este valor
                 tipo_exibido = "receita" if transacao['tipo'] in ["receita", "receita_a_receber"] else "despesa"
-                
+
                 tipo = st.selectbox(
                     "Tipo",
                     ["receita", "despesa"],
@@ -291,20 +291,20 @@ def show():
                         categoria_index = 1  # Pagamento Parceiros/Fornecedores
                     else:
                         categoria_index = 3  # Custos Administrativos
-                
+
                 categoria = st.selectbox(
                     "Categoria",
                     categorias_disponíveis,
                     index=categoria_index
                 )
-                
+
                 # Criar uma única linha de botões para o form
                 col1, col2 = st.columns(2)
                 with col1:
                     salvar_button = st.form_submit_button("💾 Salvar")
                 with col2:
                     cancelar_button = st.form_submit_button("❌ Cancelar")
-            
+
             # Lógica de ações após o form
             if salvar_button:
                 try:
@@ -335,7 +335,7 @@ def show():
                  (financeiro['classificacao'] == 'contas_a_receber')) & 
                 (financeiro['status'] == 'Pendente')
             ]['valor'].sum()
-            
+
             # Valores a Pagar - usar tipos exatos do banco
             despesas = financeiro[
                 (((financeiro['tipo'] == 'Despesa') | (financeiro['tipo'] == 'despesa_a_pagar') |
@@ -346,7 +346,7 @@ def show():
         else:
             receitas = 0
             despesas = 0
-        
+
         saldo = receitas - despesas
 
         col1, col2, col3 = st.columns(3)
@@ -361,11 +361,11 @@ def show():
         st.subheader("Contas a Receber")
 
         contas_receber = st.session_state.db.get_contas_receber()
-        
+
         # Filtrar apenas as contas com status pendente
         if not contas_receber.empty:
             contas_receber = contas_receber[contas_receber['status'] == 'Pendente']
-            
+
         # Exibir título da seção
         st.write("Lista de Contas a Receber Pendentes:")
 
@@ -412,23 +412,23 @@ def show():
 
     with tab4:
         st.subheader("Contas a Pagar")
-        
+
         # Inicializar flag para recarga forçada
         if 'reload_contas_pagar' not in st.session_state:
             st.session_state.reload_contas_pagar = False
-        
+
         # Exibir título da seção
         st.write("Lista de Contas a Pagar Pendentes:")
-        
+
         # Definir se precisamos forçar o recarregamento
         force_reload = True
-        
+
         # Se o flag de recarregamento estiver ativo, garantir que estamos recarregando
         if st.session_state.reload_contas_pagar:
             force_reload = True
             # Resetar o flag para o próximo carregamento
             st.session_state.reload_contas_pagar = False
-            
+
         # Carregar as contas a pagar (despesas pendentes)
         # Forçar recarregamento para evitar dados desatualizados
         contas_pagar = st.session_state.db.get_financeiro(force_reload=force_reload)
@@ -442,7 +442,7 @@ def show():
                 ) & 
                 (contas_pagar['status'] == 'Pendente')  # Garantir que status seja Pendente para todos os tipos
             ]
-            
+
             if not contas_pagar.empty:
                 # Adicionar filtro específico para assistentes
                 filtro_tipo = st.radio(
@@ -450,7 +450,7 @@ def show():
                     ["Todos", "Assistentes", "Outros"],
                     horizontal=True
                 )
-                
+
                 # Aplicar filtro
                 if filtro_tipo == "Assistentes":
                     contas_pagar = contas_pagar[(contas_pagar['categoria'] == 'Assistente') | 
@@ -466,13 +466,13 @@ def show():
                         (contas_pagar['subcategoria'] != 'Assistentes') &
                         (~contas_pagar['descricao'].str.contains('Assistente:', na=False))
                     ]
-                
+
                 # Exibir contas a pagar
                 if not contas_pagar.empty:
                     for idx, conta in contas_pagar.iterrows():
                         with st.container():
                             col1, col2, col3 = st.columns([3, 1, 1])
-                            
+
                             with col1:
                                 st.write(f"**{conta['descricao']}**")
                                 st.write(f"Valor: R$ {conta['valor']:.2f}")
@@ -482,82 +482,82 @@ def show():
                                 if 'proposta_id' in conta and pd.notna(conta['proposta_id']):
                                     st.write(f"Proposta: #{conta['proposta_id']}")
                                 st.write(f"Data: {pd.to_datetime(conta['data']).strftime('%d/%m/%Y')}")
-                            
+
                             with col2:
                                 # Chave única para cada botão de pagamento
                                 pagar_key = f"pagar_{conta['id']}"
-                                
+
                                 # Usar variáveis de sessão simples para gerenciar estado
                                 if pagar_key not in st.session_state:
                                     st.session_state[pagar_key] = False
-                                
+
                                 # Botão de pagamento
                                 if st.button("✅ Pagar", key=f"btn_{pagar_key}"):
                                     # Alternar estado de confirmação
                                     st.session_state[pagar_key] = True
                                     st.rerun()
-                                
+
                                 # Se o botão foi clicado, mostrar confirmação
                                 if st.session_state.get(pagar_key, False):
                                     st.info(f"Confirmando pagamento de R$ {conta['valor']:.2f}")
-                                    
+
                                     col_conf1, col_conf2 = st.columns(2)
                                     with col_conf1:
                                         if st.button("✓ Confirmar", key=f"confirm_{pagar_key}"):
                                             try:
                                                 # Usar o método da classe Database para atualizar transação mais seguramente
                                                 data_pagamento = datetime.now().date()
-                                                
+
                                                 # Atualizar status da transação usando método adequado do DB
                                                 result = st.session_state.db.atualizar_status_transacao(
                                                     transacao_id=conta['id'],
                                                     status='Pago',
                                                     data_recebimento=data_pagamento
                                                 )
-                                                
+
                                                 if result:
                                                     st.success(f"✅ Pagamento de {conta['descricao']} registrado com sucesso!")
-                                                    
+
                                                     # Forçar recarregamento dos dados na próxima exibição
                                                     st.session_state.reload_contas_pagar = True
-                                                    
+
                                                     # Limpar estado via session state
                                                     st.session_state[pagar_key] = False
-                                                    
+
                                                     # Aguardar um pouco para exibir a mensagem de sucesso
                                                     time.sleep(1)
-                                                    
+
                                                     # Recarregar a página para mostrar dados atualizados
                                                     st.rerun()
                                                 else:
                                                     st.error("Erro ao registrar pagamento. A transação não foi encontrada.")
                                             except Exception as e:
                                                 st.error(f"Erro ao registrar pagamento: {str(e)}")
-                                    
+
                                     with col_conf2:
                                         if st.button("✗ Cancelar", key=f"cancel_{pagar_key}"):
                                             # Limpar estado via session state
                                             st.session_state[pagar_key] = False
                                             st.rerun()
-                            
+
                             with col3:
                                 # Chave única para cada botão de cancelamento
                                 cancelar_key = f"cancelar_pagar_{conta['id']}"
-                                
+
                                 # Usar variáveis de sessão simples para gerenciar estado
                                 if cancelar_key not in st.session_state:
                                     st.session_state[cancelar_key] = False
-                                
+
                                 # Botão de cancelamento
                                 if st.button("❌ Cancelar", key=f"btn_{cancelar_key}"):
                                     # Alternar estado de confirmação
                                     st.session_state[cancelar_key] = True
                                     st.rerun()
-                                
+
                                 # Se o botão foi clicado, mostrar confirmação
                                 if st.session_state.get(cancelar_key, False):
                                     st.warning(f"Confirmar cancelamento da conta: {conta['descricao']}")
-                                    
+
                                     col_canc1, col_canc2 = st.columns(2)
                                     with col_canc1:
                                         if st.button("✓ Confirmar", key=f"confirm_{cancelar_key}"):
@@ -567,37 +567,37 @@ def show():
                                                     transacao_id=conta['id'],
                                                     status='Cancelado'
                                                 )
-                                                
+
                                                 if result:
                                                     st.success(f"Pagamento de {conta['descricao']} cancelado com sucesso!")
-                                                    
+
                                                     # Forçar recarregamento dos dados na próxima exibição
                                                     st.session_state.reload_contas_pagar = True
-                                                    
+
                                                     # Limpar estado via session state
                                                     st.session_state[cancelar_key] = False
-                                                    
+
                                                     # Aguardar um pouco para exibir a mensagem de sucesso
                                                     time.sleep(1)
-                                                    
+
                                                     # Recarregar a página para mostrar dados atualizados
                                                     st.rerun()
                                                 else:
                                                     st.error("Erro ao cancelar pagamento. A transação não foi encontrada.")
                                             except Exception as e:
                                                 st.error(f"Erro ao cancelar pagamento: {str(e)}")
-                                    
+
                                     with col_canc2:
                                         if st.button("✗ Voltar", key=f"voltar_{cancelar_key}"):
                                             # Limpar estado via session state
                                             st.session_state[cancelar_key] = False
                                             st.rerun()
-                            
+
                             st.divider()
-                    
+
                     # Resumo de contas a pagar
                     total_pendente = contas_pagar['valor'].sum()
-                    
+
                     # Considerar todas as formas de identificar assistentes
                     assistentes_mask = (
                         (contas_pagar['categoria'] == 'Assistente') | 
@@ -606,10 +606,10 @@ def show():
                         (contas_pagar['subcategoria'] == 'Assistentes') |
                         (contas_pagar['descricao'].str.contains('Assistente:', na=False))
                     )
-                    
+
                     total_assistentes = contas_pagar[assistentes_mask]['valor'].sum()
                     total_outros = total_pendente - total_assistentes
-                    
+
                     col1, col2, col3 = st.columns(3)
                     col1.metric("Total Pendente", f"R$ {total_pendente:.2f}")
                     col2.metric("Pagamentos a Assistentes", f"R$ {total_assistentes:.2f}")
@@ -623,28 +623,28 @@ def show():
 
     with tab5:
         st.subheader("Histórico Financeiro")
-        
+
         # Inicializar filtros em sessão para manter estado quando redirecionado
         if 'filtro_historico' not in st.session_state:
             st.session_state.filtro_historico = {
                 "tipo": [],
                 "status": ["Aprovado", "Recebido", "Pago", "Cancelado"]
             }
-        
+
         # Recuperar dados para histórico, forçando recarregamento do banco
         historico = st.session_state.db.get_financeiro(force_reload=True)
-        
+
         if not historico.empty:
             # Converter a coluna 'data' para datetime para manipulação
             historico['data'] = pd.to_datetime(historico['data'])
-            
+
             # Filtrar apenas transações com status não-pendente
             historico = historico[~(historico['status'] == 'Pendente')]
-            
+
             # Controles de filtro
             st.write("#### Filtros")
             col1, col2, col3 = st.columns(3)
-            
+
             with col1:
                 # Filtro por tipo de transação
                 tipos_disponiveis = ["receita", "despesa"]
@@ -653,7 +653,7 @@ def show():
                     tipos_disponiveis,
                     default=st.session_state.filtro_historico["tipo"] if st.session_state.filtro_historico["tipo"] else []
                 )
-                
+
             with col2:
                 # Filtro por status
                 status_disponiveis = ["Aprovado", "Recebido", "Pago", "Cancelado"]
@@ -662,7 +662,7 @@ def show():
                     status_disponiveis,
                     default=st.session_state.filtro_historico["status"]
                 )
-                
+
             with col3:
                 # Filtro por período
                 hoje = datetime.now().date()
@@ -677,27 +677,27 @@ def show():
                     value=hoje,
                     key="historico_data_fim"
                 )
-            
+
             # Aplicar filtros
             if tipo_selecionado:
                 historico = historico[historico['tipo'].isin(tipo_selecionado)]
-            
+
             if status_selecionado:
                 historico = historico[historico['status'].isin(status_selecionado)]
-            
+
             # Filtro de data
             historico = historico[
                 (historico['data'].dt.date >= data_inicio) & 
                 (historico['data'].dt.date <= data_fim)
             ]
-            
+
             # Mostrar os resultados
             if not historico.empty:
                 # Formatar para exibição
                 df_display = historico.copy()
                 df_display['data'] = df_display['data'].dt.strftime('%d/%m/%Y')
                 df_display['valor'] = df_display['valor'].apply(lambda x: f"R$ {x:.2f}")
-                
+
                 # Formatar o tipo para exibição (simplificar tipos)
                 def formatar_tipo(tipo):
                     # Referências a 'receita_a_receber' mantidas apenas para compatibilidade
@@ -712,9 +712,9 @@ def show():
                         return 'Despesa'
                     else:
                         return tipo.title()
-                        
+
                 df_display['tipo'] = df_display['tipo'].apply(formatar_tipo)
-                
+
                 # Mostrar os dados
                 st.write(f"#### Resultados ({len(df_display)} transações)")
                 st.dataframe(
@@ -722,28 +722,29 @@ def show():
                     use_container_width=True,
                     hide_index=True
                 )
-                
+
                 # Botão para exportar para CSV
                 if st.button("📊 Exportar para CSV"):
                     csv = df_display.to_csv(index=False)
                     # Criar um botão de download
                     b64 = base64.b64encode(csv.encode()).decode()
                     href = f'<a href="data:file/csv;base64,{b64}" download="historico_financeiro.csv">Download CSV</a>'
-                    st.markdown(href, unsafe_allow_html=True)
-                
+                    st.markdown(href, unsafe_allow_html=```python
+True)
+
                 # Mostrar resumos
                 st.write("#### Resumo Financeiro")
                 col1, col2, col3 = st.columns(3)
-                
+
                 # Valores por tipo
                 receitas = historico[historico['tipo'] == 'receita']['valor'].sum()
                 despesas = historico[historico['tipo'] == 'despesa']['valor'].sum()
                 saldo = receitas - despesas
-                
+
                 col1.metric("Total Receitas", f"R$ {receitas:.2f}")
                 col2.metric("Total Despesas", f"R$ {despesas:.2f}")
                 col3.metric("Saldo Período", f"R$ {saldo:.2f}")
-                
+
                 # Gráfico de barras por categoria
                 st.write("#### Distribuição por Categoria")
                 fig = px.bar(
@@ -759,19 +760,19 @@ def show():
                 st.info("Nenhuma transação encontrada com os filtros selecionados.")
         else:
             st.info("Não há transações no histórico.")
-    
+
     with tab6:
         st.subheader("Dashboard Financeiro")
 
         # Obter dados financeiros com force_reload para evitar cache
         financeiro_completo = st.session_state.db.get_financeiro(force_reload=True)
-        
+
         if not financeiro_completo.empty:
             # Remover função de simplificação - usar diretamente os tipos do banco
-            
+
             # Card com resumo geral (métricas)
             st.subheader("Resumo Geral")
-            
+
             # Calcular totais usando os tipos exatos do banco (com maiúscula)
             total_receitas = financeiro_completo[
                 (((financeiro_completo['tipo'] == 'Receita') | (financeiro_completo['tipo'] == 'receita_a_receber') | 
@@ -779,22 +780,22 @@ def show():
                  (financeiro_completo['classificacao'] == 'contas_a_receber')) & 
                 (financeiro_completo['status'] == 'Pendente')
             ]['valor'].sum()
-            
+
             total_despesas = financeiro_completo[
                 (((financeiro_completo['tipo'] == 'Despesa') | (financeiro_completo['tipo'] == 'despesa_a_pagar') |
                   (financeiro_completo['tipo'] == 'despesa')) |
                  (financeiro_completo['classificacao'] == 'contas_a_pagar')) & 
                 (financeiro_completo['status'] == 'Pendente')
             ]['valor'].sum()
-            
+
             saldo = total_receitas - total_despesas
-            
+
             # Exibir as métricas
             col1, col2, col3 = st.columns(3)
             col1.metric("Total Receitas", format_currency_br(total_receitas))
             col2.metric("Total Despesas", format_currency_br(total_despesas))
             col3.metric("Saldo", format_currency_br(saldo))
-            
+
             # Resumo de Contas a Receber, com force_reload
             contas_receber = st.session_state.db.get_contas_receber(force_reload=True)
             if not contas_receber.empty:
@@ -853,14 +854,14 @@ def show():
                 st.plotly_chart(fig3, use_container_width=True)
         else:
             st.info("Não há dados suficientes para gerar o dashboard.")
-    
+
     with tab7:
         st.subheader("💰 Fluxo de Caixa")
-        
+
         # Inicializar o módulo de fluxo de caixa no session_state
         if 'fluxo_caixa_module' not in st.session_state:
             st.session_state.fluxo_caixa_module = CashFlowModule(saldo_inicial=0.0)
-        
+
         # Barra lateral para configurações
         with st.expander("⚙️ Configurações", expanded=False):
             col1, col2 = st.columns(2)
@@ -875,20 +876,20 @@ def show():
                     st.session_state.fluxo_caixa_module.saldo_inicial = st.session_state.saldo_inicial
                     st.session_state.fluxo_caixa_module.recalcular_saldos()
                     st.success("Saldo inicial atualizado!")
-        
+
         # Seção para adicionar/editar meses
         st.markdown("### 📅 Gestão de Meses")
-        
+
         # Lista de meses padrão
         meses_padrao = [
             "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
             "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
         ]
-        
+
         # Adicionar novo mês
         with st.expander("➕ Adicionar Novo Mês", expanded=False):
             nome_mes = st.selectbox("Selecione o Mês", meses_padrao)
-            
+
             if st.button("Adicionar Mês", use_container_width=True):
                 # Verificar se o mês já existe
                 nomes_existentes = [m.name for m in st.session_state.fluxo_caixa_module.months]
@@ -898,29 +899,29 @@ def show():
                     st.success(f"Mês {nome_mes} adicionado com sucesso!")
                 else:
                     st.warning(f"O mês {nome_mes} já existe!")
-        
+
         # Exibir meses existentes
         if st.session_state.fluxo_caixa_module.months:
             st.markdown("### 📊 Meses Cadastrados")
-            
+
             # Seletor de mês para edição
             nomes_meses = [m.name for m in st.session_state.fluxo_caixa_module.months]
             mes_selecionado = st.selectbox("Selecione um mês para editar", nomes_meses)
-            
+
             # Encontrar o mês selecionado
             mes_obj = None
             for m in st.session_state.fluxo_caixa_module.months:
                 if m.name == mes_selecionado:
                     mes_obj = m
                     break
-            
+
             if mes_obj:
                 col1, col2 = st.columns(2)
-                
+
                 # Seção de Receitas
                 with col1:
                     st.markdown("#### 💰 Receitas Previstas")
-                    
+
                     for categoria in REVENUE_CATEGORIES:
                         valor_atual = mes_obj.previsao_receitas.get(categoria, 0.0)
                         novo_valor = st.number_input(
@@ -929,14 +930,14 @@ def show():
                             step=100.0,
                             key=f"receita_{mes_selecionado}_{categoria}"
                         )
-                        
+
                         if novo_valor != valor_atual:
                             mes_obj.editar_receita(categoria, novo_valor, previsao=True)
-                
+
                 # Seção de Despesas
                 with col2:
                     st.markdown("#### 💸 Despesas Previstas")
-                    
+
                     for categoria in EXPENSE_CATEGORIES:
                         valor_atual = mes_obj.previsao_despesas.get(categoria, 0.0)
                         novo_valor = st.number_input(
@@ -945,10 +946,10 @@ def show():
                             step=50.0,
                             key=f"despesa_{mes_selecionado}_{categoria}"
                         )
-                        
+
                         if novo_valor != valor_atual:
                             mes_obj.editar_despesa(categoria, novo_valor, previsao=True)
-                
+
                 # Empréstimo necessário
                 st.markdown("#### 🏦 Empréstimo/Financiamento")
                 emprestimo_atual = mes_obj.emprestimo
@@ -958,19 +959,19 @@ def show():
                     step=100.0,
                     key=f"emprestimo_{mes_selecionado}"
                 )
-                
+
                 if novo_emprestimo != emprestimo_atual:
                     mes_obj.emprestimo = novo_emprestimo
-                
+
                 # Botão para recalcular
                 if st.button("🔄 Recalcular Saldos", use_container_width=True):
                     st.session_state.fluxo_caixa_module.recalcular_saldos()
                     st.success("Saldos recalculados!")
-                
+
                 # Resumo do mês selecionado
                 st.markdown("#### 📈 Resumo do Mês")
                 col1, col2, col3, col4 = st.columns(4)
-                
+
                 with col1:
                     st.metric("Total Receitas", format_currency_br(mes_obj.total_receitas_previsao))
                 with col2:
@@ -979,14 +980,14 @@ def show():
                     st.metric("Saldo Mensal", format_currency_br(mes_obj.saldo_mensal_previsao))
                 with col4:
                     st.metric("Saldo Final", format_currency_br(mes_obj.saldo_final_previsao))
-        
+
         # Visualização consolidada
         if st.session_state.fluxo_caixa_module.months:
             st.markdown("### 📊 Visão Consolidada")
-            
+
             # Obter resumo de todos os meses
             resumo = st.session_state.fluxo_caixa_module.obter_resumo()
-            
+
             # Criar DataFrame para visualização
             dados_resumo = []
             for nome_mes, dados in resumo.items():
@@ -998,19 +999,19 @@ def show():
                     'Saldo Acumulado': dados['saldo_acumulado_previsao'],
                     'Saldo Final': dados['saldo_final_previsao']
                 })
-            
+
             df_resumo = pd.DataFrame(dados_resumo)
-            
+
             # Tabela resumo
             st.markdown("#### 📋 Tabela Resumo")
-            
+
             # Formatar valores para exibição
             df_display = df_resumo.copy()
             for col in ['Receitas Previstas', 'Despesas Previstas', 'Saldo Mensal', 'Saldo Acumulado', 'Saldo Final']:
                 df_display[col] = df_display[col].apply(lambda x: f"R$ {x:,.2f}")
-            
+
             st.dataframe(df_display, use_container_width=True, hide_index=True)
-            
+
             # Gráfico de evolução do saldo
             st.markdown("#### 📈 Evolução do Saldo Final")
             fig_saldo = px.line(
@@ -1023,7 +1024,7 @@ def show():
             )
             fig_saldo.update_layout(xaxis_tickangle=-45)
             st.plotly_chart(fig_saldo, use_container_width=True)
-            
+
             # Gráfico de receitas vs despesas
             st.markdown("#### 💰 Receitas vs Despesas")
             fig_comp = px.bar(
@@ -1036,13 +1037,84 @@ def show():
             )
             fig_comp.update_layout(xaxis_tickangle=-45)
             st.plotly_chart(fig_comp, use_container_width=True)
-            
+
             # Botões de ação
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("🗑️ Limpar Todos os Dados", use_container_width=True):
                     st.session_state.fluxo_caixa_module = CashFlowModule(saldo_inicial=0.0)
                     st.success("Todos os dados foram limpos!")
-                    
+
         else:
             st.info("Nenhum mês cadastrado. Use a seção 'Adicionar Novo Mês' para começar.")
+
+    # CSS e JavaScript para eliminar qualquer fundo azul restante e corrigir selectbox
+    st.markdown("""
+    <style>
+    /* Correção específica para selectbox desta página */
+    div[data-testid="stSelectbox"] * {
+        color: #1e1e1e !important;
+        font-weight: 500 !important;
+    }
+
+    div[data-testid="stSelectbox"] [data-baseweb="select"] {
+        background-color: #ffffff !important;
+        border: 1px solid #d1d5db !important;
+    }
+
+    /* Estilos gerais para consistência */
+    .stSelectbox>label {
+        color: #1e1e1e !important;
+    }
+
+    /* Eliminar fundo azul */
+    div[data-testid="stSelectbox"] div[data-baseweb="select"]>div {
+        background-color: white !important;
+    }
+
+    /* Corrigir cor do texto */
+    div[data-testid="stSelectbox"] div[data-baseweb="select"]>div>span {
+        color: #1e1e1e !important;
+    }
+
+    /* Definitivamente garantir que o texto seja legível */
+    div[data-testid="stSelectbox"] div[data-baseweb="select"]>div>span {
+        opacity: 1 !important;
+    }
+    </style>
+
+    <script>
+    function removeBlueBackgrounds() {
+        // Selecionar todos os elementos que podem ter o fundo azul
+        var elements = document.querySelectorAll('div[data-testid="stSelectbox"] *');
+
+        // Remover a cor de fundo azul de todos os elementos
+        elements.forEach(function(element) {
+            element.style.backgroundColor = 'white !important';
+        });
+    }
+
+    // Executar periodicamente
+    setInterval(removeBlueBackgrounds, 1000);
+
+    // Corrigir selectbox - FORÇAR TEXTO VISÍVEL
+    function fixSelectboxes() {
+        const selectboxes = document.querySelectorAll('[data-testid="stSelectbox"]');
+        selectboxes.forEach(selectbox => {
+            const textElements = selectbox.querySelectorAll('*');
+            textElements.forEach(el => {
+                if (el.textContent && el.textContent.trim() !== '') {
+                    el.style.setProperty('color', '#1e1e1e', 'important');
+                    el.style.fontWeight = '500';
+                    el.style.opacity = '1';
+                    el.style.visibility = 'visible';
+                }
+            });
+        });
+    }
+
+    // Executar correção de selectbox
+    fixSelectboxes();
+    setInterval(fixSelectboxes, 1000);
+    </script>
+    """, unsafe_allow_html=True)

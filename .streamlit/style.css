@@ -708,13 +708,13 @@ div[data-testid="stAlert"]:has(.css-1x8cf1d[data-testid="errorIcon"]) * {
 // Função ULTRA AGRESSIVA para eliminar fundos azuis
 function eliminateBlueBackgrounds() {
     // Buscar TODOS os elementos que podem ter fundo azul
-    const allElements = document.querySelectorAll('*');
-    
+    const allElements = document.querySelector('*');
+
     allElements.forEach(element => {
         const computedStyle = window.getComputedStyle(element);
         const bgColor = computedStyle.backgroundColor;
         const style = element.getAttribute('style') || '';
-        
+
         // Verificar se tem fundo azul
         if (bgColor.includes('rgb(13, 110, 253)') || 
             bgColor.includes('rgb(32, 146, 236)') ||
@@ -723,7 +723,7 @@ function eliminateBlueBackgrounds() {
             style.includes('background: rgb(13, 110, 253)') ||
             style.includes('background-color: blue') ||
             style.includes('background: blue')) {
-            
+
             // FORÇAR fundo branco
             element.style.setProperty('background-color', 'rgba(255, 255, 255, 0.95)', 'important');
             element.style.setProperty('background', 'rgba(255, 255, 255, 0.95)', 'important');
@@ -734,13 +734,13 @@ function eliminateBlueBackgrounds() {
             element.style.setProperty('border-radius', '0.375rem', 'important');
         }
     });
-    
+
     // Buscar especificamente alertas do Streamlit
     const alerts = document.querySelectorAll(
         '[data-testid="stAlert"], .stAlert, [data-baseweb="notification"], [role="alert"], ' +
         'div[style*="background-color: rgb(13, 110, 253)"], div[style*="background: blue"]'
     );
-    
+
     alerts.forEach(alert => {
         // FORÇAR estilo branco
         alert.style.setProperty('background-color', 'rgba(255, 255, 255, 0.95)', 'important');
@@ -750,14 +750,14 @@ function eliminateBlueBackgrounds() {
         alert.style.setProperty('border-left', '4px solid #6c757d', 'important');
         alert.style.setProperty('color', '#1e1e1e', 'important');
         alert.style.setProperty('border-radius', '0.375rem', 'important');
-        
+
         // Forçar cor do texto em todos os elementos filhos
         const textElements = alert.querySelectorAll('*');
         textElements.forEach(text => {
             text.style.setProperty('color', '#1e1e1e', 'important');
             text.style.setProperty('background-color', 'transparent', 'important');
         });
-        
+
         // Ícones
         const svgs = alert.querySelectorAll('svg');
         svgs.forEach(svg => {
@@ -765,7 +765,7 @@ function eliminateBlueBackgrounds() {
             svg.style.setProperty('color', '#6c757d', 'important');
         });
     });
-    
+
     // Remover classes problemáticas
     const problematicElements = document.querySelectorAll('.stAlert-info, .alert-info, [class*="info"]');
     problematicElements.forEach(elem => {
@@ -1333,3 +1333,125 @@ section[data-testid="stSidebar"] .stButton > button:active {
     opacity: 1 !important;
     visibility: visible !important;
 }
+
+/* Corrigir visibilidade do texto nos selectbox - VERSÃO ROBUSTA */
+.stSelectbox > div > div > div {
+    color: #1e1e1e !important;
+    background-color: #ffffff !important;
+    font-weight: 500 !important;
+}
+
+.stSelectbox select {
+    color: #1e1e1e !important;
+    background-color: #ffffff !important;
+    font-weight: 500 !important;
+}
+
+/* Selectbox quando aberto (dropdown) */
+.stSelectbox [data-baseweb="select"] > div {
+    color: #1e1e1e !important;
+    background-color: #ffffff !important;
+}
+
+/* Texto selecionado no selectbox */
+.stSelectbox [data-testid="stSelectbox"] > div > div {
+    color: #1e1e1e !important;
+    font-weight: 500 !important;
+}
+
+/* Input interno do selectbox */
+.stSelectbox input {
+    color: #1e1e1e !important;
+    background-color: #ffffff !important;
+    font-weight: 500 !important;
+}
+
+/* Container do selectbox */
+.stSelectbox [data-baseweb="select"] {
+    color: #1e1e1e !important;
+    background-color: #ffffff !important;
+}
+
+/* Texto da opção selecionada */
+.stSelectbox [data-baseweb="select"] [data-baseweb="tag"] {
+    color: #1e1e1e !important;
+    background-color: #f0f2f6 !important;
+    font-weight: 500 !important;
+}
+
+/* Valor selecionado específico */
+.stSelectbox [data-baseweb="select"] > div > div {
+    color: #1e1e1e !important;
+    font-weight: 500 !important;
+}
+
+/* Placeholder e texto interno */
+.stSelectbox [role="combobox"] {
+    color: #1e1e1e !important;
+    font-weight: 500 !important;
+}
+
+/* Menu dropdown das opções */
+.stSelectbox [data-baseweb="popover"] {
+    background-color: #ffffff !important;
+}
+
+.stSelectbox [data-baseweb="popover"] [role="option"] {
+    color: #1e1e1e !important;
+    background-color: #ffffff !important;
+    font-weight: 400 !important;
+}
+
+.stSelectbox [data-baseweb="popover"] [role="option"]:hover {
+    color: #1e1e1e !important;
+    background-color: #f0f2f6 !important;
+    font-weight: 500 !important;
+}
+
+/* Forçar override de estilos inline azuis */
+div[style*="background-color: rgb(13, 110, 253)"],
+div[style*="background-color: blue"],
+div[style*="background: blue"],
+div[style*="background: rgb(13, 110, 253)"] {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* SOLUÇÃO DEFINITIVA PARA SELECTBOX - FORÇAR TEXTO VISÍVEL */
+div[data-testid="stSelectbox"] * {
+    color: #1e1e1e !important;
+    font-weight: 500 !important;
+}
+
+/* Específico para o valor selecionado */
+div[data-testid="stSelectbox"] [data-baseweb="select"] span,
+div[data-testid="stSelectbox"] [data-baseweb="select"] div {
+    color: #1e1e1e !important;
+    background-color: transparent !important;
+    font-weight: 500 !important;
+}
+
+/* Container principal do select */
+div[data-testid="stSelectbox"] [data-baseweb="select"] {
+    background-color: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+}
+
+/* Input interno invisível */
+div[data-testid="stSelectbox"] input {
+    color: #1e1e1e !important;
+    font-weight: 500 !important;
+}
+
+/* Forçar todos os elementos dentro do selectbox */
+.stSelectbox *, 
+[data-testid="stSelectbox"] * {
+    color: #1e1e1e !important;
+}
+
+/* Texto do placeholder */
+.stSelectbox [data-baseweb="select"] [aria-expanded] {
+    color: #1e1e1e !important;
+    font-weight: 500 !important;
+}
+</style>

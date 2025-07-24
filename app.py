@@ -1242,6 +1242,27 @@ st.markdown("""
         display: none !important;
     }
     
+    /* CORREÇÃO GLOBAL PARA SELECTBOX - GARANTIR TEXTO VISÍVEL */
+    div[data-testid="stSelectbox"] * {
+        color: #1e1e1e !important;
+        font-weight: 500 !important;
+    }
+    
+    div[data-testid="stSelectbox"] [data-baseweb="select"] {
+        background-color: #ffffff !important;
+        border: 1px solid #d1d5db !important;
+    }
+    
+    div[data-testid="stSelectbox"] input {
+        color: #1e1e1e !important;
+        font-weight: 500 !important;
+    }
+    
+    .stSelectbox [data-baseweb="select"] span,
+    .stSelectbox [data-baseweb="select"] div {
+        color: #1e1e1e !important;
+        font-weight: 500 !important;
+    }
 
     </style>
 """, unsafe_allow_html=True)
