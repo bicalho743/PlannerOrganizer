@@ -43,6 +43,9 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **FUNCIONALIDADES**: Saldo inicial configurável, cálculos automáticos, visão consolidada
 - **VISUALIZAÇÕES**: Gráficos de evolução do saldo, comparativo receitas vs despesas
 - **CONTROLES**: Edição de valores por categoria, recálculo automático de saldos
+- **CORRIGIDO**: Erro de sintaxe na linha 732 do financeiro.py (código Python malformado)
+- **CORRIGIDO**: Problema de login lento - adicionado st.rerun() após autenticação bem-sucedida
+- **MELHORADO**: Processo de login agora carrega interface principal automaticamente
 
 ### 2025-07-23
 - **CORRIGIDO**: Problema de elementos azuis no módulo Vendas substituindo st.info() por custom_info()

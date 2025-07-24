@@ -1105,7 +1105,15 @@ if not st.session_state.authenticated:
                         result = firebase_auth.login(email, password)
                         if result['success']:
                             st.session_state.authenticated = True
+                            # Verificar se o usuário foi definido corretamente
+                            if 'user' in result and 'localId' in result['user']:
+                                # Garantir que o usuario_id esteja na sessão
+                                st.session_state.usuario_id = result['user']['localId']
+                                # Reinicializar database com o ID do usuário correto
+                                from utils.database import Database
+                                st.session_state.db = Database(usuario_id=result['user']['localId'])
                             st.success("Login realizado com sucesso!")
+                            st.rerun()  # Recarregar página para mostrar interface principal
                         else:
                             st.error(f"Erro de autenticação: {result['error']}")
                 else:
