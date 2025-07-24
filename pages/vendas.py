@@ -238,9 +238,29 @@ def show():
                             with col_edit1:
                                 # Editar produto
                                 st.subheader("Editar Produto")
-                                produto_id = st.selectbox("Selecione o produto", 
-                                                        options=produtos_df['id'].tolist(),
-                                                        format_func=lambda x: f"{x} - {produtos_df[produtos_df['id'] == x]['nome'].iloc[0]}")
+                                # USAR RADIO BUTTONS PARA EDIÇÃO DE PRODUTOS
+                                st.write("**Selecione o produto:**")
+                                
+                                produtos_edit_opcoes = []
+                                for _, produto in produtos_df.iterrows():
+                                    opcao = f"{produto['id']} - {produto['nome']}"
+                                    produtos_edit_opcoes.append(opcao)
+                                
+                                if len(produtos_edit_opcoes) > 0:
+                                    produto_edit_selecionado = st.radio(
+                                        "Produtos para edição:",
+                                        options=produtos_edit_opcoes,
+                                        key="radio_produtos_edit",
+                                        label_visibility="collapsed"
+                                    )
+                                    
+                                    # Extrair o ID do produto selecionado
+                                    if produto_edit_selecionado:
+                                        produto_id = int(produto_edit_selecionado.split(" - ")[0])
+                                    else:
+                                        produto_id = None
+                                else:
+                                    produto_id = None
 
                                 if produto_id:
                                     produto_selecionado = produtos_df[produtos_df['id'] == produto_id].iloc[0]
@@ -290,10 +310,29 @@ def show():
                             with col_edit2:
                                 # Excluir produto
                                 st.subheader("Excluir Produto")
-                                produto_remover_id = st.selectbox("Selecione o produto para excluir", 
-                                                                options=produtos_df['id'].tolist(),
-                                                                format_func=lambda x: f"{x} - {produtos_df[produtos_df['id'] == x]['nome'].iloc[0]}", 
-                                                                key="remover_produto")
+                                # USAR RADIO BUTTONS PARA EXCLUSÃO DE PRODUTOS
+                                st.write("**Selecione o produto para excluir:**")
+                                
+                                produtos_remover_opcoes = []
+                                for _, produto in produtos_df.iterrows():
+                                    opcao = f"{produto['id']} - {produto['nome']}"
+                                    produtos_remover_opcoes.append(opcao)
+                                
+                                if len(produtos_remover_opcoes) > 0:
+                                    produto_remover_selecionado = st.radio(
+                                        "Produtos para exclusão:",
+                                        options=produtos_remover_opcoes,
+                                        key="radio_produtos_remover",
+                                        label_visibility="collapsed"
+                                    )
+                                    
+                                    # Extrair o ID do produto selecionado
+                                    if produto_remover_selecionado:
+                                        produto_remover_id = int(produto_remover_selecionado.split(" - ")[0])
+                                    else:
+                                        produto_remover_id = None
+                                else:
+                                    produto_remover_id = None
 
                                 # Variável de estado para controlar o fluxo de exclusão
                                 if 'exclusao_confirmada' not in st.session_state:
@@ -366,12 +405,29 @@ def show():
             if 'produtos_venda' not in st.session_state:
                 st.session_state.produtos_venda = []
 
-            # Selecionar cliente
-            cliente_id = st.selectbox(
-                "Selecione o Cliente", 
-                options=clientes_df['id'].tolist(),
-                format_func=lambda x: f"{x} - {clientes_df[clientes_df['id'] == x]['nome'].iloc[0]}"
-            )
+            # Selecionar cliente - USAR RADIO BUTTONS
+            st.write("**Selecione o Cliente:**")
+            
+            clientes_opcoes = []
+            for _, cliente in clientes_df.iterrows():
+                opcao = f"{cliente['id']} - {cliente['nome']}"
+                clientes_opcoes.append(opcao)
+            
+            if len(clientes_opcoes) > 0:
+                cliente_selecionado = st.radio(
+                    "Clientes disponíveis:",
+                    options=clientes_opcoes,
+                    key="radio_clientes",
+                    label_visibility="collapsed"
+                )
+                
+                # Extrair o ID do cliente selecionado
+                if cliente_selecionado:
+                    cliente_id = int(cliente_selecionado.split(" - ")[0])
+                else:
+                    cliente_id = None
+            else:
+                cliente_id = None
 
             # Adicionar produtos à venda
             with st.expander("Adicionar Produto", expanded=True):
@@ -385,11 +441,29 @@ def show():
                         custom_info("Não há produtos em estoque disponíveis para venda.")
                         produto_id = None
                     else:
-                        produto_id = st.selectbox(
-                            "Selecione o Produto",
-                            options=produtos_disponiveis['id'].tolist(),
-                            format_func=lambda x: f"{x} - {produtos_disponiveis[produtos_disponiveis['id'] == x]['nome'].iloc[0]}"
-                        )
+                        # USAR RADIO BUTTONS PARA PRODUTOS
+                        st.write("**Selecione o Produto:**")
+                        
+                        produtos_opcoes = []
+                        for _, produto in produtos_disponiveis.iterrows():
+                            opcao = f"{produto['id']} - {produto['nome']}"
+                            produtos_opcoes.append(opcao)
+                        
+                        if len(produtos_opcoes) > 0:
+                            produto_selecionado = st.radio(
+                                "Produtos disponíveis:",
+                                options=produtos_opcoes,
+                                key="radio_produtos",
+                                label_visibility="collapsed"
+                            )
+                            
+                            # Extrair o ID do produto selecionado
+                            if produto_selecionado:
+                                produto_id = int(produto_selecionado.split(" - ")[0])
+                            else:
+                                produto_id = None
+                        else:
+                            produto_id = None
 
                 with col2:
                     if produto_id:
@@ -670,11 +744,31 @@ def show():
 
                 # Detalhes da venda selecionada
                 st.subheader("Detalhes da Venda")
-                venda_id = st.selectbox(
-                    "Selecione uma venda para ver detalhes",
-                    options=vendas_df['id'].tolist(),
-                    format_func=lambda x: f"Venda {x} - {vendas_df[vendas_df['id'] == x]['cliente_nome'].iloc[0]} ({vendas_df[vendas_df['id'] == x]['data_venda'].iloc[0]})"
-                )
+                
+                # SOLUÇÃO ALTERNATIVA - USAR RADIO BUTTONS EM VEZ DE SELECTBOX
+                st.write("**Selecione uma venda para ver detalhes:**")
+                
+                # Criar lista de opções mais amigável
+                vendas_opcoes = []
+                for _, venda in vendas_df.iterrows():
+                    opcao = f"Venda {venda['id']} - {venda['cliente_nome']} ({venda['data_venda']})"
+                    vendas_opcoes.append(opcao)
+                
+                if len(vendas_opcoes) > 0:
+                    venda_selecionada = st.radio(
+                        "Vendas disponíveis:",
+                        options=vendas_opcoes,
+                        key="radio_vendas",
+                        label_visibility="collapsed"
+                    )
+                    
+                    # Extrair o ID da venda selecionada
+                    if venda_selecionada:
+                        venda_id = int(venda_selecionada.split(" - ")[0].replace("Venda ", ""))
+                    else:
+                        venda_id = None
+                else:
+                    venda_id = None
 
                 if venda_id:
                     venda = vendas_df[vendas_df['id'] == venda_id].iloc[0]
