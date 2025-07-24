@@ -1090,9 +1090,78 @@ def show():
         except Exception as e:
             st.error(f"Erro ao carregar vendas: {str(e)}")
 
-    # CSS e JavaScript para eliminar qualquer fundo azul restante
+    # CSS e JavaScript para eliminar qualquer fundo azul restante e corrigir selectbox
     st.markdown("""
     <style>
+    /* CORREÇÃO ULTRA-ESPECÍFICA PARA SELECTBOX - FORÇA MÁXIMA */
+    div[data-testid="stSelectbox"] {
+        background-color: #ffffff !important;
+        border: 1px solid #cccccc !important;
+        border-radius: 4px !important;
+    }
+
+    /* TODOS os elementos dentro do selectbox */
+    div[data-testid="stSelectbox"] *,
+    div[data-testid="stSelectbox"] div,
+    div[data-testid="stSelectbox"] span,
+    div[data-testid="stSelectbox"] input,
+    div[data-testid="stSelectbox"] p {
+        color: #000000 !important;
+        background-color: transparent !important;
+        font-weight: 600 !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        text-shadow: 1px 1px 1px #ffffff !important;
+    }
+
+    /* Elementos BaseWeb específicos */
+    div[data-testid="stSelectbox"] [data-baseweb="select"],
+    div[data-testid="stSelectbox"] [data-baseweb="select"] *,
+    div[data-testid="stSelectbox"] [data-baseweb="input"],
+    div[data-testid="stSelectbox"] [data-baseweb="input"] * {
+        color: #000000 !important;
+        background-color: #ffffff !important;
+        font-weight: 600 !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        text-shadow: 1px 1px 1px #ffffff !important;
+    }
+
+    /* Container principal do BaseWeb select */
+    div[data-testid="stSelectbox"] [data-baseweb="select"] > div {
+        background-color: #ffffff !important;
+        border: 1px solid #cccccc !important;
+        color: #000000 !important;
+        font-weight: 600 !important;
+    }
+
+    /* Texto do valor selecionado */
+    div[data-testid="stSelectbox"] [data-baseweb="select"] > div > div {
+        color: #000000 !important;
+        font-weight: 600 !important;
+        background-color: transparent !important;
+    }
+
+    /* Seta do selectbox */
+    div[data-testid="stSelectbox"] svg {
+        color: #000000 !important;
+        fill: #000000 !important;
+    }
+
+    /* Labels dos selectbox */
+    div[data-testid="stSelectbox"] > label {
+        color: #000000 !important;
+        font-weight: 600 !important;
+    }
+
+    /* Dropdown quando expandido */
+    div[data-testid="stSelectbox"] ul,
+    div[data-testid="stSelectbox"] li {
+        color: #000000 !important;
+        background-color: #ffffff !important;
+        font-weight: 500 !important;
+    }
+
     /* MÁXIMA PRIORIDADE - Forçar fundo branco em TODOS os elementos de informação */
     .stAlert, 
     div[data-testid="stAlert"],
@@ -1123,33 +1192,80 @@ def show():
     [role="alert"] * {
         color: #1e1e1e !important;
     }
-
-    /* Remover qualquer background azul de containers */
-    .main .block-container,
-    div[data-testid="stVerticalBlock"],
-    div[data-testid="stHorizontalBlock"] {
-        background: transparent !important;
-    }
-
-    /* Específico para alertas de informação - REMOVER AZUL */
-    .stAlert[data-baseweb="notification"],
-    div[data-testid="stAlert"][data-baseweb="notification"] {
-        background-color: rgba(255, 255, 255, 0.9) !important;
-        background: rgba(255, 255, 255, 0.9) !important;
-        border-left: 4px solid #6c757d !important;
-    }
-
-    /* Forçar override de estilos inline azuis */
-    div[style*="background-color: rgb(13, 110, 253)"],
-    div[style*="background-color: blue"],
-    div[style*="background: blue"],
-    div[style*="background: rgb(13, 110, 253)"] {
-        background-color: rgba(255, 255, 255, 0.9) !important;
-        background: rgba(255, 255, 255, 0.9) !important;
-    }
     </style>
 
     <script>
+    // CORREÇÃO JAVASCRIPT ULTRA-ROBUSTA PARA SELECTBOX
+    function forceSelectboxVisibility() {
+        console.log('Executando correção de selectbox...');
+        
+        // Buscar TODOS os selectbox
+        const selectboxes = document.querySelectorAll('[data-testid="stSelectbox"]');
+        console.log('Encontrados ' + selectboxes.length + ' selectboxes');
+
+        selectboxes.forEach((selectbox, index) => {
+            console.log('Processando selectbox ' + index);
+            
+            // Forçar container principal
+            selectbox.style.setProperty('background-color', '#ffffff', 'important');
+            selectbox.style.setProperty('border', '1px solid #cccccc', 'important');
+
+            // Buscar TODOS os elementos dentro
+            const allElements = selectbox.querySelectorAll('*');
+            console.log('Elementos dentro do selectbox ' + index + ': ' + allElements.length);
+
+            allElements.forEach(element => {
+                // Aplicar estilos forçados
+                element.style.setProperty('color', '#000000', 'important');
+                element.style.setProperty('font-weight', '600', 'important');
+                element.style.setProperty('opacity', '1', 'important');
+                element.style.setProperty('visibility', 'visible', 'important');
+                element.style.setProperty('text-shadow', '1px 1px 1px #ffffff', 'important');
+                
+                // Garantir fundo transparente para elementos de texto
+                if (element.tagName !== 'svg') {
+                    element.style.setProperty('background-color', 'transparent', 'important');
+                }
+            });
+
+            // Buscar especificamente elementos BaseWeb
+            const baseWebElements = selectbox.querySelectorAll('[data-baseweb="select"], [data-baseweb="select"] *, [role="combobox"], [role="button"]');
+            console.log('Elementos BaseWeb encontrados: ' + baseWebElements.length);
+
+            baseWebElements.forEach(element => {
+                element.style.setProperty('color', '#000000', 'important');
+                element.style.setProperty('font-weight', '600', 'important');
+                element.style.setProperty('background-color', '#ffffff', 'important');
+                element.style.setProperty('opacity', '1', 'important');
+                element.style.setProperty('visibility', 'visible', 'important');
+            });
+
+            // Buscar spans com texto
+            const spans = selectbox.querySelectorAll('span');
+            spans.forEach(span => {
+                if (span.textContent && span.textContent.trim() !== '') {
+                    console.log('Span com texto encontrado: ' + span.textContent);
+                    span.style.setProperty('color', '#000000', 'important');
+                    span.style.setProperty('font-weight', '600', 'important');
+                    span.style.setProperty('background-color', 'transparent', 'important');
+                    span.style.setProperty('text-shadow', '1px 1px 1px #ffffff', 'important');
+                }
+            });
+
+            // Buscar divs com texto
+            const divs = selectbox.querySelectorAll('div');
+            divs.forEach(div => {
+                if (div.textContent && div.textContent.trim() !== '' && div.children.length === 0) {
+                    console.log('Div com texto encontrado: ' + div.textContent);
+                    div.style.setProperty('color', '#000000', 'important');
+                    div.style.setProperty('font-weight', '600', 'important');
+                    div.style.setProperty('background-color', 'transparent', 'important');
+                    div.style.setProperty('text-shadow', '1px 1px 1px #ffffff', 'important');
+                }
+            });
+        });
+    }
+
     // JavaScript para forçar remoção de fundos azuis
     function removeBlueBackgrounds() {
         // Buscar todos os elementos com fundo azul
@@ -1189,14 +1305,24 @@ def show():
         });
     }
 
-    // Executar imediatamente
+    // Executar ambas as funções imediatamente
+    forceSelectboxVisibility();
     removeBlueBackgrounds();
 
-    // Observar mudanças no DOM
+    // Executar quando a página carregar
+    document.addEventListener('DOMContentLoaded', function() {
+        forceSelectboxVisibility();
+        removeBlueBackgrounds();
+    });
+
+    // Observer para mudanças no DOM
     const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             if (mutation.addedNodes.length) {
-                setTimeout(removeBlueBackgrounds, 100);
+                setTimeout(() => {
+                    forceSelectboxVisibility();
+                    removeBlueBackgrounds();
+                }, 100);
             }
         });
     });
@@ -1206,7 +1332,10 @@ def show():
         subtree: true
     });
 
-    // Executar periodicamente
-    setInterval(removeBlueBackgrounds, 1000);
+    // Executar periodicamente com prioridade para selectbox
+    setInterval(() => {
+        forceSelectboxVisibility();
+        removeBlueBackgrounds();
+    }, 500);
     </script>
     """, unsafe_allow_html=True)

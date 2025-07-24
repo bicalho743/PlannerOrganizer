@@ -1623,41 +1623,94 @@ div[style*="background: rgb(13, 110, 253)"] {
     background: rgba(255, 255, 255, 0.9) !important;
 }
 
-/* SOLUÇÃO DEFINITIVA PARA SELECTBOX - FORÇAR TEXTO VISÍVEL */
+/* SOLUÇÃO DEFINITIVA PARA SELECTBOX - FORÇAR TEXTO VISÍVEL COM MÁXIMA ESPECIFICIDADE */
+div[data-testid="stSelectbox"] {
+    background-color: #ffffff !important;
+    border: 1px solid #cccccc !important;
+    border-radius: 4px !important;
+}
+
 div[data-testid="stSelectbox"] * {
-    color: #1e1e1e !important;
-    font-weight: 500 !important;
+    color: #000000 !important;
+    font-weight: 600 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    text-shadow: 1px 1px 1px #ffffff !important;
 }
 
 /* Específico para o valor selecionado */
 div[data-testid="stSelectbox"] [data-baseweb="select"] span,
 div[data-testid="stSelectbox"] [data-baseweb="select"] div {
-    color: #1e1e1e !important;
+    color: #000000 !important;
     background-color: transparent !important;
-    font-weight: 500 !important;
+    font-weight: 600 !important;
+    text-shadow: 1px 1px 1px #ffffff !important;
 }
 
 /* Container principal do select */
 div[data-testid="stSelectbox"] [data-baseweb="select"] {
     background-color: #ffffff !important;
-    border: 1px solid #d1d5db !important;
+    border: 1px solid #cccccc !important;
+}
+
+/* Container interno do BaseWeb */
+div[data-testid="stSelectbox"] [data-baseweb="select"] > div {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-weight: 600 !important;
+}
+
+/* Texto do valor selecionado específico */
+div[data-testid="stSelectbox"] [data-baseweb="select"] > div > div {
+    color: #000000 !important;
+    font-weight: 600 !important;
+    background-color: transparent !important;
+    text-shadow: 1px 1px 1px #ffffff !important;
 }
 
 /* Input interno invisível */
 div[data-testid="stSelectbox"] input {
-    color: #1e1e1e !important;
-    font-weight: 500 !important;
+    color: #000000 !important;
+    font-weight: 600 !important;
+    background-color: #ffffff !important;
 }
 
 /* Forçar todos os elementos dentro do selectbox */
 .stSelectbox *, 
 [data-testid="stSelectbox"] * {
-    color: #1e1e1e !important;
+    color: #000000 !important;
+    font-weight: 600 !important;
 }
 
-/* Texto do placeholder */
-.stSelectbox [data-baseweb="select"] [aria-expanded] {
-    color: #1e1e1e !important;
+/* Texto do placeholder e aria-expanded */
+.stSelectbox [data-baseweb="select"] [aria-expanded],
+div[data-testid="stSelectbox"] [data-baseweb="select"] [aria-expanded] {
+    color: #000000 !important;
+    font-weight: 600 !important;
+    background-color: #ffffff !important;
+}
+
+/* Labels dos selectbox */
+div[data-testid="stSelectbox"] > label,
+.stSelectbox > label {
+    color: #000000 !important;
+    font-weight: 600 !important;
+}
+
+/* Setas e ícones */
+div[data-testid="stSelectbox"] svg,
+.stSelectbox svg {
+    color: #000000 !important;
+    fill: #000000 !important;
+}
+
+/* Dropdown quando expandido */
+div[data-testid="stSelectbox"] ul,
+div[data-testid="stSelectbox"] li,
+.stSelectbox ul,
+.stSelectbox li {
+    color: #000000 !important;
+    background-color: #ffffff !important;
     font-weight: 500 !important;
 }
 </style>
