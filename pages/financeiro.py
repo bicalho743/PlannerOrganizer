@@ -3,20 +3,22 @@ import pandas as pd
 import plotly.express as px
 import base64
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from utils.currency_formatter import format_currency_br
+from utils.fluxo_caixa_module import CashFlowModule, MonthCashFlow, REVENUE_CATEGORIES, EXPENSE_CATEGORIES
 
 def show():
     # Título com estilo personalizado para ficar mais próximo do topo
     st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">💰 Gestão Financeira</h1>', unsafe_allow_html=True)
 
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
         "Registrar Transação",
         "Pendências",
         "Contas a Receber", 
         "Contas a Pagar",
         "Histórico",
-        "Dashboard Financeiro"
+        "Dashboard Financeiro",
+        "Fluxo de Caixa"
     ])
 
     with tab1:
@@ -851,3 +853,196 @@ def show():
                 st.plotly_chart(fig3, use_container_width=True)
         else:
             st.info("Não há dados suficientes para gerar o dashboard.")
+    
+    with tab7:
+        st.subheader("💰 Fluxo de Caixa")
+        
+        # Inicializar o módulo de fluxo de caixa no session_state
+        if 'fluxo_caixa_module' not in st.session_state:
+            st.session_state.fluxo_caixa_module = CashFlowModule(saldo_inicial=0.0)
+        
+        # Barra lateral para configurações
+        with st.expander("⚙️ Configurações", expanded=False):
+            col1, col2 = st.columns(2)
+            with col1:
+                st.session_state.saldo_inicial = st.number_input(
+                    "Saldo Inicial (R$)", 
+                    value=st.session_state.fluxo_caixa_module.saldo_inicial,
+                    step=100.0
+                )
+            with col2:
+                if st.button("Atualizar Saldo Inicial", use_container_width=True):
+                    st.session_state.fluxo_caixa_module.saldo_inicial = st.session_state.saldo_inicial
+                    st.session_state.fluxo_caixa_module.recalcular_saldos()
+                    st.success("Saldo inicial atualizado!")
+        
+        # Seção para adicionar/editar meses
+        st.markdown("### 📅 Gestão de Meses")
+        
+        # Lista de meses padrão
+        meses_padrao = [
+            "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+            "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+        ]
+        
+        # Adicionar novo mês
+        with st.expander("➕ Adicionar Novo Mês", expanded=False):
+            nome_mes = st.selectbox("Selecione o Mês", meses_padrao)
+            
+            if st.button("Adicionar Mês", use_container_width=True):
+                # Verificar se o mês já existe
+                nomes_existentes = [m.name for m in st.session_state.fluxo_caixa_module.months]
+                if nome_mes not in nomes_existentes:
+                    novo_mes = MonthCashFlow(name=nome_mes)
+                    st.session_state.fluxo_caixa_module.adicionar_mes(novo_mes)
+                    st.success(f"Mês {nome_mes} adicionado com sucesso!")
+                else:
+                    st.warning(f"O mês {nome_mes} já existe!")
+        
+        # Exibir meses existentes
+        if st.session_state.fluxo_caixa_module.months:
+            st.markdown("### 📊 Meses Cadastrados")
+            
+            # Seletor de mês para edição
+            nomes_meses = [m.name for m in st.session_state.fluxo_caixa_module.months]
+            mes_selecionado = st.selectbox("Selecione um mês para editar", nomes_meses)
+            
+            # Encontrar o mês selecionado
+            mes_obj = None
+            for m in st.session_state.fluxo_caixa_module.months:
+                if m.name == mes_selecionado:
+                    mes_obj = m
+                    break
+            
+            if mes_obj:
+                col1, col2 = st.columns(2)
+                
+                # Seção de Receitas
+                with col1:
+                    st.markdown("#### 💰 Receitas Previstas")
+                    
+                    for categoria in REVENUE_CATEGORIES:
+                        valor_atual = mes_obj.previsao_receitas.get(categoria, 0.0)
+                        novo_valor = st.number_input(
+                            categoria, 
+                            value=valor_atual, 
+                            step=100.0,
+                            key=f"receita_{mes_selecionado}_{categoria}"
+                        )
+                        
+                        if novo_valor != valor_atual:
+                            mes_obj.editar_receita(categoria, novo_valor, previsao=True)
+                
+                # Seção de Despesas
+                with col2:
+                    st.markdown("#### 💸 Despesas Previstas")
+                    
+                    for categoria in EXPENSE_CATEGORIES:
+                        valor_atual = mes_obj.previsao_despesas.get(categoria, 0.0)
+                        novo_valor = st.number_input(
+                            categoria, 
+                            value=valor_atual, 
+                            step=50.0,
+                            key=f"despesa_{mes_selecionado}_{categoria}"
+                        )
+                        
+                        if novo_valor != valor_atual:
+                            mes_obj.editar_despesa(categoria, novo_valor, previsao=True)
+                
+                # Empréstimo necessário
+                st.markdown("#### 🏦 Empréstimo/Financiamento")
+                emprestimo_atual = mes_obj.emprestimo
+                novo_emprestimo = st.number_input(
+                    "Empréstimo/Financiamento (R$)", 
+                    value=emprestimo_atual, 
+                    step=100.0,
+                    key=f"emprestimo_{mes_selecionado}"
+                )
+                
+                if novo_emprestimo != emprestimo_atual:
+                    mes_obj.emprestimo = novo_emprestimo
+                
+                # Botão para recalcular
+                if st.button("🔄 Recalcular Saldos", use_container_width=True):
+                    st.session_state.fluxo_caixa_module.recalcular_saldos()
+                    st.success("Saldos recalculados!")
+                
+                # Resumo do mês selecionado
+                st.markdown("#### 📈 Resumo do Mês")
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    st.metric("Total Receitas", format_currency_br(mes_obj.total_receitas_previsao))
+                with col2:
+                    st.metric("Total Despesas", format_currency_br(mes_obj.total_despesas_previsao))
+                with col3:
+                    st.metric("Saldo Mensal", format_currency_br(mes_obj.saldo_mensal_previsao))
+                with col4:
+                    st.metric("Saldo Final", format_currency_br(mes_obj.saldo_final_previsao))
+        
+        # Visualização consolidada
+        if st.session_state.fluxo_caixa_module.months:
+            st.markdown("### 📊 Visão Consolidada")
+            
+            # Obter resumo de todos os meses
+            resumo = st.session_state.fluxo_caixa_module.obter_resumo()
+            
+            # Criar DataFrame para visualização
+            dados_resumo = []
+            for nome_mes, dados in resumo.items():
+                dados_resumo.append({
+                    'Mês': nome_mes,
+                    'Receitas Previstas': dados['total_receitas_previsao'],
+                    'Despesas Previstas': dados['total_despesas_previsao'],
+                    'Saldo Mensal': dados['saldo_mensal_previsao'],
+                    'Saldo Acumulado': dados['saldo_acumulado_previsao'],
+                    'Saldo Final': dados['saldo_final_previsao']
+                })
+            
+            df_resumo = pd.DataFrame(dados_resumo)
+            
+            # Tabela resumo
+            st.markdown("#### 📋 Tabela Resumo")
+            
+            # Formatar valores para exibição
+            df_display = df_resumo.copy()
+            for col in ['Receitas Previstas', 'Despesas Previstas', 'Saldo Mensal', 'Saldo Acumulado', 'Saldo Final']:
+                df_display[col] = df_display[col].apply(lambda x: f"R$ {x:,.2f}")
+            
+            st.dataframe(df_display, use_container_width=True, hide_index=True)
+            
+            # Gráfico de evolução do saldo
+            st.markdown("#### 📈 Evolução do Saldo Final")
+            fig_saldo = px.line(
+                df_resumo, 
+                x='Mês', 
+                y='Saldo Final',
+                title='Evolução do Saldo Final por Mês',
+                labels={'Saldo Final': 'Saldo Final (R$)', 'Mês': 'Mês'},
+                markers=True
+            )
+            fig_saldo.update_layout(xaxis_tickangle=-45)
+            st.plotly_chart(fig_saldo, use_container_width=True)
+            
+            # Gráfico de receitas vs despesas
+            st.markdown("#### 💰 Receitas vs Despesas")
+            fig_comp = px.bar(
+                df_resumo, 
+                x='Mês', 
+                y=['Receitas Previstas', 'Despesas Previstas'],
+                title='Comparativo de Receitas e Despesas por Mês',
+                labels={'value': 'Valor (R$)', 'Mês': 'Mês', 'variable': 'Tipo'},
+                barmode='group'
+            )
+            fig_comp.update_layout(xaxis_tickangle=-45)
+            st.plotly_chart(fig_comp, use_container_width=True)
+            
+            # Botões de ação
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("🗑️ Limpar Todos os Dados", use_container_width=True):
+                    st.session_state.fluxo_caixa_module = CashFlowModule(saldo_inicial=0.0)
+                    st.success("Todos os dados foram limpos!")
+                    
+        else:
+            st.info("Nenhum mês cadastrado. Use a seção 'Adicionar Novo Mês' para começar.")

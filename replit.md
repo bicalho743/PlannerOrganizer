@@ -35,6 +35,15 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 
 ## Recent Changes
 
+### 2025-07-24
+- **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira
+- **CRIADO**: Módulo utils/fluxo_caixa_module.py com classes MonthCashFlow e CashFlowModule
+- **IMPLEMENTADO**: Interface completa para gestão de fluxo de caixa mensal
+- **CATEGORIAS**: Receitas (Previsão vendas, Contas a receber, Outros) e Despesas (Fornecedores, MEI, Marketing, etc.)
+- **FUNCIONALIDADES**: Saldo inicial configurável, cálculos automáticos, visão consolidada
+- **VISUALIZAÇÕES**: Gráficos de evolução do saldo, comparativo receitas vs despesas
+- **CONTROLES**: Edição de valores por categoria, recálculo automático de saldos
+
 ### 2025-07-23
 - **CORRIGIDO**: Problema de elementos azuis no módulo Vendas substituindo st.info() por custom_info()
 - **CRIADO**: Componente global utils/custom_components.py com fundo branco consistente
