@@ -1,3 +1,4 @@
+/* Corrected Selectbox and Background Colors CSS */
 /* Reset e eliminação de espaçamentos desnecessários */
 body, .main, [data-testid="stAppViewContainer"], .main > div,
 [data-testid="stAppViewContainer"] > div:first-child,
@@ -705,102 +706,138 @@ div[data-testid="stAlert"]:has(.css-1x8cf1d[data-testid="errorIcon"]) * {
 </style>
 
 <script>
-// Função ULTRA AGRESSIVA para eliminar fundos azuis
-function eliminateBlueBackgrounds() {
-    // Buscar TODOS os elementos que podem ter fundo azul
-    const allElements = document.querySelector('*');
+// JavaScript ULTRA ROBUSTO para forçar visibilidade dos selectbox
+function forceSelectboxVisibility() {
+    // Buscar TODOS os selectbox
+    const selectboxes = document.querySelectorAll('[data-testid="stSelectbox"]');
 
-    allElements.forEach(element => {
+    selectboxes.forEach(selectbox => {
+        // Forçar estilos no container principal
+        selectbox.style.setProperty('background-color', '#ffffff', 'important');
+        selectbox.style.setProperty('border', '1px solid #d1d5db', 'important');
+
+        // Buscar TODOS os elementos dentro do selectbox
+        const allElements = selectbox.querySelectorAll('*');
+
+        allElements.forEach(element => {
+            // Aplicar estilos de texto visível
+            element.style.setProperty('color', '#1a202c', 'important');
+            element.style.setProperty('font-weight', '600', 'important');
+            element.style.setProperty('opacity', '1', 'important');
+            element.style.setProperty('visibility', 'visible', 'important');
+            element.style.setProperty('text-shadow', 'none', 'important');
+
+            // Se for um elemento que pode ter background
+            if (element.tagName && element.tagName.toLowerCase() !== 'svg') {
+                element.style.setProperty('background-color', 'transparent', 'important');
+            }
+        });
+
+        // Buscar especificamente elementos do BaseWeb
+        const baseWebElements = selectbox.querySelectorAll('[data-baseweb="select"], [data-baseweb="select"] *, [role="combobox"], [role="button"]');
+
+        baseWebElements.forEach(element => {
+            element.style.setProperty('color', '#1a202c', 'important');
+            element.style.setProperty('font-weight', '600', 'important');
+            element.style.setProperty('background-color', '#ffffff', 'important');
+        });
+
+        // Buscar spans com texto
+        const spans = selectbox.querySelectorAll('span');
+        spans.forEach(span => {
+            if (span.textContent && span.textContent.trim() !== '') {
+                span.style.setProperty('color', '#1a202c', 'important');
+                span.style.setProperty('font-weight', '600', 'important');
+                span.style.setProperty('background-color', 'transparent', 'important');
+            }
+        });
+
+        // Buscar divs com texto
+        const divs = selectbox.querySelectorAll('div');
+        divs.forEach(div => {
+            if (div.textContent && div.textContent.trim() !== '' && div.children.length === 0) {
+                div.style.setProperty('color', '#1a202c', 'important');
+                div.style.setProperty('font-weight', '600', 'important');
+                div.style.setProperty('background-color', 'transparent', 'important');
+            }
+        });
+    });
+}
+
+// JavaScript para forçar remoção de fundos azuis
+function removeBlueBackgrounds() {
+    // Executar correção de selectbox primeiro
+    forceSelectboxVisibility();
+
+    // Buscar todos os elementos com fundo azul
+    const blueElements = document.querySelectorAll('*');
+
+    blueElements.forEach(element => {
         const computedStyle = window.getComputedStyle(element);
         const bgColor = computedStyle.backgroundColor;
-        const style = element.getAttribute('style') || '';
 
-        // Verificar se tem fundo azul
+        // Verificar se o fundo é azul
         if (bgColor.includes('rgb(13, 110, 253)') || 
             bgColor.includes('rgb(32, 146, 236)') ||
             bgColor.includes('blue') ||
-            style.includes('background-color: rgb(13, 110, 253)') ||
-            style.includes('background: rgb(13, 110, 253)') ||
-            style.includes('background-color: blue') ||
-            style.includes('background: blue')) {
+            element.style.backgroundColor.includes('blue') ||
+            element.style.backgroundColor.includes('rgb(13, 110, 253)')) {
 
-            // FORÇAR fundo branco
-            element.style.setProperty('background-color', 'rgba(255, 255, 255, 0.95)', 'important');
-            element.style.setProperty('background', 'rgba(255, 255, 255, 0.95)', 'important');
-            element.style.setProperty('background-image', 'none', 'important');
+            element.style.setProperty('background-color', 'rgba(255, 255, 255, 0.9)', 'important');
+            element.style.setProperty('background', 'rgba(255, 255, 255, 0.9)', 'important');
             element.style.setProperty('border', '1px solid rgba(0, 0, 0, 0.1)', 'important');
-            element.style.setProperty('border-left', '4px solid #6c757d', 'important');
             element.style.setProperty('color', '#1e1e1e', 'important');
-            element.style.setProperty('border-radius', '0.375rem', 'important');
         }
     });
 
     // Buscar especificamente alertas do Streamlit
-    const alerts = document.querySelectorAll(
-        '[data-testid="stAlert"], .stAlert, [data-baseweb="notification"], [role="alert"], ' +
-        'div[style*="background-color: rgb(13, 110, 253)"], div[style*="background: blue"]'
-    );
-
+    const alerts = document.querySelectorAll('[data-testid="stAlert"], .stAlert, [data-baseweb="notification"], [role="alert"]');
     alerts.forEach(alert => {
-        // FORÇAR estilo branco
-        alert.style.setProperty('background-color', 'rgba(255, 255, 255, 0.95)', 'important');
-        alert.style.setProperty('background', 'rgba(255, 255, 255, 0.95)', 'important');
-        alert.style.setProperty('background-image', 'none', 'important');
+        alert.style.setProperty('background-color', 'rgba(255, 255, 255, 0.9)', 'important');
+        alert.style.setProperty('background', 'rgba(255, 255, 255, 0.9)', 'important');
         alert.style.setProperty('border', '1px solid rgba(0, 0, 0, 0.1)', 'important');
         alert.style.setProperty('border-left', '4px solid #6c757d', 'important');
-        alert.style.setProperty('color', '#1e1e1e', 'important');
-        alert.style.setProperty('border-radius', '0.375rem', 'important');
 
-        // Forçar cor do texto em todos os elementos filhos
+        // Forçar cor do texto
         const textElements = alert.querySelectorAll('*');
         textElements.forEach(text => {
             text.style.setProperty('color', '#1e1e1e', 'important');
-            text.style.setProperty('background-color', 'transparent', 'important');
         });
-
-        // Ícones
-        const svgs = alert.querySelectorAll('svg');
-        svgs.forEach(svg => {
-            svg.style.setProperty('fill', '#6c757d', 'important');
-            svg.style.setProperty('color', '#6c757d', 'important');
-        });
-    });
-
-    // Remover classes problemáticas
-    const problematicElements = document.querySelectorAll('.stAlert-info, .alert-info, [class*="info"]');
-    problematicElements.forEach(elem => {
-        elem.classList.remove('stAlert-info', 'alert-info', 'info');
-        elem.style.setProperty('background-color', 'rgba(255, 255, 255, 0.95)', 'important');
-        elem.style.setProperty('color', '#1e1e1e', 'important');
     });
 }
 
-// Aplicar imediatamente
-eliminateBlueBackgrounds();
+// Executar imediatamente
+removeBlueBackgrounds();
+forceSelectboxVisibility();
 
-// Aplicar ao carregar
-document.addEventListener('DOMContentLoaded', eliminateBlueBackgrounds);
+// Executar quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    forceSelectboxVisibility();
+    removeBlueBackgrounds();
+});
 
-// Observar mudanças no DOM para aplicar aos novos alertas
+// Observar mudanças no DOM
 const observer = new MutationObserver(function(mutations) {
     mutations.forEach(function(mutation) {
-        if (mutation.addedNodes.length > 0) {
-            setTimeout(eliminateBlueBackgrounds, 50);
+        if (mutation.addedNodes.length) {
+            setTimeout(() => {
+                forceSelectboxVisibility();
+                removeBlueBackgrounds();
+            }, 100);
         }
     });
 });
 
-// Iniciar observação
 observer.observe(document.body, {
     childList: true,
     subtree: true
 });
 
-// Aplicar periodicamente para garantir - mais frequente
-setInterval(eliminateBlueBackgrounds, 1000);
-
-// Aplicar quando a página estiver totalmente carregada
-window.addEventListener('load', eliminateBlueBackgrounds);
+// Executar periodicamente com prioridade para selectbox
+setInterval(() => {
+    forceSelectboxVisibility();
+    removeBlueBackgrounds();
+}, 500);
 </script>
 
 <style>
