@@ -805,70 +805,34 @@ def show():
                 # Detalhes da venda selecionada
                 st.subheader("Detalhes da Venda")
                 
-                # SOLUÇÃO HÍBRIDA - STREAMLIT SELECTBOX COM CSS FORÇADO INLINE
-                st.html("""
-                <style>
-                /* CSS ULTRA ESPECÍFICO PARA SELECTBOX DE VENDAS */
-                div[data-testid="stSelectbox"] > div > div > div {
-                    color: #1e1e1e !important;
-                    background-color: #ffffff !important;
-                    border: 1px solid #ccc !important;
-                    font-weight: 600 !important;
-                }
-                
-                div[data-testid="stSelectbox"] span {
-                    color: #1e1e1e !important;
-                    font-weight: 600 !important;
-                    text-shadow: 1px 1px 0px #ffffff !important;
-                }
-                
-                div[data-testid="stSelectbox"] input {
-                    color: #1e1e1e !important;
-                    background-color: #ffffff !important;
-                    font-weight: 600 !important;
-                }
-                </style>
-                
-                <script>
-                // JavaScript específico para forçar visibilidade
-                function forceSelectboxVisibility() {
-                    const selectboxes = document.querySelectorAll('[data-testid="stSelectbox"]');
-                    selectboxes.forEach(selectbox => {
-                        const allElements = selectbox.querySelectorAll('*');
-                        allElements.forEach(el => {
-                            if (el.textContent && el.textContent.trim()) {
-                                el.style.setProperty('color', '#1e1e1e', 'important');
-                                el.style.setProperty('background-color', '#ffffff', 'important');
-                                el.style.setProperty('font-weight', '600', 'important');
-                                el.style.setProperty('text-shadow', '1px 1px 0px #ffffff', 'important');
-                            }
-                        });
-                    });
-                }
-                
-                // Executar imediatamente e repetir
-                setTimeout(forceSelectboxVisibility, 100);
-                setInterval(forceSelectboxVisibility, 500);
-                
-                // Observar mudanças no DOM
-                const observer = new MutationObserver(forceSelectboxVisibility);
-                observer.observe(document.body, { childList: true, subtree: true });
-                </script>
-                """)
-                
-                # Usar selectbox normal do Streamlit com formatação
-                venda_options = [None] + vendas_df['id'].tolist()
-                venda_labels = ["-- Escolha uma venda --"] + [
+                # SOLUÇÃO SIMPLES E FUNCIONAL - SELECTBOX COM INDEX
+                venda_options = ["-- Escolha uma venda --"] + [
                     f"{row['id']} - {row['cliente_nome']} ({row['data_venda']})" 
                     for _, row in vendas_df.iterrows()
                 ]
                 
-                venda_id = st.selectbox(
+                # CSS específico para este selectbox
+                st.html("""
+                <style>
+                div[data-testid="stSelectbox"] * {
+                    color: #000000 !important;
+                    background-color: #ffffff !important;
+                    font-weight: bold !important;
+                }
+                </style>
+                """)
+                
+                selected_option = st.selectbox(
                     "Selecione uma venda para ver detalhes:",
                     options=venda_options,
-                    format_func=lambda x: venda_labels[venda_options.index(x)] if x is not None else venda_labels[0],
-                    key="selectbox_venda_historico"
+                    key="selectbox_venda_historico_simples"
                 )
+                
+                # Extrair venda_id da seleção
+                if selected_option and selected_option != "-- Escolha uma venda --":
+                    venda_id = int(selected_option.split(' - ')[0])
+                else:
+                    venda_id = None
 
                 if venda_id:
                     venda = vendas_df[vendas_df['id'] == venda_id].iloc[0]
@@ -887,37 +851,46 @@ def show():
                         st.write(f"**Observações:** {venda['observacoes'] or '-'}")
 
                     # Exibir itens da venda
-                    itens_df = st.session_state.db.get_itens_venda(venda_id)
+                    try:
+                        itens_df = st.session_state.db.get_itens_venda(venda_id)
+                        st.write(f"DEBUG: Itens encontrados para venda {venda_id}: {len(itens_df) if not itens_df.empty else 0}")
+                    except Exception as e:
+                        st.error(f"Erro ao buscar itens da venda {venda_id}: {str(e)}")
+                        itens_df = pd.DataFrame()
 
+                    # SEMPRE mostrar os botões, mesmo sem itens
+                    st.subheader("Itens da Venda")
+                    
                     if not itens_df.empty:
-                        st.subheader("Itens da Venda")
-
                         # Formatar valores
-                        itens_df['preco_unitario'] = itens_df['preco_unitario'].map('R$ {:.2f}'.format)
-                        itens_df['subtotal'] = itens_df['subtotal'].map('R$ {:.2f}'.format)
-                        itens_df['lucro'] = itens_df['lucro'].map('R$ {:.2f}'.format)
+                        itens_df_display = itens_df.copy()
+                        itens_df_display['preco_unitario'] = itens_df_display['preco_unitario'].map('R$ {:.2f}'.format)
+                        itens_df_display['subtotal'] = itens_df_display['subtotal'].map('R$ {:.2f}'.format)
+                        itens_df_display['lucro'] = itens_df_display['lucro'].map('R$ {:.2f}'.format)
 
-                        st.dataframe(itens_df[['produto_nome', 'quantidade', 'preco_unitario', 'subtotal', 'lucro']], hide_index=True)
+                        st.dataframe(itens_df_display[['produto_nome', 'quantidade', 'preco_unitario', 'subtotal', 'lucro']], hide_index=True)
+                    else:
+                        st.info("Nenhum item encontrado para esta venda.")
 
-                        # Botões de ação em três colunas
-                        col1, col2, col3 = st.columns(3)
+                    # Botões de ação em três colunas - SEMPRE MOSTRAR
+                    col1, col2, col3 = st.columns(3)
 
-                        with col1:
-                            # Botão para editar venda
-                            if st.button("EDITAR VENDAS", type="primary", key=f"editar_venda_{venda_id}", use_container_width=True):
-                                st.session_state[f'editando_venda_{venda_id}'] = True
-                                st.rerun()
+                    with col1:
+                        # Botão para editar venda
+                        if st.button("EDITAR VENDAS", type="primary", key=f"editar_venda_{venda_id}", use_container_width=True):
+                            st.session_state[f'editando_venda_{venda_id}'] = True
+                            st.rerun()
 
-                        with col2:
-                            # Botão para gerar PDF
-                            gerar_pdf_btn = st.button("GERAR RELATÓRIO DE VENDAS", type="primary", key=f"gerar_pdf_venda_{venda_id}", use_container_width=True)
+                    with col2:
+                        # Botão para gerar PDF
+                        gerar_pdf_btn = st.button("GERAR RELATÓRIO DE VENDAS", type="primary", key=f"gerar_pdf_venda_{venda_id}", use_container_width=True)
 
-                        with col3:
-                            # Botão para excluir venda
-                            if st.button("EXCLUIR VENDAS", type="primary", key=f"excluir_venda_{venda_id}", use_container_width=True):
-                                # Marcar venda para exclusão
-                                st.session_state[f'confirmar_exclusao_venda_{venda_id}'] = True
-                                st.rerun()
+                    with col3:
+                        # Botão para excluir venda
+                        if st.button("EXCLUIR VENDAS", type="primary", key=f"excluir_venda_{venda_id}", use_container_width=True):
+                            # Marcar venda para exclusão
+                            st.session_state[f'confirmar_exclusao_venda_{venda_id}'] = True
+                            st.rerun()
 
                         # Confirmação de exclusão da venda
                         if st.session_state.get(f'confirmar_exclusao_venda_{venda_id}', False):
