@@ -810,7 +810,7 @@ def show():
                 vendas_mapping = {}
                 
                 for idx, row in vendas_df.iterrows():
-                    option_text = f"Venda {row['id']} - {row['cliente_nome']} ({row['data_venda']})"
+                    option_text = f"{row['id']} - {row['cliente_nome']} ({row['data_venda']})"
                     vendas_options.append(f'<option value="{row["id"]}">{option_text}</option>')
                     vendas_mapping[str(row['id'])] = row
                 
