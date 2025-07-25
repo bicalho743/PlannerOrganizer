@@ -880,25 +880,8 @@ def show():
                 if 'venda_selecionada_id' not in st.session_state:
                     st.session_state.venda_selecionada_id = None
                 
-                # Interface para seleção manual (fallback)
-                col1, col2 = st.columns([3, 1])
-                with col1:
-                    venda_id_manual = st.number_input(
-                        "Ou digite o ID da venda diretamente:",
-                        min_value=1,
-                        step=1,
-                        value=None,
-                        key="venda_id_input"
-                    )
-                
-                with col2:
-                    if st.button("Selecionar Venda", type="primary"):
-                        if venda_id_manual and venda_id_manual in vendas_df['id'].values:
-                            st.session_state.venda_selecionada_id = venda_id_manual
-                            st.rerun()
-                
                 # Definir venda_id baseado na seleção
-                venda_id = st.session_state.venda_selecionada_id or venda_id_manual
+                venda_id = st.session_state.venda_selecionada_id
 
                 if venda_id:
                     venda = vendas_df[vendas_df['id'] == venda_id].iloc[0]
