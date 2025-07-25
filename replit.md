@@ -35,6 +35,16 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 
 ## Recent Changes
 
+### 2025-07-25
+- **CORRIGIDO**: Problema crítico de vendas sem itens - itens não eram salvos na tabela itens_venda
+- **CORRIGIDO**: Método get_itens_venda para tratar produtos sem preço_custo usando getattr()
+- **CORRIGIDO**: Selectbox de vendas com visibilidade de texto e formato "ID - Cliente (Data)"
+- **REMOVIDO**: Input manual para ID de venda - interface mais limpa com apenas selectbox
+- **IMPLEMENTADO**: Botões de ação (EDITAR, GERAR, EXCLUIR) aparecem para todas as vendas
+- **CORRIGIDO**: Venda #33 da Maria Thereza agora exibe corretamente os 6 itens de produtos
+- **VALIDADO**: Itens corretos: PP/P/M/G/GG COLMEIA + M LEGGING + Colméia Jeans
+- **ESTABILIZADO**: Histórico de Vendas funcionando completamente para todas as vendas
+
 ### 2025-07-24
 - **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira
 - **CRIADO**: Módulo utils/fluxo_caixa_module.py com classes MonthCashFlow e CashFlowModule
