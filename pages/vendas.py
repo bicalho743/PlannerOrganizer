@@ -805,83 +805,70 @@ def show():
                 # Detalhes da venda selecionada
                 st.subheader("Detalhes da Venda")
                 
-                # SELECTBOX CUSTOMIZADO HTML NATIVO - SOLUÇÃO DEFINITIVA
-                vendas_options = []
-                vendas_mapping = {}
-                
-                for idx, row in vendas_df.iterrows():
-                    option_text = f"{row['id']} - {row['cliente_nome']} ({row['data_venda']})"
-                    vendas_options.append(f'<option value="{row["id"]}">{option_text}</option>')
-                    vendas_mapping[str(row['id'])] = row
-                
-                select_html = f"""
-                <div style="margin: 20px 0;">
-                    <label for="venda-select" style="font-size: 16px; font-weight: bold; margin-bottom: 10px; display: block; color: #1e1e1e;">
-                        Selecione uma venda para ver detalhes:
-                    </label>
-                    <select id="venda-select" style="
-                        width: 100%;
-                        padding: 10px;
-                        font-size: 16px;
-                        color: #1e1e1e !important;
-                        background-color: #ffffff !important;
-                        border: 1px solid #ccc;
-                        border-radius: 5px;
-                        appearance: none;
-                        -webkit-appearance: none;
-                        -moz-appearance: none;
-                        color-scheme: light;
-                        font-weight: 500;
-                    ">
-                        <option value="">-- Escolha uma venda --</option>
-                        {"".join(vendas_options)}
-                    </select>
-                </div>
-                
+                # SOLUÇÃO HÍBRIDA - STREAMLIT SELECTBOX COM CSS FORÇADO INLINE
+                st.html("""
                 <style>
-                #venda-select option {{
-                    background-color: #ffffff !important;
+                /* CSS ULTRA ESPECÍFICO PARA SELECTBOX DE VENDAS */
+                div[data-testid="stSelectbox"] > div > div > div {
                     color: #1e1e1e !important;
-                    font-weight: 500;
-                }}
+                    background-color: #ffffff !important;
+                    border: 1px solid #ccc !important;
+                    font-weight: 600 !important;
+                }
+                
+                div[data-testid="stSelectbox"] span {
+                    color: #1e1e1e !important;
+                    font-weight: 600 !important;
+                    text-shadow: 1px 1px 0px #ffffff !important;
+                }
+                
+                div[data-testid="stSelectbox"] input {
+                    color: #1e1e1e !important;
+                    background-color: #ffffff !important;
+                    font-weight: 600 !important;
+                }
                 </style>
                 
                 <script>
-                setTimeout(() => {{
-                    const select = document.getElementById("venda-select");
-                    if (select) {{
-                        select.style.setProperty("color", "#1e1e1e", "important");
-                        select.style.setProperty("background-color", "#ffffff", "important");
-                        
-                        // Salvar seleção no sessionStorage para persistir
-                        select.addEventListener('change', function() {{
-                            sessionStorage.setItem('vendaSelecionada', this.value);
-                            // Recarregar página para processar seleção
-                            window.parent.postMessage({{
-                                type: 'streamlit:setComponentValue',
-                                value: this.value
-                            }}, '*');
-                        }});
-                        
-                        // Restaurar seleção anterior se existir
-                        const savedValue = sessionStorage.getItem('vendaSelecionada');
-                        if (savedValue) {{
-                            select.value = savedValue;
-                        }}
-                    }}
-                }}, 100);
+                // JavaScript específico para forçar visibilidade
+                function forceSelectboxVisibility() {
+                    const selectboxes = document.querySelectorAll('[data-testid="stSelectbox"]');
+                    selectboxes.forEach(selectbox => {
+                        const allElements = selectbox.querySelectorAll('*');
+                        allElements.forEach(el => {
+                            if (el.textContent && el.textContent.trim()) {
+                                el.style.setProperty('color', '#1e1e1e', 'important');
+                                el.style.setProperty('background-color', '#ffffff', 'important');
+                                el.style.setProperty('font-weight', '600', 'important');
+                                el.style.setProperty('text-shadow', '1px 1px 0px #ffffff', 'important');
+                            }
+                        });
+                    });
+                }
+                
+                // Executar imediatamente e repetir
+                setTimeout(forceSelectboxVisibility, 100);
+                setInterval(forceSelectboxVisibility, 500);
+                
+                // Observar mudanças no DOM
+                const observer = new MutationObserver(forceSelectboxVisibility);
+                observer.observe(document.body, { childList: true, subtree: true });
                 </script>
-                """
+                """)
                 
-                # Renderizar o HTML customizado
-                selected_venda = st.html(select_html)
+                # Usar selectbox normal do Streamlit com formatação
+                venda_options = [None] + vendas_df['id'].tolist()
+                venda_labels = ["-- Escolha uma venda --"] + [
+                    f"{row['id']} - {row['cliente_nome']} ({row['data_venda']})" 
+                    for _, row in vendas_df.iterrows()
+                ]
                 
-                # Recuperar seleção via session state alternativo
-                if 'venda_selecionada_id' not in st.session_state:
-                    st.session_state.venda_selecionada_id = None
-                
-                # Definir venda_id baseado na seleção
-                venda_id = st.session_state.venda_selecionada_id
+                venda_id = st.selectbox(
+                    "Selecione uma venda para ver detalhes:",
+                    options=venda_options,
+                    format_func=lambda x: venda_labels[venda_options.index(x)] if x is not None else venda_labels[0],
+                    key="selectbox_venda_historico"
+                )
 
                 if venda_id:
                     venda = vendas_df[vendas_df['id'] == venda_id].iloc[0]
