@@ -805,63 +805,100 @@ def show():
                 # Detalhes da venda selecionada
                 st.subheader("Detalhes da Venda")
                 
-                # SOLUÇÃO MELHORADA - SELECTBOX COM CSS ESPECÍFICO FORÇADO
-                st.html("""
+                # SELECTBOX CUSTOMIZADO HTML NATIVO - SOLUÇÃO DEFINITIVA
+                vendas_options = []
+                vendas_mapping = {}
+                
+                for idx, row in vendas_df.iterrows():
+                    option_text = f"Venda {row['id']} - {row['cliente_nome']} ({row['data_venda']})"
+                    vendas_options.append(f'<option value="{row["id"]}">{option_text}</option>')
+                    vendas_mapping[str(row['id'])] = row
+                
+                select_html = f"""
+                <div style="margin: 20px 0;">
+                    <label for="venda-select" style="font-size: 16px; font-weight: bold; margin-bottom: 10px; display: block; color: #1e1e1e;">
+                        Selecione uma venda para ver detalhes:
+                    </label>
+                    <select id="venda-select" style="
+                        width: 100%;
+                        padding: 10px;
+                        font-size: 16px;
+                        color: #1e1e1e !important;
+                        background-color: #ffffff !important;
+                        border: 1px solid #ccc;
+                        border-radius: 5px;
+                        appearance: none;
+                        -webkit-appearance: none;
+                        -moz-appearance: none;
+                        color-scheme: light;
+                        font-weight: 500;
+                    ">
+                        <option value="">-- Escolha uma venda --</option>
+                        {"".join(vendas_options)}
+                    </select>
+                </div>
+                
                 <style>
-                /* CSS ULTRA ESPECÍFICO PARA ESTE SELECTBOX */
-                .venda-selectbox div[data-testid="stSelectbox"] *,
-                .venda-selectbox [data-baseweb="select"] *,
-                .venda-selectbox [data-baseweb="input"] * {
-                    color: #000000 !important;
+                #venda-select option {{
                     background-color: #ffffff !important;
-                    font-weight: 600 !important;
-                    text-shadow: 1px 1px 1px #ffffff !important;
-                }
+                    color: #1e1e1e !important;
+                    font-weight: 500;
+                }}
                 </style>
                 
                 <script>
-                // JavaScript específico para selectbox de vendas
-                setTimeout(function() {
-                    const vendaSelectbox = document.querySelector('.venda-selectbox');
-                    if (vendaSelectbox) {
-                        const allElements = vendaSelectbox.querySelectorAll('*');
-                        allElements.forEach(el => {
-                            el.style.setProperty('color', '#000000', 'important');
-                            el.style.setProperty('background-color', '#ffffff', 'important');
-                            el.style.setProperty('font-weight', '600', 'important');
-                            el.style.setProperty('text-shadow', '1px 1px 1px #ffffff', 'important');
-                        });
-                    }
-                }, 100);
-                
-                setInterval(function() {
-                    const vendaSelectbox = document.querySelector('.venda-selectbox');
-                    if (vendaSelectbox) {
-                        const textElements = vendaSelectbox.querySelectorAll('span, div, input');
-                        textElements.forEach(el => {
-                            if (el.textContent || el.value) {
-                                el.style.setProperty('color', '#000000', 'important');
-                                el.style.setProperty('background-color', '#ffffff', 'important');
-                                el.style.setProperty('font-weight', '600', 'important');
-                            }
-                        });
-                    }
-                }, 100);
+                setTimeout(() => {{
+                    const select = document.getElementById("venda-select");
+                    if (select) {{
+                        select.style.setProperty("color", "#1e1e1e", "important");
+                        select.style.setProperty("background-color", "#ffffff", "important");
+                        
+                        // Salvar seleção no sessionStorage para persistir
+                        select.addEventListener('change', function() {{
+                            sessionStorage.setItem('vendaSelecionada', this.value);
+                            // Recarregar página para processar seleção
+                            window.parent.postMessage({{
+                                type: 'streamlit:setComponentValue',
+                                value: this.value
+                            }}, '*');
+                        }});
+                        
+                        // Restaurar seleção anterior se existir
+                        const savedValue = sessionStorage.getItem('vendaSelecionada');
+                        if (savedValue) {{
+                            select.value = savedValue;
+                        }}
+                    }}
+                }}, 100);
                 </script>
-                """)
+                """
                 
-                # Container com classe específica para CSS
-                with st.container():
-                    st.markdown('<div class="venda-selectbox">', unsafe_allow_html=True)
-                    
-                    venda_id = st.selectbox(
-                        "Selecione uma venda para ver detalhes",
-                        options=vendas_df['id'].tolist(),
-                        format_func=lambda x: f"Venda {x} - {vendas_df[vendas_df['id'] == x]['cliente_nome'].iloc[0]} ({vendas_df[vendas_df['id'] == x]['data_venda'].iloc[0]})",
-                        key="selectbox_venda_detalhes"
+                # Renderizar o HTML customizado
+                selected_venda = st.html(select_html)
+                
+                # Recuperar seleção via session state alternativo
+                if 'venda_selecionada_id' not in st.session_state:
+                    st.session_state.venda_selecionada_id = None
+                
+                # Interface para seleção manual (fallback)
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    venda_id_manual = st.number_input(
+                        "Ou digite o ID da venda diretamente:",
+                        min_value=1,
+                        step=1,
+                        value=None,
+                        key="venda_id_input"
                     )
-                    
-                    st.markdown('</div>', unsafe_allow_html=True)
+                
+                with col2:
+                    if st.button("Selecionar Venda", type="primary"):
+                        if venda_id_manual and venda_id_manual in vendas_df['id'].values:
+                            st.session_state.venda_selecionada_id = venda_id_manual
+                            st.rerun()
+                
+                # Definir venda_id baseado na seleção
+                venda_id = st.session_state.venda_selecionada_id or venda_id_manual
 
                 if venda_id:
                     venda = vendas_df[vendas_df['id'] == venda_id].iloc[0]
