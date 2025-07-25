@@ -36,14 +36,15 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 ## Recent Changes
 
 ### 2025-07-25
-- **CORRIGIDO**: Problema crítico de vendas sem itens - itens não eram salvos na tabela itens_venda
+- **DIAGNOSTICADO**: Problema crítico - vendas geradas automaticamente de propostas não salvavam itens
+- **IDENTIFICADO**: Função `_registrar_venda_produtos` estava criando itens sem campo `usuario_id` 
+- **CORRIGIDO**: Adicionado `usuario_id` obrigatório nos ItemVenda para manter multi-tenancy
 - **CORRIGIDO**: Método get_itens_venda para tratar produtos sem preço_custo usando getattr()
 - **CORRIGIDO**: Selectbox de vendas com visibilidade de texto e formato "ID - Cliente (Data)"
 - **REMOVIDO**: Input manual para ID de venda - interface mais limpa com apenas selectbox
 - **IMPLEMENTADO**: Botões de ação (EDITAR, GERAR, EXCLUIR) aparecem para todas as vendas
-- **CORRIGIDO**: Venda #33 da Maria Thereza agora exibe corretamente os 6 itens de produtos
-- **VALIDADO**: Itens corretos: PP/P/M/G/GG COLMEIA + M LEGGING + Colméia Jeans
-- **ESTABILIZADO**: Histórico de Vendas funcionando completamente para todas as vendas
+- **DESCOBERTO**: Vendas manuais (25, 29, 31, 32) têm itens, vendas automáticas (14, 19-23, 33) não tinham
+- **CORRIGIDO**: Sistema agora criará corretamente itens para futuras vendas automáticas de propostas
 
 ### 2025-07-24
 - **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira

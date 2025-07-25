@@ -5844,7 +5844,8 @@ class Database:
                         produto_id=produto_info['produto_id'],
                         quantidade=produto_info['quantidade'],
                         preco_unitario=produto_info['valor'],
-                        subtotal=produto_info['subtotal']
+                        subtotal=produto_info['subtotal'],
+                        usuario_id=usuario_id  # CRÍTICO: Adicionar usuario_id para multi-tenancy
                     )
                     
                     # Tentar adicionar o campo descricao somente se for suportado
@@ -5861,7 +5862,8 @@ class Database:
                         produto_id=None,
                         quantidade=produto_info['quantidade'],
                         preco_unitario=produto_info['valor'],
-                        subtotal=produto_info['subtotal']
+                        subtotal=produto_info['subtotal'],
+                        usuario_id=usuario_id  # CRÍTICO: Adicionar usuario_id para multi-tenancy
                     )
                 session_local.add(item)
                 print(f"DEBUG VENDAS: Item adicionado à venda: {produto_info['nome']}, Subtotal: R$ {produto_info['subtotal']:.2f}")
