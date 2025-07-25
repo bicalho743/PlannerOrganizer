@@ -4574,11 +4574,11 @@ class Database:
             itens = self.session.query(ItemVenda).filter_by(venda_id=venda_id).all()
             return pd.DataFrame([{
                 'id': i.id,
-                'produto_nome': i.produto.nome if i.produto else i.descricao,
+                'produto_nome': i.produto.nome if i.produto else (i.descricao or 'Produto não identificado'),
                 'quantidade': i.quantidade,
                 'preco_unitario': i.preco_unitario,
                 'subtotal': i.subtotal,
-                'lucro': (i.preco_unitario - (i.produto.preco_custo if i.produto else 0)) * i.quantidade
+                'lucro': (i.preco_unitario - (getattr(i.produto, 'preco_custo', 0) if i.produto else 0)) * i.quantidade
             } for i in itens])
         return self._safe_query(query)
         
