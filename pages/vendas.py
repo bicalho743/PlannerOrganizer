@@ -853,7 +853,8 @@ def show():
                     # Exibir itens da venda
                     try:
                         itens_df = st.session_state.db.get_itens_venda(venda_id)
-                        st.write(f"DEBUG: Itens encontrados para venda {venda_id}: {len(itens_df) if not itens_df.empty else 0}")
+                        # Remover debug após corrigir o problema
+                        # st.write(f"DEBUG: Itens encontrados para venda {venda_id}: {len(itens_df) if not itens_df.empty else 0}")
                     except Exception as e:
                         st.error(f"Erro ao buscar itens da venda {venda_id}: {str(e)}")
                         itens_df = pd.DataFrame()
