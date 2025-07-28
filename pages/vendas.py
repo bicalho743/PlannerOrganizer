@@ -7,13 +7,34 @@ import os
 from utils.custom_components import custom_info, custom_warning
 
 def show():
-    # CORREÇÃO CRÍTICA - APLICAR FIX PARA SELECTBOX
-    try:
-        from utils.selectbox_fix import inject_selectbox_fix, apply_selectbox_theme_override
-        inject_selectbox_fix()
-        apply_selectbox_theme_override()
-    except ImportError:
-        pass
+    # CORREÇÃO CRÍTICA PARA SELECTBOX COM JAVASCRIPT
+    st.markdown("""
+    <script>
+    // Função para corrigir selectbox invisível
+    function fixSelectboxVisibility() {
+        setTimeout(function() {
+            // Encontrar todos os selectboxes
+            const selectboxes = document.querySelectorAll('[data-testid="stSelectbox"]');
+            selectboxes.forEach(function(selectbox) {
+                // Aplicar estilos diretamente no elemento
+                const elements = selectbox.querySelectorAll('*');
+                elements.forEach(function(el) {
+                    el.style.color = '#1e1e1e';
+                    el.style.backgroundColor = '#ffffff';
+                    el.style.opacity = '1';
+                    el.style.visibility = 'visible';
+                    el.style.fontWeight = '500';
+                });
+            });
+        }, 100);
+    }
+    
+    // Executar correção imediatamente e monitorar mudanças
+    fixSelectboxVisibility();
+    const observer = new MutationObserver(fixSelectboxVisibility);
+    observer.observe(document.body, { childList: true, subtree: true });
+    </script>
+    """, unsafe_allow_html=True)
     
     # Verificar se o db está na sessão
     if 'db' not in st.session_state:
@@ -811,34 +832,80 @@ def show():
                     for _, row in vendas_df.iterrows()
                 ]
                 
-                # CSS ROBUSTO PARA SELECTBOX DE VENDAS - MESMO PADRÃO DOS OUTROS
+                # CORREÇÃO EXTREMA PARA SELECTBOX INVISÍVEL
                 st.html("""
                 <style>
+                /* FORÇA EXTREMA - TODOS OS ELEMENTOS DO SELECTBOX */
+                .venda-selectbox div[data-testid="stSelectbox"],
                 .venda-selectbox div[data-testid="stSelectbox"] *,
+                .venda-selectbox [data-baseweb="select"],
                 .venda-selectbox [data-baseweb="select"] *,
+                .venda-selectbox [data-baseweb="input"],
                 .venda-selectbox [data-baseweb="input"] *,
                 .venda-selectbox [data-baseweb="popover"] *,
                 .venda-selectbox ul li,
-                .venda-selectbox [role="option"] {
+                .venda-selectbox [role="option"],
+                .venda-selectbox span,
+                .venda-selectbox div,
+                .venda-selectbox input,
+                .venda-selectbox p {
                     color: #000000 !important;
                     background-color: #ffffff !important;
                     font-weight: 600 !important;
-                    text-shadow: 1px 1px 1px #ffffff !important;
+                    opacity: 1 !important;
+                    visibility: visible !important;
+                    text-shadow: none !important;
+                    box-shadow: none !important;
+                }
+                
+                /* Container principal */
+                .venda-selectbox {
+                    background-color: #ffffff !important;
+                    border: 2px solid #007bff !important;
+                    border-radius: 4px !important;
+                    padding: 2px !important;
                 }
                 </style>
                 
                 <script>
-                setTimeout(function() {
-                    const vendaSelectbox = document.querySelector('.venda-selectbox');
-                    if (vendaSelectbox) {
-                        const allElements = vendaSelectbox.querySelectorAll('*');
-                        allElements.forEach(el => {
-                            el.style.setProperty('color', '#000000', 'important');
-                            el.style.setProperty('background-color', '#ffffff', 'important');
-                            el.style.setProperty('font-weight', '600', 'important');
-                        });
-                    }
-                }, 100);
+                function extremeSelectboxFix() {
+                    setTimeout(function() {
+                        const vendaSelectbox = document.querySelector('.venda-selectbox');
+                        if (vendaSelectbox) {
+                            // APLICAR FORÇA ABSOLUTA EM TODOS OS ELEMENTOS
+                            const allElements = vendaSelectbox.querySelectorAll('*');
+                            allElements.forEach(el => {
+                                // Use setProperty com força máxima
+                                el.style.setProperty('color', '#000000', 'important');
+                                el.style.setProperty('background-color', '#ffffff', 'important');
+                                el.style.setProperty('font-weight', '600', 'important');
+                                el.style.setProperty('opacity', '1', 'important');
+                                el.style.setProperty('visibility', 'visible', 'important');
+                                el.style.setProperty('text-shadow', 'none', 'important');
+                                el.style.setProperty('box-shadow', 'none', 'important');
+                                
+                                // Remover qualquer estilo conflitante
+                                el.style.removeProperty('text-decoration');
+                                el.style.removeProperty('filter');
+                                el.style.removeProperty('transform');
+                            });
+                            
+                            // Container principal com borda visível
+                            vendaSelectbox.style.setProperty('background-color', '#ffffff', 'important');
+                            vendaSelectbox.style.setProperty('border', '2px solid #007bff', 'important');
+                        }
+                    }, 50);
+                }
+                
+                // Executar múltiplas vezes para garantir
+                extremeSelectboxFix();
+                setTimeout(extremeSelectboxFix, 100);
+                setTimeout(extremeSelectboxFix, 300);
+                setTimeout(extremeSelectboxFix, 500);
+                
+                // Monitorar mudanças continuamente
+                const observer = new MutationObserver(extremeSelectboxFix);
+                observer.observe(document.body, { childList: true, subtree: true });
                 </script>
                 """)
                 

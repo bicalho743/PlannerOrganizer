@@ -53,6 +53,8 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **REMOVIDO**: JavaScript de refresh automático que causava loop no preview
 - **CORRIGIDO**: Lógica de transição pós-login sem refresh forçado
 - **MELHORADO**: Sistema define Dashboard automaticamente após autenticação bem-sucedida
+- **IMPLEMENTADO**: Correção extrema para selectbox invisível com JavaScript e CSS força absoluta
+- **ADICIONADO**: Borda visível e múltiplas tentativas de correção para garantir visibilidade
 
 ### 2025-07-24
 - **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira
