@@ -1217,7 +1217,14 @@ if not st.session_state.authenticated:
                                 from utils.database import Database
                                 st.session_state.db = Database(usuario_id=result['user']['localId'])
                             st.success("Login realizado com sucesso!")
-                            # Removido st.rerun() - causa loop infinito
+                            # Refresh automático após login bem-sucedido
+                            st.html("""
+                            <script>
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 1000);
+                            </script>
+                            """)
                         else:
                             st.error(f"Erro de autenticação: {result['error']}")
                 else:
