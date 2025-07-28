@@ -45,6 +45,8 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **IMPLEMENTADO**: Botões de ação (EDITAR, GERAR, EXCLUIR) aparecem para todas as vendas
 - **DESCOBERTO**: Vendas manuais (25, 29, 31, 32) têm itens, vendas automáticas (14, 19-23, 33) não tinham
 - **CORRIGIDO**: Sistema agora criará corretamente itens para futuras vendas automáticas de propostas
+- **CORRIGIDO**: Loop infinito "Your app is starting" removendo st.rerun() desnecessários
+- **REMOVIDO**: st.rerun() de login, navegação, logout e modais que causavam loops
 
 ### 2025-07-24
 - **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira

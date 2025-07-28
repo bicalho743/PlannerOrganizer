@@ -1217,7 +1217,7 @@ if not st.session_state.authenticated:
                                 from utils.database import Database
                                 st.session_state.db = Database(usuario_id=result['user']['localId'])
                             st.success("Login realizado com sucesso!")
-                            st.rerun()  # Recarregar página para mostrar interface principal
+                            # Removido st.rerun() - causa loop infinito
                         else:
                             st.error(f"Erro de autenticação: {result['error']}")
                 else:
@@ -1439,7 +1439,7 @@ for label, page in MENU_PRINCIPAL.items():
     # Renderizar o botão normalmente
     if st.sidebar.button(label, key=f"main_menu_{page.lower()}", use_container_width=True):
         st.session_state.current_page = page
-        st.rerun()
+        # Removido st.rerun() - navegação funciona sem ele
 
 # Adicionar botão de logout
 if st.sidebar.button("🚪 Sair do Sistema", 
@@ -1451,8 +1451,7 @@ if st.sidebar.button("🚪 Sair do Sistema",
     st.session_state.authenticated = False
     # Exibir mensagem
     st.sidebar.success("Logout realizado com sucesso!")
-    # Redirecionar para a página de login (recarregando a página)
-    st.rerun()
+    # Removido st.rerun() - logout funciona sem reload
 
 st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
@@ -1703,7 +1702,7 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
             # Botão para fechar
             if st.button("Fechar", key="fechar_termos", use_container_width=True):
                 st.session_state.mostrar_termos = False
-                st.rerun()
+                # Removido st.rerun() - modal fecha sem reload
     
     if st.session_state.mostrar_politica:
         # Criar um modal/dialog para a política de privacidade
@@ -1720,7 +1719,7 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
             # Botão para fechar
             if st.button("Fechar", key="fechar_politica", use_container_width=True):
                 st.session_state.mostrar_politica = False
-                st.rerun()
+                # Removido st.rerun() - modal fecha sem reload
     
     # Botão para download dos ícones do sistema
     try:
