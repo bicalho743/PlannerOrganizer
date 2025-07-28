@@ -811,22 +811,48 @@ def show():
                     for _, row in vendas_df.iterrows()
                 ]
                 
-                # CSS específico para este selectbox
+                # CSS ROBUSTO PARA SELECTBOX DE VENDAS - MESMO PADRÃO DOS OUTROS
                 st.html("""
                 <style>
-                div[data-testid="stSelectbox"] * {
+                .venda-selectbox div[data-testid="stSelectbox"] *,
+                .venda-selectbox [data-baseweb="select"] *,
+                .venda-selectbox [data-baseweb="input"] *,
+                .venda-selectbox [data-baseweb="popover"] *,
+                .venda-selectbox ul li,
+                .venda-selectbox [role="option"] {
                     color: #000000 !important;
                     background-color: #ffffff !important;
-                    font-weight: bold !important;
+                    font-weight: 600 !important;
+                    text-shadow: 1px 1px 1px #ffffff !important;
                 }
                 </style>
+                
+                <script>
+                setTimeout(function() {
+                    const vendaSelectbox = document.querySelector('.venda-selectbox');
+                    if (vendaSelectbox) {
+                        const allElements = vendaSelectbox.querySelectorAll('*');
+                        allElements.forEach(el => {
+                            el.style.setProperty('color', '#000000', 'important');
+                            el.style.setProperty('background-color', '#ffffff', 'important');
+                            el.style.setProperty('font-weight', '600', 'important');
+                        });
+                    }
+                }, 100);
+                </script>
                 """)
                 
-                selected_option = st.selectbox(
-                    "Selecione uma venda para ver detalhes:",
-                    options=venda_options,
-                    key="selectbox_venda_historico_simples"
-                )
+                # Container com classe para CSS específico
+                with st.container():
+                    st.markdown('<div class="venda-selectbox">', unsafe_allow_html=True)
+                    
+                    selected_option = st.selectbox(
+                        "Selecione uma venda para ver detalhes:",
+                        options=venda_options,
+                        key="selectbox_venda_historico_simples"
+                    )
+                    
+                    st.markdown('</div>', unsafe_allow_html=True)
                 
                 # Extrair venda_id da seleção
                 if selected_option and selected_option != "-- Escolha uma venda --":

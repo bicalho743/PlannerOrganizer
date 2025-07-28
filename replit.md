@@ -47,6 +47,8 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **CORRIGIDO**: Sistema agora criará corretamente itens para futuras vendas automáticas de propostas
 - **CORRIGIDO**: Loop infinito "Your app is starting" removendo st.rerun() desnecessários
 - **REMOVIDO**: st.rerun() de login, navegação, logout e modais que causavam loops
+- **CORRIGIDO**: Selectbox de vendas com CSS robusto para visibilidade perfeita do texto
+- **APLICADO**: Mesmo padrão CSS de outros selectboxes funcionais para módulo vendas
 
 ### 2025-07-24
 - **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira
