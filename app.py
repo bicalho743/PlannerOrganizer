@@ -1217,14 +1217,9 @@ if not st.session_state.authenticated:
                                 from utils.database import Database
                                 st.session_state.db = Database(usuario_id=result['user']['localId'])
                             st.success("Login realizado com sucesso!")
-                            # Refresh automático após login bem-sucedido
-                            st.html("""
-                            <script>
-                            setTimeout(function() {
-                                window.location.reload();
-                            }, 1000);
-                            </script>
-                            """)
+                            # Forçar mudança para dashboard imediatamente
+                            st.session_state.current_page = "Dashboard"
+                            st.session_state.show_welcome = False
                         else:
                             st.error(f"Erro de autenticação: {result['error']}")
                 else:
@@ -1462,14 +1457,12 @@ if st.sidebar.button("🚪 Sair do Sistema",
 
 st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
-# Já não mostramos a página de boas-vindas separada, 
-# pois agora o Dashboard é a página inicial por padrão
+# Garantir que usuário autenticado sempre tenha uma página definida
 if st.session_state.authenticated:
-    # Verificar se o usuário está fazendo login pela primeira vez
-    if st.session_state.get('show_welcome', True):
-        # Definir Dashboard como a página inicial
+    # Verificar se não há página definida ou se é primeira vez
+    if 'current_page' not in st.session_state or st.session_state.get('show_welcome', True):
+        # Definir Dashboard como página inicial
         st.session_state.current_page = "Dashboard"
-        # Marcar que a página de boas-vindas já foi mostrada para esta sessão
         st.session_state.show_welcome = False
 
 # Importar o cabeçalho e rodapé padrão

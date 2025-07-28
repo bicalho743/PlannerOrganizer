@@ -50,7 +50,9 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **CORRIGIDO**: Selectbox de vendas com CSS robusto para visibilidade perfeita do texto
 - **APLICADO**: Mesmo padrão CSS de outros selectboxes funcionais para módulo vendas
 - **CORRIGIDO**: Problema de login duplo - adicionado refresh automático após autenticação
-- **IMPLEMENTADO**: JavaScript para redirecionamento automático em 1 segundo após login
+- **REMOVIDO**: JavaScript de refresh automático que causava loop no preview
+- **CORRIGIDO**: Lógica de transição pós-login sem refresh forçado
+- **MELHORADO**: Sistema define Dashboard automaticamente após autenticação bem-sucedida
 
 ### 2025-07-24
 - **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira
