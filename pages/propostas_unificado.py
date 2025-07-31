@@ -1848,8 +1848,24 @@ def show():
 
                         except Exception as e:
                             st.error(f"Erro ao carregar dados para finalização: {str(e)}")
-            else:
-                st.info("Não há propostas em execução no momento.")
+        else:
+            # Mensagem quando não há propostas em execução
+            st.markdown("""
+            <div style="
+                background-color: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 8px;
+                padding: 20px;
+                text-align: center;
+                margin: 20px 0;
+            ">
+                <h4 style="color: #6c757d; margin-bottom: 10px;">📋 Nenhuma proposta em execução</h4>
+                <p style="color: #6c757d; margin: 0;">
+                    Não há propostas em execução no momento.<br>
+                    Verifique a aba "Nova Proposta" para criar uma nova ou "Propostas Finalizadas" para ver o histórico.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
 
     # ABA 3: PROPOSTAS FINALIZADAS
     with tab3:
