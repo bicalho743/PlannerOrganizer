@@ -74,6 +74,8 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **PADRONIZADO**: Barras de aniversariantes com cor da barra lateral (#1E366F, #2A4D8F)
 - **APLICADO**: Mesmo estilo de mensagem vazia para alertas de retorno ao cliente
 - **PADRONIZADO**: Mensagens informativas com fundo cinza claro e bordas consistentes
+- **CORRIGIDO**: Erro crítico "name 'st' is not defined" em utils/force_spacing_fix.py
+- **RESTAURADO**: Dashboard funcionando normalmente após correção da importação do streamlit
 
 ### 2025-07-24
 - **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira

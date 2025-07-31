@@ -1,8 +1,8 @@
 """
-MÓDULO DESATIVADO - CSS centralizado no arquivo .streamlit/style.css
+Módulo para aplicar correções de espaçamento CSS
 """
 
-# import streamlit as st
+import streamlit as st
 
 def apply_spacing_fix():
     """
