@@ -319,7 +319,13 @@ def show():
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        st.subheader("📋 Propostas em Aberto")
+        # Título com ícone igual à versão de produção
+        st.markdown("""
+        <div style="display: flex; align-items: center; margin-bottom: 15px;">
+            <span style="font-size: 20px; margin-right: 8px;">📋</span>
+            <h3 style="margin: 0; color: #333; font-size: 20px;">Propostas em Aberto</h3>
+        </div>
+        """, unsafe_allow_html=True)
         if not propostas.empty:
             # Filtrar propostas em aberto (Em elaboração e Aguardando aprovação)
             propostas_abertas = propostas[
@@ -400,7 +406,13 @@ def show():
             st.info("Nenhuma proposta cadastrada.")
 
     with col2:
-        st.subheader("🎂 Aniversariantes")
+        # Título com ícone igual à versão de produção
+        st.markdown("""
+        <div style="display: flex; align-items: center; margin-bottom: 15px;">
+            <span style="font-size: 20px; margin-right: 8px;">🎂</span>
+            <h3 style="margin: 0; color: #333; font-size: 20px;">Aniversariantes</h3>
+        </div>
+        """, unsafe_allow_html=True)
         hoje = datetime.now()
         
         # Dicionário de tradução de meses inglês -> português
