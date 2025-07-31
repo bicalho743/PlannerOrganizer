@@ -1114,10 +1114,12 @@ if not st.session_state.authenticated:
                                 # Reinicializar database com o ID do usuário correto
                                 from utils.database import Database
                                 st.session_state.db = Database(usuario_id=result['user']['localId'])
-                            st.success("Login realizado com sucesso!")
-                            # Forçar mudança para dashboard imediatamente
+                            # Forçar mudança para dashboard imediatamente ANTES da mensagem
                             st.session_state.current_page = "Dashboard"
                             st.session_state.show_welcome = False
+                            st.success("Login realizado com sucesso!")
+                            # Usar st.rerun() apenas aqui para completar a transição
+                            st.rerun()
                         else:
                             st.error(f"Erro de autenticação: {result['error']}")
                 else:

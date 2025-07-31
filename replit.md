@@ -58,6 +58,8 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **REMOVIDO**: JavaScript global que causava loop infinito "Your app is starting"
 - **CORRIGIDO**: CSS malformado no app.py que impedia carregamento normal
 - **ESTABILIZADO**: Aplicação deve carregar sem loops após remoção do JavaScript problemático
+- **CORRIGIDO**: Login agora usa st.rerun() único para completar transição para dashboard
+- **MELHORADO**: Estado da página alterado antes da mensagem de sucesso para transição imediata
 
 ### 2025-07-24
 - **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira
