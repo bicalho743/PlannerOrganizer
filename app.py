@@ -888,19 +888,38 @@ except Exception as e:
 # CSS para ocultar navegação automática e ajustar a barra lateral
 st.markdown("""
 <style>
+/* === OCULTAR NAVEGAÇÃO AUTOMÁTICA DO STREAMLIT === */
+
 /* Ocultar navegação automática de páginas */
-[data-testid="stSidebarNav"] {
+[data-testid="stSidebarNav"],
+[data-testid="stSidebarNavItems"],
+[data-testid="stSidebarNavLink"],
+div[data-testid="stSidebar"] nav,
+div[data-testid="stSidebar"] ul,
+div[data-testid="stSidebar"] li {
     display: none !important;
+    visibility: hidden !important;
 }
 
-/* Ocultar elementos de navegação do topo */
-[data-testid="stHeader"] {
+/* Ocultar header/toolbar do desenvolvimento */
+[data-testid="stHeader"],
+[data-testid="stToolbar"],
+[data-testid="stDecoration"],
+.css-1d391kg, 
+.css-1kyxreq, 
+.css-1l02zno,
+header[data-testid="stHeader"] {
     display: none !important;
+    visibility: hidden !important;
 }
 
-/* Ocultar menu dropdown de páginas */
-.css-1d391kg, .css-1kyxreq, .css-1l02zno {
+/* Ocultar menu hambúrguer e settings */
+[data-testid="stDeployButton"],
+[data-testid="stHeaderToolbar"],
+[data-testid="stMainMenuButton"],
+button[title="Settings"] {
     display: none !important;
+    visibility: hidden !important;
 }
 
 /* Ajustar barra lateral */
@@ -909,14 +928,12 @@ section[data-testid="stSidebar"] > div {
     margin-top: 0 !important;
 }
 
-/* Ocultar qualquer lista de páginas na sidebar */
-section[data-testid="stSidebar"] nav {
+/* Força brutal - ocultar qualquer elemento nav na sidebar */
+.css-17eq0hr, .css-1d391kg, .css-1kyxreq, .css-17lntkn {
     display: none !important;
-}
-
-/* Ocultar links de navegação automática */
-section[data-testid="stSidebar"] ul {
-    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
 }
 </style>
 """, unsafe_allow_html=True)

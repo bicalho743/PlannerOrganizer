@@ -84,6 +84,9 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **APLICADO**: Sistema usa apenas navegação customizada com MENU_PRINCIPAL definido no app.py
 - **ADICIONADO**: CSS força absoluta para ocultar navegação automática do Streamlit
 - **CONFIGURADO**: .streamlit/config.toml com showSidebarNavigation = false e hideTopBar = true
+- **REMOVIDO**: JavaScript global que causava loop infinito "Your app is starting"
+- **CORRIGIDO**: CSS malformado no app.py que impedia carregamento normal
+- **ESTABILIZADO**: Aplicação deve carregar sem loops após remoção do JavaScript problemático
 
 ### 2025-07-24
 - **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira

@@ -5,9 +5,14 @@ port = 5000
 
 [client]
 showSidebarNavigation = false
+toolbarMode = "minimal"
 
 [ui]
 hideTopBar = true
+
+[global]
+developmentMode = false
+showWarningOnDirectExecution = false
 enableCORS = true
 enableWebsocketCompression = false
 enableXsrfProtection = false
