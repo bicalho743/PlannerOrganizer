@@ -1,31 +1,27 @@
-/* Corrected Selectbox and Background Colors CSS */
-/* Reset e eliminação de espaçamentos desnecessários */
-body, .main, [data-testid="stAppViewContainer"], .main > div,
-[data-testid="stAppViewContainer"] > div:first-child,
-[data-testid="stAppViewContainer"] section.main {
+/* ========================================
+   PLANNER ORGANIZER - ESTILOS CONSOLIDADOS
+   ======================================== */
+
+/* Reset e configurações globais */
+* {
+    box-sizing: border-box;
+}
+
+body, .main, [data-testid="stAppViewContainer"] {
     padding-top: 0 !important;
     margin-top: 0 !important;
 }
 
-/* Correção da cor do texto nos expanders */
-.streamlit-expanderHeader,
-.streamlit-expanderContent,
-[data-testid="stExpander"] p,
-[data-testid="stExpander"] div,
-[data-testid="stExpander"] span,
-[data-testid="stExpander"] [data-testid="stMarkdownContainer"] {
-    color: #262730 !important;
-}
-
-/* Remoção do cabeçalho nativo do Streamlit */
+/* Remover cabeçalho nativo do Streamlit */
 header[data-testid="stHeader"] {
     display: none !important;
-    height: 0 !important;
 }
 
-/* Cabeçalho fixo personalizado */
+/* ========================================
+   CABEÇALHO PERSONALIZADO
+   ======================================== */
 .app-header {
-    background-color: #1E1F36;
+    background: linear-gradient(135deg, #1E1F36 0%, #2E4A99 100%);
     color: white;
     width: 100%;
     min-height: 60px;
@@ -38,590 +34,60 @@ header[data-testid="stHeader"] {
     z-index: 1000;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     display: flex;
-    flex-direction: column;
+    align-items: center;
     justify-content: center;
 }
 
-/* Ajuste global */
+/* Ajuste do container principal */
 .block-container {
-    padding-top: 100px !important;
-    margin-top: 0px !important;
-    min-height: calc(100vh - 10px) !important;
+    padding-top: 80px !important;
     max-width: 100% !important;
-    position: relative;
 }
 
-.block-container > *:first-child {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
-
-.block-container h1,
-.block-container h2,
-.block-container h3 {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
-
-/* SIDEBAR - ESTILOS UNIFICADOS E CONSISTENTES */
+/* ========================================
+   SIDEBAR - DESIGN UNIFICADO
+   ======================================== */
 section[data-testid="stSidebar"] {
-    background-color: #1E1F36 !important;
-    border-right: 1px solid #4C566A !important;
-    min-width: 250px !important;
+    background: linear-gradient(180deg, #1E1F36 0%, #2E4A99 100%);
+    border-right: 1px solid #4C566A;
+    min-width: 250px;
 }
 
-/* Container da sidebar */
-section[data-testid="stSidebar"] > div {
-    background-color: #1E1F36 !important;
-    padding: 1rem !important;
-}
-
-/* PADRONIZAÇÃO CRÍTICA - ESPAÇAMENTO CONSISTENTE DOS BOTÕES DA SIDEBAR */
-section[data-testid="stSidebar"] .stButton {
-    margin: 3px 0 !important;
-    padding: 0 !important;
-}
-
-/* FORÇA ABSOLUTA MÁXIMA - CORRIGIR ESPAÇAMENTO INCONSISTENTE */
-section[data-testid="stSidebar"] .stButton,
-section[data-testid="stSidebar"] div[data-testid="column"] .stButton,
-section[data-testid="stSidebar"] [data-testid="column"] .stButton {
-    margin: 3px 0 !important;
-    margin-top: 3px !important;
-    margin-bottom: 3px !important;
-    padding: 0 !important;
-}
-
-section[data-testid="stSidebar"] .stButton > button,
-section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"],
-section[data-testid="stSidebar"] button[kind="secondary"],
-section[data-testid="stSidebar"] div[data-testid="column"] button,
-section[data-testid="stSidebar"] [data-testid="column"] button {
-    margin: 0 !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    padding: 10px 14px !important;
+section[data-testid="stSidebar"] .stButton > button {
     width: 100% !important;
-    height: 42px !important;
-    font-size: 0.875rem !important;
-    font-weight: 500 !important;
-    line-height: 1.2 !important;
-    border-radius: 8px !important;
-    background: rgba(255, 255, 255, 0.08) !important;
+    background: rgba(255, 255, 255, 0.1) !important;
     color: rgba(255, 255, 255, 0.95) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 8px !important;
+    padding: 12px 16px !important;
+    margin: 4px 0 !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
     transition: all 0.3s ease !important;
-    text-align: center !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    box-sizing: border-box !important;
+    height: 42px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
 }
+
+section[data-testid="stSidebar"] .stButton > button:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
 }
 
-/* FORÇA ABSOLUTA GLOBAL PARA TODOS OS SELECTBOX - CORREÇÃO FINAL */
-/* Garantir que TODOS os selectbox tenham texto visível sempre */
-div[data-testid="stSelectbox"] *,
-[data-baseweb="select"] *,
-[data-baseweb="input"] *,
-[data-baseweb="popover"] *,
-ul li,
-[role="option"],
-.venda-selectbox *,
-.cliente-selectbox *,
-.produto-selectbox *,
-.produto-edit-selectbox *,
-.produto-remove-selectbox * {
-    color: #000000 !important;
-    background-color: #ffffff !important;
-    font-weight: 600 !important;
-    text-shadow: 1px 1px 1px #ffffff !important;
-    border: 1px solid #ddd !important;
-}
-
-/* Força específica para texto selecionado */
-div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
-div[data-testid="stSelectbox"] input,
-[data-baseweb="select"] > div {
-    color: #000000 !important;
-    background-color: #ffffff !important;
-    font-weight: 600 !important;
-}
-
-/* ====== CORREÇÃO CRÍTICA - VISIBILIDADE DOS SELECTBOX ====== */
-/* MÁXIMA ESPECIFICIDADE - FORÇA ABSOLUTA PARA SELECTBOX */
-
-/* Todos os containers de selectbox */
-div[data-testid="stSelectbox"],
-.stSelectbox,
-[data-testid="stSelectbox"] {
-    background-color: #ffffff !important;
-}
-
-/* TODOS os elementos dentro de selectbox - FORÇA MÁXIMA */
-div[data-testid="stSelectbox"] *,
-div[data-testid="stSelectbox"] div,
-div[data-testid="stSelectbox"] span,
-div[data-testid="stSelectbox"] input,
-div[data-testid="stSelectbox"] p,
-.stSelectbox *,
-.stSelectbox div,
-.stSelectbox span,
-.stSelectbox input,
-.stSelectbox p,
-[data-testid="stSelectbox"] *,
-[data-testid="stSelectbox"] div,
-[data-testid="stSelectbox"] span,
-[data-testid="stSelectbox"] input,
-[data-testid="stSelectbox"] p {
-    color: #1e1e1e !important;
-    background-color: #ffffff !important;
-    font-weight: 500 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-/* Elementos baseweb específicos */
-div[data-testid="stSelectbox"] [data-baseweb="select"],
-div[data-testid="stSelectbox"] [data-baseweb="select"] *,
-div[data-testid="stSelectbox"] [data-baseweb="select"] div,
-div[data-testid="stSelectbox"] [data-baseweb="select"] span,
-div[data-testid="stSelectbox"] [data-baseweb="input"],
-div[data-testid="stSelectbox"] [data-baseweb="input"] *,
-.stSelectbox [data-baseweb="select"],
-.stSelectbox [data-baseweb="select"] *,
-.stSelectbox [data-baseweb="select"] div,
-.stSelectbox [data-baseweb="select"] span,
-.stSelectbox [data-baseweb="input"],
-.stSelectbox [data-baseweb="input"] * {
-    color: #1e1e1e !important;
-    background-color: #ffffff !important;
-    font-weight: 500 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-/* Labels */
-div[data-testid="stSelectbox"] > label,
-.stSelectbox > label,
-[data-testid="stSelectbox"] > label {
-    color: #1e1e1e !important;
-    font-weight: 600 !important;
-}
-
-/* Dropdown menu quando expandido */
-div[data-testid="stSelectbox"] ul,
-div[data-testid="stSelectbox"] li,
-.stSelectbox ul,
-.stSelectbox li {
-    color: #1e1e1e !important;
-    background-color: #ffffff !important;
-}
-
-/* Setas e ícones */
-div[data-testid="stSelectbox"] svg,
-.stSelectbox svg {
-    color: #1e1e1e !important;
-    fill: #1e1e1e !important;
-}
-
-/* JavaScript para correção em tempo real dos selectbox */
-</style>
-
-<script>
-// Função global para corrigir visibilidade dos selectbox - VERSÃO EXTREMA
-function fixSelectboxVisibility() {
-    // Encontrar TODOS os selectbox possíveis
-    const selectboxes = document.querySelectorAll('[data-testid="stSelectbox"], .stSelectbox, div[data-testid="stSelectbox"]');
-    
-    selectboxes.forEach(selectbox => {
-        // FORÇA MÁXIMA - aplicar em TODOS os elementos filhos
-        const allElements = selectbox.querySelectorAll('*');
-        allElements.forEach(el => {
-            // Aplicar estilos forçados
-            el.style.setProperty('color', '#1e1e1e', 'important');
-            el.style.setProperty('background-color', '#ffffff', 'important');
-            el.style.setProperty('font-weight', '500', 'important');
-            el.style.setProperty('opacity', '1', 'important');
-            el.style.setProperty('visibility', 'visible', 'important');
-            
-            // Se tiver texto, garantir que seja visível
-            if (el.textContent && el.textContent.trim() !== '') {
-                el.style.setProperty('color', '#1e1e1e', 'important');
-                el.style.setProperty('text-shadow', 'none', 'important');
-            }
-        });
-        
-        // Container principal
-        selectbox.style.setProperty('background-color', '#ffffff', 'important');
-        
-        // Buscar por padrões específicos do Streamlit
-        const baseweb = selectbox.querySelectorAll('[data-baseweb]');
-        baseweb.forEach(el => {
-            el.style.setProperty('color', '#1e1e1e', 'important');
-            el.style.setProperty('background-color', '#ffffff', 'important');
-        });
-        
-        // Buscar inputs e spans especificamente
-        const textElements = selectbox.querySelectorAll('input, span, div, p');
-        textElements.forEach(el => {
-            if (el.textContent || el.value) {
-                el.style.setProperty('color', '#1e1e1e', 'important');
-                el.style.setProperty('background-color', '#ffffff', 'important');
-            }
-        });
-    });
-    
-    // EXTRA: Buscar por qualquer elemento que possa ser um selectbox
-    const possibleSelectboxes = document.querySelectorAll('div[role="combobox"], div[role="listbox"], select');
-    possibleSelectboxes.forEach(el => {
-        el.style.setProperty('color', '#1e1e1e', 'important');
-        el.style.setProperty('background-color', '#ffffff', 'important');
-    });
-}
-
-// Executar correção mais frequentemente
-setInterval(fixSelectboxVisibility, 200);
-
-// Executar na inicialização
-document.addEventListener('DOMContentLoaded', fixSelectboxVisibility);
-
-// Observar mudanças no DOM para aplicar correções quando necessário
-const observer = new MutationObserver(function(mutations) {
-    let shouldFix = false;
-    mutations.forEach(function(mutation) {
-        if (mutation.type === 'childList' || mutation.type === 'attributes') {
-            // Verificar se algum selectbox foi adicionado ou modificado
-            const addedNodes = Array.from(mutation.addedNodes);
-            if (addedNodes.some(node => 
-                node.nodeType === 1 && 
-                (node.querySelector && node.querySelector('[data-testid="stSelectbox"]'))
-            )) {
-                shouldFix = true;
-            }
-        }
-    });
-    
-    if (shouldFix) {
-        setTimeout(fixSelectboxVisibility, 100);
-    }
-});
-
-observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ['style', 'class']
-});
-</script>
-
-<style>
-
-/* Hover padronizado para todos os botões da sidebar */
-section[data-testid="stSidebar"] .stButton > button:hover,
-section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover,
-section[data-testid="stSidebar"] button[kind="secondary"]:hover,
-section[data-testid="stSidebar"] div[data-testid="column"] button:hover,
-section[data-testid="stSidebar"] [data-testid="column"] button:hover {
-    background: rgba(255, 255, 255, 0.15) !important;
-    color: #fff !important;
-    border-color: rgba(255, 255, 255, 0.3) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* Removido efeito ripple desnecessário para simplicidade */
-
-/* Texto dentro dos botões da sidebar */
-section[data-testid="stSidebar"] button p,
-section[data-testid="stSidebar"] button span,
-section[data-testid="stSidebar"] button div {
-    color: inherit !important;
-    font-weight: 500 !important;
-    margin: 0 !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* Botão "Informações do Sistema" - usar estilo padrão da sidebar */
-
-/* Botão "Sair do Sistema" - estilo específico vermelho */
-section[data-testid="stSidebar"] button[aria-label*="Sair"],
-section[data-testid="stSidebar"] button[title*="Sair"],
-section[data-testid="stSidebar"] .stButton > button[aria-label*="Sair"],
-section[data-testid="stSidebar"] .stButton > button[title*="Sair"],
-section[data-testid="stSidebar"] button:has(div:contains("🚪")),
-section[data-testid="stSidebar"] button:has(span:contains("🚪")),
-section[data-testid="stSidebar"] button:has(*:contains("Sair do Sistema")),
-section[data-testid="stSidebar"] .stButton > button:has(*:contains("Sair do Sistema")) {
+/* Botão de logout específico */
+section[data-testid="stSidebar"] button:has(*:contains("Sair do Sistema")) {
     background: linear-gradient(135deg, #dc3545, #c82333) !important;
-    color: white !important;
-    border: 1px solid #c82333 !important;
-    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3) !important;
-    margin-top: 10px !important;
+    border-color: #c82333 !important;
+    margin-top: 16px !important;
 }
 
-/* Hover do botão "Informações do Sistema" - usar estilo padrão da sidebar */
-
-/* Hover para o botão "Sair do Sistema" */
-section[data-testid="stSidebar"] button[aria-label*="Sair"]:hover,
-section[data-testid="stSidebar"] button[title*="Sair"]:hover,
-section[data-testid="stSidebar"] .stButton > button[aria-label*="Sair"]:hover,
-section[data-testid="stSidebar"] .stButton > button[title*="Sair"]:hover,
-section[data-testid="stSidebar"] button:has(div:contains("🚪")):hover,
-section[data-testid="stSidebar"] button:has(span:contains("🚪")):hover,
-section[data-testid="stSidebar"] button:has(*:contains("Sair do Sistema")):hover,
-section[data-testid="stSidebar"] .stButton > button:has(*:contains("Sair do Sistema")):hover {
-    background: linear-gradient(135deg, #c82333, #a71e2a) !important;
-    border-color: #a71e2a !important;
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4) !important;
-    transform: translateY(-1px) !important;
-}
-
-/* Breadcrumb */
-.page-breadcrumb {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    padding: 8px 20px;
-    margin: -1rem -1rem 1rem -1rem;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
-    font-size: 0.85rem;
-    color: #6c757d;
-    position: relative;
-}
-
-.page-breadcrumb::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: linear-gradient(180deg, #1E366F 0%, #4F4F52 100%);
-}
-
-.page-breadcrumb .breadcrumb-item {
-    display: inline-block;
-    margin-right: 8px;
-}
-
-.page-breadcrumb .breadcrumb-item:not(:last-child)::after {
-    content: '›';
-    margin-left: 8px;
-    color: #adb5bd;
-}
-
-/* Títulos */
-h1, h2, h3, h4, h5, h6 {
-    font-weight: 600;
-    margin-bottom: 1rem;
-}
-
-h1 {
-    color: #1E366F;
-    border-bottom: 1px solid #eaeaea;
-    padding-bottom: 0.5rem;
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
-
-/* BOTÕES DA ÁREA PRINCIPAL - NÃO APLICAR ESTILO DA SIDEBAR */
-.main .stButton > button,
-div[data-testid="stMainBlockContainer"] .stButton > button,
-div[data-testid="stMain"] .stButton > button {
-    background-color: #f8f9fa !important;
-    color: #262730 !important;
-    border: 1px solid #dee2e6 !important;
-    font-weight: 500 !important;
-    padding: 0.5rem 1rem !important;
-    border-radius: 4px !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
-    transition: all 0.2s ease !important;
-    min-width: fit-content !important;
-    white-space: nowrap !important;
-    overflow: visible !important;
-    text-overflow: clip !important;
-    font-size: 0.875rem !important;
-    backdrop-filter: none !important;
-    text-shadow: none !important;
-    transform: none !important;
-}
-
-.main .stButton > button:hover,
-div[data-testid="stMainBlockContainer"] .stButton > button:hover,
-div[data-testid="stMain"] .stButton > button:hover {
-    background-color: #e9ecef !important;
-    border-color: #adb5bd !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.15) !important;
-}
-
-/* Botões primários da área principal */
-.main .stButton > button[kind="primary"],
-div[data-testid="stMainBlockContainer"] .stButton > button[kind="primary"],
-div[data-testid="stMain"] .stButton > button[kind="primary"] {
-    background-color: #3a75c4 !important;
-    color: white !important;
-    border: 1px solid #3a75c4 !important;
-}
-
-.main .stButton > button[kind="primary"]:hover,
-div[data-testid="stMainBlockContainer"] .stButton > button[kind="primary"]:hover,
-div[data-testid="stMain"] .stButton > button[kind="primary"]:hover {
-    background-color: #2e5a9a !important;
-    border-color: #2e5a9a !important;
-}
-
-/* Garantir que botões em colunas pequenas mostrem o texto */
-div[data-testid="column"] .stButton > button {
-    width: 100%;
-    min-width: 80px;
-    padding: 0.4rem 0.6rem;
-    font-size: 0.8rem;
-    line-height: 1.2;
-}
-
-/* Botões específicos por ação - APENAS ÁREA PRINCIPAL */
-.main button[title*="PDF"]:not([data-testid="stSidebar"] button),
-.main button[aria-label*="PDF"]:not([data-testid="stSidebar"] button) {
-    background: linear-gradient(135deg, #4CAF50, #45a049) !important;
-    color: white !important;
-    border: none !important;
-}
-
-.main button[title*="Excluir"]:not([data-testid="stSidebar"] button),
-.main button[aria-label*="Excluir"]:not([data-testid="stSidebar"] button) {
-    background: linear-gradient(135deg, #f44336, #d32f2f) !important;
-    color: white !important;
-    border: none !important;
-}
-
-/* Mobile sidebar responsiveness */
-@media (max-width: 768px) {
-    section[data-testid="stSidebar"] {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        z-index: 999999 !important;
-    }
-
-    button[data-testid="collapsedControl"] {
-        background-color: #2E4A99 !important;
-        color: white !important;
-        border: none !important;
-        padding: 8px !important;
-        border-radius: 8px !important;
-        font-size: 18px !important;
-        position: fixed !important;
-        top: 80px !important;
-        left: 10px !important;
-        z-index: 1000000 !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-    }
-
-    .main .block-container {
-        padding-left: 60px !important;
-        padding-top: 1rem !important;
-    }
-}
-
-/* Cards */
-div[data-testid="stMetric"] {
-    background-color: #FFFFFF;
-    border-radius: 6px;
-    padding: 1rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    border: 1px solid #eaeaea;
-}
-
-div[data-testid="stMetric"] > div:first-child {
-    color: #1E366F;
-    font-weight: 600;
-}
-
-/* Inputs */
-input, textarea, .stTextInput > div > div > input, .stTextArea > div > div > textarea {
-    border-radius: 4px !important;
-    border: 1px solid #E0E0E0 !important;
-    padding: 0.5rem !important;
-}
-
-input:focus, textarea:focus, .stTextInput > div > div > input:focus, .stTextArea > div > div > textarea:focus {
-    border-color: #1E88E5 !important;
-    box-shadow: 0 0 0 1px rgba(30,136,229,0.2) !important;
-}
-
-/* Tabelas */
-.stDataFrame {
-    border-radius: 6px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.dataframe th {
-    background-color: #F5F7FA;
-    font-weight: 600;
-    color: #1E366F;
-    padding: 0.75rem !important;
-    border-bottom: 2px solid #E0E0E0;
-}
-
-.dataframe td {
-    padding: 0.75rem !important;
-    border-bottom: 1px solid #eaeaea;
-}
-
-.dataframe tr:hover {
-    background-color: #F8F9FA;
-}
-
-/* ABAS - ESTILO UNIFICADO PARA TODOS OS MÓDULOS */
-button[role="tab"] {
-    padding: 0.75rem 1.5rem !important;
-    font-weight: 500;
-    position: relative;
-    transition: all 0.2s ease-in-out;
-    background-color: #f8f9fa !important;
-    color: #1E366F !important;
-    border: 1px solid #dee2e6 !important;
-    border-radius: 6px 6px 0 0 !important;
-    margin-right: 2px !important;
-}
-
-button[role="tab"]:hover {
-    background-color: #e9ecef !important;
-    color: #1E366F !important;
-}
-
-.stTabs [aria-selected="true"] {
-    font-weight: 600;
-    color: #1E366F !important;
-    background-color: #ffffff !important;
-    border-bottom-color: #ffffff !important;
-    border-bottom: 2px solid #3a75c4 !important;
-}
-
-/* MÓDULO PROPOSTAS - ESTILOS ESPECÍFICOS */
-.propostas-container {
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin: 1rem 0;
-}
-
-.propostas-header {
-    background: linear-gradient(135deg, #1E366F 0%, #3a75c4 100%);
-    color: white;
-    padding: 1rem 1.5rem;
-    border-radius: 8px 8px 0 0;
-    font-weight: 600;
-    font-size: 1.1rem;
-}
-
-/* PROPOSTAS - BOTÕES PADRONIZADOS */
-.propostas-container .stButton > button,
-.main .propostas-container button {
+/* ========================================
+   BOTÕES DA ÁREA PRINCIPAL
+   ======================================== */
+.main .stButton > button {
     background-color: #3a75c4 !important;
     color: white !important;
     border: 1px solid #3a75c4 !important;
@@ -632,1112 +98,216 @@ button[role="tab"]:hover {
     min-height: 38px !important;
 }
 
-.propostas-container .stButton > button:hover,
-.main .propostas-container button:hover {
+.main .stButton > button:hover {
     background-color: #2e5a9a !important;
     border-color: #2e5a9a !important;
-    transform: translateY(-1px) !important;
+    transform: translateY(-2px) !important;
     box-shadow: 0 4px 8px rgba(58, 117, 196, 0.3) !important;
 }
 
-/* PROPOSTAS - BOTÕES SECUNDÁRIOS */
-.propostas-container button[kind="secondary"] {
+/* Botões secundários */
+button[kind="secondary"] {
     background-color: #6c757d !important;
     border-color: #6c757d !important;
 }
 
-.propostas-container button[kind="secondary"]:hover {
+button[kind="secondary"]:hover {
     background-color: #5a6268 !important;
     border-color: #5a6268 !important;
 }
 
-/* PROPOSTAS - BOTÕES DE AÇÃO ESPECÍFICOS */
-.propostas-container button[title*="PDF"],
-.propostas-container button[aria-label*="PDF"] {
-    background-color: #28a745 !important;
-    border-color: #28a745 !important;
+/* ========================================
+   SELECTBOX - VISIBILIDADE GARANTIDA
+   ======================================== */
+div[data-testid="stSelectbox"] {
+    background-color: #ffffff !important;
+    border-radius: 4px !important;
 }
 
-.propostas-container button[title*="PDF"]:hover,
-.propostas-container button[aria-label*="PDF"]:hover {
-    background-color: #218838 !important;
-    border-color: #218838 !important;
+div[data-testid="stSelectbox"] *,
+div[data-testid="stSelectbox"] span,
+div[data-testid="stSelectbox"] div {
+    color: #1e1e1e !important;
+    background-color: transparent !important;
+    font-weight: 500 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
-.propostas-container button[title*="Excluir"],
-.propostas-container button[aria-label*="Excluir"] {
-    background-color: #dc3545 !important;
-    border-color: #dc3545 !important;
-}
-
-.propostas-container button[title*="Excluir"]:hover,
-.propostas-container button[aria-label*="Excluir"]:hover {
-    background-color: #c82333 !important;
-    border-color: #c82333 !important;
-}
-
-/* PROPOSTAS - LAYOUT DE COLUNAS ALINHADO */
-.propostas-container div[data-testid="column"] {
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: flex-start !important;
-    align-items: stretch !important;
-}
-
-/* PROPOSTAS - ESPAÇAMENTO CONSISTENTE */
-.propostas-container .element-container {
-    margin: 0.5rem 0 !important;
-}
-
-.propostas-container .stForm {
-    background-color: #f8f9fa;
-    padding: 1.5rem;
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
-    margin: 1rem 0;
-}
-
-/* PROPOSTAS - TABELAS PADRONIZADAS */
-.propostas-container .stDataFrame {
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    overflow: hidden;
-    margin: 1rem 0;
-}
-
-.propostas-container .stDataFrame table {
-    margin: 0 !important;
-}
-
-.propostas-container .stDataFrame th {
-    background-color: #1E366F !important;
-    color: white !important;
-    font-weight: 600 !important;
-    padding: 0.75rem !important;
-    border: none !important;
-}
-
-.propostas-container .stDataFrame td {
-    padding: 0.75rem !important;
-    border-bottom: 1px solid #eee !important;
-    color: #262730 !important;
-}
-
-.propostas-container .stDataFrame tr:hover {
+div[data-testid="stSelectbox"] [data-baseweb="select"] {
     background-color: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 4px !important;
 }
 
-/* Espaçamento para rodapé */
-body, .main, [data-testid="stAppViewContainer"], .block-container {
-    padding-bottom: 52px !important;
-}
-
-/* EXPANDERS - Corrigir visibilidade do texto com seletores mais específicos */
-div[data-testid="stExpander"] {
-    background-color: #FFFFFF !important;
-    border: 1px solid #E0E4E7 !important;
-    border-radius: 8px !important;
-    margin: 0.5rem 0 !important;
-}
-
-/* Cabeçalho do expander - múltiplos seletores */
-div[data-testid="stExpander"] > div:first-child,
-div[data-testid="stExpander"] summary,
-div[data-testid="stExpander"] button {
-    background-color: #F8F9FA !important;
-    color: #262730 !important;
-    padding: 0.75rem 1rem !important;
-    border-radius: 8px 8px 0 0 !important;
+div[data-testid="stSelectbox"] [data-baseweb="select"] > div {
+    color: #1e1e1e !important;
     font-weight: 500 !important;
 }
 
-/* Conteúdo do expander - múltiplos seletores */
-div[data-testid="stExpander"] > div:last-child,
-div[data-testid="stExpander"] .streamlit-expanderContent,
-div[data-testid="stExpander"] [data-testid="stExpanderDetails"] {
-    background-color: #FFFFFF !important;
-    color: #262730 !important;
-    padding: 1rem !important;
-    border-radius: 0 0 8px 8px !important;
+/* ========================================
+   CAMPOS DE ENTRADA
+   ======================================== */
+.stTextInput input,
+.stTextArea textarea,
+.stNumberInput input {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 4px !important;
+    padding: 0.5rem 0.75rem !important;
 }
 
-/* Forçar cor do texto em todos os elementos dentro do expander */
-div[data-testid="stExpander"] *,
-div[data-testid="stExpander"] p,
-div[data-testid="stExpander"] div,
-div[data-testid="stExpander"] span,
-div[data-testid="stExpander"] .stMarkdown,
-div[data-testid="stExpander"] .stText {
-    color: #262730 !important;
-    background-color: transparent !important;
+.stTextInput input:focus,
+.stTextArea textarea:focus,
+.stNumberInput input:focus {
+    background-color: #ffffff !important;
+    border-color: #3a75c4 !important;
+    box-shadow: 0 0 0 0.2rem rgba(58, 117, 196, 0.25) !important;
 }
 
-/* Texto em negrito no expander */
-div[data-testid="stExpander"] strong,
-div[data-testid="stExpander"] b {
-    color: #1E366F !important;
+/* ========================================
+   LABELS E TEXTO
+   ======================================== */
+label,
+.stTextInput > label,
+.stTextArea > label,
+.stSelectbox > label,
+.stNumberInput > label {
+    color: #1e1e1e !important;
     font-weight: 600 !important;
+    font-size: 0.875rem !important;
 }
 
-/* PADRONIZAÇÃO DOS ELEMENTOS DE ALERTA - TODOS OS MÓDULOS */
-/* MÁXIMA ESPECIFICIDADE - ELIMINAR FUNDOS AZUIS DEFINITIVAMENTE */
-.main div[data-testid="stAlert"],
-section[data-testid="stMain"] div[data-testid="stAlert"],
-div[data-testid="stMainBlockContainer"] div[data-testid="stAlert"],
-.stTabs div[data-testid="stAlert"],
-div[data-testid="stAlert"],
-.stAlert,
-div[data-baseweb="notification"],
-[data-baseweb="notification"],
-[role="alert"],
-.streamlit-alert,
-div[style*="background-color: rgb(13, 110, 253)"],
-div[style*="background-color: blue"],
-div[style*="background: blue"],
-div[style*="background: rgb(13, 110, 253)"],
-div[class*="stAlert"],
-div[class*="alert"],
-.element-container div[data-testid="stAlert"] {
+/* ========================================
+   ALERTAS E NOTIFICAÇÕES
+   ======================================== */
+div[data-testid="stAlert"] {
     background-color: rgba(255, 255, 255, 0.95) !important;
-    background: rgba(255, 255, 255, 0.95) !important;
-    background-image: none !important;
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
     border-left: 4px solid #6c757d !important;
-    border-radius: 0.375rem !important;
+    border-radius: 6px !important;
     margin: 0.5rem 0 !important;
     color: #1e1e1e !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
 }
 
-/* Forçar texto escuro em TODOS os alertas - MÁXIMA ESPECIFICIDADE */
-.main div[data-testid="stAlert"] svg,
-.main div[data-testid="stAlert"] div,
-.main div[data-testid="stAlert"] p,
-.main div[data-testid="stAlert"] span,
-.main div[data-testid="stAlert"] *,
-section[data-testid="stMain"] div[data-testid="stAlert"] svg,
-section[data-testid="stMain"] div[data-testid="stAlert"] div,
-section[data-testid="stMain"] div[data-testid="stAlert"] p,
-section[data-testid="stMain"] div[data-testid="stAlert"] span,
-section[data-testid="stMain"] div[data-testid="stAlert"] *,
-div[data-testid="stAlert"] svg,
-div[data-testid="stAlert"] div,
-div[data-testid="stAlert"] p,
-div[data-testid="stAlert"] span,
-div[data-testid="stAlert"] *,
-.stAlert svg,
-.stAlert div,
-.stAlert p,
-.stAlert span,
-.stAlert *,
-div[data-baseweb="notification"] svg,
-div[data-baseweb="notification"] div,
-div[data-baseweb="notification"] p,
-div[data-baseweb="notification"] span,
-div[data-baseweb="notification"] *,
-[data-baseweb="notification"] svg,
-[data-baseweb="notification"] div,
-[data-baseweb="notification"] p,
-[data-baseweb="notification"] span,
-[data-baseweb="notification"] *,
-[role="alert"] svg,
-[role="alert"] div,
-[role="alert"] p,
-[role="alert"] span,
-[role="alert"] * {
+div[data-testid="stAlert"] * {
     color: #1e1e1e !important;
-    background-color: transparent !important;
 }
 
-/* Remover todas as cores azuis/brancas de alertas de informação - ALTA ESPECIFICIDADE */
-.main div[data-testid="stAlert"][data-baseweb="notification"],
-section[data-testid="stMain"] div[data-testid="stAlert"][data-baseweb="notification"],
-div[data-testid="stMainBlockContainer"] div[data-testid="stAlert"][data-baseweb="notification"],
-.stTabs div[data-testid="stAlert"][data-baseweb="notification"],
-div[data-testid="stAlert"][data-baseweb="notification"] {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-/* FORÇAR OVERRIDE DE QUALQUER COR AZUL ESPECÍFICA */
-div[data-testid="stAlert"][style*="background-color"],
-div[data-testid="stAlert"][style*="background"],
-div[data-testid="stAlert"]:has([style*="color: rgb(13, 110, 253)"]),
-div[data-testid="stAlert"]:has([style*="background"]) {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-/* Estilo específico para alertas de sucesso apenas */
+/* Alertas de sucesso */
 div[data-testid="stAlert"]:has(.css-1x8cf1d[data-testid="successIcon"]) {
     background-color: #e8f5e8 !important;
-    border-color: #4caf50 !important;
+    border-left-color: #4caf50 !important;
 }
 
 div[data-testid="stAlert"]:has(.css-1x8cf1d[data-testid="successIcon"]) * {
     color: #2e7d32 !important;
 }
 
-/* Estilo específico para alertas de aviso apenas */
-div[data-testid="stAlert"]:has(.css-1x8cf1d[data-testid="warningIcon"]) {
-    background-color: #fff3e0 !important;
-    border-color: #ff9800 !important;
-}
-
-div[data-testid="stAlert"]:has(.css-1x8cf1d[data-testid="warningIcon"]) * {
-    color: #ef6c00 !important;
-}
-
-/* Estilo específico para alertas de erro apenas */
-div[data-testid="stAlert"]:has(.css-1x8cf1d[data-testid="errorIcon"]) {
-    background-color: #ffebee !important;
-    border-color: #f44336 !important;
-}
-
-div[data-testid="stAlert"]:has(.css-1x8cf1d[data-testid="errorIcon"]) * {
-    color: #c62828 !important;
-}
-
-/* JavaScript para forçar mudança de cores dos alertas */
-</style>
-
-<script>
-// JavaScript ULTRA ROBUSTO para forçar visibilidade dos selectbox
-function forceSelectboxVisibility() {
-    // Buscar TODOS os selectbox
-    const selectboxes = document.querySelectorAll('[data-testid="stSelectbox"]');
-
-    selectboxes.forEach(selectbox => {
-        // Forçar estilos no container principal
-        selectbox.style.setProperty('background-color', '#ffffff', 'important');
-        selectbox.style.setProperty('border', '1px solid #d1d5db', 'important');
-
-        // Buscar TODOS os elementos dentro do selectbox
-        const allElements = selectbox.querySelectorAll('*');
-
-        allElements.forEach(element => {
-            // Aplicar estilos de texto visível
-            element.style.setProperty('color', '#1a202c', 'important');
-            element.style.setProperty('font-weight', '600', 'important');
-            element.style.setProperty('opacity', '1', 'important');
-            element.style.setProperty('visibility', 'visible', 'important');
-            element.style.setProperty('text-shadow', 'none', 'important');
-
-            // Se for um elemento que pode ter background
-            if (element.tagName && element.tagName.toLowerCase() !== 'svg') {
-                element.style.setProperty('background-color', 'transparent', 'important');
-            }
-        });
-
-        // Buscar especificamente elementos do BaseWeb
-        const baseWebElements = selectbox.querySelectorAll('[data-baseweb="select"], [data-baseweb="select"] *, [role="combobox"], [role="button"]');
-
-        baseWebElements.forEach(element => {
-            element.style.setProperty('color', '#1a202c', 'important');
-            element.style.setProperty('font-weight', '600', 'important');
-            element.style.setProperty('background-color', '#ffffff', 'important');
-        });
-
-        // Buscar spans com texto
-        const spans = selectbox.querySelectorAll('span');
-        spans.forEach(span => {
-            if (span.textContent && span.textContent.trim() !== '') {
-                span.style.setProperty('color', '#1a202c', 'important');
-                span.style.setProperty('font-weight', '600', 'important');
-                span.style.setProperty('background-color', 'transparent', 'important');
-            }
-        });
-
-        // Buscar divs com texto
-        const divs = selectbox.querySelectorAll('div');
-        divs.forEach(div => {
-            if (div.textContent && div.textContent.trim() !== '' && div.children.length === 0) {
-                div.style.setProperty('color', '#1a202c', 'important');
-                div.style.setProperty('font-weight', '600', 'important');
-                div.style.setProperty('background-color', 'transparent', 'important');
-            }
-        });
-    });
-}
-
-// JavaScript para forçar remoção de fundos azuis
-function removeBlueBackgrounds() {
-    // Executar correção de selectbox primeiro
-    forceSelectboxVisibility();
-
-    // Buscar todos os elementos com fundo azul
-    const blueElements = document.querySelectorAll('*');
-
-    blueElements.forEach(element => {
-        const computedStyle = window.getComputedStyle(element);
-        const bgColor = computedStyle.backgroundColor;
-
-        // Verificar se o fundo é azul
-        if (bgColor.includes('rgb(13, 110, 253)') || 
-            bgColor.includes('rgb(32, 146, 236)') ||
-            bgColor.includes('blue') ||
-            element.style.backgroundColor.includes('blue') ||
-            element.style.backgroundColor.includes('rgb(13, 110, 253)')) {
-
-            element.style.setProperty('background-color', 'rgba(255, 255, 255, 0.9)', 'important');
-            element.style.setProperty('background', 'rgba(255, 255, 255, 0.9)', 'important');
-            element.style.setProperty('border', '1px solid rgba(0, 0, 0, 0.1)', 'important');
-            element.style.setProperty('color', '#1e1e1e', 'important');
-        }
-    });
-
-    // Buscar especificamente alertas do Streamlit
-    const alerts = document.querySelectorAll('[data-testid="stAlert"], .stAlert, [data-baseweb="notification"], [role="alert"]');
-    alerts.forEach(alert => {
-        alert.style.setProperty('background-color', 'rgba(255, 255, 255, 0.9)', 'important');
-        alert.style.setProperty('background', 'rgba(255, 255, 255, 0.9)', 'important');
-        alert.style.setProperty('border', '1px solid rgba(0, 0, 0, 0.1)', 'important');
-        alert.style.setProperty('border-left', '4px solid #6c757d', 'important');
-
-        // Forçar cor do texto
-        const textElements = alert.querySelectorAll('*');
-        textElements.forEach(text => {
-            text.style.setProperty('color', '#1e1e1e', 'important');
-        });
-    });
-}
-
-// Executar imediatamente
-removeBlueBackgrounds();
-forceSelectboxVisibility();
-
-// Executar quando a página carregar
-document.addEventListener('DOMContentLoaded', function() {
-    forceSelectboxVisibility();
-    removeBlueBackgrounds();
-});
-
-// Observar mudanças no DOM
-const observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-        if (mutation.addedNodes.length) {
-            setTimeout(() => {
-                forceSelectboxVisibility();
-                removeBlueBackgrounds();
-            }, 100);
-        }
-    });
-});
-
-observer.observe(document.body, {
-    childList: true,
-    subtree: true
-});
-
-// Executar periodicamente com prioridade para selectbox
-setInterval(() => {
-    forceSelectboxVisibility();
-    removeBlueBackgrounds();
-}, 500);
-</script>
-
-<style>
-
-/* Seletor ainda mais específico para o conteúdo dos expanders */
-.main div[data-testid="stExpander"] div[data-testid="stMarkdownContainer"] {
-    color: #262730 !important;
-}
-
-.main div[data-testid="stExpander"] div[data-testid="stMarkdownContainer"] p {
-    color: #262730 !important;
-}
-
-/* Estilo para file uploader */
-div[data-testid="stFileUploader"] button {
-    background-color: #dc3545 !important;
-    color: white !important;
-    border: 1px solid #c82333 !important;
-    border-radius: 6px !important;
-    padding: 8px 16px !important;
-    font-weight: 500 !important;
-    transition: all 0.3s ease !important;
-}
-
-div[data-testid="stFileUploader"] button:hover {
-    background-color: #c82333 !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3) !important;
-}
-
-/* CSS específico para botões de formulário */
-.stForm button[data-testid="baseButton-primary"] {
-    background-color: #3a75c4 !important;
-    color: white !important;
-    border: 1px solid #3a75c4 !important;
-    font-weight: 500 !important;
-    border-radius: 0.375rem !important;
-    padding: 0.375rem 0.75rem !important;
-}
-
-.stForm button[data-testid="baseButton-primary"]:hover {
-    background-color: #2e5a9a !important;
-    border-color: #2e5a9a !important;
-}
-
-/* Forçar visibilidade do texto em botões */
-.stButton > button p,
-.stButton > button span,
-.stButton > button div {
-    color: inherit !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    font-weight: 500 !important;
-}
-
-/* Botão primário - texto branco */
-.stButton > button[kind="primary"] p,
-.stButton > button[kind="primary"] span,
-.stButton > button[kind="primary"] div {
-    color: white !important;
-}
-
-/* BOTÕES COM TIPO ESPECÍFICO - CORRIGE OS BOTÕES DE RELATÓRIO */
-button[data-testid="baseButton-primary"],
-.stButton > button[data-testid="baseButton-primary"] {
-    background-color: #3a75c4 !important;
-    color: white !important;
-    border: 1px solid #3a75c4 !important;
-    font-weight: 500 !important;
-    border-radius: 0.375rem !important;
-}
-
-button[data-testid="baseButton-primary"]:hover,
-.stButton > button[data-testid="baseButton-primary"]:hover {
-    background-color: #2e5a9a !important;
-    border-color: #2e5a9a !important;
-}
-
-button[data-testid="baseButton-secondary"],
-.stButton > button[data-testid="baseButton-secondary"] {
-    background-color: #6c757d !important;
-    color: white !important;
-    border: 1px solid #6c757d !important;
-    font-weight: 500 !important;
-    border-radius: 0.375rem !important;
-}
-
-button[data-testid="baseButton-secondary"]:hover,
-.stButton > button[data-testid="baseButton-secondary"]:hover {
-    background-color: #5a6268 !important;
-    border-color: #5a6268 !important;
-}
-
-/* CORREÇÃO ESPECÍFICA PARA BOTÕES DA ÁREA PRINCIPAL - TEXTO BRANCO FORÇADO */
-div[data-testid="stMainBlockContainer"] button[data-testid="baseButton-primary"],
-div[data-testid="stMainBlockContainer"] button[data-testid="baseButton-secondary"],
-div[data-testid="stMain"] button[data-testid="baseButton-primary"],
-div[data-testid="stMain"] button[data-testid="baseButton-secondary"],
-.main button[data-testid="baseButton-primary"],
-.main button[data-testid="baseButton-secondary"] {
-    color: #ffffff !important;
-    background-color: #3a75c4 !important;
-    border: 1px solid #3a75c4 !important;
-    font-weight: 600 !important;
-}
-
-div[data-testid="stMainBlockContainer"] button[data-testid="baseButton-primary"]:hover,
-div[data-testid="stMainBlockContainer"] button[data-testid="baseButton-secondary"]:hover,
-div[data-testid="stMain"] button[data-testid="baseButton-primary"]:hover,
-div[data-testid="stMain"] button[data-testid="baseButton-secondary"]:hover,
-.main button[data-testid="baseButton-primary"]:hover,
-.main button[data-testid="baseButton-secondary"]:hover {
-    color: #ffffff !important;
-    background-color: #2B547E !important;
-    border: 1px solid #2B547E !important;
-}
-
-/* Forçar texto branco em todos os botões da aplicação principal */
-.main button,
-div[data-testid="stMainBlockContainer"] button,
-div[data-testid="stMain"] button {
-    color: #ffffff !important;
-}
-
-/* Tabs da área principal - não aplicar à sidebar */
-.main .stTabs button {
-    color: #ffffff !important;
-    background-color: #3a75c4 !important;
-}
-
-/* Forçar texto visível nos botões primários e secundários */
-button[data-testid="baseButton-primary"] p,
-button[data-testid="baseButton-primary"] span,
-button[data-testid="baseButton-primary"] div,
-button[data-testid="baseButton-secondary"] p,
-button[data-testid="baseButton-secondary"] span,
-button[data-testid="baseButton-secondary"] div,
-.stButton > button p,
-.stButton > button span,
-.stButton > button div {
-    color: white !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    font-weight: 500 !important;
-    text-shadow: none !important;
-}
-
-/* Garantir que todos os botões sejam visíveis */
-.stButton > button,
-button[data-testid*="baseButton"] {
-    color: white !important;
-    font-weight: 500 !important;
-    min-height: 2.5rem !important;
-    padding: 0.5rem 1rem !important;
-}
-
-/* Botão de exportar CSV - azul escuro */
-.stButton > button[aria-label*="Exportar"],
-button[title*="Exportar"],
-.stButton > button {
-    background-color: #1f4e79 !important;
-    color: white !important;
-    border: 1px solid #1f4e79 !important;
-    font-size: 14px !important;
-    line-height: 1.4 !important;
-}
-
-/* Corrigir TODOS os botões do Streamlit */
-div[data-testid="stButton"] > button,
-.stButton button,
-button {
-    background: #1f4e79 !important;
-    color: white !important;
-    border: 1px solid #1f4e79 !important;
-    padding: 0.375rem 0.75rem !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    line-height: 1.5 !important;
-    border-radius: 0.375rem !important;
-    text-align: center !important;
-    vertical-align: middle !important;
-    user-select: none !important;
-    transition: all 0.15s ease-in-out !important;
-}
-
-div[data-testid="stButton"] > button:hover,
-.stButton button:hover,
-button:hover {
-    background-color: #0d3b66 !important;
-    border-color: #0d3b66 !important;
-}
-
-/* Regras específicas para botões problemáticos */
-button[kind="primary"],
-button[kind="secondary"],
-div[data-testid="element-container"] button,
-div[data-testid="column"] button,
-.element-container button {
-    background: #3a75c4 !important;
-    color: white !important;
-    border: 1px solid #3a75c4 !important;
-    padding: 0.375rem 0.75rem !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    border-radius: 0.375rem !important;
-}
-
-/* Cor específica para botões secondary */
-button[kind="secondary"] {
-    background: #2B547E !important;
-    border: 1px solid #2B547E !important;
-}
-
-/* Forçar cor em TODOS os elementos de texto dentro de botões */
-button *,
-.stButton button *,
-div[data-testid="stButton"] button * {
-    color: white !important;
-    font-weight: 500 !important;
-}
-
-/* Botões específicos por texto (último recurso) */
-button:contains("Gerar"),
-button:contains("Relatório"),
-button:contains("Reabrir"),
-button:contains("Exportar") {
-    background: #1f4e79 !important;
-    color: white !important;
-    border: 1px solid #1f4e79 !important;
-}
-
-/* CSS específico para botões dentro de expanders */
-div[data-testid="stExpander"] button,
-div[data-testid="stExpander"] .stButton > button,
-details[open] button,
-.streamlit-expanderContent button {
-    background: #3a75c4 !important;
-    color: white !important;
-    border: 1px solid #3a75c4 !important;
-    padding: 0.375rem 0.75rem !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    border-radius: 0.375rem !important;
-}
-
-/* Botões secondary dentro de expanders */
-div[data-testid="stExpander"] button[kind="secondary"],
-details[open] button[kind="secondary"] {
-    background: #2B547E !important;
-    border: 1px solid #2B547E !important;
-}
-
-/* Botão Limpar Carrinho - cor específica solicitada */
-button[kind="secondary"]:nth-of-type(1) {
-    background: #3a75c4 !important;
-    border: 1px solid #3a75c4 !important;
-}
-
-/* Botões específicos com cores diferentes */
-/* Usar seletores mais específicos para pegar botões por texto */
-div[data-testid="element-container"] button:nth-of-type(1),
-div[data-testid="column"] button:first-child {
-    background: #3a75c4 !important;
-    color: white !important;
-    border: 1px solid #3a75c4 !important;
-}
-
-/* JavaScript injection para botões específicos */
-/* Este CSS será aplicado via JavaScript para botões com texto específico */
-
-/* Forçar texto branco em expanders */
-div[data-testid="stExpander"] button span,
-details[open] button span,
-.streamlit-expanderContent button span {
-    color: white !important;
-    font-weight: 500 !important;
-}
-
-/* Botões de formulário dentro de expanders */
-div[data-testid="stExpander"] form button,
-details[open] form button,
-.streamlit-expanderContent form button {
-    background: #1f4e79 !important;
-    color: white !important;
-    border: 1px solid #1f4e79 !important;
-}
-
-/* === CORREÇÕES ESPECÍFICAS PARA MÓDULO DE VENDAS === */
-
-/* Labels/Rótulos com melhor contraste */
-.stTextInput > label,
-.stTextArea > label,
-.stSelectbox > label,
-.stNumberInput > label,
-.stSelectbox > div > label,
-label[data-testid="stWidgetLabel"],
-p[data-testid="stWidgetLabel"],
-.element-container p,
-.stTextInput p,
-.stTextArea p,
-.stSelectbox p,
-.stNumberInput p,
-.stForm p {
-    color: #1e1e1e !important;
-    font-weight: 600 !important;
-    font-size: 0.875rem !important;
-    margin-bottom: 0.25rem !important;
-    text-shadow: none !important;
-    opacity: 1 !important;
-    visibility: visible!important;
-}
-
-/* Campos de entrada com fundo cinza claro */
-.stTextInput input,
-.stTextArea textarea,
-.stSelectbox select,
-.stNumberInput input,
-div[data-baseweb="select"] > div,
-div[data-baseweb="textarea"] textarea,
-input[type="text"],
-input[type="number"],
-textarea,
-select {
-    background-color: #f8f9fa !important;
-    color: #212529 !important;
-    border: 1px solid #dee2e6 !important;
-    border-radius: 0.375rem !important;
-    padding: 0.5rem 0.75rem !important;
-    font-size: 0.875rem !important;
-}
-
-/* Campos de entrada em foco */
-.stTextInput input:focus,
-.stTextArea textarea:focus,
-.stSelectbox select:focus,
-.stNumberInput input:focus,
-div[data-baseweb="select"] > div:focus,
-div[data-baseweb="textarea"] textarea:focus,
-input[type="text"]:focus,
-input[type="number"]:focus,
-textarea:focus,
-select:focus {
+/* ========================================
+   EXPANDERS
+   ======================================== */
+div[data-testid="stExpander"] {
     background-color: #ffffff !important;
-    border-color: #3a75c4 !important;
-    box-shadow: 0 0 0 0.2rem rgba(58, 117, 196, 0.25) !important;
-}
-
-/* Placeholder text */
-.stTextInput input::placeholder,
-.stTextArea textarea::placeholder,
-input[type="text"]::placeholder,
-input[type="number"]::placeholder,
-textarea::placeholder {
-    color: #6c757d !important;
-    opacity: 0.8 !important;
-}
-
-/* Selectbox dropdown */
-div[data-baseweb="select"] > div > div {
-    background-color: #f8f9fa !important;
-    color: #212529 !important;
-    border: 1px solid #dee2e6 !important;
-}
-
-/* Selectbox options */
-div[data-baseweb="popover"] div[role="option"] {
-    background-color: #ffffff !important;
-    color: #212529 !important;
-}
-
-div[data-baseweb="popover"] div[role="option"]:hover {
-    background-color: #e9ecef !important;
-}
-
-/* Melhor contraste para texto em geral */
-.main p,
-.main div,
-.main span,
-.element-container p,
-.element-container div,
-.element-container span {
-    color: #212529 !important;
-}
-
-/* Cabeçalhos e subtítulos */
-.main h1,
-.main h2,
-.main h3,
-.main h4,
-.main h5,
-.main h6 {
-    color: #1e1e1e !important;
-    font-weight: 600 !important;
-}
-
-/* Subheader específico */
-.stSubheader {
-    color: #1e1e1e !important;
-    font-weight: 600 !important;
-}
-
-/* Markdown text */
-div[data-testid="stMarkdownContainer"] p,
-div[data-testid="stMarkdownContainer"] div,
-.stMarkdown p,
-.stMarkdown div {
-    color: #212529 !important;
-}
-
-/* Labels dentro de colunas */
-div[data-testid="column"] p,
-div[data-testid="column"] label,
-div[data-testid="column"] span {
-    color: #1e1e1e !important;
-    font-weight: 500 !important;
-}
-
-/* Número inputs com botões +/- */
-.stNumberInput button {
-    background-color: #3a75c4 !important;
-    color: white !important;
-    border: 1px solid #3a75c4 !important;
-    font-weight: 500 !important;
-}
-
-.stNumberInput button:hover {
-    background-color: #2e5a9a !important;
-    border-color: #2e5a9a !important;
-}
-
-/* CORREÇÃO CRÍTICA - PADRONIZAR TODOS OS BOTÕES DA SIDEBAR */
-/* Sobrescrever qualquer estilo diferenciado para manter consistência visual */
-section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"],
-section[data-testid="stSidebar"] .stButton > button {
-    width: 100% !important;
-    background: rgba(255, 255, 255, 0.08) !important;
-    color: rgba(255, 255, 255, 0.95) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border: 1px solid #e0e4e7 !important;
     border-radius: 8px !important;
-    padding: 10px 14px !important;
-    margin: 3px 0 !important;
+    margin: 0.5rem 0 !important;
+}
+
+div[data-testid="stExpander"] * {
+    color: #262730 !important;
+}
+
+/* ========================================
+   ABAS (TABS)
+   ======================================== */
+button[role="tab"] {
+    padding: 0.75rem 1.5rem !important;
     font-weight: 500 !important;
-    font-size: 0.875rem !important;
-    text-align: center !important;
-    transition: all 0.3s ease !important;
-    backdrop-filter: blur(10px) !important;
-    height: 42px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    background-color: #f8f9fa !important;
+    color: #1E366F !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 6px 6px 0 0 !important;
+    margin-right: 2px !important;
 }
 
-/* Hover unificado para todos os botões da sidebar */
-section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"]:hover,
-section[data-testid="stSidebar"] .stButton > button:hover {
-    background: rgba(255, 255, 255, 0.15) !important;
-    color: #fff !important;
-    border-color: rgba(255, 255, 255, 0.3) !important;
-    transform: translateY(-2px) scale(1.02) !important;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.1) !important;
-}
-
-/* Remove estilos diferenciados de botões ativos/focados */
-section[data-testid="stSidebar"] button:focus,
-section[data-testid="stSidebar"] button:active,
-section[data-testid="stSidebar"] .stButton > button:focus,
-section[data-testid="stSidebar"] .stButton > button:active {
-    background: rgba(255, 255, 255, 0.1) !important;
-    color: rgba(255, 255, 255, 0.95) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    box-shadow: inset 2px 0 0 #4CAF50 !important;
-    transform: translateY(-2px) scale(1.02) !important;
-}
-
-/* CORREÇÃO CRÍTICA - SELECTBOX VISIBILIDADE MÁXIMA */
-/* Forçar visibilidade completa do texto nos selectbox */
-.stSelectbox * {
-    color: #1e1e1e !important;
-    background-color: transparent !important;
-    font-weight: 500 !important;
-}
-
-/* Container principal do selectbox */
-.stSelectbox > div {
-    background-color: #ffffff !important;
-    border: 1px solid #cccccc !important;
-}
-
-/* Input do selectbox - texto selecionado */
-.stSelectbox div[data-baseweb="select"] > div {
-    color: #1e1e1e !important;
-    background-color: #ffffff !important;
+.stTabs [aria-selected="true"] {
     font-weight: 600 !important;
-    font-size: 14px !important;
-}
-
-/* Opções do dropdown */
-.stSelectbox [data-baseweb="menu"] {
+    color: #1E366F !important;
     background-color: #ffffff !important;
-    border: 1px solid #cccccc !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    border-bottom: 2px solid #3a75c4 !important;
 }
 
-.stSelectbox [data-baseweb="menu"] [role="option"] {
-    color: #1e1e1e !important;
-    background-color: #ffffff !important;
-    font-weight: 500 !important;
-    font-size: 14px !important;
-    padding: 10px 12px !important;
+/* ========================================
+   TABELAS
+   ======================================== */
+.stDataFrame {
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
 }
 
-.stSelectbox [data-baseweb="menu"] [role="option"]:hover {
-    color: #ffffff !important;
-    background-color: #3a75c4 !important;
+.dataframe th {
+    background-color: #1E366F !important;
+    color: white !important;
     font-weight: 600 !important;
+    padding: 0.75rem !important;
 }
 
-/* Seta do selectbox */
-.stSelectbox [data-baseweb="select"] svg {
-    color: #1e1e1e !important;
+.dataframe td {
+    padding: 0.75rem !important;
+    border-bottom: 1px solid #eee !important;
 }
 
-/* Forçar todos os elementos de texto dentro do selectbox */
-.stSelectbox span,
-.stSelectbox div,
-.stSelectbox p {
-    color: #1e1e1e !important;
-    font-weight: 500 !important;
-    text-shadow: none !important;
-    opacity: 1 !important;
-    visibility: visible !important;
+.dataframe tr:hover {
+    background-color: #f8f9fa !important;
 }
 
-/* Corrigir visibilidade do texto nos selectbox - VERSÃO ROBUSTA */
-.stSelectbox > div > div > div {
-    color: #1e1e1e !important;
-    background-color: #ffffff !important;
-    font-weight: 500 !important;
+/* ========================================
+   MÉTRICAS E CARDS
+   ======================================== */
+div[data-testid="stMetric"] {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
 }
 
-.stSelectbox select {
-    color: #1e1e1e !important;
-    background-color: #ffffff !important;
-    font-weight: 500 !important;
+div[data-testid="stMetric"] > div:first-child {
+    color: #1E366F;
+    font-weight: 600;
 }
 
-/* Selectbox quando aberto (dropdown) */
-.stSelectbox [data-baseweb="select"] > div {
-    color: #1e1e1e !important;
-    background-color: #ffffff !important;
+/* ========================================
+   RESPONSIVIDADE MOBILE
+   ======================================== */
+@media (max-width: 768px) {
+    section[data-testid="stSidebar"] {
+        display: block !important;
+        visibility: visible !important;
+        z-index: 999999 !important;
+    }
+
+    button[data-testid="collapsedControl"] {
+        background-color: #2E4A99 !important;
+        color: white !important;
+        position: fixed !important;
+        top: 80px !important;
+        left: 10px !important;
+        z-index: 1000000 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .block-container {
+        padding-left: 60px !important;
+    }
 }
 
-/* Texto selecionado no selectbox */
-.stSelectbox [data-testid="stSelectbox"] > div > div {
-    color: #1e1e1e !important;
-    font-weight: 500 !important;
+/* ========================================
+   RODAPÉ
+   ======================================== */
+body, .main, [data-testid="stAppViewContainer"], .block-container {
+    padding-bottom: 60px !important;
 }
-
-/* Input interno do selectbox */
-.stSelectbox input {
-    color: #1e1e1e !important;
-    background-color: #ffffff !important;
-    font-weight: 500 !important;
-}
-
-/* Container do selectbox */
-.stSelectbox [data-baseweb="select"] {
-    color: #1e1e1e !important;
-    background-color: #ffffff !important;
-}
-
-/* Texto da opção selecionada */
-.stSelectbox [data-baseweb="select"] [data-baseweb="tag"] {
-    color: #1e1e1e !important;
-    background-color: #f0f2f6 !important;
-    font-weight: 500 !important;
-}
-
-/* Valor selecionado específico */
-.stSelectbox [data-baseweb="select"] > div > div {
-    color: #1e1e1e !important;
-    font-weight: 500 !important;
-}
-
-/* Placeholder e texto interno */
-.stSelectbox [role="combobox"] {
-    color: #1e1e1e !important;
-    font-weight: 500 !important;
-}
-
-/* Menu dropdown das opções */
-.stSelectbox [data-baseweb="popover"] {
-    background-color: #ffffff !important;
-}
-
-.stSelectbox [data-baseweb="popover"] [role="option"] {
-    color: #1e1e1e !important;
-    background-color: #ffffff !important;
-    font-weight: 400 !important;
-}
-
-.stSelectbox [data-baseweb="popover"] [role="option"]:hover {
-    color: #1e1e1e !important;
-    background-color: #f0f2f6 !important;
-    font-weight: 500 !important;
-}
-
-/* Forçar override de estilos inline azuis */
-div[style*="background-color: rgb(13, 110, 253)"],
-div[style*="background-color: blue"],
-div[style*="background: blue"],
-div[style*="background: rgb(13, 110, 253)"] {
-    background-color: rgba(255, 255, 255, 0.9) !important;
-    background: rgba(255, 255, 255, 0.9) !important;
-}
-
-/* SOLUÇÃO DEFINITIVA PARA SELECTBOX - FORÇAR TEXTO VISÍVEL COM MÁXIMA ESPECIFICIDADE */
-div[data-testid="stSelectbox"] {
-    background-color: #ffffff !important;
-    border: 1px solid #cccccc !important;
-    border-radius: 4px !important;
-}
-
-div[data-testid="stSelectbox"] * {
-    color: #000000 !important;
-    font-weight: 600 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    text-shadow: 1px 1px 1px #ffffff !important;
-}
-
-/* Específico para o valor selecionado */
-div[data-testid="stSelectbox"] [data-baseweb="select"] span,
-div[data-testid="stSelectbox"] [data-baseweb="select"] div {
-    color: #000000 !important;
-    background-color: transparent !important;
-    font-weight: 600 !important;
-    text-shadow: 1px 1px 1px #ffffff !important;
-}
-
-/* Container principal do select */
-div[data-testid="stSelectbox"] [data-baseweb="select"] {
-    background-color: #ffffff !important;
-    border: 1px solid #cccccc !important;
-}
-
-/* Container interno do BaseWeb */
-div[data-testid="stSelectbox"] [data-baseweb="select"] > div {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-    font-weight: 600 !important;
-}
-
-/* Texto do valor selecionado específico */
-div[data-testid="stSelectbox"] [data-baseweb="select"] > div > div {
-    color: #000000 !important;
-    font-weight: 600 !important;
-    background-color: transparent !important;
-    text-shadow: 1px 1px 1px #ffffff !important;
-}
-
-/* Input interno invisível */
-div[data-testid="stSelectbox"] input {
-    color: #000000 !important;
-    font-weight: 600 !important;
-    background-color: #ffffff !important;
-}
-
-/* Forçar todos os elementos dentro do selectbox */
-.stSelectbox *, 
-[data-testid="stSelectbox"] * {
-    color: #000000 !important;
-    font-weight: 600 !important;
-}
-
-/* Texto do placeholder e aria-expanded */
-.stSelectbox [data-baseweb="select"] [aria-expanded],
-div[data-testid="stSelectbox"] [data-baseweb="select"] [aria-expanded] {
-    color: #000000 !important;
-    font-weight: 600 !important;
-    background-color: #ffffff !important;
-}
-
-/* Labels dos selectbox */
-div[data-testid="stSelectbox"] > label,
-.stSelectbox > label {
-    color: #000000 !important;
-    font-weight: 600 !important;
-}
-
-/* Setas e ícones */
-div[data-testid="stSelectbox"] svg,
-.stSelectbox svg {
-    color: #000000 !important;
-    fill: #000000 !important;
-}
-
-/* Dropdown quando expandido */
-div[data-testid="stSelectbox"] ul,
-div[data-testid="stSelectbox"] li,
-.stSelectbox ul,
-.stSelectbox li {
-    color: #000000 !important;
-    background-color: #ffffff !important;
-    font-weight: 500 !important;
-}
-</style>

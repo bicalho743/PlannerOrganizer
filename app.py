@@ -460,16 +460,9 @@ if not st.session_state.authenticated:
             # Resetar para página de login
             st.session_state.login_page = "login"
 
-    # CSS personalizado para a landing page - Design Sóbrio
-    st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500;600;700&display=swap');
-
-    body {
-        font-family: 'Segoe UI', sans-serif;
-        background-color: #F4F4F5;
-        color: #1C1C1E;
-    }
+    # Aplicar estilos centralizados
+    from utils.styles_manager import StylesManager
+    StylesManager.apply_all_fixes()
 
     h1, h2, h3, h4 {
         font-family: 'Segoe UI', sans-serif;

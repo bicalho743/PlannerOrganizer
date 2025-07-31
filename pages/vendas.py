@@ -5,6 +5,7 @@ import numpy as np
 import time
 import os
 from utils.custom_components import custom_info, custom_warning
+from utils.styles_manager import StylesManager
 
 def show():
     # CORREÇÃO CRÍTICA PARA SELECTBOX COM JAVASCRIPT
