@@ -44,7 +44,7 @@ def show():
         if st.sidebar.button("Adicionar Dados de Teste", key="btn_add_test_data_dashboard"):
             if st.session_state.db.add_test_data():
                 st.sidebar.success("Dados de teste adicionados com sucesso!")
-                st.rerun()
+                pass  # Removido st.rerun() para evitar loops
             else:
                 st.sidebar.error("Erro ao adicionar dados de teste")
 

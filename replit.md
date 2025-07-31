@@ -55,6 +55,9 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **MELHORADO**: Sistema define Dashboard automaticamente após autenticação bem-sucedida
 - **IMPLEMENTADO**: Correção extrema para selectbox invisível com JavaScript e CSS força absoluta
 - **ADICIONADO**: Borda visível e múltiplas tentativas de correção para garantir visibilidade
+- **REMOVIDO**: JavaScript global que causava loop infinito "Your app is starting"
+- **CORRIGIDO**: CSS malformado no app.py que impedia carregamento normal
+- **ESTABILIZADO**: Aplicação deve carregar sem loops após remoção do JavaScript problemático
 
 ### 2025-07-24
 - **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira
