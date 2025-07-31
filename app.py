@@ -577,7 +577,7 @@ if not st.session_state.authenticated:
         st.markdown("<h2>Transforme Seu Negócio com o Planner Organizer</h2>", unsafe_allow_html=True)
 
         # Imagem da profissional frustrada com papéis/planilhas
-        st.image("professional_business_woman.png", caption="", width=250)
+        st.image("professional_woman.png", caption="", width=250)
         st.markdown('''
         <div style="background-color: rgba(255, 255, 255, 0.9); padding: 15px; border-radius: 8px; margin-top: -20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
             <div style="font-weight: 600; color: #4F4F52; font-size: 16px; margin-bottom: 8px;">Chega de dores de cabeça!</div>
