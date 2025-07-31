@@ -35,6 +35,11 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 
 ## Recent Changes
 
+### 2025-07-31
+- **ADICIONADO**: Botão de exclusão na aba "Propostas em Execução" (2.6 - Finalizar)
+- **IMPLEMENTADO**: Confirmação dupla e exclusão completa com limpeza de dados relacionados
+- **PROTEGIDO**: Exclusão remove propostas, produtos, andamentos, financeiro e acréscimos
+
 ### 2025-07-25
 - **DIAGNOSTICADO**: Problema crítico - vendas geradas automaticamente de propostas não salvavam itens
 - **IDENTIFICADO**: Função `_registrar_venda_produtos` estava criando itens sem campo `usuario_id` 

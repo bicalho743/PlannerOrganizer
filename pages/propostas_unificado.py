@@ -1587,7 +1587,66 @@ def show():
                             st.error(f"Erro ao carregar assistentes: {str(e)}")
 
                     with exec_tab6:
-                        st.subheader("Finalizar Proposta")
+                        st.subheader("Finalizar ou Excluir Proposta")
+                        
+                        # Adicionar seção para excluir proposta
+                        st.markdown("---")
+                        with st.expander("🗑️ Excluir Proposta", expanded=False):
+                            st.warning("⚠️ **ATENÇÃO**: Esta ação irá excluir permanentemente a proposta e todos os seus dados relacionados!")
+                            
+                            st.markdown("""
+                            **O que será excluído:**
+                            - A proposta e todos os seus detalhes
+                            - Produtos e serviços associados
+                            - Registros de andamento
+                            - Transações financeiras relacionadas
+                            - Acréscimos da proposta
+                            """)
+                            
+                            # Confirmação dupla para exclusão
+                            confirmar_exclusao = st.checkbox("Eu entendo que esta ação não pode ser desfeita", key=f"confirmar_exclusao_{proposta_selecionada_id}")
+                            
+                            if confirmar_exclusao:
+                                col1, col2 = st.columns(2)
+                                
+                                with col1:
+                                    if st.button("❌ EXCLUIR PROPOSTA", key=f"btn_excluir_exec_{proposta_selecionada_id}", type="secondary", use_container_width=True):
+                                        try:
+                                            from sqlalchemy import text
+                                            from utils.database import engine
+                                            
+                                            with engine.connect() as conn:
+                                                # 1. Excluir transações financeiras
+                                                conn.execute(text(f"DELETE FROM financeiro WHERE proposta_id = {proposta_selecionada_id}"))
+                                                
+                                                # 2. Excluir acréscimos
+                                                conn.execute(text(f"DELETE FROM acrescimos_proposta WHERE proposta_id = {proposta_selecionada_id}"))
+                                                
+                                                # 3. Excluir produtos da proposta
+                                                conn.execute(text(f"DELETE FROM produtos_organizadores WHERE proposta_id = {proposta_selecionada_id}"))
+                                                
+                                                # 4. Excluir andamento
+                                                conn.execute(text(f"DELETE FROM andamento_propostas WHERE proposta_id = {proposta_selecionada_id}"))
+                                                
+                                                # 5. Excluir a proposta
+                                                conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_selecionada_id}"))
+                                                
+                                                # Confirmar alterações
+                                                conn.commit()
+                                            
+                                            st.success(f"✅ Proposta #{proposta_selecionada_id} excluída com sucesso!")
+                                            st.info("🔄 Redirecionando para lista de propostas...")
+                                            time.sleep(2)
+                                            st.rerun()
+                                            
+                                        except Exception as e:
+                                            st.error(f"Erro ao excluir proposta: {str(e)}")
+                                
+                                with col2:
+                                    if st.button("🔙 Cancelar", key=f"btn_cancelar_exclusao_{proposta_selecionada_id}", type="primary", use_container_width=True):
+                                        st.rerun()
+                        
+                        st.markdown("---")
 
                         # Obter dados para apresentação
                         try:
