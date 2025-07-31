@@ -39,6 +39,9 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **ADICIONADO**: Botão de exclusão na aba "Propostas em Execução" (2.6 - Finalizar)
 - **IMPLEMENTADO**: Confirmação dupla e exclusão completa com limpeza de dados relacionados
 - **PROTEGIDO**: Exclusão remove propostas, produtos, andamentos, financeiro e acréscimos
+- **ADICIONADA**: Mensagem personalizada quando não há propostas em execução
+- **REFORMATADO**: Página de login com layout limpo seguindo design fornecido
+- **MELHORADO**: Cards de estatísticas com bordas e sombras para destaque visual
 
 ### 2025-07-25
 - **DIAGNOSTICADO**: Problema crítico - vendas geradas automaticamente de propostas não salvavam itens

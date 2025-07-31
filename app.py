@@ -464,83 +464,161 @@ if not st.session_state.authenticated:
     from utils.styles_manager import StylesManager
     StylesManager.apply_all_fixes()
 
+    # CSS customizado para a página de login
+    st.markdown("""
+    <style>
+    .login-header {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        text-align: left;
+    }
+    
+    .login-subtitle {
+        font-size: 1.2rem;
+        color: #7f8c8d;
+        margin-bottom: 2rem;
+        text-align: left;
+    }
+    
+    .stats-container {
+        display: flex;
+        gap: 2rem;
+        margin: 2rem 0;
+        justify-content: flex-start;
+    }
+    
+    .stat-box {
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        min-width: 200px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        font-weight: 500;
+    }
+    
+    .section-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 3rem 0 2rem 0;
+    }
+    
+    .feature-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .feature-box {
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .feature-icon {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .feature-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+    
+    .feature-desc {
+        color: #7f8c8d;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     # Layout principal com duas colunas
     left_col, right_col = st.columns([3, 2])
 
     with left_col:
         # Cabeçalho principal
-        st.markdown('<h1 class="main-header">Planner Organizer</h1>', unsafe_allow_html=True)
-        st.markdown('<p class="subheader">Sistema Profissional para Personal Organizers</p>', unsafe_allow_html=True)
+        st.markdown('<h1 class="login-header">Planner Organizer</h1>', unsafe_allow_html=True)
+        st.markdown('<p class="login-subtitle">Sistema Profissional para Personal Organizers</p>', unsafe_allow_html=True)
 
         # Banner com estatísticas
-        stats_col1, stats_col2, stats_col3 = st.columns(3)
-
-        with stats_col1:
-            st.markdown('''
-            <div class="stat-card">
+        st.markdown('''
+        <div class="stats-container">
+            <div class="stat-box">
                 <div class="stat-number">+300%</div>
                 <div class="stat-label">Aumento na produtividade</div>
             </div>
-            ''', unsafe_allow_html=True)
-
-        with stats_col2:
-            st.markdown('''
-            <div class="stat-card">
+            <div class="stat-box">
                 <div class="stat-number">-25%</div>
                 <div class="stat-label">Redução de retrabalho</div>
             </div>
-            ''', unsafe_allow_html=True)
-
-        with stats_col3:
-            st.markdown('''
-            <div class="stat-card">
+            <div class="stat-box">
                 <div class="stat-number">+45%</div>
                 <div class="stat-label">Aumento no faturamento</div>
             </div>
-            ''', unsafe_allow_html=True)
+        </div>
+        ''', unsafe_allow_html=True)
 
-        # Benefícios principais
-        st.markdown("<h3>Por que escolher o Planner Organizer?</h3>", unsafe_allow_html=True)
+        # Seção "Por que escolher o Planner Organizer?"
+        st.markdown('<h3 class="section-title">Por que escolher o Planner Organizer?</h3>', unsafe_allow_html=True)
 
-        benefits_col1, benefits_col2 = st.columns(2)
-
-        with benefits_col1:
-            st.markdown('''
-            <div class="feature-card">
-                <div class="feature-title">📊 Gestão Completa de Propostas</div>
-                <div class="feature-description">
-                    Controle todo o ciclo de vida das suas propostas em um único local, desde a elaboração até a finalização.
+        st.markdown('''
+        <div class="feature-grid">
+            <div class="feature-box">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">Gestão Completa de Propostas</div>
+                <div class="feature-desc">
+                    Controle todo o ciclo de vida das suas propostas em um único local, 
+                    desde a elaboração até a finalização.
                 </div>
             </div>
-            ''', unsafe_allow_html=True)
-
-            st.markdown('''
-            <div class="feature-card">
-                <div class="feature-title">📱 Acesso de Qualquer Lugar</div>
-                <div class="feature-description">
-                    Sistema web responsivo que pode ser acessado de qualquer dispositivo, a qualquer momento.
+            <div class="feature-box">
+                <div class="feature-icon">💰</div>
+                <div class="feature-title">Controle Financeiro</div>
+                <div class="feature-desc">
+                    Gerencie receitas, despesas e comissões de forma automatizada e 
+                    integrada com suas propostas.
                 </div>
             </div>
-            ''', unsafe_allow_html=True)
-
-        with benefits_col2:
-            st.markdown('''
-            <div class="feature-card">
-                <div class="feature-title">💰 Controle Financeiro</div>
-                <div class="feature-description">
-                    Gerencie receitas, despesas e comissões de forma automatizada e integrada com suas propostas.
+            <div class="feature-box">
+                <div class="feature-icon">📱</div>
+                <div class="feature-title">Acesso de Qualquer Lugar</div>
+                <div class="feature-desc">
+                    Sistema web responsivo que pode ser acessado de qualquer dispositivo, 
+                    a qualquer momento.
                 </div>
             </div>
-            ''', unsafe_allow_html=True)
-
-            st.markdown('''
-            <div class="feature-card">
-                <div class="feature-title">📄 Relatórios Profissionais</div>
-                <div class="feature-description">
-                    Gere relatórios personalizados para clientes e para controle interno da sua operação.
+            <div class="feature-box">
+                <div class="feature-icon">📄</div>
+                <div class="feature-title">Relatórios Profissionais</div>
+                <div class="feature-desc">
+                    Gere relatórios personalizados para clientes e para controle interno 
+                    da sua operação.
                 </div>
             </div>
-            ''', unsafe_allow_html=True)
+        </div>
+        ''', unsafe_allow_html=True)
 
         # Depoimentos de clientes
         st.markdown("<h3>O que nossos clientes dizem</h3>", unsafe_allow_html=True)
