@@ -446,22 +446,36 @@ def show():
 
             with st.container():
                 st.markdown("""
-                <div style='background-color: #2A3F5F; padding: 10px; border-radius: 7px; margin-bottom: 15px;'>
-                    <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>✨ Hoje</h4>
+                <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                            padding: 12px 15px; border-radius: 8px; margin-bottom: 15px;'>
+                    <div style='color: #F1A208; margin: 0; font-size: 1rem; font-weight: bold;'>
+                        ✨ Hoje
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
                 
                 if not aniversariantes_hoje.empty:
                     for _, aniversariante in aniversariantes_hoje.iterrows():
-                        with st.container():
-                            st.markdown(f"""
-                            <div style='background-color: #304878; padding: 10px; border-radius: 5px; margin-bottom: 8px;'>
-                                <div style='font-weight: bold; color: white;'>🎈 {aniversariante['nome']}</div>
-                                {"<div style='color: #E2E8F0; font-size: 0.9em;'>📱 " + aniversariante['telefone'] + "</div>" if aniversariante['telefone'] else ""}
+                        st.markdown(f"""
+                        <div style='background: linear-gradient(135deg, #6c8cc4 0%, #8aa8d1 100%); 
+                                    padding: 12px 15px; border-radius: 6px; margin-bottom: 8px;'>
+                            <div style='color: white; font-weight: 600; margin-bottom: 4px;'>
+                                ✓ {aniversariante['nome']}
                             </div>
-                            """, unsafe_allow_html=True)
+                            <div style='color: #E8F4FD; font-size: 0.85rem;'>
+                                📱 {aniversariante.get('telefone', 'Não informado')}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
                 else:
-                    st.info("Nenhum aniversariante hoje!")
+                    st.markdown("""
+                    <div style='background: #f8f9fa; border: 1px solid #e9ecef; 
+                                padding: 12px 15px; border-radius: 6px; margin-bottom: 15px;'>
+                        <p style='margin: 0; color: #6c757d; text-align: center;'>
+                            Nenhum aniversariante hoje!
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
 
             # Aniversariantes do mês atual
             aniversariantes_mes = clientes[
@@ -471,8 +485,11 @@ def show():
             
             with st.container():
                 st.markdown(f"""
-                <div style='background-color: #2A3F5F; padding: 10px; border-radius: 7px; margin: 15px 0;'>
-                    <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>🗓️ Mês de {nome_mes_completo}</h4>
+                <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                            padding: 12px 15px; border-radius: 8px; margin: 15px 0;'>
+                    <div style='color: #F1A208; margin: 0; font-size: 1rem; font-weight: bold;'>
+                        📅 Mês de {nome_mes_completo}
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -487,25 +504,37 @@ def show():
                         dia_aniv = int(aniversariante['data_aniversario'].split('/')[0])
                         passou = dia_aniv < hoje.day
                         
-                        with st.container():
-                            st.markdown(f"""
-                            <div style='background-color: {'#375170' if not passou else '#415570'}; padding: 10px; 
-                                  border-radius: 5px; margin-bottom: 8px; opacity: {'1' if not passou else '0.8'};'>
-                                <div style='font-weight: bold; color: white;'>
-                                    {'🎂' if not passou else '✓'} {aniversariante['nome']} 
-                                    <span style='font-weight: normal; color: {"#F1A208" if not passou else "#B0B0B0"}; 
-                                          font-size: 0.9em;'>({aniversariante['data_aniversario']})</span>
-                                </div>
-                                {"<div style='color: #E2E8F0; font-size: 0.9em;'>📱 " + aniversariante['telefone'] + "</div>" if aniversariante['telefone'] else ""}
+                        st.markdown(f"""
+                        <div style='background: linear-gradient(135deg, #6c8cc4 0%, #8aa8d1 100%); 
+                                    padding: 12px 15px; border-radius: 6px; margin-bottom: 8px;'>
+                            <div style='color: white; font-weight: 600; margin-bottom: 4px;'>
+                                {'✓' if passou else '✓'} {aniversariante['nome']} 
+                                <span style='font-weight: normal; color: #E8F4FD; font-size: 0.85rem;'>
+                                    ({aniversariante['data_aniversario']})
+                                </span>
                             </div>
-                            """, unsafe_allow_html=True)
+                            <div style='color: #E8F4FD; font-size: 0.85rem;'>
+                                📱 {aniversariante.get('telefone', 'Não informado')}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
                 else:
-                    st.info(f"Nenhum aniversariante em {nome_mes_completo}.")
+                    st.markdown(f"""
+                    <div style='background: #f8f9fa; border: 1px solid #e9ecef; 
+                                padding: 12px 15px; border-radius: 6px; margin-bottom: 15px;'>
+                        <p style='margin: 0; color: #6c757d; text-align: center;'>
+                            Nenhum aniversariante em {nome_mes_completo}.
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
 
             # Próximos aniversariantes (próximos dias)
             st.markdown("""
-            <div style='background-color: #2A3F5F; padding: 10px; border-radius: 7px; margin: 15px 0;'>
-                <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>🔜 Próximos 7 dias</h4>
+            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                        padding: 12px 15px; border-radius: 8px; margin: 15px 0;'>
+                <div style='color: #F1A208; margin: 0; font-size: 1rem; font-weight: bold;'>
+                    🔜 Próximos 7 dias
+                </div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -527,17 +556,29 @@ def show():
 
             if not proximos.empty:
                 for _, proximo in proximos.iterrows():
-                    with st.container():
-                        st.markdown(f"""
-                        <div style='background-color: #304878; padding: 10px; border-radius: 5px; margin-bottom: 8px;'>
-                            <div style='font-weight: bold; color: white;'>🎂 {proximo['nome']} 
-                                <span style='font-weight: normal; color: #F1A208; font-size: 0.9em;'>({proximo['data_aniversario']})</span>
-                            </div>
-                            {"<div style='color: #E2E8F0; font-size: 0.9em;'>📱 " + proximo['telefone'] + "</div>" if proximo['telefone'] else ""}
+                    st.markdown(f"""
+                    <div style='background: linear-gradient(135deg, #6c8cc4 0%, #8aa8d1 100%); 
+                                padding: 12px 15px; border-radius: 6px; margin-bottom: 8px;'>
+                        <div style='color: white; font-weight: 600; margin-bottom: 4px;'>
+                            ✓ {proximo['nome']} 
+                            <span style='font-weight: normal; color: #E8F4FD; font-size: 0.85rem;'>
+                                ({proximo['data_aniversario']})
+                            </span>
                         </div>
-                        """, unsafe_allow_html=True)
+                        <div style='color: #E8F4FD; font-size: 0.85rem;'>
+                            📱 {proximo.get('telefone', 'Não informado')}
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
             else:
-                st.info("Nenhum aniversariante nos próximos dias.")
+                st.markdown("""
+                <div style='background: #f8f9fa; border: 1px solid #e9ecef; 
+                            padding: 12px 15px; border-radius: 6px; margin-bottom: 15px;'>
+                    <p style='margin: 0; color: #6c757d; text-align: center;'>
+                        Nenhum aniversariante nos próximos 7 dias.
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
         else:
             st.info("Nenhum cliente cadastrado com data de aniversário.")
             
