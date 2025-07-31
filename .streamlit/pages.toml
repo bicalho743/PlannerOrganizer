@@ -1,32 +1,38 @@
+# Desabilitar navegação automática de páginas do Streamlit
+# Sistema usa navegação customizada no app.py
+
 [pages]
-# Desativar a exibição automática de páginas na barra lateral
-enableAutoPagePositioning = false
+# Ocultar automaticamente todas as páginas da pasta pages/
+hidden = true
 
-# Especificar exatamente quais páginas devem ser exibidas
-page_to_show = [
-    "Dashboard",
-    "Cadastros", 
-    "Propostas", 
-    "Financeiro", 
-    "Relatórios"
-]
-
-# Ocultar todos os outros arquivos
-hidePage = [
+# Lista completa de arquivos para ocultar
+hide = [
     "pages/admin.py",
-    "pages/andamento.py",
+    "pages/andamento.py", 
     "pages/backup.py",
     "pages/clientes.py",
-    "pages/importacao.py",
-    "pages/login.py",
-    "pages/pagamentos.py",
-    "pages/teste_importacao.py",
-    "admin.py",
-    "andamento.py",
-    "backup.py",
-    "clientes.py",
-    "importacao.py",
-    "login.py",
-    "pagamentos.py",
-    "teste_importacao.py"
+    "pages/dashboard.py",
+    "pages/debug.py",
+    "pages/financeiro.py",
+    "pages/todas_propostas.py",
+    "pages/vendas.py",
+    "pages/propostas_unificado.py",
+    "pages/cadastros.py",
+    "pages/relatorios.py",
+    "pages/perfil.py",
+    "pages/propostas.py",
+    "pages/manual_sistema.py",
+    "pages/exclusao_dados.py",
+    "pages/boas_vindas.py",
+    "pages/clientes_direct.py",
+    "pages/recuperar_senha.py",
+    "pages/registrar.py",
+    "pages/termos_de_uso.py",
+    "pages/gerar_lancamentos_propostas.py",
+    "pages/politica_privacidade.py",
+    "pages/planos.py",
+    "pages/demo_status_proposta.py",
+    "pages/propostas_finalizadas.py",
+    "pages/enviar_manual.py",
+    "pages/__init__.py"
 ]

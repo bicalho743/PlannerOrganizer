@@ -79,6 +79,9 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **CORRIGIDO**: CSS malformado no app.py que causava erro "invalid decimal literal"
 - **REMOVIDO**: Blocos CSS soltos que estavam fora de strings causando erro de sintaxe
 - **ESTABILIZADO**: Aplicação deve carregar sem erros após limpeza do CSS problemático
+- **CORRIGIDO**: Sidebar mostrando todos os arquivos de páginas ao invés dos módulos principais
+- **RECONFIGURADO**: Arquivo .streamlit/pages.toml para ocultar navegação automática
+- **APLICADO**: Sistema usa apenas navegação customizada com MENU_PRINCIPAL definido no app.py
 
 ### 2025-07-24
 - **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira
