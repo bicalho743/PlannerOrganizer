@@ -701,8 +701,22 @@ def show():
                             </div>
                             """, unsafe_allow_html=True)
                 else:
-                    st.info("Não há clientes aguardando retorno no momento.")
+                    st.markdown("""
+                    <div style='background: #f8f9fa; border: 1px solid #e9ecef; 
+                                padding: 12px 15px; border-radius: 6px; margin-bottom: 15px;'>
+                        <p style='margin: 0; color: #6c757d; text-align: center;'>
+                            Não há clientes aguardando retorno no momento.
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
             else:
-                st.info("Não há propostas em execução no sistema.")
+                st.markdown("""
+                <div style='background: #f8f9fa; border: 1px solid #e9ecef; 
+                            padding: 12px 15px; border-radius: 6px; margin-bottom: 15px;'>
+                    <p style='margin: 0; color: #6c757d; text-align: center;'>
+                        Não há propostas em execução no sistema.
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
         except Exception as e:
             st.warning("Erro ao processar alertas de retorno ao cliente.")

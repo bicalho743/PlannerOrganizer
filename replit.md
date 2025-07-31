@@ -72,6 +72,8 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **MELHORADO**: Visibilidade de texto em todos os cards com color: white explícito
 - **CORRIGIDO**: Fontes dos cards forçadas com !important para garantir cor branca
 - **PADRONIZADO**: Barras de aniversariantes com cor da barra lateral (#1E366F, #2A4D8F)
+- **APLICADO**: Mesmo estilo de mensagem vazia para alertas de retorno ao cliente
+- **PADRONIZADO**: Mensagens informativas com fundo cinza claro e bordas consistentes
 
 ### 2025-07-24
 - **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira
