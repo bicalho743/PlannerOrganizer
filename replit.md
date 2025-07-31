@@ -76,6 +76,9 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **PADRONIZADO**: Mensagens informativas com fundo cinza claro e bordas consistentes
 - **CORRIGIDO**: Erro crítico "name 'st' is not defined" em utils/force_spacing_fix.py
 - **RESTAURADO**: Dashboard funcionando normalmente após correção da importação do streamlit
+- **CORRIGIDO**: CSS malformado no app.py que causava erro "invalid decimal literal"
+- **REMOVIDO**: Blocos CSS soltos que estavam fora de strings causando erro de sintaxe
+- **ESTABILIZADO**: Aplicação deve carregar sem erros após limpeza do CSS problemático
 
 ### 2025-07-24
 - **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira
