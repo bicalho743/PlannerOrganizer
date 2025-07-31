@@ -2,6 +2,12 @@
 headless = true
 address = "0.0.0.0"
 port = 5000
+
+[client]
+showSidebarNavigation = false
+
+[ui]
+hideTopBar = true
 enableCORS = true
 enableWebsocketCompression = false
 enableXsrfProtection = false

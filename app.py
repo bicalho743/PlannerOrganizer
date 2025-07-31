@@ -885,12 +885,38 @@ except Exception as e:
 
 # Sem título na barra lateral - removido conforme solicitação
 
-# CSS para ajustar a barra lateral mais próxima do topo e padronizar menus
-st.sidebar.markdown("""
+# CSS para ocultar navegação automática e ajustar a barra lateral
+st.markdown("""
 <style>
+/* Ocultar navegação automática de páginas */
+[data-testid="stSidebarNav"] {
+    display: none !important;
+}
+
+/* Ocultar elementos de navegação do topo */
+[data-testid="stHeader"] {
+    display: none !important;
+}
+
+/* Ocultar menu dropdown de páginas */
+.css-1d391kg, .css-1kyxreq, .css-1l02zno {
+    display: none !important;
+}
+
+/* Ajustar barra lateral */
 section[data-testid="stSidebar"] > div {
     padding-top: 0 !important;
     margin-top: 0 !important;
+}
+
+/* Ocultar qualquer lista de páginas na sidebar */
+section[data-testid="stSidebar"] nav {
+    display: none !important;
+}
+
+/* Ocultar links de navegação automática */
+section[data-testid="stSidebar"] ul {
+    display: none !important;
 }
 </style>
 """, unsafe_allow_html=True)

@@ -82,6 +82,8 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **CORRIGIDO**: Sidebar mostrando todos os arquivos de páginas ao invés dos módulos principais
 - **RECONFIGURADO**: Arquivo .streamlit/pages.toml para ocultar navegação automática
 - **APLICADO**: Sistema usa apenas navegação customizada com MENU_PRINCIPAL definido no app.py
+- **ADICIONADO**: CSS força absoluta para ocultar navegação automática do Streamlit
+- **CONFIGURADO**: .streamlit/config.toml com showSidebarNavigation = false e hideTopBar = true
 
 ### 2025-07-24
 - **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira
