@@ -261,15 +261,15 @@ def show():
         <div style="background: linear-gradient(135deg, #1E366F, #2A4D8F); 
              color: white; padding: 20px; border-radius: 10px; 
              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-            <div style="font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center;">
+            <div style="font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center; color: white;">
                 <span style="background-color: rgba(255,255,255,0.2); 
                        border-radius: 50%; width: 32px; height: 32px; 
                        display: flex; align-items: center; justify-content: center;
-                       margin-right: 10px;">👥</span>
-                <span><strong>Clientes</strong></span>
+                       margin-right: 10px; color: white;">👥</span>
+                <span style="color: white;"><strong>Clientes</strong></span>
             </div>
-            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0;">{}</div>
-            <div style="font-size: 0.9rem; opacity: 0.9;">Total de clientes cadastrados</div>
+            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0; color: white;">{}</div>
+            <div style="font-size: 0.9rem; opacity: 0.9; color: white;">Total de clientes cadastrados</div>
         </div>
         """.format(total_clientes), unsafe_allow_html=True)
 
@@ -279,15 +279,15 @@ def show():
         <div style="background: linear-gradient(135deg, #FF9800, #FF5722); 
              color: white; padding: 20px; border-radius: 10px; 
              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-            <div style="font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center;">
+            <div style="font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center; color: white;">
                 <span style="background-color: rgba(255,255,255,0.2); 
                        border-radius: 50%; width: 32px; height: 32px; 
                        display: flex; align-items: center; justify-content: center;
-                       margin-right: 10px;">📝</span>
-                <span><strong>Propostas</strong></span>
+                       margin-right: 10px; color: white;">📝</span>
+                <span style="color: white;"><strong>Propostas</strong></span>
             </div>
-            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0;">{}</div>
-            <div style="font-size: 0.9rem; opacity: 0.9;">Propostas em aberto</div>
+            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0; color: white;">{}</div>
+            <div style="font-size: 0.9rem; opacity: 0.9; color: white;">Propostas em aberto</div>
         </div>
         """.format(propostas_em_aberto), unsafe_allow_html=True)
 
@@ -300,17 +300,17 @@ def show():
         <div style="background: linear-gradient(135deg, {0}, {1}); 
              color: white; padding: 20px; border-radius: 10px; 
              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-            <div style="font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center;">
+            <div style="font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center; color: white;">
                 <span style="background-color: rgba(255,255,255,0.2); 
                        border-radius: 50%; width: 32px; height: 32px; 
                        display: flex; align-items: center; justify-content: center;
-                       margin-right: 10px;">💰</span>
-                <span><strong>Saldo</strong></span>
+                       margin-right: 10px; color: white;">💰</span>
+                <span style="color: white;"><strong>Saldo</strong></span>
             </div>
-            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0;">{2}</div>
-            <div style="font-size: 0.9rem; opacity: 0.9;">
-                <span style="margin-right: 10px;">📥 {3}</span>
-                <span>📤 {4}</span>
+            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0; color: white;">{2}</div>
+            <div style="font-size: 0.9rem; opacity: 0.9; color: white;">
+                <span style="margin-right: 10px; color: white;">📥 {3}</span>
+                <span style="color: white;">📤 {4}</span>
             </div>
         </div>
         """.format(cor_fundo, cor_secundaria, format_currency_br(saldo_liquido), format_currency_br(valores_receber), format_currency_br(valores_pagar)), unsafe_allow_html=True)

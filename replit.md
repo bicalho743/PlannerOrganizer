@@ -68,6 +68,8 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **PADRONIZADO**: Layout do dashboard seguindo versão de produção com ícones e formatação
 - **IMPLEMENTADO**: Seção "Aniversariantes" com design igual à versão de produção
 - **APLICADO**: Gradientes azuis e layout de cards para aniversariantes (Hoje, Mês, Próximos 7 dias)
+- **CORRIGIDO**: Fontes dos cards de métricas forçadas para branco seguindo versão de produção
+- **MELHORADO**: Visibilidade de texto em todos os cards com color: white explícito
 
 ### 2025-07-24
 - **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira
