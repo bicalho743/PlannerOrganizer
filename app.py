@@ -807,9 +807,6 @@ if not st.session_state.authenticated:
     .stDeployButton {visibility: hidden;}
     
     /* Rodapé removido do app.py - apenas page_config.py usado */
-    </style>
-    
-
     """, unsafe_allow_html=True)
     
     # Layout principal com duas colunas

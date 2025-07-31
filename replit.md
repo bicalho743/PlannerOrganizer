@@ -60,6 +60,8 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **ESTABILIZADO**: Aplicação deve carregar sem loops após remoção do JavaScript problemático
 - **CORRIGIDO**: Login agora usa st.rerun() único para completar transição para dashboard
 - **MELHORADO**: Estado da página alterado antes da mensagem de sucesso para transição imediata
+- **CORRIGIDO**: Tag `</style>` solta no dashboard que aparecia como texto na tela
+- **REMOVIDO**: HTML malformado que causava exibição incorreta de CSS como texto
 
 ### 2025-07-24
 - **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira
