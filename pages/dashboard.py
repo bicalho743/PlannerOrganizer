@@ -111,24 +111,6 @@ def show():
         # CSS removido para evitar tags malformadas
         
         st.markdown(f"""
-        <style>
-        /* Força o conteúdo a ficar colado no cabeçalho com máxima prioridade */
-        .main .block-container,
-        [data-testid="stAppViewContainer"] .main .block-container,
-        .stApp .main .block-container {{
-            padding-top: 0px !important;
-            margin-top: 80px !important;
-        }}
-        </style>
-        <script>
-        setTimeout(function() {{
-            const containers = document.querySelectorAll('.block-container, [data-testid="block-container"]');
-            containers.forEach(container => {{
-                container.style.paddingTop = '0px';
-                container.style.marginTop = '80px';
-            }});
-        }}, 100);
-        </script>
         <div style="text-align: center; margin: -10px 0 25px 0; padding-top: 0; position: relative; top: 0px;">
             <p style="font-style: italic; color: #1E366F; margin: 0; font-size: 1.1rem; font-weight: 500;">
                 "{frase['texto']}"

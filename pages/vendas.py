@@ -28,14 +28,14 @@ def show():
             });
         }, 100);
     }
-    
+
     // Executar correção imediatamente e monitorar mudanças
     fixSelectboxVisibility();
     const observer = new MutationObserver(fixSelectboxVisibility);
     observer.observe(document.body, { childList: true, subtree: true });
     </script>
     """, unsafe_allow_html=True)
-    
+
     # Verificar se o db está na sessão
     if 'db' not in st.session_state:
         st.error("Erro: Conexão com banco de dados não inicializada")
@@ -271,7 +271,7 @@ def show():
                                     text-shadow: 1px 1px 1px #ffffff !important;
                                 }
                                 </style>
-                                
+
                                 <script>
                                 setTimeout(function() {
                                     const editSelectbox = document.querySelector('.produto-edit-selectbox');
@@ -286,15 +286,15 @@ def show():
                                 }, 100);
                                 </script>
                                 """)
-                                
+
                                 with st.container():
                                     st.markdown('<div class="produto-edit-selectbox">', unsafe_allow_html=True)
-                                    
+
                                     produto_id = st.selectbox("Selecione o produto", 
                                                             options=produtos_df['id'].tolist(),
                                                             format_func=lambda x: f"{x} - {produtos_df[produtos_df['id'] == x]['nome'].iloc[0]}",
                                                             key="selectbox_produto_edit")
-                                    
+
                                     st.markdown('</div>', unsafe_allow_html=True)
 
                                 if produto_id:
@@ -357,7 +357,7 @@ def show():
                                     text-shadow: 1px 1px 1px #ffffff !important;
                                 }
                                 </style>
-                                
+
                                 <script>
                                 setTimeout(function() {
                                     const removeSelectbox = document.querySelector('.produto-remove-selectbox');
@@ -372,15 +372,15 @@ def show():
                                 }, 100);
                                 </script>
                                 """)
-                                
+
                                 with st.container():
                                     st.markdown('<div class="produto-remove-selectbox">', unsafe_allow_html=True)
-                                    
+
                                     produto_remover_id = st.selectbox("Selecione o produto para excluir", 
                                                                     options=produtos_df['id'].tolist(),
                                                                     format_func=lambda x: f"{x} - {produtos_df[produtos_df['id'] == x]['nome'].iloc[0]}", 
                                                                     key="selectbox_produto_remove")
-                                    
+
                                     st.markdown('</div>', unsafe_allow_html=True)
 
                                 # Variável de estado para controlar o fluxo de exclusão
@@ -466,7 +466,7 @@ def show():
                 text-shadow: 1px 1px 1px #ffffff !important;
             }
             </style>
-            
+
             <script>
             setTimeout(function() {
                 const clienteSelectbox = document.querySelector('.cliente-selectbox');
@@ -481,17 +481,17 @@ def show():
             }, 100);
             </script>
             """)
-            
+
             with st.container():
                 st.markdown('<div class="cliente-selectbox">', unsafe_allow_html=True)
-                
+
                 cliente_id = st.selectbox(
                     "Selecione o Cliente", 
                     options=clientes_df['id'].tolist(),
                     format_func=lambda x: f"{x} - {clientes_df[clientes_df['id'] == x]['nome'].iloc[0]}",
                     key="selectbox_cliente_nova_venda"
                 )
-                
+
                 st.markdown('</div>', unsafe_allow_html=True)
 
             # Adicionar produtos à venda
@@ -518,7 +518,7 @@ def show():
                             text-shadow: 1px 1px 1px #ffffff !important;
                         }
                         </style>
-                        
+
                         <script>
                         setTimeout(function() {
                             const produtoSelectbox = document.querySelector('.produto-selectbox');
@@ -533,17 +533,17 @@ def show():
                         }, 100);
                         </script>
                         """)
-                        
+
                         with st.container():
                             st.markdown('<div class="produto-selectbox">', unsafe_allow_html=True)
-                            
+
                             produto_id = st.selectbox(
                                 "Selecione o Produto",
                                 options=produtos_disponiveis['id'].tolist(),
                                 format_func=lambda x: f"{x} - {produtos_disponiveis[produtos_disponiveis['id'] == x]['nome'].iloc[0]}",
                                 key="selectbox_produto_nova_venda"
                             )
-                            
+
                             st.markdown('</div>', unsafe_allow_html=True)
 
                 with col2:
@@ -714,7 +714,7 @@ def show():
                                 '[data-testid="stSelectbox"], .stSelectbox, div[data-testid="stSelectbox"], ' +
                                 '[role="combobox"], [role="listbox"], select'
                             );
-                            
+
                             allSelectboxes.forEach(selectbox => {
                                 // FORÇA ABSOLUTA - aplicar estilo com setProperty
                                 const allChildren = selectbox.querySelectorAll('*');
@@ -724,21 +724,21 @@ def show():
                                     el.style.setProperty('font-weight', '500', 'important');
                                     el.style.setProperty('opacity', '1', 'important');
                                     el.style.setProperty('visibility', 'visible', 'important');
-                                    
+
                                     // Remover qualquer text-shadow ou sombra que possa ocultar o texto
                                     el.style.setProperty('text-shadow', 'none', 'important');
                                     el.style.setProperty('box-shadow', 'none', 'important');
                                 });
-                                
+
                                 // Container principal
                                 selectbox.style.setProperty('background-color', '#ffffff', 'important');
                                 selectbox.style.setProperty('color', '#1e1e1e', 'important');
-                                
+
                                 // Buscar por elementos específicos que podem conter texto
                                 const textContainers = selectbox.querySelectorAll(
                                     'span, div, input, p, label, [data-baseweb="select"], [data-baseweb="input"]'
                                 );
-                                
+
                                 textContainers.forEach(el => {
                                     if (el.textContent || el.value) {
                                         el.style.setProperty('color', '#1e1e1e', 'important');
@@ -748,14 +748,14 @@ def show():
                                 });
                             });
                         }
-                        
+
                         // Executar imediatamente
                         forceSelectboxVisibility();
                     }, 500);
 
                         // Executar periodicamente para garantir persistência
                         setInterval(forceSelectboxVisibility, 100);
-                        
+
                         // Observar mudanças no DOM 
                         const observer = new MutationObserver(function(mutations) {
                             let shouldFix = false;
@@ -764,7 +764,7 @@ def show():
                                     shouldFix = true;
                                 }
                             });
-                            
+
                             if (shouldFix) {
                                 setTimeout(forceSelectboxVisibility, 50);
                             }
@@ -825,13 +825,13 @@ def show():
 
                 # Detalhes da venda selecionada
                 st.subheader("Detalhes da Venda")
-                
+
                 # SOLUÇÃO SIMPLES E FUNCIONAL - SELECTBOX COM INDEX
                 venda_options = ["-- Escolha uma venda --"] + [
                     f"{row['id']} - {row['cliente_nome']} ({row['data_venda']})" 
                     for _, row in vendas_df.iterrows()
                 ]
-                
+
                 # CORREÇÃO EXTREMA PARA SELECTBOX INVISÍVEL
                 st.html("""
                 <style>
@@ -857,7 +857,7 @@ def show():
                     text-shadow: none !important;
                     box-shadow: none !important;
                 }
-                
+
                 /* Container principal */
                 .venda-selectbox {
                     background-color: #ffffff !important;
@@ -866,7 +866,7 @@ def show():
                     padding: 2px !important;
                 }
                 </style>
-                
+
                 <script>
                 function extremeSelectboxFix() {
                     setTimeout(function() {
@@ -883,44 +883,44 @@ def show():
                                 el.style.setProperty('visibility', 'visible', 'important');
                                 el.style.setProperty('text-shadow', 'none', 'important');
                                 el.style.setProperty('box-shadow', 'none', 'important');
-                                
+
                                 // Remover qualquer estilo conflitante
                                 el.style.removeProperty('text-decoration');
                                 el.style.removeProperty('filter');
                                 el.style.removeProperty('transform');
                             });
-                            
+
                             // Container principal com borda visível
                             vendaSelectbox.style.setProperty('background-color', '#ffffff', 'important');
                             vendaSelectbox.style.setProperty('border', '2px solid #007bff', 'important');
                         }
                     }, 50);
                 }
-                
+
                 // Executar múltiplas vezes para garantir
                 extremeSelectboxFix();
                 setTimeout(extremeSelectboxFix, 100);
                 setTimeout(extremeSelectboxFix, 300);
                 setTimeout(extremeSelectboxFix, 500);
-                
+
                 // Monitorar mudanças continuamente
                 const observer = new MutationObserver(extremeSelectboxFix);
                 observer.observe(document.body, { childList: true, subtree: true });
                 </script>
                 """)
-                
+
                 # Container com classe para CSS específico
                 with st.container():
                     st.markdown('<div class="venda-selectbox">', unsafe_allow_html=True)
-                    
+
                     selected_option = st.selectbox(
                         "Selecione uma venda para ver detalhes:",
                         options=venda_options,
                         key="selectbox_venda_historico_simples"
                     )
-                    
+
                     st.markdown('</div>', unsafe_allow_html=True)
-                
+
                 # Extrair venda_id da seleção
                 if selected_option and selected_option != "-- Escolha uma venda --":
                     venda_id = int(selected_option.split(' - ')[0])
@@ -954,7 +954,7 @@ def show():
 
                     # SEMPRE mostrar os botões, mesmo sem itens
                     st.subheader("Itens da Venda")
-                    
+
                     if not itens_df.empty:
                         # Formatar valores
                         itens_df_display = itens_df.copy()
@@ -1272,14 +1272,14 @@ def show():
     // CORREÇÃO JAVASCRIPT ULTRA-ROBUSTA PARA SELECTBOX
     function forceSelectboxVisibility() {
         console.log('Executando correção de selectbox...');
-        
+
         // Buscar TODOS os selectbox
         const selectboxes = document.querySelectorAll('[data-testid="stSelectbox"]');
         console.log('Encontrados ' + selectboxes.length + ' selectboxes');
 
         selectboxes.forEach((selectbox, index) => {
             console.log('Processando selectbox ' + index);
-            
+
             // Forçar container principal
             selectbox.style.setProperty('background-color', '#ffffff', 'important');
             selectbox.style.setProperty('border', '1px solid #cccccc', 'important');
@@ -1295,7 +1295,7 @@ def show():
                 element.style.setProperty('opacity', '1', 'important');
                 element.style.setProperty('visibility', 'visible', 'important');
                 element.style.setProperty('text-shadow', '1px 1px 1px #ffffff', 'important');
-                
+
                 // Garantir fundo transparente para elementos de texto
                 if (element.tagName !== 'svg') {
                     element.style.setProperty('background-color', 'transparent', 'important');

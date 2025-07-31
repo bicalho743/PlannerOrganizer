@@ -19,8 +19,7 @@ def show():
         st.error("Erro: Conexão com banco de dados não disponível")
         return
     
-    # Container com classe CSS padronizada
-    st.markdown('<div class="propostas-container">', unsafe_allow_html=True)
+    # Container simples - CSS está no arquivo centralizado
     
     # Criar abas - versão simplificada para garantir que todas apareçam
     try:

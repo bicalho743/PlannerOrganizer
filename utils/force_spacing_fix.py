@@ -1,8 +1,8 @@
 """
-Módulo para aplicar CSS forçado para corrigir o espaçamento entre cabeçalho e conteúdo
+MÓDULO DESATIVADO - CSS centralizado no arquivo .streamlit/style.css
 """
 
-import streamlit as st
+# import streamlit as st
 
 def apply_spacing_fix():
     """

@@ -1,10 +1,10 @@
 """
-Módulo para correção da visibilidade de selectbox no Streamlit
+MÓDULO DESATIVADO - CSS centralizado no arquivo .streamlit/style.css
 Problema: Texto dos selectbox aparece invisível/branco
-Solução: CSS e JavaScript agressivos para forçar visibilidade
+Solução: CSS unificado no arquivo principal
 """
 
-import streamlit as st
+# import streamlit as st
 
 def inject_selectbox_fix():
     """
