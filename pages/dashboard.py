@@ -108,18 +108,7 @@ def show():
     if random.choice([True, False]):
         # Mostrar uma frase motivacional
         frase = random.choice(frases_motivacionais)
-        # CSS para forçar redução do espaçamento
-        st.markdown("""
-        <style>
-        .main .block-container {
-            padding-top: 0px !important;
-        }
-        .stApp > div:first-child {
-            padding-top: 0 !important;
-            margin-top: 0 !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
+        # CSS removido para evitar tags malformadas
         
         st.markdown(f"""
         <style>

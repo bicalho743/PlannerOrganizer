@@ -62,6 +62,8 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **MELHORADO**: Estado da página alterado antes da mensagem de sucesso para transição imediata
 - **CORRIGIDO**: Tag `</style>` solta no dashboard que aparecia como texto na tela
 - **REMOVIDO**: HTML malformado que causava exibição incorreta de CSS como texto
+- **CORRIGIDO**: CSS malformado no dashboard.py que exibia `</style>` como texto
+- **REMOVIDO**: Blocos CSS redundantes que causavam problemas de renderização
 
 ### 2025-07-24
 - **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira
