@@ -266,10 +266,10 @@ def show():
                        border-radius: 50%; width: 32px; height: 32px; 
                        display: flex; align-items: center; justify-content: center;
                        margin-right: 10px; color: white;">👥</span>
-                <span style="color: white;"><strong>Clientes</strong></span>
+                <span style="color: white !important;"><strong>Clientes</strong></span>
             </div>
-            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0; color: white;">{}</div>
-            <div style="font-size: 0.9rem; opacity: 0.9; color: white;">Total de clientes cadastrados</div>
+            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0; color: white !important;">{}</div>
+            <div style="font-size: 0.9rem; opacity: 0.9; color: white !important;">Total de clientes cadastrados</div>
         </div>
         """.format(total_clientes), unsafe_allow_html=True)
 
@@ -284,10 +284,10 @@ def show():
                        border-radius: 50%; width: 32px; height: 32px; 
                        display: flex; align-items: center; justify-content: center;
                        margin-right: 10px; color: white;">📝</span>
-                <span style="color: white;"><strong>Propostas</strong></span>
+                <span style="color: white !important;"><strong>Propostas</strong></span>
             </div>
-            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0; color: white;">{}</div>
-            <div style="font-size: 0.9rem; opacity: 0.9; color: white;">Propostas em aberto</div>
+            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0; color: white !important;">{}</div>
+            <div style="font-size: 0.9rem; opacity: 0.9; color: white !important;">Propostas em aberto</div>
         </div>
         """.format(propostas_em_aberto), unsafe_allow_html=True)
 
@@ -305,12 +305,12 @@ def show():
                        border-radius: 50%; width: 32px; height: 32px; 
                        display: flex; align-items: center; justify-content: center;
                        margin-right: 10px; color: white;">💰</span>
-                <span style="color: white;"><strong>Saldo</strong></span>
+                <span style="color: white !important;"><strong>Saldo</strong></span>
             </div>
-            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0; color: white;">{2}</div>
-            <div style="font-size: 0.9rem; opacity: 0.9; color: white;">
-                <span style="margin-right: 10px; color: white;">📥 {3}</span>
-                <span style="color: white;">📤 {4}</span>
+            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0; color: white !important;">{2}</div>
+            <div style="font-size: 0.9rem; opacity: 0.9; color: white !important;">
+                <span style="margin-right: 10px; color: white !important;">📥 {3}</span>
+                <span style="color: white !important;">📤 {4}</span>
             </div>
         </div>
         """.format(cor_fundo, cor_secundaria, format_currency_br(saldo_liquido), format_currency_br(valores_receber), format_currency_br(valores_pagar)), unsafe_allow_html=True)
@@ -446,7 +446,7 @@ def show():
 
             with st.container():
                 st.markdown("""
-                <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                <div style='background: linear-gradient(135deg, #1E366F, #2A4D8F); 
                             padding: 12px 15px; border-radius: 8px; margin-bottom: 15px;'>
                     <div style='color: #F1A208; margin: 0; font-size: 1rem; font-weight: bold;'>
                         ✨ Hoje
@@ -485,7 +485,7 @@ def show():
             
             with st.container():
                 st.markdown(f"""
-                <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                <div style='background: linear-gradient(135deg, #1E366F, #2A4D8F); 
                             padding: 12px 15px; border-radius: 8px; margin: 15px 0;'>
                     <div style='color: #F1A208; margin: 0; font-size: 1rem; font-weight: bold;'>
                         📅 Mês de {nome_mes_completo}
@@ -530,7 +530,7 @@ def show():
 
             # Próximos aniversariantes (próximos dias)
             st.markdown("""
-            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            <div style='background: linear-gradient(135deg, #1E366F, #2A4D8F); 
                         padding: 12px 15px; border-radius: 8px; margin: 15px 0;'>
                 <div style='color: #F1A208; margin: 0; font-size: 1rem; font-weight: bold;'>
                     🔜 Próximos 7 dias

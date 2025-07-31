@@ -70,6 +70,8 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **APLICADO**: Gradientes azuis e layout de cards para aniversariantes (Hoje, Mês, Próximos 7 dias)
 - **CORRIGIDO**: Fontes dos cards de métricas forçadas para branco seguindo versão de produção
 - **MELHORADO**: Visibilidade de texto em todos os cards com color: white explícito
+- **CORRIGIDO**: Fontes dos cards forçadas com !important para garantir cor branca
+- **PADRONIZADO**: Barras de aniversariantes com cor da barra lateral (#1E366F, #2A4D8F)
 
 ### 2025-07-24
 - **ADICIONADO**: Nova aba "Fluxo de Caixa" no módulo Gestão Financeira
