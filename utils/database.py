@@ -5215,12 +5215,18 @@ class Database:
             
             # Adicionar itens à venda
             for item in itens_venda:
+                # Corrigir: usar None como produto_id para produtos de organização
+                # e adicionar a descrição do produto
+                produto_org = self.session.query(ProdutoOrganizador).filter_by(id=item["produto_id"]).first()
+                descricao = produto_org.nome if produto_org else f"Produto ID {item['produto_id']}"
+                
                 item_venda = ItemVenda(
                     venda_id=venda.id,
-                    produto_id=item["produto_id"],
+                    produto_id=None,  # Produtos de organização não têm produto_id na tabela produtos
                     quantidade=item["quantidade"],
                     preco_unitario=item["preco_unitario"],
-                    subtotal=item["quantidade"] * item["preco_unitario"]
+                    subtotal=item["quantidade"] * item["preco_unitario"],
+                    descricao=descricao
                 )
                 self.session.add(item_venda)
             
