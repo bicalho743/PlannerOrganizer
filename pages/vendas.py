@@ -282,7 +282,6 @@ def show():
                                 venda_id = st.session_state.db.adicionar_venda(
                                     cliente_id=cliente_id,
                                     data_venda=data_venda,
-                                    valor_total=total_venda,
                                     forma_pagamento=forma_pagamento,
                                     observacoes=observacoes
                                 )
