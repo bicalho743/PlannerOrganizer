@@ -189,7 +189,7 @@ def show():
 
                 # Remover as transações duplicadas (manter apenas a versão padronizada)
                 if duplicados_assistentes:
-                    financeiro = financeiro[~financeiro['id'].isin(duplicados_assistentes)]
+                    financeiro = financeiro[~financeiro['id'].isin(pd.Series(duplicados_assistentes))]
 
             # Aplicar filtros adicionais
             if tipo_filtro:
@@ -966,12 +966,12 @@ def show():
                 
                 # Aplicar filtros
                 if tipos_filtro:
-                    transacoes_filtradas = df_display[df_display['tipo'].isin(tipos_filtro)]
+                    transacoes_filtradas = df_display[df_display['tipo'].isin(pd.Series(tipos_filtro))]
                 else:
                     transacoes_filtradas = df_display
                     
                 if status_filtro:
-                    transacoes_filtradas = transacoes_filtradas[transacoes_filtradas['status'].isin(status_filtro)]
+                    transacoes_filtradas = transacoes_filtradas[transacoes_filtradas['status'].isin(pd.Series(status_filtro))]
                 
                 # Exibir tabela
                 st.dataframe(
