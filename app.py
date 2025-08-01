@@ -88,6 +88,12 @@ if "show_enviar_manual" not in st.session_state:
 if "show_debug_propostas_finalizadas" not in st.session_state:
     st.session_state.show_debug_propostas_finalizadas = False
 
+# Inicializar estados de controle de login
+if "login_success" not in st.session_state:
+    st.session_state.login_success = False
+if "login_processing" not in st.session_state:
+    st.session_state.login_processing = False
+
 # Configuração inicial da página
 st.set_page_config(
     page_title="Planner Organizer | Sistema para Personal Organizers",
@@ -120,15 +126,10 @@ except Exception as e:
     logger.error(f"❌ Erro ao implementar meta tags de SEO: {e}")
 
 # JavaScript removido para evitar loops infinitos
-# Verificar se estamos em um loop de inicialização
-if "app_initialized" not in st.session_state:
-    st.session_state.app_initialized = True
-    st.session_state.loop_counter = 0
-else:
-    st.session_state.loop_counter = st.session_state.get("loop_counter", 0) + 1
-    if st.session_state.loop_counter > 3:
-        st.error("Detectado loop de inicialização. Recarregue a página.")
-        st.stop()
+# Verificar se houve login bem-sucedido e limpar flag
+if st.session_state.get('login_success', False):
+    st.session_state.login_success = False
+    st.session_state.login_processing = False
 
 # Diagnóstico de componentes do sistema
 logger.info("🔍 Verificando status dos componentes do sistema...")
@@ -986,15 +987,21 @@ if not st.session_state.authenticated:
                     with st.spinner("Autenticando..."):
                         result = firebase_auth.login(email, password)
                         if result['success']:
-                            st.session_state.authenticated = True
-                            # Verificar se o usuário foi definido corretamente
+                            # Configurar tudo ANTES de marcar como autenticado
                             if 'user' in result and 'localId' in result['user']:
-                                # Garantir que o usuario_id esteja na sessão
                                 st.session_state.usuario_id = result['user']['localId']
-                                # Reinicializar database com o ID do usuário correto
                                 from utils.database import Database
                                 st.session_state.db = Database(usuario_id=result['user']['localId'])
-                            st.success("Login realizado com sucesso!")
+                            
+                            # Marcar como autenticado e forçar transição imediata
+                            st.session_state.authenticated = True
+                            st.session_state.current_page = "Dashboard"
+                            st.session_state.login_success = True
+                            
+                            # Usar st.rerun() APENAS uma vez e com controle
+                            if not st.session_state.get('login_processing', False):
+                                st.session_state.login_processing = True
+                                st.rerun()
                         else:
                             st.error(f"Erro de autenticação: {result['error']}")
                 else:
