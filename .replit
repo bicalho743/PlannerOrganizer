@@ -78,7 +78,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd /home/runner/workspace && python -m streamlit run app_stable_fix.py --server.port 5000 --server.address 0.0.0.0 --server.headless true"
+args = "cd /home/runner/workspace && python -m streamlit run app.py --server.port 5000 --server.address 0.0.0.0 --server.headless true"
 waitForPort = 5000
 
 [[ports]]
