@@ -24,16 +24,31 @@ def show():
     with tab1:
         st.subheader("Nova Transação")
 
+        # Definir categorias
+        categorias_receita = ["Serviços de Organização", "Venda de Produtos", "Comissão sobre Fornecedores", "Serviços Adicionais"]
+        categorias_despesa = ["Pagamento Equipe/Assistentes", "Pagamento Parceiros/Fornecedores", "Custos Operacionais", "Custos Administrativos"]
+
+        # Primeiro, fora do form, para que a mudança seja imediata
+        tipo = st.selectbox(
+            "Tipo",
+            ["receita", "despesa"],
+            key="tipo_transacao"
+        )
+
         with st.form("registro_transacao", clear_on_submit=True):
-            tipo = st.selectbox(
-                "Tipo",
-                ["receita", "despesa"]
+            # Replicar o valor do selectbox dentro do form
+            tipo_form = st.selectbox(
+                "Tipo (confirmação)",
+                ["receita", "despesa"],
+                index=0 if tipo == "receita" else 1,
+                disabled=True,
+                key="tipo_form"
             )
 
             descricao = st.text_input("Descrição")
             valor = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
 
-            # Apenas opção 'receita' é disponível no seletor, mas mantemos o mesmo comportamento
+            # Campos condicionais baseados no tipo selecionado
             if tipo == "receita":
                 tipo_receita = st.selectbox(
                     "Tipo de Receita",
@@ -62,22 +77,17 @@ def show():
                     else:
                         st.warning("Nenhum fornecedor cadastrado")
                         origem_id = None
-            else:
-                tipo_receita = None
-                origem_tipo = None
-                origem_id = None
 
-            # Definir categorias de acordo com o padrão solicitado
-            categorias_receita = ["Serviços de Organização", "Venda de Produtos", "Comissão sobre Fornecedores", "Serviços Adicionais"]
-            categorias_despesa = ["Pagamento Equipe/Assistentes", "Pagamento Parceiros/Fornecedores", "Custos Operacionais", "Custos Administrativos"]
-
-            # Simplificado para usar apenas as opções disponíveis no selectbox
-            if tipo == "receita":
                 categoria = st.selectbox(
                     "Categoria",
                     categorias_receita
                 )
             else:
+                # Para despesas, definir valores None
+                tipo_receita = None
+                origem_tipo = None
+                origem_id = None
+                
                 categoria = st.selectbox(
                     "Categoria",
                     categorias_despesa
@@ -89,7 +99,7 @@ def show():
                 if descricao and valor > 0:
                     try:
                         st.session_state.db.add_transacao(
-                            tipo=tipo,
+                            tipo=tipo,  # Usar o tipo selecionado fora do form
                             descricao=descricao,
                             valor=valor,
                             categoria=categoria,
