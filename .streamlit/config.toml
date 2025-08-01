@@ -4,6 +4,7 @@ address = "0.0.0.0"
 port = 5000
 runOnSave = false
 fileWatcherType = "none"
+maxUploadSize = 200
 
 [client]
 showSidebarNavigation = false

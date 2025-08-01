@@ -120,6 +120,15 @@ except Exception as e:
     logger.error(f"❌ Erro ao implementar meta tags de SEO: {e}")
 
 # JavaScript removido para evitar loops infinitos
+# Verificar se estamos em um loop de inicialização
+if "app_initialized" not in st.session_state:
+    st.session_state.app_initialized = True
+    st.session_state.loop_counter = 0
+else:
+    st.session_state.loop_counter = st.session_state.get("loop_counter", 0) + 1
+    if st.session_state.loop_counter > 3:
+        st.error("Detectado loop de inicialização. Recarregue a página.")
+        st.stop()
 
 # Diagnóstico de componentes do sistema
 logger.info("🔍 Verificando status dos componentes do sistema...")
@@ -985,10 +994,7 @@ if not st.session_state.authenticated:
                                 # Reinicializar database com o ID do usuário correto
                                 from utils.database import Database
                                 st.session_state.db = Database(usuario_id=result['user']['localId'])
-                            # Forçar mudança para dashboard imediatamente ANTES da mensagem
-                            st.session_state.current_page = "Dashboard"
-                            st.session_state.show_welcome = False
-                            st.success("Login realizado com sucesso! Redirecionando para o dashboard...")
+                            st.success("Login realizado com sucesso!")
                         else:
                             st.error(f"Erro de autenticação: {result['error']}")
                 else:
