@@ -49,19 +49,21 @@ def show():
     # Título com estilo personalizado para ficar mais próximo do topo
     st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">🛒 Vendas</h1>', unsafe_allow_html=True)
 
-    # Abas para diferentes funcionalidades
+    # Criar abas para organizar o conteúdo seguindo o padrão do módulo de propostas
+    st.markdown('<div class="main-tabs">', unsafe_allow_html=True)
     tab_produtos, tab_nova_venda, tab_historico = st.tabs([
-        "📦 Produtos",
-        "🛍️ Nova Venda",
-        "📊 Histórico de Vendas"
+        "1 - Produtos",
+        "2 - Nova Venda", 
+        "3 - Histórico de Vendas"
     ])
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # === Aba de Produtos ===
     with tab_produtos:
-        st.subheader("Cadastro de Produtos")
+        st.header("Produtos")
 
-        # Adicionar abas para incluir a importação
-        cadastro_tab, importacao_tab = st.tabs(["Cadastro Individual", "Importação em Massa"])
+        # Criar tabs dentro da primeira aba seguindo o padrão
+        cadastro_tab, importacao_tab = st.tabs(["1.1 - Cadastro Individual", "1.2 - Importação em Massa"])
 
         # Aba de importação de produtos
         with importacao_tab:
@@ -440,20 +442,25 @@ def show():
 
     # === Aba de Nova Venda ===
     with tab_nova_venda:
-        st.subheader("Registrar Nova Venda")
+        st.header("Nova Venda")
 
-        # Carrega dados necessários
-        clientes_df = st.session_state.db.get_clientes()
-        produtos_df = st.session_state.db.get_produtos()
+        # Criar tabs dentro da segunda aba seguindo o padrão
+        venda_tab1, venda_tab2 = st.tabs(["2.1 - Registrar Venda", "2.2 - Vendas Recentes"])
 
-        if clientes_df.empty:
-            custom_warning("É necessário cadastrar clientes para registrar vendas.")
-        elif produtos_df.empty:
-            custom_warning("É necessário cadastrar produtos para registrar vendas.")
-        else:
-            # Inicializar sessão state para produtos da venda
-            if 'produtos_venda' not in st.session_state:
-                st.session_state.produtos_venda = []
+        # SUBTAB 1: REGISTRAR NOVA VENDA
+        with venda_tab1:
+            # Carrega dados necessários
+            clientes_df = st.session_state.db.get_clientes()
+            produtos_df = st.session_state.db.get_produtos()
+
+            if clientes_df.empty:
+                custom_warning("É necessário cadastrar clientes para registrar vendas.")
+            elif produtos_df.empty:
+                custom_warning("É necessário cadastrar produtos para registrar vendas.")
+            else:
+                # Inicializar sessão state para produtos da venda
+                if 'produtos_venda' not in st.session_state:
+                    st.session_state.produtos_venda = []
 
             # SELECTBOX MELHORADO PARA CLIENTES
             st.html("""
@@ -808,16 +815,53 @@ def show():
             else:
                 custom_info("Nenhum produto adicionado ao carrinho.")
 
+        # SUBTAB 2: VENDAS RECENTES
+        with venda_tab2:
+            st.subheader("Vendas Recentes (Últimos 30 dias)")
+            
+            try:
+                vendas_df = st.session_state.db.get_vendas()
+                if not vendas_df.empty:
+                    # Filtrar últimos 30 dias
+                    vendas_df['data_venda'] = pd.to_datetime(vendas_df['data_venda'])
+                    data_limite = datetime.now() - timedelta(days=30)
+                    vendas_recentes = vendas_df[vendas_df['data_venda'] >= data_limite]
+                    
+                    if not vendas_recentes.empty:
+                        # Mostrar vendas em formato de lista com expansores
+                        for idx, venda in vendas_recentes.iterrows():
+                            with st.expander(f"Venda #{venda['id']} - {venda['data_venda'].strftime('%d/%m/%Y')} - R$ {venda['valor_total']:.2f}"):
+                                col1, col2 = st.columns(2)
+                                with col1:
+                                    st.write(f"**Cliente:** {venda.get('cliente_nome', 'N/A')}")
+                                    st.write(f"**Data:** {venda['data_venda'].strftime('%d/%m/%Y %H:%M')}")
+                                    st.write(f"**Valor Total:** R$ {venda['valor_total']:.2f}")
+                                with col2:
+                                    st.write(f"**Forma de Pagamento:** {venda.get('forma_pagamento', 'N/A')}")
+                                    if venda.get('observacoes'):
+                                        st.write(f"**Observações:** {venda['observacoes']}")
+                    else:
+                        st.info("Nenhuma venda nos últimos 30 dias.")
+                else:
+                    st.info("Nenhuma venda registrada.")
+            except Exception as e:
+                st.error(f"Erro ao carregar vendas recentes: {str(e)}")
+
     # === Aba de Histórico de Vendas ===
     with tab_historico:
-        st.subheader("Histórico de Vendas")
+        st.header("Histórico de Vendas")
 
-        try:
-            vendas_df = st.session_state.db.get_vendas()
+        # Criar tabs dentro da terceira aba seguindo o padrão
+        historico_tab1, historico_tab2 = st.tabs(["3.1 - Relatório Completo", "3.2 - Análise por Período"])
 
-            if vendas_df.empty:
-                custom_info("Nenhuma venda registrada.")
-            else:
+        # SUBTAB 1: RELATÓRIO COMPLETO
+        with historico_tab1:
+            try:
+                vendas_df = st.session_state.db.get_vendas()
+
+                if vendas_df.empty:
+                    custom_info("Nenhuma venda registrada.")
+                else:
                 # Formatar dados para exibição
                 vendas_df['valor_total'] = vendas_df['valor_total'].map('R$ {:.2f}'.format)
 
@@ -1162,8 +1206,59 @@ def show():
                                     st.error(f"Erro ao gerar relatório: {str(e)}")
 
 
-        except Exception as e:
-            st.error(f"Erro ao carregar vendas: {str(e)}")
+            except Exception as e:
+                st.error(f"Erro ao carregar vendas: {str(e)}")
+
+        # SUBTAB 2: ANÁLISE POR PERÍODO
+        with historico_tab2:
+            st.subheader("Análise de Vendas por Período")
+            
+            # Seleção de período
+            col1, col2 = st.columns(2)
+            with col1:
+                data_inicio = st.date_input("Data de Início", value=datetime.now().date() - timedelta(days=30))
+            with col2:
+                data_fim = st.date_input("Data de Fim", value=datetime.now().date())
+            
+            if st.button("Gerar Análise", type="primary"):
+                try:
+                    vendas_df = st.session_state.db.get_vendas()
+                    if not vendas_df.empty:
+                        # Filtrar por período
+                        vendas_df['data_venda'] = pd.to_datetime(vendas_df['data_venda'])
+                        vendas_periodo = vendas_df[
+                            (vendas_df['data_venda'].dt.date >= data_inicio) & 
+                            (vendas_df['data_venda'].dt.date <= data_fim)
+                        ]
+                        
+                        if not vendas_periodo.empty:
+                            # Estatísticas do período
+                            total_vendas = len(vendas_periodo)
+                            total_faturamento = vendas_periodo['valor_total'].sum()
+                            ticket_medio = vendas_periodo['valor_total'].mean()
+                            
+                            # Exibir métricas
+                            col1, col2, col3 = st.columns(3)
+                            with col1:
+                                st.metric("Total de Vendas", total_vendas)
+                            with col2:
+                                st.metric("Faturamento Total", f"R$ {total_faturamento:.2f}")
+                            with col3:
+                                st.metric("Ticket Médio", f"R$ {ticket_medio:.2f}")
+                            
+                            # Gráfico de vendas por dia
+                            vendas_por_dia = vendas_periodo.groupby(vendas_periodo['data_venda'].dt.date)['valor_total'].sum().reset_index()
+                            
+                            import plotly.express as px
+                            fig = px.line(vendas_por_dia, x='data_venda', y='valor_total', 
+                                        title='Evolução de Vendas no Período')
+                            st.plotly_chart(fig, use_container_width=True)
+                        else:
+                            st.info("Nenhuma venda encontrada no período selecionado.")
+                    else:
+                        st.info("Nenhuma venda registrada.")
+                except Exception as e:
+                    st.error(f"Erro ao gerar análise: {str(e)}")
 
     # CSS e JavaScript para eliminar qualquer fundo azul restante e corrigir selectbox
     st.markdown("""
