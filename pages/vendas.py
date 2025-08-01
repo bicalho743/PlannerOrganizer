@@ -992,7 +992,7 @@ def show():
                         analise_agrupada = vendas_periodo.groupby('periodo').agg({
                             'id': 'count',
                             'valor_total': ['sum', 'mean', 'std'],
-                            'cliente_id': 'nunique'
+                            'cliente_nome': 'nunique'
                         }).round(2)
                         
                         # Achatar nomes das colunas
@@ -1007,7 +1007,7 @@ def show():
                         total_vendas = len(vendas_periodo)
                         receita_total = vendas_periodo['valor_total'].sum()
                         ticket_medio = vendas_periodo['valor_total'].mean()
-                        clientes_unicos = vendas_periodo['cliente_id'].nunique()
+                        clientes_unicos = vendas_periodo['cliente_nome'].nunique()
                         
                         with col1:
                             st.metric("Total de Vendas", f"{total_vendas:,}")
@@ -1083,8 +1083,9 @@ def show():
                                         AVG(iv.preco_unitario) as preco_medio
                                     FROM itens_venda iv
                                     JOIN produtos p ON iv.produto_id = p.id
-                                    WHERE iv.venda_id IN :venda_ids
-                                    AND p.usuario_id = :usuario_id
+                                    JOIN vendas v ON iv.venda_id = v.id
+                                    WHERE iv.venda_id = ANY(:venda_ids)
+                                    AND v.usuario_id = :usuario_id
                                     GROUP BY p.id, p.nome
                                     ORDER BY quantidade_total DESC
                                     LIMIT 10
@@ -1092,7 +1093,7 @@ def show():
                                 
                                 with st.session_state.db.engine.connect() as conn:
                                     resultado = conn.execute(query, {
-                                        'venda_ids': tuple(vendas_ids),
+                                        'venda_ids': vendas_ids,
                                         'usuario_id': st.session_state.usuario_id
                                     })
                                     top_produtos = pd.DataFrame(resultado.fetchall(), columns=resultado.keys())
