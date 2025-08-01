@@ -470,17 +470,48 @@ if not st.session_state.authenticated:
     /* Ocultar cabeçalho do Streamlit completamente */
     header[data-testid="stHeader"] {
         display: none !important;
+        height: 0 !important;
     }
     
-    /* Remover espaçamento superior da página */
+    /* Ocultar toolbar */
+    .stApp > header {
+        display: none !important;
+    }
+    
+    /* Remover TODO espaçamento superior da página */
+    .main {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    
     .block-container {
         padding-top: 0 !important;
         margin-top: 0 !important;
+        padding-bottom: 0 !important;
     }
     
     .main .block-container {
         padding-top: 0 !important;
         margin-top: 0 !important;
+    }
+    
+    /* Forçar botões mais visíveis */
+    .stButton > button {
+        background-color: #6c757d !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 0.75rem 1.5rem !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        width: 100% !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .stButton > button:hover {
+        background-color: #5a6268 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
     }
     
     .login-header {
@@ -930,7 +961,7 @@ if not st.session_state.authenticated:
 
 
 
-        # Botões para navegação
+        # Botões para navegação - estilo conforme imagem
         col1, col2 = st.columns(2)
         with col1:
             if st.button("Esqueceu sua senha?", key="btn_recuperar_senha", use_container_width=True):
