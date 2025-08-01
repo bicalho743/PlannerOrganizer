@@ -5,7 +5,7 @@ import base64
 import time
 from datetime import datetime, timedelta
 from utils.currency_formatter import format_currency_br
-from utils.fluxo_caixa_module import CashFlowModule, MonthCashFlow, REVENUE_CATEGORIES, EXPENSE_CATEGORIES
+from utils.fluxo_caixa_simple import FluxoCaixaSimple
 
 def show():
     # Título com estilo personalizado para ficar mais próximo do topo
@@ -882,389 +882,195 @@ def show():
 
     with tab7:
         st.subheader("💰 Fluxo de Caixa")
-
-        # Inicializar o módulo de fluxo de caixa no session_state
-        if 'fluxo_caixa_module' not in st.session_state:
-            st.session_state.fluxo_caixa_module = CashFlowModule(
-                saldo_inicial=0.0, 
-                db_connection=st.session_state.db
+        
+        # Inicializar módulo simplificado
+        if 'fluxo_caixa_simple' not in st.session_state:
+            st.session_state.fluxo_caixa_simple = FluxoCaixaSimple(st.session_state.db)
+        
+        # Seleção do período
+        col1, col2 = st.columns(2)
+        with col1:
+            ano_selecionado = st.selectbox(
+                "Ano",
+                options=list(range(2023, 2027)),
+                index=list(range(2023, 2027)).index(datetime.now().year),
+                key="fluxo_ano"
+            )
+        with col2:
+            mes_selecionado = st.selectbox(
+                "Mês",
+                options=list(range(1, 13)),
+                format_func=lambda x: datetime(2024, x, 1).strftime('%B'),
+                index=datetime.now().month - 1,
+                key="fluxo_mes"
             )
         
-        # Inicializar categorias personalizadas
-        if 'categorias_receitas_personalizadas' not in st.session_state:
-            st.session_state.categorias_receitas_personalizadas = REVENUE_CATEGORIES.copy()
-        if 'categorias_despesas_personalizadas' not in st.session_state:
-            st.session_state.categorias_despesas_personalizadas = EXPENSE_CATEGORIES.copy()
-
-        # Barra lateral para configurações
-        with st.expander("⚙️ Configurações", expanded=False):
-            col1, col2 = st.columns(2)
-            with col1:
-                st.session_state.saldo_inicial = st.number_input(
-                    "Saldo Inicial (R$)", 
-                    value=st.session_state.fluxo_caixa_module.saldo_inicial,
-                    step=100.0
+        # Tabs para diferentes visualizações
+        tab_visao_geral, tab_transacoes, tab_categorias, tab_filtros = st.tabs([
+            "📊 Visão Geral", 
+            "📋 Transações", 
+            "🏷️ Por Categoria",
+            "🔍 Categorias Usadas"
+        ])
+        
+        with tab_visao_geral:
+            # Resumo mensal
+            resumo = st.session_state.fluxo_caixa_simple.get_resumo_mensal(ano_selecionado, mes_selecionado)
+            
+            # Métricas principais
+            col1, col2, col3 = st.columns(3)
+            col1.metric("💰 Total Receitas", f"R$ {resumo['total_receitas']:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+            col2.metric("💸 Total Despesas", f"R$ {resumo['total_despesas']:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+            
+            saldo_cor = "normal"
+            if resumo['saldo_mes'] > 0:
+                saldo_cor = "inverse" 
+            col3.metric("📈 Saldo do Mês", f"R$ {resumo['saldo_mes']:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+            
+            # Status das transações
+            st.markdown("#### 📊 Status das Transações")
+            col1, col2, col3, col4 = st.columns(4)
+            col1.metric("✅ Receitas Pagas", f"R$ {resumo['receitas_pagas']:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+            col2.metric("⏳ Receitas Pendentes", f"R$ {resumo['receitas_pendentes']:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+            col3.metric("✅ Despesas Pagas", f"R$ {resumo['despesas_pagas']:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+            col4.metric("⏳ Despesas Pendentes", f"R$ {resumo['despesas_pendentes']:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+        
+        with tab_transacoes:
+            # Lista de transações do mês
+            transacoes = st.session_state.fluxo_caixa_simple.get_transacoes_mes(ano_selecionado, mes_selecionado)
+            
+            if not transacoes.empty:
+                # Formatação para exibição
+                df_display = transacoes.copy()
+                df_display['data'] = pd.to_datetime(df_display['data']).dt.strftime('%d/%m/%Y')
+                df_display['valor_formatado'] = df_display['valor'].apply(
+                    lambda x: f"R$ {x:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
                 )
-            with col2:
-                if st.button("Atualizar Saldo Inicial", use_container_width=True):
-                    st.session_state.fluxo_caixa_module.saldo_inicial = st.session_state.saldo_inicial
-                    st.session_state.fluxo_caixa_module.recalcular_saldos()
-                    st.success("Saldo inicial atualizado!")
-                    
-        # Seção de sincronização com banco de dados
-        with st.expander("🔄 Sincronizar com Banco de Dados", expanded=False):
-            st.markdown("""
-            **Integração Automática**: Esta seção permite sincronizar o fluxo de caixa com as transações 
-            registradas na aba "Registrar Transação". As transações pagas/recebidas serão automaticamente 
-            importadas para os valores realizados.
-            """)
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("🔄 Sincronizar Todos os Meses", use_container_width=True):
-                    if st.session_state.fluxo_caixa_module.months:
-                        sucesso_total = 0
-                        for mes in st.session_state.fluxo_caixa_module.months:
-                            if st.session_state.fluxo_caixa_module.sincronizar_mes_com_banco(mes.name):
-                                sucesso_total += 1
-                        
-                        st.success(f"✅ {sucesso_total} meses sincronizados com sucesso!")
-                        st.rerun()
-                    else:
-                        st.warning("Nenhum mês cadastrado para sincronizar.")
-            
-            with col2:
-                if st.session_state.fluxo_caixa_module.months:
-                    mes_para_sync = st.selectbox(
-                        "Sincronizar mês específico:",
-                        [m.name for m in st.session_state.fluxo_caixa_module.months],
-                        key="sync_mes_especifico"
-                    )
-                    
-                    if st.button("🔄 Sincronizar Mês Selecionado", use_container_width=True):
-                        if st.session_state.fluxo_caixa_module.sincronizar_mes_com_banco(mes_para_sync):
-                            st.success(f"✅ Mês {mes_para_sync} sincronizado!")
-                            st.rerun()
-                        else:
-                            st.error(f"❌ Erro ao sincronizar {mes_para_sync}")
-            
-            # Informações sobre o mapeamento de categorias
-            st.markdown("#### 📋 Mapeamento de Categorias")
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown("**Receitas do Banco → Fluxo de Caixa:**")
-                st.markdown("• Serviços de Organização → Contas a receber-vendas realizadas")
-                st.markdown("• Venda de Produtos → Contas a receber-vendas realizadas")
-                st.markdown("• Vendas → Contas a receber-vendas realizadas")
-                st.markdown("• Comissão sobre Fornecedores → Outros recebimentos")
-                st.markdown("• Serviços Adicionais → Outros recebimentos")
-            
-            with col2:
-                st.markdown("**Despesas do Banco → Fluxo de Caixa:**")
-                st.markdown("• Pagamento Equipe/Assistentes → Pró Labore")
-                st.markdown("• Pagamento Parceiros/Fornecedores → Fornecedores")
-                st.markdown("• Custos Operacionais → Fornecedores")
-                st.markdown("• Custos Administrativos → MEI")
-                st.markdown("• Assistente → Pró Labore")
-
-        # Seção para personalizar categorias
-        with st.expander("🏷️ Personalizar Categorias", expanded=False):
-            tab_receitas, tab_despesas = st.tabs(["💰 Receitas", "💸 Despesas"])
-            
-            with tab_receitas:
-                st.markdown("**Categorias de Receitas:**")
                 
-                # Mostrar categorias atuais
-                for i, categoria in enumerate(st.session_state.categorias_receitas_personalizadas):
-                    col1, col2 = st.columns([4, 1])
-                    with col1:
-                        st.write(f"• {categoria}")
-                    with col2:
-                        if st.button("🗑️", key=f"del_receita_{i}", help="Excluir categoria"):
-                            st.session_state.categorias_receitas_personalizadas.remove(categoria)
-                            st.rerun()
-                
-                # Adicionar nova categoria
-                st.markdown("**Adicionar Nova Categoria:**")
-                nova_receita = st.text_input("Nome da nova categoria de receita", key="nova_categoria_receita")
-                if st.button("➕ Adicionar Receita", use_container_width=True):
-                    if nova_receita and nova_receita not in st.session_state.categorias_receitas_personalizadas:
-                        st.session_state.categorias_receitas_personalizadas.append(nova_receita)
-                        st.success(f"Categoria '{nova_receita}' adicionada!")
-                        st.rerun()
-                    elif nova_receita in st.session_state.categorias_receitas_personalizadas:
-                        st.warning("Esta categoria já existe!")
-            
-            with tab_despesas:
-                st.markdown("**Categorias de Despesas:**")
-                
-                # Mostrar categorias atuais
-                for i, categoria in enumerate(st.session_state.categorias_despesas_personalizadas):
-                    col1, col2 = st.columns([4, 1])
-                    with col1:
-                        st.write(f"• {categoria}")
-                    with col2:
-                        if st.button("🗑️", key=f"del_despesa_{i}", help="Excluir categoria"):
-                            st.session_state.categorias_despesas_personalizadas.remove(categoria)
-                            st.rerun()
-                
-                # Adicionar nova categoria
-                st.markdown("**Adicionar Nova Categoria:**")
-                nova_despesa = st.text_input("Nome da nova categoria de despesa", key="nova_categoria_despesa")
-                if st.button("➕ Adicionar Despesa", use_container_width=True):
-                    if nova_despesa and nova_despesa not in st.session_state.categorias_despesas_personalizadas:
-                        st.session_state.categorias_despesas_personalizadas.append(nova_despesa)
-                        st.success(f"Categoria '{nova_despesa}' adicionada!")
-                        st.rerun()
-                    elif nova_despesa in st.session_state.categorias_despesas_personalizadas:
-                        st.warning("Esta categoria já existe!")
-                
-                # Botão para resetar para padrão
-                st.markdown("---")
-                if st.button("🔄 Restaurar Categorias Padrão", use_container_width=True):
-                    st.session_state.categorias_receitas_personalizadas = REVENUE_CATEGORIES.copy()
-                    st.session_state.categorias_despesas_personalizadas = EXPENSE_CATEGORIES.copy()
-                    st.success("Categorias restauradas para o padrão!")
-                    st.rerun()
-
-        # Seção para adicionar/editar meses
-        st.markdown("### 📅 Gestão de Meses")
-
-        # Lista de meses padrão
-        meses_padrao = [
-            "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-            "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-        ]
-
-        # Adicionar novo mês
-        with st.expander("➕ Adicionar Novo Mês", expanded=False):
-            col1, col2 = st.columns(2)
-            with col1:
-                nome_mes = st.selectbox("Selecione o Mês", meses_padrao)
-            with col2:
-                ano_mes = st.number_input("Ano", min_value=2020, max_value=2030, value=datetime.now().year, step=1)
-
-            if st.button("Adicionar Mês", use_container_width=True):
-                # Criar nome completo com mês e ano
-                nome_completo = f"{nome_mes} {ano_mes}"
-                
-                # Verificar se o mês já existe
-                nomes_existentes = [m.name for m in st.session_state.fluxo_caixa_module.months]
-                if nome_completo not in nomes_existentes:
-                    novo_mes = MonthCashFlow(name=nome_completo)
-                    st.session_state.fluxo_caixa_module.adicionar_mes(novo_mes)
-                    st.success(f"Mês {nome_completo} adicionado com sucesso!")
-                else:
-                    st.warning(f"O mês {nome_completo} já existe!")
-
-        # Exibir meses existentes
-        if st.session_state.fluxo_caixa_module.months:
-            st.markdown("### 📊 Meses Cadastrados")
-
-            # Seletor de mês para edição
-            nomes_meses = [m.name for m in st.session_state.fluxo_caixa_module.months]
-            mes_selecionado = st.selectbox("Selecione um mês para editar", nomes_meses)
-
-            # Encontrar o mês selecionado
-            mes_obj = None
-            for m in st.session_state.fluxo_caixa_module.months:
-                if m.name == mes_selecionado:
-                    mes_obj = m
-                    break
-
-            if mes_obj:
+                # Filtros
                 col1, col2 = st.columns(2)
-
-                # Seção de Receitas
                 with col1:
-                    st.markdown("#### 💰 Receitas")
-                    
-                    # Subseção Previstas
-                    with st.expander("📅 Receitas Previstas", expanded=True):
-                        for categoria in st.session_state.categorias_receitas_personalizadas:
-                            valor_atual = mes_obj.previsao_receitas.get(categoria, 0.0)
-                            novo_valor = st.number_input(
-                                categoria, 
-                                value=valor_atual, 
-                                step=100.0,
-                                key=f"receita_prev_{mes_selecionado}_{categoria}"
-                            )
-
-                            if novo_valor != valor_atual:
-                                mes_obj.editar_receita(categoria, novo_valor, previsao=True)
-                    
-                    # Subseção Realizadas (importadas do banco)
-                    if mes_obj.realizado_receitas:
-                        with st.expander("✅ Receitas Realizadas (Banco)", expanded=False):
-                            for categoria, valor in mes_obj.realizado_receitas.items():
-                                st.metric(categoria, f"R$ {valor:,.2f}")
-                    else:
-                        st.info("💡 Use 'Sincronizar com Banco' para importar receitas realizadas")
-
-                # Seção de Despesas
+                    tipos_filtro = st.multiselect(
+                        "Filtrar por Tipo",
+                        options=df_display['tipo'].unique(),
+                        default=df_display['tipo'].unique(),
+                        key="filtro_tipo_transacoes"
+                    )
                 with col2:
-                    st.markdown("#### 💸 Despesas")
-                    
-                    # Subseção Previstas
-                    with st.expander("📅 Despesas Previstas", expanded=True):
-                        for categoria in st.session_state.categorias_despesas_personalizadas:
-                            valor_atual = mes_obj.previsao_despesas.get(categoria, 0.0)
-                            novo_valor = st.number_input(
-                                categoria, 
-                                value=valor_atual, 
-                                step=50.0,
-                                key=f"despesa_prev_{mes_selecionado}_{categoria}"
-                            )
-
-                            if novo_valor != valor_atual:
-                                mes_obj.editar_despesa(categoria, novo_valor, previsao=True)
-                    
-                    # Subseção Realizadas (importadas do banco)
-                    if mes_obj.realizado_despesas:
-                        with st.expander("✅ Despesas Realizadas (Banco)", expanded=False):
-                            for categoria, valor in mes_obj.realizado_despesas.items():
-                                st.metric(categoria, f"R$ {valor:,.2f}")
-                    else:
-                        st.info("💡 Use 'Sincronizar com Banco' para importar despesas realizadas")
-
-                # Botão para recalcular
-                if st.button("🔄 Recalcular Saldos", use_container_width=True):
-                    st.session_state.fluxo_caixa_module.recalcular_saldos()
-                    st.success("Saldos recalculados!")
-
-                # Resumo do mês selecionado
-                st.markdown("#### 📈 Resumo do Mês")
+                    status_filtro = st.multiselect(
+                        "Filtrar por Status", 
+                        options=df_display['status'].unique(),
+                        default=df_display['status'].unique(),
+                        key="filtro_status_transacoes"
+                    )
                 
-                # Resumo Previsto
-                st.markdown("**📅 Valores Previstos:**")
-                col1, col2, col3, col4 = st.columns(4)
-
-                with col1:
-                    st.metric("Receitas Previstas", format_currency_br(mes_obj.total_receitas_previsao))
-                with col2:
-                    st.metric("Despesas Previstas", format_currency_br(mes_obj.total_despesas_previsao))
-                with col3:
-                    st.metric("Saldo Mensal Previsto", format_currency_br(mes_obj.saldo_mensal_previsao))
-                with col4:
-                    st.metric("Saldo Final Previsto", format_currency_br(mes_obj.saldo_final_previsao))
-                
-                # Resumo Realizado (se disponível)
-                if mes_obj.total_receitas_realizado is not None or mes_obj.total_despesas_realizado is not None:
-                    st.markdown("**✅ Valores Realizados (Banco):**")
-                    col1, col2, col3, col4 = st.columns(4)
+                # Aplicar filtros
+                if tipos_filtro:
+                    transacoes_filtradas = df_display[df_display['tipo'].isin(tipos_filtro)]
+                else:
+                    transacoes_filtradas = df_display
                     
-                    with col1:
-                        receitas_real = mes_obj.total_receitas_realizado or 0.0
-                        st.metric("Receitas Realizadas", format_currency_br(receitas_real))
-                    with col2:
-                        despesas_real = mes_obj.total_despesas_realizado or 0.0
-                        st.metric("Despesas Realizadas", format_currency_br(despesas_real))
-                    with col3:
-                        saldo_real = mes_obj.saldo_mensal_realizado or 0.0
-                        st.metric("Saldo Mensal Real", format_currency_br(saldo_real))
-                    with col4:
-                        saldo_final_real = mes_obj.saldo_final_realizado or 0.0
-                        st.metric("Saldo Final Real", format_currency_br(saldo_final_real))
-
-        # Visualização consolidada
-        if st.session_state.fluxo_caixa_module.months:
-            st.markdown("### 📊 Visão Consolidada")
-
-            # Obter resumo de todos os meses
-            resumo = st.session_state.fluxo_caixa_module.obter_resumo()
-
-            # Criar DataFrame para visualização
-            dados_resumo = []
-            for nome_mes, dados in resumo.items():
-                dados_resumo.append({
-                    'Mês': nome_mes,
-                    'Receitas Previstas': dados['total_receitas_previsao'],
-                    'Despesas Previstas': dados['total_despesas_previsao'],
-                    'Saldo Mensal': dados['saldo_mensal_previsao'],
-                    'Saldo Acumulado': dados['saldo_acumulado_previsao'],
-                    'Saldo Final': dados['saldo_final_previsao']
-                })
-
-            df_resumo = pd.DataFrame(dados_resumo)
-
-            # Tabela resumo
-            st.markdown("#### 📋 Tabela Resumo")
-
-            # Formatar valores para exibição
-            df_display = df_resumo.copy()
-            for col in ['Receitas Previstas', 'Despesas Previstas', 'Saldo Mensal', 'Saldo Acumulado', 'Saldo Final']:
-                df_display[col] = df_display[col].apply(lambda x: f"R$ {x:,.2f}")
-
-            st.dataframe(df_display, use_container_width=True, hide_index=True)
-
-            # Gráfico de evolução do saldo
-            st.markdown("#### 📈 Evolução do Saldo Final")
-            fig_saldo = px.line(
-                df_resumo, 
-                x='Mês', 
-                y='Saldo Final',
-                title='Evolução do Saldo Final por Mês',
-                labels={'Saldo Final': 'Saldo Final (R$)', 'Mês': 'Mês'},
-                markers=True
-            )
-            fig_saldo.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig_saldo, use_container_width=True)
-
-            # Gráfico de receitas vs despesas
-            st.markdown("#### 💰 Receitas vs Despesas")
-            fig_comp = px.bar(
-                df_resumo, 
-                x='Mês', 
-                y=['Receitas Previstas', 'Despesas Previstas'],
-                title='Comparativo de Receitas e Despesas por Mês',
-                labels={'value': 'Valor (R$)', 'Mês': 'Mês', 'variable': 'Tipo'},
-                barmode='group'
-            )
-            fig_comp.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig_comp, use_container_width=True)
-
-            # Botões de ação
+                if status_filtro:
+                    transacoes_filtradas = transacoes_filtradas[transacoes_filtradas['status'].isin(status_filtro)]
+                
+                # Exibir tabela
+                st.dataframe(
+                    transacoes_filtradas[['data', 'tipo', 'descricao', 'categoria', 'valor_formatado', 'status']],
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "data": "Data",
+                        "tipo": "Tipo", 
+                        "descricao": "Descrição",
+                        "categoria": "Categoria",
+                        "valor_formatado": "Valor",
+                        "status": "Status"
+                    }
+                )
+                
+                # Botão de exportação
+                if st.button("📊 Exportar para CSV"):
+                    csv_data = st.session_state.fluxo_caixa_simple.export_to_dataframe(ano_selecionado, mes_selecionado)
+                    st.download_button(
+                        label="⬇️ Download CSV",
+                        data=csv_data.to_csv(index=False),
+                        file_name=f"fluxo_caixa_{ano_selecionado}_{mes_selecionado:02d}.csv",
+                        mime="text/csv"
+                    )
+            else:
+                st.info(f"Nenhuma transação encontrada para {datetime(2024, mes_selecionado, 1).strftime('%B')} de {ano_selecionado}")
+        
+        with tab_categorias:
+            # Análise por categoria
+            resumo_categorias = st.session_state.fluxo_caixa_simple.get_resumo_por_categoria(ano_selecionado, mes_selecionado)
+            
+            if resumo_categorias:
+                # Converter para DataFrame para visualização
+                dados_categorias = []
+                for categoria, dados in resumo_categorias.items():
+                    dados_categorias.append({
+                        'Categoria': categoria,
+                        'Receitas': dados['receitas'],
+                        'Despesas': dados['despesas'], 
+                        'Saldo': dados['saldo'],
+                        'Transações': dados['transacoes']
+                    })
+                
+                df_categorias = pd.DataFrame(dados_categorias)
+                
+                # Formatar valores monetários
+                for col in ['Receitas', 'Despesas', 'Saldo']:
+                    df_categorias[col + '_formatado'] = df_categorias[col].apply(
+                        lambda x: f"R$ {x:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+                    )
+                
+                # Exibir tabela
+                st.dataframe(
+                    df_categorias[['Categoria', 'Receitas_formatado', 'Despesas_formatado', 'Saldo_formatado', 'Transações']],
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "Receitas_formatado": "Receitas",
+                        "Despesas_formatado": "Despesas", 
+                        "Saldo_formatado": "Saldo"
+                    }
+                )
+                
+                # Gráfico de categorias
+                if len(df_categorias) > 0:
+                    fig = px.bar(
+                        df_categorias, 
+                        x='Categoria',
+                        y=['Receitas', 'Despesas'],
+                        title=f"Receitas vs Despesas por Categoria - {datetime(2024, mes_selecionado, 1).strftime('%B')} {ano_selecionado}",
+                        barmode='group'
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("Nenhuma transação para análise por categoria neste período")
+        
+        with tab_filtros:
+            # Mostrar categorias utilizadas
+            st.markdown("#### 📋 Categorias Registradas no Sistema")
+            
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("🗑️ Limpar Todos os Dados", use_container_width=True):
-                    st.session_state.fluxo_caixa_module = CashFlowModule(
-                        saldo_inicial=0.0, 
-                        db_connection=st.session_state.db
-                    )
-                    st.success("Todos os dados foram limpos!")
+                st.markdown("**💰 Categorias de Receitas:**")
+                categorias_receitas = st.session_state.fluxo_caixa_simple.get_categorias_usadas("receita")
+                if categorias_receitas:
+                    for categoria in categorias_receitas:
+                        st.write(f"• {categoria}")
+                else:
+                    st.info("Nenhuma categoria de receita registrada")
             
             with col2:
-                if st.button("📊 Exportar Fluxo de Caixa (CSV)", use_container_width=True):
-                    # Criar DataFrame para exportação
-                    resumo = st.session_state.fluxo_caixa_module.obter_resumo()
-                    
-                    dados_export = []
-                    for nome_mes, dados in resumo.items():
-                        dados_export.append({
-                            'Mês': nome_mes,
-                            'Receitas Previstas': dados['total_receitas_previsao'],
-                            'Despesas Previstas': dados['total_despesas_previsao'],
-                            'Saldo Mensal Previsto': dados['saldo_mensal_previsao'],
-                            'Saldo Final Previsto': dados['saldo_final_previsao']
-                        })
-                    
-                    if dados_export:
-                        df_export = pd.DataFrame(dados_export)
-                        csv = df_export.to_csv(index=False)
-                        
-                        st.download_button(
-                            label="📥 Baixar CSV",
-                            data=csv,
-                            file_name=f"fluxo_caixa_{datetime.now().strftime('%Y%m%d')}.csv",
-                            mime="text/csv",
-                            use_container_width=True
-                        )
-                    else:
-                        st.warning("Nenhum dado para exportar.")
-
-        else:
-            st.info("Nenhum mês cadastrado. Use a seção 'Adicionar Novo Mês' para começar.")
+                st.markdown("**💸 Categorias de Despesas:**")
+                categorias_despesas = st.session_state.fluxo_caixa_simple.get_categorias_usadas("despesa")
+                if categorias_despesas:
+                    for categoria in categorias_despesas:
+                        st.write(f"• {categoria}")
+                else:
+                    st.info("Nenhuma categoria de despesa registrada")
 
     # CSS e JavaScript para eliminar qualquer fundo azul restante e corrigir selectbox
     st.markdown("""
