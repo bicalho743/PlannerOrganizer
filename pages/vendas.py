@@ -661,14 +661,22 @@ def show():
                                     except:
                                         itens_pdf = pd.DataFrame()  # DataFrame vazio se não encontrar itens
                                     
-                                    # Gerar nome do arquivo
+                                    # Gerar nome do arquivo único
+                                    import time
                                     data_atual = datetime.now().strftime('%Y%m%d_%H%M%S')
-                                    cliente_nome_arquivo = venda_detalhes['cliente_nome'].replace(' ', '_').lower()
-                                    filename = f"pdfs/Venda_{venda_id}_{cliente_nome_arquivo}_{data_atual}.pdf"
+                                    timestamp = str(int(time.time()))
+                                    cliente_nome_arquivo = venda_detalhes['cliente_nome'].replace(' ', '_').replace('/', '_').lower()
+                                    filename = f"pdfs/Venda_{venda_id}_{cliente_nome_arquivo}_{data_atual}_{timestamp}.pdf"
                                     
                                     # Garantir que diretório existe
                                     import os
                                     os.makedirs("pdfs", exist_ok=True)
+                                    
+                                    # Debug dos itens antes de gerar PDF
+                                    print(f"DEBUG: Itens para PDF - {len(itens_pdf) if not itens_pdf.empty else 0} registros")
+                                    if not itens_pdf.empty:
+                                        for _, item in itens_pdf.iterrows():
+                                            print(f"  Item: {item.get('produto_nome', 'N/A')} - Qtd: {item.get('quantidade', 0)}")
                                     
                                     # Gerar PDF
                                     pdf_path = gerar_pdf_venda(venda_dados, cliente_dados, itens_pdf, filename)

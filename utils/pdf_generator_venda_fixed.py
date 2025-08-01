@@ -34,7 +34,19 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
     print(f"DEBUG PDF VENDA: Itens: {len(itens_venda) if hasattr(itens_venda, 'empty') and not itens_venda.empty else 0} registros")
     
     try:
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        # Garantir que o diretório existe
+        dir_path = os.path.dirname(filename)
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
+        
+        # Verificar se temos itens para exibir
+        if hasattr(itens_venda, 'empty') and not itens_venda.empty:
+            print(f"DEBUG PDF VENDA: Produtos encontrados:")
+            for _, item in itens_venda.iterrows():
+                print(f"  - {item.get('produto_nome', 'N/A')}: {item.get('quantidade', 0)} x R${item.get('preco_unitario', 0):.2f}")
+        else:
+            print("DEBUG PDF VENDA: ATENÇÃO - Nenhum item encontrado para a venda!")
+        
         c = canvas.Canvas(filename, pagesize=A4)
         width, height = A4
 

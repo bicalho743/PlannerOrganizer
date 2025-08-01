@@ -4572,14 +4572,35 @@ class Database:
         """Retorna os itens de uma venda específica"""
         def query():
             itens = self.session.query(ItemVenda).filter_by(venda_id=venda_id).all()
-            return pd.DataFrame([{
-                'id': i.id,
-                'produto_nome': i.produto.nome if i.produto else (i.descricao or 'Produto não identificado'),
-                'quantidade': i.quantidade,
-                'preco_unitario': i.preco_unitario,
-                'subtotal': i.subtotal,
-                'lucro': (i.preco_unitario - (getattr(i.produto, 'preco_custo', 0) if i.produto else 0)) * i.quantidade
-            } for i in itens])
+            print(f"DEBUG get_itens_venda: Encontrados {len(itens)} itens para venda_id={venda_id}")
+            
+            dados_itens = []
+            for i in itens:
+                # Usar descricao como produto_nome pois não temos produto_id linkado corretamente
+                produto_nome = i.descricao if i.descricao else 'Produto não identificado'
+                
+                # Calcular lucro usando margem padrão de 30% se não tiver produto linkado
+                preco_custo = 0
+                if i.produto and hasattr(i.produto, 'preco_custo') and i.produto.preco_custo:
+                    preco_custo = i.produto.preco_custo
+                else:
+                    # Usar margem de 30% como estimativa se não tiver custo definido
+                    preco_custo = i.preco_unitario * 0.7
+                
+                lucro_item = (i.preco_unitario - preco_custo) * i.quantidade
+                
+                item_data = {
+                    'id': i.id,
+                    'produto_nome': produto_nome,
+                    'quantidade': i.quantidade,
+                    'preco_unitario': i.preco_unitario,
+                    'subtotal': i.subtotal if i.subtotal else (i.preco_unitario * i.quantidade),
+                    'lucro': lucro_item
+                }
+                dados_itens.append(item_data)
+                print(f"DEBUG get_itens_venda: Item {i.id}: {produto_nome} - Qtd: {i.quantidade} - Preço: R${i.preco_unitario:.2f}")
+            
+            return pd.DataFrame(dados_itens)
         return self._safe_query(query)
 
     def adicionar_venda(self, cliente_id, data_venda, forma_pagamento, observacoes=""):
