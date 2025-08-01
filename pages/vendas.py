@@ -862,8 +862,8 @@ def show():
                 if vendas_df.empty:
                     custom_info("Nenhuma venda registrada.")
                 else:
-                # Formatar dados para exibição
-                vendas_df['valor_total'] = vendas_df['valor_total'].map('R$ {:.2f}'.format)
+                    # Formatar dados para exibição
+                    vendas_df['valor_total'] = vendas_df['valor_total'].map('R$ {:.2f}'.format)
 
                 # Exibir tabela de vendas
                 st.dataframe(vendas_df, hide_index=True)
