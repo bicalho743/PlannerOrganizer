@@ -1266,22 +1266,7 @@ def show():
                         except Exception as e:
                             st.warning(f"Não foi possível carregar análise de produtos: {str(e)}")
                         
-                        # Botão de exportação
-                        st.markdown("### 📥 Exportar Dados")
-                        export_key = f"export_analysis_{data_inicio}_{data_fim}_{tipo_agrupamento}"
-                        if st.button("📊 Exportar Análise para CSV", use_container_width=True, key=export_key):
-                            # Preparar dados para exportação
-                            dados_exportacao = analise_agrupada.copy()
-                            csv_data = dados_exportacao.to_csv(index=False)
-                            
-                            st.download_button(
-                                label="💾 Baixar CSV",
-                                data=csv_data,
-                                file_name=f"analise_vendas_{data_inicio}_{data_fim}.csv",
-                                mime="text/csv",
-                                use_container_width=True,
-                                key=f"download_csv_{export_key}"
-                            )
+
                     
                     else:
                         st.warning("Nenhuma venda encontrada no período selecionado.")
