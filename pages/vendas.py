@@ -1083,8 +1083,8 @@ def show():
                         
                         # Calcular lucro total se disponível
                         if not lucros_agrupados.empty:
-                            lucro_total = lucros_agrupados['Lucro_Total'].sum()
-                            margem_lucro = (lucro_total / receita_total * 100) if receita_total > 0 else 0
+                            lucro_total = round(lucros_agrupados['Lucro_Total'].sum(), 2)
+                            margem_lucro = round((lucro_total / receita_total * 100), 1) if receita_total > 0 else 0
                             
                             col1, col2, col3, col4, col5 = st.columns(5)
                             
@@ -1093,7 +1093,7 @@ def show():
                             with col2:
                                 st.metric("Receita Total", f"R$ {float(receita_total):,.2f}")
                             with col3:
-                                st.metric("Lucro Total", f"R$ {float(lucro_total):,.2f}")
+                                st.metric("Lucro Total", f"R$ {lucro_total:,.2f}")
                             with col4:
                                 st.metric("Margem de Lucro", f"{margem_lucro:.1f}%")
                             with col5:
@@ -1121,8 +1121,9 @@ def show():
                         
                         # Formatar colunas de lucro se existirem
                         if 'Lucro_Total' in analise_display.columns:
-                            analise_display['Lucro_Total'] = analise_display['Lucro_Total'].apply(lambda x: f"R$ {x:,.2f}")
-                            analise_display['Lucro_Medio'] = analise_display['Lucro_Medio'].apply(lambda x: f"R$ {x:.2f}")
+                            # Arredondar valores antes de formatar
+                            analise_display['Lucro_Total'] = analise_display['Lucro_Total'].round(2).apply(lambda x: f"R$ {x:,.2f}")
+                            analise_display['Lucro_Medio'] = analise_display['Lucro_Medio'].round(2).apply(lambda x: f"R$ {x:.2f}")
                             # Calcular margem de lucro por período
                             margem_periodo = ((analise_agrupada['Lucro_Total'] / analise_agrupada['Receita_Total']) * 100).fillna(0).round(1)
                             analise_display['Margem_Lucro'] = margem_periodo.apply(lambda x: f"{x:.1f}%")

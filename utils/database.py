@@ -4587,14 +4587,14 @@ class Database:
                     # Usar margem de 30% como estimativa se não tiver custo definido
                     preco_custo = i.preco_unitario * 0.7
                 
-                lucro_item = (i.preco_unitario - preco_custo) * i.quantidade
+                lucro_item = round((i.preco_unitario - preco_custo) * i.quantidade, 2)
                 
                 item_data = {
                     'id': i.id,
                     'produto_nome': produto_nome,
                     'quantidade': i.quantidade,
-                    'preco_unitario': i.preco_unitario,
-                    'subtotal': i.subtotal if i.subtotal else (i.preco_unitario * i.quantidade),
+                    'preco_unitario': round(i.preco_unitario, 2),
+                    'subtotal': round(i.subtotal if i.subtotal else (i.preco_unitario * i.quantidade), 2),
                     'lucro': lucro_item
                 }
                 dados_itens.append(item_data)
