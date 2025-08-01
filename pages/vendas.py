@@ -1014,25 +1014,18 @@ def show():
                             vendas_ids = vendas_periodo['id'].tolist()
                             if vendas_ids:
                                 from sqlalchemy import text
-                                # Query para calcular lucro total por venda
+                                # Query para calcular lucro total por venda (preço venda - custo)
                                 lucro_query = text("""
                                     SELECT 
                                         v.id as venda_id,
                                         v.data_venda,
                                         COALESCE(SUM(
-                                            iv.quantidade * (iv.preco_unitario - 
-                                                CASE 
-                                                    WHEN p.preco_custo IS NOT NULL AND p.preco_custo > 0 
-                                                    THEN p.preco_custo
-                                                    ELSE iv.preco_unitario * 0.6
-                                                END
-                                            )
+                                            iv.quantidade * (iv.preco_unitario - (iv.preco_unitario * 0.6))
                                         ), 0) as lucro_venda
                                     FROM vendas v
                                     LEFT JOIN itens_venda iv ON v.id = iv.venda_id
-                                    LEFT JOIN produtos p ON iv.produto_id = p.id
                                     WHERE v.id = ANY(:vendas_ids)
-                                    GROUP BY v.id, v.data_venda, v.valor_total
+                                    GROUP BY v.id, v.data_venda
                                 """)
                                 
                                 lucros_result = st.session_state.db.session.execute(lucro_query, {"vendas_ids": vendas_ids})
@@ -1084,13 +1077,7 @@ def show():
                         # Métricas resumo do período
                         st.markdown("### 📈 Resumo do Período")
                         
-                        # Debug: Verificar cálculos de lucro
-                        if not lucros_agrupados.empty:
-                            st.write("DEBUG - Dados de lucro:", lucros_agrupados)
-                            total_receita_periodo = analise_agrupada['Receita_Total'].sum()
-                            total_lucro_periodo = analise_agrupada['Lucro_Total'].sum()
-                            margem_calculada = (total_lucro_periodo / total_receita_periodo * 100) if total_receita_periodo > 0 else 0
-                            st.write(f"DEBUG - Receita: R$ {total_receita_periodo:.2f}, Lucro: R$ {total_lucro_periodo:.2f}, Margem: {margem_calculada:.1f}%")
+
                         
                         total_vendas = len(vendas_periodo)
                         receita_total = vendas_periodo['valor_total'].sum()
