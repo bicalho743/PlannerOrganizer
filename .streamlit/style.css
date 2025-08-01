@@ -148,6 +148,40 @@ button[data-testid="baseButton-primary"] div {
     font-weight: 600 !important;
 }
 
+/* TODOS OS BOTÕES - MÁXIMA PRIORIDADE */
+button,
+button *,
+button p,
+button span,
+button div {
+    color: white !important;
+    font-weight: 600 !important;
+    text-shadow: none !important;
+}
+
+/* Botões específicos por tipo */
+button[type="primary"],
+button[type="primary"] *,
+button[type="primary"] p,
+button[type="primary"] span,
+button[type="primary"] div {
+    background-color: #1f4e79 !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 600 !important;
+}
+
+button[type="secondary"],
+button[type="secondary"] *,
+button[type="secondary"] p,
+button[type="secondary"] span,
+button[type="secondary"] div {
+    background-color: #6c757d !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 600 !important;
+}
+
 /* Botões secundários */
 button[kind="secondary"] {
     background-color: #6c757d !important;
@@ -433,19 +467,40 @@ div[data-testid="stExpander"] button[kind="primary"] span {
 }
 
 /* FORÇAR TEXTO BRANCO EM EXPANDERS - MÁXIMA PRIORIDADE */
-div[data-testid="stExpander"] button[kind="primary"],
-div[data-testid="stExpander"] button[kind="primary"] *,
-div[data-testid="stExpander"] button[kind="primary"] p,
-div[data-testid="stExpander"] button[kind="primary"] span,
-div[data-testid="stExpander"] button[kind="primary"] div,
-.streamlit-expanderContent button[kind="primary"],
-.streamlit-expanderContent button[kind="primary"] *,
-.streamlit-expanderContent button[kind="primary"] p,
-.streamlit-expanderContent button[kind="primary"] span,
-.streamlit-expanderContent button[kind="primary"] div {
+div[data-testid="stExpander"] button,
+div[data-testid="stExpander"] button *,
+div[data-testid="stExpander"] button p,
+div[data-testid="stExpander"] button span,
+div[data-testid="stExpander"] button div,
+.streamlit-expanderContent button,
+.streamlit-expanderContent button *,
+.streamlit-expanderContent button p,
+.streamlit-expanderContent button span,
+.streamlit-expanderContent button div {
     color: white !important;
     font-weight: 600 !important;
     text-shadow: none !important;
+    background-color: #1f4e79 !important;
+    border: none !important;
+}
+
+/* Botões específicos dentro de expanders */
+div[data-testid="stExpander"] button[kind="primary"],
+div[data-testid="stExpander"] button[type="primary"],
+.streamlit-expanderContent button[kind="primary"],
+.streamlit-expanderContent button[type="primary"] {
+    background-color: #1f4e79 !important;
+    color: white !important;
+    border: none !important;
+}
+
+div[data-testid="stExpander"] button[kind="secondary"], 
+div[data-testid="stExpander"] button[type="secondary"],
+.streamlit-expanderContent button[kind="secondary"],
+.streamlit-expanderContent button[type="secondary"] {
+    background-color: #6c757d !important;
+    color: white !important;
+    border: none !important;
 }
 
 /* ========================================
