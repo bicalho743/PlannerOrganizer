@@ -1942,16 +1942,17 @@ def show():
                 with st.form(key="exportar_csv_form"):
                     exportar_csv = st.form_submit_button("EXPORTAR PARA CSV", type="primary", use_container_width=True)
 
-                    if exportar_csv:
-                        csv = propostas_filtradas[['numero', 'nome', 'descricao', 'valor_formatado', 'status', 'data_formatada', 'tipo_proposta']].to_csv(index=False)
-                        st.download_button(
-                            label="BAIXAR CSV",
-                            data=csv,
-                            file_name="propostas_exportadas.csv",
-                            mime="text/csv",
-                            type="primary",
-                            use_container_width=True
-                        )
+                # Botão de download fora do formulário
+                if exportar_csv:
+                    csv = propostas_filtradas[['numero', 'nome', 'descricao', 'valor_formatado', 'status', 'data_formatada', 'tipo_proposta']].to_csv(index=False)
+                    st.download_button(
+                        label="BAIXAR CSV",
+                        data=csv,
+                        file_name="propostas_exportadas.csv",
+                        mime="text/csv",
+                        type="primary",
+                        use_container_width=True
+                    )
 
                 # Adicionar funcionalidade para gerar relatórios de propostas finalizadas
 
