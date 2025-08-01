@@ -860,6 +860,12 @@ def show():
         # Inicializar o módulo de fluxo de caixa no session_state
         if 'fluxo_caixa_module' not in st.session_state:
             st.session_state.fluxo_caixa_module = CashFlowModule(saldo_inicial=0.0)
+        
+        # Inicializar categorias personalizadas
+        if 'categorias_receitas_personalizadas' not in st.session_state:
+            st.session_state.categorias_receitas_personalizadas = REVENUE_CATEGORIES.copy()
+        if 'categorias_despesas_personalizadas' not in st.session_state:
+            st.session_state.categorias_despesas_personalizadas = EXPENSE_CATEGORIES.copy()
 
         # Barra lateral para configurações
         with st.expander("⚙️ Configurações", expanded=False):
@@ -875,6 +881,66 @@ def show():
                     st.session_state.fluxo_caixa_module.saldo_inicial = st.session_state.saldo_inicial
                     st.session_state.fluxo_caixa_module.recalcular_saldos()
                     st.success("Saldo inicial atualizado!")
+
+        # Seção para personalizar categorias
+        with st.expander("🏷️ Personalizar Categorias", expanded=False):
+            tab_receitas, tab_despesas = st.tabs(["💰 Receitas", "💸 Despesas"])
+            
+            with tab_receitas:
+                st.markdown("**Categorias de Receitas:**")
+                
+                # Mostrar categorias atuais
+                for i, categoria in enumerate(st.session_state.categorias_receitas_personalizadas):
+                    col1, col2 = st.columns([4, 1])
+                    with col1:
+                        st.write(f"• {categoria}")
+                    with col2:
+                        if st.button("🗑️", key=f"del_receita_{i}", help="Excluir categoria"):
+                            st.session_state.categorias_receitas_personalizadas.remove(categoria)
+                            st.rerun()
+                
+                # Adicionar nova categoria
+                st.markdown("**Adicionar Nova Categoria:**")
+                nova_receita = st.text_input("Nome da nova categoria de receita", key="nova_categoria_receita")
+                if st.button("➕ Adicionar Receita", use_container_width=True):
+                    if nova_receita and nova_receita not in st.session_state.categorias_receitas_personalizadas:
+                        st.session_state.categorias_receitas_personalizadas.append(nova_receita)
+                        st.success(f"Categoria '{nova_receita}' adicionada!")
+                        st.rerun()
+                    elif nova_receita in st.session_state.categorias_receitas_personalizadas:
+                        st.warning("Esta categoria já existe!")
+            
+            with tab_despesas:
+                st.markdown("**Categorias de Despesas:**")
+                
+                # Mostrar categorias atuais
+                for i, categoria in enumerate(st.session_state.categorias_despesas_personalizadas):
+                    col1, col2 = st.columns([4, 1])
+                    with col1:
+                        st.write(f"• {categoria}")
+                    with col2:
+                        if st.button("🗑️", key=f"del_despesa_{i}", help="Excluir categoria"):
+                            st.session_state.categorias_despesas_personalizadas.remove(categoria)
+                            st.rerun()
+                
+                # Adicionar nova categoria
+                st.markdown("**Adicionar Nova Categoria:**")
+                nova_despesa = st.text_input("Nome da nova categoria de despesa", key="nova_categoria_despesa")
+                if st.button("➕ Adicionar Despesa", use_container_width=True):
+                    if nova_despesa and nova_despesa not in st.session_state.categorias_despesas_personalizadas:
+                        st.session_state.categorias_despesas_personalizadas.append(nova_despesa)
+                        st.success(f"Categoria '{nova_despesa}' adicionada!")
+                        st.rerun()
+                    elif nova_despesa in st.session_state.categorias_despesas_personalizadas:
+                        st.warning("Esta categoria já existe!")
+                
+                # Botão para resetar para padrão
+                st.markdown("---")
+                if st.button("🔄 Restaurar Categorias Padrão", use_container_width=True):
+                    st.session_state.categorias_receitas_personalizadas = REVENUE_CATEGORIES.copy()
+                    st.session_state.categorias_despesas_personalizadas = EXPENSE_CATEGORIES.copy()
+                    st.success("Categorias restauradas para o padrão!")
+                    st.rerun()
 
         # Seção para adicionar/editar meses
         st.markdown("### 📅 Gestão de Meses")
@@ -928,7 +994,7 @@ def show():
                 with col1:
                     st.markdown("#### 💰 Receitas Previstas")
 
-                    for categoria in REVENUE_CATEGORIES:
+                    for categoria in st.session_state.categorias_receitas_personalizadas:
                         valor_atual = mes_obj.previsao_receitas.get(categoria, 0.0)
                         novo_valor = st.number_input(
                             categoria, 
@@ -944,7 +1010,7 @@ def show():
                 with col2:
                     st.markdown("#### 💸 Despesas Previstas")
 
-                    for categoria in EXPENSE_CATEGORIES:
+                    for categoria in st.session_state.categorias_despesas_personalizadas:
                         valor_atual = mes_obj.previsao_despesas.get(categoria, 0.0)
                         novo_valor = st.number_input(
                             categoria, 
