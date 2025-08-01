@@ -19,11 +19,11 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Start application"
+args = "API FastAPI Estável"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "API FastAPI Estável"
+args = "Start application"
 
 [[workflows.workflow]]
 name = "Gerar Manual"
@@ -53,15 +53,6 @@ task = "shell.exec"
 args = "streamlit run pages/propostas.py --server.port 5050 --server.address 0.0.0.0"
 
 [[workflows.workflow]]
-name = "Start application"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run app.py --server.port 5000 --server.address 0.0.0.0"
-waitForPort = 5000
-
-[[workflows.workflow]]
 name = "API FastAPI Estável"
 author = "agent"
 
@@ -80,6 +71,15 @@ except Exception as e:
     import time
     time.sleep(3600)  # Manter processo ativo
 \""""
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run app_stable_fix.py --server.port 5000 --server.address 0.0.0.0"
+waitForPort = 5000
 
 [[ports]]
 localPort = 443
