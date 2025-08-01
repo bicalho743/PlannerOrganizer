@@ -41,6 +41,8 @@ A interface é construída com Streamlit, focando em um design responsivo mobile
 - Integração vendas-financeiro: Vendas criam automaticamente entradas financeiras via função `add_venda()`.
 - Fluxo de caixa com visualização de mês e ano completos para melhor organização temporal.
 - Correção de bugs do `st.download_button()` em formulários para conformidade com regras do Streamlit.
+- **Nova funcionalidade**: Análise por Período no módulo de vendas com filtros de data, agrupamento por período (dia/semana/mês/trimestre/ano), métricas de resumo, gráficos visuais e análise de produtos mais vendidos.
+- Correções de CSS para visibilidade de texto em botões com aplicação específica nos seletores `.stButton > button` e `.stFormSubmitButton > button`.
 
 ## External Dependencies
 - **Streamlit**: Para a construção da interface web.
