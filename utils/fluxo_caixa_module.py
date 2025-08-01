@@ -15,6 +15,8 @@ no Replit ou em outros ambientes Python.
 
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
+import pandas as pd
+from datetime import datetime
 
 # Definição das categorias de entradas e saídas conforme a planilha
 REVENUE_CATEGORIES: List[str] = [
@@ -174,9 +176,10 @@ class CashFlowModule:
     visão consolidada dos saldos finais por mês.
     """
 
-    def __init__(self, saldo_inicial: float = 0.0) -> None:
+    def __init__(self, saldo_inicial: float = 0.0, db_connection=None) -> None:
         self.months: List[MonthCashFlow] = []
         self.saldo_inicial = saldo_inicial
+        self.db_connection = db_connection
 
     def adicionar_mes(self, month: MonthCashFlow) -> None:
         """Adiciona um novo mês ao módulo. O saldo anterior do mês
@@ -220,6 +223,163 @@ class CashFlowModule:
                 "saldo_final_previsao": month.saldo_final_previsao,
             }
         return resumo
+
+    def importar_transacoes_banco(self, mes_nome: str, ano: int = None) -> Dict[str, float]:
+        """
+        Importa transações reais do banco de dados para um mês específico
+        
+        Args:
+            mes_nome: Nome do mês (ex: "Janeiro", "Fevereiro")
+            ano: Ano das transações (padrão: ano atual)
+            
+        Returns:
+            Dict com receitas e despesas importadas
+        """
+        if not self.db_connection:
+            return {"receitas": {}, "despesas": {}}
+            
+        if ano is None:
+            ano = datetime.now().year
+            
+        # Mapear nomes de meses para números
+        meses_map = {
+            "Janeiro": 1, "Fevereiro": 2, "Março": 3, "Abril": 4,
+            "Maio": 5, "Junho": 6, "Julho": 7, "Agosto": 8,
+            "Setembro": 9, "Outubro": 10, "Novembro": 11, "Dezembro": 12
+        }
+        
+        mes_numero = meses_map.get(mes_nome)
+        if not mes_numero:
+            return {"receitas": {}, "despesas": {}}
+            
+        try:
+            # Buscar transações do banco
+            transacoes_df = self.db_connection.get_financeiro()
+            
+            if transacoes_df.empty:
+                return {"receitas": {}, "despesas": {}}
+                
+            # Converter coluna data
+            transacoes_df['data'] = pd.to_datetime(transacoes_df['data'])
+            
+            # Filtrar por mês e ano
+            mask = (
+                (transacoes_df['data'].dt.month == mes_numero) & 
+                (transacoes_df['data'].dt.year == ano)
+            )
+            transacoes_mes = transacoes_df[mask]
+            
+            receitas_importadas = {}
+            despesas_importadas = {}
+            
+            # Processar receitas
+            receitas = transacoes_mes[
+                (transacoes_mes['tipo'].isin(['receita', 'Receita'])) &
+                (transacoes_mes['status'] == 'Recebido')
+            ]
+            
+            for _, transacao in receitas.iterrows():
+                categoria = self._mapear_categoria_receita(transacao['categoria'])
+                if categoria not in receitas_importadas:
+                    receitas_importadas[categoria] = 0.0
+                receitas_importadas[categoria] += float(transacao['valor'])
+            
+            # Processar despesas
+            despesas = transacoes_mes[
+                (transacoes_mes['tipo'].isin(['despesa', 'Despesa'])) &
+                (transacoes_mes['status'] == 'Pago')
+            ]
+            
+            for _, transacao in despesas.iterrows():
+                categoria = self._mapear_categoria_despesa(transacao['categoria'])
+                if categoria not in despesas_importadas:
+                    despesas_importadas[categoria] = 0.0
+                despesas_importadas[categoria] += float(transacao['valor'])
+                
+            return {"receitas": receitas_importadas, "despesas": despesas_importadas}
+            
+        except Exception as e:
+            print(f"Erro ao importar transações: {str(e)}")
+            return {"receitas": {}, "despesas": {}}
+    
+    def _mapear_categoria_receita(self, categoria_banco: str) -> str:
+        """Mapeia categorias do banco para categorias do fluxo de caixa"""
+        mapeamento = {
+            "Serviços de Organização": "Contas a receber-vendas realizadas",
+            "Venda de Produtos": "Contas a receber-vendas realizadas", 
+            "Vendas": "Contas a receber-vendas realizadas",
+            "Comissão sobre Fornecedores": "Outros recebimentos",
+            "Serviços Adicionais": "Outros recebimentos"
+        }
+        return mapeamento.get(categoria_banco, "Outros recebimentos")
+    
+    def _mapear_categoria_despesa(self, categoria_banco: str) -> str:
+        """Mapeia categorias do banco para categorias do fluxo de caixa"""
+        mapeamento = {
+            "Pagamento Equipe/Assistentes": "Pró Labore",
+            "Pagamento Parceiros/Fornecedores": "Fornecedores",
+            "Custos Operacionais": "Fornecedores",
+            "Custos Administrativos": "MEI",
+            "Assistente": "Pró Labore",
+            "Fornecedor": "Fornecedores"
+        }
+        return mapeamento.get(categoria_banco, "Fornecedores")
+    
+    def sincronizar_mes_com_banco(self, mes_nome: str, ano: int = None) -> bool:
+        """
+        Sincroniza um mês do fluxo de caixa com dados reais do banco
+        
+        Args:
+            mes_nome: Nome completo do mês (ex: "Janeiro 2024")
+            ano: Ano (extraído do nome se não fornecido)
+            
+        Returns:
+            bool: True se sincronizado com sucesso
+        """
+        try:
+            # Extrair mês e ano do nome se necessário
+            if ano is None and ' ' in mes_nome:
+                partes = mes_nome.split(' ')
+                if len(partes) >= 2:
+                    mes_nome_limpo = partes[0]
+                    ano = int(partes[1])
+                else:
+                    mes_nome_limpo = mes_nome
+                    ano = datetime.now().year
+            else:
+                mes_nome_limpo = mes_nome
+                if ano is None:
+                    ano = datetime.now().year
+            
+            # Encontrar o mês no fluxo de caixa
+            mes_obj = None
+            for m in self.months:
+                if mes_nome in m.name or mes_nome_limpo in m.name:
+                    mes_obj = m
+                    break
+            
+            if not mes_obj:
+                return False
+                
+            # Importar dados do banco
+            dados_importados = self.importar_transacoes_banco(mes_nome_limpo, ano)
+            
+            # Atualizar valores realizados
+            if dados_importados["receitas"]:
+                if mes_obj.realizado_receitas is None:
+                    mes_obj.realizado_receitas = {}
+                mes_obj.realizado_receitas.update(dados_importados["receitas"])
+            
+            if dados_importados["despesas"]:
+                if mes_obj.realizado_despesas is None:
+                    mes_obj.realizado_despesas = {}
+                mes_obj.realizado_despesas.update(dados_importados["despesas"])
+            
+            return True
+            
+        except Exception as e:
+            print(f"Erro ao sincronizar mês {mes_nome}: {str(e)}")
+            return False
 
     def __repr__(self) -> str:
         parts = [f"Saldo inicial: {self.saldo_inicial:.2f}\n"]
