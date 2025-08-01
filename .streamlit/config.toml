@@ -2,9 +2,15 @@
 headless = true
 address = "0.0.0.0"
 port = 5000
+runOnSave = false
+fileWatcherType = "none"
 
 [client]
 showSidebarNavigation = false
+showErrorDetails = false
+
+[browser]
+gatherUsageStats = false
 
 [theme]
 primaryColor = "#1E366F"
