@@ -203,7 +203,7 @@ def show():
                         st.metric("Total do Item", f"R$ {total_item:.2f}")
 
                 # Botão para adicionar produto à venda
-                if st.button("Adicionar à Venda", type="primary", disabled=(produto_id is None)):
+                if st.button("Adicionar à Venda", type="primary", disabled=(produto_id is None), key="btn_adicionar_produto_venda"):
                     if produto_id and quantidade > 0:
                         produto = produtos_df[produtos_df['id'] == produto_id].iloc[0]
                         
@@ -276,7 +276,7 @@ def show():
                     # Botão para finalizar venda
                     col1, col2 = st.columns(2)
                     with col1:
-                        if st.button("FINALIZAR VENDA", type="primary", use_container_width=True):
+                        if st.button("FINALIZAR VENDA", type="primary", use_container_width=True, key="btn_finalizar_venda"):
                             try:
                                 # Preparar itens para a função add_venda
                                 itens_venda = []
@@ -307,7 +307,7 @@ def show():
                                 st.error(f"❌ Erro ao registrar venda: {str(e)}")
 
                     with col2:
-                        if st.button("LIMPAR VENDA", use_container_width=True):
+                        if st.button("LIMPAR VENDA", use_container_width=True, key="btn_limpar_venda"):
                             st.session_state.produtos_venda = []
                             st.rerun()
 
