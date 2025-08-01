@@ -246,6 +246,7 @@ button[role="tab"] {
     border-radius: 6px !important;
     overflow: hidden !important;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+    border: 1px solid #dee2e6 !important;
 }
 
 .dataframe th {
@@ -253,15 +254,61 @@ button[role="tab"] {
     color: white !important;
     font-weight: 600 !important;
     padding: 0.75rem !important;
+    border-bottom: 2px solid #dee2e6 !important;
 }
 
 .dataframe td {
     padding: 0.75rem !important;
-    border-bottom: 1px solid #eee !important;
+    border-bottom: 1px solid #dee2e6 !important;
+    border-right: 1px solid #f0f0f0 !important;
+    background-color: white !important;
+    color: #333 !important;
+}
+
+.dataframe tr {
+    border-bottom: 1px solid #dee2e6 !important;
 }
 
 .dataframe tr:hover {
     background-color: #f8f9fa !important;
+}
+
+.dataframe tr:nth-child(even) {
+    background-color: #fafafa !important;
+}
+
+/* Forçar visibilidade das tabelas do Streamlit */
+div[data-testid="stDataFrame"] table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    width: 100% !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+div[data-testid="stDataFrame"] table th {
+    background-color: #1E366F !important;
+    color: white !important;
+    font-weight: 600 !important;
+    padding: 0.75rem !important;
+    border-bottom: 2px solid #dee2e6 !important;
+    border-right: 1px solid #ccc !important;
+}
+
+div[data-testid="stDataFrame"] table td {
+    padding: 0.75rem !important;
+    border-bottom: 1px solid #dee2e6 !important;
+    border-right: 1px solid #f0f0f0 !important;
+    background-color: white !important;
+    color: #333 !important;
+    font-size: 14px !important;
+}
+
+div[data-testid="stDataFrame"] table tbody tr:nth-child(even) td {
+    background-color: #fafafa !important;
+}
+
+div[data-testid="stDataFrame"] table tbody tr:hover td {
+    background-color: #e3f2fd !important;
 }
 
 /* ========================================
