@@ -467,14 +467,20 @@ if not st.session_state.authenticated:
     # CSS customizado para a página de login
     st.markdown("""
     <style>
+    /* Ocultar cabeçalho do Streamlit completamente */
+    header[data-testid="stHeader"] {
+        display: none !important;
+    }
+    
     /* Remover espaçamento superior da página */
     .block-container {
-        padding-top: 1rem !important;
+        padding-top: 0 !important;
         margin-top: 0 !important;
     }
     
     .main .block-container {
-        padding-top: 1rem !important;
+        padding-top: 0 !important;
+        margin-top: 0 !important;
     }
     
     .login-header {
@@ -503,19 +509,21 @@ if not st.session_state.authenticated:
     .stat-box {
         background: white;
         border: 2px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 1.5rem;
+        border-radius: 20px;
+        padding: 2rem 1.5rem;
         text-align: center;
         min-width: 200px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         transition: all 0.3s ease;
         cursor: pointer;
+        border-left: 4px solid #e0e0e0;
     }
     
     .stat-box:hover {
         transform: translateY(-3px);
-        box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
         border-color: #3a75c4;
+        border-left-color: #3a75c4;
     }
     
     .stat-number {
@@ -548,17 +556,19 @@ if not st.session_state.authenticated:
     .feature-box {
         background: white;
         border: 2px solid #e0e0e0;
-        border-radius: 8px;
+        border-radius: 20px;
         padding: 2rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         transition: all 0.3s ease;
         cursor: pointer;
+        border-left: 4px solid #e0e0e0;
     }
     
     .feature-box:hover {
         transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
         border-color: #3a75c4;
+        border-left-color: #3a75c4;
     }
     
     .feature-icon {
@@ -587,12 +597,13 @@ if not st.session_state.authenticated:
     }
     
     .testimonial-box {
-        background: white;
+        background: #f8f9fa;
         border: 2px solid #e0e0e0;
-        border-radius: 8px;
+        border-radius: 20px;
         padding: 2rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         position: relative;
+        border-left: 4px solid #e0e0e0;
     }
     
     .testimonial-text {
