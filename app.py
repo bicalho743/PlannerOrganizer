@@ -847,9 +847,7 @@ if not st.session_state.authenticated:
                             # Forçar mudança para dashboard imediatamente ANTES da mensagem
                             st.session_state.current_page = "Dashboard"
                             st.session_state.show_welcome = False
-                            st.success("Login realizado com sucesso!")
-                            # Usar st.rerun() apenas aqui para completar a transição
-                            st.rerun()
+                            st.success("Login realizado com sucesso! Redirecionando para o dashboard...")
                         else:
                             st.error(f"Erro de autenticação: {result['error']}")
                 else:
