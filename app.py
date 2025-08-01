@@ -88,11 +88,7 @@ if "show_enviar_manual" not in st.session_state:
 if "show_debug_propostas_finalizadas" not in st.session_state:
     st.session_state.show_debug_propostas_finalizadas = False
 
-# Inicializar estados de controle de login
-if "login_success" not in st.session_state:
-    st.session_state.login_success = False
-if "login_processing" not in st.session_state:
-    st.session_state.login_processing = False
+# Estados removidos para evitar complexidade desnecessária
 
 # Configuração inicial da página
 st.set_page_config(
@@ -126,10 +122,6 @@ except Exception as e:
     logger.error(f"❌ Erro ao implementar meta tags de SEO: {e}")
 
 # JavaScript removido para evitar loops infinitos
-# Verificar se houve login bem-sucedido e limpar flag
-if st.session_state.get('login_success', False):
-    st.session_state.login_success = False
-    st.session_state.login_processing = False
 
 # Diagnóstico de componentes do sistema
 logger.info("🔍 Verificando status dos componentes do sistema...")
@@ -993,15 +985,12 @@ if not st.session_state.authenticated:
                                 from utils.database import Database
                                 st.session_state.db = Database(usuario_id=result['user']['localId'])
                             
-                            # Marcar como autenticado e forçar transição imediata
+                            # Marcar como autenticado SEM st.rerun()
                             st.session_state.authenticated = True
                             st.session_state.current_page = "Dashboard"
-                            st.session_state.login_success = True
                             
-                            # Usar st.rerun() APENAS uma vez e com controle
-                            if not st.session_state.get('login_processing', False):
-                                st.session_state.login_processing = True
-                                st.rerun()
+                            # Mostrar mensagem de sucesso simples
+                            st.success("✅ Login realizado com sucesso!")
                         else:
                             st.error(f"Erro de autenticação: {result['error']}")
                 else:
