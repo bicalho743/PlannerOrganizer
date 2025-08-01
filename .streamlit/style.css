@@ -105,6 +105,49 @@ section[data-testid="stSidebar"] button:has(*:contains("Sair do Sistema")) {
     box-shadow: 0 4px 8px rgba(58, 117, 196, 0.3) !important;
 }
 
+/* FORÇAR TEXTO BRANCO EM TODOS OS BOTÕES PRINCIPAIS */
+.main .stButton > button,
+.main .stButton > button *,
+.main .stButton > button p,
+.main .stButton > button span,
+.main .stButton > button div {
+    color: white !important;
+    font-weight: 600 !important;
+}
+
+/* Botões primários específicos */
+button[kind="primary"],
+button[data-testid="baseButton-primary"] {
+    background-color: #1f4e79 !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+button[kind="primary"]:hover,
+button[data-testid="baseButton-primary"]:hover {
+    background-color: #164066 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(30, 78, 121, 0.3) !important;
+}
+
+/* FORÇAR TEXTO BRANCO EM BOTÕES PRIMÁRIOS */
+button[kind="primary"],
+button[kind="primary"] *,
+button[kind="primary"] p,
+button[kind="primary"] span,
+button[kind="primary"] div,
+button[data-testid="baseButton-primary"],
+button[data-testid="baseButton-primary"] *,
+button[data-testid="baseButton-primary"] p,
+button[data-testid="baseButton-primary"] span,
+button[data-testid="baseButton-primary"] div {
+    color: white !important;
+    font-weight: 600 !important;
+}
+
 /* Botões secundários */
 button[kind="secondary"] {
     background-color: #6c757d !important;
@@ -387,6 +430,22 @@ div[data-testid="stExpander"] button[kind="primary"] span {
     text-transform: uppercase !important;
     letter-spacing: 0.5px !important;
     min-height: 40px !important;
+}
+
+/* FORÇAR TEXTO BRANCO EM EXPANDERS - MÁXIMA PRIORIDADE */
+div[data-testid="stExpander"] button[kind="primary"],
+div[data-testid="stExpander"] button[kind="primary"] *,
+div[data-testid="stExpander"] button[kind="primary"] p,
+div[data-testid="stExpander"] button[kind="primary"] span,
+div[data-testid="stExpander"] button[kind="primary"] div,
+.streamlit-expanderContent button[kind="primary"],
+.streamlit-expanderContent button[kind="primary"] *,
+.streamlit-expanderContent button[kind="primary"] p,
+.streamlit-expanderContent button[kind="primary"] span,
+.streamlit-expanderContent button[kind="primary"] div {
+    color: white !important;
+    font-weight: 600 !important;
+    text-shadow: none !important;
 }
 
 /* ========================================
