@@ -37,13 +37,12 @@ class FluxoCaixaSimple:
         ORDER BY data ASC, tipo DESC
         """
         
-        with self.db.session() as session:
-            result = session.execute(text(query), {
-                'usuario_id': self.db.usuario_id, 
-                'data_inicio': data_inicio.date(), 
-                'data_fim': data_fim.date()
-            })
-            return pd.DataFrame(result.fetchall(), columns=result.keys())
+        result = self.db.session.execute(text(query), {
+            'usuario_id': self.db.usuario_id, 
+            'data_inicio': data_inicio.date(), 
+            'data_fim': data_fim.date()
+        })
+        return pd.DataFrame(result.fetchall(), columns=result.keys())
     
     def get_transacoes_mes(self, ano: int, mes: int) -> pd.DataFrame:
         """
@@ -74,10 +73,9 @@ class FluxoCaixaSimple:
         
         query += " ORDER BY categoria ASC"
         
-        with self.db.session() as session:
-            result = session.execute(text(query), params)
-            df = pd.DataFrame(result.fetchall(), columns=result.keys())
-            return df['categoria'].tolist() if not df.empty else []
+        result = self.db.session.execute(text(query), params)
+        df = pd.DataFrame(result.fetchall(), columns=result.keys())
+        return df['categoria'].tolist() if not df.empty else []
     
     def get_resumo_mensal(self, ano: int, mes: int) -> Dict:
         """
