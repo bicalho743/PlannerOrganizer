@@ -322,9 +322,17 @@ def show():
             st.subheader("Vendas Recentes (Últimos 30 dias)")
             
             try:
-                # Buscar vendas dos últimos 30 dias
+                # Buscar todas as vendas e filtrar últimos 30 dias
                 data_limite = datetime.now() - timedelta(days=30)
-                vendas_recentes = st.session_state.db.get_vendas_periodo(data_limite, datetime.now())
+                todas_vendas = st.session_state.db.get_vendas()
+                
+                if not todas_vendas.empty:
+                    # Converter coluna de data para datetime se necessário
+                    todas_vendas['data_venda'] = pd.to_datetime(todas_vendas['data_venda'])
+                    # Filtrar vendas dos últimos 30 dias
+                    vendas_recentes = todas_vendas[todas_vendas['data_venda'] >= data_limite]
+                else:
+                    vendas_recentes = todas_vendas
                 
                 if not vendas_recentes.empty:
                     # Exibir resumo
