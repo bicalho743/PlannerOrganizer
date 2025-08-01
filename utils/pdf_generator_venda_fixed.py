@@ -70,12 +70,14 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
         c.setFont("Helvetica-Bold", 12)
         c.drawString(40, y - 20, "Detalhes da Venda")
 
-        # Tratar valor_total da venda se estiver em formato de string
-        valor_total_raw = venda.get('valor_total', '0.00')
+        # Tratar valor_total da venda para garantir formatação correta
+        valor_total_raw = venda.get('valor_total', 0)
         if isinstance(valor_total_raw, str) and 'R$' in valor_total_raw:
             valor_total = valor_total_raw  # Mantém o valor como string formatada
         else:
-            valor_total = f"R$ {valor_total_raw}"
+            # Arredondar e formatar corretamente
+            valor_num = round(float(valor_total_raw), 2)
+            valor_total = f"R$ {valor_num:,.2f}".replace(',', '_').replace('.', ',').replace('_', '.')
 
         c.setFillColor(CINZA_TEXTO)
         c.setFont("Helvetica", 10)
@@ -154,7 +156,8 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
             y -= 5
             c.setFont("Helvetica-Bold", 10)
             c.setFillColor(AZUL_ESCURO)
-            c.drawRightString(540, y, f"TOTAL: R$ {total:.2f}")
+            total_formatado = f"R$ {total:,.2f}".replace(',', '_').replace('.', ',').replace('_', '.')
+            c.drawRightString(540, y, f"TOTAL: {total_formatado}")
         else:
             c.drawString(50, y, "Nenhum item encontrado.")
 

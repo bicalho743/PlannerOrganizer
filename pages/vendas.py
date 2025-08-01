@@ -620,8 +620,8 @@ def show():
                                 st.dataframe(itens_display, hide_index=True, use_container_width=True)
                                 
                                 # Mostrar total da venda
-                                total_calculado = itens_venda['total_item'].sum()
-                                st.write(f"**Total da Venda:** R$ {total_calculado:.2f}")
+                                total_calculado = round(itens_venda['total_item'].sum(), 2)
+                                st.write(f"**Total da Venda:** R$ {total_calculado:,.2f}".replace(',', '_').replace('.', ',').replace('_', '.'))
                             else:
                                 st.info("Nenhum item encontrado para esta venda.")
                         except Exception as e:
@@ -648,7 +648,7 @@ def show():
                                         'id': venda_detalhes['id'],
                                         'status': venda_detalhes['status'],
                                         'forma_pagamento': venda_detalhes['forma_pagamento'],
-                                        'valor_total': venda_detalhes['valor_total'],
+                                        'valor_total': round(float(venda_detalhes['valor_total']), 2),
                                         'data_venda': venda_detalhes['data_venda'],
                                         'observacoes': venda_detalhes.get('observacoes', '')
                                     }
