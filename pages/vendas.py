@@ -1260,22 +1260,22 @@ def show():
                 except Exception as e:
                     st.error(f"Erro ao gerar análise: {str(e)}")
 
-    # CSS e JavaScript para eliminar qualquer fundo azul restante e corrigir selectbox
+    # CSS e JavaScript ESPECÍFICO APENAS PARA PÁGINA DE VENDAS - não afeta sidebar
     st.markdown("""
     <style>
-    /* CORREÇÃO ULTRA-ESPECÍFICA PARA SELECTBOX - FORÇA MÁXIMA */
-    div[data-testid="stSelectbox"] {
+    /* CORREÇÃO ULTRA-ESPECÍFICA PARA SELECTBOX APENAS NA ÁREA PRINCIPAL */
+    section[data-testid="stMain"] div[data-testid="stSelectbox"] {
         background-color: #ffffff !important;
         border: 1px solid #cccccc !important;
         border-radius: 4px !important;
     }
 
-    /* TODOS os elementos dentro do selectbox */
-    div[data-testid="stSelectbox"] *,
-    div[data-testid="stSelectbox"] div,
-    div[data-testid="stSelectbox"] span,
-    div[data-testid="stSelectbox"] input,
-    div[data-testid="stSelectbox"] p {
+    /* TODOS os elementos dentro do selectbox APENAS NA ÁREA PRINCIPAL */
+    section[data-testid="stMain"] div[data-testid="stSelectbox"] *,
+    section[data-testid="stMain"] div[data-testid="stSelectbox"] div,
+    section[data-testid="stMain"] div[data-testid="stSelectbox"] span,
+    section[data-testid="stMain"] div[data-testid="stSelectbox"] input,
+    section[data-testid="stMain"] div[data-testid="stSelectbox"] p {
         color: #000000 !important;
         background-color: transparent !important;
         font-weight: 600 !important;
@@ -1284,11 +1284,11 @@ def show():
         text-shadow: 1px 1px 1px #ffffff !important;
     }
 
-    /* Elementos BaseWeb específicos */
-    div[data-testid="stSelectbox"] [data-baseweb="select"],
-    div[data-testid="stSelectbox"] [data-baseweb="select"] *,
-    div[data-testid="stSelectbox"] [data-baseweb="input"],
-    div[data-testid="stSelectbox"] [data-baseweb="input"] * {
+    /* Elementos BaseWeb específicos APENAS NA ÁREA PRINCIPAL */
+    section[data-testid="stMain"] div[data-testid="stSelectbox"] [data-baseweb="select"],
+    section[data-testid="stMain"] div[data-testid="stSelectbox"] [data-baseweb="select"] *,
+    section[data-testid="stMain"] div[data-testid="stSelectbox"] [data-baseweb="input"],
+    section[data-testid="stMain"] div[data-testid="stSelectbox"] [data-baseweb="input"] * {
         color: #000000 !important;
         background-color: #ffffff !important;
         font-weight: 600 !important;
@@ -1297,29 +1297,29 @@ def show():
         text-shadow: 1px 1px 1px #ffffff !important;
     }
 
-    /* Container principal do BaseWeb select */
-    div[data-testid="stSelectbox"] [data-baseweb="select"] > div {
+    /* Container principal do BaseWeb select APENAS NA ÁREA PRINCIPAL */
+    section[data-testid="stMain"] div[data-testid="stSelectbox"] [data-baseweb="select"] > div {
         background-color: #ffffff !important;
         border: 1px solid #cccccc !important;
         color: #000000 !important;
         font-weight: 600 !important;
     }
 
-    /* Texto do valor selecionado */
-    div[data-testid="stSelectbox"] [data-baseweb="select"] > div > div {
+    /* Texto do valor selecionado APENAS NA ÁREA PRINCIPAL */
+    section[data-testid="stMain"] div[data-testid="stSelectbox"] [data-baseweb="select"] > div > div {
         color: #000000 !important;
         font-weight: 600 !important;
         background-color: transparent !important;
     }
 
-    /* Seta do selectbox */
-    div[data-testid="stSelectbox"] svg {
+    /* Seta do selectbox APENAS NA ÁREA PRINCIPAL */
+    section[data-testid="stMain"] div[data-testid="stSelectbox"] svg {
         color: #000000 !important;
         fill: #000000 !important;
     }
 
-    /* Labels dos selectbox */
-    div[data-testid="stSelectbox"] > label {
+    /* Labels dos selectbox APENAS NA ÁREA PRINCIPAL */
+    section[data-testid="stMain"] div[data-testid="stSelectbox"] > label {
         color: #000000 !important;
         font-weight: 600 !important;
     }
