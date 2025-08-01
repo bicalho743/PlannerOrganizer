@@ -337,16 +337,20 @@ def show():
                     with col1:
                         st.metric("Total de Vendas", total_vendas)
                     with col2:
-                        st.metric("Valor Total", f"R$ {total_valor:.2f}")
+                        st.metric("Valor Total", f"R$ {float(total_valor):.2f}")
                     
                     # Lista de vendas
                     for _, venda in vendas_recentes.iterrows():
-                        with st.expander(f"Venda #{venda['id']} - {venda['cliente_nome']} - R$ {venda['valor_total']:.2f}"):
+                        # Formatar valor para o título do expander
+                        valor_titulo = f"R$ {float(venda['valor_total']):.2f}"
+                        with st.expander(f"Venda #{venda['id']} - {venda['cliente_nome']} - {valor_titulo}"):
                             col1, col2 = st.columns(2)
                             with col1:
                                 st.write(f"**Cliente:** {venda.get('cliente_nome', 'N/A')}")
                                 st.write(f"**Data:** {venda['data_venda'].strftime('%d/%m/%Y %H:%M')}")
-                                st.write(f"**Valor Total:** R$ {venda['valor_total']:.2f}")
+                                # Formatar valor corretamente para evitar precisão floating point
+                                valor_formatado = f"R$ {float(venda['valor_total']):.2f}"
+                                st.write(f"**Valor Total:** {valor_formatado}")
                             with col2:
                                 st.write(f"**Forma de Pagamento:** {venda.get('forma_pagamento', 'N/A')}")
                                 if venda.get('observacoes'):
@@ -505,13 +509,17 @@ def show():
                             st.subheader(f"Vendas {inicio + 1}-{fim} de {total_vendas}")
                             
                             for _, venda in vendas_pagina.iterrows():
-                                with st.expander(f"🛒 Venda #{venda['id']} - {venda['cliente_nome']} - R$ {venda['valor_total']:.2f}", expanded=False):
+                                # Formatar valor para o título do expander
+                                valor_titulo = f"R$ {float(venda['valor_total']):.2f}"
+                                with st.expander(f"🛒 Venda #{venda['id']} - {venda['cliente_nome']} - {valor_titulo}", expanded=False):
                                     col1, col2 = st.columns(2)
                                     
                                     with col1:
                                         st.write(f"**Cliente:** {venda.get('cliente_nome', 'N/A')}")
                                         st.write(f"**Data:** {venda['data_venda']}")
-                                        st.write(f"**Valor Total:** R$ {venda['valor_total']:.2f}")
+                                        # Formatar valor corretamente para evitar precisão floating point
+                                        valor_formatado = f"R$ {float(venda['valor_total']):.2f}"
+                                        st.write(f"**Valor Total:** {valor_formatado}")
                                     
                                     with col2:
                                         st.write(f"**Status:** {venda.get('status', 'N/A')}")
@@ -575,7 +583,9 @@ def show():
                             st.write(f"**Data:** {venda_detalhes['data_venda']}")
                             
                         with col2:
-                            st.write(f"**Valor Total:** R$ {venda_detalhes['valor_total']:.2f}")
+                            # Formatar valor corretamente para evitar precisão floating point
+                            valor_formatado = f"R$ {float(venda_detalhes['valor_total']):.2f}"
+                            st.write(f"**Valor Total:** {valor_formatado}")
                             st.write(f"**Forma de Pagamento:** {venda_detalhes.get('forma_pagamento', 'N/A')}")
                             if venda_detalhes.get('observacoes'):
                                 st.write(f"**Observações:** {venda_detalhes['observacoes']}")
