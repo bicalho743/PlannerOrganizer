@@ -928,7 +928,224 @@ def show():
 
         # SUBTAB 2: ANÁLISE POR PERÍODO  
         with historico_tab2:
-            st.info("Análise por período será implementada aqui.")
+            st.subheader("📊 Análise de Vendas por Período")
+            
+            try:
+                vendas_df = st.session_state.db.get_vendas()
+                
+                if vendas_df.empty:
+                    custom_info("Nenhuma venda registrada para análise.")
+                else:
+                    # Converter coluna de data
+                    vendas_df['data_venda'] = pd.to_datetime(vendas_df['data_venda'])
+                    
+                    # Filtros de período
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        data_inicio = st.date_input(
+                            "Data Inicial",
+                            value=vendas_df['data_venda'].min().date(),
+                            min_value=vendas_df['data_venda'].min().date(),
+                            max_value=vendas_df['data_venda'].max().date()
+                        )
+                    
+                    with col2:
+                        data_fim = st.date_input(
+                            "Data Final",
+                            value=vendas_df['data_venda'].max().date(),
+                            min_value=vendas_df['data_venda'].min().date(),
+                            max_value=vendas_df['data_venda'].max().date()
+                        )
+                    
+                    with col3:
+                        tipo_agrupamento = st.selectbox(
+                            "Agrupar por",
+                            ["Dia", "Semana", "Mês", "Trimestre", "Ano"]
+                        )
+                    
+                    # Filtrar dados pelo período
+                    vendas_periodo = vendas_df[
+                        (vendas_df['data_venda'].dt.date >= data_inicio) & 
+                        (vendas_df['data_venda'].dt.date <= data_fim)
+                    ].copy()
+                    
+                    if not vendas_periodo.empty:
+                        # Criar coluna de agrupamento baseada na seleção
+                        if tipo_agrupamento == "Dia":
+                            vendas_periodo['periodo'] = vendas_periodo['data_venda'].dt.strftime('%d/%m/%Y')
+                            freq_code = 'D'
+                        elif tipo_agrupamento == "Semana":
+                            vendas_periodo['periodo'] = vendas_periodo['data_venda'].dt.strftime('Semana %U/%Y')
+                            freq_code = 'W'
+                        elif tipo_agrupamento == "Mês":
+                            vendas_periodo['periodo'] = vendas_periodo['data_venda'].dt.strftime('%m/%Y')
+                            freq_code = 'M'
+                        elif tipo_agrupamento == "Trimestre":
+                            vendas_periodo['periodo'] = vendas_periodo['data_venda'].dt.to_period('Q').astype(str)
+                            freq_code = 'Q'
+                        else:  # Ano
+                            vendas_periodo['periodo'] = vendas_periodo['data_venda'].dt.strftime('%Y')
+                            freq_code = 'A'
+                        
+                        # Análise agregada
+                        analise_agrupada = vendas_periodo.groupby('periodo').agg({
+                            'id': 'count',
+                            'valor_total': ['sum', 'mean', 'std'],
+                            'cliente_id': 'nunique'
+                        }).round(2)
+                        
+                        # Achatar nomes das colunas
+                        analise_agrupada.columns = ['Total_Vendas', 'Receita_Total', 'Ticket_Medio', 'Desvio_Padrao', 'Clientes_Unicos']
+                        analise_agrupada = analise_agrupada.fillna(0)
+                        analise_agrupada.reset_index(inplace=True)
+                        
+                        # Métricas resumo do período
+                        st.markdown("### 📈 Resumo do Período")
+                        col1, col2, col3, col4 = st.columns(4)
+                        
+                        total_vendas = len(vendas_periodo)
+                        receita_total = vendas_periodo['valor_total'].sum()
+                        ticket_medio = vendas_periodo['valor_total'].mean()
+                        clientes_unicos = vendas_periodo['cliente_id'].nunique()
+                        
+                        with col1:
+                            st.metric("Total de Vendas", f"{total_vendas:,}")
+                        with col2:
+                            st.metric("Receita Total", f"R$ {receita_total:,.2f}")
+                        with col3:
+                            st.metric("Ticket Médio", f"R$ {ticket_medio:.2f}")
+                        with col4:
+                            st.metric("Clientes Únicos", f"{clientes_unicos:,}")
+                        
+                        # Tabela detalhada
+                        st.markdown("### 📋 Análise Detalhada por Período")
+                        
+                        # Formatar valores para exibição
+                        analise_display = analise_agrupada.copy()
+                        analise_display['Receita_Total'] = analise_display['Receita_Total'].apply(lambda x: f"R$ {x:,.2f}")
+                        analise_display['Ticket_Medio'] = analise_display['Ticket_Medio'].apply(lambda x: f"R$ {x:.2f}")
+                        analise_display['Desvio_Padrao'] = analise_display['Desvio_Padrao'].apply(lambda x: f"R$ {x:.2f}")
+                        
+                        # Renomear colunas para exibição
+                        analise_display.columns = ['Período', 'Total Vendas', 'Receita Total', 'Ticket Médio', 'Desvio Padrão', 'Clientes Únicos']
+                        
+                        st.dataframe(analise_display, use_container_width=True, hide_index=True)
+                        
+                        # Gráficos de análise
+                        st.markdown("### 📊 Visualizações")
+                        
+                        # Duas colunas para gráficos
+                        graf_col1, graf_col2 = st.columns(2)
+                        
+                        with graf_col1:
+                            # Gráfico de receita por período
+                            import plotly.express as px
+                            
+                            fig_receita = px.bar(
+                                analise_agrupada,
+                                x='periodo',
+                                y='Receita_Total',
+                                title=f'Receita por {tipo_agrupamento}',
+                                labels={'periodo': 'Período', 'Receita_Total': 'Receita (R$)'}
+                            )
+                            fig_receita.update_layout(xaxis_tickangle=-45)
+                            st.plotly_chart(fig_receita, use_container_width=True)
+                        
+                        with graf_col2:
+                            # Gráfico de número de vendas por período
+                            fig_vendas = px.line(
+                                analise_agrupada,
+                                x='periodo',
+                                y='Total_Vendas',
+                                title=f'Número de Vendas por {tipo_agrupamento}',
+                                labels={'periodo': 'Período', 'Total_Vendas': 'Quantidade de Vendas'},
+                                markers=True
+                            )
+                            fig_vendas.update_layout(xaxis_tickangle=-45)
+                            st.plotly_chart(fig_vendas, use_container_width=True)
+                        
+                        # Análise de produtos mais vendidos no período
+                        st.markdown("### 🏆 Top Produtos no Período")
+                        
+                        try:
+                            # Buscar itens de vendas do período
+                            vendas_ids = vendas_periodo['id'].tolist()
+                            if vendas_ids:
+                                # Consulta SQL para pegar produtos mais vendidos
+                                from sqlalchemy import text
+                                query = text("""
+                                    SELECT 
+                                        p.nome as produto_nome,
+                                        SUM(iv.quantidade) as quantidade_total,
+                                        SUM(iv.quantidade * iv.preco_unitario) as receita_produto,
+                                        COUNT(DISTINCT iv.venda_id) as vendas_com_produto,
+                                        AVG(iv.preco_unitario) as preco_medio
+                                    FROM itens_venda iv
+                                    JOIN produtos p ON iv.produto_id = p.id
+                                    WHERE iv.venda_id IN :venda_ids
+                                    AND p.usuario_id = :usuario_id
+                                    GROUP BY p.id, p.nome
+                                    ORDER BY quantidade_total DESC
+                                    LIMIT 10
+                                """)
+                                
+                                with st.session_state.db.engine.connect() as conn:
+                                    resultado = conn.execute(query, {
+                                        'venda_ids': tuple(vendas_ids),
+                                        'usuario_id': st.session_state.usuario_id
+                                    })
+                                    top_produtos = pd.DataFrame(resultado.fetchall(), columns=resultado.keys())
+                                
+                                if not top_produtos.empty:
+                                    # Formatar dados para exibição
+                                    top_produtos_display = top_produtos.copy()
+                                    top_produtos_display['receita_produto'] = top_produtos_display['receita_produto'].apply(lambda x: f"R$ {x:.2f}")
+                                    top_produtos_display['preco_medio'] = top_produtos_display['preco_medio'].apply(lambda x: f"R$ {x:.2f}")
+                                    
+                                    # Renomear colunas
+                                    top_produtos_display.columns = ['Produto', 'Qtd Total', 'Receita', 'Nº Vendas', 'Preço Médio']
+                                    
+                                    st.dataframe(top_produtos_display, use_container_width=True, hide_index=True)
+                                    
+                                    # Gráfico de pizza dos top 5 produtos
+                                    if len(top_produtos) >= 3:
+                                        fig_pizza = px.pie(
+                                            top_produtos.head(),
+                                            values='quantidade_total',
+                                            names='produto_nome',
+                                            title='Top 5 Produtos por Quantidade'
+                                        )
+                                        st.plotly_chart(fig_pizza, use_container_width=True)
+                                else:
+                                    st.info("Nenhum produto encontrado para o período selecionado.")
+                            else:
+                                st.info("Nenhuma venda encontrada no período para análise de produtos.")
+                        except Exception as e:
+                            st.warning(f"Não foi possível carregar análise de produtos: {str(e)}")
+                        
+                        # Botão de exportação
+                        st.markdown("### 📥 Exportar Dados")
+                        if st.button("📊 Exportar Análise para CSV", use_container_width=True):
+                            # Preparar dados para exportação
+                            dados_exportacao = analise_agrupada.copy()
+                            csv_data = dados_exportacao.to_csv(index=False)
+                            
+                            st.download_button(
+                                label="💾 Baixar CSV",
+                                data=csv_data,
+                                file_name=f"analise_vendas_{data_inicio}_{data_fim}.csv",
+                                mime="text/csv",
+                                use_container_width=True
+                            )
+                    
+                    else:
+                        st.warning("Nenhuma venda encontrada no período selecionado.")
+                        
+            except Exception as e:
+                st.error(f"Erro ao carregar análise por período: {str(e)}")
+                import traceback
+                st.error(traceback.format_exc())
 
     # CSS MÍNIMO APENAS PARA ESTA PÁGINA
     st.markdown("""
