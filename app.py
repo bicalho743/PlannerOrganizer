@@ -497,6 +497,14 @@ if not st.session_state.authenticated:
         text-align: center;
         min-width: 200px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .stat-box:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        border-color: #3a75c4;
     }
     
     .stat-number {
@@ -532,6 +540,14 @@ if not st.session_state.authenticated:
         border-radius: 8px;
         padding: 2rem;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .feature-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        border-color: #3a75c4;
     }
     
     .feature-icon {
@@ -550,6 +566,46 @@ if not st.session_state.authenticated:
         color: #7f8c8d;
         font-size: 0.95rem;
         line-height: 1.5;
+    }
+    
+    .testimonial-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin: 3rem 0;
+    }
+    
+    .testimonial-box {
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        position: relative;
+    }
+    
+    .testimonial-text {
+        color: #555;
+        font-style: italic;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+    }
+    
+    .testimonial-author {
+        color: #3a75c4;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .testimonial-quote {
+        position: absolute;
+        top: -10px;
+        left: 20px;
+        background: white;
+        color: #3a75c4;
+        font-size: 2rem;
+        padding: 0 0.5rem;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -621,13 +677,12 @@ if not st.session_state.authenticated:
         ''', unsafe_allow_html=True)
 
         # Depoimentos de clientes
-        st.markdown("<h3>O que nossos clientes dizem</h3>", unsafe_allow_html=True)
+        st.markdown('<h3 class="section-title">O que nossos clientes dizem</h3>', unsafe_allow_html=True)
 
-        testimonial_col1, testimonial_col2 = st.columns(2)
-
-        with testimonial_col1:
-            st.markdown('''
-            <div class="testimonial-card">
+        st.markdown('''
+        <div class="testimonial-container">
+            <div class="testimonial-box">
+                <div class="testimonial-quote">"</div>
                 <div class="testimonial-text">
                     "O Planner Organizer transformou meu negócio! Consigo gerenciar todas as minhas propostas, 
                     clientes e finanças em um só lugar com facilidade e profissionalismo."
@@ -636,11 +691,8 @@ if not st.session_state.authenticated:
                     — Ana Paula, Personal Organizer
                 </div>
             </div>
-            ''', unsafe_allow_html=True)
-
-        with testimonial_col2:
-            st.markdown('''
-            <div class="testimonial-card">
+            <div class="testimonial-box">
+                <div class="testimonial-quote">"</div>
                 <div class="testimonial-text">
                     "Meu faturamento aumentou 45% depois que comecei a usar o sistema. A gestão de propostas 
                     e o controle financeiro me ajudaram a profissionalizar meu negócio."
@@ -649,7 +701,8 @@ if not st.session_state.authenticated:
                     — Fernanda Silva, Organizadora Profissional
                 </div>
             </div>
-            ''', unsafe_allow_html=True)
+        </div>
+        ''', unsafe_allow_html=True)
 
         # Imagem promocional
         st.markdown("<h2>Transforme Seu Negócio com o Planner Organizer</h2>", unsafe_allow_html=True)
