@@ -248,11 +248,11 @@ def show():
                         except Exception as e:
                             st.error(f"Erro ao aprovar transação: {str(e)}")
                 with col2:
-                    if st.button("✏️ Editar Selecionado"):
+                    if st.button("✏️ Editar Selecionado", key="btn_editar_pendencia"):
                         st.session_state.transacao_em_edicao = financeiro.iloc[selected_idx]
                         st.rerun()
                 with col3:
-                    if st.button("🗑️ Excluir Selecionado"):
+                    if st.button("🗑️ Excluir Selecionado", key="btn_excluir_pendencia"):
                         try:
                             if st.session_state.db.delete_transacao(financeiro.iloc[selected_idx]['id']):
                                 st.success("Transação excluída com sucesso!")
@@ -749,13 +749,13 @@ def show():
                     hide_index=True
                 )
 
-                # Botão para exportar para CSV
-                if st.button("📊 Exportar para CSV"):
-                    csv = df_display.to_csv(index=False)
-                    # Criar um botão de download
-                    b64 = base64.b64encode(csv.encode()).decode()
-                    href = f'<a href="data:file/csv;base64,{b64}" download="historico_financeiro.csv">Download CSV</a>'
-                    st.markdown(href, unsafe_allow_html=True)
+                # Botão para exportar para CSV (removido para evitar IDs duplicados)
+                # if st.button("📊 Exportar para CSV"):
+                #     csv = df_display.to_csv(index=False)
+                #     # Criar um botão de download
+                #     b64 = base64.b64encode(csv.encode()).decode()
+                #     href = f'<a href="data:file/csv;base64,{b64}" download="historico_financeiro.csv">Download CSV</a>'
+                #     st.markdown(href, unsafe_allow_html=True)
 
                 # Mostrar resumos
                 st.write("#### Resumo Financeiro")
