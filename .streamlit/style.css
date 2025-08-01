@@ -167,34 +167,17 @@ div[data-testid="stForm"] button div {
     text-shadow: none !important;
 }
 
-/* TODOS OS BOTÕES - MÁXIMA PRIORIDADE ABSOLUTA */
-button,
-button *,
-button p,
-button span,
-button div,
-/* Botões específicos de Streamlit */
-.stButton button,
-.stButton button *,
-.stFormSubmitButton button,
-.stFormSubmitButton button *,
-/* Botões em containers */
-div[data-testid="column"] button,
-div[data-testid="column"] button *,
-div[data-testid="stExpander"] button,
-div[data-testid="stExpander"] button *,
-div[data-testid="stTabs"] button,
-div[data-testid="stTabs"] button *,
-/* Botões de login específicos */
-.stApp button,
-.stApp button *,
-main button,
-main button * {
+/* CORREÇÃO SIMPLES E ESPECÍFICA PARA BOTÕES */
+.stButton > button {
     color: white !important;
     font-weight: 600 !important;
-    text-shadow: none !important;
-    opacity: 1 !important;
-    visibility: visible !important;
+    background-color: #1f4e79 !important;
+}
+
+.stFormSubmitButton > button {
+    color: white !important;
+    font-weight: 600 !important;
+    background-color: #1f4e79 !important;
 }
 
 /* Botões específicos por tipo */

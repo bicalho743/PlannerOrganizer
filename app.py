@@ -343,6 +343,15 @@ if not st.session_state.authenticated:
     # CSS customizado para a página de login
     st.markdown("""
     <style>
+    /* BOTÕES DE LOGIN - CORREÇÃO ESPECÍFICA */
+    .stButton > button, .stFormSubmitButton > button {
+        color: white !important;
+        font-weight: 600 !important;
+        background-color: #1f4e79 !important;
+        border: none !important;
+        text-shadow: none !important;
+    }
+    
     /* Remover TODO espaçamento do HTML e body */
     html, body {
         margin: 0 !important;
@@ -1159,45 +1168,7 @@ section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expand
     margin: 8px 0 !important;
 }
 
-/* CORREÇÃO CRÍTICA DE VISIBILIDADE DOS BOTÕES - PRIORIDADE MÁXIMA */
-button, button *, button p, button span, button div,
-.stButton button, .stButton button *, .stButton button p, .stButton button span, .stButton button div,
-.stFormSubmitButton button, .stFormSubmitButton button *, .stFormSubmitButton button p, .stFormSubmitButton button span, .stFormSubmitButton button div,
-div[data-testid="stForm"] button, div[data-testid="stForm"] button *, div[data-testid="stForm"] button p, div[data-testid="stForm"] button span, div[data-testid="stForm"] button div {
-    color: white !important;
-    font-weight: 600 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    text-shadow: none !important;
-    background-color: #1f4e79 !important;
-    border: none !important;
-}
-</style>
-<script>
-// JavaScript para forçar visibilidade dos botões
-function forceButtonVisibility() {
-    const buttons = document.querySelectorAll('button');
-    buttons.forEach(btn => {
-        btn.style.setProperty('color', 'white', 'important');
-        btn.style.setProperty('font-weight', '600', 'important');
-        btn.style.setProperty('opacity', '1', 'important');
-        btn.style.setProperty('visibility', 'visible', 'important');
-        btn.style.setProperty('background-color', '#1f4e79', 'important');
-        
-        // Aplicar aos elementos filhos também
-        const children = btn.querySelectorAll('*');
-        children.forEach(child => {
-            child.style.setProperty('color', 'white', 'important');
-            child.style.setProperty('font-weight', '600', 'important');
-            child.style.setProperty('opacity', '1', 'important');
-            child.style.setProperty('visibility', 'visible', 'important');
-        });
-    });
-}
 
-// Executar imediatamente e a cada 500ms para garantir
-forceButtonVisibility();
-setInterval(forceButtonVisibility, 500);
 
 /* Melhorar contraste do texto no expander - FORÇAR cor escura para visibilidade */
 section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent * {
