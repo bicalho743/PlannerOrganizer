@@ -470,11 +470,63 @@ def show():
                             # Botão para gerar PDF
                             if st.button("GERAR RELATÓRIO", type="primary", key=f"gerar_pdf_venda_{venda_id}", use_container_width=True):
                                 try:
-                                    # Simular geração de PDF
-                                    st.success("Relatório de venda gerado com sucesso!")
-                                    st.info("Funcionalidade de download PDF será implementada em breve.")
+                                    # Importar gerador de PDF de vendas
+                                    from utils.pdf_generator_venda_fixed import gerar_pdf_venda
+                                    
+                                    # Preparar dados para o PDF
+                                    venda_dados = {
+                                        'id': venda_detalhes['id'],
+                                        'status': venda_detalhes['status'],
+                                        'forma_pagamento': venda_detalhes['forma_pagamento'],
+                                        'valor_total': venda_detalhes['valor_total'],
+                                        'data_venda': venda_detalhes['data_venda'],
+                                        'observacoes': venda_detalhes.get('observacoes', '')
+                                    }
+                                    
+                                    cliente_dados = {
+                                        'nome': venda_detalhes['cliente_nome']
+                                    }
+                                    
+                                    # Buscar itens da venda para o PDF
+                                    try:
+                                        itens_pdf = st.session_state.db.get_itens_venda(venda_id)
+                                    except:
+                                        itens_pdf = pd.DataFrame()  # DataFrame vazio se não encontrar itens
+                                    
+                                    # Gerar nome do arquivo
+                                    data_atual = datetime.now().strftime('%Y%m%d_%H%M%S')
+                                    cliente_nome_arquivo = venda_detalhes['cliente_nome'].replace(' ', '_').lower()
+                                    filename = f"pdfs/Venda_{venda_id}_{cliente_nome_arquivo}_{data_atual}.pdf"
+                                    
+                                    # Garantir que diretório existe
+                                    import os
+                                    os.makedirs("pdfs", exist_ok=True)
+                                    
+                                    # Gerar PDF
+                                    pdf_path = gerar_pdf_venda(venda_dados, cliente_dados, itens_pdf, filename)
+                                    
+                                    if pdf_path and os.path.exists(pdf_path):
+                                        # Ler arquivo para download
+                                        with open(pdf_path, "rb") as file:
+                                            pdf_bytes = file.read()
+                                        
+                                        # Botão de download
+                                        st.download_button(
+                                            label="📥 Baixar Relatório PDF",
+                                            data=pdf_bytes,
+                                            file_name=f"Relatório_Venda_{venda_id}_{cliente_nome_arquivo}.pdf",
+                                            mime="application/pdf",
+                                            key=f"download_pdf_venda_{venda_id}"
+                                        )
+                                        
+                                        st.success("Relatório de venda gerado com sucesso!")
+                                    else:
+                                        st.error("Erro ao gerar arquivo PDF")
+                                        
                                 except Exception as e:
                                     st.error(f"Erro ao gerar PDF: {str(e)}")
+                                    import traceback
+                                    print(f"Erro detalhado PDF: {traceback.format_exc()}")
 
                         with col3:
                             # Botão para excluir venda
