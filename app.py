@@ -12,21 +12,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Verificar se estamos no ambiente Render
-is_render = os.environ.get('RENDER') == 'true'
-if is_render:
-    logger.info("Ambiente Render detectado, executando scripts de inicialização...")
-    try:
-        # Verificar se o script render_startup.py existe e executá-lo
-        if os.path.exists('render_startup.py'):
-            logger.info("Executando render_startup.py...")
-            # Import opcional para render_startup
-            exec(open('render_startup.py').read())
-            logger.info("Script render_startup.py executado com sucesso")
-        else:
-            logger.info("Script render_startup.py não encontrado - continuando sem inicialização específica do Render")
-    except Exception as e:
-        logger.warning(f"Aviso: Script de inicialização do Render não pôde ser executado: {str(e)}")
+# Execução do script render removida para evitar loops de inicialização
 
 # Corrigir o problema de adaptação de tipos numpy.int64 para PostgreSQL
 try:
@@ -98,28 +84,7 @@ st.set_page_config(
     initial_sidebar_state="auto"
 )
 
-# Importar e aplicar correção para problemas de carregamento de módulos JavaScript
-try:
-    from utils.render_fix import inject_render_compatibility_fix
-    inject_render_compatibility_fix()
-    logger.info("Injetado script de compatibilidade para Render")
-except Exception as e:
-    logger.error(f"Erro ao injetar script de compatibilidade: {e}")
-
-# Inicializar Google Analytics 4 com injeção direta no head
-try:
-    inject_head_content()
-    track_page_view("Home")
-    logger.info("✅ Google Analytics inicializado com sucesso")
-except Exception as e:
-    logger.error(f"❌ Erro ao inicializar Google Analytics: {e}")
-
-# Implementar meta tags de SEO otimizados
-try:
-    inject_seo_meta_tags()
-    logger.info("✅ Meta tags de SEO implementados com sucesso")
-except Exception as e:
-    logger.error(f"❌ Erro ao implementar meta tags de SEO: {e}")
+# Scripts de inicialização removidos para evitar loops
 
 # JavaScript removido para evitar loops infinitos
 
