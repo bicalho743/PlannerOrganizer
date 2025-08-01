@@ -4579,13 +4579,13 @@ class Database:
                 # Usar descricao como produto_nome pois não temos produto_id linkado corretamente
                 produto_nome = i.descricao if i.descricao else 'Produto não identificado'
                 
-                # Calcular lucro usando margem padrão de 30% se não tiver produto linkado
+                # Calcular lucro usando custo real ou estimativa de 40% de margem
                 preco_custo = 0
-                if i.produto and hasattr(i.produto, 'preco_custo') and i.produto.preco_custo:
+                if i.produto and hasattr(i.produto, 'preco_custo') and i.produto.preco_custo and i.produto.preco_custo > 0:
                     preco_custo = i.produto.preco_custo
                 else:
-                    # Usar margem de 30% como estimativa se não tiver custo definido
-                    preco_custo = i.preco_unitario * 0.7
+                    # Usar margem de 40% como estimativa se não tiver custo definido (60% do preço = custo)
+                    preco_custo = i.preco_unitario * 0.6
                 
                 lucro_item = round((i.preco_unitario - preco_custo) * i.quantidade, 2)
                 

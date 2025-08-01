@@ -1020,8 +1020,14 @@ def show():
                                         v.id as venda_id,
                                         v.data_venda,
                                         COALESCE(SUM(
-                                            iv.quantidade * (iv.preco_unitario - COALESCE(p.preco_custo, 0))
-                                        ), v.valor_total * 0.3) as lucro_venda
+                                            iv.quantidade * (iv.preco_unitario - 
+                                                CASE 
+                                                    WHEN p.preco_custo IS NOT NULL AND p.preco_custo > 0 
+                                                    THEN p.preco_custo
+                                                    ELSE iv.preco_unitario * 0.6
+                                                END
+                                            )
+                                        ), 0) as lucro_venda
                                     FROM vendas v
                                     LEFT JOIN itens_venda iv ON v.id = iv.venda_id
                                     LEFT JOIN produtos p ON iv.produto_id = p.id
