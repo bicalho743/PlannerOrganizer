@@ -998,6 +998,55 @@ def show():
                             vendas_periodo['periodo'] = vendas_periodo['data_venda'].dt.strftime('%Y')
                             freq_code = 'A'
                         
+                        # Calcular lucro por venda
+                        try:
+                            # Buscar itens de venda para calcular lucro
+                            vendas_ids = vendas_periodo['id'].tolist()
+                            if vendas_ids:
+                                from sqlalchemy import text
+                                # Query para calcular lucro total por venda
+                                lucro_query = text("""
+                                    SELECT 
+                                        v.id as venda_id,
+                                        v.data_venda,
+                                        COALESCE(SUM(
+                                            iv.quantidade * (iv.preco_unitario - COALESCE(p.preco_custo, 0))
+                                        ), v.valor_total * 0.3) as lucro_venda
+                                    FROM vendas v
+                                    LEFT JOIN itens_venda iv ON v.id = iv.venda_id
+                                    LEFT JOIN produtos p ON iv.produto_id = p.id
+                                    WHERE v.id = ANY(:vendas_ids)
+                                    GROUP BY v.id, v.data_venda, v.valor_total
+                                """)
+                                
+                                lucros_result = st.session_state.db.session.execute(lucro_query, {"vendas_ids": vendas_ids})
+                                lucros_df = pd.DataFrame(lucros_result.fetchall(), columns=['venda_id', 'data_venda', 'lucro_venda'])
+                                
+                                # Converter data para datetime
+                                lucros_df['data_venda'] = pd.to_datetime(lucros_df['data_venda'])
+                                
+                                # Criar coluna de período para lucros
+                                if tipo_agrupamento == "Dia":
+                                    lucros_df['periodo'] = lucros_df['data_venda'].dt.strftime('%d/%m/%Y')
+                                elif tipo_agrupamento == "Semana":
+                                    lucros_df['periodo'] = lucros_df['data_venda'].dt.strftime('Semana %U/%Y')
+                                elif tipo_agrupamento == "Mês":
+                                    lucros_df['periodo'] = lucros_df['data_venda'].dt.strftime('%m/%Y')
+                                elif tipo_agrupamento == "Trimestre":
+                                    lucros_df['periodo'] = lucros_df['data_venda'].dt.to_period('Q').astype(str)
+                                else:  # Ano
+                                    lucros_df['periodo'] = lucros_df['data_venda'].dt.strftime('%Y')
+                                
+                                # Agrupar lucros por período
+                                lucros_agrupados = lucros_df.groupby('periodo')['lucro_venda'].agg(['sum', 'mean']).round(2)
+                                lucros_agrupados.columns = ['Lucro_Total', 'Lucro_Medio']
+                                
+                            else:
+                                lucros_agrupados = pd.DataFrame()
+                        except Exception as e:
+                            st.warning(f"Não foi possível calcular lucros: {str(e)}")
+                            lucros_agrupados = pd.DataFrame()
+                        
                         # Análise agregada
                         analise_agrupada = vendas_periodo.groupby('periodo').agg({
                             'id': 'count',
@@ -1010,23 +1059,48 @@ def show():
                         analise_agrupada = analise_agrupada.fillna(0).infer_objects(copy=False)
                         analise_agrupada.reset_index(inplace=True)
                         
+                        # Adicionar dados de lucro se disponíveis
+                        if not lucros_agrupados.empty:
+                            lucros_agrupados.reset_index(inplace=True)
+                            analise_agrupada = analise_agrupada.merge(lucros_agrupados, on='periodo', how='left')
+                            analise_agrupada[['Lucro_Total', 'Lucro_Medio']] = analise_agrupada[['Lucro_Total', 'Lucro_Medio']].fillna(0)
+                        
                         # Métricas resumo do período
                         st.markdown("### 📈 Resumo do Período")
-                        col1, col2, col3, col4 = st.columns(4)
                         
                         total_vendas = len(vendas_periodo)
                         receita_total = vendas_periodo['valor_total'].sum()
                         ticket_medio = vendas_periodo['valor_total'].mean()
                         clientes_unicos = vendas_periodo['cliente_nome'].nunique()
                         
-                        with col1:
-                            st.metric("Total de Vendas", f"{total_vendas:,}")
-                        with col2:
-                            st.metric("Receita Total", f"R$ {receita_total:,.2f}")
-                        with col3:
-                            st.metric("Ticket Médio", f"R$ {ticket_medio:.2f}")
-                        with col4:
-                            st.metric("Clientes Únicos", f"{clientes_unicos:,}")
+                        # Calcular lucro total se disponível
+                        if not lucros_agrupados.empty:
+                            lucro_total = lucros_agrupados['Lucro_Total'].sum()
+                            margem_lucro = (lucro_total / receita_total * 100) if receita_total > 0 else 0
+                            
+                            col1, col2, col3, col4, col5 = st.columns(5)
+                            
+                            with col1:
+                                st.metric("Total de Vendas", f"{total_vendas:,}")
+                            with col2:
+                                st.metric("Receita Total", f"R$ {float(receita_total):,.2f}")
+                            with col3:
+                                st.metric("Lucro Total", f"R$ {float(lucro_total):,.2f}")
+                            with col4:
+                                st.metric("Margem de Lucro", f"{margem_lucro:.1f}%")
+                            with col5:
+                                st.metric("Clientes Únicos", f"{clientes_unicos:,}")
+                        else:
+                            col1, col2, col3, col4 = st.columns(4)
+                            
+                            with col1:
+                                st.metric("Total de Vendas", f"{total_vendas:,}")
+                            with col2:
+                                st.metric("Receita Total", f"R$ {float(receita_total):,.2f}")
+                            with col3:
+                                st.metric("Ticket Médio", f"R$ {float(ticket_medio):.2f}")
+                            with col4:
+                                st.metric("Clientes Únicos", f"{clientes_unicos:,}")
                         
                         # Tabela detalhada
                         st.markdown("### 📋 Análise Detalhada por Período")
@@ -1037,16 +1111,32 @@ def show():
                         analise_display['Ticket_Medio'] = analise_display['Ticket_Medio'].apply(lambda x: f"R$ {x:.2f}")
                         analise_display['Desvio_Padrao'] = analise_display['Desvio_Padrao'].apply(lambda x: f"R$ {x:.2f}")
                         
-                        # Renomear colunas para exibição
-                        analise_display.columns = ['Período', 'Total Vendas', 'Receita Total', 'Ticket Médio', 'Desvio Padrão', 'Clientes Únicos']
+                        # Formatar colunas de lucro se existirem
+                        if 'Lucro_Total' in analise_display.columns:
+                            analise_display['Lucro_Total'] = analise_display['Lucro_Total'].apply(lambda x: f"R$ {x:,.2f}")
+                            analise_display['Lucro_Medio'] = analise_display['Lucro_Medio'].apply(lambda x: f"R$ {x:.2f}")
+                            # Calcular margem de lucro por período
+                            margem_periodo = ((analise_agrupada['Lucro_Total'] / analise_agrupada['Receita_Total']) * 100).fillna(0).round(1)
+                            analise_display['Margem_Lucro'] = margem_periodo.apply(lambda x: f"{x:.1f}%")
+                            
+                            # Renomear colunas para exibição com lucro
+                            analise_display.columns = ['Período', 'Total Vendas', 'Receita Total', 'Ticket Médio', 'Desvio Padrão', 'Clientes Únicos', 'Lucro Total', 'Lucro Médio', 'Margem %']
+                        else:
+                            # Renomear colunas para exibição sem lucro
+                            analise_display.columns = ['Período', 'Total Vendas', 'Receita Total', 'Ticket Médio', 'Desvio Padrão', 'Clientes Únicos']
                         
                         st.dataframe(analise_display, use_container_width=True, hide_index=True)
                         
                         # Gráficos de análise
                         st.markdown("### 📊 Visualizações")
                         
-                        # Duas colunas para gráficos
-                        graf_col1, graf_col2 = st.columns(2)
+                        # Verificar se temos dados de lucro para gráficos adicionais
+                        if 'Lucro_Total' in analise_agrupada.columns:
+                            # Três colunas para gráficos com lucro
+                            graf_col1, graf_col2, graf_col3 = st.columns(3)
+                        else:
+                            # Duas colunas para gráficos sem lucro
+                            graf_col1, graf_col2 = st.columns(2)
                         
                         with graf_col1:
                             # Gráfico de receita por período
@@ -1057,7 +1147,8 @@ def show():
                                 x='periodo',
                                 y='Receita_Total',
                                 title=f'Receita por {tipo_agrupamento}',
-                                labels={'periodo': 'Período', 'Receita_Total': 'Receita (R$)'}
+                                labels={'periodo': 'Período', 'Receita_Total': 'Receita (R$)'},
+                                color_discrete_sequence=['#1f77b4']
                             )
                             fig_receita.update_layout(xaxis_tickangle=-45)
                             st.plotly_chart(fig_receita, use_container_width=True)
@@ -1070,10 +1161,26 @@ def show():
                                 y='Total_Vendas',
                                 title=f'Número de Vendas por {tipo_agrupamento}',
                                 labels={'periodo': 'Período', 'Total_Vendas': 'Quantidade de Vendas'},
-                                markers=True
+                                markers=True,
+                                color_discrete_sequence=['#ff7f0e']
                             )
                             fig_vendas.update_layout(xaxis_tickangle=-45)
                             st.plotly_chart(fig_vendas, use_container_width=True)
+                        
+                        # Gráfico adicional de lucro se disponível
+                        if 'Lucro_Total' in analise_agrupada.columns:
+                            with graf_col3:
+                                # Gráfico de lucro por período
+                                fig_lucro = px.bar(
+                                    analise_agrupada,
+                                    x='periodo',
+                                    y='Lucro_Total',
+                                    title=f'Lucro por {tipo_agrupamento}',
+                                    labels={'periodo': 'Período', 'Lucro_Total': 'Lucro (R$)'},
+                                    color_discrete_sequence=['#2ca02c']
+                                )
+                                fig_lucro.update_layout(xaxis_tickangle=-45)
+                                st.plotly_chart(fig_lucro, use_container_width=True)
                         
                         # Análise de produtos mais vendidos no período
                         st.markdown("### 🏆 Top Produtos no Período")
