@@ -27,11 +27,16 @@ try:
     
     # Verificar se está logado (sem Firebase por enquanto)
     if 'usuario_logado' not in st.session_state:
-        st.session_state.usuario_logado = True  # Temporariamente sempre logado
+        st.session_state.usuario_logado = True
     
     # Inicializar banco de dados se não existir
     if 'db' not in st.session_state:
-        st.session_state.db = Database()
+        try:
+            st.session_state.db = Database()
+            st.success("Banco de dados conectado com sucesso!")
+        except Exception as db_error:
+            st.error(f"Erro ao conectar com banco: {str(db_error)}")
+            st.stop()
     
     # Menu lateral
     with st.sidebar:
@@ -68,7 +73,27 @@ try:
             vendas.show()
         except Exception as e:
             st.error(f"Erro ao carregar módulo de vendas: {str(e)}")
-            st.info("Use o sistema básico por enquanto")
+            
+            # Interface básica de vendas
+            st.subheader("Sistema Básico de Vendas")
+            
+            # Tentar mostrar vendas do banco
+            try:
+                vendas_df = st.session_state.db.get_vendas()
+                if not vendas_df.empty:
+                    st.dataframe(vendas_df)
+                    
+                    # Métricas básicas
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.metric("Total de Vendas", len(vendas_df))
+                    with col2:
+                        total_valor = vendas_df['valor_total'].sum() if 'valor_total' in vendas_df.columns else 0
+                        st.metric("Receita Total", f"R$ {total_valor:,.2f}")
+                else:
+                    st.info("Nenhuma venda encontrada")
+            except Exception as venda_error:
+                st.error(f"Erro ao carregar vendas: {str(venda_error)}")
             
     elif page == "Clientes":
         st.header("👥 Clientes")
