@@ -467,11 +467,22 @@ if not st.session_state.authenticated:
     # CSS customizado para a página de login
     st.markdown("""
     <style>
+    /* Remover espaçamento superior da página */
+    .block-container {
+        padding-top: 1rem !important;
+        margin-top: 0 !important;
+    }
+    
+    .main .block-container {
+        padding-top: 1rem !important;
+    }
+    
     .login-header {
         font-size: 3rem;
         font-weight: 700;
         color: #2c3e50;
         margin-bottom: 0.5rem;
+        margin-top: 0 !important;
         text-align: left;
     }
     

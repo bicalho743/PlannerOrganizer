@@ -42,6 +42,9 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **ADICIONADA**: Mensagem personalizada quando não há propostas em execução
 - **REFORMATADO**: Página de login com layout limpo seguindo design fornecido
 - **MELHORADO**: Cards de estatísticas com bordas e sombras para destaque visual
+- **ADICIONADOS**: Efeitos hover em todas as caixas da página de login
+- **CRIADAS**: Caixas individuais para depoimentos de clientes
+- **REDUZIDO**: Espaçamento superior da página inicial para menor distância do cabeçalho
 
 ### 2025-07-25
 - **DIAGNOSTICADO**: Problema crítico - vendas geradas automaticamente de propostas não salvavam itens
