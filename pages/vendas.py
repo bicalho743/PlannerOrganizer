@@ -584,8 +584,10 @@ def show():
                             
                         with col2:
                             # Formatar valor corretamente para evitar precisão floating point
-                            valor_formatado = f"R$ {float(venda_detalhes['valor_total']):.2f}"
+                            valor_total = round(float(venda_detalhes['valor_total']), 2)
+                            valor_formatado = f"R$ {valor_total:,.2f}".replace(',', '_').replace('.', ',').replace('_', '.')
                             st.write(f"**Valor Total:** {valor_formatado}")
+                            st.write(f"**Status:** {venda_detalhes.get('status', 'N/A')}")
                             st.write(f"**Forma de Pagamento:** {venda_detalhes.get('forma_pagamento', 'N/A')}")
                             if venda_detalhes.get('observacoes'):
                                 st.write(f"**Observações:** {venda_detalhes['observacoes']}")
