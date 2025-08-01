@@ -133,7 +133,7 @@ button[data-testid="baseButton-primary"]:hover {
     box-shadow: 0 4px 8px rgba(30, 78, 121, 0.3) !important;
 }
 
-/* FORÇAR TEXTO BRANCO EM BOTÕES PRIMÁRIOS */
+/* FORÇAR TEXTO BRANCO EM BOTÕES PRIMÁRIOS - MÁXIMA PRIORIDADE */
 button[kind="primary"],
 button[kind="primary"] *,
 button[kind="primary"] p,
@@ -143,20 +143,58 @@ button[data-testid="baseButton-primary"],
 button[data-testid="baseButton-primary"] *,
 button[data-testid="baseButton-primary"] p,
 button[data-testid="baseButton-primary"] span,
-button[data-testid="baseButton-primary"] div {
+button[data-testid="baseButton-primary"] div,
+/* Todos os botões dentro da aplicação */
+.stButton > button,
+.stButton > button *,
+.stButton > button p,
+.stButton > button span,
+.stButton > button div,
+/* Botões de formulário */
+.stFormSubmitButton > button,
+.stFormSubmitButton > button *,
+.stFormSubmitButton > button p,
+.stFormSubmitButton > button span,
+.stFormSubmitButton > button div,
+/* Seletores mais específicos para garantir prioridade */
+div[data-testid="stForm"] button,
+div[data-testid="stForm"] button *,
+div[data-testid="stForm"] button p,
+div[data-testid="stForm"] button span,
+div[data-testid="stForm"] button div {
     color: white !important;
     font-weight: 600 !important;
+    text-shadow: none !important;
 }
 
-/* TODOS OS BOTÕES - MÁXIMA PRIORIDADE */
+/* TODOS OS BOTÕES - MÁXIMA PRIORIDADE ABSOLUTA */
 button,
 button *,
 button p,
 button span,
-button div {
+button div,
+/* Botões específicos de Streamlit */
+.stButton button,
+.stButton button *,
+.stFormSubmitButton button,
+.stFormSubmitButton button *,
+/* Botões em containers */
+div[data-testid="column"] button,
+div[data-testid="column"] button *,
+div[data-testid="stExpander"] button,
+div[data-testid="stExpander"] button *,
+div[data-testid="stTabs"] button,
+div[data-testid="stTabs"] button *,
+/* Botões de login específicos */
+.stApp button,
+.stApp button *,
+main button,
+main button * {
     color: white !important;
     font-weight: 600 !important;
     text-shadow: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 /* Botões específicos por tipo */
