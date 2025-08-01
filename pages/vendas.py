@@ -276,32 +276,27 @@ def show():
                     # Botão para finalizar venda
                     col1, col2 = st.columns(2)
                     with col1:
-                        if st.button("Finalizar Venda", type="primary", use_container_width=True):
+                        if st.button("FINALIZAR VENDA", type="primary", use_container_width=True):
                             try:
-                                # Registrar a venda
-                                venda_id = st.session_state.db.adicionar_venda(
+                                # Preparar itens para a função add_venda
+                                itens_venda = []
+                                for item in st.session_state.produtos_venda:
+                                    itens_venda.append({
+                                        'produto_id': item['produto_id'],
+                                        'quantidade': item['quantidade'],
+                                        'preco_unitario': item['preco_unitario']
+                                    })
+
+                                # Registrar a venda usando a função que integra com financeiro
+                                venda_id = st.session_state.db.add_venda(
                                     cliente_id=cliente_id,
-                                    data_venda=data_venda,
+                                    itens=itens_venda,
                                     forma_pagamento=forma_pagamento,
                                     observacoes=observacoes
                                 )
 
-                                # Adicionar itens da venda
-                                for item in st.session_state.produtos_venda:
-                                    st.session_state.db.adicionar_item_venda(
-                                        venda_id=venda_id,
-                                        produto_id=item['produto_id'],
-                                        quantidade=item['quantidade'],
-                                        preco_unitario=item['preco_unitario']
-                                    )
-                                    
-                                    # Atualizar estoque
-                                    st.session_state.db.atualizar_estoque_produto(
-                                        produto_id=item['produto_id'],
-                                        quantidade_vendida=item['quantidade']
-                                    )
-
-                                st.success(f"Venda #{venda_id} registrada com sucesso!")
+                                st.success(f"✅ Venda #{venda_id} registrada com sucesso!")
+                                st.success("✅ Lançamento financeiro criado automaticamente!")
                                 
                                 # Limpar produtos da venda
                                 st.session_state.produtos_venda = []
@@ -309,10 +304,10 @@ def show():
                                 st.rerun()
 
                             except Exception as e:
-                                st.error(f"Erro ao registrar venda: {str(e)}")
+                                st.error(f"❌ Erro ao registrar venda: {str(e)}")
 
                     with col2:
-                        if st.button("Limpar Venda", use_container_width=True):
+                        if st.button("LIMPAR VENDA", use_container_width=True):
                             st.session_state.produtos_venda = []
                             st.rerun()
 
