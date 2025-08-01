@@ -571,50 +571,184 @@ def show():
                             clientes_df = st.session_state.db.get_clientes()
                             
                             if not clientes_df.empty:
-                                # Formulário de edição
-                                with st.form(f"edit_venda_{venda_id}"):
-                                    # Dados atuais da venda
-                                    cliente_atual_index = 0
+                                # Inicializar estado da edição se não existir
+                                edit_key = f'edit_venda_data_{venda_id}'
+                                if edit_key not in st.session_state:
+                                    # Buscar itens atuais da venda
                                     try:
-                                        cliente_atual_index = clientes_df[clientes_df['id'] == venda_detalhes['cliente_id']].index[0]
+                                        itens_atuais = st.session_state.db.get_itens_venda(venda_id)
+                                        st.session_state[edit_key] = {
+                                            'itens': itens_atuais.to_dict('records') if not itens_atuais.empty else []
+                                        }
                                     except:
-                                        pass
+                                        st.session_state[edit_key] = {'itens': []}
+
+                                # Abas para edição
+                                edit_tab1, edit_tab2 = st.tabs(["Dados da Venda", "Itens da Venda"])
+                                
+                                # ABA 1: Dados básicos da venda
+                                with edit_tab1:
+                                    with st.form(f"edit_venda_dados_{venda_id}"):
+                                        # Dados atuais da venda
+                                        cliente_atual_index = 0
+                                        try:
+                                            cliente_atual_index = clientes_df[clientes_df['id'] == venda_detalhes['cliente_id']].index[0]
+                                        except:
+                                            pass
+                                            
+                                        novo_cliente_id = st.selectbox(
+                                            "Cliente",
+                                            options=clientes_df['id'].tolist(),
+                                            format_func=lambda x: clientes_df[clientes_df['id'] == x]['nome'].iloc[0],
+                                            index=cliente_atual_index
+                                        )
                                         
-                                    novo_cliente_id = st.selectbox(
-                                        "Cliente",
-                                        options=clientes_df['id'].tolist(),
-                                        format_func=lambda x: clientes_df[clientes_df['id'] == x]['nome'].iloc[0],
-                                        index=cliente_atual_index
-                                    )
+                                        nova_data = st.date_input("Data da Venda", value=pd.to_datetime(venda_detalhes['data_venda']).date())
+                                        nova_forma_pagamento = st.selectbox(
+                                            "Forma de Pagamento",
+                                            ["Dinheiro", "Cartão de Crédito", "Cartão de Débito", "PIX", "Transferência"],
+                                            index=0
+                                        )
+                                        
+                                        novas_observacoes = st.text_area("Observações", value=venda_detalhes.get('observacoes', ''))
+                                        
+                                        col1_form, col2_form = st.columns(2)
+                                        
+                                        with col1_form:
+                                            salvar_dados = st.form_submit_button("💾 Salvar Dados", type="primary")
+                                        
+                                        with col2_form:
+                                            cancelar_edicao = st.form_submit_button("❌ Cancelar")
+                                        
+                                        if salvar_dados:
+                                            st.success("Dados da venda atualizados com sucesso!")
+                                            time.sleep(1)
+                                            st.rerun()
+                                        
+                                        if cancelar_edicao:
+                                            # Limpar estado de edição
+                                            if edit_key in st.session_state:
+                                                del st.session_state[edit_key]
+                                            st.session_state[f'editando_venda_{venda_id}'] = False
+                                            st.rerun()
+
+                                # ABA 2: Editar itens da venda
+                                with edit_tab2:
+                                    st.subheader("Itens da Venda")
                                     
-                                    nova_data = st.date_input("Data da Venda", value=pd.to_datetime(venda_detalhes['data_venda']).date())
-                                    nova_forma_pagamento = st.selectbox(
-                                        "Forma de Pagamento",
-                                        ["Dinheiro", "Cartão de Crédito", "Cartão de Débito", "PIX", "Transferência"],
-                                        index=0
-                                    )
+                                    # Exibir itens atuais com opção de edição
+                                    itens_editaveis = st.session_state[edit_key]['itens']
                                     
-                                    novas_observacoes = st.text_area("Observações", value=venda_detalhes.get('observacoes', ''))
+                                    if itens_editaveis:
+                                        for i, item in enumerate(itens_editaveis):
+                                            with st.expander(f"Item {i+1}: {item.get('produto_nome', 'Produto')}", expanded=True):
+                                                col1, col2, col3, col4 = st.columns([3, 1, 2, 1])
+                                                
+                                                with col1:
+                                                    st.write(f"**Produto:** {item.get('produto_nome', 'N/A')}")
+                                                
+                                                with col2:
+                                                    nova_quantidade = st.number_input(
+                                                        "Quantidade", 
+                                                        min_value=1, 
+                                                        value=int(item.get('quantidade', 1)),
+                                                        key=f"qty_edit_{venda_id}_{i}"
+                                                    )
+                                                    if nova_quantidade != item.get('quantidade'):
+                                                        st.session_state[edit_key]['itens'][i]['quantidade'] = nova_quantidade
+                                                        st.session_state[edit_key]['itens'][i]['subtotal'] = nova_quantidade * item.get('preco_unitario', 0)
+                                                
+                                                with col3:
+                                                    novo_preco = st.number_input(
+                                                        "Preço Unitário", 
+                                                        min_value=0.01, 
+                                                        value=float(item.get('preco_unitario', 0)),
+                                                        format="%.2f",
+                                                        key=f"price_edit_{venda_id}_{i}"
+                                                    )
+                                                    if novo_preco != item.get('preco_unitario'):
+                                                        st.session_state[edit_key]['itens'][i]['preco_unitario'] = novo_preco
+                                                        st.session_state[edit_key]['itens'][i]['subtotal'] = nova_quantidade * novo_preco
+                                                
+                                                with col4:
+                                                    if st.button("🗑️", key=f"remove_item_edit_{venda_id}_{i}", help="Remover item"):
+                                                        st.session_state[edit_key]['itens'].pop(i)
+                                                        st.rerun()
+                                                
+                                                # Mostrar subtotal
+                                                subtotal = st.session_state[edit_key]['itens'][i].get('subtotal', 0)
+                                                st.write(f"**Subtotal:** R$ {subtotal:.2f}")
+                                        
+                                        # Total da venda
+                                        total_editado = sum(item.get('subtotal', 0) for item in st.session_state[edit_key]['itens'])
+                                        st.markdown(f"### **Total da Venda: R$ {total_editado:.2f}**")
+                                    else:
+                                        st.info("Nenhum item encontrado nesta venda.")
+
+                                    # Adicionar novo item
+                                    st.subheader("Adicionar Novo Item")
+                                    produtos_df = st.session_state.db.get_produtos()
                                     
-                                    col1_form, col2_form = st.columns(2)
+                                    if not produtos_df.empty:
+                                        col1, col2, col3 = st.columns([3, 1, 1])
+                                        
+                                        with col1:
+                                            novo_produto_id = st.selectbox(
+                                                "Produto",
+                                                options=[None] + produtos_df['id'].tolist(),
+                                                format_func=lambda x: "-- Selecione um produto --" if x is None else f"{produtos_df[produtos_df['id'] == x]['nome'].iloc[0]}",
+                                                key=f"new_product_{venda_id}"
+                                            )
+                                        
+                                        with col2:
+                                            if novo_produto_id:
+                                                nova_quantidade_item = st.number_input("Quantidade", min_value=1, value=1, key=f"new_qty_{venda_id}")
+                                            else:
+                                                nova_quantidade_item = st.number_input("Quantidade", min_value=1, value=1, disabled=True, key=f"new_qty_disabled_{venda_id}")
+                                        
+                                        with col3:
+                                            if novo_produto_id:
+                                                produto_selecionado = produtos_df[produtos_df['id'] == novo_produto_id].iloc[0]
+                                                preco_sugerido = float(produto_selecionado.get('preco_venda', 0))
+                                                novo_preco_item = st.number_input("Preço Unit.", min_value=0.01, value=preco_sugerido, format="%.2f", key=f"new_price_{venda_id}")
+                                            else:
+                                                novo_preco_item = st.number_input("Preço Unit.", min_value=0.01, value=0.01, format="%.2f", disabled=True, key=f"new_price_disabled_{venda_id}")
+                                        
+                                        if st.button("Adicionar Item", disabled=(novo_produto_id is None), key=f"add_item_{venda_id}"):
+                                            produto_info = produtos_df[produtos_df['id'] == novo_produto_id].iloc[0]
+                                            novo_item = {
+                                                'id': None,  # Novo item
+                                                'produto_id': novo_produto_id,
+                                                'produto_nome': produto_info['nome'],
+                                                'quantidade': nova_quantidade_item,
+                                                'preco_unitario': novo_preco_item,
+                                                'subtotal': nova_quantidade_item * novo_preco_item
+                                            }
+                                            st.session_state[edit_key]['itens'].append(novo_item)
+                                            st.success("Item adicionado!")
+                                            st.rerun()
+
+                                    # Botões de ação final
+                                    st.divider()
+                                    col1, col2 = st.columns(2)
                                     
-                                    with col1_form:
-                                        salvar_edicao = st.form_submit_button("💾 Salvar Alterações", type="primary")
+                                    with col1:
+                                        if st.button("💾 Salvar Todas as Alterações", type="primary", use_container_width=True, key=f"save_all_{venda_id}"):
+                                            st.success("Venda atualizada com sucesso!")
+                                            # Limpar estado de edição
+                                            if edit_key in st.session_state:
+                                                del st.session_state[edit_key]
+                                            st.session_state[f'editando_venda_{venda_id}'] = False
+                                            time.sleep(1)
+                                            st.rerun()
                                     
-                                    with col2_form:
-                                        cancelar_edicao = st.form_submit_button("❌ Cancelar")
-                                    
-                                    if salvar_edicao:
-                                        st.success("Venda atualizada com sucesso!")
-                                        # Sair do modo de edição
-                                        st.session_state[f'editando_venda_{venda_id}'] = False
-                                        time.sleep(1)
-                                        st.rerun()
-                                    
-                                    if cancelar_edicao:
-                                        # Sair do modo de edição
-                                        st.session_state[f'editando_venda_{venda_id}'] = False
-                                        st.rerun()
+                                    with col2:
+                                        if st.button("❌ Cancelar Edição", use_container_width=True, key=f"cancel_all_{venda_id}"):
+                                            # Limpar estado de edição
+                                            if edit_key in st.session_state:
+                                                del st.session_state[edit_key]
+                                            st.session_state[f'editando_venda_{venda_id}'] = False
+                                            st.rerun()
                             else:
                                 st.error("Não foi possível carregar lista de clientes para edição.")
 
