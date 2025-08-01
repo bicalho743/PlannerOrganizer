@@ -159,7 +159,7 @@ def show():
                             gerar_financeiro = st.checkbox("Gerar lançamentos financeiros", value=True)
 
                         # Botão para salvar
-                        submitted = st.form_submit_button("Salvar Proposta", type="primary")
+                        submitted = st.form_submit_button("SALVAR PROPOSTA", type="primary", use_container_width=True)
 
                         if submitted:
                             try:
@@ -1131,7 +1131,7 @@ def show():
                                 else:
                                     valor_unitario = preco_padrao
 
-                                produto_salvar = st.form_submit_button("Adicionar à Proposta")
+                                produto_salvar = st.form_submit_button("ADICIONAR À PROPOSTA", type="primary", use_container_width=True)
 
                                 if produto_salvar:
                                     try:
@@ -1212,7 +1212,7 @@ def show():
                                         key=f"select_remover_produto_{proposta_selecionada_id}"
                                     )
 
-                                    remover_produto = st.form_submit_button("Remover")
+                                    remover_produto = st.form_submit_button("REMOVER PRODUTO", type="primary", use_container_width=True)
 
                                     if remover_produto:
                                         try:
@@ -1830,7 +1830,7 @@ def show():
                             st.warning("⚠️ **Atenção**: Finalizar uma proposta não poderá ser desfeito facilmente.")
 
                             with st.form(key=f"form_finalizar_concluida_{proposta_selecionada_id}"):
-                                finalizar_concluida = st.form_submit_button("Marcar como Concluída", use_container_width=True)
+                                finalizar_concluida = st.form_submit_button("MARCAR COMO CONCLUÍDA", type="primary", use_container_width=True)
                                 if finalizar_concluida:
                                     try:
                                         # Chamar a função para finalizar proposta (versão V2)
@@ -1940,15 +1940,17 @@ def show():
 
                 # Adicionar opção para exportar
                 with st.form(key="exportar_csv_form"):
-                    exportar_csv = st.form_submit_button("Exportar para CSV", type="primary", use_container_width=True)
+                    exportar_csv = st.form_submit_button("EXPORTAR PARA CSV", type="primary", use_container_width=True)
 
                     if exportar_csv:
                         csv = propostas_filtradas[['numero', 'nome', 'descricao', 'valor_formatado', 'status', 'data_formatada', 'tipo_proposta']].to_csv(index=False)
                         st.download_button(
-                            label="Download CSV",
+                            label="BAIXAR CSV",
                             data=csv,
                             file_name="propostas_exportadas.csv",
-                            mime="text/csv"
+                            mime="text/csv",
+                            type="primary",
+                            use_container_width=True
                         )
 
                 # Adicionar funcionalidade para gerar relatórios de propostas finalizadas
@@ -1982,7 +1984,7 @@ def show():
 
                         col1, col2 = st.columns(2)
                         with col1:
-                            if st.button("Relatório Cliente", key="gerar_relatorio_cliente", type="primary", use_container_width=True):
+                            if st.button("RELATÓRIO CLIENTE", key="gerar_relatorio_cliente", type="primary", use_container_width=True):
                                 try:
                                     proposta_id = propostas_filtradas[propostas_filtradas['numero'] == proposta_numero].iloc[0]['id']
                                     st_gerar_pdf_cliente(proposta_id)
@@ -1990,7 +1992,7 @@ def show():
                                     st.error(f"Erro ao gerar relatório para cliente: {str(e)}")
 
                         with col2:
-                            if st.button("Relatório Interno", key="gerar_relatorio_interno", type="secondary", use_container_width=True):
+                            if st.button("RELATÓRIO INTERNO", key="gerar_relatorio_interno", type="primary", use_container_width=True):
                                 try:
                                     proposta_id = propostas_filtradas[propostas_filtradas['numero'] == proposta_numero].iloc[0]['id']
                                     st_gerar_pdf_interno(proposta_id)
