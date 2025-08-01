@@ -306,6 +306,43 @@ div[data-testid="stMetric"] > div:first-child {
 }
 
 /* ========================================
+   BOTÕES EM EXPANDERS - VISIBILIDADE GARANTIDA
+   ======================================== */
+/* Forçar visibilidade dos botões dentro de expanders */
+div[data-testid="stExpander"] button[kind="primary"] {
+    background-color: #1f4e79 !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+div[data-testid="stExpander"] button[kind="primary"]:hover {
+    background-color: #164066 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(30, 78, 121, 0.3) !important;
+}
+
+/* Garantir que o texto dos botões seja sempre visível */
+div[data-testid="stExpander"] button[kind="primary"] span {
+    color: white !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+}
+
+/* Estilo específico para expandedrs com relatórios */
+.streamlit-expanderContent button[kind="primary"] {
+    background-color: #1f4e79 !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    min-height: 40px !important;
+}
+
+/* ========================================
    RODAPÉ
    ======================================== */
 body, .main, [data-testid="stAppViewContainer"], .block-container {
