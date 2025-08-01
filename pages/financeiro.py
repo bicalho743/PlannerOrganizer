@@ -887,17 +887,24 @@ def show():
 
         # Adicionar novo mês
         with st.expander("➕ Adicionar Novo Mês", expanded=False):
-            nome_mes = st.selectbox("Selecione o Mês", meses_padrao)
+            col1, col2 = st.columns(2)
+            with col1:
+                nome_mes = st.selectbox("Selecione o Mês", meses_padrao)
+            with col2:
+                ano_mes = st.number_input("Ano", min_value=2020, max_value=2030, value=datetime.now().year, step=1)
 
             if st.button("Adicionar Mês", use_container_width=True):
+                # Criar nome completo com mês e ano
+                nome_completo = f"{nome_mes} {ano_mes}"
+                
                 # Verificar se o mês já existe
                 nomes_existentes = [m.name for m in st.session_state.fluxo_caixa_module.months]
-                if nome_mes not in nomes_existentes:
-                    novo_mes = MonthCashFlow(name=nome_mes)
+                if nome_completo not in nomes_existentes:
+                    novo_mes = MonthCashFlow(name=nome_completo)
                     st.session_state.fluxo_caixa_module.adicionar_mes(novo_mes)
-                    st.success(f"Mês {nome_mes} adicionado com sucesso!")
+                    st.success(f"Mês {nome_completo} adicionado com sucesso!")
                 else:
-                    st.warning(f"O mês {nome_mes} já existe!")
+                    st.warning(f"O mês {nome_completo} já existe!")
 
         # Exibir meses existentes
         if st.session_state.fluxo_caixa_module.months:

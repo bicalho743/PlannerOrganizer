@@ -38,6 +38,9 @@ A interface é construída com Streamlit, focando em um design responsivo mobile
 - Gerenciamento de estado otimizado para evitar loops infinitos em recarregamentos do Streamlit.
 - Geração de relatórios em PDF com análise financeira detalhada (custo total, receita líquida, comissão).
 - Sistema de vendas com salvamento automático de itens (quantidade, preço) e métodos `update_item_venda()`, `remove_item_venda()`.
+- Integração vendas-financeiro: Vendas criam automaticamente entradas financeiras via função `add_venda()`.
+- Fluxo de caixa com visualização de mês e ano completos para melhor organização temporal.
+- Correção de bugs do `st.download_button()` em formulários para conformidade com regras do Streamlit.
 
 ## External Dependencies
 - **Streamlit**: Para a construção da interface web.
