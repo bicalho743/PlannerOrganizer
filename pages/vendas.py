@@ -1020,10 +1020,17 @@ def show():
                                         v.id as venda_id,
                                         v.data_venda,
                                         COALESCE(SUM(
-                                            iv.quantidade * (iv.preco_unitario - (iv.preco_unitario * 0.6))
+                                            CASE 
+                                                WHEN p.preco_custo IS NOT NULL AND p.preco_custo > 0 THEN
+                                                    iv.quantidade * (iv.preco_unitario - p.preco_custo)
+                                                ELSE
+                                                    -- Se não há custo, assumir margem de 40%
+                                                    iv.quantidade * (iv.preco_unitario * 0.4)
+                                            END
                                         ), 0) as lucro_venda
                                     FROM vendas v
                                     LEFT JOIN itens_venda iv ON v.id = iv.venda_id
+                                    LEFT JOIN produtos p ON UPPER(TRIM(p.nome)) = UPPER(TRIM(iv.descricao))
                                     WHERE v.id = ANY(:vendas_ids)
                                     GROUP BY v.id, v.data_venda
                                 """)
