@@ -47,6 +47,8 @@ Sistema de gestão avançado para profissionais brasileiros com interface Stream
 - **REDUZIDO**: Espaçamento superior da página inicial para menor distância do cabeçalho
 - **CORRIGIDO**: Loop "Your app is starting" adicionando st.rerun() nos locais corretos
 - **CONFIGURADO**: Streamlit com fileWatcherType="none" e runOnSave=false para evitar recarregamentos
+- **IMPLEMENTADO**: CSS completo para remover TODO espaçamento superior (html, body, containers)
+- **OCULTADO**: Cabeçalho Streamlit completamente com múltiplas regras CSS
 
 ### 2025-07-25
 - **DIAGNOSTICADO**: Problema crítico - vendas geradas automaticamente de propostas não salvavam itens

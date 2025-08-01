@@ -467,10 +467,19 @@ if not st.session_state.authenticated:
     # CSS customizado para a página de login
     st.markdown("""
     <style>
+    /* Remover TODO espaçamento do HTML e body */
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+    }
+    
     /* Ocultar cabeçalho do Streamlit completamente */
     header[data-testid="stHeader"] {
         display: none !important;
         height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
     /* Ocultar toolbar */
@@ -479,20 +488,46 @@ if not st.session_state.authenticated:
     }
     
     /* Remover TODO espaçamento superior da página */
+    .stApp {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
     .main {
         padding-top: 0 !important;
         margin-top: 0 !important;
+        padding: 0 !important;
     }
     
     .block-container {
         padding-top: 0 !important;
         margin-top: 0 !important;
         padding-bottom: 0 !important;
+        min-height: auto !important;
     }
     
     .main .block-container {
         padding-top: 0 !important;
         margin-top: 0 !important;
+        padding: 1rem !important;
+    }
+    
+    /* Remover espaçamento de containers principais */
+    .main-container, .wrapper, .page {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    
+    /* Zerar possível espaçamento do Firebase UI */
+    #firebaseui-auth-container {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    
+    /* Ajustar primeiro elemento visível */
+    .element-container:first-child {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
     }
     
     /* Forçar botões mais visíveis */
