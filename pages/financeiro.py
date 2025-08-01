@@ -28,28 +28,20 @@ def show():
         categorias_receita = ["Serviços de Organização", "Venda de Produtos", "Comissão sobre Fornecedores", "Serviços Adicionais"]
         categorias_despesa = ["Pagamento Equipe/Assistentes", "Pagamento Parceiros/Fornecedores", "Custos Operacionais", "Custos Administrativos"]
 
-        # Primeiro, fora do form, para que a mudança seja imediata
+        # Selectbox para tipo fora do form para atualização dinâmica
         tipo = st.selectbox(
             "Tipo",
             ["receita", "despesa"],
-            key="tipo_transacao"
+            key="tipo_transacao_main"
         )
 
-        with st.form("registro_transacao", clear_on_submit=True):
-            # Replicar o valor do selectbox dentro do form
-            tipo_form = st.selectbox(
-                "Tipo (confirmação)",
-                ["receita", "despesa"],
-                index=0 if tipo == "receita" else 1,
-                disabled=True,
-                key="tipo_form"
-            )
-
-            descricao = st.text_input("Descrição")
-            valor = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
-
-            # Campos condicionais baseados no tipo selecionado
-            if tipo == "receita":
+        # Mostrar formulário baseado no tipo selecionado
+        if tipo == "receita":
+            st.markdown("#### 💰 Registrar Receita")
+            with st.form("registro_receita", clear_on_submit=True):
+                descricao = st.text_input("Descrição")
+                valor = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
+                
                 tipo_receita = st.selectbox(
                     "Tipo de Receita",
                     ["organização", "comissão", "venda"]
@@ -82,37 +74,61 @@ def show():
                     "Categoria",
                     categorias_receita
                 )
-            else:
-                # Para despesas, definir valores None
-                tipo_receita = None
-                origem_tipo = None
-                origem_id = None
+
+                submitted = st.form_submit_button("Registrar Receita")
+
+                if submitted:
+                    if descricao and valor > 0:
+                        try:
+                            st.session_state.db.add_transacao(
+                                tipo="receita",
+                                descricao=descricao,
+                                valor=valor,
+                                categoria=categoria,
+                                tipo_receita=tipo_receita,
+                                origem_id=origem_id,
+                                origem_tipo=origem_tipo
+                            )
+                            st.success("Receita registrada com sucesso!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Erro ao registrar receita: {str(e)}")
+                    else:
+                        st.warning("Por favor, preencha todos os campos corretamente.")
+
+        else:  # despesa
+            st.markdown("#### 💸 Registrar Despesa") 
+            with st.form("registro_despesa", clear_on_submit=True):
+                descricao = st.text_input("Descrição")
+                valor = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
                 
                 categoria = st.selectbox(
                     "Categoria",
                     categorias_despesa
                 )
 
-            submitted = st.form_submit_button("Registrar")
+                submitted = st.form_submit_button("Registrar Despesa")
 
-            if submitted:
-                if descricao and valor > 0:
-                    try:
-                        st.session_state.db.add_transacao(
-                            tipo=tipo,  # Usar o tipo selecionado fora do form
-                            descricao=descricao,
-                            valor=valor,
-                            categoria=categoria,
-                            tipo_receita=tipo_receita,
-                            origem_id=origem_id,
-                            origem_tipo=origem_tipo
-                        )
-                        st.success("Transação registrada com sucesso!")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Erro ao registrar transação: {str(e)}")
-                else:
-                    st.warning("Por favor, preencha todos os campos corretamente.")
+                if submitted:
+                    if descricao and valor > 0:
+                        try:
+                            st.session_state.db.add_transacao(
+                                tipo="despesa",
+                                descricao=descricao,
+                                valor=valor,
+                                categoria=categoria,
+                                tipo_receita=None,
+                                origem_id=None,
+                                origem_tipo=None
+                            )
+                            st.success("Despesa registrada com sucesso!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Erro ao registrar despesa: {str(e)}")
+                    else:
+                        st.warning("Por favor, preencha todos os campos corretamente.")
+
+
 
     with tab2:
         st.subheader("Pendências Financeiras")
