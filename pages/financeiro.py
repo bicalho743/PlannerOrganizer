@@ -1102,19 +1102,6 @@ def show():
                     else:
                         st.info("💡 Use 'Sincronizar com Banco' para importar despesas realizadas")
 
-                # Empréstimo necessário
-                st.markdown("#### 🏦 Empréstimo/Financiamento")
-                emprestimo_atual = mes_obj.emprestimo
-                novo_emprestimo = st.number_input(
-                    "Empréstimo/Financiamento (R$)", 
-                    value=emprestimo_atual, 
-                    step=100.0,
-                    key=f"emprestimo_{mes_selecionado}"
-                )
-
-                if novo_emprestimo != emprestimo_atual:
-                    mes_obj.emprestimo = novo_emprestimo
-
                 # Botão para recalcular
                 if st.button("🔄 Recalcular Saldos", use_container_width=True):
                     st.session_state.fluxo_caixa_module.recalcular_saldos()

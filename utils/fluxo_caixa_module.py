@@ -58,9 +58,8 @@ class MonthCashFlow:
     # Valores realizados (podem ser omitidos se não houver)
     realizado_receitas: Optional[Dict[str, float]] = None
     realizado_despesas: Optional[Dict[str, float]] = None
-    # Saldos e necessidades de caixa
+    # Saldos
     saldo_anterior: float = 0.0
-    emprestimo: float = 0.0
 
     def _sum_values(self, values: Dict[str, float]) -> float:
         """Soma todos os valores de um dicionário, ignorando
@@ -92,10 +91,10 @@ class MonthCashFlow:
 
     @property
     def saldo_final_previsao(self) -> float:
-        """Calcula o saldo final previsto: saldo acumulado + empréstimo.
-        Se não houver empréstimo, assume zero.
+        """Calcula o saldo final previsto: saldo acumulado.
+        Sem considerar empréstimos.
         """
-        return self.saldo_acumulado_previsao + (self.emprestimo or 0.0)
+        return self.saldo_acumulado_previsao
 
     # Métodos equivalentes para valores realizados (caso fornecidos)
     @property
@@ -126,7 +125,7 @@ class MonthCashFlow:
     def saldo_final_realizado(self) -> Optional[float]:
         if self.saldo_acumulado_realizado is None:
             return None
-        return self.saldo_acumulado_realizado + (self.emprestimo or 0.0)
+        return self.saldo_acumulado_realizado
 
     def editar_despesa(self, categoria: str, novo_valor: float, previsao: bool = True) -> None:
         """Permite editar o valor de uma despesa.
@@ -191,8 +190,8 @@ class CashFlowModule:
         if len(self.months) == 1:
             month.saldo_anterior = self.saldo_inicial
         else:
-            # O saldo anterior do novo mês é o saldo final do mês anterior
-            prev_final = self.months[-2].saldo_final_previsao
+            # O saldo anterior do novo mês é o saldo acumulado do mês anterior
+            prev_final = self.months[-2].saldo_acumulado_previsao
             month.saldo_anterior = prev_final
 
     def recalcular_saldos(self) -> None:
@@ -206,7 +205,7 @@ class CashFlowModule:
         prev_final = self.saldo_inicial
         for month in self.months:
             month.saldo_anterior = prev_final
-            prev_final = month.saldo_final_previsao
+            prev_final = month.saldo_acumulado_previsao
 
     def obter_resumo(self) -> Dict[str, Dict[str, float]]:
         """Retorna um dicionário com o saldo final de cada mês.
