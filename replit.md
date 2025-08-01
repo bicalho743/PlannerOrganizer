@@ -43,6 +43,8 @@ A interface é construída com Streamlit, focando em um design responsivo mobile
 - Correção de bugs do `st.download_button()` em formulários para conformidade com regras do Streamlit.
 - **Nova funcionalidade**: Análise por Período no módulo de vendas com filtros de data, agrupamento por período (dia/semana/mês/trimestre/ano), métricas de resumo, gráficos visuais e análise de produtos mais vendidos.
 - Correções de CSS para visibilidade de texto em botões com aplicação específica nos seletores `.stButton > button` e `.stFormSubmitButton > button`.
+- **Correções de Janeiro 2025**: Problemas de loop da aplicação resolvidos, método `get_itens_venda()` corrigido para usar campo `descricao` quando `produto_id` é NULL, geração de PDF de vendas estabilizada com nomes únicos de arquivo.
+- **Sistema de autenticação**: Firebase Auth funcionando corretamente com usuários multi-tenant (65 propostas carregadas para usuário Tâmara).
 
 ## External Dependencies
 - **Streamlit**: Para a construção da interface web.
