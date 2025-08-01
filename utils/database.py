@@ -4581,6 +4581,78 @@ class Database:
                 'lucro': (i.preco_unitario - (getattr(i.produto, 'preco_custo', 0) if i.produto else 0)) * i.quantidade
             } for i in itens])
         return self._safe_query(query)
+
+    def adicionar_venda(self, cliente_id, data_venda, forma_pagamento, observacoes=""):
+        """Adiciona uma nova venda"""
+        def query():
+            nova_venda = Venda(
+                cliente_id=cliente_id,
+                data_venda=data_venda,
+                valor_total=0.0,  # Será calculado quando itens forem adicionados
+                status="Em aberto",
+                forma_pagamento=forma_pagamento,
+                observacoes=observacoes,
+                usuario_id=self.usuario_id
+            )
+            
+            self.session.add(nova_venda)
+            self.session.flush()  # Para obter o ID
+            return nova_venda.id
+        
+        return self._safe_query(query)
+
+    def adicionar_item_venda(self, venda_id, produto_id, quantidade, preco_unitario, descricao=""):
+        """Adiciona um item a uma venda"""
+        def query():
+            # Calcular subtotal
+            subtotal = quantidade * preco_unitario
+            
+            novo_item = ItemVenda(
+                venda_id=venda_id,
+                produto_id=produto_id,
+                descricao=descricao,
+                quantidade=quantidade,
+                preco_unitario=preco_unitario,
+                subtotal=subtotal
+            )
+            
+            self.session.add(novo_item)
+            
+            # Atualizar valor total da venda
+            venda = self.session.query(Venda).filter_by(id=venda_id).first()
+            if venda:
+                total_itens = self.session.query(func.sum(ItemVenda.subtotal)).filter_by(venda_id=venda_id).scalar() or 0
+                venda.valor_total = total_itens + subtotal
+            
+            self.session.flush()
+            return novo_item.id
+        
+        return self._safe_query(query)
+
+    def finalizar_venda(self, venda_id):
+        """Finaliza uma venda alterando seu status"""
+        def query():
+            venda = self.session.query(Venda).filter_by(id=venda_id).first()
+            if venda:
+                venda.status = "Finalizada"
+                return True
+            return False
+        
+        return self._safe_query(query)
+
+    def atualizar_estoque_produto(self, produto_id, quantidade_vendida):
+        """Atualiza o estoque de um produto após venda"""
+        def query():
+            produto = self.session.query(Produto).filter_by(id=produto_id).first()
+            if produto and hasattr(produto, 'estoque'):
+                if produto.estoque >= quantidade_vendida:
+                    produto.estoque -= quantidade_vendida
+                    return True
+                else:
+                    raise ValueError(f"Estoque insuficiente. Disponível: {produto.estoque}, Solicitado: {quantidade_vendida}")
+            return False
+        
+        return self._safe_query(query)
         
     def update_item_venda(self, item_id, nova_quantidade, novo_preco):
         """Atualiza a quantidade e preço de um item da venda"""
