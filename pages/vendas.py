@@ -16,9 +16,8 @@ def show():
         st.error("Erro: Conexão com banco de dados não inicializada")
         return
 
-    # Aplicar estilos personalizados usando StylesManager
-    styles_manager = StylesManager()
-    styles_manager.apply_page_header("🛒 Vendas")
+    # Título com estilo personalizado para ficar mais próximo do topo
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">🛒 Vendas</h1>', unsafe_allow_html=True)
 
     # Criar abas para organizar o conteúdo seguindo o padrão do módulo de propostas
     tab_produtos, tab_nova_venda, tab_historico = st.tabs([
