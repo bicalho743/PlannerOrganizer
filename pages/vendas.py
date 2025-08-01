@@ -997,7 +997,7 @@ def show():
                         
                         # Achatar nomes das colunas
                         analise_agrupada.columns = ['Total_Vendas', 'Receita_Total', 'Ticket_Medio', 'Desvio_Padrao', 'Clientes_Unicos']
-                        analise_agrupada = analise_agrupada.fillna(0)
+                        analise_agrupada = analise_agrupada.fillna(0).infer_objects(copy=False)
                         analise_agrupada.reset_index(inplace=True)
                         
                         # Métricas resumo do período
@@ -1091,12 +1091,17 @@ def show():
                                     LIMIT 10
                                 """)
                                 
-                                with st.session_state.db.engine.connect() as conn:
-                                    resultado = conn.execute(query, {
+                                try:
+                                    # Usar a sessão do SQLAlchemy diretamente
+                                    resultado = st.session_state.db.session.execute(query, {
                                         'venda_ids': vendas_ids,
                                         'usuario_id': st.session_state.usuario_id
                                     })
                                     top_produtos = pd.DataFrame(resultado.fetchall(), columns=resultado.keys())
+                                except Exception as e:
+                                    st.warning(f"Erro na consulta de produtos: {str(e)}")
+                                    # Fallback: análise simplificada sem produtos
+                                    top_produtos = pd.DataFrame()
                                 
                                 if not top_produtos.empty:
                                     # Formatar dados para exibição
