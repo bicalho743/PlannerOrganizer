@@ -376,11 +376,174 @@ def show():
                 if vendas_df.empty:
                     custom_info("Nenhuma venda registrada.")
                 else:
-                    # Formatar dados para exibição
-                    vendas_df['valor_total'] = vendas_df['valor_total'].map('R$ {:.2f}'.format)
-
-                    # Exibir tabela de vendas
-                    st.dataframe(vendas_df, hide_index=True)
+                    # Filtros e configurações de visualização
+                    col_filtro1, col_filtro2, col_filtro3, col_config = st.columns([2, 2, 2, 1])
+                    
+                    with col_filtro1:
+                        filtro_status = st.selectbox(
+                            "Status",
+                            ["Todos"] + list(vendas_df['status'].unique()) if 'status' in vendas_df.columns else ["Todos"]
+                        )
+                    
+                    with col_filtro2:
+                        filtro_pagamento = st.selectbox(
+                            "Forma de Pagamento",
+                            ["Todas"] + list(vendas_df['forma_pagamento'].unique()) if 'forma_pagamento' in vendas_df.columns else ["Todas"]
+                        )
+                    
+                    with col_filtro3:
+                        filtro_cliente = st.selectbox(
+                            "Cliente",
+                            ["Todos"] + list(vendas_df['cliente_nome'].unique()) if 'cliente_nome' in vendas_df.columns else ["Todos"]
+                        )
+                    
+                    with col_config:
+                        modo_visualizacao = st.selectbox(
+                            "Visualização",
+                            ["Compacta", "Detalhada"],
+                            help="Compacta: só tabela. Detalhada: cards expandidos"
+                        )
+                    
+                    # Filtro de busca por texto
+                    col_busca, col_ordenacao = st.columns([3, 1])
+                    
+                    with col_busca:
+                        filtro_busca = st.text_input(
+                            "🔍 Buscar vendas",
+                            placeholder="Digite nome do cliente, ID da venda ou observações...",
+                            help="Busca em: ID, cliente, observações"
+                        )
+                    
+                    with col_ordenacao:
+                        ordenacao = st.selectbox(
+                            "Ordenar por",
+                            ["Data (Mais recente)", "Data (Mais antiga)", "Valor (Maior)", "Valor (Menor)", "Cliente A-Z"],
+                            help="Como ordenar as vendas"
+                        )
+                    
+                    # Aplicar filtros
+                    vendas_filtradas = vendas_df.copy()
+                    
+                    if filtro_status != "Todos" and 'status' in vendas_df.columns:
+                        vendas_filtradas = vendas_filtradas[vendas_filtradas['status'] == filtro_status]
+                    
+                    if filtro_pagamento != "Todas" and 'forma_pagamento' in vendas_df.columns:
+                        vendas_filtradas = vendas_filtradas[vendas_filtradas['forma_pagamento'] == filtro_pagamento]
+                    
+                    if filtro_cliente != "Todos" and 'cliente_nome' in vendas_df.columns:
+                        vendas_filtradas = vendas_filtradas[vendas_filtradas['cliente_nome'] == filtro_cliente]
+                    
+                    # Aplicar filtro de busca por texto
+                    if filtro_busca.strip():
+                        busca_lower = filtro_busca.lower().strip()
+                        mask = (
+                            vendas_filtradas['id'].astype(str).str.contains(busca_lower, case=False, na=False) |
+                            vendas_filtradas['cliente_nome'].str.contains(busca_lower, case=False, na=False) |
+                            vendas_filtradas.get('observacoes', pd.Series([''] * len(vendas_filtradas))).fillna('').str.contains(busca_lower, case=False, na=False)
+                        )
+                        vendas_filtradas = vendas_filtradas[mask]
+                    
+                    # Aplicar ordenação
+                    if ordenacao == "Data (Mais recente)":
+                        vendas_filtradas = vendas_filtradas.sort_values('data_venda', ascending=False)
+                    elif ordenacao == "Data (Mais antiga)":
+                        vendas_filtradas = vendas_filtradas.sort_values('data_venda', ascending=True)
+                    elif ordenacao == "Valor (Maior)":
+                        vendas_filtradas = vendas_filtradas.sort_values('valor_total', ascending=False)
+                    elif ordenacao == "Valor (Menor)":
+                        vendas_filtradas = vendas_filtradas.sort_values('valor_total', ascending=True)
+                    elif ordenacao == "Cliente A-Z":
+                        vendas_filtradas = vendas_filtradas.sort_values('cliente_nome', ascending=True)
+                    
+                    # Configurar paginação
+                    vendas_por_pagina = 10 if modo_visualizacao == "Detalhada" else 20
+                    total_vendas = len(vendas_filtradas)
+                    total_paginas = max(1, (total_vendas + vendas_por_pagina - 1) // vendas_por_pagina)
+                    
+                    if total_vendas > 0:
+                        # Controles de paginação
+                        col_pag1, col_pag2, col_pag3 = st.columns([1, 2, 1])
+                        
+                        with col_pag1:
+                            pagina_atual = st.number_input(
+                                "Página", 
+                                min_value=1, 
+                                max_value=total_paginas, 
+                                value=1,
+                                key="pagina_vendas"
+                            )
+                        
+                        with col_pag2:
+                            st.write(f"**Mostrando {total_vendas} vendas em {total_paginas} páginas**")
+                        
+                        with col_pag3:
+                            items_por_pagina = st.selectbox(
+                                "Itens/página",
+                                [10, 20, 50],
+                                index=0 if modo_visualizacao == "Detalhada" else 1,
+                                key="items_por_pagina_vendas"
+                            )
+                            vendas_por_pagina = items_por_pagina
+                            # Recalcular paginação se mudou itens por página
+                            total_paginas = max(1, (total_vendas + vendas_por_pagina - 1) // vendas_por_pagina)
+                            if pagina_atual > total_paginas:
+                                st.session_state.pagina_vendas = 1
+                                st.rerun()
+                        
+                        # Calcular índices da página atual
+                        inicio = (pagina_atual - 1) * vendas_por_pagina
+                        fim = min(inicio + vendas_por_pagina, total_vendas)
+                        vendas_pagina = vendas_filtradas.iloc[inicio:fim]
+                        
+                        if modo_visualizacao == "Compacta":
+                            # Visualização em tabela compacta
+                            st.subheader(f"Vendas {inicio + 1}-{fim} de {total_vendas}")
+                            
+                            # Formatar dados para exibição
+                            vendas_display = vendas_pagina.copy()
+                            vendas_display['valor_total'] = vendas_display['valor_total'].map('R$ {:.2f}'.format)
+                            
+                            # Exibir tabela
+                            st.dataframe(vendas_display, hide_index=True, use_container_width=True)
+                        else:
+                            # Visualização detalhada em cards
+                            st.subheader(f"Vendas {inicio + 1}-{fim} de {total_vendas}")
+                            
+                            for _, venda in vendas_pagina.iterrows():
+                                with st.expander(f"🛒 Venda #{venda['id']} - {venda['cliente_nome']} - R$ {venda['valor_total']:.2f}", expanded=False):
+                                    col1, col2 = st.columns(2)
+                                    
+                                    with col1:
+                                        st.write(f"**Cliente:** {venda.get('cliente_nome', 'N/A')}")
+                                        st.write(f"**Data:** {venda['data_venda']}")
+                                        st.write(f"**Valor Total:** R$ {venda['valor_total']:.2f}")
+                                    
+                                    with col2:
+                                        st.write(f"**Status:** {venda.get('status', 'N/A')}")
+                                        st.write(f"**Forma de Pagamento:** {venda.get('forma_pagamento', 'N/A')}")
+                                        if venda.get('observacoes'):
+                                            st.write(f"**Observações:** {venda['observacoes']}")
+                                    
+                                    # Botões de ação para cada venda
+                                    col_btn1, col_btn2, col_btn3 = st.columns(3)
+                                    
+                                    with col_btn1:
+                                        if st.button("📄 Ver Detalhes", key=f"detalhes_{venda['id']}", use_container_width=True):
+                                            st.session_state[f'mostrar_detalhes_{venda["id"]}'] = True
+                                            st.rerun()
+                                    
+                                    with col_btn2:
+                                        if st.button("📋 Gerar PDF", key=f"pdf_{venda['id']}", use_container_width=True):
+                                            # Implementação rápida de PDF
+                                            st.info("Gerando PDF...")
+                                    
+                                    with col_btn3:
+                                        if st.button("🗑️ Excluir", key=f"excluir_{venda['id']}", use_container_width=True):
+                                            st.session_state[f'confirmar_exclusao_venda_{venda["id"]}'] = True
+                                            st.rerun()
+                    
+                    else:
+                        st.info("Nenhuma venda encontrada com os filtros aplicados.")
 
                     # Detalhes da venda selecionada
                     st.subheader("Detalhes da Venda")
