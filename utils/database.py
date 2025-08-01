@@ -4653,6 +4653,112 @@ class Database:
             return False
         
         return self._safe_query(query)
+
+    def excluir_venda(self, venda_id):
+        """Exclui uma venda e seus itens, devolvendo produtos ao estoque"""
+        def query():
+            # Buscar a venda
+            venda = self.session.query(Venda).filter_by(id=venda_id).first()
+            if not venda:
+                raise ValueError(f"Venda com ID {venda_id} não encontrada")
+            
+            # Buscar itens da venda para devolver ao estoque
+            itens = self.session.query(ItemVenda).filter_by(venda_id=venda_id).all()
+            
+            # Devolver produtos ao estoque
+            for item in itens:
+                if item.produto_id:
+                    produto = self.session.query(Produto).filter_by(id=item.produto_id).first()
+                    if produto and hasattr(produto, 'estoque'):
+                        produto.estoque += item.quantidade
+                        print(f"DEBUG: Devolvendo {item.quantidade} unidades do produto {produto.nome} ao estoque")
+            
+            # Excluir itens da venda
+            for item in itens:
+                self.session.delete(item)
+            
+            # Excluir a venda
+            self.session.delete(venda)
+            
+            print(f"DEBUG: Venda ID {venda_id} excluída com sucesso")
+            return True
+        
+        return self._safe_query(query)
+
+    def atualizar_venda(self, venda_id, cliente_id=None, data_venda=None, forma_pagamento=None, observacoes=None):
+        """Atualiza dados básicos de uma venda"""
+        def query():
+            venda = self.session.query(Venda).filter_by(id=venda_id).first()
+            if not venda:
+                raise ValueError(f"Venda com ID {venda_id} não encontrada")
+            
+            # Atualizar campos se fornecidos
+            if cliente_id is not None:
+                venda.cliente_id = cliente_id
+            if data_venda is not None:
+                venda.data_venda = data_venda
+            if forma_pagamento is not None:
+                venda.forma_pagamento = forma_pagamento
+            if observacoes is not None:
+                venda.observacoes = observacoes
+            
+            return True
+        
+        return self._safe_query(query)
+
+    def atualizar_item_venda(self, item_id, quantidade=None, preco_unitario=None):
+        """Atualiza um item específico de uma venda"""
+        def query():
+            item = self.session.query(ItemVenda).filter_by(id=item_id).first()
+            if not item:
+                raise ValueError(f"Item com ID {item_id} não encontrado")
+            
+            # Atualizar campos se fornecidos
+            if quantidade is not None:
+                item.quantidade = quantidade
+            if preco_unitario is not None:
+                item.preco_unitario = preco_unitario
+            
+            # Recalcular subtotal
+            item.subtotal = item.quantidade * item.preco_unitario
+            
+            # Atualizar valor total da venda
+            venda = self.session.query(Venda).filter_by(id=item.venda_id).first()
+            if venda:
+                total_itens = self.session.query(func.sum(ItemVenda.subtotal)).filter_by(venda_id=item.venda_id).scalar() or 0
+                venda.valor_total = total_itens
+            
+            return True
+        
+        return self._safe_query(query)
+
+    def remover_item_venda(self, item_id):
+        """Remove um item específico de uma venda"""
+        def query():
+            item = self.session.query(ItemVenda).filter_by(id=item_id).first()
+            if not item:
+                raise ValueError(f"Item com ID {item_id} não encontrado")
+            
+            venda_id = item.venda_id
+            
+            # Devolver produto ao estoque se aplicável
+            if item.produto_id:
+                produto = self.session.query(Produto).filter_by(id=item.produto_id).first()
+                if produto and hasattr(produto, 'estoque'):
+                    produto.estoque += item.quantidade
+            
+            # Remover item
+            self.session.delete(item)
+            
+            # Atualizar valor total da venda
+            venda = self.session.query(Venda).filter_by(id=venda_id).first()
+            if venda:
+                total_itens = self.session.query(func.sum(ItemVenda.subtotal)).filter_by(venda_id=venda_id).scalar() or 0
+                venda.valor_total = total_itens or 0
+            
+            return True
+        
+        return self._safe_query(query)
         
     def update_item_venda(self, item_id, nova_quantidade, novo_preco):
         """Atualiza a quantidade e preço de um item da venda"""

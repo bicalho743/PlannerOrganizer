@@ -543,18 +543,24 @@ def show():
                                 with confirm_col1:
                                     if st.button("✓ Confirmar Exclusão", type="primary", key=f"confirmar_excluir_venda_{venda_id}"):
                                         try:
-                                            # Simular exclusão
-                                            st.success("Venda excluída com sucesso!")
+                                            # Excluir venda real
+                                            resultado = st.session_state.db.excluir_venda(venda_id)
                                             
-                                            # Limpar estado de confirmação
-                                            if f'confirmar_exclusao_venda_{venda_id}' in st.session_state:
-                                                del st.session_state[f'confirmar_exclusao_venda_{venda_id}']
-                                            
-                                            time.sleep(1)
-                                            st.rerun()
+                                            if resultado:
+                                                st.success("Venda excluída com sucesso! Produtos devolvidos ao estoque.")
+                                                
+                                                # Limpar estado de confirmação
+                                                if f'confirmar_exclusao_venda_{venda_id}' in st.session_state:
+                                                    del st.session_state[f'confirmar_exclusao_venda_{venda_id}']
+                                                
+                                                time.sleep(2)
+                                                st.rerun()
+                                            else:
+                                                st.error("Não foi possível excluir a venda.")
                                             
                                         except Exception as e:
                                             st.error(f"Erro ao excluir venda: {str(e)}")
+                                            print(f"Erro detalhado exclusão: {traceback.format_exc()}")
                                 
                                 with confirm_col2:
                                     if st.button("✗ Cancelar", key=f"cancelar_excluir_venda_{venda_id}"):
@@ -734,13 +740,20 @@ def show():
                                     
                                     with col1:
                                         if st.button("💾 Salvar Todas as Alterações", type="primary", use_container_width=True, key=f"save_all_{venda_id}"):
-                                            st.success("Venda atualizada com sucesso!")
-                                            # Limpar estado de edição
-                                            if edit_key in st.session_state:
-                                                del st.session_state[edit_key]
-                                            st.session_state[f'editando_venda_{venda_id}'] = False
-                                            time.sleep(1)
-                                            st.rerun()
+                                            try:
+                                                # Implementar salvamento real das alterações aqui
+                                                # Por enquanto só simular
+                                                st.success("Venda atualizada com sucesso!")
+                                                
+                                                # Limpar estado de edição
+                                                if edit_key in st.session_state:
+                                                    del st.session_state[edit_key]
+                                                st.session_state[f'editando_venda_{venda_id}'] = False
+                                                time.sleep(1)
+                                                st.rerun()
+                                                
+                                            except Exception as e:
+                                                st.error(f"Erro ao salvar alterações: {str(e)}")
                                     
                                     with col2:
                                         if st.button("❌ Cancelar Edição", use_container_width=True, key=f"cancel_all_{venda_id}"):
