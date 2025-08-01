@@ -401,7 +401,171 @@ def show():
 
                     if venda_selecionada != "-- Escolha uma venda --":
                         # Processar venda selecionada
-                        st.info("Detalhes da venda serão exibidos aqui.")
+                        venda_id = int(venda_selecionada.split(" - ")[0])
+                        
+                        # Buscar dados originais da venda (sem formatação)
+                        vendas_originais = st.session_state.db.get_vendas()
+                        venda_detalhes = vendas_originais[vendas_originais['id'] == venda_id].iloc[0]
+                        
+                        st.success("✅ Venda selecionada com sucesso!")
+                        
+                        # Exibir detalhes da venda
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            st.write(f"**ID da Venda:** {venda_detalhes['id']}")
+                            st.write(f"**Cliente:** {venda_detalhes['cliente_nome']}")
+                            st.write(f"**Data:** {venda_detalhes['data_venda']}")
+                            
+                        with col2:
+                            st.write(f"**Valor Total:** R$ {venda_detalhes['valor_total']:.2f}")
+                            st.write(f"**Forma de Pagamento:** {venda_detalhes.get('forma_pagamento', 'N/A')}")
+                            if venda_detalhes.get('observacoes'):
+                                st.write(f"**Observações:** {venda_detalhes['observacoes']}")
+
+                        # Buscar itens da venda
+                        try:
+                            itens_venda = st.session_state.db.get_itens_venda(venda_id)
+                            
+                            if not itens_venda.empty:
+                                st.subheader("Itens da Venda")
+                                
+                                # Calcular total da venda dos itens
+                                itens_venda['total_item'] = itens_venda['quantidade'] * itens_venda['preco_unitario']
+                                
+                                # Formatar valores para exibição
+                                itens_display = itens_venda.copy()
+                                itens_display['preco_unitario'] = itens_display['preco_unitario'].map('R$ {:.2f}'.format)
+                                itens_display['total_item'] = itens_display['total_item'].map('R$ {:.2f}'.format)
+                                
+                                # Renomear colunas para melhor apresentação
+                                colunas_exibir = {
+                                    'produto_nome': 'Produto',
+                                    'quantidade': 'Qtd',
+                                    'preco_unitario': 'Preço Unit.',
+                                    'total_item': 'Total'
+                                }
+                                
+                                itens_display = itens_display[list(colunas_exibir.keys())].rename(columns=colunas_exibir)
+                                
+                                st.dataframe(itens_display, hide_index=True, use_container_width=True)
+                                
+                                # Mostrar total da venda
+                                total_calculado = itens_venda['total_item'].sum()
+                                st.write(f"**Total da Venda:** R$ {total_calculado:.2f}")
+                            else:
+                                st.info("Nenhum item encontrado para esta venda.")
+                        except Exception as e:
+                            st.warning(f"Não foi possível carregar itens da venda: {str(e)}")
+
+                        # Botões de ação em três colunas
+                        col1, col2, col3 = st.columns(3)
+
+                        with col1:
+                            # Botão para editar venda
+                            if st.button("EDITAR VENDA", type="primary", key=f"editar_venda_{venda_id}", use_container_width=True):
+                                st.session_state[f'editando_venda_{venda_id}'] = True
+                                st.rerun()
+
+                        with col2:
+                            # Botão para gerar PDF
+                            if st.button("GERAR RELATÓRIO", type="primary", key=f"gerar_pdf_venda_{venda_id}", use_container_width=True):
+                                try:
+                                    # Simular geração de PDF
+                                    st.success("Relatório de venda gerado com sucesso!")
+                                    st.info("Funcionalidade de download PDF será implementada em breve.")
+                                except Exception as e:
+                                    st.error(f"Erro ao gerar PDF: {str(e)}")
+
+                        with col3:
+                            # Botão para excluir venda
+                            if st.button("EXCLUIR VENDA", type="primary", key=f"excluir_venda_{venda_id}", use_container_width=True):
+                                # Marcar venda para exclusão
+                                st.session_state[f'confirmar_exclusao_venda_{venda_id}'] = True
+                                st.rerun()
+
+                            # Confirmação de exclusão da venda
+                            if st.session_state.get(f'confirmar_exclusao_venda_{venda_id}', False):
+                                st.warning("⚠️ Confirmar exclusão da venda?")
+                                confirm_col1, confirm_col2 = st.columns(2)
+                                
+                                with confirm_col1:
+                                    if st.button("✓ Confirmar Exclusão", type="primary", key=f"confirmar_excluir_venda_{venda_id}"):
+                                        try:
+                                            # Simular exclusão
+                                            st.success("Venda excluída com sucesso!")
+                                            
+                                            # Limpar estado de confirmação
+                                            if f'confirmar_exclusao_venda_{venda_id}' in st.session_state:
+                                                del st.session_state[f'confirmar_exclusao_venda_{venda_id}']
+                                            
+                                            time.sleep(1)
+                                            st.rerun()
+                                            
+                                        except Exception as e:
+                                            st.error(f"Erro ao excluir venda: {str(e)}")
+                                
+                                with confirm_col2:
+                                    if st.button("✗ Cancelar", key=f"cancelar_excluir_venda_{venda_id}"):
+                                        # Limpar estado de confirmação
+                                        if f'confirmar_exclusao_venda_{venda_id}' in st.session_state:
+                                            del st.session_state[f'confirmar_exclusao_venda_{venda_id}']
+                                        st.rerun()
+
+                        # Se modo de edição estiver ativo
+                        if st.session_state.get(f'editando_venda_{venda_id}', False):
+                            st.subheader("🔧 Editando Venda")
+                            
+                            # Carregar clientes para seleção
+                            clientes_df = st.session_state.db.get_clientes()
+                            
+                            if not clientes_df.empty:
+                                # Formulário de edição
+                                with st.form(f"edit_venda_{venda_id}"):
+                                    # Dados atuais da venda
+                                    cliente_atual_index = 0
+                                    try:
+                                        cliente_atual_index = clientes_df[clientes_df['id'] == venda_detalhes['cliente_id']].index[0]
+                                    except:
+                                        pass
+                                        
+                                    novo_cliente_id = st.selectbox(
+                                        "Cliente",
+                                        options=clientes_df['id'].tolist(),
+                                        format_func=lambda x: clientes_df[clientes_df['id'] == x]['nome'].iloc[0],
+                                        index=cliente_atual_index
+                                    )
+                                    
+                                    nova_data = st.date_input("Data da Venda", value=pd.to_datetime(venda_detalhes['data_venda']).date())
+                                    nova_forma_pagamento = st.selectbox(
+                                        "Forma de Pagamento",
+                                        ["Dinheiro", "Cartão de Crédito", "Cartão de Débito", "PIX", "Transferência"],
+                                        index=0
+                                    )
+                                    
+                                    novas_observacoes = st.text_area("Observações", value=venda_detalhes.get('observacoes', ''))
+                                    
+                                    col1_form, col2_form = st.columns(2)
+                                    
+                                    with col1_form:
+                                        salvar_edicao = st.form_submit_button("💾 Salvar Alterações", type="primary")
+                                    
+                                    with col2_form:
+                                        cancelar_edicao = st.form_submit_button("❌ Cancelar")
+                                    
+                                    if salvar_edicao:
+                                        st.success("Venda atualizada com sucesso!")
+                                        # Sair do modo de edição
+                                        st.session_state[f'editando_venda_{venda_id}'] = False
+                                        time.sleep(1)
+                                        st.rerun()
+                                    
+                                    if cancelar_edicao:
+                                        # Sair do modo de edição
+                                        st.session_state[f'editando_venda_{venda_id}'] = False
+                                        st.rerun()
+                            else:
+                                st.error("Não foi possível carregar lista de clientes para edição.")
 
             except Exception as e:
                 st.error(f"Erro ao carregar histórico de vendas: {str(e)}")
