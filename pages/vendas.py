@@ -1084,6 +1084,14 @@ def show():
                         # Métricas resumo do período
                         st.markdown("### 📈 Resumo do Período")
                         
+                        # Debug: Verificar cálculos de lucro
+                        if not lucros_agrupados.empty:
+                            st.write("DEBUG - Dados de lucro:", lucros_agrupados)
+                            total_receita_periodo = analise_agrupada['Receita_Total'].sum()
+                            total_lucro_periodo = analise_agrupada['Lucro_Total'].sum()
+                            margem_calculada = (total_lucro_periodo / total_receita_periodo * 100) if total_receita_periodo > 0 else 0
+                            st.write(f"DEBUG - Receita: R$ {total_receita_periodo:.2f}, Lucro: R$ {total_lucro_periodo:.2f}, Margem: {margem_calculada:.1f}%")
+                        
                         total_vendas = len(vendas_periodo)
                         receita_total = vendas_periodo['valor_total'].sum()
                         ticket_medio = vendas_periodo['valor_total'].mean()
