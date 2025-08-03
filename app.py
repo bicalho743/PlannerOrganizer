@@ -1043,6 +1043,82 @@ section[data-testid="stSidebar"] > div {
 # Container dos botões com fundo escuro
 st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
 
+# JavaScript para forçar setas de colapso vermelhas
+st.markdown("""
+<script>
+function makeSidebarArrowsRed() {
+    // Buscar por todos os elementos que podem ser botões de colapso
+    const selectors = [
+        'button[data-testid="collapsedControl"]',
+        'button[data-testid="baseButton-minimal"]',
+        'section[data-testid="stSidebar"] button[kind="secondary"]',
+        'section[data-testid="stSidebar"] button:has(svg)',
+        'button:has(svg[aria-hidden="true"])',
+        'button svg[width="14"]',
+        'button svg[height="14"]'
+    ];
+    
+    selectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(element => {
+            // Se for um botão, procurar SVG dentro
+            if (element.tagName === 'BUTTON') {
+                const svgs = element.querySelectorAll('svg');
+                svgs.forEach(svg => {
+                    svg.style.fill = '#dc3545';
+                    svg.style.color = '#dc3545';
+                    const paths = svg.querySelectorAll('path');
+                    paths.forEach(path => {
+                        path.style.fill = '#dc3545';
+                        path.style.stroke = '#dc3545';
+                    });
+                });
+            }
+            // Se for um SVG diretamente
+            else if (element.tagName === 'svg') {
+                element.style.fill = '#dc3545';
+                element.style.color = '#dc3545';
+                const paths = element.querySelectorAll('path');
+                paths.forEach(path => {
+                    path.style.fill = '#dc3545';
+                    path.style.stroke = '#dc3545';
+                });
+            }
+        });
+    });
+    
+    // Buscar especificamente por setas pequenas (tipicamente 14x14 ou menores)
+    const allSvgs = document.querySelectorAll('svg');
+    allSvgs.forEach(svg => {
+        const rect = svg.getBoundingClientRect();
+        if (rect.width <= 20 && rect.height <= 20) {
+            // Verificar se está na área da sidebar
+            const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+            if (sidebar && sidebar.contains(svg)) {
+                svg.style.fill = '#dc3545';
+                svg.style.color = '#dc3545';
+                const paths = svg.querySelectorAll('path');
+                paths.forEach(path => {
+                    path.style.fill = '#dc3545';
+                    path.style.stroke = '#dc3545';
+                });
+            }
+        }
+    });
+}
+
+// Executar quando a página carregar
+document.addEventListener('DOMContentLoaded', makeSidebarArrowsRed);
+
+// Executar periodicamente para capturar elementos dinâmicos
+setInterval(makeSidebarArrowsRed, 500);
+
+// Observar mudanças no DOM para elementos adicionados dinamicamente
+const observer = new MutationObserver(makeSidebarArrowsRed);
+observer.observe(document.body, { childList: true, subtree: true });
+</script>
+""", unsafe_allow_html=True)
+
 # Botões de navegação
 if 'current_page' not in st.session_state:
     st.session_state.current_page = "Dashboard"

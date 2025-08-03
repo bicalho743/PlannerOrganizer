@@ -53,26 +53,88 @@ section[data-testid="stSidebar"] {
     min-width: 250px;
 }
 
-/* Setas de colapso da sidebar em vermelho */
-button[data-testid="collapsedControl"] svg {
+/* Setas de colapso da sidebar em vermelho - múltiplos seletores */
+button[data-testid="collapsedControl"] svg,
+button[data-testid="baseButton-minimal"] svg,
+.stSidebar button svg,
+section[data-testid="stSidebar"] button svg {
     color: #dc3545 !important;
     fill: #dc3545 !important;
 }
 
-button[data-testid="collapsedControl"] svg path {
+button[data-testid="collapsedControl"] svg path,
+button[data-testid="baseButton-minimal"] svg path,
+.stSidebar button svg path,
+section[data-testid="stSidebar"] button svg path {
     fill: #dc3545 !important;
     stroke: #dc3545 !important;
 }
 
-/* Botão de colapso da sidebar */
-button[data-testid="collapsedControl"] {
+/* Botão de colapso da sidebar - múltiplos seletores */
+button[data-testid="collapsedControl"],
+button[data-testid="baseButton-minimal"],
+.stSidebar > div > button,
+section[data-testid="stSidebar"] > div > button {
     background-color: transparent !important;
     border: none !important;
     color: #dc3545 !important;
 }
 
-button[data-testid="collapsedControl"]:hover {
+button[data-testid="collapsedControl"]:hover,
+button[data-testid="baseButton-minimal"]:hover,
+.stSidebar > div > button:hover,
+section[data-testid="stSidebar"] > div > button:hover {
     background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+/* Forçar cor vermelha em todos os ícones da sidebar */
+section[data-testid="stSidebar"] button[kind="secondary"] svg,
+section[data-testid="stSidebar"] button[kind="secondary"] svg path {
+    fill: #dc3545 !important;
+    color: #dc3545 !important;
+    stroke: #dc3545 !important;
+}
+
+/* Regra mais ampla para capturar o botão de colapso */
+[data-testid*="collaps"] svg,
+[class*="collaps"] svg,
+button:has(svg) svg {
+    fill: #dc3545 !important;
+    color: #dc3545 !important;
+}
+
+[data-testid*="collaps"] svg path,
+[class*="collaps"] svg path,
+button:has(svg) svg path {
+    fill: #dc3545 !important;
+    stroke: #dc3545 !important;
+}
+
+/* Tentar diferentes seletores para o botão de colapso */
+.css-1v0mbdj button svg,
+.css-1v0mbdj button svg path,
+div[data-testid="stSidebar"] div:first-child button svg,
+div[data-testid="stSidebar"] div:first-child button svg path {
+    fill: #dc3545 !important;
+    color: #dc3545 !important;
+    stroke: #dc3545 !important;
+}
+
+/* Setas de colapso específicas */
+button[aria-label*="collapse"] svg,
+button[aria-label*="Collapse"] svg,
+button[title*="collapse"] svg,
+button[title*="Collapse"] svg {
+    fill: #dc3545 !important;
+    color: #dc3545 !important;
+}
+
+button[aria-label*="collapse"] svg path,
+button[aria-label*="Collapse"] svg path,
+button[title*="collapse"] svg path,
+button[title*="Collapse"] svg path {
+    fill: #dc3545 !important;
+    stroke: #dc3545 !important;
 }
 
 section[data-testid="stSidebar"] .stButton > button {
