@@ -749,6 +749,69 @@ def show():
                     hide_index=True
                 )
 
+                # Seção para seleção e exclusão de transações
+                if len(historico) > 0:
+                    st.write("---")
+                    st.write("#### Gerenciar Transação")
+                    
+                    # Criar lista de transações para seleção
+                    transacoes_display = [
+                        f"{row['descricao']} - R$ {row['valor']:.2f} ({row['data'].strftime('%d/%m/%Y')}) - {row['status']}" 
+                        for idx, row in historico.iterrows()
+                    ]
+                    
+                    # Selectbox para escolher transação
+                    selected_idx = st.selectbox(
+                        "Selecione uma transação para gerenciar:", 
+                        range(len(transacoes_display)),
+                        format_func=lambda x: transacoes_display[x],
+                        key="select_transacao_historico"
+                    )
+                    
+                    # Botões de ação
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button("✏️ Editar", key="btn_editar_historico"):
+                            st.session_state.transacao_em_edicao = historico.iloc[selected_idx]
+                            st.rerun()
+                    
+                    with col2:
+                        if st.button("🗑️ Excluir", key="btn_excluir_historico"):
+                            transacao_selecionada = historico.iloc[selected_idx]
+                            # Usar session state para confirmar exclusão
+                            if f"confirmar_exclusao_{transacao_selecionada['id']}" not in st.session_state:
+                                st.session_state[f"confirmar_exclusao_{transacao_selecionada['id']}"] = False
+                            
+                            if not st.session_state[f"confirmar_exclusao_{transacao_selecionada['id']}"]:
+                                st.session_state[f"confirmar_exclusao_{transacao_selecionada['id']}"] = True
+                                st.rerun()
+                    
+                    # Confirmação de exclusão
+                    if selected_idx is not None:
+                        transacao_selecionada = historico.iloc[selected_idx]
+                        if st.session_state.get(f"confirmar_exclusao_{transacao_selecionada['id']}", False):
+                            st.warning(f"⚠️ Confirmar exclusão da transação: {transacao_selecionada['descricao']} - R$ {transacao_selecionada['valor']:.2f}")
+                            
+                            col_conf1, col_conf2 = st.columns(2)
+                            with col_conf1:
+                                if st.button("✅ Confirmar Exclusão", key=f"confirmar_exclusao_final_{transacao_selecionada['id']}"):
+                                    try:
+                                        if st.session_state.db.delete_transacao(transacao_selecionada['id']):
+                                            st.success("Transação excluída com sucesso!")
+                                            # Limpar estado de confirmação
+                                            del st.session_state[f"confirmar_exclusao_{transacao_selecionada['id']}"]
+                                            st.rerun()
+                                        else:
+                                            st.error("Erro ao excluir transação.")
+                                    except Exception as e:
+                                        st.error(f"Erro ao excluir transação: {str(e)}")
+                            
+                            with col_conf2:
+                                if st.button("❌ Cancelar", key=f"cancelar_exclusao_{transacao_selecionada['id']}"):
+                                    # Limpar estado de confirmação
+                                    del st.session_state[f"confirmar_exclusao_{transacao_selecionada['id']}"]
+                                    st.rerun()
+
                 # Botão para exportar para CSV (removido para evitar IDs duplicados)
                 # if st.button("📊 Exportar para CSV"):
                 #     csv = df_display.to_csv(index=False)
