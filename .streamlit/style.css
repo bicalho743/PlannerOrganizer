@@ -120,21 +120,60 @@ div[data-testid="stSidebar"] div:first-child button svg path {
     stroke: #dc3545 !important;
 }
 
-/* Setas de colapso específicas */
+/* Setas de colapso específicas - sempre visíveis */
+button[aria-label*="collapse"],
+button[aria-label*="Collapse"],
+button[title*="collapse"],
+button[title*="Collapse"],
+button[data-testid="collapsedControl"],
+button[data-testid="baseButton-minimal"] {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background-color: transparent !important;
+    border: none !important;
+    padding: 4px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+}
+
 button[aria-label*="collapse"] svg,
 button[aria-label*="Collapse"] svg,
 button[title*="collapse"] svg,
-button[title*="Collapse"] svg {
+button[title*="Collapse"] svg,
+button[data-testid="collapsedControl"] svg,
+button[data-testid="baseButton-minimal"] svg {
     fill: #dc3545 !important;
     color: #dc3545 !important;
+    width: 14px !important;
+    height: 14px !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 button[aria-label*="collapse"] svg path,
 button[aria-label*="Collapse"] svg path,
 button[title*="collapse"] svg path,
-button[title*="Collapse"] svg path {
+button[title*="Collapse"] svg path,
+button[data-testid="collapsedControl"] svg path,
+button[data-testid="baseButton-minimal"] svg path {
     fill: #dc3545 !important;
     stroke: #dc3545 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Hover effect para botões de colapso */
+button[aria-label*="collapse"]:hover,
+button[aria-label*="Collapse"]:hover,
+button[title*="collapse"]:hover,
+button[title*="Collapse"]:hover,
+button[data-testid="collapsedControl"]:hover,
+button[data-testid="baseButton-minimal"]:hover {
+    background-color: rgba(220, 53, 69, 0.1) !important;
 }
 
 section[data-testid="stSidebar"] .stButton > button {

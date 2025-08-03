@@ -1043,7 +1043,7 @@ section[data-testid="stSidebar"] > div {
 # Container dos botões com fundo escuro
 st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
 
-# JavaScript para forçar setas de colapso vermelhas
+# JavaScript para forçar setas de colapso vermelhas e sempre visíveis
 st.markdown("""
 <script>
 function makeSidebarArrowsRed() {
@@ -1061,50 +1061,105 @@ function makeSidebarArrowsRed() {
     selectors.forEach(selector => {
         const elements = document.querySelectorAll(selector);
         elements.forEach(element => {
-            // Se for um botão, procurar SVG dentro
+            // Se for um botão, aplicar estilos e procurar SVG dentro
             if (element.tagName === 'BUTTON') {
+                // Estilizar o botão para ser sempre visível
+                element.style.opacity = '1';
+                element.style.visibility = 'visible';
+                element.style.display = 'flex';
+                element.style.alignItems = 'center';
+                element.style.justifyContent = 'center';
+                element.style.backgroundColor = 'transparent';
+                element.style.border = 'none';
+                element.style.padding = '4px';
+                element.style.borderRadius = '4px';
+                element.style.cursor = 'pointer';
+                
                 const svgs = element.querySelectorAll('svg');
                 svgs.forEach(svg => {
+                    // Preservar dimensões originais
+                    svg.style.width = svg.getAttribute('width') || '14px';
+                    svg.style.height = svg.getAttribute('height') || '14px';
                     svg.style.fill = '#dc3545';
                     svg.style.color = '#dc3545';
+                    svg.style.display = 'block';
+                    svg.style.opacity = '1';
+                    svg.style.visibility = 'visible';
+                    
                     const paths = svg.querySelectorAll('path');
                     paths.forEach(path => {
                         path.style.fill = '#dc3545';
                         path.style.stroke = '#dc3545';
+                        path.style.opacity = '1';
+                        path.style.visibility = 'visible';
                     });
+                });
+                
+                // Adicionar hover effect
+                element.addEventListener('mouseenter', function() {
+                    this.style.backgroundColor = 'rgba(220, 53, 69, 0.1)';
+                });
+                element.addEventListener('mouseleave', function() {
+                    this.style.backgroundColor = 'transparent';
                 });
             }
             // Se for um SVG diretamente
             else if (element.tagName === 'svg') {
+                element.style.width = element.getAttribute('width') || '14px';
+                element.style.height = element.getAttribute('height') || '14px';
                 element.style.fill = '#dc3545';
                 element.style.color = '#dc3545';
+                element.style.display = 'block';
+                element.style.opacity = '1';
+                element.style.visibility = 'visible';
+                
                 const paths = element.querySelectorAll('path');
                 paths.forEach(path => {
                     path.style.fill = '#dc3545';
                     path.style.stroke = '#dc3545';
+                    path.style.opacity = '1';
+                    path.style.visibility = 'visible';
                 });
             }
         });
     });
     
-    // Buscar especificamente por setas pequenas (tipicamente 14x14 ou menores)
-    const allSvgs = document.querySelectorAll('svg');
-    allSvgs.forEach(svg => {
-        const rect = svg.getBoundingClientRect();
-        if (rect.width <= 20 && rect.height <= 20) {
-            // Verificar se está na área da sidebar
-            const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-            if (sidebar && sidebar.contains(svg)) {
+    // Buscar especificamente por setas pequenas na sidebar
+    const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+    if (sidebar) {
+        const allSvgs = sidebar.querySelectorAll('svg');
+        allSvgs.forEach(svg => {
+            const rect = svg.getBoundingClientRect();
+            if (rect.width <= 20 && rect.height <= 20) {
+                // Preservar dimensões e tornar visível
+                svg.style.width = svg.getAttribute('width') || '14px';
+                svg.style.height = svg.getAttribute('height') || '14px';
                 svg.style.fill = '#dc3545';
                 svg.style.color = '#dc3545';
+                svg.style.display = 'block';
+                svg.style.opacity = '1';
+                svg.style.visibility = 'visible';
+                
                 const paths = svg.querySelectorAll('path');
                 paths.forEach(path => {
                     path.style.fill = '#dc3545';
                     path.style.stroke = '#dc3545';
+                    path.style.opacity = '1';
+                    path.style.visibility = 'visible';
                 });
+                
+                // Garantir que o botão pai também seja visível
+                const parentButton = svg.closest('button');
+                if (parentButton) {
+                    parentButton.style.opacity = '1';
+                    parentButton.style.visibility = 'visible';
+                    parentButton.style.display = 'flex';
+                    parentButton.style.alignItems = 'center';
+                    parentButton.style.justifyContent = 'center';
+                }
             }
-        }
-    });
+        });
+    }
 }
 
 // Executar quando a página carregar
