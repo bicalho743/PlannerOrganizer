@@ -53,6 +53,28 @@ section[data-testid="stSidebar"] {
     min-width: 250px;
 }
 
+/* Setas de colapso da sidebar em vermelho */
+button[data-testid="collapsedControl"] svg {
+    color: #dc3545 !important;
+    fill: #dc3545 !important;
+}
+
+button[data-testid="collapsedControl"] svg path {
+    fill: #dc3545 !important;
+    stroke: #dc3545 !important;
+}
+
+/* Botão de colapso da sidebar */
+button[data-testid="collapsedControl"] {
+    background-color: transparent !important;
+    border: none !important;
+    color: #dc3545 !important;
+}
+
+button[data-testid="collapsedControl"]:hover {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
 section[data-testid="stSidebar"] .stButton > button {
     width: 100% !important;
     background: rgba(255, 255, 255, 0.1) !important;
@@ -436,13 +458,13 @@ div[data-testid="stMetric"] > div:first-child {
     }
 
     button[data-testid="collapsedControl"] {
-        background-color: #2E4A99 !important;
-        color: white !important;
+        background-color: rgba(220, 53, 69, 0.1) !important;
+        color: #dc3545 !important;
         position: fixed !important;
         top: 80px !important;
         left: 10px !important;
         z-index: 1000000 !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3) !important;
     }
 
     .block-container {
