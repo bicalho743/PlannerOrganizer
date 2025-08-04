@@ -1,17 +1,22 @@
 [server]
 headless = true
 address = "0.0.0.0"
-port = 5000
+port = $PORT
 runOnSave = false
 fileWatcherType = "none"
 maxUploadSize = 200
+enableCORS = true
+enableWebsocketCompression = true
+enableXsrfProtection = false
 
 [client]
 showSidebarNavigation = true
-showErrorDetails = false
+showErrorDetails = true
+caching = true
 
 [browser]
 gatherUsageStats = false
+serverAddress = "0.0.0.0"
 
 [theme]
 primaryColor = "#1E366F"
@@ -19,3 +24,6 @@ backgroundColor = "#FFFFFF"
 secondaryBackgroundColor = "#F0F2F6"
 textColor = "#262730"
 font = "sans serif"
+
+[global]
+developmentMode = false
