@@ -882,12 +882,15 @@ def show():
                                         ), 0) as lucro_venda
                                     FROM vendas v
                                     LEFT JOIN itens_venda iv ON v.id = iv.venda_id
-                                    LEFT JOIN produtos p ON UPPER(TRIM(p.nome)) = UPPER(TRIM(iv.descricao))
-                                    WHERE v.id = ANY(:vendas_ids)
+                                    LEFT JOIN produtos p ON iv.produto_id = p.id
+                                    WHERE v.id = ANY(:vendas_ids) AND v.usuario_id = :usuario_id
                                     GROUP BY v.id, v.data_venda
                                 """)
                                 
-                                lucros_result = st.session_state.db.session.execute(lucro_query, {"vendas_ids": vendas_ids})
+                                lucros_result = st.session_state.db.session.execute(lucro_query, {
+                                    "vendas_ids": vendas_ids,
+                                    "usuario_id": st.session_state.usuario_id
+                                })
                                 lucros_df = pd.DataFrame(lucros_result.fetchall(), columns=['venda_id', 'data_venda', 'lucro_venda'])
                                 
                                 # Converter data para datetime
