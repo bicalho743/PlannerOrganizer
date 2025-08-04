@@ -256,8 +256,13 @@ def show():
                     if produto_id:
                         if not produtos_df.empty:
                             produto = produtos_df[produtos_df['id'] == produto_id].iloc[0]
-                            max_quantidade = int(produto['estoque'])
+                            estoque_atual = int(produto['estoque'])
+                            max_quantidade = max(1, estoque_atual)  # Garantir pelo menos 1 como máximo
                             quantidade = st.number_input("Quantidade", min_value=1, max_value=max_quantidade, value=1)
+                            
+                            # Aviso se estoque baixo
+                            if estoque_atual == 0:
+                                st.warning("⚠️ Produto sem estoque")
                     else:
                         quantidade = st.number_input("Quantidade", min_value=1, value=1, disabled=True)
 
