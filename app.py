@@ -868,12 +868,13 @@ if not st.session_state.authenticated:
                                 from utils.database import Database
                                 st.session_state.db = Database(usuario_id=result['user']['localId'])
                             
-                            # Marcar como autenticado SEM st.rerun()
+                            # Marcar como autenticado
                             st.session_state.authenticated = True
                             st.session_state.current_page = "Dashboard"
                             
-                            # Mostrar mensagem de sucesso simples
+                            # Mostrar mensagem de sucesso e atualizar interface
                             st.success("✅ Login realizado com sucesso!")
+                            st.rerun()
                         else:
                             st.error(f"Erro de autenticação: {result['error']}")
                 else:
