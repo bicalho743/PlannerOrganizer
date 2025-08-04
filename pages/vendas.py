@@ -457,34 +457,10 @@ def show():
                     total_paginas = max(1, (total_vendas + vendas_por_pagina - 1) // vendas_por_pagina)
                     
                     if total_vendas > 0:
-                        # Controles de paginação
-                        col_pag1, col_pag2, col_pag3 = st.columns([1, 2, 1])
-                        
-                        with col_pag1:
-                            pagina_atual = st.number_input(
-                                "Página", 
-                                min_value=1, 
-                                max_value=total_paginas, 
-                                value=1,
-                                key="pagina_vendas"
-                            )
-                        
-                        with col_pag2:
-                            st.write(f"**Mostrando {total_vendas} vendas em {total_paginas} páginas**")
-                        
-                        with col_pag3:
-                            items_por_pagina = st.selectbox(
-                                "Itens/página",
-                                [10, 20, 50],
-                                index=0 if modo_visualizacao == "Detalhada" else 1,
-                                key="items_por_pagina_vendas"
-                            )
-                            vendas_por_pagina = items_por_pagina
-                            # Recalcular paginação se mudou itens por página
-                            total_paginas = max(1, (total_vendas + vendas_por_pagina - 1) // vendas_por_pagina)
-                            if pagina_atual > total_paginas:
-                                st.session_state.pagina_vendas = 1
-                                st.rerun()
+                        # Definir valores padrão para paginação
+                        pagina_atual = 1
+                        items_por_pagina = 10 if modo_visualizacao == "Detalhada" else 20
+                        vendas_por_pagina = items_por_pagina
                         
                         # Calcular índices da página atual
                         inicio = (pagina_atual - 1) * vendas_por_pagina
@@ -939,6 +915,35 @@ def show():
                                             st.rerun()
                             else:
                                 st.error("Não foi possível carregar lista de clientes para edição.")
+
+                    # === CONTROLES DE PAGINAÇÃO ===
+                    # Adicionar controles de paginação após os detalhes da venda
+                    if total_vendas > 0:
+                        st.divider()
+                        st.subheader("📋 Controles de Paginação")
+                        
+                        # Controles de paginação
+                        col_pag1, col_pag2, col_pag3 = st.columns([1, 2, 1])
+                        
+                        with col_pag1:
+                            pagina_atual = st.number_input(
+                                "Página", 
+                                min_value=1, 
+                                max_value=total_paginas, 
+                                value=1,
+                                key="pagina_vendas_detalhes"
+                            )
+                        
+                        with col_pag2:
+                            st.write(f"**Vendas {1}-{min(items_por_pagina, total_vendas)} de {total_vendas}**")
+                        
+                        with col_pag3:
+                            items_por_pagina = st.selectbox(
+                                "Itens/página",
+                                [10, 20, 50],
+                                index=0 if modo_visualizacao == "Detalhada" else 1,
+                                key="items_por_pagina_vendas_detalhes"
+                            )
 
             except Exception as e:
                 st.error(f"Erro ao carregar histórico de vendas: {str(e)}")
