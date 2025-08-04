@@ -48,33 +48,35 @@ header[data-testid="stHeader"] {
    SIDEBAR - DESIGN UNIFICADO
    ======================================== */
 
-/* ESCONDER SIDEBAR POR PADRÃO - SÓ MOSTRAR QUANDO AUTENTICADO */
+/* ESCONDER SIDEBAR POR PADRÃO */
 section[data-testid="stSidebar"] {
     display: none !important;
     visibility: hidden !important;
     width: 0 !important;
     min-width: 0 !important;
-    opacity: 0 !important;
-    transform: translateX(-100%) !important;
 }
 
-/* Mostrar sidebar apenas quando há classe de autenticação */
-body.authenticated section[data-testid="stSidebar"] {
+/* Mostrar sidebar apenas quando há botões de navegação */
+section[data-testid="stSidebar"]:has(.nav-buttons) {
     display: block !important;
     visibility: visible !important;
-    opacity: 1 !important;
     width: 250px !important;
     min-width: 250px !important;
     max-width: 250px !important;
     flex: 0 0 250px !important;
-    transform: translateX(0) !important;
     background: linear-gradient(180deg, #1E1F36 0%, #2E4A99 100%);
     border-right: 1px solid #4C566A;
 }
 
-/* Ajustar margem do conteúdo principal apenas quando autenticado */
-body.authenticated .main {
+/* Ajustar margem do conteúdo principal quando sidebar está visível */
+section[data-testid="stSidebar"]:has(.nav-buttons) ~ .main {
     margin-left: 250px !important;
+}
+
+/* ESCONDER SETA DE COLAPSO DA SIDEBAR */
+button[data-testid="collapsedControl"] {
+    display: none !important;
+    visibility: hidden !important;
 }
 
 /* Setas de colapso da sidebar com cor neutra e discreta */

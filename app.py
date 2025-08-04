@@ -1192,24 +1192,38 @@ function forceSidebarRender() {
     });
 }
 
-// Adicionar classe de autenticação ao body quando há navegação
-function enableAuthenticatedView() {
+// Controlar visibilidade da sidebar baseado na presença de navegação
+function controlSidebarVisibility() {
+    const sidebar = document.querySelector('section[data-testid="stSidebar"]');
     const hasNavButtons = document.querySelector('.nav-buttons');
+    const collapseButton = document.querySelector('button[data-testid="collapsedControl"]');
     
-    if (hasNavButtons) {
-        // Adicionar classe authenticated ao body
-        document.body.classList.add('authenticated');
-        console.log('👤 Usuário autenticado - sidebar habilitada');
-    } else {
-        // Remover classe authenticated do body
-        document.body.classList.remove('authenticated');
-        console.log('🚫 Usuário não autenticado - sidebar oculta');
+    if (sidebar) {
+        if (hasNavButtons) {
+            sidebar.style.display = 'block';
+            sidebar.style.visibility = 'visible';
+            sidebar.style.width = '250px';
+            sidebar.style.minWidth = '250px';
+            console.log('👤 Usuário autenticado - sidebar habilitada');
+        } else {
+            sidebar.style.display = 'none';
+            sidebar.style.visibility = 'hidden';
+            sidebar.style.width = '0';
+            sidebar.style.minWidth = '0';
+            console.log('🚫 Usuário não autenticado - sidebar oculta');
+        }
+    }
+    
+    // Sempre esconder a seta de colapso
+    if (collapseButton) {
+        collapseButton.style.display = 'none';
+        collapseButton.style.visibility = 'hidden';
     }
 }
 
-// Executar controle de autenticação
-enableAuthenticatedView();
-document.addEventListener('DOMContentLoaded', enableAuthenticatedView);
+// Executar controle de visibilidade
+controlSidebarVisibility();
+document.addEventListener('DOMContentLoaded', controlSidebarVisibility);
 
 // Executar para Render apenas se autenticado
 if (document.querySelector('.nav-buttons')) {
@@ -1220,7 +1234,7 @@ if (document.querySelector('.nav-buttons')) {
 // Executar periodicamente para verificar estado de autenticação
 let renderAttempts = 0;
 const authCheckInterval = setInterval(() => {
-    enableAuthenticatedView();
+    controlSidebarVisibility();
     
     // Se autenticado, executar correções do Render
     if (document.querySelector('.nav-buttons')) {
