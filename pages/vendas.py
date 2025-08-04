@@ -717,6 +717,8 @@ def show():
                     
                     else:
                         st.info("Nenhuma venda encontrada com os filtros aplicados.")
+            except Exception as e:
+                st.error(f"Erro ao carregar relatório completo: {str(e)}")
 
         # SUBTAB 2: ANÁLISE POR PERÍODO
         with historico_tab2:
