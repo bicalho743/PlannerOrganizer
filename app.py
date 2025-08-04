@@ -1137,41 +1137,102 @@ console.log('🔧 Aplicando correção da sidebar para Render...');
 function forceSidebarRender() {
     const sidebar = document.querySelector('[data-testid="stSidebar"]');
     const sidebarContent = document.querySelector('section[data-testid="stSidebar"] > div');
+    const mainContainer = document.querySelector('.main');
     
     if (sidebar) {
-        sidebar.style.display = 'block';
-        sidebar.style.visibility = 'visible';
-        sidebar.style.opacity = '1';
-        sidebar.style.width = '250px';
-        sidebar.style.minWidth = '250px';
-        sidebar.style.flex = '0 0 250px';
+        // Forçar sidebar visível com estilo inline
+        sidebar.style.cssText = `
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: 250px !important;
+            min-width: 250px !important;
+            max-width: 250px !important;
+            flex: 0 0 250px !important;
+            position: relative !important;
+            transform: translateX(0) !important;
+            transition: none !important;
+        `;
         console.log('✅ Sidebar forçada a aparecer no Render');
     }
     
     if (sidebarContent) {
-        sidebarContent.style.display = 'block';
-        sidebarContent.style.visibility = 'visible';
+        sidebarContent.style.cssText = `
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: 100% !important;
+        `;
         console.log('✅ Conteúdo da sidebar forçado no Render');
     }
     
-    // Verificar se está colapsada e expandir
-    const collapseButton = document.querySelector('[data-testid="collapsedControl"]');
-    if (collapseButton && sidebar && sidebar.offsetWidth < 100) {
-        setTimeout(() => collapseButton.click(), 100);
-        console.log('✅ Sidebar expandida via botão no Render');
+    // Ajustar container principal para deixar espaço para sidebar
+    if (mainContainer && sidebar) {
+        mainContainer.style.marginLeft = '250px';
     }
+    
+    // Remover ou desabilitar botões de colapso que podem esconder a sidebar
+    const collapseButtons = document.querySelectorAll([
+        '[data-testid="collapsedControl"]',
+        '[data-testid="baseButton-minimal"]',
+        'button[kind="secondary"]'
+    ].join(', '));
+    
+    collapseButtons.forEach(btn => {
+        if (btn && btn.onclick) {
+            btn.onclick = null; // Remover evento que pode colapsar
+        }
+        // Se a sidebar estiver colapsada, forçar expansão
+        if (sidebar && sidebar.offsetWidth < 100) {
+            btn.click();
+        }
+    });
 }
+
+// Adicionar CSS global para garantir sidebar sempre visível
+const sidebarCSS = document.createElement('style');
+sidebarCSS.textContent = `
+    /* FORÇA SIDEBAR VISÍVEL NO RENDER */
+    section[data-testid="stSidebar"] {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 250px !important;
+        min-width: 250px !important;
+        flex: 0 0 250px !important;
+        position: relative !important;
+        transform: translateX(0) !important;
+    }
+    
+    section[data-testid="stSidebar"] > div {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    /* Ajustar container principal */
+    .main {
+        margin-left: 250px !important;
+    }
+    
+    /* Prevenir colapso da sidebar */
+    section[data-testid="stSidebar"][aria-expanded="false"] {
+        width: 250px !important;
+        min-width: 250px !important;
+    }
+`;
+document.head.appendChild(sidebarCSS);
 
 // Executar para Render
 forceSidebarRender();
 document.addEventListener('DOMContentLoaded', forceSidebarRender);
 
-// Executar periodicamente nos primeiros 10 segundos para Render
+// Executar periodicamente nos primeiros 15 segundos para Render
 let renderAttempts = 0;
 const renderInterval = setInterval(() => {
     forceSidebarRender();
     renderAttempts++;
-    if (renderAttempts > 20) {
+    if (renderAttempts > 30) {
         clearInterval(renderInterval);
         console.log('🔚 Correção da sidebar para Render finalizada');
     }
