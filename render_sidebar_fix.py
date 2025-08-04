@@ -30,8 +30,35 @@ def fix_sidebar_config():
     # Definir variáveis de ambiente específicas para sidebar
     os.environ['STREAMLIT_CLIENT_SHOW_SIDEBAR_NAVIGATION'] = 'true'
     os.environ['STREAMLIT_CLIENT_SIDEBAR_STATE'] = 'expanded'
+    os.environ['STREAMLIT_UI_HIDE_SIDEBAR_NAV'] = 'false'
+    
+    # Adicionar JavaScript para forçar sidebar no HTML
+    js_fix = """
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Forçar sidebar visível
+        const sidebar = document.querySelector('[data-testid="stSidebar"]');
+        if (sidebar) {
+            sidebar.style.display = 'block !important';
+            sidebar.style.visibility = 'visible !important';
+            sidebar.style.opacity = '1 !important';
+        }
+        
+        // Garantir que não esteja colapsada
+        const collapseButton = document.querySelector('[data-testid="collapsedControl"]');
+        if (collapseButton && sidebar && sidebar.style.width === '0px') {
+            collapseButton.click();
+        }
+    });
+    </script>
+    """
+    
+    # Salvar o JavaScript em um arquivo para ser injetado
+    with open('.streamlit/sidebar_fix.js', 'w') as f:
+        f.write(js_fix.strip())
     
     print("✅ Variáveis de ambiente da sidebar configuradas")
+    print("✅ JavaScript de correção da sidebar criado")
     
     return True
 

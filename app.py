@@ -81,7 +81,7 @@ st.set_page_config(
     page_title="Planner Organizer | Sistema para Personal Organizers",
     page_icon="favicon.png",
     layout="wide",
-    initial_sidebar_state="auto"
+    initial_sidebar_state="expanded"
 )
 
 # Scripts de inicialização removidos para evitar loops

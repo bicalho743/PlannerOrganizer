@@ -11,8 +11,12 @@ enableXsrfProtection = false
 
 [client]
 showSidebarNavigation = true
-showErrorDetails = true
+showErrorDetails = false
 caching = true
+
+[ui]
+hideTopBar = false
+hideSidebarNav = false
 
 [browser]
 gatherUsageStats = false
