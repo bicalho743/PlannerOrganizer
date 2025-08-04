@@ -91,48 +91,102 @@ def show():
                         # Exibir tabela de produtos
                         st.dataframe(produtos_df, hide_index=True, use_container_width=True)
                         
-                        # Funcionalidade de exclusão
+                        # Funcionalidades de edição e exclusão
                         st.subheader("Gerenciar Produtos")
-                        produto_para_excluir = st.selectbox(
-                            "Selecionar produto para excluir",
+                        
+                        # Seleção de ação
+                        acao = st.radio("Ação", ["Editar", "Excluir"], horizontal=True)
+                        
+                        produto_selecionado = st.selectbox(
+                            f"Selecionar produto para {acao.lower()}",
                             options=["-- Selecione --"] + produtos_df['nome'].tolist(),
-                            key="select_produto_excluir"
+                            key="select_produto_gerenciar"
                         )
                         
-                        if produto_para_excluir != "-- Selecione --":
-                            produto_id_excluir = produtos_df[produtos_df['nome'] == produto_para_excluir]['id'].iloc[0]
+                        if produto_selecionado != "-- Selecione --":
+                            produto_id = produtos_df[produtos_df['nome'] == produto_selecionado]['id'].iloc[0]
+                            produto_dados = produtos_df[produtos_df['id'] == produto_id].iloc[0]
                             
-                            # Verificar se o produto está sendo usado em vendas
-                            vendas_com_produto = st.session_state.db.verificar_produto_em_vendas(produto_id_excluir)
-                            
-                            if vendas_com_produto > 0:
-                                st.warning(f"⚠️ Este produto está sendo usado em {vendas_com_produto} venda(s). Não é possível excluir.")
-                            else:
-                                if not st.session_state.get('exclusao_confirmada', False):
-                                    if st.button("Excluir Produto", type="secondary", key="btn_excluir_produto"):
-                                        st.session_state.exclusao_confirmada = True
-                                        st.rerun()
-                                else:
-                                    st.warning("⚠️ Confirmar exclusão do produto?")
-                                    confirm_col1, confirm_col2 = st.columns(2)
+                            if acao == "Editar":
+                                st.subheader(f"Editar: {produto_selecionado}")
+                                
+                                with st.form("form_editar_produto"):
+                                    nome_edit = st.text_input("Nome do Produto", value=produto_dados['nome'])
+                                    descricao_edit = st.text_area("Descrição", value=produto_dados.get('descricao', ''))
+                                    categoria_edit = st.selectbox(
+                                        "Categoria", 
+                                        ["Organização", "Higiene", "Beleza", "Casa", "Outros"],
+                                        index=["Organização", "Higiene", "Beleza", "Casa", "Outros"].index(produto_dados.get('categoria', 'Outros'))
+                                    )
                                     
-                                    with confirm_col1:
-                                        if st.button("✓ Confirmar", type="primary", key="btn_confirmar_exclusao"):
-                                            try:
-                                                st.session_state.db.delete_produto(produto_id_excluir)
-                                                st.success("Produto excluído com sucesso!")
+                                    col_edit1, col_edit2 = st.columns(2)
+                                    with col_edit1:
+                                        preco_custo_edit = st.number_input("Preço de Custo (R$)", value=float(produto_dados.get('preco_custo', 0)), min_value=0.0, format="%.2f")
+                                    with col_edit2:
+                                        preco_venda_edit = st.number_input("Preço de Venda (R$)", value=float(produto_dados.get('preco_venda', 0)), min_value=0.0, format="%.2f")
+                                    
+                                    estoque_edit = st.number_input("Estoque", value=int(produto_dados.get('estoque', 0)), min_value=0)
+                                    
+                                    submitted_edit = st.form_submit_button("Salvar Alterações", type="primary")
+                                    
+                                    if submitted_edit and nome_edit:
+                                        try:
+                                            # Verificar se método de edição existe
+                                            if hasattr(st.session_state.db, 'update_produto'):
+                                                st.session_state.db.update_produto(
+                                                    produto_id=produto_id,
+                                                    nome=nome_edit,
+                                                    preco_custo=preco_custo_edit,
+                                                    preco_venda=preco_venda_edit,
+                                                    descricao=descricao_edit,
+                                                    categoria=categoria_edit,
+                                                    estoque=estoque_edit
+                                                )
+                                            else:
+                                                # Fallback: deletar e recriar
+                                                st.session_state.db.delete_produto(produto_id)
+                                                st.session_state.db.add_produto(
+                                                    nome=nome_edit,
+                                                    preco_custo=preco_custo_edit,
+                                                    preco_venda=preco_venda_edit,
+                                                    descricao=descricao_edit,
+                                                    categoria=categoria_edit,
+                                                    estoque=estoque_edit
+                                                )
+                                            st.success(f"Produto '{nome_edit}' atualizado com sucesso!")
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Erro ao editar produto: {str(e)}")
+                            
+                            elif acao == "Excluir":
+                                # Verificar se o produto está sendo usado em vendas
+                                vendas_com_produto = st.session_state.db.verificar_produto_em_vendas(produto_id)
+                                
+                                if vendas_com_produto > 0:
+                                    st.warning(f"⚠️ Este produto está sendo usado em {vendas_com_produto} venda(s). Não é possível excluir.")
+                                else:
+                                    if not st.session_state.get('exclusao_confirmada', False):
+                                        if st.button("Excluir Produto", type="secondary", key="btn_excluir_produto"):
+                                            st.session_state.exclusao_confirmada = True
+                                            st.rerun()
+                                    else:
+                                        st.warning("⚠️ Confirmar exclusão do produto?")
+                                        confirm_col1, confirm_col2 = st.columns(2)
+                                        
+                                        with confirm_col1:
+                                            if st.button("✓ Confirmar", type="primary", key="btn_confirmar_exclusao"):
+                                                try:
+                                                    st.session_state.db.delete_produto(produto_id)
+                                                    st.success("Produto excluído com sucesso!")
+                                                    st.session_state.exclusao_confirmada = False
+                                                    st.rerun()
+                                                except Exception as e:
+                                                    st.error(f"Erro ao excluir produto: {str(e)}")
+
+                                        with confirm_col2:
+                                            if st.button("✗ Cancelar", use_container_width=True, key="btn_cancelar_exclusao"):
                                                 st.session_state.exclusao_confirmada = False
                                                 st.rerun()
-                                            except Exception as e:
-                                                st.error(f"Erro ao excluir produto: {str(e)}")
-                                                print(f"Erro detalhado: {e}")
-                                                import traceback
-                                                print(traceback.format_exc())
-
-                                    with confirm_col2:
-                                        if st.button("✗ Cancelar", use_container_width=True, key="btn_cancelar_exclusao"):
-                                            st.session_state.exclusao_confirmada = False
-                                            st.rerun()
                     else:
                         custom_info("Nenhum produto cadastrado.")
                         
