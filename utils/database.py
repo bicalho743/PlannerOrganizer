@@ -4419,6 +4419,17 @@ class Database:
                 'usuario_id': p.usuario_id
             } for p in produtos])
         return self._safe_query(query)
+    
+    def verificar_produto_em_vendas(self, produto_id):
+        """Verifica se um produto está sendo usado em vendas"""
+        def query():
+            from sqlalchemy import func
+            # Contar vendas que usam este produto
+            count = self.session.query(func.count(ItemVenda.id)).filter(
+                ItemVenda.produto_id == produto_id
+            ).scalar()
+            return count or 0
+        return self._safe_query(query)
         
     def update_produto(self, produto_id, nome=None, preco_custo=None, preco_venda=None, 
                       descricao=None, categoria=None, estoque=None):
