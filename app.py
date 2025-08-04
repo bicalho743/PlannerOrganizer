@@ -1130,6 +1130,53 @@ setInterval(ensureCustomArrowVisible, 1000);
 // Observar mudanças no DOM
 const observer = new MutationObserver(ensureCustomArrowVisible);
 observer.observe(document.body, { childList: true, subtree: true });
+
+// CORREÇÃO ESPECÍFICA PARA RENDER - FORÇAR SIDEBAR
+console.log('🔧 Aplicando correção da sidebar para Render...');
+
+function forceSidebarRender() {
+    const sidebar = document.querySelector('[data-testid="stSidebar"]');
+    const sidebarContent = document.querySelector('section[data-testid="stSidebar"] > div');
+    
+    if (sidebar) {
+        sidebar.style.display = 'block';
+        sidebar.style.visibility = 'visible';
+        sidebar.style.opacity = '1';
+        sidebar.style.width = '250px';
+        sidebar.style.minWidth = '250px';
+        sidebar.style.flex = '0 0 250px';
+        console.log('✅ Sidebar forçada a aparecer no Render');
+    }
+    
+    if (sidebarContent) {
+        sidebarContent.style.display = 'block';
+        sidebarContent.style.visibility = 'visible';
+        console.log('✅ Conteúdo da sidebar forçado no Render');
+    }
+    
+    // Verificar se está colapsada e expandir
+    const collapseButton = document.querySelector('[data-testid="collapsedControl"]');
+    if (collapseButton && sidebar && sidebar.offsetWidth < 100) {
+        setTimeout(() => collapseButton.click(), 100);
+        console.log('✅ Sidebar expandida via botão no Render');
+    }
+}
+
+// Executar para Render
+forceSidebarRender();
+document.addEventListener('DOMContentLoaded', forceSidebarRender);
+
+// Executar periodicamente nos primeiros 10 segundos para Render
+let renderAttempts = 0;
+const renderInterval = setInterval(() => {
+    forceSidebarRender();
+    renderAttempts++;
+    if (renderAttempts > 20) {
+        clearInterval(renderInterval);
+        console.log('🔚 Correção da sidebar para Render finalizada');
+    }
+}, 500);
+
 </script>
 """, unsafe_allow_html=True)
 

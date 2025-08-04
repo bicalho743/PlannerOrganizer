@@ -5,9 +5,7 @@ services:
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: >
-      python render_deploy_helper.py &&
-      python render_startup.py &&
-      python render_sidebar_fix.py &&
+      python force_sidebar_render.py &&
       streamlit run app.py
       --server.port=$PORT
       --server.address=0.0.0.0
@@ -17,6 +15,8 @@ services:
       --server.enableXsrfProtection=false
       --server.maxUploadSize=50
       --client.showSidebarNavigation=true
+      --client.sidebarState=expanded
+      --ui.hideSidebarNav=false
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
