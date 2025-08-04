@@ -119,10 +119,9 @@ def show():
                                     with confirm_col1:
                                         if st.button("✓ Confirmar", type="primary", key="btn_confirmar_exclusao"):
                                             try:
-                                                st.session_state.db.excluir_produto(produto_id_excluir)
+                                                st.session_state.db.delete_produto(produto_id_excluir)
                                                 st.success("Produto excluído com sucesso!")
                                                 st.session_state.exclusao_confirmada = False
-                                                time.sleep(1)
                                                 st.rerun()
                                             except Exception as e:
                                                 st.error(f"Erro ao excluir produto: {str(e)}")
@@ -1070,7 +1069,7 @@ def show():
                         
                         # Achatar nomes das colunas
                         analise_agrupada.columns = ['Total_Vendas', 'Receita_Total', 'Ticket_Medio', 'Desvio_Padrao', 'Clientes_Unicos']
-                        analise_agrupada = analise_agrupada.fillna(0).infer_objects(copy=False)
+                        analise_agrupada = analise_agrupada.fillna(0)
                         analise_agrupada.reset_index(inplace=True)
                         
                         # Adicionar dados de lucro se disponíveis
