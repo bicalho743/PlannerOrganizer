@@ -4582,13 +4582,22 @@ class Database:
     def get_itens_venda(self, venda_id):
         """Retorna os itens de uma venda específica"""
         def query():
-            itens = self.session.query(ItemVenda).filter_by(venda_id=venda_id).all()
+            # Fazer join explícito com produtos para garantir que os nomes sejam carregados
+            itens = self.session.query(ItemVenda).join(Produto, ItemVenda.produto_id == Produto.id, isouter=True).filter(ItemVenda.venda_id == venda_id).all()
             print(f"DEBUG get_itens_venda: Encontrados {len(itens)} itens para venda_id={venda_id}")
             
             dados_itens = []
             for i in itens:
-                # Usar descricao como produto_nome pois não temos produto_id linkado corretamente
-                produto_nome = i.descricao if i.descricao else 'Produto não identificado'
+                # Priorizar o nome do produto relacionado, depois a descrição
+                produto_nome = 'Produto não identificado'
+                if i.produto and hasattr(i.produto, 'nome') and i.produto.nome:
+                    produto_nome = i.produto.nome
+                elif i.descricao and i.descricao.strip():
+                    produto_nome = i.descricao
+                
+                print(f"DEBUG get_itens_venda: Item {i.id} - produto_id: {i.produto_id}, produto objeto: {i.produto}, descricao: {i.descricao}")
+                if i.produto:
+                    print(f"DEBUG get_itens_venda: Produto encontrado - ID: {i.produto.id}, Nome: {getattr(i.produto, 'nome', 'SEM_NOME')}")
                 
                 # Calcular lucro usando custo real ou estimativa de 40% de margem
                 preco_custo = 0
