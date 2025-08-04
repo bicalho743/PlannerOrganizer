@@ -69,14 +69,13 @@ def show():
                     
                     if submitted and nome_produto:
                         try:
-                            produto_id = st.session_state.db.adicionar_produto(
+                            produto_id = st.session_state.db.add_produto(
                                 nome=nome_produto,
-                                descricao=descricao,
-                                categoria=categoria,
                                 preco_custo=preco_custo,
                                 preco_venda=preco_venda,
-                                estoque=estoque,
-                                margem=margem
+                                descricao=descricao,
+                                categoria=categoria,
+                                estoque=estoque
                             )
                             st.success(f"Produto '{nome_produto}' cadastrado com sucesso!")
                             time.sleep(1)
