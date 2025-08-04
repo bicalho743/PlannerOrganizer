@@ -718,9 +718,10 @@ def show():
                     else:
                         st.info("Nenhuma venda encontrada com os filtros aplicados.")
 
-
-
-
+        # SUBTAB 2: ANÁLISE POR PERÍODO
+        with historico_tab2:
+            try:
+                vendas_df = st.session_state.db.get_vendas()
                 
                 if vendas_df.empty:
                     custom_info("Nenhuma venda registrada para análise.")
