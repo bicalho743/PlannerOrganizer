@@ -6,6 +6,7 @@ import time
 import os
 from utils.custom_components import custom_info, custom_warning
 from utils.styles_manager import StylesManager
+from utils.tooltip_helper import create_tooltip, header_with_tooltip, input_with_tooltip
 
 def show():
     # Container específico para a página de vendas - isolando CSS
@@ -52,9 +53,24 @@ def show():
                 st.subheader("Cadastrar Produto")
                 
                 with st.form("form_produto"):
-                    nome_produto = st.text_input("Nome do Produto")
-                    descricao = st.text_area("Descrição")
-                    categoria = st.selectbox("Categoria", ["Organização", "Higiene", "Beleza", "Casa", "Outros"])
+                    # Inputs com tooltips explicativos
+                    nome_produto = input_with_tooltip(
+                        "text_input", 
+                        "Nome do Produto", 
+                        "Digite o nome comercial do produto que será vendido"
+                    )
+                    
+                    col_desc, col_help_desc = st.columns([4, 1])
+                    with col_desc:
+                        descricao = st.text_area("Descrição", label_visibility="visible")
+                    with col_help_desc:
+                        st.markdown(create_tooltip("Descrição detalhada do produto para identificação"), unsafe_allow_html=True)
+                    
+                    col_cat, col_help_cat = st.columns([4, 1])
+                    with col_cat:
+                        categoria = st.selectbox("Categoria", ["Organização", "Higiene", "Beleza", "Casa", "Outros"])
+                    with col_help_cat:
+                        st.markdown(create_tooltip("Categoria para organização e filtros do produto"), unsafe_allow_html=True)
                     
                     col_preco1, col_preco2 = st.columns(2)
                     with col_preco1:
@@ -427,7 +443,16 @@ def show():
                     custom_info("Nenhuma venda registrada.")
                 else:
                     # === SEÇÃO 1: DETALHES DA VENDA (PRIMEIRO) ===
-                    st.subheader("Detalhes da Venda")
+                    # Subheader com tooltip usando coluna
+                    col_titulo, col_help = st.columns([4, 1])
+                    with col_titulo:
+                        st.subheader("Detalhes da Venda")
+                    with col_help:
+                        st.markdown("""
+                        <div style="margin-top: 8px;">
+                            <span title="Visualize informações detalhadas de cada venda, incluindo produtos vendidos, valores, cliente e data" style="cursor: help; color: #666; font-size: 18px;">ℹ️</span>
+                        </div>
+                        """, unsafe_allow_html=True)
 
                     # Selectbox simples
                     venda_options = ["-- Escolha uma venda --"] + [
