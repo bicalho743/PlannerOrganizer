@@ -746,9 +746,9 @@ button[data-testid="stButton"] p {
 
 /* Botões - (remover) - vermelho */
 .stButton > button[data-baseweb="button"]:has(p:contains("-")) {
-    background-color: #ffffff !important;
+    background-color: #dc3545 !important;
     color: white !important;
-    border: 1px solid #ffffff !important;
+    border: 1px solid #dc3545 !important;
 }
 
 .stButton > button[data-baseweb="button"]:has(p:contains("-")):hover {
