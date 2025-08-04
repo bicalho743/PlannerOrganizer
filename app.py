@@ -1192,50 +1192,24 @@ function forceSidebarRender() {
     });
 }
 
-// Adicionar CSS condicional para sidebar (só quando autenticado)
-function addConditionalSidebarCSS() {
+// Adicionar classe de autenticação ao body quando há navegação
+function enableAuthenticatedView() {
     const hasNavButtons = document.querySelector('.nav-buttons');
     
     if (hasNavButtons) {
-        const sidebarCSS = document.createElement('style');
-        sidebarCSS.id = 'authenticated-sidebar-css';
-        sidebarCSS.textContent = `
-            /* FORÇA SIDEBAR VISÍVEL APENAS QUANDO AUTENTICADO */
-            section[data-testid="stSidebar"] {
-                display: block !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                width: 250px !important;
-                min-width: 250px !important;
-                flex: 0 0 250px !important;
-                position: relative !important;
-                transform: translateX(0) !important;
-            }
-            
-            section[data-testid="stSidebar"] > div {
-                display: block !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-            }
-            
-            /* Ajustar container principal */
-            .main {
-                margin-left: 250px !important;
-            }
-        `;
-        document.head.appendChild(sidebarCSS);
+        // Adicionar classe authenticated ao body
+        document.body.classList.add('authenticated');
+        console.log('👤 Usuário autenticado - sidebar habilitada');
     } else {
-        // Remover CSS da sidebar se não estiver autenticado
-        const existingCSS = document.getElementById('authenticated-sidebar-css');
-        if (existingCSS) {
-            existingCSS.remove();
-        }
+        // Remover classe authenticated do body
+        document.body.classList.remove('authenticated');
+        console.log('🚫 Usuário não autenticado - sidebar oculta');
     }
 }
 
-// Executar CSS condicional
-addConditionalSidebarCSS();
-document.addEventListener('DOMContentLoaded', addConditionalSidebarCSS);
+// Executar controle de autenticação
+enableAuthenticatedView();
+document.addEventListener('DOMContentLoaded', enableAuthenticatedView);
 
 // Executar para Render apenas se autenticado
 if (document.querySelector('.nav-buttons')) {
@@ -1243,34 +1217,22 @@ if (document.querySelector('.nav-buttons')) {
     document.addEventListener('DOMContentLoaded', forceSidebarRender);
 }
 
-// Executar periodicamente apenas se há botões de navegação
-if (document.querySelector('.nav-buttons')) {
-    let renderAttempts = 0;
-    const renderInterval = setInterval(() => {
-        addConditionalSidebarCSS();
+// Executar periodicamente para verificar estado de autenticação
+let renderAttempts = 0;
+const authCheckInterval = setInterval(() => {
+    enableAuthenticatedView();
+    
+    // Se autenticado, executar correções do Render
+    if (document.querySelector('.nav-buttons')) {
         forceSidebarRender();
-        renderAttempts++;
-        if (renderAttempts > 30) {
-            clearInterval(renderInterval);
-            console.log('🔚 Correção da sidebar para Render finalizada');
-        }
-    }, 500);
-} else {
-    // Garantir que sidebar fique oculta quando não há navegação
-    const hideSidebarCSS = document.createElement('style');
-    hideSidebarCSS.textContent = `
-        section[data-testid="stSidebar"] {
-            display: none !important;
-            visibility: hidden !important;
-            width: 0 !important;
-            min-width: 0 !important;
-        }
-        .main {
-            margin-left: 0 !important;
-        }
-    `;
-    document.head.appendChild(hideSidebarCSS);
-}
+    }
+    
+    renderAttempts++;
+    if (renderAttempts > 30) {
+        clearInterval(authCheckInterval);
+        console.log('🔚 Monitoramento de autenticação finalizado');
+    }
+}, 500);
 
 </script>
 """, unsafe_allow_html=True)
