@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
 import numpy as np
-import time
 import os
 from utils.custom_components import custom_info, custom_warning
 from utils.styles_manager import StylesManager
@@ -367,7 +366,6 @@ def show():
                                 
                                 # Limpar produtos da venda
                                 st.session_state.produtos_venda = []
-                                time.sleep(2)
                                 st.rerun()
 
                             except Exception as e:
@@ -626,8 +624,6 @@ def show():
                                                 if f'confirmar_exclusao_venda_{venda_id}' in st.session_state:
                                                     del st.session_state[f'confirmar_exclusao_venda_{venda_id}']
                                                 
-                                                import time
-                                                time.sleep(2)
                                                 st.rerun()
                                             else:
                                                 st.error("Não foi possível excluir a venda.")
