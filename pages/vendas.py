@@ -78,7 +78,6 @@ def show():
                                 estoque=estoque
                             )
                             st.success(f"Produto '{nome_produto}' cadastrado com sucesso!")
-                            time.sleep(1)
                             st.rerun()
                         except Exception as e:
                             st.error(f"Erro ao cadastrar produto: {str(e)}")
