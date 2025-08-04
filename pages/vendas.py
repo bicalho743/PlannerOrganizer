@@ -372,6 +372,202 @@ def show():
                 if vendas_df.empty:
                     custom_info("Nenhuma venda registrada.")
                 else:
+                    # === SEÇÃO 1: DETALHES DA VENDA (PRIMEIRO) ===
+                    st.subheader("Detalhes da Venda")
+
+                    # Selectbox simples
+                    venda_options = ["-- Escolha uma venda --"] + [
+                        f"{row['id']} - {row['cliente_nome']} ({row['data_venda']})" 
+                        for _, row in vendas_df.iterrows()
+                    ]
+
+                    venda_selecionada = st.selectbox(
+                        "Escolha uma venda",
+                        options=venda_options,
+                        index=0,
+                        key="select_venda_detalhes"
+                    )
+
+                    if venda_selecionada != "-- Escolha uma venda --":
+                        # Processar venda selecionada
+                        venda_id = int(venda_selecionada.split(" - ")[0])
+                        
+                        # Buscar dados originais da venda (sem formatação)
+                        vendas_originais = st.session_state.db.get_vendas()
+                        venda_detalhes = vendas_originais[vendas_originais['id'] == venda_id].iloc[0]
+                        
+                        st.success("✅ Venda selecionada com sucesso!")
+                        
+                        # Exibir detalhes da venda
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            st.write(f"**ID da Venda:** {venda_detalhes['id']}")
+                            st.write(f"**Cliente:** {venda_detalhes['cliente_nome']}")
+                            st.write(f"**Data:** {venda_detalhes['data_venda']}")
+                            
+                        with col2:
+                            # Formatar valor corretamente para evitar precisão floating point
+                            valor_total = round(float(venda_detalhes['valor_total']), 2)
+                            valor_formatado = f"R$ {valor_total:,.2f}".replace(',', '_').replace('.', ',').replace('_', '.')
+                            st.write(f"**Valor Total:** {valor_formatado}")
+                            st.write(f"**Status:** {venda_detalhes.get('status', 'N/A')}")
+                            st.write(f"**Forma de Pagamento:** {venda_detalhes.get('forma_pagamento', 'N/A')}")
+                            if venda_detalhes.get('observacoes'):
+                                st.write(f"**Observações:** {venda_detalhes['observacoes']}")
+
+                        # Buscar itens da venda
+                        try:
+                            itens_venda = st.session_state.db.get_itens_venda(venda_id)
+                            
+                            if not itens_venda.empty:
+                                st.subheader("Itens da Venda")
+                                
+                                # Calcular total da venda dos itens
+                                itens_venda['total_item'] = itens_venda['quantidade'] * itens_venda['preco_unitario']
+                                
+                                # Formatar valores para exibição
+                                itens_display = itens_venda.copy()
+                                itens_display['preco_unitario'] = itens_display['preco_unitario'].map('R$ {:.2f}'.format)
+                                itens_display['total_item'] = itens_display['total_item'].map('R$ {:.2f}'.format)
+                                
+                                # Renomear colunas para melhor apresentação
+                                colunas_exibir = {
+                                    'produto_nome': 'Produto',
+                                    'quantidade': 'Qtd',
+                                    'preco_unitario': 'Preço Unit.',
+                                    'total_item': 'Total'
+                                }
+                                
+                                itens_display = itens_display[list(colunas_exibir.keys())].rename(columns=colunas_exibir)
+                                
+                                st.dataframe(itens_display, hide_index=True, use_container_width=True)
+                                
+                                # Mostrar total da venda
+                                total_calculado = round(itens_venda['total_item'].sum(), 2)
+                                st.write(f"**Total da Venda:** R$ {total_calculado:,.2f}".replace(',', '_').replace('.', ',').replace('_', '.'))
+                            else:
+                                st.info("Nenhum item encontrado para esta venda.")
+                        except Exception as e:
+                            st.warning(f"Não foi possível carregar itens da venda: {str(e)}")
+
+                        # Botões de ação em três colunas
+                        col1, col2, col3 = st.columns(3)
+
+                        with col1:
+                            # Botão para editar venda
+                            if st.button("EDITAR VENDA", type="primary", key=f"editar_venda_{venda_id}_detalhes", use_container_width=True):
+                                st.session_state[f'editando_venda_{venda_id}'] = True
+                                st.rerun()
+
+                        with col2:
+                            # Botão para gerar PDF
+                            if st.button("GERAR RELATÓRIO", type="primary", key=f"gerar_pdf_venda_{venda_id}_detalhes", use_container_width=True):
+                                try:
+                                    # Importar gerador de PDF de vendas
+                                    from utils.pdf_generator_venda_fixed import gerar_pdf_venda
+                                    
+                                    # Preparar dados para o PDF
+                                    venda_dados = {
+                                        'id': venda_detalhes['id'],
+                                        'status': venda_detalhes['status'],
+                                        'forma_pagamento': venda_detalhes['forma_pagamento'],
+                                        'valor_total': round(float(venda_detalhes['valor_total']), 2),
+                                        'data_venda': venda_detalhes['data_venda'],
+                                        'observacoes': venda_detalhes.get('observacoes', '')
+                                    }
+                                    
+                                    cliente_dados = {
+                                        'nome': venda_detalhes['cliente_nome']
+                                    }
+                                    
+                                    # Buscar itens da venda para o PDF
+                                    try:
+                                        itens_pdf = st.session_state.db.get_itens_venda(venda_id)
+                                    except:
+                                        itens_pdf = pd.DataFrame()  # DataFrame vazio se não encontrar itens
+                                    
+                                    # Gerar nome do arquivo único
+                                    import time
+                                    data_atual = datetime.now().strftime('%Y%m%d_%H%M%S')
+                                    timestamp = str(int(time.time()))
+                                    cliente_nome_arquivo = venda_detalhes['cliente_nome'].replace(' ', '_').replace('/', '_').lower()
+                                    filename = f"pdfs/Venda_{venda_id}_{cliente_nome_arquivo}_{data_atual}_{timestamp}.pdf"
+                                    
+                                    # Garantir que diretório existe
+                                    import os
+                                    os.makedirs("pdfs", exist_ok=True)
+                                    
+                                    # Gerar PDF
+                                    pdf_path = gerar_pdf_venda(venda_dados, cliente_dados, itens_pdf, filename)
+                                    
+                                    if pdf_path and os.path.exists(pdf_path):
+                                        # Ler arquivo para download
+                                        with open(pdf_path, "rb") as file:
+                                            pdf_bytes = file.read()
+                                        
+                                        # Botão de download
+                                        st.download_button(
+                                            label="📥 Baixar Relatório PDF",
+                                            data=pdf_bytes,
+                                            file_name=f"Relatório_Venda_{venda_id}_{cliente_nome_arquivo}.pdf",
+                                            mime="application/pdf",
+                                            key=f"download_pdf_venda_{venda_id}_detalhes"
+                                        )
+                                        
+                                        st.success("Relatório de venda gerado com sucesso!")
+                                    else:
+                                        st.error("Erro ao gerar arquivo PDF")
+                                        
+                                except Exception as e:
+                                    st.error(f"Erro ao gerar PDF: {str(e)}")
+
+                        with col3:
+                            # Botão para excluir venda
+                            if st.button("EXCLUIR VENDA", type="primary", key=f"excluir_venda_{venda_id}_detalhes", use_container_width=True):
+                                # Marcar venda para exclusão
+                                st.session_state[f'confirmar_exclusao_venda_{venda_id}'] = True
+                                st.rerun()
+
+                            # Confirmação de exclusão da venda
+                            if st.session_state.get(f'confirmar_exclusao_venda_{venda_id}', False):
+                                st.warning("⚠️ Confirmar exclusão da venda?")
+                                confirm_col1, confirm_col2 = st.columns(2)
+                                
+                                with confirm_col1:
+                                    if st.button("✓ Confirmar Exclusão", type="primary", key=f"confirmar_excluir_venda_{venda_id}_detalhes"):
+                                        try:
+                                            # Excluir venda real
+                                            resultado = st.session_state.db.excluir_venda(venda_id)
+                                            
+                                            if resultado:
+                                                st.success("Venda excluída com sucesso! Produtos devolvidos ao estoque.")
+                                                
+                                                # Limpar estado de confirmação
+                                                if f'confirmar_exclusao_venda_{venda_id}' in st.session_state:
+                                                    del st.session_state[f'confirmar_exclusao_venda_{venda_id}']
+                                                
+                                                time.sleep(2)
+                                                st.rerun()
+                                            else:
+                                                st.error("Não foi possível excluir a venda.")
+                                            
+                                        except Exception as e:
+                                            st.error(f"Erro ao excluir venda: {str(e)}")
+                                
+                                with confirm_col2:
+                                    if st.button("✗ Cancelar", key=f"cancelar_excluir_venda_{venda_id}_detalhes"):
+                                        # Limpar estado de confirmação
+                                        if f'confirmar_exclusao_venda_{venda_id}' in st.session_state:
+                                            del st.session_state[f'confirmar_exclusao_venda_{venda_id}']
+                                        st.rerun()
+                    
+                    # === DIVISOR ===
+                    st.divider()
+                    
+                    # === SEÇÃO 2: LISTA DE VENDAS (SEGUNDO) ===
+                    st.subheader("Lista de Vendas")
+                    
                     # Filtros e configurações de visualização
                     col_filtro1, col_filtro2, col_filtro3, col_config = st.columns([2, 2, 2, 1])
                     
@@ -521,8 +717,7 @@ def show():
                     else:
                         st.info("Nenhuma venda encontrada com os filtros aplicados.")
 
-                    # Detalhes da venda selecionada
-                    st.subheader("Detalhes da Venda")
+
 
                     # Selectbox simples
                     venda_options = ["-- Escolha uma venda --"] + [
