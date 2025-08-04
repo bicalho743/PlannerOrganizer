@@ -53,71 +53,79 @@ section[data-testid="stSidebar"] {
     min-width: 250px;
 }
 
-/* Setas de colapso da sidebar em vermelho - múltiplos seletores */
+/* Setas de colapso da sidebar com cor neutra e discreta */
 button[data-testid="collapsedControl"] svg,
 button[data-testid="baseButton-minimal"] svg,
 .stSidebar button svg,
 section[data-testid="stSidebar"] button svg {
-    color: #dc3545 !important;
-    fill: #dc3545 !important;
+    color: #ffffff !important;
+    fill: #ffffff !important;
+    opacity: 0.7 !important;
 }
 
 button[data-testid="collapsedControl"] svg path,
 button[data-testid="baseButton-minimal"] svg path,
 .stSidebar button svg path,
 section[data-testid="stSidebar"] button svg path {
-    fill: #dc3545 !important;
-    stroke: #dc3545 !important;
+    fill: #ffffff !important;
+    stroke: #ffffff !important;
+    opacity: 0.7 !important;
 }
 
-/* Botão de colapso da sidebar - múltiplos seletores */
+/* Botão de colapso da sidebar com hover sutil */
 button[data-testid="collapsedControl"],
 button[data-testid="baseButton-minimal"],
 .stSidebar > div > button,
 section[data-testid="stSidebar"] > div > button {
     background-color: transparent !important;
     border: none !important;
-    color: #dc3545 !important;
+    color: #ffffff !important;
+    opacity: 0.7 !important;
 }
 
 button[data-testid="collapsedControl"]:hover,
 button[data-testid="baseButton-minimal"]:hover,
 .stSidebar > div > button:hover,
 section[data-testid="stSidebar"] > div > button:hover {
-    background-color: rgba(220, 53, 69, 0.1) !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    opacity: 1 !important;
 }
 
-/* Forçar cor vermelha em todos os ícones da sidebar */
+/* Ícones da sidebar com cor neutra */
 section[data-testid="stSidebar"] button[kind="secondary"] svg,
 section[data-testid="stSidebar"] button[kind="secondary"] svg path {
-    fill: #dc3545 !important;
-    color: #dc3545 !important;
-    stroke: #dc3545 !important;
+    fill: #ffffff !important;
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+    opacity: 0.7 !important;
 }
 
-/* Regra mais ampla para capturar o botão de colapso */
+/* Regra mais ampla para capturar o botão de colapso com cor neutra */
 [data-testid*="collaps"] svg,
 [class*="collaps"] svg,
 button:has(svg) svg {
-    fill: #dc3545 !important;
-    color: #dc3545 !important;
+    fill: #ffffff !important;
+    color: #ffffff !important;
+    opacity: 0.7 !important;
 }
 
 [data-testid*="collaps"] svg path,
 [class*="collaps"] svg path,
 button:has(svg) svg path {
-    fill: #dc3545 !important;
-    stroke: #dc3545 !important;
+    fill: #ffffff !important;
+    stroke: #ffffff !important;
+    opacity: 0.7 !important;
 }
 
-/* Tentar diferentes seletores para o botão de colapso */
+/* Diferentes seletores para o botão de colapso com cor neutra */
 .css-1v0mbdj button svg,
 .css-1v0mbdj button svg path,
 div[data-testid="stSidebar"] div:first-child button svg,
 div[data-testid="stSidebar"] div:first-child button svg path {
-    fill: #dc3545 !important;
-    color: #dc3545 !important;
-    stroke: #dc3545 !important;
+    fill: #ffffff !important;
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+    opacity: 0.8 !important;
 }
 
 /* Setas de colapso específicas - sempre visíveis */
@@ -145,12 +153,12 @@ button[title*="collapse"] svg,
 button[title*="Collapse"] svg,
 button[data-testid="collapsedControl"] svg,
 button[data-testid="baseButton-minimal"] svg {
-    fill: #dc3545 !important;
-    color: #dc3545 !important;
+    fill: #ffffff !important;
+    color: #ffffff !important;
     width: 14px !important;
     height: 14px !important;
     display: block !important;
-    opacity: 1 !important;
+    opacity: 0.8 !important;
     visibility: visible !important;
 }
 
@@ -160,20 +168,29 @@ button[title*="collapse"] svg path,
 button[title*="Collapse"] svg path,
 button[data-testid="collapsedControl"] svg path,
 button[data-testid="baseButton-minimal"] svg path {
-    fill: #dc3545 !important;
-    stroke: #dc3545 !important;
-    opacity: 1 !important;
+    fill: #ffffff !important;
+    stroke: #ffffff !important;
+    opacity: 0.8 !important;
     visibility: visible !important;
 }
 
-/* Hover effect para botões de colapso */
+/* Hover effect para botões de colapso com cor neutra */
 button[aria-label*="collapse"]:hover,
 button[aria-label*="Collapse"]:hover,
 button[title*="collapse"]:hover,
 button[title*="Collapse"]:hover,
 button[data-testid="collapsedControl"]:hover,
 button[data-testid="baseButton-minimal"]:hover {
-    background-color: rgba(220, 53, 69, 0.1) !important;
+    background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+button[aria-label*="collapse"]:hover svg,
+button[aria-label*="Collapse"]:hover svg,
+button[title*="collapse"]:hover svg,
+button[title*="Collapse"]:hover svg,
+button[data-testid="collapsedControl"]:hover svg,
+button[data-testid="baseButton-minimal"]:hover svg {
+    opacity: 1 !important;
 }
 
 /* Seta customizada para colapso da sidebar */
@@ -195,7 +212,7 @@ button[data-testid="baseButton-minimal"]:hover {
 }
 
 .custom-sidebar-arrow:hover {
-    background-color: rgba(220, 53, 69, 0.1) !important;
+    background-color: rgba(255, 255, 255, 0.15) !important;
 }
 
 .custom-sidebar-arrow::before {
@@ -204,14 +221,16 @@ button[data-testid="baseButton-minimal"]:hover {
     height: 0;
     border-top: 6px solid transparent;
     border-bottom: 6px solid transparent;
-    border-right: 8px solid #dc3545;
+    border-right: 8px solid #ffffff;
     display: block;
+    opacity: 0.8;
 }
 
 /* Quando sidebar está colapsada, inverter a seta */
 .custom-sidebar-arrow.sidebar-collapsed::before {
     border-right: none;
-    border-left: 8px solid #dc3545;
+    border-left: 8px solid #ffffff;
+    opacity: 0.8;
 }
 
 /* Forçar visibilidade da seta customizada */
@@ -248,7 +267,7 @@ section[data-testid="stSidebar"] .stButton > button:hover {
 
 /* Botão de logout específico */
 section[data-testid="stSidebar"] button:has(*:contains("Sair do Sistema")) {
-    background: linear-gradient(135deg, #dc3545, #c82333) !important;
+    background: linear-gradient(135deg, #ffffff, #c82333) !important;
     border-color: #c82333 !important;
     margin-top: 16px !important;
 }
@@ -606,7 +625,7 @@ div[data-testid="stMetric"] > div:first-child {
 
     button[data-testid="collapsedControl"] {
         background-color: rgba(220, 53, 69, 0.1) !important;
-        color: #dc3545 !important;
+        color: #ffffff !important;
         position: fixed !important;
         top: 80px !important;
         left: 10px !important;
@@ -727,9 +746,9 @@ button[data-testid="stButton"] p {
 
 /* Botões - (remover) - vermelho */
 .stButton > button[data-baseweb="button"]:has(p:contains("-")) {
-    background-color: #dc3545 !important;
+    background-color: #ffffff !important;
     color: white !important;
-    border: 1px solid #dc3545 !important;
+    border: 1px solid #ffffff !important;
 }
 
 .stButton > button[data-baseweb="button"]:has(p:contains("-")):hover {
