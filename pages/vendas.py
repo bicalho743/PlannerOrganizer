@@ -431,41 +431,8 @@ def show():
     with tab_historico:
         st.header("Histórico de Vendas")
 
-        # Criar tabs dentro da terceira aba seguindo o padrão com tooltip
-        tab_labels = [
-            "3.1 - Relatório Completo ℹ️", 
-            "3.2 - Análise por Período"
-        ]
-        historico_tab1, historico_tab2 = st.tabs(tab_labels)
-        
-        # Adicionar CSS para tooltip na aba
-        st.markdown("""
-        <style>
-        .stTabs [data-baseweb="tab"]:first-child {
-            position: relative;
-        }
-        .stTabs [data-baseweb="tab"]:first-child::after {
-            content: "Visualização detalhada de cada venda individual com produtos, valores e informações completas do cliente";
-            position: absolute;
-            bottom: -50px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            white-space: nowrap;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-        .stTabs [data-baseweb="tab"]:first-child:hover::after {
-            opacity: 1;
-        }
-        </style>
-        """, unsafe_allow_html=True)
+        # Criar tabs dentro da terceira aba seguindo o padrão
+        historico_tab1, historico_tab2 = st.tabs(["3.1 - Relatório Completo", "3.2 - Análise por Período"])
 
         # SUBTAB 1: RELATÓRIO COMPLETO
         with historico_tab1:
