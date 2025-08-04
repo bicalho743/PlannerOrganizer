@@ -1192,54 +1192,85 @@ function forceSidebarRender() {
     });
 }
 
-// Adicionar CSS global para garantir sidebar sempre visível
-const sidebarCSS = document.createElement('style');
-sidebarCSS.textContent = `
-    /* FORÇA SIDEBAR VISÍVEL NO RENDER */
-    section[data-testid="stSidebar"] {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        width: 250px !important;
-        min-width: 250px !important;
-        flex: 0 0 250px !important;
-        position: relative !important;
-        transform: translateX(0) !important;
-    }
+// Adicionar CSS condicional para sidebar (só quando autenticado)
+function addConditionalSidebarCSS() {
+    const hasNavButtons = document.querySelector('.nav-buttons');
     
-    section[data-testid="stSidebar"] > div {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
+    if (hasNavButtons) {
+        const sidebarCSS = document.createElement('style');
+        sidebarCSS.id = 'authenticated-sidebar-css';
+        sidebarCSS.textContent = `
+            /* FORÇA SIDEBAR VISÍVEL APENAS QUANDO AUTENTICADO */
+            section[data-testid="stSidebar"] {
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                width: 250px !important;
+                min-width: 250px !important;
+                flex: 0 0 250px !important;
+                position: relative !important;
+                transform: translateX(0) !important;
+            }
+            
+            section[data-testid="stSidebar"] > div {
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+            
+            /* Ajustar container principal */
+            .main {
+                margin-left: 250px !important;
+            }
+        `;
+        document.head.appendChild(sidebarCSS);
+    } else {
+        // Remover CSS da sidebar se não estiver autenticado
+        const existingCSS = document.getElementById('authenticated-sidebar-css');
+        if (existingCSS) {
+            existingCSS.remove();
+        }
     }
-    
-    /* Ajustar container principal */
-    .main {
-        margin-left: 250px !important;
-    }
-    
-    /* Prevenir colapso da sidebar */
-    section[data-testid="stSidebar"][aria-expanded="false"] {
-        width: 250px !important;
-        min-width: 250px !important;
-    }
-`;
-document.head.appendChild(sidebarCSS);
+}
 
-// Executar para Render
-forceSidebarRender();
-document.addEventListener('DOMContentLoaded', forceSidebarRender);
+// Executar CSS condicional
+addConditionalSidebarCSS();
+document.addEventListener('DOMContentLoaded', addConditionalSidebarCSS);
 
-// Executar periodicamente nos primeiros 15 segundos para Render
-let renderAttempts = 0;
-const renderInterval = setInterval(() => {
+// Executar para Render apenas se autenticado
+if (document.querySelector('.nav-buttons')) {
     forceSidebarRender();
-    renderAttempts++;
-    if (renderAttempts > 30) {
-        clearInterval(renderInterval);
-        console.log('🔚 Correção da sidebar para Render finalizada');
-    }
-}, 500);
+    document.addEventListener('DOMContentLoaded', forceSidebarRender);
+}
+
+// Executar periodicamente apenas se há botões de navegação
+if (document.querySelector('.nav-buttons')) {
+    let renderAttempts = 0;
+    const renderInterval = setInterval(() => {
+        addConditionalSidebarCSS();
+        forceSidebarRender();
+        renderAttempts++;
+        if (renderAttempts > 30) {
+            clearInterval(renderInterval);
+            console.log('🔚 Correção da sidebar para Render finalizada');
+        }
+    }, 500);
+} else {
+    // Garantir que sidebar fique oculta quando não há navegação
+    const hideSidebarCSS = document.createElement('style');
+    hideSidebarCSS.textContent = `
+        section[data-testid="stSidebar"] {
+            display: none !important;
+            visibility: hidden !important;
+            width: 0 !important;
+            min-width: 0 !important;
+        }
+        .main {
+            margin-left: 0 !important;
+        }
+    `;
+    document.head.appendChild(hideSidebarCSS);
+}
 
 </script>
 """, unsafe_allow_html=True)
@@ -1267,6 +1298,9 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
     if st.session_state.get('autenticado', False) and getattr(st.session_state.get('usuario', None), 'tipo', '') == 'admin':
         MENU_PRINCIPAL["⚙️ Administração"] = "Admin"
 
+    # Adicionar classe CSS para identificar área de navegação
+    st.sidebar.markdown('<div class="nav-buttons" style="display: none;"></div>', unsafe_allow_html=True)
+    
     # Criação dos botões do menu principal com estilização personalizada
     for label, page in MENU_PRINCIPAL.items():
         # Verificar se este é o botão da página atual para destacá-lo
