@@ -1041,8 +1041,11 @@ section[data-testid="stSidebar"] > div {
 </style>
 """, unsafe_allow_html=True)
 
-# Container dos botões com fundo escuro
-st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
+# Verificar se o usuário está autenticado antes de mostrar a sidebar
+if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
+   ('user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user):
+    # Container dos botões com fundo escuro
+    st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
 
 # JavaScript para criar seta customizada de colapso
 st.markdown("""
@@ -1241,66 +1244,70 @@ const renderInterval = setInterval(() => {
 </script>
 """, unsafe_allow_html=True)
 
-# Botões de navegação
-if 'current_page' not in st.session_state:
-    st.session_state.current_page = "Dashboard"
+# Verificar se o usuário está autenticado antes de mostrar todos os elementos da sidebar
+if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
+   ('user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user):
 
-# Definição do menu principal
-MENU_PRINCIPAL = {
-    "📊 Dashboard": "Dashboard",
-    "👥 Cadastros": "Cadastros",
-    "📝 Propostas": "Propostas",
-    "🛒 Vendas": "Vendas",
-    "💰 Financeiro": "Financeiro",
-    "📈 Relatórios": "Relatórios",
-    "🧑‍💼 Meu Perfil": "Perfil"
-}
+    # Botões de navegação
+    if 'current_page' not in st.session_state:
+        st.session_state.current_page = "Dashboard"
 
-# Adicionar opção de administração se o usuário for admin
-if st.session_state.get('autenticado', False) and getattr(st.session_state.get('usuario', None), 'tipo', '') == 'admin':
-    MENU_PRINCIPAL["⚙️ Administração"] = "Admin"
+    # Definição do menu principal
+    MENU_PRINCIPAL = {
+        "📊 Dashboard": "Dashboard",
+        "👥 Cadastros": "Cadastros",
+        "📝 Propostas": "Propostas",
+        "🛒 Vendas": "Vendas",
+        "💰 Financeiro": "Financeiro",
+        "📈 Relatórios": "Relatórios",
+        "🧑‍💼 Meu Perfil": "Perfil"
+    }
 
-# Criação dos botões do menu principal com estilização personalizada
-for label, page in MENU_PRINCIPAL.items():
-    # Verificar se este é o botão da página atual para destacá-lo
-    is_active = st.session_state.current_page == page
+    # Adicionar opção de administração se o usuário for admin
+    if st.session_state.get('autenticado', False) and getattr(st.session_state.get('usuario', None), 'tipo', '') == 'admin':
+        MENU_PRINCIPAL["⚙️ Administração"] = "Admin"
 
-    # Aplicar classe personalizada para o botão ativo usando JavaScript
-    if is_active:
-        # Adicionar código JavaScript para adicionar classe ao botão após ele ser renderizado
-        button_id = f"main_menu_{page.lower()}"
-        st.sidebar.markdown(f"""
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {{
-                // Aguardar até que o elemento seja renderizado
-                setTimeout(function() {{
-                    const button = document.querySelector('[data-testid="stButton"] button[kind="secondary"][data-baseweb="button"][aria-keyshortcuts="{button_id}"]');
-                    if (button) {{
-                        button.classList.add('menu-active');
-                    }}
-                }}, 100);
-            }});
-        </script>
-        """, unsafe_allow_html=True)
+    # Criação dos botões do menu principal com estilização personalizada
+    for label, page in MENU_PRINCIPAL.items():
+        # Verificar se este é o botão da página atual para destacá-lo
+        is_active = st.session_state.current_page == page
 
-    # Renderizar o botão normalmente
-    if st.sidebar.button(label, key=f"main_menu_{page.lower()}", use_container_width=True):
-        st.session_state.current_page = page
-        # Removido st.rerun() - navegação funciona sem ele
+        # Aplicar classe personalizada para o botão ativo usando JavaScript
+        if is_active:
+            # Adicionar código JavaScript para adicionar classe ao botão após ele ser renderizado
+            button_id = f"main_menu_{page.lower()}"
+            st.sidebar.markdown(f"""
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {{
+                    // Aguardar até que o elemento seja renderizado
+                    setTimeout(function() {{
+                        const button = document.querySelector('[data-testid="stButton"] button[kind="secondary"][data-baseweb="button"][aria-keyshortcuts="{button_id}"]');
+                        if (button) {{
+                            button.classList.add('menu-active');
+                        }}
+                    }}, 100);
+                }});
+            </script>
+            """, unsafe_allow_html=True)
 
-# Adicionar botão de logout
-if st.sidebar.button("🚪 Sair do Sistema", 
-                     key="btn_logout", 
-                     type="secondary", 
-                     use_container_width=True,
-                     help="Clique para sair do sistema e retornar à tela de login"):
-    # Limpar o estado de autenticação
-    st.session_state.authenticated = False
-    # Exibir mensagem
-    st.sidebar.success("Logout realizado com sucesso!")
-    # Removido st.rerun() - logout funciona sem reload
+        # Renderizar o botão normalmente
+        if st.sidebar.button(label, key=f"main_menu_{page.lower()}", use_container_width=True):
+            st.session_state.current_page = page
+            # Removido st.rerun() - navegação funciona sem ele
 
-st.sidebar.markdown('</div>', unsafe_allow_html=True)
+    # Adicionar botão de logout
+    if st.sidebar.button("🚪 Sair do Sistema", 
+                         key="btn_logout", 
+                         type="secondary", 
+                         use_container_width=True,
+                         help="Clique para sair do sistema e retornar à tela de login"):
+        # Limpar o estado de autenticação
+        st.session_state.authenticated = False
+        # Exibir mensagem
+        st.sidebar.success("Logout realizado com sucesso!")
+        # Removido st.rerun() - logout funciona sem reload
+
+    st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
 # Garantir que usuário autenticado sempre tenha uma página definida
 if st.session_state.authenticated:
@@ -1352,11 +1359,11 @@ try:
 except Exception as e:
     st.error(f"Erro ao carregar página: {str(e)}")
 
-# Divisor antes das informações do sistema
-st.sidebar.markdown('<div style="margin: 1.5rem 0;"><hr style="border: none; height: 1px; background-color: #E0E0E0;"></div>', unsafe_allow_html=True)
+    # Divisor antes das informações do sistema
+    st.sidebar.markdown('<div style="margin: 1.5rem 0;"><hr style="border: none; height: 1px; background-color: #E0E0E0;"></div>', unsafe_allow_html=True)
 
-# CSS para melhorar a visibilidade do texto no expander do sistema
-st.sidebar.markdown("""
+    # CSS para melhorar a visibilidade do texto no expander do sistema
+    st.sidebar.markdown("""
 <style>
 /* Estilo específico para o expander de informações do sistema na sidebar */
 section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent {
@@ -1462,73 +1469,73 @@ section[data-testid="stSidebar"] div[data-testid="stExpander"] .stDownloadButton
 </style>
 """, unsafe_allow_html=True)
 
-# Usando um expander para as informações do sistema
-with st.sidebar.expander("ℹ️ Informações do Sistema"):
-    st.markdown("### Planner Organizer")
-    st.markdown("**Versão:** 1.0.4")
+    # Usando um expander para as informações do sistema
+    with st.sidebar.expander("ℹ️ Informações do Sistema"):
+        st.markdown("### Planner Organizer")
+        st.markdown("**Versão:** 1.0.4")
 
-    st.markdown("### Módulos do Sistema:")
-    st.markdown("""
-    - **Dashboard** - Métricas e alertas
-    - **Cadastros** - Clientes, parceiros e fornecedores
-    - **Propostas** - Gestão completa de propostas
-    - **Vendas** - Controle de produtos vendidos
-    - **Financeiro** - Receitas e despesas
-    - **Relatórios** - Análises e visualizações
-    """)
+        st.markdown("### Módulos do Sistema:")
+        st.markdown("""
+        - **Dashboard** - Métricas e alertas
+        - **Cadastros** - Clientes, parceiros e fornecedores
+        - **Propostas** - Gestão completa de propostas
+        - **Vendas** - Controle de produtos vendidos
+        - **Financeiro** - Receitas e despesas
+        - **Relatórios** - Análises e visualizações
+        """)
 
-    st.markdown("### Funcionalidades Principais:")
-    st.markdown("""
-    - ✅ Fluxo completo de propostas
-    - ✅ Integração entre módulos
-    - ✅ Sistema de alertas de prazos
-    - ✅ Geração de lançamentos financeiros
-    - ✅ Cálculo de comissões
-    - ✅ Importação em lote
-    - ✅ Backup e restauração
-    """)
+        st.markdown("### Funcionalidades Principais:")
+        st.markdown("""
+        - ✅ Fluxo completo de propostas
+        - ✅ Integração entre módulos
+        - ✅ Sistema de alertas de prazos
+        - ✅ Geração de lançamentos financeiros
+        - ✅ Cálculo de comissões
+        - ✅ Importação em lote
+        - ✅ Backup e restauração
+        """)
 
-    # Botão para gerar o manual do sistema
-    if st.button("📘 Gerar Manual do Sistema", use_container_width=True):
-        with st.spinner("Gerando manual em PDF..."):
-            try:
-                from pages.manual_sistema import gerar_manual_sistema
-                pdf_path = gerar_manual_sistema()
+        # Botão para gerar o manual do sistema
+        if st.button("📘 Gerar Manual do Sistema", use_container_width=True):
+            with st.spinner("Gerando manual em PDF..."):
+                try:
+                    from pages.manual_sistema import gerar_manual_sistema
+                    pdf_path = gerar_manual_sistema()
 
-                # Ler o arquivo PDF para download
-                with open(pdf_path, "rb") as pdf_file:
-                    pdf_bytes = pdf_file.read()
+                    # Ler o arquivo PDF para download
+                    with open(pdf_path, "rb") as pdf_file:
+                        pdf_bytes = pdf_file.read()
 
-                st.success("Manual gerado com sucesso!")
-                st.download_button(
-                    label="📥 Baixar Manual do Sistema",
-                    data=pdf_bytes,
-                    file_name="Manual_Planner_Organizer.pdf",
-                    mime="application/pdf",
-                    use_container_width=True
-                )
-            except Exception as e:
-                st.error(f"Erro ao gerar o manual: {str(e)}")
+                    st.success("Manual gerado com sucesso!")
+                    st.download_button(
+                        label="📥 Baixar Manual do Sistema",
+                        data=pdf_bytes,
+                        file_name="Manual_Planner_Organizer.pdf",
+                        mime="application/pdf",
+                        use_container_width=True
+                    )
+                except Exception as e:
+                    st.error(f"Erro ao gerar o manual: {str(e)}")
 
-    # Gerenciar o estado para os modais de termos e política
-    if "mostrar_termos" not in st.session_state:
-        st.session_state.mostrar_termos = False
+        # Gerenciar o estado para os modais de termos e política
+        if "mostrar_termos" not in st.session_state:
+            st.session_state.mostrar_termos = False
 
-    if "mostrar_politica" not in st.session_state:
-        st.session_state.mostrar_politica = False
+        if "mostrar_politica" not in st.session_state:
+            st.session_state.mostrar_politica = False
 
-    # Funções para gerenciar os estados dos modais
-    def exibir_termos():
-        st.session_state.mostrar_termos = True
+        # Funções para gerenciar os estados dos modais
+        def exibir_termos():
+            st.session_state.mostrar_termos = True
 
-    def ocultar_termos():
-        st.session_state.mostrar_termos = False
+        def ocultar_termos():
+            st.session_state.mostrar_termos = False
 
-    def exibir_politica():
-        st.session_state.mostrar_politica = True
+        def exibir_politica():
+            st.session_state.mostrar_politica = True
 
-    def ocultar_politica():
-        st.session_state.mostrar_politica = False
+        def ocultar_politica():
+            st.session_state.mostrar_politica = False
 
     # Sem rodapé aqui - movido para o footer global
 
