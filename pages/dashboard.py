@@ -324,9 +324,14 @@ def show():
                     numero = proposta.get('numero', 'N/A')
                     descricao = proposta.get('descricao', 'Sem descrição')
                     
+                    # Cliente nome para o título
+                    cliente_nome = proposta.get('cliente_nome', 'N/A')
+                    if pd.isna(cliente_nome) or str(cliente_nome).strip() == '':
+                        cliente_nome = 'Cliente não informado'
+                    
                     # Criar título do expander com dados seguros
                     titulo_descricao = descricao[:40] + "..." if len(str(descricao)) > 40 else str(descricao)
-                    titulo_expander = f"{status_emoji} #{numero} - {titulo_descricao}"
+                    titulo_expander = f"{status_emoji} #{numero} - {cliente_nome} - {titulo_descricao}"
                     
                     with st.expander(titulo_expander):
                         # Cliente
