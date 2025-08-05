@@ -541,6 +541,116 @@ def show():
                             if st.button("EDITAR VENDA", type="primary", key=f"editar_venda_{venda_id}_detalhes", use_container_width=True):
                                 st.session_state[f'editando_venda_{venda_id}'] = True
                                 st.rerun()
+                        
+                        # Verificar se está editando esta venda
+                        if st.session_state.get(f'editando_venda_{venda_id}', False):
+                            st.markdown("---")
+                            st.subheader("🔧 Editando Venda")
+                            
+                            # Formulário de edição
+                            with st.form(f"form_editar_venda_{venda_id}"):
+                                st.write("**Dados da Venda:**")
+                                
+                                # Editar cliente
+                                clientes_df = st.session_state.db.get_clientes()
+                                clientes_options = ["-- Selecione --"] + clientes_df['nome'].tolist()
+                                cliente_atual_idx = 0
+                                if venda_detalhes['cliente_nome'] in clientes_options:
+                                    cliente_atual_idx = clientes_options.index(venda_detalhes['cliente_nome'])
+                                
+                                novo_cliente = st.selectbox(
+                                    "Cliente",
+                                    options=clientes_options,
+                                    index=cliente_atual_idx,
+                                    key=f"edit_cliente_{venda_id}"
+                                )
+                                
+                                # Editar status
+                                status_options = ["Pendente", "Concluída", "Cancelada"]
+                                status_atual_idx = 0
+                                if venda_detalhes['status'] in status_options:
+                                    status_atual_idx = status_options.index(venda_detalhes['status'])
+                                
+                                novo_status = st.selectbox(
+                                    "Status",
+                                    options=status_options,
+                                    index=status_atual_idx,
+                                    key=f"edit_status_{venda_id}"
+                                )
+                                
+                                # Editar forma de pagamento
+                                pagamento_options = ["Dinheiro", "PIX", "Cartão Débito", "Cartão Crédito", "Transferência"]
+                                pagamento_atual_idx = 0
+                                if venda_detalhes['forma_pagamento'] in pagamento_options:
+                                    pagamento_atual_idx = pagamento_options.index(venda_detalhes['forma_pagamento'])
+                                
+                                nova_forma_pagamento = st.selectbox(
+                                    "Forma de Pagamento",
+                                    options=pagamento_options,
+                                    index=pagamento_atual_idx,
+                                    key=f"edit_pagamento_{venda_id}"
+                                )
+                                
+                                # Editar data
+                                try:
+                                    data_atual = datetime.strptime(str(venda_detalhes['data_venda']), '%Y-%m-%d').date()
+                                except:
+                                    data_atual = datetime.now().date()
+                                
+                                nova_data = st.date_input(
+                                    "Data da Venda",
+                                    value=data_atual,
+                                    key=f"edit_data_{venda_id}"
+                                )
+                                
+                                # Editar observações
+                                novas_observacoes = st.text_area(
+                                    "Observações",
+                                    value=venda_detalhes.get('observacoes', ''),
+                                    key=f"edit_obs_{venda_id}"
+                                )
+                                
+                                # Botões do formulário
+                                col_save, col_cancel = st.columns(2)
+                                
+                                with col_save:
+                                    salvar_edicao = st.form_submit_button("💾 Salvar Alterações", type="primary", use_container_width=True)
+                                
+                                with col_cancel:
+                                    cancelar_edicao = st.form_submit_button("❌ Cancelar", use_container_width=True)
+                                
+                                if salvar_edicao:
+                                    if novo_cliente != "-- Selecione --":
+                                        try:
+                                            # Buscar ID do cliente
+                                            cliente_id = clientes_df[clientes_df['nome'] == novo_cliente]['id'].iloc[0]
+                                            
+                                            # Atualizar venda
+                                            sucesso = st.session_state.db.atualizar_venda(
+                                                venda_id=venda_id,
+                                                cliente_id=cliente_id,
+                                                status=novo_status,
+                                                forma_pagamento=nova_forma_pagamento,
+                                                data_venda=nova_data,
+                                                observacoes=novas_observacoes
+                                            )
+                                            
+                                            if sucesso:
+                                                st.success("✅ Venda atualizada com sucesso!")
+                                                # Limpar estado de edição
+                                                st.session_state[f'editando_venda_{venda_id}'] = False
+                                                st.rerun()
+                                            else:
+                                                st.error("Erro ao atualizar venda")
+                                        except Exception as e:
+                                            st.error(f"Erro ao salvar alterações: {str(e)}")
+                                    else:
+                                        st.error("Por favor, selecione um cliente")
+                                
+                                if cancelar_edicao:
+                                    # Cancelar edição
+                                    st.session_state[f'editando_venda_{venda_id}'] = False
+                                    st.rerun()
 
                         with col2:
                             # Botão para gerar PDF

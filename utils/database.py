@@ -4726,7 +4726,7 @@ class Database:
         
         return self._safe_query(query)
 
-    def atualizar_venda(self, venda_id, cliente_id=None, data_venda=None, forma_pagamento=None, observacoes=None):
+    def atualizar_venda(self, venda_id, cliente_id=None, data_venda=None, forma_pagamento=None, observacoes=None, status=None):
         """Atualiza dados básicos de uma venda"""
         def query():
             venda = self.session.query(Venda).filter_by(id=venda_id).first()
@@ -4742,6 +4742,8 @@ class Database:
                 venda.forma_pagamento = forma_pagamento
             if observacoes is not None:
                 venda.observacoes = observacoes
+            if status is not None:
+                venda.status = status
             
             return True
         
