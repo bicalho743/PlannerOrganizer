@@ -37,7 +37,7 @@ def show():
                 with col2:
                     bairro = st.text_input("Bairro")
                     endereco = st.text_input("Endereço")
-                    data_aniversario = st.text_input("Data Aniversário (DD/MMM)")
+                    data_aniversario = st.text_input("Data Aniversário (YYYY/MM/DD)")
                     origem_cliente = st.text_input("Origem do Cliente")
 
                 observacoes = st.text_area("Observações")
@@ -198,7 +198,7 @@ def show():
                                         except:
                                             data_aniversario_atual = None
                                     
-                                    nova_data_aniversario = st.date_input("Data de Aniversário", value=data_aniversario_atual)
+                                    nova_data_aniversario = st.date_input("Data de Aniversário (YYYY/MM/DD)", value=data_aniversario_atual)
                                     nova_origem = st.text_input("Origem", value=cliente_data.get('origem_cliente', ''))
                                     novas_observacoes = st.text_area("Observações", value=cliente_data.get('observacoes', ''))
                                 
