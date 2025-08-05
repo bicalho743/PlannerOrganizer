@@ -128,12 +128,25 @@ def show():
                         with col2:
                             acao = st.selectbox(
                                 "Ação:",
-                                ["Excluir"]
+                                ["Editar", "Excluir"]
                             )
 
                         # Botão de confirmação
                         if st.button(f"Confirmar {acao}"):
-                            if acao == "Excluir":
+                            if acao == "Editar":
+                                # Buscar dados do cliente para edição
+                                try:
+                                    cliente_df = st.session_state.db.get_cliente_by_id(cliente_id)
+                                    if not cliente_df.empty:
+                                        cliente_data = cliente_df.iloc[0].to_dict()
+                                        st.session_state[f'editando_cliente_{cliente_id}'] = True
+                                        st.session_state[f'dados_cliente_{cliente_id}'] = cliente_data
+                                        st.rerun()
+                                    else:
+                                        st.error(f"Cliente com ID {cliente_id} não encontrado.")
+                                except Exception as e:
+                                    st.error(f"Erro ao buscar cliente: {str(e)}")
+                            elif acao == "Excluir":
                                 try:
                                     resultado = st.session_state.db.delete_cliente(cliente_id)
                                     if resultado[0]:  # Primeiro elemento é o status (True/False)
@@ -144,6 +157,89 @@ def show():
                                         st.error(resultado[1])
                                 except Exception as e:
                                     st.error(f"Erro ao excluir cliente: {str(e)}")
+                        
+                        # Formulário de edição (se cliente está sendo editado)
+                        if st.session_state.get(f'editando_cliente_{cliente_id}', False):
+                            st.markdown("---")
+                            st.subheader(f"🔧 Editando Cliente ID: {cliente_id}")
+                            
+                            cliente_data = st.session_state.get(f'dados_cliente_{cliente_id}', {})
+                            
+                            with st.form(f"form_editar_cliente_{cliente_id}"):
+                                col_edit1, col_edit2 = st.columns(2)
+                                
+                                with col_edit1:
+                                    novo_nome = st.text_input("Nome", value=cliente_data.get('nome', ''))
+                                    novo_telefone = st.text_input("Telefone", value=cliente_data.get('telefone', ''))
+                                    novo_cpf = st.text_input("CPF", value=cliente_data.get('cpf', ''))
+                                    novo_estado = st.text_input("Estado", value=cliente_data.get('estado', ''))
+                                    novo_cidade = st.text_input("Cidade", value=cliente_data.get('cidade', ''))
+                                
+                                with col_edit2:
+                                    novo_bairro = st.text_input("Bairro", value=cliente_data.get('bairro', ''))
+                                    novo_endereco = st.text_input("Endereço", value=cliente_data.get('endereco', ''))
+                                    
+                                    # Data de aniversário
+                                    data_aniversario_atual = cliente_data.get('data_aniversario')
+                                    if data_aniversario_atual:
+                                        try:
+                                            from datetime import datetime
+                                            if isinstance(data_aniversario_atual, str):
+                                                data_aniversario_atual = datetime.strptime(data_aniversario_atual, '%Y-%m-%d').date()
+                                        except:
+                                            data_aniversario_atual = None
+                                    
+                                    nova_data_aniversario = st.date_input("Data de Aniversário", value=data_aniversario_atual)
+                                    nova_origem = st.text_input("Origem", value=cliente_data.get('origem_cliente', ''))
+                                    novas_observacoes = st.text_area("Observações", value=cliente_data.get('observacoes', ''))
+                                
+                                # Botões do formulário
+                                col_save, col_cancel = st.columns(2)
+                                
+                                with col_save:
+                                    salvar_cliente = st.form_submit_button("💾 Salvar Alterações", type="primary")
+                                
+                                with col_cancel:
+                                    cancelar_edicao = st.form_submit_button("❌ Cancelar")
+                                
+                                if salvar_cliente:
+                                    try:
+                                        # Preparar dados para atualização
+                                        dados_atualizacao = {
+                                            'nome': novo_nome,
+                                            'telefone': novo_telefone,
+                                            'cpf': novo_cpf,
+                                            'estado': novo_estado,
+                                            'cidade': novo_cidade,
+                                            'bairro': novo_bairro,
+                                            'endereco': novo_endereco,
+                                            'data_aniversario': nova_data_aniversario,
+                                            'origem_cliente': nova_origem,
+                                            'observacoes': novas_observacoes
+                                        }
+                                        
+                                        # Atualizar cliente
+                                        resultado = st.session_state.db.update_cliente(cliente_id, **dados_atualizacao)
+                                        
+                                        if resultado:
+                                            st.success("✅ Cliente atualizado com sucesso!")
+                                            # Limpar estado de edição
+                                            st.session_state[f'editando_cliente_{cliente_id}'] = False
+                                            if f'dados_cliente_{cliente_id}' in st.session_state:
+                                                del st.session_state[f'dados_cliente_{cliente_id}']
+                                            st.session_state['update_clientes'] = True
+                                            st.rerun()
+                                        else:
+                                            st.error("Erro ao atualizar cliente")
+                                    except Exception as e:
+                                        st.error(f"Erro ao salvar alterações: {str(e)}")
+                                
+                                if cancelar_edicao:
+                                    # Cancelar edição
+                                    st.session_state[f'editando_cliente_{cliente_id}'] = False
+                                    if f'dados_cliente_{cliente_id}' in st.session_state:
+                                        del st.session_state[f'dados_cliente_{cliente_id}']
+                                    st.rerun()
                     
                     with tab_multi_delete:
                         st.write("Selecione os clientes que deseja excluir:")
