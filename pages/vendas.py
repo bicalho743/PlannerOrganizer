@@ -336,7 +336,7 @@ def show():
                     with col1:
                         forma_pagamento = st.selectbox(
                             "Forma de Pagamento",
-                            ["Dinheiro", "Cartão de Crédito", "Cartão de Débito", "PIX", "Transferência"]
+                            ["Cartão", "PIX"]
                         )
                     
                     with col2:
