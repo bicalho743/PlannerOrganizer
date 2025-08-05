@@ -188,17 +188,10 @@ def show():
                                     novo_bairro = st.text_input("Bairro", value=cliente_data.get('bairro', ''))
                                     novo_endereco = st.text_input("Endereço", value=cliente_data.get('endereco', ''))
                                     
-                                    # Data de aniversário
-                                    data_aniversario_atual = cliente_data.get('data_aniversario')
-                                    if data_aniversario_atual:
-                                        try:
-                                            from datetime import datetime
-                                            if isinstance(data_aniversario_atual, str):
-                                                data_aniversario_atual = datetime.strptime(data_aniversario_atual, '%Y-%m-%d').date()
-                                        except:
-                                            data_aniversario_atual = None
-                                    
-                                    nova_data_aniversario = st.date_input("Data de Aniversário (DD/MMM)", value=data_aniversario_atual, help="Ex: 13/abr, 16/jan")
+                                    # Data de aniversário - mantém formato DD/MMM
+                                    nova_data_aniversario = st.text_input("Data de Aniversário (DD/MMM)", 
+                                                                         value=cliente_data.get('data_aniversario', ''),
+                                                                         help="Ex: 13/abr, 16/jan")
                                     nova_origem = st.text_input("Origem", value=cliente_data.get('origem_cliente', ''))
                                     novas_observacoes = st.text_area("Observações", value=cliente_data.get('observacoes', ''))
                                 
