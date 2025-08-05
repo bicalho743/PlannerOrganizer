@@ -114,16 +114,23 @@ def show():
                         # Botões de ação
                         col1, col2 = st.columns(2)
                         with col1:
-                            # Calculando o valor máximo com base nos IDs reais, não no número de registros
-                            id_maximo = int(registros['id'].max()) if not registros.empty else 1
-                            
-                            cliente_id = st.number_input(
-                                "ID do cliente para ação:",
-                                min_value=1,
-                                max_value=id_maximo,
-                                step=1,
-                                help="Digite o ID do cliente que deseja excluir"
-                            )
+                            # Criar lista de opções com nomes dos clientes
+                            if not registros.empty:
+                                opcoes_clientes = []
+                                for _, cliente in registros.iterrows():
+                                    opcoes_clientes.append(f"{cliente['nome']} (ID: {cliente['id']})")
+                                
+                                cliente_selecionado = st.selectbox(
+                                    "Cliente para ação:",
+                                    opcoes_clientes,
+                                    help="Selecione o cliente que deseja editar ou excluir"
+                                )
+                                
+                                # Extrair o ID do cliente selecionado
+                                cliente_id = int(cliente_selecionado.split("ID: ")[1].split(")")[0])
+                            else:
+                                st.info("Nenhum cliente disponível.")
+                                cliente_id = None
 
                         with col2:
                             acao = st.selectbox(
@@ -132,8 +139,10 @@ def show():
                             )
 
                         # Botão de confirmação
-                        if st.button(f"Confirmar {acao}"):
-                            if acao == "Editar":
+                        if st.button(f"Confirmar {acao}", disabled=cliente_id is None):
+                            if cliente_id is None:
+                                st.error("Nenhum cliente selecionado.")
+                            elif acao == "Editar":
                                 # Buscar dados do cliente para edição
                                 try:
                                     cliente_df = st.session_state.db.get_cliente_by_id(cliente_id)
