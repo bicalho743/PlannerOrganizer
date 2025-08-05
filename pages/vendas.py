@@ -637,9 +637,9 @@ def show():
                                             # Preço padrão baseado no produto selecionado
                                             if novo_produto != "-- Selecione --":
                                                 produto_info = produtos_df[produtos_df['nome'] == novo_produto].iloc[0]
-                                                preco_padrao = float(produto_info['preco_venda'])
+                                                preco_padrao = max(0.01, float(produto_info['preco_venda']))
                                             else:
-                                                preco_padrao = 0.0
+                                                preco_padrao = 0.01
                                             
                                             novo_preco_produto = st.number_input(
                                                 "Preço Unit.",
@@ -649,11 +649,8 @@ def show():
                                                 key=f"novo_preco_{venda_id}"
                                             )
                                         
-                                        # Botões do formulário
-                                        col_add_btn, col_finish_btn = st.columns(2)
-                                        
-                                        with col_add_btn:
-                                            adicionar_produto = st.form_submit_button("➕ Adicionar Produto", type="primary")
+                                        # Botão do formulário
+                                        adicionar_produto = st.form_submit_button("➕ Adicionar Produto", type="primary", use_container_width=True)
                                         
                                         if adicionar_produto and novo_produto != "-- Selecione --":
                                             try:
@@ -671,6 +668,8 @@ def show():
                                                     st.error("Erro ao adicionar produto")
                                             except Exception as e:
                                                 st.error(f"Erro ao adicionar produto: {str(e)}")
+                                        elif adicionar_produto and novo_produto == "-- Selecione --":
+                                            st.error("Por favor, selecione um produto para adicionar")
                                     
                                     # Botão para finalizar edição
                                     col_finish = st.columns(1)[0]
