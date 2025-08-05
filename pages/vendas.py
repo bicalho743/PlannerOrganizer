@@ -480,6 +480,33 @@ def show():
                         
                         st.success("✅ Venda selecionada com sucesso!")
                         
+                        # Dropdown de ações para a venda selecionada
+                        col_id, col_acao, col_btn = st.columns([1, 2, 1])
+                        
+                        with col_id:
+                            st.write(f"**ID do cliente para ação:** {venda_id}")
+                        
+                        with col_acao:
+                            acao_venda = st.selectbox(
+                                "Ação:",
+                                ["Editar", "Excluir"],
+                                index=0,
+                                key=f"acao_venda_{venda_id}"
+                            )
+                        
+                        with col_btn:
+                            if st.button("Confirmar Editar" if acao_venda == "Editar" else "Confirmar Excluir", 
+                                       type="primary", 
+                                       key=f"confirmar_acao_venda_{venda_id}"):
+                                if acao_venda == "Editar":
+                                    # Ativar modo de edição da venda
+                                    st.session_state[f'editando_venda_{venda_id}'] = True
+                                    st.rerun()
+                                elif acao_venda == "Excluir":
+                                    # Ativar confirmação de exclusão
+                                    st.session_state[f'confirmar_exclusao_venda_{venda_id}'] = True
+                                    st.rerun()
+                        
                         # Exibir detalhes da venda
                         col1, col2 = st.columns(2)
                         
