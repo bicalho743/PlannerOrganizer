@@ -545,110 +545,155 @@ def show():
                         # Verificar se está editando esta venda
                         if st.session_state.get(f'editando_venda_{venda_id}', False):
                             st.markdown("---")
-                            st.subheader("🔧 Editando Venda")
+                            st.subheader("🔧 Editando Produtos da Venda")
                             
-                            # Formulário de edição
-                            with st.form(f"form_editar_venda_{venda_id}"):
-                                st.write("**Dados da Venda:**")
+                            # Buscar produtos atuais da venda
+                            try:
+                                itens_atuais = st.session_state.db.get_itens_venda(venda_id)
+                                produtos_df = st.session_state.db.get_produtos()
                                 
-                                # Editar cliente
-                                clientes_df = st.session_state.db.get_clientes()
-                                clientes_options = ["-- Selecione --"] + clientes_df['nome'].tolist()
-                                cliente_atual_idx = 0
-                                if venda_detalhes['cliente_nome'] in clientes_options:
-                                    cliente_atual_idx = clientes_options.index(venda_detalhes['cliente_nome'])
-                                
-                                novo_cliente = st.selectbox(
-                                    "Cliente",
-                                    options=clientes_options,
-                                    index=cliente_atual_idx,
-                                    key=f"edit_cliente_{venda_id}"
-                                )
-                                
-                                # Editar status
-                                status_options = ["Pendente", "Concluída", "Cancelada"]
-                                status_atual_idx = 0
-                                if venda_detalhes['status'] in status_options:
-                                    status_atual_idx = status_options.index(venda_detalhes['status'])
-                                
-                                novo_status = st.selectbox(
-                                    "Status",
-                                    options=status_options,
-                                    index=status_atual_idx,
-                                    key=f"edit_status_{venda_id}"
-                                )
-                                
-                                # Editar forma de pagamento
-                                pagamento_options = ["Dinheiro", "PIX", "Cartão Débito", "Cartão Crédito", "Transferência"]
-                                pagamento_atual_idx = 0
-                                if venda_detalhes['forma_pagamento'] in pagamento_options:
-                                    pagamento_atual_idx = pagamento_options.index(venda_detalhes['forma_pagamento'])
-                                
-                                nova_forma_pagamento = st.selectbox(
-                                    "Forma de Pagamento",
-                                    options=pagamento_options,
-                                    index=pagamento_atual_idx,
-                                    key=f"edit_pagamento_{venda_id}"
-                                )
-                                
-                                # Editar data
-                                try:
-                                    data_atual = datetime.strptime(str(venda_detalhes['data_venda']), '%Y-%m-%d').date()
-                                except:
-                                    data_atual = datetime.now().date()
-                                
-                                nova_data = st.date_input(
-                                    "Data da Venda",
-                                    value=data_atual,
-                                    key=f"edit_data_{venda_id}"
-                                )
-                                
-                                # Editar observações
-                                novas_observacoes = st.text_area(
-                                    "Observações",
-                                    value=venda_detalhes.get('observacoes', ''),
-                                    key=f"edit_obs_{venda_id}"
-                                )
-                                
-                                # Botões do formulário
-                                col_save, col_cancel = st.columns(2)
-                                
-                                with col_save:
-                                    salvar_edicao = st.form_submit_button("💾 Salvar Alterações", type="primary", use_container_width=True)
-                                
-                                with col_cancel:
-                                    cancelar_edicao = st.form_submit_button("❌ Cancelar", use_container_width=True)
-                                
-                                if salvar_edicao:
-                                    if novo_cliente != "-- Selecione --":
-                                        try:
-                                            # Buscar ID do cliente
-                                            cliente_id = clientes_df[clientes_df['nome'] == novo_cliente]['id'].iloc[0]
+                                if not itens_atuais.empty and not produtos_df.empty:
+                                    st.write("**Produtos Atuais da Venda:**")
+                                    
+                                    # Exibir cada item da venda para edição
+                                    for idx, item in itens_atuais.iterrows():
+                                        with st.expander(f"📦 {item['produto_nome']} - Qtd: {item['quantidade']}", expanded=True):
+                                            col_produto, col_qtd, col_preco, col_acao = st.columns([3, 1, 1, 1])
                                             
-                                            # Atualizar venda
-                                            sucesso = st.session_state.db.atualizar_venda(
-                                                venda_id=venda_id,
-                                                cliente_id=cliente_id,
-                                                status=novo_status,
-                                                forma_pagamento=nova_forma_pagamento,
-                                                data_venda=nova_data,
-                                                observacoes=novas_observacoes
+                                            with col_produto:
+                                                # Produto (apenas informativo, não editável para manter integridade)
+                                                st.write(f"**Produto:** {item['produto_nome']}")
+                                            
+                                            with col_qtd:
+                                                nova_qtd = st.number_input(
+                                                    "Quantidade",
+                                                    min_value=1,
+                                                    value=int(item['quantidade']),
+                                                    key=f"edit_qtd_{item['id']}"
+                                                )
+                                            
+                                            with col_preco:
+                                                novo_preco = st.number_input(
+                                                    "Preço Unit.",
+                                                    min_value=0.01,
+                                                    value=float(item['preco_unitario']),
+                                                    format="%.2f",
+                                                    key=f"edit_preco_{item['id']}"
+                                                )
+                                            
+                                            with col_acao:
+                                                # Botão para atualizar este item
+                                                if st.button("💾", key=f"update_item_{item['id']}", help="Salvar alterações"):
+                                                    try:
+                                                        sucesso = st.session_state.db.update_item_venda(
+                                                            item['id'], 
+                                                            nova_qtd, 
+                                                            novo_preco
+                                                        )
+                                                        if sucesso:
+                                                            st.success("Item atualizado!")
+                                                            st.rerun()
+                                                        else:
+                                                            st.error("Erro ao atualizar item")
+                                                    except Exception as e:
+                                                        st.error(f"Erro: {str(e)}")
+                                                
+                                                # Botão para remover este item
+                                                if st.button("🗑️", key=f"remove_item_{item['id']}", help="Remover item"):
+                                                    try:
+                                                        sucesso = st.session_state.db.remove_item_venda(item['id'])
+                                                        if sucesso:
+                                                            st.success("Item removido!")
+                                                            st.rerun()
+                                                        else:
+                                                            st.error("Erro ao remover item")
+                                                    except Exception as e:
+                                                        st.error(f"Erro: {str(e)}")
+                                    
+                                    st.markdown("---")
+                                    st.write("**Adicionar Novo Produto:**")
+                                    
+                                    # Formulário para adicionar novo produto
+                                    with st.form(f"form_add_produto_{venda_id}"):
+                                        col_novo_prod, col_nova_qtd, col_novo_preco = st.columns([3, 1, 1])
+                                        
+                                        with col_novo_prod:
+                                            produto_options = ["-- Selecione --"] + produtos_df['nome'].tolist()
+                                            novo_produto = st.selectbox(
+                                                "Produto",
+                                                options=produto_options,
+                                                key=f"novo_produto_{venda_id}"
                                             )
+                                        
+                                        with col_nova_qtd:
+                                            nova_quantidade = st.number_input(
+                                                "Quantidade",
+                                                min_value=1,
+                                                value=1,
+                                                key=f"nova_qtd_{venda_id}"
+                                            )
+                                        
+                                        with col_novo_preco:
+                                            # Preço padrão baseado no produto selecionado
+                                            if novo_produto != "-- Selecione --":
+                                                produto_info = produtos_df[produtos_df['nome'] == novo_produto].iloc[0]
+                                                preco_padrao = float(produto_info['preco_venda'])
+                                            else:
+                                                preco_padrao = 0.0
                                             
-                                            if sucesso:
-                                                st.success("✅ Venda atualizada com sucesso!")
-                                                # Limpar estado de edição
+                                            novo_preco_produto = st.number_input(
+                                                "Preço Unit.",
+                                                min_value=0.01,
+                                                value=preco_padrao,
+                                                format="%.2f",
+                                                key=f"novo_preco_{venda_id}"
+                                            )
+                                        
+                                        # Botões do formulário
+                                        col_add_btn, col_finish_btn = st.columns(2)
+                                        
+                                        with col_add_btn:
+                                            adicionar_produto = st.form_submit_button("➕ Adicionar Produto", type="primary")
+                                        
+                                        if adicionar_produto and novo_produto != "-- Selecione --":
+                                            try:
+                                                produto_id = produtos_df[produtos_df['nome'] == novo_produto]['id'].iloc[0]
+                                                sucesso = st.session_state.db.add_item_venda(
+                                                    venda_id, 
+                                                    produto_id, 
+                                                    nova_quantidade, 
+                                                    novo_preco_produto
+                                                )
+                                                if sucesso:
+                                                    st.success("Produto adicionado à venda!")
+                                                    st.rerun()
+                                                else:
+                                                    st.error("Erro ao adicionar produto")
+                                            except Exception as e:
+                                                st.error(f"Erro ao adicionar produto: {str(e)}")
+                                    
+                                    # Botão para finalizar edição
+                                    col_finish = st.columns(1)[0]
+                                    with col_finish:
+                                        if st.button("✅ Finalizar Edição", type="primary", use_container_width=True):
+                                            # Recalcular valor total da venda
+                                            try:
+                                                st.session_state.db.recalcular_valor_total_venda(venda_id)
+                                                st.success("Edição finalizada! Valor total recalculado.")
                                                 st.session_state[f'editando_venda_{venda_id}'] = False
                                                 st.rerun()
-                                            else:
-                                                st.error("Erro ao atualizar venda")
-                                        except Exception as e:
-                                            st.error(f"Erro ao salvar alterações: {str(e)}")
-                                    else:
-                                        st.error("Por favor, selecione um cliente")
+                                            except Exception as e:
+                                                st.error(f"Erro ao finalizar: {str(e)}")
                                 
-                                if cancelar_edicao:
-                                    # Cancelar edição
+                                else:
+                                    st.info("Nenhum produto encontrado para esta venda ou não há produtos cadastrados.")
+                                    if st.button("❌ Cancelar Edição", key=f"cancel_edit_{venda_id}"):
+                                        st.session_state[f'editando_venda_{venda_id}'] = False
+                                        st.rerun()
+                                        
+                            except Exception as e:
+                                st.error(f"Erro ao carregar produtos para edição: {str(e)}")
+                                if st.button("❌ Cancelar Edição", key=f"cancel_edit_error_{venda_id}"):
                                     st.session_state[f'editando_venda_{venda_id}'] = False
                                     st.rerun()
 

@@ -4848,6 +4848,64 @@ class Database:
             
             return True
         return self._safe_query(query)
+
+    def add_item_venda(self, venda_id, produto_id, quantidade, preco_unitario):
+        """Adiciona um novo item a uma venda existente"""
+        def query():
+            # Verificar se a venda existe
+            venda = self.session.query(Venda).filter_by(id=venda_id).first()
+            if not venda:
+                raise ValueError(f"Venda não encontrada com ID {venda_id}")
+            
+            # Verificar se o produto existe
+            produto = self.session.query(Produto).filter_by(id=produto_id).first()
+            if not produto:
+                raise ValueError(f"Produto não encontrado com ID {produto_id}")
+            
+            # Verificar se há estoque suficiente
+            if produto.estoque < quantidade:
+                raise ValueError(f"Estoque insuficiente. Disponível: {produto.estoque}")
+            
+            # Calcular subtotal
+            subtotal = quantidade * preco_unitario
+            
+            # Criar novo item da venda
+            novo_item = ItemVenda(
+                venda_id=venda_id,
+                produto_id=produto_id,
+                quantidade=quantidade,
+                preco_unitario=preco_unitario,
+                subtotal=subtotal,
+                usuario_id=venda.usuario_id
+            )
+            
+            # Adicionar ao banco
+            self.session.add(novo_item)
+            
+            # Reduzir estoque
+            produto.estoque -= quantidade
+            
+            # Atualizar valor total da venda
+            venda.valor_total = sum(item.subtotal for item in venda.itens) + subtotal
+            
+            return True
+        
+        return self._safe_query(query)
+
+    def recalcular_valor_total_venda(self, venda_id):
+        """Recalcula o valor total de uma venda baseado nos seus itens"""
+        def query():
+            venda = self.session.query(Venda).filter_by(id=venda_id).first()
+            if not venda:
+                raise ValueError(f"Venda não encontrada com ID {venda_id}")
+            
+            # Calcular total baseado nos itens atuais
+            total = sum(item.subtotal for item in venda.itens)
+            venda.valor_total = total
+            
+            return True
+        
+        return self._safe_query(query)
         
     def cancelar_venda(self, venda_id):
         """Cancela uma venda e estorna os produtos para o estoque"""
