@@ -68,6 +68,12 @@ def show():
                 @st.cache_data(ttl=60)
                 def load_clientes():
                     return st.session_state.db.get_clientes()
+                
+                # Botão para forçar atualização da lista
+                if st.button("🔄 Atualizar Lista", help="Clique para recarregar a lista de clientes"):
+                    load_clientes.clear()
+                    st.session_state['update_clientes'] = True
+                    st.rerun()
 
                 if 'update_clientes' in st.session_state and st.session_state['update_clientes']:
                     st.session_state['clientes'] = load_clientes()
