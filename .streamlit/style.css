@@ -48,16 +48,29 @@ header[data-testid="stHeader"] {
    SIDEBAR - DESIGN UNIFICADO
    ======================================== */
 
-/* SIDEBAR SEMPRE VISÍVEL QUANDO AUTENTICADO */
+/* SIDEBAR - Estado padrão (será controlado pelo JavaScript baseado na autenticação) */
 section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #1E1F36 0%, #2E4A99 100%);
+    border-right: 1px solid #4C566A;
+}
+
+/* SIDEBAR VISÍVEL QUANDO AUTENTICADO (aplicado via JavaScript) */
+section[data-testid="stSidebar"].authenticated {
     display: block !important;
     visibility: visible !important;
     width: 250px !important;
     min-width: 250px !important;
     max-width: 250px !important;
     flex: 0 0 250px !important;
-    background: linear-gradient(180deg, #1E1F36 0%, #2E4A99 100%);
-    border-right: 1px solid #4C566A;
+}
+
+/* SIDEBAR OCULTA ANTES DO LOGIN (aplicado via JavaScript) */
+section[data-testid="stSidebar"].not-authenticated {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
 }
 
 /* Ajustar margem do conteúdo principal */
