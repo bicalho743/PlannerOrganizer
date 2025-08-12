@@ -353,14 +353,14 @@ if not st.session_state.authenticated:
         border: none !important;
         text-shadow: none !important;
     }
-    
+
     /* Remover TODO espaçamento do HTML e body */
     html, body {
         margin: 0 !important;
         padding: 0 !important;
         box-sizing: border-box !important;
     }
-    
+
     /* Ocultar cabeçalho do Streamlit completamente */
     header[data-testid="stHeader"] {
         display: none !important;
@@ -368,55 +368,55 @@ if not st.session_state.authenticated:
         margin: 0 !important;
         padding: 0 !important;
     }
-    
+
     /* Ocultar toolbar */
     .stApp > header {
         display: none !important;
     }
-    
+
     /* Remover TODO espaçamento superior da página */
     .stApp {
         margin: 0 !important;
         padding: 0 !important;
     }
-    
+
     .main {
         padding-top: 0 !important;
         margin-top: 0 !important;
         padding: 0 !important;
     }
-    
+
     .block-container {
         padding-top: 0 !important;
         margin-top: 0 !important;
         padding-bottom: 0 !important;
         min-height: auto !important;
     }
-    
+
     .main .block-container {
         padding-top: 0 !important;
         margin-top: 0 !important;
         padding: 1rem !important;
     }
-    
+
     /* Remover espaçamento de containers principais */
     .main-container, .wrapper, .page {
         margin-top: 0 !important;
         padding-top: 0 !important;
     }
-    
+
     /* Zerar possível espaçamento do Firebase UI */
     #firebaseui-auth-container {
         margin-top: 0 !important;
         padding-top: 0 !important;
     }
-    
+
     /* Ajustar primeiro elemento visível */
     .element-container:first-child {
         margin-top: 0 !important;
         padding-top: 0 !important;
     }
-    
+
     /* Forçar botões mais visíveis */
     .stButton > button {
         background-color: #6c757d !important;
@@ -429,13 +429,13 @@ if not st.session_state.authenticated:
         width: 100% !important;
         transition: all 0.3s ease !important;
     }
-    
+
     .stButton > button:hover {
         background-color: #5a6268 !important;
         transform: translateY(-2px) !important;
         box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
     }
-    
+
     .login-header {
         font-size: 3rem;
         font-weight: 700;
@@ -444,21 +444,21 @@ if not st.session_state.authenticated:
         margin-top: 0 !important;
         text-align: left;
     }
-    
+
     .login-subtitle {
         font-size: 1.2rem;
         color: #7f8c8d;
         margin-bottom: 2rem;
         text-align: left;
     }
-    
+
     .stats-container {
         display: flex;
         gap: 2rem;
         margin: 2rem 0;
         justify-content: flex-start;
     }
-    
+
     .stat-box {
         background: white;
         border: 2px solid #e0e0e0;
@@ -471,41 +471,41 @@ if not st.session_state.authenticated:
         cursor: pointer;
         border-left: 4px solid #e0e0e0;
     }
-    
+
     .stat-box:hover {
         transform: translateY(-3px);
         box-shadow: 0 8px 25px rgba(0,0,0,0.12);
         border-color: #3a75c4;
         border-left-color: #3a75c4;
     }
-    
+
     .stat-number {
         font-size: 2.5rem;
         font-weight: 700;
         color: #2c3e50;
         margin-bottom: 0.5rem;
     }
-    
+
     .stat-label {
         font-size: 0.9rem;
         color: #7f8c8d;
         font-weight: 500;
     }
-    
+
     .section-title {
         font-size: 1.8rem;
         font-weight: 600;
         color: #2c3e50;
         margin: 3rem 0 2rem 0;
     }
-    
+
     .feature-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 2rem;
         margin-bottom: 2rem;
     }
-    
+
     .feature-box {
         background: white;
         border: 2px solid #e0e0e0;
@@ -516,39 +516,39 @@ if not st.session_state.authenticated:
         cursor: pointer;
         border-left: 4px solid #e0e0e0;
     }
-    
+
     .feature-box:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 30px rgba(0,0,0,0.12);
         border-color: #3a75c4;
         border-left-color: #3a75c4;
     }
-    
+
     .feature-icon {
         font-size: 1.5rem;
         margin-bottom: 1rem;
     }
-    
+
     .feature-title {
         font-size: 1.1rem;
         font-weight: 600;
         color: #2c3e50;
         margin-bottom: 1rem;
     }
-    
+
     .feature-desc {
         color: #7f8c8d;
         font-size: 0.95rem;
         line-height: 1.5;
     }
-    
+
     .testimonial-container {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 2rem;
         margin: 3rem 0;
     }
-    
+
     .testimonial-box {
         background: #f8f9fa;
         border: 2px solid #e0e0e0;
@@ -558,7 +558,7 @@ if not st.session_state.authenticated:
         position: relative;
         border-left: 4px solid #e0e0e0;
     }
-    
+
     .testimonial-text {
         color: #555;
         font-style: italic;
@@ -566,13 +566,13 @@ if not st.session_state.authenticated:
         margin-bottom: 1rem;
         font-size: 0.95rem;
     }
-    
+
     .testimonial-author {
         color: #3a75c4;
         font-weight: 600;
         font-size: 0.9rem;
     }
-    
+
     .testimonial-quote {
         position: absolute;
         top: -10px;
@@ -777,7 +777,7 @@ if not st.session_state.authenticated:
                 taxa de conversão e rendimentos. O sistema facilita a organização de todo o fluxo de trabalho.
                 """)
 
-        # Adicionando seção de depoimentos/confiança
+        # Adicionar seção de depoimentos/confiança
         st.markdown("""
         ## CONFIADO POR PERSONAL ORGANIZERS DE TODO O BRASIL
         """)
@@ -869,11 +869,11 @@ if not st.session_state.authenticated:
                                 st.session_state.usuario_id = result['user']['localId']
                                 from utils.database import Database
                                 st.session_state.db = Database(usuario_id=result['user']['localId'])
-                            
+
                             # Marcar como autenticado
                             st.session_state.authenticated = True
                             st.session_state.current_page = "Dashboard"
-                            
+
                             # Mostrar mensagem de sucesso e atualizar interface
                             st.success("✅ Login realizado com sucesso!")
                             st.rerun()
@@ -1059,31 +1059,31 @@ function createCustomSidebarArrow() {
     if (customArrowButton) {
         customArrowButton.remove();
     }
-    
+
     // Criar nova seta customizada
     customArrowButton = document.createElement('button');
     customArrowButton.className = 'custom-sidebar-arrow';
     customArrowButton.title = 'Recolher/Expandir Barra Lateral';
-    
+
     // Verificar se a sidebar está visível para definir a direção da seta
     const sidebar = document.querySelector('section[data-testid="stSidebar"]');
     if (sidebar) {
         const isCollapsed = sidebar.style.transform === 'translateX(-100%)' || 
                            sidebar.offsetWidth < 50 ||
                            getComputedStyle(sidebar).display === 'none';
-        
+
         if (isCollapsed) {
             customArrowButton.classList.add('sidebar-collapsed');
         }
     }
-    
+
     // Adicionar funcionalidade de clique
     customArrowButton.addEventListener('click', function() {
         // Tentar encontrar o botão original do Streamlit
         const originalButton = document.querySelector('button[data-testid="collapsedControl"]') ||
                               document.querySelector('button[data-testid="baseButton-minimal"]') ||
                               document.querySelector('section[data-testid="stSidebar"] button[kind="secondary"]');
-        
+
         if (originalButton) {
             originalButton.click();
         } else {
@@ -1091,13 +1091,13 @@ function createCustomSidebarArrow() {
             const sidebarToggleEvent = new CustomEvent('sidebarToggle');
             document.dispatchEvent(sidebarToggleEvent);
         }
-        
+
         // Alternar classe da seta
         setTimeout(() => {
             this.classList.toggle('sidebar-collapsed');
         }, 100);
     });
-    
+
     // Adicionar ao DOM
     document.body.appendChild(customArrowButton);
 }
@@ -1107,14 +1107,14 @@ function ensureCustomArrowVisible() {
     if (!customArrowButton || !document.body.contains(customArrowButton)) {
         createCustomSidebarArrow();
     }
-    
+
     // Tentar modificar setas originais para serem invisíveis
     const originalButtons = document.querySelectorAll([
         'button[data-testid="collapsedControl"]',
         'button[data-testid="baseButton-minimal"]',
         'section[data-testid="stSidebar"] button[kind="secondary"]'
     ].join(','));
-    
+
     originalButtons.forEach(btn => {
         if (btn && btn !== customArrowButton) {
             btn.style.opacity = '0';
@@ -1124,26 +1124,12 @@ function ensureCustomArrowVisible() {
     });
 }
 
-// Executar quando a página carregar
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(createCustomSidebarArrow, 500);
-});
-
-// Executar periodicamente para garantir que a seta esteja sempre visível
-setInterval(ensureCustomArrowVisible, 1000);
-
-// Observar mudanças no DOM
-const observer = new MutationObserver(ensureCustomArrowVisible);
-observer.observe(document.body, { childList: true, subtree: true });
-
-// CORREÇÃO ESPECÍFICA PARA RENDER - FORÇAR SIDEBAR
-console.log('🔧 Aplicando correção da sidebar para Render...');
-
-function forceSidebarRender() {
+// Executar correção da sidebar imediatamente
+function forceSidebarVisible() {
     const sidebar = document.querySelector('[data-testid="stSidebar"]');
     const sidebarContent = document.querySelector('section[data-testid="stSidebar"] > div');
     const mainContainer = document.querySelector('.main');
-    
+
     if (sidebar) {
         // Forçar sidebar visível com estilo inline
         sidebar.style.cssText = `
@@ -1158,9 +1144,9 @@ function forceSidebarRender() {
             transform: translateX(0) !important;
             transition: none !important;
         `;
-        console.log('✅ Sidebar forçada a aparecer no Render');
+        // console.log('✅ Sidebar forçada a aparecer');
     }
-    
+
     if (sidebarContent) {
         sidebarContent.style.cssText = `
             display: block !important;
@@ -1168,21 +1154,21 @@ function forceSidebarRender() {
             opacity: 1 !important;
             width: 100% !important;
         `;
-        console.log('✅ Conteúdo da sidebar forçado no Render');
+        // console.log('✅ Conteúdo da sidebar forçado');
     }
-    
+
     // Ajustar container principal para deixar espaço para sidebar
     if (mainContainer && sidebar) {
         mainContainer.style.marginLeft = '250px';
     }
-    
+
     // Remover ou desabilitar botões de colapso que podem esconder a sidebar
     const collapseButtons = document.querySelectorAll([
         '[data-testid="collapsedControl"]',
         '[data-testid="baseButton-minimal"]',
         'button[kind="secondary"]'
     ].join(', '));
-    
+
     collapseButtons.forEach(btn => {
         if (btn && btn.onclick) {
             btn.onclick = null; // Remover evento que pode colapsar
@@ -1194,28 +1180,51 @@ function forceSidebarRender() {
     });
 }
 
+// Executar quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    forceSidebarVisible();
+    setTimeout(createCustomSidebarArrow, 500);
+    setTimeout(forceSidebarVisible, 1000);
+});
+
+// Executar periodicamente para garantir que a sidebar esteja sempre visível
+setInterval(function() {
+    forceSidebarVisible();
+    ensureCustomArrowVisible();
+}, 2000);
+
+// Observar mudanças no DOM
+const observer = new MutationObserver(function(mutations) {
+    forceSidebarVisible();
+    ensureCustomArrowVisible();
+});
+observer.observe(document.body, { childList: true, subtree: true });
+
+// CORREÇÃO ESPECÍFICA PARA RENDER - FORÇAR SIDEBAR
+// console.log('🔧 Aplicando correção da sidebar para Render...');
+
 // Controlar visibilidade da sidebar baseado na presença de navegação
 function controlSidebarVisibility() {
     const sidebar = document.querySelector('section[data-testid="stSidebar"]');
     const hasNavButtons = document.querySelector('.nav-buttons');
     const collapseButton = document.querySelector('button[data-testid="collapsedControl"]');
-    
+
     if (sidebar) {
         if (hasNavButtons) {
             sidebar.style.display = 'block';
             sidebar.style.visibility = 'visible';
             sidebar.style.width = '250px';
             sidebar.style.minWidth = '250px';
-            console.log('👤 Usuário autenticado - sidebar habilitada');
+            // console.log('👤 Usuário autenticado - sidebar habilitada');
         } else {
             sidebar.style.display = 'none';
             sidebar.style.visibility = 'hidden';
             sidebar.style.width = '0';
             sidebar.style.minWidth = '0';
-            console.log('🚫 Usuário não autenticado - sidebar oculta');
+            // console.log('🚫 Usuário não autenticado - sidebar oculta');
         }
     }
-    
+
     // Sempre esconder a seta de colapso
     if (collapseButton) {
         collapseButton.style.display = 'none';
@@ -1229,24 +1238,24 @@ document.addEventListener('DOMContentLoaded', controlSidebarVisibility);
 
 // Executar para Render apenas se autenticado
 if (document.querySelector('.nav-buttons')) {
-    forceSidebarRender();
-    document.addEventListener('DOMContentLoaded', forceSidebarRender);
+    forceSidebarVisible();
+    document.addEventListener('DOMContentLoaded', forceSidebarVisible);
 }
 
 // Executar periodicamente para verificar estado de autenticação
 let renderAttempts = 0;
 const authCheckInterval = setInterval(() => {
     controlSidebarVisibility();
-    
+
     // Se autenticado, executar correções do Render
     if (document.querySelector('.nav-buttons')) {
-        forceSidebarRender();
+        forceSidebarVisible();
     }
-    
+
     renderAttempts++;
     if (renderAttempts > 30) {
         clearInterval(authCheckInterval);
-        console.log('🔚 Monitoramento de autenticação finalizado');
+        // console.log('🔚 Monitoramento de autenticação finalizado');
     }
 }, 500);
 
@@ -1278,7 +1287,7 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
 
     # Adicionar classe CSS para identificar área de navegação
     st.sidebar.markdown('<div class="nav-buttons" style="display: none;"></div>', unsafe_allow_html=True)
-    
+
     # Criação dos botões do menu principal com estilização personalizada
     for label, page in MENU_PRINCIPAL.items():
         # Verificar se este é o botão da página atual para destacá-lo
