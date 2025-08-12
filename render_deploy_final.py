@@ -59,12 +59,36 @@ dataFrameSerialization = "legacy"
         'STREAMLIT_CLIENT_SIDEBAR_STATE': 'expanded',
         'STREAMLIT_UI_HIDE_SIDEBAR_NAV': 'false',
         'STREAMLIT_SERVER_HEADLESS': 'true',
-        'STREAMLIT_SERVER_ENABLE_CORS': 'true'
+        'STREAMLIT_SERVER_ENABLE_CORS': 'true',
+        'STREAMLIT_BROWSER_GATHER_USAGE_STATS': 'false'
     }
     
     for key, value in env_vars.items():
         os.environ[key] = value
         print(f"✅ {key} = {value}")
+    
+    # 2.1 Criar arquivo de configuração adicional para Render
+    render_config = """[server]
+headless = true
+port = $PORT
+address = "0.0.0.0"
+enableCORS = true
+
+[client]
+showSidebarNavigation = true
+sidebarState = "expanded"
+
+[ui]
+hideSidebarNav = false
+hideTopBar = false
+"""
+    
+    # Sobrescrever TODOS os arquivos de config
+    config_files = [".streamlit/config.toml", ".streamlit/config_render.toml"]
+    for config_file in config_files:
+        with open(config_file, "w") as f:
+            f.write(render_config)
+        print(f"✅ {config_file} atualizado para Render")
     
     # 3. Criar arquivo HTML de inicialização para injetar CSS
     init_html = '''

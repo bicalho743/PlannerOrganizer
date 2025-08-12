@@ -5,7 +5,11 @@ services:
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: >
+      python render_sidebar_force.py &&
       python render_deploy_final.py &&
+      STREAMLIT_CLIENT_SHOW_SIDEBAR_NAVIGATION=true 
+      STREAMLIT_CLIENT_SIDEBAR_STATE=expanded 
+      STREAMLIT_UI_HIDE_SIDEBAR_NAV=false 
       streamlit run app.py
       --server.port=$PORT
       --server.address=0.0.0.0
@@ -34,6 +38,8 @@ services:
         value: expanded
       - key: STREAMLIT_UI_HIDE_SIDEBAR_NAV
         value: false
+      - key: RENDER
+        value: true
     autoDeploy: true
     healthCheckPath: /_stcore/health
     headers:
