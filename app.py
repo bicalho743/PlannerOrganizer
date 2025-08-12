@@ -1043,53 +1043,7 @@ section[data-testid="stSidebar"] > div {
 </style>
 """, unsafe_allow_html=True)
 
-# JavaScript para controlar sidebar baseado na autenticação
-# Controlar visibilidade da sidebar baseado na presença de navegação
-def control_sidebar_visibility():
-    """Controla a visibilidade da sidebar com base no estado de autenticação do usuário."""
-    
-    sidebar = st.get_component("section[data-testid='stSidebar']")
-    has_nav_buttons = st.get_component(".nav-buttons")
-    collapse_button = st.get_component("button[data-testid='collapsedControl']")
-
-    if sidebar:
-        if has_nav_buttons:
-            sidebar.style.display = 'block'
-            sidebar.style.visibility = 'visible'
-            sidebar.style.width = '250px'
-            sidebar.style.minWidth = '250px'
-            logger.info('Usuário autenticado - sidebar habilitada')
-        else:
-            sidebar.style.display = 'none'
-            sidebar.style.visibility = 'hidden'
-            sidebar.style.width = '0'
-            sidebar.style.minWidth = '0'
-            logger.info('Usuário não autenticado - sidebar oculta')
-
-    # Sempre esconder a seta de colapso original
-    if collapse_button:
-        collapse_button.style.display = 'none'
-        collapse_button.style.visibility = 'hidden'
-
-# Executar controle de visibilidade
-control_sidebar_visibility()
-document.addEventListener('DOMContentLoaded', control_sidebar_visibility)
-
-# Executar periodicamente para verificar estado de autenticação e garantir a visibilidade da sidebar
-auth_check_interval = None
-def start_auth_check_interval():
-    global auth_check_interval
-    if auth_check_interval is None:
-        auth_check_interval = setInterval(control_sidebar_visibility, 500)
-
-def stop_auth_check_interval():
-    global auth_check_interval
-    if auth_check_interval is not None:
-        clearInterval(auth_check_interval)
-        auth_check_interval = None
-
-# Iniciar o monitoramento de autenticação quando o script for carregado
-start_auth_check_interval()
+# Controle da sidebar agora é feito apenas via CSS e configuração do Streamlit
 
 # Verificar se o usuário está autenticado antes de mostrar todos os elementos da sidebar
 if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \

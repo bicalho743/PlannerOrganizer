@@ -8,7 +8,6 @@ maxUploadSize = 200
 
 [client]
 showSidebarNavigation = true
-sidebarState = "expanded"
 showErrorDetails = false
 
 [browser]
