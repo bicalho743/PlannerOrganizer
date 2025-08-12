@@ -46,42 +46,7 @@ except ImportError:
     firebase_auth = None
     st.warning("Módulo Firebase Auth não encontrado. Usando autenticação padrão.")
 
-# Forçar configuração da sidebar via JavaScript (para Render)
-if os.environ.get('RENDER'):  # Detecta se está rodando no Render
-    st.markdown("""
-    <script>
-    // Forçar sidebar no Render
-    window.addEventListener('load', function() {
-        console.log('🔧 Forçando sidebar no Render...');
-        
-        // Tenta múltiplas vezes garantir que a sidebar apareça
-        let attempts = 0;
-        const maxAttempts = 10;
-        
-        function forceSidebar() {
-            attempts++;
-            
-            // Busca pelo botão de toggle da sidebar
-            const sidebarButton = document.querySelector('[data-testid="collapsedControl"]');
-            if (sidebarButton) {
-                console.log('✅ Botão da sidebar encontrado, clicando...');
-                sidebarButton.click();
-                return;
-            }
-            
-            // Se não encontrou e ainda tem tentativas, tenta novamente
-            if (attempts < maxAttempts) {
-                setTimeout(forceSidebar, 500);
-            } else {
-                console.log('⚠️ Não foi possível encontrar o botão da sidebar após', maxAttempts, 'tentativas');
-            }
-        }
-        
-        // Inicia as tentativas após um pequeno delay
-        setTimeout(forceSidebar, 1000);
-    });
-    </script>
-    """, unsafe_allow_html=True)
+
 
 # Inicialização dos estados da sessão
 if "authenticated" not in st.session_state:

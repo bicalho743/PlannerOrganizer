@@ -4,23 +4,7 @@ services:
     name: planner-organiza
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: >
-      python render_sidebar_force.py &&
-      python render_deploy_final.py &&
-      STREAMLIT_CLIENT_SHOW_SIDEBAR_NAVIGATION=true 
-      STREAMLIT_CLIENT_SIDEBAR_STATE=expanded 
-      STREAMLIT_UI_HIDE_SIDEBAR_NAV=false 
-      streamlit run app.py
-      --server.port=$PORT
-      --server.address=0.0.0.0
-      --server.headless=true
-      --server.enableCORS=true
-      --server.enableWebsocketCompression=true
-      --server.enableXsrfProtection=false
-      --server.maxUploadSize=50
-      --client.showSidebarNavigation=true
-      --client.sidebarState=expanded
-      --ui.hideSidebarNav=false
+    startCommand: streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
@@ -32,14 +16,7 @@ services:
         generateValue: true # Gera um ID único para o deploy
       - key: RENDER_DEPLOY_TIME
         time: 300 # Espera 5 minutos (300s) para iniciar o serviço após o build
-      - key: STREAMLIT_CLIENT_SHOW_SIDEBAR_NAVIGATION
-        value: true
-      - key: STREAMLIT_CLIENT_SIDEBAR_STATE
-        value: expanded
-      - key: STREAMLIT_UI_HIDE_SIDEBAR_NAV
-        value: false
-      - key: RENDER
-        value: true
+
     autoDeploy: true
     healthCheckPath: /_stcore/health
     headers:
