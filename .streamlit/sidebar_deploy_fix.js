@@ -11,8 +11,15 @@
         
         const style = window.getComputedStyle(sidebar);
         const width = parseInt(style.width) || sidebar.offsetWidth;
+        const display = style.display;
+        const visibility = style.visibility;
         
-        return width <= 50 ? 'collapsed' : 'expanded';
+        // Considerar colapsada se largura pequena OU display none OU visibility hidden
+        const isCollapsed = width <= 50 || display === 'none' || visibility === 'hidden';
+        
+        console.log('Sidebar state check:', { width, display, visibility, isCollapsed });
+        
+        return isCollapsed ? 'collapsed' : 'expanded';
     }
     
     // Função para criar botão customizado de reabrir
@@ -21,11 +28,14 @@
         
         customToggleButton = document.createElement('div');
         customToggleButton.innerHTML = '☰';
+        customToggleButton.className = 'custom-sidebar-toggle';
+        
+        // Estilos inline como fallback (caso CSS não carregue)
         customToggleButton.style.cssText = `
             position: fixed !important;
             top: 15px !important;
             left: 15px !important;
-            z-index: 10000 !important;
+            z-index: 10001 !important;
             background-color: rgba(30, 31, 54, 0.9) !important;
             border: 1px solid rgba(255, 255, 255, 0.3) !important;
             border-radius: 6px !important;
@@ -41,9 +51,12 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
             transition: all 0.3s ease !important;
             font-family: monospace !important;
+            opacity: 1 !important;
+            visibility: visible !important;
         `;
         
         customToggleButton.addEventListener('click', function() {
+            console.log('Custom toggle button clicked');
             expandSidebar();
         });
         
@@ -58,6 +71,7 @@
         });
         
         document.body.appendChild(customToggleButton);
+        console.log('Custom toggle button created and added to DOM');
     }
     
     // Função para expandir sidebar
@@ -87,7 +101,10 @@
     // Função para gerenciar estado da sidebar
     function manageSidebarState() {
         const state = getSidebarState();
-        const isAuthenticated = document.querySelector('.nav-buttons') !== null;
+        const isAuthenticated = document.querySelector('.nav-buttons') !== null || 
+                               document.body.classList.contains('authenticated');
+        
+        console.log('Managing sidebar state:', { state, isAuthenticated });
         
         if (!isAuthenticated) {
             // Usuário não autenticado - esconder tudo
@@ -100,11 +117,18 @@
         
         if (state === 'collapsed') {
             // Sidebar colapsada - mostrar botão customizado
+            console.log('Sidebar collapsed - showing custom button');
             document.body.classList.add('sidebar-collapsed');
             createCustomToggleButton();
-            customToggleButton.style.display = 'flex';
+            if (customToggleButton) {
+                customToggleButton.style.display = 'flex';
+                customToggleButton.style.visibility = 'visible';
+                customToggleButton.style.opacity = '1';
+                console.log('Custom button should be visible now');
+            }
         } else {
             // Sidebar expandida - esconder botão customizado
+            console.log('Sidebar expanded - hiding custom button');
             document.body.classList.remove('sidebar-collapsed');
             if (customToggleButton) {
                 customToggleButton.style.display = 'none';
@@ -148,10 +172,22 @@
         restoreNativeCollapseButton();
     });
     
+    // Adicionar listener global para cliques no pseudo-elemento
+    function addGlobalClickListener() {
+        document.addEventListener('click', function(e) {
+            // Verificar se clique foi próximo ao canto superior esquerdo (onde fica o botão)
+            if (e.clientX <= 50 && e.clientY <= 50 && document.body.classList.contains('sidebar-collapsed')) {
+                console.log('Click detected near sidebar toggle area');
+                expandSidebar();
+            }
+        });
+    }
+    
     // Inicialização
     function initialize() {
         manageSidebarState();
         restoreNativeCollapseButton();
+        addGlobalClickListener();
         
         observer.observe(document.body, {
             childList: true,
@@ -160,8 +196,13 @@
             attributeFilter: ['style', 'class']
         });
         
-        // Verificar estado periodicamente
-        setInterval(manageSidebarState, 1000);
+        // Verificar estado periodicamente (mais frequente para detectar mudanças)
+        setInterval(manageSidebarState, 500);
+        
+        // Executar imediatamente após inicialização
+        setTimeout(manageSidebarState, 100);
+        setTimeout(manageSidebarState, 500);
+        setTimeout(manageSidebarState, 1000);
     }
     
     // Executar quando DOM estiver pronto
