@@ -1,101 +1,56 @@
 /* 
-Estilos globais do Planner Organizer
-Arquivo de estilos CSS centralizado
+Estilos originais do Planner Organizer - Versão Estável
+Baseado no CSS que funcionava há 3+ dias
 */
 
-/* CORREÇÕES DE BOTÕES - TEXTO SEMPRE VISÍVEL */
-.stButton > button, .stFormSubmitButton > button {
-    color: white !important;
-    font-weight: 600 !important;
-    background-color: #1f4e79 !important;
-    border: none !important;
-    text-shadow: none !important;
-    padding: 0.5rem 1rem !important;
-    border-radius: 0.5rem !important;
-    min-height: 2.5rem !important;
+/* Cabeçalho */
+.app-header {
+    background-color: #1E1F36;
+    color: white;
+    padding: 1rem;
+    text-align: center;
+    margin-bottom: 2rem;
 }
 
-.stButton > button:hover, .stFormSubmitButton > button:hover {
-    background-color: #2B547E !important;
-    color: white !important;
-}
-
-/* SIDEBAR - GARANTIR VISIBILIDADE */
+/* Sidebar */
 section[data-testid="stSidebar"] {
-    background-color: #1E366F !important;
+    background-color: #1E1F36 !important;
 }
 
-section[data-testid="stSidebar"] .stButton > button {
-    color: white !important;
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+section[data-testid="stSidebar"] button {
     width: 100% !important;
-    text-align: left !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
     margin: 0.25rem 0 !important;
 }
 
-section[data-testid="stSidebar"] .stButton > button:hover {
-    background-color: rgba(255, 255, 255, 0.2) !important;
+/* Botões */
+.stButton > button {
+    background-color: #3a75c4 !important;
     color: white !important;
+    border: 1px solid #3a75c4 !important;
+    width: 100% !important;
 }
 
-/* SELECTBOX E INPUTS - TEXTO VISÍVEL */
-.stSelectbox > div > div {
-    background-color: white !important;
-    color: #1e1e1e !important;
-}
-
-.stTextInput > div > div > input {
-    background-color: white !important;
-    color: #1e1e1e !important;
-}
-
-/* CONTAINERS E CARDS */
-.element-container {
-    margin-bottom: 1rem !important;
-}
-
-/* MÉTRICAS */
-.metric-container {
-    background-color: white !important;
-    padding: 1rem !important;
-    border-radius: 0.5rem !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-    border: 1px solid #e0e0e0 !important;
-}
-
-/* TABELAS */
-.stDataFrame {
-    background-color: white !important;
-}
-
-/* ALERTAS E MENSAGENS */
-.stAlert {
-    margin: 1rem 0 !important;
-}
-
-/* EXPANSOR */
-.streamlit-expanderHeader {
-    background-color: rgba(255, 255, 255, 0.1) !important;
+.stFormSubmitButton > button {
+    background-color: #3a75c4 !important;
     color: white !important;
+    border: 1px solid #3a75c4 !important;
+    width: 100% !important;
 }
 
-.streamlit-expanderContent {
-    background-color: rgba(255, 255, 255, 0.95) !important;
+/* Campos de entrada */
+.stTextInput input, .stTextArea textarea, .stSelectbox select, .stNumberInput input {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+/* Labels */
+label, .stTextInput > label, .stSelectbox > label {
     color: #1e1e1e !important;
-}
-
-/* RESPONSIVIDADE MÓVEL */
-@media (max-width: 768px) {
-    .stButton > button {
-        width: 100% !important;
-        font-size: 0.9rem !important;
-    }
-    
-    section[data-testid="stSidebar"] {
-        width: 280px !important;
-        min-width: 280px !important;
-    }
+    font-weight: 600 !important;
 }
 
 /* OCULTAR ELEMENTOS DESNECESSÁRIOS */
@@ -105,11 +60,13 @@ section[data-testid="stSidebar"] .stButton > button:hover {
     display: none !important;
 }
 
-/* FOOTER */
-.app-footer {
-    margin-top: 2rem !important;
-    padding: 1rem !important;
-    text-align: center !important;
-    color: #666 !important;
-    border-top: 1px solid #e0e0e0 !important;
+/* EXPANSOR - Melhor contraste */
+.streamlit-expanderHeader {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+}
+
+.streamlit-expanderContent {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    color: #1e1e1e !important;
 }
