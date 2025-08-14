@@ -84,6 +84,16 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# VERIFICAÇÃO DE AUTENTICAÇÃO - MOSTRAR LOGIN SE NÃO AUTENTICADO
+if not st.session_state.authenticated and not (
+    ('usuario_id' in st.session_state and st.session_state.usuario_id) or 
+    ('user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user)
+):
+    # Usuário não está autenticado - mostrar tela de login
+    from utils.planos import verificar_login
+    verificar_login()
+    st.stop()
+
 # Scripts de inicialização removidos para evitar loops
 
 # JavaScript removido para evitar loops infinitos

@@ -74,12 +74,21 @@ section[data-testid="stSidebar"]:has(.nav-buttons) ~ .main {
     margin-left: 250px !important;
 }
 
-/* BOTÃO DE COLAPSO - TEMPORARIAMENTE DESABILITADO */
-/* Remover completamente a funcionalidade de colapso até resolvermos os conflitos */
-button[data-testid="collapsedControl"] {
+/* BOTÃO DE COLAPSO - COMPLETAMENTE REMOVIDO */
+/* Esconder TODOS os possíveis botões de colapso da sidebar */
+button[data-testid="collapsedControl"],
+button[data-testid="baseButton-minimal"],
+button[kind="secondary"],
+.stButton > button[aria-label*="collapse"],
+.stButton > button[aria-label*="expand"],
+.stButton > button[title*="sidebar"],
+.stButton > button[title*="Sidebar"],
+section[data-testid="stSidebar"] button[aria-label],
+section[data-testid="stSidebar"] .stButton button {
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
+    opacity: 0 !important;
 }
 
 /* FORÇAR SIDEBAR SEMPRE VISÍVEL */
