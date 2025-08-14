@@ -48,16 +48,8 @@ header[data-testid="stHeader"] {
    SIDEBAR - DESIGN UNIFICADO
    ======================================== */
 
-/* ESCONDER SIDEBAR POR PADRÃO */
+/* SIDEBAR SEMPRE VISÍVEL E EXPANDIDA */
 section[data-testid="stSidebar"] {
-    display: none !important;
-    visibility: hidden !important;
-    width: 0 !important;
-    min-width: 0 !important;
-}
-
-/* Mostrar sidebar apenas quando há botões de navegação */
-section[data-testid="stSidebar"]:has(.nav-buttons) {
     display: block !important;
     visibility: visible !important;
     width: 250px !important;
@@ -66,11 +58,66 @@ section[data-testid="stSidebar"]:has(.nav-buttons) {
     flex: 0 0 250px !important;
     background: linear-gradient(180deg, #1E1F36 0%, #2E4A99 100%);
     border-right: 1px solid #4C566A;
+    position: fixed !important;
+    height: 100vh !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 999 !important;
 }
 
-/* Ajustar margem do conteúdo principal quando sidebar está visível */
-section[data-testid="stSidebar"]:has(.nav-buttons) ~ .main {
+/* Remover botão de colapsar sidebar */
+button[data-testid="collapsedControl"],
+.stSidebarCollapsedControl,
+[data-testid="stSidebarCollapseButton"],
+button[kind="header"] {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Ajustar margem do conteúdo principal */
+.main, [data-testid="stAppViewContainer"] > div > div {
     margin-left: 250px !important;
+    padding-left: 1rem !important;
+}
+
+/* Garantir que o conteúdo da sidebar seja visível */
+section[data-testid="stSidebar"] .stMarkdown,
+section[data-testid="stSidebar"] .stButton,
+section[data-testid="stSidebar"] .stSelectbox {
+    color: white !important;
+}
+
+/* FORÇAR SIDEBAR EXPANDIDA NO DEPLOY */
+.stApp {
+    --sidebar-width: 250px !important;
+}
+
+/* Garantir que a sidebar não seja colapsada */
+[data-testid="stSidebar"][aria-expanded="false"] {
+    width: 250px !important;
+    transform: none !important;
+}
+
+/* Remover animações de colapso */
+section[data-testid="stSidebar"] {
+    transition: none !important;
+    transform: none !important;
+}
+
+/* CSS específico para produção */
+@media screen {
+    /* Força sidebar sempre visível */
+    section[data-testid="stSidebar"] {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    /* Remove controles de colapso */
+    button[data-testid="baseButton-header"],
+    [data-testid="stSidebarNavSeparator"] + button {
+        display: none !important;
+    }
 }
 
 /* ESCONDER SETA DE COLAPSO DA SIDEBAR */

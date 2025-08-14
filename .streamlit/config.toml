@@ -9,6 +9,11 @@ maxUploadSize = 200
 [client]
 showSidebarNavigation = true
 showErrorDetails = false
+sidebarState = "expanded"
+
+[ui]
+hideTopBar = false
+hideSidebarNav = false
 
 [browser]
 gatherUsageStats = false
