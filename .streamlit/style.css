@@ -70,3 +70,68 @@ label, .stTextInput > label, .stSelectbox > label {
     background-color: rgba(255, 255, 255, 0.95) !important;
     color: #1e1e1e !important;
 }
+
+/* RESPONSIVIDADE MÓVEL - PRIORIDADE PARA LOGIN */
+@media (max-width: 768px) {
+    /* Layout principal mobile-first - login sempre primeiro */
+    .main .block-container {
+        padding: 0.5rem !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    /* Botões otimizados para mobile */
+    .stButton > button, .stFormSubmitButton > button {
+        width: 100% !important;
+        font-size: 1rem !important;
+        padding: 0.8rem 1rem !important;
+        min-height: 3rem !important;
+        touch-action: manipulation !important;
+        margin: 0.5rem 0 !important;
+    }
+    
+    /* Campos de entrada maiores no mobile */
+    .stTextInput input, .stTextArea textarea, .stSelectbox select, .stNumberInput input {
+        font-size: 16px !important;
+        padding: 0.8rem !important;
+        min-height: 3rem !important;
+        border-radius: 0.5rem !important;
+    }
+    
+    /* Login container otimizado para mobile */
+    .element-container {
+        margin: 0.5rem 0 !important;
+    }
+    
+    /* Quando autenticado, sidebar responsiva */
+    section[data-testid="stSidebar"] {
+        width: 280px !important;
+        min-width: 280px !important;
+    }
+    
+    /* Títulos legíveis no mobile */
+    h1, h2, h3 {
+        font-size: 1.5rem !important;
+        text-align: center !important;
+    }
+    
+    /* Colunas empilhadas no mobile */
+    .row-widget.stColumns {
+        flex-direction: column !important;
+    }
+    
+    .column {
+        width: 100% !important;
+        padding: 0.25rem !important;
+    }
+    
+    /* Remover espaçamentos desnecessários no mobile */
+    .stApp {
+        padding: 0 !important;
+    }
+    
+    /* Garantir que o login seja sempre visível primeiro */
+    .main:not(.authenticated) {
+        padding-top: 1rem !important;
+    }
+}
