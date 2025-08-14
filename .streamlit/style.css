@@ -48,15 +48,16 @@ header[data-testid="stHeader"] {
    SIDEBAR - DESIGN UNIFICADO
    ======================================== */
 
-/* ESCONDER SIDEBAR POR PADRÃO */
-section[data-testid="stSidebar"] {
+/* SIDEBAR - CONTROLE DE VISIBILIDADE */
+/* Esconder sidebar quando NÃO há usuário autenticado */
+section[data-testid="stSidebar"]:not(:has(.nav-buttons)) {
     display: none !important;
     visibility: hidden !important;
     width: 0 !important;
     min-width: 0 !important;
 }
 
-/* Mostrar sidebar apenas quando há botões de navegação */
+/* Mostrar sidebar apenas quando há botões de navegação (usuário autenticado) */
 section[data-testid="stSidebar"]:has(.nav-buttons) {
     display: block !important;
     visibility: visible !important;
@@ -73,8 +74,16 @@ section[data-testid="stSidebar"]:has(.nav-buttons) ~ .main {
     margin-left: 250px !important;
 }
 
-/* BOTÃO DE COLAPSO DA SIDEBAR - SEMPRE VISÍVEL */
+/* BOTÃO DE COLAPSO - VISÍVEL APENAS PARA USUÁRIOS AUTENTICADOS */
+/* Esconder por padrão */
 button[data-testid="collapsedControl"] {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Mostrar apenas quando há navegação (usuário autenticado) */
+section[data-testid="stSidebar"]:has(.nav-buttons) ~ * button[data-testid="collapsedControl"],
+body:has(.nav-buttons) button[data-testid="collapsedControl"] {
     display: flex !important;
     visibility: visible !important;
     position: fixed !important;

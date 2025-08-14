@@ -1,15 +1,29 @@
 
-// Garante que o botão de colapso da sidebar sempre apareça
+// Garante que o botão de colapso apareça apenas para usuários autenticados
 function showSidebarToggle() {
+    const navButtons = document.querySelector('.nav-buttons');
     const toggleBtn = document.querySelector('button[data-testid="collapsedControl"]');
-    if (toggleBtn) {
+    
+    if (navButtons && toggleBtn) {
+        // Usuário autenticado - mostrar botão
         toggleBtn.style.display = 'flex';
         toggleBtn.style.visibility = 'visible';
         toggleBtn.style.position = 'fixed';
         toggleBtn.style.top = '15px';
         toggleBtn.style.left = '15px';
         toggleBtn.style.zIndex = '9999';
-        console.log('✅ Botão de colapso da sidebar forçado a aparecer');
+        toggleBtn.style.backgroundColor = 'rgba(30, 31, 54, 0.9)';
+        toggleBtn.style.border = '1px solid rgba(255, 255, 255, 0.3)';
+        toggleBtn.style.borderRadius = '6px';
+        toggleBtn.style.padding = '8px';
+        toggleBtn.style.width = '32px';
+        toggleBtn.style.height = '32px';
+        console.log('✅ Botão de colapso da sidebar ativado para usuário autenticado');
+    } else if (!navButtons && toggleBtn) {
+        // Usuário não autenticado - esconder botão
+        toggleBtn.style.display = 'none';
+        toggleBtn.style.visibility = 'hidden';
+        console.log('🚫 Botão de colapso escondido - usuário não autenticado');
     }
 }
 
