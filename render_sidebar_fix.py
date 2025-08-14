@@ -32,59 +32,24 @@ def fix_sidebar_config():
     os.environ['STREAMLIT_CLIENT_SIDEBAR_STATE'] = 'expanded'
     os.environ['STREAMLIT_UI_HIDE_SIDEBAR_NAV'] = 'false'
     
-    # Adicionar JavaScript avançado para garantir funcionamento da sidebar
+    # Adicionar JavaScript para forçar sidebar no HTML
     js_fix = """
     <script>
-    // Correção avançada da sidebar para deploy
-    (function() {
-        'use strict';
-        
-        function ensureSidebarFunctionality() {
-            // Garantir que a sidebar esteja visível
-            const sidebar = document.querySelector('[data-testid="stSidebar"]');
-            if (sidebar) {
-                sidebar.style.display = 'block !important';
-                sidebar.style.visibility = 'visible !important';
-                sidebar.style.opacity = '1 !important';
-                sidebar.style.width = '250px !important';
-            }
-            
-            // Forçar visibilidade do botão de colapso com múltiplos seletores
-            const selectors = [
-                '[data-testid="collapsedControl"]',
-                'button[aria-label*="collapse" i]',
-                'button[title*="collapse" i]',
-                'button[kind="minimal"]'
-            ];
-            
-            selectors.forEach(selector => {
-                const buttons = document.querySelectorAll(selector);
-                buttons.forEach(button => {
-                    if (button) {
-                        button.style.cssText = `
-                            display: flex !important;
-                            visibility: visible !important;
-                            position: fixed !important;
-                            top: 15px !important;
-                            left: 15px !important;
-                            z-index: 9999 !important;
-                            opacity: 1 !important;
-                        `;
-                    }
-                });
-            });
+    document.addEventListener('DOMContentLoaded', function() {
+        // Forçar sidebar visível
+        const sidebar = document.querySelector('[data-testid="stSidebar"]');
+        if (sidebar) {
+            sidebar.style.display = 'block !important';
+            sidebar.style.visibility = 'visible !important';
+            sidebar.style.opacity = '1 !important';
         }
         
-        // Executar múltiplas vezes para garantir funcionamento
-        document.addEventListener('DOMContentLoaded', ensureSidebarFunctionality);
-        window.addEventListener('load', ensureSidebarFunctionality);
-        setTimeout(ensureSidebarFunctionality, 1000);
-        setTimeout(ensureSidebarFunctionality, 3000);
-        
-        // Observer para mudanças no DOM
-        const observer = new MutationObserver(ensureSidebarFunctionality);
-        observer.observe(document.body, { childList: true, subtree: true });
-    })();
+        // Garantir que não esteja colapsada
+        const collapseButton = document.querySelector('[data-testid="collapsedControl"]');
+        if (collapseButton && sidebar && sidebar.style.width === '0px') {
+            collapseButton.click();
+        }
+    });
     </script>
     """
     

@@ -34,10 +34,6 @@ services:
         value: expanded
       - key: STREAMLIT_UI_HIDE_SIDEBAR_NAV
         value: false
-      - key: STREAMLIT_CLIENT_CACHING
-        value: true
-      - key: STREAMLIT_SIDEBAR_COLLAPSE_FIX
-        value: enabled
     autoDeploy: true
     healthCheckPath: /_stcore/health
     headers:

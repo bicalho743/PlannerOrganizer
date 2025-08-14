@@ -7,7 +7,7 @@ fileWatcherType = "none"
 maxUploadSize = 200
 
 [client]
-showSidebarNavigation = false
+showSidebarNavigation = true
 showErrorDetails = false
 
 [browser]

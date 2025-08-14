@@ -48,16 +48,15 @@ header[data-testid="stHeader"] {
    SIDEBAR - DESIGN UNIFICADO
    ======================================== */
 
-/* SIDEBAR - CONTROLE DE VISIBILIDADE */
-/* Esconder sidebar quando NÃO há usuário autenticado */
-section[data-testid="stSidebar"]:not(:has(.nav-buttons)) {
+/* ESCONDER SIDEBAR POR PADRÃO */
+section[data-testid="stSidebar"] {
     display: none !important;
     visibility: hidden !important;
     width: 0 !important;
     min-width: 0 !important;
 }
 
-/* Mostrar sidebar apenas quando há botões de navegação (usuário autenticado) */
+/* Mostrar sidebar apenas quando há botões de navegação */
 section[data-testid="stSidebar"]:has(.nav-buttons) {
     display: block !important;
     visibility: visible !important;
@@ -74,60 +73,10 @@ section[data-testid="stSidebar"]:has(.nav-buttons) ~ .main {
     margin-left: 250px !important;
 }
 
-/* BOTÃO DE COLAPSO - COMPLETAMENTE REMOVIDO */
-/* Esconder TODOS os possíveis botões de colapso da sidebar */
-button[data-testid="collapsedControl"],
-button[data-testid="baseButton-minimal"],
-button[kind="secondary"],
-.stButton > button[aria-label*="collapse"],
-.stButton > button[aria-label*="expand"],
-.stButton > button[title*="sidebar"],
-.stButton > button[title*="Sidebar"],
-section[data-testid="stSidebar"] button[aria-label],
-section[data-testid="stSidebar"] .stButton button {
+/* ESCONDER SETA DE COLAPSO DA SIDEBAR */
+button[data-testid="collapsedControl"] {
     display: none !important;
     visibility: hidden !important;
-    pointer-events: none !important;
-    opacity: 0 !important;
-}
-
-/* FORÇAR SIDEBAR SEMPRE VISÍVEL */
-/* Garantir que a sidebar sempre apareça quando usuário está autenticado */
-section[data-testid="stSidebar"] {
-    display: block !important;
-    visibility: visible !important;
-    width: 250px !important;
-    min-width: 250px !important;
-    max-width: 250px !important;
-    opacity: 1 !important;
-}
-
-/* Remover todos os botões personalizados e pseudo-elementos */
-.custom-sidebar-toggle,
-body.sidebar-collapsed::before,
-body.sidebar-collapsed::after,
-section[data-testid="stSidebar"][style*="width: 0"] ~ * body::before {
-    display: none !important;
-    visibility: hidden !important;
-}
-
-/* Hover effect para o botão de colapso */
-button[data-testid="collapsedControl"]:hover {
-    background-color: rgba(30, 31, 54, 1) !important;
-    border-color: rgba(255, 255, 255, 0.5) !important;
-    transform: scale(1.05) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
-}
-
-/* Responsividade para mobile */
-@media (max-width: 768px) {
-    button[data-testid="collapsedControl"] {
-        top: 10px !important;
-        left: 10px !important;
-        width: 28px !important;
-        height: 28px !important;
-        padding: 6px !important;
-    }
 }
 
 /* Setas de colapso da sidebar com cor neutra e discreta */
@@ -137,9 +86,7 @@ button[data-testid="baseButton-minimal"] svg,
 section[data-testid="stSidebar"] button svg {
     color: #ffffff !important;
     fill: #ffffff !important;
-    opacity: 0.9 !important;
-    width: 16px !important;
-    height: 16px !important;
+    opacity: 0.7 !important;
 }
 
 button[data-testid="collapsedControl"] svg path,
@@ -208,29 +155,22 @@ div[data-testid="stSidebar"] div:first-child button svg path {
 }
 
 /* Setas de colapso específicas - sempre visíveis */
-button[aria-label*="collapse" i],
-button[aria-label*="Collapse" i],
-button[title*="collapse" i],
-button[title*="Collapse" i],
+button[aria-label*="collapse"],
+button[aria-label*="Collapse"],
+button[title*="collapse"],
+button[title*="Collapse"],
 button[data-testid="collapsedControl"],
-button[data-testid="baseButton-minimal"],
-button[kind="minimal"] {
+button[data-testid="baseButton-minimal"] {
     opacity: 1 !important;
     visibility: visible !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    background-color: rgba(30, 31, 54, 0.9) !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    padding: 8px !important;
-    border-radius: 6px !important;
+    background-color: transparent !important;
+    border: none !important;
+    padding: 4px !important;
+    border-radius: 4px !important;
     cursor: pointer !important;
-    position: fixed !important;
-    top: 15px !important;
-    left: 15px !important;
-    z-index: 9999 !important;
-    width: 32px !important;
-    height: 32px !important;
 }
 
 button[aria-label*="collapse"] svg,
