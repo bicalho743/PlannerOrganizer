@@ -45,10 +45,10 @@ header[data-testid="stHeader"] {
 }
 
 /* ========================================
-   SIDEBAR - DESIGN UNIFICADO
+   SIDEBAR - CONFIGURAÇÃO CENTRALIZADA E UNIFICADA
    ======================================== */
 
-/* SIDEBAR SEMPRE VISÍVEL APÓS LOGIN - NÃO ESCONDER */
+/* SIDEBAR PRINCIPAL - Sempre visível após login */
 section[data-testid="stSidebar"] {
     display: block !important;
     visibility: visible !important;
@@ -56,140 +56,104 @@ section[data-testid="stSidebar"] {
     min-width: 250px !important;
     max-width: 250px !important;
     flex: 0 0 250px !important;
-    background: linear-gradient(180deg, #1E1F36 0%, #2E4A99 100%);
-    border-right: 1px solid #4C566A;
+    background: linear-gradient(180deg, #1E1F36 0%, #2E4A99 100%) !important;
+    border-right: 1px solid #4C566A !important;
 }
 
-/* Ajustar margem do conteúdo principal com sidebar visível */
+/* CONTEÚDO PRINCIPAL - Ajuste automático com sidebar */
 section[data-testid="stSidebar"] ~ .main {
     margin-left: 250px !important;
 }
 
-/* MANTER SETA DE COLAPSO DA SIDEBAR VISÍVEL E FUNCIONAL */
+/* TOGGLE BUTTON - Botão de colapso sempre funcional */
 button[data-testid="collapsedControl"] {
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
     pointer-events: auto !important;
     z-index: 999999 !important;
-}
-
-/* Setas de colapso da sidebar com cor neutra e discreta */
-button[data-testid="collapsedControl"] svg,
-button[data-testid="baseButton-minimal"] svg,
-.stSidebar button svg,
-section[data-testid="stSidebar"] button svg {
-    color: #ffffff !important;
-    fill: #ffffff !important;
-    opacity: 0.7 !important;
-}
-
-button[data-testid="collapsedControl"] svg path,
-button[data-testid="baseButton-minimal"] svg path,
-.stSidebar button svg path,
-section[data-testid="stSidebar"] button svg path {
-    fill: #ffffff !important;
-    stroke: #ffffff !important;
-    opacity: 0.7 !important;
-}
-
-/* Botão de colapso da sidebar com hover sutil */
-button[data-testid="collapsedControl"],
-button[data-testid="baseButton-minimal"],
-.stSidebar > div > button,
-section[data-testid="stSidebar"] > div > button {
     background-color: transparent !important;
     border: none !important;
     color: #ffffff !important;
-    opacity: 0.7 !important;
 }
 
-button[data-testid="collapsedControl"]:hover,
-button[data-testid="baseButton-minimal"]:hover,
-.stSidebar > div > button:hover,
-section[data-testid="stSidebar"] > div > button:hover {
+button[data-testid="collapsedControl"]:hover {
     background-color: rgba(255, 255, 255, 0.1) !important;
     opacity: 1 !important;
 }
 
-/* Ícones da sidebar com cor neutra */
-section[data-testid="stSidebar"] button[kind="secondary"] svg,
-section[data-testid="stSidebar"] button[kind="secondary"] svg path {
-    fill: #ffffff !important;
-    color: #ffffff !important;
-    stroke: #ffffff !important;
-    opacity: 0.7 !important;
-}
-
-/* Regra mais ampla para capturar o botão de colapso com cor neutra */
-[data-testid*="collaps"] svg,
-[class*="collaps"] svg,
-button:has(svg) svg {
-    fill: #ffffff !important;
-    color: #ffffff !important;
-    opacity: 0.7 !important;
-}
-
-[data-testid*="collaps"] svg path,
-[class*="collaps"] svg path,
-button:has(svg) svg path {
-    fill: #ffffff !important;
-    stroke: #ffffff !important;
-    opacity: 0.7 !important;
-}
-
-/* Diferentes seletores para o botão de colapso com cor neutra */
-.css-1v0mbdj button svg,
-.css-1v0mbdj button svg path,
-div[data-testid="stSidebar"] div:first-child button svg,
-div[data-testid="stSidebar"] div:first-child button svg path {
-    fill: #ffffff !important;
-    color: #ffffff !important;
-    stroke: #ffffff !important;
-    opacity: 0.8 !important;
-}
-
-/* Setas de colapso específicas - sempre visíveis */
-button[aria-label*="collapse"],
-button[aria-label*="Collapse"],
-button[title*="collapse"],
-button[title*="Collapse"],
-button[data-testid="collapsedControl"],
-button[data-testid="baseButton-minimal"] {
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background-color: transparent !important;
-    border: none !important;
-    padding: 4px !important;
-    border-radius: 4px !important;
-    cursor: pointer !important;
-}
-
-button[aria-label*="collapse"] svg,
-button[aria-label*="Collapse"] svg,
-button[title*="collapse"] svg,
-button[title*="Collapse"] svg,
+/* ÍCONES E SETAS - Estilo unificado para todos os ícones da sidebar */
 button[data-testid="collapsedControl"] svg,
-button[data-testid="baseButton-minimal"] svg {
-    fill: #ffffff !important;
+button[data-testid="collapsedControl"] svg path,
+section[data-testid="stSidebar"] button svg,
+section[data-testid="stSidebar"] button svg path {
     color: #ffffff !important;
-    width: 14px !important;
-    height: 14px !important;
-    display: block !important;
+    fill: #ffffff !important;
+    stroke: #ffffff !important;
     opacity: 0.8 !important;
-    visibility: visible !important;
 }
 
-button[aria-label*="collapse"] svg path,
-button[aria-label*="Collapse"] svg path,
-button[title*="collapse"] svg path,
-button[title*="Collapse"] svg path,
-button[data-testid="collapsedControl"] svg path,
-button[data-testid="baseButton-minimal"] svg path {
-    fill: #ffffff !important;
+/* BOTÕES DA SIDEBAR - Estilo unificado para navegação */
+section[data-testid="stSidebar"] .stButton > button {
+    background-color: #1e40af !important;
+    color: white !important;
+    border: 1px solid #1e40af !important;
+    font-weight: 600 !important;
+}
+
+section[data-testid="stSidebar"] .stButton > button:hover {
+    background-color: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+}
+
+/* TEXTOS DA SIDEBAR - Cor branca para contraste */
+section[data-testid="stSidebar"] .stMarkdown,
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] p {
+    color: white !important;
+}
+
+/* EXPANDERS DA SIDEBAR - Informações do sistema */
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+    margin: 8px 0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderHeader {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 6px !important;
+    padding: 8px 12px !important;
+}
+
+/* Texto escuro em expanders para legibilidade */
+section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent *,
+section[data-testid="stSidebar"] div[data-testid="stExpander"] [data-testid="stMarkdownContainer"],
+section[data-testid="stSidebar"] div[data-testid="stExpander"] [data-testid="stMarkdownContainer"] * {
+    color: #2c3e50 !important;
+    background-color: transparent !important;
+}
+
+/* Botões dentro de expanders */
+section[data-testid="stSidebar"] div[data-testid="stExpander"] button {
+    color: #ffffff !important;
+    background-color: #3a75c4 !important;
+    border: 1px solid #3a75c4 !important;
+    font-weight: 600 !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="stExpander"] button:hover {
+    background-color: #2B547E !important;
+    border-color: #2B547E !important;
+}
+
+/* ========================================
+   FIM DA CONFIGURAÇÃO UNIFICADA DA SIDEBAR
+   ======================================== */
     stroke: #ffffff !important;
     opacity: 0.8 !important;
     visibility: visible !important;

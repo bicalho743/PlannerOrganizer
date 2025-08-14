@@ -5,9 +5,10 @@ import streamlit as st
 
 def apply_mobile_sidebar_fix():
     """
-    DESATIVADO - CSS da sidebar agora é controlado centralmente pelo .streamlit/style.css
+    DESATIVADO - Todas as configurações da sidebar foram centralizadas no .streamlit/style.css
+    Este arquivo não é mais necessário para evitar conflitos de configuração.
     """
-    return  # Função desativada para evitar conflitos
+    pass  # Função completamente desativada - configurações centralizadas
     
     st.markdown("""
     <style>
