@@ -1,0 +1,52 @@
+about:srcdoc:78 Uncaught TypeError: Failed to execute 'observe' on 'MutationObserver': parameter 1 is not of type 'Node'.
+    at about:srcdoc:78:10
+(anonymous) @ about:srcdoc:78Understand this error
+about:srcdoc:15 🔍 Iniciando busca pelo botão de colapso...
+about:srcdoc:16 🔍 Usuário autenticado: false
+about:srcdoc:29 ❌ Seletor não encontrou botão: div[data-testid="stSidebarCollapseButton"] button[data-testid="stBaseButton-headerNoPadding"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: button[data-testid="collapsedControl"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: section[data-testid="stSidebar"] button[data-testid="stBaseButton-headerNoPadding"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: button[data-testid="stBaseButton-headerNoPadding"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: section[data-testid="stSidebar"] button:first-of-type
+about:srcdoc:59 ❌ Nenhum botão de colapso encontrado em nenhum seletor
+about:srcdoc:60 🔍 Estrutura da sidebar: null
+fbevents.js:156 [Meta Pixel] - Invalid PixelID: null.
+t @ fbevents.js:156
+w @ fbevents.js:156
+I @ fbevents.js:156
+e @ fbevents.js:76
+xa @ fbevents.js:366
+va @ fbevents.js:366
+Ma @ fbevents.js:366
+(anonymous) @ fbevents.js:366
+(anonymous) @ fbevents.js:120
+s @ fbevents.js:274
+each @ fbevents.js:274
+value @ fbevents.js:120
+value @ fbevents.js:120
+value @ fbevents.js:110
+plugin @ fbevents.js:377
+value @ fbevents.js:196
+Ra.a.registerPlugin @ fbevents.js:366
+(anonymous) @ fbevents.js:369Understand this warning
+about:srcdoc:15 🔍 Iniciando busca pelo botão de colapso...
+about:srcdoc:16 🔍 Usuário autenticado: false
+about:srcdoc:29 ❌ Seletor não encontrou botão: div[data-testid="stSidebarCollapseButton"] button[data-testid="stBaseButton-headerNoPadding"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: button[data-testid="collapsedControl"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: section[data-testid="stSidebar"] button[data-testid="stBaseButton-headerNoPadding"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: button[data-testid="stBaseButton-headerNoPadding"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: section[data-testid="stSidebar"] button:first-of-type
+about:srcdoc:59 ❌ Nenhum botão de colapso encontrado em nenhum seletor
+about:srcdoc:60 🔍 Estrutura da sidebar: null
+about:srcdoc:15 🔍 Iniciando busca pelo botão de colapso...
+about:srcdoc:16 🔍 Usuário autenticado: false
+about:srcdoc:29 ❌ Seletor não encontrou botão: div[data-testid="stSidebarCollapseButton"] button[data-testid="stBaseButton-headerNoPadding"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: button[data-testid="collapsedControl"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: section[data-testid="stSidebar"] button[data-testid="stBaseButton-headerNoPadding"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: button[data-testid="stBaseButton-headerNoPadding"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: section[data-testid="stSidebar"] button:first-of-type
+about:srcdoc:59 ❌ Nenhum botão de colapso encontrado em nenhum seletor
+about:srcdoc:60 🔍 Estrutura da sidebar: null
+ ✅ Botão encontrado com seletor corrigido: <button kind=​"headerNoPadding" data-testid=​"stBaseButton-headerNoPadding" aria-label class=​"st-emotion-cache-13wx8y2 e7nj0r415" style=​"background-color:​ rgba(30, 31, 54, 0.9)​;​ border:​ 1px solid rgba(255, 255, 255, 0.3)​;​ border-radius:​ 6px;​ padding:​ 8px;​">​…​</button>​flex
+ ✅ Estilos sendo aplicados...
+ ✅ Botão estilizado com sucesso

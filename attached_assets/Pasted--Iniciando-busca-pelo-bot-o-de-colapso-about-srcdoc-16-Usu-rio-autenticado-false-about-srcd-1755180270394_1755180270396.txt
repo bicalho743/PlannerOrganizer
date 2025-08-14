@@ -1,0 +1,46 @@
+🔍 Iniciando busca pelo botão de colapso...
+about:srcdoc:16 🔍 Usuário autenticado: false
+about:srcdoc:29 ❌ Seletor não encontrou botão: div[data-testid="stSidebarCollapseButton"] button[data-testid="stBaseButton-headerNoPadding"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: button[data-testid="collapsedControl"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: section[data-testid="stSidebar"] button[data-testid="stBaseButton-headerNoPadding"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: button[data-testid="stBaseButton-headerNoPadding"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: section[data-testid="stSidebar"] button:first-of-type
+about:srcdoc:59 ❌ Nenhum botão de colapso encontrado em nenhum seletor
+about:srcdoc:60 🔍 Estrutura da sidebar: null
+about:srcdoc:1 An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.Understand this warning
+fbevents.js:156 [Meta Pixel] - Invalid PixelID: null.
+t @ fbevents.js:156Understand this warning
+about:srcdoc:15 🔍 Iniciando busca pelo botão de colapso...
+about:srcdoc:16 🔍 Usuário autenticado: false
+about:srcdoc:29 ❌ Seletor não encontrou botão: div[data-testid="stSidebarCollapseButton"] button[data-testid="stBaseButton-headerNoPadding"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: button[data-testid="collapsedControl"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: section[data-testid="stSidebar"] button[data-testid="stBaseButton-headerNoPadding"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: button[data-testid="stBaseButton-headerNoPadding"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: section[data-testid="stSidebar"] button:first-of-type
+about:srcdoc:59 ❌ Nenhum botão de colapso encontrado em nenhum seletor
+about:srcdoc:60 🔍 Estrutura da sidebar: null
+about:srcdoc:15 🔍 Iniciando busca pelo botão de colapso...
+about:srcdoc:16 🔍 Usuário autenticado: false
+about:srcdoc:29 ❌ Seletor não encontrou botão: div[data-testid="stSidebarCollapseButton"] button[data-testid="stBaseButton-headerNoPadding"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: button[data-testid="collapsedControl"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: section[data-testid="stSidebar"] button[data-testid="stBaseButton-headerNoPadding"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: button[data-testid="stBaseButton-headerNoPadding"]
+about:srcdoc:29 ❌ Seletor não encontrou botão: section[data-testid="stSidebar"] button:first-of-type
+about:srcdoc:59 ❌ Nenhum botão de colapso encontrado em nenhum seletor
+about:srcdoc:60 🔍 Estrutura da sidebar: null
+const toggleBtn = document.querySelector('div[data-testid="stSidebarCollapseButton"] button[data-testid="stBaseButton-headerNoPadding"]');
+console.log('✅ Botão encontrado com seletor corrigido:', toggleBtn);
+if (toggleBtn) {
+    console.log('✅ Estilos sendo aplicados...');
+    toggleBtn.style.backgroundColor = 'rgba(30, 31, 54, 0.9)';
+    toggleBtn.style.border = '1px solid rgba(255, 255, 255, 0.3)';
+    toggleBtn.style.borderRadius = '6px';
+    toggleBtn.style.padding = '8px';
+    console.log('✅ Botão estilizado com sucesso');
+} else {
+    console.log('❌ Botão não encontrado');
+}
+VM740:2 ✅ Botão encontrado com seletor corrigido: <button kind=​"headerNoPadding" data-testid=​"stBaseButton-headerNoPadding" aria-label class=​"st-emotion-cache-tyfafb e1d5ycv518" style=​"background-color:​ rgba(30, 31, 54, 0.9)​;​ border:​ 1px solid rgba(255, 255, 255, 0.3)​;​ border-radius:​ 6px;​ padding:​ 8px;​">​…​</button>​flex
+VM740:4 ✅ Estilos sendo aplicados...
+VM740:9 ✅ Botão estilizado com sucesso
+undefined
