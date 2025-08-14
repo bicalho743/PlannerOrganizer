@@ -91,8 +91,18 @@ def show():
                         receitas_diarias = receitas_diarias.reset_index()
                         receitas_diarias.columns = ['data', 'valor']
 
-                        # Calcular dias desde o início
-                        dias_serie = (receitas_diarias['data'] - receitas_diarias['data'].min()).dt.days
+                        # Calcular dias desde o início de forma mais robusta
+                        data_min = receitas_diarias['data'].min()
+                        if isinstance(data_min, pd.Timestamp):
+                            data_min = data_min.date()
+                        
+                        dias_serie = []
+                        for data in receitas_diarias['data']:
+                            if isinstance(data, pd.Timestamp):
+                                data = data.date()
+                            dias_serie.append((data - data_min).days)
+                        
+                        dias_serie = pd.Series(dias_serie)
                         valores_serie = receitas_diarias['valor']
                         
                         try:
@@ -130,11 +140,22 @@ def show():
                         )
 
                         try:
-                            dias_projecao = (dias_futuros - receitas_diarias['data'].min()).dt.days
-                            dias_projecao_numeric = pd.to_numeric(dias_projecao, errors='coerce')
-                            # Remover NaN e usar valores válidos
-                            dias_projecao_clean = dias_projecao_numeric.fillna(0).values
-                            valores_projecao = p(dias_projecao_clean)
+                            # Calcular diferença de dias corretamente
+                            data_min = receitas_diarias['data'].min()
+                            if isinstance(data_min, pd.Timestamp):
+                                data_min = data_min.date()
+                            
+                            # Converter dias_futuros para list de datas se necessário
+                            if hasattr(dias_futuros, 'date'):
+                                dias_como_datas = [d.date() if hasattr(d, 'date') else d for d in dias_futuros]
+                            else:
+                                dias_como_datas = dias_futuros
+                            
+                            # Calcular dias como diferença numérica
+                            dias_projecao = [(d - data_min).days if hasattr(d - data_min, 'days') else 0 for d in dias_como_datas]
+                            dias_projecao = np.array(dias_projecao)
+                            
+                            valores_projecao = p(dias_projecao)
                             
                             # Garantir que os valores de projeção sejam não negativos
                             valores_projecao = np.maximum(valores_projecao, 0)
@@ -142,7 +163,7 @@ def show():
                             st.error(f"Erro na projeção: {str(e)}")
                             # Fallback: projeção plana
                             media_valores = receitas_diarias['valor'].mean()
-                            valores_projecao = np.full(len(dias_futuros), media_valores)
+                            valores_projecao = np.full(len(dias_futuros), max(media_valores, 0))
 
                         # Criar gráfico
                         fig = go.Figure()
