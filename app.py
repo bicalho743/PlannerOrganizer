@@ -81,7 +81,7 @@ st.set_page_config(
     page_title="Planner Organizer | Sistema para Personal Organizers",
     page_icon="favicon.png",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"  # Collapsed para não autenticados
 )
 
 # VERIFICAÇÃO DE AUTENTICAÇÃO - MOSTRAR LOGIN SE NÃO AUTENTICADO
@@ -1018,15 +1018,27 @@ st.markdown("""
 <style>
 /* === OCULTAR NAVEGAÇÃO AUTOMÁTICA DO STREAMLIT === */
 
-/* Ocultar navegação automática de páginas */
+/* OCULTAR COMPLETAMENTE NAVEGAÇÃO AUTOMÁTICA DO STREAMLIT */
 [data-testid="stSidebarNav"],
-[data-testid="stSidebarNavItems"],
+[data-testid="stSidebarNavItems"], 
 [data-testid="stSidebarNavLink"],
 div[data-testid="stSidebar"] nav,
 div[data-testid="stSidebar"] ul,
-div[data-testid="stSidebar"] li {
+div[data-testid="stSidebar"] li,
+section[data-testid="stSidebar"] nav,
+section[data-testid="stSidebar"] ul,
+section[data-testid="stSidebar"] li,
+.css-17eq0hr,
+.css-1d391kg, 
+.css-1kyxreq,
+.css-17lntkn {
     display: none !important;
     visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    opacity: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
 }
 
 /* Ocultar header/toolbar do desenvolvimento */

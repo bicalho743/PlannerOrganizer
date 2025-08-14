@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 # Verificar autenticação
-from utils.auth import verificar_autenticacao
+from utils.planos import verificar_login as verificar_autenticacao
 verificar_autenticacao()
 
 # Título da página
