@@ -2,7 +2,24 @@
 // Garante que o botão de colapso apareça apenas para usuários autenticados
 function showSidebarToggle() {
     const navButtons = document.querySelector('.nav-buttons');
-    const toggleBtn = document.querySelector('div[data-testid="stSidebarCollapseButton"] button[data-testid="stBaseButton-headerNoPadding"]');
+    
+    // Testar múltiplos seletores para máxima compatibilidade
+    const selectorList = [
+        'div[data-testid="stSidebarCollapseButton"] button[data-testid="stBaseButton-headerNoPadding"]', // Preview Replit
+        'button[data-testid="collapsedControl"]', // Produção Render
+        'section[data-testid="stSidebar"] button[data-testid="stBaseButton-headerNoPadding"]', // Fallback 1
+        'button[data-testid="stBaseButton-headerNoPadding"]', // Fallback 2
+        'section[data-testid="stSidebar"] button:first-of-type', // Fallback 3
+    ];
+    
+    let toggleBtn = null;
+    for (const selector of selectorList) {
+        toggleBtn = document.querySelector(selector);
+        if (toggleBtn) {
+            console.log(`✅ Botão de colapso encontrado com seletor: ${selector}`);
+            break;
+        }
+    }
     
     if (navButtons && toggleBtn) {
         // Usuário autenticado - mostrar botão
@@ -48,7 +65,20 @@ observer.observe(document.body, {
 
 // Verifica periodicamente se o botão ainda está visível
 setInterval(() => {
-    const toggleBtn = document.querySelector('div[data-testid="stSidebarCollapseButton"] button[data-testid="stBaseButton-headerNoPadding"]');
+    const selectorList = [
+        'div[data-testid="stSidebarCollapseButton"] button[data-testid="stBaseButton-headerNoPadding"]',
+        'button[data-testid="collapsedControl"]',
+        'section[data-testid="stSidebar"] button[data-testid="stBaseButton-headerNoPadding"]',
+        'button[data-testid="stBaseButton-headerNoPadding"]',
+        'section[data-testid="stSidebar"] button:first-of-type',
+    ];
+    
+    let toggleBtn = null;
+    for (const selector of selectorList) {
+        toggleBtn = document.querySelector(selector);
+        if (toggleBtn) break;
+    }
+    
     if (toggleBtn) {
         const styles = window.getComputedStyle(toggleBtn);
         if (styles.display === 'none' || styles.visibility === 'hidden') {
