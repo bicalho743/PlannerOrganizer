@@ -13,11 +13,9 @@ enableXsrfProtection = false
 showSidebarNavigation = true
 showErrorDetails = false
 caching = true
-sidebarState = "expanded"
 
 [ui]
 hideTopBar = false
-hideSidebarNav = false
 
 [browser]
 gatherUsageStats = false

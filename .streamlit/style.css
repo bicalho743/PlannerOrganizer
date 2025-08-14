@@ -58,26 +58,43 @@ section[data-testid="stSidebar"] {
     flex: 0 0 250px !important;
     background: linear-gradient(180deg, #1E1F36 0%, #2E4A99 100%);
     border-right: 1px solid #4C566A;
-    position: fixed !important;
-    height: 100vh !important;
-    top: 0 !important;
-    left: 0 !important;
-    z-index: 999 !important;
 }
 
-/* Remover botão de colapsar sidebar */
+/* Remover TODOS os botões de colapsar sidebar */
 button[data-testid="collapsedControl"],
 .stSidebarCollapsedControl,
 [data-testid="stSidebarCollapseButton"],
-button[kind="header"] {
+button[kind="header"],
+button[data-testid="baseButton-header"],
+[data-testid="stSidebarNavSeparator"] + button,
+section[data-testid="stSidebar"] button[kind="header"],
+section[data-testid="stSidebar"] > div > button:first-child {
     display: none !important;
     visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
-/* Ajustar margem do conteúdo principal */
-.main, [data-testid="stAppViewContainer"] > div > div {
+/* Ajustar conteúdo principal para não sobrepor */
+.main {
     margin-left: 250px !important;
     padding-left: 1rem !important;
+    width: calc(100% - 250px) !important;
+}
+
+/* Ajustar container da aplicação */
+[data-testid="stAppViewContainer"] {
+    margin-left: 250px !important;
+    width: calc(100% - 250px) !important;
+}
+
+/* Forçar layout específico */
+.stApp > div:first-child {
+    display: flex !important;
+}
+
+section[data-testid="stSidebar"] {
+    flex-shrink: 0 !important;
 }
 
 /* Garantir que o conteúdo da sidebar seja visível */
@@ -111,12 +128,27 @@ section[data-testid="stSidebar"] {
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
+        position: relative !important;
+        height: 100vh !important;
     }
     
-    /* Remove controles de colapso */
+    /* Remove TODOS os controles de colapso */
     button[data-testid="baseButton-header"],
-    [data-testid="stSidebarNavSeparator"] + button {
+    [data-testid="stSidebarNavSeparator"] + button,
+    section[data-testid="stSidebar"] button[kind="header"],
+    section[data-testid="stSidebar"] > div > button:first-child,
+    button[title="Close sidebar"] {
         display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+    
+    /* Garantir que o conteúdo principal não seja cortado */
+    .main .block-container {
+        max-width: 100% !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
     }
 }
 

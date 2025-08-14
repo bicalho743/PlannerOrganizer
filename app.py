@@ -51,21 +51,46 @@ def force_sidebar_expanded():
             sidebar.style.width = '250px';
             sidebar.style.minWidth = '250px';
             sidebar.style.maxWidth = '250px';
+            sidebar.style.position = 'relative';
             sidebar.setAttribute('aria-expanded', 'true');
         }
         
-        // Remove botões de colapsar
-        const collapseButtons = document.querySelectorAll('button[data-testid="collapsedControl"], button[data-testid="stSidebarCollapseButton"]');
-        collapseButtons.forEach(btn => btn.style.display = 'none');
+        // Remove TODOS os tipos de botões de colapsar
+        const collapseSelectors = [
+            'button[data-testid="collapsedControl"]',
+            'button[data-testid="stSidebarCollapseButton"]',
+            'button[data-testid="baseButton-header"]',
+            'button[kind="header"]',
+            'button[title="Close sidebar"]',
+            'section[data-testid="stSidebar"] > div > button:first-child',
+            'section[data-testid="stSidebar"] button[kind="header"]'
+        ];
         
-        // Ajusta conteúdo principal
+        collapseSelectors.forEach(selector => {
+            const buttons = document.querySelectorAll(selector);
+            buttons.forEach(btn => {
+                btn.style.display = 'none';
+                btn.style.visibility = 'hidden';
+                btn.style.opacity = '0';
+                btn.style.pointerEvents = 'none';
+            });
+        });
+        
+        // Ajusta layout da aplicação
+        const appContainer = document.querySelector('[data-testid="stAppViewContainer"]');
+        if (appContainer) {
+            appContainer.style.marginLeft = '250px';
+            appContainer.style.width = 'calc(100% - 250px)';
+        }
+        
         const main = document.querySelector('.main');
         if (main) {
             main.style.marginLeft = '250px';
+            main.style.width = 'calc(100% - 250px)';
         }
     }
     
-    // Executar imediatamente e também após mudanças no DOM
+    // Executar imediatamente
     forceSidebarExpanded();
     
     // Observer para garantir que funcione mesmo com atualizações do Streamlit
@@ -73,7 +98,7 @@ def force_sidebar_expanded():
     observer.observe(document.body, { childList: true, subtree: true });
     
     // Executar periodicamente como backup
-    setInterval(forceSidebarExpanded, 1000);
+    setInterval(forceSidebarExpanded, 500);
     </script>
     """, unsafe_allow_html=True)
 
