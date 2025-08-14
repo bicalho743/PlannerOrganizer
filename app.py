@@ -988,9 +988,27 @@ except Exception as e:
 
 # Carregar JavaScript para fix do botão de colapso da sidebar
 try:
-    with open('.streamlit/sidebar_toggle_fix.js', 'r') as f:
-        sidebar_js = f.read()
-        st.components.v1.html(f"<script>{sidebar_js}</script>", height=0)
+    # Injetar script de correção da sidebar para deploy
+    sidebar_scripts = []
+    
+    # Script original
+    try:
+        with open('.streamlit/sidebar_toggle_fix.js', 'r') as f:
+            sidebar_scripts.append(f.read())
+    except FileNotFoundError:
+        pass
+    
+    # Script para deploy
+    try:
+        with open('.streamlit/sidebar_deploy_fix.js', 'r') as f:
+            sidebar_scripts.append(f.read())
+    except FileNotFoundError:
+        pass
+    
+    # Combinar e injetar scripts
+    if sidebar_scripts:
+        combined_script = '\n'.join(sidebar_scripts)
+        st.components.v1.html(f"<script>{combined_script}</script>", height=0)
 except FileNotFoundError:
     logger.warning("Arquivo sidebar_toggle_fix.js não encontrado")
 except Exception as e:

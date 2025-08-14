@@ -74,16 +74,9 @@ section[data-testid="stSidebar"]:has(.nav-buttons) ~ .main {
     margin-left: 250px !important;
 }
 
-/* BOTÃO DE COLAPSO - VISÍVEL APENAS PARA USUÁRIOS AUTENTICADOS */
-/* Esconder por padrão */
+/* BOTÃO DE COLAPSO - SEMPRE VISÍVEL E ACESSÍVEL */
+/* Garantir que o botão de colapso apareça sempre no deploy */
 button[data-testid="collapsedControl"] {
-    display: none !important;
-    visibility: hidden !important;
-}
-
-/* Mostrar apenas quando há navegação (usuário autenticado) */
-section[data-testid="stSidebar"]:has(.nav-buttons) ~ * button[data-testid="collapsedControl"],
-body:has(.nav-buttons) button[data-testid="collapsedControl"] {
     display: flex !important;
     visibility: visible !important;
     position: fixed !important;
@@ -101,6 +94,27 @@ body:has(.nav-buttons) button[data-testid="collapsedControl"] {
     height: 32px !important;
     transition: all 0.3s ease !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    opacity: 1 !important;
+}
+
+/* Fallback para diferentes seletores de botão de colapso */
+[data-testid="collapsedControl"],
+button[aria-label*="collapse" i],
+button[title*="collapse" i],
+button[kind="minimal"][data-testid*="button"] {
+    display: flex !important;
+    visibility: visible !important;
+    position: fixed !important;
+    top: 15px !important;
+    left: 15px !important;
+    z-index: 9999 !important;
+    background-color: rgba(30, 31, 54, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 6px !important;
+    padding: 8px !important;
+    cursor: pointer !important;
+    width: 32px !important;
+    height: 32px !important;
 }
 
 /* Hover effect para o botão de colapso */
@@ -200,22 +214,29 @@ div[data-testid="stSidebar"] div:first-child button svg path {
 }
 
 /* Setas de colapso específicas - sempre visíveis */
-button[aria-label*="collapse"],
-button[aria-label*="Collapse"],
-button[title*="collapse"],
-button[title*="Collapse"],
+button[aria-label*="collapse" i],
+button[aria-label*="Collapse" i],
+button[title*="collapse" i],
+button[title*="Collapse" i],
 button[data-testid="collapsedControl"],
-button[data-testid="baseButton-minimal"] {
+button[data-testid="baseButton-minimal"],
+button[kind="minimal"] {
     opacity: 1 !important;
     visibility: visible !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    background-color: transparent !important;
-    border: none !important;
-    padding: 4px !important;
-    border-radius: 4px !important;
+    background-color: rgba(30, 31, 54, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    padding: 8px !important;
+    border-radius: 6px !important;
     cursor: pointer !important;
+    position: fixed !important;
+    top: 15px !important;
+    left: 15px !important;
+    z-index: 9999 !important;
+    width: 32px !important;
+    height: 32px !important;
 }
 
 button[aria-label*="collapse"] svg,

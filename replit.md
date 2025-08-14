@@ -47,6 +47,7 @@ A interface é construída com Streamlit, focando em um design responsivo mobile
 - **Sistema de autenticação**: Firebase Auth funcionando corretamente com usuários multi-tenant (65 propostas carregadas para usuário Tâmara).
 - **Correção de Bug em Produtos (Agosto 2025)**: Corrigido erro "Database object has no attribute 'adicionar_produto'" - método correto é `add_produto`. Removido `time.sleep()` que causava erro de variável local.
 - **Correção Sidebar Render Deploy (Agosto 2025)**: Problema da barra lateral não aparecer no deploy do Render resolvido. Alterado `showSidebarNavigation = false` para `true` no config.toml, criado config_render.toml específico para produção, adicionado script render_sidebar_fix.py, removida cor vermelha confusa da seta de colapso (agora branca/neutra), configuradas variáveis de ambiente específicas da sidebar no render.yaml.
+- **Correção Crítica Botão Colapso Deploy (Agosto 2025)**: Resolvido problema crítico onde o botão de reabrir a sidebar desaparecia após deploy. Implementação de múltiplas camadas de proteção: CSS com seletores robustos sem dependência de `:has()`, JavaScript com fallbacks para diferentes seletores de botão, observer de DOM para mudanças dinâmicas, posicionamento fixo forçado com z-index alto, e injeção combinada de scripts tanto para desenvolvimento quanto produção.
 
 ## External Dependencies
 - **Streamlit**: Para a construção da interface web.
