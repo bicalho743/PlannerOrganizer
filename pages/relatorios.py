@@ -94,10 +94,33 @@ def show():
                         # Calcular dias desde o início
                         dias_serie = (receitas_diarias['data'] - receitas_diarias['data'].min()).dt.days
                         valores_serie = receitas_diarias['valor']
-
-                        # Calcular tendência
-                        z = np.polyfit(dias_serie, valores_serie, 1)
-                        p = np.poly1d(z)
+                        
+                        try:
+                            # Garantir que os dados sejam numéricos
+                            dias_serie_numeric = pd.to_numeric(dias_serie, errors='coerce')
+                            valores_serie_numeric = pd.to_numeric(valores_serie, errors='coerce')
+                            
+                            # Remover valores NaN
+                            mask = ~(dias_serie_numeric.isna() | valores_serie_numeric.isna())
+                            dias_clean = dias_serie_numeric[mask]
+                            valores_clean = valores_serie_numeric[mask]
+                            
+                            # Verificar se temos dados suficientes
+                            if len(dias_clean) >= 2:
+                                # Calcular tendência
+                                z = np.polyfit(dias_clean.values, valores_clean.values, 1)
+                                p = np.poly1d(z)
+                            else:
+                                # Se não há dados suficientes, usar média como projeção
+                                media_valores = valores_clean.mean() if len(valores_clean) > 0 else 0
+                                z = [0, media_valores]  # Linha horizontal na média
+                                p = np.poly1d(z)
+                        except Exception as e:
+                            st.error(f"Erro na análise de tendência: {str(e)}")
+                            # Fallback: usar média simples
+                            media_valores = receitas_diarias['valor'].mean()
+                            z = [0, media_valores]
+                            p = np.poly1d(z)
 
                         # Criar dados para projeção
                         dias_futuros = pd.date_range(
@@ -106,8 +129,20 @@ def show():
                             freq='D'
                         )
 
-                        dias_projecao = (dias_futuros - receitas_diarias['data'].min()).dt.days
-                        valores_projecao = p(dias_projecao)
+                        try:
+                            dias_projecao = (dias_futuros - receitas_diarias['data'].min()).dt.days
+                            dias_projecao_numeric = pd.to_numeric(dias_projecao, errors='coerce')
+                            # Remover NaN e usar valores válidos
+                            dias_projecao_clean = dias_projecao_numeric.fillna(0).values
+                            valores_projecao = p(dias_projecao_clean)
+                            
+                            # Garantir que os valores de projeção sejam não negativos
+                            valores_projecao = np.maximum(valores_projecao, 0)
+                        except Exception as e:
+                            st.error(f"Erro na projeção: {str(e)}")
+                            # Fallback: projeção plana
+                            media_valores = receitas_diarias['valor'].mean()
+                            valores_projecao = np.full(len(dias_futuros), media_valores)
 
                         # Criar gráfico
                         fig = go.Figure()
