@@ -65,23 +65,36 @@ section[data-testid="stSidebar"] ~ .main {
     margin-left: 250px !important;
 }
 
-/* SIDEBAR SEMPRE VISÍVEL - Ocultar botão de toggle completamente */
-button[data-testid="collapsedControl"] {
+/* REMOVER COMPLETAMENTE QUALQUER BOTÃO DE TOGGLE */
+button[data-testid="collapsedControl"],
+button[data-testid="baseButton-minimal"],
+button[aria-label*="collapse"],
+button[aria-label*="Collapse"],
+button[title*="collapse"],
+button[title*="Collapse"],
+.stSidebar button[data-testid="baseButton-minimal"],
+section[data-testid="stSidebar"] > div:first-child > button,
+div[data-testid="stSidebar"] > div:first-child > button {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
     pointer-events: none !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
 }
 
-/* ÍCONES E SETAS - Estilo unificado para todos os ícones da sidebar */
+/* OCULTAR QUALQUER SVG DE SETAS DE TOGGLE */
 button[data-testid="collapsedControl"] svg,
-button[data-testid="collapsedControl"] svg path,
-section[data-testid="stSidebar"] button svg,
-section[data-testid="stSidebar"] button svg path {
-    color: #ffffff !important;
-    fill: #ffffff !important;
-    stroke: #ffffff !important;
-    opacity: 0.8 !important;
+button[data-testid="baseButton-minimal"] svg,
+button[aria-label*="collapse"] svg,
+section[data-testid="stSidebar"] > div:first-child > button svg {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
 }
 
 /* BOTÕES DA SIDEBAR - Estilo unificado para navegação */
@@ -142,17 +155,33 @@ section[data-testid="stSidebar"] div[data-testid="stExpander"] button:hover {
     border-color: #2B547E !important;
 }
 
-/* OCULTAR TODOS OS BOTÕES DE TOGGLE - Sidebar sempre visível */
-.stApp button[data-testid="collapsedControl"],
-.main button[data-testid="collapsedControl"],
-div[data-testid="stMain"] button[data-testid="collapsedControl"],
-button[data-testid="baseButton-minimal"],
-button[aria-label*="collapse"],
-button[aria-label*="Collapse"] {
+/* FORÇA SIDEBAR SEMPRE EXPANDIDA - SEM POSSIBILIDADE DE COLAPSO */
+section[data-testid="stSidebar"] {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    height: 100vh !important;
+    transform: none !important;
+    transition: none !important;
+}
+
+/* FORÇA OCULTAR ABSOLUTAMENTE TODOS OS CONTROLES DE TOGGLE */
+*[data-testid*="collaps"],
+*[aria-label*="ollaps"],
+*[title*="ollaps"],
+*[class*="ollaps"],
+button:has([data-testid*="collaps"]),
+button:has([aria-label*="ollaps"]),
+div:has(button[data-testid*="collaps"]) {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
     pointer-events: none !important;
+    position: absolute !important;
+    left: -10000px !important;
+    top: -10000px !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 /* ========================================

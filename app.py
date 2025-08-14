@@ -84,6 +84,38 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# JAVASCRIPT para forçar sidebar sempre visível
+st.markdown("""
+<script>
+// Remover qualquer botão de colapso quando a página carrega
+document.addEventListener('DOMContentLoaded', function() {
+    function hideToggleButtons() {
+        const selectors = [
+            'button[data-testid="collapsedControl"]',
+            'button[data-testid="baseButton-minimal"]',
+            'button[aria-label*="collapse" i]',
+            'button[title*="collapse" i]'
+        ];
+        
+        selectors.forEach(selector => {
+            const buttons = document.querySelectorAll(selector);
+            buttons.forEach(button => {
+                button.style.display = 'none';
+                button.style.visibility = 'hidden';
+                button.style.opacity = '0';
+                button.style.pointerEvents = 'none';
+                button.remove();
+            });
+        });
+    }
+    
+    // Executar na carga e continuamente
+    hideToggleButtons();
+    setInterval(hideToggleButtons, 500);
+});
+</script>
+""", unsafe_allow_html=True)
+
 # Scripts de inicialização removidos para evitar loops
 
 # JavaScript removido para evitar loops infinitos
