@@ -66,14 +66,16 @@ div[data-testid="stSidebarContent"] iframe {
     height: 0 !important;
 }
 
-/* Remover iframe de desenvolvimento que aparece como sidebar extra */
-.stApp > div:first-child > div:first-child {
+/* Remover elementos de desenvolvimento do Streamlit */
+.stApp > div:first-child {
     display: none !important;
 }
 
-/* Garantir que apenas nossa sidebar personalizada seja visível */
-.stApp > section[data-testid="stSidebar"]:not(:first-child) {
-    display: block !important;
+/* Resetar layout da aplicação */
+.stApp {
+    display: flex !important;
+    flex-direction: row !important;
+    height: 100vh !important;
 }
 
 /* SIDEBAR SEMPRE VISÍVEL E EXPANDIDA */
@@ -104,28 +106,33 @@ section[data-testid="stSidebar"] > div > button:first-child {
     pointer-events: none !important;
 }
 
-/* Layout flex para app principal */
-.stApp {
-    display: flex !important;
-    flex-direction: row !important;
-}
-
-/* Sidebar com largura fixa */
+/* Sidebar fixa à esquerda */
 section[data-testid="stSidebar"] {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 250px !important;
+    height: 100vh !important;
+    z-index: 1000 !important;
     flex-shrink: 0 !important;
-    flex-grow: 0 !important;
-    order: 1 !important;
 }
 
-/* Conteúdo principal ocupa resto do espaço */
-.main,
+/* Conteúdo principal com margem para a sidebar */
+.main {
+    margin-left: 250px !important;
+    width: calc(100vw - 250px) !important;
+    padding: 1rem !important;
+}
+
+/* Container da aplicação ajustado */
 [data-testid="stAppViewContainer"] {
-    flex: 1 !important;
-    order: 2 !important;
-    margin-left: 0 !important;
-    padding-left: 1rem !important;
-    width: auto !important;
-    max-width: none !important;
+    margin-left: 250px !important;
+    width: calc(100vw - 250px) !important;
+}
+
+/* Remover qualquer elemento que apareça na direita */
+.stApp > *:last-child:not(section[data-testid="stSidebar"]) {
+    display: none !important;
 }
 
 /* Garantir que o conteúdo da sidebar seja visível */

@@ -85,29 +85,37 @@ def force_sidebar_expanded():
             el.style.visibility = 'hidden';
         });
         
-        // Força layout flex na aplicação
-        const app = document.querySelector('.stApp');
-        if (app) {
-            app.style.display = 'flex';
-            app.style.flexDirection = 'row';
-        }
-        
-        // Ajusta sidebar
+        // Força sidebar à esquerda e fixa
         const sidebar = document.querySelector('[data-testid="stSidebar"]');
         if (sidebar) {
-            sidebar.style.order = '1';
-            sidebar.style.flexShrink = '0';
-            sidebar.style.flexGrow = '0';
+            sidebar.style.position = 'fixed';
+            sidebar.style.left = '0';
+            sidebar.style.top = '0';
+            sidebar.style.width = '250px';
+            sidebar.style.height = '100vh';
+            sidebar.style.zIndex = '1000';
         }
         
         // Ajusta conteúdo principal
+        const main = document.querySelector('.main');
+        if (main) {
+            main.style.marginLeft = '250px';
+            main.style.width = 'calc(100vw - 250px)';
+        }
+        
         const appContainer = document.querySelector('[data-testid="stAppViewContainer"]');
         if (appContainer) {
-            appContainer.style.flex = '1';
-            appContainer.style.order = '2';
-            appContainer.style.marginLeft = '0';
-            appContainer.style.width = 'auto';
+            appContainer.style.marginLeft = '250px';
+            appContainer.style.width = 'calc(100vw - 250px)';
         }
+        
+        // Remove elementos que aparecem na direita
+        const rightElements = document.querySelectorAll('.stApp > *:last-child:not(section[data-testid="stSidebar"])');
+        rightElements.forEach(el => {
+            if (!el.hasAttribute('data-testid') || el.getAttribute('data-testid') !== 'stSidebar') {
+                el.style.display = 'none';
+            }
+        });
     }
     
     // Executar imediatamente
