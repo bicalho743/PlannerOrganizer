@@ -1334,9 +1334,9 @@ from utils.page_config import apply_page_header, apply_page_footer
 apply_page_header()
 apply_page_footer()
 
-# Aplicar correção mobile para sidebar
-from utils.simple_mobile_fix import apply_mobile_sidebar_fix
-apply_mobile_sidebar_fix()
+# Correção mobile desativada para evitar conflito com toggle nativo
+# from utils.simple_mobile_fix import apply_mobile_sidebar_fix
+# apply_mobile_sidebar_fix()
 
 # Roteamento de páginas
 try:
