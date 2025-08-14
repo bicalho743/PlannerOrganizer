@@ -74,128 +74,32 @@ section[data-testid="stSidebar"]:has(.nav-buttons) ~ .main {
     margin-left: 250px !important;
 }
 
-/* BOTÃO DE COLAPSO - INTELIGENTE BASEADO NO ESTADO DA SIDEBAR */
-/* Esconder por padrão */
+/* BOTÃO DE COLAPSO - TEMPORARIAMENTE DESABILITADO */
+/* Remover completamente a funcionalidade de colapso até resolvermos os conflitos */
 button[data-testid="collapsedControl"] {
     display: none !important;
     visibility: hidden !important;
+    pointer-events: none !important;
 }
 
-/* Mostrar apenas quando usuário está autenticado E sidebar está expandida */
-section[data-testid="stSidebar"] ~ * button[data-testid="collapsedControl"],
-body.authenticated button[data-testid="collapsedControl"] {
-    display: flex !important;
+/* FORÇAR SIDEBAR SEMPRE VISÍVEL */
+/* Garantir que a sidebar sempre apareça quando usuário está autenticado */
+section[data-testid="stSidebar"] {
+    display: block !important;
     visibility: visible !important;
-    position: fixed !important;
-    top: 15px !important;
-    left: 15px !important;
-    z-index: 9999 !important;
-    background-color: rgba(30, 31, 54, 0.9) !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    border-radius: 6px !important;
-    padding: 8px !important;
-    cursor: pointer !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 32px !important;
-    height: 32px !important;
-    transition: all 0.3s ease !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    width: 250px !important;
+    min-width: 250px !important;
+    max-width: 250px !important;
     opacity: 1 !important;
 }
 
-/* BOTÃO DE REABRIR SIDEBAR - FORÇAR VISIBILIDADE */
-/* Garantir que botão customizado JS sempre apareça */
-.custom-sidebar-toggle {
-    position: fixed !important;
-    top: 15px !important;
-    left: 15px !important;
-    z-index: 10001 !important;
-    background-color: rgba(30, 31, 54, 0.9) !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    border-radius: 6px !important;
-    padding: 8px 10px !important;
-    cursor: pointer !important;
-    color: white !important;
-    font-size: 16px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 32px !important;
-    height: 32px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-    transition: all 0.3s ease !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    font-family: monospace !important;
-}
-
-.custom-sidebar-toggle:hover {
-    background-color: rgba(30, 31, 54, 1) !important;
-    transform: scale(1.05) !important;
-}
-
-/* Fallback usando pseudo-elemento - sempre tentar mostrar quando colapsada */
-body.sidebar-collapsed::before {
-    content: "☰";
-    position: fixed !important;
-    top: 15px !important;
-    left: 15px !important;
-    z-index: 10000 !important;
-    background-color: rgba(30, 31, 54, 0.9) !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    border-radius: 6px !important;
-    padding: 8px 10px !important;
-    cursor: pointer !important;
-    color: white !important;
-    font-size: 16px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 32px !important;
-    height: 32px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-    transition: all 0.3s ease !important;
-    font-family: monospace !important;
-    line-height: 1 !important;
-    text-align: center !important;
-}
-
-body.sidebar-collapsed::before:hover {
-    background-color: rgba(30, 31, 54, 1) !important;
-    transform: scale(1.05) !important;
-}
-
-/* DETECTAR AUTOMATICAMENTE SIDEBAR COLAPSADA */
-/* Quando sidebar tem largura muito pequena, assumir que está colapsada */
-section[data-testid="stSidebar"][style*="width: 0"] ~ * body,
-section[data-testid="stSidebar"][style*="display: none"] ~ * body {
-    /* Forçar classe collapsed automaticamente */
-}
-
-section[data-testid="stSidebar"][style*="width: 0"] ~ * body::before,
-section[data-testid="stSidebar"][style*="display: none"] ~ * body::before {
-    content: "☰";
-    position: fixed !important;
-    top: 15px !important;
-    left: 15px !important;
-    z-index: 10002 !important;
-    background-color: rgba(30, 31, 54, 0.9) !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    border-radius: 6px !important;
-    padding: 8px 10px !important;
-    cursor: pointer !important;
-    color: white !important;
-    font-size: 16px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 32px !important;
-    height: 32px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-    font-family: monospace !important;
-    line-height: 1 !important;
-    text-align: center !important;
+/* Remover todos os botões personalizados e pseudo-elementos */
+.custom-sidebar-toggle,
+body.sidebar-collapsed::before,
+body.sidebar-collapsed::after,
+section[data-testid="stSidebar"][style*="width: 0"] ~ * body::before {
+    display: none !important;
+    visibility: hidden !important;
 }
 
 /* Hover effect para o botão de colapso */

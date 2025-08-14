@@ -996,33 +996,10 @@ except FileNotFoundError:
 except Exception as e:
     logger.error(f"Erro ao carregar CSS: {e}")
 
-# Carregar JavaScript para fix do botão de colapso da sidebar
-try:
-    # Injetar script de correção da sidebar para deploy
-    sidebar_scripts = []
-    
-    # Script original
-    try:
-        with open('.streamlit/sidebar_toggle_fix.js', 'r') as f:
-            sidebar_scripts.append(f.read())
-    except FileNotFoundError:
-        pass
-    
-    # Script para deploy
-    try:
-        with open('.streamlit/sidebar_deploy_fix.js', 'r') as f:
-            sidebar_scripts.append(f.read())
-    except FileNotFoundError:
-        pass
-    
-    # Combinar e injetar scripts
-    if sidebar_scripts:
-        combined_script = '\n'.join(sidebar_scripts)
-        st.components.v1.html(f"<script>{combined_script}</script>", height=0)
-except FileNotFoundError:
-    logger.warning("Arquivo sidebar_toggle_fix.js não encontrado")
-except Exception as e:
-    logger.error(f"Erro ao carregar JavaScript de fix da sidebar: {e}")
+# JavaScript temporariamente desabilitado para sidebar
+# Removemos todos os scripts conflitantes que manipulam a sidebar
+# A sidebar agora fica sempre visível via CSS
+logger.info("Scripts de manipulação da sidebar temporariamente desabilitados")
 
 # Sem título na barra lateral - removido conforme solicitação
 
@@ -1085,103 +1062,19 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
     # Container dos botões com fundo escuro
     st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
 
-# JavaScript para criar seta customizada de colapso
+# JavaScript simplificado - sidebar sempre visível
 st.markdown("""
 <script>
-let customArrowButton = null;
+// SIDEBAR SEMPRE VISÍVEL - VERSÃO SIMPLIFICADA
+console.log('📌 Sidebar forçada a permanecer sempre visível');
 
-function createCustomSidebarArrow() {
-    // Remover seta existente se houver
-    if (customArrowButton) {
-        customArrowButton.remove();
-    }
-    
-    // Criar nova seta customizada
-    customArrowButton = document.createElement('button');
-    customArrowButton.className = 'custom-sidebar-arrow';
-    customArrowButton.title = 'Recolher/Expandir Barra Lateral';
-    
-    // Verificar se a sidebar está visível para definir a direção da seta
-    const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-    if (sidebar) {
-        const isCollapsed = sidebar.style.transform === 'translateX(-100%)' || 
-                           sidebar.offsetWidth < 50 ||
-                           getComputedStyle(sidebar).display === 'none';
-        
-        if (isCollapsed) {
-            customArrowButton.classList.add('sidebar-collapsed');
-        }
-    }
-    
-    // Adicionar funcionalidade de clique
-    customArrowButton.addEventListener('click', function() {
-        // Tentar encontrar o botão original do Streamlit
-        const originalButton = document.querySelector('button[data-testid="collapsedControl"]') ||
-                              document.querySelector('button[data-testid="baseButton-minimal"]') ||
-                              document.querySelector('section[data-testid="stSidebar"] button[kind="secondary"]');
-        
-        if (originalButton) {
-            originalButton.click();
-        } else {
-            // Fallback: tentar disparar evento customizado
-            const sidebarToggleEvent = new CustomEvent('sidebarToggle');
-            document.dispatchEvent(sidebarToggleEvent);
-        }
-        
-        // Alternar classe da seta
-        setTimeout(() => {
-            this.classList.toggle('sidebar-collapsed');
-        }, 100);
-    });
-    
-    // Adicionar ao DOM
-    document.body.appendChild(customArrowButton);
-}
-
-function ensureCustomArrowVisible() {
-    // Verificar se a seta customizada existe e está visível
-    if (!customArrowButton || !document.body.contains(customArrowButton)) {
-        createCustomSidebarArrow();
-    }
-    
-    // Tentar modificar setas originais para serem invisíveis
-    const originalButtons = document.querySelectorAll([
-        'button[data-testid="collapsedControl"]',
-        'button[data-testid="baseButton-minimal"]',
-        'section[data-testid="stSidebar"] button[kind="secondary"]'
-    ].join(','));
-    
-    originalButtons.forEach(btn => {
-        if (btn && btn !== customArrowButton) {
-            btn.style.opacity = '0';
-            btn.style.visibility = 'hidden';
-            btn.style.pointerEvents = 'none';
-        }
-    });
-}
-
-// Executar quando a página carregar
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(createCustomSidebarArrow, 500);
-});
-
-// Executar periodicamente para garantir que a seta esteja sempre visível
-setInterval(ensureCustomArrowVisible, 1000);
-
-// Observar mudanças no DOM
-const observer = new MutationObserver(ensureCustomArrowVisible);
-observer.observe(document.body, { childList: true, subtree: true });
-
-// CORREÇÃO ESPECÍFICA PARA RENDER - FORÇAR SIDEBAR
-console.log('🔧 Aplicando correção da sidebar para Render...');
-
-function forceSidebarRender() {
+// Função simples para garantir sidebar visível
+function ensureSidebarVisible() {
     const sidebar = document.querySelector('[data-testid="stSidebar"]');
-    const sidebarContent = document.querySelector('section[data-testid="stSidebar"] > div');
-    const mainContainer = document.querySelector('.main');
+    const hasNavButtons = document.querySelector('.nav-buttons');
     
-    if (sidebar) {
-        // Forçar sidebar visível com estilo inline
+    if (sidebar && hasNavButtons) {
+        // Forçar sidebar sempre visível para usuários autenticados
         sidebar.style.cssText = `
             display: block !important;
             visibility: visible !important;
@@ -1189,102 +1082,30 @@ function forceSidebarRender() {
             width: 250px !important;
             min-width: 250px !important;
             max-width: 250px !important;
-            flex: 0 0 250px !important;
-            position: relative !important;
-            transform: translateX(0) !important;
-            transition: none !important;
         `;
-        console.log('✅ Sidebar forçada a aparecer no Render');
+        console.log('✅ Sidebar mantida visível');
+    } else if (sidebar && !hasNavButtons) {
+        // Esconder para usuários não autenticados
+        sidebar.style.display = 'none';
     }
     
-    if (sidebarContent) {
-        sidebarContent.style.cssText = `
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            width: 100% !important;
-        `;
-        console.log('✅ Conteúdo da sidebar forçado no Render');
-    }
-    
-    // Ajustar container principal para deixar espaço para sidebar
-    if (mainContainer && sidebar) {
-        mainContainer.style.marginLeft = '250px';
-    }
-    
-    // Remover ou desabilitar botões de colapso que podem esconder a sidebar
+    // Desabilitar todos os botões de colapso
     const collapseButtons = document.querySelectorAll([
         '[data-testid="collapsedControl"]',
-        '[data-testid="baseButton-minimal"]',
+        'button[data-testid="baseButton-minimal"]',
         'button[kind="secondary"]'
     ].join(', '));
     
     collapseButtons.forEach(btn => {
-        if (btn && btn.onclick) {
-            btn.onclick = null; // Remover evento que pode colapsar
-        }
-        // Se a sidebar estiver colapsada, forçar expansão
-        if (sidebar && sidebar.offsetWidth < 100) {
-            btn.click();
-        }
+        btn.style.display = 'none';
+        btn.style.visibility = 'hidden';
+        btn.style.pointerEvents = 'none';
     });
 }
 
-// Controlar visibilidade da sidebar baseado na presença de navegação
-function controlSidebarVisibility() {
-    const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-    const hasNavButtons = document.querySelector('.nav-buttons');
-    const collapseButton = document.querySelector('button[data-testid="collapsedControl"]');
-    
-    if (sidebar) {
-        if (hasNavButtons) {
-            sidebar.style.display = 'block';
-            sidebar.style.visibility = 'visible';
-            sidebar.style.width = '250px';
-            sidebar.style.minWidth = '250px';
-            console.log('👤 Usuário autenticado - sidebar habilitada');
-        } else {
-            sidebar.style.display = 'none';
-            sidebar.style.visibility = 'hidden';
-            sidebar.style.width = '0';
-            sidebar.style.minWidth = '0';
-            console.log('🚫 Usuário não autenticado - sidebar oculta');
-        }
-    }
-    
-    // Sempre esconder a seta de colapso
-    if (collapseButton) {
-        collapseButton.style.display = 'none';
-        collapseButton.style.visibility = 'hidden';
-    }
-}
-
-// Executar controle de visibilidade
-controlSidebarVisibility();
-document.addEventListener('DOMContentLoaded', controlSidebarVisibility);
-
-// Executar para Render apenas se autenticado
-if (document.querySelector('.nav-buttons')) {
-    forceSidebarRender();
-    document.addEventListener('DOMContentLoaded', forceSidebarRender);
-}
-
-// Executar periodicamente para verificar estado de autenticação
-let renderAttempts = 0;
-const authCheckInterval = setInterval(() => {
-    controlSidebarVisibility();
-    
-    // Se autenticado, executar correções do Render
-    if (document.querySelector('.nav-buttons')) {
-        forceSidebarRender();
-    }
-    
-    renderAttempts++;
-    if (renderAttempts > 30) {
-        clearInterval(authCheckInterval);
-        console.log('🔚 Monitoramento de autenticação finalizado');
-    }
-}, 500);
+// Executar periodicamente (menos frequente)
+document.addEventListener('DOMContentLoaded', ensureSidebarVisible);
+setInterval(ensureSidebarVisible, 3000);
 
 </script>
 """, unsafe_allow_html=True)
