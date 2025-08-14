@@ -85,42 +85,19 @@ def force_sidebar_expanded():
             el.style.visibility = 'hidden';
         });
         
-        // Força sidebar à esquerda e fixa
+        // Ajustar apenas a largura da sidebar e margem do conteúdo
         const sidebar = document.querySelector('[data-testid="stSidebar"]');
         if (sidebar) {
-            sidebar.style.position = 'fixed';
-            sidebar.style.left = '0';
-            sidebar.style.top = '0';
             sidebar.style.width = '250px';
-            sidebar.style.height = '100vh';
-            sidebar.style.zIndex = '1000';
+            sidebar.style.minWidth = '250px';
+            sidebar.style.maxWidth = '250px';
         }
         
-        // Ajusta conteúdo principal
+        // Ajustar margem do conteúdo principal
         const main = document.querySelector('.main');
         if (main) {
             main.style.marginLeft = '250px';
-            main.style.width = 'calc(100vw - 250px)';
         }
-        
-        const appContainer = document.querySelector('[data-testid="stAppViewContainer"]');
-        if (appContainer) {
-            appContainer.style.marginLeft = '250px';
-            appContainer.style.width = 'calc(100vw - 250px)';
-        }
-        
-        // Garantir que o conteúdo principal seja visível
-        const mainContent = document.querySelector('[data-testid="stAppViewContainer"]');
-        if (mainContent) {
-            mainContent.style.display = 'block';
-            mainContent.style.visibility = 'visible';
-        }
-        
-        // Apenas ocultar elementos específicos de desenvolvimento
-        const devElements = document.querySelectorAll('div[data-testid*="dev"], iframe[src*="dev"], .stApp > iframe');
-        devElements.forEach(el => {
-            el.style.display = 'none';
-        });
     }
     
     // Executar imediatamente

@@ -48,28 +48,16 @@ header[data-testid="stHeader"] {
    SIDEBAR - DESIGN UNIFICADO
    ======================================== */
 
-/* OCULTAR BARRA DE DESENVOLVIMENTO E SIDEBAR DE DEBUG */
-.stDeployButton,
-[data-testid="stDevTools"],
-.stDevTools,
-.stAppDeployButton,
-[data-testid="stAppDeployButton"],
-iframe[title="streamlit_app"],
-.stAppEmbeddingId-*,
+/* OCULTAR APENAS ELEMENTOS DE DESENVOLVIMENTO */
 [data-testid="stSidebarNav"],
 .stSidebarNav,
-iframe[src*="/_stcore/"],
-div[data-testid="stSidebarContent"] iframe {
+iframe[src*="/_stcore/"] {
     display: none !important;
-    visibility: hidden !important;
-    width: 0 !important;
-    height: 0 !important;
 }
 
-/* Layout da aplicação principal */
+/* Layout normal da aplicação */
 .stApp {
     display: block !important;
-    height: 100vh !important;
 }
 
 /* SIDEBAR SEMPRE VISÍVEL E EXPANDIDA */
@@ -100,40 +88,19 @@ section[data-testid="stSidebar"] > div > button:first-child {
     pointer-events: none !important;
 }
 
-/* Sidebar fixa à esquerda */
+/* Sidebar com layout padrão mas sem botões de colapsar */
 section[data-testid="stSidebar"] {
-    position: fixed !important;
-    left: 0 !important;
-    top: 0 !important;
     width: 250px !important;
-    height: 100vh !important;
-    z-index: 1000 !important;
-    flex-shrink: 0 !important;
+    min-width: 250px !important;
+    max-width: 250px !important;
+    background: linear-gradient(180deg, #1E1F36 0%, #2E4A99 100%);
+    border-right: 1px solid #4C566A;
 }
 
-/* Conteúdo principal com margem para a sidebar */
+/* Conteúdo principal com margem simples */
 .main {
     margin-left: 250px !important;
-    width: calc(100vw - 250px) !important;
     padding: 1rem !important;
-}
-
-/* Container da aplicação ajustado */
-[data-testid="stAppViewContainer"] {
-    margin-left: 250px !important;
-    width: calc(100vw - 250px) !important;
-}
-
-/* Garantir visibilidade do conteúdo principal */
-.stApp > div {
-    display: block !important;
-}
-
-/* Apenas ocultar elementos específicos de desenvolvimento */
-.stApp > div[data-testid*="dev"],
-.stApp > iframe,
-div[class*="stDev"] {
-    display: none !important;
 }
 
 /* Garantir que o conteúdo da sidebar seja visível */

@@ -9,7 +9,6 @@ maxUploadSize = 200
 [client]
 showSidebarNavigation = false
 showErrorDetails = false
-toolbarMode = "minimal"
 
 [ui]
 hideTopBar = false
