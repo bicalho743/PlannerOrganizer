@@ -986,6 +986,16 @@ except FileNotFoundError:
 except Exception as e:
     logger.error(f"Erro ao carregar CSS: {e}")
 
+# Carregar JavaScript para fix do botão de colapso da sidebar
+try:
+    with open('.streamlit/sidebar_toggle_fix.js', 'r') as f:
+        sidebar_js = f.read()
+        st.components.v1.html(f"<script>{sidebar_js}</script>", height=0)
+except FileNotFoundError:
+    logger.warning("Arquivo sidebar_toggle_fix.js não encontrado")
+except Exception as e:
+    logger.error(f"Erro ao carregar JavaScript de fix da sidebar: {e}")
+
 # Sem título na barra lateral - removido conforme solicitação
 
 # CSS para ocultar navegação automática e ajustar a barra lateral

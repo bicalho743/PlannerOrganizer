@@ -73,10 +73,44 @@ section[data-testid="stSidebar"]:has(.nav-buttons) ~ .main {
     margin-left: 250px !important;
 }
 
-/* ESCONDER SETA DE COLAPSO DA SIDEBAR */
+/* BOTÃO DE COLAPSO DA SIDEBAR - SEMPRE VISÍVEL */
 button[data-testid="collapsedControl"] {
-    display: none !important;
-    visibility: hidden !important;
+    display: flex !important;
+    visibility: visible !important;
+    position: fixed !important;
+    top: 15px !important;
+    left: 15px !important;
+    z-index: 9999 !important;
+    background-color: rgba(30, 31, 54, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 6px !important;
+    padding: 8px !important;
+    cursor: pointer !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Hover effect para o botão de colapso */
+button[data-testid="collapsedControl"]:hover {
+    background-color: rgba(30, 31, 54, 1) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Responsividade para mobile */
+@media (max-width: 768px) {
+    button[data-testid="collapsedControl"] {
+        top: 10px !important;
+        left: 10px !important;
+        width: 28px !important;
+        height: 28px !important;
+        padding: 6px !important;
+    }
 }
 
 /* Setas de colapso da sidebar com cor neutra e discreta */
@@ -86,7 +120,9 @@ button[data-testid="baseButton-minimal"] svg,
 section[data-testid="stSidebar"] button svg {
     color: #ffffff !important;
     fill: #ffffff !important;
-    opacity: 0.7 !important;
+    opacity: 0.9 !important;
+    width: 16px !important;
+    height: 16px !important;
 }
 
 button[data-testid="collapsedControl"] svg path,
