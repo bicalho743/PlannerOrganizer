@@ -66,15 +66,9 @@ div[data-testid="stSidebarContent"] iframe {
     height: 0 !important;
 }
 
-/* Remover elementos de desenvolvimento do Streamlit */
-.stApp > div:first-child {
-    display: none !important;
-}
-
-/* Resetar layout da aplicação */
+/* Layout da aplicação principal */
 .stApp {
-    display: flex !important;
-    flex-direction: row !important;
+    display: block !important;
     height: 100vh !important;
 }
 
@@ -130,8 +124,15 @@ section[data-testid="stSidebar"] {
     width: calc(100vw - 250px) !important;
 }
 
-/* Remover qualquer elemento que apareça na direita */
-.stApp > *:last-child:not(section[data-testid="stSidebar"]) {
+/* Garantir visibilidade do conteúdo principal */
+.stApp > div {
+    display: block !important;
+}
+
+/* Apenas ocultar elementos específicos de desenvolvimento */
+.stApp > div[data-testid*="dev"],
+.stApp > iframe,
+div[class*="stDev"] {
     display: none !important;
 }
 

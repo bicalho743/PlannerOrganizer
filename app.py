@@ -109,12 +109,17 @@ def force_sidebar_expanded():
             appContainer.style.width = 'calc(100vw - 250px)';
         }
         
-        // Remove elementos que aparecem na direita
-        const rightElements = document.querySelectorAll('.stApp > *:last-child:not(section[data-testid="stSidebar"])');
-        rightElements.forEach(el => {
-            if (!el.hasAttribute('data-testid') || el.getAttribute('data-testid') !== 'stSidebar') {
-                el.style.display = 'none';
-            }
+        // Garantir que o conteúdo principal seja visível
+        const mainContent = document.querySelector('[data-testid="stAppViewContainer"]');
+        if (mainContent) {
+            mainContent.style.display = 'block';
+            mainContent.style.visibility = 'visible';
+        }
+        
+        // Apenas ocultar elementos específicos de desenvolvimento
+        const devElements = document.querySelectorAll('div[data-testid*="dev"], iframe[src*="dev"], .stApp > iframe');
+        devElements.forEach(el => {
+            el.style.display = 'none';
         });
     }
     
