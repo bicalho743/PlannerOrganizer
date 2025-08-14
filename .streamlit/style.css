@@ -155,33 +155,49 @@ section[data-testid="stSidebar"] div[data-testid="stExpander"] button:hover {
     border-color: #2B547E !important;
 }
 
-/* FORÇA SIDEBAR SEMPRE EXPANDIDA - SEM POSSIBILIDADE DE COLAPSO */
+/* SIDEBAR FIXA E SEMPRE VISÍVEL - Ajuste do layout */
 section[data-testid="stSidebar"] {
-    position: fixed !important;
-    left: 0 !important;
-    top: 0 !important;
-    height: 100vh !important;
+    width: 250px !important;
+    min-width: 250px !important;
+    max-width: 250px !important;
+    flex: 0 0 250px !important;
     transform: none !important;
     transition: none !important;
 }
 
-/* FORÇA OCULTAR ABSOLUTAMENTE TODOS OS CONTROLES DE TOGGLE */
+/* Ajuste do conteúdo principal para não sobrepor */
+.main .block-container {
+    padding-left: 0 !important;
+    max-width: 100% !important;
+}
+
+/* REMOVER TOTALMENTE QUALQUER VESTÍGIO DE TOGGLE */
 *[data-testid*="collaps"],
-*[aria-label*="ollaps"],
-*[title*="ollaps"],
-*[class*="ollaps"],
-button:has([data-testid*="collaps"]),
-button:has([aria-label*="ollaps"]),
-div:has(button[data-testid*="collaps"]) {
+*[aria-label*="collaps"],  
+*[title*="collaps"],
+button[data-testid="collapsedControl"],
+button[data-testid="baseButton-minimal"],
+section[data-testid="stSidebar"] > div:first-child > button,
+div[data-testid="stSidebar"] > div:first-child > button {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
     pointer-events: none !important;
     position: absolute !important;
-    left: -10000px !important;
-    top: -10000px !important;
+    left: -99999px !important;
+    top: -99999px !important;
     width: 0 !important;
     height: 0 !important;
+    z-index: -99999 !important;
+}
+
+/* Prevenir qualquer hover ou interação */
+*[data-testid*="collaps"]:hover,
+*[aria-label*="collaps"]:hover,
+section[data-testid="stSidebar"] > div:first-child > button:hover {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
 }
 
 /* ========================================

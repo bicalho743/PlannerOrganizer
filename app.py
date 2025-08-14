@@ -84,35 +84,44 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# JAVASCRIPT para forçar sidebar sempre visível
+# JAVASCRIPT para remover completamente toggle da sidebar
 st.markdown("""
 <script>
-// Remover qualquer botão de colapso quando a página carrega
-document.addEventListener('DOMContentLoaded', function() {
-    function hideToggleButtons() {
-        const selectors = [
-            'button[data-testid="collapsedControl"]',
-            'button[data-testid="baseButton-minimal"]',
-            'button[aria-label*="collapse" i]',
-            'button[title*="collapse" i]'
-        ];
-        
-        selectors.forEach(selector => {
-            const buttons = document.querySelectorAll(selector);
-            buttons.forEach(button => {
-                button.style.display = 'none';
-                button.style.visibility = 'hidden';
-                button.style.opacity = '0';
-                button.style.pointerEvents = 'none';
-                button.remove();
-            });
-        });
-    }
+function removeToggleButton() {
+    // Selecionar e remover TODOS os elementos de toggle
+    const selectors = [
+        'button[data-testid="collapsedControl"]',
+        'button[data-testid="baseButton-minimal"]', 
+        'button[aria-label*="collapse"]',
+        'button[title*="collapse"]',
+        'div[data-testid="stSidebar"] > div:first-child > button',
+        '.stSidebar > div:first-child > button'
+    ];
     
-    // Executar na carga e continuamente
-    hideToggleButtons();
-    setInterval(hideToggleButtons, 500);
-});
+    selectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(element => {
+            element.parentNode?.removeChild(element);
+        });
+    });
+    
+    // Remover evento de hover também
+    const style = document.createElement('style');
+    style.innerHTML = `
+        *[data-testid*="collaps"] { display: none !important; }
+        *[aria-label*="collaps"] { display: none !important; }
+        section[data-testid="stSidebar"] > div:first-child > button { display: none !important; }
+    `;
+    document.head.appendChild(style);
+}
+
+// Executar imediatamente e a cada intervalo
+removeToggleButton();
+setInterval(removeToggleButton, 200);
+
+// Executar quando DOM mudar
+const observer = new MutationObserver(removeToggleButton);
+observer.observe(document.body, { childList: true, subtree: true });
 </script>
 """, unsafe_allow_html=True)
 
