@@ -47,6 +47,7 @@ A interface é construída com Streamlit, focando em um design responsivo mobile
 - **Sistema de autenticação**: Firebase Auth funcionando corretamente com usuários multi-tenant (65 propostas carregadas para usuário Tâmara).
 - **Correção de Bug em Produtos (Agosto 2025)**: Corrigido erro "Database object has no attribute 'adicionar_produto'" - método correto é `add_produto`. Removido `time.sleep()` que causava erro de variável local.
 - **Correção Sidebar Render Deploy (Agosto 2025)**: Problema da barra lateral não aparecer no deploy do Render resolvido. Alterado `showSidebarNavigation = false` para `true` no config.toml, criado config_render.toml específico para produção, adicionado script render_sidebar_fix.py, removida cor vermelha confusa da seta de colapso (agora branca/neutra), configuradas variáveis de ambiente específicas da sidebar no render.yaml.
+- **Correções de Interface Agosto 2025**: Formas de pagamento simplificadas para apenas "Cartão" e "PIX". Formato de data de aniversário corrigido para DD/MMM em todos os campos (cadastro e edição). Campo de edição de data convertido de date_input para text_input para manter consistência com formato DD/MMM. Adicionado botão "🔄 Atualizar Lista" nos cadastros para resolver problemas de cache. Loop infinito da aplicação resolvido removendo workflow API conflitante.
 
 ## External Dependencies
 - **Streamlit**: Para a construção da interface web.
