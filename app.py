@@ -92,69 +92,9 @@ user_authenticated = (
 )
 
 if not user_authenticated:
-    # Usuário não está autenticado - mostrar interface de login Firebase
-    from utils.firebase_auth import firebase_auth
-    
-    st.title("🔐 Login - Planner Organizer")
-    st.markdown("### Sistema Profissional para Personal Organizers")
-    
-    # Layout em duas colunas
-    col1, col2 = st.columns([1.2, 1])
-    
-    with col1:
-        st.markdown("#### Por que escolher o Planner Organizer?")
-        
-        # Estatísticas de benefícios
-        stat_col1, stat_col2, stat_col3 = st.columns(3)
-        
-        with stat_col1:
-            st.metric("Produtividade", "+300%", "Aumento na produtividade")
-        with stat_col2:
-            st.metric("Retrabalho", "-25%", "Redução de retrabalho")  
-        with stat_col3:
-            st.metric("Faturamento", "+45%", "Aumento no faturamento")
-        
-        st.markdown("---")
-        st.markdown("**✅ Gestão Completa de Propostas**")
-        st.markdown("**💰 Controle Financeiro**")
-        st.markdown("**📊 Relatórios Detalhados**")
-        st.markdown("**📱 Interface Moderna e Intuitiva**")
-    
-    with col2:
-        st.markdown("#### Acesse sua conta")
-        st.markdown("Entre com seu e-mail e senha para acessar o sistema")
-        
-        with st.form("login_form"):
-            email = st.text_input("Email", placeholder="seu@email.com")
-            senha = st.text_input("Senha", type="password", placeholder="Sua senha")
-            
-            login_btn = st.form_submit_button("Entrar na minha conta", use_container_width=True)
-            
-            if login_btn:
-                if email and senha:
-                    # Tentar autenticar com Firebase
-                    try:
-                        firebase_auth.login(email, senha)
-                        # Se chegou aqui, login foi bem-sucedido (a função seta o session_state)
-                        if st.session_state.get('authenticated'):
-                            st.success("Login realizado com sucesso!")
-                            st.rerun()
-                        else:
-                            st.error("Email ou senha incorretos")
-                    except Exception as e:
-                        st.error(f"Erro na autenticação: {str(e)}")
-                else:
-                    st.error("Por favor, preencha email e senha.")
-        
-        st.markdown("---")
-        col_reg, col_rec = st.columns(2)
-        with col_reg:
-            if st.button("Criar nova conta", use_container_width=True):
-                st.info("Função de registro em desenvolvimento.")
-        with col_rec:
-            if st.button("Recuperar senha", use_container_width=True):
-                st.info("Função de recuperação em desenvolvimento.")
-    
+    # Usuário não está autenticado - usar sistema de login original
+    from login_simples import main as login_main
+    login_main()
     st.stop()
 
 # Scripts de inicialização removidos para evitar loops
