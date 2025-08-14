@@ -48,6 +48,34 @@ header[data-testid="stHeader"] {
    SIDEBAR - DESIGN UNIFICADO
    ======================================== */
 
+/* OCULTAR BARRA DE DESENVOLVIMENTO E SIDEBAR DE DEBUG */
+.stDeployButton,
+[data-testid="stDevTools"],
+.stDevTools,
+.stAppDeployButton,
+[data-testid="stAppDeployButton"],
+iframe[title="streamlit_app"],
+.stAppEmbeddingId-*,
+[data-testid="stSidebarNav"],
+.stSidebarNav,
+iframe[src*="/_stcore/"],
+div[data-testid="stSidebarContent"] iframe {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Remover iframe de desenvolvimento que aparece como sidebar extra */
+.stApp > div:first-child > div:first-child {
+    display: none !important;
+}
+
+/* Garantir que apenas nossa sidebar personalizada seja visível */
+.stApp > section[data-testid="stSidebar"]:not(:first-child) {
+    display: block !important;
+}
+
 /* SIDEBAR SEMPRE VISÍVEL E EXPANDIDA */
 section[data-testid="stSidebar"] {
     display: block !important;
@@ -58,6 +86,7 @@ section[data-testid="stSidebar"] {
     flex: 0 0 250px !important;
     background: linear-gradient(180deg, #1E1F36 0%, #2E4A99 100%);
     border-right: 1px solid #4C566A;
+    position: relative !important;
 }
 
 /* Remover TODOS os botões de colapsar sidebar */
@@ -75,26 +104,28 @@ section[data-testid="stSidebar"] > div > button:first-child {
     pointer-events: none !important;
 }
 
-/* Ajustar conteúdo principal para não sobrepor */
-.main {
-    margin-left: 250px !important;
-    padding-left: 1rem !important;
-    width: calc(100% - 250px) !important;
-}
-
-/* Ajustar container da aplicação */
-[data-testid="stAppViewContainer"] {
-    margin-left: 250px !important;
-    width: calc(100% - 250px) !important;
-}
-
-/* Forçar layout específico */
-.stApp > div:first-child {
+/* Layout flex para app principal */
+.stApp {
     display: flex !important;
+    flex-direction: row !important;
 }
 
+/* Sidebar com largura fixa */
 section[data-testid="stSidebar"] {
     flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+    order: 1 !important;
+}
+
+/* Conteúdo principal ocupa resto do espaço */
+.main,
+[data-testid="stAppViewContainer"] {
+    flex: 1 !important;
+    order: 2 !important;
+    margin-left: 0 !important;
+    padding-left: 1rem !important;
+    width: auto !important;
+    max-width: none !important;
 }
 
 /* Garantir que o conteúdo da sidebar seja visível */

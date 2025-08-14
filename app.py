@@ -76,17 +76,37 @@ def force_sidebar_expanded():
             });
         });
         
-        // Ajusta layout da aplicação
-        const appContainer = document.querySelector('[data-testid="stAppViewContainer"]');
-        if (appContainer) {
-            appContainer.style.marginLeft = '250px';
-            appContainer.style.width = 'calc(100% - 250px)';
+        // Remove barra de desenvolvimento
+        const devElements = document.querySelectorAll(
+            '.stDeployButton, [data-testid="stDevTools"], .stDevTools, .stAppDeployButton, [data-testid="stAppDeployButton"], iframe[title="streamlit_app"]'
+        );
+        devElements.forEach(el => {
+            el.style.display = 'none';
+            el.style.visibility = 'hidden';
+        });
+        
+        // Força layout flex na aplicação
+        const app = document.querySelector('.stApp');
+        if (app) {
+            app.style.display = 'flex';
+            app.style.flexDirection = 'row';
         }
         
-        const main = document.querySelector('.main');
-        if (main) {
-            main.style.marginLeft = '250px';
-            main.style.width = 'calc(100% - 250px)';
+        // Ajusta sidebar
+        const sidebar = document.querySelector('[data-testid="stSidebar"]');
+        if (sidebar) {
+            sidebar.style.order = '1';
+            sidebar.style.flexShrink = '0';
+            sidebar.style.flexGrow = '0';
+        }
+        
+        // Ajusta conteúdo principal
+        const appContainer = document.querySelector('[data-testid="stAppViewContainer"]');
+        if (appContainer) {
+            appContainer.style.flex = '1';
+            appContainer.style.order = '2';
+            appContainer.style.marginLeft = '0';
+            appContainer.style.width = 'auto';
         }
     }
     

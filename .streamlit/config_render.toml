@@ -10,15 +10,14 @@ enableWebsocketCompression = true
 enableXsrfProtection = false
 
 [client]
-showSidebarNavigation = true
+showSidebarNavigation = false
 showErrorDetails = false
 caching = true
+toolbarMode = "minimal"
 
 [ui]
 hideTopBar = false
 
-[browser]
-gatherUsageStats = false
 serverAddress = "0.0.0.0"
 
 [theme]
