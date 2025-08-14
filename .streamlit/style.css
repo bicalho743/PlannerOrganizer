@@ -74,9 +74,16 @@ section[data-testid="stSidebar"]:has(.nav-buttons) ~ .main {
     margin-left: 250px !important;
 }
 
-/* BOTÃO DE COLAPSO - SEMPRE VISÍVEL E ACESSÍVEL */
-/* Garantir que o botão de colapso apareça sempre no deploy */
+/* BOTÃO DE COLAPSO - INTELIGENTE BASEADO NO ESTADO DA SIDEBAR */
+/* Esconder por padrão */
 button[data-testid="collapsedControl"] {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Mostrar apenas quando usuário está autenticado E sidebar está expandida */
+section[data-testid="stSidebar"] ~ * button[data-testid="collapsedControl"],
+body.authenticated button[data-testid="collapsedControl"] {
     display: flex !important;
     visibility: visible !important;
     position: fixed !important;
@@ -97,24 +104,33 @@ button[data-testid="collapsedControl"] {
     opacity: 1 !important;
 }
 
-/* Fallback para diferentes seletores de botão de colapso */
-[data-testid="collapsedControl"],
-button[aria-label*="collapse" i],
-button[title*="collapse" i],
-button[kind="minimal"][data-testid*="button"] {
-    display: flex !important;
-    visibility: visible !important;
+/* BOTÃO DE REABRIR SIDEBAR - SEMPRE VISÍVEL QUANDO COLAPSADA */
+/* Criar um botão customizado quando sidebar está colapsada */
+body.sidebar-collapsed::before {
+    content: "☰";
     position: fixed !important;
     top: 15px !important;
     left: 15px !important;
-    z-index: 9999 !important;
+    z-index: 10000 !important;
     background-color: rgba(30, 31, 54, 0.9) !important;
     border: 1px solid rgba(255, 255, 255, 0.3) !important;
     border-radius: 6px !important;
-    padding: 8px !important;
+    padding: 8px 10px !important;
     cursor: pointer !important;
+    color: white !important;
+    font-size: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     width: 32px !important;
     height: 32px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+
+body.sidebar-collapsed::before:hover {
+    background-color: rgba(30, 31, 54, 1) !important;
+    transform: scale(1.05) !important;
 }
 
 /* Hover effect para o botão de colapso */

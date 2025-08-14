@@ -1,113 +1,179 @@
-// Script para garantir funcionamento da sidebar no deploy
+// Script inteligente para gerenciar sidebar no deploy
 (function() {
     'use strict';
     
-    // Função para forçar visibilidade do botão de colapso
-    function forceCollapseButtonVisibility() {
+    let customToggleButton = null;
+    
+    // Função para detectar estado da sidebar
+    function getSidebarState() {
+        const sidebar = document.querySelector('[data-testid="stSidebar"]');
+        if (!sidebar) return 'unknown';
+        
+        const style = window.getComputedStyle(sidebar);
+        const width = parseInt(style.width) || sidebar.offsetWidth;
+        
+        return width <= 50 ? 'collapsed' : 'expanded';
+    }
+    
+    // Função para criar botão customizado de reabrir
+    function createCustomToggleButton() {
+        if (customToggleButton) return;
+        
+        customToggleButton = document.createElement('div');
+        customToggleButton.innerHTML = '☰';
+        customToggleButton.style.cssText = `
+            position: fixed !important;
+            top: 15px !important;
+            left: 15px !important;
+            z-index: 10000 !important;
+            background-color: rgba(30, 31, 54, 0.9) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            border-radius: 6px !important;
+            padding: 8px 10px !important;
+            cursor: pointer !important;
+            color: white !important;
+            font-size: 16px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 32px !important;
+            height: 32px !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+            transition: all 0.3s ease !important;
+            font-family: monospace !important;
+        `;
+        
+        customToggleButton.addEventListener('click', function() {
+            expandSidebar();
+        });
+        
+        customToggleButton.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = 'rgba(30, 31, 54, 1) !important';
+            this.style.transform = 'scale(1.05) !important';
+        });
+        
+        customToggleButton.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = 'rgba(30, 31, 54, 0.9) !important';
+            this.style.transform = 'scale(1) !important';
+        });
+        
+        document.body.appendChild(customToggleButton);
+    }
+    
+    // Função para expandir sidebar
+    function expandSidebar() {
+        const sidebar = document.querySelector('[data-testid="stSidebar"]');
+        if (sidebar) {
+            sidebar.style.width = '250px !important';
+            sidebar.style.minWidth = '250px !important';
+            sidebar.style.display = 'block !important';
+            sidebar.style.visibility = 'visible !important';
+            sidebar.style.opacity = '1 !important';
+            
+            // Remover classe de colapsado
+            document.body.classList.remove('sidebar-collapsed');
+            
+            // Remover botão customizado
+            if (customToggleButton) {
+                customToggleButton.remove();
+                customToggleButton = null;
+            }
+            
+            // Tentar encontrar e restaurar o botão nativo do Streamlit
+            setTimeout(restoreNativeCollapseButton, 100);
+        }
+    }
+    
+    // Função para gerenciar estado da sidebar
+    function manageSidebarState() {
+        const state = getSidebarState();
+        const isAuthenticated = document.querySelector('.nav-buttons') !== null;
+        
+        if (!isAuthenticated) {
+            // Usuário não autenticado - esconder tudo
+            if (customToggleButton) {
+                customToggleButton.style.display = 'none';
+            }
+            document.body.classList.remove('sidebar-collapsed');
+            return;
+        }
+        
+        if (state === 'collapsed') {
+            // Sidebar colapsada - mostrar botão customizado
+            document.body.classList.add('sidebar-collapsed');
+            createCustomToggleButton();
+            customToggleButton.style.display = 'flex';
+        } else {
+            // Sidebar expandida - esconder botão customizado
+            document.body.classList.remove('sidebar-collapsed');
+            if (customToggleButton) {
+                customToggleButton.style.display = 'none';
+            }
+        }
+    }
+    
+    // Função para restaurar botão nativo do Streamlit
+    function restoreNativeCollapseButton() {
         const selectors = [
             '[data-testid="collapsedControl"]',
             'button[aria-label*="collapse" i]',
             'button[title*="collapse" i]',
-            'button[kind="minimal"]',
-            '.stSidebar button',
-            'section[data-testid="stSidebar"] button'
+            'button[kind="minimal"]'
         ];
         
         selectors.forEach(selector => {
             const buttons = document.querySelectorAll(selector);
             buttons.forEach(button => {
-                if (button) {
-                    // Forçar estilos inline para garantir visibilidade
-                    button.style.cssText = `
-                        display: flex !important;
-                        visibility: visible !important;
-                        position: fixed !important;
-                        top: 15px !important;
-                        left: 15px !important;
-                        z-index: 9999 !important;
-                        background-color: rgba(30, 31, 54, 0.9) !important;
-                        border: 1px solid rgba(255, 255, 255, 0.3) !important;
-                        border-radius: 6px !important;
-                        padding: 8px !important;
-                        cursor: pointer !important;
-                        align-items: center !important;
-                        justify-content: center !important;
-                        width: 32px !important;
-                        height: 32px !important;
-                        opacity: 1 !important;
-                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-                    `;
+                if (button && !button.hasAttribute('data-enhanced')) {
+                    button.setAttribute('data-enhanced', 'true');
                     
-                    // Garantir que o botão seja clicável
-                    button.style.pointerEvents = 'auto';
+                    // Interceptar clique para gerenciar estado
+                    const originalClick = button.onclick;
+                    button.onclick = function(e) {
+                        if (originalClick) originalClick.call(this, e);
+                        setTimeout(manageSidebarState, 100);
+                    };
                     
-                    // Adicionar event listener se não existe
-                    if (!button.hasAttribute('data-collapse-fixed')) {
-                        button.setAttribute('data-collapse-fixed', 'true');
-                        
-                        button.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            
-                            // Lógica para toggle da sidebar
-                            const sidebar = document.querySelector('[data-testid="stSidebar"]');
-                            if (sidebar) {
-                                const isCollapsed = sidebar.style.width === '0px' || 
-                                                  sidebar.style.display === 'none' ||
-                                                  sidebar.offsetWidth === 0;
-                                
-                                if (isCollapsed) {
-                                    // Expandir sidebar
-                                    sidebar.style.width = '250px';
-                                    sidebar.style.display = 'block';
-                                    sidebar.style.visibility = 'visible';
-                                    sidebar.style.opacity = '1';
-                                } else {
-                                    // Colapsar sidebar
-                                    sidebar.style.width = '0px';
-                                    sidebar.style.display = 'none';
-                                }
-                            }
-                        });
-                    }
+                    button.addEventListener('click', function() {
+                        setTimeout(manageSidebarState, 100);
+                    });
                 }
             });
         });
     }
     
-    // Função para observar mudanças no DOM
-    function observeForCollapseButton() {
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.type === 'childList') {
-                    forceCollapseButtonVisibility();
-                }
-            });
-        });
+    // Observer para mudanças no DOM
+    const observer = new MutationObserver(function(mutations) {
+        manageSidebarState();
+        restoreNativeCollapseButton();
+    });
+    
+    // Inicialização
+    function initialize() {
+        manageSidebarState();
+        restoreNativeCollapseButton();
         
         observer.observe(document.body, {
             childList: true,
-            subtree: true
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style', 'class']
         });
         
-        // Executar também periodicamente
-        setInterval(forceCollapseButtonVisibility, 2000);
+        // Verificar estado periodicamente
+        setInterval(manageSidebarState, 1000);
     }
     
     // Executar quando DOM estiver pronto
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(forceCollapseButtonVisibility, 100);
-            observeForCollapseButton();
-        });
+        document.addEventListener('DOMContentLoaded', initialize);
     } else {
-        setTimeout(forceCollapseButtonVisibility, 100);
-        observeForCollapseButton();
+        initialize();
     }
     
-    // Executar também quando a página estiver completamente carregada
+    // Executar também quando página completamente carregada
     window.addEventListener('load', function() {
-        setTimeout(forceCollapseButtonVisibility, 500);
+        setTimeout(initialize, 500);
     });
     
 })();

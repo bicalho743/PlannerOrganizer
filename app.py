@@ -291,6 +291,16 @@ if not st.session_state.authenticated:
     [data-testid="collapsedControl"] {display: none;}
     section[data-testid="stSidebar"] {display: none;}
     </style>
+    <script>
+    document.body.classList.remove('authenticated');
+    </script>
+    """, unsafe_allow_html=True)
+else:
+    # Marcar como usuário autenticado para o CSS
+    st.markdown("""
+    <script>
+    document.body.classList.add('authenticated');
+    </script>
     """, unsafe_allow_html=True)
 
     # Verificar se estamos mostrando termos de uso ou política de privacidade
