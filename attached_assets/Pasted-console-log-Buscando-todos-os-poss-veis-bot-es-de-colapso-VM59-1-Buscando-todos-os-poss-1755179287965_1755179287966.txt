@@ -1,0 +1,42 @@
+console.log('🔍 Buscando todos os possíveis botões de colapso...');
+VM59:1 🔍 Buscando todos os possíveis botões de colapso...
+undefined
+const selectors = [
+    'button[data-testid="collapsedControl"]',
+    'button[data-testid="baseButton-minimal"]',
+    'button[aria-label*="collapse"]',
+    'button[aria-label*="Collapse"]',
+    'button[title*="collapse"]',
+    'button[title*="Collapse"]',
+    'section[data-testid="stSidebar"] button',
+    '[data-testid="stSidebar"] button[kind="secondary"]',
+    '.css-1v0mbdj button',
+    'button:has(svg)',
+    'button[data-baseweb="button"][kind="minimal"]'
+];
+selectors.forEach(selector => {
+    const btn = document.querySelector(selector);
+    console.log(`${selector}:`, btn);
+});
+VM79:16 button[data-testid="collapsedControl"]: null
+VM79:16 button[data-testid="baseButton-minimal"]: null
+VM79:16 button[aria-label*="collapse"]: null
+VM79:16 button[aria-label*="Collapse"]: null
+VM79:16 button[title*="collapse"]: null
+VM79:16 button[title*="Collapse"]: null
+VM79:16 section[data-testid="stSidebar"] button: <button kind=​"headerNoPadding" data-testid=​"stBaseButton-headerNoPadding" aria-label class=​"st-emotion-cache-tyfafb e1d5ycv518">​…​</button>​flex
+VM79:16 [data-testid="stSidebar"] button[kind="secondary"]: <button kind=​"secondary" data-testid=​"stBaseButton-secondary" aria-label class=​"st-emotion-cache-kxtrv5 e1d5ycv52">​…​</button>​flex
+VM79:16 .css-1v0mbdj button: null
+VM79:16 button:has(svg): <button kind=​"headerNoPadding" data-testid=​"stBaseButton-headerNoPadding" aria-label class=​"st-emotion-cache-tyfafb e1d5ycv518">​…​</button>​flex
+VM79:16 button[data-baseweb="button"][kind="minimal"]: null
+undefined
+const sidebarButtons = document.querySelectorAll('section[data-testid="stSidebar"] button');
+console.log('Todos os botões na sidebar:', sidebarButtons);
+VM103:2 Todos os botões na sidebar: NodeList(11) [button.st-emotion-cache-tyfafb.e1d5ycv518, button.st-emotion-cache-rxke5t.e1c29vlm18, button.st-emotion-cache-kxtrv5.e1d5ycv52, button.st-emotion-cache-kxtrv5.e1d5ycv52, button.st-emotion-cache-kxtrv5.e1d5ycv52, button.st-emotion-cache-kxtrv5.e1d5ycv52, button.st-emotion-cache-kxtrv5.e1d5ycv52, button.st-emotion-cache-kxtrv5.e1d5ycv52, button.st-emotion-cache-kxtrv5.e1d5ycv52, button.st-emotion-cache-2jcuta.e1d5ycv52, button.st-emotion-cache-2jcuta.e1d5ycv52]
+undefined
+const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+if (sidebar) {
+    console.log('Estrutura da sidebar:', sidebar.innerHTML.substring(0, 500));
+}
+VM117:3 Estrutura da sidebar: <div data-testid="stSidebarContent" class="st-emotion-cache-6qob1r e1c29vlm8"><div data-testid="stSidebarHeader" class="st-emotion-cache-kgpedg e1c29vlm10"><div data-testid="stLogoSpacer" class="st-emotion-cache-11ukie e1c29vlm13"></div><div data-testid="stSidebarCollapseButton" class="st-emotion-cache-asde8h e1c29vlm16"><button kind="headerNoPadding" data-testid="stBaseButton-headerNoPadding" aria-label="" class="st-emotion-cache-tyfafb e1d5ycv518"><svg viewBox="0 0 24 24" aria-hidden="true" fo
+undefined
