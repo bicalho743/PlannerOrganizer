@@ -2,7 +2,7 @@
 // Garante que o botão de colapso apareça apenas para usuários autenticados
 function showSidebarToggle() {
     const navButtons = document.querySelector('.nav-buttons');
-    const toggleBtn = document.querySelector('button[data-testid="collapsedControl"]');
+    const toggleBtn = document.querySelector('div[data-testid="stSidebarCollapseButton"] button[data-testid="stBaseButton-headerNoPadding"]');
     
     if (navButtons && toggleBtn) {
         // Usuário autenticado - mostrar botão
@@ -48,7 +48,7 @@ observer.observe(document.body, {
 
 // Verifica periodicamente se o botão ainda está visível
 setInterval(() => {
-    const toggleBtn = document.querySelector('button[data-testid="collapsedControl"]');
+    const toggleBtn = document.querySelector('div[data-testid="stSidebarCollapseButton"] button[data-testid="stBaseButton-headerNoPadding"]');
     if (toggleBtn) {
         const styles = window.getComputedStyle(toggleBtn);
         if (styles.display === 'none' || styles.visibility === 'hidden') {
