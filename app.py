@@ -38,80 +38,6 @@ from utils.ga4_injector import setup_google_analytics
 from utils.html_head_injector import inject_head_content
 from utils.simple_mobile_fix import apply_mobile_sidebar_fix
 
-# JavaScript para forçar sidebar sempre expandida
-def force_sidebar_expanded():
-    st.markdown("""
-    <script>
-    function forceSidebarExpanded() {
-        // Força sidebar a estar sempre visível e expandida
-        const sidebar = document.querySelector('[data-testid="stSidebar"]');
-        if (sidebar) {
-            sidebar.style.display = 'block';
-            sidebar.style.visibility = 'visible';
-            sidebar.style.width = '250px';
-            sidebar.style.minWidth = '250px';
-            sidebar.style.maxWidth = '250px';
-            sidebar.style.position = 'relative';
-            sidebar.setAttribute('aria-expanded', 'true');
-        }
-        
-        // Remove TODOS os tipos de botões de colapsar
-        const collapseSelectors = [
-            'button[data-testid="collapsedControl"]',
-            'button[data-testid="stSidebarCollapseButton"]',
-            'button[data-testid="baseButton-header"]',
-            'button[kind="header"]',
-            'button[title="Close sidebar"]',
-            'section[data-testid="stSidebar"] > div > button:first-child',
-            'section[data-testid="stSidebar"] button[kind="header"]'
-        ];
-        
-        collapseSelectors.forEach(selector => {
-            const buttons = document.querySelectorAll(selector);
-            buttons.forEach(btn => {
-                btn.style.display = 'none';
-                btn.style.visibility = 'hidden';
-                btn.style.opacity = '0';
-                btn.style.pointerEvents = 'none';
-            });
-        });
-        
-        // Remove barra de desenvolvimento
-        const devElements = document.querySelectorAll(
-            '.stDeployButton, [data-testid="stDevTools"], .stDevTools, .stAppDeployButton, [data-testid="stAppDeployButton"], iframe[title="streamlit_app"]'
-        );
-        devElements.forEach(el => {
-            el.style.display = 'none';
-            el.style.visibility = 'hidden';
-        });
-        
-        // Ajustar apenas a largura da sidebar e margem do conteúdo
-        const sidebar = document.querySelector('[data-testid="stSidebar"]');
-        if (sidebar) {
-            sidebar.style.width = '250px';
-            sidebar.style.minWidth = '250px';
-            sidebar.style.maxWidth = '250px';
-        }
-        
-        // Ajustar margem do conteúdo principal
-        const main = document.querySelector('.main');
-        if (main) {
-            main.style.marginLeft = '250px';
-        }
-    }
-    
-    // Executar imediatamente
-    forceSidebarExpanded();
-    
-    // Observer para garantir que funcione mesmo com atualizações do Streamlit
-    const observer = new MutationObserver(forceSidebarExpanded);
-    observer.observe(document.body, { childList: true, subtree: true });
-    
-    // Executar periodicamente como backup
-    setInterval(forceSidebarExpanded, 500);
-    </script>
-    """, unsafe_allow_html=True)
-
 # Importar módulo de autenticação Firebase (pode ser comentado para desabilitar temporariamente)
 try:
     from utils.firebase_auth import firebase_auth
@@ -1407,9 +1333,6 @@ from utils.page_config import apply_page_header, apply_page_footer
 # Aplicar o cabeçalho e rodapé em todas as páginas 
 apply_page_header()
 apply_page_footer()
-
-# Forçar sidebar sempre expandida
-force_sidebar_expanded()
 
 # Aplicar correção mobile para sidebar
 from utils.simple_mobile_fix import apply_mobile_sidebar_fix

@@ -17,8 +17,6 @@ services:
       --client.showSidebarNavigation=true
       --client.sidebarState=expanded
       --ui.hideSidebarNav=false
-      --client.toolbarMode=minimal
-      --global.suppressDeprecationWarnings=true
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0

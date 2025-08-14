@@ -48,20 +48,16 @@ header[data-testid="stHeader"] {
    SIDEBAR - DESIGN UNIFICADO
    ======================================== */
 
-/* OCULTAR APENAS ELEMENTOS DE DESENVOLVIMENTO */
-[data-testid="stSidebarNav"],
-.stSidebarNav,
-iframe[src*="/_stcore/"] {
-    display: none !important;
-}
-
-/* Layout normal da aplicação */
-.stApp {
-    display: block !important;
-}
-
-/* SIDEBAR SEMPRE VISÍVEL E EXPANDIDA */
+/* ESCONDER SIDEBAR POR PADRÃO */
 section[data-testid="stSidebar"] {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    min-width: 0 !important;
+}
+
+/* Mostrar sidebar apenas quando há botões de navegação */
+section[data-testid="stSidebar"]:has(.nav-buttons) {
     display: block !important;
     visibility: visible !important;
     width: 250px !important;
@@ -70,92 +66,11 @@ section[data-testid="stSidebar"] {
     flex: 0 0 250px !important;
     background: linear-gradient(180deg, #1E1F36 0%, #2E4A99 100%);
     border-right: 1px solid #4C566A;
-    position: relative !important;
 }
 
-/* Remover TODOS os botões de colapsar sidebar */
-button[data-testid="collapsedControl"],
-.stSidebarCollapsedControl,
-[data-testid="stSidebarCollapseButton"],
-button[kind="header"],
-button[data-testid="baseButton-header"],
-[data-testid="stSidebarNavSeparator"] + button,
-section[data-testid="stSidebar"] button[kind="header"],
-section[data-testid="stSidebar"] > div > button:first-child {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
-
-/* Sidebar com layout padrão mas sem botões de colapsar */
-section[data-testid="stSidebar"] {
-    width: 250px !important;
-    min-width: 250px !important;
-    max-width: 250px !important;
-    background: linear-gradient(180deg, #1E1F36 0%, #2E4A99 100%);
-    border-right: 1px solid #4C566A;
-}
-
-/* Conteúdo principal com margem simples */
-.main {
+/* Ajustar margem do conteúdo principal quando sidebar está visível */
+section[data-testid="stSidebar"]:has(.nav-buttons) ~ .main {
     margin-left: 250px !important;
-    padding: 1rem !important;
-}
-
-/* Garantir que o conteúdo da sidebar seja visível */
-section[data-testid="stSidebar"] .stMarkdown,
-section[data-testid="stSidebar"] .stButton,
-section[data-testid="stSidebar"] .stSelectbox {
-    color: white !important;
-}
-
-/* FORÇAR SIDEBAR EXPANDIDA NO DEPLOY */
-.stApp {
-    --sidebar-width: 250px !important;
-}
-
-/* Garantir que a sidebar não seja colapsada */
-[data-testid="stSidebar"][aria-expanded="false"] {
-    width: 250px !important;
-    transform: none !important;
-}
-
-/* Remover animações de colapso */
-section[data-testid="stSidebar"] {
-    transition: none !important;
-    transform: none !important;
-}
-
-/* CSS específico para produção */
-@media screen {
-    /* Força sidebar sempre visível */
-    section[data-testid="stSidebar"] {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        position: relative !important;
-        height: 100vh !important;
-    }
-    
-    /* Remove TODOS os controles de colapso */
-    button[data-testid="baseButton-header"],
-    [data-testid="stSidebarNavSeparator"] + button,
-    section[data-testid="stSidebar"] button[kind="header"],
-    section[data-testid="stSidebar"] > div > button:first-child,
-    button[title="Close sidebar"] {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-    }
-    
-    /* Garantir que o conteúdo principal não seja cortado */
-    .main .block-container {
-        max-width: 100% !important;
-        padding-left: 2rem !important;
-        padding-right: 2rem !important;
-    }
 }
 
 /* ESCONDER SETA DE COLAPSO DA SIDEBAR */
