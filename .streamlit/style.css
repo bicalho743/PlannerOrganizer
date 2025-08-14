@@ -65,7 +65,7 @@ section[data-testid="stSidebar"] ~ .main {
     margin-left: 250px !important;
 }
 
-/* TOGGLE BUTTON - Botão de colapso sempre funcional */
+/* TOGGLE BUTTON - Botão de colapso sempre visível e funcional */
 button[data-testid="collapsedControl"] {
     display: flex !important;
     visibility: visible !important;
@@ -75,11 +75,31 @@ button[data-testid="collapsedControl"] {
     background-color: transparent !important;
     border: none !important;
     color: #ffffff !important;
+    position: fixed !important;
+    top: 15px !important;
+    left: 15px !important;
+    width: 24px !important;
+    height: 24px !important;
+}
+
+/* Quando sidebar está escondida, manter seta visível na posição fixa */
+.stApp:not(:has(section[data-testid="stSidebar"][aria-expanded="true"])) button[data-testid="collapsedControl"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: fixed !important;
+    top: 15px !important;
+    left: 15px !important;
+    z-index: 999999 !important;
+    background-color: rgba(59, 130, 246, 0.9) !important;
+    border-radius: 4px !important;
+    padding: 4px !important;
 }
 
 button[data-testid="collapsedControl"]:hover {
-    background-color: rgba(255, 255, 255, 0.1) !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
     opacity: 1 !important;
+    transform: scale(1.1) !important;
 }
 
 /* ÍCONES E SETAS - Estilo unificado para todos os ícones da sidebar */
@@ -151,13 +171,27 @@ section[data-testid="stSidebar"] div[data-testid="stExpander"] button:hover {
     border-color: #2B547E !important;
 }
 
+/* FALLBACK para garantir seta sempre visível mesmo quando sidebar collapsed */
+.stApp button[data-testid="collapsedControl"],
+.main button[data-testid="collapsedControl"],
+div[data-testid="stMain"] button[data-testid="collapsedControl"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: fixed !important;
+    top: 15px !important;
+    left: 15px !important;
+    z-index: 999999 !important;
+    background-color: rgba(59, 130, 246, 0.9) !important;
+    border-radius: 4px !important;
+    padding: 4px !important;
+    border: none !important;
+    cursor: pointer !important;
+}
+
 /* ========================================
    FIM DA CONFIGURAÇÃO UNIFICADA DA SIDEBAR
    ======================================== */
-    stroke: #ffffff !important;
-    opacity: 0.8 !important;
-    visibility: visible !important;
-}
 
 /* Hover effect para botões de colapso com cor neutra */
 button[aria-label*="collapse"]:hover,
