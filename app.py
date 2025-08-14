@@ -1410,131 +1410,129 @@ try:
 except Exception as e:
     st.error(f"Erro ao carregar página: {str(e)}")
 
-    # Divisor antes das informações do sistema
-    st.sidebar.markdown('<div style="margin: 1.5rem 0;"><hr style="border: none; height: 1px; background-color: #E0E0E0;"></div>', unsafe_allow_html=True)
+# Divisor antes das informações do sistema
+st.sidebar.markdown('<div style="margin: 1.5rem 0;"><hr style="border: none; height: 1px; background-color: #E0E0E0;"></div>', unsafe_allow_html=True)
 
-    # CSS movido para .streamlit/style.css para centralização
+# CSS movido para .streamlit/style.css para centralização
 
-    # Usando um expander para as informações do sistema
-    with st.sidebar.expander("ℹ️ Informações do Sistema"):
-        st.markdown("### Planner Organizer")
-        st.markdown("**Versão:** 1.0.4")
+# Usando um expander para as informações do sistema
+with st.sidebar.expander("ℹ️ Informações do Sistema"):
+    st.markdown("### Planner Organizer")
+    st.markdown("**Versão:** 1.0.4")
 
-        st.markdown("### Módulos do Sistema:")
-        st.markdown("""
-        - **Dashboard** - Métricas e alertas
-        - **Cadastros** - Clientes, parceiros e fornecedores
-        - **Propostas** - Gestão completa de propostas
-        - **Vendas** - Controle de produtos vendidos
-        - **Financeiro** - Receitas e despesas
-        - **Relatórios** - Análises e visualizações
-        """)
+    st.markdown("### Módulos do Sistema:")
+    st.markdown("""
+    - **Dashboard** - Métricas e alertas
+    - **Cadastros** - Clientes, parceiros e fornecedores
+    - **Propostas** - Gestão completa de propostas
+    - **Vendas** - Controle de produtos vendidos
+    - **Financeiro** - Receitas e despesas
+    - **Relatórios** - Análises e visualizações
+    """)
 
-        st.markdown("### Funcionalidades Principais:")
-        st.markdown("""
-        - ✅ Fluxo completo de propostas
-        - ✅ Integração entre módulos
-        - ✅ Sistema de alertas de prazos
-        - ✅ Geração de lançamentos financeiros
-        - ✅ Cálculo de comissões
-        - ✅ Importação em lote
-        - ✅ Backup e restauração
-        """)
+    st.markdown("### Funcionalidades Principais:")
+    st.markdown("""
+    - ✅ Fluxo completo de propostas
+    - ✅ Integração entre módulos
+    - ✅ Sistema de alertas de prazos
+    - ✅ Geração de lançamentos financeiros
+    - ✅ Cálculo de comissões
+    - ✅ Importação em lote
+    - ✅ Backup e restauração
+    """)
 
-        # Botão para gerar o manual do sistema
-        if st.button("📘 Gerar Manual do Sistema", use_container_width=True):
-            with st.spinner("Gerando manual em PDF..."):
-                try:
-                    from pages.manual_sistema import gerar_manual_sistema
-                    pdf_path = gerar_manual_sistema()
+    # Botão para gerar o manual do sistema
+    if st.button("📘 Gerar Manual do Sistema", use_container_width=True):
+        with st.spinner("Gerando manual em PDF..."):
+            try:
+                from pages.manual_sistema import gerar_manual_sistema
+                pdf_path = gerar_manual_sistema()
 
-                    # Ler o arquivo PDF para download
-                    with open(pdf_path, "rb") as pdf_file:
-                        pdf_bytes = pdf_file.read()
+                # Ler o arquivo PDF para download
+                with open(pdf_path, "rb") as pdf_file:
+                    pdf_bytes = pdf_file.read()
 
-                    st.success("Manual gerado com sucesso!")
-                    st.download_button(
-                        label="📥 Baixar Manual do Sistema",
-                        data=pdf_bytes,
-                        file_name="Manual_Planner_Organizer.pdf",
-                        mime="application/pdf",
-                        use_container_width=True
-                    )
-                except Exception as e:
-                    st.error(f"Erro ao gerar o manual: {str(e)}")
+                st.success("Manual gerado com sucesso!")
+                st.download_button(
+                    label="📥 Baixar Manual do Sistema",
+                    data=pdf_bytes,
+                    file_name="Manual_Planner_Organizer.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+            except Exception as e:
+                st.error(f"Erro ao gerar o manual: {str(e)}")
 
-        # Gerenciar o estado para os modais de termos e política
-        if "mostrar_termos" not in st.session_state:
+# Gerenciar o estado para os modais de termos e política
+if "mostrar_termos" not in st.session_state:
+    st.session_state.mostrar_termos = False
+
+if "mostrar_politica" not in st.session_state:
+    st.session_state.mostrar_politica = False
+
+# Funções para gerenciar os estados dos modais
+def exibir_termos():
+    st.session_state.mostrar_termos = True
+
+def ocultar_termos():
+    st.session_state.mostrar_termos = False
+
+def exibir_politica():
+    st.session_state.mostrar_politica = True
+
+def ocultar_politica():
+    st.session_state.mostrar_politica = False
+
+# Exibir modais conforme o estado
+if st.session_state.mostrar_termos:
+    # Criar um modal/dialog para os termos de uso
+    with st.container():
+        st.markdown("#### Termos de Uso")
+        st.markdown("---")
+
+        # Importamos a função do módulo
+        from pages.termos_de_uso import get_termos_conteudo
+
+        # Exibimos o conteúdo
+        st.markdown(get_termos_conteudo(), unsafe_allow_html=True)
+
+        # Botão para fechar
+        if st.button("Fechar", key="fechar_termos", use_container_width=True):
             st.session_state.mostrar_termos = False
+            # Removido st.rerun() - modal fecha sem reload
 
-        if "mostrar_politica" not in st.session_state:
+if st.session_state.mostrar_politica:
+    # Criar um modal/dialog para a política de privacidade
+    with st.container():
+        st.markdown("#### Política de Privacidade")
+        st.markdown("---")
+
+        # Importamos a função do módulo
+        from pages.politica_privacidade import get_politica_conteudo
+
+        # Exibimos o conteúdo
+        st.markdown(get_politica_conteudo(), unsafe_allow_html=True)
+
+        # Botão para fechar
+        if st.button("Fechar", key="fechar_politica", use_container_width=True):
             st.session_state.mostrar_politica = False
+            # Removido st.rerun() - modal fecha sem reload
 
-        # Funções para gerenciar os estados dos modais
-        def exibir_termos():
-            st.session_state.mostrar_termos = True
+# Botão para download dos ícones do sistema
+try:
+    with open("downloads/planner-icons.zip", "rb") as f:
+        icones_bytes = f.read()
 
-        def ocultar_termos():
-            st.session_state.mostrar_termos = False
-
-        def exibir_politica():
-            st.session_state.mostrar_politica = True
-
-        def ocultar_politica():
-            st.session_state.mostrar_politica = False
-
-    # Sem rodapé aqui - movido para o footer global
-
-    # Exibir modais conforme o estado
-    if st.session_state.mostrar_termos:
-        # Criar um modal/dialog para os termos de uso
-        with st.container():
-            st.markdown("#### Termos de Uso")
-            st.markdown("---")
-
-            # Importamos a função do módulo
-            from pages.termos_de_uso import get_termos_conteudo
-
-            # Exibimos o conteúdo
-            st.markdown(get_termos_conteudo(), unsafe_allow_html=True)
-
-            # Botão para fechar
-            if st.button("Fechar", key="fechar_termos", use_container_width=True):
-                st.session_state.mostrar_termos = False
-                # Removido st.rerun() - modal fecha sem reload
-
-    if st.session_state.mostrar_politica:
-        # Criar um modal/dialog para a política de privacidade
-        with st.container():
-            st.markdown("#### Política de Privacidade")
-            st.markdown("---")
-
-            # Importamos a função do módulo
-            from pages.politica_privacidade import get_politica_conteudo
-
-            # Exibimos o conteúdo
-            st.markdown(get_politica_conteudo(), unsafe_allow_html=True)
-
-            # Botão para fechar
-            if st.button("Fechar", key="fechar_politica", use_container_width=True):
-                st.session_state.mostrar_politica = False
-                # Removido st.rerun() - modal fecha sem reload
-
-    # Botão para download dos ícones do sistema
-    try:
-        with open("downloads/planner-icons.zip", "rb") as f:
-            icones_bytes = f.read()
-
-        st.download_button(
-            label="🎨 Baixar Ícones do Sistema",
-            data=icones_bytes,
-            file_name="planner-icons.zip",
-            mime="application/zip",
-            use_container_width=True,
-            help="Baixe todos os ícones do sistema em diferentes formatos (SVG, PNG, Favicon)"
-        )
-    except Exception as e:
-        st.warning(f"Pacote de ícones não disponível")
+    st.download_button(
+        label="🎨 Baixar Ícones do Sistema",
+        data=icones_bytes,
+        file_name="planner-icons.zip",
+        mime="application/zip",
+        use_container_width=True,
+        help="Baixe todos os ícones do sistema em diferentes formatos (SVG, PNG, Favicon)"
+    )
+except Exception as e:
+    st.warning(f"Pacote de ícones não disponível")
 
 # Menu de desenvolvedor removido - acesso direto aos módulos através do menu principal
 
