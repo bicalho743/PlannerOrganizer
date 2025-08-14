@@ -5,24 +5,34 @@ function showSidebarToggle() {
     
     // Testar múltiplos seletores para máxima compatibilidade
     const selectorList = [
-        'div[data-testid="stSidebarCollapseButton"] button[data-testid="stBaseButton-headerNoPadding"]', // Preview Replit
+        'div[data-testid="stSidebarCollapseButton"] button[data-testid="stBaseButton-headerNoPadding"]', // Preview Replit ✅
         'button[data-testid="collapsedControl"]', // Produção Render
         'section[data-testid="stSidebar"] button[data-testid="stBaseButton-headerNoPadding"]', // Fallback 1
         'button[data-testid="stBaseButton-headerNoPadding"]', // Fallback 2
         'section[data-testid="stSidebar"] button:first-of-type', // Fallback 3
     ];
     
+    console.log('🔍 Iniciando busca pelo botão de colapso...');
+    console.log('🔍 Usuário autenticado:', !!navButtons);
+    
     let toggleBtn = null;
+    let usedSelector = null;
+    
     for (const selector of selectorList) {
         toggleBtn = document.querySelector(selector);
         if (toggleBtn) {
+            usedSelector = selector;
             console.log(`✅ Botão de colapso encontrado com seletor: ${selector}`);
+            console.log('✅ Elemento do botão:', toggleBtn);
             break;
+        } else {
+            console.log(`❌ Seletor não encontrou botão: ${selector}`);
         }
     }
     
     if (navButtons && toggleBtn) {
-        // Usuário autenticado - mostrar botão
+        // Usuário autenticado - mostrar e estilizar botão
+        console.log('✅ Aplicando estilos ao botão de colapso...');
         toggleBtn.style.display = 'flex';
         toggleBtn.style.visibility = 'visible';
         toggleBtn.style.position = 'fixed';
@@ -35,12 +45,21 @@ function showSidebarToggle() {
         toggleBtn.style.padding = '8px';
         toggleBtn.style.width = '32px';
         toggleBtn.style.height = '32px';
+        
         console.log('✅ Botão de colapso da sidebar ativado para usuário autenticado');
+        console.log(`✅ Seletor usado: ${usedSelector}`);
+        console.log('✅ Estilos aplicados com sucesso');
     } else if (!navButtons && toggleBtn) {
         // Usuário não autenticado - esconder botão
         toggleBtn.style.display = 'none';
         toggleBtn.style.visibility = 'hidden';
         console.log('🚫 Botão de colapso escondido - usuário não autenticado');
+        console.log(`🚫 Seletor do botão: ${usedSelector}`);
+    } else if (!toggleBtn) {
+        console.log('❌ Nenhum botão de colapso encontrado em nenhum seletor');
+        console.log('🔍 Estrutura da sidebar:', document.querySelector('section[data-testid="stSidebar"]'));
+    } else {
+        console.log('⚠️ Estado indefinido: navButtons =', !!navButtons, ', toggleBtn =', !!toggleBtn);
     }
 }
 
