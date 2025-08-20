@@ -473,7 +473,7 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
         from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
         gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename)
         
-        return True, "PDF para cliente gerado com sucesso!", filename
+        return True, "Relatório do cliente gerado com sucesso", filename
         
     except Exception as e:
         print(f"DEBUG HELPER CRITICAL: Erro ao gerar PDF cliente: {str(e)}")
@@ -557,7 +557,7 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
         from utils.pdf_generator_interno_melhorado import gerar_pdf_interno_melhorado
         gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename)
         
-        return True, "PDF interno gerado com sucesso!", filename
+        return True, "Relatório interno gerado com sucesso", filename
         
     except Exception as e:
         print(f"DEBUG HELPER CRITICAL: Erro ao gerar PDF interno: {str(e)}")
@@ -574,19 +574,18 @@ def st_gerar_pdf_cliente(proposta_id, custom_filename=None):
         )
         
         if sucesso:
+            # Mostrar mensagem de sucesso primeiro
             st.success(mensagem)
             
-            # Botão para download do arquivo
+            # Botão de download depois
             with open(filename, "rb") as pdf:
                 # Usar o nome do arquivo original, garantindo que o nome fica correto no download
                 nome_arquivo = os.path.basename(filename)
                 st.download_button(
-                    label="⬇️ Baixar PDF do Cliente",
+                    label="📥 Baixar Relatório do Cliente",
                     data=pdf.read(),
                     file_name=nome_arquivo,
-                    mime="application/pdf",
-                    type="primary",
-                    use_container_width=True
+                    mime="application/pdf"
                 )
             
             return True, filename
@@ -607,19 +606,18 @@ def st_gerar_pdf_interno(proposta_id, custom_filename=None):
         )
         
         if sucesso:
+            # Mostrar mensagem de sucesso primeiro
             st.success(mensagem)
             
-            # Botão para download do arquivo
+            # Botão de download depois
             with open(filename, "rb") as pdf:
                 # Usar o nome do arquivo original, garantindo que o nome fica correto no download
                 nome_arquivo = os.path.basename(filename)
                 st.download_button(
-                    label="⬇️ Baixar PDF Interno",
+                    label="📥 Baixar Relatório interno",
                     data=pdf.read(),
                     file_name=nome_arquivo,
-                    mime="application/pdf",
-                    type="secondary",
-                    use_container_width=True
+                    mime="application/pdf"
                 )
             
             return True, filename
