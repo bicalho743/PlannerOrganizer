@@ -284,9 +284,20 @@ def show():
                 'observacoes_relatorio': observacoes_relatorio
             }
             
-            # Salvar perfil
-            if salvar_perfil(user_id, dados_perfil):
-                st.success("✅ Perfil salvo com sucesso!")
+            # Salvar perfil no banco de dados
+            try:
+                from utils.database import Database
+                
+                # Usar a instância do banco de dados da sessão
+                if 'db' in st.session_state:
+                    db = st.session_state.db
+                    sucesso = db.salvar_perfil_usuario(dados_perfil)
+                else:
+                    # Fallback para arquivo JSON
+                    sucesso = salvar_perfil(user_id, dados_perfil)
+                
+                if sucesso:
+                    st.success("✅ Perfil salvo com sucesso!")
                 
                 # Atualizar dados do usuário na sessão 
                 # (apenas os campos relevantes para outras partes do sistema)

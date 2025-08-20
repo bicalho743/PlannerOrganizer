@@ -1025,7 +1025,7 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
                     
                     if perfil:
                         nome_empresa = perfil.get('empresa') or perfil.get('nome', nome_empresa)
-                        instagram = f"@{perfil.get('instagram')}" if perfil.get('instagram') else instagram
+                        instagram = perfil.get('instagram') or instagram.replace('@', '')
                         cargo_funcao = perfil.get('cargo') or cargo_funcao
                 
                 return nome_empresa, cargo_funcao, instagram
@@ -1036,9 +1036,14 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         
         nome_empresa, cargo_funcao, instagram = obter_dados_rodape()
         
-        # Adicionar informações personalizadas ao rodapé no formato solicitado
+        # Primeira linha: informações da empresa
         footer_text = f"{nome_empresa} | {cargo_funcao} | {instagram}"
-        c.drawString(30, 15, footer_text)
+        c.drawString(30, 25, footer_text)
+        
+        # Segunda linha: data de geração
+        from datetime import datetime
+        agora = datetime.now()
+        c.drawString(30, 10, f"Gerado em {agora.strftime('%d/%m/%Y às %H:%M')}")
         
         # Salvar o PDF
         c.save()

@@ -432,7 +432,7 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
                     
                     if perfil:
                         nome_empresa = perfil.get('empresa') or perfil.get('nome', nome_empresa)
-                        instagram = f"@{perfil.get('instagram')}" if perfil.get('instagram') else instagram
+                        instagram = perfil.get('instagram') or instagram.replace('@', '')
                         cargo_funcao = perfil.get('cargo') or cargo_funcao
                 
                 return nome_empresa, cargo_funcao, instagram
