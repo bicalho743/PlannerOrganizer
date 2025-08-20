@@ -973,7 +973,7 @@ button[type="primary"],
 .stButton > button[kind="primary"],
 .stButton > button[data-testid="baseButton-primary"] {
     color: white !important;
-    background: linear-gradient(135deg, #1976D2, #42A5F5) !important;
+    background-color: #1f4e79 !important;
 }
 
 /* Força cor branca para todo o conteúdo dos botões primários */
@@ -986,44 +986,9 @@ button[type="primary"] *,
 }
 
 /* ========================================
-   BOTÕES DE LOGIN - MANTER AZUL PADRÃO ORIGINAL
+   BOTÃO EXCLUIR - COR VERMELHA
    ======================================== */
-/* Reset para botões específicos de login */
-.stButton > button:not([kind]):not([type]),
-button:not([kind]):not([type]) {
-    background: linear-gradient(135deg, #1976D2, #42A5F5) !important;
-    color: white !important;
-    border: none !important;
-    font-weight: 600 !important;
-}
-
-.stButton > button:not([kind]):not([type]):hover,
-button:not([kind]):not([type]):hover {
-    background: linear-gradient(135deg, #1565C0, #1976D2) !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 4px 8px rgba(25, 118, 210, 0.3) !important;
-}
-
-/* CSS específico para página de login */
-div[data-testid="stForm"] button,
-div[data-testid="stForm"] .stButton > button {
-    background: linear-gradient(135deg, #1976D2, #42A5F5) !important;
-    color: white !important;
-    border: none !important;
-    font-weight: 600 !important;
-}
-
-div[data-testid="stForm"] button:hover,
-div[data-testid="stForm"] .stButton > button:hover {
-    background: linear-gradient(135deg, #1565C0, #1976D2) !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 4px 8px rgba(25, 118, 210, 0.3) !important;
-}
-
-/* ========================================
-   BOTÃO EXCLUIR - COR VERMELHA (ESPECÍFICO)
-   ======================================== */
-/* Força vermelho apenas para botões secundários nas páginas principais */
+/* Força vermelho para todos os botões secundários */
 button[kind="secondary"],
 .stButton > button[kind="secondary"],
 button[type="secondary"],
@@ -1036,7 +1001,7 @@ button[data-testid="baseButton-secondary"],
     font-weight: 600 !important;
 }
 
-/* Efeito hover para botões excluir */
+/* Efeito hover para botões secundários */
 button[kind="secondary"]:hover,
 .stButton > button[kind="secondary"]:hover,
 button[type="secondary"]:hover,
@@ -1048,14 +1013,14 @@ button[data-testid="baseButton-secondary"]:hover,
     box-shadow: 0 3px 6px rgba(220, 53, 69, 0.3) !important;
 }
 
-/* Override: Forçar azul padrão para botões de login que não têm kind/type */
-.stButton > button:not([kind]):not([type]) {
-    background: linear-gradient(135deg, #1976D2, #42A5F5) !important;
+/* Força cor branca para todo conteúdo de botões secundários */
+button[kind="secondary"] *,
+.stButton > button[kind="secondary"] *,
+button[type="secondary"] *,
+.stButton > button[type="secondary"] *,
+button[data-testid="baseButton-secondary"] *,
+.stButton > button[data-testid="baseButton-secondary"] * {
     color: white !important;
-}
-
-.stButton > button:not([kind]):not([type]):hover {
-    background: linear-gradient(135deg, #1565C0, #1976D2) !important;
 }
 
 /* ========================================
