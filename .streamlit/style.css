@@ -986,6 +986,39 @@ button[type="primary"] *,
 }
 
 /* ========================================
+   BOTÃO EXCLUIR - COR VERMELHA
+   ======================================== */
+/* Botões secundários tipo "Excluir" devem ser vermelhos */
+button[kind="secondary"]:has(*:contains("Excluir")),
+.stButton > button[kind="secondary"]:has(*:contains("Excluir")),
+button[type="secondary"]:has(*:contains("Excluir")),
+.stButton > button[type="secondary"]:has(*:contains("Excluir")) {
+    background-color: #dc3545 !important;
+    color: white !important;
+    border: none !important;
+}
+
+/* Força vermelho para botões que contém "Excluir" no texto */
+.stButton > button:has(p:contains("Excluir")),
+.stButton > button:has(span:contains("Excluir")),
+button:has(p:contains("Excluir")),
+button:has(span:contains("Excluir")) {
+    background-color: #dc3545 !important;
+    color: white !important;
+    border: none !important;
+}
+
+/* Efeito hover para botões excluir */
+.stButton > button:has(p:contains("Excluir")):hover,
+.stButton > button:has(span:contains("Excluir")):hover,
+button:has(p:contains("Excluir")):hover,
+button:has(span:contains("Excluir")):hover {
+    background-color: #c82333 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 3px 6px rgba(220, 53, 69, 0.3) !important;
+}
+
+/* ========================================
    RODAPÉ
    ======================================== */
 body, .main, [data-testid="stAppViewContainer"], .block-container {
