@@ -884,6 +884,37 @@ div[data-testid="stDownloadButton"] * {
     border-bottom-color: transparent !important;
 }
 
+/* CSS GLOBAL para qualquer elemento que possa estar causando underline */
+button[data-testid*="download"] *,
+button[class*="download"] *,
+div[data-testid="stDownloadButton"] *,
+.stDownloadButton *,
+*[class*="download"] * {
+    text-decoration: none !important;
+    text-decoration-line: none !important;
+    text-decoration-style: none !important;
+    text-decoration-color: transparent !important;
+    border-bottom: 0px solid transparent !important;
+    border-bottom-style: none !important;
+    border-bottom-width: 0 !important;
+    border-bottom-color: transparent !important;
+    box-shadow: none !important;
+    -webkit-text-decoration: none !important;
+    -moz-text-decoration: none !important;
+    -ms-text-decoration: none !important;
+}
+
+/* Força remoção usando seletores mais amplos */
+*[data-testid="stDownloadButton"] {
+    text-decoration: none !important;
+    border-bottom: none !important;
+}
+
+*[data-testid="stDownloadButton"] * {
+    text-decoration: none !important;
+    border-bottom: none !important;
+}
+
 /* ========================================
    RODAPÉ
    ======================================== */
