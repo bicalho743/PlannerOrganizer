@@ -915,6 +915,54 @@ div[data-testid="stDownloadButton"] *,
     border-bottom: none !important;
 }
 
+/* CSS ULTRA ESPECÍFICO para eliminar qualquer decoração */
+div[data-testid="stDownloadButton"] button,
+div[data-testid="stDownloadButton"] button:hover,
+div[data-testid="stDownloadButton"] button:focus,
+div[data-testid="stDownloadButton"] button:active,
+div[data-testid="stDownloadButton"] button:visited {
+    text-decoration: none !important;
+    text-decoration-line: none !important;
+    text-decoration-style: none !important;
+    text-decoration-color: transparent !important;
+    border-bottom: 0 !important;
+    border-bottom-style: none !important;
+    border-bottom-width: 0 !important;
+    border-bottom-color: transparent !important;
+    outline: none !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    background: linear-gradient(135deg, #1B5E20, #2E7D32) !important;
+    color: white !important;
+}
+
+/* Força para todos os elementos filhos */
+div[data-testid="stDownloadButton"] button *,
+div[data-testid="stDownloadButton"] button span,
+div[data-testid="stDownloadButton"] button p,
+div[data-testid="stDownloadButton"] button div {
+    text-decoration: none !important;
+    text-decoration-line: none !important;
+    text-decoration-style: none !important;
+    text-decoration-color: transparent !important;
+    border-bottom: 0 !important;
+    border-bottom-style: none !important;
+    border-bottom-width: 0 !important;
+    border-bottom-color: transparent !important;
+    color: white !important;
+    background: none !important;
+}
+
+/* Remove qualquer pseudo-elemento que possa estar causando a linha */
+div[data-testid="stDownloadButton"] button::before,
+div[data-testid="stDownloadButton"] button::after,
+div[data-testid="stDownloadButton"] button *::before,
+div[data-testid="stDownloadButton"] button *::after {
+    display: none !important;
+    content: "" !important;
+    border: none !important;
+    background: none !important;
+}
+
 /* ========================================
    RODAPÉ
    ======================================== */
