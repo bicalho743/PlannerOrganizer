@@ -828,6 +828,9 @@ div[data-testid="stDownloadButton"] > button div {
     color: white !important;
     font-weight: 600 !important;
     text-shadow: none !important;
+    text-decoration: none !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
 }
 
 /* ========================================
