@@ -811,6 +811,9 @@ div[data-testid="stDownloadButton"] > button {
     transition: all 0.3s ease !important;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
     min-height: 40px !important;
+    text-decoration: none !important;
+    border-bottom: none !important;
+    outline: none !important;
 }
 
 div[data-testid="stDownloadButton"] > button:hover {
@@ -859,6 +862,26 @@ div[data-testid="stDownloadButton"] > button a:visited {
     text-decoration: none !important;
     border-bottom: none !important;
     color: white !important;
+}
+
+/* Força adicional para remover underlines em download buttons */
+div[data-testid="stDownloadButton"] * {
+    text-decoration: none !important;
+    border-bottom: none !important;
+    -webkit-text-decoration: none !important;
+    -moz-text-decoration: none !important;
+}
+
+/* Override para qualquer seletor específico do Streamlit */
+[data-testid="stDownloadButton"] button span,
+[data-testid="stDownloadButton"] button p,
+[data-testid="stDownloadButton"] button div,
+[data-testid="stDownloadButton"] button * {
+    text-decoration: none !important;
+    border-bottom: none !important;
+    border-bottom-style: none !important;
+    border-bottom-width: 0 !important;
+    border-bottom-color: transparent !important;
 }
 
 /* ========================================
