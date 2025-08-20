@@ -298,22 +298,24 @@ def show():
                 
                 if sucesso:
                     st.success("✅ Perfil salvo com sucesso!")
-                
-                # Atualizar dados do usuário na sessão 
-                # (apenas os campos relevantes para outras partes do sistema)
-                if 'usuario' in st.session_state:
-                    st.session_state.usuario['nome'] = nome
-                    st.session_state.usuario['telefone'] = telefone
-                    st.session_state.usuario['empresa'] = empresa
-                
-                # Atualizar também o objeto 'user'
-                if 'user' in st.session_state:
-                    if isinstance(st.session_state.user, dict):
-                        st.session_state.user['nome'] = nome
-                        st.session_state.user['telefone'] = telefone
-                        st.session_state.user['empresa'] = empresa
-            else:
-                st.error("❌ Erro ao salvar perfil. Tente novamente.")
+                    
+                    # Atualizar dados do usuário na sessão 
+                    # (apenas os campos relevantes para outras partes do sistema)
+                    if 'usuario' in st.session_state:
+                        st.session_state.usuario['nome'] = nome
+                        st.session_state.usuario['telefone'] = telefone
+                        st.session_state.usuario['empresa'] = empresa
+                    
+                    # Atualizar também o objeto 'user'
+                    if 'user' in st.session_state:
+                        if isinstance(st.session_state.user, dict):
+                            st.session_state.user['nome'] = nome
+                            st.session_state.user['telefone'] = telefone
+                            st.session_state.user['empresa'] = empresa
+                else:
+                    st.error("❌ Erro ao salvar perfil. Tente novamente.")
+            except Exception as e:
+                st.error(f"❌ Erro ao salvar perfil: {str(e)}")
     
     # Exibir informações de última atualização
     if 'ultima_atualizacao' in perfil:

@@ -986,6 +986,31 @@ button[type="primary"] *,
 }
 
 /* ========================================
+   BOTÕES EXCLUIR - FORÇA VERMELHO
+   ======================================== */
+/* Força todos os botões secundários para vermelho (são os botões Excluir) */
+button[kind="secondary"],
+.stButton > button[kind="secondary"],
+button[type="secondary"],
+.stButton > button[type="secondary"],
+button[data-testid="baseButton-secondary"],
+.stButton > button[data-testid="baseButton-secondary"] {
+    background-color: #dc3545 !important;
+    color: white !important;
+    border: none !important;
+}
+
+/* Força para o conteúdo interno dos botões secundários */
+button[kind="secondary"] *,
+.stButton > button[kind="secondary"] *,
+button[type="secondary"] *,
+.stButton > button[type="secondary"] *,
+button[data-testid="baseButton-secondary"] *,
+.stButton > button[data-testid="baseButton-secondary"] * {
+    color: white !important;
+}
+
+/* ========================================
    BOTÃO EXCLUIR - COR VERMELHA
    ======================================== */
 /* Força vermelho para todos os botões secundários */
