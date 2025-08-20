@@ -798,6 +798,39 @@ button[data-testid="stButton"] p {
 }
 
 /* ========================================
+   BOTÕES DE DOWNLOAD PDF - VERDE ESCURO
+   ======================================== */
+/* Botões de download PDF com fundo verde escuro */
+div[data-testid="stDownloadButton"] > button {
+    background: linear-gradient(135deg, #1B5E20, #2E7D32) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    padding: 8px 16px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    min-height: 40px !important;
+}
+
+div[data-testid="stDownloadButton"] > button:hover {
+    background: linear-gradient(135deg, #0D4715, #1B5E20) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+}
+
+/* Garantir texto branco nos botões de download */
+div[data-testid="stDownloadButton"] > button,
+div[data-testid="stDownloadButton"] > button *,
+div[data-testid="stDownloadButton"] > button p,
+div[data-testid="stDownloadButton"] > button span,
+div[data-testid="stDownloadButton"] > button div {
+    color: white !important;
+    font-weight: 600 !important;
+    text-shadow: none !important;
+}
+
+/* ========================================
    RODAPÉ
    ======================================== */
 body, .main, [data-testid="stAppViewContainer"], .block-container {
