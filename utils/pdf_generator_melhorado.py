@@ -1007,30 +1007,37 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         c.setFillColor(colors.white)
         c.setFont("Helvetica", 10)
         
-        # Obter informações do usuário logado (se disponível)
-        import streamlit as st
-        
-        nome_empresa = "Planner Organizer"
-        email_contato = "contato@plannerorganizer.com.br"
-        website = "www.plannerorganizer.com.br"
-        
-        # Usar informações do usuário logado, se disponíveis
-        if "usuario" in st.session_state and st.session_state.usuario:
-            usuario = st.session_state.usuario
-            
-            # Obter nome do usuário ou empresa
-            if isinstance(usuario, dict):
-                if usuario.get("empresa"):
-                    nome_empresa = usuario.get("empresa")
-                elif usuario.get("nome"):
-                    nome_empresa = usuario.get("nome")
+        # Obter informações personalizadas do perfil do usuário
+        def obter_dados_rodape():
+            try:
+                import streamlit as st
+                from utils.database import Database
                 
-                # Obter email do usuário
-                if usuario.get("email"):
-                    email_contato = usuario.get("email")
+                # Dados padrão como fallback
+                nome_empresa = "Planner Organizer"
+                cargo_funcao = "Personal Organizer"
+                instagram = "@plannerorganizer"
+                
+                # Tentar obter dados do perfil do usuário
+                if 'db' in st.session_state:
+                    db = st.session_state.db
+                    perfil = db.get_perfil_usuario()
+                    
+                    if perfil:
+                        nome_empresa = perfil.get('empresa') or perfil.get('nome', nome_empresa)
+                        instagram = f"@{perfil.get('instagram')}" if perfil.get('instagram') else instagram
+                        cargo_funcao = perfil.get('cargo') or cargo_funcao
+                
+                return nome_empresa, cargo_funcao, instagram
+                
+            except Exception as e:
+                print(f"Erro ao obter dados do perfil para rodapé: {str(e)}")
+                return "Planner Organizer", "Personal Organizer", "@plannerorganizer"
         
-        # Adicionar informações personalizadas ao rodapé
-        footer_text = f"{nome_empresa} | {email_contato} | {website}"
+        nome_empresa, cargo_funcao, instagram = obter_dados_rodape()
+        
+        # Adicionar informações personalizadas ao rodapé no formato solicitado
+        footer_text = f"{nome_empresa} | {cargo_funcao} | {instagram}"
         c.drawString(30, 15, footer_text)
         
         # Salvar o PDF

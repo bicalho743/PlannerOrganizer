@@ -1,12 +1,12 @@
 {
-    "nome": "tamara Cavalcante",
+    "nome": "Usuário",
     "email": "tamarascavalcante@yahoo.com.br",
-    "telefone": "31992041112",
-    "instagram": "@tamaraorganiza",
-    "empresa": "Tâmara Cavalcante",
-    "website": "www.tamaracavalcante.com.br",
+    "telefone": "",
+    "instagram": null,
+    "empresa": "Planner Organizer",
+    "website": null,
     "cargo": "Personal Organizer",
-    "cnpj": "40278995000171",
+    "cnpj": "",
     "endereco": "",
     "numero": "",
     "complemento": "",
@@ -14,6 +14,7 @@
     "cidade": "",
     "estado": "",
     "cep": "",
-    "mensagem_padrao": "Estou aqui para abraçar a sua residência, te permitindo liberdade para fazer o que importa para você e sua família! “Transformando caos em harmonia!”",
-    "ultima_atualizacao": "01/08/2025 17:15:27"
+    "mensagem_padrao": "Agradecemos a confiança em nossos serviços.",
+    "observacoes_relatorio": "1. Pagamento sinal, na reserva da data, via PIX\n2. Os valores apresentados incluem todos os custos.\n3. Não está incluído a organização de documentos.\n4. No caso da proposta incluir treinamento, é necessário a presença de funcionário\nno período da organização\n5. Não incluido produtos e organizadores, caso o cliente opte por adquirí-los",
+    "ultima_atualizacao": "20/08/2025 18:12:28"
 }

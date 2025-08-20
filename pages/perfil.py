@@ -34,6 +34,7 @@ def carregar_perfil(user_id):
                 'empresa': perfil_bd.get('empresa', ''),
                 'instagram': perfil_bd.get('instagram', ''),
                 'website': perfil_bd.get('website', ''),
+                'cargo': perfil_bd.get('cargo', ''),
                 'cor_principal': perfil_bd.get('cor_principal', ''),
                 'cor_secundaria': perfil_bd.get('cor_secundaria', ''),
                 'observacoes_relatorio': perfil_bd.get('observacoes_relatorio', ''),

@@ -408,14 +408,48 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
         # Ajuste de posição - sem as seções removidas
         y = y - 40
         
-        # Rodapé com data e hora de geração
+        # Rodapé personalizado
         c.setFillColor(azul_escuro)
-        c.rect(0, 0, width, 30, fill=True, stroke=0)
+        c.rect(0, 0, width, 40, fill=True, stroke=0)
         c.setFillColor(colors.white)
-        c.setFont("Helvetica", 9)
-        # Usar horário do Brasil para o timestamp
+        c.setFont("Helvetica", 10)
+        
+        # Obter informações personalizadas do perfil do usuário
+        def obter_dados_rodape():
+            try:
+                import streamlit as st
+                from utils.database import Database
+                
+                # Dados padrão como fallback
+                nome_empresa = "Planner Organizer"
+                cargo_funcao = "Personal Organizer"
+                instagram = "@plannerorganizer"
+                
+                # Tentar obter dados do perfil do usuário
+                if 'db' in st.session_state:
+                    db = st.session_state.db
+                    perfil = db.get_perfil_usuario()
+                    
+                    if perfil:
+                        nome_empresa = perfil.get('empresa') or perfil.get('nome', nome_empresa)
+                        instagram = f"@{perfil.get('instagram')}" if perfil.get('instagram') else instagram
+                        cargo_funcao = perfil.get('cargo') or cargo_funcao
+                
+                return nome_empresa, cargo_funcao, instagram
+                
+            except Exception as e:
+                print(f"Erro ao obter dados do perfil para rodapé: {str(e)}")
+                return "Planner Organizer", "Personal Organizer", "@plannerorganizer"
+        
+        nome_empresa, cargo_funcao, instagram = obter_dados_rodape()
+        
+        # Primeira linha: informações da empresa
+        footer_text = f"{nome_empresa} | {cargo_funcao} | {instagram}"
+        c.drawString(30, 25, footer_text)
+        
+        # Segunda linha: data de geração
         agora = datetime.now() - timedelta(hours=3)  # Ajustando para UTC-3 (Brasília)
-        c.drawCentredString(width/2, 10, f"Relatório gerado em {agora.strftime('%d/%m/%Y às %H:%M')}")
+        c.drawString(30, 10, f"Gerado em {agora.strftime('%d/%m/%Y às %H:%M')}")
         
         # Salvar PDF
         c.save()

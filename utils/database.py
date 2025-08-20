@@ -152,6 +152,7 @@ class Perfil(Base):
     empresa = Column(String)
     instagram = Column(String)
     website = Column(String)
+    cargo = Column(String)  # Campo para cargo/função do usuário
     cor_principal = Column(String)
     cor_secundaria = Column(String)
     observacoes_relatorio = Column(String)  # Campo para observações personalizadas do usuário nos relatórios
@@ -750,6 +751,7 @@ class Database:
                     perfil.empresa = dados_perfil.get('empresa', perfil.empresa)
                     perfil.instagram = dados_perfil.get('instagram', perfil.instagram)
                     perfil.website = dados_perfil.get('website', perfil.website)
+                    perfil.cargo = dados_perfil.get('cargo', perfil.cargo)
                     perfil.cor_principal = dados_perfil.get('cor_principal', perfil.cor_principal)
                     perfil.cor_secundaria = dados_perfil.get('cor_secundaria', perfil.cor_secundaria)
                     perfil.observacoes_relatorio = dados_perfil.get('observacoes_relatorio', perfil.observacoes_relatorio)
@@ -769,6 +771,7 @@ class Database:
                         empresa=dados_perfil.get('empresa', ''),
                         instagram=dados_perfil.get('instagram', ''),
                         website=dados_perfil.get('website', ''),
+                        cargo=dados_perfil.get('cargo', ''),
                         cor_principal=dados_perfil.get('cor_principal', ''),
                         cor_secundaria=dados_perfil.get('cor_secundaria', ''),
                         observacoes_relatorio=dados_perfil.get('observacoes_relatorio', ''),
@@ -808,6 +811,7 @@ class Database:
                         'empresa': perfil.empresa,
                         'instagram': perfil.instagram,
                         'website': perfil.website,
+                        'cargo': perfil.cargo,
                         'cor_principal': perfil.cor_principal,
                         'cor_secundaria': perfil.cor_secundaria,
                         'observacoes_relatorio': perfil.observacoes_relatorio,
