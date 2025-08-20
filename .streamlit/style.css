@@ -830,7 +830,35 @@ div[data-testid="stDownloadButton"] > button div {
     text-shadow: none !important;
     text-decoration: none !important;
     border-bottom: none !important;
-    box-shadow: none !important;
+    box-shadow: inset 0 0 0 0 transparent !important;
+}
+
+/* Remover especificamente a faixa azul do underline */
+div[data-testid="stDownloadButton"] > button:focus,
+div[data-testid="stDownloadButton"] > button:active,
+div[data-testid="stDownloadButton"] > button:visited {
+    text-decoration: none !important;
+    border-bottom: none !important;
+    outline: none !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+/* Forçar remoção de qualquer underline ou faixa */
+div[data-testid="stDownloadButton"] > button::after,
+div[data-testid="stDownloadButton"] > button::before {
+    display: none !important;
+    content: none !important;
+}
+
+/* Remover decorações de link */
+div[data-testid="stDownloadButton"] > button a,
+div[data-testid="stDownloadButton"] > button a:hover,
+div[data-testid="stDownloadButton"] > button a:focus,
+div[data-testid="stDownloadButton"] > button a:active,
+div[data-testid="stDownloadButton"] > button a:visited {
+    text-decoration: none !important;
+    border-bottom: none !important;
+    color: white !important;
 }
 
 /* ========================================
