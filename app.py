@@ -84,44 +84,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# JAVASCRIPT para remover completamente toggle da sidebar
+# JavaScript simplificado para ocultar apenas botão de toggle
 st.markdown("""
 <script>
-function removeToggleButton() {
-    // Selecionar e remover TODOS os elementos de toggle
-    const selectors = [
-        'button[data-testid="collapsedControl"]',
-        'button[data-testid="baseButton-minimal"]',
-        'button[aria-label*="collapse"]',
-        'button[title*="collapse"]',
-        'div[data-testid="stSidebar"] > div:first-child > button',
-        '.stSidebar > div:first-child > button'
-    ];
-
-    selectors.forEach(selector => {
-        const elements = document.querySelectorAll(selector);
-        elements.forEach(element => {
-            element.parentNode?.removeChild(element);
-        });
-    });
-
-    // Remover evento de hover também
-    const style = document.createElement('style');
-    style.innerHTML = `
-        *[data-testid*="collaps"] { display: none !important; }
-        *[aria-label*="collaps"] { display: none !important; }
-        section[data-testid="stSidebar"] > div:first-child > button { display: none !important; }
-    `;
-    document.head.appendChild(style);
-}
-
-// Executar imediatamente e a cada intervalo
-removeToggleButton();
-setInterval(removeToggleButton, 200);
-
-// Executar quando DOM mudar
-const observer = new MutationObserver(removeToggleButton);
-observer.observe(document.body, { childList: true, subtree: true });
+setTimeout(function() {
+    const toggleBtn = document.querySelector('button[data-testid="collapsedControl"]');
+    if (toggleBtn) {
+        toggleBtn.style.display = 'none';
+    }
+}, 1000);
 </script>
 """, unsafe_allow_html=True)
 
@@ -1029,109 +1000,19 @@ except Exception as e:
 
 # Sem título na barra lateral - removido conforme solicitação
 
-# CSS para ocultar navegação automática e ajustar a barra lateral
+# CSS mínimo para ocultar apenas navegação automática
 st.markdown("""
 <style>
-/* === OCULTAR NAVEGAÇÃO AUTOMÁTICA DO STREAMLIT === */
-
-/* Ocultar navegação automática de páginas */
+/* Ocultar apenas navegação automática do Streamlit */
 [data-testid="stSidebarNav"],
-[data-testid="stSidebarNavItems"],
-[data-testid="stSidebarNavLink"],
-div[data-testid="stSidebar"] nav,
-div[data-testid="stSidebar"] ul,
-div[data-testid="stSidebar"] li {
+[data-testid="stSidebarNavItems"] {
     display: none !important;
-    visibility: hidden !important;
 }
 
 /* Ocultar header/toolbar do desenvolvimento */
 [data-testid="stHeader"],
-[data-testid="stToolbar"],
-[data-testid="stDecoration"],
-.css-1d391kg,
-.css-1kyxreq,
-.css-1l02zno,
-header[data-testid="stHeader"] {
+[data-testid="stMainMenuButton"] {
     display: none !important;
-    visibility: hidden !important;
-}
-
-/* Ocultar menu hambúrguer e settings */
-[data-testid="stDeployButton"],
-[data-testid="stHeaderToolbar"],
-[data-testid="stMainMenuButton"],
-button[title="Settings"] {
-    display: none !important;
-    visibility: hidden !important;
-}
-
-/* Ajustar barra lateral */
-section[data-testid="stSidebar"] > div {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
-}
-
-/* Força brutal - ocultar qualquer elemento nav na sidebar */
-.css-17eq0hr, .css-1d391kg, .css-1kyxreq, .css-17lntkn {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    width: 0 !important;
-}
-
-/* Estilos específicos para a sidebar mobile */
-.mobile-sidebar {
-    transition: transform 0.3s ease-in-out !important;
-    box-shadow: 2px 0 15px rgba(0,0,0,0.2) !important; /* Sombra para dar profundidade */
-    background-color: #ffffff !important; /* Fundo branco */
-}
-
-.mobile-sidebar.sidebar-open {
-    transform: translateX(0) !important;
-}
-
-/* Botão customizado para toggle */
-.custom-sidebar-arrow {
-    position: fixed;
-    top: 15px;
-    left: 270px; /* Posição após a sidebar */
-    z-index: 1000000;
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    transition: all 0.3s ease-in-out;
-}
-
-.custom-sidebar-arrow:hover {
-    background-color: #f0f0f0;
-    transform: scale(1.1);
-}
-
-.custom-sidebar-arrow::before {
-    content: '◀'; /* Seta para a esquerda */
-    font-size: 18px;
-    color: #4F4F52;
-    font-weight: bold;
-}
-
-.custom-sidebar-arrow.sidebar-collapsed::before {
-    content: '▶'; /* Seta para a direita quando colapsado */
-}
-
-/* Ocultar botões originais de colapso */
-button[data-testid="collapsedControl"],
-button[data-testid="baseButton-minimal"],
-button[kind="secondary"] {
-    display: none !important;
-    visibility: hidden !important;
 }
 </style>
 """, unsafe_allow_html=True)
