@@ -1036,14 +1036,32 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         
         nome_empresa, cargo_funcao, instagram = obter_dados_rodape()
         
-        # Primeira linha: informações da empresa
+        # Primeira linha: informações da empresa (centralizada)
         footer_text = f"{nome_empresa} | {cargo_funcao} | {instagram}"
-        c.drawString(30, 25, footer_text)
+        text_width = c.stringWidth(footer_text, "Helvetica", 10)
+        center_x = width / 2 - text_width / 2
+        c.drawString(center_x, 25, footer_text)
         
-        # Segunda linha: data de geração
+        # Tornar Instagram clicável se contém dados válidos
+        if instagram and instagram != "@plannerorganizer":
+            # Calcular posição do Instagram no texto
+            prefix = f"{nome_empresa} | {cargo_funcao} | "
+            prefix_width = c.stringWidth(prefix, "Helvetica", 10)
+            instagram_width = c.stringWidth(instagram, "Helvetica", 10)
+            
+            # Criar link clicável para Instagram
+            instagram_url = f"https://instagram.com/{instagram.replace('@', '')}"
+            c.linkURL(instagram_url, 
+                     (center_x + prefix_width, 20, 
+                      center_x + prefix_width + instagram_width, 30))
+        
+        # Segunda linha: data de geração (centralizada)
         from datetime import datetime
         agora = datetime.now()
-        c.drawString(30, 10, f"Gerado em {agora.strftime('%d/%m/%Y às %H:%M')}")
+        date_text = f"Gerado em {agora.strftime('%d/%m/%Y às %H:%M')}"
+        date_width = c.stringWidth(date_text, "Helvetica", 10)
+        date_center_x = width / 2 - date_width / 2
+        c.drawString(date_center_x, 10, date_text)
         
         # Salvar o PDF
         c.save()
