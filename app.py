@@ -51,7 +51,7 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 # Estado para controlar a página de login
-if 'login_page' not in st.session_state:
+if 'login_page' not not in st.session_state:
     st.session_state.login_page = "login"  # Valores possíveis: login, registrar, recuperar_senha
 
 # Verificar estado para mostrar termos de uso
@@ -84,15 +84,44 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# JavaScript simplificado para ocultar apenas botão de toggle
+# JAVASCRIPT para remover completamente toggle da sidebar
 st.markdown("""
 <script>
-setTimeout(function() {
-    const toggleBtn = document.querySelector('button[data-testid="collapsedControl"]');
-    if (toggleBtn) {
-        toggleBtn.style.display = 'none';
-    }
-}, 1000);
+function removeToggleButton() {
+    // Selecionar e remover TODOS os elementos de toggle
+    const selectors = [
+        'button[data-testid="collapsedControl"]',
+        'button[data-testid="baseButton-minimal"]',
+        'button[aria-label*="collapse"]',
+        'button[title*="collapse"]',
+        'div[data-testid="stSidebar"] > div:first-child > button',
+        '.stSidebar > div:first-child > button'
+    ];
+
+    selectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(element => {
+            element.parentNode?.removeChild(element);
+        });
+    });
+
+    // Remover evento de hover também
+    const style = document.createElement('style');
+    style.innerHTML = `
+        *[data-testid*="collaps"] { display: none !important; }
+        *[aria-label*="collaps"] { display: none !important; }
+        section[data-testid="stSidebar"] > div:first-child > button { display: none !important; }
+    `;
+    document.head.appendChild(style);
+}
+
+// Executar imediatamente e a cada intervalo
+removeToggleButton();
+setInterval(removeToggleButton, 200);
+
+// Executar quando DOM mudar
+const observer = new MutationObserver(removeToggleButton);
+observer.observe(document.body, { childList: true, subtree: true });
 </script>
 """, unsafe_allow_html=True)
 
@@ -1000,78 +1029,230 @@ except Exception as e:
 
 # Sem título na barra lateral - removido conforme solicitação
 
-# CSS mínimo para ocultar apenas navegação automática
+# CSS para ocultar navegação automática e ajustar a barra lateral
 st.markdown("""
 <style>
-/* Ocultar apenas navegação automática do Streamlit */
+/* === OCULTAR NAVEGAÇÃO AUTOMÁTICA DO STREAMLIT === */
+
+/* Ocultar navegação automática de páginas */
 [data-testid="stSidebarNav"],
-[data-testid="stSidebarNavItems"] {
+[data-testid="stSidebarNavItems"],
+[data-testid="stSidebarNavLink"],
+div[data-testid="stSidebar"] nav,
+div[data-testid="stSidebar"] ul,
+div[data-testid="stSidebar"] li {
     display: none !important;
+    visibility: hidden !important;
 }
 
 /* Ocultar header/toolbar do desenvolvimento */
 [data-testid="stHeader"],
-[data-testid="stMainMenuButton"] {
+[data-testid="stToolbar"],
+[data-testid="stDecoration"],
+.css-1d391kg,
+.css-1kyxreq,
+.css-1l02zno,
+header[data-testid="stHeader"] {
     display: none !important;
+    visibility: hidden !important;
+}
+
+/* Ocultar menu hambúrguer e settings */
+[data-testid="stDeployButton"],
+[data-testid="stHeaderToolbar"],
+[data-testid="stMainMenuButton"],
+button[title="Settings"] {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Ajustar barra lateral */
+section[data-testid="stSidebar"] > div {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* Força brutal - ocultar qualquer elemento nav na sidebar */
+.css-17eq0hr, .css-1d391kg, .css-1kyxreq, .css-17lntkn {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+}
+
+/* Estilos específicos para a sidebar mobile */
+.mobile-sidebar {
+    transition: transform 0.3s ease-in-out !important;
+    box-shadow: 2px 0 15px rgba(0,0,0,0.2) !important; /* Sombra para dar profundidade */
+    background-color: #ffffff !important; /* Fundo branco */
+}
+
+.mobile-sidebar.sidebar-open {
+    transform: translateX(0) !important;
+}
+
+/* Botão customizado para toggle */
+.custom-sidebar-arrow {
+    position: fixed;
+    top: 15px;
+    left: 270px; /* Posição após a sidebar */
+    z-index: 1000000;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease-in-out;
+}
+
+.custom-sidebar-arrow:hover {
+    background-color: #f0f0f0;
+    transform: scale(1.1);
+}
+
+.custom-sidebar-arrow::before {
+    content: '◀'; /* Seta para a esquerda */
+    font-size: 18px;
+    color: #4F4F52;
+    font-weight: bold;
+}
+
+.custom-sidebar-arrow.sidebar-collapsed::before {
+    content: '▶'; /* Seta para a direita quando colapsado */
+}
+
+/* Ocultar botões originais de colapso */
+button[data-testid="collapsedControl"],
+button[data-testid="baseButton-minimal"],
+button[kind="secondary"] {
+    display: none !important;
+    visibility: hidden !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# JavaScript removido para evitar conflitos de sintaxe - funcionalidade movida para CSS
+# Controlar visibilidade da sidebar baseado na presença de navegação e tamanho da tela
+function controlSidebarVisibility() {
+    const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+    const hasNavButtons = document.querySelector('.nav-buttons');
+    const collapseButton = document.querySelector('button[data-testid="collapsedControl"]');
+    const isMobile = window.innerWidth <= 768;
 
-# Sempre mostrar as informações do sistema na sidebar primeiro
-# Divisor antes das informações do sistema
-st.sidebar.markdown('<div style="margin: 1.5rem 0;"><hr style="border: none; height: 1px; background-color: #E0E0E0;"></div>', unsafe_allow_html=True)
+    if (sidebar) {
+        if (hasNavButtons && !isMobile) {
+            // Desktop: mostrar sidebar normalmente
+            sidebar.style.display = 'block';
+            sidebar.style.visibility = 'visible';
+            sidebar.style.width = '250px';
+            sidebar.style.minWidth = '250px';
+            sidebar.style.position = 'relative';
+            sidebar.style.transform = 'none';
+            console.log('👤 Desktop - sidebar habilitada');
+        } else if (hasNavButtons && isMobile) {
+            // Mobile: sidebar do lado esquerdo, inicialmente oculta
+            sidebar.style.display = 'block';
+            sidebar.style.visibility = 'visible';
+            sidebar.style.position = 'fixed';
+            sidebar.style.top = '0';
+            sidebar.style.left = '0';
+            sidebar.style.width = '250px';
+            sidebar.style.minWidth = '250px';
+            sidebar.style.height = '100vh';
+            sidebar.style.zIndex = '999999';
+            sidebar.style.transform = 'translateX(-100%)';
+            sidebar.classList.add('mobile-sidebar');
+            console.log('📱 Mobile - sidebar configurada à esquerda');
 
-# Usando um expander para as informações do sistema
-with st.sidebar.expander("ℹ️ Informações do Sistema"):
-    st.markdown("### Planner Organizer")
-    st.markdown("**Versão:** 1.0.4")
+            // Adicionar funcionalidade de toggle para mobile
+            setupMobileSidebarToggle();
+        } else {
+            // Não autenticado: sempre ocultar
+            sidebar.style.display = 'none';
+            sidebar.style.visibility = 'hidden';
+            sidebar.style.width = '0';
+            sidebar.style.minWidth = '0';
+            console.log('🚫 Não autenticado - sidebar oculta');
+        }
+    }
 
-    st.markdown("### Módulos do Sistema:")
-    st.markdown("""
-    - **Dashboard** - Métricas e alertas
-    - **Cadastros** - Clientes, parceiros e fornecedores
-    - **Propostas** - Gestão completa de propostas
-    - **Vendas** - Controle de produtos vendidos
-    - **Financeiro** - Receitas e despesas
-    - **Relatórios** - Análises e visualizações
-    """)
+    // Sempre ocultar os botões de colapso originais do Streamlit
+    const originalCollapseButtons = document.querySelectorAll([
+        '[data-testid="collapsedControl"]',
+        '[data-testid="baseButton-minimal"]',
+        'button[kind="secondary"]'
+    ].join(', '));
 
-    st.markdown("### Funcionalidades Principais:")
-    st.markdown("""
-    - Fluxo completo de propostas
-    - Integração entre módulos
-    - Sistema de alertas de prazos
-    - Geração de lançamentos financeiros
-    - Cálculo de comissões
-    - Importação em lote
-    - Backup e restauração
-    """)
+    originalCollapseButtons.forEach(btn => {
+        if (btn) {
+            btn.style.display = 'none';
+            btn.style.visibility = 'hidden';
+        }
+    });
 
-    # Botão para gerar o manual do sistema
-    if st.button("📘 Gerar Manual do Sistema", use_container_width=True):
-        with st.spinner("Gerando manual em PDF..."):
-            try:
-                from pages.manual_sistema import gerar_manual_sistema
-                pdf_path = gerar_manual_sistema()
+    // Se a sidebar estiver visível e não for mobile, posicionar a seta customizada corretamente
+    const customArrow = document.querySelector('.custom-sidebar-arrow');
+    if (customArrow && sidebar && sidebar.style.position === 'relative') {
+        customArrow.style.left = '270px'; // Posição ajustada para a sidebar visível
+        customArrow.style.display = 'flex'; // Garantir que esteja visível
+    } else if (customArrow) {
+        customArrow.style.display = 'none'; // Ocultar seta se sidebar não estiver em modo desktop visível
+    }
+}
 
-                # Ler o arquivo PDF para download
-                with open(pdf_path, "rb") as pdf_file:
-                    pdf_bytes = pdf_file.read()
+// Função para configurar toggle da sidebar em mobile
+function setupMobileSidebarToggle() {
+    const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+    const collapseButton = document.querySelector('button[data-testid="collapsedControl"]'); // O botão que o Streamlit cria
 
-                st.success("Manual gerado com sucesso!")
-                st.download_button(
-                    label="📥 Baixar Manual do Sistema",
-                    data=pdf_bytes,
-                    file_name="Manual_Planner_Organizer.pdf",
-                    mime="application/pdf",
-                    use_container_width=True
-                )
-            except Exception as e:
-                st.error(f"Erro ao gerar o manual: {str(e)}")
+    // Criar nosso próprio botão de toggle se não existir
+    let mobileToggleBtn = document.getElementById('mobile-sidebar-toggle');
+    if (!mobileToggleBtn) {
+        mobileToggleBtn = document.createElement('button');
+        mobileToggleBtn.id = 'mobile-sidebar-toggle';
+        mobileToggleBtn.className = 'custom-sidebar-arrow'; // Usar a classe CSS existente
+        mobileToggleBtn.title = 'Abrir/Fechar Menu';
+        document.body.appendChild(mobileToggleBtn);
+    }
 
-# Verificar se o usuário está autenticado antes de mostrar elementos de navegação
+    if (mobileToggleBtn && sidebar) {
+        mobileToggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const isOpen = sidebar.style.transform === 'translateX(0px)';
+
+            if (isOpen) {
+                // Fechar sidebar
+                sidebar.style.transform = 'translateX(-100%)';
+                sidebar.classList.remove('sidebar-open');
+            } else {
+                // Abrir sidebar
+                sidebar.style.transform = 'translateX(0)';
+                sidebar.classList.add('sidebar-open');
+            }
+        });
+    }
+}
+
+
+// Listener para mudanças de orientação/redimensionamento
+window.addEventListener('resize', function() {
+    setTimeout(controlSidebarVisibility, 100);
+});
+
+window.addEventListener('orientationchange', function() {
+    setTimeout(controlSidebarVisibility, 200);
+});
+
+</script>
+""", unsafe_allow_html=True)
+
+# Verificar se o usuário está autenticado antes de mostrar todos os elementos da sidebar
 if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
    ('user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user):
     # Container dos botões com fundo escuro
@@ -1127,7 +1308,58 @@ try:
 except Exception as e:
     st.error(f"Erro ao carregar página: {str(e)}")
 
-# Informações do sistema foram movidas para aparecer sempre no início da sidebar
+# Divisor antes das informações do sistema
+st.sidebar.markdown('<div style="margin: 1.5rem 0;"><hr style="border: none; height: 1px; background-color: #E0E0E0;"></div>', unsafe_allow_html=True)
+
+# CSS movido para .streamlit/style.css para centralização
+
+# Usando um expander para as informações do sistema
+with st.sidebar.expander("ℹ️ Informações do Sistema"):
+    st.markdown("### Planner Organizer")
+    st.markdown("**Versão:** 1.0.4")
+
+    st.markdown("### Módulos do Sistema:")
+    st.markdown("""
+    - **Dashboard** - Métricas e alertas
+    - **Cadastros** - Clientes, parceiros e fornecedores
+    - **Propostas** - Gestão completa de propostas
+    - **Vendas** - Controle de produtos vendidos
+    - **Financeiro** - Receitas e despesas
+    - **Relatórios** - Análises e visualizações
+    """)
+
+    st.markdown("### Funcionalidades Principais:")
+    st.markdown("""
+    - ✅ Fluxo completo de propostas
+    - ✅ Integração entre módulos
+    - ✅ Sistema de alertas de prazos
+    - ✅ Geração de lançamentos financeiros
+    - ✅ Cálculo de comissões
+    - ✅ Importação em lote
+    - ✅ Backup e restauração
+    """)
+
+    # Botão para gerar o manual do sistema
+    if st.button("📘 Gerar Manual do Sistema", use_container_width=True):
+        with st.spinner("Gerando manual em PDF..."):
+            try:
+                from pages.manual_sistema import gerar_manual_sistema
+                pdf_path = gerar_manual_sistema()
+
+                # Ler o arquivo PDF para download
+                with open(pdf_path, "rb") as pdf_file:
+                    pdf_bytes = pdf_file.read()
+
+                st.success("Manual gerado com sucesso!")
+                st.download_button(
+                    label="📥 Baixar Manual do Sistema",
+                    data=pdf_bytes,
+                    file_name="Manual_Planner_Organizer.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+            except Exception as e:
+                st.error(f"Erro ao gerar o manual: {str(e)}")
 
 # Gerenciar o estado para os modais de termos e política
 if "mostrar_termos" not in st.session_state:
