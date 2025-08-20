@@ -375,18 +375,20 @@ def st_gerar_pdf_proposta(proposta_id, custom_filename=None):
         )
         
         if sucesso:
-            st.success(mensagem)
+            # Mostrar mensagem de sucesso primeiro
+            st.success("Proposta do cliente gerada com sucesso!")
             
-            # Botão para download do arquivo
-            with open(filename, "rb") as pdf:
-                # Usar o nome do arquivo original, garantindo que o nome fica correto no download
-                nome_arquivo = os.path.basename(filename)
-                st.download_button(
-                    label="⬇️ Baixar PDF",
-                    data=pdf.read(),
-                    file_name=nome_arquivo,
-                    mime="application/pdf"
-                )
+            # Botão de download depois (igual ao de vendas)
+            with open(filename, "rb") as file:
+                pdf_bytes = file.read()
+            
+            st.download_button(
+                label="📥 Baixar Proposta cliente",
+                data=pdf_bytes,
+                file_name=os.path.basename(filename),
+                mime="application/pdf",
+                key=f"download_pdf_proposta_{proposta_id}"
+            )
             
             return True, filename
         else:
