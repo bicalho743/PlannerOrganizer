@@ -930,14 +930,42 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         # Lista de observações
         y -= 20
         
-        # Definir as observações padrão
-        observacoes = [
-            "1. Pagamento sinal, na reserva da data, via PIX",
-            "2. Os valores apresentados incluem todos os custos.",
-            "3. Não está incluído a organização de documentos.",
-            "4. No caso da proposta incluir treinamento, é necessário a presença de funcionário no período da organização",
-            "5. Não incluido produtos e organizadores, caso o cliente opte por adquirí-los"
-        ]
+        # Obter observações personalizadas do perfil do usuário
+        observacoes_personalizadas = None
+        try:
+            import streamlit as st
+            from utils.database import Database
+            
+            if 'db' in st.session_state:
+                db = st.session_state.db
+                perfil = db.get_perfil_usuario()
+                if perfil and perfil.get('observacoes_relatorio'):
+                    observacoes_personalizadas = perfil['observacoes_relatorio']
+        except Exception as e:
+            print(f"Erro ao buscar observações personalizadas: {str(e)}")
+        
+        # Usar observações personalizadas ou padrão
+        if observacoes_personalizadas:
+            # Processar observações personalizadas (dividir por linha)
+            linhas_obs = observacoes_personalizadas.strip().split('\n')
+            observacoes = []
+            for i, linha in enumerate(linhas_obs, 1):
+                linha = linha.strip()
+                if linha:
+                    # Se a linha já tem numeração, manter; senão, adicionar
+                    if linha[0].isdigit() and '. ' in linha[:5]:
+                        observacoes.append(linha)
+                    else:
+                        observacoes.append(f"{i}. {linha}")
+        else:
+            # Observações padrão
+            observacoes = [
+                "1. Pagamento sinal, na reserva da data, via PIX",
+                "2. Os valores apresentados incluem todos os custos.",
+                "3. Não está incluído a organização de documentos.",
+                "4. No caso da proposta incluir treinamento, é necessário a presença de funcionário no período da organização",
+                "5. Não incluido produtos e organizadores, caso o cliente opte por adquirí-los"
+            ]
         
         # Função para quebrar linhas muito longas
         import textwrap

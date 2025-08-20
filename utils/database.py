@@ -154,6 +154,7 @@ class Perfil(Base):
     website = Column(String)
     cor_principal = Column(String)
     cor_secundaria = Column(String)
+    observacoes_relatorio = Column(String)  # Campo para observações personalizadas do usuário nos relatórios
     role = Column(String, default='user')
     plano = Column(String, default='gratuito')
     data_cadastro = Column(Date, default=datetime.now().date())
@@ -724,6 +725,104 @@ class Database:
                 print(f"Erro ao criar perfil: {str(e)}")
                 self.session.rollback()
                 return False
+                
+        return self._safe_query(query)
+        
+    def salvar_perfil_usuario(self, dados_perfil):
+        """
+        Salva ou atualiza o perfil do usuário no banco de dados
+        
+        Args:
+            dados_perfil (dict): Dicionário com os dados do perfil
+            
+        Returns:
+            bool: True se salvou com sucesso, False caso contrário
+        """
+        def query():
+            try:
+                # Procurar perfil existente do usuário atual
+                perfil = self.session.query(Perfil).filter_by(usuario_id=self.usuario_id).first()
+                
+                if perfil:
+                    # Atualizar perfil existente
+                    perfil.nome = dados_perfil.get('nome', perfil.nome)
+                    perfil.telefone = dados_perfil.get('telefone', perfil.telefone)
+                    perfil.empresa = dados_perfil.get('empresa', perfil.empresa)
+                    perfil.instagram = dados_perfil.get('instagram', perfil.instagram)
+                    perfil.website = dados_perfil.get('website', perfil.website)
+                    perfil.cor_principal = dados_perfil.get('cor_principal', perfil.cor_principal)
+                    perfil.cor_secundaria = dados_perfil.get('cor_secundaria', perfil.cor_secundaria)
+                    perfil.observacoes_relatorio = dados_perfil.get('observacoes_relatorio', perfil.observacoes_relatorio)
+                    perfil.ultimo_login = datetime.now()
+                else:
+                    # Criar novo perfil - precisa de email válido
+                    email = dados_perfil.get('email')
+                    if not email:
+                        print("Erro: Email é obrigatório para criar perfil")
+                        return False
+                    
+                    perfil = Perfil(
+                        usuario_id=self.usuario_id,
+                        email=email,
+                        nome=dados_perfil.get('nome', 'Usuário'),
+                        telefone=dados_perfil.get('telefone', ''),
+                        empresa=dados_perfil.get('empresa', ''),
+                        instagram=dados_perfil.get('instagram', ''),
+                        website=dados_perfil.get('website', ''),
+                        cor_principal=dados_perfil.get('cor_principal', ''),
+                        cor_secundaria=dados_perfil.get('cor_secundaria', ''),
+                        observacoes_relatorio=dados_perfil.get('observacoes_relatorio', ''),
+                        ultimo_login=datetime.now()
+                    )
+                    self.session.add(perfil)
+                
+                self.session.commit()
+                print(f"Perfil salvo com sucesso para usuário: {self.usuario_id}")
+                return True
+                
+            except Exception as e:
+                print(f"Erro ao salvar perfil: {str(e)}")
+                self.session.rollback()
+                return False
+                
+        return self._safe_query(query)
+        
+    def get_perfil_usuario(self):
+        """
+        Obtém o perfil do usuário atual
+        
+        Returns:
+            dict: Dados do perfil ou None se não encontrado
+        """
+        def query():
+            try:
+                perfil = self.session.query(Perfil).filter_by(usuario_id=self.usuario_id).first()
+                
+                if perfil:
+                    return {
+                        'id': perfil.id,
+                        'usuario_id': perfil.usuario_id,
+                        'email': perfil.email,
+                        'nome': perfil.nome,
+                        'telefone': perfil.telefone,
+                        'empresa': perfil.empresa,
+                        'instagram': perfil.instagram,
+                        'website': perfil.website,
+                        'cor_principal': perfil.cor_principal,
+                        'cor_secundaria': perfil.cor_secundaria,
+                        'observacoes_relatorio': perfil.observacoes_relatorio,
+                        'role': perfil.role,
+                        'plano': perfil.plano,
+                        'data_cadastro': perfil.data_cadastro,
+                        'ultimo_login': perfil.ultimo_login,
+                        'ativo': perfil.ativo
+                    }
+                else:
+                    return None
+                    
+            except Exception as e:
+                print(f"Erro ao buscar perfil: {str(e)}")
+                return None
                 
         return self._safe_query(query)
         

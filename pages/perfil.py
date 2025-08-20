@@ -6,7 +6,7 @@ from datetime import datetime
 
 def carregar_perfil(user_id):
     """
-    Carrega os dados do perfil do usuário a partir do arquivo JSON
+    Carrega os dados do perfil do usuário do banco de dados (com fallback para arquivo JSON)
     
     Args:
         user_id: ID ou email do usuário
@@ -14,13 +14,38 @@ def carregar_perfil(user_id):
     Returns:
         dict: Dados do perfil ou dicionário vazio se não existir
     """
-    # Normalizar o ID do usuário para uso em nome de arquivo
-    user_id_normalizado = user_id.replace('@', '_at_').replace('.', '_dot_')
+    try:
+        from utils.database import Database
+        
+        # Tentar carregar do banco de dados primeiro
+        if 'db' in st.session_state:
+            db = st.session_state.db
+        else:
+            db = Database()
+        
+        perfil_bd = db.get_perfil_usuario()
+        
+        if perfil_bd:
+            # Converter dados do banco para o formato esperado
+            return {
+                'nome': perfil_bd.get('nome', ''),
+                'email': perfil_bd.get('email', ''),
+                'telefone': perfil_bd.get('telefone', ''),
+                'empresa': perfil_bd.get('empresa', ''),
+                'instagram': perfil_bd.get('instagram', ''),
+                'website': perfil_bd.get('website', ''),
+                'cor_principal': perfil_bd.get('cor_principal', ''),
+                'cor_secundaria': perfil_bd.get('cor_secundaria', ''),
+                'observacoes_relatorio': perfil_bd.get('observacoes_relatorio', ''),
+                'ultima_atualizacao': perfil_bd.get('ultimo_login', '').strftime("%d/%m/%Y %H:%M:%S") if perfil_bd.get('ultimo_login') else ''
+            }
+    except Exception as e:
+        print(f"Erro ao carregar perfil do banco: {str(e)}")
     
-    # Caminho do arquivo de perfil
+    # Fallback para arquivo JSON se banco falhar
+    user_id_normalizado = user_id.replace('@', '_at_').replace('.', '_dot_')
     perfil_path = f"data/perfis/{user_id_normalizado}.json"
     
-    # Verificar se o arquivo existe
     if os.path.exists(perfil_path):
         try:
             with open(perfil_path, 'r', encoding='utf-8') as f:
@@ -33,7 +58,7 @@ def carregar_perfil(user_id):
 
 def salvar_perfil(user_id, dados_perfil):
     """
-    Salva os dados do perfil do usuário em um arquivo JSON
+    Salva os dados do perfil do usuário no banco de dados
     
     Args:
         user_id: ID ou email do usuário
@@ -42,25 +67,44 @@ def salvar_perfil(user_id, dados_perfil):
     Returns:
         bool: True se o salvamento foi bem-sucedido, False caso contrário
     """
-    # Normalizar o ID do usuário para uso em nome de arquivo
-    user_id_normalizado = user_id.replace('@', '_at_').replace('.', '_dot_')
-    
-    # Garantir que o diretório existe
-    os.makedirs("data/perfis", exist_ok=True)
-    
-    # Caminho do arquivo de perfil
-    perfil_path = f"data/perfis/{user_id_normalizado}.json"
-    
-    # Adicionar timestamp de atualização
-    dados_perfil['ultima_atualizacao'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    
     try:
-        with open(perfil_path, 'w', encoding='utf-8') as f:
-            json.dump(dados_perfil, f, ensure_ascii=False, indent=4)
-        return True
+        from utils.database import Database
+        
+        # Usar o sistema de banco de dados
+        if 'db' in st.session_state:
+            db = st.session_state.db
+        else:
+            db = Database()
+        
+        # Tentar salvar no banco de dados primeiro
+        success = db.salvar_perfil_usuario(dados_perfil)
+        
+        if success:
+            # Manter backup em arquivo JSON como fallback
+            user_id_normalizado = user_id.replace('@', '_at_').replace('.', '_dot_')
+            os.makedirs("data/perfis", exist_ok=True)
+            perfil_path = f"data/perfis/{user_id_normalizado}.json"
+            dados_perfil['ultima_atualizacao'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            
+            with open(perfil_path, 'w', encoding='utf-8') as f:
+                json.dump(dados_perfil, f, ensure_ascii=False, indent=4)
+        
+        return success
+        
     except Exception as e:
-        st.error(f"Erro ao salvar perfil: {str(e)}")
-        return False
+        # Fallback para arquivo JSON se banco falhar
+        try:
+            user_id_normalizado = user_id.replace('@', '_at_').replace('.', '_dot_')
+            os.makedirs("data/perfis", exist_ok=True)
+            perfil_path = f"data/perfis/{user_id_normalizado}.json"
+            dados_perfil['ultima_atualizacao'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            
+            with open(perfil_path, 'w', encoding='utf-8') as f:
+                json.dump(dados_perfil, f, ensure_ascii=False, indent=4)
+            return True
+        except Exception as e2:
+            st.error(f"Erro ao salvar perfil: {str(e)} | Fallback: {str(e2)}")
+            return False
 
 def show():
     """
@@ -201,6 +245,20 @@ def show():
             help="Esta mensagem aparecerá nos relatórios enviados para clientes"
         )
         
+        # Campo para observações personalizadas nos relatórios
+        observacoes_default = """1. Pagamento sinal, na reserva da data, via PIX
+2. Os valores apresentados incluem todos os custos.
+3. Não está incluído a organização de documentos.
+4. No caso da proposta incluir treinamento, é necessário a presença de funcionário no período da organização
+5. Não incluido produtos e organizadores, caso o cliente opte por adquirí-los"""
+        
+        observacoes_relatorio = st.text_area(
+            "Observações para Relatórios de Propostas",
+            value=perfil.get('observacoes_relatorio', observacoes_default),
+            height=150,
+            help="Estas observações aparecerão em todos os PDFs de propostas gerados. Uma observação por linha, numeradas automaticamente."
+        )
+        
         botao_salvar = st.form_submit_button("💾 Salvar Perfil")
         
         if botao_salvar:
@@ -221,7 +279,8 @@ def show():
                 'cidade': cidade,
                 'estado': estado,
                 'cep': cep,
-                'mensagem_padrao': mensagem_padrao
+                'mensagem_padrao': mensagem_padrao,
+                'observacoes_relatorio': observacoes_relatorio
             }
             
             # Salvar perfil
