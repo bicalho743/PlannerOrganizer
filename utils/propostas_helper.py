@@ -577,16 +577,17 @@ def st_gerar_pdf_cliente(proposta_id, custom_filename=None):
             # Mostrar mensagem de sucesso primeiro
             st.success(mensagem)
             
-            # Botão de download depois
-            with open(filename, "rb") as pdf:
-                # Usar o nome do arquivo original, garantindo que o nome fica correto no download
-                nome_arquivo = os.path.basename(filename)
-                st.download_button(
-                    label="📥 Baixar Relatório do Cliente",
-                    data=pdf.read(),
-                    file_name=nome_arquivo,
-                    mime="application/pdf"
-                )
+            # Botão de download depois (igual ao de vendas)
+            with open(filename, "rb") as file:
+                pdf_bytes = file.read()
+            
+            st.download_button(
+                label="📥 Baixar Relatório do Cliente",
+                data=pdf_bytes,
+                file_name=os.path.basename(filename),
+                mime="application/pdf",
+                key=f"download_pdf_cliente_{proposta_id}"
+            )
             
             return True, filename
         else:
@@ -609,16 +610,17 @@ def st_gerar_pdf_interno(proposta_id, custom_filename=None):
             # Mostrar mensagem de sucesso primeiro
             st.success(mensagem)
             
-            # Botão de download depois
-            with open(filename, "rb") as pdf:
-                # Usar o nome do arquivo original, garantindo que o nome fica correto no download
-                nome_arquivo = os.path.basename(filename)
-                st.download_button(
-                    label="📥 Baixar Relatório interno",
-                    data=pdf.read(),
-                    file_name=nome_arquivo,
-                    mime="application/pdf"
-                )
+            # Botão de download depois (igual ao de vendas)
+            with open(filename, "rb") as file:
+                pdf_bytes = file.read()
+            
+            st.download_button(
+                label="📥 Baixar Relatório interno",
+                data=pdf_bytes,
+                file_name=os.path.basename(filename),
+                mime="application/pdf",
+                key=f"download_pdf_interno_{proposta_id}"
+            )
             
             return True, filename
         else:
