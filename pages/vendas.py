@@ -742,16 +742,17 @@ def show():
                                         with open(pdf_path, "rb") as file:
                                             pdf_bytes = file.read()
                                         
-                                        # Botão de download
+                                        # Mostrar mensagem de sucesso primeiro
+                                        st.success("Relatório de venda gerado com sucesso!")
+                                        
+                                        # Botão de download depois
                                         st.download_button(
-                                            label="📥 Baixar Relatório PDF",
+                                            label="📥 Baixar Relatório de vendas",
                                             data=pdf_bytes,
                                             file_name=f"Relatório_Venda_{venda_id}_{cliente_nome_arquivo}.pdf",
                                             mime="application/pdf",
                                             key=f"download_pdf_venda_{venda_id}_detalhes"
                                         )
-                                        
-                                        st.success("Relatório de venda gerado com sucesso!")
                                     else:
                                         st.error("Erro ao gerar arquivo PDF")
                                         
