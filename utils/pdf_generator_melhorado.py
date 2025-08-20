@@ -229,23 +229,49 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         c.setFont("Helvetica-Bold", 12)
         c.drawString(40, y, "DESCRIÇÃO DO SERVIÇO")
         
-        # Fundo colorido para a descrição
+        # Fundo colorido para a descrição (altura ajustável)
         c.setFillColor(azul_claro)
-        c.rect(40, y-40, width-80, 30, fill=True, stroke=False)
+        # Calcular altura necessária baseada no texto
+        descricao_temp = proposta.get('descricao', 'Sem descrição')
+        paragrafos_temp = descricao_temp.split('\n')
+        linhas_total = 0
+        for p in paragrafos_temp:
+            if p.strip():
+                linhas_total += len(textwrap.wrap(p.strip(), 85))
+            else:
+                linhas_total += 1
+        altura_necessaria = max(30, linhas_total * 14 + 20)
+        c.rect(40, y-altura_necessaria, width-80, altura_necessaria, fill=True, stroke=False)
         
         # Texto da descrição
         y -= 25
         c.setFillColor(cinza_medio)
         c.setFont("Helvetica", 10)
         
-        # Processar a descrição para remover caracteres indesejados
+        # Processar a descrição mantendo quebras de linha
         descricao = proposta.get('descricao', 'Sem descrição')
         # Limpar caracteres especiais que podem aparecer como ■
-        descricao = descricao.replace('■', ' ').replace('\r\n', ' ').replace('\n', ' ').strip()
-        # Substituir múltiplos espaços por um único espaço
-        import re
-        descricao = re.sub(r'\s+', ' ', descricao)
-        c.drawString(50, y, descricao)
+        descricao = descricao.replace('■', '- ').replace('\r\n', '\n').replace('\r', '\n')
+        
+        # Quebrar texto em linhas para exibição adequada
+        import textwrap
+        paragrafos = descricao.split('\n')
+        y_inicial = y
+        line_height = 14
+        
+        for paragrafo in paragrafos:
+            if paragrafo.strip():
+                # Quebrar parágrafo em linhas que cabem na página
+                linhas = textwrap.wrap(paragrafo.strip(), 85)
+                for linha in linhas:
+                    c.drawString(50, y, linha)
+                    y -= line_height
+            else:
+                # Linha vazia - apenas pular espaço
+                y -= line_height
+        
+        # Ajustar Y para continuar o layout
+        y -= 10
         
         # ===== SERVIÇOS REALIZADOS (TABELA) =====
         y -= 45
@@ -877,21 +903,13 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         y -= 20
         line_height = 14
         
-        # Desenhar as linhas (limitado a 6 para não ficar muito grande)
-        max_lines = 6  
-        for i, linha in enumerate(todas_linhas[:max_lines]):
+        # Desenhar todas as linhas da descrição (removido limite artificial)
+        for i, linha in enumerate(todas_linhas):
             c.setFont("Helvetica", 10)
             c.drawString(50, y - (i * line_height), linha)
         
-        # Se houver mais linhas, indicar
-        if len(todas_linhas) > max_lines:
-            linhas_extras = len(todas_linhas) - max_lines
-            c.setFillColor(azul_escuro)
-            texto_mais = f"... e mais {linhas_extras} {'linha' if linhas_extras == 1 else 'linhas'}"
-            c.drawString(50, y - (max_lines * line_height), texto_mais)
-        
         # Ajustar a posição Y considerando o número de linhas mostradas
-        linhas_mostradas = min(len(todas_linhas), max_lines) 
+        linhas_mostradas = len(todas_linhas) 
         y -= (linhas_mostradas * line_height + 25)
         
         # Exibir valor e status
