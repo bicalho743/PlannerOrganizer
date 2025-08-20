@@ -51,7 +51,7 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 # Estado para controlar a página de login
-if 'login_page' not not in st.session_state:
+if 'login_page' not in st.session_state:
     st.session_state.login_page = "login"  # Valores possíveis: login, registrar, recuperar_senha
 
 # Verificar estado para mostrar termos de uso
@@ -1136,121 +1136,7 @@ button[kind="secondary"] {
 </style>
 """, unsafe_allow_html=True)
 
-# Controlar visibilidade da sidebar baseado na presença de navegação e tamanho da tela
-function controlSidebarVisibility() {
-    const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-    const hasNavButtons = document.querySelector('.nav-buttons');
-    const collapseButton = document.querySelector('button[data-testid="collapsedControl"]');
-    const isMobile = window.innerWidth <= 768;
-
-    if (sidebar) {
-        if (hasNavButtons && !isMobile) {
-            // Desktop: mostrar sidebar normalmente
-            sidebar.style.display = 'block';
-            sidebar.style.visibility = 'visible';
-            sidebar.style.width = '250px';
-            sidebar.style.minWidth = '250px';
-            sidebar.style.position = 'relative';
-            sidebar.style.transform = 'none';
-            console.log('👤 Desktop - sidebar habilitada');
-        } else if (hasNavButtons && isMobile) {
-            // Mobile: sidebar do lado esquerdo, inicialmente oculta
-            sidebar.style.display = 'block';
-            sidebar.style.visibility = 'visible';
-            sidebar.style.position = 'fixed';
-            sidebar.style.top = '0';
-            sidebar.style.left = '0';
-            sidebar.style.width = '250px';
-            sidebar.style.minWidth = '250px';
-            sidebar.style.height = '100vh';
-            sidebar.style.zIndex = '999999';
-            sidebar.style.transform = 'translateX(-100%)';
-            sidebar.classList.add('mobile-sidebar');
-            console.log('📱 Mobile - sidebar configurada à esquerda');
-
-            // Adicionar funcionalidade de toggle para mobile
-            setupMobileSidebarToggle();
-        } else {
-            // Não autenticado: sempre ocultar
-            sidebar.style.display = 'none';
-            sidebar.style.visibility = 'hidden';
-            sidebar.style.width = '0';
-            sidebar.style.minWidth = '0';
-            console.log('🚫 Não autenticado - sidebar oculta');
-        }
-    }
-
-    // Sempre ocultar os botões de colapso originais do Streamlit
-    const originalCollapseButtons = document.querySelectorAll([
-        '[data-testid="collapsedControl"]',
-        '[data-testid="baseButton-minimal"]',
-        'button[kind="secondary"]'
-    ].join(', '));
-
-    originalCollapseButtons.forEach(btn => {
-        if (btn) {
-            btn.style.display = 'none';
-            btn.style.visibility = 'hidden';
-        }
-    });
-
-    // Se a sidebar estiver visível e não for mobile, posicionar a seta customizada corretamente
-    const customArrow = document.querySelector('.custom-sidebar-arrow');
-    if (customArrow && sidebar && sidebar.style.position === 'relative') {
-        customArrow.style.left = '270px'; // Posição ajustada para a sidebar visível
-        customArrow.style.display = 'flex'; // Garantir que esteja visível
-    } else if (customArrow) {
-        customArrow.style.display = 'none'; // Ocultar seta se sidebar não estiver em modo desktop visível
-    }
-}
-
-// Função para configurar toggle da sidebar em mobile
-function setupMobileSidebarToggle() {
-    const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-    const collapseButton = document.querySelector('button[data-testid="collapsedControl"]'); // O botão que o Streamlit cria
-
-    // Criar nosso próprio botão de toggle se não existir
-    let mobileToggleBtn = document.getElementById('mobile-sidebar-toggle');
-    if (!mobileToggleBtn) {
-        mobileToggleBtn = document.createElement('button');
-        mobileToggleBtn.id = 'mobile-sidebar-toggle';
-        mobileToggleBtn.className = 'custom-sidebar-arrow'; // Usar a classe CSS existente
-        mobileToggleBtn.title = 'Abrir/Fechar Menu';
-        document.body.appendChild(mobileToggleBtn);
-    }
-
-    if (mobileToggleBtn && sidebar) {
-        mobileToggleBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            const isOpen = sidebar.style.transform === 'translateX(0px)';
-
-            if (isOpen) {
-                // Fechar sidebar
-                sidebar.style.transform = 'translateX(-100%)';
-                sidebar.classList.remove('sidebar-open');
-            } else {
-                // Abrir sidebar
-                sidebar.style.transform = 'translateX(0)';
-                sidebar.classList.add('sidebar-open');
-            }
-        });
-    }
-}
-
-
-// Listener para mudanças de orientação/redimensionamento
-window.addEventListener('resize', function() {
-    setTimeout(controlSidebarVisibility, 100);
-});
-
-window.addEventListener('orientationchange', function() {
-    setTimeout(controlSidebarVisibility, 200);
-});
-
-</script>
-""", unsafe_allow_html=True)
+# JavaScript removido para evitar conflitos de sintaxe - funcionalidade movida para CSS
 
 # Verificar se o usuário está autenticado antes de mostrar todos os elementos da sidebar
 if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
@@ -1330,13 +1216,13 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
 
     st.markdown("### Funcionalidades Principais:")
     st.markdown("""
-    - ✓ Fluxo completo de propostas
-    - ✓ Integração entre módulos
-    - ✓ Sistema de alertas de prazos
-    - ✓ Geração de lançamentos financeiros
-    - ✓ Cálculo de comissões
-    - ✓ Importação em lote
-    - ✓ Backup e restauração
+    - Fluxo completo de propostas
+    - Integração entre módulos
+    - Sistema de alertas de prazos
+    - Geração de lançamentos financeiros
+    - Cálculo de comissões
+    - Importação em lote
+    - Backup e restauração
     """)
 
     # Botão para gerar o manual do sistema
