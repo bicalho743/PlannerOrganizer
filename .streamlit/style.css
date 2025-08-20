@@ -964,6 +964,28 @@ div[data-testid="stDownloadButton"] button *::after {
 }
 
 /* ========================================
+   CORREÇÃO ESPECÍFICA PARA BOTÃO GERAR MANUAL
+   ======================================== */
+/* Força cor branca para todos os botões tipo primary */
+button[kind="primary"],
+button[data-testid="baseButton-primary"],
+button[type="primary"],
+.stButton > button[kind="primary"],
+.stButton > button[data-testid="baseButton-primary"] {
+    color: white !important;
+    background-color: #1976D2 !important;
+}
+
+/* Força cor branca para todo o conteúdo dos botões primários */
+button[kind="primary"] *,
+button[data-testid="baseButton-primary"] *,
+button[type="primary"] *,
+.stButton > button[kind="primary"] *,
+.stButton > button[data-testid="baseButton-primary"] * {
+    color: white !important;
+}
+
+/* ========================================
    RODAPÉ
    ======================================== */
 body, .main, [data-testid="stAppViewContainer"], .block-container {
