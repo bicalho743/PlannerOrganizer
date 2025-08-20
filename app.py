@@ -51,7 +51,7 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 # Estado para controlar a página de login
-if 'login_page' not in st.session_state:
+if 'login_page' not not in st.session_state:
     st.session_state.login_page = "login"  # Valores possíveis: login, registrar, recuperar_senha
 
 # Verificar estado para mostrar termos de uso
@@ -91,20 +91,20 @@ function removeToggleButton() {
     // Selecionar e remover TODOS os elementos de toggle
     const selectors = [
         'button[data-testid="collapsedControl"]',
-        'button[data-testid="baseButton-minimal"]', 
+        'button[data-testid="baseButton-minimal"]',
         'button[aria-label*="collapse"]',
         'button[title*="collapse"]',
         'div[data-testid="stSidebar"] > div:first-child > button',
         '.stSidebar > div:first-child > button'
     ];
-    
+
     selectors.forEach(selector => {
         const elements = document.querySelectorAll(selector);
         elements.forEach(element => {
             element.parentNode?.removeChild(element);
         });
     });
-    
+
     // Remover evento de hover também
     const style = document.createElement('style');
     style.innerHTML = `
@@ -392,14 +392,14 @@ if not st.session_state.authenticated:
         border: none !important;
         text-shadow: none !important;
     }
-    
+
     /* Remover TODO espaçamento do HTML e body */
     html, body {
         margin: 0 !important;
         padding: 0 !important;
         box-sizing: border-box !important;
     }
-    
+
     /* Ocultar cabeçalho do Streamlit completamente */
     header[data-testid="stHeader"] {
         display: none !important;
@@ -407,55 +407,55 @@ if not st.session_state.authenticated:
         margin: 0 !important;
         padding: 0 !important;
     }
-    
+
     /* Ocultar toolbar */
     .stApp > header {
         display: none !important;
     }
-    
+
     /* Remover TODO espaçamento superior da página */
     .stApp {
         margin: 0 !important;
         padding: 0 !important;
     }
-    
+
     .main {
         padding-top: 0 !important;
         margin-top: 0 !important;
         padding: 0 !important;
     }
-    
+
     .block-container {
         padding-top: 0 !important;
         margin-top: 0 !important;
         padding-bottom: 0 !important;
         min-height: auto !important;
     }
-    
+
     .main .block-container {
         padding-top: 0 !important;
         margin-top: 0 !important;
         padding: 1rem !important;
     }
-    
+
     /* Remover espaçamento de containers principais */
     .main-container, .wrapper, .page {
         margin-top: 0 !important;
         padding-top: 0 !important;
     }
-    
+
     /* Zerar possível espaçamento do Firebase UI */
     #firebaseui-auth-container {
         margin-top: 0 !important;
         padding-top: 0 !important;
     }
-    
+
     /* Ajustar primeiro elemento visível */
     .element-container:first-child {
         margin-top: 0 !important;
         padding-top: 0 !important;
     }
-    
+
     /* Forçar botões mais visíveis */
     .stButton > button {
         background-color: #6c757d !important;
@@ -468,13 +468,13 @@ if not st.session_state.authenticated:
         width: 100% !important;
         transition: all 0.3s ease !important;
     }
-    
+
     .stButton > button:hover {
         background-color: #5a6268 !important;
         transform: translateY(-2px) !important;
         box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
     }
-    
+
     .login-header {
         font-size: 3rem;
         font-weight: 700;
@@ -483,21 +483,21 @@ if not st.session_state.authenticated:
         margin-top: 0 !important;
         text-align: left;
     }
-    
+
     .login-subtitle {
         font-size: 1.2rem;
         color: #7f8c8d;
         margin-bottom: 2rem;
         text-align: left;
     }
-    
+
     .stats-container {
         display: flex;
         gap: 2rem;
         margin: 2rem 0;
         justify-content: flex-start;
     }
-    
+
     .stat-box {
         background: white;
         border: 2px solid #e0e0e0;
@@ -510,41 +510,41 @@ if not st.session_state.authenticated:
         cursor: pointer;
         border-left: 4px solid #e0e0e0;
     }
-    
+
     .stat-box:hover {
         transform: translateY(-3px);
         box-shadow: 0 8px 25px rgba(0,0,0,0.12);
         border-color: #3a75c4;
         border-left-color: #3a75c4;
     }
-    
+
     .stat-number {
         font-size: 2.5rem;
         font-weight: 700;
         color: #2c3e50;
         margin-bottom: 0.5rem;
     }
-    
+
     .stat-label {
         font-size: 0.9rem;
         color: #7f8c8d;
         font-weight: 500;
     }
-    
+
     .section-title {
         font-size: 1.8rem;
         font-weight: 600;
         color: #2c3e50;
         margin: 3rem 0 2rem 0;
     }
-    
+
     .feature-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 2rem;
         margin-bottom: 2rem;
     }
-    
+
     .feature-box {
         background: white;
         border: 2px solid #e0e0e0;
@@ -555,39 +555,39 @@ if not st.session_state.authenticated:
         cursor: pointer;
         border-left: 4px solid #e0e0e0;
     }
-    
+
     .feature-box:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 30px rgba(0,0,0,0.12);
         border-color: #3a75c4;
         border-left-color: #3a75c4;
     }
-    
+
     .feature-icon {
         font-size: 1.5rem;
         margin-bottom: 1rem;
     }
-    
+
     .feature-title {
         font-size: 1.1rem;
         font-weight: 600;
         color: #2c3e50;
         margin-bottom: 1rem;
     }
-    
+
     .feature-desc {
         color: #7f8c8d;
         font-size: 0.95rem;
         line-height: 1.5;
     }
-    
+
     .testimonial-container {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 2rem;
         margin: 3rem 0;
     }
-    
+
     .testimonial-box {
         background: #f8f9fa;
         border: 2px solid #e0e0e0;
@@ -597,7 +597,7 @@ if not st.session_state.authenticated:
         position: relative;
         border-left: 4px solid #e0e0e0;
     }
-    
+
     .testimonial-text {
         color: #555;
         font-style: italic;
@@ -605,13 +605,13 @@ if not st.session_state.authenticated:
         margin-bottom: 1rem;
         font-size: 0.95rem;
     }
-    
+
     .testimonial-author {
         color: #3a75c4;
         font-weight: 600;
         font-size: 0.9rem;
     }
-    
+
     .testimonial-quote {
         position: absolute;
         top: -10px;
@@ -659,7 +659,7 @@ if not st.session_state.authenticated:
                 <div class="feature-icon">📊</div>
                 <div class="feature-title">Gestão Completa de Propostas</div>
                 <div class="feature-desc">
-                    Controle todo o ciclo de vida das suas propostas em um único local, 
+                    Controle todo o ciclo de vida das suas propostas em um único local,
                     desde a elaboração até a finalização.
                 </div>
             </div>
@@ -667,7 +667,7 @@ if not st.session_state.authenticated:
                 <div class="feature-icon">💰</div>
                 <div class="feature-title">Controle Financeiro</div>
                 <div class="feature-desc">
-                    Gerencie receitas, despesas e comissões de forma automatizada e 
+                    Gerencie receitas, despesas e comissões de forma automatizada e
                     integrada com suas propostas.
                 </div>
             </div>
@@ -675,7 +675,7 @@ if not st.session_state.authenticated:
                 <div class="feature-icon">📱</div>
                 <div class="feature-title">Acesso de Qualquer Lugar</div>
                 <div class="feature-desc">
-                    Sistema web responsivo que pode ser acessado de qualquer dispositivo, 
+                    Sistema web responsivo que pode ser acessado de qualquer dispositivo,
                     a qualquer momento.
                 </div>
             </div>
@@ -683,7 +683,7 @@ if not st.session_state.authenticated:
                 <div class="feature-icon">📄</div>
                 <div class="feature-title">Relatórios Profissionais</div>
                 <div class="feature-desc">
-                    Gere relatórios personalizados para clientes e para controle interno 
+                    Gere relatórios personalizados para clientes e para controle interno
                     da sua operação.
                 </div>
             </div>
@@ -698,7 +698,7 @@ if not st.session_state.authenticated:
             <div class="testimonial-box">
                 <div class="testimonial-quote">"</div>
                 <div class="testimonial-text">
-                    "O Planner Organizer transformou meu negócio! Consigo gerenciar todas as minhas propostas, 
+                    "O Planner Organizer transformou meu negócio! Consigo gerenciar todas as minhas propostas,
                     clientes e finanças em um só lugar com facilidade e profissionalismo."
                 </div>
                 <div class="testimonial-author">
@@ -708,7 +708,7 @@ if not st.session_state.authenticated:
             <div class="testimonial-box">
                 <div class="testimonial-quote">"</div>
                 <div class="testimonial-text">
-                    "Meu faturamento aumentou 45% depois que comecei a usar o sistema. A gestão de propostas 
+                    "Meu faturamento aumentou 45% depois que comecei a usar o sistema. A gestão de propostas
                     e o controle financeiro me ajudaram a profissionalizar meu negócio."
                 </div>
                 <div class="testimonial-author">
@@ -758,12 +758,12 @@ if not st.session_state.authenticated:
             <p style="color: #5A6A85; font-size: 1.1rem; margin-bottom: 1.5rem;">
                 Receba gratuitamente o guia completo com todas as funcionalidades do Planner Organizer
             </p>
-            <a href="https://e793124a-608d-4baa-9b36-f1c10d18b5f4-00-er4f29bufe88.worf.replit.dev/enviar_manual" 
-               target="_blank" 
-               style="display: inline-block; background: linear-gradient(135deg, #026937, #02844a); 
-                      color: white; text-align: center; padding: 1rem 2.5rem; text-decoration: none; 
+            <a href="https://e793124a-608d-4baa-9b36-f1c10d18b5f4-00-er4f29bufe88.worf.replit.dev/enviar_manual"
+               target="_blank"
+               style="display: inline-block; background: linear-gradient(135deg, #026937, #02844a);
+                      color: white; text-align: center; padding: 1rem 2.5rem; text-decoration: none;
                       border-radius: 12px; font-size: 1.2rem; font-weight: 600;
-                      box-shadow: 0 6px 20px rgba(2, 105, 55, 0.3); 
+                      box-shadow: 0 6px 20px rgba(2, 105, 55, 0.3);
                       transition: all 0.3s ease; border: none;">
                 📥 Baixe o Manual Gratuitamente
             </a>
@@ -780,39 +780,39 @@ if not st.session_state.authenticated:
             # Pergunta 1
             with st.expander("Como o sistema ajuda a manter contato com as clientes?"):
                 st.markdown("""
-                O sistema possui lembretes automáticos para datas importantes, como aniversários das clientes e datas de follow-up. 
-                Você receberá notificações quando uma cliente não contratar seus serviços por mais de 3 meses, permitindo que 
+                O sistema possui lembretes automáticos para datas importantes, como aniversários das clientes e datas de follow-up.
+                Você receberá notificações quando uma cliente não contratar seus serviços por mais de 3 meses, permitindo que
                 faça contato no momento certo.
                 """)
 
             # Pergunta 2
             with st.expander("Preciso instalar algum software no meu computador?"):
                 st.markdown("""
-                Não! O sistema é totalmente baseado na web. Você pode acessá-lo de qualquer dispositivo 
+                Não! O sistema é totalmente baseado na web. Você pode acessá-lo de qualquer dispositivo
                 (computador, tablet ou celular) com acesso à internet, sem necessidade de instalação.
                 """)
 
             # Pergunta 3
             with st.expander("Como funciona o período de teste gratuito?"):
                 st.markdown("""
-                Você terá acesso completo a todas as funcionalidades do sistema por 7 dias, sem compromisso. 
-                Se decidir não continuar, basta cancelar antes do fim do período de teste e não será cobrado(a). 
+                Você terá acesso completo a todas as funcionalidades do sistema por 7 dias, sem compromisso.
+                Se decidir não continuar, basta cancelar antes do fim do período de teste e não será cobrado(a).
                 Não solicitamos dados de cartão de crédito para o período de teste.
                 """)
 
             # Pergunta 4
             with st.expander("O sistema guarda histórico de atendimentos às clientes?"):
                 st.markdown("""
-                Sim! Você pode registrar cada atendimento realizado, com data, valores, tipo de serviço e observações. 
-                Isso cria um histórico completo que permite analisar quais clientes estão inativas e precisam ser 
+                Sim! Você pode registrar cada atendimento realizado, com data, valores, tipo de serviço e observações.
+                Isso cria um histórico completo que permite analisar quais clientes estão inativas e precisam ser
                 contatadas novamente.
                 """)
 
             # Pergunta 5
             with st.expander("Como organizar propostas no sistema?"):
                 st.markdown("""
-                Você pode cadastrar todas as suas propostas com detalhes completos, acompanhar o status de cada uma 
-                (em elaboração, em execução, finalizada ou recusada), gerar relatórios e ter uma visão clara de sua 
+                Você pode cadastrar todas as suas propostas com detalhes completos, acompanhar o status de cada uma
+                (em elaboração, em execução, finalizada ou recusada), gerar relatórios e ter uma visão clara de sua
                 taxa de conversão e rendimentos. O sistema facilita a organização de todo o fluxo de trabalho.
                 """)
 
@@ -836,12 +836,12 @@ if not st.session_state.authenticated:
 
         # Botão "Ver Planos e Preços" em verde
         st.markdown("""
-        <a href="https://promo.plannerorganiza.com.br/planos" 
-           target="_blank" 
-           id="planos-link" 
-           style="display: inline-block; background-color: #026937; color: white; 
-                  text-align: center; padding: 1rem 2rem; text-decoration: none; 
-                  border-radius: 10px; width: 100%; font-size: 1.2rem; 
+        <a href="https://promo.plannerorganiza.com.br/planos"
+           target="_blank"
+           id="planos-link"
+           style="display: inline-block; background-color: #026937; color: white;
+                  text-align: center; padding: 1rem 2rem; text-decoration: none;
+                  border-radius: 10px; width: 100%; font-size: 1.2rem;
                   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); font-weight: 600;
                   transition: all 0.3s ease;">
             Ver Planos e Preços
@@ -908,11 +908,11 @@ if not st.session_state.authenticated:
                                 st.session_state.usuario_id = result['user']['localId']
                                 from utils.database import Database
                                 st.session_state.db = Database(usuario_id=result['user']['localId'])
-                            
+
                             # Marcar como autenticado
                             st.session_state.authenticated = True
                             st.session_state.current_page = "Dashboard"
-                            
+
                             # Mostrar mensagem de sucesso e atualizar interface
                             st.success("✅ Login realizado com sucesso!")
                             st.rerun()
@@ -1049,8 +1049,8 @@ div[data-testid="stSidebar"] li {
 [data-testid="stHeader"],
 [data-testid="stToolbar"],
 [data-testid="stDecoration"],
-.css-1d391kg, 
-.css-1kyxreq, 
+.css-1d391kg,
+.css-1kyxreq,
 .css-1l02zno,
 header[data-testid="stHeader"] {
     display: none !important;
@@ -1079,215 +1079,175 @@ section[data-testid="stSidebar"] > div {
     height: 0 !important;
     width: 0 !important;
 }
+
+/* Estilos específicos para a sidebar mobile */
+.mobile-sidebar {
+    transition: transform 0.3s ease-in-out !important;
+    box-shadow: 2px 0 15px rgba(0,0,0,0.2) !important; /* Sombra para dar profundidade */
+    background-color: #ffffff !important; /* Fundo branco */
+}
+
+.mobile-sidebar.sidebar-open {
+    transform: translateX(0) !important;
+}
+
+/* Botão customizado para toggle */
+.custom-sidebar-arrow {
+    position: fixed;
+    top: 15px;
+    left: 270px; /* Posição após a sidebar */
+    z-index: 1000000;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease-in-out;
+}
+
+.custom-sidebar-arrow:hover {
+    background-color: #f0f0f0;
+    transform: scale(1.1);
+}
+
+.custom-sidebar-arrow::before {
+    content: '◀'; /* Seta para a esquerda */
+    font-size: 18px;
+    color: #4F4F52;
+    font-weight: bold;
+}
+
+.custom-sidebar-arrow.sidebar-collapsed::before {
+    content: '▶'; /* Seta para a direita quando colapsado */
+}
+
+/* Ocultar botões originais de colapso */
+button[data-testid="collapsedControl"],
+button[data-testid="baseButton-minimal"],
+button[kind="secondary"] {
+    display: none !important;
+    visibility: hidden !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# Verificar se o usuário está autenticado antes de mostrar a sidebar
-if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
-   ('user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user):
-    # Container dos botões com fundo escuro
-    st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
-
-# JavaScript para criar seta customizada de colapso
-st.markdown("""
-<script>
-let customArrowButton = null;
-
-function createCustomSidebarArrow() {
-    // Remover seta existente se houver
-    if (customArrowButton) {
-        customArrowButton.remove();
-    }
-    
-    // Criar nova seta customizada
-    customArrowButton = document.createElement('button');
-    customArrowButton.className = 'custom-sidebar-arrow';
-    customArrowButton.title = 'Recolher/Expandir Barra Lateral';
-    
-    // Verificar se a sidebar está visível para definir a direção da seta
-    const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-    if (sidebar) {
-        const isCollapsed = sidebar.style.transform === 'translateX(-100%)' || 
-                           sidebar.offsetWidth < 50 ||
-                           getComputedStyle(sidebar).display === 'none';
-        
-        if (isCollapsed) {
-            customArrowButton.classList.add('sidebar-collapsed');
-        }
-    }
-    
-    // Adicionar funcionalidade de clique
-    customArrowButton.addEventListener('click', function() {
-        // Tentar encontrar o botão original do Streamlit
-        const originalButton = document.querySelector('button[data-testid="collapsedControl"]') ||
-                              document.querySelector('button[data-testid="baseButton-minimal"]') ||
-                              document.querySelector('section[data-testid="stSidebar"] button[kind="secondary"]');
-        
-        if (originalButton) {
-            originalButton.click();
-        } else {
-            // Fallback: tentar disparar evento customizado
-            const sidebarToggleEvent = new CustomEvent('sidebarToggle');
-            document.dispatchEvent(sidebarToggleEvent);
-        }
-        
-        // Alternar classe da seta
-        setTimeout(() => {
-            this.classList.toggle('sidebar-collapsed');
-        }, 100);
-    });
-    
-    // Adicionar ao DOM
-    document.body.appendChild(customArrowButton);
-}
-
-function ensureCustomArrowVisible() {
-    // Verificar se a seta customizada existe e está visível
-    if (!customArrowButton || !document.body.contains(customArrowButton)) {
-        createCustomSidebarArrow();
-    }
-    
-    // Tentar modificar setas originais para serem invisíveis
-    const originalButtons = document.querySelectorAll([
-        'button[data-testid="collapsedControl"]',
-        'button[data-testid="baseButton-minimal"]',
-        'section[data-testid="stSidebar"] button[kind="secondary"]'
-    ].join(','));
-    
-    originalButtons.forEach(btn => {
-        if (btn && btn !== customArrowButton) {
-            btn.style.opacity = '0';
-            btn.style.visibility = 'hidden';
-            btn.style.pointerEvents = 'none';
-        }
-    });
-}
-
-// Executar quando a página carregar
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(createCustomSidebarArrow, 500);
-});
-
-// Executar periodicamente para garantir que a seta esteja sempre visível
-setInterval(ensureCustomArrowVisible, 1000);
-
-// Observar mudanças no DOM
-const observer = new MutationObserver(ensureCustomArrowVisible);
-observer.observe(document.body, { childList: true, subtree: true });
-
-// CORREÇÃO ESPECÍFICA PARA RENDER - FORÇAR SIDEBAR
-console.log('🔧 Aplicando correção da sidebar para Render...');
-
-function forceSidebarRender() {
-    const sidebar = document.querySelector('[data-testid="stSidebar"]');
-    const sidebarContent = document.querySelector('section[data-testid="stSidebar"] > div');
-    const mainContainer = document.querySelector('.main');
-    
-    if (sidebar) {
-        // Forçar sidebar visível com estilo inline
-        sidebar.style.cssText = `
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            width: 250px !important;
-            min-width: 250px !important;
-            max-width: 250px !important;
-            flex: 0 0 250px !important;
-            position: relative !important;
-            transform: translateX(0) !important;
-            transition: none !important;
-        `;
-        console.log('✅ Sidebar forçada a aparecer no Render');
-    }
-    
-    if (sidebarContent) {
-        sidebarContent.style.cssText = `
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            width: 100% !important;
-        `;
-        console.log('✅ Conteúdo da sidebar forçado no Render');
-    }
-    
-    // Ajustar container principal para deixar espaço para sidebar
-    if (mainContainer && sidebar) {
-        mainContainer.style.marginLeft = '250px';
-    }
-    
-    // Remover ou desabilitar botões de colapso que podem esconder a sidebar
-    const collapseButtons = document.querySelectorAll([
-        '[data-testid="collapsedControl"]',
-        '[data-testid="baseButton-minimal"]',
-        'button[kind="secondary"]'
-    ].join(', '));
-    
-    collapseButtons.forEach(btn => {
-        if (btn && btn.onclick) {
-            btn.onclick = null; // Remover evento que pode colapsar
-        }
-        // Se a sidebar estiver colapsada, forçar expansão
-        if (sidebar && sidebar.offsetWidth < 100) {
-            btn.click();
-        }
-    });
-}
-
-// Controlar visibilidade da sidebar baseado na presença de navegação
+# Controlar visibilidade da sidebar baseado na presença de navegação e tamanho da tela
 function controlSidebarVisibility() {
     const sidebar = document.querySelector('section[data-testid="stSidebar"]');
     const hasNavButtons = document.querySelector('.nav-buttons');
     const collapseButton = document.querySelector('button[data-testid="collapsedControl"]');
-    
+    const isMobile = window.innerWidth <= 768;
+
     if (sidebar) {
-        if (hasNavButtons) {
+        if (hasNavButtons && !isMobile) {
+            // Desktop: mostrar sidebar normalmente
             sidebar.style.display = 'block';
             sidebar.style.visibility = 'visible';
             sidebar.style.width = '250px';
             sidebar.style.minWidth = '250px';
-            console.log('👤 Usuário autenticado - sidebar habilitada');
+            sidebar.style.position = 'relative';
+            sidebar.style.transform = 'none';
+            console.log('👤 Desktop - sidebar habilitada');
+        } else if (hasNavButtons && isMobile) {
+            // Mobile: sidebar do lado esquerdo, inicialmente oculta
+            sidebar.style.display = 'block';
+            sidebar.style.visibility = 'visible';
+            sidebar.style.position = 'fixed';
+            sidebar.style.top = '0';
+            sidebar.style.left = '0';
+            sidebar.style.width = '250px';
+            sidebar.style.minWidth = '250px';
+            sidebar.style.height = '100vh';
+            sidebar.style.zIndex = '999999';
+            sidebar.style.transform = 'translateX(-100%)';
+            sidebar.classList.add('mobile-sidebar');
+            console.log('📱 Mobile - sidebar configurada à esquerda');
+
+            // Adicionar funcionalidade de toggle para mobile
+            setupMobileSidebarToggle();
         } else {
+            // Não autenticado: sempre ocultar
             sidebar.style.display = 'none';
             sidebar.style.visibility = 'hidden';
             sidebar.style.width = '0';
             sidebar.style.minWidth = '0';
-            console.log('🚫 Usuário não autenticado - sidebar oculta');
+            console.log('🚫 Não autenticado - sidebar oculta');
         }
     }
-    
-    // Sempre esconder a seta de colapso
-    if (collapseButton) {
-        collapseButton.style.display = 'none';
-        collapseButton.style.visibility = 'hidden';
+
+    // Sempre ocultar os botões de colapso originais do Streamlit
+    const originalCollapseButtons = document.querySelectorAll([
+        '[data-testid="collapsedControl"]',
+        '[data-testid="baseButton-minimal"]',
+        'button[kind="secondary"]'
+    ].join(', '));
+
+    originalCollapseButtons.forEach(btn => {
+        if (btn) {
+            btn.style.display = 'none';
+            btn.style.visibility = 'hidden';
+        }
+    });
+
+    // Se a sidebar estiver visível e não for mobile, posicionar a seta customizada corretamente
+    const customArrow = document.querySelector('.custom-sidebar-arrow');
+    if (customArrow && sidebar && sidebar.style.position === 'relative') {
+        customArrow.style.left = '270px'; // Posição ajustada para a sidebar visível
+        customArrow.style.display = 'flex'; // Garantir que esteja visível
+    } else if (customArrow) {
+        customArrow.style.display = 'none'; // Ocultar seta se sidebar não estiver em modo desktop visível
     }
 }
 
-// Executar controle de visibilidade
-controlSidebarVisibility();
-document.addEventListener('DOMContentLoaded', controlSidebarVisibility);
+// Função para configurar toggle da sidebar em mobile
+function setupMobileSidebarToggle() {
+    const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+    const collapseButton = document.querySelector('button[data-testid="collapsedControl"]'); // O botão que o Streamlit cria
 
-// Executar para Render apenas se autenticado
-if (document.querySelector('.nav-buttons')) {
-    forceSidebarRender();
-    document.addEventListener('DOMContentLoaded', forceSidebarRender);
+    // Criar nosso próprio botão de toggle se não existir
+    let mobileToggleBtn = document.getElementById('mobile-sidebar-toggle');
+    if (!mobileToggleBtn) {
+        mobileToggleBtn = document.createElement('button');
+        mobileToggleBtn.id = 'mobile-sidebar-toggle';
+        mobileToggleBtn.className = 'custom-sidebar-arrow'; // Usar a classe CSS existente
+        mobileToggleBtn.title = 'Abrir/Fechar Menu';
+        document.body.appendChild(mobileToggleBtn);
+    }
+
+    if (mobileToggleBtn && sidebar) {
+        mobileToggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const isOpen = sidebar.style.transform === 'translateX(0px)';
+
+            if (isOpen) {
+                // Fechar sidebar
+                sidebar.style.transform = 'translateX(-100%)';
+                sidebar.classList.remove('sidebar-open');
+            } else {
+                // Abrir sidebar
+                sidebar.style.transform = 'translateX(0)';
+                sidebar.classList.add('sidebar-open');
+            }
+        });
+    }
 }
 
-// Executar periodicamente para verificar estado de autenticação
-let renderAttempts = 0;
-const authCheckInterval = setInterval(() => {
-    controlSidebarVisibility();
-    
-    // Se autenticado, executar correções do Render
-    if (document.querySelector('.nav-buttons')) {
-        forceSidebarRender();
-    }
-    
-    renderAttempts++;
-    if (renderAttempts > 30) {
-        clearInterval(authCheckInterval);
-        console.log('🔚 Monitoramento de autenticação finalizado');
-    }
-}, 500);
+
+// Listener para mudanças de orientação/redimensionamento
+window.addEventListener('resize', function() {
+    setTimeout(controlSidebarVisibility, 100);
+});
+
+window.addEventListener('orientationchange', function() {
+    setTimeout(controlSidebarVisibility, 200);
+});
 
 </script>
 """, unsafe_allow_html=True)
@@ -1295,70 +1255,8 @@ const authCheckInterval = setInterval(() => {
 # Verificar se o usuário está autenticado antes de mostrar todos os elementos da sidebar
 if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
    ('user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user):
-
-    # Botões de navegação
-    if 'current_page' not in st.session_state:
-        st.session_state.current_page = "Dashboard"
-
-    # Definição do menu principal
-    MENU_PRINCIPAL = {
-        "📊 Dashboard": "Dashboard",
-        "👥 Cadastros": "Cadastros",
-        "📝 Propostas": "Propostas",
-        "🛒 Vendas": "Vendas",
-        "💰 Financeiro": "Financeiro",
-        "📈 Relatórios": "Relatórios",
-        "🧑‍💼 Meu Perfil": "Perfil"
-    }
-
-    # Adicionar opção de administração se o usuário for admin
-    if st.session_state.get('autenticado', False) and getattr(st.session_state.get('usuario', None), 'tipo', '') == 'admin':
-        MENU_PRINCIPAL["⚙️ Administração"] = "Admin"
-
-    # Adicionar classe CSS para identificar área de navegação
-    st.sidebar.markdown('<div class="nav-buttons" style="display: none;"></div>', unsafe_allow_html=True)
-    
-    # Criação dos botões do menu principal com estilização personalizada
-    for label, page in MENU_PRINCIPAL.items():
-        # Verificar se este é o botão da página atual para destacá-lo
-        is_active = st.session_state.current_page == page
-
-        # Aplicar classe personalizada para o botão ativo usando JavaScript
-        if is_active:
-            # Adicionar código JavaScript para adicionar classe ao botão após ele ser renderizado
-            button_id = f"main_menu_{page.lower()}"
-            st.sidebar.markdown(f"""
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {{
-                    // Aguardar até que o elemento seja renderizado
-                    setTimeout(function() {{
-                        const button = document.querySelector('[data-testid="stButton"] button[kind="secondary"][data-baseweb="button"][aria-keyshortcuts="{button_id}"]');
-                        if (button) {{
-                            button.classList.add('menu-active');
-                        }}
-                    }}, 100);
-                }});
-            </script>
-            """, unsafe_allow_html=True)
-
-        # Renderizar o botão normalmente
-        if st.sidebar.button(label, key=f"main_menu_{page.lower()}", use_container_width=True):
-            st.session_state.current_page = page
-            # Removido st.rerun() - navegação funciona sem ele
-
-    # Adicionar botão de logout
-    if st.sidebar.button("🚪 Sair do Sistema", 
-                         key="btn_logout", 
-                         type="secondary", 
-                         use_container_width=True,
-                         help="Clique para sair do sistema e retornar à tela de login"):
-        # Limpar o estado de autenticação
-        st.session_state.authenticated = False
-        # Exibir mensagem
-        st.sidebar.success("Logout realizado com sucesso!")
-        # Removido st.rerun() - logout funciona sem reload
-
-    st.sidebar.markdown('</div>', unsafe_allow_html=True)
+    # Container dos botões com fundo escuro
+    st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
 
 # Garantir que usuário autenticado sempre tenha uma página definida
 if st.session_state.authenticated:
@@ -1371,7 +1269,7 @@ if st.session_state.authenticated:
 # Importar o cabeçalho e rodapé padrão
 from utils.page_config import apply_page_header, apply_page_footer
 
-# Aplicar o cabeçalho e rodapé em todas as páginas 
+# Aplicar o cabeçalho e rodapé em todas as páginas
 apply_page_header()
 apply_page_footer()
 
