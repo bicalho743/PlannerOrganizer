@@ -1138,7 +1138,59 @@ button[kind="secondary"] {
 
 # JavaScript removido para evitar conflitos de sintaxe - funcionalidade movida para CSS
 
-# Verificar se o usuário está autenticado antes de mostrar todos os elementos da sidebar
+# Sempre mostrar as informações do sistema na sidebar primeiro
+# Divisor antes das informações do sistema
+st.sidebar.markdown('<div style="margin: 1.5rem 0;"><hr style="border: none; height: 1px; background-color: #E0E0E0;"></div>', unsafe_allow_html=True)
+
+# Usando um expander para as informações do sistema
+with st.sidebar.expander("ℹ️ Informações do Sistema"):
+    st.markdown("### Planner Organizer")
+    st.markdown("**Versão:** 1.0.4")
+
+    st.markdown("### Módulos do Sistema:")
+    st.markdown("""
+    - **Dashboard** - Métricas e alertas
+    - **Cadastros** - Clientes, parceiros e fornecedores
+    - **Propostas** - Gestão completa de propostas
+    - **Vendas** - Controle de produtos vendidos
+    - **Financeiro** - Receitas e despesas
+    - **Relatórios** - Análises e visualizações
+    """)
+
+    st.markdown("### Funcionalidades Principais:")
+    st.markdown("""
+    - Fluxo completo de propostas
+    - Integração entre módulos
+    - Sistema de alertas de prazos
+    - Geração de lançamentos financeiros
+    - Cálculo de comissões
+    - Importação em lote
+    - Backup e restauração
+    """)
+
+    # Botão para gerar o manual do sistema
+    if st.button("📘 Gerar Manual do Sistema", use_container_width=True):
+        with st.spinner("Gerando manual em PDF..."):
+            try:
+                from pages.manual_sistema import gerar_manual_sistema
+                pdf_path = gerar_manual_sistema()
+
+                # Ler o arquivo PDF para download
+                with open(pdf_path, "rb") as pdf_file:
+                    pdf_bytes = pdf_file.read()
+
+                st.success("Manual gerado com sucesso!")
+                st.download_button(
+                    label="📥 Baixar Manual do Sistema",
+                    data=pdf_bytes,
+                    file_name="Manual_Planner_Organizer.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+            except Exception as e:
+                st.error(f"Erro ao gerar o manual: {str(e)}")
+
+# Verificar se o usuário está autenticado antes de mostrar elementos de navegação
 if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
    ('user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user):
     # Container dos botões com fundo escuro
@@ -1194,58 +1246,7 @@ try:
 except Exception as e:
     st.error(f"Erro ao carregar página: {str(e)}")
 
-# Divisor antes das informações do sistema
-st.sidebar.markdown('<div style="margin: 1.5rem 0;"><hr style="border: none; height: 1px; background-color: #E0E0E0;"></div>', unsafe_allow_html=True)
-
-# CSS movido para .streamlit/style.css para centralização
-
-# Usando um expander para as informações do sistema
-with st.sidebar.expander("ℹ️ Informações do Sistema"):
-    st.markdown("### Planner Organizer")
-    st.markdown("**Versão:** 1.0.4")
-
-    st.markdown("### Módulos do Sistema:")
-    st.markdown("""
-    - **Dashboard** - Métricas e alertas
-    - **Cadastros** - Clientes, parceiros e fornecedores
-    - **Propostas** - Gestão completa de propostas
-    - **Vendas** - Controle de produtos vendidos
-    - **Financeiro** - Receitas e despesas
-    - **Relatórios** - Análises e visualizações
-    """)
-
-    st.markdown("### Funcionalidades Principais:")
-    st.markdown("""
-    - Fluxo completo de propostas
-    - Integração entre módulos
-    - Sistema de alertas de prazos
-    - Geração de lançamentos financeiros
-    - Cálculo de comissões
-    - Importação em lote
-    - Backup e restauração
-    """)
-
-    # Botão para gerar o manual do sistema
-    if st.button("📘 Gerar Manual do Sistema", use_container_width=True):
-        with st.spinner("Gerando manual em PDF..."):
-            try:
-                from pages.manual_sistema import gerar_manual_sistema
-                pdf_path = gerar_manual_sistema()
-
-                # Ler o arquivo PDF para download
-                with open(pdf_path, "rb") as pdf_file:
-                    pdf_bytes = pdf_file.read()
-
-                st.success("Manual gerado com sucesso!")
-                st.download_button(
-                    label="📥 Baixar Manual do Sistema",
-                    data=pdf_bytes,
-                    file_name="Manual_Planner_Organizer.pdf",
-                    mime="application/pdf",
-                    use_container_width=True
-                )
-            except Exception as e:
-                st.error(f"Erro ao gerar o manual: {str(e)}")
+# Informações do sistema foram movidas para aparecer sempre no início da sidebar
 
 # Gerenciar o estado para os modais de termos e política
 if "mostrar_termos" not in st.session_state:
