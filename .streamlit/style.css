@@ -973,7 +973,7 @@ button[type="primary"],
 .stButton > button[kind="primary"],
 .stButton > button[data-testid="baseButton-primary"] {
     color: white !important;
-    background-color: #1976D2 !important;
+    background-color: #1f4e79 !important;
 }
 
 /* Força cor branca para todo o conteúdo dos botões primários */

@@ -690,11 +690,11 @@ def show():
                                                 cliente_nome = nome_str.replace(' ', '_').lower()
 
                                             # Mostrar mensagem de sucesso
-                                            st.success("PDF gerado com sucesso!")
+                                            st.success("Proposta do cliente gerada com sucesso!")
 
                                             # Criar botão de download
                                             st.download_button(
-                                                label="Baixar",
+                                                label="📥 Baixar Proposta cliente",
                                                 data=pdf_bytes,
                                                 file_name=f"Proposta_{proposta_id}_{cliente_nome}.pdf",
                                                 mime="application/pdf",
