@@ -1330,13 +1330,13 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
 
     st.markdown("### Funcionalidades Principais:")
     st.markdown("""
-    - ✅ Fluxo completo de propostas
-    - ✅ Integração entre módulos
-    - ✅ Sistema de alertas de prazos
-    - ✅ Geração de lançamentos financeiros
-    - ✅ Cálculo de comissões
-    - ✅ Importação em lote
-    - ✅ Backup e restauração
+    - ✓ Fluxo completo de propostas
+    - ✓ Integração entre módulos
+    - ✓ Sistema de alertas de prazos
+    - ✓ Geração de lançamentos financeiros
+    - ✓ Cálculo de comissões
+    - ✓ Importação em lote
+    - ✓ Backup e restauração
     """)
 
     # Botão para gerar o manual do sistema
