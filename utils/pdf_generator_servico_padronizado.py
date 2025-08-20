@@ -196,14 +196,9 @@ def gerar_pdf_servico_padronizado(proposta, cliente, itens_servico, filename):
         c.drawRightString(540, y + 4, f"R$ {total:.2f}")
         y -= 30
 
-        # Rodapé
-        c.setFillColor(AZUL_ESCURO)
-        c.rect(0, 0, width, 40, fill=True, stroke=0)
-        c.setFillColor(BRANCO)
-        c.setFont("Helvetica", 9)
-        c.drawCentredString(width / 2, 25, "Planner Organizer | contato@plannerorganizer.com.br | www.plannerorganizer.com.br")
-        c.setFont("Helvetica", 7)
-        c.drawCentredString(width / 2, 10, f"Gerado em {data_atual} às {(datetime.now() - timedelta(hours=3)).strftime('%H:%M')}")
+        # Aplicar rodapé padronizado
+        from utils.pdf_footer_helper import aplicar_rodape_padronizado
+        aplicar_rodape_padronizado(c, width, height=40, ajuste_brasilia=True)
 
         c.save()
         print(f"✅ PDF de serviço gerado com sucesso: {filename}")

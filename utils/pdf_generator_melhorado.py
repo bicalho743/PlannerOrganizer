@@ -1007,61 +1007,9 @@ def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
         c.setFillColor(colors.white)
         c.setFont("Helvetica", 10)
         
-        # Obter informações personalizadas do perfil do usuário
-        def obter_dados_rodape():
-            try:
-                import streamlit as st
-                from utils.database import Database
-                
-                # Dados padrão como fallback
-                nome_empresa = "Planner Organizer"
-                cargo_funcao = "Personal Organizer"
-                instagram = "@plannerorganizer"
-                
-                # Tentar obter dados do perfil do usuário
-                if 'db' in st.session_state:
-                    db = st.session_state.db
-                    perfil = db.get_perfil_usuario()
-                    
-                    if perfil:
-                        nome_empresa = perfil.get('empresa') or perfil.get('nome', nome_empresa)
-                        instagram = perfil.get('instagram') or instagram.replace('@', '')
-                        cargo_funcao = perfil.get('cargo') or cargo_funcao
-                
-                return nome_empresa, cargo_funcao, instagram
-                
-            except Exception as e:
-                print(f"Erro ao obter dados do perfil para rodapé: {str(e)}")
-                return "Planner Organizer", "Personal Organizer", "@plannerorganizer"
-        
-        nome_empresa, cargo_funcao, instagram = obter_dados_rodape()
-        
-        # Primeira linha: informações da empresa (centralizada)
-        footer_text = f"{nome_empresa} | {cargo_funcao} | {instagram}"
-        text_width = c.stringWidth(footer_text, "Helvetica", 10)
-        center_x = width / 2 - text_width / 2
-        c.drawString(center_x, 25, footer_text)
-        
-        # Tornar Instagram clicável se contém dados válidos
-        if instagram and instagram != "@plannerorganizer":
-            # Calcular posição do Instagram no texto
-            prefix = f"{nome_empresa} | {cargo_funcao} | "
-            prefix_width = c.stringWidth(prefix, "Helvetica", 10)
-            instagram_width = c.stringWidth(instagram, "Helvetica", 10)
-            
-            # Criar link clicável para Instagram
-            instagram_url = f"https://instagram.com/{instagram.replace('@', '')}"
-            c.linkURL(instagram_url, 
-                     (center_x + prefix_width, 20, 
-                      center_x + prefix_width + instagram_width, 30))
-        
-        # Segunda linha: data de geração (centralizada)
-        from datetime import datetime
-        agora = datetime.now()
-        date_text = f"Gerado em {agora.strftime('%d/%m/%Y às %H:%M')}"
-        date_width = c.stringWidth(date_text, "Helvetica", 10)
-        date_center_x = width / 2 - date_width / 2
-        c.drawString(date_center_x, 10, date_text)
+        # Aplicar rodapé padronizado
+        from utils.pdf_footer_helper import aplicar_rodape_padronizado
+        aplicar_rodape_padronizado(c, width, height=40, ajuste_brasilia=False)
         
         # Salvar o PDF
         c.save()

@@ -98,9 +98,19 @@ def gerar_pdf_proposta(proposta_id):
             story.append(Paragraph(proposta_data['observacoes'], styles['Normal']))
             story.append(Spacer(1, 12))
         
-        # Rodapé
+        # Rodapé personalizado
         story.append(Spacer(1, 24))
-        story.append(Paragraph(f"Documento gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')}", styles['Normal']))
+        
+        # Obter dados do perfil para rodapé
+        from utils.pdf_footer_helper import obter_dados_rodape
+        nome_empresa, cargo_funcao, instagram = obter_dados_rodape()
+        
+        # Adicionar informações da empresa
+        footer_empresa = f"{nome_empresa} | {cargo_funcao} | {instagram}"
+        story.append(Paragraph(footer_empresa, styles['Normal']))
+        
+        # Data de geração
+        story.append(Paragraph(f"Gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')}", styles['Normal']))
         
         # Construir PDF
         doc.build(story)
