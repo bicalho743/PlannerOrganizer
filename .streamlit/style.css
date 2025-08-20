@@ -988,34 +988,39 @@ button[type="primary"] *,
 /* ========================================
    BOTÃO EXCLUIR - COR VERMELHA
    ======================================== */
-/* Botões secundários tipo "Excluir" devem ser vermelhos */
-button[kind="secondary"]:has(*:contains("Excluir")),
-.stButton > button[kind="secondary"]:has(*:contains("Excluir")),
-button[type="secondary"]:has(*:contains("Excluir")),
-.stButton > button[type="secondary"]:has(*:contains("Excluir")) {
+/* Força vermelho para todos os botões secundários */
+button[kind="secondary"],
+.stButton > button[kind="secondary"],
+button[type="secondary"],
+.stButton > button[type="secondary"],
+button[data-testid="baseButton-secondary"],
+.stButton > button[data-testid="baseButton-secondary"] {
     background-color: #dc3545 !important;
     color: white !important;
     border: none !important;
+    font-weight: 600 !important;
 }
 
-/* Força vermelho para botões que contém "Excluir" no texto */
-.stButton > button:has(p:contains("Excluir")),
-.stButton > button:has(span:contains("Excluir")),
-button:has(p:contains("Excluir")),
-button:has(span:contains("Excluir")) {
-    background-color: #dc3545 !important;
-    color: white !important;
-    border: none !important;
-}
-
-/* Efeito hover para botões excluir */
-.stButton > button:has(p:contains("Excluir")):hover,
-.stButton > button:has(span:contains("Excluir")):hover,
-button:has(p:contains("Excluir")):hover,
-button:has(span:contains("Excluir")):hover {
+/* Efeito hover para botões secundários */
+button[kind="secondary"]:hover,
+.stButton > button[kind="secondary"]:hover,
+button[type="secondary"]:hover,
+.stButton > button[type="secondary"]:hover,
+button[data-testid="baseButton-secondary"]:hover,
+.stButton > button[data-testid="baseButton-secondary"]:hover {
     background-color: #c82333 !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 3px 6px rgba(220, 53, 69, 0.3) !important;
+}
+
+/* Força cor branca para todo conteúdo de botões secundários */
+button[kind="secondary"] *,
+.stButton > button[kind="secondary"] *,
+button[type="secondary"] *,
+.stButton > button[type="secondary"] *,
+button[data-testid="baseButton-secondary"] *,
+.stButton > button[data-testid="baseButton-secondary"] * {
+    color: white !important;
 }
 
 /* ========================================
