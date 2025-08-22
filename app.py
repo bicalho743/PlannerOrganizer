@@ -1257,145 +1257,10 @@ const authCheckInterval = setInterval(() => {
 if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
    ('user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user):
 
-    # BOTÃO DE TOGGLE DA SIDEBAR - APÓS AUTENTICAÇÃO
+    # BOTÃO SIMPLES E DIRETO - TESTE
     st.markdown("""
-    <script>
-    console.log('🚀 Usuário autenticado - Criando botão de toggle da sidebar');
-    
-    // Função para criar botão universal (desktop + mobile)
-    function createSidebarToggle() {
-        // Evitar duplicação
-        if (document.getElementById('sidebar-toggle-btn')) return;
-        
-        console.log('Criando botão de toggle da sidebar...');
-        
-        // Criar botão - SEMPRE visível
-        const btn = document.createElement('button');
-        btn.id = 'sidebar-toggle-btn';
-        btn.innerHTML = '☰';
-        btn.setAttribute('aria-label', 'Toggle Sidebar');
-        
-        // Estilo inline para máxima força
-        btn.style.cssText = `
-            position: fixed !important;
-            top: 20px !important;
-            left: 20px !important;
-            z-index: 999999999 !important;
-            background: #FF4B4B !important;
-            color: white !important;
-            border: 3px solid white !important;
-            border-radius: 10px !important;
-            width: 50px !important;
-            height: 50px !important;
-            font-size: 22px !important;
-            font-weight: 900 !important;
-            cursor: pointer !important;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.5) !important;
-            display: block !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-            pointer-events: auto !important;
-            transition: all 0.2s ease !important;
-        `;
-        
-        // Overlay para mobile
-        const overlay = document.createElement('div');
-        overlay.id = 'sidebar-overlay';
-        overlay.style.cssText = `
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background: rgba(0,0,0,0.6) !important;
-            z-index: 999998 !important;
-            display: none !important;
-        `;
-        
-        // Estado da sidebar
-        let sidebarOpen = window.innerWidth > 768; // Aberta por padrão no desktop
-        
-        // Função para alternar sidebar
-        btn.onclick = function() {
-            console.log('Clique no botão de toggle');
-            const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-            
-            if (!sidebar) {
-                console.log('Sidebar não encontrada');
-                return;
-            }
-            
-            sidebarOpen = !sidebarOpen;
-            
-            if (window.innerWidth <= 768) {
-                // Mobile: usar overlay
-                if (sidebarOpen) {
-                    sidebar.classList.add('show-mobile');
-                    overlay.style.display = 'block';
-                    btn.innerHTML = '✕';
-                } else {
-                    sidebar.classList.remove('show-mobile');
-                    overlay.style.display = 'none';
-                    btn.innerHTML = '☰';
-                }
-            } else {
-                // Desktop: toggle normal
-                if (sidebarOpen) {
-                    sidebar.style.display = 'block';
-                    sidebar.style.visibility = 'visible';
-                    btn.innerHTML = '✕';
-                    btn.style.background = '#FF4B4B';
-                } else {
-                    sidebar.style.display = 'none';
-                    sidebar.style.visibility = 'hidden';
-                    btn.innerHTML = '☰';
-                    btn.style.background = '#4CAF50';
-                }
-            }
-        };
-        
-        // Fechar com overlay
-        overlay.onclick = function() {
-            const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-            if (sidebar) {
-                sidebar.classList.remove('show-mobile');
-                overlay.style.display = 'none';
-                btn.innerHTML = '☰';
-                sidebarOpen = false;
-            }
-        };
-        
-        // Hover effect
-        btn.onmouseenter = function() {
-            btn.style.transform = 'scale(1.1)';
-            btn.style.boxShadow = '0 8px 25px rgba(0,0,0,0.6)';
-        };
-        
-        btn.onmouseleave = function() {
-            btn.style.transform = 'scale(1)';
-            btn.style.boxShadow = '0 6px 20px rgba(0,0,0,0.5)';
-        };
-        
-        // Adicionar ao DOM
-        document.body.appendChild(btn);
-        document.body.appendChild(overlay);
-        
-        console.log('✅ Botão criado e adicionado ao DOM');
-    }
-    
-    // Executar imediatamente - múltiplas tentativas
-    setTimeout(createSidebarToggle, 100);
-    setTimeout(createSidebarToggle, 500);
-    setTimeout(createSidebarToggle, 1000);
-    setTimeout(createSidebarToggle, 2000);
-    
-    // Executar periodicamente
-    setInterval(createSidebarToggle, 3000);
-    </script>
-    
-    <style>
-    /* Estilos para garantir visibilidade */
-    #sidebar-toggle-btn {
+    <!-- TESTE DE VISIBILIDADE: Botão HTML direto -->
+    <button id="test-btn" style="
         position: fixed !important;
         top: 20px !important;
         left: 20px !important;
@@ -1413,15 +1278,41 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
         display: block !important;
         opacity: 1 !important;
         visibility: visible !important;
-    }
+    " onclick="toggleSidebar()">☰</button>
+
+    <script>
+    console.log('🚀 TESTE: Usuário autenticado');
+    console.log('🔍 TESTE: Procurando botão...', document.getElementById('test-btn'));
     
-    /* Mobile: sidebar como overlay */
-    @media (max-width: 768px) {
-        section[data-testid="stSidebar"].show-mobile {
-            left: 0 !important;
+    function toggleSidebar() {
+        console.log('🎯 CLIQUE DETECTADO!');
+        alert('Botão funcionou! Clique OK para continuar.');
+        
+        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+        console.log('📋 Sidebar encontrada:', sidebar);
+        
+        if (sidebar) {
+            if (sidebar.style.display === 'none') {
+                sidebar.style.display = 'block';
+                sidebar.style.visibility = 'visible';
+                console.log('✅ Sidebar mostrada');
+            } else {
+                sidebar.style.display = 'none';
+                sidebar.style.visibility = 'hidden';
+                console.log('❌ Sidebar ocultada');
+            }
         }
     }
-    </style>
+    
+    // Log de debug
+    setTimeout(function() {
+        console.log('🔎 Status do botão após 1s:', {
+            'botão existe': !!document.getElementById('test-btn'),
+            'sidebar existe': !!document.querySelector('section[data-testid="stSidebar"]'),
+            'window width': window.innerWidth
+        });
+    }, 1000);
+    </script>
     """, unsafe_allow_html=True)
 
     # Botões de navegação
