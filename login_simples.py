@@ -203,6 +203,171 @@ def main():
         st.title("Planner Organizer - Login")
         st.subheader("Sistema de Gestão para Personal Organizers")
         
+        # CSS para otimização mobile - LOGIN PRIORITÁRIO
+        mobile_css = """
+        <style>
+        /* MOBILE OPTIMIZATION - LOGIN FIRST */
+        @media (max-width: 768px) {
+            /* LOGIN FORMULÁRIO NO TOPO NO MOBILE */
+            .login-form-container {
+                order: -1 !important; /* Move form para o topo */
+                margin-bottom: 1.5rem !important;
+                background: #f8f9fa !important;
+                border-radius: 10px !important;
+                padding: 1rem !important;
+                border: 2px solid #4A6670 !important;
+            }
+            
+            /* Títulos menores no mobile */
+            h1[data-testid="stTitle"] {
+                font-size: 1.3rem !important;
+                margin-bottom: 0.3rem !important;
+                text-align: center !important;
+            }
+            
+            /* Subtitle centralizado e menor */
+            .element-container h3 {
+                font-size: 0.9rem !important;
+                margin-bottom: 0.8rem !important;
+                text-align: center !important;
+            }
+            
+            /* Colunas em stack vertical no mobile */
+            div[data-testid="column"] {
+                width: 100% !important;
+                flex: none !important;
+                margin-bottom: 1rem !important;
+            }
+            
+            /* Imagem promocional menor no mobile */
+            div[data-testid="column"]:first-child {
+                max-width: 150px !important;
+                margin: 0 auto !important;
+            }
+            
+            /* Conteúdo promocional compacto */
+            .login-promo {
+                padding: 8px !important;
+                margin: 5px 0 !important;
+                font-size: 0.8rem !important;
+            }
+            
+            .login-promo h3 {
+                font-size: 0.9rem !important;
+                margin-bottom: 0.3rem !important;
+            }
+            
+            .login-promo ul {
+                padding-left: 12px !important;
+                margin-bottom: 0.3rem !important;
+            }
+            
+            .login-promo li {
+                margin-bottom: 0.2rem !important;
+                font-size: 0.75rem !important;
+            }
+            
+            /* Inputs de login maiores no mobile */
+            .stTextInput > div > div > input {
+                font-size: 1rem !important;
+                padding: 0.7rem !important;
+            }
+            
+            /* Botão de login destacado */
+            div.stButton > button[kind="formSubmit"] {
+                font-size: 1.1rem !important;
+                padding: 0.8rem 1.5rem !important;
+                margin-top: 1rem !important;
+            }
+        }
+        </style>
+        """
+        st.markdown(mobile_css, unsafe_allow_html=True)
+        
+        # FORMULÁRIO DE LOGIN PRIMEIRO NO MOBILE
+        login_container = st.container()
+        with login_container:
+            st.markdown('<div class="login-form-container">', unsafe_allow_html=True)
+            
+            # Login tradicional com email/senha
+            with st.form("login_form"):
+                username = st.text_input("Usuário ou E-mail", placeholder="Digite seu email")
+                password = st.text_input("Senha", type="password", placeholder="Digite sua senha")
+                
+                # Checkbox para aceitar os termos
+                terms_html = """
+                <div style="font-size: 0.8rem; margin: 0.5rem 0; text-align: center;">
+                    Ao continuar, você concorda com os <a href="#" onclick="document.dispatchEvent(new CustomEvent('show_termos')); return false;">Termos de Uso</a>
+                </div>
+                """
+                st.markdown(terms_html, unsafe_allow_html=True)
+                
+                # Botão de login
+                submitted = st.form_submit_button("🔐 ENTRAR", use_container_width=True)
+                
+                # Interceptar cliques nos termos de uso
+                termos_js = """
+                <script>
+                    document.addEventListener('show_termos', function() {
+                        window.parent.postMessage({
+                            type: 'streamlit:setComponentValue',
+                            value: true,
+                            dataType: 'bool',
+                            componentId: 'termos_link'
+                        }, '*');
+                    });
+                </script>
+                """
+                st.components.v1.html(termos_js, height=0)
+                
+                if submitted:
+                    # Credenciais de demonstração para testes
+                    if username.lower() == "admin" and password == "admin":
+                        st.session_state.authenticated = True
+                        st.session_state.user_id = "admin-demo-user-123"
+                        st.session_state.usuario_id = "admin-demo-user-123"
+                        st.session_state.user = {
+                            'email': 'admin@plannerorganizer.com',
+                            'nome': 'Administrador',
+                            'telefone': '',
+                            'empresa': 'Planner Organizer',
+                            'role': 'admin'
+                        }
+                        st.success("Login realizado com sucesso!")
+                        st.rerun()
+                    else:
+                        # Autenticação Firebase
+                        try:
+                            # Fazer login usando Firebase
+                            result = firebase_auth.login(username, password)
+                            
+                            if result["success"]:
+                                st.session_state.authenticated = True
+                                
+                                # Definir ID do usuário
+                                if 'user' in result and 'localId' in result['user']:
+                                    usuario_id = result['user']['localId']
+                                    st.session_state.usuario_id = usuario_id
+                                    st.session_state.user_id = usuario_id
+                                
+                                st.success("Login realizado com sucesso!")
+                                st.rerun()
+                            else:
+                                # Mensagens de erro personalizadas
+                                error_message = result.get("error", "")
+                                if "INVALID_PASSWORD" in error_message or "INVALID_LOGIN_CREDENTIALS" in error_message:
+                                    st.error("Senha incorreta. Verifique suas credenciais.")
+                                elif "EMAIL_NOT_FOUND" in error_message:
+                                    st.error("Email não encontrado. Crie uma nova conta.")
+                                elif "TOO_MANY_ATTEMPTS_TRY_LATER" in error_message:
+                                    st.error("Muitas tentativas. Tente novamente mais tarde.")
+                                else:
+                                    st.error("Erro de autenticação. Verifique suas credenciais.")
+                        except Exception as e:
+                            st.error("Sistema de autenticação indisponível. Tente novamente.")
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+        
         # Layout com duas colunas: imagem promocional e texto
         col1, col2 = st.columns([3, 4])
         
@@ -213,7 +378,7 @@ def main():
         with col2:
             # Conteúdo promocional destacando benefícios do sistema
             promo_html = """
-            <div style="background: linear-gradient(120deg, #FFF8E1 0%, #FFECB3 100%); padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #FF7043;">
+            <div class="login-promo" style="background: linear-gradient(120deg, #FFF8E1 0%, #FFECB3 100%); padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #FF7043;">
                 <h3 style="color: #5D4037; margin-top: 0; font-size: 20px;">Cansada de planilhas e papéis?</h3>
                 <ul style="color: #5D4037; padding-left: 20px; margin-bottom: 5px;">
                     <li><b>Organize</b> - Diga adeus às planilhas desorganizadas</li>
@@ -226,33 +391,7 @@ def main():
             """
             st.markdown(promo_html, unsafe_allow_html=True)
     
-    # Login tradicional com email/senha
-    with st.form("login_form"):
-        username = st.text_input("Usuário ou E-mail")
-        password = st.text_input("Senha", type="password")
-        
-        # Checkbox para aceitar os termos
-        terms_html = """
-        <div style="font-size: 0.85rem; margin-top: 10px;">
-            Ao continuar, você concorda com os <a href="#" onclick="document.dispatchEvent(new CustomEvent('show_termos')); return false;">Termos de Uso</a>
-        </div>
-        """
-        st.markdown(terms_html, unsafe_allow_html=True)
-        
-        # Interceptar cliques nos termos de uso
-        termos_js = """
-        <script>
-            document.addEventListener('show_termos', function() {
-                window.parent.postMessage({
-                    type: 'streamlit:setComponentValue',
-                    value: true,
-                    dataType: 'bool',
-                    componentId: 'termos_link'
-                }, '*');
-            });
-        </script>
-        """
-        st.components.v1.html(termos_js, height=0)
+        # CONTEÚDO PROMOCIONAL (aparece depois do login no mobile)
         
         # Botão de submissão estilizado para usar cor diferente do azul padrão
         submit_button_style = """
