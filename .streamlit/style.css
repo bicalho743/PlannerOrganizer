@@ -180,8 +180,24 @@ button[data-testid*="Button"][aria-label=""] {
     visibility: visible !important;
 }
 
-/* CAPTURAR BOTÕES COM SVG DE SETA */
+/* CAPTURAR BOTÕES COM SVG DE SETA - COLAPSAR */
 button:has(svg path[d*="15.41"]) {
+    background: #FF4B4B !important;
+    border: 3px solid white !important;
+    border-radius: 10px !important;
+    width: 50px !important;
+    height: 50px !important;
+    cursor: pointer !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* CAPTURAR BOTÕES COM SVG DE SETA - EXPANDIR */
+button:has(svg path[d*="M10 6L8.59"]) {
     background: #FF4B4B !important;
     border: 3px solid white !important;
     border-radius: 10px !important;
