@@ -299,19 +299,25 @@ def show():
                 if sucesso:
                     st.success("✅ Perfil salvo com sucesso!")
                     
-                    # Atualizar dados do usuário na sessão 
-                    # (apenas os campos relevantes para outras partes do sistema)
-                    if 'usuario' in st.session_state:
-                        st.session_state.usuario['nome'] = nome
-                        st.session_state.usuario['telefone'] = telefone
-                        st.session_state.usuario['empresa'] = empresa
+                    # CORREÇÃO: Atualizar dados do usuário na sessão SEM sobrescrever outros campos
+                    if 'usuario' in st.session_state and isinstance(st.session_state.usuario, dict):
+                        # Manter todos os dados existentes e apenas adicionar/atualizar os novos
+                        st.session_state.usuario.update({
+                            'nome': nome,
+                            'telefone': telefone,
+                            'empresa': empresa,
+                            'cargo': cargo,
+                            'observacoes_relatorio': observacoes_relatorio
+                        })
                     
-                    # Atualizar também o objeto 'user'
-                    if 'user' in st.session_state:
-                        if isinstance(st.session_state.user, dict):
-                            st.session_state.user['nome'] = nome
-                            st.session_state.user['telefone'] = telefone
-                            st.session_state.user['empresa'] = empresa
+                    # Atualizar também o objeto 'user' se existir
+                    if 'user' in st.session_state and isinstance(st.session_state.user, dict):
+                        st.session_state.user.update({
+                            'nome': nome,
+                            'telefone': telefone,
+                            'empresa': empresa,
+                            'cargo': cargo
+                        })
                 else:
                     st.error("❌ Erro ao salvar perfil. Tente novamente.")
             except Exception as e:
