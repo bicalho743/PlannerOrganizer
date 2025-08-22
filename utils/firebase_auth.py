@@ -116,6 +116,13 @@ class FirebaseAuth:
             except Exception as db_error:
                 print(f"Erro ao carregar perfil do PostgreSQL: {str(db_error)}")
             
+            # Salvar sessão no localStorage para persistência
+            try:
+                from utils.session_persistence import save_session_to_storage
+                save_session_to_storage(session_user, usuario_data, user['localId'])
+            except Exception as e:
+                print(f"Erro ao salvar sessão persistente: {str(e)}")
+            
             print(f"Login realizado com sucesso. Dados do usuário na sessão: {st.session_state.usuario}")
             
             return {'success': True, 'user': session_user}
@@ -242,6 +249,13 @@ class FirebaseAuth:
             
             st.session_state.authenticated = False
             print("DEBUG MULTI-TENANT: Logout realizado. Sessão limpa.")
+            
+            # Limpar sessão persistente
+            try:
+                from utils.session_persistence import clear_stored_session
+                clear_stored_session()
+            except Exception as e:
+                print(f"Erro ao limpar sessão persistente: {str(e)}")
             
             return {'success': True}
         except Exception as e:

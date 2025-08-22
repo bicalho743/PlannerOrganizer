@@ -90,6 +90,15 @@ st.set_page_config(
 
 # JavaScript removido para evitar loops infinitos
 
+# Tentar restaurar sessão persistente (APÓS set_page_config)
+try:
+    from utils.session_persistence import setup_session_persistence
+    from utils.auto_login import check_and_restore_auto_login
+    setup_session_persistence()
+    check_and_restore_auto_login()
+except Exception as e:
+    logger.warning(f"Erro ao configurar persistência de sessão: {str(e)}")
+
 # Diagnóstico de componentes do sistema
 logger.info("🔍 Verificando status dos componentes do sistema...")
 

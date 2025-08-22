@@ -326,13 +326,32 @@ def main():
                         st.session_state.authenticated = True
                         st.session_state.user_id = "admin-demo-user-123"
                         st.session_state.usuario_id = "admin-demo-user-123"
-                        st.session_state.user = {
+                        
+                        # Dados do usuário demo
+                        user_data = {
+                            'localId': 'admin-demo-user-123',
+                            'email': 'admin@plannerorganizer.com',
+                            'role': 'admin'
+                        }
+                        
+                        usuario_data = {
                             'email': 'admin@plannerorganizer.com',
                             'nome': 'Administrador',
                             'telefone': '',
                             'empresa': 'Planner Organizer',
                             'role': 'admin'
                         }
+                        
+                        st.session_state.user = user_data
+                        st.session_state.usuario = usuario_data
+                        
+                        # Salvar sessão persistente
+                        try:
+                            from utils.session_persistence import save_session_to_storage
+                            save_session_to_storage(user_data, usuario_data, "admin-demo-user-123")
+                        except Exception as e:
+                            print(f"Erro ao salvar sessão demo: {str(e)}")
+                        
                         st.success("Login realizado com sucesso!")
                         st.rerun()
                     else:
