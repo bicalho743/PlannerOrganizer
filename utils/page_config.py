@@ -122,6 +122,20 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         .main .block-container {
             margin-top: calc(var(--header-height, 50px) + 1px) !important;
         }
+        
+        /* OCULTAR TEXTO DO CABEÇALHO NO MOBILE */
+        .app-header h2,
+        .app-header p {
+            display: none !important;
+        }
+        
+        /* Centralizar área do usuário quando texto está oculto */
+        .app-header > div:last-child {
+            margin-left: 0 !important;
+            flex: 1 !important;
+            display: flex !important;
+            justify-content: center !important;
+        }
     }
 
     /* Sidebar */
