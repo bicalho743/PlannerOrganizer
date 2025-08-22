@@ -684,30 +684,39 @@ div[data-testid="stMetric"] > div:first-child {
         display: block !important;
     }
     
-    /* Botão hamburger para abrir sidebar */
+    /* Botão hamburger para abrir sidebar - MAIS VISÍVEL */
     .mobile-menu-btn {
         position: fixed !important;
-        top: 20px !important;
-        left: 20px !important;
+        top: 15px !important;
+        left: 15px !important;
         z-index: 1000000 !important;
-        background: linear-gradient(135deg, #2E4A99, #4A6CF7) !important;
+        background: #2E4A99 !important;
         color: white !important;
-        border: none !important;
-        border-radius: 8px !important;
-        padding: 10px 12px !important;
-        font-size: 18px !important;
+        border: 2px solid white !important;
+        border-radius: 10px !important;
+        padding: 12px !important;
+        font-size: 20px !important;
+        font-weight: bold !important;
         cursor: pointer !important;
-        box-shadow: 0 4px 12px rgba(46, 74, 153, 0.4) !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        width: 45px !important;
-        height: 45px !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+        display: block !important;
+        width: 50px !important;
+        height: 50px !important;
+        text-align: center !important;
+        line-height: 1 !important;
     }
     
     .mobile-menu-btn:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 16px rgba(46, 74, 153, 0.6) !important;
+        background: #1f4e79 !important;
+        transform: scale(1.05) !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+    }
+    
+    /* Força exibição do botão em mobile */
+    .mobile-menu-btn:not([style*="display: none"]) {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     
     /* Botão X para fechar sidebar */
@@ -741,10 +750,42 @@ div[data-testid="stMetric"] > div:first-child {
     /* Ocultar completamente o toggle original */
     button[data-testid="collapsedControl"] {
         display: none !important;
-        top: 80px !important;
-        left: 10px !important;
-        z-index: 1000000 !important;
-        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3) !important;
+    }
+}
+
+/* CSS adicional para garantir visibilidade do botão hamburger */
+@media (max-width: 768px) {
+    /* Garantir que o botão hamburger seja sempre visível */
+    button.mobile-menu-btn,
+    .mobile-menu-btn {
+        position: fixed !important;
+        top: 15px !important;
+        left: 15px !important;
+        z-index: 999999999 !important;
+        background: #2E4A99 !important;
+        color: white !important;
+        border: 2px solid white !important;
+        border-radius: 10px !important;
+        padding: 12px !important;
+        font-size: 20px !important;
+        font-weight: bold !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+        display: block !important;
+        width: 50px !important;
+        height: 50px !important;
+        text-align: center !important;
+        line-height: 1 !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+    }
+    
+    /* Força contra qualquer CSS que possa interferir */
+    body .mobile-menu-btn {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 
     .block-container {

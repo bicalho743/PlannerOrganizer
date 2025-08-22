@@ -111,23 +111,57 @@ function isMobile() {
 }
 
 function createMobileSidebarControls() {
-    if (!isMobile()) return;
+    if (!isMobile()) {
+        // Remover botão em desktop
+        const existingBtn = document.querySelector('.mobile-menu-btn');
+        if (existingBtn) existingBtn.remove();
+        return;
+    }
     
-    // Remover controles existentes
-    const existingBtn = document.querySelector('.mobile-menu-btn');
-    const existingOverlay = document.querySelector('.mobile-sidebar-overlay');
-    if (existingBtn) existingBtn.remove();
-    if (existingOverlay) existingOverlay.remove();
+    // Evitar duplicação
+    if (document.querySelector('.mobile-menu-btn')) return;
     
-    // Criar botão hamburger
+    // Criar botão hamburger com estilo inline para garantir visibilidade
     const menuBtn = document.createElement('button');
     menuBtn.className = 'mobile-menu-btn';
     menuBtn.innerHTML = '☰';
+    menuBtn.style.cssText = `
+        position: fixed !important;
+        top: 15px !important;
+        left: 15px !important;
+        z-index: 999999999 !important;
+        background: #2E4A99 !important;
+        color: white !important;
+        border: 2px solid white !important;
+        border-radius: 10px !important;
+        padding: 12px !important;
+        font-size: 20px !important;
+        font-weight: bold !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+        display: block !important;
+        width: 50px !important;
+        height: 50px !important;
+        text-align: center !important;
+        line-height: 1 !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    `;
     menuBtn.setAttribute('aria-label', 'Abrir menu');
     
     // Criar overlay
     const overlay = document.createElement('div');
     overlay.className = 'mobile-sidebar-overlay';
+    overlay.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background-color: rgba(0, 0, 0, 0.5) !important;
+        z-index: 999998 !important;
+        display: none !important;
+    `;
     
     // Adicionar ao DOM
     document.body.appendChild(menuBtn);
@@ -138,14 +172,30 @@ function createMobileSidebarControls() {
         const sidebar = document.querySelector('section[data-testid="stSidebar"]');
         if (sidebar) {
             sidebar.classList.add('mobile-sidebar-open');
-            overlay.classList.add('active');
+            overlay.style.display = 'block';
             
-            // Adicionar botão fechar na sidebar
+            // Adicionar botão fechar
             if (!sidebar.querySelector('.mobile-close-btn')) {
                 const closeBtn = document.createElement('button');
                 closeBtn.className = 'mobile-close-btn';
                 closeBtn.innerHTML = '×';
-                closeBtn.setAttribute('aria-label', 'Fechar menu');
+                closeBtn.style.cssText = `
+                    position: absolute !important;
+                    top: 20px !important;
+                    right: 20px !important;
+                    background: rgba(255, 255, 255, 0.1) !important;
+                    color: white !important;
+                    border: none !important;
+                    border-radius: 50% !important;
+                    width: 35px !important;
+                    height: 35px !important;
+                    font-size: 18px !important;
+                    cursor: pointer !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    z-index: 999999 !important;
+                `;
                 closeBtn.onclick = closeSidebar;
                 sidebar.appendChild(closeBtn);
             }
@@ -156,7 +206,7 @@ function createMobileSidebarControls() {
         const sidebar = document.querySelector('section[data-testid="stSidebar"]');
         if (sidebar) {
             sidebar.classList.remove('mobile-sidebar-open');
-            overlay.classList.remove('active');
+            overlay.style.display = 'none';
         }
     }
     
@@ -176,9 +226,15 @@ function createMobileSidebarControls() {
 removeToggleButton();
 createMobileSidebarControls();
 
-// Executar periodicamente
+// Executar periodicamente - mais frequente no início
 setInterval(removeToggleButton, 200);
-setInterval(createMobileSidebarControls, 1000);
+setInterval(createMobileSidebarControls, 500);
+
+// Execuções extras nos primeiros segundos
+setTimeout(createMobileSidebarControls, 100);
+setTimeout(createMobileSidebarControls, 500);
+setTimeout(createMobileSidebarControls, 1500);
+setTimeout(createMobileSidebarControls, 3000);
 
 // Executar quando DOM mudar
 const observer = new MutationObserver(() => {
