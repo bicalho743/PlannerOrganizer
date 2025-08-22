@@ -755,6 +755,7 @@ class Database:
                     perfil.instagram = dados_perfil.get('instagram', perfil.instagram)
                     perfil.website = dados_perfil.get('website', perfil.website)
                     perfil.cargo = dados_perfil.get('cargo', perfil.cargo)
+                    perfil.mensagem_padrao = dados_perfil.get('mensagem_padrao', perfil.mensagem_padrao)
                     perfil.cor_principal = dados_perfil.get('cor_principal', perfil.cor_principal)
                     perfil.cor_secundaria = dados_perfil.get('cor_secundaria', perfil.cor_secundaria)
                     perfil.observacoes_relatorio = dados_perfil.get('observacoes_relatorio', perfil.observacoes_relatorio)
@@ -775,6 +776,7 @@ class Database:
                         instagram=dados_perfil.get('instagram', ''),
                         website=dados_perfil.get('website', ''),
                         cargo=dados_perfil.get('cargo', ''),
+                        mensagem_padrao=dados_perfil.get('mensagem_padrao', ''),
                         cor_principal=dados_perfil.get('cor_principal', ''),
                         cor_secundaria=dados_perfil.get('cor_secundaria', ''),
                         observacoes_relatorio=dados_perfil.get('observacoes_relatorio', ''),
@@ -815,6 +817,7 @@ class Database:
                         'instagram': perfil.instagram,
                         'website': perfil.website,
                         'cargo': perfil.cargo,
+                        'mensagem_padrao': perfil.mensagem_padrao,
                         'cor_principal': perfil.cor_principal,
                         'cor_secundaria': perfil.cor_secundaria,
                         'observacoes_relatorio': perfil.observacoes_relatorio,

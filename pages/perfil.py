@@ -307,6 +307,7 @@ def show():
                             'telefone': telefone,
                             'empresa': empresa,
                             'cargo': cargo,
+                            'mensagem_padrao': mensagem_padrao,
                             'observacoes_relatorio': observacoes_relatorio
                         })
                     
