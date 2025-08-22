@@ -84,111 +84,180 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# SOLUÇÃO MOBILE SIMPLIFICADA
+# BOTÃO UNIVERSAL DE TOGGLE SIDEBAR
 st.markdown("""
 <script>
-// Função simples para detectar mobile
-function isMobile() {
-    return window.innerWidth <= 768;
-}
-
-// Criar botão de menu mobile
-function createMenuButton() {
-    if (!isMobile() || document.getElementById('mobile-menu-btn')) return;
+// Função para criar botão universal (desktop + mobile)
+function createSidebarToggle() {
+    // Evitar duplicação
+    if (document.getElementById('sidebar-toggle-btn')) return;
     
-    // Criar botão
+    console.log('Criando botão de toggle da sidebar...');
+    
+    // Criar botão - SEMPRE visível
     const btn = document.createElement('button');
-    btn.id = 'mobile-menu-btn';
+    btn.id = 'sidebar-toggle-btn';
     btn.innerHTML = '☰';
-    btn.style.cssText = \`
+    btn.setAttribute('aria-label', 'Toggle Sidebar');
+    
+    // Estilo inline para máxima força
+    btn.style.cssText = `
         position: fixed !important;
-        top: 15px !important;
-        left: 15px !important;
-        z-index: 9999999 !important;
+        top: 20px !important;
+        left: 20px !important;
+        z-index: 999999999 !important;
         background: #FF4B4B !important;
         color: white !important;
-        border: none !important;
-        border-radius: 8px !important;
-        width: 45px !important;
-        height: 45px !important;
-        font-size: 18px !important;
-        font-weight: bold !important;
+        border: 3px solid white !important;
+        border-radius: 10px !important;
+        width: 50px !important;
+        height: 50px !important;
+        font-size: 22px !important;
+        font-weight: 900 !important;
         cursor: pointer !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.5) !important;
         display: block !important;
         opacity: 1 !important;
         visibility: visible !important;
-    \`;
+        pointer-events: auto !important;
+        transition: all 0.2s ease !important;
+    `;
     
-    // Overlay
+    // Overlay para mobile
     const overlay = document.createElement('div');
-    overlay.id = 'mobile-overlay';
-    overlay.style.cssText = \`
+    overlay.id = 'sidebar-overlay';
+    overlay.style.cssText = `
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
         width: 100vw !important;
         height: 100vh !important;
-        background: rgba(0,0,0,0.5) !important;
-        z-index: 9999998 !important;
+        background: rgba(0,0,0,0.6) !important;
+        z-index: 999998 !important;
         display: none !important;
-    \`;
+    `;
     
-    // Funções
+    // Estado da sidebar
+    let sidebarOpen = false;
+    
+    // Função para alternar sidebar
     btn.onclick = function() {
+        console.log('Clique no botão de toggle');
         const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-        if (sidebar) {
-            sidebar.classList.add('show-mobile');
-            overlay.style.display = 'block';
+        
+        if (!sidebar) {
+            console.log('Sidebar não encontrada');
+            return;
+        }
+        
+        sidebarOpen = !sidebarOpen;
+        
+        if (window.innerWidth <= 768) {
+            // Mobile: usar overlay
+            if (sidebarOpen) {
+                sidebar.classList.add('show-mobile');
+                overlay.style.display = 'block';
+                btn.innerHTML = '✕';
+            } else {
+                sidebar.classList.remove('show-mobile');
+                overlay.style.display = 'none';
+                btn.innerHTML = '☰';
+            }
+        } else {
+            // Desktop: toggle normal
+            if (sidebarOpen) {
+                sidebar.style.display = 'none';
+                btn.innerHTML = '☰';
+                btn.style.background = '#4CAF50';
+            } else {
+                sidebar.style.display = 'block';
+                btn.innerHTML = '✕';
+                btn.style.background = '#FF4B4B';
+            }
         }
     };
     
+    // Fechar com overlay
     overlay.onclick = function() {
         const sidebar = document.querySelector('section[data-testid="stSidebar"]');
         if (sidebar) {
             sidebar.classList.remove('show-mobile');
             overlay.style.display = 'none';
+            btn.innerHTML = '☰';
+            sidebarOpen = false;
         }
+    };
+    
+    // Hover effect
+    btn.onmouseenter = function() {
+        btn.style.transform = 'scale(1.1)';
+        btn.style.boxShadow = '0 8px 25px rgba(0,0,0,0.6)';
+    };
+    
+    btn.onmouseleave = function() {
+        btn.style.transform = 'scale(1)';
+        btn.style.boxShadow = '0 6px 20px rgba(0,0,0,0.5)';
     };
     
     // Adicionar ao DOM
     document.body.appendChild(btn);
     document.body.appendChild(overlay);
+    
+    console.log('Botão criado e adicionado ao DOM');
 }
 
-// Executar
-if (isMobile()) {
-    createMenuButton();
-    setInterval(createMenuButton, 1000);
-}
+// Executar imediatamente
+setTimeout(createSidebarToggle, 100);
+setTimeout(createSidebarToggle, 500);
+setTimeout(createSidebarToggle, 1000);
+setTimeout(createSidebarToggle, 2000);
 
-// Em resize
-window.addEventListener('resize', function() {
-    setTimeout(function() {
-        if (isMobile()) createMenuButton();
-    }, 300);
+// Executar periodicamente
+setInterval(createSidebarToggle, 2000);
+
+// Executar quando DOM mudar
+const observer = new MutationObserver(createSidebarToggle);
+observer.observe(document.body, { 
+    childList: true, 
+    subtree: true 
 });
+
+// Executar em resize
+window.addEventListener('resize', function() {
+    setTimeout(createSidebarToggle, 200);
+});
+
+// Executar quando página carregar
+window.addEventListener('load', createSidebarToggle);
+document.addEventListener('DOMContentLoaded', createSidebarToggle);
 </script>
 
 <style>
-/* Botão mobile */
+/* Estilos para garantir visibilidade */
+#sidebar-toggle-btn {
+    position: fixed !important;
+    top: 20px !important;
+    left: 20px !important;
+    z-index: 999999999 !important;
+    background: #FF4B4B !important;
+    color: white !important;
+    border: 3px solid white !important;
+    border-radius: 10px !important;
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 22px !important;
+    font-weight: 900 !important;
+    cursor: pointer !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5) !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Mobile: sidebar como overlay */
 @media (max-width: 768px) {
-    #mobile-menu-btn {
-        position: fixed !important;
-        top: 15px !important;
-        left: 15px !important;
-        z-index: 9999999 !important;
-        background: #FF4B4B !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 8px !important;
-        width: 45px !important;
-        height: 45px !important;
-        font-size: 18px !important;
-        font-weight: bold !important;
-        cursor: pointer !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
-        display: block !important;
+    section[data-testid="stSidebar"].show-mobile {
+        left: 0 !important;
     }
 }
 </style>
