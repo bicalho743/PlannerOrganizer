@@ -89,8 +89,10 @@ div[data-testid="stSidebarCollapseButton"] {
     transition: all 0.2s ease !important;
 }
 
-/* Estilo do botão interno */
-div[data-testid="stSidebarCollapseButton"] button {
+/* Estilo do botão interno - TODOS OS ESTADOS */
+div[data-testid="stSidebarCollapseButton"] button,
+button[data-testid="stBaseButton-headerNoPadding"],
+button[kind="headerNoPadding"] {
     background: #FF4B4B !important;
     border: 3px solid white !important;
     border-radius: 10px !important;
@@ -102,6 +104,7 @@ div[data-testid="stSidebarCollapseButton"] button {
     align-items: center !important;
     justify-content: center !important;
     opacity: 1 !important;
+    visibility: visible !important;
 }
 
 /* Mobile: botão fixo no canto */
@@ -135,11 +138,30 @@ div[data-testid="stSidebarCollapseButton"] svg {
     height: 24px !important;
 }
 
-/* Hover no botão nativo */
-div[data-testid="stSidebarCollapseButton"]:hover button {
+/* Hover no botão nativo - TODOS OS ESTADOS */
+div[data-testid="stSidebarCollapseButton"]:hover button,
+button[data-testid="stBaseButton-headerNoPadding"]:hover,
+button[kind="headerNoPadding"]:hover {
     background: #E53E3E !important;
     transform: scale(1.05) !important;
     box-shadow: 0 8px 25px rgba(0,0,0,0.6) !important;
+}
+
+/* Garantir que botões fora da sidebar também tenham estilo */
+section[data-testid="stAppViewContainer"] button[data-testid="stBaseButton-headerNoPadding"],
+section[data-testid="stAppViewContainer"] button[kind="headerNoPadding"] {
+    background: #FF4B4B !important;
+    border: 3px solid white !important;
+    border-radius: 10px !important;
+    width: 50px !important;
+    height: 50px !important;
+    cursor: pointer !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 /* OCULTAR QUALQUER SVG DE SETAS DE TOGGLE */
