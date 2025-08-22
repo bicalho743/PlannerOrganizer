@@ -65,26 +65,42 @@ section[data-testid="stSidebar"] ~ .main {
     margin-left: 250px !important;
 }
 
-/* REMOVER COMPLETAMENTE QUALQUER BOTÃO DE TOGGLE */
-button[data-testid="collapsedControl"],
-button[data-testid="baseButton-minimal"],
-button[aria-label*="collapse"],
-button[aria-label*="Collapse"],
-button[title*="collapse"],
-button[title*="Collapse"],
-.stSidebar button[data-testid="baseButton-minimal"],
-section[data-testid="stSidebar"] > div:first-child > button,
-div[data-testid="stSidebar"] > div:first-child > button {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    position: absolute !important;
-    left: -9999px !important;
-    top: -9999px !important;
-    width: 0 !important;
-    height: 0 !important;
-    overflow: hidden !important;
+/* ESTILIZAR BOTÃO NATIVO DO STREAMLIT */
+div[data-testid="stSidebarCollapseButton"],
+button[data-testid="stBaseButton-headerNoPadding"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    position: fixed !important;
+    top: 20px !important;
+    left: 20px !important;
+    z-index: 999999 !important;
+    background: #FF4B4B !important;
+    border: 3px solid white !important;
+    border-radius: 10px !important;
+    width: 50px !important;
+    height: 50px !important;
+    cursor: pointer !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5) !important;
+    transition: all 0.2s ease !important;
+}
+
+/* Ícone do botão nativo */
+div[data-testid="stSidebarCollapseButton"] svg,
+button[data-testid="stBaseButton-headerNoPadding"] svg {
+    color: white !important;
+    font-size: 22px !important;
+    width: 24px !important;
+    height: 24px !important;
+}
+
+/* Hover no botão nativo */
+div[data-testid="stSidebarCollapseButton"]:hover,
+button[data-testid="stBaseButton-headerNoPadding"]:hover {
+    background: #E53E3E !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.6) !important;
 }
 
 /* OCULTAR QUALQUER SVG DE SETAS DE TOGGLE */
