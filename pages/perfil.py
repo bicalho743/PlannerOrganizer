@@ -260,6 +260,46 @@ def show():
             help="Estas observações aparecerão em todos os PDFs de propostas gerados. Uma observação por linha, numeradas automaticamente."
         )
         
+        # Seção de personalização de cores para PDFs
+        st.subheader("🎨 Cores Personalizadas para PDFs")
+        st.info("💡 Personalize as cores dos seus relatórios PDF para combinar com sua identidade visual")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            cor_principal = st.color_picker(
+                "Cor Principal", 
+                value=perfil.get('cor_principal', '#1E366F'),
+                help="Cor principal para títulos, cabeçalhos e destaque nos PDFs"
+            )
+        
+        with col2:
+            cor_secundaria = st.color_picker(
+                "Cor Secundária", 
+                value=perfil.get('cor_secundaria', '#e9f2ff'),
+                help="Cor secundária para fundos, bordas e elementos complementares nos PDFs"
+            )
+        
+        # Preview das cores
+        st.markdown("**Preview das cores:**")
+        col_preview1, col_preview2 = st.columns(2)
+        
+        with col_preview1:
+            st.markdown(f"""
+            <div style="background-color: {cor_principal}; color: white; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold;">
+                Cor Principal<br>
+                <small style="opacity: 0.8;">{cor_principal}</small>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col_preview2:
+            st.markdown(f"""
+            <div style="background-color: {cor_secundaria}; color: {cor_principal}; padding: 15px; border-radius: 8px; text-align: center; border: 2px solid {cor_principal};">
+                Cor Secundária<br>
+                <small style="opacity: 0.8;">{cor_secundaria}</small>
+            </div>
+            """, unsafe_allow_html=True)
+        
         botao_salvar = st.form_submit_button("💾 Salvar Perfil")
         
         if botao_salvar:
@@ -281,7 +321,9 @@ def show():
                 'estado': estado,
                 'cep': cep,
                 'mensagem_padrao': mensagem_padrao,
-                'observacoes_relatorio': observacoes_relatorio
+                'observacoes_relatorio': observacoes_relatorio,
+                'cor_principal': cor_principal,
+                'cor_secundaria': cor_secundaria
             }
             
             # Salvar perfil no banco de dados
