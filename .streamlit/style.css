@@ -78,16 +78,19 @@ section[data-testid="stSidebar"] ~ .main {
     margin-left: 250px !important;
 }
 
-/* ESTILIZAR APENAS O PRIMEIRO BOTÃO NATIVO DO STREAMLIT */
-div[data-testid="stSidebarCollapseButton"]:first-of-type {
+/* ESTILIZAR BOTÃO NATIVO DO STREAMLIT - UNIVERSAL */
+div[data-testid="stSidebarCollapseButton"] {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
     pointer-events: auto !important;
-    position: fixed !important;
-    top: 20px !important;
-    left: 20px !important;
     z-index: 999999 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+/* Estilo do botão interno */
+div[data-testid="stSidebarCollapseButton"] button {
     background: #FF4B4B !important;
     border: 3px solid white !important;
     border-radius: 10px !important;
@@ -95,18 +98,37 @@ div[data-testid="stSidebarCollapseButton"]:first-of-type {
     height: 50px !important;
     cursor: pointer !important;
     box-shadow: 0 6px 20px rgba(0,0,0,0.5) !important;
-    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 1 !important;
 }
 
-/* Ocultar outros botões duplicados */
-div[data-testid="stSidebarCollapseButton"]:not(:first-of-type),
-button[data-testid="stBaseButton-headerNoPadding"]:not(:first-of-type) {
-    display: none !important;
-    visibility: hidden !important;
+/* Mobile: botão fixo no canto */
+@media (max-width: 768px) {
+    div[data-testid="stSidebarCollapseButton"] {
+        position: fixed !important;
+        top: 20px !important;
+        left: 20px !important;
+    }
+}
+
+/* Desktop: botão em posição normal mas estilizado */
+@media (min-width: 769px) {
+    div[data-testid="stSidebarCollapseButton"] {
+        position: relative !important;
+    }
+    
+    /* Se preferir fixo no desktop também, descomente: */
+    /* div[data-testid="stSidebarCollapseButton"] {
+        position: fixed !important;
+        top: 20px !important;
+        left: 20px !important;
+    } */
 }
 
 /* Ícone do botão nativo */
-div[data-testid="stSidebarCollapseButton"]:first-of-type svg {
+div[data-testid="stSidebarCollapseButton"] svg {
     color: white !important;
     font-size: 22px !important;
     width: 24px !important;
@@ -114,7 +136,7 @@ div[data-testid="stSidebarCollapseButton"]:first-of-type svg {
 }
 
 /* Hover no botão nativo */
-div[data-testid="stSidebarCollapseButton"]:first-of-type:hover {
+div[data-testid="stSidebarCollapseButton"]:hover button {
     background: #E53E3E !important;
     transform: scale(1.05) !important;
     box-shadow: 0 8px 25px rgba(0,0,0,0.6) !important;
