@@ -48,16 +48,29 @@ header[data-testid="stHeader"] {
    SIDEBAR - CONFIGURAÇÃO CENTRALIZADA E UNIFICADA
    ======================================== */
 
-/* SIDEBAR PRINCIPAL - Sempre visível após login */
+/* SIDEBAR PRINCIPAL - Configuração inteligente */
 section[data-testid="stSidebar"] {
-    display: block !important;
-    visibility: visible !important;
-    width: 250px !important;
-    min-width: 250px !important;
-    max-width: 250px !important;
-    flex: 0 0 250px !important;
     background: linear-gradient(180deg, #1E1F36 0%, #2E4A99 100%) !important;
     border-right: 1px solid #4C566A !important;
+}
+
+/* Desktop: sidebar expansível normal */
+@media (min-width: 769px) {
+    section[data-testid="stSidebar"] {
+        display: block !important;
+        visibility: visible !important;
+        width: 250px !important;
+        min-width: 250px !important;
+        max-width: 250px !important;
+    }
+    
+    /* Quando sidebar está colapsada no desktop */
+    section[data-testid="stSidebar"][aria-expanded="false"] {
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        overflow: hidden !important;
+    }
 }
 
 /* CONTEÚDO PRINCIPAL - Ajuste automático com sidebar */
@@ -660,30 +673,31 @@ div[data-testid="stMetric"] > div:first-child {
 }
 
 /* ========================================
-   RESPONSIVIDADE MOBILE - VERSÃO SIMPLIFICADA
+   RESPONSIVIDADE MOBILE - FUNCIONAMENTO CORRETO
    ======================================== */
 @media (max-width: 768px) {
-    /* Sidebar oculta por padrão */
+    /* Mobile: sidebar como overlay à esquerda */
     section[data-testid="stSidebar"] {
         position: fixed !important;
         top: 0 !important;
-        left: -280px !important; /* Oculta completamente */
+        left: 0 !important;
         height: 100vh !important;
         width: 280px !important;
         z-index: 999999 !important;
-        transition: left 0.3s ease !important;
-        background: linear-gradient(180deg, #1E1F36 0%, #2E4A99 100%) !important;
-        border-right: 2px solid #4C566A !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s ease !important;
         box-shadow: 2px 0 15px rgba(0, 0, 0, 0.3) !important;
         overflow-y: auto !important;
+        display: block !important;
+        visibility: visible !important;
     }
     
-    /* Sidebar aberta - desliza para a direita */
-    section[data-testid="stSidebar"].show-mobile {
-        left: 0 !important;
+    /* Sidebar expandida no mobile */
+    section[data-testid="stSidebar"][aria-expanded="true"] {
+        transform: translateX(0) !important;
     }
     
-    /* Conteúdo principal sem padding extra */
+    /* Conteúdo principal no mobile */
     .main .block-container {
         margin-left: 0 !important;
         padding-left: 70px !important; /* Espaço para o botão */
@@ -691,16 +705,17 @@ div[data-testid="stMetric"] > div:first-child {
         max-width: 100% !important;
         width: 100% !important;
     }
-
-    /* Remover toggle original do Streamlit */
-    button[data-testid="collapsedControl"],
-    *[data-testid*="collaps"] {
-        display: none !important;
-        visibility: hidden !important;
-    }
-
-    .block-container {
-        padding-left: 60px !important;
+    
+    /* Overlay quando sidebar aberta no mobile */
+    section[data-testid="stSidebar"][aria-expanded="true"]::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 280px;
+        width: calc(100vw - 280px);
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: -1;
     }
 }
 
