@@ -84,7 +84,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# JAVASCRIPT para remover completamente toggle da sidebar
+# JAVASCRIPT para remover toggle original e adicionar controles mobile
 st.markdown("""
 <script>
 function removeToggleButton() {
@@ -104,24 +104,93 @@ function removeToggleButton() {
             element.parentNode?.removeChild(element);
         });
     });
-    
-    // Remover evento de hover também
-    const style = document.createElement('style');
-    style.innerHTML = `
-        *[data-testid*="collaps"] { display: none !important; }
-        *[aria-label*="collaps"] { display: none !important; }
-        section[data-testid="stSidebar"] > div:first-child > button { display: none !important; }
-    `;
-    document.head.appendChild(style);
 }
 
-// Executar imediatamente e a cada intervalo
+function isMobile() {
+    return window.innerWidth <= 768;
+}
+
+function createMobileSidebarControls() {
+    if (!isMobile()) return;
+    
+    // Remover controles existentes
+    const existingBtn = document.querySelector('.mobile-menu-btn');
+    const existingOverlay = document.querySelector('.mobile-sidebar-overlay');
+    if (existingBtn) existingBtn.remove();
+    if (existingOverlay) existingOverlay.remove();
+    
+    // Criar botão hamburger
+    const menuBtn = document.createElement('button');
+    menuBtn.className = 'mobile-menu-btn';
+    menuBtn.innerHTML = '☰';
+    menuBtn.setAttribute('aria-label', 'Abrir menu');
+    
+    // Criar overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'mobile-sidebar-overlay';
+    
+    // Adicionar ao DOM
+    document.body.appendChild(menuBtn);
+    document.body.appendChild(overlay);
+    
+    // Funções de controle
+    function openSidebar() {
+        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+        if (sidebar) {
+            sidebar.classList.add('mobile-sidebar-open');
+            overlay.classList.add('active');
+            
+            // Adicionar botão fechar na sidebar
+            if (!sidebar.querySelector('.mobile-close-btn')) {
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'mobile-close-btn';
+                closeBtn.innerHTML = '×';
+                closeBtn.setAttribute('aria-label', 'Fechar menu');
+                closeBtn.onclick = closeSidebar;
+                sidebar.appendChild(closeBtn);
+            }
+        }
+    }
+    
+    function closeSidebar() {
+        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+        if (sidebar) {
+            sidebar.classList.remove('mobile-sidebar-open');
+            overlay.classList.remove('active');
+        }
+    }
+    
+    // Event listeners
+    menuBtn.onclick = openSidebar;
+    overlay.onclick = closeSidebar;
+    
+    // Fechar com ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeSidebar();
+        }
+    });
+}
+
+// Executar funções
 removeToggleButton();
+createMobileSidebarControls();
+
+// Executar periodicamente
 setInterval(removeToggleButton, 200);
+setInterval(createMobileSidebarControls, 1000);
 
 // Executar quando DOM mudar
-const observer = new MutationObserver(removeToggleButton);
+const observer = new MutationObserver(() => {
+    removeToggleButton();
+    if (isMobile()) createMobileSidebarControls();
+});
 observer.observe(document.body, { childList: true, subtree: true });
+
+// Executar em mudanças de orientação/resize
+window.addEventListener('resize', () => {
+    setTimeout(createMobileSidebarControls, 300);
+});
 </script>
 """, unsafe_allow_html=True)
 
