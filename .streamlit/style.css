@@ -644,148 +644,43 @@ div[data-testid="stMetric"] > div:first-child {
 }
 
 /* ========================================
-   RESPONSIVIDADE MOBILE - SIDEBAR CORRIGIDA
+   RESPONSIVIDADE MOBILE - VERSÃO SIMPLIFICADA
    ======================================== */
 @media (max-width: 768px) {
-    /* Sidebar como overlay à esquerda */
+    /* Sidebar oculta por padrão */
     section[data-testid="stSidebar"] {
         position: fixed !important;
         top: 0 !important;
-        left: 0 !important;
+        left: -280px !important; /* Oculta completamente */
         height: 100vh !important;
         width: 280px !important;
         z-index: 999999 !important;
-        transform: translateX(-100%) !important;
-        transition: transform 0.3s ease !important;
+        transition: left 0.3s ease !important;
         background: linear-gradient(180deg, #1E1F36 0%, #2E4A99 100%) !important;
         border-right: 2px solid #4C566A !important;
         box-shadow: 2px 0 15px rgba(0, 0, 0, 0.3) !important;
         overflow-y: auto !important;
     }
     
-    /* Sidebar aberta */
-    section[data-testid="stSidebar"].mobile-sidebar-open {
-        transform: translateX(0) !important;
-    }
-    
-    /* Overlay de fundo quando sidebar aberta */
-    .mobile-sidebar-overlay {
-        position: fixed !important;
-        top: 0 !important;
+    /* Sidebar aberta - desliza para a direita */
+    section[data-testid="stSidebar"].show-mobile {
         left: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        background-color: rgba(0, 0, 0, 0.5) !important;
-        z-index: 999998 !important;
-        display: none !important;
     }
     
-    .mobile-sidebar-overlay.active {
-        display: block !important;
-    }
-    
-    /* Botão hamburger para abrir sidebar - MAIS VISÍVEL */
-    .mobile-menu-btn {
-        position: fixed !important;
-        top: 15px !important;
-        left: 15px !important;
-        z-index: 1000000 !important;
-        background: #2E4A99 !important;
-        color: white !important;
-        border: 2px solid white !important;
-        border-radius: 10px !important;
-        padding: 12px !important;
-        font-size: 20px !important;
-        font-weight: bold !important;
-        cursor: pointer !important;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
-        display: block !important;
-        width: 50px !important;
-        height: 50px !important;
-        text-align: center !important;
-        line-height: 1 !important;
-    }
-    
-    .mobile-menu-btn:hover {
-        background: #1f4e79 !important;
-        transform: scale(1.05) !important;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
-    }
-    
-    /* Força exibição do botão em mobile */
-    .mobile-menu-btn:not([style*="display: none"]) {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
-    
-    /* Botão X para fechar sidebar */
-    .mobile-close-btn {
-        position: absolute !important;
-        top: 20px !important;
-        right: 20px !important;
-        background: rgba(255, 255, 255, 0.1) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 50% !important;
-        width: 35px !important;
-        height: 35px !important;
-        font-size: 18px !important;
-        cursor: pointer !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        z-index: 999999 !important;
-    }
-    
-    /* Conteúdo principal ajustado */
+    /* Conteúdo principal sem padding extra */
     .main .block-container {
         margin-left: 0 !important;
-        padding-left: 80px !important;
+        padding-left: 70px !important; /* Espaço para o botão */
         padding-right: 1rem !important;
         max-width: 100% !important;
         width: 100% !important;
     }
 
-    /* Ocultar completamente o toggle original */
-    button[data-testid="collapsedControl"] {
+    /* Remover toggle original do Streamlit */
+    button[data-testid="collapsedControl"],
+    *[data-testid*="collaps"] {
         display: none !important;
-    }
-}
-
-/* CSS adicional para garantir visibilidade do botão hamburger */
-@media (max-width: 768px) {
-    /* Garantir que o botão hamburger seja sempre visível */
-    button.mobile-menu-btn,
-    .mobile-menu-btn {
-        position: fixed !important;
-        top: 15px !important;
-        left: 15px !important;
-        z-index: 999999999 !important;
-        background: #2E4A99 !important;
-        color: white !important;
-        border: 2px solid white !important;
-        border-radius: 10px !important;
-        padding: 12px !important;
-        font-size: 20px !important;
-        font-weight: bold !important;
-        cursor: pointer !important;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
-        display: block !important;
-        width: 50px !important;
-        height: 50px !important;
-        text-align: center !important;
-        line-height: 1 !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        pointer-events: auto !important;
-    }
-    
-    /* Força contra qualquer CSS que possa interferir */
-    body .mobile-menu-btn {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
+        visibility: hidden !important;
     }
 
     .block-container {

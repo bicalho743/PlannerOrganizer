@@ -36,7 +36,7 @@ from utils.planos import verificar_login  # Importando apenas a função de veri
 from utils.analytics_injector import inject_analytics_tags, track_page_view, inject_seo_meta_tags
 from utils.ga4_injector import setup_google_analytics
 from utils.html_head_injector import inject_head_content
-from utils.simple_mobile_fix import apply_mobile_sidebar_fix
+# Importação removida - configurações mobile centralizadas no próprio app.py
 
 # Importar módulo de autenticação Firebase (pode ser comentado para desabilitar temporariamente)
 try:
@@ -84,170 +84,114 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# JAVASCRIPT para remover toggle original e adicionar controles mobile
+# SOLUÇÃO MOBILE SIMPLIFICADA
 st.markdown("""
 <script>
-function removeToggleButton() {
-    // Selecionar e remover TODOS os elementos de toggle
-    const selectors = [
-        'button[data-testid="collapsedControl"]',
-        'button[data-testid="baseButton-minimal"]', 
-        'button[aria-label*="collapse"]',
-        'button[title*="collapse"]',
-        'div[data-testid="stSidebar"] > div:first-child > button',
-        '.stSidebar > div:first-child > button'
-    ];
-    
-    selectors.forEach(selector => {
-        const elements = document.querySelectorAll(selector);
-        elements.forEach(element => {
-            element.parentNode?.removeChild(element);
-        });
-    });
-}
-
+// Função simples para detectar mobile
 function isMobile() {
     return window.innerWidth <= 768;
 }
 
-function createMobileSidebarControls() {
-    if (!isMobile()) {
-        // Remover botão em desktop
-        const existingBtn = document.querySelector('.mobile-menu-btn');
-        if (existingBtn) existingBtn.remove();
-        return;
-    }
+// Criar botão de menu mobile
+function createMenuButton() {
+    if (!isMobile() || document.getElementById('mobile-menu-btn')) return;
     
-    // Evitar duplicação
-    if (document.querySelector('.mobile-menu-btn')) return;
-    
-    // Criar botão hamburger com estilo inline para garantir visibilidade
-    const menuBtn = document.createElement('button');
-    menuBtn.className = 'mobile-menu-btn';
-    menuBtn.innerHTML = '☰';
-    menuBtn.style.cssText = `
+    // Criar botão
+    const btn = document.createElement('button');
+    btn.id = 'mobile-menu-btn';
+    btn.innerHTML = '☰';
+    btn.style.cssText = \`
         position: fixed !important;
         top: 15px !important;
         left: 15px !important;
-        z-index: 999999999 !important;
-        background: #2E4A99 !important;
+        z-index: 9999999 !important;
+        background: #FF4B4B !important;
         color: white !important;
-        border: 2px solid white !important;
-        border-radius: 10px !important;
-        padding: 12px !important;
-        font-size: 20px !important;
+        border: none !important;
+        border-radius: 8px !important;
+        width: 45px !important;
+        height: 45px !important;
+        font-size: 18px !important;
         font-weight: bold !important;
         cursor: pointer !important;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
         display: block !important;
-        width: 50px !important;
-        height: 50px !important;
-        text-align: center !important;
-        line-height: 1 !important;
         opacity: 1 !important;
         visibility: visible !important;
-    `;
-    menuBtn.setAttribute('aria-label', 'Abrir menu');
+    \`;
     
-    // Criar overlay
+    // Overlay
     const overlay = document.createElement('div');
-    overlay.className = 'mobile-sidebar-overlay';
-    overlay.style.cssText = `
+    overlay.id = 'mobile-overlay';
+    overlay.style.cssText = \`
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
         width: 100vw !important;
         height: 100vh !important;
-        background-color: rgba(0, 0, 0, 0.5) !important;
-        z-index: 999998 !important;
+        background: rgba(0,0,0,0.5) !important;
+        z-index: 9999998 !important;
         display: none !important;
-    `;
+    \`;
     
-    // Adicionar ao DOM
-    document.body.appendChild(menuBtn);
-    document.body.appendChild(overlay);
-    
-    // Funções de controle
-    function openSidebar() {
+    // Funções
+    btn.onclick = function() {
         const sidebar = document.querySelector('section[data-testid="stSidebar"]');
         if (sidebar) {
-            sidebar.classList.add('mobile-sidebar-open');
+            sidebar.classList.add('show-mobile');
             overlay.style.display = 'block';
-            
-            // Adicionar botão fechar
-            if (!sidebar.querySelector('.mobile-close-btn')) {
-                const closeBtn = document.createElement('button');
-                closeBtn.className = 'mobile-close-btn';
-                closeBtn.innerHTML = '×';
-                closeBtn.style.cssText = `
-                    position: absolute !important;
-                    top: 20px !important;
-                    right: 20px !important;
-                    background: rgba(255, 255, 255, 0.1) !important;
-                    color: white !important;
-                    border: none !important;
-                    border-radius: 50% !important;
-                    width: 35px !important;
-                    height: 35px !important;
-                    font-size: 18px !important;
-                    cursor: pointer !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    z-index: 999999 !important;
-                `;
-                closeBtn.onclick = closeSidebar;
-                sidebar.appendChild(closeBtn);
-            }
         }
-    }
+    };
     
-    function closeSidebar() {
+    overlay.onclick = function() {
         const sidebar = document.querySelector('section[data-testid="stSidebar"]');
         if (sidebar) {
-            sidebar.classList.remove('mobile-sidebar-open');
+            sidebar.classList.remove('show-mobile');
             overlay.style.display = 'none';
         }
-    }
+    };
     
-    // Event listeners
-    menuBtn.onclick = openSidebar;
-    overlay.onclick = closeSidebar;
-    
-    // Fechar com ESC
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeSidebar();
-        }
-    });
+    // Adicionar ao DOM
+    document.body.appendChild(btn);
+    document.body.appendChild(overlay);
 }
 
-// Executar funções
-removeToggleButton();
-createMobileSidebarControls();
+// Executar
+if (isMobile()) {
+    createMenuButton();
+    setInterval(createMenuButton, 1000);
+}
 
-// Executar periodicamente - mais frequente no início
-setInterval(removeToggleButton, 200);
-setInterval(createMobileSidebarControls, 500);
-
-// Execuções extras nos primeiros segundos
-setTimeout(createMobileSidebarControls, 100);
-setTimeout(createMobileSidebarControls, 500);
-setTimeout(createMobileSidebarControls, 1500);
-setTimeout(createMobileSidebarControls, 3000);
-
-// Executar quando DOM mudar
-const observer = new MutationObserver(() => {
-    removeToggleButton();
-    if (isMobile()) createMobileSidebarControls();
-});
-observer.observe(document.body, { childList: true, subtree: true });
-
-// Executar em mudanças de orientação/resize
-window.addEventListener('resize', () => {
-    setTimeout(createMobileSidebarControls, 300);
+// Em resize
+window.addEventListener('resize', function() {
+    setTimeout(function() {
+        if (isMobile()) createMenuButton();
+    }, 300);
 });
 </script>
+
+<style>
+/* Botão mobile */
+@media (max-width: 768px) {
+    #mobile-menu-btn {
+        position: fixed !important;
+        top: 15px !important;
+        left: 15px !important;
+        z-index: 9999999 !important;
+        background: #FF4B4B !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        width: 45px !important;
+        height: 45px !important;
+        font-size: 18px !important;
+        font-weight: bold !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+        display: block !important;
+    }
+}
+</style>
 """, unsafe_allow_html=True)
 
 # Scripts de inicialização removidos para evitar loops
@@ -1501,7 +1445,7 @@ apply_page_header()
 apply_page_footer()
 
 # Correção mobile desativada para evitar conflito com toggle nativo
-# from utils.simple_mobile_fix import apply_mobile_sidebar_fix
+# # Importação removida - configurações mobile centralizadas no próprio app.py
 # apply_mobile_sidebar_fix()
 
 # Roteamento de páginas
