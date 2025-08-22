@@ -78,9 +78,8 @@ section[data-testid="stSidebar"] ~ .main {
     margin-left: 250px !important;
 }
 
-/* ESTILIZAR BOTÃO NATIVO DO STREAMLIT */
-div[data-testid="stSidebarCollapseButton"],
-button[data-testid="stBaseButton-headerNoPadding"] {
+/* ESTILIZAR APENAS O PRIMEIRO BOTÃO NATIVO DO STREAMLIT */
+div[data-testid="stSidebarCollapseButton"]:first-of-type {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
@@ -99,9 +98,15 @@ button[data-testid="stBaseButton-headerNoPadding"] {
     transition: all 0.2s ease !important;
 }
 
+/* Ocultar outros botões duplicados */
+div[data-testid="stSidebarCollapseButton"]:not(:first-of-type),
+button[data-testid="stBaseButton-headerNoPadding"]:not(:first-of-type) {
+    display: none !important;
+    visibility: hidden !important;
+}
+
 /* Ícone do botão nativo */
-div[data-testid="stSidebarCollapseButton"] svg,
-button[data-testid="stBaseButton-headerNoPadding"] svg {
+div[data-testid="stSidebarCollapseButton"]:first-of-type svg {
     color: white !important;
     font-size: 22px !important;
     width: 24px !important;
@@ -109,8 +114,7 @@ button[data-testid="stBaseButton-headerNoPadding"] svg {
 }
 
 /* Hover no botão nativo */
-div[data-testid="stSidebarCollapseButton"]:hover,
-button[data-testid="stBaseButton-headerNoPadding"]:hover {
+div[data-testid="stSidebarCollapseButton"]:first-of-type:hover {
     background: #E53E3E !important;
     transform: scale(1.05) !important;
     box-shadow: 0 8px 25px rgba(0,0,0,0.6) !important;
