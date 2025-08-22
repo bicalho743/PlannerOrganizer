@@ -741,6 +741,21 @@ div[data-testid="stMetric"] > div:first-child {
    RESPONSIVIDADE MOBILE - FUNCIONAMENTO CORRETO
    ======================================== */
 @media (max-width: 768px) {
+    
+    /* OCULTAR CABEÇALHO COMPLETAMENTE NO MOBILE */
+    .app-header {
+        display: none !important;
+    }
+    
+    /* Ocultar qualquer div que contenha o texto do sistema */
+    div[data-testid="stMarkdownContainer"]:has(div[style*="Sistema Profissional"]) {
+        display: none !important;
+    }
+    
+    /* Fallback para ocultar primeiro elemento do container */
+    .main .block-container > div:first-child > div:first-child {
+        display: none !important;
+    }
     /* Mobile: sidebar como overlay à esquerda - PERFORMANCE OTIMIZADA */
     section[data-testid="stSidebar"] {
         position: fixed !important;
