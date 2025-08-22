@@ -155,6 +155,7 @@ class Perfil(Base):
     cargo = Column(String)  # Campo para cargo/função do usuário
     cor_principal = Column(String)
     cor_secundaria = Column(String)
+    mensagem_padrao = Column(String)  # Campo para mensagem de agradecimento nos relatórios
     observacoes_relatorio = Column(String)  # Campo para observações personalizadas do usuário nos relatórios
     role = Column(String, default='user')
     plano = Column(String, default='gratuito')
