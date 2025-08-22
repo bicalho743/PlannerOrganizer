@@ -524,8 +524,10 @@ class Database:
             usuario_id (str, optional): ID do usuário para filtrar os dados.
                                        Se None, tenta obter o ID do usuário da sessão do Streamlit.
         """
-        # Forçar atualização de metadados para resolver problemas com colunas
-        self.refresh_schema_metadata()
+        # OTIMIZAÇÃO: Cache metadata refresh para evitar consultas desnecessárias
+        if not hasattr(self.__class__, '_metadata_refreshed'):
+            self.refresh_schema_metadata()
+            self.__class__._metadata_refreshed = True
         
         try:
             # Criar tabelas se não existirem

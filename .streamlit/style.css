@@ -741,7 +741,7 @@ div[data-testid="stMetric"] > div:first-child {
    RESPONSIVIDADE MOBILE - FUNCIONAMENTO CORRETO
    ======================================== */
 @media (max-width: 768px) {
-    /* Mobile: sidebar como overlay à esquerda */
+    /* Mobile: sidebar como overlay à esquerda - PERFORMANCE OTIMIZADA */
     section[data-testid="stSidebar"] {
         position: fixed !important;
         top: 0 !important;
@@ -749,12 +749,18 @@ div[data-testid="stMetric"] > div:first-child {
         height: 100vh !important;
         width: 280px !important;
         z-index: 999999 !important;
-        transform: translateX(-100%) !important;
-        transition: transform 0.3s ease !important;
+        transform: translateX(-100%) translateZ(0) !important; /* GPU acceleration */
+        transition: transform 0.15s ease-out !important; /* Reduced from 0.3s */
         box-shadow: 2px 0 15px rgba(0, 0, 0, 0.3) !important;
         overflow-y: auto !important;
         display: block !important;
         visibility: visible !important;
+        
+        /* PERFORMANCE BOOST */
+        will-change: transform !important; /* Browser optimization hint */
+        backface-visibility: hidden !important; /* Reduce repaints */
+        -webkit-font-smoothing: antialiased !important; /* Smoother text */
+        contain: layout style paint !important; /* CSS containment */
     }
     
     /* Sidebar expandida no mobile */

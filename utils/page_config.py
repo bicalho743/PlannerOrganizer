@@ -52,8 +52,10 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
     </script>
     """
 
-    # Injetar tudo de uma vez só
-    st.components.v1.html(combined_html, height=0, width=0)
+    # OTIMIZAÇÃO: Cache scripts pesados para evitar re-execução
+    if 'scripts_injected' not in st.session_state:
+        st.components.v1.html(combined_html, height=0, width=0)
+        st.session_state.scripts_injected = True
 
     # CSS para esconder o contêiner dos iframes
     st.markdown("""
