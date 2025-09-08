@@ -404,9 +404,10 @@ def show():
                                 vendas_df = st.session_state.db.get_vendas()
                                 venda_dados = vendas_df[vendas_df['id'] == venda_id].iloc[0]
                                 
-                                # Buscar dados do cliente
-                                clientes_df = st.session_state.db.get_clientes()
-                                cliente_dados = clientes_df[clientes_df['id'] == venda_dados['cliente_id']].iloc[0]
+                                # Usar dados do cliente já presentes na venda
+                                cliente_dados = {
+                                    'nome': venda_dados['cliente_nome']
+                                }
                                 
                                 # Buscar itens da venda
                                 itens_venda = st.session_state.db.get_itens_venda(venda_id)
