@@ -404,11 +404,21 @@ def show():
                                 vendas_df = st.session_state.db.get_vendas()
                                 venda_dados = vendas_df[vendas_df['id'] == venda_id].iloc[0]
                                 
+                                # Buscar dados do cliente
+                                clientes_df = st.session_state.db.get_clientes()
+                                cliente_dados = clientes_df[clientes_df['id'] == venda_dados['cliente_id']].iloc[0]
+                                
                                 # Buscar itens da venda
                                 itens_venda = st.session_state.db.get_itens_venda(venda_id)
                                 
+                                # Criar nome do arquivo
+                                from datetime import datetime
+                                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                                nome_cliente_limpo = cliente_dados['nome'].replace(' ', '_').lower()
+                                filename = f"pdfs/Venda_{venda_id}_{nome_cliente_limpo}_{timestamp}.pdf"
+                                
                                 # Gerar PDF
-                                caminho_pdf = gerar_pdf_venda(venda_dados, itens_venda)
+                                caminho_pdf = gerar_pdf_venda(venda_dados.to_dict(), cliente_dados.to_dict(), itens_venda, filename)
                                 
                                 if caminho_pdf:
                                     # Ler arquivo PDF
