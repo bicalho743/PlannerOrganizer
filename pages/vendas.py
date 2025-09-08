@@ -412,7 +412,6 @@ def show():
                                 itens_venda = st.session_state.db.get_itens_venda(venda_id)
                                 
                                 # Criar nome do arquivo
-                                from datetime import datetime
                                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                                 nome_cliente_limpo = cliente_dados['nome'].replace(' ', '_').lower()
                                 filename = f"pdfs/Venda_{venda_id}_{nome_cliente_limpo}_{timestamp}.pdf"
