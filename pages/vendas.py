@@ -369,6 +369,10 @@ def show():
                                 st.success(f"✅ Venda #{venda_id} registrada com sucesso!")
                                 st.success("✅ Lançamento financeiro criado automaticamente!")
                                 
+                                # Armazenar ID da venda recém-criada para geração de relatório
+                                st.session_state.venda_recente_id = venda_id
+                                st.session_state.mostrar_gerar_relatorio = True
+                                
                                 # Limpar produtos da venda
                                 st.session_state.produtos_venda = []
                                 st.rerun()
@@ -379,6 +383,63 @@ def show():
                     with col2:
                         if st.button("LIMPAR VENDA", use_container_width=True, key="btn_limpar_venda"):
                             st.session_state.produtos_venda = []
+                            st.rerun()
+                
+                # Mostrar botão de gerar relatório após finalizar venda
+                if st.session_state.get('mostrar_gerar_relatorio', False) and st.session_state.get('venda_recente_id'):
+                    st.markdown("---")
+                    st.info("📋 Relatório de venda gerado com sucesso!")
+                    
+                    col_relatorio1, col_relatorio2 = st.columns(2)
+                    
+                    with col_relatorio1:
+                        if st.button("GERAR RELATÓRIO", type="primary", use_container_width=True, key="btn_gerar_relatorio_pos_venda"):
+                            try:
+                                # Importar gerador de PDF de vendas
+                                from utils.pdf_generator_venda_fixed import gerar_pdf_venda
+                                
+                                venda_id = st.session_state.venda_recente_id
+                                
+                                # Buscar dados da venda
+                                vendas_df = st.session_state.db.get_vendas()
+                                venda_dados = vendas_df[vendas_df['id'] == venda_id].iloc[0]
+                                
+                                # Buscar itens da venda
+                                itens_venda = st.session_state.db.get_itens_venda(venda_id)
+                                
+                                # Gerar PDF
+                                caminho_pdf = gerar_pdf_venda(venda_dados, itens_venda)
+                                
+                                if caminho_pdf:
+                                    # Ler arquivo PDF
+                                    with open(caminho_pdf, "rb") as pdf_file:
+                                        pdf_data = pdf_file.read()
+                                    
+                                    # Nome do arquivo para download
+                                    nome_cliente = venda_dados['cliente_nome'].replace(' ', '_').lower()
+                                    nome_arquivo = f"relatorio_venda_{venda_id}_{nome_cliente}.pdf"
+                                    
+                                    st.download_button(
+                                        label="📥 Baixar Relatório de Vendas",
+                                        data=pdf_data,
+                                        file_name=nome_arquivo,
+                                        mime="application/pdf",
+                                        use_container_width=True
+                                    )
+                                    
+                                    st.success("✅ Relatório gerado com sucesso!")
+                                else:
+                                    st.error("❌ Erro ao gerar relatório PDF")
+                                    
+                            except Exception as e:
+                                st.error(f"❌ Erro ao gerar relatório: {str(e)}")
+                    
+                    with col_relatorio2:
+                        if st.button("🔄 Atualizar Lista", use_container_width=True, key="btn_atualizar_pos_venda"):
+                            # Limpar estado do relatório
+                            st.session_state.mostrar_gerar_relatorio = False
+                            if 'venda_recente_id' in st.session_state:
+                                del st.session_state.venda_recente_id
                             st.rerun()
 
         # SUBTAB 2: VENDAS RECENTES
