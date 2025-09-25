@@ -369,8 +369,12 @@ def show():
                                 st.success(f"✅ Venda #{venda_id} registrada com sucesso!")
                                 st.success("✅ Lançamento financeiro criado automaticamente!")
                                 
-                                # Armazenar ID da venda recém-criada para geração de relatório
+                                # Armazenar dados necessários para geração de relatório
                                 st.session_state.venda_recente_id = venda_id
+                                st.session_state.venda_recente_cliente_id = cliente_id
+                                st.session_state.venda_recente_forma_pagamento = forma_pagamento
+                                st.session_state.venda_recente_observacoes = observacoes
+                                st.session_state.venda_recente_valor_total = total_venda
                                 st.session_state.mostrar_gerar_relatorio = True
                                 
                                 # Limpar produtos da venda
@@ -388,68 +392,88 @@ def show():
                 # Mostrar botão de gerar relatório após finalizar venda
                 if st.session_state.get('mostrar_gerar_relatorio', False) and st.session_state.get('venda_recente_id'):
                     st.markdown("---")
-                    st.info("📋 Relatório de venda gerado com sucesso!")
+                    st.success("🎉 Venda finalizada com sucesso!")
+                    st.info("📋 Agora você pode gerar o relatório de vendas para impressão ou envio ao cliente.")
                     
                     col_relatorio1, col_relatorio2 = st.columns(2)
                     
                     with col_relatorio1:
-                        if st.button("GERAR RELATÓRIO", type="primary", use_container_width=True, key="btn_gerar_relatorio_pos_venda"):
+                        if st.button("📄 GERAR RELATÓRIO DE VENDAS", type="primary", use_container_width=True, key="btn_gerar_relatorio_pos_venda"):
                             try:
                                 # Importar gerador de PDF de vendas
                                 from utils.pdf_generator_venda_fixed import gerar_pdf_venda
                                 
                                 venda_id = st.session_state.venda_recente_id
                                 
-                                # Buscar dados da venda
+                                # Buscar dados da venda recém-criada
                                 vendas_df = st.session_state.db.get_vendas()
                                 venda_dados = vendas_df[vendas_df['id'] == venda_id].iloc[0]
                                 
-                                # Usar dados do cliente já presentes na venda
-                                cliente_dados = {
-                                    'nome': venda_dados['cliente_nome']
+                                # Buscar dados do cliente
+                                clientes_df = st.session_state.db.get_clientes()
+                                cliente_dados = clientes_df[clientes_df['id'] == st.session_state.venda_recente_cliente_id].iloc[0]
+                                cliente_dict = {
+                                    'nome': cliente_dados['nome']
                                 }
                                 
                                 # Buscar itens da venda
                                 itens_venda = st.session_state.db.get_itens_venda(venda_id)
                                 
+                                # Preparar dados da venda para o PDF
+                                venda_dict = {
+                                    'id': venda_dados['id'],
+                                    'status': venda_dados.get('status', 'Concluída'),
+                                    'forma_pagamento': st.session_state.venda_recente_forma_pagamento,
+                                    'valor_total': st.session_state.venda_recente_valor_total,
+                                    'data_venda': datetime.now().strftime('%d/%m/%Y %H:%M'),
+                                    'observacoes': st.session_state.venda_recente_observacoes or ''
+                                }
+                                
                                 # Criar nome do arquivo
                                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                                nome_cliente_limpo = cliente_dados['nome'].replace(' ', '_').lower()
+                                nome_cliente_limpo = cliente_dict['nome'].replace(' ', '_').replace('/', '_').lower()
                                 filename = f"pdfs/Venda_{venda_id}_{nome_cliente_limpo}_{timestamp}.pdf"
                                 
-                                # Gerar PDF
-                                caminho_pdf = gerar_pdf_venda(venda_dados.to_dict(), cliente_dados.to_dict(), itens_venda, filename)
+                                # Garantir que diretório existe
+                                import os
+                                os.makedirs("pdfs", exist_ok=True)
                                 
-                                if caminho_pdf:
+                                # Gerar PDF
+                                caminho_pdf = gerar_pdf_venda(venda_dict, cliente_dict, itens_venda, filename)
+                                
+                                if caminho_pdf and os.path.exists(caminho_pdf):
                                     # Ler arquivo PDF
                                     with open(caminho_pdf, "rb") as pdf_file:
                                         pdf_data = pdf_file.read()
                                     
                                     # Nome do arquivo para download
-                                    nome_cliente = venda_dados['cliente_nome'].replace(' ', '_').lower()
-                                    nome_arquivo = f"relatorio_venda_{venda_id}_{nome_cliente}.pdf"
+                                    nome_arquivo = f"relatorio_venda_{venda_id}_{nome_cliente_limpo}.pdf"
+                                    
+                                    st.success("✅ Relatório gerado com sucesso!")
                                     
                                     st.download_button(
                                         label="📥 Baixar Relatório de Vendas",
                                         data=pdf_data,
                                         file_name=nome_arquivo,
                                         mime="application/pdf",
-                                        use_container_width=True
+                                        use_container_width=True,
+                                        key="download_relatorio_venda_pos_finalizacao"
                                     )
-                                    
-                                    st.success("✅ Relatório gerado com sucesso!")
                                 else:
-                                    st.error("❌ Erro ao gerar relatório PDF")
+                                    st.error("❌ Erro ao gerar arquivo PDF")
                                     
                             except Exception as e:
                                 st.error(f"❌ Erro ao gerar relatório: {str(e)}")
+                                import traceback
+                                st.error(traceback.format_exc())
                     
                     with col_relatorio2:
-                        if st.button("🔄 Atualizar Lista", use_container_width=True, key="btn_atualizar_pos_venda"):
-                            # Limpar estado do relatório
+                        if st.button("✅ Nova Venda", type="secondary", use_container_width=True, key="btn_nova_venda_pos_finalizacao"):
+                            # Limpar todos os estados relacionados à venda
                             st.session_state.mostrar_gerar_relatorio = False
-                            if 'venda_recente_id' in st.session_state:
-                                del st.session_state.venda_recente_id
+                            for key in list(st.session_state.keys()):
+                                if key.startswith('venda_recente_'):
+                                    del st.session_state[key]
                             st.rerun()
 
         # SUBTAB 2: VENDAS RECENTES
