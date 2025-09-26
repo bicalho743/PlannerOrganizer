@@ -103,8 +103,28 @@ def show():
                     produtos_df = st.session_state.db.get_produtos()
                     
                     if not produtos_df.empty:
+                        # Formatar data de cadastro para formato brasileiro
+                        produtos_display = produtos_df.copy()
+                        
+                        if 'data_cadastro' in produtos_display.columns:
+                            def formatar_data_produto(data_cadastro):
+                                if isinstance(data_cadastro, str):
+                                    try:
+                                        from datetime import datetime
+                                        data_obj = datetime.strptime(data_cadastro[:10], '%Y-%m-%d')
+                                        return data_obj.strftime('%d/%m/%Y')
+                                    except:
+                                        return data_cadastro
+                                else:
+                                    try:
+                                        return data_cadastro.strftime('%d/%m/%Y')
+                                    except:
+                                        return str(data_cadastro)
+                            
+                            produtos_display['data_cadastro'] = produtos_display['data_cadastro'].map(formatar_data_produto)
+                        
                         # Exibir tabela de produtos
-                        st.dataframe(produtos_df, hide_index=True, use_container_width=True)
+                        st.dataframe(produtos_display, hide_index=True, use_container_width=True)
                         
                         # Funcionalidades de edição e exclusão
                         st.subheader("Gerenciar Produtos")
