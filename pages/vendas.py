@@ -506,8 +506,23 @@ def show():
                         """, unsafe_allow_html=True)
 
                     # Selectbox simples
+                    # Formatar data para formato brasileiro no selectbox
+                    def formatar_data_br(data_venda):
+                        if isinstance(data_venda, str):
+                            try:
+                                from datetime import datetime
+                                data_obj = datetime.strptime(data_venda[:10], '%Y-%m-%d')
+                                return data_obj.strftime('%d/%m/%Y')
+                            except:
+                                return data_venda
+                        else:
+                            try:
+                                return data_venda.strftime('%d/%m/%Y')
+                            except:
+                                return str(data_venda)
+                    
                     venda_options = ["-- Escolha uma venda --"] + [
-                        f"{row['id']} - {row['cliente_nome']} ({row['data_venda']})" 
+                        f"{row['id']} - {row['cliente_nome']} ({formatar_data_br(row['data_venda'])})" 
                         for _, row in vendas_df.iterrows()
                     ]
 
@@ -534,7 +549,21 @@ def show():
                         with col1:
                             st.write(f"**ID da Venda:** {venda_detalhes['id']}")
                             st.write(f"**Cliente:** {venda_detalhes['cliente_nome']}")
-                            st.write(f"**Data:** {venda_detalhes['data_venda']}")
+                            # Formatar data para formato brasileiro
+                            data_venda = venda_detalhes['data_venda']
+                            if isinstance(data_venda, str):
+                                try:
+                                    from datetime import datetime
+                                    data_obj = datetime.strptime(data_venda[:10], '%Y-%m-%d')
+                                    data_formatada = data_obj.strftime('%d/%m/%Y')
+                                except:
+                                    data_formatada = data_venda
+                            else:
+                                try:
+                                    data_formatada = data_venda.strftime('%d/%m/%Y')
+                                except:
+                                    data_formatada = str(data_venda)
+                            st.write(f"**Data:** {data_formatada}")
                             
                         with col2:
                             # Formatar valor corretamente para evitar precisão floating point
@@ -969,7 +998,21 @@ def show():
                                     
                                     with col1:
                                         st.write(f"**Cliente:** {venda.get('cliente_nome', 'N/A')}")
-                                        st.write(f"**Data:** {venda['data_venda']}")
+                                        # Formatar data para formato brasileiro
+                                        data_venda = venda['data_venda']
+                                        if isinstance(data_venda, str):
+                                            try:
+                                                from datetime import datetime
+                                                data_obj = datetime.strptime(data_venda[:10], '%Y-%m-%d')
+                                                data_formatada = data_obj.strftime('%d/%m/%Y')
+                                            except:
+                                                data_formatada = data_venda
+                                        else:
+                                            try:
+                                                data_formatada = data_venda.strftime('%d/%m/%Y')
+                                            except:
+                                                data_formatada = str(data_venda)
+                                        st.write(f"**Data:** {data_formatada}")
                                         # Formatar valor corretamente para evitar precisão floating point
                                         valor_formatado = f"R$ {float(venda['valor_total']):.2f}"
                                         st.write(f"**Valor Total:** {valor_formatado}")
