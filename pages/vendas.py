@@ -213,7 +213,7 @@ def show():
         st.header("Nova Venda")
 
         # Criar tabs dentro da segunda aba seguindo o padrão
-        venda_tab1, venda_tab2 = st.tabs(["2.1 - Registrar Venda", "2.2 - Vendas Recentes"])
+        venda_tab1 = st.tabs(["2.1 - Registrar Venda"])[0]
 
         # SUBTAB 1: REGISTRAR NOVA VENDA
         with venda_tab1:
@@ -476,54 +476,6 @@ def show():
                                     del st.session_state[key]
                             st.rerun()
 
-        # SUBTAB 2: VENDAS RECENTES
-        with venda_tab2:
-            st.subheader("Vendas Recentes (Últimos 30 dias)")
-            
-            try:
-                # Buscar todas as vendas e filtrar últimos 30 dias
-                data_limite = datetime.now() - timedelta(days=30)
-                todas_vendas = st.session_state.db.get_vendas()
-                
-                if not todas_vendas.empty:
-                    # Converter coluna de data para datetime se necessário
-                    todas_vendas['data_venda'] = pd.to_datetime(todas_vendas['data_venda'])
-                    # Filtrar vendas dos últimos 30 dias
-                    vendas_recentes = todas_vendas[todas_vendas['data_venda'] >= data_limite]
-                else:
-                    vendas_recentes = todas_vendas
-                
-                if not vendas_recentes.empty:
-                    # Exibir resumo
-                    total_vendas = len(vendas_recentes)
-                    total_valor = vendas_recentes['valor_total'].sum()
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric("Total de Vendas", total_vendas)
-                    with col2:
-                        st.metric("Valor Total", f"R$ {float(total_valor):.2f}")
-                    
-                    # Lista de vendas
-                    for _, venda in vendas_recentes.iterrows():
-                        # Formatar valor para o título do expander
-                        valor_titulo = f"R$ {float(venda['valor_total']):.2f}"
-                        with st.expander(f"Venda #{venda['id']} - {venda['cliente_nome']} - {valor_titulo}"):
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                st.write(f"**Cliente:** {venda.get('cliente_nome', 'N/A')}")
-                                st.write(f"**Data:** {venda['data_venda'].strftime('%d/%m/%Y %H:%M')}")
-                                # Formatar valor corretamente para evitar precisão floating point
-                                valor_formatado = f"R$ {float(venda['valor_total']):.2f}"
-                                st.write(f"**Valor Total:** {valor_formatado}")
-                            with col2:
-                                st.write(f"**Forma de Pagamento:** {venda.get('forma_pagamento', 'N/A')}")
-                                if venda.get('observacoes'):
-                                    st.write(f"**Observações:** {venda['observacoes']}")
-                else:
-                    st.info("Nenhuma venda nos últimos 30 dias.")
-            except Exception as e:
-                st.error(f"Erro ao carregar vendas recentes: {str(e)}")
 
     # === Aba de Histórico de Vendas ===
     with tab_historico:
