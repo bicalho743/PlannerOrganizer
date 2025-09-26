@@ -363,7 +363,8 @@ def show():
                                     cliente_id=cliente_id,
                                     itens=itens_venda,
                                     forma_pagamento=forma_pagamento,
-                                    observacoes=observacoes
+                                    observacoes=observacoes,
+                                    data_venda=data_venda
                                 )
 
                                 st.success(f"✅ Venda #{venda_id} registrada com sucesso!")

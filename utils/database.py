@@ -4586,7 +4586,7 @@ class Database:
         return self._safe_query(query)
         
     # Métodos para gerenciamento de vendas
-    def add_venda(self, cliente_id, itens, forma_pagamento=None, observacoes=None):
+    def add_venda(self, cliente_id, itens, forma_pagamento=None, observacoes=None, data_venda=None):
         """
         Adiciona uma nova venda
         
@@ -4608,6 +4608,7 @@ class Database:
                 valor_total=0,  # Será atualizado após adicionar os itens
                 forma_pagamento=forma_pagamento,
                 observacoes=observacoes,
+                data_venda=data_venda if data_venda else datetime.now().date(),
                 usuario_id=self.usuario_id  # Adicionar o ID do usuário atual
             )
             self.session.add(venda)
