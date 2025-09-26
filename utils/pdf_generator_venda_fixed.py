@@ -79,13 +79,35 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
             valor_num = round(float(valor_total_raw), 2)
             valor_total = f"R$ {valor_num:,.2f}".replace(',', '_').replace('.', ',').replace('_', '.')
 
+        # Formatar data da venda
+        data_venda_str = "N/A"
+        if venda.get('data_venda'):
+            if isinstance(venda['data_venda'], str):
+                # Se for string, tentar converter
+                try:
+                    from datetime import datetime
+                    if 'T' in venda['data_venda']:
+                        data_obj = datetime.fromisoformat(venda['data_venda'].replace('Z', '+00:00'))
+                    else:
+                        data_obj = datetime.strptime(venda['data_venda'][:10], '%Y-%m-%d')
+                    data_venda_str = data_obj.strftime('%d/%m/%Y')
+                except:
+                    data_venda_str = venda['data_venda']
+            else:
+                # Se for objeto date/datetime
+                try:
+                    data_venda_str = venda['data_venda'].strftime('%d/%m/%Y')
+                except:
+                    data_venda_str = str(venda['data_venda'])
+
         c.setFillColor(CINZA_TEXTO)
         c.setFont("Helvetica", 10)
         c.drawString(40, y - 40, f"Cliente: {cliente.get('nome', '-')}")
-        c.drawString(40, y - 55, f"Status: {venda.get('status', '-')}")
-        c.drawString(40, y - 70, f"Forma de Pagamento: {venda.get('forma_pagamento', '-')}")
-        c.drawString(40, y - 85, f"Valor Total: {valor_total}")
-        y -= 130
+        c.drawString(40, y - 55, f"Data da Venda: {data_venda_str}")
+        c.drawString(40, y - 70, f"Status: {venda.get('status', '-')}")
+        c.drawString(40, y - 85, f"Forma de Pagamento: {venda.get('forma_pagamento', '-')}")
+        c.drawString(40, y - 100, f"Valor Total: {valor_total}")
+        y -= 145
 
         # Título da seção de itens
         c.setFillColor(AZUL_ESCURO)
