@@ -1102,7 +1102,8 @@ def show():
                             "Data Inicial",
                             value=vendas_df['data_venda'].min().date(),
                             min_value=vendas_df['data_venda'].min().date(),
-                            max_value=vendas_df['data_venda'].max().date()
+                            max_value=vendas_df['data_venda'].max().date(),
+                            format="DD/MM/YYYY"
                         )
                     
                     with col2:
@@ -1110,7 +1111,8 @@ def show():
                             "Data Final",
                             value=vendas_df['data_venda'].max().date(),
                             min_value=vendas_df['data_venda'].min().date(),
-                            max_value=vendas_df['data_venda'].max().date()
+                            max_value=vendas_df['data_venda'].max().date(),
+                            format="DD/MM/YYYY"
                         )
                     
                     with col3:
