@@ -984,6 +984,23 @@ def show():
                             vendas_display = vendas_pagina.copy()
                             vendas_display['valor_total'] = vendas_display['valor_total'].map('R$ {:.2f}'.format)
                             
+                            # Formatar data para formato brasileiro
+                            def formatar_data_tabela(data_venda):
+                                if isinstance(data_venda, str):
+                                    try:
+                                        from datetime import datetime
+                                        data_obj = datetime.strptime(data_venda[:10], '%Y-%m-%d')
+                                        return data_obj.strftime('%d/%m/%Y')
+                                    except:
+                                        return data_venda
+                                else:
+                                    try:
+                                        return data_venda.strftime('%d/%m/%Y')
+                                    except:
+                                        return str(data_venda)
+                            
+                            vendas_display['data_venda'] = vendas_display['data_venda'].map(formatar_data_tabela)
+                            
                             # Exibir tabela
                             st.dataframe(vendas_display, hide_index=True, use_container_width=True)
                         else:
