@@ -85,7 +85,6 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
             if isinstance(venda['data_venda'], str):
                 # Se for string, tentar converter
                 try:
-                    from datetime import datetime
                     if 'T' in venda['data_venda']:
                         data_obj = datetime.fromisoformat(venda['data_venda'].replace('Z', '+00:00'))
                     else:
