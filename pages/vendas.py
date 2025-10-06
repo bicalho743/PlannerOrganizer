@@ -103,6 +103,9 @@ def show():
                     produtos_df = st.session_state.db.get_produtos()
                     
                     if not produtos_df.empty:
+                        # Ordenar produtos alfabeticamente por nome
+                        produtos_df = produtos_df.sort_values('nome').reset_index(drop=True)
+                        
                         # Formatar data de cadastro para formato brasileiro
                         produtos_display = produtos_df.copy()
                         

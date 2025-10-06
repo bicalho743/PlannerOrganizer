@@ -78,7 +78,7 @@ def show():
                 # Formulário para cadastro de nova proposta
                 with st.form(key="nova_proposta_form"):
                     # Cliente (seleção a partir do módulo de cadastro)
-                    clientes_lista = clientes['nome'].tolist()
+                    clientes_lista = sorted(clientes['nome'].tolist())
                     cliente = st.selectbox("Cliente:", clientes_lista)
                     
                     # Descrição do serviço
@@ -947,6 +947,9 @@ def show():
                                         produtos_cadastrados = produtos_cadastrados.drop('nome_lower', axis=1)
                                 
                                 if not produtos_cadastrados.empty:
+                                    # Ordenar produtos alfabeticamente por nome
+                                    produtos_cadastrados = produtos_cadastrados.sort_values('nome').reset_index(drop=True)
+                                    
                                     with st.form(key=f"produto_catalogo_form_{proposta_exec_id}"):
                                         # Seleção de produto do catálogo
                                         produto_id = st.selectbox(
@@ -2493,8 +2496,8 @@ def show():
                         status_filtro = st.selectbox("Status da Proposta:", status_unicos, key="status_filtro_todas")
                     
                     with col2:
-                        # Filtro por nome do cliente
-                        clientes_unicos = ['Todos'] + list(todas_propostas['cliente_nome'].unique())
+                        # Filtro por nome do cliente - ordenado alfabeticamente
+                        clientes_unicos = ['Todos'] + sorted(list(todas_propostas['cliente_nome'].unique()))
                         cliente_filtro = st.selectbox("Cliente:", clientes_unicos, key="cliente_filtro_todas")
                     
                     with col3:
