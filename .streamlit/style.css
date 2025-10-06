@@ -54,34 +54,11 @@ section[data-testid="stSidebar"] {
     border-right: 1px solid #4C566A !important;
 }
 
-/* OCULTAR SIDEBAR APENAS ANTES DO LOGIN */
-body:not(:has(.nav-buttons)) section[data-testid="stSidebar"] {
+/* SIDEBAR OCULTA POR PADRÃO - Será mostrada via CSS inline após login */
+section[data-testid="stSidebar"] {
     display: none !important;
     visibility: hidden !important;
-}
-
-/* MOSTRAR SIDEBAR APÓS LOGIN - Sempre visível quando .nav-buttons existe */
-body:has(.nav-buttons) section[data-testid="stSidebar"] {
-    display: block !important;
-    visibility: visible !important;
-    transform: translateX(0) !important;
-}
-
-/* OCULTAR BOTÃO DE TOGGLE PERMANENTEMENTE - Sidebar sempre visível após login */
-button[kind="headerNoPadding"],
-button[data-testid="stBaseButton-headerNoPadding"],
-div[data-testid="stSidebarCollapseButton"],
-button[data-testid="collapsedControl"] {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
-
-/* Força sidebar a permanecer sempre expandida após login */
-section[data-testid="stSidebar"][aria-expanded="false"] {
-    display: block !important;
-    visibility: visible !important;
+    transform: translateX(-100%) !important;
 }
 
 /* BOTÕES DA SIDEBAR - Estilo unificado para navegação */
@@ -537,33 +514,16 @@ div[data-testid="stMetric"] > div:first-child {
     .main .block-container > div:first-child > div:first-child {
         display: none !important;
     }
-    /* Mobile: sidebar sempre visível após login */
-    body:has(.nav-buttons) section[data-testid="stSidebar"] {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        height: 100vh !important;
-        width: 280px !important;
-        z-index: 999999 !important;
-        transform: translateX(0) !important; /* Sempre visível após login */
-        transition: transform 0.15s ease-out !important;
+    /* Mobile: Estilos adicionais para sidebar (visibilidade controlada via CSS inline no app.py) */
+    section[data-testid="stSidebar"] {
         box-shadow: 2px 0 15px rgba(0, 0, 0, 0.3) !important;
         overflow-y: auto !important;
-        display: block !important;
-        visibility: visible !important;
         
         /* PERFORMANCE BOOST */
         will-change: transform !important;
         backface-visibility: hidden !important;
         -webkit-font-smoothing: antialiased !important;
         contain: layout style paint !important;
-    }
-    
-    /* Mobile: sidebar oculta antes do login */
-    body:not(:has(.nav-buttons)) section[data-testid="stSidebar"] {
-        transform: translateX(-100%) translateZ(0) !important;
-        display: none !important;
-        visibility: hidden !important;
     }
     
     /* Conteúdo principal no mobile */

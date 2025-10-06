@@ -1055,6 +1055,36 @@ section[data-testid="stSidebar"] > div {
 # Verificar se o usuário está autenticado antes de mostrar a sidebar
 if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
    ('user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user):
+    
+    # INJETAR CSS PARA MOSTRAR SIDEBAR APÓS LOGIN - Solução compatível com todos os navegadores
+    st.markdown("""
+    <style>
+    /* SIDEBAR VISÍVEL APÓS LOGIN - Força em todos os contextos */
+    section[data-testid="stSidebar"] {
+        display: block !important;
+        visibility: visible !important;
+        transform: translateX(0) !important;
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        height: 100vh !important;
+        width: 280px !important;
+        z-index: 999999 !important;
+    }
+    
+    /* OCULTAR BOTÃO DE TOGGLE PERMANENTEMENTE */
+    button[kind="headerNoPadding"],
+    button[data-testid="stBaseButton-headerNoPadding"],
+    div[data-testid="stSidebarCollapseButton"],
+    button[data-testid="collapsedControl"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Container dos botões com fundo escuro
     st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
 
