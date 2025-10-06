@@ -54,40 +54,27 @@ section[data-testid="stSidebar"] {
     border-right: 1px solid #4C566A !important;
 }
 
-/* OCULTAR SIDEBAR E BOTÃO APENAS ANTES DO LOGIN */
-body:not(:has(.nav-buttons)) section[data-testid="stSidebar"],
-body:not(:has(.nav-buttons)) button[kind="headerNoPadding"],
-body:not(:has(.nav-buttons)) button[data-testid="stBaseButton-headerNoPadding"],
-body:not(:has(.nav-buttons)) div[data-testid="stSidebarCollapseButton"] {
+/* OCULTAR SIDEBAR APENAS ANTES DO LOGIN */
+body:not(:has(.nav-buttons)) section[data-testid="stSidebar"] {
     display: none !important;
     visibility: hidden !important;
 }
 
-/* BOTÃO DE TOGGLE - ESTILIZAÇÃO VISUAL APENAS */
+/* OCULTAR BOTÃO DE TOGGLE PERMANENTEMENTE - Sidebar sempre visível após login */
 button[kind="headerNoPadding"],
-button[data-testid="stBaseButton-headerNoPadding"] {
-    background: #FF4B4B !important;
-    border: 3px solid white !important;
-    border-radius: 10px !important;
-    width: 50px !important;
-    height: 50px !important;
-    cursor: pointer !important;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.5) !important;
-    transition: all 0.2s ease !important;
+button[data-testid="stBaseButton-headerNoPadding"],
+div[data-testid="stSidebarCollapseButton"],
+button[data-testid="collapsedControl"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
-button[kind="headerNoPadding"]:hover,
-button[data-testid="stBaseButton-headerNoPadding"]:hover {
-    background: #E53E3E !important;
-    transform: scale(1.05) !important;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.6) !important;
-}
-
-/* Ícone do botão - cor branca */
-button[kind="headerNoPadding"] svg,
-button[data-testid="stBaseButton-headerNoPadding"] svg {
-    color: white !important;
-    fill: white !important;
+/* Força sidebar a permanecer sempre expandida após login */
+section[data-testid="stSidebar"][aria-expanded="false"] {
+    display: block !important;
+    visibility: visible !important;
 }
 
 /* BOTÕES DA SIDEBAR - Estilo unificado para navegação */
