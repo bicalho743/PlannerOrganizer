@@ -78,9 +78,24 @@ section[data-testid="stSidebar"] ~ .main {
     margin-left: 250px !important;
 }
 
-/* BOTÃO DE TOGGLE DA SIDEBAR - ESTILIZAÇÃO SIMPLES E CONFIÁVEL */
+/* BOTÃO DE TOGGLE DA SIDEBAR - OCULTO POR PADRÃO */
 button[kind="headerNoPadding"],
-button[data-testid="stBaseButton-headerNoPadding"] {
+button[data-testid="stBaseButton-headerNoPadding"],
+div[data-testid="stSidebarCollapseButton"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* BOTÃO DE TOGGLE - VISÍVEL APENAS APÓS LOGIN */
+section[data-testid="stSidebar"]:has(.nav-buttons) ~ * button[kind="headerNoPadding"],
+section[data-testid="stSidebar"]:has(.nav-buttons) ~ * button[data-testid="stBaseButton-headerNoPadding"],
+body:has(.nav-buttons) button[kind="headerNoPadding"],
+body:has(.nav-buttons) button[data-testid="stBaseButton-headerNoPadding"],
+body:has(.nav-buttons) div[data-testid="stSidebarCollapseButton"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
     background: #FF4B4B !important;
     border: 3px solid white !important;
     border-radius: 10px !important;
@@ -89,18 +104,20 @@ button[data-testid="stBaseButton-headerNoPadding"] {
     cursor: pointer !important;
     box-shadow: 0 6px 20px rgba(0,0,0,0.5) !important;
     transition: all 0.2s ease !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
-button[kind="headerNoPadding"]:hover,
-button[data-testid="stBaseButton-headerNoPadding"]:hover {
+body:has(.nav-buttons) button[kind="headerNoPadding"]:hover,
+body:has(.nav-buttons) button[data-testid="stBaseButton-headerNoPadding"]:hover {
     background: #E53E3E !important;
     transform: scale(1.05) !important;
     box-shadow: 0 8px 25px rgba(0,0,0,0.6) !important;
 }
 
 /* Ícone do botão - cor branca */
-button[kind="headerNoPadding"] svg,
-button[data-testid="stBaseButton-headerNoPadding"] svg {
+body:has(.nav-buttons) button[kind="headerNoPadding"] svg,
+body:has(.nav-buttons) button[data-testid="stBaseButton-headerNoPadding"] svg {
     color: white !important;
     fill: white !important;
 }
