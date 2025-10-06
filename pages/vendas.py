@@ -132,9 +132,12 @@ def show():
                         # Seleção de ação
                         acao = st.radio("Ação", ["Editar", "Excluir"], horizontal=True)
                         
+                        # Ordenar produtos alfabeticamente para seleção
+                        produtos_ordenados = sorted(produtos_df['nome'].tolist())
+                        
                         produto_selecionado = st.selectbox(
                             f"Selecionar produto para {acao.lower()}",
-                            options=["-- Selecione --"] + produtos_df['nome'].tolist(),
+                            options=["-- Selecione --"] + produtos_ordenados,
                             key="select_produto_gerenciar"
                         )
                         
@@ -721,7 +724,9 @@ def show():
                                         col_novo_prod, col_nova_qtd, col_novo_preco = st.columns([3, 1, 1])
                                         
                                         with col_novo_prod:
-                                            produto_options = ["-- Selecione --"] + produtos_df['nome'].tolist()
+                                            # Ordenar produtos alfabeticamente
+                                            produtos_ordenados = sorted(produtos_df['nome'].tolist())
+                                            produto_options = ["-- Selecione --"] + produtos_ordenados
                                             novo_produto = st.selectbox(
                                                 "Produto",
                                                 options=produto_options,
@@ -923,9 +928,11 @@ def show():
                         )
                     
                     with col_filtro3:
+                        # Ordenar clientes alfabeticamente
+                        clientes_unicos = sorted(list(vendas_df['cliente_nome'].unique())) if 'cliente_nome' in vendas_df.columns else []
                         filtro_cliente = st.selectbox(
                             "Cliente",
-                            ["Todos"] + list(vendas_df['cliente_nome'].unique()) if 'cliente_nome' in vendas_df.columns else ["Todos"]
+                            ["Todos"] + clientes_unicos
                         )
                     
                     with col_config:
