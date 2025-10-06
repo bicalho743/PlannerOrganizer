@@ -163,9 +163,23 @@ section[data-testid="stSidebar"] div[data-testid="stExpander"] button:hover {
     border-color: #2B547E !important;
 }
 
-/* SIDEBAR - Permitir colapso natural do Streamlit */
+/* SIDEBAR - OCULTA POR PADRÃO (antes do login) */
 section[data-testid="stSidebar"] {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    transform: translateX(-100%) !important;
     transition: all 0.3s ease !important;
+}
+
+/* SIDEBAR - VISÍVEL APENAS APÓS LOGIN (quando .nav-buttons existe) */
+section[data-testid="stSidebar"]:has(.nav-buttons) {
+    display: block !important;
+    visibility: visible !important;
+    width: 250px !important;
+    min-width: 250px !important;
+    transform: translateX(0) !important;
 }
 
 /* Ajuste do conteúdo principal para não sobrepor */
