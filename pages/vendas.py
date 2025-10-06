@@ -246,6 +246,12 @@ def show():
             elif produtos_df.empty:
                 custom_warning("É necessário cadastrar produtos para registrar vendas.")
             else:
+                # Ordenar clientes e produtos alfabeticamente por nome
+                if not clientes_df.empty:
+                    clientes_df = clientes_df.sort_values('nome').reset_index(drop=True)
+                if not produtos_df.empty:
+                    produtos_df = produtos_df.sort_values('nome').reset_index(drop=True)
+                
                 # Inicializar sessão state para produtos da venda
                 if 'produtos_venda' not in st.session_state:
                     st.session_state.produtos_venda = []
