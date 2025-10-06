@@ -82,6 +82,10 @@ def show():
                     st.session_state['clientes'] = load_clientes()
 
                 registros = st.session_state['clientes']
+                
+                # Ordenar clientes alfabeticamente por nome
+                if not registros.empty:
+                    registros = registros.sort_values('nome').reset_index(drop=True)
 
                 if not registros.empty:
                     # Definir colunas para exibição
@@ -120,12 +124,13 @@ def show():
                         # Botões de ação
                         col1, col2 = st.columns(2)
                         with col1:
-                            # Criar lista de opções com nomes dos clientes
+                            # Criar lista de opções com nomes dos clientes ordenados alfabeticamente
                             if not registros.empty:
                                 opcoes_clientes = []
                                 for _, cliente in registros.iterrows():
                                     opcoes_clientes.append(f"{cliente['nome']} (ID: {cliente['id']})")
                                 
+                                # Já está ordenado porque registros foi ordenado acima
                                 cliente_selecionado = st.selectbox(
                                     "Cliente para ação:",
                                     opcoes_clientes,
@@ -445,6 +450,10 @@ def show():
                     st.session_state['fornecedores'] = load_fornecedores()
 
                 registros = st.session_state['fornecedores']
+                
+                # Ordenar fornecedores alfabeticamente por descrição (nome)
+                if not registros.empty:
+                    registros = registros.sort_values('descricao').reset_index(drop=True)
 
                 if not registros.empty:
                     # Definir colunas para exibição
@@ -669,6 +678,11 @@ def show():
                     st.session_state['parceiros'] = load_parceiros()
 
                 registros = st.session_state['parceiros']
+                
+                # Ordenar parceiros alfabeticamente por nome
+                if not registros.empty:
+                    registros = registros.sort_values('nome').reset_index(drop=True)
+                
                 if not registros.empty:
                     # Definir colunas para exibição
                     colunas = ['id', 'nome', 'telefone', 'area_atuacao', 'tipo_parceria', 'pix', 'observacoes']
