@@ -78,21 +78,9 @@ section[data-testid="stSidebar"] ~ .main {
     margin-left: 250px !important;
 }
 
-/* ESTILIZAR BOTÃO NATIVO DO STREAMLIT - UNIVERSAL */
-div[data-testid="stSidebarCollapseButton"] {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    z-index: 999999 !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-}
-
-/* Estilo do botão interno - TODOS OS ESTADOS */
-div[data-testid="stSidebarCollapseButton"] button,
-button[data-testid="stBaseButton-headerNoPadding"],
-button[kind="headerNoPadding"] {
+/* BOTÃO DE TOGGLE DA SIDEBAR - ESTILIZAÇÃO SIMPLES E CONFIÁVEL */
+button[kind="headerNoPadding"],
+button[data-testid="stBaseButton-headerNoPadding"] {
     background: #FF4B4B !important;
     border: 3px solid white !important;
     border-radius: 10px !important;
@@ -100,95 +88,21 @@ button[kind="headerNoPadding"] {
     height: 50px !important;
     cursor: pointer !important;
     box-shadow: 0 6px 20px rgba(0,0,0,0.5) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    opacity: 1 !important;
-    visibility: visible !important;
+    transition: all 0.2s ease !important;
 }
 
-/* Mobile: botão fixo no canto */
-@media (max-width: 768px) {
-    div[data-testid="stSidebarCollapseButton"] {
-        position: fixed !important;
-        top: 20px !important;
-        left: 20px !important;
-    }
-}
-
-/* Desktop: botão em posição normal mas estilizado */
-@media (min-width: 769px) {
-    div[data-testid="stSidebarCollapseButton"] {
-        position: relative !important;
-    }
-    
-    /* Se preferir fixo no desktop também, descomente: */
-    /* div[data-testid="stSidebarCollapseButton"] {
-        position: fixed !important;
-        top: 20px !important;
-        left: 20px !important;
-    } */
-}
-
-/* Ícone do botão nativo */
-div[data-testid="stSidebarCollapseButton"] svg {
-    color: white !important;
-    font-size: 22px !important;
-    width: 24px !important;
-    height: 24px !important;
-}
-
-/* Hover no botão nativo - TODOS OS ESTADOS */
-div[data-testid="stSidebarCollapseButton"]:hover button,
-button[data-testid="stBaseButton-headerNoPadding"]:hover,
-button[kind="headerNoPadding"]:hover {
+button[kind="headerNoPadding"]:hover,
+button[data-testid="stBaseButton-headerNoPadding"]:hover {
     background: #E53E3E !important;
     transform: scale(1.05) !important;
     box-shadow: 0 8px 25px rgba(0,0,0,0.6) !important;
 }
 
-/* Garantir que botões fora da sidebar também tenham estilo */
-section[data-testid="stAppViewContainer"] button[data-testid="stBaseButton-headerNoPadding"],
-section[data-testid="stAppViewContainer"] button[kind="headerNoPadding"] {
-    background: #FF4B4B !important;
-    border: 3px solid white !important;
-    border-radius: 10px !important;
-    width: 50px !important;
-    height: 50px !important;
-    cursor: pointer !important;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.5) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-/* APENAS BOTÕES DA SIDEBAR COM SVG DE SETA - MAIS ESPECÍFICO */
-div[data-testid="stSidebarCollapseButton"] button:has(svg path[d*="15.41"]),
-section[data-testid="stAppViewContainer"] button[data-testid="stBaseButton-headerNoPadding"]:has(svg path[d*="M10 6L8.59"]) {
-    background: #FF4B4B !important;
-    border: 3px solid white !important;
-    border-radius: 10px !important;
-    width: 50px !important;
-    height: 50px !important;
-    cursor: pointer !important;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.5) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-/* OCULTAR QUALQUER SVG DE SETAS DE TOGGLE */
-button[data-testid="collapsedControl"] svg,
-button[data-testid="baseButton-minimal"] svg,
-button[aria-label*="collapse"] svg,
-section[data-testid="stSidebar"] > div:first-child > button svg {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
+/* Ícone do botão - cor branca */
+button[kind="headerNoPadding"] svg,
+button[data-testid="stBaseButton-headerNoPadding"] svg {
+    color: white !important;
+    fill: white !important;
 }
 
 /* BOTÕES DA SIDEBAR - Estilo unificado para navegação */
@@ -249,49 +163,15 @@ section[data-testid="stSidebar"] div[data-testid="stExpander"] button:hover {
     border-color: #2B547E !important;
 }
 
-/* SIDEBAR FIXA E SEMPRE VISÍVEL - Ajuste do layout */
+/* SIDEBAR - Permitir colapso natural do Streamlit */
 section[data-testid="stSidebar"] {
-    width: 250px !important;
-    min-width: 250px !important;
-    max-width: 250px !important;
-    flex: 0 0 250px !important;
-    transform: none !important;
-    transition: none !important;
+    transition: all 0.3s ease !important;
 }
 
 /* Ajuste do conteúdo principal para não sobrepor */
 .main .block-container {
     padding-left: 0 !important;
     max-width: 100% !important;
-}
-
-/* REMOVER TOTALMENTE QUALQUER VESTÍGIO DE TOGGLE */
-*[data-testid*="collaps"],
-*[aria-label*="collaps"],  
-*[title*="collaps"],
-button[data-testid="collapsedControl"],
-button[data-testid="baseButton-minimal"],
-section[data-testid="stSidebar"] > div:first-child > button,
-div[data-testid="stSidebar"] > div:first-child > button {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    position: absolute !important;
-    left: -99999px !important;
-    top: -99999px !important;
-    width: 0 !important;
-    height: 0 !important;
-    z-index: -99999 !important;
-}
-
-/* Prevenir qualquer hover ou interação */
-*[data-testid*="collaps"]:hover,
-*[aria-label*="collaps"]:hover,
-section[data-testid="stSidebar"] > div:first-child > button:hover {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
 }
 
 /* ========================================
