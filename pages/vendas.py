@@ -154,10 +154,16 @@ def show():
                                 with st.form("form_editar_produto"):
                                     nome_edit = st.text_input("Nome do Produto", value=produto_dados['nome'])
                                     descricao_edit = st.text_area("Descrição", value=produto_dados.get('descricao', ''))
+                                    
+                                    # Obter categoria ou usar "Outros" como padrão se vazio
+                                    categoria_atual = produto_dados.get('categoria', 'Outros')
+                                    if categoria_atual == '' or categoria_atual not in ["Organização", "Higiene", "Beleza", "Casa", "Outros"]:
+                                        categoria_atual = 'Outros'
+                                    
                                     categoria_edit = st.selectbox(
                                         "Categoria", 
                                         ["Organização", "Higiene", "Beleza", "Casa", "Outros"],
-                                        index=["Organização", "Higiene", "Beleza", "Casa", "Outros"].index(produto_dados.get('categoria', 'Outros'))
+                                        index=["Organização", "Higiene", "Beleza", "Casa", "Outros"].index(categoria_atual)
                                     )
                                     
                                     col_edit1, col_edit2 = st.columns(2)
