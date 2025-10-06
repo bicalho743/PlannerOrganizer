@@ -45,49 +45,25 @@ header[data-testid="stHeader"] {
 }
 
 /* ========================================
-   SIDEBAR - CONFIGURAÇÃO CENTRALIZADA E UNIFICADA
+   SIDEBAR - CONFIGURAÇÃO MINIMALISTA
    ======================================== */
 
-/* SIDEBAR PRINCIPAL - Configuração inteligente */
+/* SIDEBAR PRINCIPAL - Estilo visual apenas */
 section[data-testid="stSidebar"] {
     background: linear-gradient(180deg, #1E1F36 0%, #2E4A99 100%) !important;
     border-right: 1px solid #4C566A !important;
 }
 
-/* Desktop: sidebar expansível normal */
-@media (min-width: 769px) {
-    section[data-testid="stSidebar"] {
-        display: block !important;
-        visibility: visible !important;
-        width: 250px !important;
-        min-width: 250px !important;
-        max-width: 250px !important;
-    }
-    
-    /* Quando sidebar está colapsada no desktop */
-    section[data-testid="stSidebar"][aria-expanded="false"] {
-        width: 0 !important;
-        min-width: 0 !important;
-        max-width: 0 !important;
-        overflow: hidden !important;
-    }
-}
-
-/* CONTEÚDO PRINCIPAL - Ajuste automático com sidebar */
-section[data-testid="stSidebar"] ~ .main {
-    margin-left: 250px !important;
-}
-
-/* BOTÃO DE TOGGLE DA SIDEBAR - OCULTO APENAS ANTES DO LOGIN */
+/* OCULTAR SIDEBAR E BOTÃO APENAS ANTES DO LOGIN */
+body:not(:has(.nav-buttons)) section[data-testid="stSidebar"],
 body:not(:has(.nav-buttons)) button[kind="headerNoPadding"],
 body:not(:has(.nav-buttons)) button[data-testid="stBaseButton-headerNoPadding"],
 body:not(:has(.nav-buttons)) div[data-testid="stSidebarCollapseButton"] {
     display: none !important;
     visibility: hidden !important;
-    opacity: 0 !important;
 }
 
-/* BOTÃO DE TOGGLE - ESTILIZAÇÃO APENAS (não interferir na funcionalidade) */
+/* BOTÃO DE TOGGLE - ESTILIZAÇÃO VISUAL APENAS */
 button[kind="headerNoPadding"],
 button[data-testid="stBaseButton-headerNoPadding"] {
     background: #FF4B4B !important;
@@ -172,33 +148,8 @@ section[data-testid="stSidebar"] div[data-testid="stExpander"] button:hover {
     border-color: #2B547E !important;
 }
 
-/* SIDEBAR - OCULTA POR PADRÃO (antes do login) */
-section[data-testid="stSidebar"] {
-    display: none !important;
-    visibility: hidden !important;
-    width: 0 !important;
-    min-width: 0 !important;
-    transform: translateX(-100%) !important;
-    transition: all 0.3s ease !important;
-}
-
-/* SIDEBAR - VISÍVEL APENAS APÓS LOGIN (quando .nav-buttons existe) */
-section[data-testid="stSidebar"]:has(.nav-buttons) {
-    display: block !important;
-    visibility: visible !important;
-    width: 250px !important;
-    min-width: 250px !important;
-    transform: translateX(0) !important;
-}
-
-/* Ajuste do conteúdo principal para não sobrepor */
-.main .block-container {
-    padding-left: 0 !important;
-    max-width: 100% !important;
-}
-
 /* ========================================
-   FIM DA CONFIGURAÇÃO UNIFICADA DA SIDEBAR
+   FIM DA CONFIGURAÇÃO DA SIDEBAR
    ======================================== */
 
 /* Hover effect para botões de colapso com cor neutra */
