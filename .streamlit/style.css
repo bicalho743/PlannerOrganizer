@@ -60,6 +60,13 @@ body:not(:has(.nav-buttons)) section[data-testid="stSidebar"] {
     visibility: hidden !important;
 }
 
+/* MOSTRAR SIDEBAR APÓS LOGIN - Sempre visível quando .nav-buttons existe */
+body:has(.nav-buttons) section[data-testid="stSidebar"] {
+    display: block !important;
+    visibility: visible !important;
+    transform: translateX(0) !important;
+}
+
 /* OCULTAR BOTÃO DE TOGGLE PERMANENTEMENTE - Sidebar sempre visível após login */
 button[kind="headerNoPadding"],
 button[data-testid="stBaseButton-headerNoPadding"],
