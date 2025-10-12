@@ -1056,105 +1056,16 @@ section[data-testid="stSidebar"] > div {
 if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
    ('user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user):
     
-    # INJETAR CSS PARA MOSTRAR SIDEBAR APÓS LOGIN - Solução compatível com todos os navegadores
-    st.markdown("""
-    <style>
-    /* SIDEBAR VISÍVEL APÓS LOGIN - Força em todos os contextos */
-    section[data-testid="stSidebar"] {
-        display: block !important;
-        visibility: visible !important;
-        transform: translateX(0) !important;
-        position: fixed !important;
-        left: 0 !important;
-        top: 0 !important;
-        height: 100vh !important;
-        width: 280px !important;
-        z-index: 999999 !important;
-    }
-    
-    /* OCULTAR BOTÃO DE TOGGLE PERMANENTEMENTE */
-    button[kind="headerNoPadding"],
-    button[data-testid="stBaseButton-headerNoPadding"],
-    div[data-testid="stSidebarCollapseButton"],
-    button[data-testid="collapsedControl"] {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
     # Container dos botões com fundo escuro
     st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
 
-# JavaScript para controlar sidebar após autenticação
-st.markdown("""
-<script>
-// Controlar visibilidade da sidebar baseado na presença de navegação
-function controlSidebarVisibility() {
-    const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-    const hasNavButtons = document.querySelector('.nav-buttons');
-    
-    if (sidebar && !hasNavButtons) {
-        // Usuário NÃO autenticado - esconder sidebar completamente
-        sidebar.style.display = 'none';
-        sidebar.style.visibility = 'hidden';
-        sidebar.style.width = '0';
-        sidebar.style.minWidth = '0';
-        sidebar.style.transform = 'translateX(-100%)';
-        console.log('🚫 Sidebar oculta - usuário não autenticado');
-    }
-}
-
-// Executar ao carregar a página
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(controlSidebarVisibility, 100);
-});
-
-// Observar mudanças no DOM para detectar quando .nav-buttons aparecer
-const observer = new MutationObserver(controlSidebarVisibility);
-observer.observe(document.body, { childList: true, subtree: true });
-
-// Executar periodicamente como fallback
-setInterval(controlSidebarVisibility, 500);
-</script>
-""", unsafe_allow_html=True)
+# Sidebar sempre visível - CSS gerencia a visibilidade
 
 # Verificar se o usuário está autenticado antes de mostrar todos os elementos da sidebar
 if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
    ('user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user):
     
-    # Expandir sidebar automaticamente após login
-    st.markdown("""
-    <script>
-    console.log('👤 Usuário autenticado - expandindo sidebar...');
-    setTimeout(() => {
-        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-        if (sidebar) {
-            sidebar.style.display = 'block';
-            sidebar.style.visibility = 'visible';
-            sidebar.style.transform = 'translateX(0)';
-        }
-    }, 100);
-    
-    // Debug do botão nativo
-    setTimeout(function() {
-        const nativeBtn = document.querySelector('div[data-testid="stSidebarCollapseButton"]');
-        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-        
-        console.log('🔎 Status dos elementos:', {
-            'botão nativo existe': !!nativeBtn,
-            'sidebar existe': !!sidebar,
-            'window width': window.innerWidth
-        });
-        
-        if (nativeBtn) {
-            console.log('✅ Botão nativo encontrado e estilizado via CSS');
-        }
-    }, 1000);
-    </script>
-    """, unsafe_allow_html=True)
+    # Sidebar gerenciada via CSS - sempre visível quando autenticado
 
     # Botões de navegação
     if 'current_page' not in st.session_state:
