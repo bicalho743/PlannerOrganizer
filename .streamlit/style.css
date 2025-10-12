@@ -42,16 +42,42 @@ header[data-testid="stHeader"] {
 .block-container {
     padding-top: 80px !important;
     max-width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+/* Garantir que o conteúdo não ultrapasse os limites */
+.main {
+    overflow-x: hidden !important;
+}
+
+[data-testid="stAppViewContainer"] {
+    overflow-x: hidden !important;
 }
 
 /* Desktop - margem para compensar sidebar */
 @media screen and (min-width: 769px) {
     .block-container {
         margin-left: 280px !important;
+        width: calc(100% - 280px) !important;
+        max-width: calc(100% - 280px) !important;
     }
     
     .main .block-container {
         margin-left: 280px !important;
+        width: calc(100% - 280px) !important;
+        max-width: calc(100% - 280px) !important;
+    }
+    
+    .main {
+        margin-left: 280px !important;
+        width: calc(100% - 280px) !important;
+        max-width: calc(100% - 280px) !important;
+    }
+    
+    [data-testid="stAppViewContainer"] > .main {
+        margin-left: 280px !important;
+        width: calc(100% - 280px) !important;
+        max-width: calc(100% - 280px) !important;
     }
 }
 
