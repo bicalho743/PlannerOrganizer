@@ -299,8 +299,27 @@ if not st.session_state.authenticated:
     # Ocultar completamente a barra lateral na página de login
     st.markdown("""
     <style>
-    [data-testid="collapsedControl"] {display: none;}
-    section[data-testid="stSidebar"] {display: none;}
+    /* OCULTAR SIDEBAR COMPLETAMENTE ANTES DO LOGIN */
+    section[data-testid="stSidebar"],
+    section[data-testid="stSidebar"] *,
+    [data-testid="collapsedControl"],
+    button[kind="headerNoPadding"],
+    button[data-testid="stBaseButton-headerNoPadding"],
+    div[data-testid="stSidebarCollapseButton"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        pointer-events: none !important;
+    }
+    
+    /* AJUSTAR CONTEÚDO PRINCIPAL PARA OCUPAR TODA A LARGURA */
+    .main .block-container {
+        margin-left: 0 !important;
+        padding-left: 1rem !important;
+        max-width: 100% !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -1055,6 +1074,13 @@ section[data-testid="stSidebar"] > div {
 # Verificar se o usuário está autenticado antes de mostrar a sidebar
 if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
    ('user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user):
+    
+    # Adicionar classe ao body para indicar usuário autenticado
+    st.markdown("""
+    <script>
+    document.body.classList.add('authenticated');
+    </script>
+    """, unsafe_allow_html=True)
     
     # Container dos botões com fundo escuro
     st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
