@@ -563,7 +563,7 @@ def show():
                     ]
 
                     venda_selecionada = st.selectbox(
-                        "Escolha uma venda",
+                        "Escolha uma venda para - EDITAR, EXCLUIR, GERAR RELATÓRIO",
                         options=venda_options,
                         index=0,
                         key="select_venda_detalhes_top"
