@@ -113,7 +113,6 @@ def show():
                             def formatar_data_produto(data_cadastro):
                                 if isinstance(data_cadastro, str):
                                     try:
-                                        from datetime import datetime
                                         data_obj = datetime.strptime(data_cadastro[:10], '%Y-%m-%d')
                                         return data_obj.strftime('%d/%m/%Y')
                                     except:
@@ -548,7 +547,6 @@ def show():
                     def formatar_data_br(data_venda):
                         if isinstance(data_venda, str):
                             try:
-                                from datetime import datetime
                                 data_obj = datetime.strptime(data_venda[:10], '%Y-%m-%d')
                                 return data_obj.strftime('%d/%m/%Y')
                             except:
@@ -591,7 +589,6 @@ def show():
                             data_venda = venda_detalhes['data_venda']
                             if isinstance(data_venda, str):
                                 try:
-                                    from datetime import datetime
                                     data_obj = datetime.strptime(data_venda[:10], '%Y-%m-%d')
                                     data_formatada = data_obj.strftime('%d/%m/%Y')
                                 except:
@@ -1030,7 +1027,6 @@ def show():
                             def formatar_data_tabela(data_venda):
                                 if isinstance(data_venda, str):
                                     try:
-                                        from datetime import datetime
                                         data_obj = datetime.strptime(data_venda[:10], '%Y-%m-%d')
                                         return data_obj.strftime('%d/%m/%Y')
                                     except:
@@ -1061,7 +1057,6 @@ def show():
                                         data_venda = venda['data_venda']
                                         if isinstance(data_venda, str):
                                             try:
-                                                from datetime import datetime
                                                 data_obj = datetime.strptime(data_venda[:10], '%Y-%m-%d')
                                                 data_formatada = data_obj.strftime('%d/%m/%Y')
                                             except:
