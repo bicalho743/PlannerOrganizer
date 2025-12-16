@@ -557,19 +557,19 @@ def show():
                             except:
                                 return str(data_venda)
                     
-                    venda_options = ["-- Escolha uma venda --"] + [
+                    venda_options = ["-- Escolha uma venda para EDITAR, EXCLUIR, GERAR RELATÓRIO --"] + [
                         f"{row['id']} - {row['cliente_nome']} ({formatar_data_br(row['data_venda'])})" 
                         for _, row in vendas_df.iterrows()
                     ]
 
                     venda_selecionada = st.selectbox(
-                        "Escolha uma venda para - EDITAR, EXCLUIR, GERAR RELATÓRIO",
+                        "Escolha uma venda para EDITAR, EXCLUIR, GERAR RELATÓRIO",
                         options=venda_options,
                         index=0,
                         key="select_venda_detalhes_top"
                     )
 
-                    if venda_selecionada != "-- Escolha uma venda --":
+                    if venda_selecionada != "-- Escolha uma venda para EDITAR, EXCLUIR, GERAR RELATÓRIO --":
                         # Processar venda selecionada
                         venda_id = int(venda_selecionada.split(" - ")[0])
                         
