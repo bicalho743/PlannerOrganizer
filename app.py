@@ -1347,21 +1347,6 @@ if st.session_state.mostrar_politica:
             st.session_state.mostrar_politica = False
             # Removido st.rerun() - modal fecha sem reload
 
-# Botão para download dos ícones do sistema
-try:
-    with open("downloads/planner-icons.zip", "rb") as f:
-        icones_bytes = f.read()
-
-    st.download_button(
-        label="🎨 Baixar Ícones do Sistema",
-        data=icones_bytes,
-        file_name="planner-icons.zip",
-        mime="application/zip",
-        use_container_width=True,
-        help="Baixe todos os ícones do sistema em diferentes formatos (SVG, PNG, Favicon)"
-    )
-except Exception as e:
-    st.warning(f"Pacote de ícones não disponível")
 
 # Menu de desenvolvedor removido - acesso direto aos módulos através do menu principal
 
