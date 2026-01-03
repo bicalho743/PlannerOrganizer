@@ -6414,3 +6414,329 @@ class Database:
                 raise e
         
         return self._safe_query(query)
+
+    # =========================================
+    # MÉTODOS DO MÓDULO PÓS-ORGANIZAÇÃO
+    # =========================================
+    
+    def create_post_organization(self, proposta_id, cliente_id, data_final_projeto):
+        """
+        Cria um registro de pós-organização e as ações automáticas padrão.
+        Chamado automaticamente quando uma proposta é finalizada.
+        
+        Args:
+            proposta_id: ID da proposta finalizada
+            cliente_id: ID do cliente
+            data_final_projeto: Data de finalização do projeto
+            
+        Returns:
+            int: ID do registro criado ou None se erro
+        """
+        def query():
+            try:
+                # Verificar se já existe pós-organização para esta proposta
+                existing = self.session.query(PostOrganization).filter(
+                    PostOrganization.proposta_id == proposta_id,
+                    PostOrganization.usuario_id == self.usuario_id
+                ).first()
+                
+                if existing:
+                    print(f"Pós-organização já existe para proposta {proposta_id}")
+                    return existing.id
+                
+                # Criar registro principal
+                post_org = PostOrganization(
+                    proposta_id=proposta_id,
+                    cliente_id=cliente_id,
+                    data_final_projeto=data_final_projeto,
+                    status='ATIVO',
+                    usuario_id=self.usuario_id
+                )
+                self.session.add(post_org)
+                self.session.flush()
+                
+                # Criar ações automáticas conforme especificação
+                acoes_padrao = [
+                    ('AGRADECIMENTO', data_final_projeto + timedelta(days=1)),
+                    ('MANUTENCAO', data_final_projeto + timedelta(days=2)),
+                    ('FOLLOW_UP', data_final_projeto + timedelta(days=7)),
+                    ('FEEDBACK', data_final_projeto + timedelta(days=7)),
+                    ('OPORTUNIDADE', data_final_projeto + timedelta(days=10)),
+                ]
+                
+                for action_type, due_date in acoes_padrao:
+                    action = PostOrganizationAction(
+                        post_organization_id=post_org.id,
+                        action_type=action_type,
+                        due_date=due_date,
+                        status='PENDENTE',
+                        usuario_id=self.usuario_id
+                    )
+                    self.session.add(action)
+                
+                self.session.commit()
+                print(f"Pós-organização criada com sucesso para proposta {proposta_id}")
+                return post_org.id
+                
+            except Exception as e:
+                self.session.rollback()
+                print(f"Erro ao criar pós-organização: {str(e)}")
+                raise e
+        
+        return self._safe_query(query)
+    
+    def get_post_organizations(self, status_filter=None):
+        """
+        Retorna lista de pós-organizações do usuário.
+        
+        Args:
+            status_filter: Filtrar por status ('ATIVO', 'CONCLUIDO') ou None para todos
+            
+        Returns:
+            DataFrame com dados das pós-organizações
+        """
+        def query():
+            try:
+                q = self.session.query(PostOrganization).filter(
+                    PostOrganization.usuario_id == self.usuario_id
+                )
+                
+                if status_filter:
+                    q = q.filter(PostOrganization.status == status_filter)
+                
+                post_orgs = q.order_by(PostOrganization.created_at.desc()).all()
+                
+                df_data = []
+                for po in post_orgs:
+                    # Buscar próxima ação pendente
+                    proxima_acao = self.session.query(PostOrganizationAction).filter(
+                        PostOrganizationAction.post_organization_id == po.id,
+                        PostOrganizationAction.status == 'PENDENTE'
+                    ).order_by(PostOrganizationAction.due_date).first()
+                    
+                    # Buscar nome do cliente
+                    cliente = self.session.query(Cliente).filter(Cliente.id == po.cliente_id).first()
+                    cliente_nome = cliente.nome if cliente else 'N/A'
+                    
+                    # Buscar número da proposta
+                    proposta = self.session.query(Proposta).filter(Proposta.id == po.proposta_id).first()
+                    proposta_numero = proposta.numero if proposta else 'N/A'
+                    
+                    df_data.append({
+                        'id': po.id,
+                        'proposta_id': po.proposta_id,
+                        'proposta_numero': proposta_numero,
+                        'cliente_id': po.cliente_id,
+                        'cliente_nome': cliente_nome,
+                        'data_final_projeto': po.data_final_projeto,
+                        'status': po.status,
+                        'created_at': po.created_at,
+                        'proxima_acao': proxima_acao.action_type if proxima_acao else None,
+                        'proxima_acao_data': proxima_acao.due_date if proxima_acao else None
+                    })
+                
+                return pd.DataFrame(df_data)
+                
+            except Exception as e:
+                print(f"Erro ao buscar pós-organizações: {str(e)}")
+                return pd.DataFrame()
+        
+        return self._safe_query(query)
+    
+    def get_post_organization_actions(self, post_organization_id):
+        """
+        Retorna todas as ações de uma pós-organização.
+        
+        Args:
+            post_organization_id: ID da pós-organização
+            
+        Returns:
+            DataFrame com as ações
+        """
+        def query():
+            try:
+                actions = self.session.query(PostOrganizationAction).filter(
+                    PostOrganizationAction.post_organization_id == post_organization_id
+                ).order_by(PostOrganizationAction.due_date).all()
+                
+                df_data = []
+                for a in actions:
+                    df_data.append({
+                        'id': a.id,
+                        'post_organization_id': a.post_organization_id,
+                        'action_type': a.action_type,
+                        'due_date': a.due_date,
+                        'status': a.status,
+                        'notes': a.notes,
+                        'completed_at': a.completed_at
+                    })
+                
+                return pd.DataFrame(df_data)
+                
+            except Exception as e:
+                print(f"Erro ao buscar ações: {str(e)}")
+                return pd.DataFrame()
+        
+        return self._safe_query(query)
+    
+    def update_post_organization_action(self, action_id, status, notes=None):
+        """
+        Atualiza uma ação de pós-organização.
+        
+        Args:
+            action_id: ID da ação
+            status: Novo status ('PENDENTE', 'FEITO', 'CANCELADO')
+            notes: Observações (opcional)
+            
+        Returns:
+            dict com informações da ação atualizada ou None se erro
+        """
+        def query():
+            try:
+                action = self.session.query(PostOrganizationAction).filter(
+                    PostOrganizationAction.id == action_id
+                ).first()
+                
+                if not action:
+                    return None
+                
+                action.status = status
+                if notes is not None:
+                    action.notes = notes
+                
+                if status == 'FEITO':
+                    action.completed_at = datetime.now()
+                
+                self.session.commit()
+                
+                # Verificar conclusão automática
+                self._check_post_organization_completion(action.post_organization_id)
+                
+                return {
+                    'id': action.id,
+                    'action_type': action.action_type,
+                    'status': action.status,
+                    'post_organization_id': action.post_organization_id
+                }
+                
+            except Exception as e:
+                self.session.rollback()
+                print(f"Erro ao atualizar ação: {str(e)}")
+                raise e
+        
+        return self._safe_query(query)
+    
+    def _check_post_organization_completion(self, post_organization_id):
+        """
+        Verifica se todas as ações obrigatórias estão concluídas e marca a pós-organização como CONCLUIDO.
+        Ações obrigatórias: AGRADECIMENTO, FOLLOW_UP, FEEDBACK
+        """
+        try:
+            # Buscar ações obrigatórias
+            acoes_obrigatorias = ['AGRADECIMENTO', 'FOLLOW_UP', 'FEEDBACK']
+            
+            acoes = self.session.query(PostOrganizationAction).filter(
+                PostOrganizationAction.post_organization_id == post_organization_id,
+                PostOrganizationAction.action_type.in_(acoes_obrigatorias)
+            ).all()
+            
+            # Verificar se todas estão com status FEITO
+            todas_feitas = all(a.status == 'FEITO' for a in acoes)
+            
+            if todas_feitas and len(acoes) == len(acoes_obrigatorias):
+                post_org = self.session.query(PostOrganization).filter(
+                    PostOrganization.id == post_organization_id
+                ).first()
+                
+                if post_org:
+                    post_org.status = 'CONCLUIDO'
+                    self.session.commit()
+                    print(f"Pós-organização {post_organization_id} marcada como CONCLUIDA")
+                    
+        except Exception as e:
+            print(f"Erro ao verificar conclusão: {str(e)}")
+    
+    def add_retorno_tecnico_action(self, post_organization_id, due_date):
+        """
+        Adiciona uma ação de RETORNO_TECNICO manualmente.
+        Chamado quando o usuário marca FOLLOW_UP como FEITO e indica necessidade de retorno.
+        
+        Args:
+            post_organization_id: ID da pós-organização
+            due_date: Data prevista para o retorno (entre 15 e 30 dias)
+            
+        Returns:
+            int: ID da ação criada ou None se erro
+        """
+        def query():
+            try:
+                action = PostOrganizationAction(
+                    post_organization_id=post_organization_id,
+                    action_type='RETORNO_TECNICO',
+                    due_date=due_date,
+                    status='PENDENTE',
+                    usuario_id=self.usuario_id
+                )
+                self.session.add(action)
+                self.session.commit()
+                
+                return action.id
+                
+            except Exception as e:
+                self.session.rollback()
+                print(f"Erro ao criar retorno técnico: {str(e)}")
+                raise e
+        
+        return self._safe_query(query)
+    
+    def get_pending_post_actions_for_dashboard(self):
+        """
+        Retorna ações pendentes vencidas para exibição no Dashboard.
+        Filtro: status=PENDENTE, due_date <= hoje, action_type em (FOLLOW_UP, RETORNO_TECNICO)
+        
+        Returns:
+            DataFrame com ações pendentes para alerta
+        """
+        def query():
+            try:
+                hoje = datetime.now().date()
+                
+                actions = self.session.query(PostOrganizationAction).join(
+                    PostOrganization
+                ).filter(
+                    PostOrganization.usuario_id == self.usuario_id,
+                    PostOrganizationAction.status == 'PENDENTE',
+                    PostOrganizationAction.due_date <= hoje,
+                    PostOrganizationAction.action_type.in_(['FOLLOW_UP', 'RETORNO_TECNICO'])
+                ).all()
+                
+                df_data = []
+                for a in actions:
+                    post_org = self.session.query(PostOrganization).filter(
+                        PostOrganization.id == a.post_organization_id
+                    ).first()
+                    
+                    cliente = self.session.query(Cliente).filter(
+                        Cliente.id == post_org.cliente_id
+                    ).first() if post_org else None
+                    
+                    proposta = self.session.query(Proposta).filter(
+                        Proposta.id == post_org.proposta_id
+                    ).first() if post_org else None
+                    
+                    df_data.append({
+                        'action_id': a.id,
+                        'action_type': a.action_type,
+                        'due_date': a.due_date,
+                        'cliente_nome': cliente.nome if cliente else 'N/A',
+                        'proposta_numero': proposta.numero if proposta else 'N/A',
+                        'post_organization_id': a.post_organization_id
+                    })
+                
+                return pd.DataFrame(df_data)
+                
+            except Exception as e:
+                print(f"Erro ao buscar ações pendentes: {str(e)}")
+                return pd.DataFrame()
+        
+        return self._safe_query(query)
