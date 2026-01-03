@@ -569,152 +569,13 @@ def show():
         else:
             st.info("Nenhum cliente cadastrado com data de aniversário.")
             
-    # Nova seção para alertas de retorno ao cliente se aproximando dos 60 dias após execução
-    st.subheader("📢 Alertas Retorno Cliente")
-    
-    # Container para mostrar propostas se aproximando de 60 dias após execução
-    with st.container():
-        st.markdown("""
-        <div style='background-color: #2A3F5F; padding: 10px; border-radius: 7px; margin-bottom: 15px;'>
-            <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>⏱️ Clientes aguardando retorno (faltam até 15 dias para completar 60 dias)</h4>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Verificar se propostas está vazio ou se tem a coluna status
-        if not isinstance(propostas, pd.DataFrame) or propostas.empty or 'status' not in propostas.columns:
-            propostas_executadas = pd.DataFrame()
-        else:
-            # Buscar todas as propostas executadas
-            propostas_executadas = propostas[propostas['status'].isin(['Executada', 'Em execução', 'Finalizada', 'Concluída'])]
-            
-        try:
-            # Verificar propostas executadas
-            
-            if isinstance(propostas_executadas, pd.DataFrame) and not propostas_executadas.empty:
-                # Data atual
-                hoje = datetime.now().date()
-                
-                # Lista para armazenar propostas próximas de 60 dias
-                propostas_alerta = []
-                
-                # Verificar se a coluna data_inicio existe
-                if 'data_inicio' not in propostas_executadas.columns:
-                    st.info("Campo 'data_inicio' não encontrado nas propostas.")
-                    # Não usamos return aqui para evitar sair da função antes de completar
-                    
-                for idx, proposta in propostas_executadas.iterrows():
-                    # Verificar se proposta tem todos os campos necessários
-                    campos_obrigatorios = ['id', 'numero', 'descricao']
-                    if not all(campo in proposta for campo in campos_obrigatorios):
-                        continue  # Pula se faltar algum campo obrigatório
-                    
-                    # Decidir qual data usar para cálculo:
-                    # Para propostas finalizadas, usar data_fim (data de conclusão)
-                    # Para outras propostas, usar data_inicio
-                    data_referencia = None
-                    
-                    # Para propostas finalizadas ou concluídas, preferir a data_fim
-                    if (proposta['status'] == 'Finalizada' or proposta['status'] == 'Concluída') and pd.notna(proposta.get('data_fim')):
-                        data_campo = proposta['data_fim']
-                        campo_nome = "data_fim"
-                    # Para outras propostas ou se não tiver data_fim, usar data_inicio
-                    elif pd.notna(proposta.get('data_inicio')):
-                        data_campo = proposta['data_inicio']
-                        campo_nome = "data_inicio"
-                    else:
-                        continue  # Se não tem nenhuma data válida, pular esta proposta
-                    
-                    # Converter para datetime se for string
-                    if isinstance(data_campo, str):
-                        try:
-                            data_referencia = datetime.strptime(data_campo, '%Y-%m-%d').date()
-                        except ValueError:
-                            try:
-                                data_referencia = datetime.strptime(data_campo, '%d/%m/%Y').date()
-                            except ValueError:
-                                continue  # Se não conseguir converter, pula
-                    else:
-                        data_referencia = data_campo.date() if hasattr(data_campo, 'date') else data_campo
-                        
-                    # Calcular a data que será 60 dias após a data de referência
-                    data_60_dias = data_referencia + timedelta(days=60)
-                    
-                    # Calcular quantos dias faltam para atingir 60 dias
-                    try:
-                        dias_restantes = (data_60_dias - hoje).days
-                        
-                        # Se faltar 15 dias ou menos (e ainda não tiver passado), mostrar alerta
-                        if 0 <= dias_restantes <= 15:
-                            # Garantir que todos os valores sejam do tipo correto para evitar comparações incompatíveis
-                            prop_id = int(proposta['id']) if not pd.isna(proposta['id']) else 0
-                            prop_numero = int(proposta['numero']) if not pd.isna(proposta['numero']) else 0
-                            
-                            propostas_alerta.append({
-                                'id': prop_id,
-                                'numero': prop_numero,
-                                'cliente_nome': str(proposta.get('cliente_nome', 'Cliente não informado')),
-                                'descricao': str(proposta['descricao']) if not pd.isna(proposta['descricao']) else "",
-                                'data_referencia': data_referencia,
-                                'campo_nome': campo_nome,
-                                'dias_restantes': dias_restantes,
-                                'data_60_dias': data_60_dias
-                            })
-                    except Exception as e:
-                        # Ignorar essa proposta caso ocorra algum erro de tipo
-                        continue
-                
-                # Ordenar por dias restantes (mais urgentes primeiro)
-                propostas_alerta.sort(key=lambda x: x['dias_restantes'])
-                
-                # Mostrar alertas
-                if propostas_alerta:
-                    for p in propostas_alerta:
-                        with st.container():
-                            st.markdown(f"""
-                            <div style='background-color: #2A3F5F; 
-                                  padding: 10px; border-radius: 5px; margin-bottom: 8px;'>
-                                <div style='font-weight: bold; color: white;'>
-                                    {'⚠️' if p['dias_restantes'] <= 3 else '⚠️'} Proposta #{p['numero']} 
-                                    <span style='font-weight: normal; color: white; font-size: 0.9em;'>
-                                        (Faltam {p['dias_restantes']} dias para contatar o cliente)
-                                    </span>
-                                </div>
-                                <div style='color: white; font-size: 0.9em;'>
-                                    Cliente: <b>{p['cliente_nome']}</b>
-                                </div>
-                                <div style='color: white; font-size: 0.9em;'>
-                                    {('Data de conclusão' if p['campo_nome'] == 'data_fim' else 'Data da organização')}: {format_date_safe(p['data_referencia'])} | Completará 60 dias em: {format_date_safe(p['data_60_dias'])}
-                                </div>
-                            </div>
-                            """, unsafe_allow_html=True)
-                else:
-                    st.markdown("""
-                    <div style='background: #f8f9fa; border: 1px solid #e9ecef; 
-                                padding: 12px 15px; border-radius: 6px; margin-bottom: 15px;'>
-                        <p style='margin: 0; color: #6c757d; text-align: center;'>
-                            Não há clientes aguardando retorno no momento.
-                        </p>
-                    </div>
-                    """, unsafe_allow_html=True)
-            else:
-                st.markdown("""
-                <div style='background: #f8f9fa; border: 1px solid #e9ecef; 
-                            padding: 12px 15px; border-radius: 6px; margin-bottom: 15px;'>
-                    <p style='margin: 0; color: #6c757d; text-align: center;'>
-                        Não há propostas em execução no sistema.
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
-        except Exception as e:
-            st.warning("Erro ao processar alertas de retorno ao cliente.")
-    
-    # Seção de alertas de Pós-Organização
+    # Seção unificada de alertas de Pós-Organização
     st.subheader("📋 Alertas Pós-Organização")
     
     with st.container():
         st.markdown("""
         <div style='background-color: #2A3F5F; padding: 10px; border-radius: 7px; margin-bottom: 15px;'>
-            <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>📞 Follow-ups e Retornos Técnicos Pendentes</h4>
+            <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>📞 Ações Pendentes de Acompanhamento</h4>
         </div>
         """, unsafe_allow_html=True)
         
@@ -724,8 +585,17 @@ def show():
                 
                 if not df_alertas.empty:
                     for _, alerta in df_alertas.iterrows():
-                        tipo_icone = "📞" if alerta['action_type'] == 'FOLLOW_UP' else "🔄"
-                        tipo_texto = "Follow-up" if alerta['action_type'] == 'FOLLOW_UP' else "Retorno Técnico"
+                        # Ícones e textos para cada tipo de ação
+                        tipo_config = {
+                            'AGRADECIMENTO': {'icone': '🙏', 'texto': 'Agradecimento', 'cor': '#27ae60'},
+                            'MANUTENCAO': {'icone': '🔧', 'texto': 'Manutenção', 'cor': '#3498db'},
+                            'FOLLOW_UP': {'icone': '📞', 'texto': 'Follow-up', 'cor': '#e74c3c'},
+                            'FEEDBACK': {'icone': '⭐', 'texto': 'Feedback', 'cor': '#f39c12'},
+                            'OPORTUNIDADE': {'icone': '💼', 'texto': 'Oportunidade', 'cor': '#9b59b6'},
+                            'RETORNO_TECNICO': {'icone': '🔄', 'texto': 'Retorno Técnico', 'cor': '#e74c3c'}
+                        }
+                        
+                        config = tipo_config.get(alerta['action_type'], {'icone': '📋', 'texto': alerta['action_type'], 'cor': '#2A3F5F'})
                         
                         # Formatação da data
                         try:
@@ -734,12 +604,12 @@ def show():
                             data_fmt = str(alerta['due_date'])
                         
                         st.markdown(f"""
-                        <div style='background-color: #e74c3c; 
+                        <div style='background-color: {config['cor']}; 
                               padding: 10px; border-radius: 5px; margin-bottom: 8px;'>
                             <div style='font-weight: bold; color: white;'>
-                                {tipo_icone} {tipo_texto} - Proposta #{alerta['proposta_numero']}
+                                {config['icone']} {config['texto']} - Proposta #{alerta['proposta_numero']}
                                 <span style='font-weight: normal; color: white; font-size: 0.9em;'>
-                                    (Vencido em {data_fmt})
+                                    (Previsto: {data_fmt})
                                 </span>
                             </div>
                             <div style='color: white; font-size: 0.9em;'>

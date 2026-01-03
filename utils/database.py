@@ -6722,24 +6722,27 @@ class Database:
     
     def get_pending_post_actions_for_dashboard(self):
         """
-        Retorna ações pendentes vencidas para exibição no Dashboard.
-        Filtro: status=PENDENTE, due_date <= hoje, action_type em (FOLLOW_UP, RETORNO_TECNICO)
+        Retorna ações pendentes para exibição no Dashboard.
+        Filtro: status=PENDENTE, ações de acompanhamento (Agradecimento, Manutenção, Follow-up)
+        Mostra ações vencidas e próximas (até 3 dias)
         
         Returns:
             DataFrame com ações pendentes para alerta
         """
         def query():
             try:
+                from datetime import timedelta
                 hoje = datetime.now().date()
+                limite = hoje + timedelta(days=3)
                 
                 actions = self.session.query(PostOrganizationAction).join(
                     PostOrganization
                 ).filter(
                     PostOrganization.usuario_id == self.usuario_id,
                     PostOrganizationAction.status == 'PENDENTE',
-                    PostOrganizationAction.due_date <= hoje,
-                    PostOrganizationAction.action_type.in_(['FOLLOW_UP', 'RETORNO_TECNICO'])
-                ).all()
+                    PostOrganizationAction.due_date <= limite,
+                    PostOrganizationAction.action_type.in_(['AGRADECIMENTO', 'MANUTENCAO', 'FOLLOW_UP', 'RETORNO_TECNICO'])
+                ).order_by(PostOrganizationAction.due_date).all()
                 
                 df_data = []
                 for a in actions:
