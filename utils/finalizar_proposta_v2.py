@@ -464,12 +464,10 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
         # GATILHO: Criar pós-organização automaticamente
         # ============================================
         try:
-            # Buscar data_fim da proposta
-            cursor.execute("""
-                SELECT data_fim FROM propostas WHERE id = %s
-            """, (proposta_id,))
-            data_fim_row = cursor.fetchone()
-            data_final = data_fim_row[0] if data_fim_row and data_fim_row[0] else date.today()
+            # IMPORTANTE: Usar a data ATUAL (hoje) como base para as ações,
+            # não a data_fim da proposta, pois a proposta pode ser finalizada
+            # dias/semanas após o término do projeto
+            data_final = date.today()
             
             # Verificar se já existe pós-organização para esta proposta
             cursor.execute("""
