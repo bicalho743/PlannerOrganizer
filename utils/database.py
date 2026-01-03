@@ -6660,11 +6660,11 @@ class Database:
     def _check_post_organization_completion(self, post_organization_id):
         """
         Verifica se todas as ações obrigatórias estão concluídas e marca a pós-organização como CONCLUIDO.
-        Ações obrigatórias: AGRADECIMENTO, FOLLOW_UP, FEEDBACK
+        Ações obrigatórias: AGRADECIMENTO, MANUTENCAO, FOLLOW_UP, FEEDBACK
         """
         try:
             # Buscar ações obrigatórias
-            acoes_obrigatorias = ['AGRADECIMENTO', 'FOLLOW_UP', 'FEEDBACK']
+            acoes_obrigatorias = ['AGRADECIMENTO', 'MANUTENCAO', 'FOLLOW_UP', 'FEEDBACK']
             
             acoes = self.session.query(PostOrganizationAction).filter(
                 PostOrganizationAction.post_organization_id == post_organization_id,
