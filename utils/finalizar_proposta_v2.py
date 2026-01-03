@@ -460,6 +460,60 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
             
             resultado["lancamentos"]["valores"]["despesa_assistentes"] = valor_total_assistentes
         
+        # ============================================
+        # GATILHO: Criar pós-organização automaticamente
+        # ============================================
+        try:
+            # Buscar data_fim da proposta
+            cursor.execute("""
+                SELECT data_fim FROM propostas WHERE id = %s
+            """, (proposta_id,))
+            data_fim_row = cursor.fetchone()
+            data_final = data_fim_row[0] if data_fim_row and data_fim_row[0] else date.today()
+            
+            # Verificar se já existe pós-organização para esta proposta
+            cursor.execute("""
+                SELECT id FROM post_organizations WHERE proposta_id = %s AND usuario_id = %s
+            """, (proposta_id, proposta_info['usuario_id']))
+            
+            existing_pos_org = cursor.fetchone()
+            
+            if not existing_pos_org:
+                # Criar registro de pós-organização
+                cursor.execute("""
+                    INSERT INTO post_organizations (proposta_id, cliente_id, data_final_projeto, status, usuario_id)
+                    VALUES (%s, %s, %s, 'ATIVO', %s)
+                    RETURNING id
+                """, (proposta_id, proposta_info['cliente_id'], data_final, proposta_info['usuario_id']))
+                
+                pos_org_id = cursor.fetchone()[0]
+                
+                # Criar ações automáticas padrão
+                from datetime import timedelta
+                acoes_padrao = [
+                    ('AGRADECIMENTO', data_final + timedelta(days=1)),
+                    ('MANUTENCAO', data_final + timedelta(days=2)),
+                    ('FOLLOW_UP', data_final + timedelta(days=7)),
+                    ('FEEDBACK', data_final + timedelta(days=7)),
+                    ('OPORTUNIDADE', data_final + timedelta(days=10)),
+                ]
+                
+                for action_type, due_date in acoes_padrao:
+                    cursor.execute("""
+                        INSERT INTO post_organization_actions 
+                        (post_organization_id, action_type, due_date, status, usuario_id)
+                        VALUES (%s, %s, %s, 'PENDENTE', %s)
+                    """, (pos_org_id, action_type, due_date, proposta_info['usuario_id']))
+                
+                logger.info(f"Pós-organização criada automaticamente para proposta #{proposta_id}")
+                resultado["pos_organizacao"] = {"status": "success", "id": pos_org_id}
+            else:
+                resultado["pos_organizacao"] = {"status": "exists", "id": existing_pos_org[0]}
+                
+        except Exception as pos_error:
+            logger.warning(f"Erro ao criar pós-organização (não crítico): {str(pos_error)}")
+            resultado["pos_organizacao"] = {"status": "error", "message": str(pos_error)}
+        
         # Commit das alterações no banco
         conn.commit()
         
