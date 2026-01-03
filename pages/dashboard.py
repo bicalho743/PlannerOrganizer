@@ -707,3 +707,56 @@ def show():
                 """, unsafe_allow_html=True)
         except Exception as e:
             st.warning("Erro ao processar alertas de retorno ao cliente.")
+    
+    # Seção de alertas de Pós-Organização
+    st.subheader("📋 Alertas Pós-Organização")
+    
+    with st.container():
+        st.markdown("""
+        <div style='background-color: #2A3F5F; padding: 10px; border-radius: 7px; margin-bottom: 15px;'>
+            <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>📞 Follow-ups e Retornos Técnicos Pendentes</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        try:
+            if 'db' in st.session_state and st.session_state.db:
+                df_alertas = st.session_state.db.get_pending_post_actions_for_dashboard()
+                
+                if not df_alertas.empty:
+                    for _, alerta in df_alertas.iterrows():
+                        tipo_icone = "📞" if alerta['action_type'] == 'FOLLOW_UP' else "🔄"
+                        tipo_texto = "Follow-up" if alerta['action_type'] == 'FOLLOW_UP' else "Retorno Técnico"
+                        
+                        # Formatação da data
+                        try:
+                            data_fmt = pd.to_datetime(alerta['due_date']).strftime('%d/%m/%Y')
+                        except:
+                            data_fmt = str(alerta['due_date'])
+                        
+                        st.markdown(f"""
+                        <div style='background-color: #e74c3c; 
+                              padding: 10px; border-radius: 5px; margin-bottom: 8px;'>
+                            <div style='font-weight: bold; color: white;'>
+                                {tipo_icone} {tipo_texto} - Proposta #{alerta['proposta_numero']}
+                                <span style='font-weight: normal; color: white; font-size: 0.9em;'>
+                                    (Vencido em {data_fmt})
+                                </span>
+                            </div>
+                            <div style='color: white; font-size: 0.9em;'>
+                                Cliente: <b>{alerta['cliente_nome']}</b>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.markdown("""
+                    <div style='background: #f8f9fa; border: 1px solid #e9ecef; 
+                                padding: 12px 15px; border-radius: 6px; margin-bottom: 15px;'>
+                        <p style='margin: 0; color: #6c757d; text-align: center;'>
+                            Nenhuma ação pendente de pós-organização.
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.info("Conexão com banco de dados não disponível.")
+        except Exception as e:
+            st.warning("Erro ao processar alertas de pós-organização.")
