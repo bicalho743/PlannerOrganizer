@@ -1075,8 +1075,36 @@ section[data-testid="stSidebar"] > div {
 if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
    ('user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user):
     
-    # Adicionar classe ao body para indicar usuário autenticado
+    # CSS para layout com sidebar (APENAS QUANDO AUTENTICADO)
     st.markdown("""
+    <style>
+    /* Desktop - margem para compensar sidebar QUANDO AUTENTICADO */
+    @media screen and (min-width: 769px) {
+        .block-container {
+            margin-left: 280px !important;
+            width: calc(100% - 280px) !important;
+            max-width: calc(100% - 280px) !important;
+        }
+        
+        .main .block-container {
+            margin-left: 280px !important;
+            width: calc(100% - 280px) !important;
+            max-width: calc(100% - 280px) !important;
+        }
+        
+        .main {
+            margin-left: 280px !important;
+            width: calc(100% - 280px) !important;
+            max-width: calc(100% - 280px) !important;
+        }
+        
+        [data-testid="stAppViewContainer"] > .main {
+            margin-left: 280px !important;
+            width: calc(100% - 280px) !important;
+            max-width: calc(100% - 280px) !important;
+        }
+    }
+    </style>
     <script>
     document.body.classList.add('authenticated');
     </script>

@@ -54,30 +54,32 @@ header[data-testid="stHeader"] {
     overflow-x: hidden !important;
 }
 
-/* Desktop - margem para compensar sidebar */
+/* Desktop - margem para compensar sidebar APENAS QUANDO AUTENTICADO */
+/* As regras de margem são aplicadas via CSS inline no app.py baseado no estado de autenticação */
 @media screen and (min-width: 769px) {
+    /* Margem padrão: 0 (antes do login) */
     .block-container {
-        margin-left: 280px !important;
-        width: calc(100% - 280px) !important;
-        max-width: calc(100% - 280px) !important;
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
     
     .main .block-container {
-        margin-left: 280px !important;
-        width: calc(100% - 280px) !important;
-        max-width: calc(100% - 280px) !important;
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
     
     .main {
-        margin-left: 280px !important;
-        width: calc(100% - 280px) !important;
-        max-width: calc(100% - 280px) !important;
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
     
     [data-testid="stAppViewContainer"] > .main {
-        margin-left: 280px !important;
-        width: calc(100% - 280px) !important;
-        max-width: calc(100% - 280px) !important;
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
 }
 
