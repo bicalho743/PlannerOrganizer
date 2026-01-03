@@ -1132,6 +1132,7 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
         "📝 Propostas": "Propostas",
         "🛒 Vendas": "Vendas",
         "💰 Financeiro": "Financeiro",
+        "📋 Pós-Organização": "PosOrganizacao",
         "📈 Relatórios": "Relatórios",
         "🧑‍💼 Meu Perfil": "Perfil"
     }
@@ -1220,6 +1221,9 @@ try:
         show()
     elif st.session_state.current_page == "Financeiro":
         from pages.financeiro import show
+        show()
+    elif st.session_state.current_page == "PosOrganizacao":
+        from pages.pos_organizacao import show
         show()
     elif st.session_state.current_page == "Relatórios":
         from pages.relatorios import show

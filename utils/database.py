@@ -2628,6 +2628,22 @@ class Database:
             
             # Registrar a mudança de status
             print(f"DEBUG: Proposta {proposta_id} atualizada com status '{novo_status}', status_execucao='{proposta.status_execucao}'")
+            
+            # GATILHO: Criar pós-organização quando proposta é FINALIZADA
+            if novo_status == "Finalizada" and proposta.status_execucao == "Finalizada":
+                try:
+                    data_final = proposta.data_fim if proposta.data_fim else datetime.now().date()
+                    self.create_post_organization(
+                        proposta_id=proposta.id,
+                        cliente_id=proposta.cliente_id,
+                        data_final_projeto=data_final
+                    )
+                    resultado["pos_organizacao"] = {"status": "success", "message": "Pós-organização criada automaticamente"}
+                    print(f"DEBUG: Pós-organização criada automaticamente para proposta {proposta_id}")
+                except Exception as e:
+                    print(f"ERRO ao criar pós-organização: {str(e)}")
+                    resultado["pos_organizacao"] = {"status": "error", "message": f"Erro: {str(e)}"}
+            
             return resultado
             
         return self._safe_query(query)
@@ -3626,6 +3642,21 @@ class Database:
                                     lancamentos_result["erro_venda"] = str(e)
                             
                             resultado["lancamentos_finalizacao"] = lancamentos_result
+                            
+                            # GATILHO: Criar pós-organização quando proposta é finalizada
+                            try:
+                                data_final = proposta.data_fim if proposta.data_fim else datetime.now().date()
+                                self.create_post_organization(
+                                    proposta_id=proposta.id,
+                                    cliente_id=proposta.cliente_id,
+                                    data_final_projeto=data_final
+                                )
+                                resultado["pos_organizacao"] = {"status": "success", "message": "Pós-organização criada automaticamente"}
+                                print(f"DEBUG: Pós-organização criada automaticamente para proposta {proposta_id}")
+                            except Exception as po_error:
+                                print(f"ERRO ao criar pós-organização: {str(po_error)}")
+                                resultado["pos_organizacao"] = {"status": "error", "message": f"Erro: {str(po_error)}"}
+                                
                     except Exception as e:
                         print(f"ERRO ao gerar lançamentos de finalização: {str(e)}")
                         import traceback
