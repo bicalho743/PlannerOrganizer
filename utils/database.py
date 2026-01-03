@@ -494,6 +494,58 @@ class ItemVenda(Base):
     venda = relationship("Venda", back_populates="itens")
     produto = relationship("Produto", back_populates="vendas_itens")
 
+# =========================================
+# MÓDULO PÓS-ORGANIZAÇÃO
+# =========================================
+
+class PostOrganization(Base):
+    """
+    Registro de pós-organização vinculado a uma proposta finalizada.
+    Gerencia ações de acompanhamento pós-serviço.
+    """
+    __tablename__ = 'post_organizations'
+    id = Column(Integer, primary_key=True)
+    proposta_id = Column(Integer, ForeignKey('propostas.id'), nullable=False)
+    cliente_id = Column(Integer, ForeignKey('clientes.id'), nullable=False)
+    data_final_projeto = Column(Date, nullable=False)
+    status = Column(String, default='ATIVO')  # ATIVO, CONCLUIDO
+    created_at = Column(DateTime, default=datetime.now)
+    usuario_id = Column(String, nullable=True)  # Multi-tenant
+    
+    # Relacionamentos
+    proposta = relationship("Proposta")
+    cliente = relationship("Cliente")
+    acoes = relationship("PostOrganizationAction", back_populates="post_organization", cascade="all, delete-orphan")
+    
+    __table_args__ = (
+        Index('idx_post_org_usuario_id', 'usuario_id'),
+        Index('idx_post_org_proposta_id', 'proposta_id'),
+        Index('idx_post_org_status', 'status'),
+    )
+
+class PostOrganizationAction(Base):
+    """
+    Ações individuais de pós-organização (agradecimento, manutenção, follow-up, etc.)
+    """
+    __tablename__ = 'post_organization_actions'
+    id = Column(Integer, primary_key=True)
+    post_organization_id = Column(Integer, ForeignKey('post_organizations.id'), nullable=False)
+    action_type = Column(String, nullable=False)  # AGRADECIMENTO, MANUTENCAO, FOLLOW_UP, FEEDBACK, OPORTUNIDADE, RETORNO_TECNICO
+    due_date = Column(Date, nullable=False)
+    status = Column(String, default='PENDENTE')  # PENDENTE, FEITO, CANCELADO
+    notes = Column(String, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+    usuario_id = Column(String, nullable=True)  # Multi-tenant
+    
+    # Relacionamento
+    post_organization = relationship("PostOrganization", back_populates="acoes")
+    
+    __table_args__ = (
+        Index('idx_post_action_status', 'status'),
+        Index('idx_post_action_due_date', 'due_date'),
+        Index('idx_post_action_type', 'action_type'),
+    )
+
 class Database:
     def refresh_schema_metadata(self):
         """
