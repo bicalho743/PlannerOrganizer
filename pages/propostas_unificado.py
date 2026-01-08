@@ -1439,33 +1439,81 @@ def show():
                                         valor_total_fornecedores = acrescimos['valor'].sum()
                                         st.info(f"Valor Total dos Fornecedores: R$ {valor_total_fornecedores:.2f}")
 
-                                        # Formulário para remover fornecedores
-                                        with st.form(key=f"form_remover_fornecedor_{proposta_selecionada_id}"):
-                                            acrescimo_remover_id = st.selectbox(
-                                                "Selecione um fornecedor para remover:",
+                                        # Formulário para editar fornecedor
+                                        with st.form(key=f"form_editar_fornecedor_{proposta_selecionada_id}"):
+                                            st.write("Selecione um fornecedor para editar:")
+
+                                            acrescimo_editar_id = st.selectbox(
+                                                "Selecione um fornecedor:",
                                                 options=acrescimos['id'].tolist(),
-                                                format_func=lambda x: f"{acrescimos.loc[acrescimos['id'] == x, 'fornecedor'].iloc[0]}"
+                                                format_func=lambda x: f"{acrescimos.loc[acrescimos['id'] == x, 'fornecedor'].iloc[0]}",
+                                                key=f"select_editar_fornecedor_{proposta_selecionada_id}"
+                                            )
+                                            
+                                            # Obter dados atuais do fornecedor selecionado
+                                            fornecedor_atual = acrescimos.loc[acrescimos['id'] == acrescimo_editar_id].iloc[0]
+                                            
+                                            # Campos para edição
+                                            novo_valor = st.number_input(
+                                                "Novo valor (R$):", 
+                                                min_value=0.0, 
+                                                value=float(fornecedor_atual['valor']), 
+                                                format="%.2f",
+                                                key=f"novo_valor_fornecedor_{proposta_selecionada_id}"
+                                            )
+                                            
+                                            nova_descricao = st.text_area(
+                                                "Novas observações:", 
+                                                value=fornecedor_atual['descricao'] if fornecedor_atual['descricao'] else "",
+                                                key=f"nova_descricao_fornecedor_{proposta_selecionada_id}"
                                             )
 
-                                            remover_fornecedor = st.form_submit_button("Remover Fornecedor")
+                                            editar_fornecedor = st.form_submit_button("Editar")
+
+                                            if editar_fornecedor:
+                                                try:
+                                                    resultado = st.session_state.db.update_acrescimo_proposta(
+                                                        acrescimo_editar_id, 
+                                                        valor=novo_valor, 
+                                                        descricao=nova_descricao
+                                                    )
+
+                                                    if resultado:
+                                                        st.success("Fornecedor atualizado com sucesso!")
+                                                    else:
+                                                        st.error("Falha ao atualizar o fornecedor.")
+
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                                except Exception as e:
+                                                    st.error(f"Erro ao editar fornecedor: {str(e)}")
+
+                                        # Formulário para remover fornecedores
+                                        with st.form(key=f"form_remover_fornecedor_{proposta_selecionada_id}"):
+                                            st.write("Selecione um fornecedor para remover:")
+
+                                            acrescimo_remover_id = st.selectbox(
+                                                "Selecione um fornecedor:",
+                                                options=acrescimos['id'].tolist(),
+                                                format_func=lambda x: f"{acrescimos.loc[acrescimos['id'] == x, 'fornecedor'].iloc[0]}",
+                                                key=f"select_remover_fornecedor_{proposta_selecionada_id}"
+                                            )
+
+                                            remover_fornecedor = st.form_submit_button("Remover")
 
                                             if remover_fornecedor:
                                                 try:
-                                                    # Chamar a função para remover o acréscimo
                                                     resultado = st.session_state.db.remove_acrescimo_proposta(acrescimo_remover_id)
 
                                                     if resultado:
                                                         st.success("Fornecedor removido com sucesso!")
                                                     else:
-                                                        st.error("Falha ao remover o fornecedor. Ele pode não existir mais no banco de dados.")
+                                                        st.error("Falha ao remover o fornecedor.")
 
-                                                    # Recarregar a página
                                                     time.sleep(1)
                                                     st.rerun()
                                                 except Exception as e:
                                                     st.error(f"Erro ao remover fornecedor: {str(e)}")
-
-                                        # Já mostramos o valor total acima, remover esta duplicidade
                                     else:
                                         st.info("Nenhum fornecedor adicionado a esta proposta ainda.")
                                 except Exception as e:
