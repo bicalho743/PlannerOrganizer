@@ -1549,30 +1549,80 @@ def show():
                                         valor_total_assistentes = acrescimos['valor'].sum()
                                         st.info(f"Valor Total dos Assistentes: R$ {valor_total_assistentes:.2f}")
 
+                                        # Formulário para editar assistente
+                                        with st.form(key=f"form_editar_assistente_{proposta_selecionada_id}"):
+                                            st.write("Selecione um assistente para editar:")
+
+                                            # Usar ID para identificação única
+                                            acrescimo_editar_id = st.selectbox(
+                                                "Selecione um assistente:",
+                                                options=acrescimos['id'].tolist(),
+                                                format_func=lambda x: f"{acrescimos.loc[acrescimos['id'] == x, 'fornecedor'].iloc[0]}",
+                                                key=f"select_editar_assistente_{proposta_selecionada_id}"
+                                            )
+                                            
+                                            # Obter dados atuais do assistente selecionado
+                                            assistente_atual = acrescimos.loc[acrescimos['id'] == acrescimo_editar_id].iloc[0]
+                                            
+                                            # Campos para edição
+                                            novo_valor = st.number_input(
+                                                "Novo valor (R$):", 
+                                                min_value=0.0, 
+                                                value=float(assistente_atual['valor']), 
+                                                format="%.2f",
+                                                key=f"novo_valor_assistente_{proposta_selecionada_id}"
+                                            )
+                                            
+                                            nova_descricao = st.text_area(
+                                                "Nova descrição:", 
+                                                value=assistente_atual['descricao'] if assistente_atual['descricao'] else "",
+                                                key=f"nova_descricao_assistente_{proposta_selecionada_id}"
+                                            )
+
+                                            editar_assistente = st.form_submit_button("Editar")
+
+                                            if editar_assistente:
+                                                try:
+                                                    # Chamar a função para atualizar o acréscimo
+                                                    resultado = st.session_state.db.update_acrescimo_proposta(
+                                                        acrescimo_editar_id, 
+                                                        valor=novo_valor, 
+                                                        descricao=nova_descricao
+                                                    )
+
+                                                    if resultado:
+                                                        st.success("Assistente atualizado com sucesso!")
+                                                    else:
+                                                        st.error("Falha ao atualizar o assistente.")
+
+                                                    # Recarregar a página
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                                except Exception as e:
+                                                    st.error(f"Erro ao editar assistente: {str(e)}")
+                                        
                                         # Formulário para remover assistente
                                         with st.form(key=f"form_remover_assistente_{proposta_selecionada_id}"):
                                             st.write("Selecione um assistente para remover:")
 
-                                            # Usar ID para identificação única
                                             acrescimo_remover_id = st.selectbox(
                                                 "Selecione um assistente:",
                                                 options=acrescimos['id'].tolist(),
-                                                format_func=lambda x: f"{acrescimos.loc[acrescimos['id'] == x, 'fornecedor'].iloc[0]}"
+                                                format_func=lambda x: f"{acrescimos.loc[acrescimos['id'] == x, 'fornecedor'].iloc[0]}",
+                                                key=f"select_remover_assistente_{proposta_selecionada_id}"
                                             )
 
                                             remover_assistente = st.form_submit_button("Remover")
 
                                             if remover_assistente:
                                                 try:
-                                                    # Chamar a função para remover o acréscimo
                                                     resultado = st.session_state.db.remove_acrescimo_proposta(acrescimo_remover_id)
 
                                                     if resultado:
                                                         st.success("Assistente removido com sucesso!")
                                                     else:
-                                                        st.error("Falha ao remover o assistente. Ele pode não existir mais no banco de dados.")
+                                                        st.error("Falha ao remover o assistente.")
 
-                                                    # Recarregar a página
                                                     time.sleep(1)
                                                     st.rerun()
                                                 except Exception as e:

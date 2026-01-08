@@ -3888,6 +3888,68 @@ class Database:
                 return pd.DataFrame(columns=['id', 'tipo', 'fornecedor', 'descricao', 'valor', 'status_pagamento', 'data_cadastro'])
                 
         return self._safe_query(query)
+    
+    def update_acrescimo_proposta(self, acrescimo_id, valor=None, descricao=None):
+        """
+        Atualiza um acréscimo de uma proposta
+        
+        Args:
+            acrescimo_id: ID do acréscimo a ser atualizado
+            valor: Novo valor (opcional)
+            descricao: Nova descrição (opcional)
+            
+        Returns:
+            bool: True se o acréscimo foi atualizado com sucesso, False caso contrário
+        """
+        try:
+            import psycopg2
+            import os
+            
+            db_url = os.environ.get('DATABASE_URL')
+            if not db_url:
+                raise ValueError("DATABASE_URL não disponível no ambiente")
+                
+            conn = psycopg2.connect(db_url)
+            cursor = conn.cursor()
+            
+            # Construir a query de atualização dinamicamente
+            updates = []
+            params = []
+            
+            if valor is not None:
+                updates.append("valor = %s")
+                params.append(valor)
+            
+            if descricao is not None:
+                updates.append("descricao = %s")
+                params.append(descricao)
+            
+            if not updates:
+                return False
+            
+            params.append(acrescimo_id)
+            
+            query = f"UPDATE acrescimos_proposta SET {', '.join(updates)} WHERE id = %s"
+            cursor.execute(query, params)
+            
+            affected_rows = cursor.rowcount
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            if affected_rows > 0:
+                print(f"Acréscimo ID {acrescimo_id} atualizado com sucesso")
+                return True
+            else:
+                print(f"Nenhum acréscimo encontrado com ID {acrescimo_id}")
+                return False
+                
+        except Exception as e:
+            print(f"Erro ao atualizar acréscimo: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return False
         
     def remove_acrescimo_proposta(self, acrescimo_id):
         """
