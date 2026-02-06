@@ -52,8 +52,9 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
             # Adicionar acréscimos se existirem
             if acrescimos is not None and not acrescimos.empty:
                 for _, acrescimo in acrescimos.iterrows():
-                    # Pular acréscimos de assistentes
-                    if acrescimo.get('tipo', '').lower() == 'assistente':
+                    # Pular acréscimos de assistentes e fornecedores (fornecedores vão em relatório separado)
+                    tipo_acrescimo = acrescimo.get('tipo', '').lower()
+                    if tipo_acrescimo in ('assistente', 'fornecedor'):
                         continue
                     
                     # Obter descrição e valor
@@ -415,8 +416,8 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
                     print(f"DEBUG PDF: Encontrou produto nos acréscimos: {fornecedor} - R$ {valor:.2f}")
                     continue
                 
-                # Pular qualquer acréscimo de assistente, especialmente "andreia"
-                if tipo == 'assistente' or (fornecedor and fornecedor.lower() == 'andreia'):
+                # Pular acréscimos de assistentes e fornecedores (fornecedores vão em relatório separado)
+                if tipo in ('assistente', 'fornecedor') or (fornecedor and fornecedor.lower() == 'andreia'):
                     continue
                 
                 if tipo and fornecedor:

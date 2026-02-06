@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 import uuid
 import plotly.graph_objects as go
 from utils.database import Fornecedor
-from utils.propostas_helper import st_gerar_pdf_cliente, st_gerar_pdf_interno, gerar_pdf_proposta
+from utils.propostas_helper import st_gerar_pdf_cliente, st_gerar_pdf_interno, st_gerar_pdf_fornecedores, gerar_pdf_proposta
 
 
 def show():
@@ -2140,7 +2140,7 @@ def show():
                     if not proposta_relatorio.empty:
                         st.info(f"Proposta selecionada: #{proposta_numero} - {proposta_relatorio.iloc[0]['descricao']}")
 
-                        col1, col2 = st.columns(2)
+                        col1, col2, col3 = st.columns(3)
                         with col1:
                             if st.button("RELATÓRIO CLIENTE", key="gerar_relatorio_cliente", type="primary", use_container_width=True):
                                 try:
@@ -2156,6 +2156,14 @@ def show():
                                     st_gerar_pdf_interno(proposta_id)
                                 except Exception as e:
                                     st.error(f"Erro ao gerar relatório interno: {str(e)}")
+
+                        with col3:
+                            if st.button("RELATÓRIO FORNECEDORES", key="gerar_relatorio_fornecedores", type="primary", use_container_width=True):
+                                try:
+                                    proposta_id = propostas_filtradas[propostas_filtradas['numero'] == proposta_numero].iloc[0]['id']
+                                    st_gerar_pdf_fornecedores(proposta_id)
+                                except Exception as e:
+                                    st.error(f"Erro ao gerar relatório de fornecedores: {str(e)}")
 
                 # Adicionar funcionalidade para reabrir propostas
                 with st.expander("Reabrir Proposta Finalizada"):
