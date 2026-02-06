@@ -1178,11 +1178,9 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
                          type="secondary", 
                          use_container_width=True,
                          help="Clique para sair do sistema e retornar à tela de login"):
-        # Limpar o estado de autenticação
         st.session_state.authenticated = False
-        # Exibir mensagem
-        st.sidebar.success("Logout realizado com sucesso!")
-        # Removido st.rerun() - logout funciona sem reload
+        st.session_state.current_page = "Dashboard"
+        st.rerun()
 
     st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
