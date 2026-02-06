@@ -1232,6 +1232,65 @@ def show():
                                 # Mostrar valor total dos produtos
                                 valor_total_produtos = produtos_proposta['valor_total'].sum()
                                 st.info(f"Valor Total dos Produtos: R$ {valor_total_produtos:.2f}")
+                                
+                                # Botão para gerar PDF de venda dos produtos
+                                st.markdown("---")
+                                if st.button("📄 GERAR RELATÓRIO DE VENDA DOS PRODUTOS", type="primary", use_container_width=True, key=f"btn_pdf_produtos_proposta_{proposta_selecionada_id}"):
+                                    try:
+                                        from utils.pdf_generator_venda_fixed import gerar_pdf_venda
+                                        
+                                        # Obter nome do cliente da proposta
+                                        cliente_nome = proposta.get('cliente_nome', proposta.get('cliente', 'Cliente'))
+                                        
+                                        # Preparar dados no formato esperado pelo gerador de PDF
+                                        venda_dados = {
+                                            'id': proposta_selecionada_id,
+                                            'status': 'Proposta',
+                                            'forma_pagamento': 'N/A',
+                                            'valor_total': round(float(valor_total_produtos), 2),
+                                            'data_venda': datetime.now().strftime('%d/%m/%Y %H:%M'),
+                                            'observacoes': f"Produtos da Proposta #{proposta_selecionada_id}"
+                                        }
+                                        
+                                        cliente_dados = {'nome': cliente_nome}
+                                        
+                                        # Preparar itens no formato do PDF de vendas
+                                        itens_pdf = produtos_proposta.rename(columns={
+                                            'nome': 'produto_nome',
+                                            'valor_unit': 'preco_unitario'
+                                        })[['produto_nome', 'quantidade', 'preco_unitario']].copy()
+                                        
+                                        # Gerar nome do arquivo
+                                        import time as _t
+                                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                                        ts_unique = str(int(_t.time()))
+                                        cliente_limpo = cliente_nome.replace(' ', '_').replace('/', '_').lower()
+                                        filename = f"pdfs/Venda_Proposta_{proposta_selecionada_id}_{cliente_limpo}_{timestamp}_{ts_unique}.pdf"
+                                        
+                                        os.makedirs("pdfs", exist_ok=True)
+                                        
+                                        pdf_path = gerar_pdf_venda(venda_dados, cliente_dados, itens_pdf, filename)
+                                        
+                                        if pdf_path and os.path.exists(pdf_path):
+                                            with open(pdf_path, "rb") as pdf_file:
+                                                pdf_data = pdf_file.read()
+                                            
+                                            st.success("Relatório de venda dos produtos gerado com sucesso!")
+                                            
+                                            st.download_button(
+                                                label="📥 Baixar Relatório de Venda",
+                                                data=pdf_data,
+                                                file_name=f"Relatorio_Venda_Proposta_{proposta_selecionada_id}_{cliente_limpo}.pdf",
+                                                mime="application/pdf",
+                                                use_container_width=True,
+                                                key=f"download_pdf_venda_proposta_{proposta_selecionada_id}"
+                                            )
+                                        else:
+                                            st.error("Erro ao gerar arquivo PDF")
+                                    except Exception as e:
+                                        st.error(f"Erro ao gerar relatório: {str(e)}")
+                                        import traceback
+                                        st.error(traceback.format_exc())
                             else:
                                 st.info("Nenhum produto adicionado a esta proposta ainda.")
                         except Exception as e:
