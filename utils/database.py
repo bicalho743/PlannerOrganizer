@@ -15,24 +15,46 @@ if DATABASE_URL is None:
 
 # Ensure proper SSL configuration for PostgreSQL
 try:
-    # Importar NullPool para evitar caching de conexões
-    from sqlalchemy.pool import NullPool
+    from sqlalchemy.pool import QueuePool
+    import time as _time
     
-    # Criar engine sem pool para evitar caching de conexões
-    engine = create_engine(
-        DATABASE_URL,
-        connect_args={
+    _connect_args = {}
+    if 'postgresql' in DATABASE_URL:
+        _connect_args = {
             'sslmode': 'require',
-            'connect_timeout': 10
-        } if 'postgresql' in DATABASE_URL else {},
-        # Usar NullPool para desativar caching de conexões
-        poolclass=NullPool,
-        # Desativar mecanismos de caching para garantir acesso às colunas mais recentes
-        isolation_level='AUTOCOMMIT'
-    )
+            'connect_timeout': 30,
+            'keepalives': 1,
+            'keepalives_idle': 30,
+            'keepalives_interval': 10,
+            'keepalives_count': 5
+        }
     
-    # Forçar informar que estamos atualizando o esquema de metadados
-    print("Iniciando motor de banco com caching desativado para resolver problemas de esquema")
+    def _create_engine_with_retry(max_retries=3):
+        for attempt in range(max_retries):
+            try:
+                eng = create_engine(
+                    DATABASE_URL,
+                    connect_args=_connect_args,
+                    poolclass=QueuePool,
+                    pool_size=5,
+                    max_overflow=10,
+                    pool_timeout=30,
+                    pool_recycle=300,
+                    pool_pre_ping=True,
+                    isolation_level='AUTOCOMMIT'
+                )
+                with eng.connect() as conn:
+                    conn.execute(text("SELECT 1"))
+                print("Iniciando motor de banco com conexão estável e pool_pre_ping ativo")
+                return eng
+            except Exception as e:
+                print(f"Tentativa {attempt + 1}/{max_retries} de conexão falhou: {str(e)}")
+                if attempt < max_retries - 1:
+                    _time.sleep(2 * (attempt + 1))
+                else:
+                    raise
+    
+    engine = _create_engine_with_retry()
 except Exception as e:
     print(f"Error creating database engine: {str(e)}")
     raise
