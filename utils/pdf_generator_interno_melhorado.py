@@ -355,12 +355,12 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
         
         # Desenhar tabela de receita líquida
         c.setFillColor(azul_claro)
-        c.rect(width/2 - 150, y - 140, 300, 130, fill=True, stroke=0)
+        c.rect(width/2 - 150, y - 160, 300, 150, fill=True, stroke=0)
         
         # Borda da tabela
         c.setStrokeColor(azul_escuro)
         c.setLineWidth(0.5)
-        c.rect(width/2 - 150, y - 140, 300, 130, fill=False, stroke=1)
+        c.rect(width/2 - 150, y - 160, 300, 150, fill=False, stroke=1)
         
         # Cabeçalhos
         c.setFillColor(azul_escuro)
@@ -378,12 +378,13 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
         valor_comissao_real = total_comissoes
         
         # Calcular o ganho líquido com o valor real de comissão
-        meu_ganho_real = valor_base + valor_comissao_real + lucro_produtos_total - custos_assistentes
+        meu_ganho_real = valor_base + valor_comissao_real + lucro_produtos_total + total_outros - custos_assistentes
         
         rows = [
             ["Personal Organizer", f"R$ {valor_base:.2f}"],
             ["Comissões", f"R$ {valor_comissao_real:.2f}"],
             ["Lucro em Produtos", f"R$ {lucro_produtos_total:.2f}"],
+            ["Outros", f"R$ {total_outros:.2f}"],
             ["Pagamento Assistentes", f"R$ -{custos_assistentes:.2f}"],
             ["RECEITA LÍQUIDA TOTAL", f"R$ {meu_ganho_real:.2f}"]
         ]
