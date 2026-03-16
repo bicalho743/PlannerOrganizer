@@ -218,40 +218,34 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
                         print(f"DEBUG PDF: Definindo comissão direta para {fornecedor_nome}: 5%")
                     else:
                         try:
-                            # Consultar diretamente o banco de dados via SQL
                             import psycopg2
+                            import streamlit as st
                             
-                            # Obter conexão do ambiente
                             db_url = os.environ.get("DATABASE_URL")
                             conn = psycopg2.connect(db_url)
                             cursor = conn.cursor()
                             
-                            # Buscar o ID do usuário atual
-                            import streamlit as st
-                            usuario_id = None
-                            if 'usuario' in st.session_state and st.session_state.usuario and 'id' in st.session_state.usuario:
-                                usuario_id = st.session_state.usuario['id']
-                            elif 'user' in st.session_state and st.session_state.user and 'uid' in st.session_state.user:
-                                # Obter o ID do usuário Firebase
-                                firebase_uid = st.session_state.user['uid']
-                                # Buscar o ID interno correspondente
-                                cursor.execute("SELECT id FROM usuarios WHERE firebase_uid = %s", (firebase_uid,))
-                                user_result = cursor.fetchone()
-                                if user_result:
-                                    usuario_id = user_result[0]
+                            # Usar usuario_id direto da sessão (Firebase UID)
+                            usuario_id = st.session_state.get('usuario_id') or (
+                                st.session_state.user.get('localId') if st.session_state.get('user') else None
+                            )
                             
-                            if usuario_id:
-                                # Buscar percentual de comissão do fornecedor (coluna é 'descricao', não 'nome')
-                                cursor.execute(
-                                    "SELECT percentual_comissao FROM fornecedores WHERE LOWER(descricao) = %s AND (usuario_id = %s OR usuario_id IS NULL)",
-                                    (fornecedor_nome, usuario_id)
-                                )
-                                forn_result = cursor.fetchone()
-                                if forn_result and forn_result[0] is not None:
-                                    percentual_comissao = float(forn_result[0])
-                                    print(f"DEBUG PDF: Encontrado percentual de comissão para fornecedor {fornecedor_nome}: {percentual_comissao}%")
+                            # Buscar por nome do fornecedor; aceita tanto registros do usuário quanto sem dono
+                            cursor.execute(
+                                """SELECT percentual_comissao FROM fornecedores
+                                   WHERE LOWER(descricao) = %s
+                                   AND (usuario_id = %s OR usuario_id IS NULL)
+                                   AND percentual_comissao IS NOT NULL
+                                   AND percentual_comissao > 0
+                                   ORDER BY CASE WHEN usuario_id = %s THEN 0 ELSE 1 END
+                                   LIMIT 1""",
+                                (fornecedor_nome, usuario_id, usuario_id)
+                            )
+                            forn_result = cursor.fetchone()
+                            if forn_result and forn_result[0] is not None:
+                                percentual_comissao = float(forn_result[0])
+                                print(f"DEBUG PDF: Encontrado percentual de comissão para fornecedor {fornecedor_nome}: {percentual_comissao}%")
                             
-                            # Fechar a conexão
                             cursor.close()
                             conn.close()
                         except Exception as e:
