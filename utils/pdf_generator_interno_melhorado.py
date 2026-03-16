@@ -241,9 +241,9 @@ def gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename):
                                     usuario_id = user_result[0]
                             
                             if usuario_id:
-                                # Buscar percentual de comissão do fornecedor
+                                # Buscar percentual de comissão do fornecedor (coluna é 'descricao', não 'nome')
                                 cursor.execute(
-                                    "SELECT percentual_comissao FROM fornecedores WHERE LOWER(nome) = %s AND (usuario_id = %s OR usuario_id IS NULL)",
+                                    "SELECT percentual_comissao FROM fornecedores WHERE LOWER(descricao) = %s AND (usuario_id = %s OR usuario_id IS NULL)",
                                     (fornecedor_nome, usuario_id)
                                 )
                                 forn_result = cursor.fetchone()
