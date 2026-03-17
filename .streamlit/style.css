@@ -40,9 +40,29 @@ header[data-testid="stHeader"] {
 
 /* Ajuste do container principal */
 .block-container {
-    padding-top: 80px !important;
+    padding-top: 68px !important;
     max-width: 100% !important;
     overflow-x: hidden !important;
+}
+
+/* Zerar padding interno do Streamlit no container principal */
+[data-testid="stMain"],
+[data-testid="stAppViewContainer"],
+[data-testid="stAppViewBlockContainer"] {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+[data-testid="stMainBlockContainer"],
+[data-testid="stAppViewBlockContainer"] {
+    padding-top: 68px !important;
+    margin-top: 0 !important;
+}
+
+/* Zerando padding do primeiro elemento filho direto */
+.main > div:first-child {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
 }
 
 /* Garantir que o conteúdo não ultrapasse os limites */
