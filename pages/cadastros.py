@@ -102,10 +102,9 @@ def show():
                     tab_view, tab_multi_delete = st.tabs(["Visualizar/Editar", "Excluir Múltiplos"])
                     
                     with tab_view:
-                        # Exibir tabela editável
-                        edited_df = st.data_editor(
+                        # Exibir tabela com ordenação por clique no cabeçalho
+                        st.dataframe(
                             df_display,
-                            num_rows="dynamic",
                             use_container_width=True,
                             hide_index=True
                         )
@@ -303,30 +302,6 @@ def show():
                                     if resultados["sucesso"]:
                                         st.rerun()
 
-                    # Verificar mudanças na edição
-                    if edited_df is not None and not edited_df.equals(df_display):
-                        for index, row in edited_df.iterrows():
-                            original_row = df_display.iloc[index]
-                            if not row.equals(original_row):
-                                try:
-                                    cliente_id = int(row['ID'])
-                                    update_data = {
-                                        'nome': row['Nome'],
-                                        'telefone': row['Telefone'],
-                                        'cpf': row['CPF'],
-                                        'estado': row['Estado'],
-                                        'cidade': row['Cidade'],
-                                        'bairro': row['Bairro'],
-                                        'endereco': row['Endereço'],
-                                        'data_aniversario': row['Data Aniversário'],
-                                        'origem_cliente': row['Origem'],
-                                        'observacoes': row['Observações']
-                                    }
-                                    st.session_state.db.update_cliente(cliente_id, **update_data)
-                                    st.success(f"Cliente {cliente_id} atualizado com sucesso!")
-                                    st.session_state['update_clientes'] = True
-                                except Exception as e:
-                                    st.error(f"Erro ao atualizar cliente {cliente_id}: {str(e)}")
                 else:
                     st.info("Nenhum cliente cadastrado.")
 
@@ -454,10 +429,9 @@ def show():
                     df_display = registros[colunas].copy()
                     df_display.columns = [rename[col] for col in colunas]
 
-                    # Exibir tabela editável
-                    edited_df = st.data_editor(
+                    # Exibir tabela com ordenação por clique no cabeçalho
+                    st.dataframe(
                         df_display,
-                        num_rows="dynamic",
                         use_container_width=True,
                         hide_index=True
                     )
@@ -496,28 +470,6 @@ def show():
                                 except Exception as e:
                                     st.error(f"Erro ao excluir fornecedor: {str(e)}")
 
-                    # Verificar mudanças na edição
-                    if edited_df is not None and not edited_df.equals(df_display):
-                        for index, row in edited_df.iterrows():
-                            original_row = df_display.iloc[index]
-                            if not row.equals(original_row):
-                                try:
-                                    fornecedor_id = int(row['ID'])
-                                    update_data = {
-                                        'descricao': row['Nome/Razão Social'],
-                                        'contato': row['Contato'],
-                                        'categoria': row['Categoria'],
-                                        'endereco': row['Endereço'],
-                                        'pix': row['PIX'],
-                                        'recorrente': row['Recorrente'],
-                                        'percentual_comissao': row['% Comissão'],
-                                        'observacoes': row['Observações']
-                                    }
-                                    st.session_state.db.update_fornecedor(fornecedor_id, **update_data)
-                                    st.success(f"Fornecedor {fornecedor_id} atualizado com sucesso!")
-                                    st.session_state['update_fornecedores'] = True
-                                except Exception as e:
-                                    st.error(f"Erro ao atualizar fornecedor {fornecedor_id}: {str(e)}")
                 else:
                     st.info("Nenhum fornecedor cadastrado.")
 
@@ -680,10 +632,9 @@ def show():
                     df_display = registros[colunas].copy()
                     df_display.columns = [rename[col] for col in colunas]
 
-                    # Exibir tabela editável
-                    edited_df = st.data_editor(
+                    # Exibir tabela com ordenação por clique no cabeçalho
+                    st.dataframe(
                         df_display,
-                        num_rows="dynamic",
                         use_container_width=True,
                         hide_index=True
                     )
@@ -722,26 +673,6 @@ def show():
                                 except Exception as e:
                                     st.error(f"Erro ao excluir parceiro: {str(e)}")
 
-                    # Verificar mudanças na edição
-                    if edited_df is not None and not edited_df.equals(df_display):
-                        for index, row in edited_df.iterrows():
-                            original_row = df_display.iloc[index]
-                            if not row.equals(original_row):
-                                try:
-                                    parceiro_id = int(row['ID'])
-                                    update_data = {
-                                        'nome': row['Nome'],
-                                        'telefone': row['Telefone'],
-                                        'area_atuacao': row['Área de Atuação'],
-                                        'tipo_parceria': row['Tipo de Parceria'],
-                                        'pix': row['PIX'],
-                                        'observacoes': row['Observações']
-                                    }
-                                    st.session_state.db.update_parceiro(parceiro_id, **update_data)
-                                    st.success(f"Parceiro {parceiro_id} atualizado com sucesso!")
-                                    st.session_state['update_parceiros'] = True
-                                except Exception as e:
-                                    st.error(f"Erro ao atualizar parceiro {parceiro_id}: {str(e)}")
                 else:
                     st.info("Nenhum parceiro cadastrado.")
 
@@ -882,10 +813,9 @@ def show():
                     # Renomear colunas para exibição
                     df_display.columns = [rename[col] for col in colunas]
 
-                    # Exibir tabela editável
-                    edited_df = st.data_editor(
+                    # Exibir tabela com ordenação por clique no cabeçalho
+                    st.dataframe(
                         df_display,
-                        num_rows="dynamic",
                         use_container_width=True,
                         hide_index=True
                     )
@@ -924,25 +854,6 @@ def show():
                                 except Exception as e:
                                     st.error(f"Erro ao excluir assistente: {str(e)}")
 
-                    # Verificar mudanças na edição
-                    if edited_df is not None and not edited_df.equals(df_display):
-                        for index, row in edited_df.iterrows():
-                            original_row = df_display.iloc[index]
-                            if not row.equals(original_row):
-                                try:
-                                    assistente_id = int(row['ID'])
-                                    update_data = {
-                                        'nome': row['Nome'],
-                                        'telefone': row['Telefone'],
-                                        'endereco': row['Endereço'],
-                                        'pix': row['PIX'],
-                                        'observacoes': row['Observações']
-                                    }
-                                    st.session_state.db.update_assistente(assistente_id, **update_data)
-                                    st.success(f"Assistente {assistente_id} atualizado com sucesso!")
-                                    st.session_state['update_assistentes'] = True
-                                except Exception as e:
-                                    st.error(f"Erro ao atualizar assistente {assistente_id}: {str(e)}")
                 else:
                     st.info(f"Nenhum assistente cadastrado.")
 
