@@ -65,23 +65,12 @@ def show():
             # Lista de clientes
             st.subheader("Lista de Clientes")
             try:
-                @st.cache_data(ttl=60)
-                def load_clientes():
-                    return st.session_state.db.get_clientes()
-                
                 # Botão para forçar atualização da lista
                 if st.button("🔄 Atualizar Lista", help="Clique para recarregar a lista de clientes"):
-                    load_clientes.clear()
-                    st.session_state['update_clientes'] = True
                     st.rerun()
 
-                if 'update_clientes' in st.session_state and st.session_state['update_clientes']:
-                    st.session_state['clientes'] = load_clientes()
-                    st.session_state['update_clientes'] = False
-                elif 'clientes' not in st.session_state:
-                    st.session_state['clientes'] = load_clientes()
-
-                registros = st.session_state['clientes']
+                # Sempre busca dados frescos do banco (sem cache)
+                registros = st.session_state.db.get_clientes()
                 
                 # Ordenar clientes alfabeticamente por nome
                 if not registros.empty:
@@ -257,14 +246,8 @@ def show():
                     with tab_multi_delete:
                         st.write("Selecione os clientes que deseja excluir:")
                         
-                        # Garantir que estamos trabalhando com os dados mais recentes
-                        # Forçar uma atualização da lista de clientes antes de mostrar opções de exclusão
-                        if not 'forcar_atualizacao_clientes' in st.session_state:
-                            st.session_state['clientes'] = st.session_state.db.get_clientes()
-                            st.session_state['forcar_atualizacao_clientes'] = True
-                        
-                        # Criar DataFrame para seleção com os dados mais atualizados
-                        clientes_atuais = st.session_state['clientes']
+                        # Sempre busca dados frescos do banco
+                        clientes_atuais = st.session_state.db.get_clientes()
                         
                         if clientes_atuais.empty:
                             st.info("Nenhum cliente disponível para exclusão.")
@@ -317,10 +300,7 @@ def show():
                                         for erro in resultados["erro"]:
                                             st.warning(f"❌ Cliente {erro['nome']} (ID: {erro['id']}): {erro['mensagem']}")
                                     
-                                    # Atualizar lista de clientes e forçar nova leitura na próxima execução
                                     if resultados["sucesso"]:
-                                        st.session_state['update_clientes'] = True
-                                        st.session_state.pop('forcar_atualizacao_clientes', None)
                                         st.rerun()
 
                     # Verificar mudanças na edição
