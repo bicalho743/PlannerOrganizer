@@ -2190,7 +2190,22 @@ class Database:
             return True
             
         return self._safe_query(query)
-        
+
+    def delete_fornecedor(self, fornecedor_id):
+        """
+        Exclui um fornecedor pelo ID, apenas se pertencer ao usuário logado.
+        """
+        def query():
+            fornecedor = self.session.query(Fornecedor).filter(
+                Fornecedor.id == fornecedor_id,
+                Fornecedor.usuario_id == self.usuario_id
+            ).first()
+            if not fornecedor:
+                raise ValueError(f"Fornecedor com ID {fornecedor_id} não encontrado ou sem permissão.")
+            self.session.delete(fornecedor)
+            return True
+        return self._safe_query(query)
+
     def update_parceiro(self, parceiro_id, nome=None, telefone=None, area_atuacao=None, 
                        tipo_parceria=None, estado=None, cidade=None, bairro=None, 
                        endereco=None, pix=None, observacoes=None):
