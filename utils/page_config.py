@@ -190,8 +190,9 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         elif hasattr(st.session_state.usuario, "nome"):
             nome_usuario = st.session_state.usuario.nome
 
-    from datetime import datetime
-    data_atual = datetime.now()
+    from datetime import datetime, timezone, timedelta
+    fuso_brasilia = timezone(timedelta(hours=-3))
+    data_atual = datetime.now(fuso_brasilia)
     meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
     data_formatada = f"{data_atual.day} de {meses[data_atual.month-1]} de {data_atual.year}"
 
