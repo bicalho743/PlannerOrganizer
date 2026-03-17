@@ -227,17 +227,23 @@ def apply_page_footer():
     footer_css = """
     <style>
     .footer-container {
-        position: fixed; bottom: 0; left: 0; right: 0;
-        background-color: #1E1F36; color: white;
+        position: fixed; bottom: 0; left: 280px; right: 0;
+        background: linear-gradient(135deg, #1E1F36 0%, #2E4A99 100%);
+        color: white;
         padding: 12px 20px; text-align: center;
-        font-size: 13px; z-index: 1000;
+        font-size: 13px; z-index: 999;
         box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
     }
+    @media screen and (max-width: 768px) {
+        .footer-container {
+            left: 0;
+        }
+    }
     .footer-container a {
-        color: #4A90E2; text-decoration: none; margin: 0 5px;
+        color: #7AB8FF; text-decoration: none; margin: 0 5px;
     }
     .footer-container a:hover {
-        color: #7AB8FF; text-decoration: underline;
+        color: #ffffff; text-decoration: underline;
     }
     .main .block-container { padding-bottom: 50px !important; margin-bottom: 0px !important; }
     [data-testid="stAppViewContainer"] .main { margin-bottom: 0px !important; }
