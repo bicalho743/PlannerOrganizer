@@ -644,24 +644,28 @@ def show():
                         from sqlalchemy import text
                         vids = vp["id"].tolist()
                         if vids:
-                            q = text("""
-                                SELECT p.nome, SUM(iv.quantidade) as qtd,
-                                       SUM(iv.quantidade * iv.preco_unitario) as receita,
-                                       AVG(iv.preco_unitario) as preco_medio
+                            placeholders = ",".join(str(v) for v in vids)
+                            q = text(f"""
+                                SELECT
+                                    COALESCE(p.nome, iv.descricao, 'Produto') AS nome,
+                                    SUM(iv.quantidade)                        AS qtd,
+                                    SUM(iv.quantidade * iv.preco_unitario)    AS receita,
+                                    AVG(iv.preco_unitario)                    AS preco_medio
                                 FROM itens_venda iv
-                                JOIN produtos p ON iv.produto_id = p.id
-                                JOIN vendas v ON iv.venda_id = v.id
-                                WHERE iv.venda_id = ANY(:vids) AND v.usuario_id = :uid
-                                GROUP BY p.id, p.nome ORDER BY qtd DESC LIMIT 10
+                                LEFT JOIN produtos p ON iv.produto_id = p.id
+                                WHERE iv.venda_id IN ({placeholders})
+                                GROUP BY COALESCE(p.nome, iv.descricao, 'Produto')
+                                ORDER BY qtd DESC
+                                LIMIT 15
                             """)
-                            res = st.session_state.db.session.execute(q, {"vids": vids, "uid": st.session_state.usuario_id})
+                            res = st.session_state.db.session.execute(q)
                             top = pd.DataFrame(res.fetchall(), columns=["Produto", "Qtd", "Receita", "Preço Médio"])
                             if not top.empty:
-                                top["Receita"] = top["Receita"].apply(lambda x: f"R$ {x:.2f}")
-                                top["Preço Médio"] = top["Preço Médio"].apply(lambda x: f"R$ {x:.2f}")
+                                top["Receita"] = top["Receita"].apply(lambda x: f"R$ {x:,.2f}".replace(",","X").replace(".",",").replace("X","."))
+                                top["Preço Médio"] = top["Preço Médio"].apply(lambda x: f"R$ {x:,.2f}".replace(",","X").replace(".",",").replace("X","."))
                                 st.dataframe(top, use_container_width=True, hide_index=True)
                             else:
-                                st.info("Sem dados de produtos para o período.")
+                                st.info("Sem itens de venda encontrados no período.")
                     except Exception as e:
                         st.warning(f"Não foi possível carregar top produtos: {str(e)}")
         except Exception as e:
