@@ -229,7 +229,7 @@ def apply_page_footer():
     <style>
     .footer-container {
         position: fixed; bottom: 0; left: 280px; right: 0;
-        background: linear-gradient(135deg, #1E1F36 0%, #2E4A99 100%);
+        background-color: #1E2547;
         color: white;
         padding: 12px 20px; text-align: center;
         font-size: 13px; z-index: 999;
