@@ -471,14 +471,17 @@ def show():
         return
 
     # Separar por status
-    def _col_vendas(status_val):
+    # "Confirmada" é equivalente a "Concluída" (status legado de versões anteriores)
+    def _col_vendas(status_vals):
         if vendas_df.empty:
             return pd.DataFrame()
-        return vendas_df[vendas_df["status"] == status_val].copy()
+        if isinstance(status_vals, str):
+            status_vals = [status_vals]
+        return vendas_df[vendas_df["status"].isin(status_vals)].copy()
 
-    vendas_concluidas = _col_vendas("Concluída")
-    vendas_pendentes  = _col_vendas("Pendente")
-    vendas_canceladas = _col_vendas("Cancelada")
+    vendas_concluidas = _col_vendas(["Concluída", "Confirmada"])
+    vendas_pendentes  = _col_vendas(["Pendente", "Em aberto"])
+    vendas_canceladas = _col_vendas(["Cancelada"])
 
     col_concluida, col_pendente, col_cancelada = st.columns(3)
 
@@ -661,11 +664,13 @@ def show():
                             res = st.session_state.db.session.execute(q)
                             top = pd.DataFrame(res.fetchall(), columns=["Produto", "Qtd", "Receita", "Preço Médio"])
                             if not top.empty:
+                                top["Qtd"] = top["Qtd"].astype(int)
                                 top["Receita"] = top["Receita"].apply(lambda x: f"R$ {x:,.2f}".replace(",","X").replace(".",",").replace("X","."))
                                 top["Preço Médio"] = top["Preço Médio"].apply(lambda x: f"R$ {x:,.2f}".replace(",","X").replace(".",",").replace("X","."))
                                 st.dataframe(top, use_container_width=True, hide_index=True)
                             else:
-                                st.info("Sem itens de venda encontrados no período.")
+                                st.info("Estas vendas não possuem itens detalhados cadastrados. "
+                                        "Novas vendas criadas pelo sistema já registram os produtos automaticamente.")
                     except Exception as e:
                         st.warning(f"Não foi possível carregar top produtos: {str(e)}")
         except Exception as e:
