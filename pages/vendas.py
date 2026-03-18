@@ -896,20 +896,9 @@ def show():
                                     if venda.get('observacoes'):
                                         st.write(f"**Observações:** {venda['observacoes']}")
                                 
-                                # Botões de ação para cada venda
-                                col_btn1, col_btn2, col_btn3 = st.columns(3)
-                                
-                                with col_btn1:
-                                    if st.button("📄 Ver Detalhes", key=f"detalhes_{venda['id']}", use_container_width=True):
-                                        st.session_state[f'mostrar_detalhes_{venda["id"]}'] = True
-                                        st.rerun()
-                                
-                                with col_btn2:
-                                    if st.button("📋 Gerar PDF", key=f"pdf_{venda['id']}", use_container_width=True):
-                                        # Implementação rápida de PDF
-                                        st.info("Gerando PDF...")
-                                
-                                with col_btn3:
+                                # Botão de exclusão (detalhes e PDF disponíveis no seletor acima)
+                                _, col_excluir = st.columns([3, 1])
+                                with col_excluir:
                                     if st.button("🗑️ Excluir", key=f"excluir_{venda['id']}", use_container_width=True):
                                         st.session_state[f'confirmar_exclusao_venda_{venda["id"]}'] = True
                                         st.rerun()
