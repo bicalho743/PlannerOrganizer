@@ -859,9 +859,9 @@ def show():
                 )
             with f3:
                 hoje = datetime.now().date()
-                data_inicio = st.date_input("De", value=hoje.replace(day=1), key="historico_data_inicio")
+                data_inicio = st.date_input("De", value=hoje.replace(day=1), key="historico_data_inicio", format="DD/MM/YYYY")
             with f4:
-                data_fim = st.date_input("Até", value=hoje, key="historico_data_fim")
+                data_fim = st.date_input("Até", value=hoje, key="historico_data_fim", format="DD/MM/YYYY")
             st.markdown('</div>', unsafe_allow_html=True)
 
             # Aplicar filtros
