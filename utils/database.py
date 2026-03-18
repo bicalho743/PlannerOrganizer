@@ -6782,30 +6782,28 @@ class Database:
     def _check_post_organization_completion(self, post_organization_id):
         """
         Verifica se todas as ações obrigatórias estão concluídas e marca a pós-organização como CONCLUIDO.
-        Ações obrigatórias: AGRADECIMENTO, MANUTENCAO, FOLLOW_UP, FEEDBACK
+        Ações obrigatórias: agradecimento, acompanhamento, ajuste_fino, feedback, continuidade
         """
         try:
-            # Buscar ações obrigatórias
-            acoes_obrigatorias = ['AGRADECIMENTO', 'MANUTENCAO', 'FOLLOW_UP', 'FEEDBACK']
-            
+            acoes_obrigatorias = ['agradecimento', 'acompanhamento', 'ajuste_fino', 'feedback', 'continuidade']
+
             acoes = self.session.query(PostOrganizationAction).filter(
                 PostOrganizationAction.post_organization_id == post_organization_id,
                 PostOrganizationAction.action_type.in_(acoes_obrigatorias)
             ).all()
-            
-            # Verificar se todas estão com status FEITO
+
             todas_feitas = all(a.status == 'FEITO' for a in acoes)
-            
-            if todas_feitas and len(acoes) == len(acoes_obrigatorias):
+
+            if todas_feitas and len(acoes) > 0:
                 post_org = self.session.query(PostOrganization).filter(
                     PostOrganization.id == post_organization_id
                 ).first()
-                
+
                 if post_org:
                     post_org.status = 'CONCLUIDO'
                     self.session.commit()
                     print(f"Pós-organização {post_organization_id} marcada como CONCLUIDA")
-                    
+
         except Exception as e:
             print(f"Erro ao verificar conclusão: {str(e)}")
     
@@ -6825,7 +6823,7 @@ class Database:
             try:
                 action = PostOrganizationAction(
                     post_organization_id=post_organization_id,
-                    action_type='RETORNO_TECNICO',
+                    action_type='retorno_tecnico',
                     due_date=due_date,
                     status='PENDENTE',
                     usuario_id=self.usuario_id
@@ -6863,7 +6861,7 @@ class Database:
                     PostOrganization.usuario_id == self.usuario_id,
                     PostOrganizationAction.status == 'PENDENTE',
                     PostOrganizationAction.due_date <= limite,
-                    PostOrganizationAction.action_type.in_(['AGRADECIMENTO', 'MANUTENCAO', 'FOLLOW_UP', 'RETORNO_TECNICO'])
+                    PostOrganizationAction.action_type.in_(['agradecimento', 'acompanhamento', 'ajuste_fino', 'retorno_tecnico'])
                 ).order_by(PostOrganizationAction.due_date).all()
                 
                 df_data = []
@@ -6894,5 +6892,22 @@ class Database:
             except Exception as e:
                 print(f"Erro ao buscar ações pendentes: {str(e)}")
                 return pd.DataFrame()
-        
+
         return self._safe_query(query)
+
+    def get_post_org_templates(self):
+        """
+        Retorna todos os templates de mensagem de pós-organização.
+
+        Returns:
+            dict: {etapa: {nome, dias_apos, emoji, texto}} ou {} se erro
+        """
+        def query():
+            try:
+                templates = self.session.query(PostOrgTemplate).order_by(PostOrgTemplate.dias_apos).all()
+                return {t.etapa: {'nome': t.nome, 'dias_apos': t.dias_apos, 'emoji': t.emoji or '', 'texto': t.texto} for t in templates}
+            except Exception as e:
+                print(f"Erro ao buscar templates: {str(e)}")
+                return {}
+
+        return self._safe_query(query) or {}

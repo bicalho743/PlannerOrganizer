@@ -6,6 +6,16 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
 
+# Templates de fallback caso o banco não retorne
+TEMPLATES_FALLBACK = {
+    'agradecimento':  {'nome': 'Agradecimento',  'dias_apos': 1,  'emoji': '🙏', 'texto': 'Foi um prazer enorme participar desse momento da sua casa, {nome}. Fico feliz que tudo tenha ficado exatamente como você merecia. Qualquer coisa que precisar, estou por aqui. 🤍'},
+    'acompanhamento': {'nome': 'Acompanhamento', 'dias_apos': 7,  'emoji': '📞', 'texto': 'Oi, {nome}! Passando pra saber como você está se sentindo na sua casa depois da organização. Tudo funcionando bem pra você? 😊'},
+    'ajuste_fino':    {'nome': 'Ajuste fino',    'dias_apos': 30, 'emoji': '🔧', 'texto': 'Oi, {nome}! Depois de algumas semanas usando o espaço, é natural surgirem pequenos ajustes. Se quiser, posso dar uma olhada com você — às vezes é só um detalhe que muda tudo. 🏡'},
+    'feedback':       {'nome': 'Feedback',        'dias_apos': 45, 'emoji': '💬', 'texto': 'Oi, {nome}! Sua opinião é muito importante pra mim. O que você sentiu de diferença no seu dia a dia depois da organização? Fico feliz em ouvir — mesmo o que ainda pode melhorar. 💬'},
+    'continuidade':   {'nome': 'Continuidade',    'dias_apos': 60, 'emoji': '🤝', 'texto': 'Oi, {nome}! Muitas clientes gostam de manter esse cuidado com a casa de forma contínua — um acompanhamento periódico pra garantir que tudo siga funcionando bem. Se fizer sentido pra você, posso te contar como funciona. 🤝'},
+    'retorno_tecnico':{'nome': 'Retorno Técnico', 'dias_apos': 0,  'emoji': '🔄', 'texto': 'Oi, {nome}! Conforme combinamos, estou passando para agendar nosso retorno técnico. Quando seria um bom momento para você? 🗓️'},
+}
+
 
 def formatar_data_br(data):
     try:
@@ -18,16 +28,14 @@ def formatar_data_br(data):
         return str(data) if data else "N/A"
 
 
-def traduzir_tipo_acao(action_type):
-    traducoes = {
-        'AGRADECIMENTO': '🙏 Agradecimento',
-        'MANUTENCAO': '🔧 Manutenção',
-        'FOLLOW_UP': '📞 Follow-up',
-        'FEEDBACK': '⭐ Feedback',
-        'OPORTUNIDADE': '💡 Oportunidade',
-        'RETORNO_TECNICO': '🔄 Retorno Técnico'
-    }
-    return traducoes.get(action_type, action_type)
+def get_template(templates, action_type):
+    """Retorna info do template para o tipo de ação."""
+    t = templates.get(action_type) or TEMPLATES_FALLBACK.get(action_type, {})
+    return (
+        t.get('emoji', '📌'),
+        t.get('nome', action_type.replace('_', ' ').title()),
+        t.get('texto', '')
+    )
 
 
 CSS = """
@@ -56,33 +64,53 @@ CSS = """
     font-size: 0.72rem;
     font-weight: 700;
 }
-.po-badge-ativo    { background: #dcfce7; color: #166534; }
-.po-badge-concluido{ background: #e0e7ff; color: #3730a3; }
+.po-badge-ativo     { background: #dcfce7; color: #166534; }
+.po-badge-concluido { background: #e0e7ff; color: #3730a3; }
 .po-proxima { font-size: 0.8rem; color: #475569; margin: 4px 0 0 0; }
-.po-proxima strong { color: #1E2547; }
+.po-proxima strong  { color: #1E2547; }
 
-.po-acao-card {
+/* Ação card */
+.po-acao-wrap {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-bottom: 8px;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
 }
-.po-acao-card-feito    { background: #f0fdf4; border-color: #bbf7d0; }
-.po-acao-card-cancelado{ background: #fafafa; border-color: #e5e7eb; opacity: 0.65; }
-.po-acao-title { font-weight: 700; font-size: 0.88rem; color: #1a202c; margin: 0 0 3px 0; }
-.po-acao-meta  { font-size: 0.75rem; color: #64748b; margin: 0; }
-.po-status-pill {
+.po-acao-wrap-feito    { background: #f0fdf4; border-color: #bbf7d0; }
+.po-acao-wrap-cancelado{ background: #fafafa; border-color: #e5e7eb; opacity: 0.6; }
+.po-acao-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+.po-acao-title { font-weight: 700; font-size: 0.9rem; color: #1a202c; margin: 0; }
+.po-acao-date  { font-size: 0.75rem; color: #64748b; margin: 0 0 8px 0; }
+.po-pill {
     display: inline-block;
-    padding: 2px 8px;
+    padding: 1px 8px;
     border-radius: 12px;
     font-size: 0.68rem;
     font-weight: 700;
 }
-.po-pill-pendente { background: #fef3c7; color: #92400e; }
-.po-pill-feito    { background: #dcfce7; color: #166534; }
-.po-pill-cancelado{ background: #f3f4f6; color: #6b7280; }
+.po-pill-pendente  { background: #fef3c7; color: #92400e; }
+.po-pill-feito     { background: #dcfce7; color: #166534; }
+.po-pill-cancelado { background: #f3f4f6; color: #6b7280; }
 
+.po-msg-box {
+    background: #f1f5f9;
+    border-left: 3px solid #94a3b8;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    color: #334155;
+    font-style: italic;
+    margin: 8px 0 4px 0;
+    line-height: 1.5;
+}
+
+/* Header detalhe */
 .po-detalhe-header {
     background: linear-gradient(135deg, #1E2547 0%, #2E4A99 100%);
     color: white;
@@ -92,6 +120,20 @@ CSS = """
 }
 .po-detalhe-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; }
 .po-detalhe-header p  { margin: 4px 0 0 0; font-size: 0.82rem; opacity: 0.85; }
+
+/* Linha de progresso */
+.po-progress-bar {
+    background: #e2e8f0;
+    border-radius: 99px;
+    height: 6px;
+    margin: 8px 0 4px 0;
+    overflow: hidden;
+}
+.po-progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #1E2547, #2E4A99);
+}
 </style>
 """
 
@@ -110,10 +152,9 @@ def _abrir_detalhes(row):
     st.session_state.pos_view = 'detalhes'
 
 
-def _view_lista():
-    # Cabeçalho + filtro
-    h1, h2 = st.columns([4, 1])
-    with h1:
+def _view_lista(templates):
+    f1, f2 = st.columns([4, 1])
+    with f1:
         filtro_status = st.selectbox(
             "Status:",
             options=["Todos", "ATIVO", "CONCLUIDO"],
@@ -121,7 +162,7 @@ def _view_lista():
             key="filtro_status_pos",
             label_visibility="collapsed"
         )
-    with h2:
+    with f2:
         if st.button("🔄 Atualizar", key="btn_refresh_pos", use_container_width=True):
             st.rerun()
 
@@ -139,7 +180,8 @@ def _view_lista():
         badge_txt = "Concluído" if is_concluido else "Ativo"
 
         if row['proxima_acao']:
-            proxima = f"{traduzir_tipo_acao(row['proxima_acao'])} &nbsp;·&nbsp; 📅 {formatar_data_br(row['proxima_acao_data'])}"
+            emoji, nome_acao, _ = get_template(templates, row['proxima_acao'])
+            proxima = f"{emoji} {nome_acao} &nbsp;·&nbsp; 📅 {formatar_data_br(row['proxima_acao_data'])}"
         else:
             proxima = "✅ Todas as ações concluídas"
 
@@ -159,12 +201,12 @@ def _view_lista():
             """, unsafe_allow_html=True)
         with col_btn:
             st.markdown("<div style='margin-top:10px'></div>", unsafe_allow_html=True)
-            if st.button("🔍 Detalhes", key=f"btn_det_{row['id']}", use_container_width=True):
+            if st.button("🔍 Ver", key=f"btn_det_{row['id']}", use_container_width=True):
                 _abrir_detalhes(row)
                 st.rerun()
 
 
-def _view_detalhes():
+def _view_detalhes(templates):
     pos_org_id = st.session_state.pos_org_selecionada_id
     cliente_nome = st.session_state.get('pos_org_cliente_nome', 'N/A')
     proposta_numero = st.session_state.get('pos_org_proposta_numero', 'N/A')
@@ -190,48 +232,76 @@ def _view_detalhes():
         st.warning("Nenhuma ação encontrada para este acompanhamento.")
         return
 
-    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+    # Barra de progresso
+    total = len(df_acoes[df_acoes['action_type'] != 'retorno_tecnico'])
+    feitas = len(df_acoes[(df_acoes['action_type'] != 'retorno_tecnico') & (df_acoes['status'] == 'FEITO')])
+    pct = int((feitas / total * 100) if total > 0 else 0)
+    st.markdown(f"""
+    <div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:#64748b;margin-bottom:4px">
+            <span>Progresso</span><span>{feitas}/{total} concluídas</span>
+        </div>
+        <div class="po-progress-bar"><div class="po-progress-fill" style="width:{pct}%"></div></div>
+    </div>
+    """, unsafe_allow_html=True)
 
     for _, acao in df_acoes.iterrows():
         is_feito = acao['status'] == 'FEITO'
         is_cancelado = acao['status'] == 'CANCELADO'
 
-        card_cls = "po-acao-card-feito" if is_feito else ("po-acao-card-cancelado" if is_cancelado else "")
+        emoji, nome_acao, texto_template = get_template(templates, acao['action_type'])
+        msg_personalizada = texto_template.replace('{nome}', cliente_nome)
+
+        wrap_cls = "po-acao-wrap-feito" if is_feito else ("po-acao-wrap-cancelado" if is_cancelado else "")
         pill_cls = "po-pill-feito" if is_feito else ("po-pill-cancelado" if is_cancelado else "po-pill-pendente")
-        pill_txt = "Feito" if is_feito else ("Cancelado" if is_cancelado else "Pendente")
+        pill_txt = "✓ Feito" if is_feito else ("✕ Cancelado" if is_cancelado else "⏳ Pendente")
 
-        col_info, col_check, col_obs = st.columns([3, 1, 3])
-
-        with col_info:
-            st.markdown(f"""
-            <div class="po-acao-card {card_cls}">
-                <p class="po-acao-title">{traduzir_tipo_acao(acao['action_type'])}</p>
-                <p class="po-acao-meta">📅 {formatar_data_br(acao['due_date'])}</p>
-                <span class="po-status-pill {pill_cls}">{pill_txt}</span>
+        st.markdown(f"""
+        <div class="po-acao-wrap {wrap_cls}">
+            <div class="po-acao-header">
+                <span style="font-size:1.2rem">{emoji}</span>
+                <p class="po-acao-title">{nome_acao}</p>
+                <span class="po-pill {pill_cls}">{pill_txt}</span>
             </div>
-            """, unsafe_allow_html=True)
+            <p class="po-acao-date">📅 Prevista para {formatar_data_br(acao['due_date'])}</p>
+            <div class="po-msg-box">{msg_personalizada}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Controles abaixo do card
+        col_check, col_copy, col_obs = st.columns([1, 1, 3])
 
         with col_check:
-            st.markdown("<div style='margin-top:16px'></div>", unsafe_allow_html=True)
             novo_status = st.checkbox(
-                "Feito",
+                "Marcar como feito",
                 value=is_feito,
                 key=f"check_acao_{acao['id']}",
                 disabled=is_cancelado
             )
 
+        with col_copy:
+            st.markdown("<div style='margin-top:4px'></div>", unsafe_allow_html=True)
+            if st.button("📋 Copiar", key=f"copy_{acao['id']}", use_container_width=True, disabled=is_cancelado):
+                st.session_state[f"copied_{acao['id']}"] = True
+
         with col_obs:
-            st.markdown("<div style='margin-top:16px'></div>", unsafe_allow_html=True)
             obs_atual = acao['notes'] if acao['notes'] else ""
             nova_obs = st.text_input(
                 "Observação",
                 value=obs_atual,
                 key=f"obs_acao_{acao['id']}",
                 label_visibility="collapsed",
-                placeholder="Adicione uma observação...",
+                placeholder="Observação...",
                 disabled=is_cancelado
             )
 
+        # Mostrar texto copiável quando botão é clicado
+        if st.session_state.get(f"copied_{acao['id']}", False):
+            st.code(msg_personalizada, language=None)
+            st.caption("⬆️ Selecione e copie o texto acima")
+            st.session_state[f"copied_{acao['id']}"] = False
+
+        # Salvar mudanças
         if novo_status != is_feito or nova_obs != obs_atual:
             new_status = 'FEITO' if novo_status else 'PENDENTE'
             result = st.session_state.db.update_post_organization_action(
@@ -240,10 +310,12 @@ def _view_detalhes():
                 notes=nova_obs if nova_obs else None
             )
             if result:
-                if acao['action_type'] == 'FOLLOW_UP' and new_status == 'FEITO':
+                if acao['action_type'] == 'acompanhamento' and new_status == 'FEITO':
                     st.session_state.show_retorno_tecnico_modal = True
                     st.session_state.retorno_tecnico_pos_org_id = pos_org_id
                 st.rerun()
+
+        st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
 
     # Modal Retorno Técnico
     if st.session_state.get('show_retorno_tecnico_modal', False):
@@ -251,7 +323,7 @@ def _view_detalhes():
         st.markdown("""
         <div style='background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 18px;margin-bottom:12px;'>
             <p style='font-weight:700;color:#1e40af;margin:0 0 4px 0;'>🔄 Retorno Técnico Necessário?</p>
-            <p style='font-size:0.85rem;color:#1e3a8a;margin:0;'>O Follow-up foi concluído. Há necessidade de ajuste ou visita técnica?</p>
+            <p style='font-size:0.85rem;color:#1e3a8a;margin:0;'>O acompanhamento foi concluído. Há necessidade de ajuste ou visita técnica?</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -303,7 +375,10 @@ def show():
 
     st.markdown('<h1 style="font-size:1.8rem;font-weight:700;margin:0 0 1rem 0;">📋 Pós-Organização</h1>', unsafe_allow_html=True)
 
+    # Carrega templates uma vez
+    templates = st.session_state.db.get_post_org_templates()
+
     if st.session_state.pos_view == 'detalhes' and st.session_state.pos_org_selecionada_id:
-        _view_detalhes()
+        _view_detalhes(templates)
     else:
-        _view_lista()
+        _view_lista(templates)
