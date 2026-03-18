@@ -386,53 +386,174 @@ def show():
     with tab3:
         st.subheader("Contas a Receber")
 
-        contas_receber = st.session_state.db.get_contas_receber()
+        # CSS compacto para cards de contas a receber (borda verde)
+        st.markdown("""
+        <style>
+        .cr-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #38A169;
+            border-radius: 8px;
+            padding: 10px 16px;
+            margin-bottom: 6px;
+        }
+        .cr-title {
+            font-weight: 700;
+            font-size: 0.92rem;
+            color: #1a202c;
+            margin: 0 0 3px 0;
+        }
+        .cr-meta {
+            font-size: 0.78rem;
+            color: #64748b;
+            margin: 0;
+        }
+        .cr-valor {
+            font-weight: 700;
+            color: #38A169;
+            font-size: 1.05rem;
+            white-space: nowrap;
+        }
+        .cr-resumo {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            display: flex;
+            gap: 24px;
+        }
+        .cr-resumo-item { flex: 1; text-align: center; }
+        .cr-resumo-label { font-size: 0.75rem; color: #64748b; margin: 0; }
+        .cr-resumo-valor { font-size: 1rem; font-weight: 700; color: #1a202c; margin: 0; }
+        </style>
+        """, unsafe_allow_html=True)
 
-        # Filtrar apenas as contas com status pendente
+        if 'reload_contas_receber' not in st.session_state:
+            st.session_state.reload_contas_receber = False
+
+        contas_receber = st.session_state.db.get_contas_receber(
+            force_reload=st.session_state.reload_contas_receber or True
+        )
+        st.session_state.reload_contas_receber = False
+
         if not contas_receber.empty:
             contas_receber = contas_receber[contas_receber['status'] == 'Pendente']
 
-        # Exibir título da seção
-        st.write("Lista de Contas a Receber Pendentes:")
-
         if not contas_receber.empty:
-            # Adicionar coluna de ações
             for idx, conta in contas_receber.iterrows():
-                col1, col2, col3 = st.columns([3, 1, 1])
-                with col1:
-                    st.write(f"**{conta['descricao']}**")
-                    st.write(f"Valor: R$ {conta['valor']:.2f}")
-                    st.write(f"Origem: {conta['origem_tipo']}")
-                    st.write(f"Status: {conta['status']}")
+                receber_key = f"cr_receber_{conta['id']}"
+                cancelar_key = f"cr_cancelar_{conta['id']}"
 
-                with col2:
-                    if conta['status'] == 'Pendente':
-                        if st.button("✅ Receber", key=f"receber_{conta['id']}"):
-                            st.session_state.db.atualizar_status_transacao(
-                                conta['id'],
-                                'Recebido',
-                                datetime.now().date()
-                            )
+                if receber_key not in st.session_state:
+                    st.session_state[receber_key] = False
+                if cancelar_key not in st.session_state:
+                    st.session_state[cancelar_key] = False
+
+                # Montar linha de metadados
+                partes_meta = []
+                if 'origem_tipo' in conta and pd.notna(conta.get('origem_tipo')) and conta['origem_tipo']:
+                    partes_meta.append(str(conta['origem_tipo']))
+                if 'categoria' in conta and pd.notna(conta.get('categoria')) and conta['categoria']:
+                    partes_meta.append(str(conta['categoria']))
+                if 'proposta_id' in conta and pd.notna(conta.get('proposta_id')):
+                    partes_meta.append(f"Proposta #{int(conta['proposta_id'])}")
+                if 'data' in conta and pd.notna(conta.get('data')):
+                    partes_meta.append(f"📅 {pd.to_datetime(conta['data']).strftime('%d/%m/%Y')}")
+                meta_str = " · ".join(partes_meta) if partes_meta else "—"
+
+                # Card + botões na mesma linha
+                col_card, col_receber, col_cancelar = st.columns([5, 1, 1])
+                with col_card:
+                    st.markdown(f"""
+                    <div class="cr-card">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <p class="cr-title">{conta['descricao']}</p>
+                                <p class="cr-meta">{meta_str}</p>
+                            </div>
+                            <span class="cr-valor">R$ {conta['valor']:.2f}</span>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                with col_receber:
+                    st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
+                    if not st.session_state.get(receber_key) and not st.session_state.get(cancelar_key):
+                        if st.button("✅ Receber", key=f"btn_{receber_key}", use_container_width=True):
+                            st.session_state[receber_key] = True
                             st.rerun()
 
-                with col3:
-                    if conta['status'] == 'Pendente':
-                        if st.button("❌ Cancelar", key=f"cancelar_{conta['id']}"):
-                            st.session_state.db.atualizar_status_transacao(
-                                conta['id'],
-                                'Cancelado'
-                            )
+                with col_cancelar:
+                    st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
+                    if not st.session_state.get(receber_key) and not st.session_state.get(cancelar_key):
+                        if st.button("❌ Excluir", key=f"btn_{cancelar_key}", use_container_width=True):
+                            st.session_state[cancelar_key] = True
                             st.rerun()
 
-                st.divider()
+                # Confirmação de recebimento
+                if st.session_state.get(receber_key):
+                    with st.container():
+                        st.success(f"Confirmar recebimento de **R$ {conta['valor']:.2f}** — {conta['descricao']}?")
+                        c1, c2, _ = st.columns([1, 1, 5])
+                        with c1:
+                            if st.button("✓ Confirmar", key=f"confirm_{receber_key}", use_container_width=True):
+                                try:
+                                    result = st.session_state.db.atualizar_status_transacao(
+                                        transacao_id=conta['id'],
+                                        status='Recebido',
+                                        data_recebimento=datetime.now().date()
+                                    )
+                                    if result:
+                                        st.session_state.reload_contas_receber = True
+                                        st.session_state[receber_key] = False
+                                        time.sleep(0.5)
+                                        st.rerun()
+                                    else:
+                                        st.error("Erro ao registrar recebimento.")
+                                except Exception as e:
+                                    st.error(f"Erro: {str(e)}")
+                        with c2:
+                            if st.button("✗ Voltar", key=f"cancel_{receber_key}", use_container_width=True):
+                                st.session_state[receber_key] = False
+                                st.rerun()
 
-            # Resumo de contas a receber
-            total_pendente = contas_receber[contas_receber['status'] == 'Pendente']['valor'].sum()
-            total_recebido = contas_receber[contas_receber['status'] == 'Recebido']['valor'].sum()
+                # Confirmação de cancelamento
+                if st.session_state.get(cancelar_key):
+                    with st.container():
+                        st.warning(f"Excluir a conta **{conta['descricao']}** permanentemente?")
+                        c1, c2, _ = st.columns([1, 1, 5])
+                        with c1:
+                            if st.button("✓ Confirmar", key=f"confirm_{cancelar_key}", use_container_width=True):
+                                try:
+                                    result = st.session_state.db.atualizar_status_transacao(
+                                        transacao_id=conta['id'],
+                                        status='Cancelado'
+                                    )
+                                    if result:
+                                        st.session_state.reload_contas_receber = True
+                                        st.session_state[cancelar_key] = False
+                                        time.sleep(0.5)
+                                        st.rerun()
+                                    else:
+                                        st.error("Erro ao excluir.")
+                                except Exception as e:
+                                    st.error(f"Erro: {str(e)}")
+                        with c2:
+                            if st.button("✗ Voltar", key=f"voltar_{cancelar_key}", use_container_width=True):
+                                st.session_state[cancelar_key] = False
+                                st.rerun()
 
-            col1, col2 = st.columns(2)
-            col1.metric("Total Pendente", f"R$ {total_pendente:.2f}")
-            col2.metric("Total Recebido", f"R$ {total_recebido:.2f}")
+            # Resumo compacto
+            total_pendente = contas_receber['valor'].sum()
+            st.markdown(f"""
+            <div class="cr-resumo">
+                <div class="cr-resumo-item">
+                    <p class="cr-resumo-label">Total Pendente</p>
+                    <p class="cr-resumo-valor" style="color:#38A169;">R$ {total_pendente:.2f}</p>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
         else:
             st.info("Nenhuma conta a receber cadastrada.")
 
