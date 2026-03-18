@@ -5,6 +5,7 @@ Gerencia ações de acompanhamento pós-serviço para propostas finalizadas.
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
+from html import escape as html_escape
 
 # Templates de fallback caso o banco não retorne
 TEMPLATES_FALLBACK = {
@@ -29,12 +30,14 @@ def formatar_data_br(data):
 
 
 def get_template(templates, action_type):
-    """Retorna info do template para o tipo de ação."""
-    t = templates.get(action_type) or TEMPLATES_FALLBACK.get(action_type, {})
+    """Retorna info do template para o tipo de ação (case-insensitive)."""
+    etapa = (action_type or '').lower().strip()
+    t = templates.get(etapa) or TEMPLATES_FALLBACK.get(etapa, {})
+    texto = t.get('texto') or ''
     return (
         t.get('emoji', '📌'),
-        t.get('nome', action_type.replace('_', ' ').title()),
-        t.get('texto', '')
+        t.get('nome', etapa.replace('_', ' ').title()),
+        texto
     )
 
 
@@ -250,7 +253,8 @@ def _view_detalhes(templates):
         is_cancelado = acao['status'] == 'CANCELADO'
 
         emoji, nome_acao, texto_template = get_template(templates, acao['action_type'])
-        msg_personalizada = texto_template.replace('{nome}', cliente_nome)
+        nome_safe = html_escape(cliente_nome or 'cliente')
+        msg_personalizada = (texto_template or '').replace('{nome}', nome_safe)
 
         wrap_cls = "po-acao-wrap-feito" if is_feito else ("po-acao-wrap-cancelado" if is_cancelado else "")
         pill_cls = "po-pill-feito" if is_feito else ("po-pill-cancelado" if is_cancelado else "po-pill-pendente")
