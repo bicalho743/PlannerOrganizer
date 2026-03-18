@@ -109,6 +109,14 @@ header[data-testid="stHeader"] {
 
 /* SIDEBAR PRINCIPAL - Sempre visível e fixa (APENAS QUANDO AUTENTICADO) */
 /* A visibilidade é controlada pelo app.py antes do login */
+section[data-testid="stSidebar"],
+section[data-testid="stSidebar"] > div,
+section[data-testid="stSidebar"] > div > div,
+[data-testid="stSidebarContent"],
+[data-testid="stSidebarUserContent"] {
+    background-color: #1E2547 !important;
+}
+
 section[data-testid="stSidebar"] {
     background-color: #1E2547 !important;
     border-right: 1px solid #4C566A !important;
