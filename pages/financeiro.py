@@ -439,207 +439,218 @@ def show():
     with tab4:
         st.subheader("Contas a Pagar")
 
-        # Inicializar flag para recarga forçada
+        # CSS compacto para cards de contas a pagar
+        st.markdown("""
+        <style>
+        .cp-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #E53E3E;
+            border-radius: 8px;
+            padding: 10px 16px;
+            margin-bottom: 6px;
+        }
+        .cp-title {
+            font-weight: 700;
+            font-size: 0.92rem;
+            color: #1a202c;
+            margin: 0 0 3px 0;
+        }
+        .cp-meta {
+            font-size: 0.78rem;
+            color: #64748b;
+            margin: 0;
+        }
+        .cp-valor {
+            font-weight: 700;
+            color: #E53E3E;
+            font-size: 1.05rem;
+            white-space: nowrap;
+        }
+        .cp-resumo {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            display: flex;
+            gap: 24px;
+        }
+        .cp-resumo-item { flex: 1; text-align: center; }
+        .cp-resumo-label { font-size: 0.75rem; color: #64748b; margin: 0; }
+        .cp-resumo-valor { font-size: 1rem; font-weight: 700; color: #1a202c; margin: 0; }
+        </style>
+        """, unsafe_allow_html=True)
+
         if 'reload_contas_pagar' not in st.session_state:
             st.session_state.reload_contas_pagar = False
 
-        # Exibir título da seção
-        st.write("Lista de Contas a Pagar Pendentes:")
-
-        # Definir se precisamos forçar o recarregamento
         force_reload = True
-
-        # Se o flag de recarregamento estiver ativo, garantir que estamos recarregando
         if st.session_state.reload_contas_pagar:
-            force_reload = True
-            # Resetar o flag para o próximo carregamento
             st.session_state.reload_contas_pagar = False
 
-        # Carregar as contas a pagar (despesas pendentes)
-        # Forçar recarregamento para evitar dados desatualizados
         contas_pagar = st.session_state.db.get_financeiro(force_reload=force_reload)
         if not contas_pagar.empty:
-            # Filtrar por classificação contas_a_pagar OU tipo despesa, sempre com status pendente
             contas_pagar = contas_pagar[
                 (
-                    (contas_pagar['classificacao'] == 'contas_a_pagar') | 
+                    (contas_pagar['classificacao'] == 'contas_a_pagar') |
                     (contas_pagar['tipo'] == 'despesa') |
                     (contas_pagar['tipo'] == 'despesa_a_pagar')
-                ) & 
-                (contas_pagar['status'] == 'Pendente')  # Garantir que status seja Pendente para todos os tipos
+                ) &
+                (contas_pagar['status'] == 'Pendente')
             ]
 
             if not contas_pagar.empty:
-                # Adicionar filtro específico para assistentes
                 filtro_tipo = st.radio(
                     "Filtrar por tipo:",
                     ["Todos", "Assistentes", "Outros"],
                     horizontal=True
                 )
 
-                # Aplicar filtro
                 if filtro_tipo == "Assistentes":
-                    contas_pagar = contas_pagar[(contas_pagar['categoria'] == 'Assistente') | 
-                                               (contas_pagar['categoria'] == 'Pagamento Equipe/Assistentes') |
-                                               (contas_pagar['categoria'] == 'Pagamento de Assistente') |
-                                               (contas_pagar['subcategoria'] == 'Assistentes') |
-                                               (contas_pagar['descricao'].str.contains('Assistente:', na=False))]
+                    contas_pagar = contas_pagar[
+                        (contas_pagar['categoria'] == 'Assistente') |
+                        (contas_pagar['categoria'] == 'Pagamento Equipe/Assistentes') |
+                        (contas_pagar['categoria'] == 'Pagamento de Assistente') |
+                        (contas_pagar['subcategoria'] == 'Assistentes') |
+                        (contas_pagar['descricao'].str.contains('Assistente:', na=False))
+                    ]
                 elif filtro_tipo == "Outros":
                     contas_pagar = contas_pagar[
-                        (contas_pagar['categoria'] != 'Assistente') & 
+                        (contas_pagar['categoria'] != 'Assistente') &
                         (contas_pagar['categoria'] != 'Pagamento Equipe/Assistentes') &
                         (contas_pagar['categoria'] != 'Pagamento de Assistente') &
                         (contas_pagar['subcategoria'] != 'Assistentes') &
                         (~contas_pagar['descricao'].str.contains('Assistente:', na=False))
                     ]
 
-                # Exibir contas a pagar
                 if not contas_pagar.empty:
                     for idx, conta in contas_pagar.iterrows():
-                        with st.container():
-                            col1, col2, col3 = st.columns([3, 1, 1])
+                        pagar_key = f"pagar_{conta['id']}"
+                        cancelar_key = f"cancelar_pagar_{conta['id']}"
 
-                            with col1:
-                                st.write(f"**{conta['descricao']}**")
-                                st.write(f"Valor: R$ {conta['valor']:.2f}")
-                                st.write(f"Categoria: {conta['categoria']}")
-                                if 'subcategoria' in conta and pd.notna(conta['subcategoria']):
-                                    st.write(f"Subcategoria: {conta['subcategoria']}")
-                                if 'proposta_id' in conta and pd.notna(conta['proposta_id']):
-                                    st.write(f"Proposta: #{conta['proposta_id']}")
-                                st.write(f"Data: {pd.to_datetime(conta['data']).strftime('%d/%m/%Y')}")
+                        if pagar_key not in st.session_state:
+                            st.session_state[pagar_key] = False
+                        if cancelar_key not in st.session_state:
+                            st.session_state[cancelar_key] = False
 
-                            with col2:
-                                # Chave única para cada botão de pagamento
-                                pagar_key = f"pagar_{conta['id']}"
+                        # Montar linha de metadados
+                        partes_meta = [conta['categoria']]
+                        if 'subcategoria' in conta and pd.notna(conta.get('subcategoria')) and conta['subcategoria']:
+                            partes_meta.append(str(conta['subcategoria']))
+                        if 'proposta_id' in conta and pd.notna(conta.get('proposta_id')):
+                            partes_meta.append(f"Proposta #{int(conta['proposta_id'])}")
+                        partes_meta.append(f"📅 {pd.to_datetime(conta['data']).strftime('%d/%m/%Y')}")
+                        meta_str = " · ".join(partes_meta)
 
-                                # Usar variáveis de sessão simples para gerenciar estado
-                                if pagar_key not in st.session_state:
-                                    st.session_state[pagar_key] = False
+                        # Card compacto com info e valor lado a lado
+                        col_card, col_btns = st.columns([6, 2])
+                        with col_card:
+                            st.markdown(f"""
+                            <div class="cp-card">
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <div>
+                                        <p class="cp-title">{conta['descricao']}</p>
+                                        <p class="cp-meta">{meta_str}</p>
+                                    </div>
+                                    <span class="cp-valor">R$ {conta['valor']:.2f}</span>
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
 
-                                # Botão de pagamento
-                                if st.button("✅ Pagar", key=f"btn_{pagar_key}"):
-                                    # Alternar estado de confirmação
-                                    st.session_state[pagar_key] = True
-                                    st.rerun()
+                        with col_btns:
+                            if not st.session_state.get(pagar_key) and not st.session_state.get(cancelar_key):
+                                b1, b2 = st.columns(2)
+                                with b1:
+                                    if st.button("✅ Pagar", key=f"btn_{pagar_key}", use_container_width=True):
+                                        st.session_state[pagar_key] = True
+                                        st.rerun()
+                                with b2:
+                                    if st.button("❌ Excluir", key=f"btn_{cancelar_key}", use_container_width=True):
+                                        st.session_state[cancelar_key] = True
+                                        st.rerun()
 
-                                # Se o botão foi clicado, mostrar confirmação
-                                if st.session_state.get(pagar_key, False):
-                                    st.info(f"Confirmando pagamento de R$ {conta['valor']:.2f}")
+                        # Confirmação de pagamento (inline, abaixo do card)
+                        if st.session_state.get(pagar_key):
+                            with st.container():
+                                st.success(f"Confirmar pagamento de **R$ {conta['valor']:.2f}** — {conta['descricao']}?")
+                                c1, c2, _ = st.columns([1, 1, 5])
+                                with c1:
+                                    if st.button("✓ Confirmar", key=f"confirm_{pagar_key}", use_container_width=True):
+                                        try:
+                                            result = st.session_state.db.atualizar_status_transacao(
+                                                transacao_id=conta['id'],
+                                                status='Pago',
+                                                data_recebimento=datetime.now().date()
+                                            )
+                                            if result:
+                                                st.session_state.reload_contas_pagar = True
+                                                st.session_state[pagar_key] = False
+                                                time.sleep(0.5)
+                                                st.rerun()
+                                            else:
+                                                st.error("Erro ao registrar pagamento.")
+                                        except Exception as e:
+                                            st.error(f"Erro: {str(e)}")
+                                with c2:
+                                    if st.button("✗ Voltar", key=f"cancel_{pagar_key}", use_container_width=True):
+                                        st.session_state[pagar_key] = False
+                                        st.rerun()
 
-                                    col_conf1, col_conf2 = st.columns(2)
-                                    with col_conf1:
-                                        if st.button("✓ Confirmar", key=f"confirm_{pagar_key}"):
-                                            try:
-                                                # Usar o método da classe Database para atualizar transação mais seguramente
-                                                data_pagamento = datetime.now().date()
+                        # Confirmação de cancelamento
+                        if st.session_state.get(cancelar_key):
+                            with st.container():
+                                st.warning(f"Excluir a conta **{conta['descricao']}** permanentemente?")
+                                c1, c2, _ = st.columns([1, 1, 5])
+                                with c1:
+                                    if st.button("✓ Confirmar", key=f"confirm_{cancelar_key}", use_container_width=True):
+                                        try:
+                                            result = st.session_state.db.atualizar_status_transacao(
+                                                transacao_id=conta['id'],
+                                                status='Cancelado'
+                                            )
+                                            if result:
+                                                st.session_state.reload_contas_pagar = True
+                                                st.session_state[cancelar_key] = False
+                                                time.sleep(0.5)
+                                                st.rerun()
+                                            else:
+                                                st.error("Erro ao cancelar.")
+                                        except Exception as e:
+                                            st.error(f"Erro: {str(e)}")
+                                with c2:
+                                    if st.button("✗ Voltar", key=f"voltar_{cancelar_key}", use_container_width=True):
+                                        st.session_state[cancelar_key] = False
+                                        st.rerun()
 
-                                                # Atualizar status da transação usando método adequado do DB
-                                                result = st.session_state.db.atualizar_status_transacao(
-                                                    transacao_id=conta['id'],
-                                                    status='Pago',
-                                                    data_recebimento=data_pagamento
-                                                )
-
-                                                if result:
-                                                    st.success(f"✅ Pagamento de {conta['descricao']} registrado com sucesso!")
-
-                                                    # Forçar recarregamento dos dados na próxima exibição
-                                                    st.session_state.reload_contas_pagar = True
-
-                                                    # Limpar estado via session state
-                                                    st.session_state[pagar_key] = False
-
-                                                    # Aguardar um pouco para exibir a mensagem de sucesso
-                                                    time.sleep(1)
-
-                                                    # Recarregar a página para mostrar dados atualizados
-                                                    st.rerun()
-                                                else:
-                                                    st.error("Erro ao registrar pagamento. A transação não foi encontrada.")
-                                            except Exception as e:
-                                                st.error(f"Erro ao registrar pagamento: {str(e)}")
-
-                                    with col_conf2:
-                                        if st.button("✗ Cancelar", key=f"cancel_{pagar_key}"):
-                                            # Limpar estado via session state
-                                            st.session_state[pagar_key] = False
-                                            st.rerun()
-
-                            with col3:
-                                # Chave única para cada botão de cancelamento
-                                cancelar_key = f"cancelar_pagar_{conta['id']}"
-
-                                # Usar variáveis de sessão simples para gerenciar estado
-                                if cancelar_key not in st.session_state:
-                                    st.session_state[cancelar_key] = False
-
-                                # Botão de cancelamento
-                                if st.button("❌ Cancelar", key=f"btn_{cancelar_key}"):
-                                    # Alternar estado de confirmação
-                                    st.session_state[cancelar_key] = True
-                                    st.rerun()
-
-                                # Se o botão foi clicado, mostrar confirmação
-                                if st.session_state.get(cancelar_key, False):
-                                    st.warning(f"Confirmar cancelamento da conta: {conta['descricao']}")
-
-                                    col_canc1, col_canc2 = st.columns(2)
-                                    with col_canc1:
-                                        if st.button("✓ Confirmar", key=f"confirm_{cancelar_key}"):
-                                            try:
-                                                # Usar o método da classe Database para atualizar transação mais seguramente
-                                                result = st.session_state.db.atualizar_status_transacao(
-                                                    transacao_id=conta['id'],
-                                                    status='Cancelado'
-                                                )
-
-                                                if result:
-                                                    st.success(f"Pagamento de {conta['descricao']} cancelado com sucesso!")
-
-                                                    # Forçar recarregamento dos dados na próxima exibição
-                                                    st.session_state.reload_contas_pagar = True
-
-                                                    # Limpar estado via session state
-                                                    st.session_state[cancelar_key] = False
-
-                                                    # Aguardar um pouco para exibir a mensagem de sucesso
-                                                    time.sleep(1)
-
-                                                    # Recarregar a página para mostrar dados atualizados
-                                                    st.rerun()
-                                                else:
-                                                    st.error("Erro ao cancelar pagamento. A transação não foi encontrada.")
-                                            except Exception as e:
-                                                st.error(f"Erro ao cancelar pagamento: {str(e)}")
-
-                                    with col_canc2:
-                                        if st.button("✗ Voltar", key=f"voltar_{cancelar_key}"):
-                                            # Limpar estado via session state
-                                            st.session_state[cancelar_key] = False
-                                            st.rerun()
-
-                            st.divider()
-
-                    # Resumo de contas a pagar
+                    # Resumo compacto
                     total_pendente = contas_pagar['valor'].sum()
-
-                    # Considerar todas as formas de identificar assistentes
                     assistentes_mask = (
-                        (contas_pagar['categoria'] == 'Assistente') | 
+                        (contas_pagar['categoria'] == 'Assistente') |
                         (contas_pagar['categoria'] == 'Pagamento Equipe/Assistentes') |
                         (contas_pagar['categoria'] == 'Pagamento de Assistente') |
                         (contas_pagar['subcategoria'] == 'Assistentes') |
                         (contas_pagar['descricao'].str.contains('Assistente:', na=False))
                     )
-
                     total_assistentes = contas_pagar[assistentes_mask]['valor'].sum()
                     total_outros = total_pendente - total_assistentes
 
-                    col1, col2, col3 = st.columns(3)
-                    col1.metric("Total Pendente", f"R$ {total_pendente:.2f}")
-                    col2.metric("Pagamentos a Assistentes", f"R$ {total_assistentes:.2f}")
-                    col3.metric("Outros Pagamentos", f"R$ {total_outros:.2f}")
+                    st.markdown(f"""
+                    <div class="cp-resumo">
+                        <div class="cp-resumo-item">
+                            <p class="cp-resumo-label">Total Pendente</p>
+                            <p class="cp-resumo-valor" style="color:#E53E3E;">R$ {total_pendente:.2f}</p>
+                        </div>
+                        <div class="cp-resumo-item">
+                            <p class="cp-resumo-label">Assistentes</p>
+                            <p class="cp-resumo-valor">R$ {total_assistentes:.2f}</p>
+                        </div>
+                        <div class="cp-resumo-item">
+                            <p class="cp-resumo-label">Outros</p>
+                            <p class="cp-resumo-valor">R$ {total_outros:.2f}</p>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
                 else:
                     st.info(f"Nenhuma conta a pagar encontrada do tipo {filtro_tipo.lower()}.")
             else:
