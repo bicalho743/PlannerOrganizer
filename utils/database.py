@@ -547,25 +547,43 @@ class PostOrganization(Base):
 
 class PostOrganizationAction(Base):
     """
-    Ações individuais de pós-organização (agradecimento, manutenção, follow-up, etc.)
+    Ações individuais de pós-organização (agradecimento, acompanhamento, ajuste_fino, feedback, continuidade, retorno_tecnico)
     """
     __tablename__ = 'post_organization_actions'
     id = Column(Integer, primary_key=True)
     post_organization_id = Column(Integer, ForeignKey('post_organizations.id'), nullable=False)
-    action_type = Column(String, nullable=False)  # AGRADECIMENTO, MANUTENCAO, FOLLOW_UP, FEEDBACK, OPORTUNIDADE, RETORNO_TECNICO
+    action_type = Column(String, nullable=False)  # agradecimento, acompanhamento, ajuste_fino, feedback, continuidade, retorno_tecnico
     due_date = Column(Date, nullable=False)
     status = Column(String, default='PENDENTE')  # PENDENTE, FEITO, CANCELADO
     notes = Column(String, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     usuario_id = Column(String, nullable=True)  # Multi-tenant
-    
+
     # Relacionamento
     post_organization = relationship("PostOrganization", back_populates="acoes")
-    
+
     __table_args__ = (
         Index('idx_post_action_status', 'status'),
         Index('idx_post_action_due_date', 'due_date'),
         Index('idx_post_action_type', 'action_type'),
+    )
+
+
+class PostOrgTemplate(Base):
+    """
+    Templates de mensagem por etapa do pós-organização.
+    """
+    __tablename__ = 'post_org_templates'
+    id = Column(Integer, primary_key=True)
+    etapa = Column(String(50), nullable=False, unique=True)
+    nome = Column(String(100), nullable=False)
+    dias_apos = Column(Integer, nullable=False)
+    emoji = Column(String(10), nullable=True)
+    texto = Column(String, nullable=False)
+    criado_em = Column(DateTime, default=datetime.now)
+
+    __table_args__ = (
+        Index('idx_templates_etapa', 'etapa'),
     )
 
 class Database:
@@ -6585,15 +6603,20 @@ class Database:
                 self.session.add(post_org)
                 self.session.flush()
                 
-                # Criar ações automáticas conforme especificação
-                acoes_padrao = [
-                    ('AGRADECIMENTO', data_final_projeto + timedelta(days=1)),
-                    ('MANUTENCAO', data_final_projeto + timedelta(days=2)),
-                    ('FOLLOW_UP', data_final_projeto + timedelta(days=7)),
-                    ('FEEDBACK', data_final_projeto + timedelta(days=7)),
-                    ('OPORTUNIDADE', data_final_projeto + timedelta(days=10)),
-                ]
-                
+                # Buscar templates do banco para criar as ações
+                templates = self.session.query(PostOrgTemplate).order_by(PostOrgTemplate.dias_apos).all()
+                if templates:
+                    acoes_padrao = [(t.etapa, data_final_projeto + timedelta(days=t.dias_apos)) for t in templates]
+                else:
+                    # Fallback com as etapas padrão caso a tabela não exista
+                    acoes_padrao = [
+                        ('agradecimento',  data_final_projeto + timedelta(days=1)),
+                        ('acompanhamento', data_final_projeto + timedelta(days=7)),
+                        ('ajuste_fino',    data_final_projeto + timedelta(days=30)),
+                        ('feedback',       data_final_projeto + timedelta(days=45)),
+                        ('continuidade',   data_final_projeto + timedelta(days=60)),
+                    ]
+
                 for action_type, due_date in acoes_padrao:
                     action = PostOrganizationAction(
                         post_organization_id=post_org.id,
