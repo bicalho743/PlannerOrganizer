@@ -377,7 +377,7 @@ def show():
                         )
                     
                     with col2:
-                        data_venda = st.date_input("Data da Venda", value=datetime.now().date())
+                        data_venda = st.date_input("Data da Venda", value=datetime.now().date(), format="DD/MM/YYYY")
 
                     observacoes = st.text_area("Observações (opcional)")
 

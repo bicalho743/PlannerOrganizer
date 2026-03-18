@@ -92,9 +92,9 @@ def show():
                     
                     # Data de início prevista - ajustada conforme tipo de cadastro
                     if tipo_cadastro == "Nova proposta":
-                        data_inicio = st.date_input("Data de início prevista:", datetime.now().date())
+                        data_inicio = st.date_input("Data de início prevista:", datetime.now().date(), format="DD/MM/YYYY")
                     else:
-                        data_inicio = st.date_input("Data de início:", datetime.now().date() - timedelta(days=90))
+                        data_inicio = st.date_input("Data de início:", datetime.now().date() - timedelta(days=90), format="DD/MM/YYYY")
                         
                         # Para cadastros retroativos, oferecer opcões de status mais avançados
                         status_opcoes = [
@@ -108,7 +108,7 @@ def show():
                         
                         # Datas relacionadas ao status selecionado
                         if status_inicial in ["Aprovada", "Em execução", "Finalizada"]:
-                            data_aprovacao = st.date_input("Data de aprovação:", data_inicio)
+                            data_aprovacao = st.date_input("Data de aprovação:", data_inicio, format="DD/MM/YYYY")
                         
                         if status_inicial in ["Em execução", "Finalizada"]:
                             # A data de início de execução é sempre igual à data de início da proposta
@@ -117,7 +117,7 @@ def show():
                             data_inicio_execucao = data_inicio  # Usar sempre a data de início da proposta
                         
                         if status_inicial == "Finalizada":
-                            data_fim_real = st.date_input("Data de conclusão:", data_inicio + timedelta(days=prazo))
+                            data_fim_real = st.date_input("Data de conclusão:", data_inicio + timedelta(days=prazo), format="DD/MM/YYYY")
                             
                         # Status de pagamento para propostas finalizadas ou aprovadas
                         if status_inicial in ["Aprovada", "Finalizada"]:
@@ -585,7 +585,8 @@ def show():
                                     # Data de início e prazo
                                     data_inicio_edit = st.date_input(
                                         "Data de início:",
-                                        proposta_edit.iloc[0]['data_inicio'] if pd.notna(proposta_edit.iloc[0]['data_inicio']) else datetime.now().date()
+                                        proposta_edit.iloc[0]['data_inicio'] if pd.notna(proposta_edit.iloc[0]['data_inicio']) else datetime.now().date(),
+                                        format="DD/MM/YYYY"
                                     )
                                     
                                     prazo_edit = st.number_input(

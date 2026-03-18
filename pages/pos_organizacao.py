@@ -235,6 +235,7 @@ def show():
                             value=data_min,
                             min_value=data_min,
                             max_value=data_max,
+                            format="DD/MM/YYYY",
                             key="data_retorno_tecnico"
                         )
                         

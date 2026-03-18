@@ -151,7 +151,7 @@ def show():
                 todas_categorias
             )
         with col3:
-            data_filtro = st.date_input("Data")
+            data_filtro = st.date_input("Data", format="DD/MM/YYYY")
 
         # Carregar e filtrar dados
         financeiro = st.session_state.db.get_financeiro()

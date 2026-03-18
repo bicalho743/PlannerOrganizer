@@ -96,7 +96,7 @@ def show():
 
                         # Data de início prevista - ajustada conforme tipo de cadastro
                         if tipo_cadastro == "Nova proposta":
-                            data_inicio = st.date_input("Data de início prevista:", datetime.now().date())
+                            data_inicio = st.date_input("Data de início prevista:", datetime.now().date(), format="DD/MM/YYYY")
 
                             # Status inicial para novas propostas
                             status_opcoes = [
@@ -107,7 +107,7 @@ def show():
                             status_inicial = st.selectbox("Status inicial da proposta:", status_opcoes, index=0)
 
                         else:
-                            data_inicio = st.date_input("Data de início:", datetime.now().date() - timedelta(days=30))
+                            data_inicio = st.date_input("Data de início:", datetime.now().date() - timedelta(days=30), format="DD/MM/YYYY")
 
                             # Para cadastros retroativos, oferecer todas as opcões
                             status_opcoes = [
@@ -127,7 +127,7 @@ def show():
 
                             # Datas relacionadas ao status selecionado
                             if status_inicial in ["Aprovada", "Em execução", "Finalizada"]:
-                                data_aprovacao = st.date_input("Data de aprovação:", data_inicio)
+                                data_aprovacao = st.date_input("Data de aprovação:", data_inicio, format="DD/MM/YYYY")
 
                             if status_inicial in ["Em execução", "Finalizada"]:
                                 # A data de início de execução é sempre igual à data de início da proposta
@@ -135,7 +135,7 @@ def show():
                                 data_inicio_execucao = data_inicio
 
                             if status_inicial == "Finalizada":
-                                data_fim_real = st.date_input("Data de conclusão:", data_inicio + timedelta(days=prazo))
+                                data_fim_real = st.date_input("Data de conclusão:", data_inicio + timedelta(days=prazo), format="DD/MM/YYYY")
 
                             # Status de pagamento para propostas finalizadas ou aprovadas
                             if status_inicial in ["Aprovada", "Finalizada"]:
@@ -922,7 +922,7 @@ def show():
                     with st.form(key=f"form_andamento_{proposta_selecionada_id}"):
                         st.write("Registre uma nova atualização de detalhes:")
                         descricao_andamento = st.text_area("Descrição:", height=100)
-                        data_andamento = st.date_input("Data:", datetime.now())
+                        data_andamento = st.date_input("Data:", datetime.now(), format="DD/MM/YYYY")
                         # Usar o mesmo valor da barra superior como padrão para manter consistência
                         try:
                             slider_value = st.session_state[f"slider_progresso_topo_{proposta_selecionada_id}"]
