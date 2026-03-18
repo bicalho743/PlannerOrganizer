@@ -2,6 +2,8 @@ import streamlit as st
 from datetime import datetime
 import pandas as pd
 from utils.importador import importar_cadastros, gerar_template_csv
+from utils.custom_components import custom_info
+from utils.tooltip_helper import create_tooltip, input_with_tooltip
 
 def show():
     # Verificar se o db está na sessão
@@ -13,11 +15,12 @@ def show():
     st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">👥 Cadastros</h1>', unsafe_allow_html=True)
 
     # Tabs para diferentes tipos de cadastro
-    tab_cliente, tab_fornecedor, tab_parceiro, tab_assistente = st.tabs([
+    tab_cliente, tab_fornecedor, tab_parceiro, tab_assistente, tab_produto = st.tabs([
         "👥 Clientes",
         "🏢 Fornecedores",
         "🤝 Parceiros",
-        "👨‍💼 Assistentes"
+        "👨‍💼 Assistentes",
+        "📦 Produtos"
     ])
 
     with tab_cliente:
@@ -922,5 +925,202 @@ def show():
                     if st.form_submit_button("Cancelar"):
                         del st.session_state['editing_assistente_id']
                         st.rerun()
+
+    # === Aba de Produtos ===
+    with tab_produto:
+        produto_tab1, produto_tab2 = st.tabs(["Cadastrar/Listar", "Importar"])
+
+        with produto_tab2:
+            try:
+                from utils.componentes_importacao import interface_importacao
+                interface_importacao(tipo_cadastro="Produto", db=st.session_state.db,
+                                    pagina_titulo="Importação de Produtos")
+            except Exception as e:
+                st.error(f"Erro ao carregar interface de importação: {str(e)}")
+                import traceback
+                st.error(traceback.format_exc())
+
+        with produto_tab1:
+            col1, col2 = st.columns([1, 1])
+
+            with col1:
+                st.subheader("Cadastrar Produto")
+
+                with st.form("form_produto"):
+                    nome_produto = input_with_tooltip(
+                        "text_input",
+                        "Nome do Produto",
+                        "Digite o nome comercial do produto que será vendido"
+                    )
+
+                    col_desc, col_help_desc = st.columns([4, 1])
+                    with col_desc:
+                        descricao = st.text_area("Descrição", label_visibility="visible")
+                    with col_help_desc:
+                        st.markdown(create_tooltip("Descrição detalhada do produto para identificação"), unsafe_allow_html=True)
+
+                    col_cat, col_help_cat = st.columns([4, 1])
+                    with col_cat:
+                        categoria = st.selectbox("Categoria", ["Organização", "Higiene", "Beleza", "Casa", "Outros"])
+                    with col_help_cat:
+                        st.markdown(create_tooltip("Categoria para organização e filtros do produto"), unsafe_allow_html=True)
+
+                    col_preco1, col_preco2 = st.columns(2)
+                    with col_preco1:
+                        preco_custo = st.number_input("Preço de Custo (R$)", min_value=0.0, format="%.2f")
+                    with col_preco2:
+                        preco_venda = st.number_input("Preço de Venda (R$)", min_value=0.0, format="%.2f")
+
+                    estoque = st.number_input("Estoque Inicial", min_value=0, value=0)
+                    margem = st.number_input("Margem (%)", min_value=0.0, max_value=100.0, value=50.0, format="%.1f")
+
+                    submitted = st.form_submit_button("Cadastrar Produto", type="primary")
+
+                    if submitted and nome_produto:
+                        try:
+                            produto_id = st.session_state.db.add_produto(
+                                nome=nome_produto,
+                                preco_custo=preco_custo,
+                                preco_venda=preco_venda,
+                                descricao=descricao,
+                                categoria=categoria,
+                                estoque=estoque
+                            )
+                            st.success(f"Produto '{nome_produto}' cadastrado com sucesso!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Erro ao cadastrar produto: {str(e)}")
+
+            with col2:
+                st.subheader("Produtos Cadastrados")
+                try:
+                    produtos_df = st.session_state.db.get_produtos()
+
+                    if not produtos_df.empty:
+                        produtos_df = produtos_df.sort_values('nome').reset_index(drop=True)
+
+                        produtos_display = produtos_df.copy()
+
+                        if 'data_cadastro' in produtos_display.columns:
+                            def formatar_data_produto(data_cadastro):
+                                if isinstance(data_cadastro, str):
+                                    try:
+                                        data_obj = datetime.strptime(data_cadastro[:10], '%Y-%m-%d')
+                                        return data_obj.strftime('%d/%m/%Y')
+                                    except:
+                                        return data_cadastro
+                                else:
+                                    try:
+                                        return data_cadastro.strftime('%d/%m/%Y')
+                                    except:
+                                        return str(data_cadastro)
+
+                            produtos_display['data_cadastro'] = produtos_display['data_cadastro'].map(formatar_data_produto)
+
+                        st.dataframe(produtos_display, hide_index=True, use_container_width=True)
+
+                        st.subheader("Gerenciar Produtos")
+
+                        acao = st.radio("Ação", ["Editar", "Excluir"], horizontal=True)
+
+                        produtos_ordenados = sorted(produtos_df['nome'].tolist())
+
+                        produto_selecionado = st.selectbox(
+                            f"Selecionar produto para {acao.lower()}",
+                            options=["-- Selecione --"] + produtos_ordenados,
+                            key="select_produto_gerenciar"
+                        )
+
+                        if produto_selecionado != "-- Selecione --":
+                            produto_id = produtos_df[produtos_df['nome'] == produto_selecionado]['id'].iloc[0]
+                            produto_dados = produtos_df[produtos_df['id'] == produto_id].iloc[0]
+
+                            if acao == "Editar":
+                                st.subheader(f"Editar: {produto_selecionado}")
+
+                                with st.form("form_editar_produto"):
+                                    nome_edit = st.text_input("Nome do Produto", value=produto_dados['nome'])
+                                    descricao_edit = st.text_area("Descrição", value=produto_dados.get('descricao', ''))
+
+                                    categoria_atual = produto_dados.get('categoria', 'Outros')
+                                    if categoria_atual == '' or categoria_atual not in ["Organização", "Higiene", "Beleza", "Casa", "Outros"]:
+                                        categoria_atual = 'Outros'
+
+                                    categoria_edit = st.selectbox(
+                                        "Categoria",
+                                        ["Organização", "Higiene", "Beleza", "Casa", "Outros"],
+                                        index=["Organização", "Higiene", "Beleza", "Casa", "Outros"].index(categoria_atual)
+                                    )
+
+                                    col_edit1, col_edit2 = st.columns(2)
+                                    with col_edit1:
+                                        preco_custo_edit = st.number_input("Preço de Custo (R$)", value=float(produto_dados.get('preco_custo', 0)), min_value=0.0, format="%.2f")
+                                    with col_edit2:
+                                        preco_venda_edit = st.number_input("Preço de Venda (R$)", value=float(produto_dados.get('preco_venda', 0)), min_value=0.0, format="%.2f")
+
+                                    estoque_edit = st.number_input("Estoque", value=int(produto_dados.get('estoque', 0)), min_value=0)
+
+                                    submitted_edit = st.form_submit_button("Salvar Alterações", type="primary")
+
+                                    if submitted_edit and nome_edit:
+                                        try:
+                                            if hasattr(st.session_state.db, 'update_produto'):
+                                                st.session_state.db.update_produto(
+                                                    produto_id=produto_id,
+                                                    nome=nome_edit,
+                                                    preco_custo=preco_custo_edit,
+                                                    preco_venda=preco_venda_edit,
+                                                    descricao=descricao_edit,
+                                                    categoria=categoria_edit,
+                                                    estoque=estoque_edit
+                                                )
+                                            else:
+                                                st.session_state.db.delete_produto(produto_id)
+                                                st.session_state.db.add_produto(
+                                                    nome=nome_edit,
+                                                    preco_custo=preco_custo_edit,
+                                                    preco_venda=preco_venda_edit,
+                                                    descricao=descricao_edit,
+                                                    categoria=categoria_edit,
+                                                    estoque=estoque_edit
+                                                )
+                                            st.success(f"Produto '{nome_edit}' atualizado com sucesso!")
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Erro ao editar produto: {str(e)}")
+
+                            elif acao == "Excluir":
+                                vendas_com_produto = st.session_state.db.verificar_produto_em_vendas(produto_id)
+
+                                if vendas_com_produto > 0:
+                                    st.warning(f"⚠️ Este produto está sendo usado em {vendas_com_produto} venda(s). Não é possível excluir.")
+                                else:
+                                    if not st.session_state.get('exclusao_produto_confirmada', False):
+                                        if st.button("Excluir Produto", type="secondary", key="btn_excluir_produto"):
+                                            st.session_state.exclusao_produto_confirmada = True
+                                            st.rerun()
+                                    else:
+                                        st.warning("⚠️ Confirmar exclusão do produto?")
+                                        confirm_col1, confirm_col2 = st.columns(2)
+
+                                        with confirm_col1:
+                                            if st.button("✓ Confirmar", type="primary", key="btn_confirmar_exclusao_produto"):
+                                                try:
+                                                    st.session_state.db.delete_produto(produto_id)
+                                                    st.success("Produto excluído com sucesso!")
+                                                    st.session_state.exclusao_produto_confirmada = False
+                                                    st.rerun()
+                                                except Exception as e:
+                                                    st.error(f"Erro ao excluir produto: {str(e)}")
+
+                                        with confirm_col2:
+                                            if st.button("✗ Cancelar", use_container_width=True, key="btn_cancelar_exclusao_produto"):
+                                                st.session_state.exclusao_produto_confirmada = False
+                                                st.rerun()
+                    else:
+                        custom_info("Nenhum produto cadastrado.")
+
+                except Exception as e:
+                    st.error(f"Erro ao carregar produtos: {str(e)}")
 
 # Removida seção antiga de importação

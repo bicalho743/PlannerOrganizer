@@ -19,7 +19,8 @@ O sistema inclui módulos para:
 - **Dashboard**: Visão geral com propostas em aberto e estatísticas.
 - **Propostas**: Gestão completa de propostas, incluindo exclusão com limpeza de dados relacionados.
 - **Clientes**: Cadastro e gestão de clientes.
-- **Vendas**: Controle de vendas, com integração automática de propostas e edição de itens.
+- **Vendas**: Controle de vendas com botão "+ Nova Venda" inline no topo, lista de vendas e análise por período como abas diretas (sem sub-abas). Módulo de Produtos movido para Cadastros.
+- **Cadastros**: Cadastro e gestão de clientes, fornecedores, parceiros, assistentes e **produtos** (nova aba 📦 Produtos com cadastro individual + importação em massa).
 - **Financeiro**: Relatórios financeiros detalhados, incluindo fluxo de caixa mensal com categorias de receitas e despesas.
 
 ### UI/UX e Design
