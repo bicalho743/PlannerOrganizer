@@ -71,7 +71,7 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         left: 0;
         right: 0;
         z-index: 999;
-        background-color: #1E1F36;
+        background-color: #1E2547;
         padding: 0.3rem 0.8rem;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         font-family: "Poppins", sans-serif;
@@ -144,7 +144,7 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
     [data-testid="stSidebar"] {
         padding-top: 0 !important;
         margin-top: 0 !important;
-        background-color: #1E1F36 !important;
+        background-color: #1E2547 !important;
     }
 
     [data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
