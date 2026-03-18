@@ -8,6 +8,40 @@ from utils.styles_manager import StylesManager
 from utils.tooltip_helper import create_tooltip, header_with_tooltip, input_with_tooltip
 
 def show():
+    st.markdown("""
+    <style>
+    /* Headers compactos */
+    .main h2 { font-size: 1.1rem !important; font-weight: 700 !important; margin: 0.6rem 0 0.4rem 0 !important; }
+    .main h3 { font-size: 0.95rem !important; font-weight: 700 !important; margin: 0.4rem 0 0.3rem 0 !important; }
+
+    /* Métricas compactas */
+    [data-testid="stMetricLabel"]  { font-size: 0.72rem !important; }
+    [data-testid="stMetricValue"]  { font-size: 1rem !important; }
+    [data-testid="stMetricDelta"]  { font-size: 0.72rem !important; }
+
+    /* Inputs e selectbox levemente menores */
+    .stTextInput input, .stSelectbox select,
+    .stNumberInput input, .stDateInput input,
+    .stTextArea textarea {
+        font-size: 0.85rem !important;
+    }
+    label[data-testid="stWidgetLabel"] > div > p {
+        font-size: 0.82rem !important;
+    }
+
+    /* Botões padrão menores */
+    .stButton > button {
+        font-size: 0.8rem !important;
+        padding: 5px 12px !important;
+        min-height: 0 !important;
+        height: auto !important;
+    }
+
+    /* Textos gerais de markdown na página */
+    .main .stMarkdown p { font-size: 0.85rem; }
+    </style>
+    """, unsafe_allow_html=True)
+
     # Container específico para a página de vendas - isolando CSS
     st.markdown('<div class="vendas-page">', unsafe_allow_html=True)
 
@@ -17,7 +51,7 @@ def show():
         return
 
     # Título com estilo personalizado para ficar mais próximo do topo
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">🛒 Vendas</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="font-size: 1.8rem; font-weight: 700; margin-top: 0; padding-top: 0; margin-bottom: 0.8rem;">🛒 Vendas</h1>', unsafe_allow_html=True)
 
     # Criar abas para organizar o conteúdo seguindo o padrão do módulo de propostas
     tab_produtos, tab_nova_venda, tab_historico = st.tabs([
