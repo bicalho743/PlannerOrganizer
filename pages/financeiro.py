@@ -784,200 +784,208 @@ def show():
     with tab5:
         st.subheader("Histórico Financeiro")
 
-        # Inicializar filtros em sessão para manter estado quando redirecionado
+        # CSS para o histórico
+        st.markdown("""
+        <style>
+        .hf-filtros {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 14px 18px 6px 18px;
+            margin-bottom: 16px;
+        }
+        .hf-filtros-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0 0 8px 0;
+        }
+        .hf-metric-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .hf-metric {
+            flex: 1;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 16px;
+            text-align: center;
+        }
+        .hf-metric-label { font-size: 0.72rem; color: #64748b; margin: 0 0 4px 0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+        .hf-metric-value { font-size: 1.25rem; font-weight: 800; margin: 0; }
+        .hf-row-receita { border-left: 3px solid #38A169; }
+        .hf-row-despesa { border-left: 3px solid #E53E3E; }
+        .hf-section-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin: 16px 0 8px 0;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
         if 'filtro_historico' not in st.session_state:
             st.session_state.filtro_historico = {
                 "tipo": [],
                 "status": ["Aprovado", "Recebido", "Pago", "Cancelado"]
             }
 
-        # Recuperar dados para histórico, forçando recarregamento do banco
         historico = st.session_state.db.get_financeiro(force_reload=True)
 
         if not historico.empty:
-            # Converter a coluna 'data' para datetime para manipulação
             historico['data'] = pd.to_datetime(historico['data'])
-
-            # Filtrar apenas transações com status não-pendente
             historico = historico[~(historico['status'] == 'Pendente')]
 
-            # Controles de filtro
-            st.write("#### Filtros")
-            col1, col2, col3 = st.columns(3)
-
-            with col1:
-                # Filtro por tipo de transação
-                tipos_disponiveis = ["receita", "despesa"]
+            # Painel de filtros compacto
+            st.markdown('<div class="hf-filtros"><p class="hf-filtros-label">🔍 Filtros</p>', unsafe_allow_html=True)
+            f1, f2, f3, f4 = st.columns([2, 2, 1.5, 1.5])
+            with f1:
                 tipo_selecionado = st.multiselect(
-                    "Tipo de Transação", 
-                    tipos_disponiveis,
-                    default=st.session_state.filtro_historico["tipo"] if st.session_state.filtro_historico["tipo"] else []
+                    "Tipo", ["receita", "despesa"],
+                    default=st.session_state.filtro_historico["tipo"],
+                    key="hist_tipo"
                 )
-
-            with col2:
-                # Filtro por status
-                status_disponiveis = ["Aprovado", "Recebido", "Pago", "Cancelado"]
+            with f2:
                 status_selecionado = st.multiselect(
-                    "Status", 
-                    status_disponiveis,
-                    default=st.session_state.filtro_historico["status"]
+                    "Status", ["Aprovado", "Recebido", "Pago", "Cancelado"],
+                    default=st.session_state.filtro_historico["status"],
+                    key="hist_status"
                 )
-
-            with col3:
-                # Filtro por período
+            with f3:
                 hoje = datetime.now().date()
-                primeiro_dia_mes = hoje.replace(day=1)
-                data_inicio = st.date_input(
-                    "Data Inicial", 
-                    value=primeiro_dia_mes,
-                    key="historico_data_inicio"
-                )
-                data_fim = st.date_input(
-                    "Data Final", 
-                    value=hoje,
-                    key="historico_data_fim"
-                )
+                data_inicio = st.date_input("De", value=hoje.replace(day=1), key="historico_data_inicio")
+            with f4:
+                data_fim = st.date_input("Até", value=hoje, key="historico_data_fim")
+            st.markdown('</div>', unsafe_allow_html=True)
 
             # Aplicar filtros
             if tipo_selecionado:
                 historico = historico[historico['tipo'].isin(tipo_selecionado)]
-
             if status_selecionado:
                 historico = historico[historico['status'].isin(status_selecionado)]
-
-            # Filtro de data
             historico = historico[
-                (historico['data'].dt.date >= data_inicio) & 
+                (historico['data'].dt.date >= data_inicio) &
                 (historico['data'].dt.date <= data_fim)
             ]
 
-            # Mostrar os resultados
             if not historico.empty:
-                # Formatar para exibição
-                df_display = historico.copy()
-                df_display['data'] = df_display['data'].dt.strftime('%d/%m/%Y')
-                df_display['valor'] = df_display['valor'].apply(lambda x: f"R$ {x:.2f}")
+                # Métricas em destaque
+                receitas = historico[historico['tipo'].isin(['receita', 'receita_a_receber'])]['valor'].sum()
+                despesas = historico[historico['tipo'].isin(['despesa', 'despesa_a_pagar'])]['valor'].sum()
+                saldo = receitas - despesas
+                saldo_cor = "#38A169" if saldo >= 0 else "#E53E3E"
 
-                # Formatar o tipo para exibição (simplificar tipos)
+                st.markdown(f"""
+                <div class="hf-metric-row">
+                    <div class="hf-metric">
+                        <p class="hf-metric-label">Receitas</p>
+                        <p class="hf-metric-value" style="color:#38A169;">R$ {receitas:,.2f}</p>
+                    </div>
+                    <div class="hf-metric">
+                        <p class="hf-metric-label">Despesas</p>
+                        <p class="hf-metric-value" style="color:#E53E3E;">R$ {despesas:,.2f}</p>
+                    </div>
+                    <div class="hf-metric">
+                        <p class="hf-metric-label">Saldo</p>
+                        <p class="hf-metric-value" style="color:{saldo_cor};">R$ {saldo:,.2f}</p>
+                    </div>
+                    <div class="hf-metric">
+                        <p class="hf-metric-label">Transações</p>
+                        <p class="hf-metric-value" style="color:#1E2547;">{len(historico)}</p>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # Tabela de resultados
                 def formatar_tipo(tipo):
-                    # Referências a 'receita_a_receber' mantidas apenas para compatibilidade
-                    # com dados históricos no banco que possam conter este valor
-                    if tipo == 'receita_a_receber':
+                    if tipo in ['receita_a_receber', 'receita', 'Receita']:
                         return 'Receita'
-                    elif tipo == 'receita':
-                        return 'Receita'
-                    elif tipo == 'despesa_a_pagar':
+                    elif tipo in ['despesa_a_pagar', 'despesa', 'Despesa']:
                         return 'Despesa'
-                    elif tipo == 'despesa':
-                        return 'Despesa'
-                    else:
-                        return tipo.title()
+                    return tipo.title()
 
-                df_display['tipo'] = df_display['tipo'].apply(formatar_tipo)
+                df_display = historico.copy()
+                df_display['Tipo'] = df_display['tipo'].apply(formatar_tipo)
+                df_display['Data'] = df_display['data'].dt.strftime('%d/%m/%Y')
+                df_display['Valor (R$)'] = df_display['valor'].apply(lambda x: f"R$ {x:,.2f}")
+                df_display['Descrição'] = df_display['descricao']
+                df_display['Categoria'] = df_display['categoria'].fillna('—')
+                df_display['Status'] = df_display['status']
 
-                # Mostrar os dados
-                st.write(f"#### Resultados ({len(df_display)} transações)")
+                st.markdown('<p class="hf-section-title">Transações</p>', unsafe_allow_html=True)
                 st.dataframe(
-                    df_display[['data', 'tipo', 'descricao', 'valor', 'categoria', 'status']],
+                    df_display[['Data', 'Tipo', 'Descrição', 'Valor (R$)', 'Categoria', 'Status']],
                     use_container_width=True,
                     hide_index=True
                 )
 
-                # Seção para seleção e exclusão de transações
-                if len(historico) > 0:
-                    st.write("---")
-                    st.write("#### Gerenciar Transação")
-                    
-                    # Criar lista de transações para seleção
-                    transacoes_display = [
-                        f"{row['descricao']} - R$ {row['valor']:.2f} ({row['data'].strftime('%d/%m/%Y')}) - {row['status']}" 
-                        for idx, row in historico.iterrows()
-                    ]
-                    
-                    # Selectbox para escolher transação
+                # Gráfico de distribuição por categoria
+                if not historico.empty:
+                    st.markdown('<p class="hf-section-title">Distribuição por Categoria</p>', unsafe_allow_html=True)
+                    fig = px.bar(
+                        historico,
+                        x='categoria',
+                        y='valor',
+                        color='tipo',
+                        color_discrete_map={'receita': '#38A169', 'despesa': '#E53E3E'},
+                        labels={'valor': 'Valor (R$)', 'categoria': 'Categoria', 'tipo': 'Tipo'},
+                        height=300
+                    )
+                    fig.update_layout(
+                        margin=dict(l=0, r=0, t=10, b=0),
+                        legend=dict(orientation="h", yanchor="bottom", y=1.02),
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        paper_bgcolor='rgba(0,0,0,0)'
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+
+                # Gerenciar transação (excluir)
+                st.markdown('<p class="hf-section-title">Excluir Transação</p>', unsafe_allow_html=True)
+                transacoes_display = [
+                    f"{row['data'].strftime('%d/%m/%Y')} · {row['descricao']} · R$ {row['valor']:,.2f} · {row['status']}"
+                    for idx, row in historico.iterrows()
+                ]
+                col_sel, col_del = st.columns([5, 1])
+                with col_sel:
                     selected_idx = st.selectbox(
-                        "Selecione uma transação para gerenciar:", 
+                        "Selecione:",
                         range(len(transacoes_display)),
                         format_func=lambda x: transacoes_display[x],
-                        key="select_transacao_historico"
+                        key="select_transacao_historico",
+                        label_visibility="collapsed"
                     )
-                    
-                    # Botões de ação
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        if st.button("✏️ Editar", key="btn_editar_historico"):
-                            st.session_state.transacao_em_edicao = historico.iloc[selected_idx]
-                            st.rerun()
-                    
-                    with col2:
-                        if st.button("🗑️ Excluir", key="btn_excluir_historico"):
-                            transacao_selecionada = historico.iloc[selected_idx]
-                            # Usar session state para confirmar exclusão
-                            if f"confirmar_exclusao_{transacao_selecionada['id']}" not in st.session_state:
-                                st.session_state[f"confirmar_exclusao_{transacao_selecionada['id']}"] = False
-                            
-                            if not st.session_state[f"confirmar_exclusao_{transacao_selecionada['id']}"]:
-                                st.session_state[f"confirmar_exclusao_{transacao_selecionada['id']}"] = True
+                with col_del:
+                    if st.button("🗑️ Excluir", key="btn_excluir_historico", use_container_width=True):
+                        transacao_sel = historico.iloc[selected_idx]
+                        st.session_state[f"confirmar_exclusao_{transacao_sel['id']}"] = True
+                        st.rerun()
+
+                if selected_idx is not None:
+                    transacao_sel = historico.iloc[selected_idx]
+                    if st.session_state.get(f"confirmar_exclusao_{transacao_sel['id']}", False):
+                        st.warning(f"Excluir **{transacao_sel['descricao']}** — R$ {transacao_sel['valor']:,.2f}?")
+                        c1, c2, _ = st.columns([1, 1, 5])
+                        with c1:
+                            if st.button("✓ Confirmar", key=f"confirmar_exclusao_final_{transacao_sel['id']}", use_container_width=True):
+                                try:
+                                    if st.session_state.db.delete_transacao(transacao_sel['id']):
+                                        st.success("Transação excluída!")
+                                        del st.session_state[f"confirmar_exclusao_{transacao_sel['id']}"]
+                                        st.rerun()
+                                    else:
+                                        st.error("Erro ao excluir transação.")
+                                except Exception as e:
+                                    st.error(f"Erro: {str(e)}")
+                        with c2:
+                            if st.button("✗ Voltar", key=f"cancelar_exclusao_{transacao_sel['id']}", use_container_width=True):
+                                del st.session_state[f"confirmar_exclusao_{transacao_sel['id']}"]
                                 st.rerun()
-                    
-                    # Confirmação de exclusão
-                    if selected_idx is not None:
-                        transacao_selecionada = historico.iloc[selected_idx]
-                        if st.session_state.get(f"confirmar_exclusao_{transacao_selecionada['id']}", False):
-                            st.warning(f"⚠️ Confirmar exclusão da transação: {transacao_selecionada['descricao']} - R$ {transacao_selecionada['valor']:.2f}")
-                            
-                            col_conf1, col_conf2 = st.columns(2)
-                            with col_conf1:
-                                if st.button("✅ Confirmar Exclusão", key=f"confirmar_exclusao_final_{transacao_selecionada['id']}"):
-                                    try:
-                                        if st.session_state.db.delete_transacao(transacao_selecionada['id']):
-                                            st.success("Transação excluída com sucesso!")
-                                            # Limpar estado de confirmação
-                                            del st.session_state[f"confirmar_exclusao_{transacao_selecionada['id']}"]
-                                            st.rerun()
-                                        else:
-                                            st.error("Erro ao excluir transação.")
-                                    except Exception as e:
-                                        st.error(f"Erro ao excluir transação: {str(e)}")
-                            
-                            with col_conf2:
-                                if st.button("❌ Cancelar", key=f"cancelar_exclusao_{transacao_selecionada['id']}"):
-                                    # Limpar estado de confirmação
-                                    del st.session_state[f"confirmar_exclusao_{transacao_selecionada['id']}"]
-                                    st.rerun()
-
-                # Botão para exportar para CSV (removido para evitar IDs duplicados)
-                # if st.button("📊 Exportar para CSV"):
-                #     csv = df_display.to_csv(index=False)
-                #     # Criar um botão de download
-                #     b64 = base64.b64encode(csv.encode()).decode()
-                #     href = f'<a href="data:file/csv;base64,{b64}" download="historico_financeiro.csv">Download CSV</a>'
-                #     st.markdown(href, unsafe_allow_html=True)
-
-                # Mostrar resumos
-                st.write("#### Resumo Financeiro")
-                col1, col2, col3 = st.columns(3)
-
-                # Valores por tipo
-                receitas = historico[historico['tipo'] == 'receita']['valor'].sum()
-                despesas = historico[historico['tipo'] == 'despesa']['valor'].sum()
-                saldo = receitas - despesas
-
-                col1.metric("Total Receitas", f"R$ {receitas:.2f}")
-                col2.metric("Total Despesas", f"R$ {despesas:.2f}")
-                col3.metric("Saldo Período", f"R$ {saldo:.2f}")
-
-                # Gráfico de barras por categoria
-                st.write("#### Distribuição por Categoria")
-                fig = px.bar(
-                    historico, 
-                    x='categoria', 
-                    y='valor', 
-                    color='tipo',
-                    title="Valores por Categoria",
-                    labels={'valor': 'Valor (R$)', 'categoria': 'Categoria'}
-                )
-                st.plotly_chart(fig, use_container_width=True)
             else:
                 st.info("Nenhuma transação encontrada com os filtros selecionados.")
         else:

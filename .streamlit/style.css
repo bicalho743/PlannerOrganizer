@@ -383,6 +383,28 @@ button[kind="secondary"]:hover {
 }
 
 /* ========================================
+   MULTISELECT / DATE INPUT - FUNDO CLARO
+   ======================================== */
+div[data-testid="stMultiSelect"] [data-baseweb="select"] > div,
+div[data-testid="stMultiSelect"] [data-baseweb="select"] {
+    background-color: #ffffff !important;
+    color: #1e1e1e !important;
+}
+div[data-testid="stMultiSelect"] [data-baseweb="tag"] {
+    background-color: #1E2547 !important;
+    color: #ffffff !important;
+}
+div[data-testid="stMultiSelect"] input {
+    background-color: #ffffff !important;
+    color: #1e1e1e !important;
+}
+div[data-testid="stDateInput"] input {
+    background-color: #ffffff !important;
+    color: #1e1e1e !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+/* ========================================
    SELECTBOX - VISIBILIDADE GARANTIDA
    ======================================== */
 div[data-testid="stSelectbox"] {
