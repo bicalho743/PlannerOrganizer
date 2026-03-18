@@ -1073,34 +1073,71 @@ def show():
     <style>
     .kanban-col-header {
         font-weight: 700;
-        font-size: 1rem;
-        padding: 8px 12px;
+        font-size: 0.82rem;
+        padding: 6px 10px;
         border-radius: 8px 8px 0 0;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         text-align: center;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
     }
     .kanban-card {
         border: 1px solid #dee2e6;
         border-radius: 8px;
-        padding: 10px 12px;
-        margin-bottom: 8px;
+        padding: 8px 10px;
+        margin-bottom: 6px;
         background: #fff;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
     .kanban-card-cliente {
         font-weight: 600;
-        font-size: 0.93rem;
-        margin-bottom: 2px;
+        font-size: 0.82rem;
+        margin-bottom: 1px;
+        color: #1a202c;
     }
     .kanban-card-desc {
-        font-size: 0.8rem;
+        font-size: 0.72rem;
         color: #6c757d;
-        margin-bottom: 4px;
+        margin-bottom: 3px;
     }
     .kanban-card-valor {
-        font-size: 0.88rem;
+        font-size: 0.78rem;
         color: #1a5276;
         font-weight: 600;
+    }
+    /* Botões "Ver Detalhes" compactos */
+    [data-testid="stHorizontalBlock"] .stButton > button,
+    .stButton > button[kind="secondary"] {
+        font-size: 0.75rem !important;
+        padding: 4px 8px !important;
+        min-height: 0 !important;
+        height: auto !important;
+        line-height: 1.4 !important;
+    }
+    /* Cards de métricas do rodapé */
+    .kanban-metric {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        text-align: center;
+    }
+    .kanban-metric-label {
+        font-size: 0.72rem;
+        color: #64748b;
+        margin: 0 0 4px 0;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+    }
+    .kanban-metric-value {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #1a202c;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     </style>
     """
@@ -1146,14 +1183,19 @@ def show():
 
     st.markdown("---")
     footer_c1, footer_c2, footer_c3, footer_c4 = st.columns(4)
-    with footer_c1:
-        st.metric("🟡 Em Aberto", _fmt_brl(total_aberto))
-    with footer_c2:
-        st.metric("🟢 Aprovada", _fmt_brl(total_aprovada))
-    with footer_c3:
-        st.metric("🔵 Em Execução", _fmt_brl(total_execucao))
-    with footer_c4:
-        st.metric("✅ Finalizada", _fmt_brl(total_finalizada))
+    for col, label, valor in [
+        (footer_c1, "🟡 Em Aberto",   total_aberto),
+        (footer_c2, "🟢 Aprovada",    total_aprovada),
+        (footer_c3, "🔵 Em Execução", total_execucao),
+        (footer_c4, "✅ Finalizada",  total_finalizada),
+    ]:
+        with col:
+            st.markdown(f"""
+            <div class="kanban-metric">
+                <p class="kanban-metric-label">{label}</p>
+                <p class="kanban-metric-value">{_fmt_brl(valor)}</p>
+            </div>
+            """, unsafe_allow_html=True)
 
     selected_id = st.session_state.get('kanban_selected_proposta')
     if selected_id is not None:
