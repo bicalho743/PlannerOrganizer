@@ -544,7 +544,7 @@ def show():
                         meta_str = " · ".join(partes_meta)
 
                         # Card compacto com info e valor lado a lado
-                        col_card, col_btns = st.columns([6, 2])
+                        col_card, col_pagar, col_excluir = st.columns([5, 1, 1])
                         with col_card:
                             st.markdown(f"""
                             <div class="cp-card">
@@ -558,17 +558,19 @@ def show():
                             </div>
                             """, unsafe_allow_html=True)
 
-                        with col_btns:
+                        with col_pagar:
+                            st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
                             if not st.session_state.get(pagar_key) and not st.session_state.get(cancelar_key):
-                                b1, b2 = st.columns(2)
-                                with b1:
-                                    if st.button("✅ Pagar", key=f"btn_{pagar_key}", use_container_width=True):
-                                        st.session_state[pagar_key] = True
-                                        st.rerun()
-                                with b2:
-                                    if st.button("❌ Excluir", key=f"btn_{cancelar_key}", use_container_width=True):
-                                        st.session_state[cancelar_key] = True
-                                        st.rerun()
+                                if st.button("✅ Pagar", key=f"btn_{pagar_key}", use_container_width=True):
+                                    st.session_state[pagar_key] = True
+                                    st.rerun()
+
+                        with col_excluir:
+                            st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
+                            if not st.session_state.get(pagar_key) and not st.session_state.get(cancelar_key):
+                                if st.button("❌ Excluir", key=f"btn_{cancelar_key}", use_container_width=True):
+                                    st.session_state[cancelar_key] = True
+                                    st.rerun()
 
                         # Confirmação de pagamento (inline, abaixo do card)
                         if st.session_state.get(pagar_key):
