@@ -15,7 +15,7 @@ AZUL_CLARO = colors.HexColor("#e9f2ff")
 CINZA_TEXTO = colors.HexColor("#5A6A85")
 BRANCO = colors.white
 
-def gerar_pdf_venda(venda, cliente, itens_venda, filename):
+def gerar_pdf_venda(venda, cliente, itens_venda, filename, proposta_descricao=None):
     """
     Gera um PDF de relatório de venda com o mesmo estilo do relatório interno.
 
@@ -131,56 +131,73 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename):
         total = 0
         row_height = 18
 
-        if hasattr(itens_venda, 'empty') and not itens_venda.empty:
-            for _, item in itens_venda.iterrows():
-                produto = item.get("produto_nome", "")
-                quantidade = item.get("quantidade", 1)
+        tem_itens = hasattr(itens_venda, 'empty') and not itens_venda.empty
 
-                # Preço unitário (tratando string com "R$")
+        # Montar lista de itens a renderizar
+        itens_renderizar = []
+        if tem_itens:
+            for _, item in itens_venda.iterrows():
                 preco_unit_raw = item.get("preco_unitario", 0)
                 if isinstance(preco_unit_raw, str) and 'R$' in preco_unit_raw:
-                    preco_unit_str = preco_unit_raw  # Mantém a string original para exibição
-                    # Convertemos para cálculo
-                    # Apenas remover o R$ e converter vírgula em ponto, não remover os pontos dos milhares
-                    valor_limpo = preco_unit_raw.replace("R$", "").replace(",", ".").strip()
-                    preco_unit = float(valor_limpo)
+                    preco_unit = float(preco_unit_raw.replace("R$", "").replace(",", ".").strip())
                 else:
                     preco_unit = float(preco_unit_raw)
-                    preco_unit_str = f"R$ {preco_unit:.2f}"
-
-                # Subtotal (também trata string com "R$")
-                subtotal_raw = item.get("subtotal", preco_unit * quantidade)
+                subtotal_raw = item.get("subtotal", preco_unit * item.get("quantidade", 1))
                 if isinstance(subtotal_raw, str) and 'R$' in subtotal_raw:
-                    subtotal_str = subtotal_raw  # Mantém a string original para exibição
-                    # Convertemos para cálculo
-                    # Apenas remover o R$ e converter vírgula em ponto, não remover os pontos dos milhares
-                    valor_limpo = subtotal_raw.replace("R$", "").replace(",", ".").strip()
-                    subtotal = float(valor_limpo)
+                    subtotal = float(subtotal_raw.replace("R$", "").replace(",", ".").strip())
                 else:
                     subtotal = float(subtotal_raw)
-                    subtotal_str = f"R$ {subtotal:.2f}"
-
-                total += subtotal
-
-                if y < 80:
-                    c.showPage()
-                    y = height - 80
-
-                c.drawString(50, y, str(produto))
-                c.drawString(220, y, str(quantidade))
-                c.drawString(270, y, preco_unit_str)
-                c.drawString(370, y, "-")
-                c.drawString(470, y, subtotal_str)
-                y -= row_height
-
-            # Total
-            y -= 5
-            c.setFont("Helvetica-Bold", 10)
-            c.setFillColor(AZUL_ESCURO)
-            total_formatado = f"R$ {total:,.2f}".replace(',', '_').replace('.', ',').replace('_', '.')
-            c.drawRightString(540, y, f"TOTAL: {total_formatado}")
+                itens_renderizar.append({
+                    "produto": str(item.get("produto_nome", "")),
+                    "quantidade": item.get("quantidade", 1),
+                    "preco_unit": preco_unit,
+                    "subtotal": subtotal,
+                })
         else:
-            c.drawString(50, y, "Nenhum item encontrado.")
+            # Fallback: usar descrição da proposta ou observações como serviço único
+            valor_total_num = round(float(venda.get("valor_total", 0)), 2)
+            if proposta_descricao:
+                descricao_servico = str(proposta_descricao).strip()
+            elif venda.get("observacoes"):
+                descricao_servico = str(venda["observacoes"]).strip()
+            else:
+                descricao_servico = "Serviço prestado"
+            itens_renderizar.append({
+                "produto": descricao_servico,
+                "quantidade": 1,
+                "preco_unit": valor_total_num,
+                "subtotal": valor_total_num,
+            })
+
+        for it in itens_renderizar:
+            preco_unit_str = f"R$ {it['preco_unit']:,.2f}".replace(',', '_').replace('.', ',').replace('_', '.')
+            subtotal_str   = f"R$ {it['subtotal']:,.2f}".replace(',', '_').replace('.', ',').replace('_', '.')
+            total += it["subtotal"]
+
+            if y < 80:
+                c.showPage()
+                y = height - 80
+
+            # Truncar nome do produto para caber na célula
+            produto_txt = str(it["produto"])
+            if len(produto_txt) > 38:
+                produto_txt = produto_txt[:35] + "..."
+
+            c.setFillColor(CINZA_TEXTO)
+            c.setFont("Helvetica", 10)
+            c.drawString(50, y, produto_txt)
+            c.drawString(220, y, str(it["quantidade"]))
+            c.drawString(270, y, preco_unit_str)
+            c.drawString(370, y, "-")
+            c.drawString(470, y, subtotal_str)
+            y -= row_height
+
+        # Total
+        y -= 5
+        c.setFont("Helvetica-Bold", 10)
+        c.setFillColor(AZUL_ESCURO)
+        total_formatado = f"R$ {total:,.2f}".replace(',', '_').replace('.', ',').replace('_', '.')
+        c.drawRightString(540, y, f"TOTAL: {total_formatado}")
 
         # Aplicar rodapé padronizado
         from utils.pdf_footer_helper import aplicar_rodape_padronizado

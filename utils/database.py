@@ -4886,7 +4886,9 @@ class Database:
                 'status': v.status,
                 'forma_pagamento': v.forma_pagamento,
                 'observacoes': v.observacoes,
-                'usuario_id': v.usuario_id
+                'usuario_id': v.usuario_id,
+                'proposta_id': v.proposta_id,
+                'proposta_descricao': (v.proposta.descricao if v.proposta and v.proposta.descricao else None),
             } for v in vendas])
         return self._safe_query(query)
         

@@ -212,6 +212,7 @@ def _render_detail_panel(venda_id, venda_row):
                     "data_venda": venda_row.get("data_venda"),
                     "observacoes": venda_row.get("observacoes", "")
                 }
+                proposta_desc = venda_row.get("proposta_descricao") or None
                 cliente_dados = {"nome": str(cliente_nome)}
                 try:
                     itens_pdf = st.session_state.db.get_itens_venda(venda_id)
@@ -221,7 +222,8 @@ def _render_detail_panel(venda_id, venda_row):
                 ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_time.time()))
                 safe_nome = str(cliente_nome).replace(" ", "_").replace("/", "_").lower()
                 pdf_path = gerar_pdf_venda(venda_dados, cliente_dados, itens_pdf,
-                                           f"pdfs/Venda_{venda_id}_{safe_nome}_{ts}.pdf")
+                                           f"pdfs/Venda_{venda_id}_{safe_nome}_{ts}.pdf",
+                                           proposta_descricao=proposta_desc)
                 if pdf_path and os.path.exists(pdf_path):
                     with open(pdf_path, "rb") as f:
                         pdf_bytes = f.read()
@@ -437,11 +439,13 @@ def show():
                         "data_venda": datetime.now().strftime("%d/%m/%Y %H:%M"),
                         "observacoes": st.session_state.venda_recente_observacoes or ""
                     }
+                    proposta_desc_pos = vrow.get("proposta_descricao") or None
                     safe = crow["nome"].replace(" ", "_").replace("/", "_").lower()
                     os.makedirs("pdfs", exist_ok=True)
                     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
                     pdf_path = gerar_pdf_venda(venda_dados, {"nome": crow["nome"]}, itens_tmp,
-                                               f"pdfs/Venda_{vid}_{safe}_{ts}.pdf")
+                                               f"pdfs/Venda_{vid}_{safe}_{ts}.pdf",
+                                               proposta_descricao=proposta_desc_pos)
                     if pdf_path and os.path.exists(pdf_path):
                         with open(pdf_path, "rb") as f:
                             pdf_bytes = f.read()
