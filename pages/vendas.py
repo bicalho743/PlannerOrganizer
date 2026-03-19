@@ -162,104 +162,154 @@ def _render_nova_venda_form(clientes_df, produtos_df):
 
 
 def _render_detail_panel(venda_id, venda_row):
-    cliente_nome = venda_row.get("cliente_nome", "Cliente")
-    st.markdown(f"### Venda #{venda_id} — {html_module.escape(str(cliente_nome))}")
+    cliente_nome = html_module.escape(str(venda_row.get("cliente_nome", "Cliente")))
+    status       = str(venda_row.get("status") or "—")
+    data_str     = html_module.escape(_fmt_date(venda_row.get("data_venda")))
+    pagamento    = str(venda_row.get("forma_pagamento") or "—")
+    valor_str    = html_module.escape(_fmt_brl(venda_row.get("valor_total", 0)))
+    obs_raw      = str(venda_row.get("observacoes") or "")
+    proposta_desc = str(venda_row.get("proposta_descricao") or "")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.write(f"**Cliente:** {cliente_nome}")
-        st.write(f"**Data:** {_fmt_date(venda_row.get('data_venda'))}")
-        st.write(f"**Status:** {venda_row.get('status', 'N/A')}")
-    with col2:
-        st.write(f"**Valor Total:** {_fmt_brl(venda_row.get('valor_total', 0))}")
-        st.write(f"**Forma de pagamento:** {venda_row.get('forma_pagamento', 'N/A')}")
-        if venda_row.get("observacoes"):
-            st.write(f"**Observações:** {venda_row['observacoes']}")
+    # linha de metadados compacta
+    meta_parts = [status, data_str]
+    if pagamento and pagamento != "—":
+        meta_parts.append(pagamento)
+    if proposta_desc:
+        meta_parts.append(html_module.escape(proposta_desc))
+    elif obs_raw:
+        meta_parts.append(html_module.escape(obs_raw[:80]))
+    meta_str = " · ".join(meta_parts)
 
-    # Itens da venda
+    # badge de cor por status
+    status_lower = status.lower()
+    if "conclu" in status_lower or "confirm" in status_lower:
+        border_color = "#38A169"
+        badge_bg = "#C6F6D5"; badge_fg = "#276749"
+    elif "pendent" in status_lower or "aberto" in status_lower:
+        border_color = "#D69E2E"
+        badge_bg = "#FEFCBF"; badge_fg = "#744210"
+    else:
+        border_color = "#718096"
+        badge_bg = "#EDF2F7"; badge_fg = "#2D3748"
+
+    st.markdown(f"""
+    <style>
+    .det-card {{
+        background:#fff; border:1px solid #e2e8f0;
+        border-left:4px solid {border_color};
+        border-radius:8px; padding:12px 16px; margin-bottom:4px;
+    }}
+    .det-title {{ font-weight:700; font-size:1rem; color:#1a202c; margin:0 0 4px 0; }}
+    .det-meta  {{ font-size:0.78rem; color:#64748b; margin:0; }}
+    .det-valor {{ font-weight:700; font-size:1.1rem; color:{border_color}; white-space:nowrap; }}
+    .det-badge {{
+        display:inline-block; padding:2px 8px; border-radius:12px;
+        font-size:0.7rem; font-weight:600;
+        background:{badge_bg}; color:{badge_fg}; margin-left:6px;
+    }}
+    </style>
+    <div class="det-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+                <p class="det-title">
+                    Venda #{venda_id}
+                    <span class="det-badge">{html_module.escape(status)}</span>
+                </p>
+                <p class="det-meta">👤 {cliente_nome} &nbsp;·&nbsp; {meta_str}</p>
+            </div>
+            <span class="det-valor">{valor_str}</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Itens da venda (compacto, sem título separado)
     try:
         itens = st.session_state.db.get_itens_venda(venda_id)
         if not itens.empty:
-            st.markdown("**Itens:**")
-            itens["total_item"] = itens["quantidade"] * itens["preco_unitario"]
-            disp = itens.copy()
-            disp["preco_unitario"] = disp["preco_unitario"].map("R$ {:.2f}".format)
-            disp["total_item"] = disp["total_item"].map("R$ {:.2f}".format)
-            cols_map = {"produto_nome": "Produto", "quantidade": "Qtd", "preco_unitario": "Preço Unit.", "total_item": "Total"}
-            disp = disp[list(cols_map.keys())].rename(columns=cols_map)
+            itens["Total"] = (itens["quantidade"] * itens["preco_unitario"]).map(
+                lambda x: f"R$ {x:,.2f}".replace(",","X").replace(".",",").replace("X",".")
+            )
+            itens["preco_unitario"] = itens["preco_unitario"].map(
+                lambda x: f"R$ {x:,.2f}".replace(",","X").replace(".",",").replace("X",".")
+            )
+            disp = itens[["produto_nome","quantidade","preco_unitario","Total"]].rename(columns={
+                "produto_nome":"Produto","quantidade":"Qtd","preco_unitario":"Unit."
+            })
             st.dataframe(disp, hide_index=True, use_container_width=True)
     except Exception as e:
-        st.warning(f"Não foi possível carregar itens: {str(e)}")
+        st.caption(f"Itens: {str(e)}")
 
-    st.markdown("---")
-    col_edit, col_pdf, col_del = st.columns(3)
-
+    # Botões de ação compactos
+    col_edit, col_pdf, col_del, col_space = st.columns([1, 1, 1, 3])
     with col_edit:
-        if st.button("✏️ EDITAR", type="primary", key=f"det_edit_{venda_id}", use_container_width=True):
-            st.session_state[f"editando_venda_{venda_id}"] = True
+        if st.button("✏️ Editar", key=f"det_edit_{venda_id}", use_container_width=True):
+            st.session_state[f"editando_venda_{venda_id}"] = not st.session_state.get(f"editando_venda_{venda_id}", False)
             st.rerun()
-
     with col_pdf:
-        if st.button("📄 GERAR PDF", type="primary", key=f"det_pdf_{venda_id}", use_container_width=True):
-            try:
-                from utils.pdf_generator_venda_fixed import gerar_pdf_venda
-                import time as _time
-                venda_dados = {
-                    "id": venda_row["id"],
-                    "status": venda_row.get("status", "Concluída"),
-                    "forma_pagamento": venda_row.get("forma_pagamento", ""),
-                    "valor_total": round(_safe_float(venda_row.get("valor_total", 0)), 2),
-                    "data_venda": venda_row.get("data_venda"),
-                    "observacoes": venda_row.get("observacoes", "")
-                }
-                proposta_desc = venda_row.get("proposta_descricao") or None
-                cliente_dados = {"nome": str(cliente_nome)}
-                try:
-                    itens_pdf = st.session_state.db.get_itens_venda(venda_id)
-                except Exception:
-                    itens_pdf = pd.DataFrame()
-                os.makedirs("pdfs", exist_ok=True)
-                ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_time.time()))
-                safe_nome = str(cliente_nome).replace(" ", "_").replace("/", "_").lower()
-                pdf_path = gerar_pdf_venda(venda_dados, cliente_dados, itens_pdf,
-                                           f"pdfs/Venda_{venda_id}_{safe_nome}_{ts}.pdf",
-                                           proposta_descricao=proposta_desc)
-                if pdf_path and os.path.exists(pdf_path):
-                    with open(pdf_path, "rb") as f:
-                        pdf_bytes = f.read()
-                    st.success("PDF gerado com sucesso!")
-                    st.download_button(
-                        label="📥 Baixar PDF",
-                        data=pdf_bytes,
-                        file_name=f"Venda_{venda_id}_{safe_nome}.pdf",
-                        mime="application/pdf",
-                        key=f"dl_pdf_{venda_id}"
-                    )
-                else:
-                    st.error("Erro ao gerar PDF.")
-            except Exception as e:
-                st.error(f"Erro: {str(e)}")
-
+        if st.button("📄 PDF", key=f"det_pdf_{venda_id}", use_container_width=True):
+            st.session_state[f"gerar_pdf_{venda_id}"] = True
+            st.rerun()
     with col_del:
-        if st.button("🗑️ EXCLUIR", type="secondary", key=f"det_del_{venda_id}", use_container_width=True):
+        if st.button("🗑️ Excluir", key=f"det_del_{venda_id}", use_container_width=True):
             st.session_state[f"confirmar_excluir_{venda_id}"] = True
             st.rerun()
 
+    # Geração de PDF (após clicar no botão)
+    if st.session_state.get(f"gerar_pdf_{venda_id}", False):
+        st.session_state.pop(f"gerar_pdf_{venda_id}", None)
+        try:
+            from utils.pdf_generator_venda_fixed import gerar_pdf_venda
+            import time as _time
+            venda_dados = {
+                "id": venda_row["id"],
+                "status": venda_row.get("status", "Concluída"),
+                "forma_pagamento": venda_row.get("forma_pagamento", ""),
+                "valor_total": round(_safe_float(venda_row.get("valor_total", 0)), 2),
+                "data_venda": venda_row.get("data_venda"),
+                "observacoes": venda_row.get("observacoes", "")
+            }
+            prop_desc = venda_row.get("proposta_descricao") or None
+            nome_raw = str(venda_row.get("cliente_nome", "cliente"))
+            try:
+                itens_pdf = st.session_state.db.get_itens_venda(venda_id)
+            except Exception:
+                itens_pdf = pd.DataFrame()
+            os.makedirs("pdfs", exist_ok=True)
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_time.time()))
+            safe_nome = nome_raw.replace(" ", "_").replace("/", "_").lower()
+            pdf_path = gerar_pdf_venda(venda_dados, {"nome": nome_raw}, itens_pdf,
+                                       f"pdfs/Venda_{venda_id}_{safe_nome}_{ts}.pdf",
+                                       proposta_descricao=prop_desc)
+            if pdf_path and os.path.exists(pdf_path):
+                with open(pdf_path, "rb") as f:
+                    pdf_bytes = f.read()
+                st.success("PDF gerado!")
+                st.download_button(
+                    label="📥 Baixar PDF",
+                    data=pdf_bytes,
+                    file_name=f"Venda_{venda_id}_{safe_nome}.pdf",
+                    mime="application/pdf",
+                    key=f"dl_pdf_{venda_id}"
+                )
+            else:
+                st.error("Erro ao gerar PDF.")
+        except Exception as e:
+            st.error(f"Erro: {str(e)}")
+
+    # Confirmação de exclusão
     if st.session_state.get(f"confirmar_excluir_{venda_id}", False):
-        st.warning("⚠️ Confirmar exclusão desta venda?")
-        cc1, cc2 = st.columns(2)
+        st.warning(f"⚠️ Excluir Venda #{venda_id} — {venda_row.get('cliente_nome','')}?")
+        cc1, cc2, _ = st.columns([1, 1, 4])
         with cc1:
             if st.button("✓ Confirmar", type="primary", key=f"conf_del_{venda_id}", use_container_width=True):
                 try:
                     st.session_state.db.excluir_venda(venda_id)
-                    st.success("Venda excluída com sucesso!")
-                    st.session_state.get(f"confirmar_excluir_{venda_id}", None)
                     st.session_state["venda_selecionada"] = None
                     for k in [f"confirmar_excluir_{venda_id}", f"editando_venda_{venda_id}"]:
                         st.session_state.pop(k, None)
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Erro ao excluir: {str(e)}")
+                    st.error(f"Erro: {str(e)}")
         with cc2:
             if st.button("✗ Cancelar", key=f"canc_del_{venda_id}", use_container_width=True):
                 st.session_state.pop(f"confirmar_excluir_{venda_id}", None)
@@ -267,83 +317,79 @@ def _render_detail_panel(venda_id, venda_row):
 
     # Painel de edição de itens
     if st.session_state.get(f"editando_venda_{venda_id}", False):
-        st.markdown("---")
-        st.subheader("Editar itens da venda")
-        try:
-            itens_atuais = st.session_state.db.get_itens_venda(venda_id)
-            produtos_df = st.session_state.db.get_produtos()
+        with st.expander("✏️ Editar itens", expanded=True):
+            try:
+                itens_atuais = st.session_state.db.get_itens_venda(venda_id)
+                produtos_df  = st.session_state.db.get_produtos()
 
-            if not itens_atuais.empty and not produtos_df.empty:
-                for _, item in itens_atuais.iterrows():
-                    with st.expander(f"📦 {item['produto_nome']} — Qtd: {item['quantidade']}", expanded=True):
-                        ec1, ec2, ec3, ec4 = st.columns([3, 1, 1, 1])
+                if not itens_atuais.empty:
+                    for _, item in itens_atuais.iterrows():
+                        ec1, ec2, ec3, ec4, ec5 = st.columns([3, 1, 1, 1, 1])
                         ec1.write(f"**{item['produto_nome']}**")
                         with ec2:
                             nova_qtd = st.number_input("Qtd", min_value=1, value=int(item["quantidade"]),
-                                                       key=f"eq_{item['id']}")
+                                                       key=f"eq_{item['id']}", label_visibility="collapsed")
                         with ec3:
-                            novo_preco = st.number_input("Preço", min_value=0.01, value=float(item["preco_unitario"]),
-                                                         format="%.2f", key=f"ep_{item['id']}")
+                            novo_preco = st.number_input("R$", min_value=0.01, value=float(item["preco_unitario"]),
+                                                         format="%.2f", key=f"ep_{item['id']}", label_visibility="collapsed")
                         with ec4:
-                            if st.button("💾", key=f"esv_{item['id']}", help="Salvar"):
+                            if st.button("💾", key=f"esv_{item['id']}", help="Salvar", use_container_width=True):
                                 try:
                                     st.session_state.db.update_item_venda(item["id"], nova_qtd, novo_preco)
-                                    st.success("Salvo!")
                                     st.rerun()
                                 except Exception as ex:
                                     st.error(str(ex))
-                            if st.button("🗑️", key=f"erm_{item['id']}", help="Remover"):
+                        with ec5:
+                            if st.button("🗑️", key=f"erm_{item['id']}", help="Remover", use_container_width=True):
                                 try:
                                     st.session_state.db.remove_item_venda(item["id"])
-                                    st.success("Removido!")
+                                    st.rerun()
+                                except Exception as ex:
+                                    st.error(str(ex))
+                    st.markdown("---")
+
+                if not produtos_df.empty:
+                    with st.form(f"form_add_item_{venda_id}"):
+                        ap1, ap2, ap3 = st.columns([3, 1, 1])
+                        with ap1:
+                            prods_lista = ["-- Selecione --"] + sorted(produtos_df["nome"].tolist())
+                            novo_prod = st.selectbox("Produto", prods_lista, key=f"ap_prod_{venda_id}")
+                        with ap2:
+                            nova_qtd_add = st.number_input("Qtd", min_value=1, value=1, key=f"ap_qtd_{venda_id}")
+                        with ap3:
+                            preco_default = 0.01
+                            if novo_prod != "-- Selecione --":
+                                prow = produtos_df[produtos_df["nome"] == novo_prod].iloc[0]
+                                preco_default = max(0.01, float(prow["preco_venda"]))
+                            novo_preco_add = st.number_input("Preço", min_value=0.01, value=preco_default,
+                                                             format="%.2f", key=f"ap_preco_{venda_id}")
+                        if st.form_submit_button("➕ Adicionar produto", type="primary", use_container_width=True):
+                            if novo_prod != "-- Selecione --":
+                                try:
+                                    pid_add = produtos_df[produtos_df["nome"] == novo_prod]["id"].iloc[0]
+                                    st.session_state.db.add_item_venda(venda_id, pid_add, nova_qtd_add, novo_preco_add)
                                     st.rerun()
                                 except Exception as ex:
                                     st.error(str(ex))
 
-                st.markdown("---")
-                with st.form(f"form_add_item_{venda_id}"):
-                    st.write("**Adicionar produto:**")
-                    ap1, ap2, ap3 = st.columns([3, 1, 1])
-                    with ap1:
-                        prods_lista = ["-- Selecione --"] + sorted(produtos_df["nome"].tolist())
-                        novo_prod = st.selectbox("Produto", prods_lista, key=f"ap_prod_{venda_id}")
-                    with ap2:
-                        nova_qtd_add = st.number_input("Qtd", min_value=1, value=1, key=f"ap_qtd_{venda_id}")
-                    with ap3:
-                        preco_default = 0.01
-                        if novo_prod != "-- Selecione --":
-                            prow = produtos_df[produtos_df["nome"] == novo_prod].iloc[0]
-                            preco_default = max(0.01, float(prow["preco_venda"]))
-                        novo_preco_add = st.number_input("Preço", min_value=0.01, value=preco_default,
-                                                         format="%.2f", key=f"ap_preco_{venda_id}")
-                    if st.form_submit_button("➕ Adicionar", type="primary", use_container_width=True):
-                        if novo_prod != "-- Selecione --":
-                            try:
-                                pid_add = produtos_df[produtos_df["nome"] == novo_prod]["id"].iloc[0]
-                                st.session_state.db.add_item_venda(venda_id, pid_add, nova_qtd_add, novo_preco_add)
-                                st.success("Produto adicionado!")
-                                st.rerun()
-                            except Exception as ex:
-                                st.error(str(ex))
-
-                if st.button("✅ Finalizar edição", type="primary", use_container_width=True, key=f"fin_edit_{venda_id}"):
-                    try:
-                        st.session_state.db.recalcular_valor_total_venda(venda_id)
+                fe1, fe2 = st.columns(2)
+                with fe1:
+                    if st.button("✅ Salvar e fechar", type="primary", use_container_width=True, key=f"fin_edit_{venda_id}"):
+                        try:
+                            st.session_state.db.recalcular_valor_total_venda(venda_id)
+                            st.session_state[f"editando_venda_{venda_id}"] = False
+                            st.rerun()
+                        except Exception as ex:
+                            st.error(str(ex))
+                with fe2:
+                    if st.button("Cancelar", use_container_width=True, key=f"canc_edit_{venda_id}"):
                         st.session_state[f"editando_venda_{venda_id}"] = False
-                        st.success("Edição concluída!")
                         st.rerun()
-                    except Exception as ex:
-                        st.error(str(ex))
-            else:
-                st.info("Sem itens ou produtos cadastrados.")
-                if st.button("Cancelar edição", key=f"canc_edit_{venda_id}"):
+            except Exception as e:
+                st.error(f"Erro: {str(e)}")
+                if st.button("Fechar", key=f"canc_edit_err_{venda_id}"):
                     st.session_state[f"editando_venda_{venda_id}"] = False
                     st.rerun()
-        except Exception as e:
-            st.error(f"Erro ao carregar edição: {str(e)}")
-            if st.button("Cancelar", key=f"canc_edit_err_{venda_id}"):
-                st.session_state[f"editando_venda_{venda_id}"] = False
-                st.rerun()
 
 
 def show():
