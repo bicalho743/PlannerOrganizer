@@ -162,27 +162,15 @@ def _render_detail_panel(proposta_id, proposta, propostas_com_clientes):
     st.markdown(f"### Proposta #{numero} — {nome_cliente}")
     st.caption(proposta.get('descricao', '')[:120])
 
-    detail_tabs = st.tabs([
-        "📊 Detalhes", "📦 Produtos", "🏭 Fornecedores",
-        "👥 Assistentes", "➕ Outros", "🏁 Finalizar / Ações"
-    ])
+    detail_tabs = st.tabs(["📊 Detalhes", "📋 Itens & Custos", "🏁 Finalizar"])
 
     with detail_tabs[0]:
         _tab_detalhes(proposta_id, proposta)
 
     with detail_tabs[1]:
-        _tab_produtos(proposta_id)
+        _tab_itens(proposta_id)
 
     with detail_tabs[2]:
-        _tab_fornecedores(proposta_id)
-
-    with detail_tabs[3]:
-        _tab_assistentes(proposta_id)
-
-    with detail_tabs[4]:
-        _tab_outros(proposta_id)
-
-    with detail_tabs[5]:
         _tab_acoes(proposta_id, proposta)
 
 
@@ -387,6 +375,69 @@ def _tab_produtos(proposta_id):
         else:
             st.warning("Nenhum produto cadastrado. Adicione em Cadastros > Produtos.")
             st.form_submit_button("ADICIONAR", disabled=True)
+
+
+def _tab_itens(proposta_id):
+    """Aba unificada: Produtos, Fornecedores, Assistentes e Outros numa só tela."""
+
+    # ── Carregar todos os dados ───────────────────────────────────────────
+    try:
+        produtos_df     = st.session_state.db.get_produtos_organizadores(proposta_id)
+        fornecedores_df = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_id, "FORNECEDOR")
+        assistentes_df  = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_id, "ASSISTENTE")
+        outros_df       = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_id, "OUTROS")
+    except Exception as e:
+        st.error(f"Erro ao carregar itens: {e}"); return
+
+    t_prod = (produtos_df['valor'] * produtos_df['quantidade']).sum() if not produtos_df.empty else 0
+    t_forn = fornecedores_df['valor'].sum() if not fornecedores_df.empty else 0
+    t_asst = assistentes_df['valor'].sum() if not assistentes_df.empty else 0
+    t_outr = outros_df['valor'].sum() if not outros_df.empty else 0
+    t_total = t_prod + t_forn + t_asst + t_outr
+
+    # ── Painel de totais ──────────────────────────────────────────────────
+    cats = [
+        ("📦 Produtos",      len(produtos_df),     t_prod, "#C9A84C"),
+        ("🏢 Fornecedores",  len(fornecedores_df),  t_forn, "#0F5E6E"),
+        ("👥 Assistentes",   len(assistentes_df),   t_asst, "#6B4EAA"),
+        ("➕ Outros",        len(outros_df),        t_outr, "#E07B39"),
+    ]
+    cols = st.columns(4)
+    for col, (label, qtd, total, cor) in zip(cols, cats):
+        vtot = _fmt_brl(total)
+        col.markdown(f"""
+        <div style="border-top:3px solid {cor};background:#fff;border-radius:0 0 8px 8px;
+                    padding:10px 12px;box-shadow:0 1px 4px rgba(0,0,0,.07);text-align:center;">
+          <div style="font-size:11px;color:#888;font-weight:600;">{label}</div>
+          <div style="font-size:18px;font-weight:700;color:#0D1B2A;">{qtd}</div>
+          <div style="font-size:12px;color:{cor};font-weight:600;">{vtot}</div>
+        </div>""", unsafe_allow_html=True)
+
+    if t_total > 0:
+        st.markdown(f"""
+        <div style="background:#0D1B2A;border-radius:8px;padding:10px 16px;margin-top:10px;
+                    display:flex;justify-content:space-between;align-items:center;">
+          <span style="color:#C9A84C;font-weight:700;font-size:13px;">TOTAL DE ITENS & CUSTOS</span>
+          <span style="color:#fff;font-weight:700;font-size:15px;">{_fmt_brl(t_total)}</span>
+        </div>""", unsafe_allow_html=True)
+
+    st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
+
+    # ── Seção Produtos ────────────────────────────────────────────────────
+    with st.expander(f"📦 Produtos ({len(produtos_df)})" + (f"  —  {_fmt_brl(t_prod)}" if t_prod > 0 else ""), expanded=True):
+        _tab_produtos(proposta_id)
+
+    # ── Seção Fornecedores ────────────────────────────────────────────────
+    with st.expander(f"🏢 Fornecedores ({len(fornecedores_df)})" + (f"  —  {_fmt_brl(t_forn)}" if t_forn > 0 else ""), expanded=False):
+        _tab_fornecedores(proposta_id)
+
+    # ── Seção Assistentes ─────────────────────────────────────────────────
+    with st.expander(f"👥 Assistentes ({len(assistentes_df)})" + (f"  —  {_fmt_brl(t_asst)}" if t_asst > 0 else ""), expanded=False):
+        _tab_assistentes(proposta_id)
+
+    # ── Seção Outros ──────────────────────────────────────────────────────
+    with st.expander(f"➕ Outros ({len(outros_df)})" + (f"  —  {_fmt_brl(t_outr)}" if t_outr > 0 else ""), expanded=False):
+        _tab_outros(proposta_id)
 
 
 def _acrescimos_cards(acrescimos, cor_borda="#C9A84C"):
@@ -648,10 +699,6 @@ def _tab_outros(proposta_id):
                         st.error("Erro ao adicionar.")
                 except Exception as e:
                     st.error(str(e))
-
-
-def _fmt_brl(v):
-    return f"R$ {float(v):,.2f}".replace(",","X").replace(".",",").replace("X",".")
 
 
 def _status_badge(label, cor_fundo, cor_texto="#fff"):
