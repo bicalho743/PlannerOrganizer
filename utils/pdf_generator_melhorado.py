@@ -697,329 +697,156 @@ def gerar_pdf_cliente_melhorado(proposta, cliente, acrescimos, filename):
 
 
 def gerar_pdf_fechamento(proposta, cliente, acrescimos, filename):
-    """
-    ALIAS para compatibilidade com melhorias para garantir que todas as informações
-    da proposta sejam adequadamente transferidas.
-    """
-    # Garantir que as informações críticas da proposta estejam presentes
-    # Debug de informações
-    print(f"DEBUG PDF INFO: Tipo de proposta: {proposta.get('tipo_proposta', 'N/A')}")
-    print(f"DEBUG PDF INFO: Status: {proposta.get('status', 'N/A')}")
-    print(f"DEBUG PDF INFO: Data Início: {proposta.get('data_inicio', 'N/A')}")
-    print(f"DEBUG PDF INFO: Data Fim: {proposta.get('data_fim', 'N/A')}")
-    print(f"DEBUG PDF INFO: Prazo Entrega: {proposta.get('prazo_entrega', 'N/A')}")
-    
-    # Se for um dataframe, converter para dict
+    """Alias de compatibilidade — delega ao gerador com novo design."""
     proposta_dict = proposta
-    if hasattr(proposta, 'to_dict'):
+    if hasattr(proposta, "to_dict"):
         proposta_dict = proposta.to_dict()
-    
-    # Garantir que estamos repassando um objeto com todos os campos necessários
     if isinstance(proposta_dict, dict):
-        # Garantir valores padrão para campos essenciais
-        if 'tipo_proposta' not in proposta_dict:
-            proposta_dict['tipo_proposta'] = 'Organização'
-        if 'status' not in proposta_dict:
-            proposta_dict['status'] = 'Em elaboração'
-    
+        proposta_dict.setdefault("tipo_proposta", "Organização")
+        proposta_dict.setdefault("status", "Em elaboração")
     return gerar_pdf_fechamento_novo(proposta_dict, cliente, acrescimos, filename)
+
 
 def gerar_pdf_fechamento_novo(proposta, cliente, acrescimos, filename):
     """
-    Gera um PDF com o fechamento da proposta utilizando o novo design
-    mais profissional e organizado.
-    
-    Args:
-        proposta: Dicionário com os dados da proposta
-        cliente: Dicionário com os dados do cliente
-        acrescimos: DataFrame com os acréscimos da proposta
-        filename: Nome do arquivo PDF a ser gerado
-        
-    Returns:
-        str: Caminho do arquivo PDF gerado
-    """
-    # Logs para debugging
-    print(f"DEBUG PDF NOVO: Gerando PDF para proposta #{proposta.get('id', 'N/A')} com novo design")
-    print(f"DEBUG PDF NOVO: Cliente: {cliente.get('nome', 'N/A')}")
-    print(f"DEBUG PDF NOVO: Filename: {filename}")
-    print(f"DEBUG PDF NOVO: Acréscimos: {len(acrescimos) if isinstance(acrescimos, pd.DataFrame) and not acrescimos.empty else 0} registros")
-    
-    try:
-        # Certificar que o diretório existe
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        
-        # Canvas approach (mais flexível para layout e design)
-        c = canvas.Canvas(filename, pagesize=A4)
-        width, height = A4
-        
-        # Definir cores personalizadas
-        cinza_claro = colors.HexColor("#f5f7fa")     # fundo
-        cinza_medio = colors.HexColor("#5A6A85")     # textos
-        azul_escuro = colors.HexColor("#1E366F")     # acentos (cabeçalho)
-        azul_claro = colors.HexColor("#e9f2ff")      # destaque
-        
-        # Tons adicionais para melhorar o contraste visual
-        cinza_muito_claro = colors.HexColor("#f8f9fc")  # fundo ainda mais claro para áreas de destaque
-        azul_destaque = colors.HexColor("#d4e5fd")      # azul bem claro para seções de conteúdo
+    Gera a Proposta de Serviço com design Navy/Gold profissional.
 
-        # Cabeçalho
-        c.setFillColor(azul_escuro)
-        c.rect(0, height - 60, width, 60, fill=True, stroke=0)
-        c.setFillColor(colors.white)
-        c.setFont("Helvetica-Bold", 18)
-        c.drawString(30, height - 30, "Proposta de Serviço")
-        
-        # Subtítulo com número da proposta e nome do cliente
-        c.setFont("Helvetica", 11)
-        c.drawString(30, height - 50, f"#{proposta.get('id', 'N/A')} - {cliente.get('nome', 'Cliente')}")
-        
-        # Data no canto direito (agora dentro da faixa azul)
-        c.setFillColor(colors.white)
-        c.setFont("Helvetica", 10)
-        from datetime import datetime, timedelta
-        agora = datetime.now() - timedelta(hours=3)  # Ajustando para UTC-3 (Brasília)
-        c.drawRightString(width - 30, height - 30, f"Data: {agora.strftime('%d/%m/%Y')}")
-        
-        # Informações da Proposta
-        y = height - 100
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(30, y, "Informações da Proposta")
-        y -= 20
-        
-        # Calcular a altura total do texto para a caixa sombreada
-        # 4 linhas de informações * 16 pixels de altura cada + 10 pixels de margem superior e inferior
-        box_height = (4 * 16) + 20
-        
-        # Criar uma caixa de destaque para os detalhes
-        c.setFillColor(azul_claro)
-        c.rect(30, y - box_height + 10, width - 60, box_height, fill=True, stroke=0)
-        c.setFillColor(azul_escuro)
-        
-        # Tipo da proposta
-        c.setFont("Helvetica-Bold", 11)
-        c.drawString(40, y, f"Tipo: {proposta.get('tipo_proposta', 'Organização')}")
-        y -= 16
-        
-        # Status da proposta
-        c.drawString(40, y, f"Status: {proposta.get('status', 'Em elaboração')}")
-        y -= 16
-        
-        # Log para debug
-        print(f"DEBUG PDF DRAW: Desenhando data início: {proposta.get('data_inicio', 'N/A')}")
-        
-        # Data de início
-        data_inicio_str = "N/A"
-        if proposta.get('data_inicio'):
-            if hasattr(proposta['data_inicio'], 'strftime'):
-                data_inicio_str = proposta['data_inicio'].strftime('%d/%m/%Y')
-            else:
-                data_inicio_str = str(proposta['data_inicio'])
-        c.drawString(40, y, f"Data Início: {data_inicio_str}")
-        y -= 16
-        
-        # Data de fim
-        data_fim_str = "N/A"
-        if proposta.get('data_fim'):
-            if hasattr(proposta['data_fim'], 'strftime'):
-                data_fim_str = proposta['data_fim'].strftime('%d/%m/%Y')
-            else:
-                data_fim_str = str(proposta['data_fim'])
-        c.drawString(40, y, f"Data Fim: {data_fim_str}")
-        y -= 16
-        
-        # Prazo de entrega em dias
-        prazo_str = "N/A"
-        if proposta.get('data_inicio') and proposta.get('data_fim'):
-            print(f"DEBUG PDF CALC: Calculando prazo com datas: {proposta.get('data_inicio')} a {proposta.get('data_fim')}")
-            if hasattr(proposta['data_inicio'], 'toordinal') and hasattr(proposta['data_fim'], 'toordinal'):
-                dias = (proposta['data_fim'] - proposta['data_inicio']).days
-                prazo_str = f"{dias} dias"
-                print(f"DEBUG PDF CALC: Calculado como objetos date: {dias} dias")
-            elif isinstance(proposta['data_inicio'], str) and isinstance(proposta['data_fim'], str):
-                # Tentativa de converter strings para data
-                try:
-                    from datetime import datetime
-                    inicio = datetime.strptime(proposta['data_inicio'], "%Y-%m-%d")
-                    fim = datetime.strptime(proposta['data_fim'], "%Y-%m-%d")
-                    dias = (fim - inicio).days
-                    prazo_str = f"{dias} dias"
-                    print(f"DEBUG PDF CALC: Calculado como strings: {dias} dias")
-                except Exception as e:
-                    # Log de erro com detalhes
-                    print(f"DEBUG PDF CALC ERROR: Erro ao calcular prazo: {str(e)}")
-                    prazo_str = "Não Calculado"  # Mensagem mais específica
-        elif proposta.get('prazo_estimado'):
-            # Usar prazo estimado diretamente se disponível
-            prazo_str = f"{proposta.get('prazo_estimado')} dias"
-            print(f"DEBUG PDF CALC: Usando prazo_estimado direto: {prazo_str}")
-        
-        c.drawString(40, y, f"Prazo de Entrega: {prazo_str}")
-        
-        # Layout completamente redesenhado - seção única e mais limpa
-        y -= 40
-        
-        # Título principal e subtítulo em vez de caixas
-        c.setFillColor(azul_escuro)
-        c.setFont("Helvetica-Bold", 14)
-        c.drawString(40, y + 5, "Descrição e Investimento")
-        
-        # Desenhar linha separadora horizontal
-        c.setStrokeColor(azul_escuro)
-        c.setLineWidth(1)
-        c.line(40, y - 5, width - 40, y - 5)
-        
-        # Processar o texto da descrição diretamente
-        import textwrap
-        
-        # Espaço para descrição do serviço
-        y -= 20
-        c.setFillColor(cinza_medio)
-        c.setFont("Helvetica-Bold", 11)
-        c.drawString(40, y, "Descrição do Serviço:")
-        
-        # Processar o texto da descrição
-        descricao_text = proposta.get('descricao', 'Serviço Base')
-        
-        # Substituir caracteres problemáticos e remover formatação inconsistente
-        descricao_text = descricao_text.replace("•", "- ")
-        descricao_text = descricao_text.replace("\r\n", "\n").replace("\r", "\n")
-        
-        # Separar em parágrafos
-        paragrafos = descricao_text.split('\n')
-        
-        # Depois, cada parágrafo quebrar por tamanho
-        max_chars_per_line = 85  # Um pouco maior para aproveitar o espaço
-        todas_linhas = []
-        for paragrafo in paragrafos:
-            if paragrafo.strip():  # Ignorar linhas vazias
-                linhas_quebradas = textwrap.wrap(paragrafo.strip(), max_chars_per_line)
-                todas_linhas.extend(linhas_quebradas)
-        
-        # Se não tiver nenhuma linha, adicionar um texto padrão
-        if not todas_linhas:
-            todas_linhas = ["Serviço Base"]
-        
-        # Configurar a área de texto
-        y -= 20
-        line_height = 14
-        
-        # Desenhar todas as linhas da descrição (removido limite artificial)
-        for i, linha in enumerate(todas_linhas):
-            c.setFont("Helvetica", 10)
-            c.drawString(50, y - (i * line_height), linha)
-        
-        # Ajustar a posição Y considerando o número de linhas mostradas
-        linhas_mostradas = len(todas_linhas) 
-        y -= (linhas_mostradas * line_height + 25)
-        
-        # Exibir valor e status
-        valor_str = f"R$ {float(proposta.get('valor', 0)):.2f}"
-        status_str = proposta.get('status_pagamento_base', 'Pendente')
-        
-        c.setFont("Helvetica-Bold", 12)
-        c.setFillColor(azul_escuro)
-        c.drawString(40, y - 35, f"Total: {valor_str} – Status: {status_str}")
-        
-        # Observações
-        y -= 80
-        c.setFillColor(cinza_medio)
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(30, y, "Observações:")
-        c.setFont("Helvetica", 11)
-        
-        # Lista de observações
-        y -= 20
-        
-        # Obter observações personalizadas do perfil do usuário
-        observacoes_personalizadas = None
+    Args:
+        proposta (dict): dados da proposta
+        cliente  (dict): dados do cliente
+        acrescimos (DataFrame): acréscimos da proposta
+        filename (str): caminho do PDF a gerar
+
+    Returns:
+        str: caminho do PDF gerado
+    """
+    import textwrap as _tw
+    from reportlab.lib.units import mm as _mm
+    from utils.pdf_base import (
+        W, H, NAVY, GOLD, GOLD_LT, WHITE, GRAY1, GRAY2, GRAY3, DARK, GREEN,
+        fmt, rr, header, info_cards, section_title, table_rows, total_row, footer,
+    )
+
+    print(f"PDF PROPOSTA: #{proposta.get('id','?')} | {cliente.get('nome','?')}")
+    try:
+        os.makedirs(os.path.dirname(filename) or ".", exist_ok=True)
+        c = canvas.Canvas(filename, pagesize=A4)
+        margin = 18 * _mm
+        cw = W - 2 * margin
+
+        # ── Helper de data ───────────────────────────────────────────────
+        def _fmt(d):
+            if not d:
+                return "—"
+            if hasattr(d, "strftime"):
+                return d.strftime("%d/%m/%Y")
+            s = str(d)[:10]
+            try:
+                from datetime import datetime as _dt
+                return _dt.strptime(s, "%Y-%m-%d").strftime("%d/%m/%Y")
+            except Exception:
+                return s
+
+        num_prop = f"#{proposta.get('id', '')}"
+        header(c, "Proposta de Serviço", num_prop, margin, cw)
+
+        di = _fmt(proposta.get("data_inicio"))
+        df = _fmt(proposta.get("data_fim"))
+        periodo = f"{di} – {df}" if di != "—" else "—"
+
+        y = info_cards(c, margin, cw, [
+            ("Cliente", cliente.get("nome", "—")),
+            ("Tipo",    proposta.get("tipo_proposta", "—")),
+            ("Status",  proposta.get("status", "—")),
+            ("Período", periodo),
+        ])
+
+        # ── Bloco de descrição ───────────────────────────────────────────
+        descricao = str(proposta.get("descricao") or "Serviço de Personal Organizer").strip()
+        rr(c, margin, y - 12 * _mm, cw, 12 * _mm, 4, GOLD_LT, GOLD, 0.5)
+        c.setFillColor(colors.HexColor("#7A5C1A"))
+        c.setFont("Helvetica", 9)
+        c.drawString(margin + 5 * _mm, y - 4 * _mm, "Descrição do serviço")
+        c.setFillColor(NAVY)
+        c.setFont("Helvetica-Bold", 10)
+        desc_curta = descricao if len(descricao) <= 80 else descricao[:77] + "..."
+        c.drawString(margin + 5 * _mm, y - 9.5 * _mm, desc_curta)
+        y -= 22 * _mm
+
+        # ── Valor e investimento ─────────────────────────────────────────
+        valor_base = float(proposta.get("valor", 0) or 0)
+        y = section_title(c, margin, cw, y,
+                          "Investimento",
+                          "Valores do serviço contratado",
+                          GOLD)
+
+        rows = [("Serviço de Personal Organizer", valor_base, False)]
+
+        # Somar acréscimos não-assistente/fornecedor para a proposta
+        if acrescimos is not None and not acrescimos.empty:
+            for _, ac in acrescimos.iterrows():
+                tipo  = str(ac.get("tipo", "") or "").lower()
+                valor = float(ac.get("valor", 0) or 0)
+                desc  = str(ac.get("descricao") or ac.get("fornecedor") or tipo.capitalize())
+                if tipo not in ("assistente", "fornecedor"):
+                    rows.append((desc, valor, False))
+
+        y = table_rows(c, margin, cw, y, rows)
+        total_val = sum(r[1] for r in rows)
+        y = total_row(c, margin, cw, y,
+                      "TOTAL DO INVESTIMENTO", total_val,
+                      NAVY, WHITE, GOLD)
+
+        # ── Observações ──────────────────────────────────────────────────
+        y -= 12 * _mm
+        y = section_title(c, margin, cw, y,
+                          "Observações",
+                          "Condições e informações importantes desta proposta",
+                          GRAY3)
+
+        # Buscar observações personalizadas do perfil
+        obs_linhas = []
         try:
             import streamlit as st
-            from utils.database import Database
-            
-            if 'db' in st.session_state:
-                db = st.session_state.db
-                perfil = db.get_perfil_usuario()
-                if perfil and perfil.get('observacoes_relatorio'):
-                    observacoes_personalizadas = perfil['observacoes_relatorio']
-        except Exception as e:
-            print(f"Erro ao buscar observações personalizadas: {str(e)}")
-        
-        # Usar observações personalizadas ou padrão
-        if observacoes_personalizadas:
-            # Processar observações personalizadas (dividir por linha)
-            linhas_obs = observacoes_personalizadas.strip().split('\n')
-            observacoes = []
-            for i, linha in enumerate(linhas_obs, 1):
-                linha = linha.strip()
-                if linha:
-                    # Se a linha já tem numeração, manter; senão, adicionar
-                    if linha[0].isdigit() and '. ' in linha[:5]:
-                        observacoes.append(linha)
-                    else:
-                        observacoes.append(f"{i}. {linha}")
-        else:
-            # Observações padrão
-            observacoes = [
-                "1. Pagamento sinal, na reserva da data, via PIX",
+            if "db" in st.session_state:
+                perfil = st.session_state.db.get_perfil_usuario()
+                if perfil and perfil.get("observacoes_relatorio"):
+                    for ln in perfil["observacoes_relatorio"].strip().split("\n"):
+                        ln = ln.strip()
+                        if ln:
+                            obs_linhas.append(ln)
+        except Exception:
+            pass
+
+        if not obs_linhas:
+            obs_linhas = [
+                "1. Pagamento sinal, na reserva da data, via PIX.",
                 "2. Os valores apresentados incluem todos os custos.",
-                "3. Não está incluído a organização de documentos.",
-                "4. No caso da proposta incluir treinamento, é necessário a presença de funcionário no período da organização",
-                "5. Não incluido produtos e organizadores, caso o cliente opte por adquirí-los"
+                "3. Não está incluída a organização de documentos.",
+                "4. Treinamento requer presença de funcionário durante a organização.",
+                "5. Produtos e organizadores não incluídos, salvo especificado.",
             ]
-        
-        # Função para quebrar linhas muito longas
-        import textwrap
-        max_largura_obs = 80
-        
-        # Desenhar cada observação, tratando quebras de linha para items muito longos
-        for obs in observacoes:
-            # Se a linha for muito longa, quebrar
-            if len(obs) > max_largura_obs:
-                # Obter o prefixo (número e ponto)
-                prefixo = obs.split(". ")[0] + ". "
-                
-                # Obter o texto após o prefixo
-                texto = obs[len(prefixo):]
-                
-                # Adicionar o prefixo
-                c.drawString(40, y, prefixo)
-                
-                # Quebrar o texto restante
-                linhas_quebradas = textwrap.wrap(texto, max_largura_obs)
-                
-                # Desenhar a primeira linha após o prefixo
-                c.drawString(40 + c.stringWidth(prefixo, "Helvetica", 11), y, linhas_quebradas[0])
-                
-                # Desenhar linhas adicionais, se houver
-                for i, linha in enumerate(linhas_quebradas[1:], 1):
-                    y -= 14
-                    c.drawString(45, y, linha)
-            else:
-                # Se a linha for curta, apenas desenhar
-                c.drawString(40, y, obs)
-            
-            # Avançar para a próxima observação
-            y -= 18
-        
-        # Adicionar informações do usuário/empresa no rodapé
-        c.setFillColor(azul_escuro)
-        c.rect(0, 0, width, 40, fill=True, stroke=0)
-        c.setFillColor(colors.white)
-        c.setFont("Helvetica", 10)
-        
-        # Aplicar rodapé padronizado
-        from utils.pdf_footer_helper import aplicar_rodape_padronizado
-        aplicar_rodape_padronizado(c, width, height=40, ajuste_brasilia=False)
-        
-        # Salvar o PDF
+
+        for obs in obs_linhas:
+            linhas = _tw.wrap(obs, 90)
+            for li in linhas:
+                if y < 30 * _mm:
+                    c.showPage()
+                    y = H - 30 * _mm
+                c.setFillColor(DARK)
+                c.setFont("Helvetica", 10)
+                c.drawString(margin + 4 * _mm, y, li)
+                y -= 5.5 * _mm
+            y -= 1 * _mm
+
+        footer(c, margin)
         c.save()
-        print(f"DEBUG PDF NOVO: PDF gerado com sucesso: {filename}")
+        print(f"PDF PROPOSTA gerado: {filename}")
         return filename
-    
+
     except Exception as e:
-        print(f"DEBUG PDF NOVO ERROR: Erro ao gerar PDF: {str(e)}")
         traceback.print_exc()
-        raise Exception(f"Erro ao gerar PDF: {str(e)}")
+        raise Exception(f"Erro ao gerar PDF proposta: {e}")
 
 # Não vamos mais sobrescrever a função gerar_pdf_fechamento
 # Mantemos nossa versão melhorada que garante a compatibilidade e transferência

@@ -1,212 +1,129 @@
 """
-Gerador de PDF para relatórios de venda com estilo consistente com o relatório interno
-Versão completamente nova e simplificada
+Relatório de Venda — design Navy/Gold.
 """
 import os
+import traceback
 from datetime import datetime, timedelta
+
+import pandas as pd
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
-import traceback
 
-# Paleta de cores igual ao relatório interno
-AZUL_ESCURO = colors.HexColor("#1E366F")
-AZUL_CLARO = colors.HexColor("#e9f2ff")
-CINZA_TEXTO = colors.HexColor("#5A6A85")
-BRANCO = colors.white
+from utils.pdf_base import (
+    W, H, NAVY, GOLD, GOLD_LT, WHITE, GRAY1, GRAY2, GRAY3, DARK, GREEN, GREEN_LT,
+    fmt, rr, header, info_cards, section_title, table_rows, total_row, footer,
+)
+
+
+def _fmt_data(d):
+    if not d:
+        return "—"
+    if isinstance(d, str):
+        try:
+            if "T" in d:
+                d = datetime.fromisoformat(d.replace("Z", "+00:00"))
+            else:
+                d = datetime.strptime(d[:10], "%Y-%m-%d")
+        except Exception:
+            return d
+    if hasattr(d, "strftime"):
+        return d.strftime("%d/%m/%Y")
+    return str(d)
+
 
 def gerar_pdf_venda(venda, cliente, itens_venda, filename, proposta_descricao=None):
     """
-    Gera um PDF de relatório de venda com o mesmo estilo do relatório interno.
+    Gera o relatório de venda com design Navy/Gold.
 
     Args:
-        venda (dict): informações da venda (id, status, forma_pagamento, valor_total)
-        cliente (dict): informações do cliente (nome)
-        itens_venda (DataFrame): produtos vendidos
-        filename (str): caminho do arquivo PDF a ser gerado
-        
+        venda (dict): dados da venda (id, status, forma_pagamento, valor_total, data_venda, observacoes)
+        cliente (dict): dados do cliente (nome)
+        itens_venda (DataFrame): produtos da venda
+        filename (str): caminho do PDF a gerar
+        proposta_descricao (str, optional): descrição da proposta vinculada
+
     Returns:
-        str: Caminho do arquivo PDF gerado
+        str: caminho do PDF gerado
     """
-    print(f"DEBUG PDF VENDA: Gerando PDF para venda #{venda.get('id', 'N/A')}")
-    print(f"DEBUG PDF VENDA: Cliente: {cliente.get('nome', 'N/A')}")
-    print(f"DEBUG PDF VENDA: Filename: {filename}")
-    print(f"DEBUG PDF VENDA: Itens: {len(itens_venda) if hasattr(itens_venda, 'empty') and not itens_venda.empty else 0} registros")
-    
+    print(f"PDF VENDA: venda #{venda.get('id','?')} | cliente {cliente.get('nome','?')}")
     try:
-        # Garantir que o diretório existe
         dir_path = os.path.dirname(filename)
         if dir_path:
             os.makedirs(dir_path, exist_ok=True)
-        
-        # Verificar se temos itens para exibir
-        if hasattr(itens_venda, 'empty') and not itens_venda.empty:
-            print(f"DEBUG PDF VENDA: Produtos encontrados:")
-            for _, item in itens_venda.iterrows():
-                print(f"  - {item.get('produto_nome', 'N/A')}: {item.get('quantidade', 0)} x R${item.get('preco_unitario', 0):.2f}")
-        else:
-            print("DEBUG PDF VENDA: ATENÇÃO - Nenhum item encontrado para a venda!")
-        
+
         c = canvas.Canvas(filename, pagesize=A4)
-        width, height = A4
+        margin = 18 * mm
+        cw = W - 2 * margin
 
-        # Cabeçalho
-        c.setFillColor(AZUL_ESCURO)
-        c.rect(0, height - 70, width, 70, fill=True, stroke=0)
-        c.setFillColor(BRANCO)
-        c.setFont("Helvetica-Bold", 18)
-        c.drawString(30, height - 30, "Relatório de Venda")
-        c.setFont("Helvetica", 11)
-        c.drawString(30, height - 50, f"#{venda.get('id', '')} - {cliente.get('nome', '')}")
-        agora = datetime.now() - timedelta(hours=3)
-        c.setFont("Helvetica", 10)
-        c.drawRightString(width - 30, height - 30, f"Data: {agora.strftime('%d/%m/%Y')}")
+        num_venda = f"#{venda.get('id', '')}"
+        header(c, "Relatório de Venda", num_venda, margin, cw)
 
-        # Bloco de informações da venda
-        y = height - 100
-        c.setFillColor(AZUL_CLARO)
-        c.rect(30, y - 110, width - 60, 100, fill=True, stroke=0)
-        c.setFillColor(AZUL_ESCURO)
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(40, y - 20, "Detalhes da Venda")
+        data_venda = _fmt_data(venda.get("data_venda"))
+        pagamento  = venda.get("forma_pagamento") or "—"
+        status     = venda.get("status") or "—"
 
-        # Tratar valor_total da venda para garantir formatação correta
-        valor_total_raw = venda.get('valor_total', 0)
-        if isinstance(valor_total_raw, str) and 'R$' in valor_total_raw:
-            valor_total = valor_total_raw  # Mantém o valor como string formatada
-        else:
-            # Arredondar e formatar corretamente
-            valor_num = round(float(valor_total_raw), 2)
-            valor_total = f"R$ {valor_num:,.2f}".replace(',', '_').replace('.', ',').replace('_', '.')
+        y = info_cards(c, margin, cw, [
+            ("Cliente",    cliente.get("nome", "—")),
+            ("Data",       data_venda),
+            ("Pagamento",  pagamento),
+            ("Status",     status),
+        ])
 
-        # Formatar data da venda
-        data_venda_str = "N/A"
-        if venda.get('data_venda'):
-            if isinstance(venda['data_venda'], str):
-                # Se for string, tentar converter
-                try:
-                    if 'T' in venda['data_venda']:
-                        data_obj = datetime.fromisoformat(venda['data_venda'].replace('Z', '+00:00'))
-                    else:
-                        data_obj = datetime.strptime(venda['data_venda'][:10], '%Y-%m-%d')
-                    data_venda_str = data_obj.strftime('%d/%m/%Y')
-                except:
-                    data_venda_str = venda['data_venda']
-            else:
-                # Se for objeto date/datetime
-                try:
-                    data_venda_str = venda['data_venda'].strftime('%d/%m/%Y')
-                except:
-                    data_venda_str = str(venda['data_venda'])
+        # ── Seção Itens da Venda ────────────────────────────────────────
+        y = section_title(c, margin, cw, y,
+                          "Itens da Venda",
+                          "Produtos e serviços incluídos nesta venda",
+                          NAVY)
 
-        c.setFillColor(CINZA_TEXTO)
-        c.setFont("Helvetica", 10)
-        c.drawString(40, y - 40, f"Cliente: {cliente.get('nome', '-')}")
-        c.drawString(40, y - 55, f"Data da Venda: {data_venda_str}")
-        c.drawString(40, y - 70, f"Status: {venda.get('status', '-')}")
-        c.drawString(40, y - 85, f"Forma de Pagamento: {venda.get('forma_pagamento', '-')}")
-        c.drawString(40, y - 100, f"Valor Total: {valor_total}")
-        y -= 145
+        tem_itens = hasattr(itens_venda, "empty") and not itens_venda.empty
 
-        # Título da seção de itens
-        c.setFillColor(AZUL_ESCURO)
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(40, y, "Itens da Venda:")
-        y -= 20
-
-        # Cabeçalho da tabela
-        c.setFont("Helvetica-Bold", 10)
-        c.drawString(50, y, "Produto")
-        c.drawString(220, y, "Qtd")
-        c.drawString(270, y, "Unitário")
-        c.drawString(370, y, "Área")
-        c.drawString(470, y, "Subtotal")
-        y -= 10
-        c.line(40, y, width - 40, y)
-        y -= 15
-
-        # Corpo da tabela
-        c.setFont("Helvetica", 10)
-        c.setFillColor(CINZA_TEXTO)
-        total = 0
-        row_height = 18
-
-        tem_itens = hasattr(itens_venda, 'empty') and not itens_venda.empty
-
-        # Montar lista de itens a renderizar
-        itens_renderizar = []
+        rows = []
         if tem_itens:
             for _, item in itens_venda.iterrows():
-                preco_unit_raw = item.get("preco_unitario", 0)
-                if isinstance(preco_unit_raw, str) and 'R$' in preco_unit_raw:
-                    preco_unit = float(preco_unit_raw.replace("R$", "").replace(",", ".").strip())
-                else:
-                    preco_unit = float(preco_unit_raw)
-                subtotal_raw = item.get("subtotal", preco_unit * item.get("quantidade", 1))
-                if isinstance(subtotal_raw, str) and 'R$' in subtotal_raw:
-                    subtotal = float(subtotal_raw.replace("R$", "").replace(",", ".").strip())
-                else:
-                    subtotal = float(subtotal_raw)
-                itens_renderizar.append({
-                    "produto": str(item.get("produto_nome", "")),
-                    "quantidade": item.get("quantidade", 1),
-                    "preco_unit": preco_unit,
-                    "subtotal": subtotal,
-                })
+                nome     = str(item.get("produto_nome", "") or "Produto")
+                qty      = float(item.get("quantidade", 1) or 1)
+                unit_raw = item.get("preco_unitario", 0)
+                if isinstance(unit_raw, str) and "R$" in unit_raw:
+                    unit_raw = unit_raw.replace("R$", "").replace(",", ".").strip()
+                unit = float(unit_raw or 0)
+                sub  = unit * qty
+                rows.append((f"{nome}  ×{int(qty)}", sub, False))
         else:
-            # Fallback: usar descrição da proposta ou observações como serviço único
-            valor_total_num = round(float(venda.get("valor_total", 0)), 2)
+            valor_total_num = float(venda.get("valor_total", 0) or 0)
             if proposta_descricao:
-                descricao_servico = str(proposta_descricao).strip()
+                desc = str(proposta_descricao).strip()
             elif venda.get("observacoes"):
-                descricao_servico = str(venda["observacoes"]).strip()
+                desc = str(venda["observacoes"]).strip()
             else:
-                descricao_servico = "Serviço prestado"
-            itens_renderizar.append({
-                "produto": descricao_servico,
-                "quantidade": 1,
-                "preco_unit": valor_total_num,
-                "subtotal": valor_total_num,
-            })
+                desc = "Serviço prestado"
+            rows.append((desc, valor_total_num, False))
 
-        for it in itens_renderizar:
-            preco_unit_str = f"R$ {it['preco_unit']:,.2f}".replace(',', '_').replace('.', ',').replace('_', '.')
-            subtotal_str   = f"R$ {it['subtotal']:,.2f}".replace(',', '_').replace('.', ',').replace('_', '.')
-            total += it["subtotal"]
+        y = table_rows(c, margin, cw, y, rows)
+        total = sum(r[1] for r in rows)
+        y = total_row(c, margin, cw, y,
+                      "TOTAL DA VENDA", total,
+                      NAVY, WHITE, GOLD)
 
-            if y < 80:
-                c.showPage()
-                y = height - 80
-
-            # Truncar nome do produto para caber na célula
-            produto_txt = str(it["produto"])
-            if len(produto_txt) > 38:
-                produto_txt = produto_txt[:35] + "..."
-
-            c.setFillColor(CINZA_TEXTO)
+        # ── Observações (se existir) ────────────────────────────────────
+        obs = str(venda.get("observacoes") or "").strip()
+        if obs:
+            y -= 10 * mm
+            rr(c, margin, y - 16 * mm, cw, 16 * mm, 6, GRAY1, GRAY2, 0.5)
+            c.setFillColor(GRAY3)
+            c.setFont("Helvetica", 8.5)
+            c.drawString(margin + 5 * mm, y - 5 * mm, "Observações")
+            c.setFillColor(DARK)
             c.setFont("Helvetica", 10)
-            c.drawString(50, y, produto_txt)
-            c.drawString(220, y, str(it["quantidade"]))
-            c.drawString(270, y, preco_unit_str)
-            c.drawString(370, y, "-")
-            c.drawString(470, y, subtotal_str)
-            y -= row_height
+            obs_curta = obs if len(obs) <= 90 else obs[:87] + "..."
+            c.drawString(margin + 5 * mm, y - 12 * mm, obs_curta)
 
-        # Total
-        y -= 5
-        c.setFont("Helvetica-Bold", 10)
-        c.setFillColor(AZUL_ESCURO)
-        total_formatado = f"R$ {total:,.2f}".replace(',', '_').replace('.', ',').replace('_', '.')
-        c.drawRightString(540, y, f"TOTAL: {total_formatado}")
-
-        # Aplicar rodapé padronizado
-        from utils.pdf_footer_helper import aplicar_rodape_padronizado
-        aplicar_rodape_padronizado(c, width, height=40, ajuste_brasilia=True)
-
+        footer(c, margin)
         c.save()
-        print(f"✅ PDF de venda gerado com sucesso: {filename}")
+        print(f"PDF VENDA gerado: {filename}")
         return filename
+
     except Exception as e:
-        print(f"DEBUG PDF VENDA ERROR: Erro ao gerar PDF de venda: {str(e)}")
         traceback.print_exc()
-        raise Exception(f"Erro ao gerar PDF de venda: {str(e)}")
+        raise Exception(f"Erro ao gerar PDF de venda: {e}")
