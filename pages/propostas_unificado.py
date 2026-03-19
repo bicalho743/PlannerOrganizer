@@ -145,6 +145,7 @@ def _render_nova_proposta_form(clientes):
                         st.session_state.db.update_proposta(novo_numero, **proposta_atualizada)
 
                     st.success(f"Proposta #{novo_numero} criada com sucesso!")
+                    time.sleep(1)
                     st.session_state['kanban_nova_proposta_open'] = False
                     st.rerun()
                 else:
@@ -218,7 +219,7 @@ def _tab_detalhes(proposta_id, proposta):
                         proposta_id=proposta_id, status="Em andamento", observacao=descricao_andamento)
                     if resultado:
                         st.success("Andamento registrado!")
-                        st.rerun()
+                        time.sleep(0.5); st.rerun()
                     else:
                         st.error("Erro ao registrar andamento.")
                 except Exception as e:
@@ -377,7 +378,7 @@ def _tab_produtos(proposta_id):
 
 
 def _tab_itens(proposta_id):
-    """Aba unificada: Produtos, Fornecedores, Assistentes e Outros numa só tela."""
+    """Itens & Custos com navegação lateral por categoria."""
 
     # ── Carregar todos os dados ───────────────────────────────────────────
     try:
@@ -388,55 +389,113 @@ def _tab_itens(proposta_id):
     except Exception as e:
         st.error(f"Erro ao carregar itens: {e}"); return
 
-    t_prod = (produtos_df['valor'] * produtos_df['quantidade']).sum() if not produtos_df.empty else 0
-    t_forn = fornecedores_df['valor'].sum() if not fornecedores_df.empty else 0
-    t_asst = assistentes_df['valor'].sum() if not assistentes_df.empty else 0
-    t_outr = outros_df['valor'].sum() if not outros_df.empty else 0
+    t_prod  = (produtos_df['valor'] * produtos_df['quantidade']).sum() if not produtos_df.empty else 0
+    t_forn  = fornecedores_df['valor'].sum() if not fornecedores_df.empty else 0
+    t_asst  = assistentes_df['valor'].sum() if not assistentes_df.empty else 0
+    t_outr  = outros_df['valor'].sum() if not outros_df.empty else 0
     t_total = t_prod + t_forn + t_asst + t_outr
 
-    # ── Painel de totais ──────────────────────────────────────────────────
     cats = [
-        ("📦 Produtos",      len(produtos_df),     t_prod, "#C9A84C"),
-        ("🏢 Fornecedores",  len(fornecedores_df),  t_forn, "#0F5E6E"),
-        ("👥 Assistentes",   len(assistentes_df),   t_asst, "#6B4EAA"),
-        ("➕ Outros",        len(outros_df),        t_outr, "#E07B39"),
+        ("📦 Produtos",     len(produtos_df),     t_prod,  "#C9A84C"),
+        ("🏢 Fornecedores", len(fornecedores_df),  t_forn,  "#0F5E6E"),
+        ("👥 Assistentes",  len(assistentes_df),   t_asst,  "#6B4EAA"),
+        ("➕ Outros",       len(outros_df),        t_outr,  "#E07B39"),
     ]
-    cols = st.columns(4)
-    for col, (label, qtd, total, cor) in zip(cols, cats):
-        vtot = _fmt_brl(total)
-        col.markdown(f"""
-        <div style="border-top:3px solid {cor};background:#fff;border-radius:0 0 8px 8px;
-                    padding:10px 12px;box-shadow:0 1px 4px rgba(0,0,0,.07);text-align:center;">
-          <div style="font-size:11px;color:#888;font-weight:600;">{label}</div>
-          <div style="font-size:18px;font-weight:700;color:#0D1B2A;">{qtd}</div>
-          <div style="font-size:12px;color:{cor};font-weight:600;">{vtot}</div>
-        </div>""", unsafe_allow_html=True)
 
-    if t_total > 0:
+    # ── Chave de sessão para categoria ativa ──────────────────────────────
+    key_cat = f"itens_cat_{proposta_id}"
+    if key_cat not in st.session_state:
+        st.session_state[key_cat] = "📦 Produtos"
+
+    # ── CSS da navegação lateral ──────────────────────────────────────────
+    st.markdown("""
+    <style>
+    div[data-testid="stHorizontalBlock"] > div:first-child .stRadio > div {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    div[data-testid="stHorizontalBlock"] > div:first-child .stRadio label {
+        padding: 10px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        border: none;
+        width: 100%;
+        transition: background 0.1s;
+    }
+    div[data-testid="stHorizontalBlock"] > div:first-child .stRadio label:hover {
+        background: #f3f4f6;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # ── Layout: sidebar (1) + conteúdo (3) ───────────────────────────────
+    col_nav, col_main = st.columns([1, 2.8])
+
+    with col_nav:
+        # Montar labels com contagem
+        labels = []
+        for label, qtd, total, cor in cats:
+            badge = f" ({qtd})" if qtd > 0 else " (0)"
+            labels.append(label + badge)
+
+        # Mapeamento de label com badge → label base
+        label_map = {(l + (f" ({q})" if q > 0 else " (0)")): l for l, q, _, _ in cats}
+
+        # Índice atual
+        labels_base = [l for l, _, _, _ in cats]
+        idx_atual = labels_base.index(st.session_state[key_cat]) if st.session_state[key_cat] in labels_base else 0
+
+        escolha = st.radio(
+            "Categoria",
+            options=labels,
+            index=idx_atual,
+            key=f"radio_cat_{proposta_id}",
+            label_visibility="collapsed"
+        )
+
+        # Salvar categoria ativa (sem badge)
+        cat_ativa = label_map.get(escolha, "📦 Produtos")
+        st.session_state[key_cat] = cat_ativa
+
+        # Total geral
+        st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
         st.markdown(f"""
-        <div style="background:#0D1B2A;border-radius:8px;padding:10px 16px;margin-top:10px;
-                    display:flex;justify-content:space-between;align-items:center;">
-          <span style="color:#C9A84C;font-weight:700;font-size:13px;">TOTAL DE ITENS & CUSTOS</span>
-          <span style="color:#fff;font-weight:700;font-size:15px;">{_fmt_brl(t_total)}</span>
+        <div style="background:#0D1B2A;border-radius:8px;padding:10px 12px;text-align:center;">
+          <div style="color:#C9A84C;font-size:10px;font-weight:700;letter-spacing:0.06em;
+                      text-transform:uppercase;margin-bottom:4px;">Total geral</div>
+          <div style="color:#fff;font-weight:700;font-size:15px;">{_fmt_brl(t_total)}</div>
         </div>""", unsafe_allow_html=True)
 
-    st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
+    with col_main:
+        # Cabeçalho da categoria ativa
+        for label, qtd, total, cor in cats:
+            if label == cat_ativa:
+                st.markdown(f"""
+                <div style="display:flex;align-items:center;justify-content:space-between;
+                            padding:10px 14px;border-radius:8px;background:#fff;
+                            border-left:3px solid {cor};margin-bottom:12px;
+                            box-shadow:0 1px 4px rgba(0,0,0,.06);">
+                  <span style="font-size:15px;font-weight:700;color:#0D1B2A;">{label}</span>
+                  <div style="text-align:right;">
+                    <div style="font-size:12px;color:#888;">{qtd} {"item" if qtd == 1 else "itens"}</div>
+                    <div style="font-size:13px;font-weight:700;color:{cor};">{_fmt_brl(total)}</div>
+                  </div>
+                </div>""", unsafe_allow_html=True)
+                break
 
-    # ── Seção Produtos ────────────────────────────────────────────────────
-    with st.expander(f"📦 Produtos ({len(produtos_df)})" + (f"  —  {_fmt_brl(t_prod)}" if t_prod > 0 else ""), expanded=True):
-        _tab_produtos(proposta_id)
+        # Renderizar conteúdo da categoria ativa
+        if cat_ativa == "📦 Produtos":
+            _tab_produtos(proposta_id)
+        elif cat_ativa == "🏢 Fornecedores":
+            _tab_fornecedores(proposta_id)
+        elif cat_ativa == "👥 Assistentes":
+            _tab_assistentes(proposta_id)
+        elif cat_ativa == "➕ Outros":
+            _tab_outros(proposta_id)
 
-    # ── Seção Fornecedores ────────────────────────────────────────────────
-    with st.expander(f"🏢 Fornecedores ({len(fornecedores_df)})" + (f"  —  {_fmt_brl(t_forn)}" if t_forn > 0 else ""), expanded=False):
-        _tab_fornecedores(proposta_id)
-
-    # ── Seção Assistentes ─────────────────────────────────────────────────
-    with st.expander(f"👥 Assistentes ({len(assistentes_df)})" + (f"  —  {_fmt_brl(t_asst)}" if t_asst > 0 else ""), expanded=False):
-        _tab_assistentes(proposta_id)
-
-    # ── Seção Outros ──────────────────────────────────────────────────────
-    with st.expander(f"➕ Outros ({len(outros_df)})" + (f"  —  {_fmt_brl(t_outr)}" if t_outr > 0 else ""), expanded=False):
-        _tab_outros(proposta_id)
 
 
 def _acrescimos_cards(acrescimos, cor_borda="#C9A84C"):
@@ -484,7 +543,7 @@ def _tab_fornecedores(proposta_id):
                         if st.form_submit_button("Salvar", use_container_width=True):
                             try:
                                 if st.session_state.db.update_acrescimo_proposta(aid, valor=nv, descricao=nd):
-                                    st.success("Atualizado!"); st.rerun()
+                                    st.success("Atualizado!"); time.sleep(1); st.rerun()
                                 else:
                                     st.error("Falha ao atualizar.")
                             except Exception as e:
@@ -495,7 +554,7 @@ def _tab_fornecedores(proposta_id):
                         if st.form_submit_button("🗑️ Remover", use_container_width=True):
                             try:
                                 if st.session_state.db.remove_acrescimo_proposta(rid):
-                                    st.success("Removido!"); st.rerun()
+                                    st.success("Removido!"); time.sleep(1); st.rerun()
                                 else:
                                     st.error("Falha ao remover.")
                             except Exception as e:
@@ -530,7 +589,7 @@ def _tab_fornecedores(proposta_id):
                             res = st.session_state.db.add_fornecedor_proposta(proposta_id=proposta_id,
                                   fornecedor_id=forn_sel, valor=valor_servico, observacoes=observacoes)
                             if res and "acrescimo_id" in res:
-                                st.success("Fornecedor adicionado!"); st.rerun()
+                                st.success("Fornecedor adicionado!"); time.sleep(1); st.rerun()
                             else:
                                 st.error("Erro ao adicionar.")
                         except Exception as e:
@@ -565,7 +624,7 @@ def _tab_assistentes(proposta_id):
                         if st.form_submit_button("Salvar", use_container_width=True):
                             try:
                                 if st.session_state.db.update_acrescimo_proposta(aid, valor=nv, descricao=nd):
-                                    st.success("Atualizado!"); st.rerun()
+                                    st.success("Atualizado!"); time.sleep(1); st.rerun()
                                 else:
                                     st.error("Falha ao atualizar.")
                             except Exception as e:
@@ -576,7 +635,7 @@ def _tab_assistentes(proposta_id):
                         if st.form_submit_button("🗑️ Remover", use_container_width=True):
                             try:
                                 if st.session_state.db.remove_acrescimo_proposta(rid):
-                                    st.success("Removido!"); st.rerun()
+                                    st.success("Removido!"); time.sleep(1); st.rerun()
                                 else:
                                     st.error("Falha ao remover.")
                             except Exception as e:
@@ -608,7 +667,7 @@ def _tab_assistentes(proposta_id):
                             res = st.session_state.db.add_assistente_proposta(proposta_id=proposta_id,
                                   assistente_id=asst_sel, valor=valor_servico, observacoes=observacoes)
                             if res and "acrescimo_id" in res:
-                                st.success("Assistente adicionado!"); st.rerun()
+                                st.success("Assistente adicionado!"); time.sleep(1); st.rerun()
                             else:
                                 st.error("Erro ao adicionar.")
                         except Exception as e:
@@ -657,7 +716,7 @@ def _tab_outros(proposta_id):
                     if st.form_submit_button("Remover", use_container_width=True):
                         try:
                             if st.session_state.db.remove_acrescimo_proposta(rid):
-                                st.success("Item removido!"); st.rerun()
+                                st.success("Item removido!"); time.sleep(1); st.rerun()
                             else:
                                 st.error("Falha ao remover.")
                         except Exception as e:
@@ -693,7 +752,7 @@ def _tab_outros(proposta_id):
                         fornecedor=comodo_area if comodo_area else "Geral"
                     )
                     if res and "acrescimo_id" in res:
-                        st.success(f"'{nome_item}' adicionado!"); st.rerun()
+                        st.success(f"'{nome_item}' adicionado!"); time.sleep(1); st.rerun()
                     else:
                         st.error("Erro ao adicionar.")
                 except Exception as e:
@@ -741,7 +800,7 @@ def _tab_acoes(proposta_id, proposta):
                     if res.get('status', False):
                         st.success("Proposta aprovada!")
                         st.session_state['kanban_selected_proposta'] = None
-                        st.rerun()
+                        time.sleep(1); st.rerun()
                     else:
                         st.error(res.get('message', 'Erro ao aprovar.'))
                 except Exception as e:
@@ -754,7 +813,7 @@ def _tab_acoes(proposta_id, proposta):
                         st.session_state.db.update_proposta(proposta_id, status_execucao="Cancelada", data_fim=datetime.now().date())
                         st.success("Proposta recusada.")
                         st.session_state['kanban_selected_proposta'] = None
-                        st.rerun()
+                        time.sleep(1); st.rerun()
                     else:
                         st.error("Erro ao recusar.")
                 except Exception as e:
@@ -770,7 +829,7 @@ def _tab_acoes(proposta_id, proposta):
                 if res.get('status', False):
                     st.success("Execução iniciada!")
                     st.session_state['kanban_selected_proposta'] = None
-                    st.rerun()
+                    time.sleep(1); st.rerun()
                 else:
                     st.error(res.get('message', 'Erro.'))
             except Exception as e:
@@ -845,7 +904,7 @@ def _tab_acoes(proposta_id, proposta):
                     if res.get('status', False):
                         st.success("Proposta finalizada com sucesso!")
                         st.session_state['kanban_selected_proposta'] = None
-                        st.rerun()
+                        time.sleep(1); st.rerun()
                     else:
                         st.error(f"Erro: {res.get('message', 'Desconhecido')}")
                 except Exception as e:
@@ -906,7 +965,7 @@ def _tab_acoes(proposta_id, proposta):
                         if res.get('status') == 'sucesso_com_alerta':
                             st.warning(res.get('alerta'))
                         st.session_state['kanban_selected_proposta'] = None
-                        st.rerun()
+                        time.sleep(1); st.rerun()
                     else:
                         st.error(res.get('mensagem'))
                 except Exception as e:
@@ -948,7 +1007,7 @@ def _tab_acoes(proposta_id, proposta):
                             conn.commit()
                         st.success(f"Proposta #{proposta_id} excluída.")
                         st.session_state['kanban_selected_proposta'] = None
-                        st.rerun()
+                        time.sleep(2); st.rerun()
                     except Exception as e:
                         st.error(str(e))
             with col2:
