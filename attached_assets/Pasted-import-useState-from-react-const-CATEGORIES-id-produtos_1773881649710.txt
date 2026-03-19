@@ -1,0 +1,178 @@
+import { useState } from "react";
+
+const CATEGORIES = [
+  { id: "produtos", label: "Produtos", icon: "📦" },
+  { id: "fornecedores", label: "Fornecedores", icon: "🏢" },
+  { id: "assistentes", label: "Assistentes", icon: "👥" },
+  { id: "outros", label: "Outros", icon: "➕" },
+];
+
+const FIELD_TEMPLATES = {
+  produtos: [
+    { key: "descricao", label: "Descrição", type: "text", placeholder: "Ex: Caixa de papelão P", wide: true },
+    { key: "quantidade", label: "Qtd", type: "number", placeholder: "1" },
+    { key: "unidade", label: "Un.", type: "select", options: ["un", "cx", "kg", "m²", "h"] },
+    { key: "valor", label: "Valor (R$)", type: "number", placeholder: "0,00" },
+  ],
+  fornecedores: [
+    { key: "nome", label: "Nome / Empresa", type: "text", placeholder: "Ex: Transportadora XYZ", wide: true },
+    { key: "servico", label: "Serviço", type: "text", placeholder: "Ex: Frete" },
+    { key: "quantidade", label: "Qtd", type: "number", placeholder: "1" },
+    { key: "valor", label: "Valor (R$)", type: "number", placeholder: "0,00" },
+  ],
+  assistentes: [
+    { key: "nome", label: "Nome", type: "text", placeholder: "Ex: Assistente João", wide: true },
+    { key: "funcao", label: "Função", type: "text", placeholder: "Ex: Embalagem" },
+    { key: "horas", label: "Horas", type: "number", placeholder: "8" },
+    { key: "valor", label: "R$/hora", type: "number", placeholder: "0,00" },
+  ],
+  outros: [
+    { key: "descricao", label: "Descrição", type: "text", placeholder: "Ex: Taxa de estacionamento", wide: true },
+    { key: "categoria", label: "Tipo", type: "select", options: ["Deslocamento", "Taxa", "Aluguel", "Seguro", "Outros"] },
+    { key: "quantidade", label: "Qtd", type: "number", placeholder: "1" },
+    { key: "valor", label: "Valor (R$)", type: "number", placeholder: "0,00" },
+  ],
+};
+
+function calcItemTotal(catId, item) {
+  const q = parseFloat(item.quantidade || item.horas || 1) || 1;
+  const v = parseFloat(item.valor) || 0;
+  return q * v;
+}
+
+function fmtBRL(v) {
+  return Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+export default function ItensCustos() {
+  const [active, setActive] = useState("produtos");
+  const [items, setItems] = useState({ produtos: [], fornecedores: [], assistentes: [], outros: [] });
+
+  const addItem = () => {
+    const fields = FIELD_TEMPLATES[active];
+    const blank = Object.fromEntries(fields.map((f) => [f.key, f.type === "select" ? f.options[0] : ""]));
+    setItems((prev) => ({ ...prev, [active]: [...prev[active], blank] }));
+  };
+
+  const removeItem = (catId, idx) => {
+    setItems((prev) => ({ ...prev, [catId]: prev[catId].filter((_, i) => i !== idx) }));
+  };
+
+  const updateItem = (catId, idx, key, val) => {
+    setItems((prev) => ({
+      ...prev,
+      [catId]: prev[catId].map((item, i) => (i === idx ? { ...item, [key]: val } : item)),
+    }));
+  };
+
+  const catTotal = (catId) => items[catId].reduce((sum, item) => sum + calcItemTotal(catId, item), 0);
+  const grandTotal = CATEGORIES.reduce((sum, c) => sum + catTotal(c.id), 0);
+  const activeCat = CATEGORIES.find((c) => c.id === active);
+  const fields = FIELD_TEMPLATES[active];
+  const activeItems = items[active];
+
+  return (
+    <div style={{ display: "flex", height: "520px", border: "1px solid #e5e7eb", borderRadius: "12px", overflow: "hidden", background: "#f9fafb" }}>
+      
+      {/* SIDEBAR */}
+      <div style={{ width: "200px", flexShrink: 0, background: "#fff", borderRight: "1px solid #e5e7eb", display: "flex", flexDirection: "column" }}>
+        <div style={{ padding: "14px 16px 12px", borderBottom: "1px solid #f0f0f0" }}>
+          <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "#aaa" }}>Itens & Custos</p>
+        </div>
+        <div style={{ flex: 1, padding: "8px", display: "flex", flexDirection: "column", gap: "2px" }}>
+          {CATEGORIES.map((cat) => {
+            const isActive = active === cat.id;
+            const count = items[cat.id].length;
+            const total = catTotal(cat.id);
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setActive(cat.id)}
+                style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", padding: "10px", borderRadius: "8px", border: "none", borderLeft: isActive ? "2px solid #374151" : "2px solid transparent", cursor: "pointer", background: isActive ? "#f3f4f6" : "transparent", width: "100%", textAlign: "left" }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "7px", width: "100%" }}>
+                  <span style={{ fontSize: "14px" }}>{cat.icon}</span>
+                  <span style={{ fontSize: "13px", fontWeight: isActive ? 700 : 500, color: isActive ? "#111" : "#555", flex: 1 }}>{cat.label}</span>
+                  <span style={{ fontSize: "11px", fontWeight: 600, background: isActive ? "#374151" : "#e5e7eb", color: isActive ? "#fff" : "#888", borderRadius: "20px", padding: "1px 7px" }}>{count}</span>
+                </div>
+                {total > 0 && (
+                  <p style={{ fontSize: "11px", color: "#6b7280", marginTop: "3px", marginLeft: "21px", fontFamily: "monospace" }}>R$ {fmtBRL(total)}</p>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ margin: "10px", padding: "12px 14px", borderRadius: "10px", background: "#1f2937", color: "#fff" }}>
+          <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em", opacity: 0.7, marginBottom: "4px", textTransform: "uppercase" }}>Total Geral</p>
+          <p style={{ fontSize: "17px", fontWeight: 800, fontFamily: "monospace" }}>R$ {fmtBRL(grandTotal)}</p>
+        </div>
+      </div>
+
+      {/* MAIN */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#fff" }}>
+        {/* Header */}
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid #e5e7eb", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: "#f3f4f6", border: "1px solid #e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>{activeCat.icon}</div>
+            <div>
+              <p style={{ fontSize: "15px", fontWeight: 700, color: "#111" }}>{activeCat.label}</p>
+              <p style={{ fontSize: "12px", color: "#9ca3af" }}>{activeItems.length} {activeItems.length === 1 ? "item" : "itens"} · R$ {fmtBRL(catTotal(active))}</p>
+            </div>
+          </div>
+          <button onClick={addItem} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "7px 14px", borderRadius: "8px", border: "1px solid #d1d5db", background: "#fff", color: "#374151", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>
+            + Adicionar {activeCat.label.toLowerCase().replace(/s$/, "")}
+          </button>
+        </div>
+
+        {/* Column headers */}
+        {activeItems.length > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 20px", background: "#f9fafb", borderBottom: "1px solid #e5e7eb", flexShrink: 0 }}>
+            {fields.map((f) => (
+              <span key={f.key} style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", ...(f.wide ? { flex: 1 } : { width: "80px", flexShrink: 0 }) }}>{f.label}</span>
+            ))}
+            <span style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", width: "80px", textAlign: "right", flexShrink: 0 }}>Subtotal</span>
+            <span style={{ width: "28px" }} />
+          </div>
+        )}
+
+        {/* Items */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "12px 20px", display: "flex", flexDirection: "column", gap: "6px" }}>
+          {activeItems.length === 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: "12px" }}>
+              <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: "#f3f4f6", border: "2px dashed #d1d5db", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>{activeCat.icon}</div>
+              <div style={{ textAlign: "center" }}>
+                <p style={{ fontSize: "14px", fontWeight: 600, color: "#9ca3af" }}>Nenhum item ainda</p>
+                <p style={{ fontSize: "12px", color: "#d1d5db", marginTop: "3px" }}>Clique em "+ Adicionar" para incluir {activeCat.label.toLowerCase()}</p>
+              </div>
+              <button onClick={addItem} style={{ padding: "8px 18px", borderRadius: "8px", border: "1px dashed #d1d5db", background: "#fff", color: "#6b7280", fontSize: "13px", cursor: "pointer" }}>+ Adicionar primeiro item</button>
+            </div>
+          ) : (
+            activeItems.map((item, idx) => (
+              <div key={idx} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 10px", border: "1px solid #e5e7eb", borderRadius: "8px", background: "#fff" }}>
+                {fields.map((f) =>
+                  f.type === "select" ? (
+                    <select key={f.key} value={item[f.key] || f.options[0]} onChange={(e) => updateItem(active, idx, f.key, e.target.value)} style={{ width: "80px", flexShrink: 0, fontSize: "13px", padding: "5px 6px", border: "1px solid #e5e7eb", borderRadius: "6px", background: "#f9fafb" }}>
+                      {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  ) : (
+                    <input key={f.key} type={f.type} value={item[f.key] || ""} placeholder={f.placeholder} onChange={(e) => updateItem(active, idx, f.key, e.target.value)} style={{ ...(f.wide ? { flex: 1 } : { width: "80px", flexShrink: 0 }), fontSize: "13px", padding: "5px 8px", border: "1px solid #e5e7eb", borderRadius: "6px", background: "#f9fafb" }} />
+                  )
+                )}
+                <span style={{ width: "80px", flexShrink: 0, textAlign: "right", fontSize: "12px", fontWeight: 600, color: "#374151", fontFamily: "monospace" }}>R$ {fmtBRL(calcItemTotal(active, item))}</span>
+                <button onClick={() => removeItem(active, idx)} style={{ width: "26px", height: "26px", flexShrink: 0, border: "none", background: "none", cursor: "pointer", color: "#d1d5db", fontSize: "16px", borderRadius: "6px" }}>×</button>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Footer */}
+        {activeItems.length > 0 && (
+          <div style={{ padding: "10px 20px", borderTop: "1px solid #e5e7eb", display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+            <span style={{ fontSize: "13px", color: "#9ca3af" }}>Subtotal {activeCat.label}:</span>
+            <span style={{ fontSize: "15px", fontWeight: 700, color: "#1f2937", fontFamily: "monospace", background: "#f3f4f6", padding: "4px 12px", borderRadius: "8px" }}>R$ {fmtBRL(catTotal(active))}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
