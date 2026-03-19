@@ -55,7 +55,7 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename, proposta_descricao=No
         c.rect(0, height - 70, width, 70, fill=True, stroke=0)
         c.setFillColor(BRANCO)
         c.setFont("Helvetica-Bold", 18)
-        c.drawString(30, height - 30, "Relatório de Produtos")
+        c.drawString(30, height - 30, "Relatório de Venda")
         c.setFont("Helvetica", 11)
         c.drawString(30, height - 50, f"#{venda.get('id', '')} - {cliente.get('nome', '')}")
         agora = datetime.now() - timedelta(hours=3)

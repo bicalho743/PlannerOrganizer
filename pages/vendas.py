@@ -222,22 +222,44 @@ def _render_detail_panel(venda_id, venda_row):
     </div>
     """, unsafe_allow_html=True)
 
+    # ── Helper: busca itens de itens_venda; cai para produtos_organizadores se vazio ──
+    def _get_itens_completo():
+        try:
+            iv = st.session_state.db.get_itens_venda(venda_id)
+            if not iv.empty:
+                return iv
+        except Exception:
+            pass
+        pid = venda_row.get("proposta_id")
+        if pid and not pd.isna(pid):
+            try:
+                po = st.session_state.db.get_produtos_organizadores(proposta_id=int(pid))
+                if not po.empty:
+                    po = po.rename(columns={"nome": "produto_nome", "valor": "preco_unitario"})
+                    po["subtotal"] = po["preco_unitario"] * po["quantidade"]
+                    return po[["produto_nome", "quantidade", "preco_unitario", "subtotal"]]
+            except Exception:
+                pass
+        return pd.DataFrame()
+
+    itens_det = _get_itens_completo()
+
     # Itens da venda (compacto, sem título separado)
-    try:
-        itens = st.session_state.db.get_itens_venda(venda_id)
-        if not itens.empty:
-            itens["Total"] = (itens["quantidade"] * itens["preco_unitario"]).map(
+    if not itens_det.empty:
+        try:
+            disp = itens_det.copy()
+            disp["Total"] = (disp["quantidade"] * disp["preco_unitario"]).map(
                 lambda x: f"R$ {x:,.2f}".replace(",","X").replace(".",",").replace("X",".")
             )
-            itens["preco_unitario"] = itens["preco_unitario"].map(
+            disp["preco_unitario"] = disp["preco_unitario"].map(
                 lambda x: f"R$ {x:,.2f}".replace(",","X").replace(".",",").replace("X",".")
             )
-            disp = itens[["produto_nome","quantidade","preco_unitario","Total"]].rename(columns={
+            disp = disp[["produto_nome","quantidade","preco_unitario","Total"]].rename(columns={
                 "produto_nome":"Produto","quantidade":"Qtd","preco_unitario":"Unit."
             })
             st.dataframe(disp, hide_index=True, use_container_width=True)
-    except Exception as e:
-        st.caption(f"Itens: {str(e)}")
+        except Exception as e:
+            st.caption(f"Itens: {str(e)}")
 
     # Botões de ação compactos
     col_edit, col_pdf, col_del, col_space = st.columns([1, 1, 1, 3])
@@ -270,10 +292,7 @@ def _render_detail_panel(venda_id, venda_row):
             }
             prop_desc = venda_row.get("proposta_descricao") or None
             nome_raw = str(venda_row.get("cliente_nome", "cliente"))
-            try:
-                itens_pdf = st.session_state.db.get_itens_venda(venda_id)
-            except Exception:
-                itens_pdf = pd.DataFrame()
+            itens_pdf = itens_det  # usa os itens já carregados (com fallback proposta)
             os.makedirs("pdfs", exist_ok=True)
             ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_time.time()))
             safe_nome = nome_raw.replace(" ", "_").replace("/", "_").lower()
