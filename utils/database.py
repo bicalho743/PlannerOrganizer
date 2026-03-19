@@ -73,12 +73,6 @@ def get_usuario_id_from_session():
     Returns:
         str: ID do usuário autenticado ou None se não há usuário na sessão
     """
-    # Debug: Imprimir conteúdo da sessão para diagnóstico
-    
-    # NOVO: Verificar se existe algum campo relacionado a nome de usuário ou email
-    for key in st.session_state.keys():
-        if any(palavra in key.lower() for palavra in ['user', 'email', 'nome', 'login', 'auth']):
-    
     # INÍCIO DA SOLUÇÃO DEFINITIVA: Prioridade 1 - Verificar session_state.usuario_id diretamente
     # Este é o método preferencial e mais direto
     if 'usuario_id' in st.session_state:
@@ -613,7 +607,7 @@ class Database:
                         if 'usuario_id' not in st.session_state or st.session_state.usuario_id != usuario_id:
                             st.session_state.usuario_id = usuario_id
                 except Exception as session_error:
-                
+                    pass
             else:
                 # 2. Tentar obter o ID do usuário da sessão do Streamlit
                 # Esta função agora tem lógica aprimorada para garantir que o ID seja sempre encontrado
@@ -633,8 +627,8 @@ class Database:
                         if hasattr(st, 'session_state'):
                             st.session_state.usuario_id = temp_id
                     except Exception as session_error:
-                        
-            
+                        pass
+
             # Status final do tenant
             if self.usuario_id:
                 
@@ -651,11 +645,13 @@ class Database:
                         """)
                         result = self.session.execute(query).scalar()
                         if result > 0:
+                            pass
                     
                 except Exception as patch_error:
                     self.session.rollback()
             else:
-                
+                pass
+
             # Verificar e criar perfil do usuário se necessário
             if self.usuario_id:
                 # Sempre que temos um ID de usuário válido, garantir que o perfil exista
@@ -1355,6 +1351,7 @@ class Database:
                         if session_usuario_id:
                             self.usuario_id = session_usuario_id
                     except Exception as e:
+                        pass
                 
                 # Aplicar filtro de usuário - com segurança aprimorada
                 if self.usuario_id:
@@ -2457,6 +2454,7 @@ class Database:
                             if id_receita_result and len(id_receita_result) > 0:
                                 id_receita = id_receita_result[0]
                             else:
+                                pass
                             
                             # Removido o lançamento de "Valor a receber" para evitar duplicidade
                             
@@ -2701,7 +2699,9 @@ class Database:
                     cursor.execute(verify_sql)
                     verify_result = cursor.fetchone()
                     if verify_result and verify_result[0] > 0:
+                        pass
                     else:
+                        pass
                     
                     return produto_id
                 else:
@@ -4745,6 +4745,7 @@ class Database:
                     produto_nome = i.descricao
                 
                 if i.produto:
+                    pass
                 
                 # Calcular lucro usando custo real ou estimativa de 40% de margem
                 preco_custo = 0
@@ -5753,6 +5754,7 @@ class Database:
                         if transacoes_produtos > 0:
                             return {"status": "já existe", "mensagem": "Lançamentos já existem para esta proposta"}
                         else:
+                            pass
                             # Continuamos a execução para gerar os lançamentos de produtos
                 
                 # Resultados para retornar
@@ -5789,7 +5791,9 @@ class Database:
                     ).first()
                     
                     if transacao_existente:
+                        pass
                     else:
+                        pass
                     
                     result["valor_base"] = valor_base
                 
@@ -5802,8 +5806,11 @@ class Database:
                     
                     if produtos_sql:
                         for p in produtos_sql:
+                            pass
                     else:
+                        pass
                 except Exception as e:
+                    pass
                 
                 # Agrupar produtos por tipo (físicos vs. serviços)
                 produtos_fisicos = []
@@ -5957,6 +5964,7 @@ class Database:
                     result["lancamentos_gerados"] += 1
                 else:
                     if transacoes_outros > 0:
+                        pass
                     result["valor_outros"] = valor_total_outros
                 
                 # 3. Comissões a receber por fornecedor - APENAS para propostas concluídas
@@ -5965,6 +5973,7 @@ class Database:
                 if proposta.status == "Concluída" or (hasattr(proposta, 'status_execucao') and proposta.status_execucao == "Concluída"):
                     gerar_lancamentos_comissao = True
                 else:
+                    pass
                 
                 # Inicializar variável para total de fornecedores
                 valor_total_fornecedores = 0
@@ -6000,6 +6009,7 @@ class Database:
                             if valor_comissao > 0:
                                 continue
                 else:
+                    pass
                 
                 # 4. Assistentes a pagar - APENAS para propostas concluídas
                 # Inicializar variável para total de assistentes
@@ -6037,7 +6047,9 @@ class Database:
                                 continue
                     else:
                         if transacoes_assistentes > 0:
+                            pass
                 else:
+                    pass
                 
                 result["valor_fornecedores"] = valor_total_fornecedores
                 result["valor_assistentes"] = valor_total_assistentes
