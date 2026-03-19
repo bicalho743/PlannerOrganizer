@@ -162,7 +162,6 @@ else:
                         st.success(f"Lançamentos gerados com sucesso! Valor base: R$ {valor_base:.2f}, Total de lançamentos: {lancamentos}")
                         
                         # Recarregar dados após alguns segundos
-                        time.sleep(1)
                         st.rerun()
                 else:
                     st.error("Falha ao gerar lançamentos. Nenhum resultado retornado.")

@@ -201,7 +201,6 @@ def show():
                                 st.success(f"Proposta #{novo_numero} criada com sucesso!")
                                 
                                 # Aguardar um momento para a mensagem ser exibida
-                                time.sleep(1)
                                 st.rerun()  # Recarregar a página para limpar o formulário
                             else:
                                 st.error("Erro ao salvar proposta.")
@@ -523,7 +522,6 @@ def show():
                                         if sucesso:
                                             st.success("Proposta excluída com sucesso!")
                                             # Dar tempo para visualizar a mensagem
-                                            time.sleep(1)
                                             # Resetar o estado e recarregar
                                             st.session_state[exclusao_key] = {
                                                 "confirmar_visivel": False,
@@ -624,7 +622,6 @@ def show():
                                             if sucesso:
                                                 st.success("Proposta atualizada com sucesso!")
                                                 st.session_state.modo_edicao_proposta = False
-                                                time.sleep(1)
                                                 st.rerun()
                                             else:
                                                 st.error("Erro ao atualizar proposta.")
@@ -765,7 +762,6 @@ def show():
                                     mensagem = resultado_exclusao.get("message", "Erro desconhecido")
                                     if sucesso:
                                         st.success("Proposta excluída com sucesso!")
-                                        time.sleep(1)
                                         st.rerun()
                                     else:
                                         st.error(f"Erro ao excluir proposta: {mensagem}")
@@ -1026,7 +1022,6 @@ def show():
                                                             
                                                         # Se chegou aqui, a operação foi bem-sucedida
                                                         st.success(f"Produto '{produto_info['nome']}' adicionado com sucesso!")
-                                                        time.sleep(2)  # Aumentar tempo para garantir que transação seja concluída
                                                         st.rerun()
                                                     except Exception as e_inner:
                                                         # Removido logs de debug
@@ -1114,7 +1109,6 @@ def show():
                                                 # Remover o produto
                                                 if st.session_state.db.remover_produto_organizador(produto_id):
                                                     st.success("Produto removido com sucesso!")
-                                                    time.sleep(1)
                                                     st.rerun()
                                                 else:
                                                     st.error("Erro ao remover o produto.")
@@ -1191,7 +1185,6 @@ def show():
                                                     
                                                 if item_id:
                                                     st.success(f"Item '{nome_produto}' adicionado com sucesso!")
-                                                    time.sleep(1)
                                                     st.rerun()
                                                 else:
                                                     st.error("Erro ao adicionar item à proposta.")
@@ -1241,7 +1234,6 @@ def show():
                                                 # Remover o acréscimo
                                                 if st.session_state.db.remover_acrescimo(acrescimo_id):
                                                     st.success("Item removido com sucesso!")
-                                                    time.sleep(1)
                                                     st.rerun()
                                                 else:
                                                     st.error("Erro ao remover o item.")
@@ -1333,7 +1325,6 @@ def show():
                                                         mensagem += f"\nComissão de R$ {valor_comissao:.2f} registrada automaticamente."
                                                     
                                                     st.success(mensagem)
-                                                    time.sleep(1)
                                                     st.rerun()
                                                 else:
                                                     st.error("Erro ao adicionar fornecedor.")
@@ -1378,7 +1369,6 @@ def show():
                                                 # Remover o acréscimo
                                                 if st.session_state.db.remover_acrescimo(acrescimo_id):
                                                     st.success("Fornecedor removido com sucesso!")
-                                                    time.sleep(1)
                                                     st.rerun()
                                                 else:
                                                     st.error("Erro ao remover o fornecedor.")
@@ -1428,7 +1418,6 @@ def show():
                                                 
                                                 if acrescimo_id:
                                                     st.success(f"Assistente adicionado com sucesso à proposta!")
-                                                    time.sleep(1)
                                                     st.rerun()
                                                 else:
                                                     st.error("Erro ao adicionar assistente.")
@@ -1473,7 +1462,6 @@ def show():
                                                 # Remover o acréscimo
                                                 if st.session_state.db.remover_acrescimo(acrescimo_id):
                                                     st.success("Assistente removido com sucesso!")
-                                                    time.sleep(1)
                                                     st.rerun()
                                                 else:
                                                     st.error("Erro ao remover o assistente.")
@@ -1849,7 +1837,6 @@ def show():
                                                 st.success(f"Venda #{venda_id} registrada com {produtos_vendidos} produtos!")
                                             
                                             # Atualizar a interface após completar a operação
-                                            time.sleep(2)  # Dar tempo para o usuário ver as mensagens
                                             st.rerun()
                                         else:
                                             # Mostrar mensagem de erro
@@ -2023,13 +2010,11 @@ def show():
                                     
                                     if resultado.get('status') == 'sucesso':
                                         st.success(resultado.get('mensagem'))
-                                        time.sleep(1)
                                         st.rerun()
                                     elif resultado.get('status') == 'sucesso_com_alerta':
                                         st.success(resultado.get('mensagem'))
                                         st.warning(resultado.get('alerta'))
                                         st.info(f"Encontrados {resultado.get('lancamentos_encontrados')} lançamentos financeiros.")
-                                        time.sleep(2)
                                         st.rerun()
                                     else:
                                         st.error(f"Erro ao reabrir proposta: {resultado.get('mensagem')}")
@@ -2059,7 +2044,6 @@ def show():
                                     mensagem = resultado_exclusao.get("message", "Erro desconhecido")
                                     if sucesso:
                                         st.success("Proposta excluída com sucesso!")
-                                        time.sleep(1)
                                         st.rerun()
                                     else:
                                         st.error(f"Erro ao excluir proposta: {mensagem}")

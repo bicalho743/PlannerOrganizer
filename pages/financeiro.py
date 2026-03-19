@@ -507,7 +507,6 @@ def show():
                                     if result:
                                         st.session_state.reload_contas_receber = True
                                         st.session_state[receber_key] = False
-                                        time.sleep(0.5)
                                         st.rerun()
                                     else:
                                         st.error("Erro ao registrar recebimento.")
@@ -533,7 +532,6 @@ def show():
                                     if result:
                                         st.session_state.reload_contas_receber = True
                                         st.session_state[cancelar_key] = False
-                                        time.sleep(0.5)
                                         st.rerun()
                                     else:
                                         st.error("Erro ao excluir.")
@@ -709,7 +707,6 @@ def show():
                                             if result:
                                                 st.session_state.reload_contas_pagar = True
                                                 st.session_state[pagar_key] = False
-                                                time.sleep(0.5)
                                                 st.rerun()
                                             else:
                                                 st.error("Erro ao registrar pagamento.")
@@ -735,7 +732,6 @@ def show():
                                             if result:
                                                 st.session_state.reload_contas_pagar = True
                                                 st.session_state[cancelar_key] = False
-                                                time.sleep(0.5)
                                                 st.rerun()
                                             else:
                                                 st.error("Erro ao cancelar.")

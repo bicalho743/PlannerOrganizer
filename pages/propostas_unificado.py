@@ -145,7 +145,6 @@ def _render_nova_proposta_form(clientes):
                         st.session_state.db.update_proposta(novo_numero, **proposta_atualizada)
 
                     st.success(f"Proposta #{novo_numero} criada com sucesso!")
-                    time.sleep(1)
                     st.session_state['kanban_nova_proposta_open'] = False
                     st.rerun()
                 else:
@@ -219,7 +218,7 @@ def _tab_detalhes(proposta_id, proposta):
                         proposta_id=proposta_id, status="Em andamento", observacao=descricao_andamento)
                     if resultado:
                         st.success("Andamento registrado!")
-                        time.sleep(0.5); st.rerun()
+                        st.rerun()
                     else:
                         st.error("Erro ao registrar andamento.")
                 except Exception as e:
@@ -485,7 +484,7 @@ def _tab_fornecedores(proposta_id):
                         if st.form_submit_button("Salvar", use_container_width=True):
                             try:
                                 if st.session_state.db.update_acrescimo_proposta(aid, valor=nv, descricao=nd):
-                                    st.success("Atualizado!"); time.sleep(1); st.rerun()
+                                    st.success("Atualizado!"); st.rerun()
                                 else:
                                     st.error("Falha ao atualizar.")
                             except Exception as e:
@@ -496,7 +495,7 @@ def _tab_fornecedores(proposta_id):
                         if st.form_submit_button("🗑️ Remover", use_container_width=True):
                             try:
                                 if st.session_state.db.remove_acrescimo_proposta(rid):
-                                    st.success("Removido!"); time.sleep(1); st.rerun()
+                                    st.success("Removido!"); st.rerun()
                                 else:
                                     st.error("Falha ao remover.")
                             except Exception as e:
@@ -531,7 +530,7 @@ def _tab_fornecedores(proposta_id):
                             res = st.session_state.db.add_fornecedor_proposta(proposta_id=proposta_id,
                                   fornecedor_id=forn_sel, valor=valor_servico, observacoes=observacoes)
                             if res and "acrescimo_id" in res:
-                                st.success("Fornecedor adicionado!"); time.sleep(1); st.rerun()
+                                st.success("Fornecedor adicionado!"); st.rerun()
                             else:
                                 st.error("Erro ao adicionar.")
                         except Exception as e:
@@ -566,7 +565,7 @@ def _tab_assistentes(proposta_id):
                         if st.form_submit_button("Salvar", use_container_width=True):
                             try:
                                 if st.session_state.db.update_acrescimo_proposta(aid, valor=nv, descricao=nd):
-                                    st.success("Atualizado!"); time.sleep(1); st.rerun()
+                                    st.success("Atualizado!"); st.rerun()
                                 else:
                                     st.error("Falha ao atualizar.")
                             except Exception as e:
@@ -577,7 +576,7 @@ def _tab_assistentes(proposta_id):
                         if st.form_submit_button("🗑️ Remover", use_container_width=True):
                             try:
                                 if st.session_state.db.remove_acrescimo_proposta(rid):
-                                    st.success("Removido!"); time.sleep(1); st.rerun()
+                                    st.success("Removido!"); st.rerun()
                                 else:
                                     st.error("Falha ao remover.")
                             except Exception as e:
@@ -609,7 +608,7 @@ def _tab_assistentes(proposta_id):
                             res = st.session_state.db.add_assistente_proposta(proposta_id=proposta_id,
                                   assistente_id=asst_sel, valor=valor_servico, observacoes=observacoes)
                             if res and "acrescimo_id" in res:
-                                st.success("Assistente adicionado!"); time.sleep(1); st.rerun()
+                                st.success("Assistente adicionado!"); st.rerun()
                             else:
                                 st.error("Erro ao adicionar.")
                         except Exception as e:
@@ -658,7 +657,7 @@ def _tab_outros(proposta_id):
                     if st.form_submit_button("Remover", use_container_width=True):
                         try:
                             if st.session_state.db.remove_acrescimo_proposta(rid):
-                                st.success("Item removido!"); time.sleep(1); st.rerun()
+                                st.success("Item removido!"); st.rerun()
                             else:
                                 st.error("Falha ao remover.")
                         except Exception as e:
@@ -694,7 +693,7 @@ def _tab_outros(proposta_id):
                         fornecedor=comodo_area if comodo_area else "Geral"
                     )
                     if res and "acrescimo_id" in res:
-                        st.success(f"'{nome_item}' adicionado!"); time.sleep(1); st.rerun()
+                        st.success(f"'{nome_item}' adicionado!"); st.rerun()
                     else:
                         st.error("Erro ao adicionar.")
                 except Exception as e:
@@ -742,7 +741,7 @@ def _tab_acoes(proposta_id, proposta):
                     if res.get('status', False):
                         st.success("Proposta aprovada!")
                         st.session_state['kanban_selected_proposta'] = None
-                        time.sleep(1); st.rerun()
+                        st.rerun()
                     else:
                         st.error(res.get('message', 'Erro ao aprovar.'))
                 except Exception as e:
@@ -755,7 +754,7 @@ def _tab_acoes(proposta_id, proposta):
                         st.session_state.db.update_proposta(proposta_id, status_execucao="Cancelada", data_fim=datetime.now().date())
                         st.success("Proposta recusada.")
                         st.session_state['kanban_selected_proposta'] = None
-                        time.sleep(1); st.rerun()
+                        st.rerun()
                     else:
                         st.error("Erro ao recusar.")
                 except Exception as e:
@@ -771,7 +770,7 @@ def _tab_acoes(proposta_id, proposta):
                 if res.get('status', False):
                     st.success("Execução iniciada!")
                     st.session_state['kanban_selected_proposta'] = None
-                    time.sleep(1); st.rerun()
+                    st.rerun()
                 else:
                     st.error(res.get('message', 'Erro.'))
             except Exception as e:
@@ -846,7 +845,7 @@ def _tab_acoes(proposta_id, proposta):
                     if res.get('status', False):
                         st.success("Proposta finalizada com sucesso!")
                         st.session_state['kanban_selected_proposta'] = None
-                        time.sleep(1); st.rerun()
+                        st.rerun()
                     else:
                         st.error(f"Erro: {res.get('message', 'Desconhecido')}")
                 except Exception as e:
@@ -907,7 +906,7 @@ def _tab_acoes(proposta_id, proposta):
                         if res.get('status') == 'sucesso_com_alerta':
                             st.warning(res.get('alerta'))
                         st.session_state['kanban_selected_proposta'] = None
-                        time.sleep(1); st.rerun()
+                        st.rerun()
                     else:
                         st.error(res.get('mensagem'))
                 except Exception as e:
@@ -949,7 +948,7 @@ def _tab_acoes(proposta_id, proposta):
                             conn.commit()
                         st.success(f"Proposta #{proposta_id} excluída.")
                         st.session_state['kanban_selected_proposta'] = None
-                        time.sleep(2); st.rerun()
+                        st.rerun()
                     except Exception as e:
                         st.error(str(e))
             with col2:

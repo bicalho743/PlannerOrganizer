@@ -118,13 +118,11 @@ def show():
                         
                         if resultado.get('status') == 'sucesso':
                             st.success(resultado.get('mensagem'))
-                            time.sleep(1)
                             st.rerun()
                         elif resultado.get('status') == 'sucesso_com_alerta':
                             st.success(resultado.get('mensagem'))
                             st.warning(resultado.get('alerta'))
                             st.info(f"Encontrados {resultado.get('lancamentos_encontrados')} lançamentos financeiros.")
-                            time.sleep(2)
                             st.rerun()
                         else:
                             st.error(f"Erro ao reabrir proposta: {resultado.get('mensagem')}")

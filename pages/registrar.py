@@ -60,7 +60,6 @@ def show():
                                 # Exibir mensagem de sucesso
                                 st.success("Conta criada com sucesso! Redirecionando...")
                                 # Esperar um pouco antes de redirecionar
-                                time.sleep(2)
                                 # Redirecionar para a página principal
                                 st.session_state.show_welcome = True
                                 st.session_state.current_page = "Dashboard"
