@@ -187,56 +187,7 @@ def _render_detail_panel(proposta_id, proposta, propostas_com_clientes):
 
 
 def _tab_detalhes(proposta_id, proposta):
-    st.subheader("Detalhes")
-
-    with st.form(key=f"form_andamento_{proposta_id}"):
-        st.write("Registre uma nova atualização de detalhes:")
-        descricao_andamento = st.text_area("Descrição:", height=100)
-        submitted = st.form_submit_button("Registrar Andamento", type="primary")
-
-        if submitted:
-            if descricao_andamento:
-                try:
-                    resultado = st.session_state.db.add_andamento_proposta(
-                        proposta_id=proposta_id,
-                        status="Em andamento",
-                        observacao=descricao_andamento
-                    )
-                    if resultado:
-                        st.success("Andamento registrado com sucesso!")
-                        time.sleep(0.5)
-                        st.rerun()
-                    else:
-                        st.error("Erro ao registrar andamento.")
-                except Exception as e:
-                    st.error(f"Erro ao registrar andamento: {str(e)}")
-            else:
-                st.warning("Por favor, insira uma descrição para o andamento.")
-
-    try:
-        andamentos = st.session_state.db.get_andamentos_proposta(proposta_id)
-        if not andamentos.empty:
-            st.write("### Histórico de Andamentos")
-            for _, andamento in andamentos.iterrows():
-                with st.container():
-                    col1, col2 = st.columns([3, 1])
-                    with col1:
-                        texto = andamento.get('observacao', andamento.get('descricao', 'Andamento sem descrição'))
-                        st.markdown(f"**{texto}**")
-                        status = andamento.get('status', '')
-                        if pd.notna(status) and status:
-                            st.caption(f"📊 Status: {status}")
-                    with col2:
-                        data_and = andamento.get('data')
-                        if pd.notna(data_and) and data_and:
-                            data_formatada = data_and.strftime('%d/%m/%Y')
-                        else:
-                            data_formatada = 'N/A'
-                        st.markdown(f"📅 {data_formatada}")
-                    st.markdown("---")
-    except Exception as e:
-        st.error(f"Erro ao carregar andamentos: {str(e)}")
-
+    # ── Barra de progresso ────────────────────────────────────────────────
     hoje = datetime.now().date()
     data_inicio_exec = proposta.get('data_inicio_execucao') or proposta.get('data_inicio')
     if data_inicio_exec is None:
@@ -246,421 +197,429 @@ def _tab_detalhes(proposta_id, proposta):
         data_fim_prevista = data_inicio_exec + timedelta(days=30)
 
     try:
-        total_dias = (data_fim_prevista - data_inicio_exec).days
+        total_dias = max(1, (data_fim_prevista - data_inicio_exec).days)
         dias_decorridos = (hoje - data_inicio_exec).days
-        progresso = min(100, max(0, int(dias_decorridos / total_dias * 100))) if total_dias > 0 else 0
-        st.write("**Progresso baseado no prazo:**")
-        st.progress(progresso)
-        st.caption(f"Progresso: {progresso}% ({dias_decorridos} de {total_dias} dias)")
-        if hoje > data_fim_prevista:
-            st.warning(f"⚠️ Proposta atrasada por {(hoje - data_fim_prevista).days} dias!")
-        else:
-            dias_restantes = (data_fim_prevista - hoje).days
-            st.info(f"📅 Restam {dias_restantes} dias para a conclusão prevista")
+        progresso = min(100, max(0, int(dias_decorridos / total_dias * 100)))
+        dias_restantes = max(0, (data_fim_prevista - hoje).days)
+        atrasado = hoje > data_fim_prevista
+        cor_prog = "#C0392B" if atrasado else "#1D6A4A"
+        label_prog = (f"⚠️ Atrasado em {(hoje - data_fim_prevista).days} dias"
+                      if atrasado else f"📅 {dias_restantes} dias restantes")
+        st.markdown(f"""
+        <div style="background:#f7f7f5;border-radius:10px;padding:14px 18px;margin-bottom:18px;border:1px solid #e8e6e0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-weight:600;color:#0D1B2A;font-size:13px;">Progresso do Prazo</span>
+            <span style="font-size:13px;color:{cor_prog};font-weight:600;">{label_prog}</span>
+          </div>
+          <div style="background:#e8e6e0;border-radius:6px;height:10px;overflow:hidden;">
+            <div style="background:{cor_prog};width:{progresso}%;height:100%;border-radius:6px;transition:width .3s;"></div>
+          </div>
+          <div style="margin-top:6px;font-size:12px;color:#9a9890;">{progresso}% — {dias_decorridos} de {total_dias} dias</div>
+        </div>""", unsafe_allow_html=True)
     except (TypeError, AttributeError):
         pass
 
+    # ── Formulário novo andamento ─────────────────────────────────────────
+    st.markdown('<p style="font-weight:600;color:#0D1B2A;font-size:14px;margin-bottom:4px;">📝 Novo Andamento</p>', unsafe_allow_html=True)
+    with st.form(key=f"form_andamento_{proposta_id}"):
+        descricao_andamento = st.text_area("Descrição:", height=90, placeholder="Descreva o que aconteceu nesta etapa…", label_visibility="collapsed")
+        submitted = st.form_submit_button("✔ Registrar Andamento", type="primary", use_container_width=True)
+        if submitted:
+            if descricao_andamento:
+                try:
+                    resultado = st.session_state.db.add_andamento_proposta(
+                        proposta_id=proposta_id, status="Em andamento", observacao=descricao_andamento)
+                    if resultado:
+                        st.success("Andamento registrado!")
+                        time.sleep(0.5); st.rerun()
+                    else:
+                        st.error("Erro ao registrar andamento.")
+                except Exception as e:
+                    st.error(f"Erro: {str(e)}")
+            else:
+                st.warning("Insira uma descrição.")
+
+    # ── Histórico de andamentos ───────────────────────────────────────────
+    try:
+        andamentos = st.session_state.db.get_andamentos_proposta(proposta_id)
+        if not andamentos.empty:
+            st.markdown('<p style="font-weight:600;color:#0D1B2A;font-size:14px;margin:16px 0 8px;">🕐 Histórico</p>', unsafe_allow_html=True)
+            cards = ""
+            for _, a in andamentos.iterrows():
+                texto = html_module.escape(str(a.get('observacao') or a.get('descricao') or 'Sem descrição'))
+                data_and = a.get('data')
+                data_str = data_and.strftime('%d/%m/%Y') if pd.notna(data_and) and data_and else '—'
+                cards += f"""
+                <div style="border-left:3px solid #C9A84C;background:#fff;border-radius:0 8px 8px 0;
+                            padding:10px 14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);">
+                  <div style="font-size:13px;color:#1C1C1A;">{texto}</div>
+                  <div style="font-size:11px;color:#9a9890;margin-top:4px;">📅 {data_str}</div>
+                </div>"""
+            st.markdown(cards, unsafe_allow_html=True)
+    except Exception as e:
+        st.error(f"Erro ao carregar andamentos: {str(e)}")
+
 
 def _tab_produtos(proposta_id):
-    st.subheader("Produtos")
-    st.write("Adição à Proposta")
-
-    with st.form(key=f"form_produto_{proposta_id}"):
-        produtos_cadastrados = st.session_state.db.get_produtos()
-
-        if not produtos_cadastrados.empty:
-            opcoes_produtos = produtos_cadastrados['id'].tolist()
-
-            def format_produto_option(produto_id):
-                produto = produtos_cadastrados.loc[produtos_cadastrados['id'] == produto_id]
-                if not produto.empty:
-                    nome = produto['nome'].iloc[0]
-                    preco = float(produto['preco_venda'].iloc[0])
-                    return f"{nome} - R$ {preco:.2f}"
-                return "Produto não encontrado"
-
-            st.write("Selecione o produto:")
-            produto_selecionado_id = st.selectbox(
-                "Selecione o produto:",
-                options=opcoes_produtos,
-                format_func=format_produto_option,
-                key=f"select_produto_{proposta_id}",
-                label_visibility="collapsed"
-            )
-
-            produto = produtos_cadastrados.loc[produtos_cadastrados['id'] == produto_selecionado_id].iloc[0]
-            st.write(f"Descrição: {produto['descricao']}")
-            st.write(f"Categoria: {produto['categoria']}")
-
-            quantidade = st.number_input("Quantidade:", min_value=1, value=1)
-            comodo = st.text_input("Cômodo/Área:")
-            usar_preco_padrao = st.checkbox("Usar preço padrão", value=True)
-            preco_padrao = float(produto['preco_venda'])
-
-            if not usar_preco_padrao:
-                valor_unitario = st.number_input("Preço personalizado (R$):", min_value=0.0, value=preco_padrao, format="%.2f")
-            else:
-                valor_unitario = preco_padrao
-
-            produto_salvar = st.form_submit_button("ADICIONAR À PROPOSTA", type="primary", use_container_width=True)
-
-            if produto_salvar:
-                try:
-                    valor_total = valor_unitario * quantidade
-                    nome_produto = produto['nome']
-                    descricao_produto = produto['descricao']
-                    comodo_final = comodo if comodo else "Geral"
-
-                    produto_id = st.session_state.db.add_produto_organizador(
-                        proposta_id=proposta_id,
-                        nome=nome_produto,
-                        descricao=descricao_produto,
-                        valor=valor_unitario,
-                        quantidade=quantidade,
-                        comodo=comodo_final
-                    )
-
-                    st.success(f"Produto '{nome_produto}' adicionado com sucesso! Valor Total: R$ {valor_total:.2f}")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Erro ao adicionar produto: {str(e)}")
-        else:
-            st.warning("Não há produtos cadastrados no sistema. Adicione produtos no módulo de vendas.")
-            st.form_submit_button("ADICIONAR À PROPOSTA", disabled=True)
-
-    st.write("Produtos da Proposta:")
+    # ── Lista atual de produtos ───────────────────────────────────────────
     try:
         produtos_proposta_raw = st.session_state.db.get_produtos_organizadores(proposta_id=proposta_id)
-
         if not produtos_proposta_raw.empty:
             produtos_proposta = produtos_proposta_raw.rename(columns={'valor': 'valor_unit'})
             produtos_proposta['valor_total'] = produtos_proposta['valor_unit'] * produtos_proposta['quantidade']
-
-            st.dataframe(
-                produtos_proposta[['nome', 'descricao', 'valor_unit', 'quantidade', 'valor_total', 'comodo']],
-                column_config={
-                    'nome': 'Nome',
-                    'descricao': 'Descrição',
-                    'valor_unit': st.column_config.NumberColumn('Valor Unit.', format="R$ %.2f"),
-                    'quantidade': 'Quantidade',
-                    'valor_total': st.column_config.NumberColumn('Valor Total', format="R$ %.2f"),
-                    'comodo': 'Cômodo'
-                },
-                use_container_width=True,
-                hide_index=True
-            )
-
-            with st.form(key=f"form_remover_produto_{proposta_id}"):
-                st.write("Selecione um produto para remover:")
-                produto_remover_id = st.selectbox(
-                    "Selecione um produto para remover:",
-                    options=produtos_proposta['id'].tolist(),
-                    format_func=lambda x: f"{x} - {produtos_proposta.loc[produtos_proposta['id'] == x, 'nome'].iloc[0]}",
-                    key=f"select_remover_produto_{proposta_id}"
-                )
-
-                remover_produto = st.form_submit_button("REMOVER PRODUTO", type="primary", use_container_width=True)
-
-                if remover_produto:
-                    try:
-                        resultado = st.session_state.db.remove_produto_organizador(produto_remover_id)
-                        if resultado:
-                            st.success("Produto removido com sucesso!")
-                        else:
-                            st.error("Falha ao remover o produto.")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Erro ao remover produto: {str(e)}")
-
             valor_total_produtos = produtos_proposta['valor_total'].sum()
-            st.info(f"Valor Total dos Produtos: R$ {valor_total_produtos:.2f}")
 
+            # Métricas resumo
+            c1, c2 = st.columns(2)
+            c1.metric("Itens adicionados", len(produtos_proposta))
+            c2.metric("Total produtos", f"R$ {valor_total_produtos:,.2f}".replace(",","X").replace(".",",").replace("X","."))
+
+            # Cards dos itens
+            cards = ""
+            for _, p in produtos_proposta.iterrows():
+                nome = html_module.escape(str(p.get('nome', '')))
+                comodo = html_module.escape(str(p.get('comodo') or 'Geral'))
+                qty = int(p.get('quantidade', 1))
+                vunit = float(p.get('valor_unit', 0))
+                vtot = float(p.get('valor_total', 0))
+                vunit_str = f"R$ {vunit:,.2f}".replace(",","X").replace(".",",").replace("X",".")
+                vtot_str  = f"R$ {vtot:,.2f}".replace(",","X").replace(".",",").replace("X",".")
+                cards += f"""
+                <div style="border-left:3px solid #C9A84C;background:#fff;border-radius:0 8px 8px 0;
+                            padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);
+                            display:flex;justify-content:space-between;align-items:center;">
+                  <div>
+                    <span style="font-weight:600;color:#0D1B2A;font-size:13px;">{nome}</span>
+                    <span style="font-size:11px;color:#9a9890;margin-left:8px;">📦 {comodo}</span>
+                  </div>
+                  <div style="text-align:right;white-space:nowrap;">
+                    <span style="font-size:11px;color:#9a9890;">{qty}× {vunit_str}</span><br>
+                    <span style="font-weight:700;color:#1D6A4A;font-size:13px;">{vtot_str}</span>
+                  </div>
+                </div>"""
+            st.markdown(cards, unsafe_allow_html=True)
+
+            # Remover produto
+            with st.expander("🗑️ Remover produto"):
+                with st.form(key=f"form_remover_produto_{proposta_id}"):
+                    produto_remover_id = st.selectbox(
+                        "Selecione:",
+                        options=produtos_proposta['id'].tolist(),
+                        format_func=lambda x: produtos_proposta.loc[produtos_proposta['id'] == x, 'nome'].iloc[0],
+                        key=f"select_remover_produto_{proposta_id}"
+                    )
+                    if st.form_submit_button("Remover", type="primary", use_container_width=True):
+                        try:
+                            if st.session_state.db.remove_produto_organizador(produto_remover_id):
+                                st.success("Produto removido!")
+                            else:
+                                st.error("Falha ao remover.")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(str(e))
+
+            # PDF dos produtos
             st.markdown("---")
-            if st.button("📄 GERAR RELATÓRIO DE VENDA DOS PRODUTOS", type="primary", use_container_width=True, key=f"btn_pdf_produtos_proposta_{proposta_id}"):
+            if st.button("📄 Gerar Relatório de Venda dos Produtos", use_container_width=True, key=f"btn_pdf_produtos_proposta_{proposta_id}"):
                 try:
                     from utils.pdf_generator_venda_fixed import gerar_pdf_venda
-
-                    venda_dados = {
-                        'id': proposta_id,
-                        'status': 'Proposta',
-                        'forma_pagamento': 'N/A',
-                        'valor_total': round(float(valor_total_produtos), 2),
-                        'data_venda': datetime.now().strftime('%d/%m/%Y %H:%M'),
-                        'observacoes': f"Produtos da Proposta #{proposta_id}"
-                    }
-                    cliente_dados = {'nome': 'Cliente'}
-
-                    itens_pdf = produtos_proposta.rename(columns={
-                        'nome': 'produto_nome',
-                        'valor_unit': 'preco_unitario'
-                    })[['produto_nome', 'quantidade', 'preco_unitario']].copy()
-
                     import time as _t
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    ts_unique = str(int(_t.time()))
-                    filename = f"pdfs/Venda_Proposta_{proposta_id}_{timestamp}_{ts_unique}.pdf"
+                    venda_dados = {'id': proposta_id, 'status': 'Proposta', 'forma_pagamento': 'N/A',
+                                   'valor_total': round(float(valor_total_produtos), 2),
+                                   'data_venda': datetime.now().strftime('%d/%m/%Y'), 'observacoes': f"Produtos Proposta #{proposta_id}"}
+                    itens_pdf = produtos_proposta.rename(columns={'nome': 'produto_nome', 'valor_unit': 'preco_unitario'})[['produto_nome', 'quantidade', 'preco_unitario']].copy()
+                    ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_t.time()))
+                    filename = f"pdfs/Venda_Proposta_{proposta_id}_{ts}.pdf"
                     os.makedirs("pdfs", exist_ok=True)
-
-                    pdf_path = gerar_pdf_venda(venda_dados, cliente_dados, itens_pdf, filename)
-
+                    pdf_path = gerar_pdf_venda(venda_dados, {'nome': 'Cliente'}, itens_pdf, filename)
                     if pdf_path and os.path.exists(pdf_path):
-                        with open(pdf_path, "rb") as pdf_file:
-                            pdf_data = pdf_file.read()
-                        st.success("Relatório de venda dos produtos gerado com sucesso!")
-                        st.download_button(
-                            label="📥 Baixar Relatório de Venda",
-                            data=pdf_data,
-                            file_name=f"Relatorio_Venda_Proposta_{proposta_id}.pdf",
-                            mime="application/pdf",
-                            use_container_width=True,
-                            key=f"download_pdf_venda_proposta_{proposta_id}"
-                        )
+                        with open(pdf_path, "rb") as f:
+                            st.success("PDF gerado!")
+                            st.download_button("📥 Baixar PDF", f.read(), f"Produtos_Proposta_{proposta_id}.pdf",
+                                               "application/pdf", use_container_width=True,
+                                               key=f"dl_pdf_venda_proposta_{proposta_id}")
                     else:
-                        st.error("Erro ao gerar arquivo PDF")
+                        st.error("Erro ao gerar PDF.")
                 except Exception as e:
-                    st.error(f"Erro ao gerar relatório: {str(e)}")
+                    st.error(str(e))
         else:
             st.info("Nenhum produto adicionado a esta proposta ainda.")
     except Exception as e:
-        st.error(f"Erro ao carregar produtos da proposta: {str(e)}")
+        st.error(f"Erro ao carregar produtos: {str(e)}")
+
+    # ── Formulário adicionar produto ──────────────────────────────────────
+    st.markdown("---")
+    st.markdown('<p style="font-weight:600;color:#0D1B2A;font-size:14px;margin-bottom:4px;">➕ Adicionar Produto</p>', unsafe_allow_html=True)
+    with st.form(key=f"form_produto_{proposta_id}"):
+        produtos_cadastrados = st.session_state.db.get_produtos()
+        if not produtos_cadastrados.empty:
+            opcoes_produtos = produtos_cadastrados['id'].tolist()
+            def format_produto_option(pid):
+                p = produtos_cadastrados.loc[produtos_cadastrados['id'] == pid]
+                if not p.empty:
+                    return f"{p['nome'].iloc[0]} — R$ {float(p['preco_venda'].iloc[0]):.2f}"
+                return "?"
+            produto_selecionado_id = st.selectbox("Produto:", options=opcoes_produtos,
+                                                   format_func=format_produto_option,
+                                                   key=f"select_produto_{proposta_id}")
+            produto = produtos_cadastrados.loc[produtos_cadastrados['id'] == produto_selecionado_id].iloc[0]
+            col1, col2 = st.columns(2)
+            with col1:
+                quantidade = st.number_input("Quantidade:", min_value=1, value=1)
+                comodo = st.text_input("Cômodo/Área:")
+            with col2:
+                preco_padrao = float(produto['preco_venda'])
+                usar_preco_padrao = st.checkbox("Usar preço padrão", value=True)
+                if not usar_preco_padrao:
+                    valor_unitario = st.number_input("Preço (R$):", min_value=0.0, value=preco_padrao, format="%.2f")
+                else:
+                    valor_unitario = preco_padrao
+                    st.write(f"Preço: R$ {preco_padrao:.2f}")
+            if st.form_submit_button("ADICIONAR", type="primary", use_container_width=True):
+                try:
+                    st.session_state.db.add_produto_organizador(proposta_id=proposta_id, nome=produto['nome'],
+                        descricao=produto['descricao'], valor=valor_unitario, quantidade=quantidade,
+                        comodo=comodo if comodo else "Geral")
+                    st.success(f"'{produto['nome']}' adicionado!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(str(e))
+        else:
+            st.warning("Nenhum produto cadastrado. Adicione em Cadastros > Produtos.")
+            st.form_submit_button("ADICIONAR", disabled=True)
+
+
+def _acrescimos_cards(acrescimos, cor_borda="#C9A84C"):
+    """Renderiza acréscimos como cards com borda colorida e valor à direita."""
+    cards = ""
+    for _, a in acrescimos.iterrows():
+        nome = html_module.escape(str(a.get('fornecedor') or a.get('descricao') or '—'))
+        desc = html_module.escape(str(a.get('descricao') or ''))
+        val  = float(a.get('valor', 0))
+        val_str = f"R$ {val:,.2f}".replace(",","X").replace(".",",").replace("X",".")
+        cards += f"""
+        <div style="border-left:3px solid {cor_borda};background:#fff;border-radius:0 8px 8px 0;
+                    padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);
+                    display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <span style="font-weight:600;color:#0D1B2A;font-size:13px;">{nome}</span>
+            {"<br><span style='font-size:11px;color:#9a9890;'>" + desc + "</span>" if desc and desc != nome else ""}
+          </div>
+          <span style="font-weight:700;color:#1D6A4A;font-size:13px;white-space:nowrap;">{val_str}</span>
+        </div>"""
+    return cards
 
 
 def _tab_fornecedores(proposta_id):
-    st.subheader("Fornecedores")
-
+    # ── Lista atual ───────────────────────────────────────────────────────
     try:
-        fornecedores = st.session_state.db.get_fornecedores()
+        acrescimos = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_id, "FORNECEDOR")
+        if not acrescimos.empty:
+            total_forn = acrescimos['valor'].sum()
+            c1, c2 = st.columns(2)
+            c1.metric("Fornecedores", len(acrescimos))
+            c2.metric("Total", f"R$ {total_forn:,.2f}".replace(",","X").replace(".",",").replace("X","."))
+            st.markdown(_acrescimos_cards(acrescimos, "#0F5E6E"), unsafe_allow_html=True)
 
-        if not fornecedores.empty:
-            with st.form(key=f"form_fornecedor_{proposta_id}"):
-                opcoes_fornecedores = fornecedores['id'].tolist()
-
-                def format_fornecedor_option(fornecedor_id):
-                    forn = fornecedores.loc[fornecedores['id'] == fornecedor_id]
-                    if not forn.empty:
-                        return forn['descricao'].iloc[0]
-                    return "Fornecedor não encontrado"
-
-                st.write("Selecione o fornecedor:")
-                fornecedor_selecionado = st.selectbox(
-                    "Selecione o fornecedor:",
-                    options=opcoes_fornecedores,
-                    format_func=format_fornecedor_option,
-                    key=f"select_fornecedor_{proposta_id}",
-                    label_visibility="collapsed"
-                )
-
-                valor_servico = st.number_input("Valor do serviço (R$):", min_value=0.0, value=0.0, format="%.2f", key=f"valor_forn_{proposta_id}")
-                observacoes = st.text_area("Observações:", height=80, key=f"obs_forn_{proposta_id}")
-
-                fornecedor_salvar = st.form_submit_button("Adicionar Fornecedor")
-
-                if fornecedor_salvar:
-                    if valor_servico <= 0:
-                        st.error("O valor do serviço deve ser maior que zero.")
-                    else:
-                        try:
-                            nome_fornecedor = format_fornecedor_option(fornecedor_selecionado)
-                            resultado = st.session_state.db.add_fornecedor_proposta(
-                                proposta_id=proposta_id,
-                                fornecedor_id=fornecedor_selecionado,
-                                valor=valor_servico,
-                                observacoes=observacoes
-                            )
-
-                            if resultado and "acrescimo_id" in resultado:
-                                st.success("Fornecedor adicionado à proposta com sucesso!")
-                                time.sleep(1)
-                                st.rerun()
-                            else:
-                                st.error("Erro ao adicionar fornecedor. Verifique os dados e tente novamente.")
-                        except Exception as e:
-                            st.error(f"Erro ao adicionar fornecedor: {str(e)}")
+            with st.expander("✏️ Editar / 🗑️ Remover"):
+                ids = acrescimos['id'].tolist()
+                fmt_forn = lambda x: acrescimos.loc[acrescimos['id'] == x, 'fornecedor'].iloc[0]
+                col_e, col_r = st.columns(2)
+                with col_e:
+                    with st.form(key=f"form_editar_fornecedor_{proposta_id}"):
+                        aid = st.selectbox("Editar:", options=ids, format_func=fmt_forn, key=f"sel_edit_forn_{proposta_id}")
+                        atual = acrescimos.loc[acrescimos['id'] == aid].iloc[0]
+                        nv = st.number_input("Novo valor (R$):", min_value=0.0, value=float(atual['valor']), format="%.2f", key=f"nv_forn_{proposta_id}")
+                        nd = st.text_area("Observações:", value=str(atual['descricao'] or ""), height=70, key=f"nd_forn_{proposta_id}")
+                        if st.form_submit_button("Salvar", use_container_width=True):
+                            try:
+                                if st.session_state.db.update_acrescimo_proposta(aid, valor=nv, descricao=nd):
+                                    st.success("Atualizado!"); time.sleep(1); st.rerun()
+                                else:
+                                    st.error("Falha ao atualizar.")
+                            except Exception as e:
+                                st.error(str(e))
+                with col_r:
+                    with st.form(key=f"form_remover_fornecedor_{proposta_id}"):
+                        rid = st.selectbox("Remover:", options=ids, format_func=fmt_forn, key=f"sel_rem_forn_{proposta_id}")
+                        if st.form_submit_button("🗑️ Remover", use_container_width=True):
+                            try:
+                                if st.session_state.db.remove_acrescimo_proposta(rid):
+                                    st.success("Removido!"); time.sleep(1); st.rerun()
+                                else:
+                                    st.error("Falha ao remover.")
+                            except Exception as e:
+                                st.error(str(e))
         else:
-            st.info("Não há fornecedores cadastrados. Adicione fornecedores no menu Cadastros > Fornecedores.")
-
-        try:
-            acrescimos = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_id, "FORNECEDOR")
-
-            if not acrescimos.empty:
-                st.write("### Fornecedores Adicionados")
-                df_display = acrescimos[['id', 'fornecedor', 'descricao', 'valor']].copy()
-                df_display.columns = ['ID', 'Fornecedor', 'Descrição', 'Valor']
-                df_display['Valor'] = df_display['Valor'].apply(lambda x: f"R$ {float(x):.2f}")
-                st.dataframe(df_display[['Fornecedor', 'Descrição', 'Valor']], hide_index=True)
-
-                valor_total_forn = acrescimos['valor'].sum()
-                st.info(f"Valor Total dos Fornecedores: R$ {valor_total_forn:.2f}")
-
-                with st.form(key=f"form_editar_fornecedor_{proposta_id}"):
-                    st.write("Selecione um fornecedor para editar:")
-                    acrescimo_editar_id = st.selectbox(
-                        "Selecione um fornecedor:",
-                        options=acrescimos['id'].tolist(),
-                        format_func=lambda x: f"{acrescimos.loc[acrescimos['id'] == x, 'fornecedor'].iloc[0]}",
-                        key=f"select_editar_fornecedor_{proposta_id}"
-                    )
-
-                    fornecedor_atual = acrescimos.loc[acrescimos['id'] == acrescimo_editar_id].iloc[0]
-                    novo_valor = st.number_input("Novo valor (R$):", min_value=0.0, value=float(fornecedor_atual['valor']), format="%.2f", key=f"novo_valor_fornecedor_{proposta_id}")
-                    nova_descricao = st.text_area("Novas observações:", value=fornecedor_atual['descricao'] if fornecedor_atual['descricao'] else "", key=f"nova_descricao_fornecedor_{proposta_id}")
-
-                    editar_fornecedor = st.form_submit_button("Editar")
-
-                    if editar_fornecedor:
-                        try:
-                            resultado = st.session_state.db.update_acrescimo_proposta(acrescimo_editar_id, valor=novo_valor, descricao=nova_descricao)
-                            if resultado:
-                                st.success("Fornecedor atualizado com sucesso!")
-                            else:
-                                st.error("Falha ao atualizar o fornecedor.")
-                            time.sleep(1)
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"Erro ao editar fornecedor: {str(e)}")
-
-                with st.form(key=f"form_remover_fornecedor_{proposta_id}"):
-                    st.write("Selecione um fornecedor para remover:")
-                    acrescimo_remover_id = st.selectbox(
-                        "Selecione um fornecedor:",
-                        options=acrescimos['id'].tolist(),
-                        format_func=lambda x: f"{acrescimos.loc[acrescimos['id'] == x, 'fornecedor'].iloc[0]}",
-                        key=f"select_remover_fornecedor_{proposta_id}"
-                    )
-                    remover_fornecedor = st.form_submit_button("Remover")
-
-                    if remover_fornecedor:
-                        try:
-                            resultado = st.session_state.db.remove_acrescimo_proposta(acrescimo_remover_id)
-                            if resultado:
-                                st.success("Fornecedor removido com sucesso!")
-                            else:
-                                st.error("Falha ao remover o fornecedor.")
-                            time.sleep(1)
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"Erro ao remover fornecedor: {str(e)}")
-            else:
-                st.info("Nenhum fornecedor adicionado a esta proposta ainda.")
-        except Exception as e:
-            st.error(f"Erro ao carregar fornecedores da proposta: {str(e)}")
-
+            st.info("Nenhum fornecedor adicionado ainda.")
     except Exception as e:
         st.error(f"Erro ao carregar fornecedores: {str(e)}")
 
-
-def _tab_assistentes(proposta_id):
-    st.subheader("Assistentes")
-
+    # ── Formulário adicionar ──────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown('<p style="font-weight:600;color:#0D1B2A;font-size:14px;margin-bottom:4px;">➕ Adicionar Fornecedor</p>', unsafe_allow_html=True)
     try:
-        assistentes = st.session_state.db.get_assistentes()
-
-        if not assistentes.empty:
-            with st.form(key=f"form_assistente_{proposta_id}"):
-                assistente_selecionado = st.selectbox(
-                    "Selecione o assistente:",
-                    options=assistentes['id'].tolist(),
-                    format_func=lambda x: assistentes.loc[assistentes['id'] == x, 'nome'].iloc[0]
-                )
-                valor_servico = st.number_input("Valor do serviço (R$):", min_value=0.0, value=0.0, format="%.2f")
-                observacoes = st.text_area("Observações:", height=100)
-                assistente_salvar = st.form_submit_button("Adicionar Assistente")
-
-                if assistente_salvar:
+        fornecedores = st.session_state.db.get_fornecedores()
+        if not fornecedores.empty:
+            with st.form(key=f"form_fornecedor_{proposta_id}"):
+                def fmt_forn_opt(fid):
+                    r = fornecedores.loc[fornecedores['id'] == fid]
+                    return r['descricao'].iloc[0] if not r.empty else "?"
+                forn_sel = st.selectbox("Fornecedor:", options=fornecedores['id'].tolist(),
+                                        format_func=fmt_forn_opt, key=f"select_fornecedor_{proposta_id}")
+                col1, col2 = st.columns(2)
+                with col1:
+                    valor_servico = st.number_input("Valor (R$):", min_value=0.0, value=0.0, format="%.2f", key=f"valor_forn_{proposta_id}")
+                with col2:
+                    observacoes = st.text_area("Observações:", height=70, key=f"obs_forn_{proposta_id}")
+                if st.form_submit_button("ADICIONAR", type="primary", use_container_width=True):
                     if valor_servico <= 0:
-                        st.error("O valor do serviço deve ser maior que zero.")
+                        st.error("Valor deve ser maior que zero.")
                     else:
                         try:
-                            resultado = st.session_state.db.add_assistente_proposta(
-                                proposta_id=proposta_id,
-                                assistente_id=assistente_selecionado,
-                                valor=valor_servico,
-                                observacoes=observacoes
-                            )
-
-                            if resultado and "acrescimo_id" in resultado:
-                                st.success("Assistente adicionado à proposta com sucesso!")
-                                time.sleep(1)
-                                st.rerun()
+                            res = st.session_state.db.add_fornecedor_proposta(proposta_id=proposta_id,
+                                  fornecedor_id=forn_sel, valor=valor_servico, observacoes=observacoes)
+                            if res and "acrescimo_id" in res:
+                                st.success("Fornecedor adicionado!"); time.sleep(1); st.rerun()
                             else:
-                                st.error("Erro ao adicionar assistente. Verifique os dados e tente novamente.")
+                                st.error("Erro ao adicionar.")
                         except Exception as e:
-                            st.error(f"Erro ao adicionar assistente: {str(e)}")
-
-            try:
-                acrescimos = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_id, "ASSISTENTE")
-
-                if not acrescimos.empty:
-                    st.write("### Assistentes Adicionados")
-                    df_display = acrescimos[['id', 'fornecedor', 'descricao', 'valor']].copy()
-                    df_display.columns = ['ID', 'Assistente', 'Descrição', 'Valor']
-                    df_display['Valor'] = df_display['Valor'].apply(lambda x: f"R$ {float(x):.2f}")
-                    st.dataframe(df_display[['Assistente', 'Descrição', 'Valor']], hide_index=True)
-
-                    valor_total_assistentes = acrescimos['valor'].sum()
-                    st.info(f"Valor Total dos Assistentes: R$ {valor_total_assistentes:.2f}")
-
-                    with st.form(key=f"form_editar_assistente_{proposta_id}"):
-                        st.write("Selecione um assistente para editar:")
-                        acrescimo_editar_id = st.selectbox(
-                            "Selecione um assistente:",
-                            options=acrescimos['id'].tolist(),
-                            format_func=lambda x: f"{acrescimos.loc[acrescimos['id'] == x, 'fornecedor'].iloc[0]}",
-                            key=f"select_editar_assistente_{proposta_id}"
-                        )
-                        assistente_atual = acrescimos.loc[acrescimos['id'] == acrescimo_editar_id].iloc[0]
-                        novo_valor = st.number_input("Novo valor (R$):", min_value=0.0, value=float(assistente_atual['valor']), format="%.2f", key=f"novo_valor_assistente_{proposta_id}")
-                        nova_descricao = st.text_area("Nova descrição:", value=assistente_atual['descricao'] if assistente_atual['descricao'] else "", key=f"nova_descricao_assistente_{proposta_id}")
-                        editar_assistente = st.form_submit_button("Editar")
-
-                        if editar_assistente:
-                            try:
-                                resultado = st.session_state.db.update_acrescimo_proposta(acrescimo_editar_id, valor=novo_valor, descricao=nova_descricao)
-                                if resultado:
-                                    st.success("Assistente atualizado com sucesso!")
-                                else:
-                                    st.error("Falha ao atualizar o assistente.")
-                                time.sleep(1)
-                                st.rerun()
-                            except Exception as e:
-                                st.error(f"Erro ao editar assistente: {str(e)}")
-
-                    with st.form(key=f"form_remover_assistente_{proposta_id}"):
-                        st.write("Selecione um assistente para remover:")
-                        acrescimo_remover_id = st.selectbox(
-                            "Selecione um assistente:",
-                            options=acrescimos['id'].tolist(),
-                            format_func=lambda x: f"{acrescimos.loc[acrescimos['id'] == x, 'fornecedor'].iloc[0]}",
-                            key=f"select_remover_assistente_{proposta_id}"
-                        )
-                        remover_assistente = st.form_submit_button("Remover")
-
-                        if remover_assistente:
-                            try:
-                                resultado = st.session_state.db.remove_acrescimo_proposta(acrescimo_remover_id)
-                                if resultado:
-                                    st.success("Assistente removido com sucesso!")
-                                else:
-                                    st.error("Falha ao remover o assistente.")
-                                time.sleep(1)
-                                st.rerun()
-                            except Exception as e:
-                                st.error(f"Erro ao remover assistente: {str(e)}")
-                else:
-                    st.info("Nenhum assistente adicionado a esta proposta ainda.")
-            except Exception as e:
-                st.error(f"Erro ao carregar assistentes da proposta: {str(e)}")
+                            st.error(str(e))
         else:
-            st.info("Não há assistentes cadastrados. Adicione assistentes no menu Cadastros > Assistentes.")
+            st.info("Nenhum fornecedor cadastrado. Adicione em Cadastros > Fornecedores.")
+    except Exception as e:
+        st.error(str(e))
 
+
+def _tab_assistentes(proposta_id):
+    # ── Lista atual ───────────────────────────────────────────────────────
+    try:
+        acrescimos = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_id, "ASSISTENTE")
+        if not acrescimos.empty:
+            total_asst = acrescimos['valor'].sum()
+            c1, c2 = st.columns(2)
+            c1.metric("Assistentes", len(acrescimos))
+            c2.metric("Total", f"R$ {total_asst:,.2f}".replace(",","X").replace(".",",").replace("X","."))
+            st.markdown(_acrescimos_cards(acrescimos, "#6B4EAA"), unsafe_allow_html=True)
+
+            with st.expander("✏️ Editar / 🗑️ Remover"):
+                ids = acrescimos['id'].tolist()
+                fmt_a = lambda x: acrescimos.loc[acrescimos['id'] == x, 'fornecedor'].iloc[0]
+                col_e, col_r = st.columns(2)
+                with col_e:
+                    with st.form(key=f"form_editar_assistente_{proposta_id}"):
+                        aid = st.selectbox("Editar:", options=ids, format_func=fmt_a, key=f"sel_edit_asst_{proposta_id}")
+                        atual = acrescimos.loc[acrescimos['id'] == aid].iloc[0]
+                        nv = st.number_input("Novo valor (R$):", min_value=0.0, value=float(atual['valor']), format="%.2f", key=f"nv_asst_{proposta_id}")
+                        nd = st.text_area("Descrição:", value=str(atual['descricao'] or ""), height=70, key=f"nd_asst_{proposta_id}")
+                        if st.form_submit_button("Salvar", use_container_width=True):
+                            try:
+                                if st.session_state.db.update_acrescimo_proposta(aid, valor=nv, descricao=nd):
+                                    st.success("Atualizado!"); time.sleep(1); st.rerun()
+                                else:
+                                    st.error("Falha ao atualizar.")
+                            except Exception as e:
+                                st.error(str(e))
+                with col_r:
+                    with st.form(key=f"form_remover_assistente_{proposta_id}"):
+                        rid = st.selectbox("Remover:", options=ids, format_func=fmt_a, key=f"sel_rem_asst_{proposta_id}")
+                        if st.form_submit_button("🗑️ Remover", use_container_width=True):
+                            try:
+                                if st.session_state.db.remove_acrescimo_proposta(rid):
+                                    st.success("Removido!"); time.sleep(1); st.rerun()
+                                else:
+                                    st.error("Falha ao remover.")
+                            except Exception as e:
+                                st.error(str(e))
+        else:
+            st.info("Nenhum assistente adicionado ainda.")
     except Exception as e:
         st.error(f"Erro ao carregar assistentes: {str(e)}")
 
+    # ── Formulário adicionar ──────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown('<p style="font-weight:600;color:#0D1B2A;font-size:14px;margin-bottom:4px;">➕ Adicionar Assistente</p>', unsafe_allow_html=True)
+    try:
+        assistentes = st.session_state.db.get_assistentes()
+        if not assistentes.empty:
+            with st.form(key=f"form_assistente_{proposta_id}"):
+                asst_sel = st.selectbox("Assistente:", options=assistentes['id'].tolist(),
+                                        format_func=lambda x: assistentes.loc[assistentes['id'] == x, 'nome'].iloc[0])
+                col1, col2 = st.columns(2)
+                with col1:
+                    valor_servico = st.number_input("Valor (R$):", min_value=0.0, value=0.0, format="%.2f")
+                with col2:
+                    observacoes = st.text_area("Observações:", height=70)
+                if st.form_submit_button("ADICIONAR", type="primary", use_container_width=True):
+                    if valor_servico <= 0:
+                        st.error("Valor deve ser maior que zero.")
+                    else:
+                        try:
+                            res = st.session_state.db.add_assistente_proposta(proposta_id=proposta_id,
+                                  assistente_id=asst_sel, valor=valor_servico, observacoes=observacoes)
+                            if res and "acrescimo_id" in res:
+                                st.success("Assistente adicionado!"); time.sleep(1); st.rerun()
+                            else:
+                                st.error("Erro ao adicionar.")
+                        except Exception as e:
+                            st.error(str(e))
+        else:
+            st.info("Nenhum assistente cadastrado. Adicione em Cadastros > Assistentes.")
+    except Exception as e:
+        st.error(str(e))
+
 
 def _tab_outros(proposta_id):
-    st.subheader("Outros")
-    st.write("Adicionar itens adicionais que não estão no catálogo de produtos")
+    # ── Lista atual ───────────────────────────────────────────────────────
+    try:
+        acrescimos = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_id, "OUTROS")
+        if not acrescimos.empty:
+            total_outros = acrescimos['valor'].sum()
+            c1, c2 = st.columns(2)
+            c1.metric("Itens extras", len(acrescimos))
+            c2.metric("Total", f"R$ {total_outros:,.2f}".replace(",","X").replace(".",",").replace("X","."))
+            # Montar cards com nome extraído da descrição
+            cards = ""
+            for _, a in acrescimos.iterrows():
+                desc_raw = str(a.get('descricao') or '—')
+                nome = html_module.escape(desc_raw.split(' - ')[0] if ' - ' in desc_raw else desc_raw)
+                sub  = html_module.escape(desc_raw.split(' - ')[1] if ' - ' in desc_raw else '')
+                comodo = html_module.escape(str(a.get('fornecedor') or 'Geral'))
+                val = float(a.get('valor', 0))
+                val_str = f"R$ {val:,.2f}".replace(",","X").replace(".",",").replace("X",".")
+                cards += f"""
+                <div style="border-left:3px solid #E07B39;background:#fff;border-radius:0 8px 8px 0;
+                            padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);
+                            display:flex;justify-content:space-between;align-items:center;">
+                  <div>
+                    <span style="font-weight:600;color:#0D1B2A;font-size:13px;">{nome}</span>
+                    {'<br><span style="font-size:11px;color:#9a9890;">' + sub + '</span>' if sub else ''}
+                    <span style="font-size:11px;color:#9a9890;margin-left:6px;">📍 {comodo}</span>
+                  </div>
+                  <span style="font-weight:700;color:#1D6A4A;font-size:13px;white-space:nowrap;">{val_str}</span>
+                </div>"""
+            st.markdown(cards, unsafe_allow_html=True)
 
+            with st.expander("🗑️ Remover item"):
+                with st.form(key=f"form_remover_outros_{proposta_id}"):
+                    rid = st.selectbox("Selecione:", options=acrescimos['id'].tolist(),
+                                       format_func=lambda x: acrescimos.loc[acrescimos['id'] == x, 'descricao'].iloc[0])
+                    if st.form_submit_button("Remover", use_container_width=True):
+                        try:
+                            if st.session_state.db.remove_acrescimo_proposta(rid):
+                                st.success("Item removido!"); time.sleep(1); st.rerun()
+                            else:
+                                st.error("Falha ao remover.")
+                        except Exception as e:
+                            st.error(str(e))
+        else:
+            st.info("Nenhum item extra adicionado ainda.")
+    except Exception as e:
+        st.error(f"Erro ao carregar itens: {str(e)}")
+
+    # ── Formulário adicionar ──────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown('<p style="font-weight:600;color:#0D1B2A;font-size:14px;margin-bottom:4px;">➕ Adicionar Item Extra</p>', unsafe_allow_html=True)
     with st.form(key=f"form_outros_{proposta_id}"):
         col1, col2 = st.columns(2)
         with col1:
@@ -670,262 +629,265 @@ def _tab_outros(proposta_id):
         with col2:
             valor_unitario = st.number_input("Valor unitário (R$):", min_value=0.0, value=0.0, format="%.2f")
             quantidade = st.number_input("Quantidade:", min_value=1, value=1)
-            valor_total = valor_unitario * quantidade
-            st.write(f"Valor total: R$ {valor_total:.2f}")
-
-        item_salvar = st.form_submit_button("Adicionar Item")
-
-        if item_salvar:
+            valor_total_calc = valor_unitario * quantidade
+            st.markdown(f'<p style="color:#1D6A4A;font-weight:600;margin-top:22px;">Total: R$ {valor_total_calc:.2f}</p>', unsafe_allow_html=True)
+        if st.form_submit_button("ADICIONAR", type="primary", use_container_width=True):
             if not nome_item or valor_unitario <= 0:
-                st.error("Preencha o nome do item e um valor válido.")
+                st.error("Preencha o nome e um valor válido.")
             else:
                 try:
-                    resultado = st.session_state.db.add_acrescimo_proposta(
-                        proposta_id=proposta_id,
-                        tipo="OUTROS",
-                        valor=valor_total,
+                    res = st.session_state.db.add_acrescimo_proposta(
+                        proposta_id=proposta_id, tipo="OUTROS",
+                        valor=valor_unitario * quantidade,
                         descricao=f"{nome_item} - {descricao_item}" if descricao_item else nome_item,
                         fornecedor=comodo_area if comodo_area else "Geral"
                     )
-
-                    if resultado and "acrescimo_id" in resultado:
-                        st.success(f"Item '{nome_item}' adicionado com sucesso!")
-                        time.sleep(1)
-                        st.rerun()
+                    if res and "acrescimo_id" in res:
+                        st.success(f"'{nome_item}' adicionado!"); time.sleep(1); st.rerun()
                     else:
-                        st.error("Erro ao adicionar item. Verifique os dados e tente novamente.")
+                        st.error("Erro ao adicionar.")
                 except Exception as e:
-                    st.error(f"Erro ao adicionar item: {str(e)}")
+                    st.error(str(e))
 
-    try:
-        acrescimos = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_id, "OUTROS")
 
-        if not acrescimos.empty:
-            st.write("### Itens adicionados")
-            df_display = acrescimos.copy()
-            df_display['nome_item'] = df_display['descricao'].apply(lambda x: x.split(' - ')[0] if ' - ' in x else x)
-            df_display['descricao_item'] = df_display['descricao'].apply(lambda x: x.split(' - ')[1] if ' - ' in x else '')
-            df_display = df_display[['id', 'nome_item', 'descricao_item', 'valor', 'fornecedor']]
-            df_display.columns = ['ID', 'Nome', 'Descrição', 'Valor Total', 'Cômodo/Área']
-            df_display['Valor Total'] = df_display['Valor Total'].apply(lambda x: f"R$ {float(x):.2f}")
-            st.dataframe(df_display)
+def _fmt_brl(v):
+    return f"R$ {float(v):,.2f}".replace(",","X").replace(".",",").replace("X",".")
 
-            with st.form(key=f"form_remover_outros_{proposta_id}"):
-                acrescimo_remover_id = st.selectbox(
-                    "Selecione um item para remover:",
-                    options=acrescimos['id'].tolist(),
-                    format_func=lambda x: acrescimos.loc[acrescimos['id'] == x, 'descricao'].iloc[0]
-                )
-                remover_item = st.form_submit_button("Remover Item")
 
-                if remover_item:
-                    try:
-                        resultado = st.session_state.db.remove_acrescimo_proposta(acrescimo_remover_id)
-                        if resultado:
-                            st.success("Item removido com sucesso!")
-                        else:
-                            st.error("Falha ao remover o item.")
-                        time.sleep(1)
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Erro ao remover item: {str(e)}")
-        else:
-            st.info("Nenhum item adicional adicionado a esta proposta ainda.")
-    except Exception as e:
-        st.error(f"Erro ao carregar itens adicionais da proposta: {str(e)}")
+def _status_badge(label, cor_fundo, cor_texto="#fff"):
+    st.markdown(f"""
+    <div style="display:inline-block;background:{cor_fundo};color:{cor_texto};
+                border-radius:20px;padding:5px 16px;font-size:13px;font-weight:600;
+                margin-bottom:16px;">{label}</div>""", unsafe_allow_html=True)
 
 
 def _tab_acoes(proposta_id, proposta):
-    st.subheader("Finalizar / Ações")
-
-    status_atual = proposta.get('status', '')
+    status_atual   = proposta.get('status', '')
     status_execucao = proposta.get('status_execucao', '')
 
-    em_aberto = status_atual in ['Em elaboração', 'Aguardando aprovação', 'Aguardando']
+    em_aberto    = status_atual in ['Em elaboração', 'Aguardando aprovação', 'Aguardando']
     esta_aprovada = status_atual == 'Aprovada'
-    em_execucao = status_execucao == 'Em execução'
-    finalizada = status_atual in ['Finalizada', 'Recusada']
+    em_execucao  = status_execucao == 'Em execução'
+    finalizada   = status_atual in ['Finalizada', 'Recusada']
 
-    st.markdown("#### Transições de Estágio")
-
+    # ── Badge de status ───────────────────────────────────────────────────
     if em_aberto:
-        st.info("Esta proposta está **Em Aberto**. Você pode aprová-la ou recusá-la.")
-        col1, col2 = st.columns(2)
+        _status_badge("🟡 Em Aberto", "#B7860D")
+    elif esta_aprovada and not em_execucao and not finalizada:
+        _status_badge("✅ Aprovada — aguardando início", "#1D6A4A")
+    elif em_execucao and not finalizada:
+        _status_badge("🔵 Em Execução", "#1565C0")
+    elif finalizada:
+        cor_fin = "#4A4A4A" if status_atual == 'Finalizada' else "#C0392B"
+        _status_badge(f"🏁 {status_atual}", cor_fin)
+    else:
+        _status_badge(f"● {status_atual}", "#555")
 
+    # ── EM ABERTO ─────────────────────────────────────────────────────────
+    if em_aberto:
+        st.markdown('<p style="color:#555;font-size:13px;margin-bottom:12px;">Escolha a próxima ação para esta proposta.</p>', unsafe_allow_html=True)
+        col1, col2 = st.columns(2)
         with col1:
             if st.button("✅ Aprovar Proposta", type="primary", use_container_width=True, key=f"btn_aprovar_{proposta_id}"):
                 try:
-                    data_aprovacao_local = datetime.now().date()
-                    resultado = st.session_state.db.update_proposta_status(
-                        proposta_id=proposta_id,
-                        novo_status="Aprovada",
-                        data_aprovacao=data_aprovacao_local
-                    )
-                    sucesso = resultado.get('status', False)
-                    if sucesso:
-                        st.success("Proposta aprovada! Agora está na coluna **Aprovada**.")
+                    res = st.session_state.db.update_proposta_status(proposta_id=proposta_id,
+                          novo_status="Aprovada", data_aprovacao=datetime.now().date())
+                    if res.get('status', False):
+                        st.success("Proposta aprovada!")
                         st.session_state['kanban_selected_proposta'] = None
-                        time.sleep(1)
-                        st.rerun()
+                        time.sleep(1); st.rerun()
                     else:
-                        st.error(f"Erro ao aprovar proposta: {resultado.get('message', '')}")
+                        st.error(res.get('message', 'Erro ao aprovar.'))
                 except Exception as e:
-                    st.error(f"Erro ao aprovar proposta: {str(e)}")
-
+                    st.error(str(e))
         with col2:
-            if st.button("❌ Recusar Proposta", type="secondary", use_container_width=True, key=f"btn_recusar_{proposta_id}"):
+            if st.button("❌ Recusar Proposta", use_container_width=True, key=f"btn_recusar_{proposta_id}"):
                 try:
-                    resultado = st.session_state.db.update_proposta_status(
-                        proposta_id=proposta_id,
-                        novo_status="Finalizada"
-                    )
-                    if resultado.get('status', False):
-                        st.session_state.db.update_proposta(
-                            proposta_id,
-                            status_execucao="Cancelada",
-                            data_fim=datetime.now().date()
-                        )
-                        st.success("Proposta marcada como recusada!")
+                    res = st.session_state.db.update_proposta_status(proposta_id=proposta_id, novo_status="Finalizada")
+                    if res.get('status', False):
+                        st.session_state.db.update_proposta(proposta_id, status_execucao="Cancelada", data_fim=datetime.now().date())
+                        st.success("Proposta recusada.")
                         st.session_state['kanban_selected_proposta'] = None
-                        time.sleep(1)
-                        st.rerun()
+                        time.sleep(1); st.rerun()
                     else:
-                        st.error("Erro ao recusar proposta.")
+                        st.error("Erro ao recusar.")
                 except Exception as e:
-                    st.error(f"Erro ao recusar proposta: {str(e)}")
+                    st.error(str(e))
 
+    # ── APROVADA ──────────────────────────────────────────────────────────
     elif esta_aprovada and not em_execucao and not finalizada:
-        st.info("Esta proposta está **Aprovada**. Você pode iniciar a execução.")
+        st.markdown('<p style="color:#555;font-size:13px;margin-bottom:12px;">Inicie a execução quando o trabalho começar.</p>', unsafe_allow_html=True)
         if st.button("▶ Iniciar Execução", type="primary", use_container_width=True, key=f"btn_iniciar_exec_{proposta_id}"):
             try:
-                resultado = st.session_state.db.update_proposta_status(
-                    proposta_id=proposta_id,
-                    novo_status="Em execução",
-                    data_aprovacao=proposta.get('data_aprovacao')
-                )
-                sucesso = resultado.get('status', False)
-                if sucesso:
-                    st.success("Execução iniciada! Proposta movida para **Em Execução**.")
+                res = st.session_state.db.update_proposta_status(proposta_id=proposta_id,
+                      novo_status="Em execução", data_aprovacao=proposta.get('data_aprovacao'))
+                if res.get('status', False):
+                    st.success("Execução iniciada!")
                     st.session_state['kanban_selected_proposta'] = None
-                    time.sleep(1)
-                    st.rerun()
+                    time.sleep(1); st.rerun()
                 else:
-                    st.error(f"Erro ao iniciar execução: {resultado.get('message', '')}")
+                    st.error(res.get('message', 'Erro.'))
             except Exception as e:
-                st.error(f"Erro ao iniciar execução: {str(e)}")
+                st.error(str(e))
 
+    # ── EM EXECUÇÃO ───────────────────────────────────────────────────────
     elif em_execucao and not finalizada:
-        st.info("Esta proposta está **Em Execução**. Você pode finalizá-la.")
-
         try:
-            valor_base = _safe_float(proposta.get('valor'))
-            data_inicio = proposta.get('data_inicio')
-            data_aprovacao = proposta.get('data_aprovacao')
-
-            produtos_df = st.session_state.db.get_produtos_organizadores(proposta_id)
+            valor_base      = _safe_float(proposta.get('valor'))
+            produtos_df     = st.session_state.db.get_produtos_organizadores(proposta_id)
             fornecedores_df = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_id, "FORNECEDOR")
-            assistentes_df = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_id, "ASSISTENTE")
-            outros_df = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_id, "OUTROS")
+            assistentes_df  = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_id, "ASSISTENTE")
+            outros_df       = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_id, "OUTROS")
 
-            total_produtos = (produtos_df['valor'] * produtos_df['quantidade']).sum() if not produtos_df.empty else 0
-            total_fornecedores = fornecedores_df['valor'].sum() if not fornecedores_df.empty else 0
-            total_assistentes = assistentes_df['valor'].sum() if not assistentes_df.empty else 0
-            total_outros = outros_df['valor'].sum() if not outros_df.empty else 0
-            total_geral = valor_base + total_produtos + total_fornecedores + total_assistentes + total_outros
+            total_prod = (produtos_df['valor'] * produtos_df['quantidade']).sum() if not produtos_df.empty else 0
+            total_forn = fornecedores_df['valor'].sum() if not fornecedores_df.empty else 0
+            total_asst = assistentes_df['valor'].sum() if not assistentes_df.empty else 0
+            total_outr = outros_df['valor'].sum() if not outros_df.empty else 0
+            total_geral = valor_base + total_prod + total_forn + total_asst + total_outr
 
-            st.write("### Resumo Financeiro")
-            resumo_financeiro = {
-                "Item": ["Valor Personal Organizer", "Produtos", "Fornecedores", "Assistentes", "Outros", "Total Geral"],
-                "Valor": [
-                    f"R$ {valor_base:.2f}",
-                    f"R$ {total_produtos:.2f}",
-                    f"R$ {total_fornecedores:.2f}",
-                    f"R$ {total_assistentes:.2f}",
-                    f"R$ {total_outros:.2f}",
-                    f"R$ {total_geral:.2f}"
-                ]
-            }
-            st.dataframe(pd.DataFrame(resumo_financeiro), hide_index=True, use_container_width=True)
+            # Métricas compactas
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Serviço (PO)", _fmt_brl(valor_base))
+            c2.metric("Custos totais", _fmt_brl(total_forn + total_asst + total_outr + total_prod))
+            c3.metric("Total geral", _fmt_brl(total_geral))
 
-            labels = ['Valor Personal Organizer', 'Fornecedores', 'Assistentes (Custos)', 'Produtos']
-            values = [valor_base, total_fornecedores, total_assistentes, total_produtos]
-            fig = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.3, textinfo='label+value')])
-            fig.update_layout(title_text="Distribuição de Valores da Proposta", legend=dict(orientation="h", yanchor="bottom", y=-0.3))
-            st.plotly_chart(fig, use_container_width=True)
+            # Breakdown em cards
+            breakdown = [
+                ("🏷️ Personal Organizer", valor_base, "#C9A84C"),
+                ("📦 Produtos",           total_prod, "#0F5E6E"),
+                ("🏢 Fornecedores",       total_forn, "#0F5E6E"),
+                ("👥 Assistentes",        total_asst, "#6B4EAA"),
+                ("➕ Outros",             total_outr, "#E07B39"),
+            ]
+            rows_html = ""
+            for label, val, cor in breakdown:
+                if val > 0:
+                    rows_html += f"""
+                    <div style="display:flex;justify-content:space-between;padding:7px 12px;
+                                border-left:3px solid {cor};background:#fff;border-radius:0 6px 6px 0;
+                                margin-bottom:6px;box-shadow:0 1px 3px rgba(0,0,0,.05);">
+                      <span style="font-size:13px;color:#333;">{label}</span>
+                      <span style="font-size:13px;font-weight:600;color:#1D6A4A;">{_fmt_brl(val)}</span>
+                    </div>"""
+            rows_html += f"""
+                    <div style="display:flex;justify-content:space-between;padding:9px 12px;
+                                background:#0D1B2A;border-radius:6px;margin-top:6px;">
+                      <span style="font-size:13px;color:#C9A84C;font-weight:700;">TOTAL GERAL</span>
+                      <span style="font-size:14px;font-weight:700;color:#fff;">{_fmt_brl(total_geral)}</span>
+                    </div>"""
+            st.markdown(rows_html, unsafe_allow_html=True)
 
+            # Gráfico de pizza
+            if any(v > 0 for _, v, _ in breakdown):
+                labels = [l for l, v, _ in breakdown if v > 0]
+                values = [v for _, v, _ in breakdown if v > 0]
+                fig = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.35,
+                                              textinfo='percent', hoverinfo='label+value')])
+                fig.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=250,
+                                  showlegend=True,
+                                  legend=dict(orientation="h", yanchor="bottom", y=-0.3))
+                st.plotly_chart(fig, use_container_width=True)
         except Exception as e:
-            st.error(f"Erro ao carregar resumo financeiro: {str(e)}")
+            st.error(f"Erro ao carregar resumo: {str(e)}")
 
-        st.warning("⚠️ **Atenção**: Finalizar uma proposta não poderá ser desfeito facilmente.")
-
+        st.markdown("---")
+        st.markdown('<p style="color:#B7860D;font-size:13px;font-weight:600;">⚠️ Após finalizar, esta ação não poderá ser desfeita facilmente.</p>', unsafe_allow_html=True)
         with st.form(key=f"form_finalizar_concluida_{proposta_id}"):
-            finalizar_concluida = st.form_submit_button("🏁 MARCAR COMO CONCLUÍDA", type="primary", use_container_width=True)
-            if finalizar_concluida:
+            if st.form_submit_button("🏁 MARCAR COMO CONCLUÍDA", type="primary", use_container_width=True):
                 try:
-                    proposta_id_int = int(proposta_id)
-                    resultado = finalizar_proposta_v2(proposta_id_int)
-                    if resultado.get('status', False):
-                        st.success("✅ Proposta finalizada com sucesso!")
+                    res = finalizar_proposta_v2(int(proposta_id))
+                    if res.get('status', False):
+                        st.success("Proposta finalizada com sucesso!")
                         st.session_state['kanban_selected_proposta'] = None
-                        time.sleep(1)
-                        st.rerun()
+                        time.sleep(1); st.rerun()
                     else:
-                        st.error(f"❌ Erro ao finalizar proposta: {resultado.get('message', 'Erro desconhecido')}")
+                        st.error(f"Erro: {res.get('message', 'Desconhecido')}")
                 except Exception as e:
-                    st.error(f"❌ Erro ao finalizar proposta: {str(e)}")
+                    st.error(str(e))
 
+    # ── FINALIZADA ────────────────────────────────────────────────────────
     elif finalizada:
-        st.info("Esta proposta está **Finalizada**.")
+        st.markdown('<p style="color:#555;font-size:13px;margin-bottom:12px;">Gere os relatórios para esta proposta concluída.</p>', unsafe_allow_html=True)
+
+        # Cards de relatório
+        st.markdown("""
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
+          <div style="background:#0D1B2A;border-radius:10px;padding:14px;text-align:center;">
+            <div style="font-size:22px;">📋</div>
+            <div style="color:#C9A84C;font-weight:700;font-size:12px;margin-top:4px;">RELATÓRIO CLIENTE</div>
+            <div style="color:#aaa;font-size:10px;">Proposta de serviço</div>
+          </div>
+          <div style="background:#0D1B2A;border-radius:10px;padding:14px;text-align:center;">
+            <div style="font-size:22px;">📊</div>
+            <div style="color:#C9A84C;font-weight:700;font-size:12px;margin-top:4px;">RELATÓRIO INTERNO</div>
+            <div style="color:#aaa;font-size:10px;">Margens e custos</div>
+          </div>
+          <div style="background:#0D1B2A;border-radius:10px;padding:14px;text-align:center;">
+            <div style="font-size:22px;">🏢</div>
+            <div style="color:#C9A84C;font-weight:700;font-size:12px;margin-top:4px;">RELATÓRIO FORNECEDORES</div>
+            <div style="color:#aaa;font-size:10px;">Lista de terceiros</div>
+          </div>
+        </div>""", unsafe_allow_html=True)
 
         col1, col2, col3 = st.columns(3)
         with col1:
-            if st.button("📄 RELATÓRIO CLIENTE", type="primary", use_container_width=True, key=f"btn_rel_cliente_{proposta_id}"):
+            if st.button("📋 Gerar para Cliente", use_container_width=True, key=f"btn_rel_cliente_{proposta_id}"):
                 try:
                     st_gerar_pdf_cliente(proposta_id)
                 except Exception as e:
-                    st.error(f"Erro ao gerar relatório para cliente: {str(e)}")
-
+                    st.error(str(e))
         with col2:
-            if st.button("📄 RELATÓRIO INTERNO", type="primary", use_container_width=True, key=f"btn_rel_interno_{proposta_id}"):
+            if st.button("📊 Gerar Interno", use_container_width=True, key=f"btn_rel_interno_{proposta_id}"):
                 try:
                     st_gerar_pdf_interno(proposta_id)
                 except Exception as e:
-                    st.error(f"Erro ao gerar relatório interno: {str(e)}")
-
+                    st.error(str(e))
         with col3:
-            if st.button("📄 RELATÓRIO FORNECEDORES", type="primary", use_container_width=True, key=f"btn_rel_forn_{proposta_id}"):
+            if st.button("🏢 Gerar Fornecedores", use_container_width=True, key=f"btn_rel_forn_{proposta_id}"):
                 try:
                     st_gerar_pdf_fornecedores(proposta_id)
                 except Exception as e:
-                    st.error(f"Erro ao gerar relatório de fornecedores: {str(e)}")
+                    st.error(str(e))
 
-        st.markdown("---")
         with st.expander("🔄 Reabrir Proposta Finalizada"):
-            st.warning("Esta ação mudará o status da proposta para 'Em execução'.")
+            st.warning("Esta ação retornará a proposta para o status 'Em execução'.")
             if st.button("REABRIR PROPOSTA", key=f"btn_reabrir_{proposta_id}", type="primary", use_container_width=True):
                 try:
                     from reabrir_proposta import reabrir_proposta_finalizada
-                    resultado = reabrir_proposta_finalizada(proposta_id)
-                    if resultado.get('status') in ['sucesso', 'sucesso_com_alerta']:
-                        st.success(resultado.get('mensagem'))
-                        if resultado.get('status') == 'sucesso_com_alerta':
-                            st.warning(resultado.get('alerta'))
+                    res = reabrir_proposta_finalizada(proposta_id)
+                    if res.get('status') in ['sucesso', 'sucesso_com_alerta']:
+                        st.success(res.get('mensagem'))
+                        if res.get('status') == 'sucesso_com_alerta':
+                            st.warning(res.get('alerta'))
                         st.session_state['kanban_selected_proposta'] = None
-                        time.sleep(1)
-                        st.rerun()
+                        time.sleep(1); st.rerun()
                     else:
-                        st.error(f"Erro ao reabrir proposta: {resultado.get('mensagem')}")
+                        st.error(res.get('mensagem'))
                 except Exception as e:
-                    st.error(f"Erro ao reabrir proposta: {str(e)}")
+                    st.error(str(e))
 
     else:
-        st.info(f"Status atual: {status_atual} / {status_execucao}")
+        st.info(f"Status: {status_atual} / {status_execucao}")
 
+    # ── Gerar PDF da proposta (sempre disponível) ─────────────────────────
     st.markdown("---")
-    with st.expander("🗑️ Excluir Proposta", expanded=False):
-        st.warning("⚠️ **ATENÇÃO**: Esta ação irá excluir permanentemente a proposta e todos os seus dados relacionados!")
-        confirmar_exclusao = st.checkbox("Eu entendo que esta ação não pode ser desfeita", key=f"confirmar_exclusao_{proposta_id}")
+    if st.button("📄 Gerar PDF da Proposta (cliente)", key=f"btn_pdf_proposta_{proposta_id}", use_container_width=True):
+        try:
+            sucesso, mensagem, arquivo = gerar_pdf_proposta(db=st.session_state.db, proposta_id=proposta_id)
+            if sucesso and arquivo:
+                with open(arquivo, "rb") as f:
+                    st.success("PDF gerado!")
+                    st.download_button("📥 Baixar Proposta", f.read(), f"Proposta_{proposta_id}.pdf",
+                                       "application/pdf", key=f"dl_proposta_{proposta_id}", use_container_width=True)
+            else:
+                st.error(f"Erro: {mensagem}")
+        except Exception as e:
+            st.error(str(e))
 
+    # ── Excluir proposta ──────────────────────────────────────────────────
+    with st.expander("🗑️ Excluir Proposta", expanded=False):
+        st.warning("⚠️ Esta ação é **permanente** e removerá todos os dados relacionados.")
+        confirmar_exclusao = st.checkbox("Entendo que esta ação não pode ser desfeita", key=f"confirmar_exclusao_{proposta_id}")
         if confirmar_exclusao:
             col1, col2 = st.columns(2)
             with col1:
@@ -933,44 +895,19 @@ def _tab_acoes(proposta_id, proposta):
                     try:
                         from sqlalchemy import text
                         from utils.database import engine
-
                         with engine.connect() as conn:
-                            conn.execute(text(f"DELETE FROM financeiro WHERE proposta_id = {proposta_id}"))
-                            conn.execute(text(f"DELETE FROM acrescimos_proposta WHERE proposta_id = {proposta_id}"))
-                            conn.execute(text(f"DELETE FROM produtos_organizadores WHERE proposta_id = {proposta_id}"))
-                            conn.execute(text(f"DELETE FROM andamento_propostas WHERE proposta_id = {proposta_id}"))
+                            for tbl in ["financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
+                                conn.execute(text(f"DELETE FROM {tbl} WHERE proposta_id = {proposta_id}"))
                             conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
                             conn.commit()
-
-                        st.success(f"✅ Proposta #{proposta_id} excluída com sucesso!")
+                        st.success(f"Proposta #{proposta_id} excluída.")
                         st.session_state['kanban_selected_proposta'] = None
-                        time.sleep(2)
-                        st.rerun()
+                        time.sleep(2); st.rerun()
                     except Exception as e:
-                        st.error(f"Erro ao excluir proposta: {str(e)}")
+                        st.error(str(e))
             with col2:
-                if st.button("🔙 Cancelar", key=f"btn_cancelar_exclusao_kanban_{proposta_id}", type="primary", use_container_width=True):
+                if st.button("🔙 Cancelar", key=f"btn_cancel_excl_{proposta_id}", type="primary", use_container_width=True):
                     st.rerun()
-
-    st.markdown("---")
-    if st.button("↩ Gerar PDF da Proposta", key=f"btn_pdf_proposta_{proposta_id}", type="secondary"):
-        try:
-            sucesso, mensagem, arquivo = gerar_pdf_proposta(db=st.session_state.db, proposta_id=proposta_id)
-            if sucesso and arquivo:
-                with open(arquivo, "rb") as file:
-                    pdf_bytes = file.read()
-                st.success("Proposta do cliente gerada com sucesso!")
-                st.download_button(
-                    label="📥 Baixar Proposta",
-                    data=pdf_bytes,
-                    file_name=f"Proposta_{proposta_id}.pdf",
-                    mime="application/pdf",
-                    key=f"download_proposta_{proposta_id}"
-                )
-            else:
-                st.error(f"Erro ao gerar PDF: {mensagem}")
-        except Exception as e:
-            st.error(f"Erro ao gerar PDF: {str(e)}")
 
 
 def show():
