@@ -383,9 +383,8 @@ def show():
         return
 
     st.markdown(CSS, unsafe_allow_html=True)
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Pós-Organização</h1>', unsafe_allow_html=True)
     _init_state()
-
-    st.markdown('<h1 style="font-size:1.8rem;font-weight:700;margin:0 0 1rem 0;">📋 Pós-Organização</h1>', unsafe_allow_html=True)
 
     # Carrega templates uma vez
     templates = st.session_state.db.get_post_org_templates()

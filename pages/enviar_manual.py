@@ -31,7 +31,7 @@ def main():
     """, unsafe_allow_html=True)
 
     # Título e descrição
-    st.title("Manual do Sistema Planner Organizer")
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Manual do Sistema Planner Organizer</h1>', unsafe_allow_html=True)
     st.markdown("""
     <div style="text-align: center; margin-bottom: 2rem;">
         <p style="font-size: 1.2rem; color: #5A6A85;">

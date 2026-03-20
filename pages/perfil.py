@@ -111,7 +111,7 @@ def show():
     """
     Exibe a página de perfil do usuário
     """
-    st.title("Perfil do Usuário")
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Perfil do Usuário</h1>', unsafe_allow_html=True)
     
     # Verificar se o usuário está logado
     print(f"Verificando estado da autenticação no perfil: {st.session_state.keys()}")

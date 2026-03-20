@@ -16,7 +16,7 @@ from utils.auth import verificar_autenticacao
 verificar_autenticacao()
 
 # Título da página
-st.title("📊 Gerar Lançamentos Financeiros para Propostas")
+st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Gerar Lançamentos Financeiros para Propostas</h1>', unsafe_allow_html=True)
 
 # Descrição
 st.write("""

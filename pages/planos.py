@@ -59,7 +59,7 @@ def show():
     initialize_session_state()
     
     # Configuração da página
-    st.title("Planos de Assinatura")
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Planos de Assinatura</h1>', unsafe_allow_html=True)
     
     # Mensagem de página em construção com estilos inline
     st.markdown("""

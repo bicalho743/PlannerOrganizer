@@ -450,7 +450,7 @@ def show():
         st.error("Erro: Conexão com banco de dados não inicializada")
         return
 
-    st.markdown('<h1 style="font-size: 1.8rem; font-weight: 700; margin-top: 0; padding-top: 0; margin-bottom: 0.8rem;">🛒 Vendas</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Vendas</h1>', unsafe_allow_html=True)
 
     if "venda_selecionada" not in st.session_state:
         st.session_state["venda_selecionada"] = None

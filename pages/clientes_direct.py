@@ -289,7 +289,7 @@ def show_cliente_form(cliente=None):
 # Função principal
 def main():
     """Função principal da página de clientes"""
-    st.title("👥 Clientes")
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Clientes</h1>', unsafe_allow_html=True)
     
     # Carregar clientes
     clientes = load_clientes()

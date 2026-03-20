@@ -91,7 +91,7 @@ def carregar_todas_propostas():
 
 def mostrar_todas_propostas():
     """Página principal para mostrar todas as propostas"""
-    st.title("Todas as Propostas")
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Todas as Propostas</h1>', unsafe_allow_html=True)
     st.info("Esta página mostra todas as propostas, independentemente do status - Abertas, Em execução, Finalizadas e Recusadas.")
     
     # Carregar todas as propostas

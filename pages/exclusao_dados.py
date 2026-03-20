@@ -2,7 +2,7 @@
 import streamlit as st
 
 def show():
-    st.title("Exclusão de Dados do Usuário")
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Exclusão de Dados</h1>', unsafe_allow_html=True)
     
     st.markdown("""
     ## Solicitação de Exclusão de Dados

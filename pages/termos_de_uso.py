@@ -68,7 +68,7 @@ def show():
     </style>
     """, unsafe_allow_html=True)
     
-    st.title("Termos e Condições de Uso")
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Termos e Condições de Uso</h1>', unsafe_allow_html=True)
     
     st.markdown("""
     Bem-vindo ao nosso sistema. Ao utilizar esta plataforma, você concorda com os presentes Termos e Condições de Uso. 

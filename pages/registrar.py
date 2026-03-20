@@ -9,7 +9,7 @@ def show():
     """
     Exibe o formulário de registro de usuário
     """
-    st.title("Criar Nova Conta")
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Criar Nova Conta</h1>', unsafe_allow_html=True)
     
     # Container para o formulário de registro
     with st.container():

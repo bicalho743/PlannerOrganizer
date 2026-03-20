@@ -9,7 +9,7 @@ def show():
     """
     Exibe o formulário de recuperação de senha
     """
-    st.title("Recuperar Senha")
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Recuperar Senha</h1>', unsafe_allow_html=True)
     
     # Inicializar variáveis de estado
     if 'email_enviado' not in st.session_state:
