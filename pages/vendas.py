@@ -273,7 +273,7 @@ def _render_detail_panel(venda_id, venda_row):
     if st.session_state.get(f"gerar_pdf_{venda_id}", False):
         st.session_state.pop(f"gerar_pdf_{venda_id}", None)
         try:
-            from utils.pdf_generator_venda_fixed import gerar_pdf_venda
+            from utils.pdf_generator_v2 import gerar_pdf_venda
             import time as _time
             venda_dados = {
                 "id": venda_row["id"],
@@ -494,7 +494,7 @@ def show():
         with rc1:
             if st.button("📄 GERAR RELATÓRIO", type="primary", use_container_width=True, key="btn_rel_pos"):
                 try:
-                    from utils.pdf_generator_venda_fixed import gerar_pdf_venda
+                    from utils.pdf_generator_v2 import gerar_pdf_venda
                     import time as _time
                     vid = st.session_state.venda_recente_id
                     vendas_tmp = st.session_state.db.get_vendas()

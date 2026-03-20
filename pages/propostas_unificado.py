@@ -422,7 +422,7 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type):
                 error_msg = mensagem
         elif report_type == "vendas":
             import time as _t
-            from utils.pdf_generator_venda_fixed import gerar_pdf_venda
+            from utils.pdf_generator_v2 import gerar_pdf_venda
             produtos = st.session_state.db.get_produtos_organizadores(proposta_id)
             if produtos is None or (hasattr(produtos, 'empty') and produtos.empty):
                 error_msg = "Nenhum produto cadastrado."
@@ -610,7 +610,7 @@ def _tab_produtos(proposta_id):
             st.markdown("---")
             if st.button("📄 Gerar Relatório de Venda dos Produtos", use_container_width=True, key=f"btn_pdf_produtos_proposta_{proposta_id}"):
                 try:
-                    from utils.pdf_generator_venda_fixed import gerar_pdf_venda
+                    from utils.pdf_generator_v2 import gerar_pdf_venda
                     import time as _t
                     venda_dados = {'id': proposta_id, 'status': 'Proposta', 'forma_pagamento': 'N/A',
                                    'valor_total': round(float(valor_total_produtos), 2),
