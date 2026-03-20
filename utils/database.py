@@ -6609,7 +6609,7 @@ class Database:
                     PostOrganization.usuario_id == self.usuario_id,
                     PostOrganizationAction.status == 'PENDENTE',
                     PostOrganizationAction.due_date <= limite,
-                    PostOrganizationAction.action_type.in_(['agradecimento', 'acompanhamento', 'ajuste_fino', 'retorno_tecnico'])
+                    PostOrganizationAction.action_type.in_(['agradecimento', 'acompanhamento', 'ajuste_fino', 'feedback', 'continuidade', 'retorno_tecnico'])
                 ).order_by(PostOrganizationAction.due_date).all()
                 
                 df_data = []

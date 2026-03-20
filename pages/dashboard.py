@@ -585,36 +585,39 @@ def show():
                 
                 if not df_alertas.empty:
                     for _, alerta in df_alertas.iterrows():
-                        # Ícones e textos para cada tipo de ação
                         tipo_config = {
-                            'AGRADECIMENTO': {'icone': '🙏', 'texto': 'Agradecimento', 'cor': '#27ae60'},
-                            'MANUTENCAO': {'icone': '🔧', 'texto': 'Manutenção', 'cor': '#3498db'},
-                            'FOLLOW_UP': {'icone': '📞', 'texto': 'Follow-up', 'cor': '#e74c3c'},
-                            'FEEDBACK': {'icone': '⭐', 'texto': 'Feedback', 'cor': '#f39c12'},
-                            'OPORTUNIDADE': {'icone': '💼', 'texto': 'Oportunidade', 'cor': '#9b59b6'},
-                            'RETORNO_TECNICO': {'icone': '🔄', 'texto': 'Retorno Técnico', 'cor': '#e74c3c'}
+                            'agradecimento':   {'icone': '🙏', 'texto': 'Agradecimento',  'cor': '#27ae60', 'dias': 'D+1',  'objetivo': 'Mensagem elegante de encerramento'},
+                            'acompanhamento':  {'icone': '📞', 'texto': 'Acompanhamento', 'cor': '#3498db', 'dias': 'D+7',  'objetivo': 'Saber como a cliente está se sentindo'},
+                            'ajuste_fino':     {'icone': '🔧', 'texto': 'Ajuste fino',    'cor': '#e67e22', 'dias': 'D+30', 'objetivo': 'Propor pequenos ajustes após uso real'},
+                            'feedback':        {'icone': '💬', 'texto': 'Feedback',        'cor': '#f39c12', 'dias': 'D+45', 'objetivo': 'Colher opinião genuína da experiência'},
+                            'continuidade':    {'icone': '🤝', 'texto': 'Continuidade',    'cor': '#9b59b6', 'dias': 'D+60', 'objetivo': 'Oferta elegante de serviço contínuo'},
+                            'retorno_tecnico': {'icone': '🔄', 'texto': 'Retorno Técnico', 'cor': '#e74c3c', 'dias': '',     'objetivo': 'Visita técnica agendada'},
                         }
                         
-                        config = tipo_config.get(alerta['action_type'], {'icone': '📋', 'texto': alerta['action_type'], 'cor': '#2A3F5F'})
+                        at = alerta['action_type'].lower() if isinstance(alerta['action_type'], str) else str(alerta['action_type']).lower()
+                        config = tipo_config.get(at, {'icone': '📋', 'texto': at.replace('_', ' ').title(), 'cor': '#2A3F5F', 'dias': '', 'objetivo': ''})
                         
-                        # Formatação da data
                         try:
                             data_fmt = pd.to_datetime(alerta['due_date']).strftime('%d/%m/%Y')
                         except:
                             data_fmt = str(alerta['due_date'])
                         
+                        dias_badge = f"<span style='background:rgba(255,255,255,0.25);padding:2px 8px;border-radius:10px;font-size:0.75em;margin-left:8px;font-weight:600;'>{config['dias']}</span>" if config['dias'] else ""
+                        objetivo_txt = f"<div style='color:rgba(255,255,255,0.85);font-size:0.8em;font-style:italic;margin-top:2px;'>{config['objetivo']}</div>" if config['objetivo'] else ""
+                        
                         st.markdown(f"""
                         <div style='background-color: {config['cor']}; 
-                              padding: 10px; border-radius: 5px; margin-bottom: 8px;'>
-                            <div style='font-weight: bold; color: white;'>
-                                {config['icone']} {config['texto']} - Proposta #{alerta['proposta_numero']}
-                                <span style='font-weight: normal; color: white; font-size: 0.9em;'>
-                                    (Previsto: {data_fmt})
+                              padding: 10px 14px; border-radius: 7px; margin-bottom: 8px;'>
+                            <div style='font-weight: bold; color: white; display:flex; align-items:center; flex-wrap:wrap;'>
+                                {config['icone']} {config['texto']}{dias_badge}
+                                <span style='font-weight: normal; color: rgba(255,255,255,0.9); font-size: 0.85em; margin-left:auto;'>
+                                    Proposta #{alerta['proposta_numero']} · {data_fmt}
                                 </span>
                             </div>
-                            <div style='color: white; font-size: 0.9em;'>
+                            <div style='color: white; font-size: 0.9em; margin-top:3px;'>
                                 Cliente: <b>{alerta['cliente_nome']}</b>
                             </div>
+                            {objetivo_txt}
                         </div>
                         """, unsafe_allow_html=True)
                 else:
