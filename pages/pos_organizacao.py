@@ -309,8 +309,8 @@ def _view_detalhes(templates):
             col_btn1, col_badge, col_btn2 = st.columns([2, 1, 2])
 
             with col_btn1:
-                if st.button("💡 Ver sugestão de texto", key=f"sug_{acao_id}"):
-                    st.session_state[f"mostrar_sug_{acao_id}"] = not st.session_state.get(f"mostrar_sug_{acao_id}", False)
+                if st.button("💡 Ver sugestão de texto", key=f"sug_{acao['id']}"):
+                    st.session_state[f"mostrar_sug_{acao['id']}"] = not st.session_state.get(f"mostrar_sug_{acao['id']}", False)
 
             with col_badge:
                 if gratuito:
@@ -321,11 +321,11 @@ def _view_detalhes(templates):
 
             with col_btn2:
                 if hint:
-                    if st.button("💛 Dica estratégica", key=f"hint_{acao_id}"):
-                        st.session_state[f"mostrar_hint_{acao_id}"] = not st.session_state.get(f"mostrar_hint_{acao_id}", False)
+                    if st.button("💛 Dica estratégica", key=f"hint_{acao['id']}"):
+                        st.session_state[f"mostrar_hint_{acao['id']}"] = not st.session_state.get(f"mostrar_hint_{acao['id']}", False)
 
             # ── Painel hint ───────────────────────────────────────────
-            if hint and st.session_state.get(f"mostrar_hint_{acao_id}", False):
+            if hint and st.session_state.get(f"mostrar_hint_{acao['id']}", False):
                 st.markdown(
                     f"""
                     💛 Dica estratégica
@@ -335,7 +335,7 @@ def _view_detalhes(templates):
                 )
 
             # ── Painel sugestão de texto ──────────────────────────────
-            if st.session_state.get(f"mostrar_sug_{acao_id}", False):
+            if st.session_state.get(f"mostrar_sug_{acao['id']}", False):
                 badge_html = ""
                 if gratuito:
                     badge_html = (
@@ -352,13 +352,13 @@ def _view_detalhes(templates):
                 )
                 col_c1, col_c2 = st.columns([1, 1])
                 with col_c1:
-                    if st.button("📋 Copiar texto", key=f"copy_{acao_id}"):
+                    if st.button("📋 Copiar texto", key=f"copy_{acao['id']}"):
                         st.code(msg_personalizada, language=None)
                         st.toast("Texto pronto para copiar acima!", icon="✅")
                 with col_c2:
-                    if st.button("✏️ Usar na observação", key=f"usar_{acao_id}"):
-                        st.session_state[f"obs_{acao_id}"] = msg_personalizada
-                        st.session_state[f"mostrar_sug_{acao_id}"] = False
+                    if st.button("✏️ Usar na observação", key=f"usar_{acao['id']}"):
+                        st.session_state[f"obs_{acao['id']}"] = msg_personalizada
+                        st.session_state[f"mostrar_sug_{acao['id']}"] = False
                         st.rerun()
 
         # Salvar mudanças
