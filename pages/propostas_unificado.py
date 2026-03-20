@@ -172,16 +172,30 @@ def _render_detail_panel(proposta_id, proposta, propostas_com_clientes):
     elif finalizada:
         _render_finalized_proposal_actions(proposta_id, proposta)
     else:
-        detail_tabs = st.tabs(["📊 Detalhes", "📋 Itens & Custos", "🏁 Finalizar"])
-
-        with detail_tabs[0]:
-            _tab_detalhes(proposta_id, proposta)
-
-        with detail_tabs[1]:
-            _tab_itens(proposta_id)
-
-        with detail_tabs[2]:
-            _tab_acoes(proposta_id, proposta)
+        _tab_itens(proposta_id)
+        st.markdown("---")
+        if st.button("🏁 FINALIZAR PROPOSTA", key=f"btn_finalizar_exec_{proposta_id}", type="primary", use_container_width=True):
+            st.session_state[f"confirm_finalizar_{proposta_id}"] = True
+        if st.session_state.get(f"confirm_finalizar_{proposta_id}", False):
+            st.warning("Deseja realmente finalizar esta proposta?")
+            fc1, fc2, fc3 = st.columns([2, 1, 1])
+            with fc2:
+                if st.button("Cancelar", key=f"btn_cancel_fin_{proposta_id}", use_container_width=True):
+                    st.session_state[f"confirm_finalizar_{proposta_id}"] = False
+                    st.rerun()
+            with fc3:
+                if st.button("Confirmar", key=f"btn_confirm_fin_{proposta_id}", use_container_width=True, type="primary"):
+                    try:
+                        res = finalizar_proposta_v2(int(proposta_id))
+                        if res.get('status', False):
+                            st.success("Proposta finalizada!")
+                            st.session_state['kanban_selected_proposta'] = None
+                            st.session_state[f"confirm_finalizar_{proposta_id}"] = False
+                            time.sleep(1); st.rerun()
+                        else:
+                            st.error(res.get('message', 'Erro ao finalizar.'))
+                    except Exception as e:
+                        st.error(str(e))
 
 
 def _render_open_proposal_actions(proposta_id, proposta):
