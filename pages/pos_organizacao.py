@@ -9,12 +9,12 @@ from html import escape as html_escape
 
 # Templates de fallback caso o banco não retorne
 TEMPLATES_FALLBACK = {
-    'agradecimento':  {'nome': 'Agradecimento',  'dias_apos': 1,  'emoji': '🙏', 'texto': 'Foi um prazer enorme participar desse momento da sua casa, {nome}. Fico feliz que tudo tenha ficado exatamente como você merecia. Qualquer coisa que precisar, estou por aqui. 🤍'},
-    'acompanhamento': {'nome': 'Acompanhamento', 'dias_apos': 7,  'emoji': '📞', 'texto': 'Oi, {nome}! Passando pra saber como você está se sentindo na sua casa depois da organização. Tudo funcionando bem pra você? 😊'},
-    'ajuste_fino':    {'nome': 'Ajuste fino',    'dias_apos': 30, 'emoji': '🔧', 'texto': 'Oi, {nome}! Depois de algumas semanas usando o espaço, é natural surgirem pequenos ajustes. Se quiser, posso dar uma olhada com você — às vezes é só um detalhe que muda tudo. 🏡'},
-    'feedback':       {'nome': 'Feedback',        'dias_apos': 45, 'emoji': '💬', 'texto': 'Oi, {nome}! Sua opinião é muito importante pra mim. O que você sentiu de diferença no seu dia a dia depois da organização? Fico feliz em ouvir — mesmo o que ainda pode melhorar. 💬'},
-    'continuidade':   {'nome': 'Continuidade',    'dias_apos': 60, 'emoji': '🤝', 'texto': 'Oi, {nome}! Muitas clientes gostam de manter esse cuidado com a casa de forma contínua — um acompanhamento periódico pra garantir que tudo siga funcionando bem. Se fizer sentido pra você, posso te contar como funciona. 🤝'},
-    'retorno_tecnico':{'nome': 'Retorno Técnico', 'dias_apos': 0,  'emoji': '🔄', 'texto': 'Oi, {nome}! Conforme combinamos, estou passando para agendar nosso retorno técnico. Quando seria um bom momento para você? 🗓️'},
+    'agradecimento':  {'nome': 'Agradecimento',  'dias_apos': 1,  'emoji': '🙏', 'texto': 'Foi um prazer enorme participar desse momento da sua casa, {nome}. Fico feliz que tudo tenha ficado exatamente como você merecia. Qualquer coisa que precisar, estou por aqui. 🤍', 'gratuito': False, 'hint': ''},
+    'acompanhamento': {'nome': 'Acompanhamento', 'dias_apos': 7,  'emoji': '📞', 'texto': 'Oi, {nome}! Passando pra saber como você está se sentindo na sua casa depois da organização. Tudo funcionando bem pra você? 😊', 'gratuito': False, 'hint': ''},
+    'ajuste_fino':    {'nome': 'Ajuste fino',    'dias_apos': 30, 'emoji': '🔧', 'texto': 'Oi, {nome}! Gosto de voltar depois de algumas semanas para garantir que tudo ainda está funcionando para você — sem custo, faz parte do meu acompanhamento. Posso passar na sua casa essa semana? 🏡', 'gratuito': True, 'hint': 'Esta visita é gratuita e faz parte do seu padrão de atendimento. Não mencione desconto — posicione como cuidado incluído no serviço. É o momento ideal para apresentar o acompanhamento periódico pago no D+60.'},
+    'feedback':       {'nome': 'Feedback',        'dias_apos': 45, 'emoji': '💬', 'texto': 'Oi, {nome}! Sua opinião é muito importante pra mim. O que você sentiu de diferença no seu dia a dia depois da organização? Fico feliz em ouvir — mesmo o que ainda pode melhorar. 💬', 'gratuito': False, 'hint': ''},
+    'continuidade':   {'nome': 'Continuidade',    'dias_apos': 60, 'emoji': '🤝', 'texto': 'Oi, {nome}! Muitas clientes gostam de manter esse cuidado com a casa de forma contínua — um acompanhamento periódico pra garantir que tudo siga funcionando bem. Se fizer sentido pra você, posso te contar como funciona. 🤝', 'gratuito': False, 'hint': ''},
+    'retorno_tecnico':{'nome': 'Retorno Técnico', 'dias_apos': 0,  'emoji': '🔄', 'texto': 'Oi, {nome}! Conforme combinamos, estou passando para agendar nosso retorno técnico. Quando seria um bom momento para você? 🗓️', 'gratuito': False, 'hint': ''},
 }
 
 
@@ -46,12 +46,16 @@ def get_template(templates, action_type):
     texto = t.get('texto') or ''
     dias_apos = t.get('dias_apos', 0)
     objetivo = OBJETIVOS_ETAPA.get(etapa, '')
+    gratuito = t.get('gratuito', False)
+    hint = t.get('hint', '')
     return (
         t.get('emoji', '📌'),
         t.get('nome', etapa.replace('_', ' ').title()),
         texto,
         dias_apos,
         objetivo,
+        gratuito,
+        hint,
     )
 
 
@@ -197,7 +201,7 @@ def _view_lista(templates):
         badge_txt = "Concluído" if is_concluido else "Ativo"
 
         if row['proxima_acao']:
-            emoji, nome_acao, _, _, _ = get_template(templates, row['proxima_acao'])
+            emoji, nome_acao, _, _, _, _, _ = get_template(templates, row['proxima_acao'])
             proxima = f"{emoji} {nome_acao} &nbsp;·&nbsp; 📅 {formatar_data_br(row['proxima_acao_data'])}"
         else:
             proxima = "✅ Todas as ações concluídas"
@@ -266,7 +270,7 @@ def _view_detalhes(templates):
         is_feito = acao['status'] == 'FEITO'
         is_cancelado = acao['status'] == 'CANCELADO'
 
-        emoji, nome_acao, texto_template, dias_apos, objetivo = get_template(templates, acao['action_type'])
+        emoji, nome_acao, texto_template, dias_apos, objetivo, gratuito, hint = get_template(templates, acao['action_type'])
         nome_safe = html_escape(cliente_nome or 'cliente')
         msg_personalizada = (texto_template or '').replace('{nome}', nome_safe)
 
@@ -276,6 +280,9 @@ def _view_detalhes(templates):
 
         dias_badge = f"<span style='background:#e2e8f0;color:#475569;padding:2px 8px;border-radius:10px;font-size:0.68rem;font-weight:700;margin-left:6px;'>D+{dias_apos}</span>" if dias_apos else ""
         objetivo_html = f"<p style='font-size:0.75rem;color:#94a3b8;margin:2px 0 0 0;font-style:italic;'>{objetivo}</p>" if objetivo else ""
+        
+        # Badge "Gratuito" para ajuste fino
+        gratuito_badge = "<span style='background:#d4edda;color:#155724;padding:2px 8px;border-radius:10px;font-size:0.68rem;font-weight:700;margin-left:4px;'>💚 Gratuito</span>" if gratuito else ""
 
         st.markdown(f"""
         <div class="po-acao-wrap {wrap_cls}">
@@ -283,6 +290,7 @@ def _view_detalhes(templates):
                 <span style="font-size:1.2rem">{emoji}</span>
                 <p class="po-acao-title">{nome_acao}</p>
                 {dias_badge}
+                {gratuito_badge}
                 <span class="po-pill {pill_cls}">{pill_txt}</span>
             </div>
             {objetivo_html}
