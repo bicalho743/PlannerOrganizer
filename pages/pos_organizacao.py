@@ -280,11 +280,8 @@ def _view_detalhes(templates):
 
         dias_badge = f"<span style='background:#e2e8f0;color:#475569;padding:2px 8px;border-radius:10px;font-size:0.68rem;font-weight:700;margin-left:6px;'>D+{dias_apos}</span>" if dias_apos else ""
         objetivo_html = f"<p style='font-size:0.75rem;color:#94a3b8;margin:2px 0 0 0;font-style:italic;'>{objetivo}</p>" if objetivo else ""
-        
-        # Badge "Gratuito" para ajuste fino
-        gratuito_badge = "<span style='background:#d4edda;color:#155724;padding:2px 8px;border-radius:10px;font-size:0.68rem;font-weight:700;margin-left:4px;'>💚 Gratuito</span>" if gratuito else ""
 
-        st.markdown(f'<div class="po-acao-wrap {wrap_cls}"><div class="po-acao-header"><span style="font-size:1.2rem">{emoji}</span><p class="po-acao-title">{nome_acao}</p>{dias_badge}{gratuito_badge}<span class="po-pill {pill_cls}">{pill_txt}</span></div>{objetivo_html}<p class="po-acao-date">📅 Prevista para {formatar_data_br(acao["due_date"])}</p><div class="po-msg-box">{msg_personalizada}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="po-acao-wrap {wrap_cls}"><div class="po-acao-header"><span style="font-size:1.2rem">{emoji}</span><p class="po-acao-title">{nome_acao}</p>{dias_badge}<span class="po-pill {pill_cls}">{pill_txt}</span></div>{objetivo_html}<p class="po-acao-date">📅 Prevista para {formatar_data_br(acao["due_date"])}</p></div>', unsafe_allow_html=True)
 
         # Controles abaixo do card
         col_check, col_obs = st.columns([1, 3])
@@ -307,10 +304,34 @@ def _view_detalhes(templates):
                 placeholder="Observação...",
                 disabled=is_cancelado
             )
+
+        # Botões e badges na mesma linha
+        col_btn1, col_btn2, col_btn3 = st.columns([1.2, 0.8, 1.2])
         
-        # Exibir hint estratégico se disponível
-        if hint and not is_cancelado:
-            st.markdown(f'<div style="background:#f0f4ff;border-left:3px solid #6366f1;padding:10px 12px;margin:8px 0;border-radius:4px"><p style="margin:0;font-size:0.85rem;color:#4f46e5;font-weight:600">💡 Dica estratégica:</p><p style="margin:4px 0 0 0;font-size:0.8rem;color:#4338ca">{hint}</p></div>', unsafe_allow_html=True)
+        with col_btn1:
+            if st.button("📝 Ver sugestão de texto", key=f"btn_texto_{acao['id']}", use_container_width=True):
+                st.session_state[f"show_texto_{acao['id']}"] = not st.session_state.get(f"show_texto_{acao['id']}", False)
+                st.rerun()
+        
+        with col_btn2:
+            # Badge "+ Gratuito"
+            if gratuito:
+                st.markdown(f'<div style="background:#c6f6d5;color:#22543d;padding:8px 12px;border-radius:8px;text-align:center;font-weight:600;font-size:0.9rem;">➕ Gratuito</div>', unsafe_allow_html=True)
+        
+        with col_btn3:
+            # Botão "Dica estratégica" apenas se houver hint
+            if hint:
+                if st.button("🎯 Dica estratégica", key=f"btn_hint_{acao['id']}", use_container_width=True):
+                    st.session_state[f"show_hint_{acao['id']}"] = not st.session_state.get(f"show_hint_{acao['id']}", False)
+                    st.rerun()
+
+        # Mostrar sugestão de texto se solicitado
+        if st.session_state.get(f"show_texto_{acao['id']}", False):
+            st.markdown(f'<div style="background:#faf5ff;border-left:3px solid #a78bfa;padding:12px;margin:8px 0;border-radius:4px"><p style="margin:0;font-size:0.85rem;color:#6d28d9;font-weight:600">📝 Sugestão de texto:</p><p style="margin:8px 0 0 0;font-size:0.8rem;color:#5b21b6;line-height:1.5">{msg_personalizada}</p></div>', unsafe_allow_html=True)
+
+        # Mostrar dica estratégica se solicitado
+        if st.session_state.get(f"show_hint_{acao['id']}", False):
+            st.markdown(f'<div style="background:#fef3c7;border-left:3px solid #f59e0b;padding:12px;margin:8px 0;border-radius:4px"><p style="margin:0;font-size:0.85rem;color:#b45309;font-weight:600">🎯 Dica estratégica:</p><p style="margin:8px 0 0 0;font-size:0.8rem;color:#92400e;line-height:1.5">{hint}</p></div>', unsafe_allow_html=True)
 
         # Salvar mudanças
         if novo_status != is_feito or nova_obs != obs_atual:
