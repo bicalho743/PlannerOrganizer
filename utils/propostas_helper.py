@@ -833,9 +833,21 @@ def gerar_pdf_venda_proposta(db, proposta_id, custom_filename=None):
             data_atual = datetime.now().strftime('%Y%m%d_%H%M%S')
             filename = f"pdfs/Venda_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
             
-        # Usar o gerador de relatório de serviço (que já está funcionando)
-        from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
-        gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename)
+        # Usar pdf_generator_v2 que tem layout Navy/Gold
+        from utils.pdf_generator_v2 import gerar_pdf_venda
+        
+        # Preparar itens para a tabela
+        itens_tabela = acrescimos if not acrescimos.empty else pd.DataFrame()
+        
+        venda_dados = {
+            "id": proposta.get('numero', proposta_id),
+            "status": proposta.get('status', 'Concluída'),
+            "forma_pagamento": "N/A",
+            "valor_total": proposta.get('valor', 0),
+            "data_venda": datetime.now().strftime('%d/%m/%Y'),
+            "observacoes": proposta.get('descricao', '')
+        }
+        gerar_pdf_venda(venda_dados, cliente, itens_tabela, filename)
         
         return True, "Relatório de vendas/produtos gerado com sucesso", filename
         

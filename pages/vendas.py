@@ -294,8 +294,9 @@ def _render_detail_panel(venda_id, venda_row):
             cliente_dados = {"nome": nome_raw}
             pdf_path = f"pdfs/Venda_{venda_id}_{safe_nome}_{ts}.pdf"
             
-            # Usar relatorio_servico_novo que funciona
-            gerar_pdf_relatorio_servico(proposta_dados, cliente_dados, itens_pdf, pdf_path)
+            # Usar pdf_generator_v2 que tem layout Navy/Gold
+            from utils.pdf_generator_v2 import gerar_pdf_venda as gerar_pdf_venda_v2
+            gerar_pdf_venda_v2(proposta_dados, cliente_dados, itens_pdf, pdf_path)
             if pdf_path and os.path.exists(pdf_path):
                 with open(pdf_path, "rb") as f:
                     pdf_bytes = f.read()
@@ -522,8 +523,9 @@ def show():
                     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
                     pdf_path = f"pdfs/Venda_{vid}_{safe}_{ts}.pdf"
                     
-                    # Usar relatorio_servico_novo que funciona
-                    gerar_pdf_relatorio_servico(proposta_dados, {"nome": crow["nome"]}, itens_tmp, pdf_path)
+                    # Usar pdf_generator_v2 que tem layout Navy/Gold
+                    from utils.pdf_generator_v2 import gerar_pdf_venda as gerar_pdf_venda_v2
+                    gerar_pdf_venda_v2(proposta_dados, {"nome": crow["nome"]}, itens_tmp, pdf_path)
                     if pdf_path and os.path.exists(pdf_path):
                         with open(pdf_path, "rb") as f:
                             pdf_bytes = f.read()
