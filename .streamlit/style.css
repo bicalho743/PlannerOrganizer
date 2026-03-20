@@ -433,6 +433,25 @@ div[data-testid="stSelectbox"] [data-baseweb="select"] > div {
     font-weight: 500 !important;
 }
 
+[data-baseweb="popover"],
+[data-baseweb="popover"] > div,
+[data-baseweb="menu"],
+[data-baseweb="menu"] ul,
+[data-baseweb="menu"] li,
+ul[role="listbox"],
+ul[role="listbox"] li,
+ul[role="listbox"] li > div {
+    background-color: #ffffff !important;
+    color: #1e1e1e !important;
+}
+
+ul[role="listbox"] li[aria-selected="true"],
+ul[role="listbox"] li:hover,
+[data-baseweb="menu"] li:hover {
+    background-color: #e8ecf0 !important;
+    color: #1e1e1e !important;
+}
+
 /* ========================================
    CAMPOS DE ENTRADA
    ======================================== */
