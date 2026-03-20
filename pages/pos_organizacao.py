@@ -284,20 +284,7 @@ def _view_detalhes(templates):
         # Badge "Gratuito" para ajuste fino
         gratuito_badge = "<span style='background:#d4edda;color:#155724;padding:2px 8px;border-radius:10px;font-size:0.68rem;font-weight:700;margin-left:4px;'>💚 Gratuito</span>" if gratuito else ""
 
-        st.markdown(f"""
-        <div class="po-acao-wrap {wrap_cls}">
-            <div class="po-acao-header">
-                <span style="font-size:1.2rem">{emoji}</span>
-                <p class="po-acao-title">{nome_acao}</p>
-                {dias_badge}
-                {gratuito_badge}
-                <span class="po-pill {pill_cls}">{pill_txt}</span>
-            </div>
-            {objetivo_html}
-            <p class="po-acao-date">📅 Prevista para {formatar_data_br(acao['due_date'])}</p>
-            <div class="po-msg-box">{msg_personalizada}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f'<div class="po-acao-wrap {wrap_cls}"><div class="po-acao-header"><span style="font-size:1.2rem">{emoji}</span><p class="po-acao-title">{nome_acao}</p>{dias_badge}{gratuito_badge}<span class="po-pill {pill_cls}">{pill_txt}</span></div>{objetivo_html}<p class="po-acao-date">📅 Prevista para {formatar_data_br(acao["due_date"])}</p><div class="po-msg-box">{msg_personalizada}</div></div>', unsafe_allow_html=True)
 
         # Controles abaixo do card
         col_check, col_obs = st.columns([1, 3])
@@ -323,12 +310,7 @@ def _view_detalhes(templates):
         
         # Exibir hint estratégico se disponível
         if hint and not is_cancelado:
-            st.markdown(f"""
-            <div style="background:#f0f4ff;border-left:3px solid #6366f1;padding:10px 12px;margin:8px 0;border-radius:4px">
-                <p style="margin:0;font-size:0.85rem;color:#4f46e5;font-weight:600">💡 Dica estratégica:</p>
-                <p style="margin:4px 0 0 0;font-size:0.8rem;color:#4338ca">{hint}</p>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f'<div style="background:#f0f4ff;border-left:3px solid #6366f1;padding:10px 12px;margin:8px 0;border-radius:4px"><p style="margin:0;font-size:0.85rem;color:#4f46e5;font-weight:600">💡 Dica estratégica:</p><p style="margin:4px 0 0 0;font-size:0.8rem;color:#4338ca">{hint}</p></div>', unsafe_allow_html=True)
 
         # Salvar mudanças
         if novo_status != is_feito or nova_obs != obs_atual:
