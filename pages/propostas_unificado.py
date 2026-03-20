@@ -165,8 +165,12 @@ def _render_detail_panel(proposta_id, proposta, propostas_com_clientes):
     st.markdown(f"### Proposta #{numero} — {nome_cliente}")
     st.caption(proposta.get('descricao', '')[:120])
 
+    finalizada = status_atual in ['Finalizada', 'Recusada']
+
     if em_aberto or aprovada_parada:
         _render_open_proposal_actions(proposta_id, proposta)
+    elif finalizada:
+        _render_finalized_proposal_actions(proposta_id, proposta)
     else:
         detail_tabs = st.tabs(["📊 Detalhes", "📋 Itens & Custos", "🏁 Finalizar"])
 
@@ -265,6 +269,211 @@ def _render_open_proposal_actions(proposta_id, proposta):
                     time.sleep(1); st.rerun()
                 except Exception as e:
                     st.error(str(e))
+
+
+def _render_finalized_proposal_actions(proposta_id, proposta):
+    """Compact view for finalized proposals: report buttons + reopen/delete."""
+    valor = _safe_float(proposta.get('valor'))
+    status_atual = proposta.get('status', '')
+
+    if status_atual == 'Recusada':
+        badge_label, badge_bg = "Recusada", "#C0392B"
+    else:
+        badge_label, badge_bg = "Finalizada", "#4A4A4A"
+
+    st.markdown(f"""
+    <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;
+                background:#faf9f7;border-radius:10px;border:1px solid #e8e5df;margin-bottom:14px;">
+      <span style="background:{badge_bg};color:#fff;font-size:11px;font-weight:700;
+                   padding:3px 10px;border-radius:12px;white-space:nowrap;">{badge_label}</span>
+      <span style="font-size:13px;color:#0D1B2A;font-weight:600;">{_fmt_brl(valor)}</span>
+    </div>""", unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <div style="background:#0D1B2A;border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:22px;">📋</div>
+        <div style="color:#C9A84C;font-weight:700;font-size:12px;margin-top:4px;">RELATÓRIO CLIENTE</div>
+        <div style="color:#aaa;font-size:10px;">Proposta de serviço</div>
+      </div>
+      <div style="background:#0D1B2A;border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:22px;">📊</div>
+        <div style="color:#C9A84C;font-weight:700;font-size:12px;margin-top:4px;">RELATÓRIO INTERNO</div>
+        <div style="color:#aaa;font-size:10px;">Margens e custos</div>
+      </div>
+      <div style="background:#0D1B2A;border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:22px;">🏢</div>
+        <div style="color:#C9A84C;font-weight:700;font-size:12px;margin-top:4px;">RELATÓRIO FORNECEDORES</div>
+        <div style="color:#aaa;font-size:10px;">Lista de terceiros</div>
+      </div>
+      <div style="background:#0D1B2A;border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:22px;">📦</div>
+        <div style="color:#C9A84C;font-weight:700;font-size:12px;margin-top:4px;">VENDAS DO PRODUTO</div>
+        <div style="color:#aaa;font-size:10px;">Produtos organizados</div>
+      </div>
+    </div>""", unsafe_allow_html=True)
+
+    rc1, rc2 = st.columns(2)
+    with rc1:
+        _auto_download_pdf_cliente(proposta_id)
+    with rc2:
+        _auto_download_pdf_interno(proposta_id)
+
+    rc3, rc4 = st.columns(2)
+    with rc3:
+        _auto_download_pdf_fornecedores(proposta_id)
+    with rc4:
+        _auto_download_pdf_vendas_produto(proposta_id)
+
+    st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+    ac1, ac2 = st.columns(2)
+    with ac1:
+        if st.button("🔄 Reabrir", key=f"btn_reabrir_fin_{proposta_id}", use_container_width=True):
+            st.session_state[f"confirm_reopen_{proposta_id}"] = True
+    with ac2:
+        if st.button("🗑️ Excluir", key=f"btn_excluir_fin_{proposta_id}", use_container_width=True):
+            st.session_state[f"confirm_delete_{proposta_id}"] = True
+
+    if st.session_state.get(f"confirm_reopen_{proposta_id}", False):
+        st.warning("A proposta voltará para o status 'Em execução'.")
+        ro1, ro2, ro3 = st.columns([2, 1, 1])
+        with ro2:
+            if st.button("Cancelar", key=f"btn_cancel_reopen_{proposta_id}", use_container_width=True):
+                st.session_state[f"confirm_reopen_{proposta_id}"] = False
+                st.rerun()
+        with ro3:
+            if st.button("Confirmar", key=f"btn_confirm_reopen_{proposta_id}", use_container_width=True, type="primary"):
+                try:
+                    from reabrir_proposta import reabrir_proposta_finalizada
+                    res = reabrir_proposta_finalizada(proposta_id)
+                    if res.get('status') in ['sucesso', 'sucesso_com_alerta']:
+                        st.success(res.get('mensagem'))
+                        st.session_state['kanban_selected_proposta'] = None
+                        st.session_state[f"confirm_reopen_{proposta_id}"] = False
+                        time.sleep(1); st.rerun()
+                    else:
+                        st.error(res.get('mensagem'))
+                except Exception as e:
+                    st.error(str(e))
+
+    if st.session_state.get(f"confirm_delete_{proposta_id}", False):
+        st.warning("Esta ação é permanente e removerá todos os dados relacionados.")
+        dc1, dc2, dc3 = st.columns([2, 1, 1])
+        with dc2:
+            if st.button("Cancelar", key=f"btn_cancel_del_fin_{proposta_id}", use_container_width=True):
+                st.session_state[f"confirm_delete_{proposta_id}"] = False
+                st.rerun()
+        with dc3:
+            if st.button("Confirmar", key=f"btn_confirm_del_fin_{proposta_id}", use_container_width=True, type="primary"):
+                try:
+                    from sqlalchemy import text
+                    from utils.database import engine
+                    with engine.connect() as conn:
+                        for tbl in ["financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
+                            conn.execute(text(f"DELETE FROM {tbl} WHERE proposta_id = {proposta_id}"))
+                        conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
+                        conn.commit()
+                    st.success(f"Proposta #{proposta_id} excluída.")
+                    st.session_state['kanban_selected_proposta'] = None
+                    st.session_state[f"confirm_delete_{proposta_id}"] = False
+                    time.sleep(1); st.rerun()
+                except Exception as e:
+                    st.error(str(e))
+
+
+def _auto_download_pdf_cliente(proposta_id):
+    """Auto-download client report PDF."""
+    key = f"gen_pdf_cli_{proposta_id}"
+    if st.button("📋 Gerar Cliente", use_container_width=True, key=f"btn_rel_cli_{proposta_id}"):
+        st.session_state[key] = True
+    if st.session_state.get(key, False):
+        try:
+            from utils.propostas_helper import gerar_pdf_cliente_proposta
+            sucesso, mensagem, filename = gerar_pdf_cliente_proposta(st.session_state.db, proposta_id)
+            if sucesso and filename:
+                with open(filename, "rb") as f:
+                    st.download_button("📥 Baixar", f.read(), os.path.basename(filename),
+                                       "application/pdf", key=f"dl_cli_{proposta_id}", use_container_width=True)
+            else:
+                st.error(mensagem)
+        except Exception as e:
+            st.error(str(e))
+        st.session_state[key] = False
+
+
+def _auto_download_pdf_interno(proposta_id):
+    """Auto-download internal report PDF."""
+    key = f"gen_pdf_int_{proposta_id}"
+    if st.button("📊 Gerar Interno", use_container_width=True, key=f"btn_rel_int_{proposta_id}"):
+        st.session_state[key] = True
+    if st.session_state.get(key, False):
+        try:
+            from utils.propostas_helper import gerar_pdf_interno_proposta
+            sucesso, mensagem, filename = gerar_pdf_interno_proposta(st.session_state.db, proposta_id)
+            if sucesso and filename:
+                with open(filename, "rb") as f:
+                    st.download_button("📥 Baixar", f.read(), os.path.basename(filename),
+                                       "application/pdf", key=f"dl_int_{proposta_id}", use_container_width=True)
+            else:
+                st.error(mensagem)
+        except Exception as e:
+            st.error(str(e))
+        st.session_state[key] = False
+
+
+def _auto_download_pdf_fornecedores(proposta_id):
+    """Auto-download suppliers report PDF."""
+    key = f"gen_pdf_forn_{proposta_id}"
+    if st.button("🏢 Gerar Fornecedores", use_container_width=True, key=f"btn_rel_forn2_{proposta_id}"):
+        st.session_state[key] = True
+    if st.session_state.get(key, False):
+        try:
+            from utils.propostas_helper import gerar_pdf_fornecedores_proposta
+            sucesso, mensagem, filename = gerar_pdf_fornecedores_proposta(st.session_state.db, proposta_id)
+            if sucesso and filename:
+                with open(filename, "rb") as f:
+                    st.download_button("📥 Baixar", f.read(), os.path.basename(filename),
+                                       "application/pdf", key=f"dl_forn_{proposta_id}", use_container_width=True)
+            else:
+                st.error(mensagem)
+        except Exception as e:
+            st.error(str(e))
+        st.session_state[key] = False
+
+
+def _auto_download_pdf_vendas_produto(proposta_id):
+    """Auto-download product sales report PDF."""
+    key = f"gen_pdf_vend_{proposta_id}"
+    if st.button("📦 Gerar Vendas Produto", use_container_width=True, key=f"btn_rel_vend_{proposta_id}"):
+        st.session_state[key] = True
+    if st.session_state.get(key, False):
+        try:
+            from utils.pdf_generator_venda_fixed import gerar_pdf_venda
+            import time as _t
+            produtos = st.session_state.db.get_produtos_proposta(proposta_id)
+            if produtos is None or (hasattr(produtos, 'empty') and produtos.empty):
+                st.info("Nenhum produto cadastrado nesta proposta.")
+                st.session_state[key] = False
+                return
+            valor_total = float(produtos['valor_unit'].astype(float).mul(produtos['quantidade'].astype(float)).sum()) if 'valor_unit' in produtos.columns else 0
+            venda_dados = {'id': proposta_id, 'status': 'Proposta', 'forma_pagamento': 'N/A',
+                           'valor_total': round(valor_total, 2),
+                           'data_venda': datetime.now().strftime('%d/%m/%Y'),
+                           'observacoes': f"Produtos Proposta #{proposta_id}"}
+            itens_pdf = produtos.rename(columns={'nome': 'produto_nome', 'valor_unit': 'preco_unitario'})[['produto_nome', 'quantidade', 'preco_unitario']].copy()
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_t.time()))
+            filename = f"pdfs/Venda_Proposta_{proposta_id}_{ts}.pdf"
+            os.makedirs("pdfs", exist_ok=True)
+            pdf_path = gerar_pdf_venda(venda_dados, {'nome': 'Cliente'}, itens_pdf, filename)
+            if pdf_path and os.path.exists(pdf_path):
+                with open(pdf_path, "rb") as f:
+                    st.download_button("📥 Baixar", f.read(), f"Produtos_Proposta_{proposta_id}.pdf",
+                                       "application/pdf", key=f"dl_vend_{proposta_id}", use_container_width=True)
+            else:
+                st.error("Erro ao gerar PDF de vendas.")
+        except Exception as e:
+            st.error(str(e))
+        st.session_state[key] = False
 
 
 def _tab_detalhes(proposta_id, proposta):
