@@ -270,6 +270,10 @@ def _render_open_proposal_actions(proposta_id, proposta):
                     from sqlalchemy import text
                     from utils.database import engine
                     with engine.connect() as conn:
+                        po_ids = conn.execute(text(f"SELECT id FROM post_organizations WHERE proposta_id = {proposta_id}")).fetchall()
+                        if po_ids:
+                            po_id_list = ",".join(str(r[0]) for r in po_ids)
+                            conn.execute(text(f"DELETE FROM post_organization_actions WHERE post_organization_id IN ({po_id_list})"))
                         for tbl in ["post_organizations", "vendas", "financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
                             conn.execute(text(f"DELETE FROM {tbl} WHERE proposta_id = {proposta_id}"))
                         conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
@@ -356,6 +360,10 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
                     from sqlalchemy import text
                     from utils.database import engine
                     with engine.connect() as conn:
+                        po_ids = conn.execute(text(f"SELECT id FROM post_organizations WHERE proposta_id = {proposta_id}")).fetchall()
+                        if po_ids:
+                            po_id_list = ",".join(str(r[0]) for r in po_ids)
+                            conn.execute(text(f"DELETE FROM post_organization_actions WHERE post_organization_id IN ({po_id_list})"))
                         for tbl in ["post_organizations", "vendas", "financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
                             conn.execute(text(f"DELETE FROM {tbl} WHERE proposta_id = {proposta_id}"))
                         conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
