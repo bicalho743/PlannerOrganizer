@@ -160,11 +160,12 @@ def _render_detail_panel(proposta_id, proposta, propostas_com_clientes):
     numero = proposta.get('numero', proposta_id)
     status_atual = proposta.get('status', '')
     em_aberto = status_atual in ['Em elaboração', 'Aguardando aprovação', 'Aguardando']
+    aprovada_parada = status_atual == 'Aprovada' and proposta.get('status_execucao', '') != 'Em execução'
 
     st.markdown(f"### Proposta #{numero} — {nome_cliente}")
     st.caption(proposta.get('descricao', '')[:120])
 
-    if em_aberto:
+    if em_aberto or aprovada_parada:
         _render_open_proposal_actions(proposta_id, proposta)
     else:
         detail_tabs = st.tabs(["📊 Detalhes", "📋 Itens & Custos", "🏁 Finalizar"])
@@ -180,8 +181,9 @@ def _render_detail_panel(proposta_id, proposta, propostas_com_clientes):
 
 
 def _render_open_proposal_actions(proposta_id, proposta):
-    """Compact action bar for open proposals."""
+    """Compact action bar for open/approved proposals not yet in execution."""
     valor = _safe_float(proposta.get('valor'))
+    status_atual = proposta.get('status', '')
     data_str = ""
     d = proposta.get('data_inicio')
     if d:
@@ -190,44 +192,41 @@ def _render_open_proposal_actions(proposta_id, proposta):
         except Exception:
             data_str = str(d)[:10]
 
+    if status_atual == 'Aprovada':
+        badge_label, badge_bg = "Aprovada", "#1D6A4A"
+    else:
+        badge_label, badge_bg = "Em Aberto", "#B7860D"
+
     st.markdown(f"""
     <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;
                 background:#faf9f7;border-radius:10px;border:1px solid #e8e5df;margin-bottom:14px;">
-      <span style="background:#B7860D;color:#fff;font-size:11px;font-weight:700;
-                   padding:3px 10px;border-radius:12px;white-space:nowrap;">Em Aberto</span>
+      <span style="background:{badge_bg};color:#fff;font-size:11px;font-weight:700;
+                   padding:3px 10px;border-radius:12px;white-space:nowrap;">{badge_label}</span>
       <span style="font-size:13px;color:#0D1B2A;font-weight:600;">{_fmt_brl(valor)}</span>
       {"<span style='font-size:12px;color:#8B8680;'>" + data_str + "</span>" if data_str else ""}
     </div>""", unsafe_allow_html=True)
 
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3 = st.columns(3)
     with c1:
-        if st.button("✅ Aprovar", key=f"btn_aprovar_{proposta_id}", use_container_width=True, type="primary"):
+        if st.button("▶️ Iniciar", key=f"btn_aprovar_{proposta_id}", use_container_width=True, type="primary"):
             try:
                 res = st.session_state.db.update_proposta_status(proposta_id=proposta_id,
                       novo_status="Aprovada", data_aprovacao=datetime.now().date())
                 if res.get('status', False):
-                    st.success("Proposta aprovada!")
+                    res2 = st.session_state.db.update_proposta_status(proposta_id=proposta_id,
+                          novo_status="Em execução", data_aprovacao=datetime.now().date())
+                    if res2.get('status', False):
+                        st.success("Proposta iniciada!")
+                    else:
+                        st.success("Proposta aprovada!")
                     st.session_state['kanban_selected_proposta'] = None
                     time.sleep(1); st.rerun()
                 else:
-                    st.error(res.get('message', 'Erro ao aprovar.'))
+                    st.error(res.get('message', 'Erro ao iniciar.'))
             except Exception as e:
                 st.error(str(e))
     with c2:
-        if st.button("❌ Recusar", key=f"btn_recusar_{proposta_id}", use_container_width=True):
-            try:
-                res = st.session_state.db.update_proposta_status(proposta_id=proposta_id, novo_status="Finalizada")
-                if res.get('status', False):
-                    st.session_state.db.update_proposta(proposta_id, status_execucao="Cancelada", data_fim=datetime.now().date())
-                    st.success("Proposta recusada.")
-                    st.session_state['kanban_selected_proposta'] = None
-                    time.sleep(1); st.rerun()
-                else:
-                    st.error("Erro ao recusar.")
-            except Exception as e:
-                st.error(str(e))
-    with c3:
-        if st.button("📄 Gerar PDF", key=f"btn_pdf_proposta_{proposta_id}", use_container_width=True):
+        if st.button("📄 Gerar Proposta", key=f"btn_pdf_proposta_{proposta_id}", use_container_width=True):
             try:
                 sucesso, mensagem, arquivo = gerar_pdf_proposta(db=st.session_state.db, proposta_id=proposta_id)
                 if sucesso and arquivo:
@@ -239,7 +238,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
                     st.error(f"Erro: {mensagem}")
             except Exception as e:
                 st.error(str(e))
-    with c4:
+    with c3:
         if st.button("🗑️ Excluir", key=f"btn_excluir_open_{proposta_id}", use_container_width=True):
             st.session_state[f"confirm_delete_{proposta_id}"] = True
 
