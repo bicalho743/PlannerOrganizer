@@ -11,6 +11,7 @@ import plotly.graph_objects as go
 import html as html_module
 from utils.database import Fornecedor
 from utils.propostas_helper import st_gerar_pdf_cliente, st_gerar_pdf_interno, st_gerar_pdf_fornecedores, gerar_pdf_proposta
+from streamlit_extras.stylable_container import stylable_container
 
 
 def _safe_float(val, default=0.0):
@@ -1384,13 +1385,24 @@ def show():
         st.error(f"Erro ao carregar dados iniciais: {str(e)}")
         return
 
-    hdr_col1, hdr_col2 = st.columns([6, 2])
-    with hdr_col1:
-        pass
-    with hdr_col2:
-        nova_btn = st.button("+ Nova Proposta", type="primary", use_container_width=True, key="btn_nova_proposta_top")
-        if nova_btn:
-            st.session_state['kanban_nova_proposta_open'] = not st.session_state['kanban_nova_proposta_open']
+    col_esp1, col_btn, col_esp2 = st.columns([3, 2, 3])
+    with col_btn:
+        with stylable_container(key="gold_nova_proposta", css_styles="""
+            button {
+                background: linear-gradient(135deg, #C9A84C, #B8943D) !important;
+                color: #fff !important;
+                font-weight: 700 !important;
+                font-size: 15px !important;
+                padding: 12px 32px !important;
+                border-radius: 10px !important;
+                border: none !important;
+                letter-spacing: 0.02em !important;
+                box-shadow: 0 3px 12px rgba(201,168,76,0.35) !important;
+            }
+        """):
+            nova_btn = st.button("✚  Nova Proposta", type="primary", use_container_width=True, key="btn_nova_proposta_top")
+            if nova_btn:
+                st.session_state['kanban_nova_proposta_open'] = not st.session_state['kanban_nova_proposta_open']
 
     if st.session_state['kanban_nova_proposta_open']:
         with st.expander("📝 Nova Proposta", expanded=True):
