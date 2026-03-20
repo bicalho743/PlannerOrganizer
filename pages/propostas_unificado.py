@@ -289,41 +289,17 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
       <span style="font-size:13px;color:#0D1B2A;font-weight:600;">{_fmt_brl(valor)}</span>
     </div>""", unsafe_allow_html=True)
 
-    st.markdown("""<style>
-    .report-card-btn > button {
-        background:#0D1B2A !important; border-radius:10px !important; padding:18px 10px !important;
-        text-align:center !important; border:none !important; min-height:80px !important;
-        display:flex !important; flex-direction:column !important; align-items:center !important;
-        justify-content:center !important; gap:4px !important; transition:all 0.2s !important;
-    }
-    .report-card-btn > button:hover {
-        background:#162840 !important; transform:translateY(-2px) !important;
-        box-shadow:0 4px 12px rgba(0,0,0,0.3) !important;
-    }
-    .report-card-btn > button p, .report-card-btn > button span, .report-card-btn > button div {
-        color:#C9A84C !important; font-weight:700 !important; font-size:12px !important;
-    }
-    </style>""", unsafe_allow_html=True)
-
     rc1, rc2 = st.columns(2)
     with rc1:
-        st.markdown('<div class="report-card-btn">', unsafe_allow_html=True)
-        _auto_download_pdf_cliente(proposta_id)
-        st.markdown('</div>', unsafe_allow_html=True)
+        _report_card_download("📋", "RELATÓRIO CLIENTE", "Gerar", proposta_id, "cliente")
     with rc2:
-        st.markdown('<div class="report-card-btn">', unsafe_allow_html=True)
-        _auto_download_pdf_interno(proposta_id)
-        st.markdown('</div>', unsafe_allow_html=True)
+        _report_card_download("📊", "RELATÓRIO INTERNO", "Gerar", proposta_id, "interno")
 
     rc3, rc4 = st.columns(2)
     with rc3:
-        st.markdown('<div class="report-card-btn">', unsafe_allow_html=True)
-        _auto_download_pdf_fornecedores(proposta_id)
-        st.markdown('</div>', unsafe_allow_html=True)
+        _report_card_download("🏢", "RELATÓRIO FORNECEDORES", "Gerar", proposta_id, "fornecedores")
     with rc4:
-        st.markdown('<div class="report-card-btn">', unsafe_allow_html=True)
-        _auto_download_pdf_vendas_produto(proposta_id)
-        st.markdown('</div>', unsafe_allow_html=True)
+        _report_card_download("📦", "VENDAS DO PRODUTO", "Gerar", proposta_id, "vendas")
 
     st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
     ac1, ac2 = st.columns(2)
@@ -381,99 +357,90 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
                     st.error(str(e))
 
 
-def _auto_download_pdf_cliente(proposta_id):
-    """Auto-download client report PDF."""
-    key = f"gen_pdf_cli_{proposta_id}"
-    if st.button("📋\nRELATÓRIO CLIENTE\nGerar", use_container_width=True, key=f"btn_rel_cli_{proposta_id}"):
-        st.session_state[key] = True
-    if st.session_state.get(key, False):
-        try:
+def _report_card_download(icon, title, subtitle, proposta_id, report_type):
+    """Render a navy card-styled download button that generates and downloads PDF on click."""
+    pdf_bytes = None
+    file_name = f"Relatorio_{report_type}_{proposta_id}.pdf"
+    error_msg = None
+
+    try:
+        if report_type == "cliente":
             from utils.propostas_helper import gerar_pdf_cliente_proposta
             sucesso, mensagem, filename = gerar_pdf_cliente_proposta(st.session_state.db, proposta_id)
             if sucesso and filename:
                 with open(filename, "rb") as f:
-                    st.download_button("📥 Baixar", f.read(), os.path.basename(filename),
-                                       "application/pdf", key=f"dl_cli_{proposta_id}", use_container_width=True)
+                    pdf_bytes = f.read()
+                file_name = os.path.basename(filename)
             else:
-                st.error(mensagem)
-        except Exception as e:
-            st.error(str(e))
-        st.session_state[key] = False
-
-
-def _auto_download_pdf_interno(proposta_id):
-    """Auto-download internal report PDF."""
-    key = f"gen_pdf_int_{proposta_id}"
-    if st.button("📊\nRELATÓRIO INTERNO\nGerar", use_container_width=True, key=f"btn_rel_int_{proposta_id}"):
-        st.session_state[key] = True
-    if st.session_state.get(key, False):
-        try:
+                error_msg = mensagem
+        elif report_type == "interno":
             from utils.propostas_helper import gerar_pdf_interno_proposta
             sucesso, mensagem, filename = gerar_pdf_interno_proposta(st.session_state.db, proposta_id)
             if sucesso and filename:
                 with open(filename, "rb") as f:
-                    st.download_button("📥 Baixar", f.read(), os.path.basename(filename),
-                                       "application/pdf", key=f"dl_int_{proposta_id}", use_container_width=True)
+                    pdf_bytes = f.read()
+                file_name = os.path.basename(filename)
             else:
-                st.error(mensagem)
-        except Exception as e:
-            st.error(str(e))
-        st.session_state[key] = False
-
-
-def _auto_download_pdf_fornecedores(proposta_id):
-    """Auto-download suppliers report PDF."""
-    key = f"gen_pdf_forn_{proposta_id}"
-    if st.button("🏢\nRELATÓRIO FORNECEDORES\nGerar", use_container_width=True, key=f"btn_rel_forn2_{proposta_id}"):
-        st.session_state[key] = True
-    if st.session_state.get(key, False):
-        try:
+                error_msg = mensagem
+        elif report_type == "fornecedores":
             from utils.propostas_helper import gerar_pdf_fornecedores_proposta
             sucesso, mensagem, filename = gerar_pdf_fornecedores_proposta(st.session_state.db, proposta_id)
             if sucesso and filename:
                 with open(filename, "rb") as f:
-                    st.download_button("📥 Baixar", f.read(), os.path.basename(filename),
-                                       "application/pdf", key=f"dl_forn_{proposta_id}", use_container_width=True)
+                    pdf_bytes = f.read()
+                file_name = os.path.basename(filename)
             else:
-                st.error(mensagem)
-        except Exception as e:
-            st.error(str(e))
-        st.session_state[key] = False
-
-
-def _auto_download_pdf_vendas_produto(proposta_id):
-    """Auto-download product sales report PDF."""
-    key = f"gen_pdf_vend_{proposta_id}"
-    if st.button("📦\nVENDAS DO PRODUTO\nGerar", use_container_width=True, key=f"btn_rel_vend_{proposta_id}"):
-        st.session_state[key] = True
-    if st.session_state.get(key, False):
-        try:
-            from utils.pdf_generator_venda_fixed import gerar_pdf_venda
+                error_msg = mensagem
+        elif report_type == "vendas":
             import time as _t
+            from utils.pdf_generator_venda_fixed import gerar_pdf_venda
             produtos = st.session_state.db.get_produtos_proposta(proposta_id)
             if produtos is None or (hasattr(produtos, 'empty') and produtos.empty):
-                st.info("Nenhum produto cadastrado nesta proposta.")
-                st.session_state[key] = False
-                return
-            valor_total = float(produtos['valor_unit'].astype(float).mul(produtos['quantidade'].astype(float)).sum()) if 'valor_unit' in produtos.columns else 0
-            venda_dados = {'id': proposta_id, 'status': 'Proposta', 'forma_pagamento': 'N/A',
-                           'valor_total': round(valor_total, 2),
-                           'data_venda': datetime.now().strftime('%d/%m/%Y'),
-                           'observacoes': f"Produtos Proposta #{proposta_id}"}
-            itens_pdf = produtos.rename(columns={'nome': 'produto_nome', 'valor_unit': 'preco_unitario'})[['produto_nome', 'quantidade', 'preco_unitario']].copy()
-            ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_t.time()))
-            filename = f"pdfs/Venda_Proposta_{proposta_id}_{ts}.pdf"
-            os.makedirs("pdfs", exist_ok=True)
-            pdf_path = gerar_pdf_venda(venda_dados, {'nome': 'Cliente'}, itens_pdf, filename)
-            if pdf_path and os.path.exists(pdf_path):
-                with open(pdf_path, "rb") as f:
-                    st.download_button("📥 Baixar", f.read(), f"Produtos_Proposta_{proposta_id}.pdf",
-                                       "application/pdf", key=f"dl_vend_{proposta_id}", use_container_width=True)
+                error_msg = "Nenhum produto cadastrado."
             else:
-                st.error("Erro ao gerar PDF de vendas.")
-        except Exception as e:
-            st.error(str(e))
-        st.session_state[key] = False
+                valor_total = float(produtos['valor_unit'].astype(float).mul(produtos['quantidade'].astype(float)).sum()) if 'valor_unit' in produtos.columns else 0
+                venda_dados = {'id': proposta_id, 'status': 'Proposta', 'forma_pagamento': 'N/A',
+                               'valor_total': round(valor_total, 2),
+                               'data_venda': datetime.now().strftime('%d/%m/%Y'),
+                               'observacoes': f"Produtos Proposta #{proposta_id}"}
+                itens_pdf = produtos.rename(columns={'nome': 'produto_nome', 'valor_unit': 'preco_unitario'})[['produto_nome', 'quantidade', 'preco_unitario']].copy()
+                ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_t.time()))
+                fname = f"pdfs/Venda_Proposta_{proposta_id}_{ts}.pdf"
+                os.makedirs("pdfs", exist_ok=True)
+                pdf_path = gerar_pdf_venda(venda_dados, {'nome': 'Cliente'}, itens_pdf, fname)
+                if pdf_path and os.path.exists(pdf_path):
+                    with open(pdf_path, "rb") as f:
+                        pdf_bytes = f.read()
+                    file_name = f"Produtos_Proposta_{proposta_id}.pdf"
+                else:
+                    error_msg = "Erro ao gerar PDF de vendas."
+    except Exception as e:
+        error_msg = str(e)
+
+    if pdf_bytes:
+        import base64
+        b64 = base64.b64encode(pdf_bytes).decode()
+        st.markdown(f"""
+        <a href="data:application/pdf;base64,{b64}" download="{file_name}"
+           style="text-decoration:none;display:block;">
+          <div style="background:#0D1B2A;border-radius:10px;padding:16px;text-align:center;min-height:80px;
+                      display:flex;flex-direction:column;align-items:center;justify-content:center;
+                      cursor:pointer;transition:all 0.2s;border:1px solid transparent;"
+               onmouseover="this.style.background='#162840';this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)'"
+               onmouseout="this.style.background='#0D1B2A';this.style.transform='none';this.style.boxShadow='none'">
+            <div style="font-size:22px;">{icon}</div>
+            <div style="color:#C9A84C;font-weight:700;font-size:12px;margin-top:4px;">{title}</div>
+            <div style="color:#aaa;font-size:10px;">{subtitle}</div>
+          </div>
+        </a>""", unsafe_allow_html=True)
+    elif error_msg:
+        st.markdown(f"""
+        <div style="background:#0D1B2A;border-radius:10px;padding:16px;text-align:center;min-height:80px;
+                    display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0.6;">
+          <div style="font-size:22px;">{icon}</div>
+          <div style="color:#C9A84C;font-weight:700;font-size:12px;margin-top:4px;">{title}</div>
+          <div style="color:#ff6b6b;font-size:10px;">{error_msg}</div>
+        </div>""", unsafe_allow_html=True)
 
 
 def _tab_detalhes(proposta_id, proposta):
