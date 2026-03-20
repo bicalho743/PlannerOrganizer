@@ -1,40 +1,36 @@
-
-anthropic>=0.45.2
-humanize>=4.11.0
-mercadopago>=2.2.3
-numpy>=2.2.2
-openai>=1.61.1
-openpyxl>=3.1.5
-pandas>=2.2.3
-plotly>=6.0.0
-psycopg2-binary>=2.9.10
-pyjwt>=2.10.1
-pypdf2>=3.0.1
-reflex>=0.7.6
-reportlab>=4.3.0
-schedule>=1.2.2
-sqlalchemy>=2.0.38
+# Core
 streamlit>=1.42.0
-stripe>=11.5.0
-trafilatura>=2.0.0
-twilio>=9.4.4
-unidecode>=1.3.8
-werkzeug>=3.1.3
-xlrd>=2.0.1
-zipfile36>=0.1.3
-reportlab
+psycopg2-binary>=2.9.10
+sqlalchemy>=2.0.38
+pandas>=2.2.3
+numpy>=2.2.2
+
+# Autenticação
+streamlit-authenticator
 firebase-admin
-streamlit-authenticator
 pyrebase4
-streamlit-authenticator
-pandas
-psycopg2-binary
-streamlit
+pyjwt>=2.10.1
+werkzeug>=3.1.3
+
+# PDF e Excel
+reportlab>=4.3.0
+pypdf2>=3.0.1
+openpyxl>=3.1.5
+xlrd>=2.0.1
+
+# Pagamentos
+stripe>=11.5.0
+
+# Email
+sib-api-v3-sdk
 sendgrid
-sendgrid
-stripe
+
+# Visualização
+plotly>=6.0.0
+
+# Utilitários
+humanize>=4.11.0
+unidecode>=1.3.8
+schedule>=1.2.2
 requests
-sib-api-v3-sdk
-sib-api-v3-sdk
-sib-api-v3-sdk
 streamlit-extras
