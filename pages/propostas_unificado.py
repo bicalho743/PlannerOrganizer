@@ -422,7 +422,7 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type):
                 error_msg = mensagem
         elif report_type == "vendas":
             import time as _t
-            from utils.pdf_generator_v2 import gerar_pdf_venda
+            from utils.pdf_generator_v2 import gerar_pdf_venda_v2
             produtos = st.session_state.db.get_produtos_organizadores(proposta_id)
             if produtos is None or (hasattr(produtos, 'empty') and produtos.empty):
                 error_msg = "Nenhum produto cadastrado."
@@ -438,7 +438,7 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type):
                 ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_t.time()))
                 fname = f"pdfs/Venda_Proposta_{proposta_id}_{ts}.pdf"
                 os.makedirs("pdfs", exist_ok=True)
-                pdf_path = gerar_pdf_venda(venda_dados, {'nome': 'Cliente'}, itens_pdf, fname)
+                pdf_path = gerar_pdf_venda_v2(venda_dados, {'nome': 'Cliente'}, itens_pdf, fname)
                 if pdf_path and os.path.exists(pdf_path):
                     with open(pdf_path, "rb") as f:
                         pdf_bytes = f.read()
@@ -610,7 +610,7 @@ def _tab_produtos(proposta_id):
             st.markdown("---")
             if st.button("📄 Gerar Relatório de Venda dos Produtos", use_container_width=True, key=f"btn_pdf_produtos_proposta_{proposta_id}"):
                 try:
-                    from utils.pdf_generator_v2 import gerar_pdf_venda
+                    from utils.pdf_generator_v2 import gerar_pdf_venda_v2
                     import time as _t
                     venda_dados = {'id': proposta_id, 'status': 'Proposta', 'forma_pagamento': 'N/A',
                                    'valor_total': round(float(valor_total_produtos), 2),
@@ -619,7 +619,7 @@ def _tab_produtos(proposta_id):
                     ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_t.time()))
                     filename = f"pdfs/Venda_Proposta_{proposta_id}_{ts}.pdf"
                     os.makedirs("pdfs", exist_ok=True)
-                    pdf_path = gerar_pdf_venda(venda_dados, {'nome': 'Cliente'}, itens_pdf, filename)
+                    pdf_path = gerar_pdf_venda_v2(venda_dados, {'nome': 'Cliente'}, itens_pdf, filename)
                     if pdf_path and os.path.exists(pdf_path):
                         with open(pdf_path, "rb") as f:
                             st.success("PDF gerado!")

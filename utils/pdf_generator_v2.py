@@ -296,9 +296,10 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename, proposta_descricao=No
         dados['total'], NAVY, WHITE, GOLD)
     _footer(c, margin)
     c.save()
+    return filename
 
 
-def gerar_pdf_venda(venda_dados, cliente_dados, itens_df, filename):
+def gerar_pdf_venda_v2(venda_dados, cliente_dados, itens_df, filename):
     """
     Gera PDF de venda/produtos da proposta com design Navy/Gold
     

@@ -295,7 +295,7 @@ def _render_detail_panel(venda_id, venda_row):
             pdf_path = f"pdfs/Venda_{venda_id}_{safe_nome}_{ts}.pdf"
             
             # Usar pdf_generator_v2 que tem layout Navy/Gold
-            from utils.pdf_generator_v2 import gerar_pdf_venda as gerar_pdf_venda_v2
+            from utils.pdf_generator_v2 import gerar_pdf_venda_v2
             gerar_pdf_venda_v2(proposta_dados, cliente_dados, itens_pdf, pdf_path)
             if pdf_path and os.path.exists(pdf_path):
                 with open(pdf_path, "rb") as f:
@@ -524,7 +524,7 @@ def show():
                     pdf_path = f"pdfs/Venda_{vid}_{safe}_{ts}.pdf"
                     
                     # Usar pdf_generator_v2 que tem layout Navy/Gold
-                    from utils.pdf_generator_v2 import gerar_pdf_venda as gerar_pdf_venda_v2
+                    from utils.pdf_generator_v2 import gerar_pdf_venda_v2
                     gerar_pdf_venda_v2(proposta_dados, {"nome": crow["nome"]}, itens_tmp, pdf_path)
                     if pdf_path and os.path.exists(pdf_path):
                         with open(pdf_path, "rb") as f:
