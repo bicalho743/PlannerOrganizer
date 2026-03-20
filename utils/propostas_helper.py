@@ -278,6 +278,17 @@ def gerar_pdf_proposta(db, proposta_id, custom_filename=None):
         # Gerar PDF com novo layout
         try:
             # Preparar dados para gerar_pdf_cliente que espera (dados, output_path)
+            itens_raw = proposta_dict.get('produtos', [])
+            itens_tuples = []
+            total_calculado = 0
+            for it in itens_raw:
+                nome_it = it.get('nome', it.get('produto_nome', it.get('descricao', '')))
+                qtd = float(it.get('quantidade', 1))
+                val = float(it.get('valor_unit', it.get('valor', it.get('preco_unitario', 0))))
+                subtotal = qtd * val
+                total_calculado += subtotal
+                itens_tuples.append((f"{nome_it} ({int(qtd)}x)", subtotal, False))
+            valor_proposta = float(proposta_dict.get('valor', proposta_dict.get('valor_total', total_calculado)))
             dados_pdf = {
                 'proposta_id': proposta_dict.get('id', ''),
                 'cliente': cliente_dict.get('nome', ''),
@@ -285,7 +296,8 @@ def gerar_pdf_proposta(db, proposta_id, custom_filename=None):
                 'tipo': proposta_dict.get('tipo_proposta', ''),
                 'status': proposta_dict.get('status', ''),
                 'descricao': proposta_dict.get('descricao', ''),
-                'itens': proposta_dict.get('produtos', [])
+                'itens': itens_tuples,
+                'total': valor_proposta
             }
             pdf_path = gerar_pdf_fechamento(dados_pdf, filename)
             if not pdf_path or not os.path.exists(pdf_path):

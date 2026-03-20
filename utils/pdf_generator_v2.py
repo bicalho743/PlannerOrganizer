@@ -150,16 +150,16 @@ def gerar_pdf_interno(dados, output_path):
         "Todos os valores cobrados ao cliente nesta proposta", GOLD)
     y = _table_rows(c, margin, cw, y, dados.get('itens_custo', []))
     y = _total_row(c, margin, cw, y, "CUSTO TOTAL DO CLIENTE",
-        dados['total_custo'], NAVY, WHITE, GOLD)
+        dados.get('total_custo', 0), NAVY, WHITE, GOLD)
     y -= 12*mm
     y = _section_title(c, margin, cw, y, "Receita Líquida do Projeto",
         "Ganho real da Personal, considerando comissões e pagamentos", GREEN)
     y = _table_rows(c, margin, cw, y, dados.get('itens_receita', []))
     y = _total_row(c, margin, cw, y, "RECEITA LÍQUIDA TOTAL",
-        dados['total_receita'], GREEN, WHITE, GREEN_LT)
+        dados.get('total_receita', 0), GREEN, WHITE, GREEN_LT)
     if dados.get('total_custo', 0) > 0:
         y -= 10*mm
-        pct = (dados['total_receita'] / dados['total_custo']) * 100
+        pct = (dados.get('total_receita', 0) / dados.get('total_custo', 1)) * 100
         rr(c, margin, y - 14*mm, cw, 14*mm, 6, GOLD_LT, GOLD, 0.8)
         c.setFillColor(colors.HexColor("#7A5C1A"))
         c.setFont("Helvetica", 9)
@@ -194,7 +194,7 @@ def gerar_pdf_cliente(dados, output_path):
         "Todos os itens e serviços prestados nesta proposta", NAVY)
     y = _table_rows(c, margin, cw, y, dados.get('itens', []))
     _total_row(c, margin, cw, y, "TOTAL DO SERVIÇO",
-        dados['total'], NAVY, WHITE, GOLD)
+        dados.get('total', 0), NAVY, WHITE, GOLD)
     _footer(c, margin)
     c.save()
     return output_path
@@ -215,7 +215,7 @@ def gerar_pdf_fornecedores(dados, output_path):
         "Valores pagos a fornecedores neste projeto", TEAL)
     y = _table_rows(c, margin, cw, y, dados.get('itens', []))
     _total_row(c, margin, cw, y, "TOTAL FORNECEDORES",
-        dados['total'], TEAL, WHITE, colors.HexColor("#A8DDE8"))
+        dados.get('total', 0), TEAL, WHITE, colors.HexColor("#A8DDE8"))
     _footer(c, margin)
     c.save()
     return output_path
