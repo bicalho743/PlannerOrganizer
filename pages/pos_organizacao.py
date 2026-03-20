@@ -305,37 +305,24 @@ def _view_detalhes(templates):
                 disabled=is_cancelado
             )
 
-        # Botões e badges na mesma linha - sempre renderizar os 3 espaços
+        # Botões e badges na mesma linha usando expanders compactos
         btn_cols = st.columns([1.2, 0.8, 1.2])
         
         with btn_cols[0]:
-            # Botão "Ver sugestão de texto" - sempre aparece
-            if st.button("📝 Ver sugestão de texto", key=f"btn_texto_{acao['id']}", use_container_width=False):
-                st.session_state[f"show_texto_{acao['id']}"] = not st.session_state.get(f"show_texto_{acao['id']}", False)
-                st.rerun()
+            # Expander "Ver sugestão de texto"
+            with st.expander("📝 Ver sugestão de texto", expanded=False):
+                st.markdown(f'<p style="font-size:0.9rem;line-height:1.6;color:#333;">{msg_personalizada}</p>', unsafe_allow_html=True)
         
         with btn_cols[1]:
-            # Badge "+ Gratuito" - renderiza sempre, mas vazio se não for gratuito
-            badge_html = '➕ Gratuito' if gratuito else ''
-            badge_color = '#c6f6d5' if gratuito else 'transparent'
-            badge_text_color = '#22543d' if gratuito else 'transparent'
+            # Badge "+ Gratuito" - renderiza sempre
             if gratuito:
-                st.markdown(f'<span style="background:{badge_color};color:{badge_text_color};padding:6px 10px;border-radius:6px;font-weight:600;font-size:0.9rem;display:inline-block;">{badge_html}</span>', unsafe_allow_html=True)
+                st.markdown('<div style="padding:4px 0;"><span style="background:#c6f6d5;color:#22543d;padding:6px 10px;border-radius:6px;font-weight:600;font-size:0.85rem;display:inline-block;">➕ Gratuito</span></div>', unsafe_allow_html=True)
         
         with btn_cols[2]:
-            # Botão "Dica estratégica" - renderiza sempre se houver hint
+            # Expander "Dica estratégica" - renderiza se houver hint
             if hint:
-                if st.button("🎯 Dica estratégica", key=f"btn_hint_{acao['id']}", use_container_width=False):
-                    st.session_state[f"show_hint_{acao['id']}"] = not st.session_state.get(f"show_hint_{acao['id']}", False)
-                    st.rerun()
-
-        # Mostrar sugestão de texto se solicitado
-        if st.session_state.get(f"show_texto_{acao['id']}", False):
-            st.markdown(f'<div style="background:#faf5ff;border-left:3px solid #a78bfa;padding:10px;margin:8px 0;border-radius:4px"><p style="margin:0;font-size:0.85rem;color:#6d28d9;font-weight:600;">📝 Sugestão de texto:</p><p style="margin:6px 0 0 0;font-size:0.8rem;color:#5b21b6;line-height:1.5">{msg_personalizada}</p></div>', unsafe_allow_html=True)
-
-        # Mostrar dica estratégica se solicitado
-        if st.session_state.get(f"show_hint_{acao['id']}", False):
-            st.markdown(f'<div style="background:#fef3c7;border-left:3px solid #f59e0b;padding:10px;margin:8px 0;border-radius:4px"><p style="margin:0;font-size:0.85rem;color:#b45309;font-weight:600;">🎯 Dica estratégica:</p><p style="margin:6px 0 0 0;font-size:0.8rem;color:#92400e;line-height:1.5">{hint}</p></div>', unsafe_allow_html=True)
+                with st.expander("🎯 Dica estratégica", expanded=False):
+                    st.markdown(f'<p style="font-size:0.85rem;line-height:1.6;color:#333;">{hint}</p>', unsafe_allow_html=True)
 
         # Salvar mudanças
         if novo_status != is_feito or nova_obs != obs_atual:
