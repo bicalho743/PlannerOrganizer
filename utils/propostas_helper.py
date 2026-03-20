@@ -468,23 +468,9 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
             # Criando nome de arquivo com o formato: Cliente_Proposta_#ID_NomeCliente_DATA.pdf
             filename = f"pdfs/Cliente_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
             
-        # Gerar o PDF para cliente usando o gerador v2 (design Navy/Gold)
-        from utils.pdf_generator_v2 import gerar_pdf_cliente
-        dados_cliente = {
-            'proposta_id': proposta_id,
-            'numero': proposta.get('numero', proposta_id),
-            'cliente_nome': cliente.get('nome', ''),
-            'cliente_email': cliente.get('email', ''),
-            'cliente_telefone': cliente.get('telefone', ''),
-            'tipo_servico': proposta.get('tipo_proposta', 'Organização'),
-            'descricao': proposta.get('descricao', ''),
-            'data_inicio': proposta.get('data_inicio', ''),
-            'data_fim': proposta.get('data_fim', ''),
-            'prazo': proposta.get('prazo_entrega', ''),
-            'valor_total': proposta.get('valor', 0),
-            'observacoes': proposta.get('observacoes', ''),
-        }
-        gerar_pdf_cliente(dados_cliente, filename)
+        # Gerar o PDF para cliente usando o relatório de serviço (funcionando)
+        from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
+        gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename)
         
         return True, "Relatório do cliente gerado com sucesso", filename
         
@@ -566,21 +552,52 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
             # Criando nome de arquivo com o formato: Interno_Proposta_#ID_NomeCliente_DATA.pdf
             filename = f"pdfs/Interno_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
             
-        # Gerar o PDF interno usando o gerador v2 com análise financeira completa
-        from utils.pdf_generator_v2 import gerar_pdf_interno
-        # Preparar dados no formato esperado
-        dados_interno = {
-            'proposta_id': proposta.get('numero', '') if isinstance(proposta, dict) else proposta.numero,
-            'cliente': cliente.get('nome', '') if isinstance(cliente, dict) else cliente.nome,
-            'tipo': proposta.get('tipo_proposta', '') if isinstance(proposta, dict) else proposta.tipo_proposta,
-            'status': proposta.get('status', '') if isinstance(proposta, dict) else proposta.status,
-            'periodo': datetime.now().strftime('%b/%Y'),
-            'total_custo': 0,
-            'total_receita': 0,
-            'itens_custo': [],
-            'itens_receita': []
-        }
-        gerar_pdf_interno(dados_interno, filename)
+        # Gerar o PDF interno usando gerador que já está funcionando
+        # O gerador está em pdf_generator_v2 e recebe dict consolidado
+        try:
+            from utils.pdf_generator_v2 import gerar_pdf_interno
+            # Buscar dados financeiros para análise
+            financeiro = db.get_financeiro() if db else pd.DataFrame()
+            
+            # Preparar dados consolidados
+            total_custo = 0
+            total_receita = 0
+            itens_custo = []
+            itens_receita = []
+            
+            if not financeiro.empty:
+                pf = financeiro[financeiro['proposta_id'] == int(proposta_id)]
+                if not pf.empty:
+                    for _, row in pf.iterrows():
+                        tipo = row.get('tipo', '').lower()
+                        valor = row.get('valor', 0)
+                        desc = row.get('descricao', '')
+                        
+                        if 'receita' in tipo or 'ganho' in tipo or 'lucro' in tipo:
+                            total_receita += valor
+                            itens_receita.append((desc, valor))
+                        else:
+                            total_custo += valor
+                            itens_custo.append((desc, valor))
+            
+            dados_interno = {
+                'proposta_id': proposta.get('numero', proposta_id) if isinstance(proposta, dict) else getattr(proposta, 'numero', proposta_id),
+                'cliente': cliente.get('nome', '') if isinstance(cliente, dict) else getattr(cliente, 'nome', ''),
+                'telefone': cliente.get('telefone', '') if isinstance(cliente, dict) else getattr(cliente, 'telefone', ''),
+                'tipo': proposta.get('tipo_proposta', '') if isinstance(proposta, dict) else getattr(proposta, 'tipo_proposta', ''),
+                'status': proposta.get('status', '') if isinstance(proposta, dict) else getattr(proposta, 'status', ''),
+                'periodo': datetime.now().strftime('%d/%m/%Y'),
+                'total_custo': total_custo,
+                'total_receita': total_receita,
+                'itens_custo': itens_custo,
+                'itens_receita': itens_receita
+            }
+            gerar_pdf_interno(dados_interno, filename)
+        except Exception as e_inner:
+            print(f"DEBUG: Erro ao gerar PDF interno v2: {str(e_inner)}. Tentando relatorio_servico_novo...")
+            # Fallback: usar relatorio_servico_novo se v2 falhar
+            from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
+            gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename)
         
         return True, "Relatório interno gerado com sucesso", filename
         
@@ -669,20 +686,9 @@ def gerar_pdf_fornecedores_proposta(db, proposta_id, custom_filename=None):
             data_atual = datetime.now().strftime('%Y%m%d_%H%M%S')
             filename = f"pdfs/Fornecedores_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
             
-        from utils.pdf_generator_v2 import gerar_pdf_fornecedores
-        # Preparar dados no formato esperado
-        dados_forn = {
-            'proposta_id': proposta.get('numero', '') if isinstance(proposta, dict) else proposta.numero,
-            'cliente': cliente.get('nome', '') if isinstance(cliente, dict) else cliente.nome,
-            'telefone': cliente.get('telefone', '') if isinstance(cliente, dict) else cliente.telefone,
-            'tipo': proposta.get('tipo_proposta', '') if isinstance(proposta, dict) else proposta.tipo_proposta,
-            'status': proposta.get('status', '') if isinstance(proposta, dict) else proposta.status,
-            'itens': [(f.get('descricao', f.get('nome', '')) if isinstance(f, dict) else getattr(f, 'descricao', getattr(f, 'nome', '')), 
-                      f.get('valor', 0) if isinstance(f, dict) else getattr(f, 'valor', 0), False) 
-                     for f in itens_fornecedores] if itens_fornecedores else [],
-            'total': sum(f.get('valor', 0) if isinstance(f, dict) else getattr(f, 'valor', 0) for f in itens_fornecedores) if itens_fornecedores else 0
-        }
-        gerar_pdf_fornecedores(dados_forn, filename)
+        from utils.pdf_generator_fornecedores import gerar_pdf_fornecedores
+        # Chamar com argumentos corretos
+        gerar_pdf_fornecedores(proposta, cliente, itens_fornecedores, filename)
         
         return True, "Relatório de fornecedores gerado com sucesso", filename
         
@@ -804,3 +810,76 @@ def st_marcar_proposta_como_paga(proposta_id):
     except Exception as e:
         st.error(f"Erro: {str(e)}")
         return False
+def gerar_pdf_venda_proposta(db, proposta_id, custom_filename=None):
+    """
+    Gera um PDF de relatório de produtos/vendas de uma proposta
+    Usa o mesmo layout do relatório de serviço
+    
+    Args:
+        db: Conexão com o banco de dados
+        proposta_id: ID da proposta
+        custom_filename: Nome de arquivo personalizado (opcional)
+        
+    Returns:
+        tuple: (sucesso, mensagem, filename)
+    """
+    print(f"DEBUG HELPER: Gerando PDF Vendas para proposta ID={proposta_id}")
+    
+    try:
+        if not os.path.exists('pdfs'):
+            os.makedirs('pdfs')
+            
+        # Buscar a proposta
+        proposta = None
+        try:
+            propostas = db.get_propostas()
+            if not propostas.empty:
+                proposta_found = propostas[propostas['id'] == int(proposta_id)]
+                if not proposta_found.empty:
+                    proposta = proposta_found.iloc[0].to_dict()
+        except Exception as e:
+            print(f"DEBUG HELPER ERROR: Erro ao buscar proposta: {str(e)}")
+            
+        if proposta is None:
+            return False, f"Proposta ID={proposta_id} não encontrada.", None
+            
+        # Buscar cliente
+        try:
+            clientes = db.get_clientes()
+            cliente = None
+            cliente_id = int(proposta['cliente_id'])
+            
+            if not clientes.empty:
+                cliente_found = clientes[clientes['id'] == cliente_id]
+                if not cliente_found.empty:
+                    cliente = cliente_found.iloc[0].to_dict()
+            
+            if cliente is None:
+                return False, f"Cliente ID={cliente_id} não encontrado.", None
+        except Exception as e:
+            print(f"DEBUG HELPER ERROR: Erro ao buscar cliente: {str(e)}")
+            return False, f"Erro ao buscar cliente: {str(e)}", None
+            
+        # Obter acréscimos (que incluem produtos e fornecedores)
+        acrescimos = db.get_acrescimos_proposta(proposta_id)
+        if acrescimos is None:
+            acrescimos = pd.DataFrame()
+            
+        # Nome do arquivo
+        if custom_filename:
+            filename = custom_filename
+        else:
+            cliente_nome = cliente.get('nome', 'sem_nome').replace(' ', '_').lower()
+            data_atual = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"pdfs/Venda_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
+            
+        # Usar o gerador de relatório de serviço (que já está funcionando)
+        from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
+        gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename)
+        
+        return True, "Relatório de vendas/produtos gerado com sucesso", filename
+        
+    except Exception as e:
+        print(f"DEBUG HELPER CRITICAL: Erro ao gerar PDF vendas: {str(e)}")
+        traceback.print_exc()
+        return False, f"Erro ao gerar PDF vendas: {str(e)}", None
