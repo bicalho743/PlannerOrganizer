@@ -158,20 +158,114 @@ def _render_detail_panel(proposta_id, proposta, propostas_com_clientes):
     """Renders the full detail panel for a selected proposal."""
     nome_cliente = proposta.get('nome', proposta.get('cliente_nome', 'Cliente'))
     numero = proposta.get('numero', proposta_id)
+    status_atual = proposta.get('status', '')
+    em_aberto = status_atual in ['Em elaboração', 'Aguardando aprovação', 'Aguardando']
 
     st.markdown(f"### Proposta #{numero} — {nome_cliente}")
     st.caption(proposta.get('descricao', '')[:120])
 
-    detail_tabs = st.tabs(["📊 Detalhes", "📋 Itens & Custos", "🏁 Finalizar"])
+    if em_aberto:
+        _render_open_proposal_actions(proposta_id, proposta)
+    else:
+        detail_tabs = st.tabs(["📊 Detalhes", "📋 Itens & Custos", "🏁 Finalizar"])
 
-    with detail_tabs[0]:
-        _tab_detalhes(proposta_id, proposta)
+        with detail_tabs[0]:
+            _tab_detalhes(proposta_id, proposta)
 
-    with detail_tabs[1]:
-        _tab_itens(proposta_id)
+        with detail_tabs[1]:
+            _tab_itens(proposta_id)
 
-    with detail_tabs[2]:
-        _tab_acoes(proposta_id, proposta)
+        with detail_tabs[2]:
+            _tab_acoes(proposta_id, proposta)
+
+
+def _render_open_proposal_actions(proposta_id, proposta):
+    """Compact action bar for open proposals."""
+    valor = _safe_float(proposta.get('valor'))
+    data_str = ""
+    d = proposta.get('data_inicio')
+    if d:
+        try:
+            data_str = d.strftime("%d/%m/%Y") if hasattr(d, 'strftime') else str(d)[:10]
+        except Exception:
+            data_str = str(d)[:10]
+
+    st.markdown(f"""
+    <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;
+                background:#faf9f7;border-radius:10px;border:1px solid #e8e5df;margin-bottom:14px;">
+      <span style="background:#B7860D;color:#fff;font-size:11px;font-weight:700;
+                   padding:3px 10px;border-radius:12px;white-space:nowrap;">Em Aberto</span>
+      <span style="font-size:13px;color:#0D1B2A;font-weight:600;">{_fmt_brl(valor)}</span>
+      {"<span style='font-size:12px;color:#8B8680;'>" + data_str + "</span>" if data_str else ""}
+    </div>""", unsafe_allow_html=True)
+
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        if st.button("✅ Aprovar", key=f"btn_aprovar_{proposta_id}", use_container_width=True, type="primary"):
+            try:
+                res = st.session_state.db.update_proposta_status(proposta_id=proposta_id,
+                      novo_status="Aprovada", data_aprovacao=datetime.now().date())
+                if res.get('status', False):
+                    st.success("Proposta aprovada!")
+                    st.session_state['kanban_selected_proposta'] = None
+                    time.sleep(1); st.rerun()
+                else:
+                    st.error(res.get('message', 'Erro ao aprovar.'))
+            except Exception as e:
+                st.error(str(e))
+    with c2:
+        if st.button("❌ Recusar", key=f"btn_recusar_{proposta_id}", use_container_width=True):
+            try:
+                res = st.session_state.db.update_proposta_status(proposta_id=proposta_id, novo_status="Finalizada")
+                if res.get('status', False):
+                    st.session_state.db.update_proposta(proposta_id, status_execucao="Cancelada", data_fim=datetime.now().date())
+                    st.success("Proposta recusada.")
+                    st.session_state['kanban_selected_proposta'] = None
+                    time.sleep(1); st.rerun()
+                else:
+                    st.error("Erro ao recusar.")
+            except Exception as e:
+                st.error(str(e))
+    with c3:
+        if st.button("📄 Gerar PDF", key=f"btn_pdf_proposta_{proposta_id}", use_container_width=True):
+            try:
+                sucesso, mensagem, arquivo = gerar_pdf_proposta(db=st.session_state.db, proposta_id=proposta_id)
+                if sucesso and arquivo:
+                    with open(arquivo, "rb") as f:
+                        st.success("PDF gerado!")
+                        st.download_button("📥 Baixar", f.read(), f"Proposta_{proposta_id}.pdf",
+                                           "application/pdf", key=f"dl_proposta_{proposta_id}", use_container_width=True)
+                else:
+                    st.error(f"Erro: {mensagem}")
+            except Exception as e:
+                st.error(str(e))
+    with c4:
+        if st.button("🗑️ Excluir", key=f"btn_excluir_open_{proposta_id}", use_container_width=True):
+            st.session_state[f"confirm_delete_{proposta_id}"] = True
+
+    if st.session_state.get(f"confirm_delete_{proposta_id}", False):
+        st.warning("Esta ação é permanente e removerá todos os dados relacionados.")
+        dc1, dc2, dc3 = st.columns([2, 1, 1])
+        with dc2:
+            if st.button("Cancelar", key=f"btn_cancel_del_{proposta_id}", use_container_width=True):
+                st.session_state[f"confirm_delete_{proposta_id}"] = False
+                st.rerun()
+        with dc3:
+            if st.button("Confirmar", key=f"btn_confirm_del_{proposta_id}", use_container_width=True, type="primary"):
+                try:
+                    from sqlalchemy import text
+                    from utils.database import engine
+                    with engine.connect() as conn:
+                        for tbl in ["financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
+                            conn.execute(text(f"DELETE FROM {tbl} WHERE proposta_id = {proposta_id}"))
+                        conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
+                        conn.commit()
+                    st.success(f"Proposta #{proposta_id} excluída.")
+                    st.session_state['kanban_selected_proposta'] = None
+                    st.session_state[f"confirm_delete_{proposta_id}"] = False
+                    time.sleep(1); st.rerun()
+                except Exception as e:
+                    st.error(str(e))
 
 
 def _tab_detalhes(proposta_id, proposta):
