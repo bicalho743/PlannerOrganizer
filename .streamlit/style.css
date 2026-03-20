@@ -440,14 +440,44 @@ div[data-testid="stSelectbox"] [data-baseweb="select"] > div {
 [data-baseweb="menu"] li,
 ul[role="listbox"],
 ul[role="listbox"] li,
-ul[role="listbox"] li > div {
+ul[role="listbox"] li > div,
+ul[role="listbox"] li > div > div {
+    background-color: #ffffff !important;
+    color: #1e1e1e !important;
+}
+
+ul[role="listbox"] li[style],
+ul[role="listbox"] li[style] *,
+[data-baseweb="menu"] li[style],
+[data-baseweb="menu"] li[style] * {
     background-color: #ffffff !important;
     color: #1e1e1e !important;
 }
 
 ul[role="listbox"] li[aria-selected="true"],
+ul[role="listbox"] li[aria-selected="true"] *,
 ul[role="listbox"] li:hover,
-[data-baseweb="menu"] li:hover {
+ul[role="listbox"] li:hover *,
+ul[role="listbox"] li[data-highlighted="true"],
+ul[role="listbox"] li[data-highlighted="true"] *,
+[data-baseweb="menu"] li:hover,
+[data-baseweb="menu"] li:hover *,
+[data-baseweb="menu"] li[aria-selected="true"],
+[data-baseweb="menu"] li[aria-selected="true"] *,
+li[role="option"][aria-selected="true"],
+li[role="option"][aria-selected="true"] *,
+li[role="option"]:hover,
+li[role="option"]:hover *,
+li[role="option"]:focus,
+li[role="option"]:focus * {
+    background-color: #e8ecf0 !important;
+    color: #1e1e1e !important;
+}
+
+[data-baseweb="menu"] [data-highlighted],
+[data-baseweb="menu"] [data-highlighted] *,
+[data-baseweb="popover"] [data-highlighted],
+[data-baseweb="popover"] [data-highlighted] * {
     background-color: #e8ecf0 !important;
     color: #1e1e1e !important;
 }
