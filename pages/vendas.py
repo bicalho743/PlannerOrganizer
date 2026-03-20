@@ -273,25 +273,29 @@ def _render_detail_panel(venda_id, venda_row):
     if st.session_state.get(f"gerar_pdf_{venda_id}", False):
         st.session_state.pop(f"gerar_pdf_{venda_id}", None)
         try:
-            from utils.pdf_generator_v2 import gerar_pdf_venda
+            from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
             import time as _time
-            venda_dados = {
-                "id": venda_row["id"],
+            nome_raw = str(venda_row.get("cliente_nome", "cliente"))
+            itens_pdf = itens_det  # usa os itens já carregados (com fallback proposta)
+            os.makedirs("pdfs", exist_ok=True)
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_time.time()))
+            safe_nome = nome_raw.replace(" ", "_").replace("/", "_").lower()
+            
+            # Preparar dados para relatorio_servico_novo
+            proposta_dados = {
+                "numero": venda_row.get("id", ""),
+                "tipo_proposta": "Venda",
                 "status": venda_row.get("status", "Concluída"),
                 "forma_pagamento": venda_row.get("forma_pagamento", ""),
                 "valor_total": round(_safe_float(venda_row.get("valor_total", 0)), 2),
                 "data_venda": venda_row.get("data_venda"),
                 "observacoes": venda_row.get("observacoes", "")
             }
-            prop_desc = venda_row.get("proposta_descricao") or None
-            nome_raw = str(venda_row.get("cliente_nome", "cliente"))
-            itens_pdf = itens_det  # usa os itens já carregados (com fallback proposta)
-            os.makedirs("pdfs", exist_ok=True)
-            ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_time.time()))
-            safe_nome = nome_raw.replace(" ", "_").replace("/", "_").lower()
-            pdf_path = gerar_pdf_venda(venda_dados, {"nome": nome_raw}, itens_pdf,
-                                       f"pdfs/Venda_{venda_id}_{safe_nome}_{ts}.pdf",
-                                       proposta_descricao=prop_desc)
+            cliente_dados = {"nome": nome_raw}
+            pdf_path = f"pdfs/Venda_{venda_id}_{safe_nome}_{ts}.pdf"
+            
+            # Usar relatorio_servico_novo que funciona
+            gerar_pdf_relatorio_servico(proposta_dados, cliente_dados, itens_pdf, pdf_path)
             if pdf_path and os.path.exists(pdf_path):
                 with open(pdf_path, "rb") as f:
                     pdf_bytes = f.read()
@@ -494,7 +498,7 @@ def show():
         with rc1:
             if st.button("📄 GERAR RELATÓRIO", type="primary", use_container_width=True, key="btn_rel_pos"):
                 try:
-                    from utils.pdf_generator_v2 import gerar_pdf_venda
+                    from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
                     import time as _time
                     vid = st.session_state.venda_recente_id
                     vendas_tmp = st.session_state.db.get_vendas()
@@ -502,20 +506,24 @@ def show():
                     clientes_tmp = st.session_state.db.get_clientes()
                     crow = clientes_tmp[clientes_tmp["id"] == st.session_state.venda_recente_cliente_id].iloc[0]
                     itens_tmp = st.session_state.db.get_itens_venda(vid)
-                    venda_dados = {
-                        "id": vrow["id"], "status": vrow.get("status", "Concluída"),
+                    
+                    # Preparar dados para relatorio_servico_novo
+                    proposta_dados = {
+                        "numero": vrow["id"],
+                        "tipo_proposta": "Venda",
+                        "status": vrow.get("status", "Concluída"),
                         "forma_pagamento": st.session_state.venda_recente_forma_pagamento,
                         "valor_total": st.session_state.venda_recente_valor_total,
                         "data_venda": datetime.now().strftime("%d/%m/%Y %H:%M"),
                         "observacoes": st.session_state.venda_recente_observacoes or ""
                     }
-                    proposta_desc_pos = vrow.get("proposta_descricao") or None
                     safe = crow["nome"].replace(" ", "_").replace("/", "_").lower()
                     os.makedirs("pdfs", exist_ok=True)
                     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    pdf_path = gerar_pdf_venda(venda_dados, {"nome": crow["nome"]}, itens_tmp,
-                                               f"pdfs/Venda_{vid}_{safe}_{ts}.pdf",
-                                               proposta_descricao=proposta_desc_pos)
+                    pdf_path = f"pdfs/Venda_{vid}_{safe}_{ts}.pdf"
+                    
+                    # Usar relatorio_servico_novo que funciona
+                    gerar_pdf_relatorio_servico(proposta_dados, {"nome": crow["nome"]}, itens_tmp, pdf_path)
                     if pdf_path and os.path.exists(pdf_path):
                         with open(pdf_path, "rb") as f:
                             pdf_bytes = f.read()
