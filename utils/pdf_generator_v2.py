@@ -185,6 +185,7 @@ def gerar_pdf_cliente(dados, output_path):
         dados['total'], NAVY, WHITE, GOLD)
     _footer(c, margin)
     c.save()
+    return output_path
 
 def gerar_pdf_fornecedores(dados, output_path):
     """Relatório de fornecedores do projeto."""
@@ -205,6 +206,7 @@ def gerar_pdf_fornecedores(dados, output_path):
         dados['total'], TEAL, WHITE, colors.HexColor("#A8DDE8"))
     _footer(c, margin)
     c.save()
+    return output_path
 
 def gerar_pdf_venda(venda, cliente, itens_venda, filename, proposta_descricao=None):
     """Relatório de venda avulsa — mantém compatibilidade com interface antigo."""
