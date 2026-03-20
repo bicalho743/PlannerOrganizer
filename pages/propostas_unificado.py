@@ -270,7 +270,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
                     from sqlalchemy import text
                     from utils.database import engine
                     with engine.connect() as conn:
-                        for tbl in ["vendas", "financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
+                        for tbl in ["post_organizations", "vendas", "financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
                             conn.execute(text(f"DELETE FROM {tbl} WHERE proposta_id = {proposta_id}"))
                         conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
                         conn.commit()
@@ -356,7 +356,7 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
                     from sqlalchemy import text
                     from utils.database import engine
                     with engine.connect() as conn:
-                        for tbl in ["vendas", "financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
+                        for tbl in ["post_organizations", "vendas", "financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
                             conn.execute(text(f"DELETE FROM {tbl} WHERE proposta_id = {proposta_id}"))
                         conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
                         conn.commit()
@@ -1313,7 +1313,7 @@ def _tab_acoes(proposta_id, proposta):
                         from sqlalchemy import text
                         from utils.database import engine
                         with engine.connect() as conn:
-                            for tbl in ["vendas", "financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
+                            for tbl in ["post_organizations", "vendas", "financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
                                 conn.execute(text(f"DELETE FROM {tbl} WHERE proposta_id = {proposta_id}"))
                             conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
                             conn.commit()
