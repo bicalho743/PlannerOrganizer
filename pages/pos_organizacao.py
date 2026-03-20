@@ -292,7 +292,7 @@ def _view_detalhes(templates):
         """, unsafe_allow_html=True)
 
         # Controles abaixo do card
-        col_check, col_copy, col_obs = st.columns([1, 1, 3])
+        col_check, col_obs = st.columns([1, 3])
 
         with col_check:
             novo_status = st.checkbox(
@@ -301,11 +301,6 @@ def _view_detalhes(templates):
                 key=f"check_acao_{acao['id']}",
                 disabled=is_cancelado
             )
-
-        with col_copy:
-            st.markdown("<div style='margin-top:4px'></div>", unsafe_allow_html=True)
-            if st.button("📋 Copiar", key=f"copy_{acao['id']}", use_container_width=True, disabled=is_cancelado):
-                st.session_state[f"copied_{acao['id']}"] = True
 
         with col_obs:
             obs_atual = acao['notes'] if acao['notes'] else ""
@@ -317,12 +312,6 @@ def _view_detalhes(templates):
                 placeholder="Observação...",
                 disabled=is_cancelado
             )
-
-        # Mostrar texto copiável quando botão é clicado
-        if st.session_state.get(f"copied_{acao['id']}", False):
-            st.code(msg_personalizada, language=None)
-            st.caption("⬆️ Selecione e copie o texto acima")
-            st.session_state[f"copied_{acao['id']}"] = False
 
         # Salvar mudanças
         if novo_status != is_feito or nova_obs != obs_atual:
