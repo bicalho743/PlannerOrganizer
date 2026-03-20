@@ -9,20 +9,17 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-# Importar a versão melhorada do gerador de PDF
+# Importar gerador de PDF unificado v2
 try:
-    # Forçar a importação do módulo melhorado
-    import utils.pdf_generator_melhorado
-    # Agora importar a função específica
-    from utils.pdf_generator_melhorado import gerar_pdf_fechamento
-    print("DEBUG: Usando o gerador de PDF melhorado!")
+    from utils.pdf_generator_v2 import gerar_pdf_cliente as gerar_pdf_fechamento
+    print("DEBUG: Usando o gerador de PDF v2!")
 except ImportError as e:
     # Log detalhado do erro para diagnóstico
     print(f"ERRO DETALHADO NA IMPORTAÇÃO: {str(e)}")
     traceback.print_exc()
-    # Fallback para o gerador original em caso de erro
-    from utils.pdf_generator import gerar_pdf_fechamento
-    print("DEBUG: Usando o gerador de PDF original (fallback)!")
+    # Fallback seguro em caso de erro
+    gerar_pdf_fechamento = None
+    print("DEBUG: Gerador de PDF indisponível (fallback)!")
 
 def adicionar_acrescimo(db, proposta_id, tipo, fornecedor, descricao, valor):
     """
@@ -555,9 +552,21 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
             # Criando nome de arquivo com o formato: Interno_Proposta_#ID_NomeCliente_DATA.pdf
             filename = f"pdfs/Interno_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
             
-        # Gerar o PDF interno usando o gerador com análise financeira completa
-        from utils.pdf_generator_interno_melhorado import gerar_pdf_interno_melhorado
-        gerar_pdf_interno_melhorado(proposta, cliente, acrescimos, filename)
+        # Gerar o PDF interno usando o gerador v2 com análise financeira completa
+        from utils.pdf_generator_v2 import gerar_pdf_interno
+        # Preparar dados no formato esperado
+        dados_interno = {
+            'proposta_id': proposta.get('numero', '') if isinstance(proposta, dict) else proposta.numero,
+            'cliente': cliente.get('nome', '') if isinstance(cliente, dict) else cliente.nome,
+            'tipo': proposta.get('tipo_proposta', '') if isinstance(proposta, dict) else proposta.tipo_proposta,
+            'status': proposta.get('status', '') if isinstance(proposta, dict) else proposta.status,
+            'periodo': datetime.now().strftime('%b/%Y'),
+            'total_custo': 0,
+            'total_receita': 0,
+            'itens_custo': [],
+            'itens_receita': []
+        }
+        gerar_pdf_interno(dados_interno, filename)
         
         return True, "Relatório interno gerado com sucesso", filename
         
@@ -646,8 +655,20 @@ def gerar_pdf_fornecedores_proposta(db, proposta_id, custom_filename=None):
             data_atual = datetime.now().strftime('%Y%m%d_%H%M%S')
             filename = f"pdfs/Fornecedores_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
             
-        from utils.pdf_generator_fornecedores import gerar_pdf_fornecedores
-        gerar_pdf_fornecedores(proposta, cliente, itens_fornecedores, filename)
+        from utils.pdf_generator_v2 import gerar_pdf_fornecedores
+        # Preparar dados no formato esperado
+        dados_forn = {
+            'proposta_id': proposta.get('numero', '') if isinstance(proposta, dict) else proposta.numero,
+            'cliente': cliente.get('nome', '') if isinstance(cliente, dict) else cliente.nome,
+            'telefone': cliente.get('telefone', '') if isinstance(cliente, dict) else cliente.telefone,
+            'tipo': proposta.get('tipo_proposta', '') if isinstance(proposta, dict) else proposta.tipo_proposta,
+            'status': proposta.get('status', '') if isinstance(proposta, dict) else proposta.status,
+            'itens': [(f.get('descricao', f.get('nome', '')) if isinstance(f, dict) else getattr(f, 'descricao', getattr(f, 'nome', '')), 
+                      f.get('valor', 0) if isinstance(f, dict) else getattr(f, 'valor', 0), False) 
+                     for f in itens_fornecedores] if itens_fornecedores else [],
+            'total': sum(f.get('valor', 0) if isinstance(f, dict) else getattr(f, 'valor', 0) for f in itens_fornecedores) if itens_fornecedores else 0
+        }
+        gerar_pdf_fornecedores(dados_forn, filename)
         
         return True, "Relatório de fornecedores gerado com sucesso", filename
         
