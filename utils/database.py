@@ -1091,6 +1091,11 @@ class Database:
         """
         Retorna todos os clientes do usuário atual - com filtro obrigatório por multilocação
         """
+        # Cache por usuário
+        cache_key = f"cache_clientes_{self.usuario_id}"
+        if cache_key in st.session_state:
+            return st.session_state[cache_key]
+        
         def query():
             # SEMPRE aplicar filtro por usuário para garantir isolamento de dados
             query = self.session.query(Cliente)
@@ -1124,7 +1129,9 @@ class Database:
                 'observacoes': c.observacoes,
                 'usuario_id': c.usuario_id
             } for c in clientes])
-        return self._safe_query(query)
+        resultado = self._safe_query(query)
+        st.session_state[cache_key] = resultado
+        return resultado
         
     def get_cliente_by_id(self, cliente_id):
         """
@@ -1253,6 +1260,9 @@ class Database:
         Returns:
             int: ID do cliente adicionado
         """
+        # Invalidar cache quando novo cliente é adicionado
+        self.invalidar_cache()
+        
         def query():
             # Verificar se temos um ID de usuário válido antes de continuar
             if not self.usuario_id:
@@ -1334,6 +1344,11 @@ class Database:
         """
         Retorna todas as propostas do usuário atual
         """
+        # Cache por usuário
+        cache_key = f"cache_propostas_{self.usuario_id}"
+        if cache_key in st.session_state:
+            return st.session_state[cache_key]
+        
         def query():
             try:
                 # Construir consulta base
@@ -1449,7 +1464,9 @@ class Database:
                 # Retornar DataFrame vazio em caso de erro
                 return pd.DataFrame()
         
-        return self._safe_query(query)
+        resultado = self._safe_query(query)
+        st.session_state[cache_key] = resultado
+        return resultado
 
     def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, 
                     data_inicio=None, data_fim=None, prazo_entrega=None, previsao_dias=None, 
@@ -1460,6 +1477,9 @@ class Database:
         
         Os parâmetros são renomeados para evitar conflitos de escopo
         """
+        # Invalidar cache quando nova proposta é adicionada
+        self.invalidar_cache()
+        
         # Verificações mais robustas dos valores antes de convertê-los
         if cliente_id is None:
             raise ValueError("Cliente ID não pode ser nulo")
@@ -1550,6 +1570,11 @@ class Database:
         Returns:
             DataFrame: DataFrame com as transações
         """
+        # Cache por usuário (skip se force_reload)
+        cache_key = f"cache_financeiro_{self.usuario_id}"
+        if not force_reload and cache_key in st.session_state:
+            return st.session_state[cache_key]
+        
         # Importações no escopo da função principal
         import pandas as pd
         
@@ -1660,7 +1685,9 @@ class Database:
                 } for t in transacoes])
                 
                 return df
-        return self._safe_query(query)
+        resultado = self._safe_query(query)
+        st.session_state[cache_key] = resultado
+        return resultado
 
     def add_transacao(self, tipo, descricao, valor, categoria, tipo_receita=None, 
                      origem_id=None, origem_tipo=None, tipo_conta='PF', status='Pendente',
@@ -1686,6 +1713,9 @@ class Database:
         Returns:
             int: ID da transação adicionada
         """
+        # Invalidar cache quando nova transação é adicionada
+        self.invalidar_cache()
+        
         def query():
             # Verificar se temos um ID de usuário válido antes de continuar
             if not self.usuario_id:
@@ -6659,3 +6689,13 @@ class Database:
                 return {}
 
         return self._safe_query(query) or {}
+    
+    def invalidar_cache(self):
+        """
+        Invalida o cache de clientes, propostas e financeiro para o usuário atual.
+        Deve ser chamado quando dados são criados ou modificados.
+        """
+        for key in ["cache_clientes", "cache_propostas", "cache_financeiro"]:
+            full_key = f"{key}_{self.usuario_id}"
+            if full_key in st.session_state:
+                del st.session_state[full_key]
