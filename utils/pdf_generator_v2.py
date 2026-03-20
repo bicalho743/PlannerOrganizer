@@ -90,7 +90,19 @@ def _section_title(c, margin, content_w, y, titulo, subtitulo, line_color):
 
 def _table_rows(c, margin, content_w, start_y, items, row_h=9*mm):
     y = start_y
-    for idx, (nome, valor, is_neg) in enumerate(items):
+    for idx, item in enumerate(items):
+        if isinstance(item, dict):
+            nome = item.get('descricao', item.get('nome', item.get('produto_nome', '')))
+            valor = item.get('total', item.get('valor', item.get('subtotal', 0)))
+            is_neg = item.get('is_neg', False)
+        elif isinstance(item, (list, tuple)):
+            nome = item[0]
+            valor = item[1]
+            is_neg = item[2] if len(item) > 2 else False
+        else:
+            nome = str(item)
+            valor = 0
+            is_neg = False
         bg = GRAY1 if idx % 2 == 0 else WHITE
         rr(c, margin, y - row_h + 1.5*mm, content_w, row_h - 1*mm, 3, bg)
         c.setFillColor(DARK)
