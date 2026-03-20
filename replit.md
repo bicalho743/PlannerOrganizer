@@ -17,7 +17,7 @@ A aplicação é composta por `app.py` como arquivo principal, `pages/` para pá
 ### Módulos Principais
 O sistema inclui módulos para:
 - **Dashboard**: Visão geral com propostas em aberto e estatísticas.
-- **Propostas**: Gestão completa de propostas, incluindo exclusão com limpeza de dados relacionados.
+- **Propostas**: Gestão completa de propostas, incluindo exclusão com limpeza de dados relacionados. Seção "Itens & Custos" redesenhada com navegação lateral fixa (4 categorias: Produtos, Fornecedores, Assistentes, Outros), contadores e subtotais ao vivo, empty states visuais, e total geral sempre visível.
 - **Clientes**: Cadastro e gestão de clientes.
 - **Vendas**: Controle de vendas com botão "+ Nova Venda" inline no topo, lista de vendas e análise por período como abas diretas (sem sub-abas). Módulo de Produtos movido para Cadastros.
 - **Cadastros**: Cadastro e gestão de clientes, fornecedores, parceiros, assistentes e **produtos** (nova aba 📦 Produtos com cadastro individual + importação em massa).

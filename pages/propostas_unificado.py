@@ -331,12 +331,15 @@ def _tab_produtos(proposta_id):
                 except Exception as e:
                     st.error(str(e))
         else:
-            st.info("Nenhum produto adicionado a esta proposta ainda.")
+            st.markdown("""
+            <div class="itens-empty-state">
+              <div class="itens-empty-icon">📦</div>
+              <div class="itens-empty-title">Nenhum produto ainda</div>
+              <div class="itens-empty-hint">Clique em "+ Adicionar" abaixo para incluir produtos</div>
+            </div>""", unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Erro ao carregar produtos: {str(e)}")
 
-    # ── Formulário adicionar produto ──────────────────────────────────────
-    st.markdown("---")
     st.markdown('<p style="font-weight:600;color:#0D1B2A;font-size:14px;margin-bottom:4px;">➕ Adicionar Produto</p>', unsafe_allow_html=True)
     with st.form(key=f"form_produto_{proposta_id}"):
         produtos_cadastrados = st.session_state.db.get_produtos()
@@ -380,7 +383,6 @@ def _tab_produtos(proposta_id):
 def _tab_itens(proposta_id):
     """Itens & Custos com navegação lateral por categoria."""
 
-    # ── Carregar todos os dados ───────────────────────────────────────────
     try:
         produtos_df     = st.session_state.db.get_produtos_organizadores(proposta_id)
         fornecedores_df = st.session_state.db.get_acrescimos_proposta_por_tipo(proposta_id, "FORNECEDOR")
@@ -396,57 +398,81 @@ def _tab_itens(proposta_id):
     t_total = t_prod + t_forn + t_asst + t_outr
 
     cats = [
-        ("📦 Produtos",     len(produtos_df),     t_prod,  "#C9A84C"),
-        ("🏢 Fornecedores", len(fornecedores_df),  t_forn,  "#0F5E6E"),
-        ("👥 Assistentes",  len(assistentes_df),   t_asst,  "#6B4EAA"),
-        ("➕ Outros",       len(outros_df),        t_outr,  "#E07B39"),
+        ("Produtos",     "📦", len(produtos_df),     t_prod,  "#C9A84C"),
+        ("Fornecedores", "🏢", len(fornecedores_df),  t_forn,  "#0F5E6E"),
+        ("Assistentes",  "👥", len(assistentes_df),   t_asst,  "#6B4EAA"),
+        ("Outros",       "➕", len(outros_df),        t_outr,  "#E07B39"),
     ]
 
-    # ── Chave de sessão para categoria ativa ──────────────────────────────
     key_cat = f"itens_cat_{proposta_id}"
     if key_cat not in st.session_state:
-        st.session_state[key_cat] = "📦 Produtos"
+        st.session_state[key_cat] = "Produtos"
+    old_to_new = {"📦 Produtos": "Produtos", "🏢 Fornecedores": "Fornecedores",
+                  "👥 Assistentes": "Assistentes", "➕ Outros": "Outros"}
+    if st.session_state[key_cat] in old_to_new:
+        st.session_state[key_cat] = old_to_new[st.session_state[key_cat]]
 
-    # ── CSS da navegação lateral ──────────────────────────────────────────
+    cat_ativa = st.session_state[key_cat]
+
     st.markdown("""
     <style>
-    div[data-testid="stHorizontalBlock"] > div:first-child .stRadio > div {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
+    .itens-sidebar-title {
+        font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+        text-transform: uppercase; color: #8B8680; padding: 0 0 10px 2px;
+        border-bottom: 1px solid #eee; margin-bottom: 6px;
     }
-    div[data-testid="stHorizontalBlock"] > div:first-child .stRadio label {
-        padding: 10px 12px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 13px;
-        font-weight: 500;
-        border: none;
-        width: 100%;
-        transition: background 0.1s;
+    .itens-total-box {
+        background: #faf9f7; border: 1px solid #e8e5df; border-radius: 10px;
+        padding: 14px 12px; margin-top: 12px;
     }
-    div[data-testid="stHorizontalBlock"] > div:first-child .stRadio label:hover {
-        background: #f3f4f6;
+    .itens-total-label {
+        font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+        text-transform: uppercase; color: #8B8680; margin-bottom: 4px;
     }
+    .itens-total-value {
+        font-size: 18px; font-weight: 700; color: #0D1B2A;
+    }
+    .itens-content-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 14px 18px; background: #faf9f7; border-radius: 10px;
+        margin-bottom: 16px; border: 1px solid #e8e5df;
+    }
+    .itens-content-title {
+        font-size: 16px; font-weight: 700; color: #0D1B2A;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .itens-content-subtitle {
+        font-size: 12px; color: #8B8680; margin-top: 2px;
+    }
+    .itens-empty-state {
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; padding: 48px 20px;
+        background: #faf9f7; border-radius: 12px; border: 1px dashed #ddd;
+        margin: 8px 0 16px 0; text-align: center;
+    }
+    .itens-empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.6; }
+    .itens-empty-title {
+        font-size: 15px; font-weight: 600; color: #4a4a4a; margin-bottom: 6px;
+    }
+    .itens-empty-hint { font-size: 12px; color: #9a9890; }
     </style>
     """, unsafe_allow_html=True)
 
-    # ── Layout: sidebar (1) + conteúdo (3) ───────────────────────────────
     col_nav, col_main = st.columns([1, 2.8])
 
     with col_nav:
-        # Montar labels com contagem
+        st.markdown('<div class="itens-sidebar-title">ITENS & CUSTOS</div>', unsafe_allow_html=True)
+
         labels = []
-        for label, qtd, total, cor in cats:
-            badge = f" ({qtd})" if qtd > 0 else " (0)"
-            labels.append(label + badge)
+        label_map = {}
+        for cat_name, cat_icon, cat_qtd, cat_total, cat_cor in cats:
+            sub = _fmt_brl(cat_total) if cat_total > 0 else ""
+            display = f"{cat_icon} {cat_name}  {cat_qtd}" + (f" · {sub}" if sub else "")
+            labels.append(display)
+            label_map[display] = cat_name
 
-        # Mapeamento de label com badge → label base
-        label_map = {(l + (f" ({q})" if q > 0 else " (0)")): l for l, q, _, _ in cats}
-
-        # Índice atual
-        labels_base = [l for l, _, _, _ in cats]
-        idx_atual = labels_base.index(st.session_state[key_cat]) if st.session_state[key_cat] in labels_base else 0
+        labels_base = [name for name, _, _, _, _ in cats]
+        idx_atual = labels_base.index(cat_ativa) if cat_ativa in labels_base else 0
 
         escolha = st.radio(
             "Categoria",
@@ -456,44 +482,35 @@ def _tab_itens(proposta_id):
             label_visibility="collapsed"
         )
 
-        # Salvar categoria ativa (sem badge)
-        cat_ativa = label_map.get(escolha, "📦 Produtos")
+        cat_ativa = label_map.get(escolha, "Produtos")
         st.session_state[key_cat] = cat_ativa
 
-        # Total geral
-        st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
         st.markdown(f"""
-        <div style="background:#0D1B2A;border-radius:8px;padding:10px 12px;text-align:center;">
-          <div style="color:#C9A84C;font-size:10px;font-weight:700;letter-spacing:0.06em;
-                      text-transform:uppercase;margin-bottom:4px;">Total geral</div>
-          <div style="color:#fff;font-weight:700;font-size:15px;">{_fmt_brl(t_total)}</div>
+        <div class="itens-total-box">
+          <div class="itens-total-label">Total geral</div>
+          <div class="itens-total-value">{_fmt_brl(t_total)}</div>
         </div>""", unsafe_allow_html=True)
 
     with col_main:
-        # Cabeçalho da categoria ativa
-        for label, qtd, total, cor in cats:
-            if label == cat_ativa:
+        for cat_name, cat_icon, cat_qtd, cat_total, cat_cor in cats:
+            if cat_name == cat_ativa:
+                sub_text = f"{cat_qtd} {'item' if cat_qtd == 1 else 'itens'} · {_fmt_brl(cat_total)}"
                 st.markdown(f"""
-                <div style="display:flex;align-items:center;justify-content:space-between;
-                            padding:10px 14px;border-radius:8px;background:#fff;
-                            border-left:3px solid {cor};margin-bottom:12px;
-                            box-shadow:0 1px 4px rgba(0,0,0,.06);">
-                  <span style="font-size:15px;font-weight:700;color:#0D1B2A;">{label}</span>
-                  <div style="text-align:right;">
-                    <div style="font-size:12px;color:#888;">{qtd} {"item" if qtd == 1 else "itens"}</div>
-                    <div style="font-size:13px;font-weight:700;color:{cor};">{_fmt_brl(total)}</div>
+                <div class="itens-content-header">
+                  <div>
+                    <div class="itens-content-title">{cat_icon} {cat_name}</div>
+                    <div class="itens-content-subtitle">{sub_text}</div>
                   </div>
                 </div>""", unsafe_allow_html=True)
                 break
 
-        # Renderizar conteúdo da categoria ativa
-        if cat_ativa == "📦 Produtos":
+        if cat_ativa == "Produtos":
             _tab_produtos(proposta_id)
-        elif cat_ativa == "🏢 Fornecedores":
+        elif cat_ativa == "Fornecedores":
             _tab_fornecedores(proposta_id)
-        elif cat_ativa == "👥 Assistentes":
+        elif cat_ativa == "Assistentes":
             _tab_assistentes(proposta_id)
-        elif cat_ativa == "➕ Outros":
+        elif cat_ativa == "Outros":
             _tab_outros(proposta_id)
 
 
@@ -560,12 +577,15 @@ def _tab_fornecedores(proposta_id):
                             except Exception as e:
                                 st.error(str(e))
         else:
-            st.info("Nenhum fornecedor adicionado ainda.")
+            st.markdown("""
+            <div class="itens-empty-state">
+              <div class="itens-empty-icon">🏢</div>
+              <div class="itens-empty-title">Nenhum fornecedor ainda</div>
+              <div class="itens-empty-hint">Clique em "+ Adicionar" abaixo para incluir fornecedores</div>
+            </div>""", unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Erro ao carregar fornecedores: {str(e)}")
 
-    # ── Formulário adicionar ──────────────────────────────────────────────
-    st.markdown("---")
     st.markdown('<p style="font-weight:600;color:#0D1B2A;font-size:14px;margin-bottom:4px;">➕ Adicionar Fornecedor</p>', unsafe_allow_html=True)
     try:
         fornecedores = st.session_state.db.get_fornecedores()
@@ -641,12 +661,15 @@ def _tab_assistentes(proposta_id):
                             except Exception as e:
                                 st.error(str(e))
         else:
-            st.info("Nenhum assistente adicionado ainda.")
+            st.markdown("""
+            <div class="itens-empty-state">
+              <div class="itens-empty-icon">👥</div>
+              <div class="itens-empty-title">Nenhum assistente ainda</div>
+              <div class="itens-empty-hint">Clique em "+ Adicionar" abaixo para incluir assistentes</div>
+            </div>""", unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Erro ao carregar assistentes: {str(e)}")
 
-    # ── Formulário adicionar ──────────────────────────────────────────────
-    st.markdown("---")
     st.markdown('<p style="font-weight:600;color:#0D1B2A;font-size:14px;margin-bottom:4px;">➕ Adicionar Assistente</p>', unsafe_allow_html=True)
     try:
         assistentes = st.session_state.db.get_assistentes()
@@ -722,12 +745,15 @@ def _tab_outros(proposta_id):
                         except Exception as e:
                             st.error(str(e))
         else:
-            st.info("Nenhum item extra adicionado ainda.")
+            st.markdown("""
+            <div class="itens-empty-state">
+              <div class="itens-empty-icon">➕</div>
+              <div class="itens-empty-title">Nenhum item extra ainda</div>
+              <div class="itens-empty-hint">Clique em "+ Adicionar" abaixo para incluir itens extras</div>
+            </div>""", unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Erro ao carregar itens: {str(e)}")
 
-    # ── Formulário adicionar ──────────────────────────────────────────────
-    st.markdown("---")
     st.markdown('<p style="font-weight:600;color:#0D1B2A;font-size:14px;margin-bottom:4px;">➕ Adicionar Item Extra</p>', unsafe_allow_html=True)
     with st.form(key=f"form_outros_{proposta_id}"):
         col1, col2 = st.columns(2)
