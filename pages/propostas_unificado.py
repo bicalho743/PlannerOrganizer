@@ -394,16 +394,18 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type):
         elif report_type == "vendas":
             import time as _t
             from utils.pdf_generator_venda_fixed import gerar_pdf_venda
-            produtos = st.session_state.db.get_produtos_proposta(proposta_id)
+            produtos = st.session_state.db.get_produtos_organizadores(proposta_id)
             if produtos is None or (hasattr(produtos, 'empty') and produtos.empty):
                 error_msg = "Nenhum produto cadastrado."
             else:
-                valor_total = float(produtos['valor_unit'].astype(float).mul(produtos['quantidade'].astype(float)).sum()) if 'valor_unit' in produtos.columns else 0
+                val_col = 'valor_unit' if 'valor_unit' in produtos.columns else 'valor'
+                valor_total = float(produtos[val_col].astype(float).mul(produtos['quantidade'].astype(float)).sum())
                 venda_dados = {'id': proposta_id, 'status': 'Proposta', 'forma_pagamento': 'N/A',
                                'valor_total': round(valor_total, 2),
                                'data_venda': datetime.now().strftime('%d/%m/%Y'),
                                'observacoes': f"Produtos Proposta #{proposta_id}"}
-                itens_pdf = produtos.rename(columns={'nome': 'produto_nome', 'valor_unit': 'preco_unitario'})[['produto_nome', 'quantidade', 'preco_unitario']].copy()
+                rename_map = {'nome': 'produto_nome', val_col: 'preco_unitario'}
+                itens_pdf = produtos.rename(columns=rename_map)[['produto_nome', 'quantidade', 'preco_unitario']].copy()
                 ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_t.time()))
                 fname = f"pdfs/Venda_Proposta_{proposta_id}_{ts}.pdf"
                 os.makedirs("pdfs", exist_ok=True)
