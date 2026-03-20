@@ -130,6 +130,9 @@ def get_usuario_id_from_session():
 # Importar modelos do módulo separado
 from utils.models import *
 
+# Importar queries de módulos separados
+from utils.queries_pos_org import *
+
 
 class Database:
     def refresh_schema_metadata(self):
