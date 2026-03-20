@@ -320,6 +320,15 @@ def _view_detalhes(templates):
                 placeholder="Observação...",
                 disabled=is_cancelado
             )
+        
+        # Exibir hint estratégico se disponível
+        if hint and not is_cancelado:
+            st.markdown(f"""
+            <div style="background:#f0f4ff;border-left:3px solid #6366f1;padding:10px 12px;margin:8px 0;border-radius:4px">
+                <p style="margin:0;font-size:0.85rem;color:#4f46e5;font-weight:600">💡 Dica estratégica:</p>
+                <p style="margin:4px 0 0 0;font-size:0.8rem;color:#4338ca">{hint}</p>
+            </div>
+            """, unsafe_allow_html=True)
 
         # Salvar mudanças
         if novo_status != is_feito or nova_obs != obs_atual:
