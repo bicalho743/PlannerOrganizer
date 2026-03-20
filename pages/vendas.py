@@ -465,7 +465,7 @@ def show():
     if "vendas_nova_venda_open" not in st.session_state:
         st.session_state["vendas_nova_venda_open"] = False
 
-    col_esp1, col_btn, col_esp2 = st.columns([3, 2, 3])
+    col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
     with col_btn:
         with stylable_container(key="gold_nova_venda", css_styles="""
             button {
