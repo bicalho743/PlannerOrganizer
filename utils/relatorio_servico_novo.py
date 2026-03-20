@@ -15,9 +15,6 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
-# Importar a nova versão padronizada do relatório de serviço
-from utils.pdf_generator_servico_padronizado import gerar_pdf_servico_padronizado
-
 
 def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
     """
