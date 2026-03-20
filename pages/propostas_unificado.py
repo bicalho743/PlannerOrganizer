@@ -1015,7 +1015,6 @@ def _tab_acoes(proposta_id, proposta):
             st.error(f"Erro ao carregar resumo: {str(e)}")
 
         st.markdown("---")
-        st.markdown('<p style="color:#B7860D;font-size:13px;font-weight:600;">⚠️ Após finalizar, esta ação não poderá ser desfeita facilmente.</p>', unsafe_allow_html=True)
         with st.form(key=f"form_finalizar_concluida_{proposta_id}"):
             if st.form_submit_button("🏁 MARCAR COMO CONCLUÍDA", type="primary", use_container_width=True):
                 try:
