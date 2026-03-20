@@ -225,8 +225,8 @@ def _render_detail_panel(venda_id, venda_row):
             iv = st.session_state.db.get_itens_venda(venda_id)
             if not iv.empty:
                 return iv
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Erro: {e}")
         pid = venda_row.get("proposta_id")
         if pid and not pd.isna(pid):
             try:
@@ -235,8 +235,8 @@ def _render_detail_panel(venda_id, venda_row):
                     po = po.rename(columns={"nome": "produto_nome", "valor": "preco_unitario"})
                     po["subtotal"] = po["preco_unitario"] * po["quantidade"]
                     return po[["produto_nome", "quantidade", "preco_unitario", "subtotal"]]
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"Erro: {e}")
         return pd.DataFrame()
 
     itens_det = _get_itens_completo()

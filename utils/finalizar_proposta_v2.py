@@ -205,8 +205,8 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
             # Garantir que a transação seja limpa
             try:
                 conn.rollback()
-            except:
-                pass
+            except Exception as e:
+                print(f"Erro: {e}")
         
         try:
             produtos_estoque = cursor.fetchall()

@@ -607,7 +607,7 @@ class Database:
                         if 'usuario_id' not in st.session_state or st.session_state.usuario_id != usuario_id:
                             st.session_state.usuario_id = usuario_id
                 except Exception as session_error:
-                    pass
+                    print(f"Erro: {session_error}")
             else:
                 # 2. Tentar obter o ID do usuário da sessão do Streamlit
                 # Esta função agora tem lógica aprimorada para garantir que o ID seja sempre encontrado
@@ -627,7 +627,7 @@ class Database:
                         if hasattr(st, 'session_state'):
                             st.session_state.usuario_id = temp_id
                     except Exception as session_error:
-                        pass
+                        print(f"Erro: {session_error}")
 
             # Status final do tenant
             if self.usuario_id:
@@ -948,8 +948,8 @@ class Database:
                 if 'PREPARE' in session_state or 'FINISHED' in session_state:
                     try:
                         self.session.close()
-                    except:
-                        pass
+                    except Exception as e:
+                        print(f"Erro: {e}")
                     self.session = Session()
                     # Removido log de debug sobre recriação de sessão
                 elif not self.session.is_active:
@@ -958,8 +958,8 @@ class Database:
             except Exception as session_check_error:
                 try:
                     self.session.close()
-                except:
-                    pass
+                except Exception as e:
+                    print(f"Erro: {e}")
                 self.session = Session()
                 # Removido log de debug sobre criação de nova sessão
                 
@@ -1021,13 +1021,13 @@ class Database:
                     try:
                         self.session.rollback()
                         # Removido log de debug sobre rollback
-                    except:
-                        pass
+                    except Exception as e:
+                        print(f"Erro: {e}")
                     # Criar nova sessão se necessário
                     try:
                         self.session.close()
-                    except:
-                        pass
+                    except Exception as e:
+                        print(f"Erro: {e}")
                     self.session = Session()
                     # Removido log de debug sobre nova sessão
 
@@ -1069,8 +1069,8 @@ class Database:
                 # Em caso de falha no rollback, criar nova sessão
                 try:
                     self.session.close()
-                except:
-                    pass
+                except Exception as e:
+                    print(f"Erro: {e}")
                 self.session = Session()
                 # Removido log de debug sobre nova sessão
             
@@ -1351,7 +1351,7 @@ class Database:
                         if session_usuario_id:
                             self.usuario_id = session_usuario_id
                     except Exception as e:
-                        pass
+                        print(f"Erro: {e}")
                 
                 # Aplicar filtro de usuário - com segurança aprimorada
                 if self.usuario_id:
@@ -5810,7 +5810,7 @@ class Database:
                     else:
                         pass
                 except Exception as e:
-                    pass
+                    print(f"Erro: {e}")
                 
                 # Agrupar produtos por tipo (físicos vs. serviços)
                 produtos_fisicos = []
