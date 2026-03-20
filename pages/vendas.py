@@ -273,17 +273,15 @@ def _render_detail_panel(venda_id, venda_row):
     if st.session_state.get(f"gerar_pdf_{venda_id}", False):
         st.session_state.pop(f"gerar_pdf_{venda_id}", None)
         try:
-            from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
             import time as _time
             nome_raw = str(venda_row.get("cliente_nome", "cliente"))
-            itens_pdf = itens_det  # usa os itens já carregados (com fallback proposta)
+            itens_pdf = itens_det
             os.makedirs("pdfs", exist_ok=True)
             ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_time.time()))
             safe_nome = nome_raw.replace(" ", "_").replace("/", "_").lower()
             
-            # Preparar dados para relatorio_servico_novo
             proposta_dados = {
-                "numero": venda_row.get("id", ""),
+                "id": venda_row.get("id", ""),
                 "tipo_proposta": "Venda",
                 "status": venda_row.get("status", "Concluída"),
                 "forma_pagamento": venda_row.get("forma_pagamento", ""),
@@ -499,7 +497,6 @@ def show():
         with rc1:
             if st.button("📄 GERAR RELATÓRIO", type="primary", use_container_width=True, key="btn_rel_pos"):
                 try:
-                    from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
                     import time as _time
                     vid = st.session_state.venda_recente_id
                     vendas_tmp = st.session_state.db.get_vendas()
@@ -510,7 +507,7 @@ def show():
                     
                     # Preparar dados para relatorio_servico_novo
                     proposta_dados = {
-                        "numero": vrow["id"],
+                        "id": vrow["id"],
                         "tipo_proposta": "Venda",
                         "status": vrow.get("status", "Concluída"),
                         "forma_pagamento": st.session_state.venda_recente_forma_pagamento,
