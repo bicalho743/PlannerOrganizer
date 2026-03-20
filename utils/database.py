@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import streamlit as st
 from datetime import datetime, timedelta
 from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, func, Index, text, select, DateTime, inspect
 from sqlalchemy.ext.declarative import declarative_base
@@ -64,6 +63,63 @@ Base = declarative_base()
 # Create scoped session
 session_factory = sessionmaker(bind=engine, expire_on_commit=False)
 Session = scoped_session(session_factory)
+
+# Função auxiliar para obter o ID do usuário (desacoplada do Streamlit)
+def get_usuario_id(usuario_id_override=None):
+    """
+    Retorna o ID do usuário atual.
+    Aceita override direto para uso fora do contexto Streamlit.
+    
+    Args:
+        usuario_id_override: ID fornecido externamente (sobrescreve a sessão)
+        
+    Returns:
+        str: ID do usuário ou None se não disponível
+    """
+    if usuario_id_override is not None:
+        return usuario_id_override
+    try:
+        import streamlit as st
+        return st.session_state.get('usuario_id')
+    except Exception:
+        return None
+
+# Função para obter um valor do cache da sessão (desacoplada do Streamlit)
+def get_cache(key):
+    """
+    Obtém um valor do cache da sessão Streamlit.
+    Retorna None se não estiver em Streamlit ou se a chave não existe.
+    """
+    try:
+        import streamlit as st
+        return st.session_state.get(key)
+    except Exception:
+        return None
+
+# Função para definir um valor no cache da sessão (desacoplada do Streamlit)
+def set_cache(key, value):
+    """
+    Define um valor no cache da sessão Streamlit.
+    Falha silenciosamente se não estiver em Streamlit.
+    """
+    try:
+        import streamlit as st
+        st.session_state[key] = value
+    except Exception:
+        pass
+
+# Função para remover um valor do cache da sessão (desacoplada do Streamlit)
+def remove_cache(key):
+    """
+    Remove um valor do cache da sessão Streamlit.
+    Falha silenciosamente se não estiver em Streamlit.
+    """
+    try:
+        import streamlit as st
+        if key in st.session_state:
+            del st.session_state[key]
+    except Exception:
+        pass
 
 # Função auxiliar para obter o ID do usuário da sessão do Streamlit
 def get_usuario_id_from_session():
@@ -675,8 +731,9 @@ class Database:
         """
         # Cache por usuário
         cache_key = f"cache_clientes_{self.usuario_id}"
-        if cache_key in st.session_state:
-            return st.session_state[cache_key]
+        cached_result = get_cache(cache_key)
+        if cached_result is not None:
+            return cached_result
         
         def query():
             # SEMPRE aplicar filtro por usuário para garantir isolamento de dados
@@ -712,7 +769,7 @@ class Database:
                 'usuario_id': c.usuario_id
             } for c in clientes])
         resultado = self._safe_query(query)
-        st.session_state[cache_key] = resultado
+        set_cache(cache_key, resultado)
         return resultado
         
     def get_cliente_by_id(self, cliente_id):
@@ -928,8 +985,9 @@ class Database:
         """
         # Cache por usuário
         cache_key = f"cache_propostas_{self.usuario_id}"
-        if cache_key in st.session_state:
-            return st.session_state[cache_key]
+        cached_result = get_cache(cache_key)
+        if cached_result is not None:
+            return cached_result
         
         def query():
             try:
@@ -1047,7 +1105,7 @@ class Database:
                 return pd.DataFrame()
         
         resultado = self._safe_query(query)
-        st.session_state[cache_key] = resultado
+        set_cache(cache_key, resultado)
         return resultado
 
     def add_proposta(self, cliente_id, descricao, valor, status, tipo_proposta=None, 
@@ -1154,8 +1212,10 @@ class Database:
         """
         # Cache por usuário (skip se force_reload)
         cache_key = f"cache_financeiro_{self.usuario_id}"
-        if not force_reload and cache_key in st.session_state:
-            return st.session_state[cache_key]
+        if not force_reload:
+            cached_result = get_cache(cache_key)
+            if cached_result is not None:
+                return cached_result
         
         # Importações no escopo da função principal
         import pandas as pd
@@ -1268,7 +1328,7 @@ class Database:
                 
                 return df
         resultado = self._safe_query(query)
-        st.session_state[cache_key] = resultado
+        set_cache(cache_key, resultado)
         return resultado
 
     def add_transacao(self, tipo, descricao, valor, categoria, tipo_receita=None, 
@@ -6279,5 +6339,4 @@ class Database:
         """
         for key in ["cache_clientes", "cache_propostas", "cache_financeiro"]:
             full_key = f"{key}_{self.usuario_id}"
-            if full_key in st.session_state:
-                del st.session_state[full_key]
+            remove_cache(full_key)
