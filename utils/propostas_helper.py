@@ -468,9 +468,23 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
             # Criando nome de arquivo com o formato: Cliente_Proposta_#ID_NomeCliente_DATA.pdf
             filename = f"pdfs/Cliente_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
             
-        # Gerar o PDF para cliente usando o relatório de serviço padronizado
-        from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
-        gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename)
+        # Gerar o PDF para cliente usando o gerador v2 (design Navy/Gold)
+        from utils.pdf_generator_v2 import gerar_pdf_cliente
+        dados_cliente = {
+            'proposta_id': proposta_id,
+            'numero': proposta.get('numero', proposta_id),
+            'cliente_nome': cliente.get('nome', ''),
+            'cliente_email': cliente.get('email', ''),
+            'cliente_telefone': cliente.get('telefone', ''),
+            'tipo_servico': proposta.get('tipo_proposta', 'Organização'),
+            'descricao': proposta.get('descricao', ''),
+            'data_inicio': proposta.get('data_inicio', ''),
+            'data_fim': proposta.get('data_fim', ''),
+            'prazo': proposta.get('prazo_entrega', ''),
+            'valor_total': proposta.get('valor', 0),
+            'observacoes': proposta.get('observacoes', ''),
+        }
+        gerar_pdf_cliente(dados_cliente, filename)
         
         return True, "Relatório do cliente gerado com sucesso", filename
         
