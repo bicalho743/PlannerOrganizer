@@ -1103,3 +1103,37 @@ button[data-testid="baseButton-secondary"] *,
 body, .main, [data-testid="stAppViewContainer"], .block-container {
     padding-bottom: 60px !important;
 }
+
+/* ========================================
+   TÍTULOS DE PÁGINA CENTRALIZADOS
+   ======================================== */
+h1.page-title {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-top: 0;
+    padding-top: 0;
+    margin-bottom: 1rem;
+}
+
+/* ========================================
+   KANBAN - ESTILOS CENTRALIZADOS
+   ======================================== */
+.kanban-col-header {
+    font-weight: 700;
+    font-size: 0.82rem;
+    padding: 6px 10px;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 6px;
+    text-align: center;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.kanban-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
