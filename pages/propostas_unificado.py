@@ -172,10 +172,7 @@ def _render_detail_panel(proposta_id, proposta, propostas_com_clientes):
     elif finalizada:
         _render_finalized_proposal_actions(proposta_id, proposta)
     else:
-        _tab_itens(proposta_id)
-        st.markdown("---")
-        if st.button("🏁 FINALIZAR PROPOSTA", key=f"btn_finalizar_exec_{proposta_id}", type="primary", use_container_width=True):
-            st.session_state[f"confirm_finalizar_{proposta_id}"] = True
+        _tab_itens(proposta_id, show_finalizar=True)
         if st.session_state.get(f"confirm_finalizar_{proposta_id}", False):
             st.warning("Deseja realmente finalizar esta proposta?")
             fc1, fc2, fc3 = st.columns([2, 1, 1])
@@ -665,7 +662,7 @@ def _tab_produtos(proposta_id):
             st.form_submit_button("ADICIONAR", disabled=True)
 
 
-def _tab_itens(proposta_id):
+def _tab_itens(proposta_id, show_finalizar=False):
     """Itens & Custos com navegação lateral por categoria."""
 
     try:
@@ -775,6 +772,11 @@ def _tab_itens(proposta_id):
           <div class="itens-total-label">Total geral</div>
           <div class="itens-total-value">{_fmt_brl(t_total)}</div>
         </div>""", unsafe_allow_html=True)
+
+        if show_finalizar:
+            st.markdown("<div style='margin-top:8px;'></div>", unsafe_allow_html=True)
+            if st.button("🏁 Finalizar", key=f"btn_finalizar_exec_{proposta_id}", use_container_width=True):
+                st.session_state[f"confirm_finalizar_{proposta_id}"] = True
 
     with col_main:
         for cat_name, cat_icon, cat_qtd, cat_total, cat_cor in cats:
