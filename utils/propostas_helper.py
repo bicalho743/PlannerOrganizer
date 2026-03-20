@@ -468,11 +468,14 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
             # Criando nome de arquivo com o formato: Cliente_Proposta_#ID_NomeCliente_DATA.pdf
             filename = f"pdfs/Cliente_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
             
-        # Gerar o PDF para cliente usando o relatório de serviço (funcionando)
+        # Usar relatorio_servico_novo que está funcionando
         from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
-        gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename)
-        
-        return True, "Relatório do cliente gerado com sucesso", filename
+        try:
+            gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename)
+            return True, "Relatório do cliente gerado com sucesso", filename
+        except Exception as e:
+            print(f"DEBUG: Erro em relatorio_servico_novo: {str(e)}")
+            raise
         
     except Exception as e:
         print(f"DEBUG HELPER CRITICAL: Erro ao gerar PDF cliente: {str(e)}")
@@ -552,52 +555,9 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
             # Criando nome de arquivo com o formato: Interno_Proposta_#ID_NomeCliente_DATA.pdf
             filename = f"pdfs/Interno_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
             
-        # Gerar o PDF interno usando gerador que já está funcionando
-        # O gerador está em pdf_generator_v2 e recebe dict consolidado
-        try:
-            from utils.pdf_generator_v2 import gerar_pdf_interno
-            # Buscar dados financeiros para análise
-            financeiro = db.get_financeiro() if db else pd.DataFrame()
-            
-            # Preparar dados consolidados
-            total_custo = 0
-            total_receita = 0
-            itens_custo = []
-            itens_receita = []
-            
-            if not financeiro.empty:
-                pf = financeiro[financeiro['proposta_id'] == int(proposta_id)]
-                if not pf.empty:
-                    for _, row in pf.iterrows():
-                        tipo = row.get('tipo', '').lower()
-                        valor = row.get('valor', 0)
-                        desc = row.get('descricao', '')
-                        
-                        if 'receita' in tipo or 'ganho' in tipo or 'lucro' in tipo:
-                            total_receita += valor
-                            itens_receita.append((desc, valor))
-                        else:
-                            total_custo += valor
-                            itens_custo.append((desc, valor))
-            
-            dados_interno = {
-                'proposta_id': proposta.get('numero', proposta_id) if isinstance(proposta, dict) else getattr(proposta, 'numero', proposta_id),
-                'cliente': cliente.get('nome', '') if isinstance(cliente, dict) else getattr(cliente, 'nome', ''),
-                'telefone': cliente.get('telefone', '') if isinstance(cliente, dict) else getattr(cliente, 'telefone', ''),
-                'tipo': proposta.get('tipo_proposta', '') if isinstance(proposta, dict) else getattr(proposta, 'tipo_proposta', ''),
-                'status': proposta.get('status', '') if isinstance(proposta, dict) else getattr(proposta, 'status', ''),
-                'periodo': datetime.now().strftime('%d/%m/%Y'),
-                'total_custo': total_custo,
-                'total_receita': total_receita,
-                'itens_custo': itens_custo,
-                'itens_receita': itens_receita
-            }
-            gerar_pdf_interno(dados_interno, filename)
-        except Exception as e_inner:
-            print(f"DEBUG: Erro ao gerar PDF interno v2: {str(e_inner)}. Tentando relatorio_servico_novo...")
-            # Fallback: usar relatorio_servico_novo se v2 falhar
-            from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
-            gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename)
+        # Usar relatorio_servico_novo (o ÚNICO que funciona!)
+        from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
+        gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename)
         
         return True, "Relatório interno gerado com sucesso", filename
         
@@ -686,9 +646,9 @@ def gerar_pdf_fornecedores_proposta(db, proposta_id, custom_filename=None):
             data_atual = datetime.now().strftime('%Y%m%d_%H%M%S')
             filename = f"pdfs/Fornecedores_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
             
-        from utils.pdf_generator_fornecedores import gerar_pdf_fornecedores
-        # Chamar com argumentos corretos
-        gerar_pdf_fornecedores(proposta, cliente, itens_fornecedores, filename)
+        # Usar relatorio_servico_novo que está funcionando
+        from utils.relatorio_servico_novo import gerar_pdf_relatorio_servico
+        gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename)
         
         return True, "Relatório de fornecedores gerado com sucesso", filename
         
