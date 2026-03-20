@@ -4,7 +4,7 @@ import plotly.express as px
 import base64
 import time
 from datetime import datetime, timedelta
-from utils.currency_formatter import format_currency_br
+from utils.currency_formatter import format_currency_br, fmt_brl
 from utils.fluxo_caixa_simple import FluxoCaixaSimple
 
 def show():
@@ -1120,21 +1120,21 @@ def show():
             
             # Métricas principais
             col1, col2, col3 = st.columns(3)
-            col1.metric("💰 Total Receitas", f"R$ {resumo['total_receitas']:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
-            col2.metric("💸 Total Despesas", f"R$ {resumo['total_despesas']:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+            col1.metric("💰 Total Receitas", fmt_brl(resumo['total_receitas']))
+            col2.metric("💸 Total Despesas", fmt_brl(resumo['total_despesas']))
             
             saldo_cor = "normal"
             if resumo['saldo_mes'] > 0:
                 saldo_cor = "inverse" 
-            col3.metric("📈 Saldo do Mês", f"R$ {resumo['saldo_mes']:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+            col3.metric("📈 Saldo do Mês", fmt_brl(resumo['saldo_mes']))
             
             # Status das transações
             st.markdown("#### 📊 Status das Transações")
             col1, col2, col3, col4 = st.columns(4)
-            col1.metric("✅ Receitas Pagas", f"R$ {resumo['receitas_pagas']:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
-            col2.metric("⏳ Receitas Pendentes", f"R$ {resumo['receitas_pendentes']:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
-            col3.metric("✅ Despesas Pagas", f"R$ {resumo['despesas_pagas']:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
-            col4.metric("⏳ Despesas Pendentes", f"R$ {resumo['despesas_pendentes']:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+            col1.metric("✅ Receitas Pagas", fmt_brl(resumo['receitas_pagas']))
+            col2.metric("⏳ Receitas Pendentes", fmt_brl(resumo['receitas_pendentes']))
+            col3.metric("✅ Despesas Pagas", fmt_brl(resumo['despesas_pagas']))
+            col4.metric("⏳ Despesas Pendentes", fmt_brl(resumo['despesas_pendentes']))
         
         with tab_transacoes:
             # Lista de transações do mês
@@ -1144,9 +1144,7 @@ def show():
                 # Formatação para exibição
                 df_display = transacoes.copy()
                 df_display['data'] = pd.to_datetime(df_display['data']).dt.strftime('%d/%m/%Y')
-                df_display['valor_formatado'] = df_display['valor'].apply(
-                    lambda x: f"R$ {x:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
-                )
+                df_display['valor_formatado'] = df_display['valor'].apply(fmt_brl)
                 
                 # Filtros
                 col1, col2 = st.columns(2)
@@ -1221,9 +1219,7 @@ def show():
                 
                 # Formatar valores monetários
                 for col in ['Receitas', 'Despesas', 'Saldo']:
-                    df_categorias[col + '_formatado'] = df_categorias[col].apply(
-                        lambda x: f"R$ {x:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
-                    )
+                    df_categorias[col + '_formatado'] = df_categorias[col].apply(fmt_brl)
                 
                 # Exibir tabela
                 st.dataframe(

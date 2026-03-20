@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from utils.currency_formatter import fmt_brl
 import os
 
 # Configuração da página
@@ -47,9 +48,7 @@ def exportar_propostas():
         propostas['categoria'] = propostas.apply(categorizar_proposta, axis=1)
         
         # Formatar valor para exibição
-        propostas['valor_formatado'] = propostas['valor'].apply(
-            lambda x: f"R$ {float(x):,.2f}".replace(',', '.').replace('.', ',') if pd.notna(x) else "R$ 0,00"
-        )
+        propostas['valor_formatado'] = propostas['valor'].apply(fmt_brl)
         
         # Formatar datas
         propostas['data_inicio_formatada'] = propostas['data_inicio'].apply(

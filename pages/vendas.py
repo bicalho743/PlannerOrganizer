@@ -7,11 +7,7 @@ from utils.custom_components import custom_info, custom_warning
 from streamlit_extras.stylable_container import stylable_container
 
 
-def _fmt_brl(val):
-    try:
-        return f"R$ {float(val):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-    except Exception:
-        return "R$ 0,00"
+from utils.currency_formatter import fmt_brl as _fmt_brl
 
 
 def _safe_float(val, default=0.0):
@@ -249,12 +245,8 @@ def _render_detail_panel(venda_id, venda_row):
     if not itens_det.empty:
         try:
             disp = itens_det.copy()
-            disp["Total"] = (disp["quantidade"] * disp["preco_unitario"]).map(
-                lambda x: f"R$ {x:,.2f}".replace(",","X").replace(".",",").replace("X",".")
-            )
-            disp["preco_unitario"] = disp["preco_unitario"].map(
-                lambda x: f"R$ {x:,.2f}".replace(",","X").replace(".",",").replace("X",".")
-            )
+            disp["Total"] = (disp["quantidade"] * disp["preco_unitario"]).map(_fmt_brl)
+            disp["preco_unitario"] = disp["preco_unitario"].map(_fmt_brl)
             disp = disp[["produto_nome","quantidade","preco_unitario","Total"]].rename(columns={
                 "produto_nome":"Produto","quantidade":"Qtd","preco_unitario":"Unit."
             })
@@ -747,8 +739,8 @@ def show():
                             top = pd.DataFrame(res.fetchall(), columns=["Produto", "Qtd", "Receita", "Preço Médio"])
                             if not top.empty:
                                 top["Qtd"] = top["Qtd"].astype(int)
-                                top["Receita"] = top["Receita"].apply(lambda x: f"R$ {x:,.2f}".replace(",","X").replace(".",",").replace("X","."))
-                                top["Preço Médio"] = top["Preço Médio"].apply(lambda x: f"R$ {x:,.2f}".replace(",","X").replace(".",",").replace("X","."))
+                                top["Receita"] = top["Receita"].apply(_fmt_brl)
+                                top["Preço Médio"] = top["Preço Médio"].apply(_fmt_brl)
                                 st.dataframe(top, use_container_width=True, hide_index=True)
                             else:
                                 st.info("Estas vendas não possuem itens detalhados cadastrados. "

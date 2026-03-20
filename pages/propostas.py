@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import uuid
 import plotly.graph_objects as go
 from utils.database import Fornecedor
+from utils.currency_formatter import fmt_brl
 
 def show():
     # Título com estilo personalizado para ficar mais próximo do topo
@@ -2277,9 +2278,9 @@ def show():
                         # Tratar o valor como texto formatado no formato brasileiro
                         try:
                             valor_numerico = float(row[8]) if row[8] else 0.0
-                            valor_fmt = f"R$ {valor_numerico:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+                            valor_fmt = fmt_brl(valor_numerico)
                         except (ValueError, TypeError):
-                            valor_fmt = f"R$ {row[8]}" if row[8] else "R$ 0,00"
+                            valor_fmt = "R$ 0,00"
                             valor_numerico = 0.0
                         
                         # Determinar a categoria de status para agrupamento/filtro

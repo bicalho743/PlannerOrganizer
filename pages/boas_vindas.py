@@ -5,9 +5,7 @@ import random
 from utils.database import Database
 from sqlalchemy import text
 
-def format_currency(value):
-    """Formata um valor como moeda brasileira"""
-    return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+from utils.currency_formatter import fmt_brl as format_currency
 
 def get_random_color():
     """Retorna uma cor aleatória entre um conjunto de cores pré-definidas do tema"""

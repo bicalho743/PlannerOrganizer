@@ -2,7 +2,7 @@ import streamlit as st
 from datetime import datetime, timedelta
 import pandas as pd
 from utils.force_spacing_fix import apply_spacing_fix
-from utils.currency_formatter import format_currency_br
+from utils.currency_formatter import format_currency_br, fmt_brl
 from utils.simple_mobile_fix import apply_mobile_sidebar_fix
 
 # Função auxiliar para formatar datas com segurança
@@ -342,7 +342,7 @@ def show():
                         # Valor
                         try:
                             valor = float(proposta['valor']) if not pd.isna(proposta['valor']) else 0.0
-                            valor_formatado = f"R$ {valor:,.2f}".replace(',', '.')
+                            valor_formatado = fmt_brl(valor)
                         except (ValueError, TypeError):
                             valor_formatado = "R$ 0,00"
                         

@@ -7,6 +7,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 from utils.database import Database
+from utils.currency_formatter import fmt_brl
 from sqlalchemy import text
 
 class FluxoCaixaSimple:
@@ -181,7 +182,7 @@ class FluxoCaixaSimple:
         # Formatar para exportação
         export_df = transacoes.copy()
         export_df['data'] = pd.to_datetime(export_df['data']).dt.strftime('%d/%m/%Y')
-        export_df['valor_formatado'] = export_df['valor'].apply(lambda x: f"R$ {x:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+        export_df['valor_formatado'] = export_df['valor'].apply(fmt_brl)
         
         # Reordenar colunas
         colunas_export = ['data', 'tipo', 'descricao', 'categoria', 'valor_formatado', 'status']

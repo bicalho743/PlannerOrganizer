@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from utils.currency_formatter import fmt_brl
 
 # Configuração da página
 st.set_page_config(
@@ -81,15 +82,7 @@ try:
         st.write(f"Propostas encontradas após filtros: {len(propostas_filtradas)}")
         
         # Formatar valor para exibição
-        def formatar_valor(valor):
-            if pd.isna(valor):
-                return "R$ 0,00"
-            try:
-                return f"R$ {float(valor):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
-            except:
-                return f"R$ {valor}"
-        
-        propostas_filtradas['valor_formatado'] = propostas_filtradas['valor'].apply(formatar_valor)
+        propostas_filtradas['valor_formatado'] = propostas_filtradas['valor'].apply(fmt_brl)
         
         # Tabela de propostas
         st.subheader("Lista de Propostas")

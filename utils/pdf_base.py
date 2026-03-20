@@ -29,7 +29,8 @@ def fmt(v):
         v = float(v)
     except (TypeError, ValueError):
         v = 0.0
-    return f"R$ {abs(v):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    from utils.currency_formatter import fmt_brl as _fmt
+    return _fmt(abs(v))
 
 
 def rr(c, x, y, w, h, r, fill, stroke=None, sw=0.5):

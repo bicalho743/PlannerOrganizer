@@ -23,11 +23,7 @@ def _safe_float(val, default=0.0):
         return default
 
 
-def _fmt_brl(val):
-    try:
-        return f"R$ {float(val):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-    except Exception:
-        return "R$ 0,00"
+from utils.currency_formatter import fmt_brl as _fmt_brl
 
 
 def _render_nova_proposta_form(clientes):
@@ -565,7 +561,7 @@ def _tab_produtos(proposta_id):
             # Métricas resumo
             c1, c2 = st.columns(2)
             c1.metric("Itens adicionados", len(produtos_proposta))
-            c2.metric("Total produtos", f"R$ {valor_total_produtos:,.2f}".replace(",","X").replace(".",",").replace("X","."))
+            c2.metric("Total produtos", _fmt_brl(valor_total_produtos))
 
             # Cards dos itens
             cards = ""
@@ -575,8 +571,8 @@ def _tab_produtos(proposta_id):
                 qty = int(p.get('quantidade', 1))
                 vunit = float(p.get('valor_unit', 0))
                 vtot = float(p.get('valor_total', 0))
-                vunit_str = f"R$ {vunit:,.2f}".replace(",","X").replace(".",",").replace("X",".")
-                vtot_str  = f"R$ {vtot:,.2f}".replace(",","X").replace(".",",").replace("X",".")
+                vunit_str = _fmt_brl(vunit)
+                vtot_str  = _fmt_brl(vtot)
                 cards += f"""
                 <div style="border-left:3px solid #C9A84C;background:#fff;border-radius:0 8px 8px 0;
                             padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);
@@ -832,7 +828,7 @@ def _acrescimos_cards(acrescimos, cor_borda="#C9A84C"):
         nome = html_module.escape(str(a.get('fornecedor') or a.get('descricao') or '—'))
         desc = html_module.escape(str(a.get('descricao') or ''))
         val  = float(a.get('valor', 0))
-        val_str = f"R$ {val:,.2f}".replace(",","X").replace(".",",").replace("X",".")
+        val_str = _fmt_brl(val)
         cards += f"""
         <div style="border-left:3px solid {cor_borda};background:#fff;border-radius:0 8px 8px 0;
                     padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);
@@ -854,7 +850,7 @@ def _tab_fornecedores(proposta_id):
             total_forn = acrescimos['valor'].sum()
             c1, c2 = st.columns(2)
             c1.metric("Fornecedores", len(acrescimos))
-            c2.metric("Total", f"R$ {total_forn:,.2f}".replace(",","X").replace(".",",").replace("X","."))
+            c2.metric("Total", _fmt_brl(total_forn))
             st.markdown(_acrescimos_cards(acrescimos, "#0F5E6E"), unsafe_allow_html=True)
 
             with st.expander("✏️ Editar / 🗑️ Remover"):
@@ -938,7 +934,7 @@ def _tab_assistentes(proposta_id):
             total_asst = acrescimos['valor'].sum()
             c1, c2 = st.columns(2)
             c1.metric("Assistentes", len(acrescimos))
-            c2.metric("Total", f"R$ {total_asst:,.2f}".replace(",","X").replace(".",",").replace("X","."))
+            c2.metric("Total", _fmt_brl(total_asst))
             st.markdown(_acrescimos_cards(acrescimos, "#6B4EAA"), unsafe_allow_html=True)
 
             with st.expander("✏️ Editar / 🗑️ Remover"):
@@ -1019,7 +1015,7 @@ def _tab_outros(proposta_id):
             total_outros = acrescimos['valor'].sum()
             c1, c2 = st.columns(2)
             c1.metric("Itens extras", len(acrescimos))
-            c2.metric("Total", f"R$ {total_outros:,.2f}".replace(",","X").replace(".",",").replace("X","."))
+            c2.metric("Total", _fmt_brl(total_outros))
             # Montar cards com nome extraído da descrição
             cards = ""
             for _, a in acrescimos.iterrows():
@@ -1028,7 +1024,7 @@ def _tab_outros(proposta_id):
                 sub  = html_module.escape(desc_raw.split(' - ')[1] if ' - ' in desc_raw else '')
                 comodo = html_module.escape(str(a.get('fornecedor') or 'Geral'))
                 val = float(a.get('valor', 0))
-                val_str = f"R$ {val:,.2f}".replace(",","X").replace(".",",").replace("X",".")
+                val_str = _fmt_brl(val)
                 cards += f"""
                 <div style="border-left:3px solid #E07B39;background:#fff;border-radius:0 8px 8px 0;
                             padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);

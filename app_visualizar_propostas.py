@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from utils.currency_formatter import fmt_brl
 import os
 import sys
 
@@ -107,13 +108,7 @@ try:
         st.write(f"Propostas encontradas após filtros: {len(propostas_filtradas)}")
         
         # Preparar dados para exibição
-        def formatar_valor(valor):
-            try:
-                return f"R$ {float(valor):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
-            except:
-                return "R$ 0,00"
-        
-        propostas_filtradas['valor_formatado'] = propostas_filtradas['valor'].apply(formatar_valor)
+        propostas_filtradas['valor_formatado'] = propostas_filtradas['valor'].apply(fmt_brl)
         
         # Exibir tabela com todas as propostas filtradas
         colunas_exibir = [

@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
 from sqlalchemy import text
+from utils.currency_formatter import fmt_brl
 import sys
 import os
 
@@ -51,10 +52,7 @@ def carregar_todas_propostas():
                 data_fim_fmt = row[7].strftime('%d/%m/%Y') if row[7] else "-"
                 
                 # Tratar valor monetário
-                try:
-                    valor_fmt = f"R$ {float(row[8]):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                except (ValueError, TypeError):
-                    valor_fmt = f"R$ {row[8] or 0.0}"
+                valor_fmt = fmt_brl(row[8])
                 
                 # Definir categoria para agrupar por status
                 status_categoria = None

@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from utils.currency_formatter import fmt_brl
 import time
 
 # Configuração da página
@@ -37,7 +38,7 @@ def carregar_propostas():
             return pd.DataFrame()
             
         # Formatar valores
-        propostas_df['valor_formatado'] = propostas_df['valor'].apply(lambda x: f"R$ {float(x):.2f}".replace('.', ',') if pd.notna(x) else "R$ 0,00")
+        propostas_df['valor_formatado'] = propostas_df['valor'].apply(fmt_brl)
         
         # Ordenar por data de modificação (mais recentes primeiro)
         if 'data_modificacao' in propostas_df.columns:
