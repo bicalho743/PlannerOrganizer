@@ -298,41 +298,68 @@ def _view_detalhes(templates):
             obs_atual = acao['notes'] if acao['notes'] else ""
             nova_obs = st.text_input(
                 "Observação",
-                value=obs_atual,
+                value=st.session_state.get(f"obs_{acao['id']}", obs_atual),
                 key=f"obs_acao_{acao['id']}",
                 label_visibility="collapsed",
                 placeholder="Observação...",
                 disabled=is_cancelado
             )
             
-            # Botões e badges na mesma linha - DENTRO da coluna de observação
-            btn_cols = st.columns([1.2, 0.8, 1.2])
-            
-            with btn_cols[0]:
-                # Botão "Ver sugestão de texto" - sempre aparece
-                if st.button("📝 Ver sugestão de texto", key=f"btn_texto_{acao['id']}", use_container_width=True):
-                    st.session_state[f"show_texto_{acao['id']}"] = not st.session_state.get(f"show_texto_{acao['id']}", False)
-                    st.rerun()
-            
-            with btn_cols[1]:
-                # Badge "+ Gratuito" - renderizado apenas se gratuito
+            # ── Linha de botões: sugestão + badge + hint ──────────────
+            col_btn1, col_badge, col_btn2 = st.columns([2, 1, 2])
+
+            with col_btn1:
+                if st.button("💡 Ver sugestão de texto", key=f"sug_{acao_id}"):
+                    st.session_state[f"mostrar_sug_{acao_id}"] = not st.session_state.get(f"mostrar_sug_{acao_id}", False)
+
+            with col_badge:
                 if gratuito:
-                    st.markdown('<div style="text-align:center;padding:8px 0;"><span style="background:#c6f6d5;color:#22543d;padding:6px 10px;border-radius:6px;font-weight:600;font-size:0.85rem;">➕ Gratuito</span></div>', unsafe_allow_html=True)
-            
-            with btn_cols[2]:
-                # Botão "Dica estratégica" - renderizado se houver hint
+                    st.markdown(
+                        "✦ Gratuito",
+                        unsafe_allow_html=True
+                    )
+
+            with col_btn2:
                 if hint:
-                    if st.button("🎯 Dica estratégica", key=f"btn_hint_{acao['id']}", use_container_width=True):
-                        st.session_state[f"show_hint_{acao['id']}"] = not st.session_state.get(f"show_hint_{acao['id']}", False)
+                    if st.button("💛 Dica estratégica", key=f"hint_{acao_id}"):
+                        st.session_state[f"mostrar_hint_{acao_id}"] = not st.session_state.get(f"mostrar_hint_{acao_id}", False)
+
+            # ── Painel hint ───────────────────────────────────────────
+            if hint and st.session_state.get(f"mostrar_hint_{acao_id}", False):
+                st.markdown(
+                    f"""
+                    💛 Dica estratégica
+                    {hint}
+                    """,
+                    unsafe_allow_html=True
+                )
+
+            # ── Painel sugestão de texto ──────────────────────────────
+            if st.session_state.get(f"mostrar_sug_{acao_id}", False):
+                badge_html = ""
+                if gratuito:
+                    badge_html = (
+                        "✦ Gratuito"
+                    )
+                st.markdown(
+                    f"""
+                    
+                    {emoji} Sugestão — {nome_acao}{badge_html}
+                    
+                    {msg_personalizada}
+                    """,
+                    unsafe_allow_html=True
+                )
+                col_c1, col_c2 = st.columns([1, 1])
+                with col_c1:
+                    if st.button("📋 Copiar texto", key=f"copy_{acao_id}"):
+                        st.code(msg_personalizada, language=None)
+                        st.toast("Texto pronto para copiar acima!", icon="✅")
+                with col_c2:
+                    if st.button("✏️ Usar na observação", key=f"usar_{acao_id}"):
+                        st.session_state[f"obs_{acao_id}"] = msg_personalizada
+                        st.session_state[f"mostrar_sug_{acao_id}"] = False
                         st.rerun()
-            
-            # Mostrar sugestão de texto se ativado
-            if st.session_state.get(f"show_texto_{acao['id']}", False):
-                st.markdown(f'<div style="background:#faf5ff;border-left:3px solid #a78bfa;padding:10px;margin-top:8px;border-radius:4px;"><p style="margin:0;font-size:0.85rem;color:#6d28d9;font-weight:600;">📝 Sugestão de texto:</p><p style="margin:8px 0 0 0;font-size:0.8rem;color:#5b21b6;">{msg_personalizada}</p></div>', unsafe_allow_html=True)
-            
-            # Mostrar dica estratégica se ativado
-            if st.session_state.get(f"show_hint_{acao['id']}", False):
-                st.markdown(f'<div style="background:#fef3c7;border-left:3px solid #f59e0b;padding:10px;margin-top:8px;border-radius:4px;"><p style="margin:0;font-size:0.85rem;color:#b45309;font-weight:600;">🎯 Dica estratégica:</p><p style="margin:8px 0 0 0;font-size:0.8rem;color:#92400e;">{hint}</p></div>', unsafe_allow_html=True)
 
         # Salvar mudanças
         if novo_status != is_feito or nova_obs != obs_atual:
