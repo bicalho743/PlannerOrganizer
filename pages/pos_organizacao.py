@@ -305,33 +305,33 @@ def _view_detalhes(templates):
                 disabled=is_cancelado
             )
 
-        # Botões e badges na mesma linha
-        col_btn1, col_btn2, col_btn3 = st.columns([1.2, 0.8, 1.2])
+        # Botões e badges na mesma linha usando HTML
+        col1, col2, col3 = st.columns([0.5, 0.5, 0.5])
         
-        with col_btn1:
-            if st.button("📝 Ver sugestão de texto", key=f"btn_texto_{acao['id']}", use_container_width=True):
+        with col1:
+            if st.button("📝 Ver sugestão de texto", key=f"btn_texto_{acao['id']}", use_container_width=False):
                 st.session_state[f"show_texto_{acao['id']}"] = not st.session_state.get(f"show_texto_{acao['id']}", False)
                 st.rerun()
         
-        with col_btn2:
+        with col2:
             # Badge "+ Gratuito"
             if gratuito:
-                st.markdown(f'<div style="background:#c6f6d5;color:#22543d;padding:8px 12px;border-radius:8px;text-align:center;font-weight:600;font-size:0.9rem;">➕ Gratuito</div>', unsafe_allow_html=True)
+                st.markdown('<span style="background:#c6f6d5;color:#22543d;padding:6px 10px;border-radius:6px;font-weight:600;font-size:0.85rem;display:inline-block;">➕ Gratuito</span>', unsafe_allow_html=True)
         
-        with col_btn3:
+        with col3:
             # Botão "Dica estratégica" apenas se houver hint
             if hint:
-                if st.button("🎯 Dica estratégica", key=f"btn_hint_{acao['id']}", use_container_width=True):
+                if st.button("🎯 Dica estratégica", key=f"btn_hint_{acao['id']}", use_container_width=False):
                     st.session_state[f"show_hint_{acao['id']}"] = not st.session_state.get(f"show_hint_{acao['id']}", False)
                     st.rerun()
 
         # Mostrar sugestão de texto se solicitado
         if st.session_state.get(f"show_texto_{acao['id']}", False):
-            st.markdown(f'<div style="background:#faf5ff;border-left:3px solid #a78bfa;padding:12px;margin:8px 0;border-radius:4px"><p style="margin:0;font-size:0.85rem;color:#6d28d9;font-weight:600">📝 Sugestão de texto:</p><p style="margin:8px 0 0 0;font-size:0.8rem;color:#5b21b6;line-height:1.5">{msg_personalizada}</p></div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="background:#faf5ff;border-left:3px solid #a78bfa;padding:10px;margin:8px 0;border-radius:4px"><p style="margin:0;font-size:0.85rem;color:#6d28d9;font-weight:600;">📝 Sugestão de texto:</p><p style="margin:6px 0 0 0;font-size:0.8rem;color:#5b21b6;line-height:1.5">{msg_personalizada}</p></div>', unsafe_allow_html=True)
 
         # Mostrar dica estratégica se solicitado
         if st.session_state.get(f"show_hint_{acao['id']}", False):
-            st.markdown(f'<div style="background:#fef3c7;border-left:3px solid #f59e0b;padding:12px;margin:8px 0;border-radius:4px"><p style="margin:0;font-size:0.85rem;color:#b45309;font-weight:600">🎯 Dica estratégica:</p><p style="margin:8px 0 0 0;font-size:0.8rem;color:#92400e;line-height:1.5">{hint}</p></div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="background:#fef3c7;border-left:3px solid #f59e0b;padding:10px;margin:8px 0;border-radius:4px"><p style="margin:0;font-size:0.85rem;color:#b45309;font-weight:600;">🎯 Dica estratégica:</p><p style="margin:6px 0 0 0;font-size:0.8rem;color:#92400e;line-height:1.5">{hint}</p></div>', unsafe_allow_html=True)
 
         # Salvar mudanças
         if novo_status != is_feito or nova_obs != obs_atual:
