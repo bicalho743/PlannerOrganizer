@@ -29,15 +29,29 @@ def formatar_data_br(data):
         return str(data) if data else "N/A"
 
 
+OBJETIVOS_ETAPA = {
+    'agradecimento':   'Mensagem elegante de encerramento',
+    'acompanhamento':  'Saber como a cliente está se sentindo na casa',
+    'ajuste_fino':     'Propor pequenos ajustes após uso real',
+    'feedback':        'Colher opinião genuína da experiência',
+    'continuidade':    'Oferta elegante de serviço contínuo',
+    'retorno_tecnico': 'Visita técnica agendada',
+}
+
+
 def get_template(templates, action_type):
     """Retorna info do template para o tipo de ação (case-insensitive)."""
     etapa = (action_type or '').lower().strip()
     t = templates.get(etapa) or TEMPLATES_FALLBACK.get(etapa, {})
     texto = t.get('texto') or ''
+    dias_apos = t.get('dias_apos', 0)
+    objetivo = OBJETIVOS_ETAPA.get(etapa, '')
     return (
         t.get('emoji', '📌'),
         t.get('nome', etapa.replace('_', ' ').title()),
-        texto
+        texto,
+        dias_apos,
+        objetivo,
     )
 
 
@@ -183,7 +197,7 @@ def _view_lista(templates):
         badge_txt = "Concluído" if is_concluido else "Ativo"
 
         if row['proxima_acao']:
-            emoji, nome_acao, _ = get_template(templates, row['proxima_acao'])
+            emoji, nome_acao, _, _, _ = get_template(templates, row['proxima_acao'])
             proxima = f"{emoji} {nome_acao} &nbsp;·&nbsp; 📅 {formatar_data_br(row['proxima_acao_data'])}"
         else:
             proxima = "✅ Todas as ações concluídas"
@@ -252,7 +266,7 @@ def _view_detalhes(templates):
         is_feito = acao['status'] == 'FEITO'
         is_cancelado = acao['status'] == 'CANCELADO'
 
-        emoji, nome_acao, texto_template = get_template(templates, acao['action_type'])
+        emoji, nome_acao, texto_template, dias_apos, objetivo = get_template(templates, acao['action_type'])
         nome_safe = html_escape(cliente_nome or 'cliente')
         msg_personalizada = (texto_template or '').replace('{nome}', nome_safe)
 
@@ -260,13 +274,18 @@ def _view_detalhes(templates):
         pill_cls = "po-pill-feito" if is_feito else ("po-pill-cancelado" if is_cancelado else "po-pill-pendente")
         pill_txt = "✓ Feito" if is_feito else ("✕ Cancelado" if is_cancelado else "⏳ Pendente")
 
+        dias_badge = f"<span style='background:#e2e8f0;color:#475569;padding:2px 8px;border-radius:10px;font-size:0.68rem;font-weight:700;margin-left:6px;'>D+{dias_apos}</span>" if dias_apos else ""
+        objetivo_html = f"<p style='font-size:0.75rem;color:#94a3b8;margin:2px 0 0 0;font-style:italic;'>{objetivo}</p>" if objetivo else ""
+
         st.markdown(f"""
         <div class="po-acao-wrap {wrap_cls}">
             <div class="po-acao-header">
                 <span style="font-size:1.2rem">{emoji}</span>
                 <p class="po-acao-title">{nome_acao}</p>
+                {dias_badge}
                 <span class="po-pill {pill_cls}">{pill_txt}</span>
             </div>
+            {objetivo_html}
             <p class="po-acao-date">📅 Prevista para {formatar_data_br(acao['due_date'])}</p>
             <div class="po-msg-box">{msg_personalizada}</div>
         </div>
