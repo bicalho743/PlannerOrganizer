@@ -423,7 +423,7 @@ def show():
     .stNumberInput input, .stDateInput input,
     .stTextArea textarea { font-size: 0.85rem !important; }
     label[data-testid="stWidgetLabel"] > div > p { font-size: 0.82rem !important; }
-    .stButton > button { font-size: 0.8rem !important; padding: 5px 12px !important; }
+    .stButton > button:not([kind="primary"]) { font-size: 0.8rem !important; padding: 5px 12px !important; }
     .kanban-col-header {
         font-weight: 700; font-size: 0.82rem;
         padding: 6px 10px; border-radius: 8px 8px 0 0;
