@@ -277,7 +277,17 @@ def gerar_pdf_proposta(db, proposta_id, custom_filename=None):
             
         # Gerar PDF com novo layout
         try:
-            pdf_path = gerar_pdf_fechamento(proposta_dict, cliente_dict, acrescimos, filename)
+            # Preparar dados para gerar_pdf_cliente que espera (dados, output_path)
+            dados_pdf = {
+                'proposta_id': proposta_dict.get('id', ''),
+                'cliente': cliente_dict.get('nome', ''),
+                'telefone': cliente_dict.get('telefone', ''),
+                'tipo': proposta_dict.get('tipo_proposta', ''),
+                'status': proposta_dict.get('status', ''),
+                'descricao': proposta_dict.get('descricao', ''),
+                'itens': proposta_dict.get('produtos', [])
+            }
+            pdf_path = gerar_pdf_fechamento(dados_pdf, filename)
             if not pdf_path or not os.path.exists(pdf_path):
                 return False, "Não foi possível gerar o PDF.", None
                 
