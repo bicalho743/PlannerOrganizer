@@ -276,11 +276,16 @@ def gerar_pdf_proposta(db, proposta_id, custom_filename=None):
         proposta_dict['produtos'] = produtos
             
         # Gerar PDF com novo layout
-        pdf_path = gerar_pdf_fechamento(proposta_dict, cliente_dict, acrescimos, filename)
-        if not pdf_path or not os.path.exists(pdf_path):
-            return False, "Não foi possível gerar o PDF.", None
-            
-        return True, "PDF gerado com sucesso com o novo layout profissional!", pdf_path
+        try:
+            pdf_path = gerar_pdf_fechamento(proposta_dict, cliente_dict, acrescimos, filename)
+            if not pdf_path or not os.path.exists(pdf_path):
+                return False, "Não foi possível gerar o PDF.", None
+                
+            return True, "PDF gerado com sucesso com o novo layout profissional!", pdf_path
+        except TypeError as te:
+            # Se gerar_pdf_fechamento retorna um número diferente de valores
+            print(f"DEBUG: TypeError ao gerar PDF fechamento: {str(te)}")
+            return False, "Erro na geração do PDF de fechamento.", None
         
     except Exception as e:
         print(f"DEBUG HELPER CRITICAL: Erro ao gerar PDF: {str(e)}")
@@ -847,7 +852,12 @@ def gerar_pdf_venda_proposta(db, proposta_id, custom_filename=None):
             "data_venda": datetime.now().strftime('%d/%m/%Y'),
             "observacoes": proposta.get('descricao', '')
         }
-        gerar_pdf_venda(venda_dados, cliente, itens_tabela, filename)
+        try:
+            pdf_path = gerar_pdf_venda(venda_dados, cliente, itens_tabela, filename)
+            if not pdf_path or not os.path.exists(pdf_path):
+                return False, "Não foi possível gerar o PDF de vendas.", None
+        except Exception as e:
+            return False, f"Erro ao gerar PDF de vendas: {str(e)}", None
         
         return True, "Relatório de vendas/produtos gerado com sucesso", filename
         
