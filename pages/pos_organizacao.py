@@ -305,25 +305,29 @@ def _view_detalhes(templates):
                 disabled=is_cancelado
             )
 
-        # Botões e badges na mesma linha usando HTML
-        col1, col2, col3 = st.columns([0.5, 0.5, 0.5])
+        # Botões e badges na mesma linha
+        col1, col2 = st.columns([3, 1])
         
         with col1:
-            if st.button("📝 Ver sugestão de texto", key=f"btn_texto_{acao['id']}", use_container_width=False):
-                st.session_state[f"show_texto_{acao['id']}"] = not st.session_state.get(f"show_texto_{acao['id']}", False)
-                st.rerun()
-        
-        with col2:
-            # Badge "+ Gratuito"
-            if gratuito:
-                st.markdown('<span style="background:#c6f6d5;color:#22543d;padding:6px 10px;border-radius:6px;font-weight:600;font-size:0.85rem;display:inline-block;">➕ Gratuito</span>', unsafe_allow_html=True)
-        
-        with col3:
-            # Botão "Dica estratégica" apenas se houver hint
-            if hint:
-                if st.button("🎯 Dica estratégica", key=f"btn_hint_{acao['id']}", use_container_width=False):
-                    st.session_state[f"show_hint_{acao['id']}"] = not st.session_state.get(f"show_hint_{acao['id']}", False)
+            # Elementos em uma linha usando expanders e columns compactas
+            btn_cols = st.columns([1, 1, 1])
+            
+            with btn_cols[0]:
+                if st.button("📝 Ver sugestão de texto", key=f"btn_texto_{acao['id']}", use_container_width=False):
+                    st.session_state[f"show_texto_{acao['id']}"] = not st.session_state.get(f"show_texto_{acao['id']}", False)
                     st.rerun()
+            
+            with btn_cols[1]:
+                # Badge "+ Gratuito"
+                if gratuito:
+                    st.markdown('<span style="background:#c6f6d5;color:#22543d;padding:6px 10px;border-radius:6px;font-weight:600;font-size:0.9rem;display:inline-block;">➕ Gratuito</span>', unsafe_allow_html=True)
+            
+            with btn_cols[2]:
+                # Botão "Dica estratégica" apenas se houver hint
+                if hint:
+                    if st.button("🎯 Dica estratégica", key=f"btn_hint_{acao['id']}", use_container_width=False):
+                        st.session_state[f"show_hint_{acao['id']}"] = not st.session_state.get(f"show_hint_{acao['id']}", False)
+                        st.rerun()
 
         # Mostrar sugestão de texto se solicitado
         if st.session_state.get(f"show_texto_{acao['id']}", False):
