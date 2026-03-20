@@ -270,7 +270,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
                     from sqlalchemy import text
                     from utils.database import engine
                     with engine.connect() as conn:
-                        for tbl in ["financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
+                        for tbl in ["vendas", "financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
                             conn.execute(text(f"DELETE FROM {tbl} WHERE proposta_id = {proposta_id}"))
                         conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
                         conn.commit()
@@ -356,7 +356,7 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
                     from sqlalchemy import text
                     from utils.database import engine
                     with engine.connect() as conn:
-                        for tbl in ["financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
+                        for tbl in ["vendas", "financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
                             conn.execute(text(f"DELETE FROM {tbl} WHERE proposta_id = {proposta_id}"))
                         conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
                         conn.commit()
@@ -775,7 +775,7 @@ def _tab_itens(proposta_id, show_finalizar=False):
 
         if show_finalizar:
             st.markdown("<div style='margin-top:8px;'></div>", unsafe_allow_html=True)
-            if st.button("🏁 Finalizar", key=f"btn_finalizar_exec_{proposta_id}", use_container_width=True):
+            if st.button("🏁 FINALIZAR PROJETO", key=f"btn_finalizar_exec_{proposta_id}", use_container_width=True):
                 st.session_state[f"confirm_finalizar_{proposta_id}"] = True
 
     with col_main:
@@ -1313,7 +1313,7 @@ def _tab_acoes(proposta_id, proposta):
                         from sqlalchemy import text
                         from utils.database import engine
                         with engine.connect() as conn:
-                            for tbl in ["financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
+                            for tbl in ["vendas", "financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
                                 conn.execute(text(f"DELETE FROM {tbl} WHERE proposta_id = {proposta_id}"))
                             conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
                             conn.commit()
