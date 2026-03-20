@@ -305,24 +305,28 @@ def _view_detalhes(templates):
                 disabled=is_cancelado
             )
 
-        # Botões e badges na mesma linha usando expanders compactos
+        # Botões e badges na mesma linha - aparecem em TODAS as etapas
         btn_cols = st.columns([1.2, 0.8, 1.2])
         
         with btn_cols[0]:
-            # Expander "Ver sugestão de texto"
+            # Expander "Ver sugestão de texto" - sempre aparece
             with st.expander("📝 Ver sugestão de texto", expanded=False):
                 st.markdown(f'<p style="font-size:0.9rem;line-height:1.6;color:#333;">{msg_personalizada}</p>', unsafe_allow_html=True)
         
         with btn_cols[1]:
-            # Badge "+ Gratuito" - renderiza sempre
-            if gratuito:
-                st.markdown('<div style="padding:4px 0;"><span style="background:#c6f6d5;color:#22543d;padding:6px 10px;border-radius:6px;font-weight:600;font-size:0.85rem;display:inline-block;">➕ Gratuito</span></div>', unsafe_allow_html=True)
+            # Badge "+ Gratuito" - sempre renderizado
+            badge_style = 'background:#c6f6d5;color:#22543d;' if gratuito else 'background:transparent;color:transparent;'
+            badge_text = '➕ Gratuito' if gratuito else ''
+            st.markdown(f'<div style="padding:4px 0;height:32px;display:flex;align-items:center;"><span style="{badge_style}padding:6px 10px;border-radius:6px;font-weight:600;font-size:0.85rem;display:inline-block;">{badge_text}</span></div>', unsafe_allow_html=True)
         
         with btn_cols[2]:
-            # Expander "Dica estratégica" - renderiza se houver hint
+            # Expander "Dica estratégica" - sempre aparece
             if hint:
                 with st.expander("🎯 Dica estratégica", expanded=False):
                     st.markdown(f'<p style="font-size:0.85rem;line-height:1.6;color:#333;">{hint}</p>', unsafe_allow_html=True)
+            else:
+                # Placeholder vazio para manter alinhamento
+                st.markdown('<div style="height:32px;"></div>', unsafe_allow_html=True)
 
         # Salvar mudanças
         if novo_status != is_feito or nova_obs != obs_atual:
