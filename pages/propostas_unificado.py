@@ -1494,7 +1494,6 @@ def show():
         font-weight: 600;
     }
     /* Botões "Ver Detalhes" compactos */
-    [data-testid="stHorizontalBlock"] .stButton > button,
     .stButton > button[kind="secondary"] {
         font-size: 0.75rem !important;
         padding: 4px 8px !important;
