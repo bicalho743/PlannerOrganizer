@@ -291,15 +291,15 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
 
     rc1, rc2 = st.columns(2)
     with rc1:
-        _report_card_download("📋", "RELATÓRIO CLIENTE", "Gerar", proposta_id, "cliente")
+        _report_card_download("📋", "RELATÓRIO CLIENTE", "Proposta de serviço", proposta_id, "cliente")
     with rc2:
-        _report_card_download("📊", "RELATÓRIO INTERNO", "Gerar", proposta_id, "interno")
+        _report_card_download("📊", "RELATÓRIO INTERNO", "Margens e custos", proposta_id, "interno")
 
     rc3, rc4 = st.columns(2)
     with rc3:
-        _report_card_download("🏢", "RELATÓRIO FORNECEDORES", "Gerar", proposta_id, "fornecedores")
+        _report_card_download("🏢", "RELATÓRIO FORNECEDORES", "Lista de terceiros", proposta_id, "fornecedores")
     with rc4:
-        _report_card_download("📦", "VENDAS DO PRODUTO", "Gerar", proposta_id, "vendas")
+        _report_card_download("📦", "VENDAS DO PRODUTO", "Produtos organizados", proposta_id, "vendas")
 
     st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
     ac1, ac2 = st.columns(2)
