@@ -289,41 +289,41 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
       <span style="font-size:13px;color:#0D1B2A;font-weight:600;">{_fmt_brl(valor)}</span>
     </div>""", unsafe_allow_html=True)
 
-    st.markdown("""
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-      <div style="background:#0D1B2A;border-radius:10px;padding:14px;text-align:center;">
-        <div style="font-size:22px;">📋</div>
-        <div style="color:#C9A84C;font-weight:700;font-size:12px;margin-top:4px;">RELATÓRIO CLIENTE</div>
-        <div style="color:#aaa;font-size:10px;">Proposta de serviço</div>
-      </div>
-      <div style="background:#0D1B2A;border-radius:10px;padding:14px;text-align:center;">
-        <div style="font-size:22px;">📊</div>
-        <div style="color:#C9A84C;font-weight:700;font-size:12px;margin-top:4px;">RELATÓRIO INTERNO</div>
-        <div style="color:#aaa;font-size:10px;">Margens e custos</div>
-      </div>
-      <div style="background:#0D1B2A;border-radius:10px;padding:14px;text-align:center;">
-        <div style="font-size:22px;">🏢</div>
-        <div style="color:#C9A84C;font-weight:700;font-size:12px;margin-top:4px;">RELATÓRIO FORNECEDORES</div>
-        <div style="color:#aaa;font-size:10px;">Lista de terceiros</div>
-      </div>
-      <div style="background:#0D1B2A;border-radius:10px;padding:14px;text-align:center;">
-        <div style="font-size:22px;">📦</div>
-        <div style="color:#C9A84C;font-weight:700;font-size:12px;margin-top:4px;">VENDAS DO PRODUTO</div>
-        <div style="color:#aaa;font-size:10px;">Produtos organizados</div>
-      </div>
-    </div>""", unsafe_allow_html=True)
+    st.markdown("""<style>
+    .report-card-btn > button {
+        background:#0D1B2A !important; border-radius:10px !important; padding:18px 10px !important;
+        text-align:center !important; border:none !important; min-height:80px !important;
+        display:flex !important; flex-direction:column !important; align-items:center !important;
+        justify-content:center !important; gap:4px !important; transition:all 0.2s !important;
+    }
+    .report-card-btn > button:hover {
+        background:#162840 !important; transform:translateY(-2px) !important;
+        box-shadow:0 4px 12px rgba(0,0,0,0.3) !important;
+    }
+    .report-card-btn > button p, .report-card-btn > button span, .report-card-btn > button div {
+        color:#C9A84C !important; font-weight:700 !important; font-size:12px !important;
+    }
+    </style>""", unsafe_allow_html=True)
 
     rc1, rc2 = st.columns(2)
     with rc1:
+        st.markdown('<div class="report-card-btn">', unsafe_allow_html=True)
         _auto_download_pdf_cliente(proposta_id)
+        st.markdown('</div>', unsafe_allow_html=True)
     with rc2:
+        st.markdown('<div class="report-card-btn">', unsafe_allow_html=True)
         _auto_download_pdf_interno(proposta_id)
+        st.markdown('</div>', unsafe_allow_html=True)
 
     rc3, rc4 = st.columns(2)
     with rc3:
+        st.markdown('<div class="report-card-btn">', unsafe_allow_html=True)
         _auto_download_pdf_fornecedores(proposta_id)
+        st.markdown('</div>', unsafe_allow_html=True)
     with rc4:
+        st.markdown('<div class="report-card-btn">', unsafe_allow_html=True)
         _auto_download_pdf_vendas_produto(proposta_id)
+        st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
     ac1, ac2 = st.columns(2)
@@ -384,7 +384,7 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
 def _auto_download_pdf_cliente(proposta_id):
     """Auto-download client report PDF."""
     key = f"gen_pdf_cli_{proposta_id}"
-    if st.button("📋 Gerar Cliente", use_container_width=True, key=f"btn_rel_cli_{proposta_id}"):
+    if st.button("📋\nRELATÓRIO CLIENTE\nGerar", use_container_width=True, key=f"btn_rel_cli_{proposta_id}"):
         st.session_state[key] = True
     if st.session_state.get(key, False):
         try:
@@ -404,7 +404,7 @@ def _auto_download_pdf_cliente(proposta_id):
 def _auto_download_pdf_interno(proposta_id):
     """Auto-download internal report PDF."""
     key = f"gen_pdf_int_{proposta_id}"
-    if st.button("📊 Gerar Interno", use_container_width=True, key=f"btn_rel_int_{proposta_id}"):
+    if st.button("📊\nRELATÓRIO INTERNO\nGerar", use_container_width=True, key=f"btn_rel_int_{proposta_id}"):
         st.session_state[key] = True
     if st.session_state.get(key, False):
         try:
@@ -424,7 +424,7 @@ def _auto_download_pdf_interno(proposta_id):
 def _auto_download_pdf_fornecedores(proposta_id):
     """Auto-download suppliers report PDF."""
     key = f"gen_pdf_forn_{proposta_id}"
-    if st.button("🏢 Gerar Fornecedores", use_container_width=True, key=f"btn_rel_forn2_{proposta_id}"):
+    if st.button("🏢\nRELATÓRIO FORNECEDORES\nGerar", use_container_width=True, key=f"btn_rel_forn2_{proposta_id}"):
         st.session_state[key] = True
     if st.session_state.get(key, False):
         try:
@@ -444,7 +444,7 @@ def _auto_download_pdf_fornecedores(proposta_id):
 def _auto_download_pdf_vendas_produto(proposta_id):
     """Auto-download product sales report PDF."""
     key = f"gen_pdf_vend_{proposta_id}"
-    if st.button("📦 Gerar Vendas Produto", use_container_width=True, key=f"btn_rel_vend_{proposta_id}"):
+    if st.button("📦\nVENDAS DO PRODUTO\nGerar", use_container_width=True, key=f"btn_rel_vend_{proposta_id}"):
         st.session_state[key] = True
     if st.session_state.get(key, False):
         try:
