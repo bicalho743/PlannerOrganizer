@@ -234,7 +234,10 @@ def _render_detail_panel(venda_id, venda_row):
                 if not po.empty:
                     po = po.rename(columns={"nome": "produto_nome", "valor": "preco_unitario"})
                     po["subtotal"] = po["preco_unitario"] * po["quantidade"]
-                    return po[["produto_nome", "quantidade", "preco_unitario", "subtotal"]]
+                    cols = ["produto_nome", "quantidade", "preco_unitario", "subtotal"]
+                    if "comodo" in po.columns:
+                        cols.append("comodo")
+                    return po[cols]
             except Exception as e:
                 print(f"Erro: {e}")
         return pd.DataFrame()

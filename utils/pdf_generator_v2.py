@@ -331,61 +331,65 @@ def gerar_pdf_venda(venda, cliente, itens_venda, filename, proposta_descricao=No
 
 def gerar_pdf_venda_v2(venda_dados, cliente_dados, itens_df, filename):
     """
-    Gera PDF de venda/produtos da proposta com design Navy/Gold
-    
-    Args:
-        venda_dados: dict com id, status, forma_pagamento, valor_total, data_venda, observacoes
-        cliente_dados: dict com nome, email (opcional)
-        itens_df: DataFrame com colunas: produto_nome, quantidade, preco_unitario
-        filename: caminho do arquivo PDF a ser gerado
-    
-    Returns:
-        str: caminho do arquivo gerado
+    Gera PDF de venda com design Navy/Gold
     """
     os.makedirs(os.path.dirname(filename) if os.path.dirname(filename) else '.', exist_ok=True)
-    
+
     c = canvas.Canvas(filename, pagesize=A4)
-    margin = 30*mm
+    margin = 18*mm
     cw = W - 2*margin
-    
-    # Cabeçalho
-    _header(c, "Produtos da Proposta", f"#{venda_dados.get('id','')}", margin)
-    
-    # Informações da venda
+
+    _header(c, "Relatório de Venda", f"#{venda_dados.get('id','')}", margin)
+
+    data_venda = venda_dados.get('data_venda', '')
+    if hasattr(data_venda, 'strftime'):
+        data_venda = data_venda.strftime('%d/%m/%Y')
+    elif data_venda:
+        data_venda = str(data_venda)
+
+    forma_pgto = venda_dados.get('forma_pagamento', '') or '—'
+
     y = _info_cards(c, margin, cw, [
         ("Cliente", cliente_dados.get('nome', 'N/A')),
-        ("Data", venda_dados.get('data_venda', datetime.now().strftime('%d/%m/%Y'))),
-        ("Status", venda_dados.get('status', 'Proposta')),
-        ("Forma de Pagamento", venda_dados.get('forma_pagamento', 'A definir')),
+        ("Data", data_venda),
+        ("Pagamento", forma_pgto),
+        ("Status", venda_dados.get('status', '')),
     ])
-    
-    # Seção de itens
-    y = _section_title(c, margin, cw, y, "Produtos Inclusos", 
-        "Lista de produtos e quantidades", NAVY)
-    
-    # Preparar itens para a tabela
-    itens_lista = []
+
+    y = _section_title(c, margin, cw, y, "Itens da Venda",
+        "Produtos e serviços incluídos nesta venda", NAVY)
+
+    itens_tuples = []
+    total_calc = 0
     if isinstance(itens_df, pd.DataFrame) and not itens_df.empty:
         for _, row in itens_df.iterrows():
-            nome = str(row.get('produto_nome', row.get('nome', 'Produto')))
+            nome = str(row.get('produto_nome', row.get('nome', 'Produto'))).title()
             qtd = int(row.get('quantidade', 1))
             valor = float(row.get('preco_unitario', row.get('valor', 0)))
-            itens_lista.append({
-                'descricao': nome,
-                'quantidade': qtd,
-                'valor': valor,
-                'total': qtd * valor
-            })
-    
-    # Renderizar tabela
-    y = _table_rows(c, margin, cw, y, itens_lista)
-    
-    # Total
-    total = venda_dados.get('valor_total', 0)
-    _total_row(c, margin, cw, y, "TOTAL DA PROPOSTA", total, NAVY, WHITE, GOLD)
-    
-    # Rodapé
+            subtotal = qtd * valor
+            total_calc += subtotal
+            comodo = str(row.get('comodo', '') or '').strip()
+            label = f"{nome} ×{qtd}"
+            if comodo:
+                label += f" - {comodo.title()}"
+            itens_tuples.append((label, subtotal, False))
+
+    y = _table_rows(c, margin, cw, y, itens_tuples)
+
+    total = venda_dados.get('valor_total', total_calc) or total_calc
+    y = _total_row(c, margin, cw, y, "TOTAL DA VENDA", total, NAVY, WHITE, GOLD)
+
+    obs = venda_dados.get('observacoes', '') or ''
+    if obs.strip():
+        y -= 12*mm
+        rr(c, margin, y - 18*mm, cw, 18*mm, 4, GOLD_LT, GOLD, 0.5)
+        c.setFillColor(colors.HexColor("#7A5C1A"))
+        c.setFont("Helvetica", 9)
+        c.drawString(margin + 5*mm, y - 5*mm, "Observações")
+        c.setFillColor(NAVY)
+        c.setFont("Helvetica", 10)
+        c.drawString(margin + 5*mm, y - 13*mm, obs.strip())
+
     _footer(c, margin)
-    
     c.save()
     return filename
