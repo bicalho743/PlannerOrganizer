@@ -359,8 +359,23 @@ def gerar_pdf_venda_v2(venda_dados, cliente_dados, itens_df, filename):
     y = _section_title(c, margin, cw, y, "Itens da Venda",
         "Produtos e serviços incluídos nesta venda", NAVY)
 
-    itens_tuples = []
+    col_produto = margin
+    col_qtd = margin + cw * 0.50
+    col_unit = margin + cw * 0.62
+    col_sub = margin + cw - 4*mm
+    row_h = 9*mm
+
+    rr(c, margin, y - row_h + 1.5*mm, cw, row_h - 1*mm, 3, NAVY)
+    c.setFillColor(WHITE)
+    c.setFont("Helvetica-Bold", 9)
+    c.drawString(col_produto + 4*mm, y - 5*mm, "Produto")
+    c.drawString(col_qtd, y - 5*mm, "Qtd")
+    c.drawString(col_unit, y - 5*mm, "Vlr. Unitário")
+    c.drawRightString(col_sub, y - 5*mm, "Subtotal")
+    y -= row_h
+
     total_calc = 0
+    idx = 0
     if isinstance(itens_df, pd.DataFrame) and not itens_df.empty:
         for _, row in itens_df.iterrows():
             nome = str(row.get('produto_nome', row.get('nome', 'Produto'))).title()
@@ -369,12 +384,21 @@ def gerar_pdf_venda_v2(venda_dados, cliente_dados, itens_df, filename):
             subtotal = qtd * valor
             total_calc += subtotal
             comodo = str(row.get('comodo', '') or '').strip()
-            label = f"{nome} ×{qtd} · {fmt(valor)}/un."
             if comodo:
-                label += f" - {comodo.title()}"
-            itens_tuples.append((label, subtotal, False))
+                nome += f" - {comodo.title()}"
 
-    y = _table_rows(c, margin, cw, y, itens_tuples)
+            bg = GRAY1 if idx % 2 == 0 else WHITE
+            rr(c, margin, y - row_h + 1.5*mm, cw, row_h - 1*mm, 3, bg)
+            c.setFillColor(DARK)
+            c.setFont("Helvetica", 9.5)
+            c.drawString(col_produto + 4*mm, y - 5*mm, nome)
+            c.setFont("Helvetica", 9.5)
+            c.drawString(col_qtd, y - 5*mm, str(qtd))
+            c.drawString(col_unit, y - 5*mm, fmt(valor))
+            c.setFont("Helvetica-Bold", 9.5)
+            c.drawRightString(col_sub, y - 5*mm, fmt(subtotal))
+            y -= row_h
+            idx += 1
 
     total = venda_dados.get('valor_total', total_calc) or total_calc
     y = _total_row(c, margin, cw, y, "TOTAL DA VENDA", total, NAVY, WHITE, GOLD)
