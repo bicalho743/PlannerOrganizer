@@ -295,8 +295,9 @@ def _render_detail_panel(venda_id, venda_row):
             ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_time.time()))
             safe_nome = nome_raw.replace(" ", "_").replace("/", "_").lower()
             
+            numero_exibir = venda_row.get("proposta_numero") or venda_row.get("id", "")
             proposta_dados = {
-                "id": venda_row.get("id", ""),
+                "id": numero_exibir,
                 "tipo_proposta": "Venda",
                 "status": venda_row.get("status", "Concluída"),
                 "forma_pagamento": venda_row.get("forma_pagamento", ""),
@@ -520,9 +521,9 @@ def show():
                     crow = clientes_tmp[clientes_tmp["id"] == st.session_state.venda_recente_cliente_id].iloc[0]
                     itens_tmp = st.session_state.db.get_itens_venda(vid)
                     
-                    # Preparar dados para relatorio_servico_novo
+                    numero_exibir2 = vrow.get("proposta_numero") or vrow["id"]
                     proposta_dados = {
-                        "id": vrow["id"],
+                        "id": numero_exibir2,
                         "tipo_proposta": "Venda",
                         "status": vrow.get("status", "Concluída"),
                         "forma_pagamento": st.session_state.venda_recente_forma_pagamento,
