@@ -310,7 +310,7 @@ def _render_detail_panel(venda_id, venda_row):
                 "observacoes": venda_row.get("observacoes", "")
             }
             cliente_dados = {"nome": nome_raw}
-            pdf_path = f"pdfs/Venda_{venda_id}_{safe_nome}_{ts}.pdf"
+            pdf_path = f"pdfs/Venda_{numero_exibir}_{safe_nome}_{ts}.pdf"
             
             # Usar pdf_generator_v2 que tem layout Navy/Gold
             from utils.pdf_generator_v2 import gerar_pdf_venda_v2
@@ -322,7 +322,7 @@ def _render_detail_panel(venda_id, venda_row):
                 st.download_button(
                     label="📥 Baixar PDF",
                     data=pdf_bytes,
-                    file_name=f"Venda_{venda_id}_{safe_nome}.pdf",
+                    file_name=f"Venda_{numero_exibir}_{safe_nome}.pdf",
                     mime="application/pdf",
                     key=f"dl_pdf_{venda_id}"
                 )
