@@ -182,19 +182,37 @@ def gerar_pdf_cliente(dados, output_path):
         ("Tipo",     dados.get('tipo', '')),
         ("Status",   dados.get('status', '')),
     ])
-    rr(c, margin, y - 12*mm, cw, 12*mm, 4, GOLD_LT, GOLD, 0.5)
-    c.setFillColor(colors.HexColor("#7A5C1A"))
-    c.setFont("Helvetica", 9)
-    c.drawString(margin + 5*mm, y - 4*mm, "Descrição do serviço")
-    c.setFillColor(NAVY)
-    c.setFont("Helvetica-Bold", 10)
-    c.drawString(margin + 5*mm, y - 9.5*mm, dados.get('descricao', ''))
-    y -= 22*mm
+    desc = dados.get('descricao', '')
+    if desc:
+        rr(c, margin, y - 12*mm, cw, 12*mm, 4, GOLD_LT, GOLD, 0.5)
+        c.setFillColor(colors.HexColor("#7A5C1A"))
+        c.setFont("Helvetica", 9)
+        c.drawString(margin + 5*mm, y - 4*mm, "Descrição do serviço")
+        c.setFillColor(NAVY)
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(margin + 5*mm, y - 9.5*mm, f"- {desc}" if not desc.startswith('-') else desc)
+        y -= 22*mm
     y = _section_title(c, margin, cw, y, "Itens Inclusos",
         "Todos os itens e serviços prestados nesta proposta", NAVY)
     y = _table_rows(c, margin, cw, y, dados.get('itens', []))
-    _total_row(c, margin, cw, y, "TOTAL DO SERVIÇO",
+    y = _total_row(c, margin, cw, y, "TOTAL DO SERVIÇO",
         dados.get('total', 0), NAVY, WHITE, GOLD)
+    valor_base = dados.get('valor_base', 0)
+    valor_adicionais = dados.get('valor_adicionais', 0)
+    if valor_base > 0:
+        y -= 12*mm
+        rr(c, margin, y - 22*mm, cw, 22*mm, 6, GOLD_LT, GOLD, 0.5)
+        c.setFillColor(colors.HexColor("#7A5C1A"))
+        c.setFont("Helvetica", 9)
+        c.drawString(margin + 5*mm, y - 5*mm, "Valor base do serviço de Personal Organizer")
+        c.setFillColor(NAVY)
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(margin + 5*mm, y - 15*mm, f"R$ {valor_base:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        if valor_adicionais > 0:
+            c.setFillColor(NAVY)
+            c.setFont("Helvetica-Bold", 11)
+            c.drawRightString(margin + cw - 5*mm, y - 15*mm,
+                f"Adicionais: R$ {valor_adicionais:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
     _footer(c, margin)
     c.save()
     return output_path

@@ -495,6 +495,14 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
             # Criando nome de arquivo com o formato: Cliente_Proposta_#ID_NomeCliente_DATA.pdf
             filename = f"pdfs/Cliente_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
             
+        tipo_proposta = proposta.get('tipo_proposta', 'Organização')
+        valor_base = float(proposta.get('valor', 0))
+
+        itens_tuples = []
+        itens_tuples.append((f"Personal Organizer - {tipo_proposta}", valor_base, False))
+
+        total_adicionais = 0
+
         produtos = []
         try:
             produtos_df = db.get_produtos_organizadores(proposta_id)
@@ -503,14 +511,12 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
         except Exception:
             pass
 
-        itens_tuples = []
-        total_itens = 0
         for it in produtos:
             nome_it = it.get('nome', it.get('produto_nome', ''))
             qtd = float(it.get('quantidade', 1))
             val = float(it.get('valor_unit', it.get('valor', it.get('preco_unitario', 0))))
             subtotal = qtd * val
-            total_itens += subtotal
+            total_adicionais += subtotal
             itens_tuples.append((f"{nome_it} ({int(qtd)}x)", subtotal, False))
 
         if not acrescimos.empty:
@@ -520,21 +526,23 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
                     continue
                 desc = ac.get('descricao', ac.get('fornecedor', 'Acréscimo'))
                 val_ac = float(ac.get('valor', 0))
-                total_itens += val_ac
+                total_adicionais += val_ac
                 itens_tuples.append((desc, val_ac, False))
 
-        valor_proposta = float(proposta.get('valor', proposta.get('valor_total', total_itens)))
+        total_geral = valor_base + total_adicionais
 
         from utils.pdf_generator_v2 import gerar_pdf_cliente
         dados_pdf = {
             'proposta_id': proposta.get('id', ''),
             'cliente': cliente.get('nome', ''),
             'telefone': cliente.get('telefone', ''),
-            'tipo': proposta.get('tipo_proposta', ''),
+            'tipo': tipo_proposta,
             'status': proposta.get('status', ''),
             'descricao': proposta.get('descricao', ''),
             'itens': itens_tuples,
-            'total': valor_proposta
+            'total': total_geral,
+            'valor_base': valor_base,
+            'valor_adicionais': total_adicionais,
         }
         gerar_pdf_cliente(dados_pdf, filename)
         return True, "Relatório do cliente gerado com sucesso", filename
