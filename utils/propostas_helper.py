@@ -625,6 +625,8 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
             # Criando nome de arquivo com o formato: Interno_Proposta_#ID_NomeCliente_DATA.pdf
             filename = f"pdfs/Interno_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
             
+        valor_base = float(proposta.get('valor', 0))
+
         produtos = []
         try:
             produtos_df = db.get_produtos_organizadores(proposta_id)
@@ -633,37 +635,80 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
         except Exception:
             pass
 
-        itens_custo = []
-        total_custo = 0
+        total_produtos_venda = 0
+        total_produtos_custo = 0
         for it in produtos:
-            nome_it = it.get('nome', it.get('produto_nome', '')).title()
             qtd = float(it.get('quantidade', 1))
-            val = float(it.get('valor_unit', it.get('valor', it.get('preco_unitario', 0))))
-            subtotal = qtd * val
-            total_custo += subtotal
-            itens_custo.append((f"{nome_it} ({int(qtd)}x)", subtotal, False))
+            val_venda = float(it.get('valor_unit', it.get('valor', it.get('preco_unitario', 0))))
+            total_produtos_venda += qtd * val_venda
+            prod_id = it.get('id')
+            custo_unit = val_venda
+            if prod_id:
+                try:
+                    forn_df = db.get_produto_fornecedores(prod_id)
+                    if forn_df is not None and not forn_df.empty:
+                        custo_unit = float(forn_df['valor'].min())
+                except Exception:
+                    pass
+            total_produtos_custo += qtd * custo_unit
 
+        total_fornecedores = 0
+        total_assistentes = 0
+        total_comissoes = 0
+        total_outros = 0
         if not acrescimos.empty:
             for _, ac in acrescimos.iterrows():
-                desc = ac.get('descricao', ac.get('fornecedor', 'Acréscimo')).title()
+                tipo_ac = str(ac.get('tipo', '')).upper()
                 val_ac = float(ac.get('valor', 0))
-                tipo_ac = str(ac.get('tipo', '')).lower()
-                total_custo += val_ac
-                itens_custo.append((desc, val_ac, False))
+                if tipo_ac == 'FORNECEDOR':
+                    total_fornecedores += val_ac
+                    pct_com = ac.get('percentual_comissao')
+                    if pct_com is not None and float(pct_com) > 0:
+                        total_comissoes += val_ac * float(pct_com) / 100
+                elif tipo_ac == 'ASSISTENTE':
+                    total_assistentes += val_ac
+                else:
+                    total_outros += val_ac
 
-        valor_proposta = float(proposta.get('valor', proposta.get('valor_total', total_custo)))
+        total_custo_cliente = valor_base + total_produtos_venda + total_fornecedores + total_outros
 
-        comissao_pct = float(proposta.get('comissao', proposta.get('percentual_comissao', 0)))
-        comissao_val = valor_proposta * (comissao_pct / 100) if comissao_pct else 0
-        receita = valor_proposta - total_custo
+        itens_custo = [
+            ("Personal Organizer", valor_base, False),
+            ("Produtos", total_produtos_venda, False),
+            ("Fornecedores", total_fornecedores, False),
+            ("Outros", total_outros, False),
+        ]
+
+        lucro_produtos = total_produtos_venda - total_produtos_custo
+
+        receita = valor_base + total_comissoes + lucro_produtos + total_outros - total_assistentes
 
         itens_receita = [
-            ("Valor cobrado do cliente", valor_proposta, False),
-            ("(-) Custos do projeto", total_custo, True),
+            ("Personal Organizer", valor_base, False),
+            ("Comissões", total_comissoes, False),
+            ("Lucro em Produtos", lucro_produtos, False),
+            ("Outros", total_outros, False),
+            ("Pagamento Assistentes", total_assistentes, True),
         ]
-        if comissao_val > 0:
-            itens_receita.append((f"(-) Comissão ({comissao_pct:.0f}%)", comissao_val, True))
-            receita -= comissao_val
+
+        periodo_str = ''
+        data_inicio = proposta.get('data_inicio', '')
+        data_fim = proposta.get('data_fim', proposta.get('data_conclusao', ''))
+        if data_inicio and data_fim:
+            try:
+                if hasattr(data_inicio, 'strftime'):
+                    di = data_inicio.strftime('%d/%m/%Y')
+                else:
+                    di = str(data_inicio)
+                if hasattr(data_fim, 'strftime'):
+                    df = data_fim.strftime('%d/%m/%Y')
+                else:
+                    df = str(data_fim)
+                periodo_str = f"{di} – {df}"
+            except Exception:
+                periodo_str = str(data_inicio)
+        elif data_inicio:
+            periodo_str = str(data_inicio)
 
         from utils.pdf_generator_v2 import gerar_pdf_interno
         dados_pdf = {
@@ -671,9 +716,9 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
             'cliente': cliente.get('nome', ''),
             'tipo': proposta.get('tipo_proposta', ''),
             'status': proposta.get('status', ''),
-            'periodo': proposta.get('periodo', proposta.get('data_inicio', '')),
+            'periodo': periodo_str,
             'itens_custo': itens_custo,
-            'total_custo': total_custo,
+            'total_custo': total_custo_cliente,
             'itens_receita': itens_receita,
             'total_receita': receita
         }

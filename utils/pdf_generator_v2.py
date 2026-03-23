@@ -153,7 +153,7 @@ def gerar_pdf_interno(dados, output_path):
         dados.get('total_custo', 0), NAVY, WHITE, GOLD)
     y -= 12*mm
     y = _section_title(c, margin, cw, y, "Receita Líquida do Projeto",
-        "Ganho real da Personal, considerando comissões e pagamentos", GREEN)
+        "Ganho real considerando comissões, lucro em produtos e pagamentos", GREEN)
     y = _table_rows(c, margin, cw, y, dados.get('itens_receita', []))
     y = _total_row(c, margin, cw, y, "RECEITA LÍQUIDA TOTAL",
         dados.get('total_receita', 0), GREEN, WHITE, GREEN_LT)
