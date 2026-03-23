@@ -978,6 +978,7 @@ def show():
 
                     if submitted and nome_produto:
                         try:
+                            nome_produto = nome_produto.strip().title()
                             produto_id = st.session_state.db.add_produto(
                                 nome=nome_produto,
                                 preco_custo=preco_custo,
@@ -1064,6 +1065,7 @@ def show():
 
                                     if submitted_edit and nome_edit:
                                         try:
+                                            nome_edit = nome_edit.strip().title()
                                             if hasattr(st.session_state.db, 'update_produto'):
                                                 st.session_state.db.update_produto(
                                                     produto_id=produto_id,
