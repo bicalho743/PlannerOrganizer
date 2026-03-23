@@ -4389,6 +4389,7 @@ class Database:
             
             return pd.DataFrame([{
                 'id': v.id,
+                'cliente_id': v.cliente_id,
                 'cliente_nome': v.cliente.nome if v.cliente else "Cliente não encontrado",
                 'valor_total': v.valor_total,
                 'data_venda': v.data_venda,
