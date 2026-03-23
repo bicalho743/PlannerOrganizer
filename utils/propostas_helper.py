@@ -627,30 +627,50 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
             
         valor_base = float(proposta.get('valor', 0))
 
-        produtos = []
+        produtos_org = []
         try:
             produtos_df = db.get_produtos_organizadores(proposta_id)
             if produtos_df is not None and not produtos_df.empty:
-                produtos = produtos_df.to_dict('records')
+                produtos_org = produtos_df.to_dict('records')
+        except Exception:
+            pass
+
+        catalogo = {}
+        try:
+            catalogo_df = db.get_produtos()
+            if catalogo_df is not None and not catalogo_df.empty:
+                for _, p in catalogo_df.iterrows():
+                    nome_norm = str(p.get('nome', '')).strip().upper()
+                    catalogo[nome_norm] = {
+                        'preco_custo': float(p.get('preco_custo', 0) or 0),
+                        'preco_venda': float(p.get('preco_venda', 0) or 0),
+                    }
         except Exception:
             pass
 
         total_produtos_venda = 0
-        total_produtos_custo = 0
-        for it in produtos:
+        lucro_produtos = 0
+        for it in produtos_org:
+            nome_prod = str(it.get('nome', it.get('produto_nome', ''))).strip()
             qtd = float(it.get('quantidade', 1))
             val_venda = float(it.get('valor_unit', it.get('valor', it.get('preco_unitario', 0))))
             total_produtos_venda += qtd * val_venda
-            prod_id = it.get('id')
-            custo_unit = val_venda
-            if prod_id:
-                try:
-                    forn_df = db.get_produto_fornecedores(prod_id)
-                    if forn_df is not None and not forn_df.empty:
-                        custo_unit = float(forn_df['valor'].min())
-                except Exception:
-                    pass
-            total_produtos_custo += qtd * custo_unit
+            cat = catalogo.get(nome_prod.upper())
+            if cat:
+                lucro_produtos += (cat['preco_venda'] - cat['preco_custo']) * qtd
+            else:
+                lucro_produtos += 0
+
+        fornecedores_cadastro = {}
+        try:
+            forn_df = db.get_fornecedores()
+            if forn_df is not None and not forn_df.empty:
+                for _, f in forn_df.iterrows():
+                    nome_f = str(f.get('descricao', f.get('nome', ''))).strip().upper()
+                    pct = float(f.get('percentual_comissao', 0) or 0)
+                    fornecedores_cadastro[nome_f] = pct
+        except Exception:
+            pass
 
         total_fornecedores = 0
         total_assistentes = 0
@@ -662,9 +682,10 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
                 val_ac = float(ac.get('valor', 0))
                 if tipo_ac == 'FORNECEDOR':
                     total_fornecedores += val_ac
-                    pct_com = ac.get('percentual_comissao')
-                    if pct_com is not None and float(pct_com) > 0:
-                        total_comissoes += val_ac * float(pct_com) / 100
+                    nome_forn = str(ac.get('fornecedor', '')).strip().upper()
+                    pct_com = fornecedores_cadastro.get(nome_forn, 0)
+                    if pct_com > 0:
+                        total_comissoes += val_ac * pct_com / 100
                 elif tipo_ac == 'ASSISTENTE':
                     total_assistentes += val_ac
                 else:
@@ -678,8 +699,6 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
             ("Fornecedores", total_fornecedores, False),
             ("Outros", total_outros, False),
         ]
-
-        lucro_produtos = total_produtos_venda - total_produtos_custo
 
         receita = valor_base + total_comissoes + lucro_produtos + total_outros - total_assistentes
 
