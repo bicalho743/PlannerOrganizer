@@ -282,7 +282,7 @@ def gerar_pdf_proposta(db, proposta_id, custom_filename=None):
             itens_tuples = []
             total_calculado = 0
             for it in itens_raw:
-                nome_it = it.get('nome', it.get('produto_nome', it.get('descricao', '')))
+                nome_it = it.get('nome', it.get('produto_nome', it.get('descricao', ''))).title()
                 qtd = float(it.get('quantidade', 1))
                 val = float(it.get('valor_unit', it.get('valor', it.get('preco_unitario', 0))))
                 subtotal = qtd * val
@@ -512,7 +512,7 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
             pass
 
         for it in produtos:
-            nome_it = it.get('nome', it.get('produto_nome', ''))
+            nome_it = it.get('nome', it.get('produto_nome', '')).title()
             qtd = float(it.get('quantidade', 1))
             val = float(it.get('valor_unit', it.get('valor', it.get('preco_unitario', 0))))
             subtotal = qtd * val
@@ -524,7 +524,7 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
                 tipo_ac = str(ac.get('tipo', '')).lower()
                 if tipo_ac in ('fornecedor', 'assistente'):
                     continue
-                desc = ac.get('descricao', ac.get('fornecedor', 'Acréscimo'))
+                desc = ac.get('descricao', ac.get('fornecedor', 'Acréscimo')).title()
                 val_ac = float(ac.get('valor', 0))
                 total_adicionais += val_ac
                 itens_tuples.append((desc, val_ac, False))
@@ -636,7 +636,7 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
         itens_custo = []
         total_custo = 0
         for it in produtos:
-            nome_it = it.get('nome', it.get('produto_nome', ''))
+            nome_it = it.get('nome', it.get('produto_nome', '')).title()
             qtd = float(it.get('quantidade', 1))
             val = float(it.get('valor_unit', it.get('valor', it.get('preco_unitario', 0))))
             subtotal = qtd * val
@@ -645,7 +645,7 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
 
         if not acrescimos.empty:
             for _, ac in acrescimos.iterrows():
-                desc = ac.get('descricao', ac.get('fornecedor', 'Acréscimo'))
+                desc = ac.get('descricao', ac.get('fornecedor', 'Acréscimo')).title()
                 val_ac = float(ac.get('valor', 0))
                 tipo_ac = str(ac.get('tipo', '')).lower()
                 total_custo += val_ac
@@ -768,7 +768,7 @@ def gerar_pdf_fornecedores_proposta(db, proposta_id, custom_filename=None):
         itens_tuples = []
         total_forn = 0
         for it in itens_fornecedores:
-            desc = it.get('descricao', 'Fornecedor')
+            desc = it.get('descricao', 'Fornecedor').title()
             val = float(it.get('valor', 0))
             total_forn += val
             itens_tuples.append((desc, val, False))
