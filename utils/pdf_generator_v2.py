@@ -369,7 +369,7 @@ def gerar_pdf_venda_v2(venda_dados, cliente_dados, itens_df, filename):
             subtotal = qtd * valor
             total_calc += subtotal
             comodo = str(row.get('comodo', '') or '').strip()
-            label = f"{nome} ×{qtd}"
+            label = f"{nome} ×{qtd} · {fmt(valor)}/un."
             if comodo:
                 label += f" - {comodo.title()}"
             itens_tuples.append((label, subtotal, False))
