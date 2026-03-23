@@ -277,7 +277,19 @@ def _render_detail_panel(venda_id, venda_row):
         st.session_state.pop(f"gerar_pdf_{venda_id}", None)
         try:
             import time as _time
-            nome_raw = str(venda_row.get("cliente_nome", "cliente"))
+            nome_raw = str(venda_row.get("cliente_nome", "") or "")
+            if not nome_raw or nome_raw in ("Cliente", "cliente", "Cliente não encontrado"):
+                try:
+                    cid = venda_row.get("cliente_id")
+                    if cid:
+                        cl_df = st.session_state.db.get_clientes()
+                        cl_row = cl_df[cl_df['id'] == int(cid)]
+                        if not cl_row.empty:
+                            nome_raw = str(cl_row.iloc[0].get('nome', 'Cliente'))
+                except Exception:
+                    pass
+            if not nome_raw:
+                nome_raw = "Cliente"
             itens_pdf = itens_det
             os.makedirs("pdfs", exist_ok=True)
             ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_time.time()))
