@@ -165,7 +165,6 @@ def reabrir_proposta_finalizada(proposta_id):
             # Atualizar status da proposta baseado no status anterior
             data_atual = datetime.now().strftime('%Y-%m-%d')
             
-            # Se era uma proposta recusada, voltar para o status inicial
             if status == 'Recusada':
                 cursor.execute("""
                     UPDATE propostas 
@@ -174,10 +173,9 @@ def reabrir_proposta_finalizada(proposta_id):
                     WHERE id = %s
                 """, (proposta_id,))
             else:
-                # Se era finalizada/concluída, voltar para execução
                 cursor.execute("""
                     UPDATE propostas 
-                    SET status = 'Aprovada', 
+                    SET status = 'Em execução', 
                         status_execucao = 'Em execução'
                     WHERE id = %s
                 """, (proposta_id,))
@@ -212,7 +210,6 @@ def reabrir_proposta_finalizada(proposta_id):
                 data_atual = datetime.now().strftime('%Y-%m-%d')
                 
                 # Tentar atualizar sem o campo data_finalizacao
-                # Se era uma proposta recusada, voltar para o status inicial
                 if status == 'Recusada':
                     cursor.execute("""
                         UPDATE propostas 
@@ -221,10 +218,9 @@ def reabrir_proposta_finalizada(proposta_id):
                         WHERE id = %s
                     """, (proposta_id,))
                 else:
-                    # Se era finalizada/concluída, voltar para execução
                     cursor.execute("""
                         UPDATE propostas 
-                        SET status = 'Aprovada', 
+                        SET status = 'Em execução', 
                             status_execucao = 'Em execução'
                         WHERE id = %s
                     """, (proposta_id,))
