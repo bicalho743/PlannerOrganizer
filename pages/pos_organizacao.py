@@ -283,8 +283,7 @@ def _view_detalhes(templates):
 
         st.markdown(f'<div class="po-acao-wrap {wrap_cls}"><div class="po-acao-header"><span style="font-size:1.2rem">{emoji}</span><p class="po-acao-title">{nome_acao}</p>{dias_badge}<span class="po-pill {pill_cls}">{pill_txt}</span></div>{objetivo_html}<p class="po-acao-date">📅 Prevista para {formatar_data_br(acao["due_date"])}</p></div>', unsafe_allow_html=True)
 
-        # Controles abaixo do card
-        col_check, col_obs = st.columns([1, 3])
+        col_check, col_obs, col_sug = st.columns([1, 2.5, 0.5])
 
         with col_check:
             novo_status = st.checkbox(
@@ -304,62 +303,18 @@ def _view_detalhes(templates):
                 placeholder="Observação...",
                 disabled=is_cancelado
             )
-            
-            # ── Linha de botões: sugestão + badge + hint ──────────────
-            col_btn1, col_badge, col_btn2 = st.columns([2, 1, 2])
 
-            with col_btn1:
-                if st.button("💡 Ver sugestão de texto", key=f"sug_{acao['id']}"):
+        with col_sug:
+            if texto_template:
+                if st.button("💡", key=f"sug_{acao['id']}", help="Ver sugestão de texto"):
                     st.session_state[f"mostrar_sug_{acao['id']}"] = not st.session_state.get(f"mostrar_sug_{acao['id']}", False)
 
-            with col_badge:
-                if gratuito:
-                    st.markdown(
-                        "✦ Gratuito",
-                        unsafe_allow_html=True
-                    )
+        if hint and st.session_state.get(f"mostrar_hint_{acao['id']}", False):
+            st.markdown(f"<p style='font-size:0.78rem;color:#64748b;background:#fef9c3;padding:8px 12px;border-radius:8px;margin:4px 0;'>💛 {hint}</p>", unsafe_allow_html=True)
 
-            with col_btn2:
-                if hint:
-                    if st.button("💛 Dica estratégica", key=f"hint_{acao['id']}"):
-                        st.session_state[f"mostrar_hint_{acao['id']}"] = not st.session_state.get(f"mostrar_hint_{acao['id']}", False)
-
-            # ── Painel hint ───────────────────────────────────────────
-            if hint and st.session_state.get(f"mostrar_hint_{acao['id']}", False):
-                st.markdown(
-                    f"""
-                    💛 Dica estratégica
-                    {hint}
-                    """,
-                    unsafe_allow_html=True
-                )
-
-            # ── Painel sugestão de texto ──────────────────────────────
-            if st.session_state.get(f"mostrar_sug_{acao['id']}", False):
-                badge_html = ""
-                if gratuito:
-                    badge_html = (
-                        "✦ Gratuito"
-                    )
-                st.markdown(
-                    f"""
-                    
-                    {emoji} Sugestão — {nome_acao}{badge_html}
-                    
-                    {msg_personalizada}
-                    """,
-                    unsafe_allow_html=True
-                )
-                col_c1, col_c2 = st.columns([1, 1])
-                with col_c1:
-                    if st.button("📋 Copiar texto", key=f"copy_{acao['id']}"):
-                        st.code(msg_personalizada, language=None)
-                        st.toast("Texto pronto para copiar acima!", icon="✅")
-                with col_c2:
-                    if st.button("✏️ Usar na observação", key=f"usar_{acao['id']}"):
-                        st.session_state[f"obs_{acao['id']}"] = msg_personalizada
-                        st.session_state[f"mostrar_sug_{acao['id']}"] = False
-                        st.rerun()
+        if st.session_state.get(f"mostrar_sug_{acao['id']}", False):
+            gratuito_badge = " <span style='background:#d4edda;color:#155724;padding:1px 6px;border-radius:8px;font-size:0.65rem;font-weight:700;'>✦ Gratuito</span>" if gratuito else ""
+            st.markdown(f"<div style='background:#f0f4ff;border-left:3px solid #6366f1;padding:10px 14px;border-radius:0 8px 8px 0;margin:4px 0;font-size:0.82rem;color:#334155;'><strong>{emoji} {nome_acao}{gratuito_badge}</strong><br>{msg_personalizada}</div>", unsafe_allow_html=True)
 
         # Salvar mudanças
         if novo_status != is_feito or nova_obs != obs_atual:
