@@ -1435,7 +1435,8 @@ def show():
 
     propostas_aprovadas = _col_propostas(
         "Aprovada",
-        ['Aprovada']
+        ['Aprovada'],
+        exclude_exec=['Em execução']
     )
 
     if not propostas_com_clientes.empty:
