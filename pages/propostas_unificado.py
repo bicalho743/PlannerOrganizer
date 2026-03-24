@@ -787,8 +787,9 @@ def _tab_itens(proposta_id, show_finalizar=False):
                 try:
                     res = finalizar_proposta_v2(int(proposta_id))
                     if res.get('status', False):
-                        st.success("Proposta finalizada!")
                         st.session_state['kanban_selected_proposta'] = None
+                        st.session_state['proposta_finalizada_sucesso'] = True
+                        st.cache_data.clear()
                         st.rerun()
                     else:
                         st.error(res.get('message', 'Erro ao finalizar.'))
@@ -1355,6 +1356,9 @@ def show():
         st.session_state['kanban_selected_proposta'] = None
     if 'kanban_nova_proposta_open' not in st.session_state:
         st.session_state['kanban_nova_proposta_open'] = False
+
+    if st.session_state.pop('proposta_finalizada_sucesso', False):
+        st.success("✅ Proposta finalizada com sucesso!")
 
     try:
         propostas = st.session_state.db.get_propostas()
