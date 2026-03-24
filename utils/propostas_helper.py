@@ -674,6 +674,7 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
 
         total_fornecedores = 0
         total_assistentes = 0
+        lista_assistentes = []
         total_comissoes = 0
         total_outros = 0
         if not acrescimos.empty:
@@ -688,6 +689,8 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
                         total_comissoes += val_ac * pct_com / 100
                 elif tipo_ac == 'ASSISTENTE':
                     total_assistentes += val_ac
+                    nome_assist = str(ac.get('descricao', '') or ac.get('fornecedor', '') or 'Assistente').strip().title()
+                    lista_assistentes.append((nome_assist, val_ac))
                 else:
                     total_outros += val_ac
 
@@ -707,8 +710,12 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
             ("Comissões", total_comissoes, False),
             ("Lucro em Produtos", lucro_produtos, False),
             ("Outros", total_outros, False),
-            ("Pagamento Assistentes", total_assistentes, True),
         ]
+        if lista_assistentes:
+            for nome_a, val_a in lista_assistentes:
+                itens_receita.append((f"Assistente: {nome_a}", val_a, True))
+        elif total_assistentes > 0:
+            itens_receita.append(("Pagamento Assistentes", total_assistentes, True))
 
         periodo_str = ''
         data_inicio = proposta.get('data_inicio', '')
