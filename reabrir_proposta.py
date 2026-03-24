@@ -69,8 +69,8 @@ def reabrir_proposta_finalizada(proposta_id):
         # Permitir reabrir propostas com status "Finalizada", "Concluída" ou "Recusada"
         # Para propostas recusadas, o status pode ser "Recusada" e status_execucao pode ser "Cancelada"
         proposta_pode_reabrir = (
-            status in ["Finalizada", "Concluída", "Recusada"] or 
-            status_execucao in ["Finalizada", "Concluída", "Cancelada"]
+            status in ["Finalizada", "Concluída", "Recusada", "Aprovada"] or 
+            status_execucao in ["Finalizada", "Concluída", "Cancelada", "Em execução"]
         )
         
         print(f"DEBUG REABRIR: proposta_pode_reabrir={proposta_pode_reabrir}")
