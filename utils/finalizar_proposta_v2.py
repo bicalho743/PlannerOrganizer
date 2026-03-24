@@ -297,20 +297,24 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
                 lancamentos_gerados += 1
                 resultado["lancamentos"]["valores"]["produtos"] = valor_total_produtos
                 
-                # Registrar venda no módulo de vendas
-                cursor.execute("""
-                    INSERT INTO vendas 
-                    (observacoes, valor_total, data_venda, cliente_id, proposta_id, usuario_id, status)
-                    VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s)
-                    RETURNING id
-                """, (
-                    f"Venda da proposta #{proposta_info['numero']} - {nome_cliente}",
-                    valor_total_produtos,
-                    proposta_info['cliente_id'],
-                    proposta_id,
-                    proposta_info['usuario_id'],
-                    "Confirmada"
-                ))
+                cursor.execute("SELECT COUNT(*) FROM vendas WHERE proposta_id = %s", (proposta_id,))
+                vendas_existentes = cursor.fetchone()[0]
+                if vendas_existentes == 0:
+                    cursor.execute("""
+                        INSERT INTO vendas 
+                        (observacoes, valor_total, data_venda, cliente_id, proposta_id, usuario_id, status)
+                        VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s)
+                        RETURNING id
+                    """, (
+                        f"Venda da proposta #{proposta_info['numero']} - {nome_cliente}",
+                        valor_total_produtos,
+                        proposta_info['cliente_id'],
+                        proposta_id,
+                        proposta_info['usuario_id'],
+                        "Confirmada"
+                    ))
+                else:
+                    logger.info(f"Venda já existe para proposta #{proposta_id}, pulando criação")
         
         # Etapa 3: Serviços adicionais (OUTROS) - Gerar lançamento para serviços adicionais
         cursor.execute("""
