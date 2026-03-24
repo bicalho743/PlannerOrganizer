@@ -298,6 +298,8 @@ def _render_open_proposal_actions(proposta_id, proposta):
 
 def _render_finalized_proposal_actions(proposta_id, proposta):
     """Compact view for finalized proposals: report buttons + reopen/delete."""
+    nome_cliente = proposta.get('nome', proposta.get('cliente_nome', 'Cliente'))
+    numero = proposta.get('numero', proposta_id)
     valor = _safe_float(proposta.get('valor'))
     status_atual = proposta.get('status', '')
 
@@ -612,16 +614,22 @@ def _tab_produtos(proposta_id):
             if st.button("📄 Gerar Relatório de Venda dos Produtos", use_container_width=True, key=f"btn_pdf_produtos_proposta_{proposta_id}"):
                 try:
                     from utils.pdf_generator_v2 import gerar_pdf_venda_v2
+                    from sqlalchemy import text as _text
                     import time as _t
-                    num_exibir2 = numero or proposta_id
-                    venda_dados = {'id': num_exibir2, 'status': 'Proposta', 'forma_pagamento': 'N/A',
+                    _prop_row = st.session_state.db.session.execute(
+                        _text("SELECT p.numero, c.nome FROM propostas p LEFT JOIN clientes c ON p.cliente_id = c.id WHERE p.id = :pid"),
+                        {"pid": proposta_id}
+                    ).fetchone()
+                    _num_prop = _prop_row[0] if _prop_row else proposta_id
+                    _nome_cl = _prop_row[1] if _prop_row and _prop_row[1] else "Cliente"
+                    venda_dados = {'id': _num_prop, 'status': 'Proposta', 'forma_pagamento': 'N/A',
                                    'valor_total': round(float(valor_total_produtos), 2),
-                                   'data_venda': datetime.now().strftime('%d/%m/%Y'), 'observacoes': f"Produtos Proposta #{num_exibir2} - {nome_cliente}"}
+                                   'data_venda': datetime.now().strftime('%d/%m/%Y'), 'observacoes': f"Produtos Proposta #{_num_prop} - {_nome_cl}"}
                     itens_pdf = produtos_proposta.rename(columns={'nome': 'produto_nome', 'valor_unit': 'preco_unitario'})[['produto_nome', 'quantidade', 'preco_unitario']].copy()
                     ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_t.time()))
-                    filename = f"pdfs/Venda_Proposta_{num_exibir2}_{ts}.pdf"
+                    filename = f"pdfs/Venda_Proposta_{_num_prop}_{ts}.pdf"
                     os.makedirs("pdfs", exist_ok=True)
-                    pdf_path = gerar_pdf_venda_v2(venda_dados, {'nome': nome_cliente}, itens_pdf, filename)
+                    pdf_path = gerar_pdf_venda_v2(venda_dados, {'nome': _nome_cl}, itens_pdf, filename)
                     if pdf_path and os.path.exists(pdf_path):
                         with open(pdf_path, "rb") as f:
                             st.success("PDF gerado!")
