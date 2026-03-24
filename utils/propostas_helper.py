@@ -689,7 +689,7 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
                         total_comissoes += val_ac * pct_com / 100
                 elif tipo_ac == 'ASSISTENTE':
                     total_assistentes += val_ac
-                    nome_assist = str(ac.get('descricao', '') or ac.get('fornecedor', '') or 'Assistente').strip().title()
+                    nome_assist = str(ac.get('fornecedor', '') or 'Assistente').strip().title()
                     lista_assistentes.append((nome_assist, val_ac))
                 else:
                     total_outros += val_ac
