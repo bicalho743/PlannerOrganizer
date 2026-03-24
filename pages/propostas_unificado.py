@@ -316,15 +316,15 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
 
     rc1, rc2 = st.columns(2)
     with rc1:
-        _report_card_download("📋", "RELATÓRIO CLIENTE", "Proposta de serviço", proposta_id, "cliente")
+        _report_card_download("📋", "RELATÓRIO CLIENTE", "Proposta de serviço", proposta_id, "cliente", nome_cliente, numero)
     with rc2:
-        _report_card_download("📊", "RELATÓRIO INTERNO", "Margens e custos", proposta_id, "interno")
+        _report_card_download("📊", "RELATÓRIO INTERNO", "Margens e custos", proposta_id, "interno", nome_cliente, numero)
 
     rc3, rc4 = st.columns(2)
     with rc3:
-        _report_card_download("🏢", "RELATÓRIO FORNECEDORES", "Lista de terceiros", proposta_id, "fornecedores")
+        _report_card_download("🏢", "RELATÓRIO FORNECEDORES", "Lista de terceiros", proposta_id, "fornecedores", nome_cliente, numero)
     with rc4:
-        _report_card_download("📦", "VENDAS DO PRODUTO", "Produtos organizados", proposta_id, "vendas")
+        _report_card_download("📦", "VENDAS DO PRODUTO", "Produtos organizados", proposta_id, "vendas", nome_cliente, numero)
 
     st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
     ac1, ac2 = st.columns(2)
@@ -386,7 +386,7 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
                     st.error(str(e))
 
 
-def _report_card_download(icon, title, subtitle, proposta_id, report_type):
+def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_cliente="Cliente", numero_proposta=None):
     """Render a navy card-styled download button that generates and downloads PDF on click."""
     pdf_bytes = None
     file_name = f"Relatorio_{report_type}_{proposta_id}.pdf"
@@ -429,20 +429,21 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type):
             else:
                 val_col = 'valor_unit' if 'valor_unit' in produtos.columns else 'valor'
                 valor_total = float(produtos[val_col].astype(float).mul(produtos['quantidade'].astype(float)).sum())
-                venda_dados = {'id': proposta_id, 'status': 'Proposta', 'forma_pagamento': 'N/A',
+                num_exibir = numero_proposta or proposta_id
+                venda_dados = {'id': num_exibir, 'status': 'Proposta', 'forma_pagamento': 'N/A',
                                'valor_total': round(valor_total, 2),
                                'data_venda': datetime.now().strftime('%d/%m/%Y'),
-                               'observacoes': f"Produtos Proposta #{proposta_id}"}
+                               'observacoes': f"Produtos Proposta #{num_exibir} - {nome_cliente}"}
                 rename_map = {'nome': 'produto_nome', val_col: 'preco_unitario'}
                 itens_pdf = produtos.rename(columns=rename_map)[['produto_nome', 'quantidade', 'preco_unitario']].copy()
                 ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_t.time()))
-                fname = f"pdfs/Venda_Proposta_{proposta_id}_{ts}.pdf"
+                fname = f"pdfs/Venda_Proposta_{num_exibir}_{ts}.pdf"
                 os.makedirs("pdfs", exist_ok=True)
-                pdf_path = gerar_pdf_venda_v2(venda_dados, {'nome': 'Cliente'}, itens_pdf, fname)
+                pdf_path = gerar_pdf_venda_v2(venda_dados, {'nome': nome_cliente}, itens_pdf, fname)
                 if pdf_path and os.path.exists(pdf_path):
                     with open(pdf_path, "rb") as f:
                         pdf_bytes = f.read()
-                    file_name = f"Produtos_Proposta_{proposta_id}.pdf"
+                    file_name = f"Produtos_Proposta_{num_exibir}.pdf"
                 else:
                     error_msg = "Erro ao gerar PDF de vendas."
     except Exception as e:
@@ -612,14 +613,15 @@ def _tab_produtos(proposta_id):
                 try:
                     from utils.pdf_generator_v2 import gerar_pdf_venda_v2
                     import time as _t
-                    venda_dados = {'id': proposta_id, 'status': 'Proposta', 'forma_pagamento': 'N/A',
+                    num_exibir2 = numero or proposta_id
+                    venda_dados = {'id': num_exibir2, 'status': 'Proposta', 'forma_pagamento': 'N/A',
                                    'valor_total': round(float(valor_total_produtos), 2),
-                                   'data_venda': datetime.now().strftime('%d/%m/%Y'), 'observacoes': f"Produtos Proposta #{proposta_id}"}
+                                   'data_venda': datetime.now().strftime('%d/%m/%Y'), 'observacoes': f"Produtos Proposta #{num_exibir2} - {nome_cliente}"}
                     itens_pdf = produtos_proposta.rename(columns={'nome': 'produto_nome', 'valor_unit': 'preco_unitario'})[['produto_nome', 'quantidade', 'preco_unitario']].copy()
                     ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_t.time()))
-                    filename = f"pdfs/Venda_Proposta_{proposta_id}_{ts}.pdf"
+                    filename = f"pdfs/Venda_Proposta_{num_exibir2}_{ts}.pdf"
                     os.makedirs("pdfs", exist_ok=True)
-                    pdf_path = gerar_pdf_venda_v2(venda_dados, {'nome': 'Cliente'}, itens_pdf, filename)
+                    pdf_path = gerar_pdf_venda_v2(venda_dados, {'nome': nome_cliente}, itens_pdf, filename)
                     if pdf_path and os.path.exists(pdf_path):
                         with open(pdf_path, "rb") as f:
                             st.success("PDF gerado!")
