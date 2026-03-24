@@ -169,26 +169,6 @@ def _render_detail_panel(proposta_id, proposta, propostas_com_clientes):
         _render_finalized_proposal_actions(proposta_id, proposta)
     else:
         _tab_itens(proposta_id, show_finalizar=True)
-        if st.session_state.get(f"confirm_finalizar_{proposta_id}", False):
-            st.warning("Deseja realmente finalizar esta proposta?")
-            fc1, fc2, fc3 = st.columns([2, 1, 1])
-            with fc2:
-                if st.button("Cancelar", key=f"btn_cancel_fin_{proposta_id}", use_container_width=True):
-                    st.session_state[f"confirm_finalizar_{proposta_id}"] = False
-                    st.rerun()
-            with fc3:
-                if st.button("Confirmar", key=f"btn_confirm_fin_{proposta_id}", use_container_width=True, type="primary"):
-                    try:
-                        res = finalizar_proposta_v2(int(proposta_id))
-                        if res.get('status', False):
-                            st.success("Proposta finalizada!")
-                            st.session_state['kanban_selected_proposta'] = None
-                            st.session_state[f"confirm_finalizar_{proposta_id}"] = False
-                            st.rerun()
-                        else:
-                            st.error(res.get('message', 'Erro ao finalizar.'))
-                    except Exception as e:
-                        st.error(str(e))
 
 
 def _render_open_proposal_actions(proposta_id, proposta):
@@ -803,8 +783,17 @@ def _tab_itens(proposta_id, show_finalizar=False):
 
         if show_finalizar:
             st.markdown("<div style='margin-top:8px;'></div>", unsafe_allow_html=True)
-            if st.button("🏁 FINALIZAR PROJETO", key=f"btn_finalizar_exec_{proposta_id}", use_container_width=True):
-                st.session_state[f"confirm_finalizar_{proposta_id}"] = True
+            if st.button("🏁 FINALIZAR PROJETO", key=f"btn_finalizar_exec_{proposta_id}", use_container_width=True, type="primary"):
+                try:
+                    res = finalizar_proposta_v2(int(proposta_id))
+                    if res.get('status', False):
+                        st.success("Proposta finalizada!")
+                        st.session_state['kanban_selected_proposta'] = None
+                        st.rerun()
+                    else:
+                        st.error(res.get('message', 'Erro ao finalizar.'))
+                except Exception as e:
+                    st.error(str(e))
 
     with col_main:
         for cat_name, cat_icon, cat_qtd, cat_total, cat_cor in cats:
