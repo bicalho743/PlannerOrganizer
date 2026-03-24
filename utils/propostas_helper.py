@@ -822,12 +822,13 @@ def gerar_pdf_fornecedores_proposta(db, proposta_id, custom_filename=None):
         if not itens_fornecedores:
             return False, "Nenhum fornecedor encontrado para esta proposta.", None
             
+        numero_proposta = proposta.get('numero', proposta_id)
         if custom_filename:
             filename = custom_filename
         else:
             cliente_nome = cliente.get('nome', 'sem_nome').replace(' ', '_').lower()
             data_atual = datetime.now().strftime('%Y%m%d_%H%M%S')
-            filename = f"pdfs/Fornecedores_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
+            filename = f"pdfs/Fornecedores_Proposta_{numero_proposta}_{cliente_nome}_{data_atual}.pdf"
             
         itens_tuples = []
         total_forn = 0
@@ -839,7 +840,7 @@ def gerar_pdf_fornecedores_proposta(db, proposta_id, custom_filename=None):
 
         from utils.pdf_generator_v2 import gerar_pdf_fornecedores
         dados_pdf = {
-            'proposta_id': proposta.get('id', ''),
+            'proposta_id': numero_proposta,
             'cliente': cliente.get('nome', ''),
             'telefone': cliente.get('telefone', ''),
             'tipo': proposta.get('tipo_proposta', ''),
