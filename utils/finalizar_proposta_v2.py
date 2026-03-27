@@ -72,13 +72,13 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
     try:
         cursor = conn.cursor()
         
-        # Verificar se a proposta existe e obter informações básicas
         cursor.execute("""
             SELECT p.id, p.numero, p.descricao, p.valor, p.status, p.status_execucao, 
                    p.cliente_id, p.usuario_id, c.nome as nome_cliente
             FROM propostas p
             JOIN clientes c ON p.cliente_id = c.id
             WHERE p.id = %s
+            FOR UPDATE OF p
         """, (proposta_id,))
         
         proposta_row = cursor.fetchone()
