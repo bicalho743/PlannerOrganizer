@@ -182,13 +182,8 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
         else:
             logger.warning(f"Proposta #{proposta_info['numero']} não possui lançamento de valor base!")
         
-        # Etapa 2: Produtos - Gerar lançamento para produtos
-        # Buscar produtos no módulo de produtos (primeira opção)
-        # Primeiro, vamos verificar se há um problema de transação abortada e limpar
         try:
-            # Tentar limpar transações abortadas
-            conn.rollback()
-            
+            cursor.execute("SAVEPOINT busca_produtos_estoque")
             cursor.execute("""
                 SELECT p.id, 'ESTOQUE' as fornecedor, 
                        COALESCE(p.nome, p.descricao) as descricao, 
@@ -200,13 +195,11 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
             """, (proposta_id,))
         except Exception as e:
             logger.warning(f"Erro ao buscar produtos do estoque: {str(e)}")
-            # Se falhar, retornamos uma lista vazia
             logger.info("Continuando com lista vazia de produtos do estoque")
-            # Garantir que a transação seja limpa
             try:
-                conn.rollback()
-            except Exception as e:
-                print(f"Erro: {e}")
+                cursor.execute("ROLLBACK TO SAVEPOINT busca_produtos_estoque")
+            except Exception as e2:
+                logger.warning(f"Erro ao rollback savepoint: {e2}")
         
         try:
             produtos_estoque = cursor.fetchall()
