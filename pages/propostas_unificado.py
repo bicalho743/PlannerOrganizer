@@ -218,6 +218,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
                           novo_status="Aprovada", data_aprovacao=datetime.now().date())
                     if res.get('status', False):
                         st.session_state['kanban_selected_proposta'] = None
+                        st.session_state.db.invalidar_cache()
                         st.rerun()
                     else:
                         st.error(res.get('message', 'Erro ao aprovar.'))
@@ -234,7 +235,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
                         ), {"pid": proposta_id})
                         conn.commit()
                     st.session_state['kanban_selected_proposta'] = None
-                    st.cache_data.clear()
+                    st.session_state.db.invalidar_cache()
                     st.rerun()
                 except Exception as e:
                     st.error(str(e))
