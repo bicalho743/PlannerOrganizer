@@ -198,12 +198,11 @@ def _render_open_proposal_actions(proposta_id, proposta):
     </div>""", unsafe_allow_html=True)
 
     if status_atual == 'Aprovada':
-        if st.button("▶️ Iniciar", key=f"btn_aprovar_{proposta_id}", use_container_width=True, type="primary"):
+        if st.button("▶️ Iniciar Execução", key=f"btn_iniciar_{proposta_id}", use_container_width=True, type="primary"):
             try:
                 res = st.session_state.db.update_proposta_status(proposta_id=proposta_id,
-                      novo_status="Em execução", data_aprovacao=datetime.now().date())
+                      novo_status="Em execução", data_aprovacao=proposta.get('data_aprovacao') or datetime.now().date())
                 if res.get('status', False):
-                    st.success("Proposta iniciada!")
                     st.session_state['kanban_selected_proposta'] = None
                     st.rerun()
                 else:
@@ -211,26 +210,34 @@ def _render_open_proposal_actions(proposta_id, proposta):
             except Exception as e:
                 st.error(str(e))
     else:
-        c1, c2, c3 = st.columns(3)
+        c1, c2 = st.columns(2)
         with c1:
-            if st.button("▶️ Iniciar", key=f"btn_aprovar_{proposta_id}", use_container_width=True, type="primary"):
+            if st.button("✅ Aprovar", key=f"btn_aprovar_{proposta_id}", use_container_width=True, type="primary"):
                 try:
                     res = st.session_state.db.update_proposta_status(proposta_id=proposta_id,
                           novo_status="Aprovada", data_aprovacao=datetime.now().date())
                     if res.get('status', False):
-                        res2 = st.session_state.db.update_proposta_status(proposta_id=proposta_id,
-                              novo_status="Em execução", data_aprovacao=datetime.now().date())
-                        if res2.get('status', False):
-                            st.success("Proposta iniciada!")
-                        else:
-                            st.success("Proposta aprovada!")
                         st.session_state['kanban_selected_proposta'] = None
                         st.rerun()
                     else:
-                        st.error(res.get('message', 'Erro ao iniciar.'))
+                        st.error(res.get('message', 'Erro ao aprovar.'))
                 except Exception as e:
                     st.error(str(e))
         with c2:
+            if st.button("❌ Recusar", key=f"btn_recusar_{proposta_id}", use_container_width=True):
+                try:
+                    res = st.session_state.db.update_proposta_status(proposta_id=proposta_id,
+                          novo_status="Recusada")
+                    if res.get('status', False):
+                        st.session_state['kanban_selected_proposta'] = None
+                        st.rerun()
+                    else:
+                        st.error(res.get('message', 'Erro ao recusar.'))
+                except Exception as e:
+                    st.error(str(e))
+
+        c3, c4 = st.columns(2)
+        with c3:
             if st.button("📄 Gerar Proposta", key=f"btn_pdf_proposta_{proposta_id}", use_container_width=True):
                 try:
                     sucesso, mensagem, arquivo = gerar_pdf_proposta(db=st.session_state.db, proposta_id=proposta_id)
@@ -243,7 +250,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
                         st.error(f"Erro: {mensagem}")
                 except Exception as e:
                     st.error(str(e))
-        with c3:
+        with c4:
             if st.button("🗑️ Excluir", key=f"btn_excluir_open_{proposta_id}", use_container_width=True):
                 st.session_state[f"confirm_delete_{proposta_id}"] = True
 
