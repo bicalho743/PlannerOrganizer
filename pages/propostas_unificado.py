@@ -226,13 +226,16 @@ def _render_open_proposal_actions(proposta_id, proposta):
         with c2:
             if st.button("❌ Recusar", key=f"btn_recusar_{proposta_id}", use_container_width=True):
                 try:
-                    res = st.session_state.db.update_proposta_status(proposta_id=proposta_id,
-                          novo_status="Recusada")
-                    if res.get('status', False):
-                        st.session_state['kanban_selected_proposta'] = None
-                        st.rerun()
-                    else:
-                        st.error(res.get('message', 'Erro ao recusar.'))
+                    from sqlalchemy import text as sa_text
+                    from utils.database import engine
+                    with engine.connect() as conn:
+                        conn.execute(sa_text(
+                            "UPDATE propostas SET status = 'Recusada', status_execucao = 'Cancelada' WHERE id = :pid"
+                        ), {"pid": proposta_id})
+                        conn.commit()
+                    st.session_state['kanban_selected_proposta'] = None
+                    st.cache_data.clear()
+                    st.rerun()
                 except Exception as e:
                     st.error(str(e))
 
