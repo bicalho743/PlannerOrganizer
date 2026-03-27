@@ -204,6 +204,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
                       novo_status="Em execução", data_aprovacao=proposta.get('data_aprovacao') or datetime.now().date())
                 if res.get('status', False):
                     st.session_state['kanban_selected_proposta'] = None
+                    st.session_state.db.invalidar_cache()
                     st.rerun()
                 else:
                     st.error(res.get('message', 'Erro ao iniciar.'))
@@ -1171,6 +1172,7 @@ def _tab_acoes(proposta_id, proposta):
                 if res.get('status', False):
                     st.success("Execução iniciada!")
                     st.session_state['kanban_selected_proposta'] = None
+                    st.session_state.db.invalidar_cache()
                     st.rerun()
                 else:
                     st.error(res.get('message', 'Erro.'))
