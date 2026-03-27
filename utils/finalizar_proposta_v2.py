@@ -101,22 +101,23 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
         }
         nome_cliente = proposta_row[8]
         
-        # Verificar se a proposta já está com status finalizado
-        if proposta_info['status_execucao'] != 'Finalizada':
-            # Atualizar status da proposta para finalizada - VERSÃO CORRIGIDA
-            cursor.execute("""
-                UPDATE propostas 
-                SET status = 'Finalizada', 
-                    status_execucao = 'Finalizada'
-                WHERE id = %s
-            """, (proposta_id,))
-            
-            # Executar commit imediatamente para garantir que a mudança seja persistida
-            conn.commit()
-            
-            logger.info(f"Proposta #{proposta_id} marcada como finalizada com commit")
-        
-        # Verificar se já existem lançamentos para esta proposta
+        if proposta_info['status_execucao'] == 'Finalizada':
+            logger.info(f"Proposta #{proposta_id} já está finalizada, ignorando chamada duplicada")
+            return {"status": True, "mensagem": f"Proposta #{proposta_info.get('numero', proposta_id)} já está finalizada"}
+
+        cursor.execute("""
+            UPDATE propostas 
+            SET status = 'Finalizada', 
+                status_execucao = 'Finalizada'
+            WHERE id = %s AND status_execucao != 'Finalizada'
+        """, (proposta_id,))
+
+        if cursor.rowcount == 0:
+            logger.info(f"Proposta #{proposta_id} já finalizada por outra execução concorrente")
+            return {"status": True, "mensagem": f"Proposta #{proposta_info.get('numero', proposta_id)} já está finalizada"}
+
+        logger.info(f"Proposta #{proposta_id} marcada como finalizada")
+
         cursor.execute("""
             SELECT COUNT(*) FROM financeiro 
             WHERE proposta_id = %s AND origem_tipo IN 
@@ -126,7 +127,6 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
         count = cursor.fetchone()[0]
         if count > 0:
             logger.warning(f"Proposta #{proposta_id} já possui {count} lançamentos financeiros")
-            # Limpar apenas os lançamentos que serão recriados, preservando o valor base
             cursor.execute("""
                 DELETE FROM financeiro 
                 WHERE proposta_id = %s AND origem_tipo IN 
