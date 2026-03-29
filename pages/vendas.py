@@ -257,79 +257,70 @@ def _render_detail_panel(venda_id, venda_row):
         except Exception as e:
             st.caption(f"Itens: {str(e)}")
 
-    # Botões de ação compactos
-    col_edit, col_pdf, col_del, col_space = st.columns([1, 1, 1, 3])
+    col_edit, col_del, col_space = st.columns([1, 1, 4])
     with col_edit:
         if st.button("✏️ Editar", key=f"det_edit_{venda_id}", use_container_width=True):
             st.session_state[f"editando_venda_{venda_id}"] = not st.session_state.get(f"editando_venda_{venda_id}", False)
-            st.rerun()
-    with col_pdf:
-        if st.button("📄 PDF", key=f"det_pdf_{venda_id}", use_container_width=True):
-            st.session_state[f"gerar_pdf_{venda_id}"] = True
             st.rerun()
     with col_del:
         if st.button("🗑️ Excluir", key=f"det_del_{venda_id}", use_container_width=True):
             st.session_state[f"confirmar_excluir_{venda_id}"] = True
             st.rerun()
 
-    # Geração de PDF (após clicar no botão)
-    if st.session_state.get(f"gerar_pdf_{venda_id}", False):
-        st.session_state.pop(f"gerar_pdf_{venda_id}", None)
+    try:
+        import time as _time
+        import base64 as _b64
+        nome_raw = ""
         try:
-            import time as _time
-            nome_raw = ""
-            try:
-                from sqlalchemy import text as _text
-                cid = venda_row.get("cliente_id")
-                if cid and str(cid) not in ('', 'nan', 'None'):
-                    result = st.session_state.db.session.execute(
-                        _text("SELECT nome FROM clientes WHERE id = :cid"),
-                        {"cid": int(cid)}
-                    ).fetchone()
-                    if result:
-                        nome_raw = str(result[0])
-            except Exception:
-                pass
-            if not nome_raw:
-                nome_raw = str(venda_row.get("cliente_nome", "") or "")
-            if not nome_raw or nome_raw in ("Cliente", "cliente", "Cliente não encontrado", "nan", "None", ""):
-                nome_raw = "Cliente"
-            itens_pdf = itens_det
-            os.makedirs("pdfs", exist_ok=True)
-            ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_time.time()))
-            safe_nome = nome_raw.replace(" ", "_").replace("/", "_").lower()
-            
-            numero_exibir = venda_row.get("proposta_numero") or venda_row.get("id", "")
-            proposta_dados = {
-                "id": numero_exibir,
-                "tipo_proposta": "Venda",
-                "status": venda_row.get("status", "Concluída"),
-                "forma_pagamento": venda_row.get("forma_pagamento", ""),
-                "valor_total": round(_safe_float(venda_row.get("valor_total", 0)), 2),
-                "data_venda": venda_row.get("data_venda"),
-                "observacoes": venda_row.get("observacoes", "")
-            }
-            cliente_dados = {"nome": nome_raw}
-            pdf_path = f"pdfs/Venda_{numero_exibir}_{safe_nome}_{ts}.pdf"
-            
-            # Usar pdf_generator_v2 que tem layout Navy/Gold
-            from utils.pdf_generator_v2 import gerar_pdf_venda_v2
-            gerar_pdf_venda_v2(proposta_dados, cliente_dados, itens_pdf, pdf_path)
-            if pdf_path and os.path.exists(pdf_path):
-                with open(pdf_path, "rb") as f:
-                    pdf_bytes = f.read()
-                st.success("PDF gerado!")
-                st.download_button(
-                    label="📥 Baixar PDF",
-                    data=pdf_bytes,
-                    file_name=f"Venda_{numero_exibir}_{safe_nome}.pdf",
-                    mime="application/pdf",
-                    key=f"dl_pdf_{venda_id}"
-                )
-            else:
-                st.error("Erro ao gerar PDF.")
-        except Exception as e:
-            st.error(f"Erro: {str(e)}")
+            from sqlalchemy import text as _text
+            cid = venda_row.get("cliente_id")
+            if cid and str(cid) not in ('', 'nan', 'None'):
+                result = st.session_state.db.session.execute(
+                    _text("SELECT nome FROM clientes WHERE id = :cid"),
+                    {"cid": int(cid)}
+                ).fetchone()
+                if result:
+                    nome_raw = str(result[0])
+        except Exception:
+            pass
+        if not nome_raw:
+            nome_raw = str(venda_row.get("cliente_nome", "") or "")
+        if not nome_raw or nome_raw in ("Cliente", "cliente", "Cliente não encontrado", "nan", "None", ""):
+            nome_raw = "Cliente"
+        os.makedirs("pdfs", exist_ok=True)
+        safe_nome = nome_raw.replace(" ", "_").replace("/", "_").lower()
+        numero_exibir = venda_row.get("proposta_numero") or venda_row.get("id", "")
+        proposta_dados = {
+            "id": numero_exibir,
+            "tipo_proposta": "Venda",
+            "status": venda_row.get("status", "Concluída"),
+            "forma_pagamento": venda_row.get("forma_pagamento", ""),
+            "valor_total": round(_safe_float(venda_row.get("valor_total", 0)), 2),
+            "data_venda": venda_row.get("data_venda"),
+            "observacoes": venda_row.get("observacoes", "")
+        }
+        cliente_dados = {"nome": nome_raw}
+        pdf_file_name = f"Relatorio_Venda_{safe_nome}_{numero_exibir}.pdf"
+        pdf_path = f"pdfs/{pdf_file_name}"
+        from utils.pdf_generator_v2 import gerar_pdf_venda_v2
+        gerar_pdf_venda_v2(proposta_dados, cliente_dados, itens_det, pdf_path)
+        if pdf_path and os.path.exists(pdf_path):
+            with open(pdf_path, "rb") as f:
+                pdf_bytes = f.read()
+            b64 = _b64.b64encode(pdf_bytes).decode()
+            st.markdown(f"""
+            <a href="data:application/pdf;base64,{b64}" download="{pdf_file_name}"
+               style="text-decoration:none;display:inline-block;">
+              <div style="background:#0D1B2A;border-radius:10px;padding:14px 24px;text-align:center;
+                          display:flex;align-items:center;gap:10px;cursor:pointer;transition:all 0.2s;"
+                   onmouseover="this.style.background='#162840';this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)'"
+                   onmouseout="this.style.background='#0D1B2A';this.style.transform='none';this.style.boxShadow='none'">
+                <span style="font-size:20px;">📄</span>
+                <span style="color:#C9A84C;font-weight:700;font-size:13px;">Baixar PDF da Venda</span>
+              </div>
+            </a>""", unsafe_allow_html=True)
+    except Exception as e:
+        st.error(f"Erro ao gerar PDF: {str(e)}")
 
     # Confirmação de exclusão
     if st.session_state.get(f"confirmar_excluir_{venda_id}", False):
