@@ -25,7 +25,7 @@ serverAddress = "0.0.0.0"
 [theme]
 primaryColor = "#C9A84C"
 backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F0F2F6"
+secondaryBackgroundColor = "#0D1B2A"
 textColor = "#262730"
 font = "sans serif"
 

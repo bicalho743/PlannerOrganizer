@@ -23,7 +23,7 @@ def inject_mobile_sidebar_fix():
         position: relative !important;
         width: auto !important;
         min-width: 250px !important;
-        background-color: #1E1F36 !important;
+        background-color: #0D1B2A !important;
     }
     
     /* Force sidebar visibility on all screen sizes */
@@ -54,7 +54,7 @@ def inject_mobile_sidebar_fix():
             z-index: 999999 !important;
             transform: translateX(-100%) !important;
             transition: transform 0.3s ease !important;
-            background-color: #1E1F36 !important;
+            background-color: #0D1B2A !important;
             border-right: 2px solid #0D1B2A !important;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3) !important;
         }

@@ -353,7 +353,7 @@ def inject_render_compatibility_fix():
                         
                         // Adicionar evento hover
                         button.addEventListener('mouseenter', function() {
-                            this.style.backgroundColor = '#E3F2FD';
+                            this.style.backgroundColor = '#f5f0e0';
                             this.style.transform = 'translateY(-2px)';
                             this.style.boxShadow = '0 4px 8px rgba(13, 27, 42, 0.15)';
                         });
@@ -365,7 +365,7 @@ def inject_render_compatibility_fix():
                                 this.style.transform = 'translateY(0)';
                                 this.style.boxShadow = 'none';
                             } else {
-                                this.style.backgroundColor = '#E3F2FD';
+                                this.style.backgroundColor = '#f5f0e0';
                                 this.style.transform = 'translateY(0)';
                                 this.style.boxShadow = '0 2px 5px rgba(13, 27, 42, 0.15)';
                             }

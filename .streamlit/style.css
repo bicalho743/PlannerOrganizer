@@ -2,6 +2,14 @@
    PLANNER ORGANIZER - ESTILOS CONSOLIDADOS
    ======================================== */
 
+:root {
+    --navy: #0D1B2A;
+    --navy-hover: #162840;
+    --gold: #C9A84C;
+    --gold-dark: #B8943D;
+    --gold-light: #E8D5A3;
+}
+
 /* Reset e configurações globais */
 * {
     box-sizing: border-box;
@@ -168,8 +176,18 @@ section[data-testid="stSidebar"] .stButton > button {
 }
 
 section[data-testid="stSidebar"] .stButton > button:hover {
-    background-color: #162840 !important;
-    border-color: #162840 !important;
+    background-color: var(--navy-hover) !important;
+    border-color: var(--navy-hover) !important;
+}
+
+/* SIDEBAR ACTIVE NAV ITEM - Gold highlight for current page */
+section[data-testid="stSidebar"] .stButton > button:active,
+section[data-testid="stSidebar"] .stButton > button:focus,
+section[data-testid="stSidebar"] .stButton > button[aria-pressed="true"] {
+    background-color: var(--gold) !important;
+    border-color: var(--gold) !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(201, 168, 76, 0.35) !important;
 }
 
 /* TEXTOS DA SIDEBAR - Cor branca para contraste */

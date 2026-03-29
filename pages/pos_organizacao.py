@@ -338,7 +338,7 @@ def _view_detalhes(templates):
         st.markdown("""
         <div style='background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 18px;margin-bottom:12px;'>
             <p style='font-weight:700;color:#0D1B2A;margin:0 0 4px 0;'>🔄 Retorno Técnico Necessário?</p>
-            <p style='font-size:0.85rem;color:#1e3a8a;margin:0;'>O acompanhamento foi concluído. Há necessidade de ajuste ou visita técnica?</p>
+            <p style='font-size:0.85rem;color:#0D1B2A;margin:0;'>O acompanhamento foi concluído. Há necessidade de ajuste ou visita técnica?</p>
         </div>
         """, unsafe_allow_html=True)
 

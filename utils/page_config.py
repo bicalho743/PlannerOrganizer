@@ -1,4 +1,5 @@
 import streamlit as st
+from utils.design_tokens import NAVY, NAVY_HOVER, GOLD, GOLD_DARK, GOLD_LIGHT, GLOBAL_CSS_VARS
 
 def apply_page_header(page_title=None, breadcrumb_items=None):
     """
@@ -57,7 +58,8 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         st.components.v1.html(combined_html, height=0, width=0)
         st.session_state.scripts_injected = True
 
-    # CSS para esconder o contêiner dos iframes
+    st.markdown(f"<style>{GLOBAL_CSS_VARS}</style>", unsafe_allow_html=True)
+
     st.markdown("""
     <style>
     /* Esconder contêineres de iframes */

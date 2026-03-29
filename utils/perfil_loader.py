@@ -116,7 +116,7 @@ def get_perfil_padrao():
         'instagram': 'plannerorganizer',
         'website': 'www.plannerorganizer.com.br',
         'cor_principal': '#0D1B2A',  # Navy
-        'cor_secundaria': '#e9f2ff',  # Azul claro
+        'cor_secundaria': '#E8D5A3',  # Gold Light
     }
 
 def formatar_instagram(usuario):
