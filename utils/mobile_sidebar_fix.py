@@ -55,7 +55,7 @@ def inject_mobile_sidebar_fix():
             transform: translateX(-100%) !important;
             transition: transform 0.3s ease !important;
             background-color: #1E1F36 !important;
-            border-right: 2px solid #2E4A99 !important;
+            border-right: 2px solid #0D1B2A !important;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3) !important;
         }
         
@@ -70,7 +70,7 @@ def inject_mobile_sidebar_fix():
             top: 20px !important;
             left: 20px !important;
             z-index: 1000000 !important;
-            background: linear-gradient(135deg, #2E4A99, #4A6CF7) !important;
+            background: linear-gradient(135deg, #0D1B2A, #C9A84C) !important;
             color: white !important;
             border: none !important;
             border-radius: 12px !important;

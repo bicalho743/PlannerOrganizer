@@ -376,7 +376,7 @@ if not st.session_state.authenticated:
     .stButton > button, .stFormSubmitButton > button {
         color: white !important;
         font-weight: 600 !important;
-        background-color: #1f4e79 !important;
+        background-color: #C9A84C !important;
         border: none !important;
         text-shadow: none !important;
     }
@@ -505,8 +505,8 @@ if not st.session_state.authenticated:
     .stat-box:hover {
         transform: translateY(-3px);
         box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-        border-color: #3a75c4;
-        border-left-color: #3a75c4;
+        border-color: #C9A84C;
+        border-left-color: #C9A84C;
     }
     
     .stat-number {
@@ -550,8 +550,8 @@ if not st.session_state.authenticated:
     .feature-box:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-        border-color: #3a75c4;
-        border-left-color: #3a75c4;
+        border-color: #C9A84C;
+        border-left-color: #C9A84C;
     }
     
     .feature-icon {
@@ -598,7 +598,7 @@ if not st.session_state.authenticated:
     }
     
     .testimonial-author {
-        color: #3a75c4;
+        color: #C9A84C;
         font-weight: 600;
         font-size: 0.9rem;
     }
@@ -608,7 +608,7 @@ if not st.session_state.authenticated:
         top: -10px;
         left: 20px;
         background: white;
-        color: #3a75c4;
+        color: #C9A84C;
         font-size: 2rem;
         padding: 0 0.5rem;
     }
@@ -782,7 +782,7 @@ if not st.session_state.authenticated:
         # CTA para download do manual
         st.markdown("""
         <div style="text-align: center; margin: 2rem 0; padding: 2rem; background: linear-gradient(135deg, #f8f9fa, #e9f2ff); border-radius: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.05);">
-            <h3 style="color: #1E366F; margin-bottom: 1rem; font-size: 1.8rem;">📘 Manual Completo do Sistema</h3>
+            <h3 style="color: #0D1B2A; margin-bottom: 1rem; font-size: 1.8rem;">📘 Manual Completo do Sistema</h3>
             <p style="color: #5A6A85; font-size: 1.1rem; margin-bottom: 1.5rem;">
                 Receba gratuitamente o guia completo com todas as funcionalidades do Planner Organizer
             </p>

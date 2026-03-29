@@ -112,10 +112,10 @@ def show():
         
         st.markdown(f"""
         <div style="text-align: center; margin: -10px 0 25px 0; padding-top: 0; position: relative; top: 0px;">
-            <p style="font-style: italic; color: #1E366F; margin: 0; font-size: 1.1rem; font-weight: 500;">
+            <p style="font-style: italic; color: #0D1B2A; margin: 0; font-size: 1.1rem; font-weight: 500;">
                 "{frase['texto']}"
             </p>
-            <p style="color: #4A6FA5; margin: 8px 0 0 0; font-size: 0.85rem; text-align: right; font-weight: 500;">
+            <p style="color: #C9A84C; margin: 8px 0 0 0; font-size: 0.85rem; text-align: right; font-weight: 500;">
                 — {frase['autor']}
             </p>
         </div>
@@ -240,7 +240,7 @@ def show():
         total_clientes = len(clientes) if not clientes.empty else 0
         
         st.markdown("""
-        <div style="background: linear-gradient(135deg, #1E366F, #2A4D8F); 
+        <div style="background: linear-gradient(135deg, #0D1B2A, #162840); 
              color: white; padding: 20px; border-radius: 10px; 
              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
             <div style="font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center; color: white;">
@@ -250,7 +250,7 @@ def show():
                        margin-right: 10px; color: white;">👥</span>
                 <span style="color: white !important;"><strong>Clientes</strong></span>
             </div>
-            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0; color: white !important;">{}</div>
+            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0; color: #C9A84C !important;">{}</div>
             <div style="font-size: 0.9rem; opacity: 0.9; color: white !important;">Total de clientes cadastrados</div>
         </div>
         """.format(total_clientes), unsafe_allow_html=True)
@@ -258,7 +258,7 @@ def show():
     # Cartão 2: Propostas em Aberto
     with col_metricas2:
         st.markdown("""
-        <div style="background: linear-gradient(135deg, #FF9800, #FF5722); 
+        <div style="background: linear-gradient(135deg, #0D1B2A, #162840); 
              color: white; padding: 20px; border-radius: 10px; 
              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
             <div style="font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center; color: white;">
@@ -268,15 +268,15 @@ def show():
                        margin-right: 10px; color: white;">📝</span>
                 <span style="color: white !important;"><strong>Propostas</strong></span>
             </div>
-            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0; color: white !important;">{}</div>
+            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0; color: #C9A84C !important;">{}</div>
             <div style="font-size: 0.9rem; opacity: 0.9; color: white !important;">Propostas em aberto</div>
         </div>
         """.format(propostas_em_aberto), unsafe_allow_html=True)
 
     # Cartão 3: Saldo Financeiro
     with col_metricas3:
-        cor_fundo = "#4CAF50" if saldo_liquido >= 0 else "#F44336"
-        cor_secundaria = "#388E3C" if saldo_liquido >= 0 else "#D32F2F"
+        cor_fundo = "#0D1B2A"
+        cor_secundaria = "#162840"
         
         st.markdown("""
         <div style="background: linear-gradient(135deg, {0}, {1}); 
@@ -289,7 +289,7 @@ def show():
                        margin-right: 10px; color: white;">💰</span>
                 <span style="color: white !important;"><strong>Saldo</strong></span>
             </div>
-            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0; color: white !important;">{2}</div>
+            <div style="font-size: 2rem; font-weight: bold; margin: 5px 0; color: #C9A84C !important;">{2}</div>
             <div style="font-size: 0.9rem; opacity: 0.9; color: white !important;">
                 <span style="margin-right: 10px; color: white !important;">📥 {3}</span>
                 <span style="color: white !important;">📤 {4}</span>
@@ -433,9 +433,9 @@ def show():
 
             with st.container():
                 st.markdown("""
-                <div style='background: linear-gradient(135deg, #1E366F, #2A4D8F); 
+                <div style='background: linear-gradient(135deg, #0D1B2A, #162840); 
                             padding: 12px 15px; border-radius: 8px; margin-bottom: 15px;'>
-                    <div style='color: #F1A208; margin: 0; font-size: 1rem; font-weight: bold;'>
+                    <div style='color: #C9A84C; margin: 0; font-size: 1rem; font-weight: bold;'>
                         ✨ Hoje
                     </div>
                 </div>
@@ -444,7 +444,7 @@ def show():
                 if not aniversariantes_hoje.empty:
                     for _, aniversariante in aniversariantes_hoje.iterrows():
                         st.markdown(f"""
-                        <div style='background: linear-gradient(135deg, #6c8cc4 0%, #8aa8d1 100%); 
+                        <div style='background: linear-gradient(135deg, #0D1B2A 0%, #162840 100%); 
                                     padding: 12px 15px; border-radius: 6px; margin-bottom: 8px;'>
                             <div style='color: white; font-weight: 600; margin-bottom: 4px;'>
                                 ✓ {aniversariante['nome']}
@@ -472,9 +472,9 @@ def show():
             
             with st.container():
                 st.markdown(f"""
-                <div style='background: linear-gradient(135deg, #1E366F, #2A4D8F); 
+                <div style='background: linear-gradient(135deg, #0D1B2A, #162840); 
                             padding: 12px 15px; border-radius: 8px; margin: 15px 0;'>
-                    <div style='color: #F1A208; margin: 0; font-size: 1rem; font-weight: bold;'>
+                    <div style='color: #C9A84C; margin: 0; font-size: 1rem; font-weight: bold;'>
                         📅 Mês de {nome_mes_completo}
                     </div>
                 </div>
@@ -492,7 +492,7 @@ def show():
                         passou = dia_aniv < hoje.day
                         
                         st.markdown(f"""
-                        <div style='background: linear-gradient(135deg, #6c8cc4 0%, #8aa8d1 100%); 
+                        <div style='background: linear-gradient(135deg, #0D1B2A 0%, #162840 100%); 
                                     padding: 12px 15px; border-radius: 6px; margin-bottom: 8px;'>
                             <div style='color: white; font-weight: 600; margin-bottom: 4px;'>
                                 {'✓' if passou else '✓'} {aniversariante['nome']} 
@@ -517,9 +517,9 @@ def show():
 
             # Próximos aniversariantes (próximos dias)
             st.markdown("""
-            <div style='background: linear-gradient(135deg, #1E366F, #2A4D8F); 
+            <div style='background: linear-gradient(135deg, #0D1B2A, #162840); 
                         padding: 12px 15px; border-radius: 8px; margin: 15px 0;'>
-                <div style='color: #F1A208; margin: 0; font-size: 1rem; font-weight: bold;'>
+                <div style='color: #C9A84C; margin: 0; font-size: 1rem; font-weight: bold;'>
                     🔜 Próximos 7 dias
                 </div>
             </div>
@@ -544,7 +544,7 @@ def show():
             if not proximos.empty:
                 for _, proximo in proximos.iterrows():
                     st.markdown(f"""
-                    <div style='background: linear-gradient(135deg, #6c8cc4 0%, #8aa8d1 100%); 
+                    <div style='background: linear-gradient(135deg, #0D1B2A 0%, #162840 100%); 
                                 padding: 12px 15px; border-radius: 6px; margin-bottom: 8px;'>
                         <div style='color: white; font-weight: 600; margin-bottom: 4px;'>
                             ✓ {proximo['nome']} 
@@ -574,8 +574,8 @@ def show():
     
     with st.container():
         st.markdown("""
-        <div style='background-color: #2A3F5F; padding: 10px; border-radius: 7px; margin-bottom: 15px;'>
-            <h4 style='color: #F1A208; margin: 0; font-size: 1rem;'>📞 Ações Pendentes de Acompanhamento</h4>
+        <div style='background-color: #0D1B2A; padding: 10px; border-radius: 7px; margin-bottom: 15px;'>
+            <h4 style='color: #C9A84C; margin: 0; font-size: 1rem;'>📞 Ações Pendentes de Acompanhamento</h4>
         </div>
         """, unsafe_allow_html=True)
         
@@ -595,7 +595,7 @@ def show():
                         }
                         
                         at = alerta['action_type'].lower() if isinstance(alerta['action_type'], str) else str(alerta['action_type']).lower()
-                        config = tipo_config.get(at, {'icone': '📋', 'texto': at.replace('_', ' ').title(), 'cor': '#2A3F5F', 'dias': '', 'objetivo': ''})
+                        config = tipo_config.get(at, {'icone': '📋', 'texto': at.replace('_', ' ').title(), 'cor': '#0D1B2A', 'dias': '', 'objetivo': ''})
                         
                         try:
                             data_fmt = pd.to_datetime(alerta['due_date']).strftime('%d/%m/%Y')

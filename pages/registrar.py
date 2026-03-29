@@ -19,7 +19,7 @@ def show():
         with col2:
             st.markdown("""
             <div style="text-align: center; margin-bottom: 1.5rem;">
-                <h3 style="color: #1E366F; margin-bottom: 0.5rem;">Registre-se no Planner Organizer</h3>
+                <h3 style="color: #0D1B2A; margin-bottom: 0.5rem;">Registre-se no Planner Organizer</h3>
                 <p style="color: #5A6A85; font-size: 0.9rem;">
                     Crie sua conta para começar a gerenciar propostas e finanças
                 </p>

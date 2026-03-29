@@ -42,7 +42,7 @@ gatherUsageStats = false
 serverAddress = "0.0.0.0"
 
 [theme]
-primaryColor = "#1E366F"
+primaryColor = "#C9A84C"
 backgroundColor = "#FFFFFF"
 secondaryBackgroundColor = "#F0F2F6"
 textColor = "#262730"

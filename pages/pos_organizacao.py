@@ -64,7 +64,7 @@ CSS = """
 .po-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-left: 4px solid #1E2547;
+    border-left: 4px solid #0D1B2A;
     border-radius: 10px;
     padding: 14px 18px;
     margin-bottom: 10px;
@@ -88,7 +88,7 @@ CSS = """
 .po-badge-ativo     { background: #dcfce7; color: #166534; }
 .po-badge-concluido { background: #e0e7ff; color: #3730a3; }
 .po-proxima { font-size: 0.8rem; color: #475569; margin: 4px 0 0 0; }
-.po-proxima strong  { color: #1E2547; }
+.po-proxima strong  { color: #0D1B2A; }
 
 /* Ação card */
 .po-acao-wrap {
@@ -133,7 +133,7 @@ CSS = """
 
 /* Header detalhe */
 .po-detalhe-header {
-    background: linear-gradient(135deg, #1E2547 0%, #2E4A99 100%);
+    background: linear-gradient(135deg, #0D1B2A 0%, #162840 100%);
     color: white;
     border-radius: 12px;
     padding: 16px 20px;
@@ -153,7 +153,7 @@ CSS = """
 .po-progress-fill {
     height: 100%;
     border-radius: 99px;
-    background: linear-gradient(90deg, #1E2547, #2E4A99);
+    background: linear-gradient(90deg, #0D1B2A, #C9A84C);
 }
 </style>
 """
@@ -337,7 +337,7 @@ def _view_detalhes(templates):
         st.markdown("---")
         st.markdown("""
         <div style='background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 18px;margin-bottom:12px;'>
-            <p style='font-weight:700;color:#1e40af;margin:0 0 4px 0;'>🔄 Retorno Técnico Necessário?</p>
+            <p style='font-weight:700;color:#0D1B2A;margin:0 0 4px 0;'>🔄 Retorno Técnico Necessário?</p>
             <p style='font-size:0.85rem;color:#1e3a8a;margin:0;'>O acompanhamento foi concluído. Há necessidade de ajuste ou visita técnica?</p>
         </div>
         """, unsafe_allow_html=True)

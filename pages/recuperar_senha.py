@@ -23,7 +23,7 @@ def show():
         with col2:
             st.markdown("""
             <div style="text-align: center; margin-bottom: 1.5rem;">
-                <h3 style="color: #1E366F; margin-bottom: 0.5rem;">Esqueceu sua senha?</h3>
+                <h3 style="color: #0D1B2A; margin-bottom: 0.5rem;">Esqueceu sua senha?</h3>
                 <p style="color: #5A6A85; font-size: 0.9rem;">
                     Informe seu email para receber um link de redefinição de senha
                 </p>
@@ -85,7 +85,7 @@ def show():
             st.markdown("""
             <div style="text-align: center; margin-top: 1rem;">
                 <p style="color: #5A6A85; font-size: 0.9rem;">
-                    <a href="/" style="color: #1E88E5; text-decoration: none;">
+                    <a href="/" style="color: #C9A84C; text-decoration: none;">
                         Voltar ao login
                     </a>
                 </p>

@@ -188,7 +188,7 @@ def gerar_pdf_relatorio_servico(proposta, cliente, acrescimos, filename):
         # Configurações de cores exatamente iguais ao relatório interno
         cinza_claro = colors.HexColor("#f5f7fa")       # fundo
         cinza_medio = colors.HexColor("#5A6A85")       # textos normais
-        azul_escuro = colors.HexColor("#1E366F")       # cabeçalho e títulos
+        azul_escuro = colors.HexColor("#0D1B2A")       # cabeçalho e títulos
         azul_claro = colors.HexColor("#e9f2ff")        # blocos de destaque
         azul_destaque = colors.HexColor("#d4e5fd")     # blocos de conteúdo
         

@@ -269,7 +269,7 @@ def show():
         with col1:
             cor_principal = st.color_picker(
                 "Cor Principal", 
-                value=perfil.get('cor_principal', '#1E366F'),
+                value=perfil.get('cor_principal', '#0D1B2A'),
                 help="Cor principal para títulos, cabeçalhos e destaque nos PDFs"
             )
         

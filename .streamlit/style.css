@@ -21,7 +21,7 @@ header[data-testid="stHeader"] {
    CABEÇALHO PERSONALIZADO
    ======================================== */
 .app-header {
-    background-color: #1E2547;
+    background-color: #0D1B2A;
     color: white;
     width: 100%;
     min-height: 60px;
@@ -114,11 +114,11 @@ section[data-testid="stSidebar"] > div,
 section[data-testid="stSidebar"] > div > div,
 [data-testid="stSidebarContent"],
 [data-testid="stSidebarUserContent"] {
-    background-color: #1E2547 !important;
+    background-color: #0D1B2A !important;
 }
 
 section[data-testid="stSidebar"] {
-    background-color: #1E2547 !important;
+    background-color: #0D1B2A !important;
     border-right: 1px solid #4C566A !important;
     position: fixed !important;
     left: 0 !important;
@@ -161,15 +161,15 @@ button[data-testid="collapsedControl"] {
 
 /* BOTÕES DA SIDEBAR - Estilo unificado para navegação */
 section[data-testid="stSidebar"] .stButton > button {
-    background-color: #1e40af !important;
+    background-color: #0D1B2A !important;
     color: white !important;
-    border: 1px solid #1e40af !important;
+    border: 1px solid #0D1B2A !important;
     font-weight: 600 !important;
 }
 
 section[data-testid="stSidebar"] .stButton > button:hover {
-    background-color: #1d4ed8 !important;
-    border-color: #1d4ed8 !important;
+    background-color: #162840 !important;
+    border-color: #162840 !important;
 }
 
 /* TEXTOS DA SIDEBAR - Cor branca para contraste */
@@ -207,14 +207,14 @@ section[data-testid="stSidebar"] div[data-testid="stExpander"] [data-testid="stM
 /* Botões dentro de expanders */
 section[data-testid="stSidebar"] div[data-testid="stExpander"] button {
     color: #ffffff !important;
-    background-color: #3a75c4 !important;
-    border: 1px solid #3a75c4 !important;
+    background-color: #C9A84C !important;
+    border: 1px solid #C9A84C !important;
     font-weight: 600 !important;
 }
 
 section[data-testid="stSidebar"] div[data-testid="stExpander"] button:hover {
-    background-color: #2B547E !important;
-    border-color: #2B547E !important;
+    background-color: #B8943D !important;
+    border-color: #B8943D !important;
 }
 
 /* ========================================
@@ -256,9 +256,9 @@ section[data-testid="stSidebar"] button:has(*:contains("Sair do Sistema")) {
    BOTÕES DA ÁREA PRINCIPAL
    ======================================== */
 .main .stButton > button {
-    background-color: #3a75c4 !important;
+    background-color: #0D1B2A !important;
     color: white !important;
-    border: 1px solid #3a75c4 !important;
+    border: 1px solid #0D1B2A !important;
     font-weight: 500 !important;
     padding: 0.5rem 1rem !important;
     border-radius: 6px !important;
@@ -267,10 +267,10 @@ section[data-testid="stSidebar"] button:has(*:contains("Sair do Sistema")) {
 }
 
 .main .stButton > button:hover {
-    background-color: #2e5a9a !important;
-    border-color: #2e5a9a !important;
+    background-color: #162840 !important;
+    border-color: #162840 !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 4px 8px rgba(58, 117, 196, 0.3) !important;
+    box-shadow: 0 4px 8px rgba(13, 27, 42, 0.3) !important;
 }
 
 /* FORÇAR TEXTO BRANCO EM TODOS OS BOTÕES PRINCIPAIS */
@@ -286,7 +286,7 @@ section[data-testid="stSidebar"] button:has(*:contains("Sair do Sistema")) {
 /* Botões primários específicos */
 button[kind="primary"],
 button[data-testid="baseButton-primary"] {
-    background-color: #1f4e79 !important;
+    background-color: #C9A84C !important;
     color: white !important;
     border: none !important;
     font-weight: 600 !important;
@@ -296,9 +296,9 @@ button[data-testid="baseButton-primary"] {
 
 button[kind="primary"]:hover,
 button[data-testid="baseButton-primary"]:hover {
-    background-color: #164066 !important;
+    background-color: #B8943D !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 4px 8px rgba(30, 78, 121, 0.3) !important;
+    box-shadow: 0 4px 8px rgba(201, 168, 76, 0.3) !important;
 }
 
 /* FORÇAR TEXTO BRANCO EM BOTÕES PRIMÁRIOS - MÁXIMA PRIORIDADE */
@@ -339,13 +339,13 @@ div[data-testid="stForm"] button div {
 .stButton > button {
     color: white !important;
     font-weight: 600 !important;
-    background-color: #1f4e79 !important;
+    background-color: #0D1B2A !important;
 }
 
 .stFormSubmitButton > button {
     color: white !important;
     font-weight: 600 !important;
-    background-color: #1f4e79 !important;
+    background-color: #C9A84C !important;
 }
 
 /* Botões específicos por tipo */
@@ -354,7 +354,7 @@ button[type="primary"] *,
 button[type="primary"] p,
 button[type="primary"] span,
 button[type="primary"] div {
-    background-color: #1f4e79 !important;
+    background-color: #C9A84C !important;
     color: white !important;
     border: none !important;
     font-weight: 600 !important;
@@ -391,7 +391,7 @@ div[data-testid="stMultiSelect"] [data-baseweb="select"] {
     color: #1e1e1e !important;
 }
 div[data-testid="stMultiSelect"] [data-baseweb="tag"] {
-    background-color: #1E2547 !important;
+    background-color: #0D1B2A !important;
     color: #ffffff !important;
 }
 div[data-testid="stMultiSelect"] input {
@@ -499,8 +499,8 @@ li[role="option"]:focus * {
 .stTextArea textarea:focus,
 .stNumberInput input:focus {
     background-color: #ffffff !important;
-    border-color: #3a75c4 !important;
-    box-shadow: 0 0 0 0.2rem rgba(58, 117, 196, 0.25) !important;
+    border-color: #C9A84C !important;
+    box-shadow: 0 0 0 0.2rem rgba(201, 168, 76, 0.25) !important;
 }
 
 /* ========================================
@@ -563,7 +563,7 @@ button[role="tab"] {
     padding: 0.75rem 1.5rem !important;
     font-weight: 500 !important;
     background-color: #f8f9fa !important;
-    color: #1E366F !important;
+    color: #0D1B2A !important;
     border: 1px solid #dee2e6 !important;
     border-radius: 6px 6px 0 0 !important;
     margin-right: 2px !important;
@@ -571,9 +571,9 @@ button[role="tab"] {
 
 .stTabs [aria-selected="true"] {
     font-weight: 600 !important;
-    color: #1E366F !important;
+    color: #0D1B2A !important;
     background-color: #ffffff !important;
-    border-bottom: 2px solid #3a75c4 !important;
+    border-bottom: 2px solid #C9A84C !important;
 }
 
 /* ========================================
@@ -587,7 +587,7 @@ button[role="tab"] {
 }
 
 .dataframe th {
-    background-color: #1E366F !important;
+    background-color: #0D1B2A !important;
     color: white !important;
     font-weight: 600 !important;
     padding: 0.75rem !important;
@@ -623,7 +623,7 @@ div[data-testid="stDataFrame"] table {
 }
 
 div[data-testid="stDataFrame"] table th {
-    background-color: #1E366F !important;
+    background-color: #0D1B2A !important;
     color: white !important;
     font-weight: 600 !important;
     padding: 0.75rem !important;
@@ -660,7 +660,7 @@ div[data-testid="stMetric"] {
 }
 
 div[data-testid="stMetric"] > div:first-child {
-    color: #1E366F;
+    color: #0D1B2A;
     font-weight: 600;
 }
 
@@ -722,7 +722,7 @@ div[data-testid="stMetric"] > div:first-child {
    ======================================== */
 /* Forçar visibilidade dos botões dentro de expanders */
 div[data-testid="stExpander"] button[kind="primary"] {
-    background-color: #1f4e79 !important;
+    background-color: #C9A84C !important;
     color: white !important;
     border: none !important;
     font-weight: 600 !important;
@@ -731,9 +731,9 @@ div[data-testid="stExpander"] button[kind="primary"] {
 }
 
 div[data-testid="stExpander"] button[kind="primary"]:hover {
-    background-color: #164066 !important;
+    background-color: #B8943D !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 4px 8px rgba(30, 78, 121, 0.3) !important;
+    box-shadow: 0 4px 8px rgba(201, 168, 76, 0.3) !important;
 }
 
 /* Garantir que o texto dos botões seja sempre visível */
@@ -745,7 +745,7 @@ div[data-testid="stExpander"] button[kind="primary"] span {
 
 /* Estilo específico para expandedrs com relatórios */
 .streamlit-expanderContent button[kind="primary"] {
-    background-color: #1f4e79 !important;
+    background-color: #C9A84C !important;
     color: white !important;
     border: none !important;
     font-weight: 600 !important;
@@ -768,7 +768,7 @@ div[data-testid="stExpander"] button div,
     color: white !important;
     font-weight: 600 !important;
     text-shadow: none !important;
-    background-color: #1f4e79 !important;
+    background-color: #0D1B2A !important;
     border: none !important;
 }
 
@@ -777,7 +777,7 @@ div[data-testid="stExpander"] button[kind="primary"],
 div[data-testid="stExpander"] button[type="primary"],
 .streamlit-expanderContent button[kind="primary"],
 .streamlit-expanderContent button[type="primary"] {
-    background-color: #1f4e79 !important;
+    background-color: #C9A84C !important;
     color: white !important;
     border: none !important;
 }
@@ -1022,7 +1022,7 @@ button[type="primary"],
 .stButton > button[kind="primary"],
 .stButton > button[data-testid="baseButton-primary"] {
     color: white !important;
-    background-color: #1f4e79 !important;
+    background-color: #C9A84C !important;
 }
 
 /* Força cor branca para todo o conteúdo dos botões primários */

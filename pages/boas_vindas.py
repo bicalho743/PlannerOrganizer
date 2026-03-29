@@ -9,7 +9,7 @@ from utils.currency_formatter import fmt_brl as format_currency
 
 def get_random_color():
     """Retorna uma cor aleatória entre um conjunto de cores pré-definidas do tema"""
-    colors = ["#2d8cff", "#4CAF50", "#ff6b6b", "#ffbb33", "#9C27B0", "#FF9800"]
+    colors = ["#C9A84C", "#4CAF50", "#ff6b6b", "#ffbb33", "#9C27B0", "#FF9800"]
     return random.choice(colors)
 
 def show():
@@ -21,7 +21,7 @@ def show():
     st.markdown("""
     <style>
     .welcome-header {
-        color: #2d8cff;
+        color: #0D1B2A;
         font-size: 2.3rem;
         font-weight: 700;
         margin-bottom: 0.5rem;
@@ -36,7 +36,7 @@ def show():
         box-shadow: 0 8px 16px rgba(0,0,0,0.08);
         margin-bottom: 1.5rem;
         transition: all 0.3s ease;
-        border-left: 4px solid #2d8cff;
+        border-left: 4px solid #C9A84C;
     }
     
     .metric-card:hover {
@@ -47,7 +47,7 @@ def show():
     .metric-value {
         font-size: 1.8rem;
         font-weight: 700;
-        color: #2d8cff;
+        color: #C9A84C;
         margin-bottom: 0.5rem;
     }
     
@@ -62,7 +62,7 @@ def show():
         padding: 1.2rem;
         box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         margin-bottom: 0.7rem;
-        border-left: 3px solid #2d8cff;
+        border-left: 3px solid #C9A84C;
         transition: all 0.3s ease;
     }
     
@@ -116,7 +116,7 @@ def show():
     }
     
     .quote-card {
-        background: linear-gradient(135deg, #E3F2FD, #bbdefb);
+        background: linear-gradient(135deg, #f5f0e0, #E8D5A3);
         padding: 1.8rem;
         border-radius: 12px;
         position: relative;
@@ -126,7 +126,7 @@ def show():
     
     .quote-text {
         font-style: italic;
-        color: #1E366F;
+        color: #0D1B2A;
         margin-bottom: 1rem;
         font-size: 1.05rem;
         line-height: 1.6;
@@ -134,26 +134,26 @@ def show():
     
     .quote-author {
         font-weight: 600;
-        color: #1976D2;
+        color: #B8943D;
         font-size: 1rem;
     }
     
     .stButton > button {
-        background: linear-gradient(135deg, #2d8cff, #0063cc) !important;
+        background: linear-gradient(135deg, #C9A84C, #B8943D) !important;
         color: white !important;
         border-radius: 12px !important;
         padding: 0.7rem 1.2rem !important;
         font-weight: 600 !important;
         font-size: 1rem !important;
         border: none !important;
-        box-shadow: 0 4px 10px rgba(45,140,255,0.3) !important;
+        box-shadow: 0 4px 10px rgba(201,168,76,0.3) !important;
         transition: all 0.3s ease !important;
     }
     
     .stButton > button:hover {
-        background: linear-gradient(135deg, #0063cc, #004a99) !important;
+        background: linear-gradient(135deg, #B8943D, #A07C30) !important;
         transform: translateY(-2px) !important;
-        box-shadow: 0 6px 15px rgba(45,140,255,0.4) !important;
+        box-shadow: 0 6px 15px rgba(201,168,76,0.4) !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -161,7 +161,7 @@ def show():
     # Adicionar data fixa com design melhorado
     st.markdown("""
     <div style="text-align: center; background-color: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-        <span style="font-size: 1.2rem; color: #1E366F; font-weight: 500;">📅 25 de abril de 2025</span>
+        <span style="font-size: 1.2rem; color: #0D1B2A; font-weight: 500;">📅 25 de abril de 2025</span>
     </div>
     """, unsafe_allow_html=True)
     
@@ -183,9 +183,9 @@ def show():
                 
             st.markdown(f"""
             <div style="background: linear-gradient(135deg, #f8faff, #e6f0ff); border-radius: 12px; padding: 1.5rem; box-shadow: 0 8px 16px rgba(0,0,0,0.08); text-align: center; transition: all 0.3s ease; height: 100%;">
-                <div style="font-size: 2.5rem; font-weight: 700; color: #1E366F; margin-bottom: 0.5rem;">{propostas_em_andamento}</div>
+                <div style="font-size: 2.5rem; font-weight: 700; color: #0D1B2A; margin-bottom: 0.5rem;">{propostas_em_andamento}</div>
                 <div style="color: #5A6A85; font-size: 0.9rem; font-weight: 500;">Propostas em Execução</div>
-                <div style="margin-top: 0.7rem; font-size: 1.8rem; color: #2d8cff;">📝</div>
+                <div style="margin-top: 0.7rem; font-size: 1.8rem; color: #C9A84C;">📝</div>
             </div>
             """, unsafe_allow_html=True)
         

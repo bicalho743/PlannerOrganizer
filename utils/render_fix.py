@@ -348,14 +348,14 @@ def inject_render_compatibility_fix():
                             button.parentElement.style.marginBottom = '2px';
                         }
                         button.style.fontWeight = '500';
-                        button.style.color = '#1E366F';
+                        button.style.color = '#0D1B2A';
                         button.style.transition = 'all 0.2s ease';
                         
                         // Adicionar evento hover
                         button.addEventListener('mouseenter', function() {
                             this.style.backgroundColor = '#E3F2FD';
                             this.style.transform = 'translateY(-2px)';
-                            this.style.boxShadow = '0 4px 8px rgba(30, 54, 111, 0.15)';
+                            this.style.boxShadow = '0 4px 8px rgba(13, 27, 42, 0.15)';
                         });
                         
                         button.addEventListener('mouseleave', function() {
@@ -367,7 +367,7 @@ def inject_render_compatibility_fix():
                             } else {
                                 this.style.backgroundColor = '#E3F2FD';
                                 this.style.transform = 'translateY(0)';
-                                this.style.boxShadow = '0 2px 5px rgba(30, 54, 111, 0.15)';
+                                this.style.boxShadow = '0 2px 5px rgba(13, 27, 42, 0.15)';
                             }
                         });
                     });

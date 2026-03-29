@@ -115,7 +115,7 @@ def get_perfil_padrao():
         'empresa': 'Planner Organizer', 
         'instagram': 'plannerorganizer',
         'website': 'www.plannerorganizer.com.br',
-        'cor_principal': '#1E366F',  # Azul escuro
+        'cor_principal': '#0D1B2A',  # Navy
         'cor_secundaria': '#e9f2ff',  # Azul claro
     }
 
