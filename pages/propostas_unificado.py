@@ -1397,6 +1397,39 @@ def show():
         st.error(f"Erro ao carregar dados iniciais: {str(e)}")
         return
 
+    _metric_css = """<style>
+    .prop-metric{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;text-align:center;}
+    .prop-metric-label{font-size:0.72rem;color:#64748b;margin:0 0 4px 0;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;}
+    .prop-metric-value{font-size:0.95rem;font-weight:700;color:#1a202c;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    </style>"""
+    st.markdown(_metric_css, unsafe_allow_html=True)
+
+    def _calc_total_propostas(df):
+        if df.empty or 'valor' not in df.columns:
+            return 0.0
+        return df['valor'].apply(_safe_float).sum()
+
+    _p_aberto = propostas_com_clientes[propostas_com_clientes['status'].isin(['Em elaboração', 'Aguardando aprovação', 'Aguardando'])] if not propostas_com_clientes.empty else pd.DataFrame()
+    _p_aprovada = propostas_com_clientes[(propostas_com_clientes['status'] == 'Aprovada') & (~propostas_com_clientes['status_execucao'].isin(['Em execução']) if 'status_execucao' in propostas_com_clientes.columns else True)] if not propostas_com_clientes.empty else pd.DataFrame()
+    _p_exec = propostas_com_clientes[propostas_com_clientes['status_execucao'] == 'Em execução'] if not propostas_com_clientes.empty and 'status_execucao' in propostas_com_clientes.columns else pd.DataFrame()
+    _p_final = propostas_com_clientes[propostas_com_clientes['status'].isin(['Finalizada', 'Recusada'])] if not propostas_com_clientes.empty else pd.DataFrame()
+
+    mc1, mc2, mc3, mc4 = st.columns(4)
+    for col, label, df in [
+        (mc1, "📋 EM ABERTO", _p_aberto),
+        (mc2, "✅ APROVADA", _p_aprovada),
+        (mc3, "🔧 EM EXECUÇÃO", _p_exec),
+        (mc4, "🏁 FINALIZADA", _p_final),
+    ]:
+        with col:
+            st.markdown(f"""
+            <div class="prop-metric">
+                <p class="prop-metric-label">{label}</p>
+                <p class="prop-metric-value">{_fmt_brl(_calc_total_propostas(df))}</p>
+            </div>""", unsafe_allow_html=True)
+
+    st.markdown("")
+
     col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
     with col_btn:
         with stylable_container(key="gold_nova_proposta", css_styles="""

@@ -471,6 +471,42 @@ def show():
     if "vendas_nova_venda_open" not in st.session_state:
         st.session_state["vendas_nova_venda_open"] = False
 
+    try:
+        vendas_df = st.session_state.db.get_vendas()
+    except Exception as e:
+        st.warning(f"Erro ao carregar vendas: {str(e)}")
+        vendas_df = pd.DataFrame()
+
+    def _col_vendas(status_vals):
+        if vendas_df.empty:
+            return pd.DataFrame()
+        if isinstance(status_vals, str):
+            status_vals = [status_vals]
+        return vendas_df[vendas_df["status"].isin(status_vals)].copy()
+
+    vendas_concluidas = _col_vendas(["Concluída", "Confirmada"])
+    vendas_pendentes  = _col_vendas(["Pendente", "Em aberto"])
+    vendas_canceladas = _col_vendas(["Cancelada"])
+
+    total_concluidas = vendas_concluidas["valor_total"].apply(_safe_float).sum() if not vendas_concluidas.empty else 0.0
+    total_pendentes  = vendas_pendentes["valor_total"].apply(_safe_float).sum()  if not vendas_pendentes.empty  else 0.0
+    total_canceladas = vendas_canceladas["valor_total"].apply(_safe_float).sum() if not vendas_canceladas.empty else 0.0
+
+    fc1, fc2, fc3 = st.columns(3)
+    for col, label, valor in [
+        (fc1, "✅ CONCLUÍDA",  total_concluidas),
+        (fc2, "🟡 PENDENTE",   total_pendentes),
+        (fc3, "⛔ CANCELADA",  total_canceladas),
+    ]:
+        with col:
+            st.markdown(f"""
+            <div class="kanban-metric">
+                <p class="kanban-metric-label">{label}</p>
+                <p class="kanban-metric-value">{_fmt_brl(valor)}</p>
+            </div>""", unsafe_allow_html=True)
+
+    st.markdown("")
+
     col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
     with col_btn:
         with stylable_container(key="gold_nova_venda", css_styles="""
@@ -555,26 +591,6 @@ def show():
 
     st.markdown("---")
 
-    # Carregar dados
-    try:
-        vendas_df = st.session_state.db.get_vendas()
-    except Exception as e:
-        st.error(f"Erro ao carregar vendas: {str(e)}")
-        return
-
-    # Separar por status
-    # "Confirmada" é equivalente a "Concluída" (status legado de versões anteriores)
-    def _col_vendas(status_vals):
-        if vendas_df.empty:
-            return pd.DataFrame()
-        if isinstance(status_vals, str):
-            status_vals = [status_vals]
-        return vendas_df[vendas_df["status"].isin(status_vals)].copy()
-
-    vendas_concluidas = _col_vendas(["Concluída", "Confirmada"])
-    vendas_pendentes  = _col_vendas(["Pendente", "Em aberto"])
-    vendas_canceladas = _col_vendas(["Cancelada"])
-
     col_concluida, col_pendente, col_cancelada = st.columns(3)
 
     COLS_CONFIG = [
@@ -618,25 +634,6 @@ def show():
                         st.rerun()
             else:
                 st.caption("Nenhuma venda nesta etapa.")
-
-    # Rodapé com totais
-    total_concluidas = vendas_concluidas["valor_total"].apply(_safe_float).sum() if not vendas_concluidas.empty else 0.0
-    total_pendentes  = vendas_pendentes["valor_total"].apply(_safe_float).sum()  if not vendas_pendentes.empty  else 0.0
-    total_canceladas = vendas_canceladas["valor_total"].apply(_safe_float).sum() if not vendas_canceladas.empty else 0.0
-
-    st.markdown("---")
-    fc1, fc2, fc3 = st.columns(3)
-    for col, label, valor in [
-        (fc1, "✅ Concluída",  total_concluidas),
-        (fc2, "🟡 Pendente",   total_pendentes),
-        (fc3, "⛔ Cancelada",  total_canceladas),
-    ]:
-        with col:
-            st.markdown(f"""
-            <div class="kanban-metric">
-                <p class="kanban-metric-label">{label}</p>
-                <p class="kanban-metric-value">{_fmt_brl(valor)}</p>
-            </div>""", unsafe_allow_html=True)
 
     # Painel de detalhes
     selected_id = st.session_state.get("venda_selecionada")
