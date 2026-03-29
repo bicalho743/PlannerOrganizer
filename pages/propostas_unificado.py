@@ -1630,26 +1630,16 @@ def show():
             if hist_df.empty:
                 st.info("Nenhuma proposta encontrada com os filtros selecionados.")
             else:
-                st.markdown("""
-                <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
-                <thead>
-                <tr style="border-bottom:2px solid #dee2e6;text-align:left;">
-                    <th style="padding:6px 8px;color:#64748b;font-weight:600;">Nº</th>
-                    <th style="padding:6px 8px;color:#64748b;font-weight:600;">Cliente</th>
-                    <th style="padding:6px 8px;color:#64748b;font-weight:600;">Tipo</th>
-                    <th style="padding:6px 8px;color:#64748b;font-weight:600;text-align:right;">Valor</th>
-                    <th style="padding:6px 8px;color:#64748b;font-weight:600;text-align:center;">Status</th>
-                    <th style="padding:6px 8px;color:#64748b;font-weight:600;text-align:right;">Data</th>
-                </tr>
-                </thead>
-                <tbody>
-                """, unsafe_allow_html=True)
+                hdr = st.columns([0.6, 1.5, 1.2, 1, 0.8, 0.8, 0.8])
+                hdr_labels = ["Nº", "Cliente", "Tipo", "Valor", "Status", "Data", ""]
+                for i, lbl in enumerate(hdr_labels):
+                    hdr[i].markdown(f"<span style='font-size:0.75rem;color:#64748b;font-weight:700;text-transform:uppercase;'>{lbl}</span>", unsafe_allow_html=True)
 
                 for _, prop in hist_df.iterrows():
                     h_pid = prop['id']
-                    h_nome = html_module.escape(str(prop.get('nome', prop.get('cliente_nome', 'Cliente'))))
+                    h_nome = str(prop.get('nome', prop.get('cliente_nome', 'Cliente')))
                     h_numero = prop.get('numero', h_pid)
-                    h_tipo = html_module.escape(str(prop.get('tipo_proposta', prop.get('descricao', '')))[:40])
+                    h_tipo = str(prop.get('tipo_proposta', prop.get('descricao', '')))[:40]
                     h_valor = _fmt_brl(_safe_float(prop.get('valor')))
                     h_status = str(prop.get('status', ''))
                     h_data = ''
@@ -1662,29 +1652,22 @@ def show():
                             break
 
                     h_badge_cor = "#28a745" if h_status == "Finalizada" else "#dc3545"
-                    st.markdown(f"""
-                    <tr style="border-bottom:1px solid #f1f3f5;">
-                        <td style="padding:6px 8px;font-weight:600;">#{h_numero}</td>
-                        <td style="padding:6px 8px;">{h_nome}</td>
-                        <td style="padding:6px 8px;color:#6c757d;">{h_tipo}</td>
-                        <td style="padding:6px 8px;text-align:right;font-weight:600;color:#1a5276;">{h_valor}</td>
-                        <td style="padding:6px 8px;text-align:center;">
-                            <span style="font-size:0.72rem;padding:2px 8px;border-radius:10px;background:{h_badge_cor};color:#fff;">{h_status}</span>
-                        </td>
-                        <td style="padding:6px 8px;text-align:right;color:#999;">{h_data}</td>
-                    </tr>
-                    """, unsafe_allow_html=True)
-
+                    rc = st.columns([0.6, 1.5, 1.2, 1, 0.8, 0.8, 0.8])
+                    rc[0].markdown(f"**#{h_numero}**")
+                    rc[1].markdown(h_nome)
+                    rc[2].markdown(f"<span style='color:#6c757d;font-size:0.82rem;'>{html_module.escape(h_tipo)}</span>", unsafe_allow_html=True)
+                    rc[3].markdown(f"<span style='font-weight:600;color:#1a5276;'>{h_valor}</span>", unsafe_allow_html=True)
+                    rc[4].markdown(f"<span style='font-size:0.72rem;padding:2px 8px;border-radius:10px;background:{h_badge_cor};color:#fff;'>{h_status}</span>", unsafe_allow_html=True)
+                    rc[5].markdown(f"<span style='color:#999;font-size:0.82rem;'>{h_data}</span>", unsafe_allow_html=True)
                     is_sel = st.session_state.get('kanban_selected_proposta') == h_pid
-                    h_btn_label = "▲ Fechar" if is_sel else "▼ Ver Detalhes"
-                    if st.button(h_btn_label, key=f"hist_btn_{h_pid}", use_container_width=True):
+                    h_btn_label = "▲ Fechar" if is_sel else "▼ Detalhes"
+                    if rc[6].button(h_btn_label, key=f"hist_btn_{h_pid}"):
                         if is_sel:
                             st.session_state['kanban_selected_proposta'] = None
                         else:
                             st.session_state['kanban_selected_proposta'] = h_pid
                         st.rerun()
-
-                st.markdown("</tbody></table>", unsafe_allow_html=True)
+                    st.markdown("<hr style='margin:2px 0;border:none;border-top:1px solid #f1f3f5;'>", unsafe_allow_html=True)
 
     selected_id = st.session_state.get('kanban_selected_proposta')
     if selected_id is not None:
