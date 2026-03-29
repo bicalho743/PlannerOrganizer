@@ -1660,7 +1660,7 @@ def show():
                     rc[4].markdown(f"<span style='font-size:0.72rem;padding:2px 8px;border-radius:10px;background:{h_badge_cor};color:#fff;'>{h_status}</span>", unsafe_allow_html=True)
                     rc[5].markdown(f"<span style='color:#999;font-size:0.82rem;'>{h_data}</span>", unsafe_allow_html=True)
                     is_sel = st.session_state.get('kanban_selected_proposta') == h_pid
-                    h_btn_label = "▲ Fechar" if is_sel else "▼ Detalhes"
+                    h_btn_label = "▲ Fechar" if is_sel else "▼ Ver Detalhes"
                     if rc[6].button(h_btn_label, key=f"hist_btn_{h_pid}"):
                         if is_sel:
                             st.session_state['kanban_selected_proposta'] = None
