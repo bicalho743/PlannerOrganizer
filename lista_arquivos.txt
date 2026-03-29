@@ -73174,7 +73174,6 @@
 ./pages/manual_sistema.py
 ./pages/exclusao_dados.py
 ./pages/boas_vindas.py
-./pages/clientes_direct.py
 ./pages/dashboard.py
 ./pages/financeiro.py
 ./pages/perfil.py
@@ -73598,7 +73597,6 @@
 ./__pycache__/importar_planilha_diretamente.cpython-311.pyc
 ./__pycache__/gerar_manual.cpython-311.pyc
 ./__pycache__/planos_improved.cpython-311.pyc
-./__pycache__/login_simples.cpython-311.pyc
 ./__pycache__/sincronizar_clientes.cpython-311.pyc
 ./__pycache__/login_firebase_novo.cpython-311.pyc
 ./__pycache__/app.cpython-311.pyc
@@ -81338,7 +81336,6 @@
 ./git_push.py
 ./instrucoes_render_final.md
 ./login.py
-./login_simples.py
 ./planos_minimal.py
 ./populate_usuario_id.sql
 ./profile_auth_fixes.diff
