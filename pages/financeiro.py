@@ -4,7 +4,6 @@ import plotly.express as px
 import html as html_module
 from datetime import datetime, timedelta
 from utils.currency_formatter import fmt_brl
-from utils.fluxo_caixa_simple import FluxoCaixaSimple
 from streamlit_extras.stylable_container import stylable_container
 
 
