@@ -48,7 +48,7 @@ header[data-testid="stHeader"] {
 
 /* Ajuste do container principal */
 .block-container {
-    padding-top: 68px !important;
+    padding-top: 62px !important;
     max-width: 100% !important;
     overflow-x: hidden !important;
 }
@@ -63,7 +63,7 @@ header[data-testid="stHeader"] {
 
 [data-testid="stMainBlockContainer"],
 [data-testid="stAppViewBlockContainer"] {
-    padding-top: 68px !important;
+    padding-top: 62px !important;
     margin-top: 0 !important;
 }
 
