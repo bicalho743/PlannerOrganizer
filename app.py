@@ -1184,6 +1184,33 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
     if st.session_state.get('autenticado', False) and getattr(st.session_state.get('usuario', None), 'tipo', '') == 'admin':
         MENU_PRINCIPAL["⚙️ Administração"] = "Admin"
 
+    # Botão de manual do sistema no topo da sidebar — gera e baixa direto
+    if 'manual_pdf_bytes' not in st.session_state:
+        st.session_state.manual_pdf_bytes = None
+    _manual_col1, _manual_col2 = st.sidebar.columns([1, 1])
+    with _manual_col1:
+        if st.button("📖 Manual do Sistema", key="btn_manual_sidebar", use_container_width=True):
+            with st.spinner("Gerando…"):
+                try:
+                    from pages.manual_sistema import gerar_manual_sistema
+                    _pdf_path = gerar_manual_sistema()
+                    with open(_pdf_path, "rb") as _f:
+                        st.session_state.manual_pdf_bytes = _f.read()
+                except Exception as _e:
+                    st.sidebar.error(f"Erro: {_e}")
+    with _manual_col2:
+        if st.session_state.manual_pdf_bytes:
+            st.download_button(
+                label="📥 Baixar PDF",
+                data=st.session_state.manual_pdf_bytes,
+                file_name="Manual_Planner_Organizer.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                key="btn_download_manual_sidebar"
+            )
+
+    st.sidebar.markdown('<div style="margin:4px 0;"><hr style="border:none;height:1px;background:#E0E0E0;"></div>', unsafe_allow_html=True)
+
     # Adicionar classe CSS para identificar área de navegação
     st.sidebar.markdown('<div class="nav-buttons" style="display: none;"></div>', unsafe_allow_html=True)
     
@@ -1311,27 +1338,7 @@ with st.sidebar.expander("ℹ️ Informações do Sistema"):
     - ✅ Backup e restauração
     """)
 
-    # Botão para gerar o manual do sistema
-    if st.button("📘 Gerar Manual do Sistema", use_container_width=True):
-        with st.spinner("Gerando manual em PDF..."):
-            try:
-                from pages.manual_sistema import gerar_manual_sistema
-                pdf_path = gerar_manual_sistema()
-
-                # Ler o arquivo PDF para download
-                with open(pdf_path, "rb") as pdf_file:
-                    pdf_bytes = pdf_file.read()
-
-                st.success("Manual gerado com sucesso!")
-                st.download_button(
-                    label="📥 Baixar Manual do Sistema",
-                    data=pdf_bytes,
-                    file_name="Manual_Planner_Organizer.pdf",
-                    mime="application/pdf",
-                    use_container_width=True
-                )
-            except Exception as e:
-                st.error(f"Erro ao gerar o manual: {str(e)}")
+    st.markdown("_Use o botão 📖 Manual do Sistema no topo do menu para baixar o PDF completo._")
 
 # Gerenciar o estado para os modais de termos e política
 if "mostrar_termos" not in st.session_state:
