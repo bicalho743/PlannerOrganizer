@@ -22,6 +22,32 @@ BORDER_LIGHT = "#dee2e6"
 BG_CARD = "#fff"
 BG_SUBTLE = "#faf9f7"
 
+GLOBAL_CSS_VARS = f"""
+:root {{
+    --navy: {NAVY};
+    --navy-hover: {NAVY_HOVER};
+    --gold: {GOLD};
+    --gold-dark: {GOLD_DARK};
+    --gold-light: {GOLD_LIGHT};
+    --success: {SUCCESS};
+    --success-bg: {SUCCESS_BG};
+    --success-fg: {SUCCESS_FG};
+    --danger: {DANGER};
+    --danger-bg: {DANGER_BG};
+    --danger-fg: {DANGER_FG};
+    --warning: {WARNING};
+    --warning-bg: {WARNING_BG};
+    --warning-fg: {WARNING_FG};
+    --text-primary: {TEXT_PRIMARY};
+    --text-secondary: {TEXT_SECONDARY};
+    --text-muted: {TEXT_MUTED};
+    --border: {BORDER};
+    --border-light: {BORDER_LIGHT};
+    --bg-card: {BG_CARD};
+    --bg-subtle: {BG_SUBTLE};
+}}
+"""
+
 GOLD_GRADIENT = f"linear-gradient(135deg, {GOLD}, {GOLD_DARK})"
 GOLD_BUTTON_CSS = f"""
     button {{

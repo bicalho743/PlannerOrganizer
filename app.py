@@ -1045,6 +1045,10 @@ if 'db' not in st.session_state:
         st.error(f"Detalhes do erro: {str(e)}")
         st.stop()
 
+# Injetar CSS custom properties (design tokens globais)
+from utils.design_tokens import GLOBAL_CSS_VARS
+st.markdown(f"<style>{GLOBAL_CSS_VARS}</style>", unsafe_allow_html=True)
+
 # Carregar CSS customizado centralizado
 try:
     with open('.streamlit/style.css', 'r') as f:

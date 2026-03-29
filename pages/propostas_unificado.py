@@ -14,8 +14,6 @@ from utils.propostas_helper import st_gerar_pdf_cliente, st_gerar_pdf_interno, s
 from streamlit_extras.stylable_container import stylable_container
 from utils.design_tokens import (
     NAVY, NAVY_HOVER, GOLD, GOLD_BUTTON_CSS,
-    NAVY_CARD_CSS, NAVY_CARD_HOVER, NAVY_CARD_OUT,
-    TEXT_PRIMARY,
 )
 
 
