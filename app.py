@@ -1184,30 +1184,24 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
     if st.session_state.get('autenticado', False) and getattr(st.session_state.get('usuario', None), 'tipo', '') == 'admin':
         MENU_PRINCIPAL["⚙️ Administração"] = "Admin"
 
-    # Botão de manual do sistema no topo da sidebar — gera e baixa direto
-    if 'manual_pdf_bytes' not in st.session_state:
-        st.session_state.manual_pdf_bytes = None
-    _manual_col1, _manual_col2 = st.sidebar.columns([1, 1])
-    with _manual_col1:
-        if st.button("📖 Manual do Sistema", key="btn_manual_sidebar", use_container_width=True):
-            with st.spinner("Gerando…"):
-                try:
-                    from pages.manual_sistema import gerar_manual_sistema
-                    _pdf_path = gerar_manual_sistema()
-                    with open(_pdf_path, "rb") as _f:
-                        st.session_state.manual_pdf_bytes = _f.read()
-                except Exception as _e:
-                    st.sidebar.error(f"Erro: {_e}")
-    with _manual_col2:
-        if st.session_state.manual_pdf_bytes:
-            st.download_button(
-                label="📥 Baixar PDF",
-                data=st.session_state.manual_pdf_bytes,
-                file_name="Manual_Planner_Organizer.pdf",
-                mime="application/pdf",
-                use_container_width=True,
-                key="btn_download_manual_sidebar"
-            )
+    # Botão de manual — gera o PDF uma vez e baixa direto ao clicar
+    if 'manual_pdf_bytes' not in st.session_state or st.session_state.manual_pdf_bytes is None:
+        try:
+            from pages.manual_sistema import gerar_manual_sistema
+            _pdf_path = gerar_manual_sistema()
+            with open(_pdf_path, "rb") as _f:
+                st.session_state.manual_pdf_bytes = _f.read()
+        except Exception:
+            st.session_state.manual_pdf_bytes = None
+    if st.session_state.get('manual_pdf_bytes'):
+        st.sidebar.download_button(
+            label="📥 Manual do Sistema",
+            data=st.session_state.manual_pdf_bytes,
+            file_name="Manual_Planner_Organizer.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+            key="btn_manual_sidebar"
+        )
 
     st.sidebar.markdown('<div style="margin:4px 0;"><hr style="border:none;height:1px;background:#E0E0E0;"></div>', unsafe_allow_html=True)
 
