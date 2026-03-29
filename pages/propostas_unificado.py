@@ -1576,27 +1576,6 @@ def show():
             else:
                 st.caption("Nenhuma proposta nesta etapa.")
 
-    total_aberto = propostas_em_aberto['valor'].apply(_safe_float).sum() if not propostas_em_aberto.empty else 0.0
-    total_aprovada = propostas_aprovadas['valor'].apply(_safe_float).sum() if not propostas_aprovadas.empty else 0.0
-    total_execucao = propostas_em_exec['valor'].apply(_safe_float).sum() if not propostas_em_exec.empty else 0.0
-    total_finalizada = propostas_finalizadas['valor'].apply(_safe_float).sum() if not propostas_finalizadas.empty else 0.0
-
-    st.markdown("---")
-    footer_c1, footer_c2, footer_c3, footer_c4 = st.columns(4)
-    for col, label, valor in [
-        (footer_c1, "🟡 Em Aberto",   total_aberto),
-        (footer_c2, "🟢 Aprovada",    total_aprovada),
-        (footer_c3, "🔵 Em Execução", total_execucao),
-        (footer_c4, "✅ Finalizada",  total_finalizada),
-    ]:
-        with col:
-            st.markdown(f"""
-            <div class="kanban-metric">
-                <p class="kanban-metric-label">{label}</p>
-                <p class="kanban-metric-value">{_fmt_brl(valor)}</p>
-            </div>
-            """, unsafe_allow_html=True)
-
     selected_id = st.session_state.get('kanban_selected_proposta')
     if selected_id is not None:
         st.markdown("---")
