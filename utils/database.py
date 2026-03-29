@@ -1821,7 +1821,7 @@ class Database:
         def query():
             fornecedor = self.session.query(Fornecedor).filter(
                 Fornecedor.id == fornecedor_id,
-                Fornecedor.usuario_id == self.usuario_id
+                (Fornecedor.usuario_id == self.usuario_id) | (Fornecedor.usuario_id.is_(None))
             ).first()
             if not fornecedor:
                 raise ValueError(f"Fornecedor com ID {fornecedor_id} não encontrado ou sem permissão.")
