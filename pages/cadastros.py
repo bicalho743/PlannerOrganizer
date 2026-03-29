@@ -402,6 +402,7 @@ def show():
                     return st.session_state.db.get_fornecedores()
 
                 if 'update_fornecedores' in st.session_state and st.session_state['update_fornecedores']:
+                    load_fornecedores.clear()
                     st.session_state['fornecedores'] = load_fornecedores()
                     st.session_state['update_fornecedores'] = False
                 elif 'fornecedores' not in st.session_state:
