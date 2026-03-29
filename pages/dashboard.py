@@ -111,7 +111,7 @@ def show():
         # CSS removido para evitar tags malformadas
         
         st.markdown(f"""
-        <div style="text-align: center; margin: -10px 0 25px 0; padding-top: 0; position: relative; top: 0px;">
+        <div style="text-align: center; margin: 0 0 25px 0; padding-top: 0;">
             <p style="font-style: italic; color: #0D1B2A; margin: 0; font-size: 1.1rem; font-weight: 500;">
                 "{frase['texto']}"
             </p>
@@ -123,28 +123,8 @@ def show():
     else:
         # Mostrar uma dica profissional
         dica = random.choice(dicas_profissionais)
-        # CSS para forçar redução do espaçamento
-        st.markdown("""
-        <style>
-        .main .block-container {
-            padding-top: 0px !important;
-        }
-        .stApp > div:first-child {
-            padding-top: 0 !important;
-            margin-top: 0 !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-        
         st.markdown(f"""
-        <style>
-        /* Força o conteúdo a ficar colado no cabeçalho */
-        [data-testid="stAppViewContainer"] > .main > .block-container {{
-            padding-top: 5px !important;
-            margin-top: 75px !important;
-        }}
-        </style>
-        <div style="text-align: center; margin: -20px 0 25px 0; padding-top: 0; position: relative; top: 0px;">
+        <div style="text-align: center; margin: 0 0 25px 0; padding-top: 0;">
             <p style="color: #FF9800; font-weight: bold; font-size: 0.9rem; margin-bottom: 5px;">
                 💡 DICA PROFISSIONAL
             </p>

@@ -84,26 +84,12 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         justify-content: space-between;
     }
 
-    /* Ajuste do conteúdo principal - colado no cabeçalho */
-    .main .block-container {
-        margin-top: calc(var(--header-height, 60px) + 2px) !important;
-        padding-top: 0 !important;
-    }
-
     /* Remove header nativo do Streamlit */
     header[data-testid="stHeader"] { 
         display: none !important; 
         height: 0 !important; 
         margin: 0 !important; 
         padding: 0 !important; 
-    }
-
-    /* Reset completo de espaçamentos */
-    [data-testid="stAppViewContainer"] > div:first-child,
-    [data-testid="stAppViewContainer"] > section:first-of-type,
-    [data-testid="stAppViewContainer"] {
-        padding-top: 0 !important; 
-        margin-top: 0 !important; 
     }
 
     /* Esconder elementos vazios que criam espaçamento */
@@ -121,10 +107,6 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         .app-header {
             min-height: 50px;
             max-height: 50px;
-            --header-height: 50px;
-        }
-        .main .block-container {
-            margin-top: calc(var(--header-height, 50px) + 1px) !important;
         }
         
         /* OCULTAR TEXTO DO CABEÇALHO NO MOBILE */
