@@ -324,8 +324,15 @@ def _render_edit_form(transacao):
         st.rerun()
 
 
-def _dedup_assistentes(df):
-    if df.empty or 'categoria' not in df.columns:
+def _dedup_transacoes(df):
+    if df.empty:
+        return df
+    dedup_cols = ['descricao', 'valor', 'data', 'proposta_id', 'categoria', 'status']
+    available = [c for c in dedup_cols if c in df.columns]
+    if available:
+        df = df.drop_duplicates(subset=available, keep='first')
+
+    if 'categoria' not in df.columns:
         return df
     equipe = df[df['categoria'] == 'Pagamento Equipe/Assistentes']
     assistente = df[df['categoria'] == 'Pagamento de Assistente']
@@ -410,7 +417,7 @@ def show():
             if c not in financeiro_df.columns:
                 financeiro_df[c] = None
         financeiro_df['data'] = pd.to_datetime(financeiro_df['data'], errors='coerce')
-        financeiro_df = _dedup_assistentes(financeiro_df)
+        financeiro_df = _dedup_transacoes(financeiro_df)
 
     pendentes = financeiro_df[financeiro_df['status'] == 'Pendente'].copy() if not financeiro_df.empty else pd.DataFrame()
 
