@@ -336,7 +336,7 @@ def _view_detalhes(templates):
     if st.session_state.get('show_retorno_tecnico_modal', False):
         st.markdown("---")
         st.markdown("""
-        <div style='background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 18px;margin-bottom:12px;'>
+        <div style='background:#faf9f7;border:1px solid #E8D5A3;border-radius:10px;padding:14px 18px;margin-bottom:12px;'>
             <p style='font-weight:700;color:#0D1B2A;margin:0 0 4px 0;'>🔄 Retorno Técnico Necessário?</p>
             <p style='font-size:0.85rem;color:#0D1B2A;margin:0;'>O acompanhamento foi concluído. Há necessidade de ajuste ou visita técnica?</p>
         </div>

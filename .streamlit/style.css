@@ -663,7 +663,7 @@ div[data-testid="stDataFrame"] table tbody tr:nth-child(even) td {
 }
 
 div[data-testid="stDataFrame"] table tbody tr:hover td {
-    background-color: #e3f2fd !important;
+    background-color: #f5f0e0 !important;
 }
 
 /* ========================================

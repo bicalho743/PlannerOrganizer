@@ -276,7 +276,7 @@ def show():
         with col2:
             cor_secundaria = st.color_picker(
                 "Cor Secundária", 
-                value=perfil.get('cor_secundaria', '#e9f2ff'),
+                value=perfil.get('cor_secundaria', '#E8D5A3'),
                 help="Cor secundária para fundos, bordas e elementos complementares nos PDFs"
             )
         

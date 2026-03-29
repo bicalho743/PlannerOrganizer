@@ -781,7 +781,7 @@ if not st.session_state.authenticated:
 
         # CTA para download do manual
         st.markdown("""
-        <div style="text-align: center; margin: 2rem 0; padding: 2rem; background: linear-gradient(135deg, #f8f9fa, #e9f2ff); border-radius: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.05);">
+        <div style="text-align: center; margin: 2rem 0; padding: 2rem; background: linear-gradient(135deg, #f8f9fa, #f5f0e0); border-radius: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.05);">
             <h3 style="color: #0D1B2A; margin-bottom: 1rem; font-size: 1.8rem;">📘 Manual Completo do Sistema</h3>
             <p style="color: #5A6A85; font-size: 1.1rem; margin-bottom: 1.5rem;">
                 Receba gratuitamente o guia completo com todas as funcionalidades do Planner Organizer

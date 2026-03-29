@@ -133,7 +133,7 @@ def _render_detail_panel(transacao, financeiro_df):
     valor = _safe_float(transacao.get('valor'))
 
     is_rec = _is_receita(transacao)
-    border_color = "#38A169" if is_rec else "#E53E3E"
+    border_color = "#C9A84C" if is_rec else "#E53E3E"
     badge_bg = "#C6F6D5" if is_rec else "#FED7D7"
     badge_fg = "#276749" if is_rec else "#9B2C2C"
 
@@ -442,9 +442,9 @@ def show():
 
     mc1, mc2, mc3 = st.columns(3)
     for col, label, valor, cor in [
-        (mc1, "💰 A RECEBER", total_receber, "#38A169"),
+        (mc1, "💰 A RECEBER", total_receber, "#C9A84C"),
         (mc2, "💸 A PAGAR", total_pagar, "#E53E3E"),
-        (mc3, "📊 SALDO", saldo, "#38A169" if saldo >= 0 else "#E53E3E"),
+        (mc3, "📊 SALDO", saldo, "#C9A84C" if saldo >= 0 else "#E53E3E"),
     ]:
         with col:
             st.markdown(f"""
@@ -472,7 +472,7 @@ def show():
     col_receber, col_pagar, col_concluidas = st.columns(3)
 
     for col_idx, (col_widget, col_label, col_df, col_color, valor_cor) in enumerate([
-        (col_receber, "💰 A Receber", a_receber, "#d4edda", "#38A169"),
+        (col_receber, "💰 A Receber", a_receber, "#f5f0e0", "#C9A84C"),
         (col_pagar, "💸 A Pagar", a_pagar, "#f8d7da", "#E53E3E"),
         (col_concluidas, "✅ Aprovadas/Pagas", concluidas, "#e2e3e5", "#4A5568"),
     ]):

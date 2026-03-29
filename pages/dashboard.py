@@ -449,7 +449,7 @@ def show():
                             <div style='color: white; font-weight: 600; margin-bottom: 4px;'>
                                 ✓ {aniversariante['nome']}
                             </div>
-                            <div style='color: #E8F4FD; font-size: 0.85rem;'>
+                            <div style='color: #E8D5A3; font-size: 0.85rem;'>
                                 📱 {aniversariante.get('telefone', 'Não informado')}
                             </div>
                         </div>
@@ -496,11 +496,11 @@ def show():
                                     padding: 12px 15px; border-radius: 6px; margin-bottom: 8px;'>
                             <div style='color: white; font-weight: 600; margin-bottom: 4px;'>
                                 {'✓' if passou else '✓'} {aniversariante['nome']} 
-                                <span style='font-weight: normal; color: #E8F4FD; font-size: 0.85rem;'>
+                                <span style='font-weight: normal; color: #E8D5A3; font-size: 0.85rem;'>
                                     ({aniversariante['data_aniversario']})
                                 </span>
                             </div>
-                            <div style='color: #E8F4FD; font-size: 0.85rem;'>
+                            <div style='color: #E8D5A3; font-size: 0.85rem;'>
                                 📱 {aniversariante.get('telefone', 'Não informado')}
                             </div>
                         </div>
@@ -548,11 +548,11 @@ def show():
                                 padding: 12px 15px; border-radius: 6px; margin-bottom: 8px;'>
                         <div style='color: white; font-weight: 600; margin-bottom: 4px;'>
                             ✓ {proximo['nome']} 
-                            <span style='font-weight: normal; color: #E8F4FD; font-size: 0.85rem;'>
+                            <span style='font-weight: normal; color: #E8D5A3; font-size: 0.85rem;'>
                                 ({proximo['data_aniversario']})
                             </span>
                         </div>
-                        <div style='color: #E8F4FD; font-size: 0.85rem;'>
+                        <div style='color: #E8D5A3; font-size: 0.85rem;'>
                             📱 {proximo.get('telefone', 'Não informado')}
                         </div>
                     </div>
