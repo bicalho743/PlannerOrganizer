@@ -481,18 +481,21 @@ if not st.session_state.authenticated:
     
     .stats-container {
         display: flex;
-        gap: 2rem;
+        gap: 1rem;
         margin: 2rem 0;
         justify-content: flex-start;
+        overflow: hidden;
+        max-width: 100%;
     }
     
     .stat-box {
         background: white;
         border: 2px solid #e0e0e0;
         border-radius: 20px;
-        padding: 2rem 1.5rem;
+        padding: 1.5rem 1rem;
         text-align: center;
-        min-width: 200px;
+        min-width: 0;
+        flex: 1;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         transition: all 0.3s ease;
         cursor: pointer;
@@ -608,6 +611,43 @@ if not st.session_state.authenticated:
         color: #3a75c4;
         font-size: 2rem;
         padding: 0 0.5rem;
+    }
+    
+    @media (max-width: 1200px) {
+        .stats-container {
+            gap: 1rem;
+        }
+        .stat-number {
+            font-size: 1.8rem;
+        }
+        .feature-grid {
+            grid-template-columns: 1fr;
+        }
+        .testimonial-container {
+            grid-template-columns: 1fr;
+        }
+        .login-header {
+            font-size: 2rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .stats-container {
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        .stat-box {
+            min-width: 0;
+        }
+        .stat-number {
+            font-size: 1.5rem;
+        }
+        .login-header {
+            font-size: 1.6rem;
+        }
+        .section-title {
+            font-size: 1.3rem;
+        }
     }
     </style>
     """, unsafe_allow_html=True)
