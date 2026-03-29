@@ -1307,32 +1307,32 @@ st.sidebar.markdown('<div style="margin: 1.5rem 0;"><hr style="border: none; hei
 # CSS movido para .streamlit/style.css para centralização
 
 # Usando um expander para as informações do sistema
-with st.sidebar.expander("ℹ️ Informações do Sistema"):
-    st.markdown("### Planner Organizer")
-    st.markdown("**Versão:** 1.0.4")
-
-    st.markdown("### Módulos do Sistema:")
+with st.sidebar.expander("ℹ️ Sobre o Sistema"):
+    st.markdown("**Planner Organizer** · Versão 1.0.4")
     st.markdown("""
-    - **Dashboard** - Métricas e alertas
-    - **Cadastros** - Clientes, parceiros e fornecedores
-    - **Propostas** - Gestão completa de propostas
-    - **Vendas** - Controle de produtos vendidos
-    - **Financeiro** - Receitas e despesas
-    - **Relatórios** - Análises e visualizações
+**Módulos:**
+- 📊 Dashboard — Métricas, alertas e indicadores
+- 👥 Cadastros — Clientes, fornecedores, parceiros e assistentes
+- 📝 Propostas — Ciclo completo com relatórios PDF
+- 🛒 Vendas — Produtos vendidos por cliente
+- 💰 Financeiro — Kanban de receitas e despesas
+- 📋 Pós-Organização — Follow-up em 6 etapas
+- 📈 Relatórios — Análises e gráficos interativos
+- 🧑‍💼 Perfil — Configurações da conta
     """)
-
-    st.markdown("### Funcionalidades Principais:")
     st.markdown("""
-    - ✅ Fluxo completo de propostas
-    - ✅ Integração entre módulos
-    - ✅ Sistema de alertas de prazos
-    - ✅ Geração de lançamentos financeiros
-    - ✅ Cálculo de comissões
-    - ✅ Importação em lote
-    - ✅ Backup e restauração
+**Funcionalidades:**
+- ✅ Fluxo completo de propostas com 5 status
+- ✅ Integração automática entre módulos
+- ✅ Alertas de prazo (60 dias)
+- ✅ Lançamentos financeiros automáticos
+- ✅ Cálculo de comissões de fornecedores
+- ✅ Jornada pós-organização (6 etapas)
+- ✅ Relatórios PDF Navy & Gold
+- ✅ Importação em lote (CSV)
+- ✅ Backup e restauração
+- ✅ Controle multi-tenant seguro
     """)
-
-    st.markdown("_Use o botão 📖 Manual do Sistema no topo do menu para baixar o PDF completo._")
 
 # Gerenciar o estado para os modais de termos e política
 if "mostrar_termos" not in st.session_state:
