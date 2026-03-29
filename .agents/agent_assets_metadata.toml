@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "Gm-UV-COEeWwHeP8AqXUE"
+uri = "file://pdfs/Manual_Planner_Organizer.pdf"
+type = "pdf"
+title = "Manual do Sistema - Preview"
