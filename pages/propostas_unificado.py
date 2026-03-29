@@ -1398,9 +1398,9 @@ def show():
         return
 
     _metric_css = """<style>
-    .prop-metric{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;text-align:center;}
-    .prop-metric-label{font-size:0.72rem;color:#64748b;margin:0 0 4px 0;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;}
-    .prop-metric-value{font-size:0.95rem;font-weight:700;color:#1a202c;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .kanban-metric{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;text-align:center;}
+    .kanban-metric-label{font-size:0.72rem;color:#64748b;margin:0 0 4px 0;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;}
+    .kanban-metric-value{font-size:0.95rem;font-weight:700;color:#1a202c;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     </style>"""
     st.markdown(_metric_css, unsafe_allow_html=True)
 
@@ -1423,9 +1423,9 @@ def show():
     ]:
         with col:
             st.markdown(f"""
-            <div class="prop-metric">
-                <p class="prop-metric-label">{label}</p>
-                <p class="prop-metric-value">{_fmt_brl(_calc_total_propostas(df))}</p>
+            <div class="kanban-metric">
+                <p class="kanban-metric-label">{label}</p>
+                <p class="kanban-metric-value">{_fmt_brl(_calc_total_propostas(df))}</p>
             </div>""", unsafe_allow_html=True)
 
     st.markdown("")
