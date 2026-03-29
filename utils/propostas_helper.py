@@ -217,15 +217,9 @@ def gerar_pdf_proposta(db, proposta_id, custom_filename=None):
         if custom_filename:
             filename = custom_filename
         else:
-            # Garantir que temos ID da proposta e nome do cliente
-            proposta_id = proposta.get('id', 'sem_id')
+            numero_prop = proposta.get('numero', proposta.get('id', 'sem_id'))
             cliente_nome = cliente_dict.get('nome', 'sem_nome').replace(' ', '_').lower()
-            
-            # Adicionar data atual para evitar sobrescrever arquivos
-            data_atual = datetime.now().strftime('%Y%m%d_%H%M%S')
-            
-            # Criando nome de arquivo com o formato: Proposta_#ID_NomeCliente_DATA.pdf
-            filename = f"pdfs/Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
+            filename = f"pdfs/Relatorio_Proposta_{cliente_nome}_{numero_prop}.pdf"
             
         # Buscar informações adicionais para o PDF melhorado
         # Buscar produtos da proposta se estiverem disponíveis
@@ -486,14 +480,9 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
         if custom_filename:
             filename = custom_filename
         else:
-            # Garantir que temos ID da proposta e nome do cliente
+            numero_prop = proposta.get('numero', proposta_id)
             cliente_nome = cliente.get('nome', 'sem_nome').replace(' ', '_').lower()
-            
-            # Adicionar data atual para evitar sobrescrever arquivos
-            data_atual = datetime.now().strftime('%Y%m%d_%H%M%S')
-            
-            # Criando nome de arquivo com o formato: Cliente_Proposta_#ID_NomeCliente_DATA.pdf
-            filename = f"pdfs/Cliente_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
+            filename = f"pdfs/Relatorio_Cliente_{cliente_nome}_{numero_prop}.pdf"
             
         tipo_proposta = proposta.get('tipo_proposta', 'Organização')
         valor_base = float(proposta.get('valor', 0))
@@ -616,14 +605,9 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
         if custom_filename:
             filename = custom_filename
         else:
-            # Garantir que temos ID da proposta e nome do cliente
+            numero_prop = proposta.get('numero', proposta_id)
             cliente_nome = cliente.get('nome', 'sem_nome').replace(' ', '_').lower()
-            
-            # Adicionar data atual para evitar sobrescrever arquivos
-            data_atual = datetime.now().strftime('%Y%m%d_%H%M%S')
-            
-            # Criando nome de arquivo com o formato: Interno_Proposta_#ID_NomeCliente_DATA.pdf
-            filename = f"pdfs/Interno_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
+            filename = f"pdfs/Relatorio_Interno_{cliente_nome}_{numero_prop}.pdf"
             
         valor_base = float(proposta.get('valor', 0))
 
@@ -829,13 +813,12 @@ def gerar_pdf_fornecedores_proposta(db, proposta_id, custom_filename=None):
         if not itens_fornecedores:
             return False, "Nenhum fornecedor encontrado para esta proposta.", None
             
-        numero_proposta = proposta.get('numero', proposta_id)
+        numero_prop = proposta.get('numero', proposta_id)
         if custom_filename:
             filename = custom_filename
         else:
             cliente_nome = cliente.get('nome', 'sem_nome').replace(' ', '_').lower()
-            data_atual = datetime.now().strftime('%Y%m%d_%H%M%S')
-            filename = f"pdfs/Fornecedores_Proposta_{numero_proposta}_{cliente_nome}_{data_atual}.pdf"
+            filename = f"pdfs/Relatorio_Fornecedores_{cliente_nome}_{numero_prop}.pdf"
             
         itens_tuples = []
         total_forn = 0
@@ -1035,9 +1018,9 @@ def gerar_pdf_venda_proposta(db, proposta_id, custom_filename=None):
         if custom_filename:
             filename = custom_filename
         else:
+            numero_prop = proposta.get('numero', proposta_id)
             cliente_nome = cliente.get('nome', 'sem_nome').replace(' ', '_').lower()
-            data_atual = datetime.now().strftime('%Y%m%d_%H%M%S')
-            filename = f"pdfs/Venda_Proposta_{proposta_id}_{cliente_nome}_{data_atual}.pdf"
+            filename = f"pdfs/Relatorio_Produtos_{cliente_nome}_{numero_prop}.pdf"
             
         # Usar pdf_generator_v2 que tem layout Navy/Gold
         from utils.pdf_generator_v2 import gerar_pdf_venda

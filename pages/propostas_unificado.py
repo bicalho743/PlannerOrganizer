@@ -249,7 +249,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
                     if sucesso and arquivo:
                         with open(arquivo, "rb") as f:
                             st.success("PDF gerado!")
-                            st.download_button("📥 Baixar", f.read(), f"Proposta_{proposta_id}.pdf",
+                            st.download_button("📥 Baixar", f.read(), os.path.basename(arquivo),
                                                "application/pdf", key=f"dl_proposta_{proposta_id}", use_container_width=True)
                     else:
                         st.error(f"Erro: {mensagem}")
@@ -430,14 +430,14 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_
                                'observacoes': f"Produtos Proposta #{num_exibir} - {nome_cliente}"}
                 rename_map = {'nome': 'produto_nome', val_col: 'preco_unitario'}
                 itens_pdf = produtos.rename(columns=rename_map)[['produto_nome', 'quantidade', 'preco_unitario']].copy()
-                ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_t.time()))
-                fname = f"pdfs/Venda_Proposta_{num_exibir}_{ts}.pdf"
+                cliente_nome_arq = nome_cliente.replace(' ', '_').lower()
+                fname = f"pdfs/Relatorio_Produtos_{cliente_nome_arq}_{num_exibir}.pdf"
                 os.makedirs("pdfs", exist_ok=True)
                 pdf_path = gerar_pdf_venda_v2(venda_dados, {'nome': nome_cliente}, itens_pdf, fname)
                 if pdf_path and os.path.exists(pdf_path):
                     with open(pdf_path, "rb") as f:
                         pdf_bytes = f.read()
-                    file_name = f"Produtos_Proposta_{num_exibir}.pdf"
+                    file_name = f"Relatorio_Produtos_{cliente_nome_arq}_{num_exibir}.pdf"
                 else:
                     error_msg = "Erro ao gerar PDF de vendas."
     except Exception as e:
@@ -618,14 +618,14 @@ def _tab_produtos(proposta_id):
                                    'valor_total': round(float(valor_total_produtos), 2),
                                    'data_venda': datetime.now().strftime('%d/%m/%Y'), 'observacoes': f"Produtos Proposta #{_num_prop} - {_nome_cl}"}
                     itens_pdf = produtos_proposta.rename(columns={'nome': 'produto_nome', 'valor_unit': 'preco_unitario'})[['produto_nome', 'quantidade', 'preco_unitario']].copy()
-                    ts = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + str(int(_t.time()))
-                    filename = f"pdfs/Venda_Proposta_{_num_prop}_{ts}.pdf"
+                    _nome_cl_arq = _nome_cl.replace(' ', '_').lower()
+                    filename = f"pdfs/Relatorio_Produtos_{_nome_cl_arq}_{_num_prop}.pdf"
                     os.makedirs("pdfs", exist_ok=True)
                     pdf_path = gerar_pdf_venda_v2(venda_dados, {'nome': _nome_cl}, itens_pdf, filename)
                     if pdf_path and os.path.exists(pdf_path):
                         with open(pdf_path, "rb") as f:
                             st.success("PDF gerado!")
-                            st.download_button("📥 Baixar PDF", f.read(), f"Produtos_Proposta_{proposta_id}.pdf",
+                            st.download_button("📥 Baixar PDF", f.read(), f"Relatorio_Produtos_{_nome_cl_arq}_{_num_prop}.pdf",
                                                "application/pdf", use_container_width=True,
                                                key=f"dl_pdf_venda_proposta_{proposta_id}")
                     else:
@@ -1326,7 +1326,7 @@ def _tab_acoes(proposta_id, proposta):
             if sucesso and arquivo:
                 with open(arquivo, "rb") as f:
                     st.success("PDF gerado!")
-                    st.download_button("📥 Baixar Proposta", f.read(), f"Proposta_{proposta_id}.pdf",
+                    st.download_button("📥 Baixar Proposta", f.read(), os.path.basename(arquivo),
                                        "application/pdf", key=f"dl_proposta_{proposta_id}", use_container_width=True)
             else:
                 st.error(f"Erro: {mensagem}")
