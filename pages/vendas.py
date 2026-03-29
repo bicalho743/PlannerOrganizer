@@ -5,6 +5,9 @@ from datetime import datetime
 import os
 from utils.custom_components import custom_info, custom_warning
 from streamlit_extras.stylable_container import stylable_container
+from utils.design_tokens import (
+    NAVY, NAVY_HOVER, GOLD, GOLD_BUTTON_CSS,
+)
 
 
 from utils.currency_formatter import fmt_brl as _fmt_brl
@@ -311,12 +314,12 @@ def _render_detail_panel(venda_id, venda_row):
             st.markdown(f"""
             <a href="data:application/pdf;base64,{b64}" download="{pdf_file_name}"
                style="text-decoration:none;display:inline-block;">
-              <div style="background:#0D1B2A;border-radius:10px;padding:14px 24px;text-align:center;
+              <div style="background:{NAVY};border-radius:10px;padding:14px 24px;text-align:center;
                           display:flex;align-items:center;gap:10px;cursor:pointer;transition:all 0.2s;"
-                   onmouseover="this.style.background='#162840';this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)'"
-                   onmouseout="this.style.background='#0D1B2A';this.style.transform='none';this.style.boxShadow='none'">
+                   onmouseover="this.style.background='{NAVY_HOVER}';this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)'"
+                   onmouseout="this.style.background='{NAVY}';this.style.transform='none';this.style.boxShadow='none'">
                 <span style="font-size:20px;">📄</span>
-                <span style="color:#C9A84C;font-weight:700;font-size:13px;">Baixar PDF da Venda</span>
+                <span style="color:{GOLD};font-weight:700;font-size:13px;">Baixar PDF da Venda</span>
               </div>
             </a>""", unsafe_allow_html=True)
     except Exception as e:
@@ -509,19 +512,7 @@ def show():
 
     col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
     with col_btn:
-        with stylable_container(key="gold_nova_venda", css_styles="""
-            button {
-                background: linear-gradient(135deg, #C9A84C, #B8943D) !important;
-                color: #fff !important;
-                font-weight: 700 !important;
-                font-size: 15px !important;
-                padding: 12px 32px !important;
-                border-radius: 10px !important;
-                border: none !important;
-                letter-spacing: 0.02em !important;
-                box-shadow: 0 3px 12px rgba(201,168,76,0.35) !important;
-            }
-        """):
+        with stylable_container(key="gold_nova_venda", css_styles=GOLD_BUTTON_CSS):
             if st.button("✚  Nova Venda", type="primary", use_container_width=True, key="btn_nova_venda_top"):
                 st.session_state["vendas_nova_venda_open"] = not st.session_state["vendas_nova_venda_open"]
                 if not st.session_state["vendas_nova_venda_open"]:

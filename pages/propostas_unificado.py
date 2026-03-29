@@ -12,6 +12,11 @@ import html as html_module
 from utils.database import Fornecedor
 from utils.propostas_helper import st_gerar_pdf_cliente, st_gerar_pdf_interno, st_gerar_pdf_fornecedores, gerar_pdf_proposta
 from streamlit_extras.stylable_container import stylable_container
+from utils.design_tokens import (
+    NAVY, NAVY_HOVER, GOLD, GOLD_BUTTON_CSS,
+    NAVY_CARD_CSS, NAVY_CARD_HOVER, NAVY_CARD_OUT,
+    TEXT_PRIMARY,
+)
 
 
 def _safe_float(val, default=0.0):
@@ -193,7 +198,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
                 background:#faf9f7;border-radius:10px;border:1px solid #e8e5df;margin-bottom:14px;">
       <span style="background:{badge_bg};color:#fff;font-size:11px;font-weight:700;
                    padding:3px 10px;border-radius:12px;white-space:nowrap;">{badge_label}</span>
-      <span style="font-size:13px;color:#0D1B2A;font-weight:600;">{_fmt_brl(valor)}</span>
+      <span style="font-size:13px;color:{NAVY};font-weight:600;">{_fmt_brl(valor)}</span>
       {"<span style='font-size:12px;color:#8B8680;'>" + data_str + "</span>" if data_str else ""}
     </div>""", unsafe_allow_html=True)
 
@@ -305,7 +310,7 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
                 background:#faf9f7;border-radius:10px;border:1px solid #e8e5df;margin-bottom:14px;">
       <span style="background:{badge_bg};color:#fff;font-size:11px;font-weight:700;
                    padding:3px 10px;border-radius:12px;white-space:nowrap;">{badge_label}</span>
-      <span style="font-size:13px;color:#0D1B2A;font-weight:600;">{_fmt_brl(valor)}</span>
+      <span style="font-size:13px;color:{NAVY};font-weight:600;">{_fmt_brl(valor)}</span>
     </div>""", unsafe_allow_html=True)
 
     rc1, rc2 = st.columns(2)
@@ -449,22 +454,22 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_
         st.markdown(f"""
         <a href="data:application/pdf;base64,{b64}" download="{file_name}"
            style="text-decoration:none;display:block;">
-          <div style="background:#0D1B2A;border-radius:10px;padding:16px;text-align:center;min-height:80px;
+          <div style="background:{NAVY};border-radius:10px;padding:16px;text-align:center;min-height:80px;
                       display:flex;flex-direction:column;align-items:center;justify-content:center;
                       cursor:pointer;transition:all 0.2s;border:1px solid transparent;"
-               onmouseover="this.style.background='#162840';this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)'"
-               onmouseout="this.style.background='#0D1B2A';this.style.transform='none';this.style.boxShadow='none'">
+               onmouseover="this.style.background='{NAVY_HOVER}';this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)'"
+               onmouseout="this.style.background='{NAVY}';this.style.transform='none';this.style.boxShadow='none'">
             <div style="font-size:22px;">{icon}</div>
-            <div style="color:#C9A84C;font-weight:700;font-size:12px;margin-top:4px;">{title}</div>
+            <div style="color:{GOLD};font-weight:700;font-size:12px;margin-top:4px;">{title}</div>
             <div style="color:#aaa;font-size:10px;">{subtitle}</div>
           </div>
         </a>""", unsafe_allow_html=True)
     elif error_msg:
         st.markdown(f"""
-        <div style="background:#0D1B2A;border-radius:10px;padding:16px;text-align:center;min-height:80px;
+        <div style="background:{NAVY};border-radius:10px;padding:16px;text-align:center;min-height:80px;
                     display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0.6;">
           <div style="font-size:22px;">{icon}</div>
-          <div style="color:#C9A84C;font-weight:700;font-size:12px;margin-top:4px;">{title}</div>
+          <div style="color:{GOLD};font-weight:700;font-size:12px;margin-top:4px;">{title}</div>
           <div style="color:#ff6b6b;font-size:10px;">{error_msg}</div>
         </div>""", unsafe_allow_html=True)
 
@@ -491,7 +496,7 @@ def _tab_detalhes(proposta_id, proposta):
         st.markdown(f"""
         <div style="background:#f7f7f5;border-radius:10px;padding:14px 18px;margin-bottom:18px;border:1px solid #e8e6e0;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <span style="font-weight:600;color:#0D1B2A;font-size:13px;">Progresso do Prazo</span>
+            <span style="font-weight:600;color:{NAVY};font-size:13px;">Progresso do Prazo</span>
             <span style="font-size:13px;color:{cor_prog};font-weight:600;">{label_prog}</span>
           </div>
           <div style="background:#e8e6e0;border-radius:6px;height:10px;overflow:hidden;">
@@ -503,7 +508,7 @@ def _tab_detalhes(proposta_id, proposta):
         pass
 
     # ── Formulário novo andamento ─────────────────────────────────────────
-    st.markdown('<p style="font-weight:600;color:#0D1B2A;font-size:14px;margin-bottom:4px;">📝 Novo Andamento</p>', unsafe_allow_html=True)
+    st.markdown('<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">📝 Novo Andamento</p>', unsafe_allow_html=True)
     with st.form(key=f"form_andamento_{proposta_id}"):
         descricao_andamento = st.text_area("Descrição:", height=90, placeholder="Descreva o que aconteceu nesta etapa…", label_visibility="collapsed")
         submitted = st.form_submit_button("✔ Registrar Andamento", type="primary", use_container_width=True)
@@ -526,14 +531,14 @@ def _tab_detalhes(proposta_id, proposta):
     try:
         andamentos = st.session_state.db.get_andamentos_proposta(proposta_id)
         if not andamentos.empty:
-            st.markdown('<p style="font-weight:600;color:#0D1B2A;font-size:14px;margin:16px 0 8px;">🕐 Histórico</p>', unsafe_allow_html=True)
+            st.markdown('<p style="font-weight:600;color:{NAVY};font-size:14px;margin:16px 0 8px;">🕐 Histórico</p>', unsafe_allow_html=True)
             cards = ""
             for _, a in andamentos.iterrows():
                 texto = html_module.escape(str(a.get('observacao') or a.get('descricao') or 'Sem descrição'))
                 data_and = a.get('data')
                 data_str = data_and.strftime('%d/%m/%Y') if pd.notna(data_and) and data_and else '—'
                 cards += f"""
-                <div style="border-left:3px solid #C9A84C;background:#fff;border-radius:0 8px 8px 0;
+                <div style="border-left:3px solid {GOLD};background:#fff;border-radius:0 8px 8px 0;
                             padding:10px 14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);">
                   <div style="font-size:13px;color:#1C1C1A;">{texto}</div>
                   <div style="font-size:11px;color:#9a9890;margin-top:4px;">📅 {data_str}</div>
@@ -568,11 +573,11 @@ def _tab_produtos(proposta_id):
                 vunit_str = _fmt_brl(vunit)
                 vtot_str  = _fmt_brl(vtot)
                 cards += f"""
-                <div style="border-left:3px solid #C9A84C;background:#fff;border-radius:0 8px 8px 0;
+                <div style="border-left:3px solid {GOLD};background:#fff;border-radius:0 8px 8px 0;
                             padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);
                             display:flex;justify-content:space-between;align-items:center;">
                   <div>
-                    <span style="font-weight:600;color:#0D1B2A;font-size:13px;">{nome}</span>
+                    <span style="font-weight:600;color:{NAVY};font-size:13px;">{nome}</span>
                     <span style="font-size:11px;color:#9a9890;margin-left:8px;">📦 {comodo}</span>
                   </div>
                   <div style="text-align:right;white-space:nowrap;">
@@ -642,7 +647,7 @@ def _tab_produtos(proposta_id):
     except Exception as e:
         st.error(f"Erro ao carregar produtos: {str(e)}")
 
-    st.markdown('<p style="font-weight:600;color:#0D1B2A;font-size:14px;margin-bottom:4px;">➕ Adicionar Produto</p>', unsafe_allow_html=True)
+    st.markdown('<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">➕ Adicionar Produto</p>', unsafe_allow_html=True)
     with st.form(key=f"form_produto_{proposta_id}"):
         produtos_cadastrados = st.session_state.db.get_produtos()
         if not produtos_cadastrados.empty:
@@ -700,7 +705,7 @@ def _tab_itens(proposta_id, show_finalizar=False):
     t_total = t_prod + t_forn + t_asst + t_outr
 
     cats = [
-        ("Produtos",     "📦", len(produtos_df),     t_prod,  "#C9A84C"),
+        ("Produtos",     "📦", len(produtos_df),     t_prod,  GOLD),
         ("Fornecedores", "🏢", len(fornecedores_df),  t_forn,  "#0F5E6E"),
         ("Assistentes",  "👥", len(assistentes_df),   t_asst,  "#6B4EAA"),
         ("Outros",       "➕", len(outros_df),        t_outr,  "#E07B39"),
@@ -732,7 +737,7 @@ def _tab_itens(proposta_id, show_finalizar=False):
         text-transform: uppercase; color: #8B8680; margin-bottom: 4px;
     }
     .itens-total-value {
-        font-size: 18px; font-weight: 700; color: #0D1B2A;
+        font-size: 18px; font-weight: 700; color: {NAVY};
     }
     .itens-content-header {
         display: flex; align-items: center; justify-content: space-between;
@@ -740,7 +745,7 @@ def _tab_itens(proposta_id, show_finalizar=False):
         margin-bottom: 16px; border: 1px solid #e8e5df;
     }
     .itens-content-title {
-        font-size: 16px; font-weight: 700; color: #0D1B2A;
+        font-size: 16px; font-weight: 700; color: {NAVY};
         display: flex; align-items: center; gap: 8px;
     }
     .itens-content-subtitle {
@@ -832,7 +837,7 @@ def _tab_itens(proposta_id, show_finalizar=False):
 
 
 
-def _acrescimos_cards(acrescimos, cor_borda="#C9A84C"):
+def _acrescimos_cards(acrescimos, cor_borda=GOLD):
     """Renderiza acréscimos como cards com borda colorida e valor à direita."""
     cards = ""
     for _, a in acrescimos.iterrows():
@@ -845,7 +850,7 @@ def _acrescimos_cards(acrescimos, cor_borda="#C9A84C"):
                     padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);
                     display:flex;justify-content:space-between;align-items:center;">
           <div>
-            <span style="font-weight:600;color:#0D1B2A;font-size:13px;">{nome}</span>
+            <span style="font-weight:600;color:{NAVY};font-size:13px;">{nome}</span>
             {"<br><span style='font-size:11px;color:#9a9890;'>" + desc + "</span>" if desc and desc != nome else ""}
           </div>
           <span style="font-weight:700;color:#1D6A4A;font-size:13px;white-space:nowrap;">{val_str}</span>
@@ -903,7 +908,7 @@ def _tab_fornecedores(proposta_id):
     except Exception as e:
         st.error(f"Erro ao carregar fornecedores: {str(e)}")
 
-    st.markdown('<p style="font-weight:600;color:#0D1B2A;font-size:14px;margin-bottom:4px;">➕ Adicionar Fornecedor</p>', unsafe_allow_html=True)
+    st.markdown('<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">➕ Adicionar Fornecedor</p>', unsafe_allow_html=True)
     try:
         fornecedores = st.session_state.db.get_fornecedores()
         if not fornecedores.empty:
@@ -987,7 +992,7 @@ def _tab_assistentes(proposta_id):
     except Exception as e:
         st.error(f"Erro ao carregar assistentes: {str(e)}")
 
-    st.markdown('<p style="font-weight:600;color:#0D1B2A;font-size:14px;margin-bottom:4px;">➕ Adicionar Assistente</p>', unsafe_allow_html=True)
+    st.markdown('<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">➕ Adicionar Assistente</p>', unsafe_allow_html=True)
     try:
         assistentes = st.session_state.db.get_assistentes()
         if not assistentes.empty:
@@ -1041,7 +1046,7 @@ def _tab_outros(proposta_id):
                             padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);
                             display:flex;justify-content:space-between;align-items:center;">
                   <div>
-                    <span style="font-weight:600;color:#0D1B2A;font-size:13px;">{nome}</span>
+                    <span style="font-weight:600;color:{NAVY};font-size:13px;">{nome}</span>
                     {'<br><span style="font-size:11px;color:#9a9890;">' + sub + '</span>' if sub else ''}
                     <span style="font-size:11px;color:#9a9890;margin-left:6px;">📍 {comodo}</span>
                   </div>
@@ -1071,7 +1076,7 @@ def _tab_outros(proposta_id):
     except Exception as e:
         st.error(f"Erro ao carregar itens: {str(e)}")
 
-    st.markdown('<p style="font-weight:600;color:#0D1B2A;font-size:14px;margin-bottom:4px;">➕ Adicionar Item Extra</p>', unsafe_allow_html=True)
+    st.markdown('<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">➕ Adicionar Item Extra</p>', unsafe_allow_html=True)
     with st.form(key=f"form_outros_{proposta_id}"):
         col1, col2 = st.columns(2)
         with col1:
@@ -1202,7 +1207,7 @@ def _tab_acoes(proposta_id, proposta):
 
             # Breakdown em cards
             breakdown = [
-                ("🏷️ Personal Organizer", valor_base, "#C9A84C"),
+                ("🏷️ Personal Organizer", valor_base, GOLD),
                 ("📦 Produtos",           total_prod, "#0F5E6E"),
                 ("🏢 Fornecedores",       total_forn, "#0F5E6E"),
                 ("👥 Assistentes",        total_asst, "#6B4EAA"),
@@ -1220,8 +1225,8 @@ def _tab_acoes(proposta_id, proposta):
                     </div>"""
             rows_html += f"""
                     <div style="display:flex;justify-content:space-between;padding:9px 12px;
-                                background:#0D1B2A;border-radius:6px;margin-top:6px;">
-                      <span style="font-size:13px;color:#C9A84C;font-weight:700;">TOTAL GERAL</span>
+                                background:{NAVY};border-radius:6px;margin-top:6px;">
+                      <span style="font-size:13px;color:{GOLD};font-weight:700;">TOTAL GERAL</span>
                       <span style="font-size:14px;font-weight:700;color:#fff;">{_fmt_brl(total_geral)}</span>
                     </div>"""
             st.markdown(rows_html, unsafe_allow_html=True)
@@ -1261,19 +1266,19 @@ def _tab_acoes(proposta_id, proposta):
         # Cards de relatório
         st.markdown("""
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
-          <div style="background:#0D1B2A;border-radius:10px;padding:14px;text-align:center;">
+          <div style="background:{NAVY};border-radius:10px;padding:14px;text-align:center;">
             <div style="font-size:22px;">📋</div>
-            <div style="color:#C9A84C;font-weight:700;font-size:12px;margin-top:4px;">RELATÓRIO CLIENTE</div>
+            <div style="color:{GOLD};font-weight:700;font-size:12px;margin-top:4px;">RELATÓRIO CLIENTE</div>
             <div style="color:#aaa;font-size:10px;">Proposta de serviço</div>
           </div>
-          <div style="background:#0D1B2A;border-radius:10px;padding:14px;text-align:center;">
+          <div style="background:{NAVY};border-radius:10px;padding:14px;text-align:center;">
             <div style="font-size:22px;">📊</div>
-            <div style="color:#C9A84C;font-weight:700;font-size:12px;margin-top:4px;">RELATÓRIO INTERNO</div>
+            <div style="color:{GOLD};font-weight:700;font-size:12px;margin-top:4px;">RELATÓRIO INTERNO</div>
             <div style="color:#aaa;font-size:10px;">Margens e custos</div>
           </div>
-          <div style="background:#0D1B2A;border-radius:10px;padding:14px;text-align:center;">
+          <div style="background:{NAVY};border-radius:10px;padding:14px;text-align:center;">
             <div style="font-size:22px;">🏢</div>
-            <div style="color:#C9A84C;font-weight:700;font-size:12px;margin-top:4px;">RELATÓRIO FORNECEDORES</div>
+            <div style="color:{GOLD};font-weight:700;font-size:12px;margin-top:4px;">RELATÓRIO FORNECEDORES</div>
             <div style="color:#aaa;font-size:10px;">Lista de terceiros</div>
           </div>
         </div>""", unsafe_allow_html=True)
@@ -1432,19 +1437,7 @@ def show():
 
     col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
     with col_btn:
-        with stylable_container(key="gold_nova_proposta", css_styles="""
-            button {
-                background: linear-gradient(135deg, #C9A84C, #B8943D) !important;
-                color: #fff !important;
-                font-weight: 700 !important;
-                font-size: 15px !important;
-                padding: 12px 32px !important;
-                border-radius: 10px !important;
-                border: none !important;
-                letter-spacing: 0.02em !important;
-                box-shadow: 0 3px 12px rgba(201,168,76,0.35) !important;
-            }
-        """):
+        with stylable_container(key="gold_nova_proposta", css_styles=GOLD_BUTTON_CSS):
             nova_btn = st.button("✚  Nova Proposta", type="primary", use_container_width=True, key="btn_nova_proposta_top")
             if nova_btn:
                 st.session_state['kanban_nova_proposta_open'] = not st.session_state['kanban_nova_proposta_open']

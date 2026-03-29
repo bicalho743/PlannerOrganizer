@@ -4,6 +4,10 @@ import plotly.express as px
 import html as html_module
 from datetime import datetime, timedelta
 from utils.currency_formatter import fmt_brl
+from utils.design_tokens import (
+    NAVY, GOLD, GOLD_DARK, GOLD_GRADIENT, GOLD_BUTTON_CSS,
+    TEXT_PRIMARY, TEXT_SECONDARY,
+)
 from streamlit_extras.stylable_container import stylable_container
 
 
@@ -453,19 +457,7 @@ def show():
 
     col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
     with col_btn:
-        with stylable_container(key="gold_nova_transacao", css_styles="""
-            button {
-                background: linear-gradient(135deg, #C9A84C, #B8943D) !important;
-                color: #fff !important;
-                font-weight: 700 !important;
-                font-size: 15px !important;
-                padding: 12px 32px !important;
-                border-radius: 10px !important;
-                border: none !important;
-                letter-spacing: 0.02em !important;
-                box-shadow: 0 3px 12px rgba(201,168,76,0.35) !important;
-            }
-        """):
+        with stylable_container(key="gold_nova_transacao", css_styles=GOLD_BUTTON_CSS):
             if st.button("✚  Nova Transação", type="primary", use_container_width=True, key="btn_nova_transacao"):
                 st.session_state["fin_nova_transacao_open"] = not st.session_state["fin_nova_transacao_open"]
 
