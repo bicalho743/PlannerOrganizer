@@ -830,7 +830,7 @@ def gerar_pdf_fornecedores_proposta(db, proposta_id, custom_filename=None):
 
         from utils.pdf_generator_v2 import gerar_pdf_fornecedores
         dados_pdf = {
-            'proposta_id': numero_proposta,
+            'proposta_id': numero_prop,
             'cliente': cliente.get('nome', ''),
             'telefone': cliente.get('telefone', ''),
             'tipo': proposta.get('tipo_proposta', ''),
