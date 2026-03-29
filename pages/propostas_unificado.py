@@ -1463,11 +1463,21 @@ def show():
 
     col_aberto, col_aprovada, col_execucao, col_finalizada = st.columns(4)
 
+    MAX_FINALIZADAS_KANBAN = 5
+    if not propostas_finalizadas.empty and 'data_fim' in propostas_finalizadas.columns:
+        propostas_finalizadas_sorted = propostas_finalizadas.sort_values('data_fim', ascending=False, na_position='last')
+    elif not propostas_finalizadas.empty:
+        propostas_finalizadas_sorted = propostas_finalizadas.sort_index(ascending=False)
+    else:
+        propostas_finalizadas_sorted = propostas_finalizadas
+    total_finalizadas = len(propostas_finalizadas_sorted)
+    propostas_finalizadas_kanban = propostas_finalizadas_sorted.head(MAX_FINALIZADAS_KANBAN)
+
     COLS_CONFIG = [
         (col_aberto, "🟡 Em Aberto", propostas_em_aberto, "#fff3cd"),
         (col_aprovada, "🟢 Aprovada", propostas_aprovadas, "#d4edda"),
         (col_execucao, "🔵 Em Execução", propostas_em_exec, "#cce5ff"),
-        (col_finalizada, "✅ Finalizada", propostas_finalizadas, "#e2e3e5"),
+        (col_finalizada, "✅ Finalizada", propostas_finalizadas_kanban, "#e2e3e5"),
     ]
 
     kanban_css = """
@@ -1545,8 +1555,12 @@ def show():
 
     for col_idx, (col_widget, col_label, col_df, col_color) in enumerate(COLS_CONFIG):
         with col_widget:
+            if col_idx == 3:
+                header_count = total_finalizadas
+            else:
+                header_count = len(col_df)
             st.markdown(
-                f'<div class="kanban-col-header" style="background-color:{col_color};">{col_label} ({len(col_df)})</div>',
+                f'<div class="kanban-col-header" style="background-color:{col_color};">{col_label} ({header_count})</div>',
                 unsafe_allow_html=True
             )
             if not col_df.empty:
@@ -1573,8 +1587,88 @@ def show():
                         else:
                             st.session_state['kanban_selected_proposta'] = pid
                         st.rerun()
+                if col_idx == 3 and total_finalizadas > MAX_FINALIZADAS_KANBAN:
+                    st.caption(f"Mostrando {MAX_FINALIZADAS_KANBAN} de {total_finalizadas} · veja o Histórico abaixo")
             else:
                 st.caption("Nenhuma proposta nesta etapa.")
+
+    if total_finalizadas > 0:
+        st.markdown("---")
+        with st.expander(f"📋 Histórico de Propostas ({total_finalizadas})", expanded=False):
+            hist_c1, hist_c2 = st.columns([2, 1])
+            with hist_c1:
+                busca_cliente = st.text_input("🔍 Buscar por cliente", key="hist_busca_cliente", placeholder="Nome do cliente...")
+            with hist_c2:
+                meses_opcoes = ["Todos"]
+                if not propostas_finalizadas_sorted.empty:
+                    for col_data in ['data_fim', 'data_inicio', 'data_proposta']:
+                        if col_data in propostas_finalizadas_sorted.columns:
+                            datas_validas = pd.to_datetime(propostas_finalizadas_sorted[col_data], errors='coerce').dropna()
+                            if not datas_validas.empty:
+                                meses_unicos = datas_validas.dt.to_period('M').unique().sort_values(ascending=False)
+                                for m in meses_unicos:
+                                    label = m.strftime('%m/%Y')
+                                    if label not in meses_opcoes:
+                                        meses_opcoes.append(label)
+                                break
+                filtro_mes = st.selectbox("📅 Período", meses_opcoes, key="hist_filtro_mes")
+
+            hist_df = propostas_finalizadas_sorted.copy()
+            if busca_cliente:
+                hist_df = hist_df[hist_df.apply(
+                    lambda r: busca_cliente.lower() in str(r.get('nome', r.get('cliente_nome', ''))).lower(), axis=1
+                )]
+            if filtro_mes != "Todos":
+                mes_num, ano_num = filtro_mes.split('/')
+                for col_data in ['data_fim', 'data_inicio', 'data_proposta']:
+                    if col_data in hist_df.columns:
+                        datas_parsed = pd.to_datetime(hist_df[col_data], errors='coerce')
+                        mask_periodo = (datas_parsed.dt.month == int(mes_num)) & (datas_parsed.dt.year == int(ano_num))
+                        hist_df = hist_df[mask_periodo]
+                        break
+
+            if hist_df.empty:
+                st.info("Nenhuma proposta encontrada com os filtros selecionados.")
+            else:
+                for _, prop in hist_df.iterrows():
+                    h_pid = prop['id']
+                    h_nome = str(prop.get('nome', prop.get('cliente_nome', 'Cliente')))
+                    h_numero = prop.get('numero', h_pid)
+                    h_tipo = str(prop.get('tipo_proposta', prop.get('descricao', '')))[:40]
+                    h_valor = _fmt_brl(_safe_float(prop.get('valor')))
+                    h_status = str(prop.get('status', ''))
+                    h_data = ''
+                    for col_data in ['data_fim', 'data_inicio', 'data_proposta']:
+                        if col_data in prop.index and pd.notna(prop.get(col_data)):
+                            try:
+                                h_data = pd.to_datetime(prop[col_data]).strftime('%d/%m/%Y')
+                            except Exception:
+                                pass
+                            break
+
+                    h_badge_cor = "#28a745" if h_status == "Finalizada" else "#dc3545"
+                    st.markdown(f"""
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;
+                                border:1px solid #e2e8f0;border-radius:8px;margin-bottom:6px;background:#fff;">
+                        <div style="flex:1;">
+                            <span style="font-weight:600;font-size:0.85rem;color:#1a202c;">#{h_numero} · {html_module.escape(h_nome)}</span>
+                            <span style="font-size:0.75rem;color:#6c757d;margin-left:8px;">{html_module.escape(h_tipo)}</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <span style="font-size:0.8rem;color:#1a5276;font-weight:600;">{h_valor}</span>
+                            <span style="font-size:0.68rem;padding:2px 8px;border-radius:10px;background:{h_badge_cor};color:#fff;">{h_status}</span>
+                            <span style="font-size:0.75rem;color:#999;">{h_data}</span>
+                        </div>
+                    </div>""", unsafe_allow_html=True)
+
+                    is_sel = st.session_state.get('kanban_selected_proposta') == h_pid
+                    h_btn_label = "▲ Fechar" if is_sel else "▼ Ver Detalhes"
+                    if st.button(h_btn_label, key=f"hist_btn_{h_pid}", use_container_width=True):
+                        if is_sel:
+                            st.session_state['kanban_selected_proposta'] = None
+                        else:
+                            st.session_state['kanban_selected_proposta'] = h_pid
+                        st.rerun()
 
     selected_id = st.session_state.get('kanban_selected_proposta')
     if selected_id is not None:
