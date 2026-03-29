@@ -801,7 +801,7 @@ def _tab_itens(proposta_id, show_finalizar=False):
                     if res.get('status', False):
                         st.session_state['kanban_selected_proposta'] = None
                         st.session_state['proposta_finalizada_sucesso'] = True
-                        st.cache_data.clear()
+                        st.session_state.db.invalidar_cache()
                         st.rerun()
                     else:
                         st.error(res.get('message', 'Erro ao finalizar.'))
@@ -1247,6 +1247,7 @@ def _tab_acoes(proposta_id, proposta):
                     if res.get('status', False):
                         st.success("Proposta finalizada com sucesso!")
                         st.session_state['kanban_selected_proposta'] = None
+                        st.session_state.db.invalidar_cache()
                         st.rerun()
                     else:
                         st.error(f"Erro: {res.get('message', 'Desconhecido')}")
