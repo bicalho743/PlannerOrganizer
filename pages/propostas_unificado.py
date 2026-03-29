@@ -1605,7 +1605,7 @@ def show():
                         if col_data in propostas_finalizadas_sorted.columns:
                             datas_validas = pd.to_datetime(propostas_finalizadas_sorted[col_data], errors='coerce').dropna()
                             if not datas_validas.empty:
-                                meses_unicos = datas_validas.dt.to_period('M').unique().sort_values(ascending=False)
+                                meses_unicos = sorted(datas_validas.dt.to_period('M').unique(), reverse=True)
                                 for m in meses_unicos:
                                     label = m.strftime('%m/%Y')
                                     if label not in meses_opcoes:
