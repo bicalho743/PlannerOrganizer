@@ -383,21 +383,25 @@ button[type="secondary"] *,
 button[type="secondary"] p,
 button[type="secondary"] span,
 button[type="secondary"] div {
-    background-color: #6c757d !important;
+    background-color: var(--navy, #0D1B2A) !important;
     color: white !important;
     border: none !important;
     font-weight: 600 !important;
 }
 
-/* Botões secundários */
-button[kind="secondary"] {
-    background-color: #6c757d !important;
-    border-color: #6c757d !important;
+button[kind="secondary"],
+button[data-testid="baseButton-secondary"] {
+    background-color: var(--navy, #0D1B2A) !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 600 !important;
 }
 
-button[kind="secondary"]:hover {
-    background-color: #5a6268 !important;
-    border-color: #5a6268 !important;
+button[kind="secondary"]:hover,
+button[data-testid="baseButton-secondary"]:hover {
+    background-color: var(--navy-hover, #162840) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 3px 8px rgba(13,27,42,0.3) !important;
 }
 
 /* ========================================
@@ -804,7 +808,7 @@ div[data-testid="stExpander"] button[kind="secondary"],
 div[data-testid="stExpander"] button[type="secondary"],
 .streamlit-expanderContent button[kind="secondary"],
 .streamlit-expanderContent button[type="secondary"] {
-    background-color: #6c757d !important;
+    background-color: var(--navy, #0D1B2A) !important;
     color: white !important;
     border: none !important;
 }
@@ -1053,59 +1057,8 @@ button[type="primary"] *,
 }
 
 /* ========================================
-   BOTÕES EXCLUIR - FORÇA VERMELHO
+   BOTÕES SECUNDÁRIOS - CONTEÚDO INTERNO
    ======================================== */
-/* Força todos os botões secundários para vermelho (são os botões Excluir) */
-button[kind="secondary"],
-.stButton > button[kind="secondary"],
-button[type="secondary"],
-.stButton > button[type="secondary"],
-button[data-testid="baseButton-secondary"],
-.stButton > button[data-testid="baseButton-secondary"] {
-    background-color: #dc3545 !important;
-    color: white !important;
-    border: none !important;
-}
-
-/* Força para o conteúdo interno dos botões secundários */
-button[kind="secondary"] *,
-.stButton > button[kind="secondary"] *,
-button[type="secondary"] *,
-.stButton > button[type="secondary"] *,
-button[data-testid="baseButton-secondary"] *,
-.stButton > button[data-testid="baseButton-secondary"] * {
-    color: white !important;
-}
-
-/* ========================================
-   BOTÃO EXCLUIR - COR VERMELHA
-   ======================================== */
-/* Força vermelho para todos os botões secundários */
-button[kind="secondary"],
-.stButton > button[kind="secondary"],
-button[type="secondary"],
-.stButton > button[type="secondary"],
-button[data-testid="baseButton-secondary"],
-.stButton > button[data-testid="baseButton-secondary"] {
-    background-color: #dc3545 !important;
-    color: white !important;
-    border: none !important;
-    font-weight: 600 !important;
-}
-
-/* Efeito hover para botões secundários */
-button[kind="secondary"]:hover,
-.stButton > button[kind="secondary"]:hover,
-button[type="secondary"]:hover,
-.stButton > button[type="secondary"]:hover,
-button[data-testid="baseButton-secondary"]:hover,
-.stButton > button[data-testid="baseButton-secondary"]:hover {
-    background-color: #c82333 !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 3px 6px rgba(220, 53, 69, 0.3) !important;
-}
-
-/* Força cor branca para todo conteúdo de botões secundários */
 button[kind="secondary"] *,
 .stButton > button[kind="secondary"] *,
 button[type="secondary"] *,
