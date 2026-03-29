@@ -508,7 +508,7 @@ def _tab_detalhes(proposta_id, proposta):
         pass
 
     # ── Formulário novo andamento ─────────────────────────────────────────
-    st.markdown('<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">📝 Novo Andamento</p>', unsafe_allow_html=True)
+    st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">📝 Novo Andamento</p>', unsafe_allow_html=True)
     with st.form(key=f"form_andamento_{proposta_id}"):
         descricao_andamento = st.text_area("Descrição:", height=90, placeholder="Descreva o que aconteceu nesta etapa…", label_visibility="collapsed")
         submitted = st.form_submit_button("✔ Registrar Andamento", type="primary", use_container_width=True)
@@ -531,7 +531,7 @@ def _tab_detalhes(proposta_id, proposta):
     try:
         andamentos = st.session_state.db.get_andamentos_proposta(proposta_id)
         if not andamentos.empty:
-            st.markdown('<p style="font-weight:600;color:{NAVY};font-size:14px;margin:16px 0 8px;">🕐 Histórico</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin:16px 0 8px;">🕐 Histórico</p>', unsafe_allow_html=True)
             cards = ""
             for _, a in andamentos.iterrows():
                 texto = html_module.escape(str(a.get('observacao') or a.get('descricao') or 'Sem descrição'))
@@ -647,7 +647,7 @@ def _tab_produtos(proposta_id):
     except Exception as e:
         st.error(f"Erro ao carregar produtos: {str(e)}")
 
-    st.markdown('<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">➕ Adicionar Produto</p>', unsafe_allow_html=True)
+    st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">➕ Adicionar Produto</p>', unsafe_allow_html=True)
     with st.form(key=f"form_produto_{proposta_id}"):
         produtos_cadastrados = st.session_state.db.get_produtos()
         if not produtos_cadastrados.empty:
@@ -721,7 +721,7 @@ def _tab_itens(proposta_id, show_finalizar=False):
 
     cat_ativa = st.session_state[key_cat]
 
-    st.markdown("""
+    _itens_css = """
     <style>
     .itens-sidebar-title {
         font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
@@ -737,7 +737,7 @@ def _tab_itens(proposta_id, show_finalizar=False):
         text-transform: uppercase; color: #8B8680; margin-bottom: 4px;
     }
     .itens-total-value {
-        font-size: 18px; font-weight: 700; color: {NAVY};
+        font-size: 18px; font-weight: 700; color: __NAVY__;
     }
     .itens-content-header {
         display: flex; align-items: center; justify-content: space-between;
@@ -745,7 +745,7 @@ def _tab_itens(proposta_id, show_finalizar=False):
         margin-bottom: 16px; border: 1px solid #e8e5df;
     }
     .itens-content-title {
-        font-size: 16px; font-weight: 700; color: {NAVY};
+        font-size: 16px; font-weight: 700; color: __NAVY__;
         display: flex; align-items: center; gap: 8px;
     }
     .itens-content-subtitle {
@@ -763,7 +763,8 @@ def _tab_itens(proposta_id, show_finalizar=False):
     }
     .itens-empty-hint { font-size: 12px; color: #9a9890; }
     </style>
-    """, unsafe_allow_html=True)
+    """.replace("__NAVY__", NAVY)
+    st.markdown(_itens_css, unsafe_allow_html=True)
 
     col_nav, col_main = st.columns([1, 2.8])
 
@@ -908,7 +909,7 @@ def _tab_fornecedores(proposta_id):
     except Exception as e:
         st.error(f"Erro ao carregar fornecedores: {str(e)}")
 
-    st.markdown('<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">➕ Adicionar Fornecedor</p>', unsafe_allow_html=True)
+    st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">➕ Adicionar Fornecedor</p>', unsafe_allow_html=True)
     try:
         fornecedores = st.session_state.db.get_fornecedores()
         if not fornecedores.empty:
@@ -992,7 +993,7 @@ def _tab_assistentes(proposta_id):
     except Exception as e:
         st.error(f"Erro ao carregar assistentes: {str(e)}")
 
-    st.markdown('<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">➕ Adicionar Assistente</p>', unsafe_allow_html=True)
+    st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">➕ Adicionar Assistente</p>', unsafe_allow_html=True)
     try:
         assistentes = st.session_state.db.get_assistentes()
         if not assistentes.empty:
@@ -1076,7 +1077,7 @@ def _tab_outros(proposta_id):
     except Exception as e:
         st.error(f"Erro ao carregar itens: {str(e)}")
 
-    st.markdown('<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">➕ Adicionar Item Extra</p>', unsafe_allow_html=True)
+    st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">➕ Adicionar Item Extra</p>', unsafe_allow_html=True)
     with st.form(key=f"form_outros_{proposta_id}"):
         col1, col2 = st.columns(2)
         with col1:
@@ -1264,7 +1265,7 @@ def _tab_acoes(proposta_id, proposta):
         st.markdown('<p style="color:#555;font-size:13px;margin-bottom:12px;">Gere os relatórios para esta proposta concluída.</p>', unsafe_allow_html=True)
 
         # Cards de relatório
-        st.markdown("""
+        st.markdown(f"""
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
           <div style="background:{NAVY};border-radius:10px;padding:14px;text-align:center;">
             <div style="font-size:22px;">📋</div>
