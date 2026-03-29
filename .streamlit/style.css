@@ -304,7 +304,7 @@ section[data-testid="stSidebar"] button:has(*:contains("Sair do Sistema")) {
 /* Botões primários específicos */
 button[kind="primary"],
 button[data-testid="baseButton-primary"] {
-    background-color: #C9A84C !important;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark)) !important;
     color: white !important;
     border: none !important;
     font-weight: 600 !important;
@@ -314,7 +314,7 @@ button[data-testid="baseButton-primary"] {
 
 button[kind="primary"]:hover,
 button[data-testid="baseButton-primary"]:hover {
-    background-color: #B8943D !important;
+    background: linear-gradient(135deg, var(--gold-dark), #A07C30) !important;
     transform: translateY(-2px) !important;
     box-shadow: 0 4px 8px rgba(201, 168, 76, 0.3) !important;
 }
@@ -363,7 +363,7 @@ div[data-testid="stForm"] button div {
 .stFormSubmitButton > button {
     color: white !important;
     font-weight: 600 !important;
-    background-color: #C9A84C !important;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark)) !important;
 }
 
 /* Botões específicos por tipo */
@@ -372,7 +372,7 @@ button[type="primary"] *,
 button[type="primary"] p,
 button[type="primary"] span,
 button[type="primary"] div {
-    background-color: #C9A84C !important;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark)) !important;
     color: white !important;
     border: none !important;
     font-weight: 600 !important;
@@ -740,7 +740,7 @@ div[data-testid="stMetric"] > div:first-child {
    ======================================== */
 /* Forçar visibilidade dos botões dentro de expanders */
 div[data-testid="stExpander"] button[kind="primary"] {
-    background-color: #C9A84C !important;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark)) !important;
     color: white !important;
     border: none !important;
     font-weight: 600 !important;
@@ -749,7 +749,7 @@ div[data-testid="stExpander"] button[kind="primary"] {
 }
 
 div[data-testid="stExpander"] button[kind="primary"]:hover {
-    background-color: #B8943D !important;
+    background: linear-gradient(135deg, var(--gold-dark), #A07C30) !important;
     transform: translateY(-2px) !important;
     box-shadow: 0 4px 8px rgba(201, 168, 76, 0.3) !important;
 }
@@ -763,7 +763,7 @@ div[data-testid="stExpander"] button[kind="primary"] span {
 
 /* Estilo específico para expandedrs com relatórios */
 .streamlit-expanderContent button[kind="primary"] {
-    background-color: #C9A84C !important;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark)) !important;
     color: white !important;
     border: none !important;
     font-weight: 600 !important;
@@ -795,7 +795,7 @@ div[data-testid="stExpander"] button[kind="primary"],
 div[data-testid="stExpander"] button[type="primary"],
 .streamlit-expanderContent button[kind="primary"],
 .streamlit-expanderContent button[type="primary"] {
-    background-color: #C9A84C !important;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark)) !important;
     color: white !important;
     border: none !important;
 }
@@ -1040,7 +1040,7 @@ button[type="primary"],
 .stButton > button[kind="primary"],
 .stButton > button[data-testid="baseButton-primary"] {
     color: white !important;
-    background-color: #C9A84C !important;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark)) !important;
 }
 
 /* Força cor branca para todo o conteúdo dos botões primários */

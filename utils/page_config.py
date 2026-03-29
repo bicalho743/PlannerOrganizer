@@ -73,7 +73,7 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         left: 0;
         right: 0;
         z-index: 999;
-        background-color: #0D1B2A;
+        background-color: var(--navy);
         padding: 0.3rem 0.8rem;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         font-family: "Poppins", sans-serif;
@@ -146,7 +146,7 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
     [data-testid="stSidebar"] {
         padding-top: 0 !important;
         margin-top: 0 !important;
-        background-color: #0D1B2A !important;
+        background-color: var(--navy) !important;
     }
 
     [data-testid="stSidebar"] button[data-testid="baseButton-secondary"] {
@@ -174,7 +174,7 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         top: 0.5rem;
         right: 1rem;
         font-size: 0.85rem;
-        color: #0D1B2A;
+        color: var(--navy);
         background-color: rgba(255, 255, 255, 0.9);
         padding: 0.3rem 0.7rem;
         border-radius: 1rem;
@@ -231,7 +231,7 @@ def apply_page_footer():
     <style>
     .footer-container {
         position: fixed; bottom: 0; left: 280px; right: 0;
-        background-color: #0D1B2A;
+        background-color: var(--navy, #0D1B2A);
         color: white;
         padding: 12px 20px; text-align: center;
         font-size: 13px; z-index: 999;
@@ -243,7 +243,7 @@ def apply_page_footer():
         }
     }
     .footer-container a {
-        color: #C9A84C; text-decoration: none; margin: 0 5px;
+        color: var(--gold, #C9A84C); text-decoration: none; margin: 0 5px;
     }
     .footer-container a:hover {
         color: #ffffff; text-decoration: underline;

@@ -182,7 +182,7 @@ def show():
             ).scalar() or 0
                 
             st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #f8faff, #e6f0ff); border-radius: 12px; padding: 1.5rem; box-shadow: 0 8px 16px rgba(0,0,0,0.08); text-align: center; transition: all 0.3s ease; height: 100%;">
+            <div style="background: linear-gradient(135deg, #faf9f7, #f5f0e0); border-radius: 12px; padding: 1.5rem; box-shadow: 0 8px 16px rgba(0,0,0,0.08); text-align: center; transition: all 0.3s ease; height: 100%;">
                 <div style="font-size: 2.5rem; font-weight: 700; color: #0D1B2A; margin-bottom: 0.5rem;">{propostas_em_andamento}</div>
                 <div style="color: #5A6A85; font-size: 0.9rem; font-weight: 500;">Propostas em Execução</div>
                 <div style="margin-top: 0.7rem; font-size: 1.8rem; color: #C9A84C;">📝</div>
@@ -289,7 +289,7 @@ def show():
             status_colors = {
                 "Finalizada": ["#e8f5e9", "#2E7D32", "#4CAF50"],  # Background, Text, Border
                 "Em execução": ["#fff8e1", "#F57C00", "#FFC107"], 
-                "Aguardando aprovação": ["#e3f2fd", "#1565C0", "#2196F3"],
+                "Aguardando aprovação": ["#f5f0e0", "#0D1B2A", "#C9A84C"],
                 "Cancelada": ["#ffebee", "#C62828", "#EF5350"]
             }
             
@@ -403,7 +403,7 @@ def show():
         st.subheader("🔍 Navegação")
         
         st.markdown("""
-        <div style="padding: 1rem; background-color: #E3F2FD; border-radius: 8px; margin-bottom: 1.5rem;">
+        <div style="padding: 1rem; background-color: #f5f0e0; border-radius: 8px; margin-bottom: 1.5rem;">
             Acesse as principais funções através do menu lateral esquerdo.
         </div>
         """, unsafe_allow_html=True)

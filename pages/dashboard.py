@@ -587,10 +587,10 @@ def show():
                     for _, alerta in df_alertas.iterrows():
                         tipo_config = {
                             'agradecimento':   {'icone': '🙏', 'texto': 'Agradecimento',  'cor': '#27ae60', 'dias': 'D+1',  'objetivo': 'Mensagem elegante de encerramento'},
-                            'acompanhamento':  {'icone': '📞', 'texto': 'Acompanhamento', 'cor': '#3498db', 'dias': 'D+7',  'objetivo': 'Saber como a cliente está se sentindo'},
+                            'acompanhamento':  {'icone': '📞', 'texto': 'Acompanhamento', 'cor': '#C9A84C', 'dias': 'D+7',  'objetivo': 'Saber como a cliente está se sentindo'},
                             'ajuste_fino':     {'icone': '🔧', 'texto': 'Ajuste fino',    'cor': '#e67e22', 'dias': 'D+30', 'objetivo': 'Propor pequenos ajustes após uso real'},
                             'feedback':        {'icone': '💬', 'texto': 'Feedback',        'cor': '#f39c12', 'dias': 'D+45', 'objetivo': 'Colher opinião genuína da experiência'},
-                            'continuidade':    {'icone': '🤝', 'texto': 'Continuidade',    'cor': '#9b59b6', 'dias': 'D+60', 'objetivo': 'Oferta elegante de serviço contínuo'},
+                            'continuidade':    {'icone': '🤝', 'texto': 'Continuidade',    'cor': '#B8943D', 'dias': 'D+60', 'objetivo': 'Oferta elegante de serviço contínuo'},
                             'retorno_tecnico': {'icone': '🔄', 'texto': 'Retorno Técnico', 'cor': '#e74c3c', 'dias': '',     'objetivo': 'Visita técnica agendada'},
                         }
                         
