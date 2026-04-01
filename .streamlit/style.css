@@ -23,7 +23,11 @@ body, .main, [data-testid="stAppViewContainer"] {
 
 header[data-testid="stHeader"] {
     background: transparent !important;
-    height: auto !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
 }
 [data-testid="stToolbar"],
 [data-testid="stDecoration"],
@@ -285,7 +289,7 @@ div[data-testid="stDownloadButton"] * {
 }
 
 body, .main, [data-testid="stAppViewContainer"], .block-container {
-    padding-bottom: 60px !important;
+    padding-bottom: 10px !important;
 }
 
 /* ========================================
