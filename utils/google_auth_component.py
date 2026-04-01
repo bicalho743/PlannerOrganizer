@@ -1,20 +1,32 @@
 """
 Componente de autenticação Google para Streamlit
+Abre o google_auth.html como popup real (não iframe)
+para que o Firebase reconheça o domínio correto.
 """
 import streamlit as st
 import streamlit.components.v1 as components
 import os
 
 def google_login_button():
+    replit_url = os.getenv("REPLIT_DEV_DOMAIN", "")
+    if not replit_url:
+        replit_url = "e793124a-608d-4baa-9b36-f1c10d18b5f4-00-er4f29bufe88.worf.replit.dev"
+
     api_key     = os.getenv("FIREBASE_API_KEY", "")
     auth_domain = os.getenv("FIREBASE_AUTH_DOMAIN", "")
     project_id  = os.getenv("FIREBASE_PROJECT_ID", "")
     app_id      = os.getenv("FIREBASE_APP_ID", "")
 
+    static_url = (
+        f"https://{replit_url}/app/static/google_auth.html"
+        f"?apiKey={api_key}"
+        f"&authDomain={auth_domain}"
+        f"&projectId={project_id}"
+        f"&appId={app_id}"
+    )
+
     html = f"""
-<!DOCTYPE html>
-<html>
-<head>
+<!DOCTYPE html><html><head>
 <style>
 * {{ margin:0; padding:0; box-sizing:border-box; }}
 body {{ background:transparent; }}
@@ -24,77 +36,61 @@ body {{ background:transparent; }}
   background:rgba(255,255,255,0.06);
   border:1px solid rgba(201,168,76,0.22);
   border-radius:10px; color:rgba(245,240,232,0.75);
-  font-size:14px; cursor:pointer; transition:all 0.2s;
-  font-family:sans-serif;
+  font-size:14px; cursor:pointer; transition:all 0.2s; font-family:sans-serif;
 }}
 #btn:hover {{ background:rgba(255,255,255,0.1); border-color:rgba(201,168,76,0.45); color:#F5F0E8; }}
-#btn:disabled {{ opacity:0.5; cursor:not-allowed; }}
 #btn img {{ width:18px; height:18px; }}
 #msg {{ font-size:11px; text-align:center; margin-top:5px; color:rgba(245,240,232,0.4); min-height:14px; }}
 #msg.err {{ color:#f08080; }}
 </style>
-</head>
-<body>
-<button id="btn" onclick="doLogin()">
+</head><body>
+<button id="btn" onclick="openGoogle()">
   <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"/>
   Continuar com Google
 </button>
 <div id="msg"></div>
+<script>
+var popup = null;
 
-<script type="module">
-import {{ initializeApp }}       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {{ getAuth, signInWithPopup, GoogleAuthProvider }}
-                                  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-const cfg = {{
-  apiKey:    "{api_key}",
-  authDomain:"{auth_domain}",
-  projectId: "{project_id}",
-  appId:     "{app_id}"
+window.openGoogle = function() {{
+  document.getElementById("msg").textContent = "Abrindo Google...";
+  document.getElementById("btn").disabled = true;
+  popup = window.open(
+    "{static_url}",
+    "google_auth",
+    "width=500,height=600,left=200,top=100"
+  );
+  if (!popup) {{
+    document.getElementById("msg").className = "err";
+    document.getElementById("msg").textContent = "Permita popups para este site.";
+    document.getElementById("btn").disabled = false;
+  }}
 }};
 
-const app      = initializeApp(cfg);
-const auth     = getAuth(app);
-const provider = new GoogleAuthProvider();
-provider.setCustomParameters({{ prompt:"select_account" }});
-
-window.doLogin = async () => {{
-  const btn = document.getElementById("btn");
-  const msg = document.getElementById("msg");
-  btn.disabled = true;
-  msg.className = "";
-  msg.textContent = "Abrindo Google...";
-  try {{
-    const result = await signInWithPopup(auth, provider);
-    const user   = result.user;
-    msg.textContent = "Autenticado! Redirecionando...";
-    const uid   = encodeURIComponent(user.uid);
-    const email = encodeURIComponent(user.email);
-    const name  = encodeURIComponent(user.displayName || "");
-    // Redirecionar a janela pai (Streamlit) com os dados
+// Escutar mensagem do popup com os dados do Google
+window.addEventListener("message", function(e) {{
+  if (e.data && e.data.type === "google_auth_success") {{
+    document.getElementById("msg").textContent = "Autenticado! Entrando...";
+    if (popup) popup.close();
+    var uid   = encodeURIComponent(e.data.uid   || "");
+    var email = encodeURIComponent(e.data.email || "");
+    var name  = encodeURIComponent(e.data.displayName || "");
     window.parent.location.href =
       window.parent.location.pathname +
       "?google_uid=" + uid +
       "&google_email=" + email +
       "&google_name=" + name;
-  }} catch(e) {{
-    btn.disabled = false;
-    msg.className = "err";
-    if (e.code === "auth/popup-closed-by-user")
-      msg.textContent = "Popup fechado. Tente novamente.";
-    else if (e.code === "auth/popup-blocked")
-      msg.textContent = "Permita popups para este site.";
-    else if (e.code === "auth/unauthorized-domain")
-      msg.textContent = "Domínio não autorizado no Firebase.";
-    else
-      msg.textContent = e.message;
   }}
-}};
+  if (e.data && e.data.type === "google_auth_error") {{
+    document.getElementById("btn").disabled = false;
+    document.getElementById("msg").className = "err";
+    document.getElementById("msg").textContent = e.data.message || "Erro no login.";
+  }}
+}});
 </script>
-</body>
-</html>
+</body></html>
 """
-    components.html(html, height=50, scrolling=False)
+    components.html(html, height=80, scrolling=False)
 
 
 def handle_google_callback():
