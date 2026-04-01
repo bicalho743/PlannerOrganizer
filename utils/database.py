@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import streamlit as st
 from datetime import datetime, timedelta
 from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, func, Index, text, select, DateTime, inspect
 from sqlalchemy.ext.declarative import declarative_base
@@ -130,8 +129,7 @@ def get_usuario_id_from_session():
     Returns:
         str: ID do usuário autenticado ou None se não há usuário na sessão
     """
-    # INÍCIO DA SOLUÇÃO DEFINITIVA: Prioridade 1 - Verificar session_state.usuario_id diretamente
-    # Este é o método preferencial e mais direto
+    import streamlit as st
     if 'usuario_id' in st.session_state:
         usuario_id = st.session_state.usuario_id
         return usuario_id
@@ -242,9 +240,9 @@ class Database:
                 # IMPORTANTE: Sempre manter o ID do usuário na sessão para garantir consistência
                 # entre diferentes instâncias do Database
                 try:
-                    if hasattr(st, 'session_state'):
-                        if 'usuario_id' not in st.session_state or st.session_state.usuario_id != usuario_id:
-                            st.session_state.usuario_id = usuario_id
+                    import streamlit as st
+                    if 'usuario_id' not in st.session_state or st.session_state.usuario_id != usuario_id:
+                        st.session_state.usuario_id = usuario_id
                 except Exception as session_error:
                     print(f"Erro: {session_error}")
             else:
@@ -263,8 +261,8 @@ class Database:
                     
                     # Manter na sessão para consistência
                     try:
-                        if hasattr(st, 'session_state'):
-                            st.session_state.usuario_id = temp_id
+                        import streamlit as st
+                        st.session_state.usuario_id = temp_id
                     except Exception as session_error:
                         print(f"Erro: {session_error}")
 
@@ -309,9 +307,9 @@ class Database:
             # Verificar se o perfil já existe
             perfil = self.session.query(Perfil).filter_by(usuario_id=self.usuario_id).first()
             
-            if not perfil and 'user' in st.session_state:
-                # Criar novo perfil com os dados disponíveis na sessão
-                user_data = st.session_state.user
+            import streamlit as _st
+            if not perfil and 'user' in _st.session_state:
+                user_data = _st.session_state.user
                 
                 nome = user_data.get('nome') or user_data.get('name') or 'Usuário'
                 email = user_data.get('email') or 'sem-email'
