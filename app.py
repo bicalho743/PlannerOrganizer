@@ -276,7 +276,7 @@ if not st.session_state.authenticated:
     with st.form("login_form"):
         email = st.text_input("E-mail", placeholder="seu@email.com")
         password = st.text_input("Senha", type="password", placeholder="••••••••")
-        st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="height:16px"></div>', unsafe_allow_html=True)
         submit = st.form_submit_button("Entrar na minha conta", use_container_width=True)
 
         if submit:
@@ -310,7 +310,7 @@ if not st.session_state.authenticated:
         from utils.google_auth_component import google_login_button
         google_login_button()
     except Exception as e:
-        st.warning(f"Google login indisponível: {e}")
+        pass  # silencioso se indisponível
 
     # Botões secundários
     st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
