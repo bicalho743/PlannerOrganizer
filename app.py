@@ -81,11 +81,18 @@ if not st.session_state.authenticated:
         min-height: 100vh !important;
         background: #0D1B35 !important;
     }
-    .main, .block-container {
+    .main, .block-container,
+    [data-testid="stMainBlockContainer"],
+    [data-testid="stAppViewBlockContainer"] {
         padding: 0 !important;
+        padding-top: 0 !important;
         margin: 0 !important;
         max-width: 100% !important;
         background: transparent !important;
+    }
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"] {
+        background: #0D1B35 !important;
     }
 
     .login-wrap {
