@@ -40,13 +40,20 @@ def google_login_button():
         new_query = urllib.parse.urlencode({k: v[0] for k, v in qs.items()})
         auth_uri  = urllib.parse.urlunparse(parsed._replace(query=new_query))
 
-        col = st.columns([1])[0]
-        with col:
-            st.link_button(
-                "🔵 Continuar com Google",
-                auth_uri,
-                use_container_width=True
-            )
+        st.markdown(f"""
+        <a href="{auth_uri}" target="_top" style="
+          display:flex; align-items:center; justify-content:center; gap:10px;
+          width:100%; padding:11px 16px; text-decoration:none;
+          background:rgba(255,255,255,0.06);
+          border:1px solid rgba(201,168,76,0.22);
+          border-radius:10px; color:rgba(245,240,232,0.75);
+          font-size:0.875rem; font-family:'DM Sans',sans-serif;
+          box-sizing:border-box; transition:all 0.2s;">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+               style="width:18px;height:18px;flex-shrink:0;"/>
+          Continuar com Google
+        </a>
+        """, unsafe_allow_html=True)
 
     except Exception as e:
         print(f"Erro Google button: {e}")
