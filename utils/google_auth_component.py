@@ -159,42 +159,42 @@ def handle_google_callback():
             st.query_params.clear()
             return False
     else:
-        callback_url = f"{base_url}?code={urllib.parse.quote(code, safe='')}"
-        resp = requests.post(
-            f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={api_key}",
-            json={
-                "requestUri":          callback_url,
-                "sessionId":           session_id,
-                "returnSecureToken":   True,
-                "returnIdpCredential": True,
-            },
-            timeout=10
-        )
-        data = resp.json()
-        print(f"Google signInWithIdp response keys: {list(data.keys())}")
-
-        if "error" in data:
-            msg = data["error"].get("message", "Erro")
-            print(f"Google signInWithIdp error: {msg}")
-            st.error(f"Erro no login Google: {msg}")
+        try:
+            callback_url = f"{base_url}?code={urllib.parse.quote(code, safe='')}"
+            resp = requests.post(
+                f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={api_key}",
+                json={
+                    "requestUri":          callback_url,
+                    "sessionId":           session_id,
+                    "returnSecureToken":   True,
+                    "returnIdpCredential": True,
+                },
+                timeout=10
+            )
+            data = resp.json()
+            print(f"Google signInWithIdp response keys: {list(data.keys())}")
+        except Exception as e:
+            print(f"Erro callback Google: {e}")
             st.query_params.clear()
             return False
 
-        uid   = data.get("localId", "")
-        email = data.get("email", "")
-        name  = data.get("displayName", "")
-
-        if uid and email:
-            st.query_params.clear()
-            return _create_session(uid, email, name)
-        else:
-            print(f"Google login: uid ou email vazio. Data: {data}")
-            st.query_params.clear()
-
-    except Exception as e:
-        print(f"Erro callback Google: {e}")
+    if "error" in data:
+        msg = data["error"].get("message", "Erro")
+        print(f"Google signInWithIdp error: {msg}")
+        st.error(f"Erro no login Google: {msg}")
         st.query_params.clear()
+        return False
 
+    uid   = data.get("localId", "")
+    email = data.get("email", "")
+    name  = data.get("displayName", "")
+
+    if uid and email:
+        st.query_params.clear()
+        return _create_session(uid, email, name)
+
+    print(f"Google login: uid ou email vazio. Data: {data}")
+    st.query_params.clear()
     return False
 
 
