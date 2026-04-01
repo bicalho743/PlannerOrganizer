@@ -214,6 +214,14 @@ if not st.session_state.authenticated:
         except ImportError as e:
             st.error(f"Não foi possível carregar a política de privacidade: {e}")
 
+    # Verificar callback do Google login
+    try:
+        from utils.google_auth_component import handle_google_callback
+        if handle_google_callback():
+            st.rerun()
+    except Exception as e:
+        print(f"Erro no callback Google: {e}")
+
     # Sub-páginas
     if st.session_state.login_page == "registrar":
         try:
@@ -276,6 +284,21 @@ if not st.session_state.authenticated:
                         st.error("E-mail ou senha incorretos.")
             else:
                 st.error("Sistema de autenticação indisponível.")
+
+    # Botão Google
+    st.markdown("""
+    <div style="display:flex;align-items:center;gap:10px;margin:12px 0 4px;">
+      <div style="flex:1;height:1px;background:rgba(245,240,232,0.1)"></div>
+      <span style="font-size:0.72rem;color:rgba(245,240,232,0.3);letter-spacing:0.1em">OU</span>
+      <div style="flex:1;height:1px;background:rgba(245,240,232,0.1)"></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    try:
+        from utils.google_auth_component import google_login_button
+        google_login_button()
+    except Exception as e:
+        st.warning(f"Google login indisponível: {e}")
 
     # Botões secundários
     st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
