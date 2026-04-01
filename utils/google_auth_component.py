@@ -16,8 +16,19 @@ def _get_base_url():
     return f"https://{replit_domain}"
 
 
+def _get_firebase_api_key():
+    key = os.getenv("FIREBASE_API_KEY", "")
+    if not key:
+        try:
+            from utils.firebase_config import FIREBASE_CONFIG
+            key = FIREBASE_CONFIG.get("apiKey", "")
+        except Exception:
+            pass
+    return key
+
+
 def google_login_button():
-    api_key = os.getenv("FIREBASE_API_KEY", "")
+    api_key = _get_firebase_api_key()
     if not api_key:
         return
 
@@ -90,7 +101,7 @@ def handle_google_callback():
     if "__SID__" in state:
         session_id = state.split("__SID__")[-1]
 
-    api_key  = os.getenv("FIREBASE_API_KEY", "")
+    api_key  = _get_firebase_api_key()
     base_url = _get_base_url()
 
     google_client_id     = os.getenv("GOOGLE_CLIENT_ID", "")
