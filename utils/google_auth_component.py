@@ -66,7 +66,7 @@ p{{font-size:.8rem;color:rgba(245,240,232,.5);margin-bottom:1rem;}}
 </div>
 <script type="module">
 import {{initializeApp}} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {{getAuth,signInWithPopup,GoogleAuthProvider}}
+import {{getAuth,signInWithRedirect,getRedirectResult,GoogleAuthProvider}}
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 const app  = initializeApp({{
   apiKey:    "{api_key}",
@@ -79,20 +79,26 @@ const prov = new GoogleAuthProvider();
 prov.setCustomParameters({{prompt:"select_account"}});
 const msg  = document.getElementById("msg");
 try {{
-  const r = await signInWithPopup(auth, prov);
+  // Verificar se voltou de redirect
+const rr = await getRedirectResult(auth);
+if (rr && rr.user) {{
   msg.textContent = "Sucesso! Fechando...";
   window.opener && window.opener.postMessage({{
     type:"google_auth_success",
-    uid:r.user.uid,
-    email:r.user.email,
-    displayName:r.user.displayName||""
+    uid:rr.user.uid,
+    email:rr.user.email,
+    displayName:rr.user.displayName||""
   }},"*");
   setTimeout(()=>window.close(),600);
+  return;
+}}
+// Iniciar redirect para Google
+msg.textContent = "Redirecionando...";
+await signInWithRedirect(auth, prov);
 }} catch(e) {{
   document.querySelector(".spin").style.display="none";
   msg.className="err";
-  msg.textContent = e.code==="auth/popup-closed-by-user"
-    ? "Cancelado." : e.message;
+  msg.textContent = e.message;
   window.opener && window.opener.postMessage({{
     type:"google_auth_error", message:e.message
   }},"*");
