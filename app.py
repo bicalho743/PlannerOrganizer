@@ -276,7 +276,7 @@ if not st.session_state.authenticated:
     with st.form("login_form"):
         email = st.text_input("E-mail", placeholder="seu@email.com")
         password = st.text_input("Senha", type="password", placeholder="••••••••")
-        st.markdown('<div style="height:16px"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="height:22px"></div>', unsafe_allow_html=True)
         submit = st.form_submit_button("Entrar na minha conta", use_container_width=True)
 
         if submit:
@@ -299,7 +299,7 @@ if not st.session_state.authenticated:
 
     # Botão Google
     st.markdown("""
-    <div style="display:flex;align-items:center;gap:10px;margin:16px 0 12px;">
+    <div style="display:flex;align-items:center;gap:10px;margin:16px 0 6px;">
       <div style="flex:1;height:1px;background:rgba(245,240,232,0.1)"></div>
       <span style="font-size:0.72rem;color:rgba(245,240,232,0.3);letter-spacing:0.1em">OU</span>
       <div style="flex:1;height:1px;background:rgba(245,240,232,0.1)"></div>
