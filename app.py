@@ -223,13 +223,6 @@ if not st.session_state.authenticated:
         except ImportError as e:
             st.error(f"Não foi possível carregar a política de privacidade: {e}")
 
-    # Interceptar fragmento OAuth (id_token vem no #hash, não em ?query)
-    try:
-        from utils.google_auth_component import inject_fragment_handler
-        inject_fragment_handler()
-    except Exception as e:
-        print(f"Erro fragment handler: {e}")
-
     # Verificar callback do Google login
     try:
         from utils.google_auth_component import handle_google_callback

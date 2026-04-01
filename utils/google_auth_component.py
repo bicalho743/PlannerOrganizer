@@ -1,12 +1,11 @@
 """
 Google Auth via Firebase REST API — sem JavaScript SDK.
-Gera link OAuth direto para o Google, processa callback com id_token.
+Gera link OAuth com response_type=code (query param, legível pelo Streamlit).
 """
 import streamlit as st
 import requests
 import os
 import urllib.parse
-import streamlit.components.v1 as components
 
 
 def _get_base_url():
@@ -15,30 +14,6 @@ def _get_base_url():
         return origin.rstrip("/")
     replit_domain = os.getenv("REPLIT_DEV_DOMAIN", "localhost")
     return f"https://{replit_domain}"
-
-
-def inject_fragment_handler():
-    components.html("""
-    <script>
-    (function() {
-        if (window.parent && window.parent.location.hash) {
-            var hash = window.parent.location.hash.substring(1);
-            var params = new URLSearchParams(hash);
-            var idToken = params.get('id_token');
-            var state = params.get('state');
-            if (idToken) {
-                var url = window.parent.location.origin +
-                          window.parent.location.pathname +
-                          '?google_id_token=' + encodeURIComponent(idToken);
-                if (state) {
-                    url += '&state=' + encodeURIComponent(state);
-                }
-                window.parent.location.replace(url);
-            }
-        }
-    })();
-    </script>
-    """, height=0)
 
 
 def google_login_button():
@@ -64,9 +39,20 @@ def google_login_button():
 
         parsed = urllib.parse.urlparse(auth_uri)
         qs     = urllib.parse.parse_qs(parsed.query, keep_blank_values=True)
+
         original_state = qs.get("state", [""])[0]
         new_state = f"{original_state}__SID__{session_id}"
         qs["state"] = [new_state]
+
+        qs["response_type"] = ["code"]
+
+        if "response_mode" in qs:
+            del qs["response_mode"]
+        if "nonce" in qs:
+            del qs["nonce"]
+
+        qs["access_type"] = ["offline"]
+
         new_query = urllib.parse.urlencode({k: v[0] for k, v in qs.items()})
         auth_uri  = urllib.parse.urlunparse(parsed._replace(query=new_query))
 
@@ -123,15 +109,14 @@ def handle_google_callback():
     if "__SID__" in state:
         session_id = state.split("__SID__")[-1]
 
-    api_key = os.getenv("FIREBASE_API_KEY", "")
+    api_key  = os.getenv("FIREBASE_API_KEY", "")
     base_url = _get_base_url()
-    request_uri = base_url
 
     try:
         resp = requests.post(
             f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={api_key}",
             json={
-                "requestUri":          request_uri,
+                "requestUri":          f"{base_url}?code={code}",
                 "sessionId":           session_id,
                 "returnSecureToken":   True,
                 "returnIdpCredential": True,
@@ -172,7 +157,7 @@ def _process_id_token(id_token, state):
     if "__SID__" in state:
         session_id = state.split("__SID__")[-1]
 
-    api_key = os.getenv("FIREBASE_API_KEY", "")
+    api_key  = os.getenv("FIREBASE_API_KEY", "")
     base_url = _get_base_url()
 
     try:
