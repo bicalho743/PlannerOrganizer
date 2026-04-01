@@ -9,18 +9,16 @@ def show():
     """
     Exibe o formulário de registro de usuário
     """
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Criar Nova Conta</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem; color: #C9A84C;">Criar Nova Conta</h1>', unsafe_allow_html=True)
     
-    # Container para o formulário de registro
     with st.container():
-        # Usar colunas para centralizar o formulário
-        col1, col2, col3 = st.columns([1, 2, 1])
+        col1, col2, col3 = st.columns([1, 3, 1])
         
         with col2:
             st.markdown("""
             <div style="text-align: center; margin-bottom: 1.5rem;">
-                <h3 style="color: #0D1B2A; margin-bottom: 0.5rem;">Registre-se no Planner Organizer</h3>
-                <p style="color: #5A6A85; font-size: 0.9rem;">
+                <h3 style="color: rgba(245,240,232,0.9); margin-bottom: 0.5rem;">Registre-se no Planner Organizer</h3>
+                <p style="color: rgba(245,240,232,0.55); font-size: 0.9rem;">
                     Crie sua conta para começar a gerenciar propostas e finanças
                 </p>
             </div>
@@ -71,7 +69,7 @@ def show():
             # Texto centralizado
             st.markdown("""
             <div style="text-align: center; margin-top: 1rem;">
-                <p style="color: #5A6A85; font-size: 0.9rem;">
+                <p style="color: rgba(245,240,232,0.45); font-size: 0.9rem;">
                     Já tem uma conta?
                 </p>
             </div>
