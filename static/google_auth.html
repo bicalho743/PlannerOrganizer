@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Login com Google</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: transparent;
+  font-family: 'DM Sans', sans-serif;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  min-height: 60px;
+}
+#btn-google {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; width: 100%; padding: 11px 16px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(201,168,76,0.22);
+  border-radius: 10px; color: rgba(245,240,232,0.75);
+  font-family: 'DM Sans', sans-serif; font-size: 0.875rem;
+  cursor: pointer; transition: all 0.2s;
+}
+#btn-google:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(201,168,76,0.45);
+  color: #F5F0E8;
+}
+#btn-google:disabled { opacity: 0.5; cursor: not-allowed; }
+#btn-google img { width: 18px; height: 18px; }
+#msg {
+  font-size: 0.72rem; text-align: center;
+  margin-top: 6px; color: rgba(245,240,232,0.4);
+  min-height: 16px;
+}
+#msg.error { color: #f08080; }
+</style>
+</head>
+<body>
+
+<button id="btn-google" onclick="loginGoogle()">
+  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"/>
+  Continuar com Google
+</button>
+<div id="msg"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, signInWithPopup, GoogleAuthProvider }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  // Pegar config da URL
+  const params      = new URLSearchParams(window.location.search);
+  const apiKey      = params.get("apiKey")     || "";
+  const authDomain  = params.get("authDomain") || "";
+  const projectId   = params.get("projectId")  || "";
+  const appId       = params.get("appId")      || "";
+
+  const app      = initializeApp({ apiKey, authDomain, projectId, appId });
+  const auth     = getAuth(app);
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+
+  window.loginGoogle = async function() {
+    const btn = document.getElementById("btn-google");
+    const msg = document.getElementById("msg");
+    btn.disabled = true;
+    msg.className = "";
+    msg.textContent = "Abrindo Google...";
+
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user   = result.user;
+      const token  = await user.getIdToken();
+      msg.textContent = "Autenticado! Entrando...";
+
+      // Enviar dados para a janela pai (Streamlit)
+      window.parent.postMessage({
+        type:        "google_auth_success",
+        uid:         user.uid,
+        email:       user.email,
+        displayName: user.displayName || "",
+        idToken:     token
+      }, "*");
+
+    } catch(err) {
+      btn.disabled = false;
+      msg.className = "error";
+      if (err.code === "auth/popup-closed-by-user") {
+        msg.textContent = "Popup fechado. Tente novamente.";
+      } else if (err.code === "auth/popup-blocked") {
+        msg.textContent = "Permita popups para este site.";
+      } else {
+        msg.textContent = err.message;
+      }
+    }
+  };
+</script>
+
+</body>
+</html>

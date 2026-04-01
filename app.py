@@ -96,7 +96,16 @@ if not st.session_state.authenticated:
         max-width: 420px !important;
         margin: 0 auto !important;
         padding: 3rem 1rem 2rem !important;
+        background: rgba(255,255,255,0.04) !important;
+        border: 1px solid rgba(201,168,76,0.18) !important;
+        border-radius: 20px !important;
+        backdrop-filter: blur(20px) !important;
+    }
+
+    /* Logo acima do card — sem fundo */
+    .login-logo {
         background: transparent !important;
+        border: none !important;
     }
 
     /* Tirar gap entre elementos */
@@ -249,15 +258,18 @@ if not st.session_state.authenticated:
             st.error(f"Erro ao carregar recuperação de senha: {e}")
             st.session_state.login_page = "login"
 
-    # HTML — logo + abertura do card
+    # HTML — logo
     st.markdown("""
       <div class="login-logo">
         <h1>Planner Organizer</h1>
         <p>Sistema para Personal Organizers</p>
       </div>
-      <div class="login-card">
-        <p class="login-card-title">Bem-vinda de volta ✦</p>
-        <p class="login-card-sub">Acesse sua conta para continuar</p>
+    """, unsafe_allow_html=True)
+
+    # Título do card
+    st.markdown("""
+      <p class="login-card-title">Bem-vinda de volta ✦</p>
+      <p class="login-card-sub">Acesse sua conta para continuar</p>
     """, unsafe_allow_html=True)
 
     # Formulário
@@ -312,9 +324,8 @@ if not st.session_state.authenticated:
             st.session_state.login_page = "registrar"
             st.rerun()
 
-    # Fechamento do card + footer
+    # Footer
     st.markdown("""
-      </div>
       <div class="login-footer">
         <a href="https://promo.plannerorganiza.com.br" target="_blank">← Voltar ao site</a>
         <span>·</span>
