@@ -75,55 +75,35 @@ if not st.session_state.authenticated:
     [data-testid="stDeployButton"],
     footer { display: none !important; }
 
-    html, body, .stApp {
-        margin: 0 !important;
-        padding: 0 !important;
-        min-height: 100vh !important;
-        background: #0D1B35 !important;
-    }
-
-    /* Remover TODOS os espaçamentos do Streamlit */
-    .main, .block-container,
+    /* Fundo escuro em tudo */
+    html, body, .stApp,
     [data-testid="stAppViewContainer"],
-    [data-testid="stVerticalBlock"],
-    [data-testid="stMainBlockContainer"],
-    section.main > div {
-        padding: 0 !important;
-        margin: 0 !important;
-        max-width: 100% !important;
-        width: 100% !important;
-        background: transparent !important;
-        gap: 0 !important;
+    [data-testid="stHeader"] {
+        background: #0D1B35 !important;
+        margin: 0 !important; padding: 0 !important;
     }
-
-    /* Forçar o app a ocupar tela cheia sem deslocamento */
-    .stApp > div { min-height: 100vh !important; }
-
-    /* Esconder completamente o deploy button e afins */
-    #MainMenu, .stDeployButton, [data-testid="stDecoration"] {
-        display: none !important;
-    }
-
-    .login-wrap {
-        min-height: 100vh;
-        width: 100vw;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem 1rem;
-        font-family: 'DM Sans', sans-serif;
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
+    .stApp {
         background:
             radial-gradient(ellipse 60% 50% at 30% 20%, rgba(201,168,76,0.08) 0%, transparent 60%),
             radial-gradient(ellipse 40% 60% at 70% 80%, rgba(26,48,96,0.4) 0%, transparent 60%),
-            #0D1B35;
-        overflow-y: auto;
-        z-index: 999;
+            #0D1B35 !important;
+        min-height: 100vh !important;
     }
 
-    .login-logo { text-align: center; margin-bottom: 2rem; }
+    /* Container principal centralizado e estreito */
+    .main .block-container,
+    [data-testid="stMainBlockContainer"] {
+        max-width: 420px !important;
+        margin: 0 auto !important;
+        padding: 3rem 1rem 2rem !important;
+        background: transparent !important;
+    }
+
+    /* Tirar gap entre elementos */
+    [data-testid="stVerticalBlock"] { gap: 0 !important; }
+
+    /* Logo centralizado */
+    .login-logo { text-align: center; margin-bottom: 2rem; margin-top: 1rem; }
     .login-logo h1 {
         font-family: 'Cormorant Garamond', serif;
         font-size: 2rem; font-weight: 600;
@@ -263,7 +243,6 @@ if not st.session_state.authenticated:
 
     # HTML — logo + abertura do card
     st.markdown("""
-    <div class="login-wrap">
       <div class="login-logo">
         <h1>Planner Organizer</h1>
         <p>Sistema para Personal Organizers</p>
@@ -320,7 +299,6 @@ if not st.session_state.authenticated:
         <span>·</span>
         <a href="?show_politica=true">Privacidade</a>
       </div>
-    </div>
     """, unsafe_allow_html=True)
 
     st.stop()
