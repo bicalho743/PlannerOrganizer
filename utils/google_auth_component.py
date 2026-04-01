@@ -13,11 +13,12 @@ def google_login_button():
     if not api_key:
         return
 
-    replit_domain = os.getenv("REPLIT_DEV_DOMAIN", "")
-    if replit_domain:
-        base_url = f"https://{replit_domain}"
+    origin = st.context.headers.get("origin", "")
+    if origin:
+        base_url = origin.rstrip("/")
     else:
-        base_url = st.context.headers.get("origin", "https://localhost")
+        replit_domain = os.getenv("REPLIT_DEV_DOMAIN", "localhost")
+        base_url = f"https://{replit_domain}"
 
     continue_uri = base_url
 
@@ -87,12 +88,13 @@ def handle_google_callback():
     if "__SID__" in state:
         session_id = state.split("__SID__")[-1]
 
-    api_key  = os.getenv("FIREBASE_API_KEY", "")
-    replit_domain = os.getenv("REPLIT_DEV_DOMAIN", "")
-    if replit_domain:
-        base_url = f"https://{replit_domain}"
+    api_key = os.getenv("FIREBASE_API_KEY", "")
+    origin  = st.context.headers.get("origin", "")
+    if origin:
+        base_url = origin.rstrip("/")
     else:
-        base_url = st.context.headers.get("origin", "https://localhost")
+        replit_domain = os.getenv("REPLIT_DEV_DOMAIN", "localhost")
+        base_url = f"https://{replit_domain}"
 
     request_uri = base_url
 
