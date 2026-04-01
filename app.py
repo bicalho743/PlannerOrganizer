@@ -44,12 +44,14 @@ if "show_debug_propostas_finalizadas" not in st.session_state:
     st.session_state.show_debug_propostas_finalizadas = False
 
 st.set_page_config(
+    
     page_title="Planner Organizer | Sistema para Personal Organizers",
     page_icon="favicon.png",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-
+from utils.pwa_inject import inject_pwa
+inject_pwa()
 try:
     from utils.session_persistence import setup_session_persistence
     from utils.auto_login import check_and_restore_auto_login
