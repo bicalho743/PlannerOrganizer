@@ -94,7 +94,7 @@ window.doLogin = async () => {{
 </body>
 </html>
 """
-    components.html(html, height=80, scrolling=False)
+    components.html(html, height=50, scrolling=False)
 
 
 def handle_google_callback():

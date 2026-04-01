@@ -299,7 +299,7 @@ if not st.session_state.authenticated:
 
     # Botão Google
     st.markdown("""
-    <div style="display:flex;align-items:center;gap:10px;margin:12px 0 4px;">
+    <div style="display:flex;align-items:center;gap:10px;margin:16px 0 12px;">
       <div style="flex:1;height:1px;background:rgba(245,240,232,0.1)"></div>
       <span style="font-size:0.72rem;color:rgba(245,240,232,0.3);letter-spacing:0.1em">OU</span>
       <div style="flex:1;height:1px;background:rgba(245,240,232,0.1)"></div>
@@ -309,8 +309,8 @@ if not st.session_state.authenticated:
     try:
         from utils.google_auth_component import google_login_button
         google_login_button()
-    except Exception as e:
-        pass  # silencioso se indisponível
+    except Exception:
+        pass
 
     # Botões secundários
     st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
