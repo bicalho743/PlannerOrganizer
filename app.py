@@ -81,32 +81,46 @@ if not st.session_state.authenticated:
         min-height: 100vh !important;
         background: #0D1B35 !important;
     }
+
+    /* Remover TODOS os espaçamentos do Streamlit */
     .main, .block-container,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stVerticalBlock"],
     [data-testid="stMainBlockContainer"],
-    [data-testid="stAppViewBlockContainer"] {
+    section.main > div {
         padding: 0 !important;
-        padding-top: 0 !important;
         margin: 0 !important;
         max-width: 100% !important;
+        width: 100% !important;
         background: transparent !important;
+        gap: 0 !important;
     }
-    [data-testid="stAppViewContainer"],
-    [data-testid="stMain"] {
-        background: #0D1B35 !important;
+
+    /* Forçar o app a ocupar tela cheia sem deslocamento */
+    .stApp > div { min-height: 100vh !important; }
+
+    /* Esconder completamente o deploy button e afins */
+    #MainMenu, .stDeployButton, [data-testid="stDecoration"] {
+        display: none !important;
     }
 
     .login-wrap {
         min-height: 100vh;
+        width: 100vw;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         padding: 2rem 1rem;
         font-family: 'DM Sans', sans-serif;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
         background:
             radial-gradient(ellipse 60% 50% at 30% 20%, rgba(201,168,76,0.08) 0%, transparent 60%),
             radial-gradient(ellipse 40% 60% at 70% 80%, rgba(26,48,96,0.4) 0%, transparent 60%),
             #0D1B35;
+        overflow-y: auto;
+        z-index: 999;
     }
 
     .login-logo { text-align: center; margin-bottom: 2rem; }
