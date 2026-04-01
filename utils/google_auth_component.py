@@ -1,7 +1,6 @@
 """
-Componente de autenticação Google para Streamlit
-Abre google_auth.html como popup real servido pelo Streamlit static
-(enableStaticServing = true no config.toml)
+Componente Google Auth — abre popup via Blob URL
+para evitar problemas de MIME type do Streamlit static
 """
 import streamlit as st
 import streamlit.components.v1 as components
@@ -13,8 +12,6 @@ def google_login_button():
     project_id  = os.getenv("FIREBASE_PROJECT_ID", "")
     app_id      = os.getenv("FIREBASE_APP_ID", "")
 
-    # Com enableStaticServing=true, Streamlit serve /app/static/
-    # A URL do popup usa window.parent.location.origin para pegar o domínio correto
     html = f"""
 <!DOCTYPE html><html><head>
 <style>
@@ -42,6 +39,68 @@ body {{ background:transparent; }}
 <script>
 var popup = null;
 
+// Conteúdo do popup como string — será criado via Blob com tipo text/html correto
+function getPopupHTML() {{
+  return `<!DOCTYPE html><html><head>
+<meta charset="UTF-8"/>
+<style>
+*{{margin:0;padding:0;box-sizing:border-box;}}
+body{{background:#0D1B35;font-family:sans-serif;display:flex;
+  align-items:center;justify-content:center;min-height:100vh;color:#F5F0E8;}}
+.card{{background:rgba(255,255,255,0.06);border:1px solid rgba(201,168,76,0.22);
+  border-radius:16px;padding:2rem;text-align:center;max-width:320px;width:90%;}}
+h2{{font-size:1.1rem;margin-bottom:.5rem;}}
+p{{font-size:.8rem;color:rgba(245,240,232,.5);margin-bottom:1rem;}}
+#msg{{font-size:.8rem;margin-top:.75rem;min-height:18px;color:rgba(245,240,232,.5);}}
+#msg.err{{color:#f08080;}}
+.spin{{width:32px;height:32px;border:3px solid rgba(201,168,76,.2);
+  border-top-color:#C9A84C;border-radius:50%;
+  animation:sp .8s linear infinite;margin:0 auto 1rem;}}
+@keyframes sp{{to{{transform:rotate(360deg)}}}}
+</style></head><body>
+<div class="card">
+  <div class="spin"></div>
+  <h2>Autenticando com Google</h2>
+  <p>Aguarde um momento...</p>
+  <div id="msg"></div>
+</div>
+<script type="module">
+import {{initializeApp}} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {{getAuth,signInWithPopup,GoogleAuthProvider}}
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+const app  = initializeApp({{
+  apiKey:    "{api_key}",
+  authDomain:"{auth_domain}",
+  projectId: "{project_id}",
+  appId:     "{app_id}"
+}});
+const auth = getAuth(app);
+const prov = new GoogleAuthProvider();
+prov.setCustomParameters({{prompt:"select_account"}});
+const msg  = document.getElementById("msg");
+try {{
+  const r = await signInWithPopup(auth, prov);
+  msg.textContent = "Sucesso! Fechando...";
+  window.opener && window.opener.postMessage({{
+    type:"google_auth_success",
+    uid:r.user.uid,
+    email:r.user.email,
+    displayName:r.user.displayName||""
+  }},"*");
+  setTimeout(()=>window.close(),600);
+}} catch(e) {{
+  document.querySelector(".spin").style.display="none";
+  msg.className="err";
+  msg.textContent = e.code==="auth/popup-closed-by-user"
+    ? "Cancelado." : e.message;
+  window.opener && window.opener.postMessage({{
+    type:"google_auth_error", message:e.message
+  }},"*");
+  setTimeout(()=>window.close(),2500);
+}}
+<\/script></body></html>`;
+}}
+
 window.openGoogle = function() {{
   var msg = document.getElementById("msg");
   var btn = document.getElementById("btn");
@@ -49,25 +108,20 @@ window.openGoogle = function() {{
   msg.textContent = "Abrindo Google...";
   btn.disabled = true;
 
-  // Pegar o domínio real da janela pai (o Replit)
-  var base = window.parent.location.origin;
-  var url  = base + "/app/static/google_auth.html"
-           + "?apiKey={api_key}"
-           + "&authDomain={auth_domain}"
-           + "&projectId={project_id}"
-           + "&appId={app_id}";
+  // Criar Blob com tipo correto text/html
+  var blob = new Blob([getPopupHTML()], {{type: "text/html"}});
+  var url  = URL.createObjectURL(blob);
 
   popup = window.open(url, "google_auth",
-    "width=480,height=580,left=200,top=100,resizable=yes");
+    "width=480,height=560,left=200,top=100");
 
   if (!popup || popup.closed) {{
     btn.disabled = false;
     msg.className = "err";
-    msg.textContent = "Permita popups para este site e tente novamente.";
+    msg.textContent = "Permita popups para este site.";
     return;
   }}
 
-  // Verificar se popup foi fechado manualmente
   var timer = setInterval(function() {{
     if (popup.closed) {{
       clearInterval(timer);
@@ -77,12 +131,11 @@ window.openGoogle = function() {{
   }}, 500);
 }};
 
-// Receber dados do popup após autenticação Google
 window.addEventListener("message", function(e) {{
   if (e.data && e.data.type === "google_auth_success") {{
     document.getElementById("msg").textContent = "Autenticado! Entrando...";
     if (popup && !popup.closed) popup.close();
-    var uid   = encodeURIComponent(e.data.uid   || "");
+    var uid   = encodeURIComponent(e.data.uid || "");
     var email = encodeURIComponent(e.data.email || "");
     var name  = encodeURIComponent(e.data.displayName || "");
     window.parent.location.href =
@@ -94,7 +147,7 @@ window.addEventListener("message", function(e) {{
   if (e.data && e.data.type === "google_auth_error") {{
     document.getElementById("btn").disabled = false;
     document.getElementById("msg").className = "err";
-    document.getElementById("msg").textContent = e.data.message || "Erro no login.";
+    document.getElementById("msg").textContent = e.data.message || "Erro.";
   }}
 }});
 </script>
