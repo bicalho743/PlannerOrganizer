@@ -1,7 +1,7 @@
 """
-Google Auth via Firebase JS SDK — signInWithPopup direto no componente.
-O popup do Google abre numa janela separada e os dados voltam
-via query params sem sair da página Streamlit.
+Google Auth — abre popup real em /app/static/google_auth.html
+que roda no domínio autorizado do Firebase e usa signInWithRedirect.
+Os dados voltam via postMessage para o Streamlit.
 """
 import streamlit as st
 import streamlit.components.v1 as components
@@ -13,6 +13,14 @@ def google_login_button():
     auth_domain = os.getenv("FIREBASE_AUTH_DOMAIN", "")
     project_id  = os.getenv("FIREBASE_PROJECT_ID", "")
     app_id      = os.getenv("FIREBASE_APP_ID", "")
+
+    static_url = (
+        "/app/static/google_auth.html"
+        f"?apiKey={api_key}"
+        f"&authDomain={auth_domain}"
+        f"&projectId={project_id}"
+        f"&appId={app_id}"
+    )
 
     html = f"""
 <!DOCTYPE html><html><head>
@@ -35,58 +43,62 @@ body {{ background:transparent; }}
 #msg.err {{ color:#f08080; }}
 </style>
 </head><body>
-<button id="btn" onclick="doLogin()">
+<button id="btn" onclick="openGoogle()">
   <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"/>
   Continuar com Google
 </button>
 <div id="msg"></div>
 
-<script type="module">
-import {{ initializeApp }} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {{ getAuth, signInWithPopup, GoogleAuthProvider }}
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-const app = initializeApp({{
-  apiKey:     "{api_key}",
-  authDomain: "{auth_domain}",
-  projectId:  "{project_id}",
-  appId:      "{app_id}"
-}});
-const auth     = getAuth(app);
-const provider = new GoogleAuthProvider();
-provider.setCustomParameters({{ prompt: "select_account" }});
-
-window.doLogin = async () => {{
-  const btn = document.getElementById("btn");
-  const msg = document.getElementById("msg");
+<script>
+function openGoogle() {{
+  var btn = document.getElementById("btn");
+  var msg = document.getElementById("msg");
   btn.disabled = true;
-  msg.className = "";
   msg.textContent = "Abrindo Google...";
-  try {{
-    const result = await signInWithPopup(auth, provider);
-    const user   = result.user;
-    msg.textContent = "Autenticado! Entrando...";
-    const uid   = encodeURIComponent(user.uid);
-    const email = encodeURIComponent(user.email);
-    const name  = encodeURIComponent(user.displayName || "");
+
+  var w = 500, h = 600;
+  var left = (screen.width - w) / 2;
+  var top  = (screen.height - h) / 2;
+  var popup = window.open(
+    "{static_url}",
+    "google_auth",
+    "width=" + w + ",height=" + h + ",left=" + left + ",top=" + top
+  );
+
+  if (!popup) {{
+    msg.className = "err";
+    msg.textContent = "Permita popups para este site.";
+    btn.disabled = false;
+    return;
+  }}
+
+  var checkClosed = setInterval(function() {{
+    if (popup && popup.closed) {{
+      clearInterval(checkClosed);
+      btn.disabled = false;
+      msg.textContent = "";
+    }}
+  }}, 500);
+}}
+
+window.addEventListener("message", function(e) {{
+  if (e.data && e.data.type === "google_auth_success") {{
+    document.getElementById("msg").textContent = "Autenticado! Entrando...";
+    var uid   = encodeURIComponent(e.data.uid   || "");
+    var email = encodeURIComponent(e.data.email || "");
+    var name  = encodeURIComponent(e.data.displayName || "");
     window.parent.location.href =
       window.parent.location.pathname +
       "?google_uid=" + uid +
       "&google_email=" + email +
       "&google_name=" + name;
-  }} catch(e) {{
-    btn.disabled = false;
-    msg.className = "err";
-    if (e.code === "auth/popup-closed-by-user")
-      msg.textContent = "Popup fechado. Tente novamente.";
-    else if (e.code === "auth/popup-blocked")
-      msg.textContent = "Permita popups para este site.";
-    else if (e.code === "auth/unauthorized-domain")
-      msg.textContent = "Domínio não autorizado no Firebase.";
-    else
-      msg.textContent = e.message || "Erro no login.";
   }}
-}};
+  if (e.data && e.data.type === "google_auth_error") {{
+    document.getElementById("btn").disabled = false;
+    document.getElementById("msg").className = "err";
+    document.getElementById("msg").textContent = e.data.message || "Erro no login.";
+  }}
+}});
 </script>
 </body></html>
 """

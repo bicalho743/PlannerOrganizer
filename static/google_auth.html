@@ -7,7 +7,7 @@
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
   background: #0D1B35;
-  font-family: sans-serif;
+  font-family: 'DM Sans', sans-serif;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   min-height: 100vh; color: #F5F0E8;
@@ -32,61 +32,57 @@ p { font-size: 0.8rem; color: rgba(245,240,232,0.5); margin-bottom: 1.5rem; }
 </head>
 <body>
 <div class="card">
-  <div class="spinner"></div>
+  <div class="spinner" id="spinner"></div>
   <h2>Autenticando com Google</h2>
   <p>Aguarde um momento...</p>
   <div id="msg"></div>
 </div>
 
 <script type="module">
-import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider }
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-const p          = new URLSearchParams(window.location.search);
-const app        = initializeApp({
-  apiKey:    p.get("apiKey"),
-  authDomain:p.get("authDomain"),
-  projectId: p.get("projectId"),
-  appId:     p.get("appId")
+const p    = new URLSearchParams(window.location.search);
+const msg  = document.getElementById("msg");
+const spin = document.getElementById("spinner");
+
+const app = initializeApp({
+  apiKey:     p.get("apiKey"),
+  authDomain: p.get("authDomain"),
+  projectId:  p.get("projectId"),
+  appId:      p.get("appId")
 });
 const auth     = getAuth(app);
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ prompt: "select_account" });
 
-const msg = document.getElementById("msg");
-
 try {
-  const result = await signInWithPopup(auth, provider);
-  const user   = result.user;
-  msg.textContent = "Sucesso! Fechando...";
-
-  // Enviar dados para a janela que abriu este popup
-  if (window.opener) {
-    window.opener.postMessage({
-      type:        "google_auth_success",
-      uid:         user.uid,
-      email:       user.email,
-      displayName: user.displayName || ""
-    }, "*");
+  const result = await getRedirectResult(auth);
+  if (result && result.user) {
+    const user = result.user;
+    msg.textContent = "Sucesso! Fechando...";
+    if (window.opener) {
+      window.opener.postMessage({
+        type:        "google_auth_success",
+        uid:         user.uid,
+        email:       user.email,
+        displayName: user.displayName || ""
+      }, "*");
+    }
+    setTimeout(() => window.close(), 800);
+  } else {
+    msg.textContent = "Redirecionando para o Google...";
+    await signInWithRedirect(auth, provider);
   }
-  setTimeout(() => window.close(), 800);
-
 } catch(e) {
-  document.querySelector('.spinner').style.display = 'none';
+  spin.style.display = "none";
   msg.className = "err";
   if (e.code === "auth/popup-closed-by-user") {
     msg.textContent = "Cancelado.";
   } else {
-    msg.textContent = e.message;
+    msg.textContent = e.message || "Erro no login.";
   }
-  if (window.opener) {
-    window.opener.postMessage({
-      type: "google_auth_error",
-      message: e.message
-    }, "*");
-  }
-  setTimeout(() => window.close(), 2000);
 }
 </script>
 </body>
