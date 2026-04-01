@@ -110,11 +110,56 @@ def handle_google_callback():
     api_key  = os.getenv("FIREBASE_API_KEY", "")
     base_url = _get_base_url()
 
-    try:
-        callback_url = f"{base_url}?code={urllib.parse.quote(code, safe='')}"
-        if state:
-            callback_url += f"&state={urllib.parse.quote(state, safe='')}"
+    google_client_id     = os.getenv("GOOGLE_CLIENT_ID", "")
+    google_client_secret = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
+    if google_client_secret:
+        try:
+            token_resp = requests.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "code":          code,
+                    "client_id":     google_client_id or "275264106992-d59h4ub40gs6kqk5k3drm8kghdv5rpt4.apps.googleusercontent.com",
+                    "client_secret": google_client_secret,
+                    "redirect_uri":  base_url,
+                    "grant_type":    "authorization_code",
+                },
+                timeout=10
+            )
+            token_data = token_resp.json()
+            print(f"Google token exchange keys: {list(token_data.keys())}")
+
+            if "error" in token_data:
+                print(f"Google token exchange error: {token_data}")
+                st.error(f"Erro na troca do código Google: {token_data.get('error_description', token_data.get('error'))}")
+                st.query_params.clear()
+                return False
+
+            google_id_token = token_data.get("id_token", "")
+            if google_id_token:
+                resp = requests.post(
+                    f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={api_key}",
+                    json={
+                        "requestUri":          base_url,
+                        "postBody":            f"id_token={google_id_token}&providerId=google.com",
+                        "returnSecureToken":   True,
+                        "returnIdpCredential": True,
+                    },
+                    timeout=10
+                )
+                data = resp.json()
+                print(f"Google signInWithIdp response keys: {list(data.keys())}")
+            else:
+                print("No id_token in Google token response")
+                st.query_params.clear()
+                return False
+
+        except Exception as e:
+            print(f"Erro token exchange: {e}")
+            st.query_params.clear()
+            return False
+    else:
+        callback_url = f"{base_url}?code={urllib.parse.quote(code, safe='')}"
         resp = requests.post(
             f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={api_key}",
             json={
