@@ -46,10 +46,8 @@ def google_login_button():
 
         qs["response_type"] = ["code"]
 
-        if "response_mode" in qs:
-            del qs["response_mode"]
-        if "nonce" in qs:
-            del qs["nonce"]
+        for drop in ("response_mode", "nonce", "include_profile"):
+            qs.pop(drop, None)
 
         qs["access_type"] = ["offline"]
 
