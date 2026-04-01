@@ -61,6 +61,7 @@ def google_login_button():
             qs.pop(drop, None)
 
         qs["access_type"] = ["offline"]
+        qs["prompt"] = ["select_account"]
 
         new_query = urllib.parse.urlencode({k: v[0] for k, v in qs.items()})
         auth_uri  = urllib.parse.urlunparse(parsed._replace(query=new_query))
