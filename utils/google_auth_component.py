@@ -107,6 +107,11 @@ window.addEventListener("message", function(e) {{
 
 def handle_google_callback():
     params = st.query_params
+
+    if "code" in params or "state" in params:
+        st.query_params.clear()
+        return False
+
     if "google_uid" not in params:
         return False
 
