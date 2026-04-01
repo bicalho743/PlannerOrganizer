@@ -9,28 +9,24 @@ def show():
     """
     Exibe o formulário de recuperação de senha
     """
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Recuperar Senha</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem; color: #C9A84C;">Recuperar Senha</h1>', unsafe_allow_html=True)
     
-    # Inicializar variáveis de estado
     if 'email_enviado' not in st.session_state:
         st.session_state.email_enviado = False
     
-    # Container para o formulário
     with st.container():
-        # Usar colunas para centralizar o formulário
-        col1, col2, col3 = st.columns([1, 2, 1])
+        col1, col2, col3 = st.columns([1, 3, 1])
         
         with col2:
             st.markdown("""
             <div style="text-align: center; margin-bottom: 1.5rem;">
-                <h3 style="color: #0D1B2A; margin-bottom: 0.5rem;">Esqueceu sua senha?</h3>
-                <p style="color: #5A6A85; font-size: 0.9rem;">
+                <h3 style="color: rgba(245,240,232,0.9); margin-bottom: 0.5rem;">Esqueceu sua senha?</h3>
+                <p style="color: rgba(245,240,232,0.55); font-size: 0.9rem;">
                     Informe seu email para receber um link de redefinição de senha
                 </p>
             </div>
             """, unsafe_allow_html=True)
             
-            # Formulário de recuperação
             with st.form("password_recovery_form", clear_on_submit=False):
                 email = st.text_input("Email cadastrado")
                 
