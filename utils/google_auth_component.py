@@ -76,23 +76,6 @@ def google_login_button():
 def handle_google_callback():
     params = st.query_params
 
-    if "google_uid" in params:
-        uid   = params.get("google_uid", "")
-        email = params.get("google_email", "")
-        name  = params.get("google_name", "")
-        if uid and email:
-            st.query_params.clear()
-            return _create_session(uid, email, name)
-        return False
-
-    if "google_id_token" in params:
-        id_token = params.get("google_id_token", "")
-        state    = params.get("state", "")
-        if not id_token:
-            st.query_params.clear()
-            return False
-        return _process_id_token(id_token, state)
-
     if "code" not in params:
         return False
 
@@ -195,54 +178,6 @@ def handle_google_callback():
 
     print(f"Google login: uid ou email vazio. Data: {data}")
     st.query_params.clear()
-    return False
-
-
-def _process_id_token(id_token, state):
-    session_id = ""
-    if "__SID__" in state:
-        session_id = state.split("__SID__")[-1]
-
-    api_key  = os.getenv("FIREBASE_API_KEY", "")
-    base_url = _get_base_url()
-
-    try:
-        resp = requests.post(
-            f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={api_key}",
-            json={
-                "requestUri":          base_url,
-                "sessionId":           session_id,
-                "returnSecureToken":   True,
-                "returnIdpCredential": True,
-                "postBody":            f"id_token={id_token}&providerId=google.com"
-            },
-            timeout=10
-        )
-        data = resp.json()
-        print(f"Google signInWithIdp (id_token) keys: {list(data.keys())}")
-
-        if "error" in data:
-            msg = data["error"].get("message", "Erro")
-            print(f"Google signInWithIdp error: {msg}")
-            st.error(f"Erro no login Google: {msg}")
-            st.query_params.clear()
-            return False
-
-        uid   = data.get("localId", "")
-        email = data.get("email", "")
-        name  = data.get("displayName", "")
-
-        if uid and email:
-            st.query_params.clear()
-            return _create_session(uid, email, name)
-        else:
-            print(f"Google login id_token: uid ou email vazio. Data: {data}")
-            st.query_params.clear()
-
-    except Exception as e:
-        print(f"Erro process_id_token: {e}")
-        st.query_params.clear()
-
     return False
 
 
