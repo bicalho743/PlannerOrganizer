@@ -111,14 +111,17 @@ def handle_google_callback():
     base_url = _get_base_url()
 
     try:
+        callback_url = f"{base_url}?code={urllib.parse.quote(code, safe='')}"
+        if state:
+            callback_url += f"&state={urllib.parse.quote(state, safe='')}"
+
         resp = requests.post(
             f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={api_key}",
             json={
-                "requestUri":          f"{base_url}?code={code}",
+                "requestUri":          callback_url,
                 "sessionId":           session_id,
                 "returnSecureToken":   True,
                 "returnIdpCredential": True,
-                "postBody":            f"code={code}&providerId=google.com"
             },
             timeout=10
         )
