@@ -77,20 +77,13 @@ def show():
                 if st.button("Voltar ao Login", use_container_width=True):
                     # Resetar o estado
                     st.session_state.email_enviado = False
-                    # Redirecionar para a página de login
-                    st.session_state.page = None
+                    st.session_state.login_page = "login"
                     st.rerun()
             
-            # Link para voltar ao login
-            st.markdown("""
-            <div style="text-align: center; margin-top: 1rem;">
-                <p style="color: #5A6A85; font-size: 0.9rem;">
-                    <a href="/" style="color: #C9A84C; text-decoration: none;">
-                        Voltar ao login
-                    </a>
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
+            if not st.session_state.email_enviado:
+                if st.button("Voltar ao login", key="link_voltar_login", use_container_width=True):
+                    st.session_state.login_page = "login"
+                    st.rerun()
 
 if __name__ == "__main__":
     show()
