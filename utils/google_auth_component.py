@@ -1,6 +1,7 @@
 """
-Google Auth — abre popup real em /app/static/google_auth.html
-que roda no domínio autorizado do Firebase e usa signInWithRedirect.
+Google Auth — abre popup em mini servidor estático (porta 5051)
+que serve google_auth.html com Content-Type correto.
+A página usa signInWithPopup do Firebase JS SDK.
 Os dados voltam via postMessage para o Streamlit.
 """
 import streamlit as st
@@ -9,13 +10,20 @@ import os
 
 
 def google_login_button():
+    from utils.static_server import start_static_server
+    start_static_server(5051)
+
     api_key     = os.getenv("FIREBASE_API_KEY", "")
     auth_domain = os.getenv("FIREBASE_AUTH_DOMAIN", "")
     project_id  = os.getenv("FIREBASE_PROJECT_ID", "")
     app_id      = os.getenv("FIREBASE_APP_ID", "")
 
-    static_url = (
-        "/app/static/google_auth.html"
+    replit_domain = os.getenv("REPLIT_DEV_DOMAIN", "")
+    if not replit_domain:
+        replit_domain = "e793124a-608d-4baa-9b36-f1c10d18b5f4-00-er4f29bufe88.worf.replit.dev"
+
+    popup_url = (
+        f"https://{replit_domain}:5051/google_auth.html"
         f"?apiKey={api_key}"
         f"&authDomain={auth_domain}"
         f"&projectId={project_id}"
@@ -60,7 +68,7 @@ function openGoogle() {{
   var left = (screen.width - w) / 2;
   var top  = (screen.height - h) / 2;
   var popup = window.open(
-    "{static_url}",
+    "{popup_url}",
     "google_auth",
     "width=" + w + ",height=" + h + ",left=" + left + ",top=" + top
   );
@@ -166,6 +174,6 @@ def _create_session(uid, email, display_name):
         from utils.session_persistence import save_session_to_storage
         save_session_to_storage(session_user, usuario_data, uid)
     except Exception as e:
-        print(f"Erro sessão: {e}")
+        print(f"Erro sessao: {e}")
 
     return True
