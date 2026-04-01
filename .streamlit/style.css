@@ -75,9 +75,8 @@ button[data-testid="collapsedControl"] {
 [data-testid="stAppViewContainer"] { overflow-x: hidden !important; }
 
 @media screen and (min-width: 769px) {
-    .block-container, .main .block-container, .main,
-    [data-testid="stAppViewContainer"] > .main {
-        margin-left: 0 !important; width: 100% !important; max-width: 100% !important;
+    .block-container, .main .block-container {
+        width: 100% !important; max-width: 100% !important;
     }
 }
 
@@ -99,6 +98,28 @@ section[data-testid="stSidebar"] {
     min-width: 280px !important; max-width: 280px !important;
     z-index: 999999 !important;
     transition: transform 0.3s ease !important;
+}
+
+@media screen and (min-width: 769px) {
+    section[data-testid="stSidebar"] {
+        display: block !important;
+        visibility: visible !important;
+        transform: translateX(0) !important;
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        height: 100vh !important;
+    }
+    button[data-testid="stBaseButton-headerNoPadding"],
+    button[data-testid="collapsedControl"],
+    div[data-testid="stSidebarCollapseButton"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    .main .block-container,
+    [data-testid="stMainBlockContainer"] {
+        margin-left: 280px !important;
+    }
 }
 
 
