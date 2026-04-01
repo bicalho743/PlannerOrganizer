@@ -1,11 +1,44 @@
 """
 Google Auth via Firebase REST API — sem JavaScript SDK.
-Gera link OAuth direto para o Google, processa callback com code.
+Gera link OAuth direto para o Google, processa callback com id_token.
 """
 import streamlit as st
 import requests
 import os
 import urllib.parse
+import streamlit.components.v1 as components
+
+
+def _get_base_url():
+    origin = st.context.headers.get("origin", "")
+    if origin:
+        return origin.rstrip("/")
+    replit_domain = os.getenv("REPLIT_DEV_DOMAIN", "localhost")
+    return f"https://{replit_domain}"
+
+
+def inject_fragment_handler():
+    components.html("""
+    <script>
+    (function() {
+        if (window.parent && window.parent.location.hash) {
+            var hash = window.parent.location.hash.substring(1);
+            var params = new URLSearchParams(hash);
+            var idToken = params.get('id_token');
+            var state = params.get('state');
+            if (idToken) {
+                var url = window.parent.location.origin +
+                          window.parent.location.pathname +
+                          '?google_id_token=' + encodeURIComponent(idToken);
+                if (state) {
+                    url += '&state=' + encodeURIComponent(state);
+                }
+                window.parent.location.replace(url);
+            }
+        }
+    })();
+    </script>
+    """, height=0)
 
 
 def google_login_button():
@@ -13,13 +46,7 @@ def google_login_button():
     if not api_key:
         return
 
-    origin = st.context.headers.get("origin", "")
-    if origin:
-        base_url = origin.rstrip("/")
-    else:
-        replit_domain = os.getenv("REPLIT_DEV_DOMAIN", "localhost")
-        base_url = f"https://{replit_domain}"
-
+    base_url = _get_base_url()
     continue_uri = base_url
 
     try:
@@ -74,6 +101,14 @@ def handle_google_callback():
             return _create_session(uid, email, name)
         return False
 
+    if "google_id_token" in params:
+        id_token = params.get("google_id_token", "")
+        state    = params.get("state", "")
+        if not id_token:
+            st.query_params.clear()
+            return False
+        return _process_id_token(id_token, state)
+
     if "code" not in params:
         return False
 
@@ -89,13 +124,7 @@ def handle_google_callback():
         session_id = state.split("__SID__")[-1]
 
     api_key = os.getenv("FIREBASE_API_KEY", "")
-    origin  = st.context.headers.get("origin", "")
-    if origin:
-        base_url = origin.rstrip("/")
-    else:
-        replit_domain = os.getenv("REPLIT_DEV_DOMAIN", "localhost")
-        base_url = f"https://{replit_domain}"
-
+    base_url = _get_base_url()
     request_uri = base_url
 
     try:
@@ -133,6 +162,54 @@ def handle_google_callback():
 
     except Exception as e:
         print(f"Erro callback Google: {e}")
+        st.query_params.clear()
+
+    return False
+
+
+def _process_id_token(id_token, state):
+    session_id = ""
+    if "__SID__" in state:
+        session_id = state.split("__SID__")[-1]
+
+    api_key = os.getenv("FIREBASE_API_KEY", "")
+    base_url = _get_base_url()
+
+    try:
+        resp = requests.post(
+            f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={api_key}",
+            json={
+                "requestUri":          base_url,
+                "sessionId":           session_id,
+                "returnSecureToken":   True,
+                "returnIdpCredential": True,
+                "postBody":            f"id_token={id_token}&providerId=google.com"
+            },
+            timeout=10
+        )
+        data = resp.json()
+        print(f"Google signInWithIdp (id_token) keys: {list(data.keys())}")
+
+        if "error" in data:
+            msg = data["error"].get("message", "Erro")
+            print(f"Google signInWithIdp error: {msg}")
+            st.error(f"Erro no login Google: {msg}")
+            st.query_params.clear()
+            return False
+
+        uid   = data.get("localId", "")
+        email = data.get("email", "")
+        name  = data.get("displayName", "")
+
+        if uid and email:
+            st.query_params.clear()
+            return _create_session(uid, email, name)
+        else:
+            print(f"Google login id_token: uid ou email vazio. Data: {data}")
+            st.query_params.clear()
+
+    except Exception as e:
+        print(f"Erro process_id_token: {e}")
         st.query_params.clear()
 
     return False
