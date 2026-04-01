@@ -17,7 +17,9 @@ def google_login_button():
 
     # O continueUri DEVE ser o authDomain do Firebase — é o único URI
     # autorizado no Google Cloud Console para esse projeto
-    continue_uri = "https://planner-organizer-68a23.firebaseapp.com/__/auth/handler"
+    # continueUri aponta para o handler do Firebase com o sessionId embutido
+    # para não depender do sessionStorage do navegador
+    base_replit = base_url
 
     # Chamar Firebase REST API para gerar a URL do Google OAuth
     try:
@@ -25,16 +27,25 @@ def google_login_button():
             f"https://identitytoolkit.googleapis.com/v1/accounts:createAuthUri?key={api_key}",
             json={
                 "providerId":  "google.com",
-                "continueUri": continue_uri
+                "continueUri": "https://planner-organizer-68a23.firebaseapp.com/__/auth/handler"
             },
             timeout=5
         )
-        data     = resp.json()
-        auth_uri = data.get("authUri", "")
+        data       = resp.json()
+        auth_uri   = data.get("authUri", "")
         session_id = data.get("sessionId", "")
 
         if auth_uri:
-            # Salvar sessionId para validar o callback depois
+            # Embutir sessionId diretamente na URL do Google como state
+            # para não depender do sessionStorage
+            import urllib.parse
+            parsed = urllib.parse.urlparse(auth_uri)
+            qs     = urllib.parse.parse_qs(parsed.query)
+            # Adicionar sessionId e replit_url ao state para recuperar no callback
+            state_data = f"{qs.get('state', [''])[0]}|sid={session_id}|ret={base_replit}"
+            qs["state"] = [state_data]
+            new_query   = urllib.parse.urlencode({k: v[0] for k, v in qs.items()})
+            auth_uri    = urllib.parse.urlunparse(parsed._replace(query=new_query))
             st.session_state["google_session_id"] = session_id
 
             # Botão que redireciona a página inteira — sem iframe!
