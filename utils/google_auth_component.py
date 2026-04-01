@@ -1,141 +1,119 @@
 """
-Google Auth via Firebase REST API
-session_id viaja no state do OAuth para sobreviver ao redirect
+Google Auth via Firebase JS SDK — signInWithPopup direto no componente.
+O popup do Google abre numa janela separada e os dados voltam
+via query params sem sair da página Streamlit.
 """
 import streamlit as st
-import requests
+import streamlit.components.v1 as components
 import os
-import urllib.parse
+
 
 def google_login_button():
-    api_key  = os.getenv("FIREBASE_API_KEY", "")
-    base_url = st.context.headers.get("origin", "")
-    if not base_url:
-        base_url = "https://e793124a-608d-4baa-9b36-f1c10d18b5f4-00-er4f29bufe88.worf.replit.dev"
+    api_key     = os.getenv("FIREBASE_API_KEY", "")
+    auth_domain = os.getenv("FIREBASE_AUTH_DOMAIN", "")
+    project_id  = os.getenv("FIREBASE_PROJECT_ID", "")
+    app_id      = os.getenv("FIREBASE_APP_ID", "")
 
-    continue_uri = base_url + "/"
+    html = f"""
+<!DOCTYPE html><html><head>
+<style>
+* {{ margin:0; padding:0; box-sizing:border-box; }}
+body {{ background:transparent; }}
+#btn {{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; padding:11px 16px;
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(201,168,76,0.22);
+  border-radius:10px; color:rgba(245,240,232,0.75);
+  font-size:14px; cursor:pointer; transition:all 0.2s;
+  font-family:'DM Sans',sans-serif;
+}}
+#btn:hover {{ background:rgba(255,255,255,0.1); border-color:rgba(201,168,76,0.45); color:#F5F0E8; }}
+#btn:disabled {{ opacity:0.5; cursor:not-allowed; }}
+#btn img {{ width:18px; height:18px; }}
+#msg {{ font-size:11px; text-align:center; margin-top:5px; color:rgba(245,240,232,0.4); min-height:14px; }}
+#msg.err {{ color:#f08080; }}
+</style>
+</head><body>
+<button id="btn" onclick="doLogin()">
+  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"/>
+  Continuar com Google
+</button>
+<div id="msg"></div>
 
-    try:
-        resp = requests.post(
-            f"https://identitytoolkit.googleapis.com/v1/accounts:createAuthUri?key={api_key}",
-            json={"providerId": "google.com", "continueUri": continue_uri},
-            timeout=5
-        )
-        data       = resp.json()
-        auth_uri   = data.get("authUri", "")
-        session_id = data.get("sessionId", "")
+<script type="module">
+import {{ initializeApp }} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {{ getAuth, signInWithPopup, GoogleAuthProvider }}
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-        if not auth_uri:
-            st.warning("Não foi possível gerar o link do Google.")
-            return
+const app = initializeApp({{
+  apiKey:     "{api_key}",
+  authDomain: "{auth_domain}",
+  projectId:  "{project_id}",
+  appId:      "{app_id}"
+}});
+const auth     = getAuth(app);
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({{ prompt: "select_account" }});
 
-        # Embutir session_id no parâmetro state da URL do Google
-        # O Google devolve o state intacto no callback — assim não perdemos o session_id
-        parsed   = urllib.parse.urlparse(auth_uri)
-        qs       = urllib.parse.parse_qs(parsed.query, keep_blank_values=True)
-        original_state = qs.get("state", [""])[0]
-        # Formato: <state_original>__SID__<session_id>
-        new_state = f"{original_state}__SID__{session_id}"
-        qs["state"] = [new_state]
-        new_query = urllib.parse.urlencode({k: v[0] for k, v in qs.items()})
-        auth_uri  = urllib.parse.urlunparse(parsed._replace(query=new_query))
-
-        st.markdown(f"""
-        <a href="{auth_uri}" style="
-          display:flex; align-items:center; justify-content:center; gap:10px;
-          width:100%; padding:11px 16px; text-decoration:none;
-          background:rgba(255,255,255,0.06);
-          border:1px solid rgba(201,168,76,0.22);
-          border-radius:10px; color:rgba(245,240,232,0.75);
-          font-size:0.875rem; font-family:'DM Sans',sans-serif;
-          box-sizing:border-box;">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-               style="width:18px;height:18px;flex-shrink:0;"/>
-          Continuar com Google
-        </a>
-        """, unsafe_allow_html=True)
-
-    except Exception as e:
-        st.warning(f"Google login indisponível: {e}")
+window.doLogin = async () => {{
+  const btn = document.getElementById("btn");
+  const msg = document.getElementById("msg");
+  btn.disabled = true;
+  msg.className = "";
+  msg.textContent = "Abrindo Google...";
+  try {{
+    const result = await signInWithPopup(auth, provider);
+    const user   = result.user;
+    msg.textContent = "Autenticado! Entrando...";
+    const uid   = encodeURIComponent(user.uid);
+    const email = encodeURIComponent(user.email);
+    const name  = encodeURIComponent(user.displayName || "");
+    window.parent.location.href =
+      window.parent.location.pathname +
+      "?google_uid=" + uid +
+      "&google_email=" + email +
+      "&google_name=" + name;
+  }} catch(e) {{
+    btn.disabled = false;
+    msg.className = "err";
+    if (e.code === "auth/popup-closed-by-user")
+      msg.textContent = "Popup fechado. Tente novamente.";
+    else if (e.code === "auth/popup-blocked")
+      msg.textContent = "Permita popups para este site.";
+    else if (e.code === "auth/unauthorized-domain")
+      msg.textContent = "Domínio não autorizado no Firebase.";
+    else
+      msg.textContent = e.message || "Erro no login.";
+  }}
+}};
+</script>
+</body></html>
+"""
+    components.html(html, height=50, scrolling=False)
 
 
 def handle_google_callback():
     params = st.query_params
-
-    # Callback legado com google_uid direto
-    if "google_uid" in params:
-        uid          = params.get("google_uid", "")
-        email        = params.get("google_email", "")
-        display_name = params.get("google_name", "")
-        if uid and email:
-            st.query_params.clear()
-            return _create_session(uid, email, display_name)
+    if "google_uid" not in params:
         return False
 
-    # Callback OAuth do Google com ?code=...&state=...
-    if "code" not in params:
+    uid          = params.get("google_uid", "")
+    email        = params.get("google_email", "")
+    display_name = params.get("google_name", "")
+
+    if not uid or not email:
         return False
 
-    code  = params.get("code", "")
-    state = params.get("state", "")
-
-    # Extrair session_id do state
-    session_id = ""
-    if "__SID__" in state:
-        session_id = state.split("__SID__")[-1]
-
-    if not session_id:
-        st.error("Sessão expirada. Tente novamente.")
-        st.query_params.clear()
-        return False
-
-    api_key  = os.getenv("FIREBASE_API_KEY", "")
-    base_url = st.context.headers.get("origin", "")
-    if not base_url:
-        base_url = "https://e793124a-608d-4baa-9b36-f1c10d18b5f4-00-er4f29bufe88.worf.replit.dev"
-
-    request_uri = base_url + "/"
-
-    try:
-        resp = requests.post(
-            f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={api_key}",
-            json={
-                "requestUri":          request_uri,
-                "sessionId":           session_id,
-                "postBody":            f"code={code}&providerId=google.com",
-                "returnSecureToken":   True,
-                "returnIdpCredential": True
-            },
-            timeout=10
-        )
-        data = resp.json()
-
-        if "error" in data:
-            msg = data["error"].get("message", "Erro desconhecido")
-            st.error(f"Erro no login Google: {msg}")
-            st.query_params.clear()
-            return False
-
-        uid          = data.get("localId", "")
-        email        = data.get("email", "")
-        display_name = data.get("displayName", "")
-
-        if uid and email:
-            st.query_params.clear()
-            return _create_session(uid, email, display_name)
-
-    except Exception as e:
-        print(f"Erro callback Google: {e}")
-        st.query_params.clear()
-
-    return False
+    st.query_params.clear()
+    return _create_session(uid, email, display_name)
 
 
 def _create_session(uid, email, display_name):
     from datetime import datetime, timedelta
     try:
         from utils.firebase_config import TOKEN_EXPIRY
-    except:
+    except Exception:
         TOKEN_EXPIRY = 3600
 
     session_user = {
