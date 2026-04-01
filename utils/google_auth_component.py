@@ -15,7 +15,9 @@ def google_login_button():
     if not base_url:
         base_url = "https://e793124a-608d-4baa-9b36-f1c10d18b5f4-00-er4f29bufe88.worf.replit.dev"
 
-    continue_uri = base_url + "/"
+    # O continueUri DEVE ser o authDomain do Firebase — é o único URI
+    # autorizado no Google Cloud Console para esse projeto
+    continue_uri = "https://planner-organizer-68a23.firebaseapp.com/__/auth/handler"
 
     # Chamar Firebase REST API para gerar a URL do Google OAuth
     try:
