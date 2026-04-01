@@ -16,36 +16,45 @@ body {
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(201,168,76,0.22);
   border-radius: 16px; padding: 2rem;
-  text-align: center; max-width: 320px; width: 90%;
+  text-align: center; max-width: 340px; width: 90%;
 }
-h2 { font-size: 1.2rem; margin-bottom: 0.5rem; }
-p { font-size: 0.8rem; color: rgba(245,240,232,0.5); margin-bottom: 1.5rem; }
-#msg { font-size: 0.8rem; margin-top: 1rem; min-height: 20px; color: rgba(245,240,232,0.6); }
+h2 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+p  { font-size: 0.8rem; color: rgba(245,240,232,0.5); margin-bottom: 1.5rem; }
+#google-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 12px 16px;
+  background: #fff; color: #333; border: none; border-radius: 8px;
+  font-size: 14px; font-family: 'DM Sans', sans-serif;
+  cursor: pointer; transition: all 0.2s;
+}
+#google-btn:hover { background: #f1f1f1; }
+#google-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+#google-btn img { width: 20px; height: 20px; }
+#msg {
+  font-size: 0.8rem; margin-top: 1rem; min-height: 20px;
+  color: rgba(245,240,232,0.6);
+}
 #msg.err { color: #f08080; }
-.spinner {
-  width: 32px; height: 32px; border: 3px solid rgba(201,168,76,0.2);
-  border-top-color: #C9A84C; border-radius: 50%;
-  animation: spin 0.8s linear infinite; margin: 0 auto 1rem;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
+#msg.ok  { color: #38A169; }
 </style>
 </head>
 <body>
 <div class="card">
-  <div class="spinner" id="spinner"></div>
-  <h2>Autenticando com Google</h2>
-  <p>Aguarde um momento...</p>
+  <h2>Login com Google</h2>
+  <p>Clique abaixo para entrar com sua conta Google</p>
+  <button id="google-btn" onclick="doLogin()">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"/>
+    Entrar com Google
+  </button>
   <div id="msg"></div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider }
+import { getAuth, signInWithPopup, GoogleAuthProvider }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-const p    = new URLSearchParams(window.location.search);
-const msg  = document.getElementById("msg");
-const spin = document.getElementById("spinner");
+const p = new URLSearchParams(window.location.search);
 
 const app = initializeApp({
   apiKey:     p.get("apiKey"),
@@ -57,11 +66,19 @@ const auth     = getAuth(app);
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ prompt: "select_account" });
 
-try {
-  const result = await getRedirectResult(auth);
-  if (result && result.user) {
-    const user = result.user;
-    msg.textContent = "Sucesso! Fechando...";
+window.doLogin = async () => {
+  const btn = document.getElementById("google-btn");
+  const msg = document.getElementById("msg");
+  btn.disabled = true;
+  msg.className = "";
+  msg.textContent = "Abrindo Google...";
+
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user   = result.user;
+    msg.className = "ok";
+    msg.textContent = "Autenticado! Fechando...";
+
     if (window.opener) {
       window.opener.postMessage({
         type:        "google_auth_success",
@@ -70,20 +87,22 @@ try {
         displayName: user.displayName || ""
       }, "*");
     }
-    setTimeout(() => window.close(), 800);
-  } else {
-    msg.textContent = "Redirecionando para o Google...";
-    await signInWithRedirect(auth, provider);
+    setTimeout(() => window.close(), 1000);
+
+  } catch(e) {
+    btn.disabled = false;
+    msg.className = "err";
+    if (e.code === "auth/popup-closed-by-user") {
+      msg.textContent = "Cancelado. Tente novamente.";
+    } else if (e.code === "auth/popup-blocked") {
+      msg.textContent = "Popup bloqueado. Permita popups.";
+    } else if (e.code === "auth/unauthorized-domain") {
+      msg.textContent = "Domínio não autorizado no Firebase.";
+    } else {
+      msg.textContent = e.message || "Erro no login.";
+    }
   }
-} catch(e) {
-  spin.style.display = "none";
-  msg.className = "err";
-  if (e.code === "auth/popup-closed-by-user") {
-    msg.textContent = "Cancelado.";
-  } else {
-    msg.textContent = e.message || "Erro no login.";
-  }
-}
+};
 </script>
 </body>
 </html>
