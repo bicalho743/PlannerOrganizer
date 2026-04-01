@@ -5,6 +5,7 @@ port = 5000
 runOnSave = false
 fileWatcherType = "none"
 maxUploadSize = 200
+enableStaticServing = true
 
 [client]
 showSidebarNavigation = true

@@ -1,29 +1,16 @@
 """
-Componente de autenticação Google para Streamlit
-Abre o google_auth.html como popup real (não iframe)
-para que o Firebase reconheça o domínio correto.
+Componente de autenticação Google - versão com signInWithRedirect
+para contornar limitações de popup em iframe
 """
 import streamlit as st
 import streamlit.components.v1 as components
 import os
 
 def google_login_button():
-    replit_url = os.getenv("REPLIT_DEV_DOMAIN", "")
-    if not replit_url:
-        replit_url = "e793124a-608d-4baa-9b36-f1c10d18b5f4-00-er4f29bufe88.worf.replit.dev"
-
     api_key     = os.getenv("FIREBASE_API_KEY", "")
     auth_domain = os.getenv("FIREBASE_AUTH_DOMAIN", "")
     project_id  = os.getenv("FIREBASE_PROJECT_ID", "")
     app_id      = os.getenv("FIREBASE_APP_ID", "")
-
-    static_url = (
-        f"https://{replit_url}/app/static/google_auth.html"
-        f"?apiKey={api_key}"
-        f"&authDomain={auth_domain}"
-        f"&projectId={project_id}"
-        f"&appId={app_id}"
-    )
 
     html = f"""
 <!DOCTYPE html><html><head>
@@ -44,49 +31,59 @@ body {{ background:transparent; }}
 #msg.err {{ color:#f08080; }}
 </style>
 </head><body>
-<button id="btn" onclick="openGoogle()">
+<button id="btn" onclick="doLogin()">
   <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"/>
   Continuar com Google
 </button>
 <div id="msg"></div>
-<script>
-var popup = null;
+<script type="module">
+import {{ initializeApp }}    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {{ getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider }}
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-window.openGoogle = function() {{
-  document.getElementById("msg").textContent = "Abrindo Google...";
-  document.getElementById("btn").disabled = true;
-  popup = window.open(
-    "{static_url}",
-    "google_auth",
-    "width=500,height=600,left=200,top=100"
-  );
-  if (!popup) {{
-    document.getElementById("msg").className = "err";
-    document.getElementById("msg").textContent = "Permita popups para este site.";
-    document.getElementById("btn").disabled = false;
-  }}
+const cfg = {{
+  apiKey:    "{api_key}",
+  authDomain:"{auth_domain}",
+  projectId: "{project_id}",
+  appId:     "{app_id}"
 }};
+const app      = initializeApp(cfg);
+const auth     = getAuth(app);
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({{ prompt:"select_account" }});
 
-// Escutar mensagem do popup com os dados do Google
-window.addEventListener("message", function(e) {{
-  if (e.data && e.data.type === "google_auth_success") {{
-    document.getElementById("msg").textContent = "Autenticado! Entrando...";
-    if (popup) popup.close();
-    var uid   = encodeURIComponent(e.data.uid   || "");
-    var email = encodeURIComponent(e.data.email || "");
-    var name  = encodeURIComponent(e.data.displayName || "");
+// Verificar se voltou de um redirect
+const msg = document.getElementById("msg");
+const btn = document.getElementById("btn");
+
+try {{
+  const result = await getRedirectResult(auth);
+  if (result && result.user) {{
+    msg.textContent = "Autenticado! Entrando...";
+    const uid   = encodeURIComponent(result.user.uid);
+    const email = encodeURIComponent(result.user.email);
+    const name  = encodeURIComponent(result.user.displayName || "");
     window.parent.location.href =
       window.parent.location.pathname +
       "?google_uid=" + uid +
       "&google_email=" + email +
       "&google_name=" + name;
   }}
-  if (e.data && e.data.type === "google_auth_error") {{
-    document.getElementById("btn").disabled = false;
-    document.getElementById("msg").className = "err";
-    document.getElementById("msg").textContent = e.data.message || "Erro no login.";
+}} catch(e) {{
+  console.log("Redirect result error:", e);
+}}
+
+window.doLogin = async () => {{
+  btn.disabled = true;
+  msg.textContent = "Redirecionando para Google...";
+  try {{
+    await signInWithRedirect(auth, provider);
+  }} catch(e) {{
+    btn.disabled = false;
+    msg.className = "err";
+    msg.textContent = e.message;
   }}
-}});
+}};
 </script>
 </body></html>
 """
