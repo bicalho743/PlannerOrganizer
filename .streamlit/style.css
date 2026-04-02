@@ -375,7 +375,7 @@ body, .main, [data-testid="stAppViewContainer"], .block-container {
     z-index: 10000000;
     width: 46px;
     height: 46px;
-    border-radius: 12px;
+    border-radius: 50%;
     background: #0D1B2A;
     border: 2px solid #C9A84C;
     color: #C9A84C;
@@ -384,7 +384,7 @@ body, .main, [data-testid="stAppViewContainer"], .block-container {
     justify-content: center;
     cursor: pointer;
     box-shadow: 0 4px 14px rgba(0,0,0,0.35);
-    transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease, left 0.25s ease;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }

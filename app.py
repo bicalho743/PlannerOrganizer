@@ -131,13 +131,17 @@ _components.html("""
     setTimeout(syncState, 100);
   });
 
+  var initRetries = 0;
   function initObserver() {
     var sb = getSidebar();
     if (sb) {
       new MutationObserver(function() { syncState(); }).observe(sb, {attributes: true, attributeFilter: ['aria-expanded']});
       syncState();
-    } else {
+    } else if (initRetries < 10) {
+      initRetries++;
       setTimeout(initObserver, 500);
+    } else {
+      fab.style.display = 'none';
     }
   }
   initObserver();
