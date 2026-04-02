@@ -65,10 +65,15 @@ def show():
     <style>
     [data-testid="collapsedControl"] {display: none;}
     section[data-testid="stSidebar"] {display: none;}
+    .stMarkdown, .stMarkdown p, .stMarkdown li, .stMarkdown span,
+    [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p,
+    .stSubheader, h2, h3 {
+        color: rgba(245,240,232,0.85) !important;
+    }
     </style>
     """, unsafe_allow_html=True)
     
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Termos e Condições de Uso</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem; color: #C9A84C;">Termos e Condições de Uso</h1>', unsafe_allow_html=True)
     
     st.markdown("""
     Bem-vindo ao nosso sistema. Ao utilizar esta plataforma, você concorda com os presentes Termos e Condições de Uso. 

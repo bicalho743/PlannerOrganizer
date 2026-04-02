@@ -87,10 +87,15 @@ def show():
     <style>
     [data-testid="collapsedControl"] {display: none;}
     section[data-testid="stSidebar"] {display: none;}
+    .stMarkdown, .stMarkdown p, .stMarkdown li, .stMarkdown span,
+    [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p,
+    .stSubheader, h1, h2, h3 {
+        color: rgba(245,240,232,0.85) !important;
+    }
     </style>
     """, unsafe_allow_html=True)
     
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Política de Privacidade</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem; color: #C9A84C !important;">Política de Privacidade</h1>', unsafe_allow_html=True)
     
     st.markdown("""
     Esta Política de Privacidade descreve como tratamos os dados pessoais dos usuários da nossa plataforma, 
