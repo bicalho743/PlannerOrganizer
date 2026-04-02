@@ -295,6 +295,18 @@ if not st.session_state.authenticated:
 
     .stAlert { border-radius: 10px !important; font-size: 0.85rem !important; }
 
+    /* Checkbox (termos de uso na tela de registro) */
+    .stCheckbox label span,
+    .stCheckbox label p,
+    .stCheckbox label {
+        color: rgba(245,240,232,0.7) !important;
+        font-size: 0.85rem !important;
+    }
+    /* Botão genérico (Voltar ao login, etc) */
+    .stButton > button {
+        color: rgba(245,240,232,0.55) !important;
+    }
+
     .login-footer {
         text-align: center; margin-top: 1.5rem; font-size: 0.75rem;
     }
