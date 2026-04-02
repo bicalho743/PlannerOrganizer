@@ -7,6 +7,7 @@ def require_auth():
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             if st.button("🔑 Ir para o login", use_container_width=True):
-                st.session_state.current_page = "login"
+                st.session_state.authenticated = False
+                st.session_state.login_page = "login"
                 st.rerun()
         st.stop()
