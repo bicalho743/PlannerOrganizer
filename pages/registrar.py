@@ -32,8 +32,16 @@ def show():
                                         help="Mínimo de 6 caracteres")
                 password_confirm = st.text_input("Confirme a senha", type="password")
                 
-                # Checkbox de termos
-                terms_accepted = st.checkbox("Aceito os termos de uso e política de privacidade")
+                st.markdown(
+                    '<p style="color: rgba(245,240,232,0.7); font-size: 0.85rem; margin-bottom: 0.25rem;">'
+                    'Ao criar sua conta, você concorda com nossos '
+                    '<a href="?show_termos=true" target="_blank" style="color: #C9A84C; text-decoration: underline;">Termos de Uso</a>'
+                    ' e '
+                    '<a href="?show_politica=true" target="_blank" style="color: #C9A84C; text-decoration: underline;">Política de Privacidade</a>.'
+                    '</p>',
+                    unsafe_allow_html=True
+                )
+                terms_accepted = st.checkbox("Li e aceito os termos de uso e política de privacidade")
                 
                 # Botão de registro com estilo
                 submitted = st.form_submit_button("Criar Conta", use_container_width=True)
