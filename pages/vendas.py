@@ -422,6 +422,8 @@ def _render_detail_panel(venda_id, venda_row):
 
 
 def show():
+    from utils.auth_guard import require_auth
+    require_auth()
     st.markdown("""
     <style>
     .vendas-page .main h2 { font-size: 1.1rem !important; font-weight: 700 !important; }

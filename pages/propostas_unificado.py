@@ -1364,6 +1364,8 @@ def _tab_acoes(proposta_id, proposta):
 
 
 def show():
+    from utils.auth_guard import require_auth
+    require_auth()
     st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">📝 Propostas</h1>', unsafe_allow_html=True)
 
     if not hasattr(st.session_state, 'db'):

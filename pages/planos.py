@@ -44,7 +44,8 @@ def clear_form():
     """, unsafe_allow_html=True)
 
 def show():
-    # Ocultar a barra lateral completamente
+    from utils.auth_guard import require_auth
+    require_auth()
     st.markdown("""
     <style>
     [data-testid="collapsedControl"] {display: none;}

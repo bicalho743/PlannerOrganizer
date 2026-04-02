@@ -6,6 +6,8 @@ from utils.custom_components import custom_info
 from utils.tooltip_helper import create_tooltip, input_with_tooltip
 
 def show():
+    from utils.auth_guard import require_auth
+    require_auth()
     # Verificar se o db está na sessão
     if 'db' not in st.session_state:
         st.error("Erro: Conexão com banco de dados não inicializada")

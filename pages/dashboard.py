@@ -26,6 +26,8 @@ def format_date_safe(date_obj, format_str='%d/%m/%Y'):
             return "Data indisponível"
 
 def show():
+    from utils.auth_guard import require_auth
+    require_auth()
     # Aplicar correção de espaçamento PRIMEIRO
     apply_spacing_fix()
     # Aplicar correção mobile para sidebar

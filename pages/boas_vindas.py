@@ -14,8 +14,9 @@ def get_random_color():
 
 def show():
     """Exibe a página de boas-vindas após o login"""
+    from utils.auth_guard import require_auth
+    require_auth()
     
-    # O cabeçalho já é aplicado pelo page_config.py, então não precisamos adicioná-lo aqui
     
     # Configurações básicas
     st.markdown("""

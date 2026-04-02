@@ -381,6 +381,8 @@ def _view_detalhes(templates):
 
 
 def show():
+    from utils.auth_guard import require_auth
+    require_auth()
     if 'db' not in st.session_state:
         st.error("Erro: Conexão com banco de dados não inicializada")
         return

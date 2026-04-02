@@ -357,6 +357,8 @@ def _dedup_transacoes(df):
 
 
 def show():
+    from utils.auth_guard import require_auth
+    require_auth()
     st.markdown("""
     <style>
     .fin-page .main h2 { font-size: 1.1rem !important; font-weight: 700 !important; }

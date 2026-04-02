@@ -6,7 +6,8 @@ from datetime import datetime, timedelta
 import numpy as np
 
 def show():
-    # Título com estilo personalizado para ficar mais próximo do topo
+    from utils.auth_guard import require_auth
+    require_auth()
     st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">📊 Relatórios Avançados</h1>', unsafe_allow_html=True)
 
     tipo_relatorio = st.selectbox(
