@@ -11,7 +11,8 @@ if root_dir not in sys.path:
 from utils.brevo_helper import adicionar_contato_brevo, enviar_manual_email
 
 def main():
-    # Configuração da página
+    from utils.auth_guard import require_auth
+    require_auth()
     st.set_page_config(
         page_title="Enviar Manual - Planner Organizer",
         page_icon="favicon.png",
