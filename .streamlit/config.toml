@@ -8,7 +8,7 @@ maxUploadSize = 200
 enableStaticServing = true
 
 [client]
-showSidebarNavigation = true
+showSidebarNavigation = false
 showErrorDetails = false
 toolbarMode = "viewer"
 
