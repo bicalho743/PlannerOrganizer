@@ -5,7 +5,6 @@ import streamlit as st
 import os
 import sys
 
-# Adicionar diretório raiz ao path
 project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 if project_root not in sys.path:
     sys.path.append(project_root)
@@ -60,7 +59,6 @@ def get_termos_conteudo():
 
 def show():
     """Exibe a página de termos de uso"""
-    # Ocultar completamente a barra lateral
     st.markdown("""
     <style>
     [data-testid="collapsedControl"] {display: none;}
@@ -73,40 +71,30 @@ def show():
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("""
-    <div style="color: rgba(245,240,232,0.9); line-height: 1.8; font-family: 'DM Sans', sans-serif;">
-        <h1 style="color: #C9A84C; font-size: 1.8rem; margin-bottom: 0.5rem;">Termos e Condições de Uso</h1>
-        <p style="color: rgba(245,240,232,0.6); margin-bottom: 2rem;">
-            Bem-vindo ao nosso sistema. Ao utilizar esta plataforma, você concorda com os presentes Termos e Condições de Uso.
-            Leia com atenção antes de prosseguir.
-        </p>
+    st.markdown('<h1 style="color: #C9A84C; font-size: 1.8rem; margin-bottom: 0.5rem;">Termos e Condições de Uso</h1>', unsafe_allow_html=True)
 
-        <h3 style="color: #C9A84C; font-size: 1.1rem;">1.1 Aceitação dos Termos</h3>
-        <p>Ao acessar e utilizar este sistema, o usuário declara que leu, entendeu e concorda com os termos aqui descritos.
-        Caso não concorde, deve se abster de utilizar os serviços.</p>
+    st.markdown('<p style="color: rgba(245,240,232,0.6); margin-bottom: 2rem;">Bem-vindo ao nosso sistema. Ao utilizar esta plataforma, você concorda com os presentes Termos e Condições de Uso. Leia com atenção antes de prosseguir.</p>', unsafe_allow_html=True)
 
-        <h3 style="color: #C9A84C; font-size: 1.1rem;">1.2 Uso da Plataforma</h3>
-        <p>O sistema deve ser utilizado exclusivamente para fins legais e de acordo com sua finalidade.
-        É proibido o uso indevido, cópia não autorizada, engenharia reversa, ou qualquer ação que
-        comprometa a integridade da plataforma.</p>
+    secoes = [
+        ("1.1 Aceitação dos Termos",
+         "Ao acessar e utilizar este sistema, o usuário declara que leu, entendeu e concorda com os termos aqui descritos. Caso não concorde, deve se abster de utilizar os serviços."),
+        ("1.2 Uso da Plataforma",
+         "O sistema deve ser utilizado exclusivamente para fins legais e de acordo com sua finalidade. É proibido o uso indevido, cópia não autorizada, engenharia reversa, ou qualquer ação que comprometa a integridade da plataforma."),
+        ("1.3 Propriedade Intelectual",
+         "Todos os direitos sobre o sistema, seus códigos, design, funcionalidades e marcas são de propriedade exclusiva da empresa desenvolvedora. O uso não confere qualquer direito sobre esses ativos."),
+        ("1.4 Responsabilidades do Usuário",
+         "O usuário é responsável por manter seus dados de acesso em sigilo, e por toda atividade realizada com seu login. A empresa não se responsabiliza por acessos indevidos decorrentes de negligência."),
+        ("1.5 Suspensão e Cancelamento",
+         "Reservamo-nos o direito de suspender ou cancelar o acesso de qualquer usuário que descumpra estes termos, sem necessidade de aviso prévio."),
+        ("1.6 Alterações nos Termos",
+         "Estes termos poderão ser atualizados periodicamente. O uso contínuo do sistema após alterações será considerado como aceitação das novas condições."),
+    ]
 
-        <h3 style="color: #C9A84C; font-size: 1.1rem;">1.3 Propriedade Intelectual</h3>
-        <p>Todos os direitos sobre o sistema, seus códigos, design, funcionalidades e marcas são de
-        propriedade exclusiva da empresa desenvolvedora. O uso não confere qualquer direito sobre esses ativos.</p>
+    for titulo, texto in secoes:
+        st.markdown(f'<h3 style="color: #C9A84C; font-size: 1.1rem; margin-top: 1.5rem;">{titulo}</h3>', unsafe_allow_html=True)
+        st.markdown(f'<p style="color: rgba(245,240,232,0.85); line-height: 1.8; font-size: 0.95rem;">{texto}</p>', unsafe_allow_html=True)
 
-        <h3 style="color: #C9A84C; font-size: 1.1rem;">1.4 Responsabilidades do Usuário</h3>
-        <p>O usuário é responsável por manter seus dados de acesso em sigilo, e por toda atividade realizada com seu login.
-        A empresa não se responsabiliza por acessos indevidos decorrentes de negligência.</p>
-
-        <h3 style="color: #C9A84C; font-size: 1.1rem;">1.5 Suspensão e Cancelamento</h3>
-        <p>Reservamo-nos o direito de suspender ou cancelar o acesso de qualquer usuário que descumpra estes termos,
-        sem necessidade de aviso prévio.</p>
-
-        <h3 style="color: #C9A84C; font-size: 1.1rem;">1.6 Alterações nos Termos</h3>
-        <p>Estes termos poderão ser atualizados periodicamente. O uso contínuo do sistema após alterações
-        será considerado como aceitação das novas condições.</p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
 
     if st.session_state.get("creating_account", False):
         col1, col2 = st.columns(2)
