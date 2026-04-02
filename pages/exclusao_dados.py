@@ -2,6 +2,8 @@
 import streamlit as st
 
 def show():
+    from utils.auth_guard import require_auth
+    require_auth()
     st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Exclusão de Dados</h1>', unsafe_allow_html=True)
     
     st.markdown("""

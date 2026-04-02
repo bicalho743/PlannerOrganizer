@@ -12,8 +12,8 @@ st.set_page_config(
 )
 
 # Verificar autenticação
-from utils.auth import verificar_autenticacao
-verificar_autenticacao()
+from utils.auth_guard import require_auth
+require_auth()
 
 # Título da página
 st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Gerar Lançamentos Financeiros para Propostas</h1>', unsafe_allow_html=True)
