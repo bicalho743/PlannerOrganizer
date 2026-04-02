@@ -87,96 +87,80 @@ def show():
     <style>
     [data-testid="collapsedControl"] {display: none;}
     section[data-testid="stSidebar"] {display: none;}
-    .stMarkdown, .stMarkdown p, .stMarkdown li, .stMarkdown span,
-    [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p,
-    .stSubheader, h1, h2, h3 {
-        color: rgba(245,240,232,0.85) !important;
+    .block-container {
+        max-width: 900px !important;
+        margin: 0 auto !important;
+        padding: 2rem 3rem !important;
     }
     </style>
     """, unsafe_allow_html=True)
-    
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem; color: #C9A84C !important;">Política de Privacidade</h1>', unsafe_allow_html=True)
-    
+
     st.markdown("""
-    Esta Política de Privacidade descreve como tratamos os dados pessoais dos usuários da nossa plataforma, 
-    em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 - LGPD).
-    """)
-    
-    st.header("1. Coleta de Dados")
-    st.write("""
-    Coletamos dados como nome, e-mail, telefone e IP no momento do cadastro ou uso da plataforma. 
-    Também podem ser coletados dados de navegação, para fins analíticos.
-    """)
-    
-    st.header("2. Finalidade do Uso")
-    st.write("""
-    Utilizamos os dados para:
-    - Autenticação e acesso à conta
-    - Comunicação com o usuário (e-mails transacionais ou promocionais)
-    - Aprimoramento da experiência no sistema
-    - Fins estatísticos e de segurança
-    """)
-    
-    st.header("3. Compartilhamento de Dados")
-    st.write("""
-    Os dados poderão ser compartilhados com serviços terceiros (como Firebase ou ferramentas de e-mail) 
-    apenas quando necessário para o funcionamento do sistema. Nenhum dado é vendido ou divulgado a terceiros 
-    sem autorização.
-    """)
-    
-    st.header("4. Segurança da Informação")
-    st.write("""
-    Utilizamos medidas técnicas e organizacionais para proteger seus dados contra acessos não autorizados, 
-    perda ou alteração indevida.
-    """)
-    
-    st.header("5. Direitos do Titular")
-    st.write("""
-    Você pode, a qualquer momento:
-    - Solicitar acesso aos seus dados
-    - Corrigir dados incorretos
-    - Solicitar exclusão
-    - Revogar consentimentos
-    """)
-    
-    st.header("6. Alterações na Política de Privacidade")
-    st.write("""
-    Podemos atualizar esta Política de Privacidade periodicamente. Notificaremos sobre mudanças 
-    significativas e obteremos seu consentimento quando necessário.
-    """)
-    
-    st.header("7. Controlador dos Dados")
-    st.write("""
-    O controlador dos seus dados pessoais é a empresa Planner Organizer, responsável pelas decisões 
-    referentes ao tratamento dos seus dados pessoais.
-    """)
-    
-    st.header("8. Contato para Questões de Privacidade")
-    st.write("""
-    Para exercer seus direitos ou esclarecer dúvidas sobre esta Política de Privacidade, 
-    entre em contato pelo e-mail: privacidade@plannerorganizer.com.br
-    """)
-    
-    # Verificar se estamos no fluxo de criação de conta
+    <div style="color: rgba(245,240,232,0.9); line-height: 1.8; font-family: 'DM Sans', sans-serif;">
+        <h1 style="color: #C9A84C; font-size: 1.8rem; margin-bottom: 0.5rem;">Política de Privacidade</h1>
+        <p style="color: rgba(245,240,232,0.6); margin-bottom: 2rem;">
+            Esta Política de Privacidade descreve como tratamos os dados pessoais dos usuários da nossa plataforma,
+            em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 - LGPD).
+        </p>
+
+        <h3 style="color: #C9A84C; font-size: 1.1rem;">1. Coleta de Dados</h3>
+        <p>Coletamos dados como nome, e-mail, telefone e IP no momento do cadastro ou uso da plataforma.
+        Também podem ser coletados dados de navegação, para fins analíticos.</p>
+
+        <h3 style="color: #C9A84C; font-size: 1.1rem;">2. Finalidade do Uso</h3>
+        <p>Utilizamos os dados para:</p>
+        <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+            <li>Autenticação e acesso à conta</li>
+            <li>Comunicação com o usuário (e-mails transacionais ou promocionais)</li>
+            <li>Aprimoramento da experiência no sistema</li>
+            <li>Fins estatísticos e de segurança</li>
+        </ul>
+
+        <h3 style="color: #C9A84C; font-size: 1.1rem;">3. Compartilhamento de Dados</h3>
+        <p>Os dados poderão ser compartilhados com serviços terceiros (como Firebase ou ferramentas de e-mail)
+        apenas quando necessário para o funcionamento do sistema. Nenhum dado é vendido ou divulgado a terceiros
+        sem autorização.</p>
+
+        <h3 style="color: #C9A84C; font-size: 1.1rem;">4. Segurança da Informação</h3>
+        <p>Utilizamos medidas técnicas e organizacionais para proteger seus dados contra acessos não autorizados,
+        perda ou alteração indevida.</p>
+
+        <h3 style="color: #C9A84C; font-size: 1.1rem;">5. Direitos do Titular</h3>
+        <p>Você pode, a qualquer momento:</p>
+        <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+            <li>Solicitar acesso aos seus dados</li>
+            <li>Corrigir dados incorretos</li>
+            <li>Solicitar exclusão</li>
+            <li>Revogar consentimentos</li>
+        </ul>
+
+        <h3 style="color: #C9A84C; font-size: 1.1rem;">6. Alterações na Política de Privacidade</h3>
+        <p>Podemos atualizar esta Política de Privacidade periodicamente. Notificaremos sobre mudanças
+        significativas e obteremos seu consentimento quando necessário.</p>
+
+        <h3 style="color: #C9A84C; font-size: 1.1rem;">7. Controlador dos Dados</h3>
+        <p>O controlador dos seus dados pessoais é a empresa Planner Organizer, responsável pelas decisões
+        referentes ao tratamento dos seus dados pessoais.</p>
+
+        <h3 style="color: #C9A84C; font-size: 1.1rem;">8. Contato para Questões de Privacidade</h3>
+        <p>Para exercer seus direitos ou esclarecer dúvidas sobre esta Política de Privacidade,
+        entre em contato pelo e-mail: <span style="color: #C9A84C;">privacidade@plannerorganizer.com.br</span></p>
+    </div>
+    """, unsafe_allow_html=True)
+
     if st.session_state.get("creating_account", False):
-        # Botões para aceitar/recusar termos
         col1, col2 = st.columns(2)
-        
         with col1:
             if st.button("Aceitar Política e Continuar", type="primary", use_container_width=True):
-                # Marcar política como aceita e continuar
                 st.session_state.politica_aceita = True
                 st.session_state.show_politica = False
                 st.rerun()
-        
         with col2:
             if st.button("Recusar e Voltar", use_container_width=True):
-                # Voltar ao login sem criar a conta
                 st.session_state.show_politica = False
                 st.rerun()
     else:
-        # Botão simples para voltar
-        if st.button("Voltar"):
+        if st.button("← Voltar"):
             st.session_state.show_politica = False
             st.rerun()
 
