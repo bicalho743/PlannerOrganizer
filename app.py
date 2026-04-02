@@ -52,6 +52,101 @@ st.set_page_config(
 )
 from utils.pwa_inject import inject_pwa
 inject_pwa()
+
+import streamlit.components.v1 as _components
+_components.html("""
+<script>
+(function(){
+  var doc = window.parent.document;
+  if (doc.getElementById('mobile-sidebar-fab')) return;
+
+  var style = doc.createElement('style');
+  style.textContent =
+    '#mobile-sidebar-fab { display:none !important; }' +
+    '#mobile-sidebar-overlay { display:none !important; }' +
+    '@media screen and (max-width:768px) {' +
+    '  #mobile-sidebar-fab { display:flex !important; }' +
+    '  #mobile-sidebar-overlay { display:block !important; }' +
+    '}';
+  doc.head.appendChild(style);
+
+  var fab = doc.createElement('button');
+  fab.id = 'mobile-sidebar-fab';
+  fab.setAttribute('aria-label', 'Abrir menu');
+  fab.textContent = '\\u2630';
+  doc.body.appendChild(fab);
+
+  var overlay = doc.createElement('div');
+  overlay.id = 'mobile-sidebar-overlay';
+  doc.body.appendChild(overlay);
+
+  function getSidebar() {
+    return doc.querySelector('section[data-testid="stSidebar"]');
+  }
+
+  function isOpen() {
+    var sb = getSidebar();
+    return sb && sb.getAttribute('aria-expanded') === 'true';
+  }
+
+  function clickNativeBtn() {
+    var btns = doc.querySelectorAll(
+      'button[data-testid="collapsedControl"],' +
+      'button[data-testid="stBaseButton-headerNoPadding"]'
+    );
+    for (var i = 0; i < btns.length; i++) { btns[i].click(); return true; }
+    return false;
+  }
+
+  function syncState() {
+    var open = isOpen();
+    if (open) {
+      fab.innerHTML = '\\u2715';
+      var sb = getSidebar();
+      var sbW = sb ? sb.getBoundingClientRect().width : 280;
+      fab.style.left = (sbW - 46) + 'px';
+      fab.style.background = 'rgba(13,27,42,0.85)';
+      fab.style.borderColor = 'rgba(255,255,255,0.3)';
+      fab.style.color = '#ffffff';
+      overlay.classList.add('overlay-visible');
+    } else {
+      fab.innerHTML = '\\u2630';
+      fab.style.left = '14px';
+      fab.style.background = '#0D1B2A';
+      fab.style.borderColor = '#C9A84C';
+      fab.style.color = '#C9A84C';
+      overlay.classList.remove('overlay-visible');
+    }
+  }
+
+  fab.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    clickNativeBtn();
+    setTimeout(syncState, 100);
+  });
+
+  overlay.addEventListener('click', function() {
+    if (isOpen()) clickNativeBtn();
+    setTimeout(syncState, 100);
+  });
+
+  function initObserver() {
+    var sb = getSidebar();
+    if (sb) {
+      new MutationObserver(function() { syncState(); }).observe(sb, {attributes: true, attributeFilter: ['aria-expanded']});
+      syncState();
+    } else {
+      setTimeout(initObserver, 500);
+    }
+  }
+  initObserver();
+
+  window.addEventListener('resize', function() { setTimeout(syncState, 200); });
+})();
+</script>
+""", height=0)
+
 try:
     from utils.session_persistence import setup_session_persistence
     from utils.auto_login import check_and_restore_auto_login

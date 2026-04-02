@@ -318,19 +318,16 @@ body, .main, [data-testid="stAppViewContainer"], .block-container {
    ======================================== */
 @media screen and (max-width: 768px) {
 
-    /* Sidebar oculta por padrão */
     section[data-testid="stSidebar"] {
         transform: translateX(-280px) !important;
         box-shadow: none !important;
     }
 
-    /* Quando expandida, aparece como overlay */
     section[data-testid="stSidebar"][aria-expanded="true"] {
         transform: translateX(0) !important;
         box-shadow: 4px 0 20px rgba(0,0,0,0.5) !important;
     }
 
-    /* Conteúdo ocupa tela toda */
     .main .block-container,
     [data-testid="stMainBlockContainer"] {
         margin-left: 0 !important;
@@ -344,29 +341,68 @@ body, .main, [data-testid="stAppViewContainer"], .block-container {
         margin-left: 0 !important; width: 100% !important;
     }
 
-    /* Mostrar botão ☰ no mobile */
     button[kind="headerNoPadding"],
     button[data-testid="stBaseButton-headerNoPadding"],
     div[data-testid="stSidebarCollapseButton"],
     button[data-testid="collapsedControl"] {
-        display: flex !important; visibility: visible !important;
-        opacity: 1 !important; pointer-events: auto !important;
-        position: fixed !important; top: 12px !important; left: 12px !important;
-        z-index: 9999999 !important; background: #0D1B2A !important;
-        color: white !important; border-radius: 8px !important; padding: 8px !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
+        display: none !important;
+        visibility: hidden !important;
     }
 
-    /* Cards em coluna única */
+    #mobile-sidebar-fab {
+        display: flex !important;
+    }
+
+    #mobile-sidebar-overlay {
+        display: block !important;
+    }
+
     [data-testid="stHorizontalBlock"] { flex-direction: column !important; }
     [data-testid="stHorizontalBlock"] > div { width: 100% !important; min-width: 100% !important; }
 
-    /* Cabeçalho oculto no mobile */
     .app-header { display: none !important; }
 
-    /* Tabelas menores */
     .dataframe td, .dataframe th { font-size: 12px !important; padding: 0.4rem !important; }
 
-    /* Abas menores */
     button[role="tab"] { padding: 0.5rem 0.75rem !important; font-size: 0.8rem !important; }
+}
+
+#mobile-sidebar-fab {
+    display: none;
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 10000000;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: #0D1B2A;
+    border: 2px solid #C9A84C;
+    color: #C9A84C;
+    font-size: 22px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+    transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+#mobile-sidebar-fab:active {
+    transform: scale(0.92);
+}
+
+#mobile-sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 999998;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+#mobile-sidebar-overlay.overlay-visible {
+    opacity: 1;
+    pointer-events: auto;
 }
