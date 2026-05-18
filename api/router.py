@@ -109,7 +109,6 @@ class TransacaoCreate(BaseModel):
     valor: float
     categoria: str
     tipo_receita: Optional[str] = None
-    data: Optional[str] = None
 
 class TransacaoUpdate(BaseModel):
     tipo: Optional[str] = None
@@ -117,16 +116,18 @@ class TransacaoUpdate(BaseModel):
     valor: Optional[float] = None
     categoria: Optional[str] = None
 
-class PosOrganizacaoUpdate(BaseModel):
-    status: Optional[bool] = None
-    observacao: Optional[str] = None
-    data_retorno: Optional[str] = None
+class VendaCreate(BaseModel):
+    cliente_id: int
+    itens: list
+    forma_pagamento: Optional[str] = None
+    observacoes: Optional[str] = None
+    data_venda: Optional[str] = None
 
 # ── STATUS ────────────────────────────────────────────────────────────────────
 
 @api.get("/api/status")
 async def api_status():
-    return {"status": "online", "versão": "3.0.0", "mensagem": "API CRUD completa"}
+    return {"status": "online", "versão": "3.0.0"}
 
 # ── DASHBOARD ─────────────────────────────────────────────────────────────────
 
@@ -204,14 +205,13 @@ async def get_clientes(uid: str = Depends(verify_firebase_token)):
 @api.post("/clientes")
 async def create_cliente(body: ClienteCreate, uid: str = Depends(verify_firebase_token)):
     try:
-        db = get_db(uid)
-        db.add_cliente(
+        get_db(uid).add_cliente(
             nome=body.nome, email=body.email, telefone=body.telefone,
             estado=body.estado, cidade=body.cidade, bairro=body.bairro,
             endereco=body.endereco, data_aniversario=body.data_aniversario,
             origem_cliente=body.origem_cliente, observacoes=body.observacoes
         )
-        return JSONResponse(content={"success": True, "message": "Cliente cadastrado!"})
+        return JSONResponse(content={"success": True})
     except HTTPException:
         raise
     except Exception as e:
@@ -220,15 +220,14 @@ async def create_cliente(body: ClienteCreate, uid: str = Depends(verify_firebase
 @api.put("/clientes/{cliente_id}")
 async def update_cliente(cliente_id: int, body: ClienteUpdate, uid: str = Depends(verify_firebase_token)):
     try:
-        db = get_db(uid)
-        db.update_cliente(
+        get_db(uid).update_cliente(
             cliente_id=cliente_id, nome=body.nome, email=body.email,
             telefone=body.telefone, estado=body.estado, cidade=body.cidade,
             bairro=body.bairro, endereco=body.endereco,
             data_aniversario=body.data_aniversario, origem_cliente=body.origem_cliente,
             observacoes=body.observacoes
         )
-        return JSONResponse(content={"success": True, "message": "Cliente atualizado!"})
+        return JSONResponse(content={"success": True})
     except HTTPException:
         raise
     except Exception as e:
@@ -238,7 +237,7 @@ async def update_cliente(cliente_id: int, body: ClienteUpdate, uid: str = Depend
 async def delete_cliente(cliente_id: int, uid: str = Depends(verify_firebase_token)):
     try:
         get_db(uid).delete_cliente(cliente_id)
-        return JSONResponse(content={"success": True, "message": "Cliente excluído!"})
+        return JSONResponse(content={"success": True})
     except HTTPException:
         raise
     except Exception as e:
@@ -258,12 +257,11 @@ async def get_propostas(uid: str = Depends(verify_firebase_token)):
 @api.post("/propostas")
 async def create_proposta(body: PropostaCreate, uid: str = Depends(verify_firebase_token)):
     try:
-        db = get_db(uid)
-        db.add_proposta(
+        get_db(uid).add_proposta(
             cliente_id=body.cliente_id, descricao=body.descricao,
             valor=body.valor, status=body.status, tipo_proposta=body.tipo_proposta
         )
-        return JSONResponse(content={"success": True, "message": "Proposta criada!"})
+        return JSONResponse(content={"success": True})
     except HTTPException:
         raise
     except Exception as e:
@@ -275,12 +273,9 @@ async def update_proposta(proposta_id: int, body: PropostaUpdate, uid: str = Dep
         db = get_db(uid)
         if body.status:
             db.update_proposta_status(proposta_id, body.status)
-        if body.descricao or body.valor or body.ambiente:
-            db.update_proposta(
-                proposta_id=proposta_id, descricao=body.descricao,
-                valor=body.valor
-            )
-        return JSONResponse(content={"success": True, "message": "Proposta atualizada!"})
+        if body.descricao or body.valor:
+            db.update_proposta(proposta_id=proposta_id, descricao=body.descricao, valor=body.valor)
+        return JSONResponse(content={"success": True})
     except HTTPException:
         raise
     except Exception as e:
@@ -310,13 +305,12 @@ async def get_financeiro(uid: str = Depends(verify_firebase_token)):
 @api.post("/financeiro")
 async def create_transacao(body: TransacaoCreate, uid: str = Depends(verify_firebase_token)):
     try:
-        db = get_db(uid)
-        db.add_transacao(
+        get_db(uid).add_transacao(
             tipo=body.tipo, descricao=body.descricao,
             valor=body.valor, categoria=body.categoria,
             tipo_receita=body.tipo_receita
         )
-        return JSONResponse(content={"success": True, "message": "Transação registrada!"})
+        return JSONResponse(content={"success": True})
     except HTTPException:
         raise
     except Exception as e:
@@ -325,12 +319,11 @@ async def create_transacao(body: TransacaoCreate, uid: str = Depends(verify_fire
 @api.put("/financeiro/{transacao_id}")
 async def update_transacao(transacao_id: int, body: TransacaoUpdate, uid: str = Depends(verify_firebase_token)):
     try:
-        db = get_db(uid)
-        db.update_transacao(
+        get_db(uid).update_transacao(
             transacao_id=transacao_id, tipo=body.tipo,
             descricao=body.descricao, valor=body.valor, categoria=body.categoria
         )
-        return JSONResponse(content={"success": True, "message": "Transação atualizada!"})
+        return JSONResponse(content={"success": True})
     except HTTPException:
         raise
     except Exception as e:
@@ -340,7 +333,7 @@ async def update_transacao(transacao_id: int, body: TransacaoUpdate, uid: str = 
 async def delete_transacao(transacao_id: int, uid: str = Depends(verify_firebase_token)):
     try:
         get_db(uid).delete_transacao(transacao_id)
-        return JSONResponse(content={"success": True, "message": "Transação excluída!"})
+        return JSONResponse(content={"success": True})
     except HTTPException:
         raise
     except Exception as e:
@@ -352,19 +345,49 @@ async def delete_transacao(transacao_id: int, uid: str = Depends(verify_firebase
 async def get_vendas(uid: str = Depends(verify_firebase_token)):
     try:
         db = get_db(uid)
-        try:
-            vendas = db.get_historico_pagamentos()
-            records = safe_records(vendas)
-        except:
-            propostas = db.get_propostas()
-            if propostas is not None and not propostas.empty:
-                vendas_df = propostas[propostas['status'].isin(['aprovada', 'finalizada', 'pago'])]
-                records = safe_records(vendas_df)
-            else:
-                records = []
-        total_pago = sum(float(r.get('valor', 0) or 0) for r in records if r.get('status') in ['pago', 'aprovada', 'finalizada'])
-        total_pendente = sum(float(r.get('valor', 0) or 0) for r in records if r.get('status') in ['pendente', 'aguardando'])
-        return JSONResponse(content={"vendas": records, "total_pago": round(total_pago, 2), "total_pendente": round(total_pendente, 2)})
+        vendas = db.get_vendas()
+        records = safe_records(vendas)
+        total_pago = sum(float(r.get('valor_total', 0) or 0) for r in records if str(r.get('status', '')).lower() in ['confirmada', 'pago', 'concluida'])
+        total_pendente = sum(float(r.get('valor_total', 0) or 0) for r in records if str(r.get('status', '')).lower() in ['pendente', 'aberto'])
+        return JSONResponse(content={
+            "vendas": records,
+            "total_pago": round(total_pago, 2),
+            "total_pendente": round(total_pendente, 2)
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api.post("/vendas")
+async def create_venda(body: VendaCreate, uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        data_venda = None
+        if body.data_venda:
+            try:
+                data_venda = datetime.strptime(body.data_venda, '%Y-%m-%d').date()
+            except:
+                pass
+        venda_id = db.add_venda(
+            cliente_id=body.cliente_id,
+            itens=body.itens,
+            forma_pagamento=body.forma_pagamento,
+            observacoes=body.observacoes,
+            data_venda=data_venda
+        )
+        return JSONResponse(content={"success": True, "venda_id": venda_id})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api.get("/produtos")
+async def get_produtos(uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        produtos = db.get_produtos()
+        return JSONResponse(content=safe_records(produtos))
     except HTTPException:
         raise
     except Exception as e:
@@ -376,17 +399,19 @@ async def get_vendas(uid: str = Depends(verify_firebase_token)):
 async def get_pos_organizacao(uid: str = Depends(verify_firebase_token)):
     try:
         db = get_db(uid)
-        try:
-            pos = db.get_pos_organizacao() if hasattr(db, 'get_pos_organizacao') else None
-            records = safe_records(pos) if pos is not None else []
-        except:
-            propostas = db.get_propostas()
-            if propostas is not None and not propostas.empty:
-                finalizadas = propostas[propostas['status'].isin(['finalizada', 'aprovada'])]
-                records = safe_records(finalizadas)
-            else:
-                records = []
-        return JSONResponse(content=records)
+        pos = db.get_post_organizations()
+        return JSONResponse(content=safe_records(pos))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api.get("/pos-organizacao/{pos_id}/acoes")
+async def get_pos_acoes(pos_id: int, uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        acoes = db.get_post_organization_actions(pos_id)
+        return JSONResponse(content=safe_records(acoes))
     except HTTPException:
         raise
     except Exception as e:
@@ -401,8 +426,10 @@ async def get_relatorios(uid: str = Depends(verify_firebase_token)):
         financeiro = db.get_financeiro()
         propostas = db.get_propostas()
         clientes = db.get_clientes()
+        vendas = db.get_vendas()
         hoje = datetime.now()
         fin_records = safe_records(financeiro)
+        vendas_records = safe_records(vendas)
 
         def get_receita_mes(records, mes, ano):
             total = 0.0
@@ -427,8 +454,6 @@ async def get_relatorios(uid: str = Depends(verify_firebase_token)):
         if propostas is not None and not propostas.empty and 'status' in propostas.columns:
             servicos_atual = len(propostas[propostas['status'].isin(['aprovada', 'finalizada'])])
 
-        # Top categorias de receita
-        top_categorias = []
         from collections import defaultdict
         cat_totais = defaultdict(float)
         for r in fin_records:
@@ -436,18 +461,58 @@ async def get_relatorios(uid: str = Depends(verify_firebase_token)):
                 cat_totais[r['categoria']] += float(r.get('valor', 0) or 0)
         top_categorias = [{'categoria': k, 'total': round(v, 2)} for k, v in sorted(cat_totais.items(), key=lambda x: -x[1])[:5]]
 
+        total_vendas = sum(float(r.get('valor_total', 0) or 0) for r in vendas_records)
+
+        # Status de propostas
+        status_propostas = []
+        if propostas is not None and not propostas.empty and 'status' in propostas.columns:
+            for status, grupo in propostas.groupby('status'):
+                valor_total = float(grupo['valor'].sum()) if 'valor' in grupo.columns else 0
+                status_propostas.append({
+                    'status': str(status),
+                    'quantidade': len(grupo),
+                    'valor_total': round(valor_total, 2)
+                })
+
+        # Origem dos clientes
+        origens_clientes = []
+        if clientes is not None and not clientes.empty and 'origem_cliente' in clientes.columns:
+            for origem, grupo in clientes.groupby('origem_cliente'):
+                if origem and str(origem) != 'nan':
+                    origens_clientes.append({'origem': str(origem), 'quantidade': len(grupo)})
+            origens_clientes.sort(key=lambda x: -x['quantidade'])
+
+        # Ticket médio
+        ticket_medio = 0.0
+        prop_records = safe_records(propostas)
+        valores = [float(r.get('valor', 0) or 0) for r in prop_records if r.get('valor')]
+        if valores:
+            ticket_medio = round(sum(valores) / len(valores), 2)
+
+        # Propostas por cliente
+        propostas_por_cliente = 0.0
+        total_cli = len(clientes) if clientes is not None and not clientes.empty else 0
+        total_prop = len(propostas) if propostas is not None and not propostas.empty else 0
+        if total_cli > 0:
+            propostas_por_cliente = round(total_prop / total_cli, 1)
+
         return JSONResponse(content={
             "mes_atual": {
                 "receita": get_receita_mes(fin_records, mes_atual, ano_atual),
                 "servicos": servicos_atual,
-                "novos_clientes": len(clientes) if clientes is not None and not clientes.empty else 0
+                "novos_clientes": total_cli,
+                "total_vendas": round(total_vendas, 2)
             },
             "mes_anterior": {
                 "receita": get_receita_mes(fin_records, mes_anterior, ano_anterior),
                 "servicos": 0,
                 "novos_clientes": 0
             },
-            "top_categorias": top_categorias
+            "top_categorias": top_categorias,
+            "status_propostas": status_propostas,
+            "origens_clientes": origens_clientes[:10],
+            "ticket_medio": ticket_medio,
+            "propostas_por_cliente": propostas_por_cliente
         })
     except HTTPException:
         raise
@@ -468,7 +533,7 @@ async def get_perfil(uid: str = Depends(verify_firebase_token)):
                 return JSONResponse(content=perfil if isinstance(perfil, dict) else {})
         except:
             pass
-        return JSONResponse(content={"usuario_id": uid, "nome": "", "email": "", "telefone": "", "cidade": ""})
+        return JSONResponse(content={"usuario_id": uid})
     except HTTPException:
         raise
     except Exception as e:
