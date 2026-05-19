@@ -230,9 +230,24 @@ def apply_page_footer():
     .footer-container a:hover {
         color: #ffffff; text-decoration: underline;
     }
-    .main .block-container { padding-bottom: 50px !important; margin-bottom: 0px !important; }
+    .main .block-container,
+    [data-testid="stMainBlockContainer"] {
+        padding-bottom: 90px !important;
+        margin-bottom: 0px !important;
+    }
     [data-testid="stAppViewContainer"] .main { margin-bottom: 0px !important; }
     body { margin-bottom: 0px !important; padding-bottom: 0px !important; }
+    @media screen and (max-width: 768px) {
+        .main .block-container,
+        [data-testid="stMainBlockContainer"] {
+            padding-bottom: 110px !important;
+        }
+        .footer-container {
+            font-size: 11px !important;
+            padding: 10px 12px !important;
+            line-height: 1.5 !important;
+        }
+    }
     </style>
     """
     st.markdown(footer_css, unsafe_allow_html=True)
