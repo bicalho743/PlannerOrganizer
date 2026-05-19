@@ -154,23 +154,36 @@ async def get_dashboard(uid: str = Depends(verify_firebase_token)):
         aniversariantes_mes = []
         hoje = datetime.now()
         if clientes_df is not None and not clientes_df.empty:
-            for col in ['data_nascimento', 'aniversario', 'data_aniversario']:
+            for col in ['data_nascimento', 'data_aniversario', 'aniversario']:
                 if col in clientes_df.columns:
                     for _, row in clientes_df.iterrows():
                         try:
-                            raw = str(row[col])
-                            if '/' in raw and len(raw) <= 6:
+                            raw = str(row.get(col, '') or '').strip()
+                            if not raw or raw in ('None', 'nan', ''):
+                                continue
+                            day, month = None, None
+                            # Formato DD/MM ou DD/MM/YYYY
+                            if '/' in raw:
                                 parts = raw.split('/')
-                                day, month = int(parts[0]), int(parts[1]) if len(parts) > 1 else 0
+                                day = int(parts[0])
+                                month = int(parts[1]) if len(parts) > 1 else 0
+                            # Formato MM-DD (ex: 06-15)
+                            elif '-' in raw and len(raw) <= 5:
+                                parts = raw.split('-')
+                                month = int(parts[0])
+                                day = int(parts[1])
+                            # Formato YYYY-MM-DD ou data completa
                             else:
-                                dt = pd.to_datetime(raw)
-                                day, month = dt.day, dt.month
-                            nome = row.get('nome', '')
-                            tel = row.get('telefone', '')
-                            if month == hoje.month and day == hoje.day:
-                                aniversariantes_hoje.append({'nome': nome, 'telefone': tel})
-                            elif month == hoje.month:
-                                aniversariantes_mes.append({'nome': nome, 'dia': day, 'telefone': tel})
+                                dt = pd.to_datetime(raw, errors='coerce')
+                                if pd.notna(dt):
+                                    day, month = dt.day, dt.month
+                            if day and month and month > 0:
+                                nome = str(row.get('nome', ''))
+                                tel = str(row.get('telefone', '') or '')
+                                if month == hoje.month and day == hoje.day:
+                                    aniversariantes_hoje.append({'nome': nome, 'telefone': tel})
+                                elif month == hoje.month:
+                                    aniversariantes_mes.append({'nome': nome, 'dia': day, 'telefone': tel})
                         except:
                             pass
                     break
@@ -1116,3 +1129,103 @@ async def get_assistentes(uid: str = Depends(verify_firebase_token)):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── ENDPOINTS CADASTROS UNIFICADOS ────────────────────────────────────────────
+
+class FornecedorCreate(BaseModel):
+    descricao: str
+    contato: Optional[str] = None
+    categoria: Optional[str] = None
+    estado: Optional[str] = None
+    cidade: Optional[str] = None
+    pix: Optional[str] = None
+    percentual_comissao: Optional[float] = 0.0
+    observacoes: Optional[str] = None
+
+class ParceiroCreate(BaseModel):
+    nome: str
+    telefone: Optional[str] = None
+    area_atuacao: Optional[str] = None
+    tipo_parceria: Optional[str] = None
+    cidade: Optional[str] = None
+    pix: Optional[str] = None
+    observacoes: Optional[str] = None
+
+class AssistenteCreate(BaseModel):
+    nome: str
+    telefone: Optional[str] = None
+    endereco: Optional[str] = None
+    pix: Optional[str] = None
+    observacoes: Optional[str] = None
+
+class ProdutoCreate(BaseModel):
+    nome: str
+    preco_custo: float = 0.0
+    preco_venda: float = 0.0
+    descricao: Optional[str] = None
+    categoria: Optional[str] = None
+    estoque: int = 0
+
+@api.get("/parceiros")
+async def get_parceiros(uid: str = Depends(verify_firebase_token)):
+    try:
+        return JSONResponse(content=safe_records(get_db(uid).get_parceiros()))
+    except HTTPException: raise
+    except Exception as e: raise HTTPException(status_code=500, detail=str(e))
+
+@api.post("/fornecedores")
+async def create_fornecedor(body: FornecedorCreate, uid: str = Depends(verify_firebase_token)):
+    try:
+        get_db(uid).add_fornecedor(
+            descricao=body.descricao, contato=body.contato, categoria=body.categoria or '',
+            estado=body.estado, cidade=body.cidade, pix=body.pix,
+            percentual_comissao=body.percentual_comissao or 0.0, observacoes=body.observacoes
+        )
+        return JSONResponse(content={"success": True})
+    except HTTPException: raise
+    except Exception as e: raise HTTPException(status_code=500, detail=str(e))
+
+@api.post("/parceiros")
+async def create_parceiro(body: ParceiroCreate, uid: str = Depends(verify_firebase_token)):
+    try:
+        get_db(uid).add_parceiro(
+            nome=body.nome, telefone=body.telefone or '', area_atuacao=body.area_atuacao or '',
+            tipo_parceria=body.tipo_parceria or '', cidade=body.cidade, pix=body.pix, observacoes=body.observacoes
+        )
+        return JSONResponse(content={"success": True})
+    except HTTPException: raise
+    except Exception as e: raise HTTPException(status_code=500, detail=str(e))
+
+@api.post("/assistentes")
+async def create_assistente(body: AssistenteCreate, uid: str = Depends(verify_firebase_token)):
+    try:
+        get_db(uid).add_assistente(
+            nome=body.nome, telefone=body.telefone, endereco=body.endereco,
+            pix=body.pix, observacoes=body.observacoes
+        )
+        return JSONResponse(content={"success": True})
+    except HTTPException: raise
+    except Exception as e: raise HTTPException(status_code=500, detail=str(e))
+
+@api.post("/produtos")
+async def create_produto(body: ProdutoCreate, uid: str = Depends(verify_firebase_token)):
+    try:
+        get_db(uid).add_produto(
+            nome=body.nome, preco_custo=body.preco_custo, preco_venda=body.preco_venda,
+            descricao=body.descricao, categoria=body.categoria, estoque=body.estoque
+        )
+        return JSONResponse(content={"success": True})
+    except HTTPException: raise
+    except Exception as e: raise HTTPException(status_code=500, detail=str(e))
+
+@api.put("/produtos/{produto_id}")
+async def update_produto(produto_id: int, body: ProdutoCreate, uid: str = Depends(verify_firebase_token)):
+    try:
+        get_db(uid).update_produto(
+            produto_id=produto_id, nome=body.nome, preco_custo=body.preco_custo,
+            preco_venda=body.preco_venda, descricao=body.descricao, categoria=body.categoria, estoque=body.estoque
+        )
+        return JSONResponse(content={"success": True})
+    except HTTPException: raise
+    except Exception as e: raise HTTPException(status_code=500, detail=str(e))
