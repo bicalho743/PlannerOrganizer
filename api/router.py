@@ -1229,3 +1229,51 @@ async def update_produto(produto_id: int, body: ProdutoCreate, uid: str = Depend
         return JSONResponse(content={"success": True})
     except HTTPException: raise
     except Exception as e: raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── PÓS-ORGANIZAÇÃO DETALHADO ─────────────────────────────────────────────────
+
+class AcaoUpdate(BaseModel):
+    status: str  # FEITO ou PENDENTE
+    notes: Optional[str] = None
+
+@api.get("/pos-organizacao/{pos_id}/acoes")
+async def get_pos_acoes_detail(pos_id: int, uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        acoes = db.get_post_organization_actions(pos_id)
+        records = safe_records(acoes)
+        # Buscar templates para enrichment
+        try:
+            templates = db.get_post_org_templates()
+            for r in records:
+                action_type = r.get('action_type', '')
+                if action_type in templates:
+                    t = templates[action_type]
+                    r['nome'] = t.get('nome', action_type)
+                    r['emoji'] = t.get('emoji', '📌')
+                    r['dias_apos'] = t.get('dias_apos', '')
+                    r['texto'] = t.get('texto', '')
+                else:
+                    r['nome'] = action_type.replace('_', ' ').title()
+                    r['emoji'] = '📌'
+                    r['dias_apos'] = ''
+                    r['texto'] = ''
+        except:
+            pass
+        return JSONResponse(content=records)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api.put("/pos-organizacao/acoes/{acao_id}")
+async def update_pos_acao(acao_id: int, body: AcaoUpdate, uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        db.update_post_organization_action(action_id=acao_id, status=body.status, notes=body.notes)
+        return JSONResponse(content={"success": True})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
