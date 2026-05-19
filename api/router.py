@@ -1111,9 +1111,30 @@ async def add_acrescimo(proposta_id: int, body: AcrescimoCreate, uid: str = Depe
 @api.get("/fornecedores")
 async def get_fornecedores(uid: str = Depends(verify_firebase_token)):
     try:
+        import os as _os, psycopg2, psycopg2.extras
+        db_url = _os.environ.get("DATABASE_URL")
+        if db_url:
+            conn = psycopg2.connect(db_url)
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cursor.execute("""
+                SELECT id, descricao, contato, categoria, estado, cidade, bairro,
+                       endereco, pix, recorrente, observacoes, valor,
+                       percentual_comissao, usuario_id
+                FROM fornecedores
+                WHERE usuario_id = %s OR usuario_id IS NULL
+                ORDER BY descricao
+            """, (uid,))
+            rows = cursor.fetchall()
+            cursor.close(); conn.close()
+            result = []
+            for r in rows:
+                item = dict(r)
+                for k, v in item.items():
+                    if hasattr(v, "isoformat"): item[k] = v.isoformat()
+                result.append(item)
+            return JSONResponse(content=result)
         db = get_db(uid)
-        df = db.get_fornecedores()
-        return JSONResponse(content=safe_records(df))
+        return JSONResponse(content=safe_records(db.get_fornecedores()))
     except HTTPException:
         raise
     except Exception as e:
@@ -1272,6 +1293,33 @@ async def update_pos_acao(acao_id: int, body: AcaoUpdate, uid: str = Depends(ver
     try:
         db = get_db(uid)
         db.update_post_organization_action(action_id=acao_id, status=body.status, notes=body.notes)
+        return JSONResponse(content={"success": True})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── PERFIL UPDATE ─────────────────────────────────────────────────────────────
+
+class PerfilUpdate(BaseModel):
+    nome_completo: Optional[str] = None
+    telefone: Optional[str] = None
+    instagram: Optional[str] = None
+    empresa: Optional[str] = None
+    cargo: Optional[str] = None
+    website: Optional[str] = None
+    cidade: Optional[str] = None
+    estado: Optional[str] = None
+    endereco: Optional[str] = None
+    cnpj: Optional[str] = None
+
+@api.put("/perfil")
+async def update_perfil(body: PerfilUpdate, uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        dados = {k: v for k, v in body.dict().items() if v is not None}
+        db.salvar_perfil_usuario(dados)
         return JSONResponse(content={"success": True})
     except HTTPException:
         raise
