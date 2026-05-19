@@ -1026,3 +1026,93 @@ async def pdf_proposta_comercial(proposta_id: int, uid: str = Depends(verify_fir
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── ENDPOINTS PROPOSTA EM EXECUÇÃO ────────────────────────────────────────────
+
+class ProdutoOrganizadorCreate(BaseModel):
+    proposta_id: int
+    nome: str
+    descricao: Optional[str] = None
+    valor: float
+    quantidade: int = 1
+    comodo: Optional[str] = None
+
+class AcrescimoCreate(BaseModel):
+    proposta_id: int
+    tipo: str  # fornecedor, assistente, outros
+    valor: float
+    descricao: Optional[str] = None
+    fornecedor: Optional[str] = None
+
+@api.get("/propostas/{proposta_id}/produtos")
+async def get_produtos_proposta(proposta_id: int, uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        df = db.get_produtos_organizadores(proposta_id)
+        return JSONResponse(content=safe_records(df))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api.post("/propostas/{proposta_id}/produtos")
+async def add_produto_proposta(proposta_id: int, body: ProdutoOrganizadorCreate, uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        db.add_produto_organizador(
+            proposta_id=proposta_id, nome=body.nome, descricao=body.descricao,
+            valor=body.valor, quantidade=body.quantidade, comodo=body.comodo
+        )
+        return JSONResponse(content={"success": True})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api.get("/propostas/{proposta_id}/acrescimos")
+async def get_acrescimos(proposta_id: int, uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        df = db.get_acrescimos_proposta(proposta_id)
+        return JSONResponse(content=safe_records(df))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api.post("/propostas/{proposta_id}/acrescimos")
+async def add_acrescimo(proposta_id: int, body: AcrescimoCreate, uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        db.add_acrescimo_proposta(
+            proposta_id=proposta_id, tipo=body.tipo, valor=body.valor,
+            descricao=body.descricao, fornecedor=body.fornecedor
+        )
+        return JSONResponse(content={"success": True})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api.get("/fornecedores")
+async def get_fornecedores(uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        df = db.get_fornecedores()
+        return JSONResponse(content=safe_records(df))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api.get("/assistentes")
+async def get_assistentes(uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        df = db.get_assistentes() if hasattr(db, 'get_assistentes') else None
+        return JSONResponse(content=safe_records(df) if df is not None else [])
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
