@@ -956,3 +956,73 @@ async def pdf_venda(venda_id: int, uid: str = Depends(verify_firebase_token)):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@api.get("/pdf/proposta/{proposta_id}/comercial")
+async def pdf_proposta_comercial(proposta_id: int, uid: str = Depends(verify_firebase_token)):
+    """Gera PDF de Proposta Comercial — usa layout de fechamento com dados da proposta."""
+    try:
+        from utils.pdf_generator_v2 import gerar_pdf_cliente
+        db = get_db(uid)
+        prop, cliente = _get_proposta_cliente(db, proposta_id)
+
+        # Buscar produtos
+        itens = []
+        try:
+            prod_df = db.get_produtos_organizadores(proposta_id)
+            if prod_df is not None and not prod_df.empty:
+                for _, p in prod_df.iterrows():
+                    nome = str(p.get('nome', ''))
+                    qtd = float(p.get('quantidade', 1) or 1)
+                    val = float(p.get('valor', 0) or 0)
+                    subtotal = qtd * val
+                    if qtd > 1:
+                        nome = f"{nome} ({int(qtd)}x)"
+                    itens.append((nome, subtotal, False))
+        except Exception:
+            pass
+
+        # Buscar acréscimos não-fornecedor não-assistente
+        try:
+            acrescimos = db.get_acrescimos_proposta(proposta_id)
+            if acrescimos is not None and not acrescimos.empty:
+                for _, ac in acrescimos.iterrows():
+                    tipo_ac = str(ac.get('tipo', '')).lower()
+                    if tipo_ac in ('fornecedor', 'assistente'):
+                        continue
+                    desc = str(ac.get('descricao', '') or ac.get('fornecedor', '') or 'Item')
+                    val = float(ac.get('valor', 0) or 0)
+                    itens.append((desc, val, False))
+        except Exception:
+            pass
+
+        valor_proposta = float(prop.get('valor', 0) or 0)
+        total = valor_proposta + sum(i[1] for i in itens)
+
+        dados = {
+            'proposta_id': prop.get('numero', proposta_id),
+            'cliente': str(cliente.get('nome', prop.get('cliente_nome', 'Cliente'))),
+            'telefone': str(cliente.get('telefone', '') or ''),
+            'tipo': str(prop.get('tipo_proposta', 'Organização')),
+            'status': str(prop.get('status', '')).capitalize(),
+            'descricao': str(prop.get('descricao', '') or ''),
+            'itens': [(f"Personal Organizer - {prop.get('tipo_proposta', 'Organização')}", valor_proposta, False)] + itens,
+            'total': total,
+            'valor_base': valor_proposta,
+            'valor_adicionais': total - valor_proposta,
+        }
+
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False, dir='/tmp') as tmp:
+            path = tmp.name
+
+        gerar_pdf_cliente(dados, path)
+        nome_cli = str(cliente.get('nome', 'cliente')).replace(' ', '_').lower()
+        num = prop.get('numero', proposta_id)
+        return FileResponse(path, media_type='application/pdf',
+                           filename=f"Relatorio_PropostaComercial_{nome_cli}_{num}.pdf")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
