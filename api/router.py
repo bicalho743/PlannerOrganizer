@@ -1117,7 +1117,10 @@ async def get_fornecedores(uid: str = Depends(verify_firebase_token)):
             conn = psycopg2.connect(db_url)
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             cursor.execute("""
-                SELECT id, descricao, contato, categoria, estado, cidade, bairro,
+                SELECT id,
+                       descricao,
+                       descricao AS nome,
+                       contato, categoria, estado, cidade, bairro,
                        endereco, pix, recorrente, observacoes, valor,
                        percentual_comissao, usuario_id
                 FROM fornecedores
@@ -1133,8 +1136,13 @@ async def get_fornecedores(uid: str = Depends(verify_firebase_token)):
                     if hasattr(v, "isoformat"): item[k] = v.isoformat()
                 result.append(item)
             return JSONResponse(content=result)
+        # fallback ORM — normaliza nome
         db = get_db(uid)
-        return JSONResponse(content=safe_records(db.get_fornecedores()))
+        records = safe_records(db.get_fornecedores())
+        for r in records:
+            if not r.get("nome"):
+                r["nome"] = r.get("descricao", "")
+        return JSONResponse(content=records)
     except HTTPException:
         raise
     except Exception as e:
