@@ -1303,16 +1303,15 @@ async def update_pos_acao(acao_id: int, body: AcaoUpdate, uid: str = Depends(ver
 # ── PERFIL UPDATE ─────────────────────────────────────────────────────────────
 
 class PerfilUpdate(BaseModel):
-    nome_completo: Optional[str] = None
+    nome: Optional[str] = None
     telefone: Optional[str] = None
     instagram: Optional[str] = None
     empresa: Optional[str] = None
     cargo: Optional[str] = None
     website: Optional[str] = None
-    cidade: Optional[str] = None
-    estado: Optional[str] = None
-    endereco: Optional[str] = None
     cnpj: Optional[str] = None
+    mensagem_padrao: Optional[str] = None
+    observacoes_relatorio: Optional[str] = None
 
 @api.put("/perfil")
 async def update_perfil(body: PerfilUpdate, uid: str = Depends(verify_firebase_token)):
