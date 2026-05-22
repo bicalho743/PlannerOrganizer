@@ -66,10 +66,11 @@ def reabrir_proposta_finalizada(proposta_id):
         # Debug para ver os valores
         print(f"DEBUG REABRIR: proposta_id={proposta_id}, status='{status}', status_execucao='{status_execucao}'")
             
-        # Permitir reabrir propostas com status "Finalizada", "Concluída" ou "Recusada"
-        # Para propostas recusadas, o status pode ser "Recusada" e status_execucao pode ser "Cancelada"
+        # Permitir reabrir propostas finalizadas, recusadas ou aprovadas (canônico + legado defensivo)
+        from utils.proposta_status import normalize as _normalize_status, STATUS_FINALIZADA, STATUS_RECUSADA, STATUS_APROVADA
+        status_canonical = _normalize_status(status)
         proposta_pode_reabrir = (
-            status in ["Finalizada", "Concluída", "Recusada", "Aprovada"] or 
+            status_canonical in [STATUS_FINALIZADA, STATUS_RECUSADA, STATUS_APROVADA] or
             status_execucao in ["Finalizada", "Concluída", "Cancelada", "Em execução"]
         )
         
@@ -165,25 +166,25 @@ def reabrir_proposta_finalizada(proposta_id):
             # Atualizar status da proposta baseado no status anterior
             data_atual = datetime.now().strftime('%Y-%m-%d')
             
-            if status == 'Recusada':
+            if status_canonical == STATUS_RECUSADA:
                 cursor.execute("""
-                    UPDATE propostas 
-                    SET status = 'Em elaboração', 
+                    UPDATE propostas
+                    SET status = 'em_aberto',
                         status_execucao = 'Não iniciada'
                     WHERE id = %s
                 """, (proposta_id,))
             else:
                 cursor.execute("""
-                    UPDATE propostas 
-                    SET status = 'Em execução', 
+                    UPDATE propostas
+                    SET status = 'em_execucao',
                         status_execucao = 'Em execução'
                     WHERE id = %s
                 """, (proposta_id,))
-            
+
             conn.commit()
             cursor.close()
             conn.close()
-            
+
             # Decidir o tipo de retorno com base nos lançamentos encontrados e excluídos
             if lancamentos_encontrados > 0:
                 return {
@@ -210,17 +211,17 @@ def reabrir_proposta_finalizada(proposta_id):
                 data_atual = datetime.now().strftime('%Y-%m-%d')
                 
                 # Tentar atualizar sem o campo data_finalizacao
-                if status == 'Recusada':
+                if status_canonical == STATUS_RECUSADA:
                     cursor.execute("""
-                        UPDATE propostas 
-                        SET status = 'Em elaboração', 
+                        UPDATE propostas
+                        SET status = 'em_aberto',
                             status_execucao = 'Não iniciada'
                         WHERE id = %s
                     """, (proposta_id,))
                 else:
                     cursor.execute("""
-                        UPDATE propostas 
-                        SET status = 'Em execução', 
+                        UPDATE propostas
+                        SET status = 'em_execucao',
                             status_execucao = 'Em execução'
                         WHERE id = %s
                     """, (proposta_id,))

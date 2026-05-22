@@ -32,7 +32,8 @@ def carregar_propostas():
         propostas_df = st.session_state.db.get_propostas()
         
         # Filtrar apenas Aprovadas e Em Execução
-        propostas_df = propostas_df[propostas_df['status'].isin(['Aprovada', 'Em execução'])]
+        from utils.proposta_status import STATUS_APROVADA, STATUS_EM_EXECUCAO
+        propostas_df = propostas_df[propostas_df['status'].isin([STATUS_APROVADA, STATUS_EM_EXECUCAO])]
         
         if propostas_df.empty:
             return pd.DataFrame()

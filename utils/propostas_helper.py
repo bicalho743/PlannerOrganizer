@@ -9,6 +9,8 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
+from utils.proposta_status import label_for as _label_status
+
 # Importar gerador de PDF unificado v2
 try:
     from utils.pdf_generator_v2 import gerar_pdf_cliente as gerar_pdf_fechamento
@@ -95,7 +97,7 @@ def adicionar_acrescimo(db, proposta_id, tipo, fornecedor, descricao, valor):
 
 def fechar_proposta(db, proposta_id):
     """
-    Fecha uma proposta, alterando seu status para "Fechada"
+    Fecha uma proposta, alterando seu status para "finalizada" (canônico)
     
     Args:
         db: Conexão com o banco de dados
@@ -125,13 +127,14 @@ def fechar_proposta(db, proposta_id):
             return False, f"Proposta ID={proposta_id} não encontrada."
             
         # Verificar status atual
-        if proposta['status'] == 'Fechada':
+        from utils.proposta_status import normalize as _normalize_status, STATUS_FINALIZADA
+        if _normalize_status(proposta['status']) == STATUS_FINALIZADA:
             return True, "Proposta já está fechada."
-            
+
         # Atualizar status
         resultado = db.update_proposta(
             proposta_id=proposta_id,
-            status="Fechada",
+            status=STATUS_FINALIZADA,
             data_fim=datetime.now().date()
         )
         
@@ -526,7 +529,7 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
             'cliente': cliente.get('nome', ''),
             'telefone': cliente.get('telefone', ''),
             'tipo': tipo_proposta,
-            'status': proposta.get('status', ''),
+            'status': _label_status(proposta.get('status', '')),
             'descricao': proposta.get('descricao', ''),
             'itens': itens_tuples,
             'total': total_geral,
@@ -725,7 +728,7 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
             'proposta_id': proposta.get('id', ''),
             'cliente': cliente.get('nome', ''),
             'tipo': proposta.get('tipo_proposta', ''),
-            'status': proposta.get('status', ''),
+            'status': _label_status(proposta.get('status', '')),
             'periodo': periodo_str,
             'itens_custo': itens_custo,
             'total_custo': total_custo_cliente,
@@ -834,7 +837,7 @@ def gerar_pdf_fornecedores_proposta(db, proposta_id, custom_filename=None):
             'cliente': cliente.get('nome', ''),
             'telefone': cliente.get('telefone', ''),
             'tipo': proposta.get('tipo_proposta', ''),
-            'status': proposta.get('status', ''),
+            'status': _label_status(proposta.get('status', '')),
             'itens': itens_tuples,
             'total': total_forn
         }

@@ -30,9 +30,10 @@ def show():
     # Filtro para propostas finalizadas
     if not todas_propostas.empty:
         # Aplicar filtro
+        from utils.proposta_status import STATUS_FINALIZADA, STATUS_RECUSADA, label_for as _label_status
         propostas_finalizadas = todas_propostas[
-            ((todas_propostas['status'] == 'Finalizada') & (todas_propostas['status_execucao'] == 'Finalizada')) |
-            (todas_propostas['status'] == 'Recusada')
+            ((todas_propostas['status'] == STATUS_FINALIZADA) & (todas_propostas['status_execucao'] == 'Finalizada')) |
+            (todas_propostas['status'] == STATUS_RECUSADA)
         ]
         
         # Mostrar contagem para debug
@@ -52,7 +53,7 @@ def show():
                         
                     with col2:
                         st.write(f"**Tipo:** {proposta['tipo_proposta']}")
-                        st.write(f"**Status:** {proposta['status']}")
+                        st.write(f"**Status:** {_label_status(proposta['status'])}")
                         st.write(f"**Status Execução:** {proposta['status_execucao']}")
                         data_inicio_str = proposta['data_inicio'].strftime('%d/%m/%Y') if pd.notna(proposta['data_inicio']) else 'N/D'
                         st.write(f"**Data Início:** {data_inicio_str}")
@@ -104,7 +105,7 @@ def show():
             
             if not proposta_reabrir.empty:
                 st.info(f"Você está prestes a reabrir a proposta #{proposta_numero} - {proposta_reabrir.iloc[0]['descricao']}")
-                st.warning("Esta ação mudará o status da proposta para 'Em execução'.")
+                st.warning("Esta ação mudará o status da proposta para 'Em Execução'.")
                 
                 if st.button("REABRIR PROPOSTA", key="confirmar_reabertura"):
                     try:

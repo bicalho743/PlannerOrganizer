@@ -88,11 +88,18 @@ def _render_nova_proposta_form(clientes):
             try:
                 cliente_id = clientes[clientes['nome'] == cliente]['id'].iloc[0]
 
-                status_proposta_mapeado = status_inicial
-                if status_inicial == "Aguardando":
-                    status_proposta_mapeado = "Em elaboração"
-                elif status_inicial == "Recusada":
-                    status_proposta_mapeado = "Finalizada"
+                from utils.proposta_status import (
+                    STATUS_EM_ABERTO, STATUS_APROVADA, STATUS_RECUSADA,
+                    STATUS_EM_EXECUCAO, STATUS_FINALIZADA,
+                )
+                _MAPA_FORM_STATUS = {
+                    "Aguardando":  STATUS_EM_ABERTO,
+                    "Aprovada":    STATUS_APROVADA,
+                    "Recusada":    STATUS_RECUSADA,
+                    "Em execução": STATUS_EM_EXECUCAO,
+                    "Finalizada":  STATUS_FINALIZADA,
+                }
+                status_proposta_mapeado = _MAPA_FORM_STATUS.get(status_inicial, STATUS_EM_ABERTO)
 
                 if tipo_cadastro == "Nova proposta":
                     gerar_transacoes = status_inicial == "Aprovada"
@@ -157,14 +164,19 @@ def _render_detail_panel(proposta_id, proposta, propostas_com_clientes):
     """Renders the full detail panel for a selected proposal."""
     nome_cliente = proposta.get('nome', proposta.get('cliente_nome', 'Cliente'))
     numero = proposta.get('numero', proposta_id)
-    status_atual = proposta.get('status', '')
-    em_aberto = status_atual in ['Em elaboração', 'Aguardando aprovação', 'Aguardando']
-    aprovada_parada = status_atual == 'Aprovada'
+    from utils.proposta_status import (
+        normalize as _normalize_status,
+        STATUS_EM_ABERTO, STATUS_APROVADA, STATUS_RECUSADA,
+        STATUS_EM_EXECUCAO, STATUS_FINALIZADA,
+    )
+    status_atual = _normalize_status(proposta.get('status', '')) or ''
+    em_aberto = status_atual == STATUS_EM_ABERTO
+    aprovada_parada = status_atual == STATUS_APROVADA
 
     st.markdown(f"### Proposta #{numero} — {nome_cliente}")
     st.caption(proposta.get('descricao', '')[:120])
 
-    finalizada = status_atual in ['Finalizada', 'Recusada']
+    finalizada = status_atual in [STATUS_FINALIZADA, STATUS_RECUSADA]
 
     if em_aberto or aprovada_parada:
         _render_open_proposal_actions(proposta_id, proposta)
@@ -176,8 +188,12 @@ def _render_detail_panel(proposta_id, proposta, propostas_com_clientes):
 
 def _render_open_proposal_actions(proposta_id, proposta):
     """Compact action bar for open/approved proposals not yet in execution."""
+    from utils.proposta_status import (
+        normalize as _normalize_status,
+        STATUS_APROVADA, STATUS_EM_EXECUCAO,
+    )
     valor = _safe_float(proposta.get('valor'))
-    status_atual = proposta.get('status', '')
+    status_atual = _normalize_status(proposta.get('status', '')) or ''
     data_str = ""
     d = proposta.get('data_inicio')
     if d:
@@ -186,7 +202,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
         except Exception:
             data_str = str(d)[:10]
 
-    if status_atual == 'Aprovada':
+    if status_atual == STATUS_APROVADA:
         badge_label, badge_bg = "Aprovada", "#1D6A4A"
     else:
         badge_label, badge_bg = "Em Aberto", "#B7860D"
@@ -200,11 +216,11 @@ def _render_open_proposal_actions(proposta_id, proposta):
       {"<span style='font-size:12px;color:#8B8680;'>" + data_str + "</span>" if data_str else ""}
     </div>""", unsafe_allow_html=True)
 
-    if status_atual == 'Aprovada':
+    if status_atual == STATUS_APROVADA:
         if st.button("▶️ Iniciar Execução", key=f"btn_iniciar_{proposta_id}", use_container_width=True, type="primary"):
             try:
                 res = st.session_state.db.update_proposta_status(proposta_id=proposta_id,
-                      novo_status="Em execução", data_aprovacao=proposta.get('data_aprovacao') or datetime.now().date())
+                      novo_status=STATUS_EM_EXECUCAO, data_aprovacao=proposta.get('data_aprovacao') or datetime.now().date())
                 if res.get('status', False):
                     st.session_state['kanban_selected_proposta'] = None
                     st.session_state.db.invalidar_cache()
@@ -219,7 +235,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
             if st.button("✅ Aprovar", key=f"btn_aprovar_{proposta_id}", use_container_width=True, type="primary"):
                 try:
                     res = st.session_state.db.update_proposta_status(proposta_id=proposta_id,
-                          novo_status="Aprovada", data_aprovacao=datetime.now().date())
+                          novo_status=STATUS_APROVADA, data_aprovacao=datetime.now().date())
                     if res.get('status', False):
                         st.session_state['kanban_selected_proposta'] = None
                         st.session_state.db.invalidar_cache()
@@ -235,7 +251,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
                     from utils.database import engine
                     with engine.connect() as conn:
                         conn.execute(sa_text(
-                            "UPDATE propostas SET status = 'Recusada', status_execucao = 'Cancelada' WHERE id = :pid"
+                            "UPDATE propostas SET status = 'recusada', status_execucao = 'Cancelada' WHERE id = :pid"
                         ), {"pid": proposta_id})
                         conn.commit()
                     st.session_state['kanban_selected_proposta'] = None
@@ -295,10 +311,11 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
     """Compact view for finalized proposals: report buttons + reopen/delete."""
     nome_cliente = proposta.get('nome', proposta.get('cliente_nome', 'Cliente'))
     numero = proposta.get('numero', proposta_id)
+    from utils.proposta_status import normalize as _normalize_status, STATUS_RECUSADA
     valor = _safe_float(proposta.get('valor'))
-    status_atual = proposta.get('status', '')
+    status_atual = _normalize_status(proposta.get('status', '')) or ''
 
-    if status_atual == 'Recusada':
+    if status_atual == STATUS_RECUSADA:
         badge_label, badge_bg = "Recusada", "#C0392B"
     else:
         badge_label, badge_bg = "Finalizada", "#4A4A4A"
@@ -1114,13 +1131,18 @@ def _status_badge(label, cor_fundo, cor_texto="#fff"):
 
 
 def _tab_acoes(proposta_id, proposta):
-    status_atual   = proposta.get('status', '')
+    from utils.proposta_status import (
+        normalize as _normalize_status, label_for as _label_status,
+        STATUS_EM_ABERTO, STATUS_APROVADA, STATUS_RECUSADA,
+        STATUS_EM_EXECUCAO, STATUS_FINALIZADA,
+    )
+    status_atual   = _normalize_status(proposta.get('status', '')) or ''
     status_execucao = proposta.get('status_execucao', '')
 
-    em_aberto    = status_atual in ['Em elaboração', 'Aguardando aprovação', 'Aguardando']
-    esta_aprovada = status_atual == 'Aprovada'
+    em_aberto    = status_atual == STATUS_EM_ABERTO
+    esta_aprovada = status_atual == STATUS_APROVADA
     em_execucao  = status_execucao == 'Em execução'
-    finalizada   = status_atual in ['Finalizada', 'Recusada']
+    finalizada   = status_atual in [STATUS_FINALIZADA, STATUS_RECUSADA]
 
     # ── Badge de status ───────────────────────────────────────────────────
     if em_aberto:
@@ -1130,10 +1152,10 @@ def _tab_acoes(proposta_id, proposta):
     elif em_execucao and not finalizada:
         _status_badge("🔵 Em Execução", "#1565C0")
     elif finalizada:
-        cor_fin = "#4A4A4A" if status_atual == 'Finalizada' else "#C0392B"
-        _status_badge(f"🏁 {status_atual}", cor_fin)
+        cor_fin = "#4A4A4A" if status_atual == STATUS_FINALIZADA else "#C0392B"
+        _status_badge(f"🏁 {_label_status(status_atual)}", cor_fin)
     else:
-        _status_badge(f"● {status_atual}", "#555")
+        _status_badge(f"● {_label_status(status_atual)}", "#555")
 
     # ── EM ABERTO ─────────────────────────────────────────────────────────
     if em_aberto:
@@ -1143,7 +1165,7 @@ def _tab_acoes(proposta_id, proposta):
             if st.button("✅ Aprovar Proposta", type="primary", use_container_width=True, key=f"btn_aprovar_{proposta_id}"):
                 try:
                     res = st.session_state.db.update_proposta_status(proposta_id=proposta_id,
-                          novo_status="Aprovada", data_aprovacao=datetime.now().date())
+                          novo_status=STATUS_APROVADA, data_aprovacao=datetime.now().date())
                     if res.get('status', False):
                         st.success("Proposta aprovada!")
                         st.session_state['kanban_selected_proposta'] = None
@@ -1155,7 +1177,7 @@ def _tab_acoes(proposta_id, proposta):
         with col2:
             if st.button("❌ Recusar Proposta", use_container_width=True, key=f"btn_recusar_{proposta_id}"):
                 try:
-                    res = st.session_state.db.update_proposta_status(proposta_id=proposta_id, novo_status="Finalizada")
+                    res = st.session_state.db.update_proposta_status(proposta_id=proposta_id, novo_status=STATUS_RECUSADA)
                     if res.get('status', False):
                         st.session_state.db.update_proposta(proposta_id, status_execucao="Cancelada", data_fim=datetime.now().date())
                         st.success("Proposta recusada.")
@@ -1172,7 +1194,7 @@ def _tab_acoes(proposta_id, proposta):
         if st.button("▶ Iniciar Execução", type="primary", use_container_width=True, key=f"btn_iniciar_exec_{proposta_id}"):
             try:
                 res = st.session_state.db.update_proposta_status(proposta_id=proposta_id,
-                      novo_status="Em execução", data_aprovacao=proposta.get('data_aprovacao'))
+                      novo_status=STATUS_EM_EXECUCAO, data_aprovacao=proposta.get('data_aprovacao'))
                 if res.get('status', False):
                     st.success("Execução iniciada!")
                     st.session_state['kanban_selected_proposta'] = None
@@ -1303,7 +1325,7 @@ def _tab_acoes(proposta_id, proposta):
                     st.error(str(e))
 
         with st.expander("🔄 Reabrir Proposta Finalizada"):
-            st.warning("Esta ação retornará a proposta para o status 'Em execução'.")
+            st.warning("Esta ação retornará a proposta para o status 'Em Execução'.")
             if st.button("REABRIR PROPOSTA", key=f"btn_reabrir_{proposta_id}", type="primary", use_container_width=True):
                 try:
                     from reabrir_proposta import reabrir_proposta_finalizada
@@ -1415,10 +1437,14 @@ def show():
             return 0.0
         return df['valor'].apply(_safe_float).sum()
 
-    _p_aberto = propostas_com_clientes[propostas_com_clientes['status'].isin(['Em elaboração', 'Aguardando aprovação', 'Aguardando'])] if not propostas_com_clientes.empty else pd.DataFrame()
-    _p_aprovada = propostas_com_clientes[(propostas_com_clientes['status'] == 'Aprovada') & (~propostas_com_clientes['status_execucao'].isin(['Em execução']) if 'status_execucao' in propostas_com_clientes.columns else True)] if not propostas_com_clientes.empty else pd.DataFrame()
+    from utils.proposta_status import (
+        STATUS_EM_ABERTO as _ST_AB, STATUS_APROVADA as _ST_AP,
+        STATUS_FINALIZADA as _ST_FI, STATUS_RECUSADA as _ST_RE,
+    )
+    _p_aberto = propostas_com_clientes[propostas_com_clientes['status'] == _ST_AB] if not propostas_com_clientes.empty else pd.DataFrame()
+    _p_aprovada = propostas_com_clientes[(propostas_com_clientes['status'] == _ST_AP) & (~propostas_com_clientes['status_execucao'].isin(['Em execução']) if 'status_execucao' in propostas_com_clientes.columns else True)] if not propostas_com_clientes.empty else pd.DataFrame()
     _p_exec = propostas_com_clientes[propostas_com_clientes['status_execucao'] == 'Em execução'] if not propostas_com_clientes.empty and 'status_execucao' in propostas_com_clientes.columns else pd.DataFrame()
-    _p_final = propostas_com_clientes[propostas_com_clientes['status'].isin(['Finalizada', 'Recusada'])] if not propostas_com_clientes.empty else pd.DataFrame()
+    _p_final = propostas_com_clientes[propostas_com_clientes['status'].isin([_ST_FI, _ST_RE])] if not propostas_com_clientes.empty else pd.DataFrame()
 
     mc1, mc2, mc3, mc4 = st.columns(4)
     for col, label, df in [
@@ -1464,12 +1490,12 @@ def show():
 
     propostas_em_aberto = _col_propostas(
         "Em aberto",
-        ['Em elaboração', 'Aguardando aprovação', 'Aguardando']
+        [_ST_AB]
     )
 
     propostas_aprovadas = _col_propostas(
         "Aprovada",
-        ['Aprovada'],
+        [_ST_AP],
         exclude_exec=['Em execução']
     )
 
@@ -1482,8 +1508,7 @@ def show():
 
     if not propostas_com_clientes.empty:
         propostas_finalizadas = propostas_com_clientes[
-            (propostas_com_clientes['status'] == 'Finalizada') |
-            (propostas_com_clientes['status'] == 'Recusada')
+            propostas_com_clientes['status'].isin([_ST_FI, _ST_RE])
         ].copy()
     else:
         propostas_finalizadas = pd.DataFrame()
@@ -1678,7 +1703,10 @@ def show():
                                 pass
                             break
 
-                    h_badge_cor = "#28a745" if h_status == "Finalizada" else "#dc3545"
+                    from utils.proposta_status import normalize as _norm_h_status, label_for as _label_h_status, STATUS_FINALIZADA as _ST_H_FI
+                    h_status_canon = _norm_h_status(h_status)
+                    h_badge_cor = "#28a745" if h_status_canon == _ST_H_FI else "#dc3545"
+                    h_status = _label_h_status(h_status_canon)
                     rc = st.columns([0.6, 1.5, 1.2, 1, 0.8, 0.8, 0.8])
                     rc[0].markdown(f"**#{h_numero}**")
                     rc[1].markdown(h_nome)

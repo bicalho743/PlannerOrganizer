@@ -46,10 +46,11 @@ def get_propostas_finalizadas(db):
     if propostas.empty:
         return propostas
     
-    # Filtrar propostas finalizadas (status e status_execucao = "Finalizada") ou recusadas
+    # Filtrar propostas finalizadas (status canônico) ou recusadas
+    from utils.proposta_status import STATUS_FINALIZADA, STATUS_RECUSADA
     propostas_finalizadas = propostas[
-        ((propostas['status'] == 'Finalizada') & (propostas['status_execucao'] == 'Finalizada')) |
-        (propostas['status'] == 'Recusada')
+        ((propostas['status'] == STATUS_FINALIZADA) & (propostas['status_execucao'] == 'Finalizada')) |
+        (propostas['status'] == STATUS_RECUSADA)
     ]
     
     return propostas_finalizadas

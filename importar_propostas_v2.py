@@ -56,7 +56,7 @@ template_df = pd.DataFrame([
         'cliente_nome': 'Maria da Silva',
         'descricao': 'Organização de armários',
         'valor': '1500,00',
-        'status': 'Aberta',
+        'status': 'em_aberto',
         'tipo_proposta': 'Organização',
         'data_inicio': '01/06/2025',
         'data_fim': '10/06/2025',
@@ -66,7 +66,7 @@ template_df = pd.DataFrame([
         'cliente_nome': 'João Santos',
         'descricao': 'Consultoria de decoração',
         'valor': '2000,00',
-        'status': 'Aberta',
+        'status': 'em_aberto',
         'tipo_proposta': 'Consultoria',
         'data_inicio': '15/05/2025',
         'data_fim': '20/05/2025',
@@ -76,7 +76,7 @@ template_df = pd.DataFrame([
         'cliente_nome': 'Ana Oliveira',
         'descricao': 'Reorganização de cozinha',
         'valor': '1800,00',
-        'status': 'Aberta',
+        'status': 'em_aberto',
         'tipo_proposta': 'Reorganização',
         'data_inicio': '15/07/2025',
         'data_fim': '20/07/2025',
@@ -371,12 +371,13 @@ def importar_propostas_v2(arquivo, debug_mode=False, usar_cliente_id=False):
                     erros.append(f"Erro ao processar valor na linha {idx + 2}: {str(e)}")
                     continue
                 
-                # 5.4 Processar status
-                proposta_data['status'] = 'Aberta'  # Valor padrão
+                # 5.4 Processar status (normaliza qualquer rótulo legado)
+                from utils.proposta_status import normalize as _normalize_status, CANONICAL_STATUSES, STATUS_EM_ABERTO
+                proposta_data['status'] = STATUS_EM_ABERTO
                 if 'status' in row and row['status']:
-                    status_valor = str(row['status']).strip()
-                    if status_valor in ['Aberta', 'Fechada', 'Recusada']:
-                        proposta_data['status'] = status_valor
+                    canonical = _normalize_status(str(row['status']).strip())
+                    if canonical in CANONICAL_STATUSES:
+                        proposta_data['status'] = canonical
                 
                 # 5.5 Processar tipo_proposta
                 if 'tipo_proposta' in row and row['tipo_proposta']:

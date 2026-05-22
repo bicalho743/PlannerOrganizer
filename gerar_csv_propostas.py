@@ -31,15 +31,23 @@ def exportar_propostas():
             st.warning("Não há propostas para exportar.")
             return None
         
-        # Adicionar categoria para melhor visualização
+        # Adicionar categoria para melhor visualização (status canônico)
+        from utils.proposta_status import (
+            STATUS_EM_ABERTO, STATUS_APROVADA, STATUS_EM_EXECUCAO,
+            STATUS_FINALIZADA, STATUS_RECUSADA,
+        )
         def categorizar_proposta(row):
-            if row['status'] == 'Aberta' or row['status'] == 'Em análise':
+            status = row['status']
+            status_exec = row['status_execucao']
+            if status == STATUS_EM_ABERTO:
                 return 'Abertas'
-            elif row['status'] == 'Aprovada' and row['status_execucao'] == 'Em execução':
+            elif status == STATUS_APROVADA:
+                return 'Aprovadas'
+            elif status == STATUS_EM_EXECUCAO or status_exec == 'Em execução':
                 return 'Em execução'
-            elif row['status'] == 'Aprovada' and row['status_execucao'] == 'Finalizada':
+            elif status == STATUS_FINALIZADA:
                 return 'Finalizadas'
-            elif row['status'] == 'Recusada' or row['status_execucao'] == 'Cancelada':
+            elif status == STATUS_RECUSADA or status_exec == 'Cancelada':
                 return 'Recusadas'
             else:
                 return 'Outras'

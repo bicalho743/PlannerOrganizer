@@ -107,7 +107,7 @@ def finalizar_proposta_v2(proposta_id: int) -> Dict[str, Any]:
 
         cursor.execute("""
             UPDATE propostas 
-            SET status = 'Finalizada', 
+            SET status = 'finalizada',
                 status_execucao = 'Finalizada'
             WHERE id = %s AND status_execucao != 'Finalizada'
         """, (proposta_id,))

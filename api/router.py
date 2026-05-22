@@ -93,7 +93,7 @@ class PropostaCreate(BaseModel):
     cliente_id: int
     descricao: str
     valor: float
-    status: str = 'em_elaboracao'
+    status: str = 'em_aberto'
     tipo_proposta: Optional[str] = None
     ambiente: Optional[str] = None
 
@@ -142,7 +142,7 @@ async def get_dashboard(uid: str = Depends(verify_firebase_token)):
         total_clientes = len(clientes_df) if clientes_df is not None and not clientes_df.empty else 0
         propostas_abertas = []
         if propostas_df is not None and not propostas_df.empty and 'status' in propostas_df.columns:
-            abertas = propostas_df[propostas_df['status'].isin(['em_elaboracao', 'aguardando', 'enviada'])]
+            abertas = propostas_df[propostas_df['status'] == 'em_aberto']
             propostas_abertas = safe_records(abertas)
 
         receita = despesas = 0.0
@@ -270,9 +270,11 @@ async def get_propostas(uid: str = Depends(verify_firebase_token)):
 @api.post("/propostas")
 async def create_proposta(body: PropostaCreate, uid: str = Depends(verify_firebase_token)):
     try:
+        from utils.proposta_status import normalize as _norm_status, STATUS_EM_ABERTO
+        status_canon = _norm_status(body.status) or STATUS_EM_ABERTO
         get_db(uid).add_proposta(
             cliente_id=body.cliente_id, descricao=body.descricao,
-            valor=body.valor, status=body.status, tipo_proposta=body.tipo_proposta
+            valor=body.valor, status=status_canon, tipo_proposta=body.tipo_proposta
         )
         return JSONResponse(content={"success": True})
     except HTTPException:
@@ -285,7 +287,10 @@ async def update_proposta(proposta_id: int, body: PropostaUpdate, uid: str = Dep
     try:
         db = get_db(uid)
         if body.status:
-            db.update_proposta_status(proposta_id, body.status)
+            from utils.proposta_status import normalize as _norm_status
+            status_canon = _norm_status(body.status)
+            if status_canon:
+                db.update_proposta_status(proposta_id, status_canon)
         if body.descricao or body.valor:
             db.update_proposta(proposta_id=proposta_id, descricao=body.descricao, valor=body.valor)
         return JSONResponse(content={"success": True})
@@ -630,7 +635,7 @@ async def pdf_proposta_cliente(proposta_id: int, uid: str = Depends(verify_fireb
             'cliente': str(cliente.get('nome', prop.get('cliente_nome', 'Cliente'))),
             'telefone': str(cliente.get('telefone', '') or ''),
             'tipo': tipo_prop,
-            'status': str(prop.get('status', '')).capitalize(),
+            'status': __import__('utils.proposta_status', fromlist=['label_for']).label_for(prop.get('status', '')),
             'descricao': str(prop.get('descricao', '') or ''),
             'itens': itens_final,
             'total': total_final,
@@ -766,7 +771,7 @@ async def pdf_proposta_interno(proposta_id: int, uid: str = Depends(verify_fireb
             'proposta_id': prop.get('numero', proposta_id),
             'cliente': str(cliente.get('nome', prop.get('cliente_nome', 'Cliente'))),
             'tipo': str(prop.get('tipo_proposta', 'Organização')),
-            'status': str(prop.get('status', '')).capitalize(),
+            'status': __import__('utils.proposta_status', fromlist=['label_for']).label_for(prop.get('status', '')),
             'periodo': periodo_str,
             'itens_custo': itens_custo,
             'total_custo': total_custo_cliente,
@@ -815,7 +820,7 @@ async def pdf_proposta_fornecedores(proposta_id: int, uid: str = Depends(verify_
             'cliente': str(cliente.get('nome', prop.get('cliente_nome', 'Cliente'))),
             'telefone': str(cliente.get('telefone', '') or ''),
             'tipo': str(prop.get('tipo_proposta', 'Organização')),
-            'status': str(prop.get('status', '')).capitalize(),
+            'status': __import__('utils.proposta_status', fromlist=['label_for']).label_for(prop.get('status', '')),
             'itens': itens_forn,
             'total': sum(i['total'] for i in itens_forn),
         }
@@ -1017,7 +1022,7 @@ async def pdf_proposta_comercial(proposta_id: int, uid: str = Depends(verify_fir
             'cliente': str(cliente.get('nome', prop.get('cliente_nome', 'Cliente'))),
             'telefone': str(cliente.get('telefone', '') or ''),
             'tipo': str(prop.get('tipo_proposta', 'Organização')),
-            'status': str(prop.get('status', '')).capitalize(),
+            'status': __import__('utils.proposta_status', fromlist=['label_for']).label_for(prop.get('status', '')),
             'descricao': str(prop.get('descricao', '') or ''),
             'itens': [(f"Personal Organizer - {prop.get('tipo_proposta', 'Organização')}", valor_proposta, False)] + itens,
             'total': total,

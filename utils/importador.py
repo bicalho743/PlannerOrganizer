@@ -475,22 +475,13 @@ def importar_cadastros(arquivo, tipo_cadastro, db):
                             erros.append(f"Valor não numérico na linha {idx + 2}")
                             continue
                             
-                        # Preparar status
-                        status = str(row.get('status', 'Aberta')).strip() if pd.notna(row.get('status')) else 'Aberta'
-                        
-                        # Normalizar status com case insensitive (aceitar variações como "aberta", "ABERTA", etc.)
-                        status_map = {
-                            'aberta': 'Aberta',
-                            'fechada': 'Fechada',
-                            'recusada': 'Recusada'
-                        }
-                        
-                        status_lower = status.lower()
-                        if status_lower in status_map:
-                            status = status_map[status_lower]
-                        elif status not in ['Aberta', 'Recusada', 'Fechada']:
-                            logger.warning(f"Status inválido na linha {idx + 2}: '{status}'. Usando 'Aberta'.")
-                            status = 'Aberta'
+                        # Preparar status: normaliza qualquer rótulo legado para canônico
+                        from utils.proposta_status import normalize as _normalize_status, CANONICAL_STATUSES, STATUS_EM_ABERTO
+                        status_raw = str(row.get('status', '')).strip() if pd.notna(row.get('status')) else ''
+                        status = _normalize_status(status_raw) if status_raw else STATUS_EM_ABERTO
+                        if status not in CANONICAL_STATUSES:
+                            logger.warning(f"Status inválido na linha {idx + 2}: '{status_raw}'. Usando 'em_aberto'.")
+                            status = STATUS_EM_ABERTO
                             
                         # Preparar tipo_proposta
                         tipo_proposta = str(row.get('tipo_proposta', '')).strip() if pd.notna(row.get('tipo_proposta')) else None
@@ -859,7 +850,7 @@ def gerar_template_excel(tipo):
             'Nome do Cliente',     # cliente_nome
             'Proposta de Organização Residencial', # descricao
             1500.00,               # valor
-            'Aberta',              # status
+            'em_aberto',           # status (canônico)
             'Organização',         # tipo_proposta
             '01/05/2025',          # data_inicio
             '15/05/2025',          # data_fim
@@ -973,11 +964,14 @@ def importar_propostas(arquivo, db):
 
                 # Adicionar proposta
                 try:
+                    from utils.proposta_status import normalize as _norm_legado_status, STATUS_EM_ABERTO as _ST_LEG_EA
+                    _status_raw_leg = str(row['status']).strip()
+                    _status_canon_leg = _norm_legado_status(_status_raw_leg) or _ST_LEG_EA
                     db.add_proposta(
                         cliente_id=cliente_id,
                         descricao=str(row['descricao']).strip(),
                         valor=valor,
-                        status=str(row['status']).strip(),
+                        status=_status_canon_leg,
                         tipo_proposta=str(row['tipo_proposta']).strip() if pd.notna(row.get('tipo_proposta')) else None,
                         data_inicio=data_inicio,
                         data_fim=data_fim,

@@ -258,8 +258,9 @@ def show():
                 col1, col2, col3 = st.columns(3)
 
                 total_propostas = len(propostas)
-                propostas_abertas = len(propostas[propostas['status'] == 'Aberta']) if 'status' in propostas.columns else 0
-                propostas_fechadas = len(propostas[propostas['status'] == 'Fechada']) if 'status' in propostas.columns else 0
+                from utils.proposta_status import STATUS_EM_ABERTO, STATUS_FINALIZADA
+                propostas_abertas = len(propostas[propostas['status'] == STATUS_EM_ABERTO]) if 'status' in propostas.columns else 0
+                propostas_fechadas = len(propostas[propostas['status'] == STATUS_FINALIZADA]) if 'status' in propostas.columns else 0
 
                 col1.metric("Total de Propostas", total_propostas)
                 col2.metric("Propostas em Aberto", propostas_abertas)

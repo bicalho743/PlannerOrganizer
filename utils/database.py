@@ -1131,7 +1131,8 @@ class Database:
             cliente_id_local = int(cliente_id)
             descricao_local = descricao
             valor_local = float(valor)
-            status_local = status
+            from utils.proposta_status import normalize as _norm_add_status, STATUS_EM_ABERTO as _ST_ADD_EA
+            status_local = _norm_add_status(status) or _ST_ADD_EA
             tipo_proposta_local = tipo_proposta
 
             # Para datas, vamos garantir que não sejam None antes de usar
@@ -1180,8 +1181,9 @@ class Database:
             self.session.flush()
             proposta_id = int(proposta.id) if proposta.id is not None else 0
 
-            # Gerar transações financeiras automaticamente se a proposta for criada com status "Aprovada"
-            if status_local == "Aprovada" and gerar_transacoes_automaticas and proposta_id > 0:
+            # Gerar transações financeiras automaticamente se a proposta for criada com status "aprovada"
+            from utils.proposta_status import STATUS_APROVADA as _ST_AP
+            if status_local == _ST_AP and gerar_transacoes_automaticas and proposta_id > 0:
                 try:
                     # Buscar o cliente da proposta
                     cliente = self.session.query(Cliente).filter_by(id=cliente_id_local).first()
@@ -2235,16 +2237,24 @@ class Database:
                 .filter_by(proposta_id=proposta_id, tipo="Receita")\
                 .count()
 
+            # Normalizar o novo_status para canônico
+            from utils.proposta_status import (
+                normalize as _normalize_status,
+                STATUS_EM_ABERTO, STATUS_APROVADA, STATUS_EM_EXECUCAO, STATUS_FINALIZADA,
+            )
+            novo_status = _normalize_status(novo_status) or novo_status
+            status_antigo_canonical = _normalize_status(status_antigo)
+
             # Atualizar campos
             proposta.status = novo_status
             if data_aprovacao_local:
                 proposta.data_aprovacao = data_aprovacao_local
 
-            # Definir campos adicionais se o status for "Em execução"
-            if novo_status == "Em execução":
+            # Definir campos adicionais se o status for "em_execucao"
+            if novo_status == STATUS_EM_EXECUCAO:
                 # Sempre usar a data de início da proposta como data de início de execução
                 proposta.data_inicio_execucao = proposta.data_inicio
-                # Alterar para "Em execução" em vez de "Iniciada" para consistência
+                # status_execucao mantém vocabulário próprio com capitalização original
                 proposta.status_execucao = "Em execução"
 
             # Salvar as alterações para garantir que tudo esteja atualizado antes de gerar lançamentos
@@ -2253,9 +2263,8 @@ class Database:
             # Preparar objeto de resultado
             resultado = {"status": True, "message": f"Proposta {proposta_id} atualizada com status '{novo_status}'"}
 
-            # Gerar lançamentos quando a proposta estiver mudando para "Em execução" ou "Aprovada"
-            # Removida a verificação de lancamentos_existentes == 0 para garantir que o lançamento seja gerado
-            if status_antigo in ["Em elaboração", "Aguardando aprovação"] and (novo_status == "Em execução" or novo_status == "Aprovada"):
+            # Gerar lançamentos quando a proposta estiver mudando para em_execucao ou aprovada
+            if status_antigo_canonical == STATUS_EM_ABERTO and novo_status in (STATUS_EM_EXECUCAO, STATUS_APROVADA):
                 try:
                     # Forçar regeneração de lançamentos para garantir que o valor base seja criado
                     # O parâmetro forcar_geracao=True remove lançamentos existentes antes de criar novos
@@ -2269,8 +2278,8 @@ class Database:
 
             # Registrar a mudança de status
 
-            # GATILHO: Criar pós-organização quando proposta é FINALIZADA
-            if novo_status == "Finalizada" and proposta.status_execucao == "Finalizada":
+            # GATILHO: Criar pós-organização quando proposta é finalizada
+            if novo_status == STATUS_FINALIZADA and proposta.status_execucao == "Finalizada":
                 try:
                     data_final = proposta.data_fim if proposta.data_fim else datetime.now().date()
                     self.create_post_organization(
@@ -2911,7 +2920,7 @@ class Database:
                 client1_id,
                 "Organização do closet",
                 1500.00,
-                "Aberta",
+                "em_aberto",
                 tipo_proposta="Organização"
             )
 
@@ -3172,14 +3181,22 @@ class Database:
                 proposta_aprovada = False
                 proposta_finalizada = False
 
-                # Verificar mudança de status para "Aprovada"
-                if status is not None and status == "Aprovada" and proposta.status != "Aprovada":
+                # Normalizar status recebido para canônico (defensivo contra rótulos legados)
+                from utils.proposta_status import (
+                    normalize as _normalize_status,
+                    STATUS_APROVADA, STATUS_FINALIZADA, STATUS_EM_EXECUCAO,
+                )
+                if status is not None:
+                    status = _normalize_status(status) or status
+
+                # Verificar mudança de status para "aprovada"
+                if status is not None and status == STATUS_APROVADA and proposta.status != STATUS_APROVADA:
                     proposta_aprovada = True
                     # Registrar a data de aprovação
                     proposta.data_aprovacao = datetime.now().date()
 
-                # Verificar mudança de status para "Concluída"
-                if status is not None and status == "Concluída" and proposta.status != "Concluída":
+                # Verificar mudança de status para "finalizada"
+                if status is not None and status == STATUS_FINALIZADA and proposta.status != STATUS_FINALIZADA:
                     proposta_finalizada = True
                     # Se não foi fornecida uma data_fim, usar a data atual
                     if data_fim is None:
@@ -3202,7 +3219,7 @@ class Database:
                     proposta.data_inicio = data_inicio
                     # Quando a data de início for atualizada, também atualizar a data de início de execução
                     # se a proposta já estiver aprovada ou em execução
-                    if proposta.status in ['Aprovada', 'Em execução', 'Finalizada']:
+                    if proposta.status in [STATUS_APROVADA, STATUS_EM_EXECUCAO, STATUS_FINALIZADA]:
                         proposta.data_inicio_execucao = data_inicio
 
                 if data_fim is not None:

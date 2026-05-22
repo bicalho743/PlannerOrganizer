@@ -166,11 +166,9 @@ def show():
                     
             propostas['valor'] = propostas['valor'].apply(clean_valor_dashboard)
             
-            # Contar propostas em elaboração ou aguardando aprovação como "em aberto"
-            propostas_em_aberto = len(propostas[
-                (propostas['status'] == 'Em elaboração') | 
-                (propostas['status'] == 'Aguardando aprovação')
-            ])
+            # Contar propostas em aberto (status canônico)
+            from utils.proposta_status import STATUS_EM_ABERTO
+            propostas_em_aberto = len(propostas[propostas['status'] == STATUS_EM_ABERTO])
             
             print(f"DEBUG DASHBOARD: {propostas_em_aberto} propostas em aberto encontradas")
         else:
@@ -291,18 +289,18 @@ def show():
         </div>
         """, unsafe_allow_html=True)
         if not propostas.empty:
-            # Filtrar propostas em aberto (Em elaboração e Aguardando aprovação)
+            # Filtrar propostas em aberto (status canônico)
+            from utils.proposta_status import STATUS_EM_ABERTO
             propostas_abertas = propostas[
-                (propostas['status'] == 'Em elaboração') | 
-                (propostas['status'] == 'Aguardando aprovação')
+                propostas['status'] == STATUS_EM_ABERTO
             ].sort_values('data_inicio', ascending=False)
-            
+
             if not propostas_abertas.empty:
                 print(f"DEBUG DASHBOARD: Exibindo {len(propostas_abertas)} propostas abertas")
                 for idx, proposta in propostas_abertas.head(5).iterrows():
                     print(f"DEBUG DASHBOARD: Proposta {idx}: {proposta.to_dict()}")
-                    
-                    status_emoji = "🔄" if proposta['status'] == 'Em elaboração' else "⏳"
+
+                    status_emoji = "🔄"
                     numero = proposta.get('numero', 'N/A')
                     descricao = proposta.get('descricao', 'Sem descrição')
                     

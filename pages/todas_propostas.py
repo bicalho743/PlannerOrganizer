@@ -54,15 +54,22 @@ def carregar_todas_propostas():
                 # Tratar valor monetário
                 valor_fmt = fmt_brl(row[8])
                 
-                # Definir categoria para agrupar por status
-                status_categoria = None
-                if row[4] == 'Aberta' or row[4] == 'Em análise':
+                # Definir categoria para agrupar por status (canônico)
+                from utils.proposta_status import (
+                    STATUS_EM_ABERTO, STATUS_APROVADA, STATUS_EM_EXECUCAO,
+                    STATUS_FINALIZADA, STATUS_RECUSADA,
+                )
+                _status = row[4]
+                _status_exec = row[5]
+                if _status == STATUS_EM_ABERTO:
                     status_categoria = 'Abertas'
-                elif row[4] == 'Aprovada' and row[5] == 'Em execução':
+                elif _status == STATUS_APROVADA:
+                    status_categoria = 'Aprovadas'
+                elif _status == STATUS_EM_EXECUCAO or _status_exec == 'Em execução':
                     status_categoria = 'Em execução'
-                elif row[4] == 'Aprovada' and row[5] == 'Finalizada':
+                elif _status == STATUS_FINALIZADA:
                     status_categoria = 'Finalizadas'
-                elif row[4] == 'Recusada' or row[5] == 'Cancelada':
+                elif _status == STATUS_RECUSADA or _status_exec == 'Cancelada':
                     status_categoria = 'Recusadas'
                 else:
                     status_categoria = 'Outras'

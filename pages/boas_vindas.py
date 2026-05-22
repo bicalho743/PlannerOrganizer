@@ -179,7 +179,7 @@ def show():
             # Obter dados reais do banco de dados
             db = Database()
             propostas_em_andamento = db.session.execute(
-                text("SELECT COUNT(*) FROM propostas WHERE status = 'Em execução'")
+                text("SELECT COUNT(*) FROM propostas WHERE status = 'em_execucao'")
             ).scalar() or 0
                 
             st.markdown(f"""
@@ -274,29 +274,32 @@ def show():
         ]
         
         # Exibir projetos recentes
+        from utils.proposta_status import (
+            normalize as _normalize_status, label_for as _label_status,
+            STATUS_FINALIZADA, STATUS_EM_EXECUCAO, STATUS_EM_ABERTO,
+        )
         for projeto in projetos:
+            status_canon = _normalize_status(projeto["status"])
             status_class = "status-pendente"
-            if projeto["status"] == "Finalizada":
+            if status_canon == STATUS_FINALIZADA:
                 status_class = "status-concluido"
-            elif projeto["status"] == "Em execução":
+            elif status_canon == STATUS_EM_EXECUCAO:
                 status_class = "status-urgente"
-            
+
             if isinstance(projeto["data"], datetime):
                 data_formatada = projeto["data"].strftime("%d/%m/%Y")
             else:
                 data_formatada = "Data não disponível"
-                
-            # Define colors based on status
+
+            # Cores por status canônico
             status_colors = {
-                "Finalizada": ["#e8f5e9", "#2E7D32", "#4CAF50"],  # Background, Text, Border
-                "Em execução": ["#fff8e1", "#F57C00", "#FFC107"], 
-                "Aguardando aprovação": ["#f5f0e0", "#0D1B2A", "#C9A84C"],
-                "Cancelada": ["#ffebee", "#C62828", "#EF5350"]
+                STATUS_FINALIZADA: ["#e8f5e9", "#2E7D32", "#4CAF50"],
+                STATUS_EM_EXECUCAO: ["#fff8e1", "#F57C00", "#FFC107"],
+                STATUS_EM_ABERTO: ["#f5f0e0", "#0D1B2A", "#C9A84C"],
             }
-            
-            # Use default colors if status doesn't match any known status
+
             bg_color, text_color, border_color = status_colors.get(
-                projeto["status"], 
+                status_canon,
                 ["#f5f5f5", "#757575", "#bdbdbd"]
             )
             
@@ -308,7 +311,7 @@ def show():
                     <div style="font-size: 0.9rem; color: #546E7A; margin-top: 0.3rem;">{projeto["cliente"]}</div>
                 </div>
                 <div style="background-color: {bg_color}; padding: 0.4rem 0.8rem; border-radius: 20px; color: {text_color}; font-size: 0.75rem; font-weight: 500;">
-                    {projeto["status"]}
+                    {_label_status(projeto["status"])}
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -347,7 +350,7 @@ def show():
                    CURRENT_DATE - p.data_inicio AS dias_corridos
             FROM propostas p
             JOIN clientes c ON p.cliente_id = c.id
-            WHERE p.status = 'Em execução'
+            WHERE p.status = 'em_execucao'
             ORDER BY dias_corridos DESC
             LIMIT 3
             """)
