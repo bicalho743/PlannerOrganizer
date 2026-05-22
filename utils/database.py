@@ -1830,6 +1830,38 @@ class Database:
             return True
         return self._safe_query(query)
 
+    def delete_parceiro(self, parceiro_id):
+        """
+        Exclui um parceiro pelo ID, apenas se pertencer ao usuário logado
+        (ou se for um registro legado sem usuario_id).
+        """
+        def query():
+            parceiro = self.session.query(Parceiro).filter(
+                Parceiro.id == parceiro_id,
+                (Parceiro.usuario_id == self.usuario_id) | (Parceiro.usuario_id.is_(None))
+            ).first()
+            if not parceiro:
+                raise ValueError(f"Parceiro com ID {parceiro_id} não encontrado ou sem permissão.")
+            self.session.delete(parceiro)
+            return True
+        return self._safe_query(query)
+
+    def delete_assistente(self, assistente_id):
+        """
+        Exclui um assistente pelo ID, apenas se pertencer ao usuário logado
+        (ou se for um registro legado sem usuario_id).
+        """
+        def query():
+            assistente = self.session.query(Assistente).filter(
+                Assistente.id == assistente_id,
+                (Assistente.usuario_id == self.usuario_id) | (Assistente.usuario_id.is_(None))
+            ).first()
+            if not assistente:
+                raise ValueError(f"Assistente com ID {assistente_id} não encontrado ou sem permissão.")
+            self.session.delete(assistente)
+            return True
+        return self._safe_query(query)
+
     def update_parceiro(self, parceiro_id, nome=None, telefone=None, area_atuacao=None, 
                        tipo_parceria=None, estado=None, cidade=None, bairro=None, 
                        endereco=None, pix=None, observacoes=None):
