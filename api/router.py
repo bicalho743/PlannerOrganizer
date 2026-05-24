@@ -280,22 +280,12 @@ async def create_proposta(body: PropostaCreate, uid: str = Depends(verify_fireba
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-STATUS_PARA_DB = {
-    'em_aberto':     'Em elaboração',
-    'em_elaboracao': 'Em elaboração',
-    'aprovada':      'Aprovada',
-    'em_execucao':   'Em execução',
-    'finalizada':    'Finalizada',
-    'recusada':      'Recusada',
-}
-
 @api.put("/propostas/{proposta_id}")
 async def update_proposta(proposta_id: int, body: PropostaUpdate, uid: str = Depends(verify_firebase_token)):
     try:
         db = get_db(uid)
         if body.status:
-            status_db = STATUS_PARA_DB.get(body.status, body.status)
-            db.update_proposta_status(proposta_id, status_db)
+            db.update_proposta_status(proposta_id, body.status)
         if body.descricao or body.valor:
             db.update_proposta(proposta_id=proposta_id, descricao=body.descricao, valor=body.valor)
         return JSONResponse(content={"success": True})
@@ -626,7 +616,7 @@ async def pdf_proposta_cliente(proposta_id: int, uid: str = Depends(verify_fireb
 
         valor_base = float(prop.get('valor', 0) or 0)
         total = valor_base + sum(i['total'] for i in itens if 'Personal Organizer' not in i.get('descricao', ''))
-
+        
         # Item principal
         tipo_prop = str(prop.get('tipo_proposta', 'Organização'))
         itens_final = [{'descricao': f"Personal Organizer - {tipo_prop}", 'total': valor_base}] + itens
@@ -934,21 +924,25 @@ async def pdf_venda(venda_id: int, uid: str = Depends(verify_firebase_token)):
         # Buscar itens da venda via ORM
         itens_data = []
         try:
-            from utils.database import VendaItem
+            from utils.database import VendaItem, Produto
             session = db.session
             itens = session.query(VendaItem).filter(VendaItem.venda_id == venda_id).all()
             for i in itens:
-                nome = i.produto.nome if i.produto else ''
-                qtd = int(i.quantidade)
-                preco = float(i.preco_unitario)
+                try:
+                    produto = session.query(Produto).filter(Produto.id == i.produto_id).first()
+                    nome = produto.nome if produto else (str(i.produto_id) if i.produto_id else 'Produto')
+                except Exception:
+                    nome = 'Produto'
+                qtd = int(i.quantidade or 1)
+                preco = float(i.preco_unitario or 0)
                 itens_data.append({
                     'produto_nome': nome,
                     'quantidade': qtd,
                     'preco_unitario': preco,
                     'subtotal': qtd * preco,
                 })
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"ERRO ao buscar itens da venda {venda_id}: {e}")
 
         itens_df = pd.DataFrame(itens_data) if itens_data else pd.DataFrame()
 
