@@ -1654,6 +1654,33 @@ def show():
                         else:
                             st.session_state['kanban_selected_proposta'] = pid
                         st.rerun()
+
+                    if col_idx in (0, 1):
+                        if st.button("📄 Gerar Proposta", key=f"card_pdf_c{col_idx}_{pid}", use_container_width=True):
+                            try:
+                                from utils.propostas_helper import gerar_pdf_cliente_proposta
+                                sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, pid)
+                                if sucesso and arquivo:
+                                    st.session_state[f"_kanban_pdf_{pid}"] = arquivo
+                                    st.rerun()
+                                else:
+                                    st.error(f"Erro: {mensagem}")
+                            except Exception as e:
+                                st.error(str(e))
+                        pdf_pronto = st.session_state.get(f"_kanban_pdf_{pid}")
+                        if pdf_pronto:
+                            try:
+                                with open(pdf_pronto, "rb") as _f:
+                                    st.download_button(
+                                        "📥 Baixar",
+                                        _f.read(),
+                                        os.path.basename(pdf_pronto),
+                                        "application/pdf",
+                                        key=f"card_dl_c{col_idx}_{pid}",
+                                        use_container_width=True,
+                                    )
+                            except Exception:
+                                st.session_state.pop(f"_kanban_pdf_{pid}", None)
                 if col_idx == 3 and total_finalizadas > MAX_FINALIZADAS_KANBAN:
                     st.caption(f"Mostrando {MAX_FINALIZADAS_KANBAN} de {total_finalizadas} · veja o Histórico abaixo")
             else:
