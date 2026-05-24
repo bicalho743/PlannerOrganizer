@@ -947,13 +947,18 @@ async def pdf_venda(venda_id: int, uid: str = Depends(verify_firebase_token)):
         # Buscar itens da venda via ORM
         itens_data = []
         try:
-            from utils.database import VendaItem, Produto
+            from utils.database import ItemVenda, Produto
             session = db.session
-            itens = session.query(VendaItem).filter(VendaItem.venda_id == venda_id).all()
+            itens = session.query(ItemVenda).filter(ItemVenda.venda_id == venda_id).all()
             for i in itens:
                 try:
-                    produto = session.query(Produto).filter(Produto.id == i.produto_id).first()
-                    nome = produto.nome if produto else (str(i.produto_id) if i.produto_id else 'Produto')
+                    nome = 'Produto'
+                    if i.produto_id:
+                        produto = session.query(Produto).filter(Produto.id == i.produto_id).first()
+                        if produto:
+                            nome = produto.nome
+                    if nome == 'Produto' and hasattr(i, 'descricao') and i.descricao:
+                        nome = i.descricao
                 except Exception:
                     nome = 'Produto'
                 qtd = int(i.quantidade or 1)
