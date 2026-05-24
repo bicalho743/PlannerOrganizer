@@ -264,7 +264,8 @@ def _render_open_proposal_actions(proposta_id, proposta):
         with c3:
             if st.button("📄 Gerar Proposta", key=f"btn_pdf_proposta_{proposta_id}", use_container_width=True):
                 try:
-                    sucesso, mensagem, arquivo = gerar_pdf_proposta(db=st.session_state.db, proposta_id=proposta_id)
+                    from utils.propostas_helper import gerar_pdf_cliente_proposta
+                    sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, proposta_id)
                     if sucesso and arquivo:
                         with open(arquivo, "rb") as f:
                             st.success("PDF gerado!")
