@@ -229,6 +229,20 @@ def _render_open_proposal_actions(proposta_id, proposta):
                     st.error(res.get('message', 'Erro ao iniciar.'))
             except Exception as e:
                 st.error(str(e))
+
+        if st.button("📄 Gerar Proposta", key=f"btn_pdf_proposta_apr_{proposta_id}", use_container_width=True):
+            try:
+                from utils.propostas_helper import gerar_pdf_cliente_proposta
+                sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, proposta_id)
+                if sucesso and arquivo:
+                    with open(arquivo, "rb") as f:
+                        st.success("PDF gerado!")
+                        st.download_button("📥 Baixar", f.read(), os.path.basename(arquivo),
+                                           "application/pdf", key=f"dl_proposta_apr_{proposta_id}", use_container_width=True)
+                else:
+                    st.error(f"Erro: {mensagem}")
+            except Exception as e:
+                st.error(str(e))
     else:
         c1, c2 = st.columns(2)
         with c1:
