@@ -290,10 +290,9 @@ async def update_proposta(proposta_id: int, body: PropostaUpdate, uid: str = Dep
             _cur = _conn.cursor()
             try:
                 _cur.execute(
-                    "UPDATE propostas SET status = %s WHERE id = %s AND usuario_id = %s",
-                    (body.status, proposta_id, uid)
+                    "UPDATE propostas SET status = %s WHERE id = %s",
+                    (body.status, proposta_id)
                 )
-                # campos extras por status
                 if body.status == 'em_execucao':
                     _cur.execute(
                         "UPDATE propostas SET status_execucao = %s, data_inicio_execucao = data_inicio WHERE id = %s",
@@ -305,9 +304,12 @@ async def update_proposta(proposta_id: int, body: PropostaUpdate, uid: str = Dep
                         ('Finalizada', proposta_id)
                     )
                 _conn.commit()
+                rows = _cur.rowcount
             finally:
                 _cur.close()
                 _conn.close()
+            if rows == 0:
+                raise HTTPException(status_code=404, detail="Proposta não encontrada")
         if body.descricao or body.valor:
             db = get_db(uid)
             db.update_proposta(proposta_id=proposta_id, descricao=body.descricao, valor=body.valor)
