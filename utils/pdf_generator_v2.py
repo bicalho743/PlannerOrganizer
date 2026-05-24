@@ -171,16 +171,16 @@ def gerar_pdf_interno(dados, output_path):
     c.save()
 
 def gerar_pdf_cliente(dados, output_path):
-    """Relatório de serviço para o cliente."""
+    """Proposta de serviço para o cliente (com período e observações do perfil)."""
     c = canvas.Canvas(output_path, pagesize=A4)
     margin = 18*mm
     cw = W - 2*margin
-    _header(c, "Relatório de Serviço", f"#{dados['proposta_id']}", margin)
+    _header(c, "Proposta de Serviço", f"#{dados['proposta_id']}", margin)
     y = _info_cards(c, margin, cw, [
         ("Cliente",  dados.get('cliente', '')),
-        ("Telefone", dados.get('telefone', '')),
         ("Tipo",     dados.get('tipo', '')),
         ("Status",   dados.get('status', '')),
+        ("Período",  dados.get('periodo', '')),
     ])
     desc = dados.get('descricao', '')
     if desc:
@@ -192,27 +192,30 @@ def gerar_pdf_cliente(dados, output_path):
         c.setFont("Helvetica-Bold", 10)
         c.drawString(margin + 5*mm, y - 9.5*mm, f"- {desc}" if not desc.startswith('-') else desc)
         y -= 22*mm
-    y = _section_title(c, margin, cw, y, "Itens Inclusos",
-        "Todos os itens e serviços prestados nesta proposta", NAVY)
+    y = _section_title(c, margin, cw, y, "Investimento",
+        "Valores do serviço contratado", NAVY)
     y = _table_rows(c, margin, cw, y, dados.get('itens', []))
-    y = _total_row(c, margin, cw, y, "TOTAL DO SERVIÇO",
+    y = _total_row(c, margin, cw, y, "TOTAL DO INVESTIMENTO",
         dados.get('total', 0), NAVY, WHITE, GOLD)
-    valor_base = dados.get('valor_base', 0)
-    valor_adicionais = dados.get('valor_adicionais', 0)
-    if valor_base > 0:
-        y -= 12*mm
-        rr(c, margin, y - 22*mm, cw, 22*mm, 6, GOLD_LT, GOLD, 0.5)
-        c.setFillColor(colors.HexColor("#7A5C1A"))
-        c.setFont("Helvetica", 9)
-        c.drawString(margin + 5*mm, y - 5*mm, "Valor base do serviço de Personal Organizer")
+
+    obs_texto = (dados.get('observacoes', '') or '').strip()
+    if obs_texto:
+        linhas_obs = [ln.rstrip() for ln in obs_texto.split('\n') if ln.strip()]
+        bloco_h = 14*mm + len(linhas_obs) * 5*mm
+        y -= 10*mm
+        if y - bloco_h < 22*mm:
+            c.showPage()
+            y = H - 22*mm
+        y = _section_title(c, margin, cw, y, "Observações",
+            "Condições e informações importantes desta proposta", GOLD)
+        rr(c, margin, y - bloco_h, cw, bloco_h, 4, GOLD_LT, GOLD, 0.5)
         c.setFillColor(NAVY)
-        c.setFont("Helvetica-Bold", 14)
-        c.drawString(margin + 5*mm, y - 15*mm, f"R$ {valor_base:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        if valor_adicionais > 0:
-            c.setFillColor(NAVY)
-            c.setFont("Helvetica-Bold", 11)
-            c.drawRightString(margin + cw - 5*mm, y - 15*mm,
-                f"Adicionais: R$ {valor_adicionais:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        c.setFont("Helvetica", 9.5)
+        ly = y - 6*mm
+        for ln in linhas_obs:
+            c.drawString(margin + 5*mm, ly, ln)
+            ly -= 5*mm
+
     _footer(c, margin)
     c.save()
     return output_path

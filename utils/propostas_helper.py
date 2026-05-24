@@ -523,6 +523,42 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
 
         total_geral = valor_base + total_adicionais
 
+        def _fmt_data_pdf(d):
+            if d is None:
+                return ''
+            try:
+                if hasattr(d, 'strftime'):
+                    return d.strftime('%d/%m/%Y')
+                ts = pd.to_datetime(d, errors='coerce')
+                if pd.isna(ts):
+                    return ''
+                return ts.strftime('%d/%m/%Y')
+            except Exception:
+                return str(d) if d else ''
+
+        di = _fmt_data_pdf(proposta.get('data_inicio'))
+        df_ = _fmt_data_pdf(proposta.get('data_fim'))
+        if di and df_:
+            periodo_str = f"{di} – {df_}"
+        else:
+            periodo_str = di or df_ or ''
+
+        observacoes_perfil = ''
+        try:
+            perfil = db.get_perfil_usuario()
+            if perfil:
+                observacoes_perfil = (perfil.get('observacoes_relatorio') or '').strip()
+        except Exception as e:
+            print(f"DEBUG HELPER: erro ao buscar observacoes do perfil: {e}")
+        if not observacoes_perfil:
+            observacoes_perfil = (
+                "1. Pagamento sinal, na reserva da data, via PIX\n"
+                "2. Os valores apresentados incluem todos os custos.\n"
+                "3. Não está incluído a organização de documentos.\n"
+                "4. No caso da proposta incluir treinamento, é necessário a presença de funcionário no período da organização\n"
+                "5. Não incluido produtos e organizadores, caso o cliente opte por adquirí-los"
+            )
+
         from utils.pdf_generator_v2 import gerar_pdf_cliente
         dados_pdf = {
             'proposta_id': proposta.get('id', ''),
@@ -530,7 +566,9 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
             'telefone': cliente.get('telefone', ''),
             'tipo': tipo_proposta,
             'status': _label_status(proposta.get('status', '')),
+            'periodo': periodo_str,
             'descricao': proposta.get('descricao', ''),
+            'observacoes': observacoes_perfil,
             'itens': itens_tuples,
             'total': total_geral,
             'valor_base': valor_base,
