@@ -283,10 +283,33 @@ async def create_proposta(body: PropostaCreate, uid: str = Depends(verify_fireba
 @api.put("/propostas/{proposta_id}")
 async def update_proposta(proposta_id: int, body: PropostaUpdate, uid: str = Depends(verify_firebase_token)):
     try:
-        db = get_db(uid)
+        import psycopg2 as _pg2, os as _os
         if body.status:
-            db.update_proposta_status(proposta_id, body.status)
+            _db_url = _os.environ.get("DATABASE_URL")
+            _conn = _pg2.connect(_db_url)
+            _cur = _conn.cursor()
+            try:
+                _cur.execute(
+                    "UPDATE propostas SET status = %s WHERE id = %s AND usuario_id = %s",
+                    (body.status, proposta_id, uid)
+                )
+                # campos extras por status
+                if body.status == 'em_execucao':
+                    _cur.execute(
+                        "UPDATE propostas SET status_execucao = %s, data_inicio_execucao = data_inicio WHERE id = %s",
+                        ('Em execução', proposta_id)
+                    )
+                elif body.status == 'finalizada':
+                    _cur.execute(
+                        "UPDATE propostas SET status_execucao = %s WHERE id = %s",
+                        ('Finalizada', proposta_id)
+                    )
+                _conn.commit()
+            finally:
+                _cur.close()
+                _conn.close()
         if body.descricao or body.valor:
+            db = get_db(uid)
             db.update_proposta(proposta_id=proposta_id, descricao=body.descricao, valor=body.valor)
         return JSONResponse(content={"success": True})
     except HTTPException:
@@ -1048,7 +1071,6 @@ async def pdf_proposta_comercial(proposta_id: int, uid: str = Depends(verify_fir
 # ── ENDPOINTS PROPOSTA EM EXECUÇÃO ────────────────────────────────────────────
 
 class ProdutoOrganizadorCreate(BaseModel):
-    proposta_id: int
     nome: str
     descricao: Optional[str] = None
     valor: float
@@ -1056,7 +1078,6 @@ class ProdutoOrganizadorCreate(BaseModel):
     comodo: Optional[str] = None
 
 class AcrescimoCreate(BaseModel):
-    proposta_id: int
     tipo: str  # fornecedor, assistente, outros
     valor: float
     descricao: Optional[str] = None
