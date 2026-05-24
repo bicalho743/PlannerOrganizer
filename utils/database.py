@@ -1131,8 +1131,7 @@ class Database:
             cliente_id_local = int(cliente_id)
             descricao_local = descricao
             valor_local = float(valor)
-            from utils.proposta_status import normalize as _norm_add_status, STATUS_EM_ABERTO as _ST_ADD_EA
-            status_local = _norm_add_status(status) or _ST_ADD_EA
+            status_local = status
             tipo_proposta_local = tipo_proposta
 
             # Para datas, vamos garantir que não sejam None antes de usar
@@ -1181,9 +1180,8 @@ class Database:
             self.session.flush()
             proposta_id = int(proposta.id) if proposta.id is not None else 0
 
-            # Gerar transações financeiras automaticamente se a proposta for criada com status "aprovada"
-            from utils.proposta_status import STATUS_APROVADA as _ST_AP
-            if status_local == _ST_AP and gerar_transacoes_automaticas and proposta_id > 0:
+            # Gerar transações financeiras automaticamente se a proposta for criada com status "Aprovada"
+            if status_local == "Aprovada" and gerar_transacoes_automaticas and proposta_id > 0:
                 try:
                     # Buscar o cliente da proposta
                     cliente = self.session.query(Cliente).filter_by(id=cliente_id_local).first()
@@ -1830,38 +1828,6 @@ class Database:
             return True
         return self._safe_query(query)
 
-    def delete_parceiro(self, parceiro_id):
-        """
-        Exclui um parceiro pelo ID, apenas se pertencer ao usuário logado
-        (ou se for um registro legado sem usuario_id).
-        """
-        def query():
-            parceiro = self.session.query(Parceiro).filter(
-                Parceiro.id == parceiro_id,
-                (Parceiro.usuario_id == self.usuario_id) | (Parceiro.usuario_id.is_(None))
-            ).first()
-            if not parceiro:
-                raise ValueError(f"Parceiro com ID {parceiro_id} não encontrado ou sem permissão.")
-            self.session.delete(parceiro)
-            return True
-        return self._safe_query(query)
-
-    def delete_assistente(self, assistente_id):
-        """
-        Exclui um assistente pelo ID, apenas se pertencer ao usuário logado
-        (ou se for um registro legado sem usuario_id).
-        """
-        def query():
-            assistente = self.session.query(Assistente).filter(
-                Assistente.id == assistente_id,
-                (Assistente.usuario_id == self.usuario_id) | (Assistente.usuario_id.is_(None))
-            ).first()
-            if not assistente:
-                raise ValueError(f"Assistente com ID {assistente_id} não encontrado ou sem permissão.")
-            self.session.delete(assistente)
-            return True
-        return self._safe_query(query)
-
     def update_parceiro(self, parceiro_id, nome=None, telefone=None, area_atuacao=None, 
                        tipo_parceria=None, estado=None, cidade=None, bairro=None, 
                        endereco=None, pix=None, observacoes=None):
@@ -1945,51 +1911,50 @@ class Database:
 
         return self._safe_query(query)
 
-    def get_fornecedores(self):
-        def query():
-            try:
-                # Tenta filtrar por usuario_id (coluna pode não existir em produção ainda)
-                fornecedores = self.session.query(Fornecedor).filter(
-                    (Fornecedor.usuario_id == self.usuario_id) |
-                    (Fornecedor.usuario_id.is_(None))
-                ).all()
-            except Exception:
-                # Fallback: coluna usuario_id ausente no banco → retorna todos
-                self.session.rollback()
+        def get_fornecedores(self):
+            def query():
                 try:
-                    fornecedores = self.session.query(Fornecedor).all()
-                except Exception as e2:
-                    print(f"ERRO ao obter fornecedores (fallback): {str(e2)}")
+                    # Tenta filtrar por usuario_id (coluna pode não existir em produção ainda)
+                    fornecedores = self.session.query(Fornecedor).filter(
+                        (Fornecedor.usuario_id == self.usuario_id) |
+                        (Fornecedor.usuario_id.is_(None))
+                    ).all()
+                except Exception:
+                    # Fallback: coluna usuario_id ausente no banco → retorna todos
+                    self.session.rollback()
+                    try:
+                        fornecedores = self.session.query(Fornecedor).all()
+                    except Exception as e2:
+                        print(f"ERRO ao obter fornecedores (fallback): {str(e2)}")
+                        return pd.DataFrame()
+
+                try:
+                    resultado = pd.DataFrame([{
+                        'id': f.id,
+                        'nome': f.nome,
+                        'descricao': f.descricao,
+                        'contato': f.contato,
+                        'categoria': f.categoria,
+                        'estado': getattr(f, 'estado', None),
+                        'cidade': getattr(f, 'cidade', None),
+                        'bairro': getattr(f, 'bairro', None),
+                        'endereco': f.endereco,
+                        'pix': f.pix,
+                        'recorrente': f.recorrente,
+                        'observacoes': f.observacoes,
+                        'valor': f.valor,
+                        'data_vencimento': f.data_vencimento,
+                        'data_pagamento': f.data_pagamento,
+                        'status': f.status,
+                        'percentual_comissao': getattr(f, 'percentual_comissao', 0.0),
+                        'usuario_id': getattr(f, 'usuario_id', None),
+                    } for f in fornecedores])
+                    return resultado
+                except Exception as e:
+                    print(f"ERRO ao montar DataFrame de fornecedores: {str(e)}")
                     return pd.DataFrame()
 
-            try:
-                resultado = pd.DataFrame([{
-                    'id': f.id,
-                    'nome': f.nome,
-                    'descricao': f.descricao,
-                    'contato': f.contato,
-                    'categoria': f.categoria,
-                    'estado': getattr(f, 'estado', None),
-                    'cidade': getattr(f, 'cidade', None),
-                    'bairro': getattr(f, 'bairro', None),
-                    'endereco': f.endereco,
-                    'pix': f.pix,
-                    'recorrente': f.recorrente,
-                    'observacoes': f.observacoes,
-                    'valor': f.valor,
-                    'data_vencimento': f.data_vencimento,
-                    'data_pagamento': f.data_pagamento,
-                    'status': f.status,
-                    'percentual_comissao': getattr(f, 'percentual_comissao', 0.0),
-                    'usuario_id': getattr(f, 'usuario_id', None),
-                } for f in fornecedores])
-                return resultado
-            except Exception as e:
-                print(f"ERRO ao montar DataFrame de fornecedores: {str(e)}")
-                return pd.DataFrame()
-
-        return self._safe_query(query)
-
+            return self._safe_query(query)
     def add_categoria_despesa(self, nome, descricao):
         def query():
             # Verificar se temos um ID de usuário válido antes de continuar
@@ -2250,7 +2215,7 @@ class Database:
         Returns:
             dict: Dicionário com status da operação e mensagem
         """
-        def query():
+        def query(novo_status=novo_status, data_aprovacao=data_aprovacao):
             # Inicializar data_aprovacao localmente para garantir que existe
             data_aprovacao_local = data_aprovacao
 
@@ -2269,24 +2234,16 @@ class Database:
                 .filter_by(proposta_id=proposta_id, tipo="Receita")\
                 .count()
 
-            # Normalizar o novo_status para canônico
-            from utils.proposta_status import (
-                normalize as _normalize_status,
-                STATUS_EM_ABERTO, STATUS_APROVADA, STATUS_EM_EXECUCAO, STATUS_FINALIZADA,
-            )
-            novo_status = _normalize_status(novo_status) or novo_status
-            status_antigo_canonical = _normalize_status(status_antigo)
-
             # Atualizar campos
             proposta.status = novo_status
             if data_aprovacao_local:
                 proposta.data_aprovacao = data_aprovacao_local
 
-            # Definir campos adicionais se o status for "em_execucao"
-            if novo_status == STATUS_EM_EXECUCAO:
+            # Definir campos adicionais se o status for "Em execução"
+            if novo_status == "Em execução":
                 # Sempre usar a data de início da proposta como data de início de execução
                 proposta.data_inicio_execucao = proposta.data_inicio
-                # status_execucao mantém vocabulário próprio com capitalização original
+                # Alterar para "Em execução" em vez de "Iniciada" para consistência
                 proposta.status_execucao = "Em execução"
 
             # Salvar as alterações para garantir que tudo esteja atualizado antes de gerar lançamentos
@@ -2295,8 +2252,9 @@ class Database:
             # Preparar objeto de resultado
             resultado = {"status": True, "message": f"Proposta {proposta_id} atualizada com status '{novo_status}'"}
 
-            # Gerar lançamentos quando a proposta estiver mudando para em_execucao ou aprovada
-            if status_antigo_canonical == STATUS_EM_ABERTO and novo_status in (STATUS_EM_EXECUCAO, STATUS_APROVADA):
+            # Gerar lançamentos quando a proposta estiver mudando para "Em execução" ou "Aprovada"
+            # Removida a verificação de lancamentos_existentes == 0 para garantir que o lançamento seja gerado
+            if status_antigo in ["Em elaboração", "Aguardando aprovação"] and (novo_status == "Em execução" or novo_status == "Aprovada"):
                 try:
                     # Forçar regeneração de lançamentos para garantir que o valor base seja criado
                     # O parâmetro forcar_geracao=True remove lançamentos existentes antes de criar novos
@@ -2310,8 +2268,8 @@ class Database:
 
             # Registrar a mudança de status
 
-            # GATILHO: Criar pós-organização quando proposta é finalizada
-            if novo_status == STATUS_FINALIZADA and proposta.status_execucao == "Finalizada":
+            # GATILHO: Criar pós-organização quando proposta é FINALIZADA
+            if novo_status == "Finalizada" and proposta.status_execucao == "Finalizada":
                 try:
                     data_final = proposta.data_fim if proposta.data_fim else datetime.now().date()
                     self.create_post_organization(
@@ -2952,7 +2910,7 @@ class Database:
                 client1_id,
                 "Organização do closet",
                 1500.00,
-                "em_aberto",
+                "Aberta",
                 tipo_proposta="Organização"
             )
 
@@ -3213,22 +3171,14 @@ class Database:
                 proposta_aprovada = False
                 proposta_finalizada = False
 
-                # Normalizar status recebido para canônico (defensivo contra rótulos legados)
-                from utils.proposta_status import (
-                    normalize as _normalize_status,
-                    STATUS_APROVADA, STATUS_FINALIZADA, STATUS_EM_EXECUCAO,
-                )
-                if status is not None:
-                    status = _normalize_status(status) or status
-
-                # Verificar mudança de status para "aprovada"
-                if status is not None and status == STATUS_APROVADA and proposta.status != STATUS_APROVADA:
+                # Verificar mudança de status para "Aprovada"
+                if status is not None and status == "Aprovada" and proposta.status != "Aprovada":
                     proposta_aprovada = True
                     # Registrar a data de aprovação
                     proposta.data_aprovacao = datetime.now().date()
 
-                # Verificar mudança de status para "finalizada"
-                if status is not None and status == STATUS_FINALIZADA and proposta.status != STATUS_FINALIZADA:
+                # Verificar mudança de status para "Concluída"
+                if status is not None and status == "Concluída" and proposta.status != "Concluída":
                     proposta_finalizada = True
                     # Se não foi fornecida uma data_fim, usar a data atual
                     if data_fim is None:
@@ -3251,7 +3201,7 @@ class Database:
                     proposta.data_inicio = data_inicio
                     # Quando a data de início for atualizada, também atualizar a data de início de execução
                     # se a proposta já estiver aprovada ou em execução
-                    if proposta.status in [STATUS_APROVADA, STATUS_EM_EXECUCAO, STATUS_FINALIZADA]:
+                    if proposta.status in ['Aprovada', 'Em execução', 'Finalizada']:
                         proposta.data_inicio_execucao = data_inicio
 
                 if data_fim is not None:
