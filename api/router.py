@@ -43,6 +43,17 @@ def verify_firebase_token(request: Request) -> str:
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Erro auth: {str(e)}")
 
+def get_perfil_dados(uid: str) -> dict:
+    """Busca dados do perfil do usuário para personalizar PDFs."""
+    try:
+        db = get_db(uid)
+        perfil = db.get_perfil_usuario()
+        if perfil:
+            return perfil if isinstance(perfil, dict) else {}
+    except Exception:
+        pass
+    return {}
+
 def get_db(uid: str) -> Database:
     return Database(usuario_id=uid)
 
@@ -115,7 +126,6 @@ class TransacaoUpdate(BaseModel):
     descricao: Optional[str] = None
     valor: Optional[float] = None
     categoria: Optional[str] = None
-    status: Optional[str] = None
 
 class VendaCreate(BaseModel):
     cliente_id: int
@@ -284,35 +294,10 @@ async def create_proposta(body: PropostaCreate, uid: str = Depends(verify_fireba
 @api.put("/propostas/{proposta_id}")
 async def update_proposta(proposta_id: int, body: PropostaUpdate, uid: str = Depends(verify_firebase_token)):
     try:
-        import psycopg2 as _pg2, os as _os
+        db = get_db(uid)
         if body.status:
-            _db_url = _os.environ.get("DATABASE_URL")
-            _conn = _pg2.connect(_db_url)
-            _cur = _conn.cursor()
-            try:
-                _cur.execute(
-                    "UPDATE propostas SET status = %s WHERE id = %s",
-                    (body.status, proposta_id)
-                )
-                if body.status == 'em_execucao':
-                    _cur.execute(
-                        "UPDATE propostas SET status_execucao = %s, data_inicio_execucao = data_inicio WHERE id = %s",
-                        ('Em execução', proposta_id)
-                    )
-                elif body.status == 'finalizada':
-                    _cur.execute(
-                        "UPDATE propostas SET status_execucao = %s WHERE id = %s",
-                        ('Finalizada', proposta_id)
-                    )
-                _conn.commit()
-                rows = _cur.rowcount
-            finally:
-                _cur.close()
-                _conn.close()
-            if rows == 0:
-                raise HTTPException(status_code=404, detail="Proposta não encontrada")
+            db.update_proposta_status(proposta_id, body.status)
         if body.descricao or body.valor:
-            db = get_db(uid)
             db.update_proposta(proposta_id=proposta_id, descricao=body.descricao, valor=body.valor)
         return JSONResponse(content={"success": True})
     except HTTPException:
@@ -358,26 +343,10 @@ async def create_transacao(body: TransacaoCreate, uid: str = Depends(verify_fire
 @api.put("/financeiro/{transacao_id}")
 async def update_transacao(transacao_id: int, body: TransacaoUpdate, uid: str = Depends(verify_firebase_token)):
     try:
-        if body.status:
-            import psycopg2 as _pg2, os as _os
-            _db_url = _os.environ.get("DATABASE_URL")
-            _conn = _pg2.connect(_db_url)
-            _cur = _conn.cursor()
-            try:
-                _cur.execute(
-                    "UPDATE financeiro SET status = %s WHERE id = %s",
-                    (body.status, transacao_id)
-                )
-                _conn.commit()
-                print(f"[financeiro] status={body.status} id={transacao_id} rows={_cur.rowcount}")
-            finally:
-                _cur.close()
-                _conn.close()
-        if body.tipo or body.descricao or body.valor or body.categoria:
-            get_db(uid).update_transacao(
-                transacao_id=transacao_id, tipo=body.tipo,
-                descricao=body.descricao, valor=body.valor, categoria=body.categoria
-            )
+        get_db(uid).update_transacao(
+            transacao_id=transacao_id, tipo=body.tipo,
+            descricao=body.descricao, valor=body.valor, categoria=body.categoria
+        )
         return JSONResponse(content={"success": True})
     except HTTPException:
         raise
@@ -683,7 +652,7 @@ async def pdf_proposta_cliente(proposta_id: int, uid: str = Depends(verify_fireb
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False, dir='/tmp') as tmp:
             path = tmp.name
 
-        gerar_pdf_cliente(dados, path)
+        gerar_pdf_cliente(dados, path, perfil=get_perfil_dados(uid))
         nome_cli = str(cliente.get('nome', 'cliente')).replace(' ', '_').lower()
         num = prop.get('numero', proposta_id)
         return FileResponse(path, media_type='application/pdf',
@@ -819,7 +788,7 @@ async def pdf_proposta_interno(proposta_id: int, uid: str = Depends(verify_fireb
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False, dir='/tmp') as tmp:
             path = tmp.name
 
-        gerar_pdf_interno(dados_pdf, path)
+        gerar_pdf_interno(dados_pdf, path, perfil=get_perfil_dados(uid))
         nome_cli = str(cliente.get('nome', 'cliente')).replace(' ', '_').lower()
         num = prop.get('numero', proposta_id)
         return FileResponse(path, media_type='application/pdf',
@@ -865,7 +834,7 @@ async def pdf_proposta_fornecedores(proposta_id: int, uid: str = Depends(verify_
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False, dir='/tmp') as tmp:
             path = tmp.name
 
-        gerar_pdf_fornecedores(dados, path)
+        gerar_pdf_fornecedores(dados, path, perfil=get_perfil_dados(uid))
         nome_cli = str(cliente.get('nome', 'cliente')).replace(' ', '_').lower()
         num = prop.get('numero', proposta_id)
         return FileResponse(path, media_type='application/pdf',
@@ -926,7 +895,7 @@ async def pdf_proposta_produtos(proposta_id: int, uid: str = Depends(verify_fire
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False, dir='/tmp') as tmp:
             path = tmp.name
 
-        gerar_pdf_venda_v2(venda_dados, cliente_dados, itens_df, path)
+        gerar_pdf_venda_v2(venda_dados, cliente_dados, itens_df, path, perfil=get_perfil_dados(uid))
         nome_file = nome_cli.replace(' ', '_').lower()
         return FileResponse(path, media_type='application/pdf',
                            filename=f"Relatorio_Produtos_{nome_file}_{num}.pdf")
@@ -966,30 +935,21 @@ async def pdf_venda(venda_id: int, uid: str = Depends(verify_firebase_token)):
         # Buscar itens da venda via ORM
         itens_data = []
         try:
-            from utils.database import ItemVenda, Produto
+            from utils.database import VendaItem
             session = db.session
-            itens = session.query(ItemVenda).filter(ItemVenda.venda_id == venda_id).all()
+            itens = session.query(VendaItem).filter(VendaItem.venda_id == venda_id).all()
             for i in itens:
-                try:
-                    nome = 'Produto'
-                    if i.produto_id:
-                        produto = session.query(Produto).filter(Produto.id == i.produto_id).first()
-                        if produto:
-                            nome = produto.nome
-                    if nome == 'Produto' and hasattr(i, 'descricao') and i.descricao:
-                        nome = i.descricao
-                except Exception:
-                    nome = 'Produto'
-                qtd = int(i.quantidade or 1)
-                preco = float(i.preco_unitario or 0)
+                nome = i.produto.nome if i.produto else ''
+                qtd = int(i.quantidade)
+                preco = float(i.preco_unitario)
                 itens_data.append({
                     'produto_nome': nome,
                     'quantidade': qtd,
                     'preco_unitario': preco,
                     'subtotal': qtd * preco,
                 })
-        except Exception as e:
-            print(f"ERRO ao buscar itens da venda {venda_id}: {e}")
+        except Exception:
+            pass
 
         itens_df = pd.DataFrame(itens_data) if itens_data else pd.DataFrame()
 
@@ -1010,7 +970,7 @@ async def pdf_venda(venda_id: int, uid: str = Depends(verify_firebase_token)):
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False, dir='/tmp') as tmp:
             path = tmp.name
 
-        gerar_pdf_venda_v2(venda_dados, cliente_dados, itens_df, path)
+        gerar_pdf_venda_v2(venda_dados, cliente_dados, itens_df, path, perfil=get_perfil_dados(uid))
         nome_cli = str(cliente.get('nome', 'cliente')).replace(' ', '_').lower()
         return FileResponse(path, media_type='application/pdf',
                            filename=f"Relatorio_Venda_{venda_id}_{nome_cli}.pdf")
@@ -1079,7 +1039,7 @@ async def pdf_proposta_comercial(proposta_id: int, uid: str = Depends(verify_fir
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False, dir='/tmp') as tmp:
             path = tmp.name
 
-        gerar_pdf_cliente(dados, path)
+        gerar_pdf_cliente(dados, path, perfil=get_perfil_dados(uid))
         nome_cli = str(cliente.get('nome', 'cliente')).replace(' ', '_').lower()
         num = prop.get('numero', proposta_id)
         return FileResponse(path, media_type='application/pdf',
@@ -1095,6 +1055,7 @@ async def pdf_proposta_comercial(proposta_id: int, uid: str = Depends(verify_fir
 # ── ENDPOINTS PROPOSTA EM EXECUÇÃO ────────────────────────────────────────────
 
 class ProdutoOrganizadorCreate(BaseModel):
+    proposta_id: int
     nome: str
     descricao: Optional[str] = None
     valor: float
@@ -1102,6 +1063,7 @@ class ProdutoOrganizadorCreate(BaseModel):
     comodo: Optional[str] = None
 
 class AcrescimoCreate(BaseModel):
+    proposta_id: int
     tipo: str  # fornecedor, assistente, outros
     valor: float
     descricao: Optional[str] = None
