@@ -1475,3 +1475,35 @@ async def stripe_webhook(request: Request):
         print(f"[webhook] pagamento falhou: {email}")
 
     return {"status": "ok"}
+
+
+@api.get("/stripe/portal")
+async def stripe_portal(uid: str = Depends(verify_firebase_token)):
+    try:
+        import stripe as _stripe, psycopg2 as _pg2, os as _os
+        _stripe.api_key = _os.environ.get("STRIPE_SECRET_KEY", "")
+        # Buscar email do usuário
+        _conn = _pg2.connect(_os.environ.get("DATABASE_URL"))
+        _cur = _conn.cursor()
+        _cur.execute("SELECT email FROM perfil WHERE usuario_id = %s", (uid,))
+        row = _cur.fetchone()
+        _cur.close()
+        _conn.close()
+        if not row:
+            raise HTTPException(status_code=404, detail="Perfil não encontrado")
+        email = row[0]
+        # Buscar customer_id no Stripe pelo email
+        customers = _stripe.Customer.list(email=email, limit=1)
+        if not customers.data:
+            raise HTTPException(status_code=404, detail="Cliente não encontrado no Stripe")
+        customer_id = customers.data[0].id
+        # Criar sessão do portal
+        session = _stripe.billing_portal.Session.create(
+            customer=customer_id,
+            return_url="https://plannerorganiza.com.br",
+        )
+        return JSONResponse(content={"url": session.url})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
