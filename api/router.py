@@ -360,7 +360,8 @@ async def update_transacao(transacao_id: int, body: TransacaoUpdate, uid: str = 
     try:
         if body.status:
             import psycopg2 as _pg2, os as _os
-            _conn = _pg2.connect(_os.environ.get("DATABASE_URL"))
+            _db_url = _os.environ.get("DATABASE_URL")
+            _conn = _pg2.connect(_db_url)
             _cur = _conn.cursor()
             try:
                 _cur.execute(
@@ -368,6 +369,7 @@ async def update_transacao(transacao_id: int, body: TransacaoUpdate, uid: str = 
                     (body.status, transacao_id)
                 )
                 _conn.commit()
+                print(f"[financeiro] status={body.status} id={transacao_id} rows={_cur.rowcount}")
             finally:
                 _cur.close()
                 _conn.close()
