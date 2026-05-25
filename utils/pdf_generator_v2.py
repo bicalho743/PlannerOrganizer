@@ -1,6 +1,6 @@
 # utils/pdf_generator_v2.py
-# Gerador unificado de PDFs — substitui todos os pdf_generator_*.py
-# Design: Tâmara Cavalcante | Planner Organizer
+# Gerador unificado de PDFs — design Navy/Gold
+# Nome e dados personalizados via perfil do usuário
 
 import os
 from datetime import datetime
@@ -27,6 +27,34 @@ RED      = colors.HexColor("#C0392B")
 TEAL     = colors.HexColor("#0F5E6E")
 TEAL_LT  = colors.HexColor("#E0F4F7")
 
+# ── Perfil padrão (fallback) ─────────────────────────────────
+DEFAULT_PERFIL = {
+    'nome':      'Personal Organizer',
+    'empresa':   'Planner Organizer',
+    'instagram': '@plannerorganiza',
+    'cargo':     'Personal Organizer',
+}
+
+def _get_linha_perfil(perfil: dict) -> str:
+    """Monta a linha de identificação do cabeçalho a partir do perfil."""
+    p = perfil or DEFAULT_PERFIL
+    nome = p.get('nome') or DEFAULT_PERFIL['nome']
+    cargo = p.get('cargo') or DEFAULT_PERFIL['cargo']
+    instagram = p.get('instagram') or ''
+    partes = [nome, cargo]
+    if instagram:
+        partes.append(instagram)
+    return '  ·  '.join(partes)
+
+def _get_linha_rodape(perfil: dict) -> str:
+    """Monta a linha do rodapé."""
+    p = perfil or DEFAULT_PERFIL
+    nome = p.get('nome') or DEFAULT_PERFIL['nome']
+    instagram = p.get('instagram') or ''
+    if instagram:
+        return f"{nome}  ·  {instagram}"
+    return nome
+
 # ── Utilitários ─────────────────────────────────────────────
 def fmt(v):
     return f"R$ {abs(v):,.2f}".replace(",","X").replace(".",",").replace("X",".")
@@ -41,7 +69,8 @@ def rr(c, x, y, w, h, r, fill, stroke=None, sw=0.5):
     c.drawPath(p, fill=1, stroke=1 if stroke else 0)
     c.restoreState()
 
-def _header(c, titulo, proposta, margin):
+def _header(c, titulo, proposta, margin, perfil=None):
+    linha = _get_linha_perfil(perfil)
     c.setFillColor(NAVY)
     c.rect(0, H - 52*mm, W, 52*mm, fill=1, stroke=0)
     c.setFillColor(GOLD)
@@ -54,11 +83,10 @@ def _header(c, titulo, proposta, margin):
     c.drawString(margin, H - 24*mm, titulo)
     c.setFillColor(GOLD)
     c.setFont("Helvetica", 11)
-    c.drawString(margin, H - 32*mm, "Tâmara Cavalcante  ·  Personal Organizer  ·  @tamaraorganiza")
+    c.drawString(margin, H - 32*mm, linha)
     c.setFillColor(GRAY3)
     c.setFont("Helvetica", 9)
-    from datetime import datetime
-    c.drawString(margin, H - 40*mm, f"Gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')}")
+    c.drawString(margin, H - 40*mm, f"Gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')}  ·  {(perfil or {}).get('nome','')}")
 
 def _info_cards(c, margin, content_w, infos):
     top_y = H - 68*mm
@@ -125,21 +153,23 @@ def _total_row(c, margin, content_w, y, label, valor, bg, text_color, val_color,
     c.drawRightString(margin + content_w - 4*mm, y - 4.5*mm, fmt(valor))
     return y - row_h
 
-def _footer(c, margin):
+def _footer(c, margin, perfil=None):
+    linha = _get_linha_rodape(perfil)
     c.setFillColor(GRAY2)
     c.rect(0, 0, W, 14*mm, fill=1, stroke=0)
     c.setFillColor(GRAY3)
     c.setFont("Helvetica", 8)
-    c.drawString(margin, 5*mm, "Documento de uso interno — Planner Organizer")
-    c.drawRightString(W - margin, 5*mm, "Tâmara Cavalcante  ·  @tamaraorganiza")
+    empresa = (perfil or {}).get('empresa') or 'Planner Organizer'
+    c.drawString(margin, 5*mm, f"Documento de uso interno — {empresa}")
+    c.drawRightString(W - margin, 5*mm, linha)
 
-# ── Relatórios públicos ──────────────────────────────────────
-def gerar_pdf_interno(dados, output_path):
-    """Relatório interno com análise financeira completa."""
+# ── Relatórios ───────────────────────────────────────────────
+
+def gerar_pdf_interno(dados, output_path, perfil=None):
     c = canvas.Canvas(output_path, pagesize=A4)
     margin = 18*mm
     cw = W - 2*margin
-    _header(c, "Relatório Interno", f"#{dados['proposta_id']}", margin)
+    _header(c, "Relatório Interno", f"#{dados['proposta_id']}", margin, perfil)
     y = _info_cards(c, margin, cw, [
         ("Cliente",  dados.get('cliente', '')),
         ("Tipo",     dados.get('tipo', '')),
@@ -167,15 +197,14 @@ def gerar_pdf_interno(dados, output_path):
         c.setFillColor(NAVY)
         c.setFont("Helvetica-Bold", 14)
         c.drawRightString(margin + cw - 5*mm, y - 9*mm, f"{pct:.1f}%".replace(".", ","))
-    _footer(c, margin)
+    _footer(c, margin, perfil)
     c.save()
 
-def gerar_pdf_cliente(dados, output_path):
-    """Proposta de serviço para o cliente (com período e observações do perfil)."""
+def gerar_pdf_cliente(dados, output_path, perfil=None):
     c = canvas.Canvas(output_path, pagesize=A4)
     margin = 18*mm
     cw = W - 2*margin
-    _header(c, "Proposta de Serviço", f"#{dados['proposta_id']}", margin)
+    _header(c, "Proposta de Serviço", f"#{dados['proposta_id']}", margin, perfil)
     y = _info_cards(c, margin, cw, [
         ("Cliente",  dados.get('cliente', '')),
         ("Tipo",     dados.get('tipo', '')),
@@ -197,8 +226,9 @@ def gerar_pdf_cliente(dados, output_path):
     y = _table_rows(c, margin, cw, y, dados.get('itens', []))
     y = _total_row(c, margin, cw, y, "TOTAL DO INVESTIMENTO",
         dados.get('total', 0), NAVY, WHITE, GOLD)
-
     obs_texto = (dados.get('observacoes', '') or '').strip()
+    if not obs_texto:
+        obs_texto = (perfil or {}).get('observacoes_relatorio', '') or ''
     if obs_texto:
         linhas_obs = [ln.rstrip() for ln in obs_texto.split('\n') if ln.strip()]
         bloco_h = 14*mm + len(linhas_obs) * 5*mm
@@ -215,17 +245,15 @@ def gerar_pdf_cliente(dados, output_path):
         for ln in linhas_obs:
             c.drawString(margin + 5*mm, ly, ln)
             ly -= 5*mm
-
-    _footer(c, margin)
+    _footer(c, margin, perfil)
     c.save()
     return output_path
 
-def gerar_pdf_fornecedores(dados, output_path):
-    """Relatório de fornecedores do projeto."""
+def gerar_pdf_fornecedores(dados, output_path, perfil=None):
     c = canvas.Canvas(output_path, pagesize=A4)
     margin = 18*mm
     cw = W - 2*margin
-    _header(c, "Relatório de Fornecedores", f"#{dados['proposta_id']}", margin)
+    _header(c, "Relatório de Fornecedores", f"#{dados['proposta_id']}", margin, perfil)
     y = _info_cards(c, margin, cw, [
         ("Cliente",  dados.get('cliente', '')),
         ("Telefone", dados.get('telefone', '')),
@@ -237,186 +265,115 @@ def gerar_pdf_fornecedores(dados, output_path):
     y = _table_rows(c, margin, cw, y, dados.get('itens', []))
     _total_row(c, margin, cw, y, "TOTAL FORNECEDORES",
         dados.get('total', 0), TEAL, WHITE, colors.HexColor("#A8DDE8"))
-    _footer(c, margin)
+    _footer(c, margin, perfil)
     c.save()
     return output_path
 
-def gerar_pdf_venda(venda, cliente, itens_venda, filename, proposta_descricao=None):
-    """Relatório de venda avulsa — mantém compatibilidade com interface antigo."""
-    # Preparar dados no formato esperado pela nova função
-    
-    # Extrair ID de venda
-    if isinstance(venda, dict):
-        venda_id = venda.get('id', '')
-    else:
-        venda_id = getattr(venda, 'id', '')
-    
-    # Extrair nome do cliente
-    if isinstance(cliente, dict):
-        cliente_nome = cliente.get('nome', '')
-    else:
-        cliente_nome = getattr(cliente, 'nome', '')
-    
-    # Extrair data
-    if isinstance(venda, dict):
-        data = venda.get('data_venda', '')
-    else:
-        data = str(getattr(venda, 'data_venda', ''))
-    
-    # Extrair status
-    if isinstance(venda, dict):
-        status = venda.get('status', '')
-    else:
-        status = getattr(venda, 'status', '')
-    
-    # Extrair forma de pagamento
-    if isinstance(venda, dict):
-        forma_pagamento = venda.get('forma_pagamento', '')
-    else:
-        forma_pagamento = getattr(venda, 'forma_pagamento', '')
-    
-    # Extrair total
-    if isinstance(venda, dict):
-        total = venda.get('valor_total', 0)
-    else:
-        total = getattr(venda, 'valor_total', 0)
-    
-    # Processar itens — podem ser tuples, dicts ou objetos
-    itens_processados = []
-    if itens_venda:
-        for i in itens_venda:
-            if isinstance(i, tuple):
-                # Formato tuple: (nome, valor, is_negativo)
-                nome = i[0]
-                valor = i[1]
-                is_neg = i[2] if len(i) > 2 else False
-            elif isinstance(i, dict):
-                # Formato dict
-                nome = i.get('descricao', i.get('produto_nome', i.get('nome', '')))
-                valor = i.get('subtotal', i.get('valor', 0))
-                is_neg = False
-            else:
-                # Formato objeto
-                nome = getattr(i, 'descricao', getattr(i, 'produto_nome', getattr(i, 'nome', '')))
-                valor = getattr(i, 'subtotal', getattr(i, 'valor', 0))
-                is_neg = False
-            itens_processados.append((nome, valor, is_neg))
-    
-    dados = {
-        'venda_id': venda_id,
-        'cliente': cliente_nome,
-        'data': data,
-        'status': status,
-        'forma_pagamento': forma_pagamento,
-        'itens': itens_processados,
-        'total': total
-    }
-    
-    c = canvas.Canvas(filename, pagesize=A4)
-    margin = 18*mm
-    cw = W - 2*margin
-    _header(c, "Comprovante de Venda", f"#{dados.get('venda_id','')}", margin)
-    y = _info_cards(c, margin, cw, [
-        ("Cliente", dados.get('cliente', '')),
-        ("Data",    dados.get('data', '')),
-        ("Status",  dados.get('status', '')),
-        ("Forma",   dados.get('forma_pagamento', '')),
-    ])
-    y = _section_title(c, margin, cw, y, "Itens da Venda",
-        "Produtos e quantidades desta venda", NAVY)
-    y = _table_rows(c, margin, cw, y, dados.get('itens', []))
-    _total_row(c, margin, cw, y, "TOTAL DA VENDA",
-        dados['total'], NAVY, WHITE, GOLD)
-    _footer(c, margin)
-    c.save()
-    return filename
-
-
-def gerar_pdf_venda_v2(venda_dados, cliente_dados, itens_df, filename):
-    """
-    Gera PDF de venda com design Navy/Gold
-    """
+def gerar_pdf_venda_v2(venda_dados, cliente_dados, itens_df, filename, perfil=None):
     os.makedirs(os.path.dirname(filename) if os.path.dirname(filename) else '.', exist_ok=True)
-
     c = canvas.Canvas(filename, pagesize=A4)
     margin = 18*mm
     cw = W - 2*margin
-
-    _header(c, "Relatório de Venda", f"#{venda_dados.get('id','')}", margin)
-
+    _header(c, "Relatório de Venda", f"#{venda_dados.get('id','')}", margin, perfil)
     data_venda = venda_dados.get('data_venda', '')
     if hasattr(data_venda, 'strftime'):
         data_venda = data_venda.strftime('%d/%m/%Y')
     elif data_venda:
         data_venda = str(data_venda)
-
-    forma_pgto = venda_dados.get('forma_pagamento', '') or '—'
-
     y = _info_cards(c, margin, cw, [
-        ("Cliente", cliente_dados.get('nome', 'N/A')),
-        ("Data", data_venda),
-        ("Pagamento", forma_pgto),
-        ("Status", venda_dados.get('status', '')),
+        ("Cliente",   cliente_dados.get('nome', 'N/A')),
+        ("Data",      data_venda),
+        ("Pagamento", venda_dados.get('forma_pagamento', '') or '—'),
+        ("Status",    venda_dados.get('status', '')),
     ])
-
     y = _section_title(c, margin, cw, y, "Itens da Venda",
         "Produtos e serviços incluídos nesta venda", NAVY)
-
     col_produto = margin
-    col_qtd = margin + cw * 0.50
+    col_qtd  = margin + cw * 0.50
     col_unit = margin + cw * 0.62
-    col_sub = margin + cw - 4*mm
+    col_sub  = margin + cw - 4*mm
     row_h = 9*mm
-
     rr(c, margin, y - row_h + 1.5*mm, cw, row_h - 1*mm, 3, NAVY)
     c.setFillColor(WHITE)
     c.setFont("Helvetica-Bold", 9)
     c.drawString(col_produto + 4*mm, y - 5*mm, "Produto")
-    c.drawString(col_qtd, y - 5*mm, "Qtd")
+    c.drawString(col_qtd,  y - 5*mm, "Qtd")
     c.drawString(col_unit, y - 5*mm, "Vlr. Unitário")
     c.drawRightString(col_sub, y - 5*mm, "Subtotal")
     y -= row_h
-
     total_calc = 0
     idx = 0
     if isinstance(itens_df, pd.DataFrame) and not itens_df.empty:
         for _, row in itens_df.iterrows():
             nome = str(row.get('produto_nome', row.get('nome', 'Produto'))).title()
-            qtd = int(row.get('quantidade', 1))
+            qtd  = int(row.get('quantidade', 1))
             valor = float(row.get('preco_unitario', row.get('valor', 0)))
             subtotal = qtd * valor
             total_calc += subtotal
-            comodo = str(row.get('comodo', '') or '').strip()
-            if comodo:
-                nome += f" - {comodo.title()}"
-
             bg = GRAY1 if idx % 2 == 0 else WHITE
             rr(c, margin, y - row_h + 1.5*mm, cw, row_h - 1*mm, 3, bg)
             c.setFillColor(DARK)
             c.setFont("Helvetica", 9.5)
             c.drawString(col_produto + 4*mm, y - 5*mm, nome)
-            c.setFont("Helvetica", 9.5)
-            c.drawString(col_qtd, y - 5*mm, str(qtd))
+            c.drawString(col_qtd,  y - 5*mm, str(qtd))
             c.drawString(col_unit, y - 5*mm, fmt(valor))
             c.setFont("Helvetica-Bold", 9.5)
             c.drawRightString(col_sub, y - 5*mm, fmt(subtotal))
             y -= row_h
             idx += 1
-
     total = venda_dados.get('valor_total', total_calc) or total_calc
-    y = _total_row(c, margin, cw, y, "TOTAL DA VENDA", total, NAVY, WHITE, GOLD)
-
-    obs = venda_dados.get('observacoes', '') or ''
-    if obs.strip():
-        y -= 12*mm
-        rr(c, margin, y - 18*mm, cw, 18*mm, 4, GOLD_LT, GOLD, 0.5)
-        c.setFillColor(colors.HexColor("#7A5C1A"))
-        c.setFont("Helvetica", 9)
-        c.drawString(margin + 5*mm, y - 5*mm, "Observações")
-        c.setFillColor(NAVY)
-        c.setFont("Helvetica", 10)
-        c.drawString(margin + 5*mm, y - 13*mm, obs.strip())
-
-    _footer(c, margin)
+    _total_row(c, margin, cw, y, "TOTAL DA VENDA", total, NAVY, WHITE, GOLD)
+    _footer(c, margin, perfil)
     c.save()
     return filename
+
+def gerar_pdf_proposta_comercial(dados, output_path, perfil=None):
+    """Proposta comercial — igual ao fechamento cliente mas com título diferente."""
+    dados_copia = dict(dados)
+    c = canvas.Canvas(output_path, pagesize=A4)
+    margin = 18*mm
+    cw = W - 2*margin
+    _header(c, "Proposta Comercial", f"#{dados_copia['proposta_id']}", margin, perfil)
+    y = _info_cards(c, margin, cw, [
+        ("Cliente",  dados_copia.get('cliente', '')),
+        ("Tipo",     dados_copia.get('tipo', '')),
+        ("Status",   dados_copia.get('status', '')),
+        ("Período",  dados_copia.get('periodo', '')),
+    ])
+    desc = dados_copia.get('descricao', '')
+    if desc:
+        rr(c, margin, y - 12*mm, cw, 12*mm, 4, GOLD_LT, GOLD, 0.5)
+        c.setFillColor(colors.HexColor("#7A5C1A"))
+        c.setFont("Helvetica", 9)
+        c.drawString(margin + 5*mm, y - 4*mm, "Descrição do serviço")
+        c.setFillColor(NAVY)
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(margin + 5*mm, y - 9.5*mm, f"- {desc}" if not desc.startswith('-') else desc)
+        y -= 22*mm
+    y = _section_title(c, margin, cw, y, "Investimento",
+        "Valores do serviço contratado", NAVY)
+    y = _table_rows(c, margin, cw, y, dados_copia.get('itens', []))
+    y = _total_row(c, margin, cw, y, "TOTAL DO INVESTIMENTO",
+        dados_copia.get('total', 0), NAVY, WHITE, GOLD)
+    obs_texto = (dados_copia.get('observacoes', '') or '').strip()
+    if not obs_texto:
+        obs_texto = (perfil or {}).get('observacoes_relatorio', '') or ''
+    if obs_texto:
+        linhas_obs = [ln.rstrip() for ln in obs_texto.split('\n') if ln.strip()]
+        bloco_h = 14*mm + len(linhas_obs) * 5*mm
+        y -= 10*mm
+        if y - bloco_h < 22*mm:
+            c.showPage()
+            y = H - 22*mm
+        y = _section_title(c, margin, cw, y, "Observações",
+            "Condições e informações importantes desta proposta", GOLD)
+        rr(c, margin, y - bloco_h, cw, bloco_h, 4, GOLD_LT, GOLD, 0.5)
+        c.setFillColor(NAVY)
+        c.setFont("Helvetica", 9.5)
+        ly = y - 6*mm
+        for ln in linhas_obs:
+            c.drawString(margin + 5*mm, ly, ln)
+            ly -= 5*mm
+    _footer(c, margin, perfil)
+    c.save()
+    return output_path
