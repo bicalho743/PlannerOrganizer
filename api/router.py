@@ -1405,3 +1405,73 @@ async def update_perfil(body: PerfilUpdate, uid: str = Depends(verify_firebase_t
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# ── WEBHOOK STRIPE ────────────────────────────────────────────────────────────
+
+STRIPE_SECRET_KEY    = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET = "whsec_u2kzOmFd0pRzCtcAjdINjZOOOu5dtuju"
+
+@api.post("/webhook/stripe")
+async def stripe_webhook(request: Request):
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature", "")
+    try:
+        stripe.api_key = STRIPE_SECRET_KEY
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, STRIPE_WEBHOOK_SECRET
+        )
+    except Exception as e:
+        print(f"[webhook] erro validação: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+    import psycopg2 as _pg2, os as _os
+    _db_url = _os.environ.get("DATABASE_URL")
+
+    if event["type"] == "checkout.session.completed":
+        session = event["data"]["object"]
+        email = session.get("customer_email") or session.get("customer_details", {}).get("email", "")
+        print(f"[webhook] pagamento confirmado: {email}")
+        if email:
+            try:
+                _conn = _pg2.connect(_db_url)
+                _cur = _conn.cursor()
+                _cur.execute(
+                    "UPDATE perfil SET plano = 'pro', ativo = TRUE WHERE email = %s",
+                    (email,)
+                )
+                _conn.commit()
+                print(f"[webhook] plano ativado para {email} rows={_cur.rowcount}")
+                _cur.close()
+                _conn.close()
+            except Exception as e:
+                print(f"[webhook] erro ao ativar plano: {e}")
+
+    elif event["type"] == "customer.subscription.deleted":
+        sub = event["data"]["object"]
+        customer_id = sub.get("customer")
+        print(f"[webhook] assinatura cancelada: {customer_id}")
+        if STRIPE_SECRET_KEY and customer_id:
+            try:
+                stripe.api_key = STRIPE_SECRET_KEY
+                customer = stripe.Customer.retrieve(customer_id)
+                email = customer.get("email", "")
+                if email:
+                    _conn = _pg2.connect(_db_url)
+                    _cur = _conn.cursor()
+                    _cur.execute(
+                        "UPDATE perfil SET plano = 'cancelado' WHERE email = %s",
+                        (email,)
+                    )
+                    _conn.commit()
+                    print(f"[webhook] plano cancelado para {email}")
+                    _cur.close()
+                    _conn.close()
+            except Exception as e:
+                print(f"[webhook] erro ao cancelar plano: {e}")
+
+    elif event["type"] == "invoice.payment_failed":
+        invoice = event["data"]["object"]
+        email = invoice.get("customer_email", "")
+        print(f"[webhook] pagamento falhou: {email}")
+
+    return {"status": "ok"}
