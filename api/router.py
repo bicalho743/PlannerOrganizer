@@ -294,10 +294,42 @@ async def create_proposta(body: PropostaCreate, uid: str = Depends(verify_fireba
 @api.put("/propostas/{proposta_id}")
 async def update_proposta(proposta_id: int, body: PropostaUpdate, uid: str = Depends(verify_firebase_token)):
     try:
-        db = get_db(uid)
+        import psycopg2 as _pg2, os as _os
         if body.status:
-            db.update_proposta_status(proposta_id, body.status)
+            _conn = _pg2.connect(_os.environ.get("DATABASE_URL"))
+            _cur = _conn.cursor()
+            try:
+                _cur.execute(
+                    "UPDATE propostas SET status = %s WHERE id = %s",
+                    (body.status, proposta_id)
+                )
+                if body.status == 'em_execucao':
+                    _cur.execute(
+                        "UPDATE propostas SET status_execucao = %s, data_inicio_execucao = COALESCE(data_inicio, CURRENT_DATE) WHERE id = %s",
+                        ('Em execução', proposta_id)
+                    )
+                elif body.status == 'finalizada':
+                    _cur.execute(
+                        "UPDATE propostas SET status_execucao = %s WHERE id = %s",
+                        ('Finalizada', proposta_id)
+                    )
+                _conn.commit()
+                rows = _cur.rowcount
+                print(f"[update_proposta] status={body.status} id={proposta_id} rows={rows}")
+            finally:
+                _cur.close()
+                _conn.close()
+            if rows == 0:
+                raise HTTPException(status_code=404, detail="Proposta não encontrada")
+            # Disparar lançamentos financeiros ao finalizar
+            if body.status == 'finalizada':
+                try:
+                    from utils.finalizar_proposta_v2 import finalizar_proposta_v2
+                    finalizar_proposta_v2(proposta_id)
+                except Exception as _fe:
+                    print(f"[finalizar] erro não crítico: {_fe}")
         if body.descricao or body.valor:
+            db = get_db(uid)
             db.update_proposta(proposta_id=proposta_id, descricao=body.descricao, valor=body.valor)
         return JSONResponse(content={"success": True})
     except HTTPException:
