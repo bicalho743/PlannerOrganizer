@@ -115,6 +115,7 @@ class TransacaoUpdate(BaseModel):
     descricao: Optional[str] = None
     valor: Optional[float] = None
     categoria: Optional[str] = None
+    status: Optional[str] = None
 
 class VendaCreate(BaseModel):
     cliente_id: int
@@ -357,10 +358,24 @@ async def create_transacao(body: TransacaoCreate, uid: str = Depends(verify_fire
 @api.put("/financeiro/{transacao_id}")
 async def update_transacao(transacao_id: int, body: TransacaoUpdate, uid: str = Depends(verify_firebase_token)):
     try:
-        get_db(uid).update_transacao(
-            transacao_id=transacao_id, tipo=body.tipo,
-            descricao=body.descricao, valor=body.valor, categoria=body.categoria
-        )
+        if body.status:
+            import psycopg2 as _pg2, os as _os
+            _conn = _pg2.connect(_os.environ.get("DATABASE_URL"))
+            _cur = _conn.cursor()
+            try:
+                _cur.execute(
+                    "UPDATE financeiro SET status = %s WHERE id = %s",
+                    (body.status, transacao_id)
+                )
+                _conn.commit()
+            finally:
+                _cur.close()
+                _conn.close()
+        if body.tipo or body.descricao or body.valor or body.categoria:
+            get_db(uid).update_transacao(
+                transacao_id=transacao_id, tipo=body.tipo,
+                descricao=body.descricao, valor=body.valor, categoria=body.categoria
+            )
         return JSONResponse(content={"success": True})
     except HTTPException:
         raise
