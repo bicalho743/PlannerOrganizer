@@ -1087,7 +1087,6 @@ async def pdf_proposta_comercial(proposta_id: int, uid: str = Depends(verify_fir
 # ── ENDPOINTS PROPOSTA EM EXECUÇÃO ────────────────────────────────────────────
 
 class ProdutoOrganizadorCreate(BaseModel):
-    proposta_id: int
     nome: str
     descricao: Optional[str] = None
     valor: float
@@ -1095,7 +1094,6 @@ class ProdutoOrganizadorCreate(BaseModel):
     comodo: Optional[str] = None
 
 class AcrescimoCreate(BaseModel):
-    proposta_id: int
     tipo: str  # fornecedor, assistente, outros
     valor: float
     descricao: Optional[str] = None
