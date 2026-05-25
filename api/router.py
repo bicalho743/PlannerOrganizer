@@ -327,13 +327,39 @@ async def update_proposta(proposta_id: int, body: PropostaUpdate, uid: str = Dep
                 db.invalidar_cache()
             except Exception:
                 pass
+            # Lançamento financeiro ao aprovar
+            if body.status == 'aprovada':
+                try:
+                    import psycopg2 as _pg2b, os as _osb
+                    _conn2 = _pg2b.connect(_osb.environ.get("DATABASE_URL"))
+                    _cur2 = _conn2.cursor()
+                    try:
+                        _cur2.execute("SELECT valor, numero, descricao, tipo_proposta, cliente_id, usuario_id FROM propostas WHERE id = %s", (proposta_id,))
+                        _row = _cur2.fetchone()
+                        if _row:
+                            _valor, _num, _desc, _tipo, _cli_id, _uid = _row
+                            _valor = float(_valor or 0)
+                            _cur2.execute("SELECT COUNT(*) FROM financeiro WHERE proposta_id = %s AND origem_tipo = 'proposta_aprovacao'", (proposta_id,))
+                            if _cur2.fetchone()[0] == 0 and _valor > 0:
+                                _cur2.execute(
+                                    "INSERT INTO financeiro (descricao, valor, data, categoria, subcategoria, tipo, origem_id, origem_tipo, proposta_id, status, classificacao, usuario_id) VALUES (%s,%s,CURRENT_DATE,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                                    (f"Proposta #{_num} — {_desc or 'Servico'} (Aprovacao)", _valor, "Servicos de organizacao", _tipo or "Organizacao", "Receita", _cli_id, "proposta_aprovacao", proposta_id, "Pendente", "contas_a_receber", _uid)
+                                )
+                                _conn2.commit()
+                                print(f"[aprovacao] lancamento R${_valor} proposta #{_num}")
+                    finally:
+                        _cur2.close()
+                        _conn2.close()
+                except Exception as _ae:
+                    print(f"[aprovacao] erro: {_ae}")
+
             # Disparar lançamentos financeiros ao finalizar
             if body.status == 'finalizada':
                 try:
                     from utils.finalizar_proposta_v2 import finalizar_proposta_v2
                     finalizar_proposta_v2(proposta_id)
                 except Exception as _fe:
-                    print(f"[finalizar] erro não crítico: {_fe}")
+                    print(f"[finalizar] erro nao critico: {_fe}")
         if body.descricao or body.valor:
             db = get_db(uid)
             db.update_proposta(proposta_id=proposta_id, descricao=body.descricao, valor=body.valor)
