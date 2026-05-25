@@ -32,9 +32,14 @@ def finalizar_proposta_v2(proposta_id: int) -> dict:
 
         pid, numero, descricao, valor, status_exec, cliente_id, usuario_id, nome_cliente = row
 
-        if status_exec == 'Finalizada':
-            print(f"[finalizar_v2] proposta #{numero} já finalizada, ignorando")
-            return {"status": True, "mensagem": "Já finalizada"}
+        # Verificar se lançamentos já foram gerados (evitar duplicidade)
+        cur.execute(
+            "SELECT COUNT(*) FROM financeiro WHERE proposta_id = %s AND origem_tipo IN ('venda_produtos','servicos_adicionais','comissao_fornecedor','pagamento_assistente')",
+            (proposta_id,)
+        )
+        if cur.fetchone()[0] > 0:
+            print(f"[finalizar_v2] proposta #{numero} já tem lançamentos, ignorando")
+            return {"status": True, "mensagem": "Lançamentos já existem"}
 
         lancamentos = 0
 
