@@ -321,6 +321,12 @@ async def update_proposta(proposta_id: int, body: PropostaUpdate, uid: str = Dep
                 _conn.close()
             if rows == 0:
                 raise HTTPException(status_code=404, detail="Proposta não encontrada")
+            # Invalidar cache do ORM para garantir dados frescos
+            try:
+                db = get_db(uid)
+                db.invalidar_cache()
+            except Exception:
+                pass
             # Disparar lançamentos financeiros ao finalizar
             if body.status == 'finalizada':
                 try:
