@@ -1436,7 +1436,7 @@ async def stripe_webhook(request: Request):
                 _conn = _pg2.connect(_db_url)
                 _cur = _conn.cursor()
                 _cur.execute(
-                    "UPDATE perfil SET plano = 'pro', ativo = TRUE WHERE email = %s",
+                    "UPDATE perfis SET plano = 'pro', ativo = TRUE WHERE email = %s",
                     (email,)
                 )
                 _conn.commit()
@@ -1459,7 +1459,7 @@ async def stripe_webhook(request: Request):
                     _conn = _pg2.connect(_db_url)
                     _cur = _conn.cursor()
                     _cur.execute(
-                        "UPDATE perfil SET plano = 'cancelado' WHERE email = %s",
+                        "UPDATE perfis SET plano = 'cancelado' WHERE email = %s",
                         (email,)
                     )
                     _conn.commit()
@@ -1485,7 +1485,7 @@ async def stripe_portal(uid: str = Depends(verify_firebase_token)):
         # Buscar email do usuário
         _conn = _pg2.connect(_os.environ.get("DATABASE_URL"))
         _cur = _conn.cursor()
-        _cur.execute("SELECT email FROM perfil WHERE usuario_id = %s", (uid,))
+        _cur.execute("SELECT email FROM perfis WHERE usuario_id = %s", (uid,))
         row = _cur.fetchone()
         _cur.close()
         _conn.close()
