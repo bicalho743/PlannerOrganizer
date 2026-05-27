@@ -617,10 +617,17 @@ async def get_perfil(uid: str = Depends(verify_firebase_token)):
             perfil = db.get_perfil_usuario()
             if perfil is not None:
                 if hasattr(perfil, 'to_dict'):
-                    return JSONResponse(content=perfil.to_dict())
-                return JSONResponse(content=perfil if isinstance(perfil, dict) else {})
-        except:
-            pass
+                    perfil = perfil.to_dict()
+                if isinstance(perfil, dict):
+                    # Serializar datas e outros tipos não-JSON para string
+                    for k, v in perfil.items():
+                        if hasattr(v, 'isoformat'):
+                            perfil[k] = v.isoformat()
+                        elif v is not None and not isinstance(v, (str, int, float, bool, list, dict)):
+                            perfil[k] = str(v)
+                    return JSONResponse(content=perfil)
+        except Exception as _pe:
+            print(f"[perfil] erro: {_pe}")
         return JSONResponse(content={"usuario_id": uid})
     except HTTPException:
         raise
