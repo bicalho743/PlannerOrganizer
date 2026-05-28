@@ -6,6 +6,7 @@ from typing import Optional
 import pandas as pd
 import os
 import requests
+import stripe
 from pydantic import BaseModel
 from utils.database import Database
 
