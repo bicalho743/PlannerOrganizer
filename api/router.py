@@ -1437,7 +1437,14 @@ async def stripe_webhook(request: Request):
 
     if event["type"] == "checkout.session.completed":
         session = event["data"]["object"]
-        email = session.get("customer_email") or session.get("customer_details", {}).get("email", "")
+        # StripeObject usa atributo, não dict .get()
+        try:
+            email = getattr(session, "customer_email", None) or ""
+            if not email:
+                cd = getattr(session, "customer_details", None)
+                email = getattr(cd, "email", "") or ""
+        except Exception:
+            email = ""
         print(f"[webhook] pagamento confirmado: {email}")
         if email:
             try:
@@ -1456,7 +1463,7 @@ async def stripe_webhook(request: Request):
 
     elif event["type"] == "customer.subscription.deleted":
         sub = event["data"]["object"]
-        customer_id = sub.get("customer")
+        customer_id = getattr(sub, "customer", None)
         print(f"[webhook] assinatura cancelada: {customer_id}")
         if STRIPE_SECRET_KEY and customer_id:
             try:
