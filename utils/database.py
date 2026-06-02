@@ -1181,7 +1181,8 @@ class Database:
             proposta_id = int(proposta.id) if proposta.id is not None else 0
 
             # Gerar transações financeiras automaticamente se a proposta for criada com status "Aprovada"
-            if status_local == "Aprovada" and gerar_transacoes_automaticas and proposta_id > 0:
+            from utils.proposta_status import normalize as _norm_status, STATUS_APROVADA
+            if _norm_status(status_local) == STATUS_APROVADA and gerar_transacoes_automaticas and proposta_id > 0:
                 try:
                     # Buscar o cliente da proposta
                     cliente = self.session.query(Cliente).filter_by(id=cliente_id_local).first()
@@ -2216,8 +2217,16 @@ class Database:
             dict: Dicionário com status da operação e mensagem
         """
         def query(novo_status=novo_status, data_aprovacao=data_aprovacao):
+            from utils.proposta_status import (
+                normalize as _norm_status,
+                STATUS_EM_ABERTO, STATUS_APROVADA,
+                STATUS_EM_EXECUCAO, STATUS_FINALIZADA,
+            )
             # Inicializar data_aprovacao localmente para garantir que existe
             data_aprovacao_local = data_aprovacao
+
+            # Normalizar o status recebido (aceita rótulo legado ou canônico)
+            novo_status_canon = _norm_status(novo_status) or novo_status
 
             # Buscar a proposta por ID
             proposta = self.session.query(Proposta).filter(Proposta.id == proposta_id).first()
@@ -2225,8 +2234,8 @@ class Database:
             if proposta is None:
                 return {"status": False, "message": f"Proposta ID {proposta_id} não encontrada"}
 
-            # Armazenar o status antigo para verificação simples
-            status_antigo = proposta.status
+            # Armazenar o status antigo (normalizado) para verificação simples
+            status_antigo_canon = _norm_status(proposta.status)
 
             # Verificar se já existem lançamentos para esta proposta para evitar duplicidade
             # Agora verificamos diretamente por lançamentos 'Receita' (não mais receita_a_receber_aprovacao)
@@ -2234,27 +2243,27 @@ class Database:
                 .filter_by(proposta_id=proposta_id, tipo="Receita")\
                 .count()
 
-            # Atualizar campos
-            proposta.status = novo_status
+            # Atualizar campos (sempre gravar o valor canônico)
+            proposta.status = novo_status_canon
             if data_aprovacao_local:
                 proposta.data_aprovacao = data_aprovacao_local
 
             # Definir campos adicionais se o status for "Em execução"
-            if novo_status == "Em execução":
+            if novo_status_canon == STATUS_EM_EXECUCAO:
                 # Sempre usar a data de início da proposta como data de início de execução
                 proposta.data_inicio_execucao = proposta.data_inicio
-                # Alterar para "Em execução" em vez de "Iniciada" para consistência
+                # Campo de fase de execução usado pelo kanban (filtra por 'Em execução')
                 proposta.status_execucao = "Em execução"
 
             # Salvar as alterações para garantir que tudo esteja atualizado antes de gerar lançamentos
             self.session.flush()
 
             # Preparar objeto de resultado
-            resultado = {"status": True, "message": f"Proposta {proposta_id} atualizada com status '{novo_status}'"}
+            resultado = {"status": True, "message": f"Proposta {proposta_id} atualizada com status '{novo_status_canon}'"}
 
             # Gerar lançamentos quando a proposta estiver mudando para "Em execução" ou "Aprovada"
             # Removida a verificação de lancamentos_existentes == 0 para garantir que o lançamento seja gerado
-            if status_antigo in ["Em elaboração", "Aguardando aprovação"] and (novo_status == "Em execução" or novo_status == "Aprovada"):
+            if status_antigo_canon == STATUS_EM_ABERTO and novo_status_canon in (STATUS_EM_EXECUCAO, STATUS_APROVADA):
                 try:
                     # Forçar regeneração de lançamentos para garantir que o valor base seja criado
                     # O parâmetro forcar_geracao=True remove lançamentos existentes antes de criar novos
@@ -2269,7 +2278,7 @@ class Database:
             # Registrar a mudança de status
 
             # GATILHO: Criar pós-organização quando proposta é FINALIZADA
-            if novo_status == "Finalizada" and proposta.status_execucao == "Finalizada":
+            if novo_status_canon == STATUS_FINALIZADA and proposta.status_execucao == "Finalizada":
                 try:
                     data_final = proposta.data_fim if proposta.data_fim else datetime.now().date()
                     self.create_post_organization(
