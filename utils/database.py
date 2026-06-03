@@ -1912,50 +1912,51 @@ class Database:
 
         return self._safe_query(query)
 
-        def get_fornecedores(self):
-            def query():
+    def get_fornecedores(self):
+        def query():
+            try:
+                # Tenta filtrar por usuario_id (coluna pode não existir em produção ainda)
+                fornecedores = self.session.query(Fornecedor).filter(
+                    (Fornecedor.usuario_id == self.usuario_id) |
+                    (Fornecedor.usuario_id.is_(None))
+                ).all()
+            except Exception:
+                # Fallback: coluna usuario_id ausente no banco → retorna todos
+                self.session.rollback()
                 try:
-                    # Tenta filtrar por usuario_id (coluna pode não existir em produção ainda)
-                    fornecedores = self.session.query(Fornecedor).filter(
-                        (Fornecedor.usuario_id == self.usuario_id) |
-                        (Fornecedor.usuario_id.is_(None))
-                    ).all()
-                except Exception:
-                    # Fallback: coluna usuario_id ausente no banco → retorna todos
-                    self.session.rollback()
-                    try:
-                        fornecedores = self.session.query(Fornecedor).all()
-                    except Exception as e2:
-                        print(f"ERRO ao obter fornecedores (fallback): {str(e2)}")
-                        return pd.DataFrame()
-
-                try:
-                    resultado = pd.DataFrame([{
-                        'id': f.id,
-                        'nome': f.nome,
-                        'descricao': f.descricao,
-                        'contato': f.contato,
-                        'categoria': f.categoria,
-                        'estado': getattr(f, 'estado', None),
-                        'cidade': getattr(f, 'cidade', None),
-                        'bairro': getattr(f, 'bairro', None),
-                        'endereco': f.endereco,
-                        'pix': f.pix,
-                        'recorrente': f.recorrente,
-                        'observacoes': f.observacoes,
-                        'valor': f.valor,
-                        'data_vencimento': f.data_vencimento,
-                        'data_pagamento': f.data_pagamento,
-                        'status': f.status,
-                        'percentual_comissao': getattr(f, 'percentual_comissao', 0.0),
-                        'usuario_id': getattr(f, 'usuario_id', None),
-                    } for f in fornecedores])
-                    return resultado
-                except Exception as e:
-                    print(f"ERRO ao montar DataFrame de fornecedores: {str(e)}")
+                    fornecedores = self.session.query(Fornecedor).all()
+                except Exception as e2:
+                    print(f"ERRO ao obter fornecedores (fallback): {str(e2)}")
                     return pd.DataFrame()
 
-            return self._safe_query(query)
+            try:
+                resultado = pd.DataFrame([{
+                    'id': f.id,
+                    'nome': f.nome,
+                    'descricao': f.descricao,
+                    'contato': f.contato,
+                    'categoria': f.categoria,
+                    'estado': getattr(f, 'estado', None),
+                    'cidade': getattr(f, 'cidade', None),
+                    'bairro': getattr(f, 'bairro', None),
+                    'endereco': f.endereco,
+                    'pix': f.pix,
+                    'recorrente': f.recorrente,
+                    'observacoes': f.observacoes,
+                    'valor': f.valor,
+                    'data_vencimento': f.data_vencimento,
+                    'data_pagamento': f.data_pagamento,
+                    'status': f.status,
+                    'percentual_comissao': getattr(f, 'percentual_comissao', 0.0),
+                    'usuario_id': getattr(f, 'usuario_id', None),
+                } for f in fornecedores])
+                return resultado
+            except Exception as e:
+                print(f"ERRO ao montar DataFrame de fornecedores: {str(e)}")
+                return pd.DataFrame()
+
+        return self._safe_query(query)
+
     def add_categoria_despesa(self, nome, descricao):
         def query():
             # Verificar se temos um ID de usuário válido antes de continuar
