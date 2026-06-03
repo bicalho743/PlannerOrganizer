@@ -1,0 +1,1 @@
+- [PDF download/view embutido](pdf-download.md) — "file:// ERR_FAILED" é falha de ABRIR o arquivo baixado dentro de iframe; resolver com viewer inline via Blob, não trocar o download.

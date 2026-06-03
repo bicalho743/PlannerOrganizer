@@ -1,4 +1,6 @@
 import streamlit as st
+import streamlit.components.v1 as components
+import base64
 import logging
 logging.basicConfig(level=logging.INFO)
 from utils.finalizar_proposta_v2 import finalizar_proposta_v2
@@ -415,6 +417,31 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
                     st.error(str(e))
 
 
+def _pdf_inline_viewer(pdf_bytes, key, height=720):
+    """Render a PDF inline inside the app using a blob URL.
+
+    Avoids the browser's `file://` open path (which fails inside the embedded
+    preview iframe). The PDF is decoded into a Blob in the component's own
+    document, so it renders directly via the browser's PDF viewer.
+    """
+    b64 = base64.b64encode(pdf_bytes).decode()
+    html = (
+        '<div id="pdfwrap_' + key + '" style="width:100%;height:' + str(height) + 'px;"></div>'
+        '<script>(function(){'
+        'var b64="' + b64 + '";'
+        'var bin=atob(b64);var len=bin.length;var bytes=new Uint8Array(len);'
+        'for(var i=0;i<len;i++){bytes[i]=bin.charCodeAt(i);}'
+        'var blob=new Blob([bytes],{type:"application/pdf"});'
+        'var url=URL.createObjectURL(blob);'
+        'var wrap=document.getElementById("pdfwrap_' + key + '");'
+        'var ifr=document.createElement("iframe");'
+        'ifr.src=url;ifr.style.width="100%";ifr.style.height="100%";ifr.style.border="none";'
+        'wrap.appendChild(ifr);'
+        '})();</script>'
+    )
+    components.html(html, height=height + 12)
+
+
 def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_cliente="Cliente", numero_proposta=None):
     """Render a navy card-styled download button that generates and downloads PDF on click."""
     pdf_bytes = None
@@ -502,6 +529,8 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_
                 use_container_width=True,
             )
         st.caption(subtitle)
+        with st.expander("👁️ Visualizar no navegador"):
+            _pdf_inline_viewer(pdf_bytes, key=f"{report_type}_{proposta_id}")
     elif error_msg:
         st.markdown(f"""
         <div style="background:{NAVY};border-radius:10px;padding:16px;text-align:center;min-height:80px;

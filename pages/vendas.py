@@ -310,18 +310,26 @@ def _render_detail_panel(venda_id, venda_row):
         if pdf_path and os.path.exists(pdf_path):
             with open(pdf_path, "rb") as f:
                 pdf_bytes = f.read()
-            b64 = _b64.b64encode(pdf_bytes).decode()
-            st.markdown(f"""
-            <a href="data:application/pdf;base64,{b64}" download="{pdf_file_name}"
-               style="text-decoration:none;display:inline-block;">
-              <div style="background:{NAVY};border-radius:10px;padding:14px 24px;text-align:center;
-                          display:flex;align-items:center;gap:10px;cursor:pointer;transition:all 0.2s;"
-                   onmouseover="this.style.background='{NAVY_HOVER}';this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)'"
-                   onmouseout="this.style.background='{NAVY}';this.style.transform='none';this.style.boxShadow='none'">
-                <span style="font-size:20px;">📄</span>
-                <span style="color:{GOLD};font-weight:700;font-size:13px;">Baixar PDF da Venda</span>
-              </div>
-            </a>""", unsafe_allow_html=True)
+            _venda_css = (
+                "button {"
+                f"background:{NAVY} !important;border-radius:10px !important;"
+                "padding:14px 24px !important;width:100%% !important;"
+                "border:1px solid transparent !important;transition:all 0.2s !important;}"
+                "button:hover {"
+                f"background:{NAVY_HOVER} !important;transform:translateY(-2px) !important;"
+                "box-shadow:0 4px 12px rgba(0,0,0,0.3) !important;}"
+                "button p, button div {"
+                f"color:{GOLD} !important;font-weight:700 !important;font-size:13px !important;}}"
+            ).replace("%%", "%")
+            with stylable_container(key=f"dl_venda_{venda_id}", css_styles=_venda_css):
+                st.download_button(
+                    label="📄 Baixar PDF da Venda",
+                    data=pdf_bytes,
+                    file_name=pdf_file_name,
+                    mime="application/pdf",
+                    key=f"dl_btn_venda_{venda_id}",
+                    use_container_width=True,
+                )
     except Exception as e:
         st.error(f"Erro ao gerar PDF: {str(e)}")
 
