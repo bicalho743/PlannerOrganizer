@@ -479,21 +479,29 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_
         error_msg = str(e)
 
     if pdf_bytes:
-        import base64
-        b64 = base64.b64encode(pdf_bytes).decode()
-        st.markdown(f"""
-        <a href="data:application/pdf;base64,{b64}" download="{file_name}"
-           style="text-decoration:none;display:block;">
-          <div style="background:{NAVY};border-radius:10px;padding:16px;text-align:center;min-height:80px;
-                      display:flex;flex-direction:column;align-items:center;justify-content:center;
-                      cursor:pointer;transition:all 0.2s;border:1px solid transparent;"
-               onmouseover="this.style.background='{NAVY_HOVER}';this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)'"
-               onmouseout="this.style.background='{NAVY}';this.style.transform='none';this.style.boxShadow='none'">
-            <div style="font-size:22px;">{icon}</div>
-            <div style="color:{GOLD};font-weight:700;font-size:12px;margin-top:4px;">{title}</div>
-            <div style="color:#aaa;font-size:10px;">{subtitle}</div>
-          </div>
-        </a>""", unsafe_allow_html=True)
+        _card_css = (
+            "button {"
+            f"background:{NAVY} !important;border-radius:10px !important;"
+            "padding:16px !important;min-height:80px !important;width:100%% !important;"
+            "border:1px solid transparent !important;transition:all 0.2s !important;"
+            "display:flex !important;flex-direction:column !important;"
+            "align-items:center !important;justify-content:center !important;}"
+            "button:hover {"
+            f"background:{NAVY_HOVER} !important;transform:translateY(-2px) !important;"
+            "box-shadow:0 4px 12px rgba(0,0,0,0.3) !important;}"
+            "button p, button div {"
+            f"color:{GOLD} !important;font-weight:700 !important;font-size:12px !important;}}"
+        ).replace("%%", "%")
+        with stylable_container(key=f"dl_card_{report_type}_{proposta_id}", css_styles=_card_css):
+            st.download_button(
+                label=f"{icon} {title}",
+                data=pdf_bytes,
+                file_name=file_name,
+                mime="application/pdf",
+                key=f"dl_btn_{report_type}_{proposta_id}",
+                use_container_width=True,
+            )
+        st.caption(subtitle)
     elif error_msg:
         st.markdown(f"""
         <div style="background:{NAVY};border-radius:10px;padding:16px;text-align:center;min-height:80px;
