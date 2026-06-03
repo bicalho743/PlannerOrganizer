@@ -1454,11 +1454,21 @@ def show():
 
     from utils.proposta_status import (
         STATUS_EM_ABERTO as _ST_AB, STATUS_APROVADA as _ST_AP,
+        STATUS_EM_EXECUCAO as _ST_EX,
         STATUS_FINALIZADA as _ST_FI, STATUS_RECUSADA as _ST_RE,
     )
+
+    def _mask_em_execucao(df):
+        """Coluna 'Em Execução': usa o status canônico como fonte de verdade,
+        com fallback para o campo auxiliar status_execucao (compatibilidade)."""
+        m = df['status'] == _ST_EX
+        if 'status_execucao' in df.columns:
+            m = m | (df['status_execucao'] == 'Em execução')
+        return m
+
     _p_aberto = propostas_com_clientes[propostas_com_clientes['status'] == _ST_AB] if not propostas_com_clientes.empty else pd.DataFrame()
-    _p_aprovada = propostas_com_clientes[(propostas_com_clientes['status'] == _ST_AP) & (~propostas_com_clientes['status_execucao'].isin(['Em execução']) if 'status_execucao' in propostas_com_clientes.columns else True)] if not propostas_com_clientes.empty else pd.DataFrame()
-    _p_exec = propostas_com_clientes[propostas_com_clientes['status_execucao'] == 'Em execução'] if not propostas_com_clientes.empty and 'status_execucao' in propostas_com_clientes.columns else pd.DataFrame()
+    _p_aprovada = propostas_com_clientes[(propostas_com_clientes['status'] == _ST_AP) & (~_mask_em_execucao(propostas_com_clientes))] if not propostas_com_clientes.empty else pd.DataFrame()
+    _p_exec = propostas_com_clientes[_mask_em_execucao(propostas_com_clientes)] if not propostas_com_clientes.empty else pd.DataFrame()
     _p_final = propostas_com_clientes[propostas_com_clientes['status'].isin([_ST_FI, _ST_RE])] if not propostas_com_clientes.empty else pd.DataFrame()
 
     mc1, mc2, mc3, mc4 = st.columns(4)
@@ -1508,15 +1518,16 @@ def show():
         [_ST_AB]
     )
 
-    propostas_aprovadas = _col_propostas(
-        "Aprovada",
-        [_ST_AP],
-        exclude_exec=['Em execução']
-    )
+    if not propostas_com_clientes.empty:
+        propostas_aprovadas = propostas_com_clientes[
+            (propostas_com_clientes['status'] == _ST_AP) & (~_mask_em_execucao(propostas_com_clientes))
+        ].copy()
+    else:
+        propostas_aprovadas = pd.DataFrame()
 
     if not propostas_com_clientes.empty:
         propostas_em_exec = propostas_com_clientes[
-            propostas_com_clientes['status_execucao'] == 'Em execução'
+            _mask_em_execucao(propostas_com_clientes)
         ].copy()
     else:
         propostas_em_exec = pd.DataFrame()
