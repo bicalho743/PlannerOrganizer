@@ -213,12 +213,35 @@ div[data-testid="stSelectbox"] [data-baseweb="select"] {
 }
 div[data-testid="stSelectbox"] *, div[data-testid="stSelectbox"] span,
 div[data-testid="stSelectbox"] div { color: #1e1e1e !important; }
-[data-baseweb="popover"], [data-baseweb="menu"], [data-baseweb="menu"] ul,
-[data-baseweb="menu"] li, ul[role="listbox"], ul[role="listbox"] li {
-    background-color: #ffffff !important; color: #1e1e1e !important;
+/* Menu suspenso (popover) de selectbox/multiselect: fundo branco, fonte escura */
+[data-baseweb="popover"] [data-baseweb="menu"],
+[data-baseweb="popover"] [role="listbox"],
+[data-baseweb="menu"], [data-baseweb="menu"] ul,
+ul[role="listbox"] {
+    background-color: #ffffff !important;
 }
-ul[role="listbox"] li:hover *, [data-baseweb="menu"] li:hover * {
-    background-color: #e8ecf0 !important; color: #1e1e1e !important;
+[data-baseweb="popover"] li,
+[data-baseweb="menu"] li,
+ul[role="listbox"] li,
+li[role="option"],
+[data-baseweb="popover"] [role="option"],
+[data-baseweb="menu"] li *,
+ul[role="listbox"] li *,
+li[role="option"] * {
+    background-color: #ffffff !important;
+    color: #1e1e1e !important;
+}
+/* Item destacado / em hover */
+li[role="option"]:hover,
+ul[role="listbox"] li:hover,
+[data-baseweb="menu"] li:hover,
+li[role="option"][aria-selected="true"],
+li[role="option"]:hover *,
+ul[role="listbox"] li:hover *,
+[data-baseweb="menu"] li:hover *,
+li[role="option"][aria-selected="true"] * {
+    background-color: #e8ecf0 !important;
+    color: #1e1e1e !important;
 }
 .stTextInput input, .stTextArea textarea, .stNumberInput input {
     background-color: #f8f9fa !important; color: #212529 !important;
