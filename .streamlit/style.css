@@ -208,11 +208,32 @@ div[data-testid="stMultiSelect"] [data-baseweb="tag"] {
 div[data-testid="stDateInput"] input {
     background-color: #ffffff !important; color: #1e1e1e !important;
 }
-div[data-testid="stSelectbox"] [data-baseweb="select"] {
-    background-color: #f8f9fa !important; border: 1px solid #dee2e6 !important;
+div[data-testid="stSelectbox"] [data-baseweb="select"],
+div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
+div[data-testid="stSelectbox"] [data-baseweb="select"] > div > div {
+  background-color: #f8f9fa !important; border-color: #dee2e6 !important;
 }
-div[data-testid="stSelectbox"] *, div[data-testid="stSelectbox"] span,
-div[data-testid="stSelectbox"] div { color: #1e1e1e !important; }
+div[data-testid="stSelectbox"] [data-baseweb="select"] {
+  border: 1px solid #dee2e6 !important;
+}
+/* Valor selecionado e placeholder: contraste AA (>=4.5:1) sobre fundo claro */
+div[data-testid="stSelectbox"] *,
+div[data-testid="stSelectbox"] span,
+div[data-testid="stSelectbox"] div,
+div[data-testid="stSelectbox"] input,
+div[data-testid="stSelectbox"] [data-baseweb="select"] div[class*="placeholder"],
+div[data-testid="stSelectbox"] [data-baseweb="select"] div[class*="singleValue"],
+div[data-testid="stSelectbox"] [data-baseweb="select"] div[class*="ValueContainer"] {
+  color: #1e1e1e !important;
+  -webkit-text-fill-color: #1e1e1e !important;
+  opacity: 1 !important;
+}
+div[data-testid="stSelectbox"] input::placeholder,
+div[data-testid="stSelectbox"] input::-webkit-input-placeholder {
+  color: #4b5563 !important;
+  -webkit-text-fill-color: #4b5563 !important;
+  opacity: 1 !important;
+}
 /* Menu suspenso (popover) de selectbox/multiselect: fundo branco, fonte escura */
 [data-baseweb="popover"] [data-baseweb="menu"],
 [data-baseweb="popover"] [role="listbox"],
