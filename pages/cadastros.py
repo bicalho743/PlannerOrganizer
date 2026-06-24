@@ -1,4 +1,4 @@
-from utils.formatadores import formatar_df_clientes
+from utils.formatadores import formatar_df_clientes, UFS_BRASIL, validar_cpf, formatar_cpf, data_para_ddmmm
 import streamlit as st
 from datetime import datetime
 import pandas as pd
@@ -38,18 +38,26 @@ def show():
                 with col1:
                     telefone = st.text_input("Telefone")
                     cpf = st.text_input("CPF")
-                    estado = st.text_input("Estado")
+                    estado = st.selectbox("Estado (UF)", [""] + UFS_BRASIL)
                     cidade = st.text_input("Cidade")
                 with col2:
                     bairro = st.text_input("Bairro")
                     endereco = st.text_input("Endereço")
-                    data_aniversario = st.text_input("Data Aniversário (DD/MMM)")
+                    data_aniversario_dt = st.date_input("Data de Aniversário", value=None, format="DD/MM/YYYY")
                     origem_cliente = st.text_input("Origem do Cliente")
 
                 observacoes = st.text_area("Observações")
                 submitted = st.form_submit_button("Cadastrar")
 
             if submitted:
+                if not nome or not nome.strip():
+                    st.error("O campo Nome é obrigatório.")
+                    st.stop()
+                if cpf and not validar_cpf(cpf):
+                    st.error("CPF inválido. Verifique os dígitos.")
+                    st.stop()
+                cpf = formatar_cpf(cpf) if cpf else cpf
+                data_aniversario = data_para_ddmmm(data_aniversario_dt)
                 try:
                     st.session_state.db.add_cliente(
                         nome=nome,
