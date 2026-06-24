@@ -9,6 +9,9 @@ from utils.tooltip_helper import create_tooltip, input_with_tooltip
 def show():
     from utils.auth_guard import require_auth
     require_auth()
+        # UX-4: tabela responsiva com rolagem horizontal visível e cabeçalhos fixos (sticky)
+        st.markdown("<style>.cadastros-page [data-testid='stDataFrame'] [data-testid='stDataFrameResizable']{overflow-x:auto !important;scrollbar-width:thin;scrollbar-color:#C9A84C #e2e8f0;}.cadastros-page [data-testid='stDataFrame']{position:relative;border-radius:8px;}.cadastros-page [data-testid='stDataFrame']::after{content:'';position:absolute;top:0;right:0;width:26px;height:100%;pointer-events:none;background:linear-gradient(to right,rgba(255,255,255,0),rgba(13,27,42,0.12));border-radius:0 8px 8px 0;}.cadastros-page [data-testid='stDataFrame'] [role='columnheader']{position:sticky;top:0;z-index:3;}.cadastros-page [data-testid='stDataFrame'] ::-webkit-scrollbar{height:10px;}.cadastros-page [data-testid='stDataFrame'] ::-webkit-scrollbar-thumb{background:#C9A84C;border-radius:6px;}.cadastros-page [data-testid='stDataFrame'] ::-webkit-scrollbar-track{background:#e2e8f0;border-radius:6px;}@media screen and (max-width:768px){.cadastros-page [data-testid='stDataFrame']{font-size:0.8rem;}}</style>", unsafe_allow_html=True)
+    st.markdown('<div class="cadastros-page">', unsafe_allow_html=True)
     # Verificar se o db está na sessão
     if 'db' not in st.session_state:
         st.error("Erro: Conexão com banco de dados não inicializada")
@@ -78,6 +81,7 @@ def show():
 
             # Lista de clientes
             st.subheader("Lista de Clientes")
+            st.caption("Dica: role a tabela horizontalmente para ver todas as colunas (ex.: Endereco, Origem, Observacoes).")
             try:
                 # Botão para forçar atualização da lista
                 if st.button("🔄 Atualizar Lista", help="Clique para recarregar a lista de clientes"):
@@ -1136,5 +1140,5 @@ def show():
 
                 except Exception as e:
                     st.error(f"Erro ao carregar produtos: {str(e)}")
-
+    st.markdown('</div>', unsafe_allow_html=True)
 # Removida seção antiga de importação
