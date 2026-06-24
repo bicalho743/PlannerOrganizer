@@ -529,7 +529,7 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_
                 use_container_width=True,
             )
         st.caption(subtitle)
-        with st.expander("👁️ Visualizar no navegador"):
+        if st.toggle("👁️ Visualizar no navegador", key=f"view_pdf_{report_type}_{proposta_id}"):
             _pdf_inline_viewer(pdf_bytes, key=f"{report_type}_{proposta_id}")
     elif error_msg:
         st.markdown(f"""

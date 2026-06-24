@@ -18,6 +18,13 @@ para `file://`. Logo, a falha é no ABRIR, não no baixar.
 NÃO resolve esse erro** — ambos baixam para Downloads e o "abrir" continua
 falhando no contexto embutido.
 
+# Cuidado de performance
+`components.html` (e qualquer viewer inline) renderiza mesmo dentro de
+`st.expander` colapsado — o iframe carrega na hora. Em telas com VÁRIOS
+relatórios (ex.: 4 cards de PDF por proposta), isso faz a página "não
+carregar" (trava/pesada). Sempre tornar o viewer SOB DEMANDA: gate com
+`st.toggle`/`st.checkbox` e só chamar `components.html` quando ativado.
+
 # Como resolver
 Oferecer VISUALIZAÇÃO inline dentro do app, sem depender de `file://`:
 decodificar os bytes em um Blob no próprio documento do componente e
