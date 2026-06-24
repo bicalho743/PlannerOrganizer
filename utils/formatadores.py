@@ -114,3 +114,29 @@ def formatar_df_clientes(df: pd.DataFrame) -> pd.DataFrame:
         if coluna in out.columns:
             out[coluna] = out[coluna].map(func)
     return out
+
+
+# ====== UX-2: validação e auxiliares de formulário ======
+
+UFS_BRASIL = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"]
+
+
+def validar_cpf(valor) -> bool:
+    digitos = re.sub(r"\D", "", str(valor).split(".")[0])
+    if len(digitos) != 11 or digitos == digitos[0] * 11:
+        return False
+    soma = sum(int(digitos[i]) * (10 - i) for i in range(9))
+    resto = (soma * 10) % 11
+    dv1 = 0 if resto == 10 else resto
+    if dv1 != int(digitos[9]):
+        return False
+    soma = sum(int(digitos[i]) * (11 - i) for i in range(10))
+    resto = (soma * 10) % 11
+    dv2 = 0 if resto == 10 else resto
+    return dv2 == int(digitos[10])
+MESES_ABREV = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+
+def data_para_ddmmm(data):
+    if data is None:
+        return None
+    return f"{data.day:02d}/{MESES_ABREV[data.month - 1]}"
