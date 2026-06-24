@@ -9,24 +9,24 @@ from utils.tooltip_helper import create_tooltip, input_with_tooltip
 def show():
     from utils.auth_guard import require_auth
     require_auth()
-    # UX-4: tabela responsiva com rolagem horizontal visÃ­vel e cabeÃ§alhos fixos (sticky)
+    # UX-4: tabela responsiva com rolagem horizontal visível e cabeçalhos fixos (sticky)
     st.markdown("<style>.cadastros-page [data-testid='stDataFrame'] [data-testid='stDataFrameResizable']{overflow-x:auto !important;scrollbar-width:thin;scrollbar-color:#C9A84C #e2e8f0;}.cadastros-page [data-testid='stDataFrame']{position:relative;border-radius:8px;}.cadastros-page [data-testid='stDataFrame']::after{content:'';position:absolute;top:0;right:0;width:26px;height:100%;pointer-events:none;background:linear-gradient(to right,rgba(255,255,255,0),rgba(13,27,42,0.12));border-radius:0 8px 8px 0;}.cadastros-page [data-testid='stDataFrame'] [role='columnheader']{position:sticky;top:0;z-index:3;}.cadastros-page [data-testid='stDataFrame'] ::-webkit-scrollbar{height:10px;}.cadastros-page [data-testid='stDataFrame'] ::-webkit-scrollbar-thumb{background:#C9A84C;border-radius:6px;}.cadastros-page [data-testid='stDataFrame'] ::-webkit-scrollbar-track{background:#e2e8f0;border-radius:6px;}@media screen and (max-width:768px){.cadastros-page [data-testid='stDataFrame']{font-size:0.8rem;}}</style>", unsafe_allow_html=True)
     st.markdown('<div class="cadastros-page">', unsafe_allow_html=True)
-    # Verificar se o db estÃ¡ na sessÃ£o
+    # Verificar se o db está na sessão
     if 'db' not in st.session_state:
-        st.error("Erro: ConexÃ£o com banco de dados nÃ£o inicializada")
+        st.error("Erro: Conexão com banco de dados não inicializada")
         return
 
-    # TÃ­tulo com estilo personalizado para ficar mais prÃ³ximo do topo
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">ð¥ Cadastros</h1>', unsafe_allow_html=True)
+    # Título com estilo personalizado para ficar mais próximo do topo
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">👥 Cadastros</h1>', unsafe_allow_html=True)
 
     # Tabs para diferentes tipos de cadastro
     tab_cliente, tab_fornecedor, tab_parceiro, tab_assistente, tab_produto = st.tabs([
-        "ð¥ Clientes",
-        "ð¢ Fornecedores",
-        "ð¤ Parceiros",
-        "ð¨âð¼ Assistentes",
-        "ð¦ Produtos"
+        "👥 Clientes",
+        "🏢 Fornecedores",
+        "🤝 Parceiros",
+        "👨‍💼 Assistentes",
+        "📦 Produtos"
     ])
 
     with tab_cliente:
@@ -45,19 +45,19 @@ def show():
                     cidade = st.text_input("Cidade")
                 with col2:
                     bairro = st.text_input("Bairro")
-                    endereco = st.text_input("EndereÃ§o")
-                    data_aniversario_dt = st.date_input("Data de AniversÃ¡rio", value=None, format="DD/MM/YYYY")
+                    endereco = st.text_input("Endereço")
+                    data_aniversario_dt = st.date_input("Data de Aniversário", value=None, format="DD/MM/YYYY")
                     origem_cliente = st.text_input("Origem do Cliente")
 
-                observacoes = st.text_area("ObservaÃ§Ãµes")
+                observacoes = st.text_area("Observações")
                 submitted = st.form_submit_button("Cadastrar")
 
             if submitted:
                 if not nome or not nome.strip():
-                    st.error("O campo Nome Ã© obrigatÃ³rio.")
+                    st.error("O campo Nome é obrigatório.")
                     st.stop()
                 if cpf and not validar_cpf(cpf):
-                    st.error("CPF invÃ¡lido. Verifique os dÃ­gitos.")
+                    st.error("CPF inválido. Verifique os dígitos.")
                     st.stop()
                 cpf = formatar_cpf(cpf) if cpf else cpf
                 data_aniversario = data_para_ddmmm(data_aniversario_dt)
@@ -83,8 +83,8 @@ def show():
             st.subheader("Lista de Clientes")
             st.caption("Dica: role a tabela horizontalmente para ver todas as colunas (ex.: Endereco, Origem, Observacoes).")
             try:
-                # BotÃ£o para forÃ§ar atualizaÃ§Ã£o da lista
-                if st.button("ð Atualizar Lista", help="Clique para recarregar a lista de clientes"):
+                # Botão para forçar atualização da lista
+                if st.button("🔄 Atualizar Lista", help="Clique para recarregar a lista de clientes"):
                     st.rerun()
 
                 # Sempre busca dados frescos do banco (sem cache)
@@ -95,7 +95,7 @@ def show():
                     registros = registros.sort_values('nome').reset_index(drop=True)
 
                 if not registros.empty:
-                    # Definir colunas para exibiÃ§Ã£o
+                    # Definir colunas para exibição
                     colunas = ['id', 'nome', 'telefone', 'cpf', 'estado', 'cidade', 'bairro',
                               'endereco', 'data_aniversario', 'origem_cliente', 'observacoes']
                     rename = {
@@ -106,39 +106,39 @@ def show():
                         'estado': 'Estado',
                         'cidade': 'Cidade',
                         'bairro': 'Bairro',
-                        'endereco': 'EndereÃ§o',
-                        'data_aniversario': 'Data AniversÃ¡rio',
+                        'endereco': 'Endereço',
+                        'data_aniversario': 'Data Aniversário',
                         'origem_cliente': 'Origem',
-                        'observacoes': 'ObservaÃ§Ãµes'
+                        'observacoes': 'Observações'
                     }
 
-                    # Criar DataFrame para exibiÃ§Ã£o
+                    # Criar DataFrame para exibição
                     df_display = registros[colunas].copy()
                     df_display.columns = [rename[col] for col in colunas]
 
                     df_display = formatar_df_clientes(df_display)
-                    tab_view, tab_multi_delete = st.tabs(["Visualizar/Editar", "Excluir MÃºltiplos"])
+                    tab_view, tab_multi_delete = st.tabs(["Visualizar/Editar", "Excluir Múltiplos"])
                     
                     with tab_view:
-                        # Exibir tabela com ordenaÃ§Ã£o por clique no cabeÃ§alho
+                        # Exibir tabela com ordenação por clique no cabeçalho
                         st.dataframe(
                             df_display,
                             use_container_width=True,
                             hide_index=True
                         )
 
-                        # BotÃµes de aÃ§Ã£o
+                        # Botões de ação
                         col1, col2 = st.columns(2)
                         with col1:
-                            # Criar lista de opÃ§Ãµes com nomes dos clientes ordenados alfabeticamente
+                            # Criar lista de opções com nomes dos clientes ordenados alfabeticamente
                             if not registros.empty:
                                 opcoes_clientes = []
                                 for _, cliente in registros.iterrows():
                                     opcoes_clientes.append(f"{cliente['nome']} (ID: {cliente['id']})")
                                 
-                                # JÃ¡ estÃ¡ ordenado porque registros foi ordenado acima
+                                # Já está ordenado porque registros foi ordenado acima
                                 cliente_selecionado = st.selectbox(
-                                    "Cliente para aÃ§Ã£o:",
+                                    "Cliente para ação:",
                                     opcoes_clientes,
                                     help="Selecione o cliente que deseja editar ou excluir"
                                 )
@@ -146,21 +146,21 @@ def show():
                                 # Extrair o ID do cliente selecionado
                                 cliente_id = int(cliente_selecionado.split("ID: ")[1].split(")")[0])
                             else:
-                                st.info("Nenhum cliente disponÃ­vel.")
+                                st.info("Nenhum cliente disponível.")
                                 cliente_id = None
 
                         with col2:
                             acao = st.selectbox(
-                                "AÃ§Ã£o:",
+                                "Ação:",
                                 ["Editar", "Excluir"]
                             )
 
-                        # BotÃ£o de confirmaÃ§Ã£o
+                        # Botão de confirmação
                         if st.button(f"Confirmar {acao}", disabled=cliente_id is None):
                             if cliente_id is None:
                                 st.error("Nenhum cliente selecionado.")
                             elif acao == "Editar":
-                                # Buscar dados do cliente para ediÃ§Ã£o
+                                # Buscar dados do cliente para edição
                                 try:
                                     cliente_df = st.session_state.db.get_cliente_by_id(cliente_id)
                                     if not cliente_df.empty:
@@ -169,14 +169,14 @@ def show():
                                         st.session_state[f'dados_cliente_{cliente_id}'] = cliente_data
                                         st.rerun()
                                     else:
-                                        st.error(f"Cliente com ID {cliente_id} nÃ£o encontrado.")
+                                        st.error(f"Cliente com ID {cliente_id} não encontrado.")
                                 except Exception as e:
                                     st.error(f"Erro ao buscar cliente: {str(e)}")
                             elif acao == "Excluir":
                                 try:
                                     resultado = st.session_state.db.delete_cliente(cliente_id)
-                                    if resultado[0]:  # Primeiro elemento Ã© o status (True/False)
-                                        st.success(resultado[1])  # Segundo elemento Ã© a mensagem
+                                    if resultado[0]:  # Primeiro elemento é o status (True/False)
+                                        st.success(resultado[1])  # Segundo elemento é a mensagem
                                         st.session_state['update_clientes'] = True
                                         st.rerun()
                                     else:
@@ -184,10 +184,10 @@ def show():
                                 except Exception as e:
                                     st.error(f"Erro ao excluir cliente: {str(e)}")
                         
-                        # FormulÃ¡rio de ediÃ§Ã£o (se cliente estÃ¡ sendo editado)
+                        # Formulário de edição (se cliente está sendo editado)
                         if st.session_state.get(f'editando_cliente_{cliente_id}', False):
                             st.markdown("---")
-                            st.subheader(f"ð§ Editando Cliente ID: {cliente_id}")
+                            st.subheader(f"🔧 Editando Cliente ID: {cliente_id}")
                             
                             cliente_data = st.session_state.get(f'dados_cliente_{cliente_id}', {})
                             
@@ -203,27 +203,27 @@ def show():
                                 
                                 with col_edit2:
                                     novo_bairro = st.text_input("Bairro", value=cliente_data.get('bairro', ''))
-                                    novo_endereco = st.text_input("EndereÃ§o", value=cliente_data.get('endereco', ''))
+                                    novo_endereco = st.text_input("Endereço", value=cliente_data.get('endereco', ''))
                                     
-                                    # Data de aniversÃ¡rio - mantÃ©m formato DD/MMM
-                                    nova_data_aniversario = st.text_input("Data de AniversÃ¡rio (DD/MMM)", 
+                                    # Data de aniversário - mantém formato DD/MMM
+                                    nova_data_aniversario = st.text_input("Data de Aniversário (DD/MMM)", 
                                                                          value=cliente_data.get('data_aniversario', ''),
                                                                          help="Ex: 13/abr, 16/jan")
                                     nova_origem = st.text_input("Origem", value=cliente_data.get('origem_cliente', ''))
-                                    novas_observacoes = st.text_area("ObservaÃ§Ãµes", value=cliente_data.get('observacoes', ''))
+                                    novas_observacoes = st.text_area("Observações", value=cliente_data.get('observacoes', ''))
                                 
-                                # BotÃµes do formulÃ¡rio
+                                # Botões do formulário
                                 col_save, col_cancel = st.columns(2)
                                 
                                 with col_save:
-                                    salvar_cliente = st.form_submit_button("ð¾ Salvar AlteraÃ§Ãµes", type="primary")
+                                    salvar_cliente = st.form_submit_button("💾 Salvar Alterações", type="primary")
                                 
                                 with col_cancel:
-                                    cancelar_edicao = st.form_submit_button("â Cancelar")
+                                    cancelar_edicao = st.form_submit_button("❌ Cancelar")
                                 
                                 if salvar_cliente:
                                     try:
-                                        # Preparar dados para atualizaÃ§Ã£o
+                                        # Preparar dados para atualização
                                         dados_atualizacao = {
                                             'nome': novo_nome,
                                             'telefone': novo_telefone,
@@ -241,8 +241,8 @@ def show():
                                         resultado = st.session_state.db.update_cliente(cliente_id, **dados_atualizacao)
                                         
                                         if resultado:
-                                            st.success("â Cliente atualizado com sucesso!")
-                                            # Limpar estado de ediÃ§Ã£o
+                                            st.success("✅ Cliente atualizado com sucesso!")
+                                            # Limpar estado de edição
                                             st.session_state[f'editando_cliente_{cliente_id}'] = False
                                             if f'dados_cliente_{cliente_id}' in st.session_state:
                                                 del st.session_state[f'dados_cliente_{cliente_id}']
@@ -251,10 +251,10 @@ def show():
                                         else:
                                             st.error("Erro ao atualizar cliente")
                                     except Exception as e:
-                                        st.error(f"Erro ao salvar alteraÃ§Ãµes: {str(e)}")
+                                        st.error(f"Erro ao salvar alterações: {str(e)}")
                                 
                                 if cancelar_edicao:
-                                    # Cancelar ediÃ§Ã£o
+                                    # Cancelar edição
                                     st.session_state[f'editando_cliente_{cliente_id}'] = False
                                     if f'dados_cliente_{cliente_id}' in st.session_state:
                                         del st.session_state[f'dados_cliente_{cliente_id}']
@@ -267,24 +267,24 @@ def show():
                         clientes_atuais = st.session_state.db.get_clientes()
 
                         if clientes_atuais.empty:
-                            st.info("Nenhum cliente disponÃ­vel para exclusÃ£o.")
+                            st.info("Nenhum cliente disponível para exclusão.")
                         else:
-                            # UX-7: Filtro de busca + paginaÃ§Ã£o + seleÃ§Ã£o simplificada
+                            # UX-7: Filtro de busca + paginação + seleção simplificada
                             df_base = clientes_atuais[['id', 'nome', 'telefone', 'cpf']].copy()
                             df_base.columns = ['ID', 'Nome', 'Telefone', 'CPF']
                             df_base = df_base.sort_values('Nome').reset_index(drop=True)
 
-                            # Controles de filtro e paginaÃ§Ã£o
+                            # Controles de filtro e paginação
                             fcol1, fcol2 = st.columns([3, 1])
                             with fcol1:
                                 termo_busca = st.text_input(
-                                    "ð Buscar cliente",
+                                    "🔎 Buscar cliente",
                                     key="busca_multi_delete",
                                     placeholder="Filtrar por nome, telefone ou CPF"
                                 )
                             with fcol2:
                                 itens_por_pagina = st.selectbox(
-                                    "Itens por pÃ¡gina",
+                                    "Itens por página",
                                     [10, 25, 50, 100],
                                     index=0,
                                     key="itens_pagina_multi_delete"
@@ -305,7 +305,7 @@ def show():
                             if total_registros == 0:
                                 st.info("Nenhum cliente encontrado para o filtro informado.")
                             else:
-                                # PaginaÃ§Ã£o
+                                # Paginação
                                 total_paginas = max(1, -(-total_registros // itens_por_pagina))
                                 if "pagina_multi_delete" not in st.session_state:
                                     st.session_state.pagina_multi_delete = 1
@@ -313,17 +313,17 @@ def show():
 
                                 pcol1, pcol2, pcol3 = st.columns([1, 2, 1])
                                 with pcol1:
-                                    if st.button("â¬ï¸ Anterior", key="prev_multi_delete", disabled=(pagina_atual <= 1)):
+                                    if st.button("⬅️ Anterior", key="prev_multi_delete", disabled=(pagina_atual <= 1)):
                                         st.session_state.pagina_multi_delete = pagina_atual - 1
                                         st.rerun()
                                 with pcol2:
                                     st.markdown(
-                                        f"<div style='text-align:center;'>PÃ¡gina <b>{pagina_atual}</b> de <b>{total_paginas}</b> "
+                                        f"<div style='text-align:center;'>Página <b>{pagina_atual}</b> de <b>{total_paginas}</b> "
                                         f"({total_registros} cliente(s) encontrado(s))</div>",
                                         unsafe_allow_html=True
                                     )
                                 with pcol3:
-                                    if st.button("PrÃ³ximo â¡ï¸", key="next_multi_delete", disabled=(pagina_atual >= total_paginas)):
+                                    if st.button("Próximo ➡️", key="next_multi_delete", disabled=(pagina_atual >= total_paginas)):
                                         st.session_state.pagina_multi_delete = pagina_atual + 1
                                         st.rerun()
 
@@ -331,14 +331,14 @@ def show():
                                 fim = inicio + itens_por_pagina
                                 df_pagina = df_filtrado.iloc[inicio:fim].copy()
 
-                                # SeleÃ§Ã£o simplificada: marcar/limpar todos da pÃ¡gina
+                                # Seleção simplificada: marcar/limpar todos da página
                                 marcar_todos = st.checkbox(
-                                    "Selecionar todos desta pÃ¡gina",
+                                    "Selecionar todos desta página",
                                     key="marcar_todos_multi_delete"
                                 )
                                 df_pagina["Selecionar"] = bool(marcar_todos)
 
-                                # Editor de seleÃ§Ã£o
+                                # Editor de seleção
                                 selection = st.data_editor(
                                     df_pagina,
                                     column_config={
@@ -356,11 +356,11 @@ def show():
                                     key="editor_clientes_multi_delete"
                                 )
 
-                                # Contador de selecionados na pÃ¡gina
+                                # Contador de selecionados na página
                                 qtd_selecionados = int(selection["Selecionar"].sum()) if "Selecionar" in selection else 0
-                                st.caption(f"ðï¸ {qtd_selecionados} cliente(s) selecionado(s) nesta pÃ¡gina.")
+                                st.caption(f"🗂️ {qtd_selecionados} cliente(s) selecionado(s) nesta página.")
 
-                                # BotÃ£o para confirmar exclusÃ£o
+                                # Botão para confirmar exclusão
                                 if st.button("Excluir Clientes Selecionados", type="primary", key="btn_excluir_multi_clientes"):
                                     clientes_selecionados = []
                                     for _, row in selection.iterrows():
@@ -368,19 +368,19 @@ def show():
                                             clientes_selecionados.append(int(row["ID"]))
 
                                     if not clientes_selecionados:
-                                        st.warning("Nenhum cliente selecionado para exclusÃ£o.")
+                                        st.warning("Nenhum cliente selecionado para exclusão.")
                                     else:
                                         resultados = st.session_state.db.delete_multiple_clientes(clientes_selecionados)
 
                                         if resultados["sucesso"]:
-                                            st.success(f"{len(resultados['sucesso'])} clientes excluÃ­dos com sucesso!")
+                                            st.success(f"{len(resultados['sucesso'])} clientes excluídos com sucesso!")
                                             for cliente in resultados["sucesso"]:
-                                                st.info(f"â Cliente {cliente['nome']} (ID: {cliente['id']}) excluÃ­do com sucesso.")
+                                                st.info(f"✅ Cliente {cliente['nome']} (ID: {cliente['id']}) excluído com sucesso.")
 
                                         if resultados["erro"]:
-                                            st.error(f"{len(resultados['erro'])} clientes nÃ£o puderam ser excluÃ­dos:")
+                                            st.error(f"{len(resultados['erro'])} clientes não puderam ser excluídos:")
                                             for erro in resultados["erro"]:
-                                                st.warning(f"â Cliente {erro['nome']} (ID: {erro['id']}): {erro['mensagem']}")
+                                                st.warning(f"❌ Cliente {erro['nome']} (ID: {erro['id']}): {erro['mensagem']}")
 
                                         if resultados["sucesso"]:
                                             st.rerun()
@@ -394,14 +394,14 @@ def show():
         with cliente_tab2:
             st.subheader("Importar Clientes")
             
-            # BotÃ£o para baixar template
+            # Botão para baixar template
             template = gerar_template_csv("Cliente")
             st.download_button(
-                "ð Baixar Template Cliente",
+                "📝 Baixar Template Cliente",
                 template,
                 "template_cliente.csv",
                 "text/csv",
-                help="Baixe este template, preencha com seus dados e faÃ§a upload para importar clientes"
+                help="Baixe este template, preencha com seus dados e faça upload para importar clientes"
             )
             
             # Upload do arquivo
@@ -428,36 +428,36 @@ def show():
             st.subheader("Cadastro de Fornecedores")
             # Form de cadastro de fornecedor
             with st.form("cadastro_fornecedor", clear_on_submit=True):
-                nome = st.text_input("RazÃ£o Social")
+                nome = st.text_input("Razão Social")
                 col1, col2 = st.columns(2)
                 with col1:
                     telefone = st.text_input("Telefone")
                     categoria = st.selectbox(
                         "Categoria",
-                        ["Produtos", "ServiÃ§os", "Marcenaria", "Outro"]
+                        ["Produtos", "Serviços", "Marcenaria", "Outro"]
                     )
                     percentual_comissao = st.number_input(
-                        "% de ComissÃ£o",
+                        "% de Comissão",
                         min_value=0.0,
                         max_value=100.0,
                         value=0.0,
                         step=0.5,
-                        help="Percentual de comissÃ£o para este fornecedor (entre 0% e 100%)"
+                        help="Percentual de comissão para este fornecedor (entre 0% e 100%)"
                     )
                 with col2:
                     pix = st.text_input("Chave PIX")
 
-                endereco = st.text_input("EndereÃ§o")
-                observacoes = st.text_area("ObservaÃ§Ãµes")
+                endereco = st.text_input("Endereço")
+                observacoes = st.text_area("Observações")
                 submitted = st.form_submit_button("Cadastrar")
 
                 if submitted:
                     try:
-                        # SOLUÃÃO DEFINITIVA: Usar o ID real do usuÃ¡rio Solano Bicalho
-                        # Como sabemos que vocÃª Ã© o usuÃ¡rio autenticado e tem clientes com ID correto
+                        # SOLUÇÃO DEFINITIVA: Usar o ID real do usuário Solano Bicalho
+                        # Como sabemos que você é o usuário autenticado e tem clientes com ID correto
                         usuario_id_correto = "37URJQFLe8M1QVbyFfvDhmbQ9aC2"  # Mesmo ID usado nos clientes
                         st.session_state.db.usuario_id = usuario_id_correto
-                        st.info(f"â Usando ID correto do usuÃ¡rio: {usuario_id_correto}")
+                        st.info(f"✅ Usando ID correto do usuário: {usuario_id_correto}")
                         
                         st.session_state.db.add_fornecedor(
                             descricao=nome,
@@ -468,11 +468,11 @@ def show():
                             observacoes=observacoes,
                             percentual_comissao=percentual_comissao
                         )
-                        st.success("â Fornecedor cadastrado com sucesso!")
+                        st.success("✅ Fornecedor cadastrado com sucesso!")
                         st.session_state['update_fornecedores'] = True
                     except Exception as e:
-                        st.error(f"â Erro ao cadastrar fornecedor: {str(e)}")
-                        st.error(f"ð Detalhes tÃ©cnicos: {type(e).__name__}: {str(e)}")
+                        st.error(f"❌ Erro ao cadastrar fornecedor: {str(e)}")
+                        st.error(f"🔍 Detalhes técnicos: {type(e).__name__}: {str(e)}")
 
             # Lista de fornecedores
             st.subheader("Lista de Fornecedores")
@@ -490,41 +490,41 @@ def show():
 
                 registros = st.session_state['fornecedores']
                 
-                # Ordenar fornecedores alfabeticamente por descriÃ§Ã£o (nome)
+                # Ordenar fornecedores alfabeticamente por descrição (nome)
                 if not registros.empty:
                     registros = registros.sort_values('descricao').reset_index(drop=True)
 
                 if not registros.empty:
-                    # Definir colunas para exibiÃ§Ã£o
+                    # Definir colunas para exibição
                     colunas = ['id', 'descricao', 'contato', 'categoria', 'endereco', 'pix', 'recorrente', 'percentual_comissao', 'observacoes']
                     rename = {
                         'id': 'ID',
-                        'descricao': 'Nome/RazÃ£o Social',
+                        'descricao': 'Nome/Razão Social',
                         'contato': 'Contato',
                         'categoria': 'Categoria',
-                        'endereco': 'EndereÃ§o',
+                        'endereco': 'Endereço',
                         'pix': 'PIX',
                         'recorrente': 'Recorrente', 
-                        'percentual_comissao': '% ComissÃ£o',
-                        'observacoes': 'ObservaÃ§Ãµes'
+                        'percentual_comissao': '% Comissão',
+                        'observacoes': 'Observações'
                     }
 
-                    # Criar DataFrame para exibiÃ§Ã£o
+                    # Criar DataFrame para exibição
                     df_display = registros[colunas].copy()
                     df_display.columns = [rename[col] for col in colunas]
 
-                    # Exibir tabela com ordenaÃ§Ã£o por clique no cabeÃ§alho
+                    # Exibir tabela com ordenação por clique no cabeçalho
                     st.dataframe(
                         df_display,
                         use_container_width=True,
                         hide_index=True
                     )
 
-                    # Adicionar botÃµes de aÃ§Ã£o para cada fornecedor
-                    st.write("**AÃ§Ãµes para fornecedores:**")
+                    # Adicionar botões de ação para cada fornecedor
+                    st.write("**Ações para fornecedores:**")
                     
-                    # Criar lista de IDs e nomes para seleÃ§Ã£o
-                    fornecedores_options = [f"{row['ID']} - {row['Nome/RazÃ£o Social']}" for _, row in df_display.iterrows()]
+                    # Criar lista de IDs e nomes para seleção
+                    fornecedores_options = [f"{row['ID']} - {row['Nome/Razão Social']}" for _, row in df_display.iterrows()]
                     
                     # Dropdown para selecionar fornecedor
                     fornecedor_selecionado = st.selectbox(
@@ -534,10 +534,10 @@ def show():
                     )
                     
                     if fornecedor_selecionado:
-                        # Extrair ID da seleÃ§Ã£o (formato: "ID - Nome")
+                        # Extrair ID da seleção (formato: "ID - Nome")
                         fornecedor_id = int(fornecedor_selecionado.split(" - ")[0])
                         
-                        # BotÃµes de aÃ§Ã£o lado a lado
+                        # Botões de ação lado a lado
                         col1, col2 = st.columns(2)
                         with col1:
                             if st.button("Editar Fornecedor", key=f"edit_fornecedor_{fornecedor_id}"):
@@ -548,7 +548,7 @@ def show():
                             if st.button("Excluir Fornecedor", key=f"delete_fornecedor_{fornecedor_id}"):
                                 try:
                                     st.session_state.db.delete_fornecedor(fornecedor_id)
-                                    st.success(f"Fornecedor ID {fornecedor_id} excluÃ­do com sucesso!")
+                                    st.success(f"Fornecedor ID {fornecedor_id} excluído com sucesso!")
                                     st.session_state['update_fornecedores'] = True
                                     st.rerun()
                                 except Exception as e:
@@ -560,17 +560,17 @@ def show():
             except Exception as e:
                 st.error(f"Erro ao carregar lista de fornecedores: {str(e)}")
 
-        # SeÃ§Ã£o de ediÃ§Ã£o do fornecedor (mantido separado para melhor organizaÃ§Ã£o)
+        # Seção de edição do fornecedor (mantido separado para melhor organização)
         if 'editing_fornecedor_id' in st.session_state:
             st.write("---")
             st.subheader("Editar Fornecedor")
             with st.form("edit_fornecedor_form"):
                 fornecedor = registros[registros['id'] == st.session_state['editing_fornecedor_id']].iloc[0]
                 edited_data = {}
-                edited_data['descricao'] = st.text_input("Nome/RazÃ£o Social", value=fornecedor['descricao'])
+                edited_data['descricao'] = st.text_input("Nome/Razão Social", value=fornecedor['descricao'])
                 edited_data['contato'] = st.text_input("Telefone", value=fornecedor['contato'])
                 # Lista de categorias
-                categorias = ["Produtos", "ServiÃ§os", "Marcenaria", "Outro"]
+                categorias = ["Produtos", "Serviços", "Marcenaria", "Outro"]
                 
                 # Verificar se a categoria do fornecedor existe na lista
                 categoria_atual = fornecedor['categoria']
@@ -585,14 +585,14 @@ def show():
                 edited_data['pix'] = st.text_input("PIX", value=fornecedor['pix'])
                 edited_data['recorrente'] = st.checkbox("Recorrente", value=fornecedor['recorrente'])
                 edited_data['percentual_comissao'] = st.number_input(
-                    "% de ComissÃ£o",
+                    "% de Comissão",
                     min_value=0.0,
                     max_value=100.0,
                     value=float(fornecedor['percentual_comissao']),
                     step=0.5,
-                    help="Percentual de comissÃ£o para este fornecedor (entre 0% e 100%)"
+                    help="Percentual de comissão para este fornecedor (entre 0% e 100%)"
                 )
-                edited_data['observacoes'] = st.text_area("ObservaÃ§Ãµes", value=fornecedor['observacoes'])
+                edited_data['observacoes'] = st.text_area("Observações", value=fornecedor['observacoes'])
 
                 col1, col2 = st.columns(2)
                 with col1:
@@ -620,14 +620,14 @@ def show():
             # Download do template
             template = gerar_template_csv("Fornecedor")
             st.download_button(
-                "ð Baixar Template",
+                "📝 Baixar Template",
                 template,
                 "template_fornecedor.csv",
                 "text/csv",
-                help="Baixe este template, preencha com seus dados e faÃ§a upload para importar"
+                help="Baixe este template, preencha com seus dados e faça upload para importar"
             )
 
-            # Upload e importaÃ§Ã£o
+            # Upload e importação
             arquivo = st.file_uploader(
                 "Selecione o arquivo CSV",
                 type=['csv'],
@@ -654,15 +654,15 @@ def show():
                 col1, col2 = st.columns(2)
                 with col1:
                     telefone = st.text_input("Telefone")
-                    area_atuacao = st.text_input("Ãrea de AtuaÃ§Ã£o")
+                    area_atuacao = st.text_input("Área de Atuação")
                 with col2:
                     tipo_parceria = st.selectbox(
                         "Tipo de Parceria",
-                        ["IndicaÃ§Ã£o", "ColaboraÃ§Ã£o", "Projeto Conjunto"]
+                        ["Indicação", "Colaboração", "Projeto Conjunto"]
                     )
 
                 pix = st.text_input("PIX") # Added PIX field
-                observacoes = st.text_area("ObservaÃ§Ãµes")
+                observacoes = st.text_area("Observações")
                 submitted = st.form_submit_button("Cadastrar")
 
                 if submitted:
@@ -700,33 +700,33 @@ def show():
                     registros = registros.sort_values('nome').reset_index(drop=True)
                 
                 if not registros.empty:
-                    # Definir colunas para exibiÃ§Ã£o
+                    # Definir colunas para exibição
                     colunas = ['id', 'nome', 'telefone', 'area_atuacao', 'tipo_parceria', 'pix', 'observacoes']
                     rename = {
                         'id': 'ID',
                         'nome': 'Nome',
                         'telefone': 'Telefone',
-                        'area_atuacao': 'Ãrea de AtuaÃ§Ã£o',
+                        'area_atuacao': 'Área de Atuação',
                         'tipo_parceria': 'Tipo de Parceria',
                         'pix': 'PIX',
-                        'observacoes': 'ObservaÃ§Ãµes'
+                        'observacoes': 'Observações'
                     }
 
-                    # Criar DataFrame para exibiÃ§Ã£o
+                    # Criar DataFrame para exibição
                     df_display = registros[colunas].copy()
                     df_display.columns = [rename[col] for col in colunas]
 
-                    # Exibir tabela com ordenaÃ§Ã£o por clique no cabeÃ§alho
+                    # Exibir tabela com ordenação por clique no cabeçalho
                     st.dataframe(
                         df_display,
                         use_container_width=True,
                         hide_index=True
                     )
 
-                    # Adicionar botÃµes de aÃ§Ã£o para cada parceiro
-                    st.write("**AÃ§Ãµes para parceiros:**")
+                    # Adicionar botões de ação para cada parceiro
+                    st.write("**Ações para parceiros:**")
                     
-                    # Criar lista de IDs e nomes para seleÃ§Ã£o
+                    # Criar lista de IDs e nomes para seleção
                     parceiros_options = [f"{row['ID']} - {row['Nome']}" for _, row in df_display.iterrows()]
                     
                     # Dropdown para selecionar parceiro
@@ -737,10 +737,10 @@ def show():
                     )
                     
                     if parceiro_selecionado:
-                        # Extrair ID da seleÃ§Ã£o (formato: "ID - Nome")
+                        # Extrair ID da seleção (formato: "ID - Nome")
                         parceiro_id = int(parceiro_selecionado.split(" - ")[0])
                         
-                        # BotÃµes de aÃ§Ã£o lado a lado
+                        # Botões de ação lado a lado
                         col1, col2 = st.columns(2)
                         with col1:
                             if st.button("Editar Parceiro", key=f"edit_parceiro_{parceiro_id}"):
@@ -751,7 +751,7 @@ def show():
                             if st.button("Excluir Parceiro", key=f"delete_parceiro_{parceiro_id}"):
                                 try:
                                     st.session_state.db.delete_parceiro(parceiro_id)
-                                    st.success(f"Parceiro ID {parceiro_id} excluÃ­do com sucesso!")
+                                    st.success(f"Parceiro ID {parceiro_id} excluído com sucesso!")
                                     st.session_state['update_parceiros'] = True
                                     st.rerun()
                                 except Exception as e:
@@ -763,7 +763,7 @@ def show():
             except Exception as e:
                 st.error(f"Erro ao carregar lista de parceiros: {str(e)}")
 
-        # SeÃ§Ã£o de ediÃ§Ã£o do parceiro (mantido separado para melhor organizaÃ§Ã£o)
+        # Seção de edição do parceiro (mantido separado para melhor organização)
         if 'editing_parceiro_id' in st.session_state:
             st.write("---")
             st.subheader("Editar Parceiro")
@@ -772,9 +772,9 @@ def show():
                 edited_data = {}
                 edited_data['nome'] = st.text_input("Nome", value=parceiro['nome'])
                 edited_data['telefone'] = st.text_input("Telefone", value=parceiro['telefone'])
-                edited_data['area_atuacao'] = st.text_input("Ãrea de AtuaÃ§Ã£o", value=parceiro['area_atuacao'])
+                edited_data['area_atuacao'] = st.text_input("Área de Atuação", value=parceiro['area_atuacao'])
                 # Lista de tipos de parceria
-                tipos_parceria = ["IndicaÃ§Ã£o", "ColaboraÃ§Ã£o", "Projeto Conjunto"]
+                tipos_parceria = ["Indicação", "Colaboração", "Projeto Conjunto"]
                 
                 # Verificar se o tipo de parceria do parceiro existe na lista
                 tipo_atual = parceiro['tipo_parceria']
@@ -787,7 +787,7 @@ def show():
                     index=tipos_parceria.index(tipo_atual)
                 )
                 edited_data['pix'] = st.text_input("PIX", value=parceiro['pix'])
-                edited_data['observacoes'] = st.text_area("ObservaÃ§Ãµes", value=parceiro['observacoes'])
+                edited_data['observacoes'] = st.text_area("Observações", value=parceiro['observacoes'])
 
                 col1, col2 = st.columns(2)
                 with col1:
@@ -812,14 +812,14 @@ def show():
         with parceiro_tab2:
             st.subheader("Importar Parceiros")
 
-            # BotÃ£o para baixar template
+            # Botão para baixar template
             template = gerar_template_csv("Parceiro")
             st.download_button(
-                "ð Baixar Template Parceiro",
+                "📝 Baixar Template Parceiro",
                 template,
                 "template_parceiro.csv",
                 "text/csv",
-                help="Baixe este template, preencha com seus dados e faÃ§a upload para importar parceiros"
+                help="Baixe este template, preencha com seus dados e faça upload para importar parceiros"
             )
 
             # Upload do arquivo
@@ -848,9 +848,9 @@ def show():
             with st.form("cadastro_assistente", clear_on_submit=True):
                 nome = st.text_input("Nome")
                 telefone = st.text_input("Telefone")
-                endereco = st.text_input("EndereÃ§o")
+                endereco = st.text_input("Endereço")
                 pix = st.text_input("Chave PIX")
-                observacoes = st.text_area("ObservaÃ§Ãµes")
+                observacoes = st.text_area("Observações")
                 submitted = st.form_submit_button("Cadastrar")
 
                 if submitted:
@@ -886,28 +886,28 @@ def show():
                     'id': 'ID',
                     'nome': 'Nome',
                     'telefone': 'Telefone',
-                    'endereco': 'EndereÃ§o',
+                    'endereco': 'Endereço',
                     'pix': 'PIX',
-                    'observacoes': 'ObservaÃ§Ãµes'
+                    'observacoes': 'Observações'
                 }
                 if not registros.empty:
-                    # Criar uma cÃ³pia do DataFrame original com apenas as colunas desejadas
+                    # Criar uma cópia do DataFrame original com apenas as colunas desejadas
                     df_display = registros[colunas].copy()
 
-                    # Renomear colunas para exibiÃ§Ã£o
+                    # Renomear colunas para exibição
                     df_display.columns = [rename[col] for col in colunas]
 
-                    # Exibir tabela com ordenaÃ§Ã£o por clique no cabeÃ§alho
+                    # Exibir tabela com ordenação por clique no cabeçalho
                     st.dataframe(
                         df_display,
                         use_container_width=True,
                         hide_index=True
                     )
 
-                    # Adicionar botÃµes de aÃ§Ã£o para cada assistente
-                    st.write("**AÃ§Ãµes para assistentes:**")
+                    # Adicionar botões de ação para cada assistente
+                    st.write("**Ações para assistentes:**")
                     
-                    # Criar lista de IDs e nomes para seleÃ§Ã£o
+                    # Criar lista de IDs e nomes para seleção
                     assistentes_options = [f"{row['ID']} - {row['Nome']}" for _, row in df_display.iterrows()]
                     
                     # Dropdown para selecionar assistente
@@ -918,10 +918,10 @@ def show():
                     )
                     
                     if assistente_selecionado:
-                        # Extrair ID da seleÃ§Ã£o (formato: "ID - Nome")
+                        # Extrair ID da seleção (formato: "ID - Nome")
                         assistente_id = int(assistente_selecionado.split(" - ")[0])
                         
-                        # BotÃµes de aÃ§Ã£o lado a lado
+                        # Botões de ação lado a lado
                         col1, col2 = st.columns(2)
                         with col1:
                             if st.button("Editar Assistente", key=f"edit_assistente_{assistente_id}"):
@@ -932,7 +932,7 @@ def show():
                             if st.button("Excluir Assistente", key=f"delete_assistente_{assistente_id}"):
                                 try:
                                     st.session_state.db.delete_assistente(assistente_id)
-                                    st.success(f"Assistente ID {assistente_id} excluÃ­do com sucesso!")
+                                    st.success(f"Assistente ID {assistente_id} excluído com sucesso!")
                                     st.session_state['update_assistentes'] = True
                                     st.rerun()
                                 except Exception as e:
@@ -947,14 +947,14 @@ def show():
         with assistente_tab2:
             st.subheader("Importar Assistentes")
 
-            # BotÃ£o para baixar template
+            # Botão para baixar template
             template = gerar_template_csv("Assistente")
             st.download_button(
-                "ð Baixar Template Assistente",
+                "📝 Baixar Template Assistente",
                 template,
                 "template_assistente.csv",
                 "text/csv",
-                help="Baixe este template, preencha com seus dados e faÃ§a upload para importar assistentes"
+                help="Baixe este template, preencha com seus dados e faça upload para importar assistentes"
             )
 
             # Upload do arquivo
@@ -974,7 +974,7 @@ def show():
                         else:
                             st.error(mensagem)
 
-        # SeÃ§Ã£o de ediÃ§Ã£o do assistente (mantido separado para melhor organizaÃ§Ã£o)
+        # Seção de edição do assistente (mantido separado para melhor organização)
         if 'editing_assistente_id' in st.session_state:
             st.write("---")
             st.subheader("Editar Assistente")
@@ -983,9 +983,9 @@ def show():
                 edited_data = {}
                 edited_data['nome'] = st.text_input("Nome", value=assistente['nome'])
                 edited_data['telefone'] = st.text_input("Telefone", value=assistente['telefone'])
-                edited_data['endereco'] = st.text_input("EndereÃ§o", value=assistente['endereco'])
+                edited_data['endereco'] = st.text_input("Endereço", value=assistente['endereco'])
                 edited_data['pix'] = st.text_input("PIX", value=assistente['pix'])
-                edited_data['observacoes'] = st.text_area("ObservaÃ§Ãµes", value=assistente['observacoes'])
+                edited_data['observacoes'] = st.text_area("Observações", value=assistente['observacoes'])
 
                 col1, col2 = st.columns(2)
                 with col1:
@@ -1015,9 +1015,9 @@ def show():
             try:
                 from utils.componentes_importacao import interface_importacao
                 interface_importacao(tipo_cadastro="Produto", db=st.session_state.db,
-                                    pagina_titulo="ImportaÃ§Ã£o de Produtos")
+                                    pagina_titulo="Importação de Produtos")
             except Exception as e:
-                st.error(f"Erro ao carregar interface de importaÃ§Ã£o: {str(e)}")
+                st.error(f"Erro ao carregar interface de importação: {str(e)}")
                 import traceback
                 st.error(traceback.format_exc())
 
@@ -1031,26 +1031,26 @@ def show():
                     nome_produto = input_with_tooltip(
                         "text_input",
                         "Nome do Produto",
-                        "Digite o nome comercial do produto que serÃ¡ vendido"
+                        "Digite o nome comercial do produto que será vendido"
                     )
 
                     col_desc, col_help_desc = st.columns([4, 1])
                     with col_desc:
-                        descricao = st.text_area("DescriÃ§Ã£o", label_visibility="visible")
+                        descricao = st.text_area("Descrição", label_visibility="visible")
                     with col_help_desc:
-                        st.markdown(create_tooltip("DescriÃ§Ã£o detalhada do produto para identificaÃ§Ã£o"), unsafe_allow_html=True)
+                        st.markdown(create_tooltip("Descrição detalhada do produto para identificação"), unsafe_allow_html=True)
 
                     col_cat, col_help_cat = st.columns([4, 1])
                     with col_cat:
-                        categoria = st.selectbox("Categoria", ["OrganizaÃ§Ã£o", "Higiene", "Beleza", "Casa", "Outros"])
+                        categoria = st.selectbox("Categoria", ["Organização", "Higiene", "Beleza", "Casa", "Outros"])
                     with col_help_cat:
-                        st.markdown(create_tooltip("Categoria para organizaÃ§Ã£o e filtros do produto"), unsafe_allow_html=True)
+                        st.markdown(create_tooltip("Categoria para organização e filtros do produto"), unsafe_allow_html=True)
 
                     col_preco1, col_preco2 = st.columns(2)
                     with col_preco1:
-                        preco_custo = st.number_input("PreÃ§o de Custo (R$)", min_value=0.0, format="%.2f")
+                        preco_custo = st.number_input("Preço de Custo (R$)", min_value=0.0, format="%.2f")
                     with col_preco2:
-                        preco_venda = st.number_input("PreÃ§o de Venda (R$)", min_value=0.0, format="%.2f")
+                        preco_venda = st.number_input("Preço de Venda (R$)", min_value=0.0, format="%.2f")
 
                     estoque = st.number_input("Estoque Inicial", min_value=0, value=0)
                     margem = st.number_input("Margem (%)", min_value=0.0, max_value=100.0, value=50.0, format="%.1f")
@@ -1103,7 +1103,7 @@ def show():
 
                         st.subheader("Gerenciar Produtos")
 
-                        acao = st.radio("AÃ§Ã£o", ["Editar", "Excluir"], horizontal=True)
+                        acao = st.radio("Ação", ["Editar", "Excluir"], horizontal=True)
 
                         produtos_ordenados = sorted(produtos_df['nome'].tolist())
 
@@ -1122,27 +1122,27 @@ def show():
 
                                 with st.form("form_editar_produto"):
                                     nome_edit = st.text_input("Nome do Produto", value=produto_dados['nome'])
-                                    descricao_edit = st.text_area("DescriÃ§Ã£o", value=produto_dados.get('descricao', ''))
+                                    descricao_edit = st.text_area("Descrição", value=produto_dados.get('descricao', ''))
 
                                     categoria_atual = produto_dados.get('categoria', 'Outros')
-                                    if categoria_atual == '' or categoria_atual not in ["OrganizaÃ§Ã£o", "Higiene", "Beleza", "Casa", "Outros"]:
+                                    if categoria_atual == '' or categoria_atual not in ["Organização", "Higiene", "Beleza", "Casa", "Outros"]:
                                         categoria_atual = 'Outros'
 
                                     categoria_edit = st.selectbox(
                                         "Categoria",
-                                        ["OrganizaÃ§Ã£o", "Higiene", "Beleza", "Casa", "Outros"],
-                                        index=["OrganizaÃ§Ã£o", "Higiene", "Beleza", "Casa", "Outros"].index(categoria_atual)
+                                        ["Organização", "Higiene", "Beleza", "Casa", "Outros"],
+                                        index=["Organização", "Higiene", "Beleza", "Casa", "Outros"].index(categoria_atual)
                                     )
 
                                     col_edit1, col_edit2 = st.columns(2)
                                     with col_edit1:
-                                        preco_custo_edit = st.number_input("PreÃ§o de Custo (R$)", value=float(produto_dados.get('preco_custo', 0)), min_value=0.0, format="%.2f")
+                                        preco_custo_edit = st.number_input("Preço de Custo (R$)", value=float(produto_dados.get('preco_custo', 0)), min_value=0.0, format="%.2f")
                                     with col_edit2:
-                                        preco_venda_edit = st.number_input("PreÃ§o de Venda (R$)", value=float(produto_dados.get('preco_venda', 0)), min_value=0.0, format="%.2f")
+                                        preco_venda_edit = st.number_input("Preço de Venda (R$)", value=float(produto_dados.get('preco_venda', 0)), min_value=0.0, format="%.2f")
 
                                     estoque_edit = st.number_input("Estoque", value=int(produto_dados.get('estoque', 0)), min_value=0)
 
-                                    submitted_edit = st.form_submit_button("Salvar AlteraÃ§Ãµes", type="primary")
+                                    submitted_edit = st.form_submit_button("Salvar Alterações", type="primary")
 
                                     if submitted_edit and nome_edit:
                                         try:
@@ -1176,28 +1176,28 @@ def show():
                                 vendas_com_produto = st.session_state.db.verificar_produto_em_vendas(produto_id)
 
                                 if vendas_com_produto > 0:
-                                    st.warning(f"â ï¸ Este produto estÃ¡ sendo usado em {vendas_com_produto} venda(s). NÃ£o Ã© possÃ­vel excluir.")
+                                    st.warning(f"⚠️ Este produto está sendo usado em {vendas_com_produto} venda(s). Não é possível excluir.")
                                 else:
                                     if not st.session_state.get('exclusao_produto_confirmada', False):
                                         if st.button("Excluir Produto", type="secondary", key="btn_excluir_produto"):
                                             st.session_state.exclusao_produto_confirmada = True
                                             st.rerun()
                                     else:
-                                        st.warning("â ï¸ Confirmar exclusÃ£o do produto?")
+                                        st.warning("⚠️ Confirmar exclusão do produto?")
                                         confirm_col1, confirm_col2 = st.columns(2)
 
                                         with confirm_col1:
-                                            if st.button("â Confirmar", type="primary", key="btn_confirmar_exclusao_produto"):
+                                            if st.button("✓ Confirmar", type="primary", key="btn_confirmar_exclusao_produto"):
                                                 try:
                                                     st.session_state.db.delete_produto(produto_id)
-                                                    st.success("Produto excluÃ­do com sucesso!")
+                                                    st.success("Produto excluído com sucesso!")
                                                     st.session_state.exclusao_produto_confirmada = False
                                                     st.rerun()
                                                 except Exception as e:
                                                     st.error(f"Erro ao excluir produto: {str(e)}")
 
                                         with confirm_col2:
-                                            if st.button("â Cancelar", use_container_width=True, key="btn_cancelar_exclusao_produto"):
+                                            if st.button("✗ Cancelar", use_container_width=True, key="btn_cancelar_exclusao_produto"):
                                                 st.session_state.exclusao_produto_confirmada = False
                                                 st.rerun()
                     else:
@@ -1206,4 +1206,4 @@ def show():
                 except Exception as e:
                     st.error(f"Erro ao carregar produtos: {str(e)}")
     st.markdown('</div>', unsafe_allow_html=True)
-# Removida seÃ§Ã£o antiga de importaÃ§Ã£o
+# Removida seção antiga de importação
