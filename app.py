@@ -490,6 +490,9 @@ st.markdown("""
     display: none !important; visibility: hidden !important;
 }
 section[data-testid="stSidebar"] > div { padding-top: 0 !important; }
+/* UX-3: ancora o conteudo ao topo, removendo o espaco em branco morto */
+.main .block-container, [data-testid="stMainBlockContainer"] {
+padding-top: 2rem !important;}
 </style>
 """, unsafe_allow_html=True)
 
