@@ -504,6 +504,7 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
     @media screen and (min-width: 769px) {
         .block-container { margin-left: 280px !important; width: calc(100% - 280px) !important; max-width: calc(100% - 280px) !important; }
         .main .block-container { margin-left: 280px !important; }
+        .block-container, .main .block-container, [data-testid="stMainBlockContainer"] { padding-top: 1.5rem !important; margin-top: 0 !important; }
         [data-testid="stAppViewContainer"] > .main { margin-left: 280px !important; }
     }
     </style>
