@@ -18,15 +18,23 @@ def inject_pwa():
     <link rel="icon" type="image/png" sizes="192x192" href="/app/static/icon-192.png"/>
     """, unsafe_allow_html=True)
 
-    # Registrar Service Worker
+    # Kill-switch do Service Worker:
+    # O SW antigo (planner-v1) cacheava o app shell do Streamlit. Como o
+    # Streamlit usa assets com hash no nome, após cada atualização o index
+    # cacheado aponta para arquivos inexistentes -> tela em branco / "não
+    # carrega". Aqui removemos qualquer SW registrado e limpamos os caches
+    # para garantir que o navegador sempre busque a versão atual.
     components.html("""
     <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/app/static/sw.js')
-          .then(function(reg) { console.log('SW registrado:', reg.scope); })
-          .catch(function(err) { console.log('SW erro:', err); });
-      });
+      navigator.serviceWorker.getRegistrations()
+        .then(function(regs) { regs.forEach(function(r) { r.unregister(); }); })
+        .catch(function() {});
+    }
+    if (window.caches && caches.keys) {
+      caches.keys()
+        .then(function(keys) { keys.forEach(function(k) { caches.delete(k); }); })
+        .catch(function() {});
     }
     </script>
     """, height=0)
