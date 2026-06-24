@@ -104,7 +104,7 @@ def show():
                     df_display = registros[colunas].copy()
                     df_display.columns = [rename[col] for col in colunas]
 
-                    # Criar abas para visualização
+                    df_display = formatar_df_clientes(df_display)
                     tab_view, tab_multi_delete = st.tabs(["Visualizar/Editar", "Excluir Múltiplos"])
                     
                     with tab_view:
