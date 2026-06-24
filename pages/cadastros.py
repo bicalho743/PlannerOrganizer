@@ -262,63 +262,128 @@ def show():
                     
                     with tab_multi_delete:
                         st.write("Selecione os clientes que deseja excluir:")
-                        
+
                         # Sempre busca dados frescos do banco
                         clientes_atuais = st.session_state.db.get_clientes()
-                        
+
                         if clientes_atuais.empty:
                             st.info("Nenhum cliente disponível para exclusão.")
                         else:
-                            # Filtrar apenas colunas necessárias
-                            df_select = clientes_atuais[['id', 'nome', 'telefone', 'cpf']].copy()
-                            # Renomear colunas para exibição
-                            df_select.columns = ['ID', 'Nome', 'Telefone', 'CPF']
-                            # Adicionar coluna de seleção
-                            df_select['Selecionar'] = False
-                            
-                            # Mostrar lista para seleção
-                            selection = st.data_editor(
-                                df_select,
-                                column_config={
-                                    "Selecionar": st.column_config.CheckboxColumn(
-                                        "Selecionar",
-                                        help="Selecione para excluir"
-                                    )
-                                },
-                                hide_index=True,
-                                use_container_width=True,
-                                key="editor_clientes_multi_delete"
-                            )
-                            
-                            # Botão para confirmar exclusão
-                            if st.button("Excluir Clientes Selecionados", type="primary", key="btn_excluir_multi_clientes"):
-                                # Obter IDs dos clientes selecionados
-                                clientes_selecionados = []
-                                
-                                # Percorrer as linhas do DataFrame de seleção
-                                for i, row in selection.iterrows():
-                                    if row['Selecionar'] == True:  # Comparação explícita com True
-                                        clientes_selecionados.append(int(row['ID']))
-                                
-                                if not clientes_selecionados:
-                                    st.warning("Nenhum cliente selecionado para exclusão.")
-                                else:
-                                    # Executar exclusão múltipla
-                                    resultados = st.session_state.db.delete_multiple_clientes(clientes_selecionados)
-                                    
-                                    # Mostrar resultados
-                                    if resultados["sucesso"]:
-                                        st.success(f"{len(resultados['sucesso'])} clientes excluídos com sucesso!")
-                                        for cliente in resultados["sucesso"]:
-                                            st.info(f"✅ Cliente {cliente['nome']} (ID: {cliente['id']}) excluído com sucesso.")
-                                    
-                                    if resultados["erro"]:
-                                        st.error(f"{len(resultados['erro'])} clientes não puderam ser excluídos:")
-                                        for erro in resultados["erro"]:
-                                            st.warning(f"❌ Cliente {erro['nome']} (ID: {erro['id']}): {erro['mensagem']}")
-                                    
-                                    if resultados["sucesso"]:
+                            # UX-7: Filtro de busca + paginação + seleção simplificada
+                            df_base = clientes_atuais[['id', 'nome', 'telefone', 'cpf']].copy()
+                            df_base.columns = ['ID', 'Nome', 'Telefone', 'CPF']
+                            df_base = df_base.sort_values('Nome').reset_index(drop=True)
+
+                            # Controles de filtro e paginação
+                            fcol1, fcol2 = st.columns([3, 1])
+                            with fcol1:
+                                termo_busca = st.text_input(
+                                    "🔎 Buscar cliente",
+                                    key="busca_multi_delete",
+                                    placeholder="Filtrar por nome, telefone ou CPF"
+                                )
+                            with fcol2:
+                                itens_por_pagina = st.selectbox(
+                                    "Itens por página",
+                                    [10, 25, 50, 100],
+                                    index=0,
+                                    key="itens_pagina_multi_delete"
+                                )
+
+                            # Aplicar filtro de busca
+                            df_filtrado = df_base
+                            if termo_busca and termo_busca.strip():
+                                termo = termo_busca.strip().lower()
+                                mascara = (
+                                    df_base['Nome'].astype(str).str.lower().str.contains(termo, na=False)
+                                    | df_base['Telefone'].astype(str).str.lower().str.contains(termo, na=False)
+                                    | df_base['CPF'].astype(str).str.lower().str.contains(termo, na=False)
+                                )
+                                df_filtrado = df_base[mascara].reset_index(drop=True)
+
+                            total_registros = len(df_filtrado)
+                            if total_registros == 0:
+                                st.info("Nenhum cliente encontrado para o filtro informado.")
+                            else:
+                                # Paginação
+                                total_paginas = max(1, -(-total_registros // itens_por_pagina))
+                                if "pagina_multi_delete" not in st.session_state:
+                                    st.session_state.pagina_multi_delete = 1
+                                pagina_atual = min(st.session_state.pagina_multi_delete, total_paginas)
+
+                                pcol1, pcol2, pcol3 = st.columns([1, 2, 1])
+                                with pcol1:
+                                    if st.button("⬅️ Anterior", key="prev_multi_delete", disabled=(pagina_atual <= 1)):
+                                        st.session_state.pagina_multi_delete = pagina_atual - 1
                                         st.rerun()
+                                with pcol2:
+                                    st.markdown(
+                                        f"<div style='text-align:center;'>Página <b>{pagina_atual}</b> de <b>{total_paginas}</b> "
+                                        f"({total_registros} cliente(s) encontrado(s))</div>",
+                                        unsafe_allow_html=True
+                                    )
+                                with pcol3:
+                                    if st.button("Próximo ➡️", key="next_multi_delete", disabled=(pagina_atual >= total_paginas)):
+                                        st.session_state.pagina_multi_delete = pagina_atual + 1
+                                        st.rerun()
+
+                                inicio = (pagina_atual - 1) * itens_por_pagina
+                                fim = inicio + itens_por_pagina
+                                df_pagina = df_filtrado.iloc[inicio:fim].copy()
+
+                                # Seleção simplificada: marcar/limpar todos da página
+                                marcar_todos = st.checkbox(
+                                    "Selecionar todos desta página",
+                                    key="marcar_todos_multi_delete"
+                                )
+                                df_pagina["Selecionar"] = bool(marcar_todos)
+
+                                # Editor de seleção
+                                selection = st.data_editor(
+                                    df_pagina,
+                                    column_config={
+                                        "Selecionar": st.column_config.CheckboxColumn(
+                                            "Selecionar",
+                                            help="Selecione para excluir"
+                                        ),
+                                        "ID": st.column_config.NumberColumn("ID", disabled=True),
+                                        "Nome": st.column_config.TextColumn("Nome", disabled=True),
+                                        "Telefone": st.column_config.TextColumn("Telefone", disabled=True),
+                                        "CPF": st.column_config.TextColumn("CPF", disabled=True),
+                                    },
+                                    hide_index=True,
+                                    use_container_width=True,
+                                    key="editor_clientes_multi_delete"
+                                )
+
+                                # Contador de selecionados na página
+                                qtd_selecionados = int(selection["Selecionar"].sum()) if "Selecionar" in selection else 0
+                                st.caption(f"🗂️ {qtd_selecionados} cliente(s) selecionado(s) nesta página.")
+
+                                # Botão para confirmar exclusão
+                                if st.button("Excluir Clientes Selecionados", type="primary", key="btn_excluir_multi_clientes"):
+                                    clientes_selecionados = []
+                                    for _, row in selection.iterrows():
+                                        if row["Selecionar"] == True:
+                                            clientes_selecionados.append(int(row["ID"]))
+
+                                    if not clientes_selecionados:
+                                        st.warning("Nenhum cliente selecionado para exclusão.")
+                                    else:
+                                        resultados = st.session_state.db.delete_multiple_clientes(clientes_selecionados)
+
+                                        if resultados["sucesso"]:
+                                            st.success(f"{len(resultados['sucesso'])} clientes excluídos com sucesso!")
+                                            for cliente in resultados["sucesso"]:
+                                                st.info(f"✅ Cliente {cliente['nome']} (ID: {cliente['id']}) excluído com sucesso.")
+
+                                        if resultados["erro"]:
+                                            st.error(f"{len(resultados['erro'])} clientes não puderam ser excluídos:")
+                                            for erro in resultados["erro"]:
+                                                st.warning(f"❌ Cliente {erro['nome']} (ID: {erro['id']}): {erro['mensagem']}")
+
+                                        if resultados["sucesso"]:
+                                            st.rerun()
 
                 else:
                     st.info("Nenhum cliente cadastrado.")
