@@ -381,9 +381,9 @@ def show():
         padding: 8px 10px; margin-bottom: 6px;
         background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
-    .kanban-card-title { font-weight: 600; font-size: 0.82rem; margin-bottom: 1px; color: #1a202c; }
-    .kanban-card-sub { font-size: 0.72rem; color: #6c757d; margin-bottom: 3px; }
-    .kanban-card-valor { font-size: 0.78rem; font-weight: 600; }
+    .kanban-card-title { font-weight: 600; font-size: 0.82rem; margin-bottom: 1px; color: #1a202c; overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
+    .kanban-card-sub { font-size: 0.72rem; color: #6c757d; margin-bottom: 3px; overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
+    .kanban-card-valor { font-size: 0.78rem; font-weight: 600; overflow-wrap: anywhere; word-break: break-word; } .kanban-card { overflow-wrap: anywhere; word-break: break-word; } .kanban-col-header { white-space: normal; overflow-wrap: anywhere; } .kanban-metric-value { overflow-wrap: anywhere; } @media screen and (max-width: 768px) { .kanban-card-title { font-size: 0.9rem; } .kanban-card-sub { font-size: 0.8rem; } .kanban-card-valor { font-size: 0.85rem; } .kanban-metric { padding: 8px 8px; } .kanban-metric-label { font-size: 0.66rem; } .kanban-metric-value { font-size: 0.85rem; } .kanban-col-header { font-size: 0.78rem; } }
     .kanban-metric {
         background: #fff; border: 1px solid #e2e8f0;
         border-radius: 10px; padding: 10px 14px; text-align: center;
@@ -492,7 +492,7 @@ def show():
 
                 for _, row in display_df.iterrows():
                     rid = row['id']
-                    desc = html_module.escape(str(row.get('descricao', '—'))[:50])
+                    desc = html_module.escape(str(row.get('descricao', '—')))
                     cat = html_module.escape(str(row.get('categoria', '')))
                     data_s = _fmt_date(row.get('data'))
                     val_f = fmt_brl(_safe_float(row.get('valor')))
