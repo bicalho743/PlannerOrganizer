@@ -18,15 +18,15 @@ def show():
         return
 
     # Título com estilo personalizado para ficar mais próximo do topo
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">👥 Cadastros</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="page-title">Cadastros</h1>', unsafe_allow_html=True)
 
     # Tabs para diferentes tipos de cadastro
     tab_cliente, tab_fornecedor, tab_parceiro, tab_assistente, tab_produto = st.tabs([
-        "👥 Clientes",
-        "🏢 Fornecedores",
-        "🤝 Parceiros",
-        "👨‍💼 Assistentes",
-        "📦 Produtos"
+        "Clientes",
+        "Fornecedores",
+        "Parceiros",
+        "Assistentes",
+        "Produtos"
     ])
 
     with tab_cliente:
@@ -397,7 +397,7 @@ def show():
             # Botão para baixar template
             template = gerar_template_csv("Cliente")
             st.download_button(
-                "📝 Baixar Template Cliente",
+                "Baixar Template Cliente",
                 template,
                 "template_cliente.csv",
                 "text/csv",
@@ -620,7 +620,7 @@ def show():
             # Download do template
             template = gerar_template_csv("Fornecedor")
             st.download_button(
-                "📝 Baixar Template",
+                "Baixar Template",
                 template,
                 "template_fornecedor.csv",
                 "text/csv",
@@ -815,7 +815,7 @@ def show():
             # Botão para baixar template
             template = gerar_template_csv("Parceiro")
             st.download_button(
-                "📝 Baixar Template Parceiro",
+                "Baixar Template Parceiro",
                 template,
                 "template_parceiro.csv",
                 "text/csv",
@@ -950,7 +950,7 @@ def show():
             # Botão para baixar template
             template = gerar_template_csv("Assistente")
             st.download_button(
-                "📝 Baixar Template Assistente",
+                "Baixar Template Assistente",
                 template,
                 "template_assistente.csv",
                 "text/csv",

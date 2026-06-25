@@ -529,7 +529,7 @@ def show():
                     st.session_state.produtos_venda = []
 
     if st.session_state["vendas_nova_venda_open"]:
-        with st.expander("🛒 Nova Venda", expanded=True):
+        with st.expander("Nova Venda", expanded=True):
             try:
                 clientes_df = st.session_state.db.get_clientes()
                 produtos_df = st.session_state.db.get_produtos()
@@ -575,7 +575,7 @@ def show():
                         with open(pdf_path, "rb") as f:
                             pdf_bytes = f.read()
                         st.success("PDF gerado!")
-                        st.download_button("📥 Baixar PDF", data=pdf_bytes,
+                        st.download_button("Baixar PDF", data=pdf_bytes,
                                            file_name=f"Venda_{vid}_{safe}.pdf", mime="application/pdf",
                                            key="dl_rel_pos")
                     else:
@@ -650,7 +650,7 @@ def show():
 
     # Análise por período (seção colapsável)
     st.markdown("---")
-    with st.expander("📊 Análise por Período", expanded=False):
+    with st.expander("Análise por Período", expanded=False):
         try:
             if vendas_df.empty:
                 custom_info("Nenhuma venda registrada para análise.")

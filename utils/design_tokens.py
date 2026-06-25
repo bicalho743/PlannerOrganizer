@@ -22,6 +22,23 @@ BORDER_LIGHT = "#dee2e6"
 BG_CARD = "#fff"
 BG_SUBTLE = "#faf9f7"
 
+FONT_SIZE_H1 = "2rem"
+FONT_SIZE_H2 = "1.5rem"
+FONT_SIZE_H3 = "1.15rem"
+FONT_SIZE_BASE = "0.95rem"
+FONT_SIZE_CAPTION = "0.85rem"
+
+SPACE_XXS = "0.25rem"
+SPACE_XS = "0.5rem"
+SPACE_SM = "0.75rem"
+SPACE_MD = "1rem"
+SPACE_LG = "1.5rem"
+SPACE_XL = "2rem"
+
+CARD_RADIUS = "10px"
+CARD_PADDING = "1rem"
+CARD_SHADOW = "0 10px 30px rgba(0, 0, 0, 0.08)"
+
 GLOBAL_CSS_VARS = f"""
 :root {{
     --navy: {NAVY};
@@ -45,6 +62,20 @@ GLOBAL_CSS_VARS = f"""
     --border-light: {BORDER_LIGHT};
     --bg-card: {BG_CARD};
     --bg-subtle: {BG_SUBTLE};
+    --font-h1: {FONT_SIZE_H1};
+    --font-h2: {FONT_SIZE_H2};
+    --font-h3: {FONT_SIZE_H3};
+    --font-base: {FONT_SIZE_BASE};
+    --font-caption: {FONT_SIZE_CAPTION};
+    --space-xxs: {SPACE_XXS};
+    --space-xs: {SPACE_XS};
+    --space-sm: {SPACE_SM};
+    --space-md: {SPACE_MD};
+    --space-lg: {SPACE_LG};
+    --space-xl: {SPACE_XL};
+    --card-radius: {CARD_RADIUS};
+    --card-padding: {CARD_PADDING};
+    --card-shadow: {CARD_SHADOW};
 }}
 """
 

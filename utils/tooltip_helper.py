@@ -3,7 +3,7 @@ Utilitário para criar tooltips personalizados no Streamlit
 """
 import streamlit as st
 
-def create_tooltip(texto_explicativo, icone="ℹ️", tamanho_icone="18px", cor="#666"):
+def create_tooltip(texto_explicativo, icone="i", tamanho_icone="18px", cor="#666"):
     """
     Cria um tooltip HTML com CSS personalizado
     
@@ -97,7 +97,7 @@ def input_with_tooltip(tipo_input, label, explicacao, **kwargs):
     label_com_tooltip = f"""
     <label style="font-size: 14px; font-weight: 600; margin-bottom: 4px; display: block;">
         {label} 
-        <span title="{explicacao}" style="cursor: help; color: #666; font-size: 14px; margin-left: 5px;">ℹ️</span>
+        <span title="{explicacao}" style="cursor: help; color: #666; font-size: 14px; margin-left: 5px;">i</span>
     </label>
     """
     

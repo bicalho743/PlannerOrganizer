@@ -14,7 +14,7 @@ from utils.propostas_helper import st_gerar_pdf_cliente, st_gerar_pdf_interno
 def show():
     from utils.auth_guard import require_auth
     require_auth()
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">📋 Propostas Finalizadas</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Propostas Finalizadas</h1>', unsafe_allow_html=True)
     
     # Verificar se temos uma conexão com o banco de dados
     if not hasattr(st.session_state, 'db'):

@@ -55,7 +55,7 @@ class StylesManager:
         """Aplica o cabeçalho padrão da página"""
         st.markdown("""
         <div class="app-header">
-            <h1 style="margin: 0; font-size: 1.5rem;">📋 Planner Organizer</h1>
+            <h1 style="margin: 0; font-size: 1.5rem;">Planner Organizer</h1>
         </div>
         """, unsafe_allow_html=True)
     

@@ -106,35 +106,31 @@ def show():
     
     # Escolher aleatoriamente entre mostrar uma frase motivacional ou uma dica
     random.seed(int(time.time()) % 100000)
-    
+    quote_html = ""
     if random.choice([True, False]):
-        # Mostrar uma frase motivacional
         frase = random.choice(frases_motivacionais)
-        # CSS removido para evitar tags malformadas
-        
-        st.markdown(f"""
-        <div style="text-align: center; margin: 0 0 25px 0; padding-top: 0;">
-            <p style="font-style: italic; color: #0D1B2A; margin: 0; font-size: 1.1rem; font-weight: 500;">
+        quote_html = f"""
+        <div class="app-card app-card-ghost app-quote-block">
+            <p style="margin: 0 0 0.35rem 0; font-style: italic; font-size: 0.95rem; font-weight: 500; color: #1f2937;">
                 "{frase['texto']}"
             </p>
-            <p style="color: #C9A84C; margin: 8px 0 0 0; font-size: 0.85rem; text-align: right; font-weight: 500;">
+            <p style="margin: 0; color: #6b7280; font-size: 0.85rem; text-align: right;">
                 — {frase['autor']}
             </p>
         </div>
-        """, unsafe_allow_html=True)
+        """
     else:
-        # Mostrar uma dica profissional
         dica = random.choice(dicas_profissionais)
-        st.markdown(f"""
-        <div style="text-align: center; margin: 0 0 25px 0; padding-top: 0;">
-            <p style="color: #FF9800; font-weight: bold; font-size: 0.9rem; margin-bottom: 5px;">
-                💡 DICA PROFISSIONAL
+        quote_html = f"""
+        <div class="app-card app-card-ghost app-quote-block">
+            <p style="margin: 0 0 0.35rem 0; color: #B4690E; font-weight: 700; font-size: 0.82rem; letter-spacing: 0.04em; text-transform: uppercase;">
+                💡 Dica profissional
             </p>
-            <p style="color: #333; margin: 0; font-size: 1.05rem;">
+            <p style="margin: 0; color: #374151; font-size: 0.95rem;">
                 {dica}
             </p>
         </div>
-        """, unsafe_allow_html=True)
+        """
 
     # Dashboard layout com cards modernos
     # Primeira linha - 3 cartões de métricas principais
@@ -223,12 +219,8 @@ def show():
         <div style="background: linear-gradient(135deg, #0D1B2A, #162840); 
              color: white; padding: 20px; border-radius: 10px; 
              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-            <div style="font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center; color: white;">
-                <span style="background-color: rgba(255,255,255,0.2); 
-                       border-radius: 50%; width: 32px; height: 32px; 
-                       display: flex; align-items: center; justify-content: center;
-                       margin-right: 10px; color: white;">👥</span>
-                <span style="color: white !important;"><strong>Clientes</strong></span>
+            <div style="font-size: 1.1rem; margin-bottom: 10px; color: white;">
+                <strong>Clientes</strong>
             </div>
             <div style="font-size: 2rem; font-weight: bold; margin: 5px 0; color: #C9A84C !important;">{}</div>
             <div style="font-size: 0.9rem; opacity: 0.9; color: white !important;">Total de clientes cadastrados</div>
@@ -241,12 +233,8 @@ def show():
         <div style="background: linear-gradient(135deg, #0D1B2A, #162840); 
              color: white; padding: 20px; border-radius: 10px; 
              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-            <div style="font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center; color: white;">
-                <span style="background-color: rgba(255,255,255,0.2); 
-                       border-radius: 50%; width: 32px; height: 32px; 
-                       display: flex; align-items: center; justify-content: center;
-                       margin-right: 10px; color: white;">📝</span>
-                <span style="color: white !important;"><strong>Propostas</strong></span>
+            <div style="font-size: 1.1rem; margin-bottom: 10px; color: white;">
+                <strong>Propostas</strong>
             </div>
             <div style="font-size: 2rem; font-weight: bold; margin: 5px 0; color: #C9A84C !important;">{}</div>
             <div style="font-size: 0.9rem; opacity: 0.9; color: white !important;">Propostas em aberto</div>
@@ -262,12 +250,8 @@ def show():
         <div style="background: linear-gradient(135deg, {0}, {1}); 
              color: white; padding: 20px; border-radius: 10px; 
              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-            <div style="font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center; color: white;">
-                <span style="background-color: rgba(255,255,255,0.2); 
-                       border-radius: 50%; width: 32px; height: 32px; 
-                       display: flex; align-items: center; justify-content: center;
-                       margin-right: 10px; color: white;">💰</span>
-                <span style="color: white !important;"><strong>Saldo</strong></span>
+            <div style="font-size: 1.1rem; margin-bottom: 10px; color: white;">
+                <strong>Saldo</strong>
             </div>
             <div style="font-size: 2rem; font-weight: bold; margin: 5px 0; color: #C9A84C !important;">{2}</div>
             <div style="font-size: 0.9rem; opacity: 0.9; color: white !important;">
@@ -277,6 +261,9 @@ def show():
         </div>
         """.format(cor_fundo, cor_secundaria, format_currency_br(saldo_liquido), format_currency_br(valores_receber), format_currency_br(valores_pagar)), unsafe_allow_html=True)
 
+    # Quadro de destaque secundário (frase ou dica) exibido abaixo dos KPIs
+    st.markdown(quote_html, unsafe_allow_html=True)
+
     # Segunda linha - Propostas em aberto e aniversariantes
     col1, col2 = st.columns([2, 1])
     
@@ -284,7 +271,6 @@ def show():
         # Título com ícone igual à versão de produção
         st.markdown("""
         <div style="display: flex; align-items: center; margin-bottom: 15px;">
-            <span style="font-size: 20px; margin-right: 8px;">📋</span>
             <h3 style="margin: 0; color: #333; font-size: 20px;">Propostas em Aberto</h3>
         </div>
         """, unsafe_allow_html=True)
@@ -550,7 +536,7 @@ def show():
             st.info("Nenhum cliente cadastrado com data de aniversário.")
             
     # Seção unificada de alertas de Pós-Organização
-    st.subheader("📋 Alertas Pós-Organização")
+    st.subheader("Alertas Pós-Organização")
     
     with st.container():
         st.markdown("""
@@ -566,25 +552,24 @@ def show():
                 if not df_alertas.empty:
                     for _, alerta in df_alertas.iterrows():
                         tipo_config = {
-                            'agradecimento':   {'icone': '🙏', 'texto': 'Agradecimento',  'cor': '#27ae60', 'dias': 'D+1',  'objetivo': 'Mensagem elegante de encerramento'},
-                            'acompanhamento':  {'icone': '📞', 'texto': 'Acompanhamento', 'cor': '#C9A84C', 'dias': 'D+7',  'objetivo': 'Saber como a cliente está se sentindo'},
-                            'ajuste_fino':     {'icone': '🔧', 'texto': 'Ajuste fino',    'cor': '#e67e22', 'dias': 'D+30', 'objetivo': 'Propor pequenos ajustes após uso real'},
-                            'feedback':        {'icone': '💬', 'texto': 'Feedback',        'cor': '#f39c12', 'dias': 'D+45', 'objetivo': 'Colher opinião genuína da experiência'},
-                            'continuidade':    {'icone': '🤝', 'texto': 'Continuidade',    'cor': '#B8943D', 'dias': 'D+60', 'objetivo': 'Oferta elegante de serviço contínuo'},
-                            'retorno_tecnico': {'icone': '🔄', 'texto': 'Retorno Técnico', 'cor': '#e74c3c', 'dias': '',     'objetivo': 'Visita técnica agendada'},
+                            'agradecimento':   {'icone': '', 'texto': 'Agradecimento',  'cor': '#27ae60', 'dias': 'D+1',  'objetivo': 'Mensagem elegante de encerramento'},
+                            'acompanhamento':  {'icone': '', 'texto': 'Acompanhamento', 'cor': '#C9A84C', 'dias': 'D+7',  'objetivo': 'Saber como a cliente está se sentindo'},
+                            'ajuste_fino':     {'icone': '', 'texto': 'Ajuste fino',    'cor': '#e67e22', 'dias': 'D+30', 'objetivo': 'Propor pequenos ajustes após uso real'},
+                            'feedback':        {'icone': '', 'texto': 'Feedback',        'cor': '#f39c12', 'dias': 'D+45', 'objetivo': 'Colher opinião genuína da experiência'},
+                            'continuidade':    {'icone': '', 'texto': 'Continuidade',    'cor': '#B8943D', 'dias': 'D+60', 'objetivo': 'Oferta elegante de serviço contínuo'},
+                            'retorno_tecnico': {'icone': '', 'texto': 'Retorno Técnico', 'cor': '#e74c3c', 'dias': '',     'objetivo': 'Visita técnica agendada'},
                         }
-                        
-                        at = alerta['action_type'].lower() if isinstance(alerta['action_type'], str) else str(alerta['action_type']).lower()
-                        config = tipo_config.get(at, {'icone': '📋', 'texto': at.replace('_', ' ').title(), 'cor': '#0D1B2A', 'dias': '', 'objetivo': ''})
-                        
                         try:
-                            data_fmt = pd.to_datetime(alerta['due_date']).strftime('%d/%m/%Y')
-                        except:
+                            at = alerta['action_type'].lower() if isinstance(alerta['action_type'], str) else str(alerta['action_type']).lower()
+                            config = tipo_config.get(at, {'icone': '', 'texto': at.replace('_', ' ').title(), 'cor': '#0D1B2A', 'dias': '', 'objetivo': ''})
                             data_fmt = str(alerta['due_date'])
-                        
+                        except Exception:
+                            config = {'icone': '', 'texto': 'Ação', 'cor': '#0D1B2A', 'dias': '', 'objetivo': ''}
+                            data_fmt = str(alerta.get('due_date', ''))
+
                         dias_badge = f"<span style='background:rgba(255,255,255,0.25);padding:2px 8px;border-radius:10px;font-size:0.75em;margin-left:8px;font-weight:600;'>{config['dias']}</span>" if config['dias'] else ""
                         objetivo_txt = f"<div style='color:rgba(255,255,255,0.85);font-size:0.8em;font-style:italic;margin-top:2px;'>{config['objetivo']}</div>" if config['objetivo'] else ""
-                        
+
                         st.markdown(f"""
                         <div style='background-color: {config['cor']}; 
                               padding: 10px 14px; border-radius: 7px; margin-bottom: 8px;'>

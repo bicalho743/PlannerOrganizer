@@ -516,18 +516,18 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
         st.session_state.current_page = "Dashboard"
 
     MENU_PRINCIPAL = {
-        "📊 Dashboard": "Dashboard",
-        "👥 Cadastros": "Cadastros",
-        "📝 Propostas": "Propostas",
-        "🛒 Vendas": "Vendas",
-        "💰 Financeiro": "Financeiro",
-        "📋 Pós-Organização": "PosOrganizacao",
-        "📈 Relatórios": "Relatórios",
-        "🧑‍💼 Meu Perfil": "Perfil"
+        "Dashboard": "Dashboard",
+        "Cadastros": "Cadastros",
+        "Propostas": "Propostas",
+        "Vendas": "Vendas",
+        "Financeiro": "Financeiro",
+        "Pós-Organização": "PosOrganizacao",
+        "Relatórios": "Relatórios",
+        "Meu Perfil": "Perfil"
     }
 
     if st.session_state.get('autenticado', False) and getattr(st.session_state.get('usuario', None), 'tipo', '') == 'admin':
-        MENU_PRINCIPAL["⚙️ Administração"] = "Admin"
+        MENU_PRINCIPAL["Administração"] = "Admin"
 
     if 'manual_pdf_bytes' not in st.session_state or st.session_state.manual_pdf_bytes is None:
         try:
@@ -540,7 +540,7 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
 
     if st.session_state.get('manual_pdf_bytes'):
         st.sidebar.download_button(
-            label="📥 Manual do Sistema",
+            label="Manual do Sistema",
             data=st.session_state.manual_pdf_bytes,
             file_name="Manual_Planner_Organizer.pdf",
             mime="application/pdf",
@@ -554,7 +554,7 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
         if st.sidebar.button(label, key=f"main_menu_{page.lower()}", use_container_width=True):
             st.session_state.current_page = page
 
-    if st.sidebar.button("🚪 Sair do Sistema", key="btn_logout", type="secondary", use_container_width=True):
+    if st.sidebar.button("Sair do Sistema", key="btn_logout", type="secondary", use_container_width=True):
         st.session_state.authenticated = False
         st.session_state.current_page = "Dashboard"
         st.rerun()
@@ -588,25 +588,25 @@ try:
     elif st.session_state.current_page == "Perfil":
         from pages.perfil import show; show()
     elif st.session_state.current_page == "Admin":
-        st.title("⚙️ Administração")
+        st.title("Administração")
         st.info("Módulo de administração em desenvolvimento.")
 except Exception as e:
     st.error(f"Erro ao carregar página: {str(e)}")
 
 st.sidebar.markdown('<div style="margin:1.5rem 0;"><hr style="border:none;height:1px;background:#E0E0E0;"></div>', unsafe_allow_html=True)
 
-with st.sidebar.expander("ℹ️ Sobre o Sistema"):
+with st.sidebar.expander("Sobre o Sistema"):
     st.markdown("**Planner Organizer** · Versão 1.0.4")
     st.markdown("""
 **Módulos:**
-- 📊 Dashboard — Métricas, alertas e indicadores
-- 👥 Cadastros — Clientes, fornecedores, parceiros
-- 📝 Propostas — Ciclo completo com relatórios PDF
-- 🛒 Vendas — Produtos vendidos por cliente
-- 💰 Financeiro — Kanban de receitas e despesas
-- 📋 Pós-Organização — Follow-up em 6 etapas
-- 📈 Relatórios — Análises e gráficos interativos
-- 🧑‍💼 Perfil — Configurações da conta
+- Dashboard — Métricas, alertas e indicadores
+- Cadastros — Clientes, fornecedores, parceiros
+- Propostas — Ciclo completo com relatórios PDF
+- Vendas — Produtos vendidos por cliente
+- Financeiro — Kanban de receitas e despesas
+- Pós-Organização — Follow-up em 6 etapas
+- Relatórios — Análises e gráficos interativas
+- Perfil — Configurações da conta
     """)
 
 if "mostrar_termos" not in st.session_state:

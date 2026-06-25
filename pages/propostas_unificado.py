@@ -232,7 +232,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
             except Exception as e:
                 st.error(str(e))
 
-        if st.button("📄 Gerar Proposta", key=f"btn_pdf_proposta_apr_{proposta_id}", use_container_width=True):
+        if st.button(" Gerar Proposta", key=f"btn_pdf_proposta_apr_{proposta_id}", use_container_width=True):
             try:
                 from utils.propostas_helper import gerar_pdf_cliente_proposta
                 sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, proposta_id)
@@ -248,7 +248,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
     else:
         c1, c2 = st.columns(2)
         with c1:
-            if st.button("✅ Aprovar", key=f"btn_aprovar_{proposta_id}", use_container_width=True, type="primary"):
+            if st.button(" Aprovar", key=f"btn_aprovar_{proposta_id}", use_container_width=True, type="primary"):
                 try:
                     res = st.session_state.db.update_proposta_status(proposta_id=proposta_id,
                           novo_status=STATUS_APROVADA, data_aprovacao=datetime.now().date())
@@ -278,7 +278,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
 
         c3, c4 = st.columns(2)
         with c3:
-            if st.button("📄 Gerar Proposta", key=f"btn_pdf_proposta_{proposta_id}", use_container_width=True):
+            if st.button(" Gerar Proposta", key=f"btn_pdf_proposta_{proposta_id}", use_container_width=True):
                 try:
                     from utils.propostas_helper import gerar_pdf_cliente_proposta
                     sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, proposta_id)
@@ -292,7 +292,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
                 except Exception as e:
                     st.error(str(e))
         with c4:
-            if st.button("🗑️ Excluir", key=f"btn_excluir_open_{proposta_id}", use_container_width=True):
+            if st.button(" Excluir", key=f"btn_excluir_open_{proposta_id}", use_container_width=True):
                 st.session_state[f"confirm_delete_{proposta_id}"] = True
 
         if st.session_state.get(f"confirm_delete_{proposta_id}", False):
@@ -347,23 +347,23 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
 
     rc1, rc2 = st.columns(2)
     with rc1:
-        _report_card_download("📋", "RELATÓRIO CLIENTE", "Proposta de serviço", proposta_id, "cliente", nome_cliente, numero)
+        _report_card_download("", "RELATÓRIO CLIENTE", "Proposta de serviço", proposta_id, "cliente", nome_cliente, numero)
     with rc2:
-        _report_card_download("📊", "RELATÓRIO INTERNO", "Margens e custos", proposta_id, "interno", nome_cliente, numero)
+        _report_card_download("", "RELATÓRIO INTERNO", "Margens e custos", proposta_id, "interno", nome_cliente, numero)
 
     rc3, rc4 = st.columns(2)
     with rc3:
-        _report_card_download("🏢", "RELATÓRIO FORNECEDORES", "Lista de terceiros", proposta_id, "fornecedores", nome_cliente, numero)
+        _report_card_download("", "RELATÓRIO FORNECEDORES", "Lista de terceiros", proposta_id, "fornecedores", nome_cliente, numero)
     with rc4:
-        _report_card_download("📦", "VENDAS DO PRODUTO", "Produtos organizados", proposta_id, "vendas", nome_cliente, numero)
+        _report_card_download("", "VENDAS DO PRODUTO", "Produtos organizados", proposta_id, "vendas", nome_cliente, numero)
 
     st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
     ac1, ac2 = st.columns(2)
     with ac1:
-        if st.button("🔄 Reabrir", key=f"btn_reabrir_fin_{proposta_id}", use_container_width=True):
+        if st.button(" Reabrir", key=f"btn_reabrir_fin_{proposta_id}", use_container_width=True):
             st.session_state[f"confirm_reopen_{proposta_id}"] = True
     with ac2:
-        if st.button("🗑️ Excluir", key=f"btn_excluir_fin_{proposta_id}", use_container_width=True):
+        if st.button(" Excluir", key=f"btn_excluir_fin_{proposta_id}", use_container_width=True):
             st.session_state[f"confirm_delete_{proposta_id}"] = True
 
     if st.session_state.get(f"confirm_reopen_{proposta_id}", False):
@@ -521,7 +521,7 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_
         ).replace("%%", "%")
         with stylable_container(key=f"dl_card_{report_type}_{proposta_id}", css_styles=_card_css):
             st.download_button(
-                label=f"{icon} {title}",
+                label=f"{title}",
                 data=pdf_bytes,
                 file_name=file_name,
                 mime="application/pdf",
@@ -529,7 +529,7 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_
                 use_container_width=True,
             )
         st.caption(subtitle)
-        if st.toggle("👁️ Visualizar no navegador", key=f"view_pdf_{report_type}_{proposta_id}"):
+        if st.toggle(" Visualizar no navegador", key=f"view_pdf_{report_type}_{proposta_id}"):
             _pdf_inline_viewer(pdf_bytes, key=f"{report_type}_{proposta_id}")
     elif error_msg:
         st.markdown(f"""
@@ -558,8 +558,8 @@ def _tab_detalhes(proposta_id, proposta):
         dias_restantes = max(0, (data_fim_prevista - hoje).days)
         atrasado = hoje > data_fim_prevista
         cor_prog = "#C0392B" if atrasado else "#1D6A4A"
-        label_prog = (f"⚠️ Atrasado em {(hoje - data_fim_prevista).days} dias"
-                      if atrasado else f"📅 {dias_restantes} dias restantes")
+        label_prog = (f"Atrasado em {(hoje - data_fim_prevista).days} dias"
+                      if atrasado else f"{dias_restantes} dias restantes")
         st.markdown(f"""
         <div style="background:#f7f7f5;border-radius:10px;padding:14px 18px;margin-bottom:18px;border:1px solid #e8e6e0;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -575,7 +575,7 @@ def _tab_detalhes(proposta_id, proposta):
         pass
 
     # ── Formulário novo andamento ─────────────────────────────────────────
-    st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">📝 Novo Andamento</p>', unsafe_allow_html=True)
+    st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">Novo Andamento</p>', unsafe_allow_html=True)
     with st.form(key=f"form_andamento_{proposta_id}"):
         descricao_andamento = st.text_area("Descrição:", height=90, placeholder="Descreva o que aconteceu nesta etapa…", label_visibility="collapsed")
         submitted = st.form_submit_button("✔ Registrar Andamento", type="primary", use_container_width=True)
@@ -608,7 +608,7 @@ def _tab_detalhes(proposta_id, proposta):
                 <div style="border-left:3px solid {GOLD};background:#fff;border-radius:0 8px 8px 0;
                             padding:10px 14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);">
                   <div style="font-size:13px;color:#1C1C1A;">{texto}</div>
-                  <div style="font-size:11px;color:#9a9890;margin-top:4px;">📅 {data_str}</div>
+                  <div style="font-size:11px;color:#9a9890;margin-top:4px;"> {data_str}</div>
                 </div>"""
             st.markdown(cards, unsafe_allow_html=True)
     except Exception as e:
@@ -645,7 +645,7 @@ def _tab_produtos(proposta_id):
                             display:flex;justify-content:space-between;align-items:center;">
                   <div>
                     <span style="font-weight:600;color:{NAVY};font-size:13px;">{nome}</span>
-                    <span style="font-size:11px;color:#9a9890;margin-left:8px;">📦 {comodo}</span>
+                    <span style="font-size:11px;color:#9a9890;margin-left:8px;"> {comodo}</span>
                   </div>
                   <div style="text-align:right;white-space:nowrap;">
                     <span style="font-size:11px;color:#9a9890;">{qty}× {vunit_str}</span><br>
@@ -655,7 +655,7 @@ def _tab_produtos(proposta_id):
             st.markdown(cards, unsafe_allow_html=True)
 
             # Remover produto
-            with st.expander("🗑️ Remover produto"):
+            with st.expander(" Remover produto"):
                 with st.form(key=f"form_remover_produto_{proposta_id}"):
                     produto_remover_id = st.selectbox(
                         "Selecione:",
@@ -675,7 +675,7 @@ def _tab_produtos(proposta_id):
 
             # PDF dos produtos
             st.markdown("---")
-            if st.button("📄 Gerar Relatório de Venda dos Produtos", use_container_width=True, key=f"btn_pdf_produtos_proposta_{proposta_id}"):
+            if st.button(" Gerar Relatório de Venda dos Produtos", use_container_width=True, key=f"btn_pdf_produtos_proposta_{proposta_id}"):
                 try:
                     from utils.pdf_generator_v2 import gerar_pdf_venda_v2
                     from sqlalchemy import text as _text
@@ -707,14 +707,14 @@ def _tab_produtos(proposta_id):
         else:
             st.markdown("""
             <div class="itens-empty-state">
-              <div class="itens-empty-icon">📦</div>
+              <div class="itens-empty-icon"></div>
               <div class="itens-empty-title">Nenhum produto ainda</div>
               <div class="itens-empty-hint">Clique em "+ Adicionar" abaixo para incluir produtos</div>
             </div>""", unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Erro ao carregar produtos: {str(e)}")
 
-    st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">➕ Adicionar Produto</p>', unsafe_allow_html=True)
+    st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;"> Adicionar Produto</p>', unsafe_allow_html=True)
     with st.form(key=f"form_produto_{proposta_id}"):
         produtos_cadastrados = st.session_state.db.get_produtos()
         if not produtos_cadastrados.empty:
@@ -772,17 +772,17 @@ def _tab_itens(proposta_id, show_finalizar=False):
     t_total = t_prod + t_forn + t_asst + t_outr
 
     cats = [
-        ("Produtos",     "📦", len(produtos_df),     t_prod,  GOLD),
-        ("Fornecedores", "🏢", len(fornecedores_df),  t_forn,  "#0F5E6E"),
-        ("Assistentes",  "👥", len(assistentes_df),   t_asst,  "#6B4EAA"),
-        ("Outros",       "➕", len(outros_df),        t_outr,  "#E07B39"),
+        ("Produtos",     "", len(produtos_df),     t_prod,  GOLD),
+        ("Fornecedores", "", len(fornecedores_df),  t_forn,  "#0F5E6E"),
+        ("Assistentes",  "", len(assistentes_df),   t_asst,  "#6B4EAA"),
+        ("Outros",       "", len(outros_df),        t_outr,  "#E07B39"),
     ]
 
     key_cat = f"itens_cat_{proposta_id}"
     if key_cat not in st.session_state:
         st.session_state[key_cat] = "Produtos"
-    old_to_new = {"📦 Produtos": "Produtos", "🏢 Fornecedores": "Fornecedores",
-                  "👥 Assistentes": "Assistentes", "➕ Outros": "Outros"}
+    old_to_new = {"Produtos": "Produtos", "Fornecedores": "Fornecedores",
+                  "Assistentes": "Assistentes", "Outros": "Outros"}
     if st.session_state[key_cat] in old_to_new:
         st.session_state[key_cat] = old_to_new[st.session_state[key_cat]]
 
@@ -868,7 +868,7 @@ def _tab_itens(proposta_id, show_finalizar=False):
 
         if show_finalizar:
             st.markdown("<div style='margin-top:8px;'></div>", unsafe_allow_html=True)
-            if st.button("🏁 FINALIZAR PROJETO", key=f"btn_finalizar_exec_{proposta_id}", use_container_width=True, type="primary"):
+            if st.button(" FINALIZAR PROJETO", key=f"btn_finalizar_exec_{proposta_id}", use_container_width=True, type="primary"):
                 try:
                     res = finalizar_proposta_v2(int(proposta_id))
                     if res.get('status', False):
@@ -937,7 +937,7 @@ def _tab_fornecedores(proposta_id):
             c2.metric("Total", _fmt_brl(total_forn))
             st.markdown(_acrescimos_cards(acrescimos, "#0F5E6E"), unsafe_allow_html=True)
 
-            with st.expander("✏️ Editar / 🗑️ Remover"):
+            with st.expander(" Editar /  Remover"):
                 ids = acrescimos['id'].tolist()
                 fmt_forn = lambda x: acrescimos.loc[acrescimos['id'] == x, 'fornecedor'].iloc[0]
                 col_e, col_r = st.columns(2)
@@ -958,7 +958,7 @@ def _tab_fornecedores(proposta_id):
                 with col_r:
                     with st.form(key=f"form_remover_fornecedor_{proposta_id}"):
                         rid = st.selectbox("Remover:", options=ids, format_func=fmt_forn, key=f"sel_rem_forn_{proposta_id}")
-                        if st.form_submit_button("🗑️ Remover", use_container_width=True):
+                        if st.form_submit_button(" Remover", use_container_width=True):
                             try:
                                 if st.session_state.db.remove_acrescimo_proposta(rid):
                                     st.success("Removido!"); st.rerun()
@@ -969,14 +969,14 @@ def _tab_fornecedores(proposta_id):
         else:
             st.markdown("""
             <div class="itens-empty-state">
-              <div class="itens-empty-icon">🏢</div>
+              <div class="itens-empty-icon"></div>
               <div class="itens-empty-title">Nenhum fornecedor ainda</div>
               <div class="itens-empty-hint">Clique em "+ Adicionar" abaixo para incluir fornecedores</div>
             </div>""", unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Erro ao carregar fornecedores: {str(e)}")
 
-    st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">➕ Adicionar Fornecedor</p>', unsafe_allow_html=True)
+    st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;"> Adicionar Fornecedor</p>', unsafe_allow_html=True)
     try:
         fornecedores = st.session_state.db.get_fornecedores()
         if not fornecedores.empty:
@@ -1021,7 +1021,7 @@ def _tab_assistentes(proposta_id):
             c2.metric("Total", _fmt_brl(total_asst))
             st.markdown(_acrescimos_cards(acrescimos, "#6B4EAA"), unsafe_allow_html=True)
 
-            with st.expander("✏️ Editar / 🗑️ Remover"):
+            with st.expander(" Editar /  Remover"):
                 ids = acrescimos['id'].tolist()
                 fmt_a = lambda x: acrescimos.loc[acrescimos['id'] == x, 'fornecedor'].iloc[0]
                 col_e, col_r = st.columns(2)
@@ -1042,7 +1042,7 @@ def _tab_assistentes(proposta_id):
                 with col_r:
                     with st.form(key=f"form_remover_assistente_{proposta_id}"):
                         rid = st.selectbox("Remover:", options=ids, format_func=fmt_a, key=f"sel_rem_asst_{proposta_id}")
-                        if st.form_submit_button("🗑️ Remover", use_container_width=True):
+                        if st.form_submit_button(" Remover", use_container_width=True):
                             try:
                                 if st.session_state.db.remove_acrescimo_proposta(rid):
                                     st.success("Removido!"); st.rerun()
@@ -1053,14 +1053,14 @@ def _tab_assistentes(proposta_id):
         else:
             st.markdown("""
             <div class="itens-empty-state">
-              <div class="itens-empty-icon">👥</div>
+              <div class="itens-empty-icon"></div>
               <div class="itens-empty-title">Nenhum assistente ainda</div>
               <div class="itens-empty-hint">Clique em "+ Adicionar" abaixo para incluir assistentes</div>
             </div>""", unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Erro ao carregar assistentes: {str(e)}")
 
-    st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">➕ Adicionar Assistente</p>', unsafe_allow_html=True)
+    st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;"> Adicionar Assistente</p>', unsafe_allow_html=True)
     try:
         assistentes = st.session_state.db.get_assistentes()
         if not assistentes.empty:
@@ -1122,7 +1122,7 @@ def _tab_outros(proposta_id):
                 </div>"""
             st.markdown(cards, unsafe_allow_html=True)
 
-            with st.expander("🗑️ Remover item"):
+            with st.expander(" Remover item"):
                 with st.form(key=f"form_remover_outros_{proposta_id}"):
                     rid = st.selectbox("Selecione:", options=acrescimos['id'].tolist(),
                                        format_func=lambda x: acrescimos.loc[acrescimos['id'] == x, 'descricao'].iloc[0])
@@ -1137,14 +1137,14 @@ def _tab_outros(proposta_id):
         else:
             st.markdown("""
             <div class="itens-empty-state">
-              <div class="itens-empty-icon">➕</div>
+              <div class="itens-empty-icon"></div>
               <div class="itens-empty-title">Nenhum item extra ainda</div>
               <div class="itens-empty-hint">Clique em "+ Adicionar" abaixo para incluir itens extras</div>
             </div>""", unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Erro ao carregar itens: {str(e)}")
 
-    st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">➕ Adicionar Item Extra</p>', unsafe_allow_html=True)
+    st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;"> Adicionar Item Extra</p>', unsafe_allow_html=True)
     with st.form(key=f"form_outros_{proposta_id}"):
         col1, col2 = st.columns(2)
         with col1:
@@ -1198,14 +1198,14 @@ def _tab_acoes(proposta_id, proposta):
 
     # ── Badge de status ───────────────────────────────────────────────────
     if em_aberto:
-        _status_badge("🟡 Em Aberto", "#B7860D")
+        _status_badge(" Em Aberto", "#B7860D")
     elif esta_aprovada and not em_execucao and not finalizada:
-        _status_badge("✅ Aprovada — aguardando início", "#1D6A4A")
+        _status_badge(" Aprovada — aguardando início", "#1D6A4A")
     elif em_execucao and not finalizada:
         _status_badge("🔵 Em Execução", "#1565C0")
     elif finalizada:
         cor_fin = "#4A4A4A" if status_atual == STATUS_FINALIZADA else "#C0392B"
-        _status_badge(f"🏁 {_label_status(status_atual)}", cor_fin)
+        _status_badge(f" {_label_status(status_atual)}", cor_fin)
     else:
         _status_badge(f"● {_label_status(status_atual)}", "#555")
 
@@ -1214,7 +1214,7 @@ def _tab_acoes(proposta_id, proposta):
         st.markdown('<p style="color:#555;font-size:13px;margin-bottom:12px;">Escolha a próxima ação para esta proposta.</p>', unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("✅ Aprovar Proposta", type="primary", use_container_width=True, key=f"btn_aprovar_{proposta_id}"):
+            if st.button(" Aprovar Proposta", type="primary", use_container_width=True, key=f"btn_aprovar_{proposta_id}"):
                 try:
                     res = st.session_state.db.update_proposta_status(proposta_id=proposta_id,
                           novo_status=STATUS_APROVADA, data_aprovacao=datetime.now().date())
@@ -1281,10 +1281,10 @@ def _tab_acoes(proposta_id, proposta):
             # Breakdown em cards
             breakdown = [
                 ("🏷️ Personal Organizer", valor_base, GOLD),
-                ("📦 Produtos",           total_prod, "#0F5E6E"),
-                ("🏢 Fornecedores",       total_forn, "#0F5E6E"),
-                ("👥 Assistentes",        total_asst, "#6B4EAA"),
-                ("➕ Outros",             total_outr, "#E07B39"),
+                (" Produtos",           total_prod, "#0F5E6E"),
+                (" Fornecedores",       total_forn, "#0F5E6E"),
+                (" Assistentes",        total_asst, "#6B4EAA"),
+                (" Outros",             total_outr, "#E07B39"),
             ]
             rows_html = ""
             for label, val, cor in breakdown:
@@ -1319,7 +1319,7 @@ def _tab_acoes(proposta_id, proposta):
 
         st.markdown("---")
         with st.form(key=f"form_finalizar_concluida_{proposta_id}"):
-            if st.form_submit_button("🏁 MARCAR COMO CONCLUÍDA", type="primary", use_container_width=True):
+            if st.form_submit_button("MARCAR COMO CONCLUÍDA", type="primary", use_container_width=True):
                 try:
                     res = finalizar_proposta_v2(int(proposta_id))
                     if res.get('status', False):
@@ -1340,17 +1340,17 @@ def _tab_acoes(proposta_id, proposta):
         st.markdown(f"""
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
           <div style="background:{NAVY};border-radius:10px;padding:14px;text-align:center;">
-            <div style="font-size:22px;">📋</div>
+            <div style="font-size:22px;"></div>
             <div style="color:{GOLD};font-weight:700;font-size:12px;margin-top:4px;">RELATÓRIO CLIENTE</div>
             <div style="color:#aaa;font-size:10px;">Proposta de serviço</div>
           </div>
           <div style="background:{NAVY};border-radius:10px;padding:14px;text-align:center;">
-            <div style="font-size:22px;">📊</div>
+            <div style="font-size:22px;"></div>
             <div style="color:{GOLD};font-weight:700;font-size:12px;margin-top:4px;">RELATÓRIO INTERNO</div>
             <div style="color:#aaa;font-size:10px;">Margens e custos</div>
           </div>
           <div style="background:{NAVY};border-radius:10px;padding:14px;text-align:center;">
-            <div style="font-size:22px;">🏢</div>
+            <div style="font-size:22px;"></div>
             <div style="color:{GOLD};font-weight:700;font-size:12px;margin-top:4px;">RELATÓRIO FORNECEDORES</div>
             <div style="color:#aaa;font-size:10px;">Lista de terceiros</div>
           </div>
@@ -1358,25 +1358,25 @@ def _tab_acoes(proposta_id, proposta):
 
         col1, col2, col3 = st.columns(3)
         with col1:
-            if st.button("📋 Gerar para Cliente", use_container_width=True, key=f"btn_rel_cliente_{proposta_id}"):
+            if st.button("Gerar para Cliente", use_container_width=True, key=f"btn_rel_cliente_{proposta_id}"):
                 try:
                     st_gerar_pdf_cliente(proposta_id)
                 except Exception as e:
                     st.error(str(e))
         with col2:
-            if st.button("📊 Gerar Interno", use_container_width=True, key=f"btn_rel_interno_{proposta_id}"):
+            if st.button("Gerar Interno", use_container_width=True, key=f"btn_rel_interno_{proposta_id}"):
                 try:
                     st_gerar_pdf_interno(proposta_id)
                 except Exception as e:
                     st.error(str(e))
         with col3:
-            if st.button("🏢 Gerar Fornecedores", use_container_width=True, key=f"btn_rel_forn_{proposta_id}"):
+            if st.button(" Gerar Fornecedores", use_container_width=True, key=f"btn_rel_forn_{proposta_id}"):
                 try:
                     st_gerar_pdf_fornecedores(proposta_id)
                 except Exception as e:
                     st.error(str(e))
 
-        with st.expander("🔄 Reabrir Proposta Finalizada"):
+        with st.expander(" Reabrir Proposta Finalizada"):
             st.warning("Esta ação retornará a proposta para o status 'Em Execução'.")
             if st.button("REABRIR PROPOSTA", key=f"btn_reabrir_{proposta_id}", type="primary", use_container_width=True):
                 try:
@@ -1398,7 +1398,7 @@ def _tab_acoes(proposta_id, proposta):
 
     # ── Gerar PDF da proposta (sempre disponível) ─────────────────────────
     st.markdown("---")
-    if st.button("📄 Gerar PDF da Proposta (cliente)", key=f"btn_pdf_proposta_{proposta_id}", use_container_width=True):
+    if st.button(" Gerar PDF da Proposta (cliente)", key=f"btn_pdf_proposta_{proposta_id}", use_container_width=True):
         try:
             sucesso, mensagem, arquivo = gerar_pdf_proposta(db=st.session_state.db, proposta_id=proposta_id)
             if sucesso and arquivo:
@@ -1412,7 +1412,7 @@ def _tab_acoes(proposta_id, proposta):
             st.error(str(e))
 
     # ── Excluir proposta ──────────────────────────────────────────────────
-    with st.expander("🗑️ Excluir Proposta", expanded=False):
+    with st.expander(" Excluir Proposta", expanded=False):
         st.warning("⚠️ Esta ação é **permanente** e removerá todos os dados relacionados.")
         confirmar_exclusao = st.checkbox("Entendo que esta ação não pode ser desfeita", key=f"confirmar_exclusao_{proposta_id}")
         if confirmar_exclusao:
@@ -1440,7 +1440,7 @@ def _tab_acoes(proposta_id, proposta):
 def show():
     from utils.auth_guard import require_auth
     require_auth()
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">📝 Propostas</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Propostas</h1>', unsafe_allow_html=True)
 
     if not hasattr(st.session_state, 'db'):
         st.error("Erro: Conexão com banco de dados não disponível")
@@ -1452,7 +1452,7 @@ def show():
         st.session_state['kanban_nova_proposta_open'] = False
 
     if st.session_state.pop('proposta_finalizada_sucesso', False):
-        st.success("✅ Proposta finalizada com sucesso!")
+        st.success(" Proposta finalizada com sucesso!")
 
     try:
         propostas = st.session_state.db.get_propostas()
@@ -1510,10 +1510,10 @@ def show():
 
     mc1, mc2, mc3, mc4 = st.columns(4)
     for col, label, df in [
-        (mc1, "📋 EM ABERTO", _p_aberto),
-        (mc2, "✅ APROVADA", _p_aprovada),
-        (mc3, "🔧 EM EXECUÇÃO", _p_exec),
-        (mc4, "🏁 FINALIZADA", _p_final),
+        (mc1, "Em Aberto", _p_aberto),
+        (mc2, "Aprovada", _p_aprovada),
+        (mc3, "Em Execução", _p_exec),
+        (mc4, "Finalizada", _p_final),
     ]:
         with col:
             st.markdown(f"""
@@ -1527,12 +1527,12 @@ def show():
     col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
     with col_btn:
         with stylable_container(key="gold_nova_proposta", css_styles=GOLD_BUTTON_CSS):
-            nova_btn = st.button("✚  Nova Proposta", type="primary", use_container_width=True, key="btn_nova_proposta_top")
+            nova_btn = st.button("  Nova Proposta", type="primary", use_container_width=True, key="btn_nova_proposta_top")
             if nova_btn:
                 st.session_state['kanban_nova_proposta_open'] = not st.session_state['kanban_nova_proposta_open']
 
     if st.session_state['kanban_nova_proposta_open']:
-        with st.expander("📝 Nova Proposta", expanded=True):
+        with st.expander("Nova Proposta", expanded=True):
             if clientes.empty:
                 st.warning("Nenhum cliente cadastrado. Por favor, cadastre clientes primeiro.")
             else:
@@ -1589,10 +1589,10 @@ def show():
     propostas_finalizadas_kanban = propostas_finalizadas_sorted.head(MAX_FINALIZADAS_KANBAN)
 
     COLS_CONFIG = [
-        (col_aberto, "🟡 Em Aberto", propostas_em_aberto, "#fff3cd"),
+        (col_aberto, " Em Aberto", propostas_em_aberto, "#fff3cd"),
         (col_aprovada, "🟢 Aprovada", propostas_aprovadas, "#d4edda"),
         (col_execucao, "🔵 Em Execução", propostas_em_exec, "#cce5ff"),
-        (col_finalizada, "✅ Finalizada", propostas_finalizadas_kanban, "#e2e3e5"),
+        (col_finalizada, " Finalizada", propostas_finalizadas_kanban, "#e2e3e5"),
     ]
 
     kanban_css = """
@@ -1704,7 +1704,7 @@ def show():
                         st.rerun()
 
                     if col_idx in (0, 1):
-                        if st.button("📄 Gerar Proposta", key=f"card_pdf_c{col_idx}_{pid}", use_container_width=True):
+                        if st.button(" Gerar Proposta", key=f"card_pdf_c{col_idx}_{pid}", use_container_width=True):
                             try:
                                 from utils.propostas_helper import gerar_pdf_cliente_proposta
                                 sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, pid)
@@ -1736,10 +1736,10 @@ def show():
 
     if total_finalizadas > 0:
         st.markdown("---")
-        with st.expander(f"📋 Histórico de Propostas ({total_finalizadas})", expanded=False):
+        with st.expander(f"Histórico de Propostas ({total_finalizadas})", expanded=False):
             hist_c1, hist_c2 = st.columns([2, 1])
             with hist_c1:
-                busca_cliente = st.text_input("🔍 Buscar por cliente", key="hist_busca_cliente", placeholder="Nome do cliente...")
+                busca_cliente = st.text_input(" Buscar por cliente", key="hist_busca_cliente", placeholder="Nome do cliente...")
             with hist_c2:
                 meses_opcoes = ["Todos"]
                 if not propostas_finalizadas_sorted.empty:
@@ -1753,7 +1753,7 @@ def show():
                                     if label not in meses_opcoes:
                                         meses_opcoes.append(label)
                                 break
-                filtro_mes = st.selectbox("📅 Período", meses_opcoes, key="hist_filtro_mes")
+                filtro_mes = st.selectbox(" Período", meses_opcoes, key="hist_filtro_mes")
 
             hist_df = propostas_finalizadas_sorted.copy()
             if busca_cliente:

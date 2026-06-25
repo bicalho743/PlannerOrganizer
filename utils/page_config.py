@@ -190,7 +190,7 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         </div>
         <div style="background-color: rgba(255,255,255,0.15); padding: 0.3rem 0.8rem; border-radius: 0.8rem; text-align: center; border: 1px solid rgba(255,255,255,0.2); margin-left: 1rem;">
             <span style="color: rgba(255,255,255,0.95); font-size: 0.75rem; font-family: 'Poppins', sans-serif; display: block; font-weight: 500;">Bem-vindo(a), {nome_usuario}</span>
-            <span style="color: rgba(255,255,255,0.8); font-size: 0.7rem; font-family: 'Poppins', sans-serif; display: block;">📅 {data_formatada}</span>
+            <span style="color: rgba(255,255,255,0.8); font-size: 0.7rem; font-family: 'Poppins', sans-serif; display: block;">{data_formatada}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -202,7 +202,7 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         breadcrumb_html += '</div>'
         st.markdown(breadcrumb_html, unsafe_allow_html=True)
     elif page_title:
-        breadcrumb_html = f'<div class="page-breadcrumb"><span class="breadcrumb-item">📊 {page_title}</span></div>'
+        breadcrumb_html = f'<div class="page-breadcrumb"><span class="breadcrumb-item">{page_title}</span></div>'
         st.markdown(breadcrumb_html, unsafe_allow_html=True)
 
 def apply_page_footer():

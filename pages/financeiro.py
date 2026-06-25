@@ -444,9 +444,9 @@ def show():
 
     mc1, mc2, mc3 = st.columns(3)
     for col, label, valor, cor in [
-        (mc1, "💰 A RECEBER", total_receber, "#C9A84C"),
-        (mc2, "💸 A PAGAR", total_pagar, "#E53E3E"),
-        (mc3, "📊 SALDO", saldo, "#C9A84C" if saldo >= 0 else "#E53E3E"),
+        (mc1, "A Receber", total_receber, "#C9A84C"),
+        (mc2, "A Pagar", total_pagar, "#E53E3E"),
+        (mc3, "Saldo", saldo, "#C9A84C" if saldo >= 0 else "#E53E3E"),
     ]:
         with col:
             st.markdown(f"""
@@ -460,11 +460,11 @@ def show():
     col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
     with col_btn:
         with stylable_container(key="gold_nova_transacao", css_styles=GOLD_BUTTON_CSS):
-            if st.button("✚  Nova Transação", type="primary", use_container_width=True, key="btn_nova_transacao"):
+            if st.button("Nova Transação", type="primary", use_container_width=True, key="btn_nova_transacao"):
                 st.session_state["fin_nova_transacao_open"] = not st.session_state["fin_nova_transacao_open"]
 
     if st.session_state["fin_nova_transacao_open"]:
-        with st.expander("💰 Nova Transação", expanded=True):
+        with st.expander("Nova Transação", expanded=True):
             _render_nova_transacao_form()
 
     st.markdown("---")
@@ -474,9 +474,9 @@ def show():
     col_receber, col_pagar, col_concluidas = st.columns(3)
 
     for col_idx, (col_widget, col_label, col_df, col_color, valor_cor) in enumerate([
-        (col_receber, "💰 A Receber", a_receber, "#f5f0e0", "#C9A84C"),
-        (col_pagar, "💸 A Pagar", a_pagar, "#f8d7da", "#E53E3E"),
-        (col_concluidas, "✅ Aprovadas/Pagas", concluidas, "#e2e3e5", "#4A5568"),
+        (col_receber, "A Receber", a_receber, "#f5f0e0", "#C9A84C"),
+        (col_pagar, "A Pagar", a_pagar, "#f8d7da", "#E53E3E"),
+        (col_concluidas, "Aprovadas/Pagas", concluidas, "#e2e3e5", "#4A5568"),
     ]):
         with col_widget:
             count = len(col_df)
@@ -625,7 +625,7 @@ def show():
         else:
             st.info("Não há transações no histórico.")
 
-    with st.expander("📈 Análise Financeira", expanded=False):
+    with st.expander("Análise Financeira", expanded=False):
         if not financeiro_df.empty:
             fin_copy = financeiro_df.copy()
             fin_copy['mes'] = fin_copy['data'].dt.to_period('M').astype(str)

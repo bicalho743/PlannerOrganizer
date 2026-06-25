@@ -162,7 +162,7 @@ def show():
     # Adicionar data fixa com design melhorado
     st.markdown("""
     <div style="text-align: center; background-color: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-        <span style="font-size: 1.2rem; color: #0D1B2A; font-weight: 500;">📅 25 de abril de 2025</span>
+        <span style="font-size: 1.2rem; color: #0D1B2A; font-weight: 500;">25 de abril de 2025</span>
     </div>
     """, unsafe_allow_html=True)
     
@@ -186,7 +186,6 @@ def show():
             <div style="background: linear-gradient(135deg, #faf9f7, #f5f0e0); border-radius: 12px; padding: 1.5rem; box-shadow: 0 8px 16px rgba(0,0,0,0.08); text-align: center; transition: all 0.3s ease; height: 100%;">
                 <div style="font-size: 2.5rem; font-weight: 700; color: #0D1B2A; margin-bottom: 0.5rem;">{propostas_em_andamento}</div>
                 <div style="color: #5A6A85; font-size: 0.9rem; font-weight: 500;">Propostas em Execução</div>
-                <div style="margin-top: 0.7rem; font-size: 1.8rem; color: #C9A84C;">📝</div>
             </div>
             """, unsafe_allow_html=True)
         
@@ -201,7 +200,6 @@ def show():
             <div style="background: linear-gradient(135deg, #f7fff7, #e6ffe6); border-radius: 12px; padding: 1.5rem; box-shadow: 0 8px 16px rgba(0,0,0,0.08); text-align: center; transition: all 0.3s ease; height: 100%;">
                 <div style="font-size: 2.2rem; font-weight: 700; color: #2E7D32; margin-bottom: 0.5rem;">{format_currency(receitas)}</div>
                 <div style="color: #5A6A85; font-size: 0.9rem; font-weight: 500;">Receitas do Mês</div>
-                <div style="margin-top: 0.7rem; font-size: 1.8rem; color: #4CAF50;">💰</div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -216,12 +214,11 @@ def show():
             <div style="background: linear-gradient(135deg, #fff8f2, #ffeadb); border-radius: 12px; padding: 1.5rem; box-shadow: 0 8px 16px rgba(0,0,0,0.08); text-align: center; transition: all 0.3s ease; height: 100%;">
                 <div style="font-size: 2.5rem; font-weight: 700; color: #E65100; margin-bottom: 0.5rem;">{clientes}</div>
                 <div style="color: #5A6A85; font-size: 0.9rem; font-weight: 500;">Clientes Cadastrados</div>
-                <div style="margin-top: 0.7rem; font-size: 1.8rem; color: #FF9800;">👥</div>
             </div>
             """, unsafe_allow_html=True)
         
         # Gráfico de propostas por status
-        st.subheader("📈 Status das Propostas")
+        st.subheader("Status das Propostas")
         
         # Obter dados reais do banco de dados
         db = Database()
@@ -247,7 +244,7 @@ def show():
         )
         
         # Projetos recentes
-        st.subheader("🔍 Projetos Recentes")
+        st.subheader("Projetos Recentes")
         
         # Obter projetos recentes do banco de dados
         db = Database()
@@ -317,29 +314,29 @@ def show():
             """, unsafe_allow_html=True)
         
         # Acesso rápido
-        st.subheader("⚡ Acesso Rápido")
+        st.subheader("Acesso Rápido")
         
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            if st.button("📝 Nova Proposta", key="nova_proposta"):
+            if st.button("Nova Proposta", key="nova_proposta"):
                 st.session_state.current_page = "Propostas"
                 st.rerun()
         
         with col2:
-            if st.button("👥 Novo Cliente", key="novo_cliente"):
+            if st.button("Novo Cliente", key="novo_cliente"):
                 st.session_state.current_page = "Cadastros"
                 st.rerun()
                 
         with col3:
-            if st.button("💰 Financeiro", key="financeiro"):
+            if st.button("Financeiro", key="financeiro"):
                 st.session_state.current_page = "Financeiro"
                 st.rerun()
     
     # Coluna da direita - Informações complementares
     with col_direita:
         # Lembretes e atividades
-        st.subheader("📌 Seus Lembretes")
+        st.subheader("Seus Lembretes")
         
         # Obter lembretes do banco de dados
         db = Database()

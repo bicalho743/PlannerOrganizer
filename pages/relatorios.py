@@ -8,7 +8,7 @@ import numpy as np
 def show():
     from utils.auth_guard import require_auth
     require_auth()
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">📊 Relatórios Avançados</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Relatórios Avançados</h1>', unsafe_allow_html=True)
 
     tipo_relatorio = st.selectbox(
         "Selecione o Relatório",
@@ -16,7 +16,7 @@ def show():
     )
 
     if tipo_relatorio == "Desempenho Financeiro":
-        st.subheader("💰 Análise Financeira Detalhada")
+        st.subheader("Análise Financeira Detalhada")
 
         col1, col2 = st.columns(2)
         with col1:
@@ -196,7 +196,7 @@ def show():
             st.error(f"Erro ao carregar dados financeiros: {str(e)}")
 
     elif tipo_relatorio == "Análise de Clientes":
-        st.subheader("👥 Análise de Clientes")
+        st.subheader("Análise de Clientes")
         try:
             clientes = st.session_state.db.get_clientes()
             propostas = st.session_state.db.get_propostas()
@@ -249,7 +249,7 @@ def show():
             st.error(f"Erro ao carregar dados de clientes: {str(e)}")
 
     elif tipo_relatorio == "Status de Propostas":
-        st.subheader("📋 Análise de Propostas")
+        st.subheader("Análise de Propostas")
         try:
             propostas = st.session_state.db.get_propostas()
 
