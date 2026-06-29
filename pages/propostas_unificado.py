@@ -304,24 +304,14 @@ def _render_open_proposal_actions(proposta_id, proposta):
                 st.rerun()
         with dc3:
             if st.button("Confirmar", key=f"btn_confirm_del_{proposta_id}", use_container_width=True, type="primary"):
-                try:
-                    from sqlalchemy import text
-                    from utils.database import engine
-                    with engine.connect() as conn:
-                        po_ids = conn.execute(text(f"SELECT id FROM post_organizations WHERE proposta_id = {proposta_id}")).fetchall()
-                        if po_ids:
-                            po_id_list = ",".join(str(r[0]) for r in po_ids)
-                            conn.execute(text(f"DELETE FROM post_organization_actions WHERE post_organization_id IN ({po_id_list})"))
-                        for tbl in ["post_organizations", "vendas", "financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
-                            conn.execute(text(f"DELETE FROM {tbl} WHERE proposta_id = {proposta_id}"))
-                        conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
-                        conn.commit()
-                    st.success(f"Proposta #{proposta_id} excluída.")
+                sucesso, msg = _excluir_proposta_completa(proposta_id)
+                if sucesso:
+                    st.success(msg)
                     st.session_state['kanban_selected_proposta'] = None
                     st.session_state[f"confirm_delete_{proposta_id}"] = False
                     st.rerun()
-                except Exception as e:
-                    st.error(str(e))
+                else:
+                    st.error(msg)
 
 
 def _render_finalized_proposal_actions(proposta_id, proposta):
@@ -397,24 +387,63 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
                 st.rerun()
         with dc3:
             if st.button("Confirmar", key=f"btn_confirm_del_fin_{proposta_id}", use_container_width=True, type="primary"):
-                try:
-                    from sqlalchemy import text
-                    from utils.database import engine
-                    with engine.connect() as conn:
-                        po_ids = conn.execute(text(f"SELECT id FROM post_organizations WHERE proposta_id = {proposta_id}")).fetchall()
-                        if po_ids:
-                            po_id_list = ",".join(str(r[0]) for r in po_ids)
-                            conn.execute(text(f"DELETE FROM post_organization_actions WHERE post_organization_id IN ({po_id_list})"))
-                        for tbl in ["post_organizations", "vendas", "financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
-                            conn.execute(text(f"DELETE FROM {tbl} WHERE proposta_id = {proposta_id}"))
-                        conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
-                        conn.commit()
-                    st.success(f"Proposta #{proposta_id} excluída.")
+                sucesso, msg = _excluir_proposta_completa(proposta_id)
+                if sucesso:
+                    st.success(msg)
                     st.session_state['kanban_selected_proposta'] = None
                     st.session_state[f"confirm_delete_{proposta_id}"] = False
                     st.rerun()
-                except Exception as e:
-                    st.error(str(e))
+                else:
+                    st.error(msg)
+
+
+def _excluir_proposta_completa(proposta_id):
+    """Exclui uma proposta e todos os dados relacionados, na ordem correta de
+    dependências, e invalida o cache para a lista refletir a remoção.
+
+    Usa consultas parametrizadas (sem interpolação direta de valores) e remove
+    também itens de venda e lançamentos financeiros de vendas geradas, evitando
+    falhas de chave estrangeira. Retorna (sucesso, mensagem).
+    """
+    from sqlalchemy import text
+    from utils.database import engine
+    try:
+        pid = int(proposta_id)
+    except (TypeError, ValueError):
+        return False, "ID de proposta inválido."
+    try:
+        with engine.connect() as conn:
+            po_ids = [r[0] for r in conn.execute(
+                text("SELECT id FROM post_organizations WHERE proposta_id = :pid"),
+                {"pid": pid}).fetchall()]
+            if po_ids:
+                conn.execute(
+                    text("DELETE FROM post_organization_actions WHERE post_organization_id = ANY(:ids)"),
+                    {"ids": po_ids})
+            venda_ids = [r[0] for r in conn.execute(
+                text("SELECT id FROM vendas WHERE proposta_id = :pid"),
+                {"pid": pid}).fetchall()]
+            if venda_ids:
+                conn.execute(
+                    text("DELETE FROM itens_venda WHERE venda_id = ANY(:ids)"),
+                    {"ids": venda_ids})
+                conn.execute(
+                    text("DELETE FROM financeiro WHERE origem_tipo = 'venda' AND origem_id = ANY(:ids)"),
+                    {"ids": venda_ids})
+            for tbl in ["post_organizations", "vendas", "financeiro",
+                        "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
+                conn.execute(text(f"DELETE FROM {tbl} WHERE proposta_id = :pid"), {"pid": pid})
+            conn.execute(text("DELETE FROM propostas WHERE id = :pid"), {"pid": pid})
+            conn.commit()
+        try:
+            db = st.session_state.get('db')
+            if db:
+                db.invalidar_cache()
+        except Exception:
+            pass
+        return True, f"Proposta #{pid} excluída."
+    except Exception as e:
+        return False, f"Erro ao excluir proposta: {e}"
 
 
 def _pdf_inline_viewer(pdf_bytes, key, height=720):
@@ -1422,19 +1451,13 @@ def _tab_acoes(proposta_id, proposta):
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("❌ EXCLUIR PROPOSTA", key=f"btn_excluir_kanban_{proposta_id}", type="secondary", use_container_width=True):
-                    try:
-                        from sqlalchemy import text
-                        from utils.database import engine
-                        with engine.connect() as conn:
-                            for tbl in ["post_organizations", "vendas", "financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
-                                conn.execute(text(f"DELETE FROM {tbl} WHERE proposta_id = {proposta_id}"))
-                            conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
-                            conn.commit()
-                        st.success(f"Proposta #{proposta_id} excluída.")
+                    sucesso, msg = _excluir_proposta_completa(proposta_id)
+                    if sucesso:
+                        st.success(msg)
                         st.session_state['kanban_selected_proposta'] = None
                         st.rerun()
-                    except Exception as e:
-                        st.error(str(e))
+                    else:
+                        st.error(msg)
             with col2:
                 if st.button("🔙 Cancelar", key=f"btn_cancel_excl_{proposta_id}", type="primary", use_container_width=True):
                     st.rerun()
