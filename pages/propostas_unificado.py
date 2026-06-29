@@ -1913,14 +1913,11 @@ def show():
                     id_por_indice.append(h_pid)
 
                 tabela_df = pd.DataFrame(rows)
-                st.caption("Clique no cabeçalho de uma coluna para ordenar. Selecione uma linha para ver os detalhes.")
-                evento = st.dataframe(
+                st.caption("Clique no cabeçalho de uma coluna para ordenar.")
+                st.dataframe(
                     tabela_df,
                     use_container_width=True,
                     hide_index=True,
-                    on_select="rerun",
-                    selection_mode="single-row",
-                    key="hist_dataframe",
                     column_config={
                         "Valor": st.column_config.NumberColumn("Valor", format="R$ %.2f"),
                         "Receita Líquida Total": st.column_config.NumberColumn("Receita Líquida Total", format="R$ %.2f"),
@@ -1928,12 +1925,23 @@ def show():
                     },
                 )
 
-                sel_rows = evento.selection.rows if evento and evento.selection else []
-                sel_pid = id_por_indice[sel_rows[0]] if sel_rows and sel_rows[0] < len(id_por_indice) else None
-                if sel_pid != st.session_state.get('hist_last_sel_pid'):
-                    st.session_state['hist_last_sel_pid'] = sel_pid
-                    st.session_state['kanban_selected_proposta'] = sel_pid
-                    st.rerun()
+                opcoes_hist = {
+                    f"{r['Nº']} — {r['Cliente']}": pid
+                    for r, pid in zip(rows, id_por_indice)
+                }
+                col_sel, col_btn = st.columns([3, 1])
+                with col_sel:
+                    escolha_hist = st.selectbox(
+                        "Selecione uma proposta para ver os detalhes",
+                        options=list(opcoes_hist.keys()),
+                        key="hist_select_proposta",
+                    )
+                with col_btn:
+                    st.write("")
+                    st.write("")
+                    if st.button("📋 Ver detalhes", use_container_width=True, key="hist_ver_detalhes"):
+                        st.session_state['kanban_selected_proposta'] = opcoes_hist.get(escolha_hist)
+                        st.rerun()
 
     selected_id = st.session_state.get('kanban_selected_proposta')
     if selected_id is not None:

@@ -1,25 +1,28 @@
 ---
-name: st.dataframe selection + st.dialog reopen trap
-description: Como abrir um st.dialog ao selecionar linha de st.dataframe sem reabrir em loop ao fechar
+name: st.dataframe seleção vs. ação explícita para abrir detalhes
+description: Por que abrir detalhes por seleção de linha em st.dataframe é frágil/confuso; prefira botão explícito
 ---
 
-Ao usar `st.dataframe(on_select="rerun", selection_mode="single-row")` para abrir um
-`@st.dialog` com os detalhes da linha selecionada, NÃO dispare a abertura só pela
-presença de seleção: a seleção do dataframe persiste no session_state entre reruns,
-então ao fechar o diálogo no "X" (que dispara rerun) o diálogo reabre em loop.
+Abrir um `@st.dialog` a partir da SELEÇÃO de linha de `st.dataframe(on_select="rerun")`
+é frágil e confuso para o usuário:
+- A "marca x"/checkbox de seleção não comunica que serve para abrir detalhes (usuários
+  reclamam que "não dá para saber").
+- A seleção persiste no session_state entre reruns, então fechar o diálogo reabre em
+  loop; reabrir a MESMA linha exige trocar de seleção e voltar (não há deselect nativo).
 
-**Regra:** use um nonce de estado (ex.: `hist_dialog_pid`). Abra o diálogo só quando
-`sel_pid != st.session_state['hist_dialog_pid']`; grave `sel_pid` nesse estado ao abrir;
-zere para None quando nada estiver selecionado. Assim, fechar no "X" não reabre
-(seleção continua igual), e selecionar outra linha abre o diálogo dela.
+**Regra durável:** use a tabela só para VISUALIZAÇÃO (ordenável pelo cabeçalho) e ofereça
+uma AÇÃO EXPLÍCITA para abrir detalhes — `st.selectbox` (label "#nº — Cliente") + botão
+"📋 Ver detalhes" que grava o id em um estado compartilhado (ex.: `kanban_selected_proposta`)
+e dá `st.rerun()`.
 
-**Efeito colateral:** reabrir a MESMA linha exige trocar de seleção e voltar (não há
-deselect nativo em single-row). Se precisar reabrir a mesma, ofereça um botão que
-limpa a seleção via `st.session_state.pop('<df_key>', None)`.
+**Por que funciona:** o diálogo compartilhado é renderizado a CADA run enquanto o estado
+está setado, então os botões interativos internos (relatórios, excluir, reabrir) não somem
+após reruns. Um botão "✖ Fechar" que zera o estado e dá rerun fecha de forma determinística,
+sem depender da seleção do dataframe.
 
-**Mapeamento de índice:** `evento.selection.rows` retorna posições na ordem do
-dataframe FONTE (não a ordem visual após clicar para ordenar). Mantenha uma lista
-paralela `id_por_indice` na mesma ordem das linhas passadas ao dataframe.
+**Mapeamento de índice:** ao montar as linhas, mantenha uma lista paralela `id_por_indice`
+na mesma ordem passada ao dataframe; construa as opções do selectbox por id estável, não
+por posição visual (a ordenação por coluna muda a ordem exibida).
 
-**Por que importa:** evita o bug clássico "não consigo fechar o modal" e o
-desalinhamento de qual proposta abriu após o usuário ordenar por coluna.
+**Anti-padrão abandonado:** o nonce de estado (`hist_dialog_pid`) que só abria o diálogo no
+clique inicial — qualquer rerun/botão interno fazia o conteúdo sumir. Não voltar a isso.
