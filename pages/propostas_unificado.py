@@ -351,39 +351,27 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
         _report_card_download("", "VENDAS DO PRODUTO", "Produtos organizados", proposta_id, "vendas", nome_cliente, numero)
 
     st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+    if status_atual == STATUS_RECUSADA:
+        st.info("Ao reabrir, a proposta recusada voltará para o status 'Em aberto'.")
+    else:
+        st.info("Ao reabrir, a proposta voltará para o status 'Em execução'.")
     ac1, ac2 = st.columns(2)
     with ac1:
         if st.button(" Reabrir", key=f"btn_reabrir_fin_{proposta_id}", use_container_width=True):
-            st.session_state[f"confirm_reopen_{proposta_id}"] = True
+            try:
+                from reabrir_proposta import reabrir_proposta_finalizada
+                res = reabrir_proposta_finalizada(proposta_id)
+                if res.get('status') in ['sucesso', 'sucesso_com_alerta']:
+                    st.session_state.db.invalidar_cache()
+                    st.session_state['kanban_selected_proposta'] = None
+                    st.rerun()
+                else:
+                    st.error(res.get('mensagem'))
+            except Exception as e:
+                st.error(str(e))
     with ac2:
         if st.button(" Excluir", key=f"btn_excluir_fin_{proposta_id}", use_container_width=True):
             st.session_state[f"confirm_delete_{proposta_id}"] = True
-
-    if st.session_state.get(f"confirm_reopen_{proposta_id}", False):
-        if status_atual == STATUS_RECUSADA:
-            st.warning("A proposta recusada voltará para o status 'Em aberto'.")
-        else:
-            st.warning("A proposta voltará para o status 'Em execução'.")
-        ro1, ro2, ro3 = st.columns([2, 1, 1])
-        with ro2:
-            if st.button("Cancelar", key=f"btn_cancel_reopen_{proposta_id}", use_container_width=True):
-                st.session_state[f"confirm_reopen_{proposta_id}"] = False
-                st.rerun()
-        with ro3:
-            if st.button("Confirmar", key=f"btn_confirm_reopen_{proposta_id}", use_container_width=True, type="primary"):
-                try:
-                    from reabrir_proposta import reabrir_proposta_finalizada
-                    res = reabrir_proposta_finalizada(proposta_id)
-                    if res.get('status') in ['sucesso', 'sucesso_com_alerta']:
-                        st.session_state.db.invalidar_cache()
-                        st.success(res.get('mensagem'))
-                        st.session_state['kanban_selected_proposta'] = None
-                        st.session_state[f"confirm_reopen_{proposta_id}"] = False
-                        st.rerun()
-                    else:
-                        st.error(res.get('mensagem'))
-                except Exception as e:
-                    st.error(str(e))
 
     if st.session_state.get(f"confirm_delete_{proposta_id}", False):
         st.warning("Esta ação é permanente e removerá todos os dados relacionados.")
