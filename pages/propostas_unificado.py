@@ -182,7 +182,7 @@ def _render_detail_panel(proposta_id, proposta, propostas_com_clientes):
     elif finalizada:
         _render_finalized_proposal_actions(proposta_id, proposta)
     else:
-        _tab_itens(proposta_id, show_finalizar=True)
+        _tab_itens(proposta_id, show_finalizar=True, proposta=proposta)
 
 
 def _render_open_proposal_actions(proposta_id, proposta):
@@ -796,8 +796,39 @@ def _tab_produtos(proposta_id):
             st.form_submit_button("ADICIONAR", disabled=True)
 
 
-def _tab_itens(proposta_id, show_finalizar=False):
+def _tab_itens(proposta_id, show_finalizar=False, proposta=None):
     """Itens & Custos com navegação lateral por categoria."""
+
+    if show_finalizar and proposta is not None:
+        valor_base_atual = _safe_float(proposta.get('valor'))
+        st.markdown(
+            f'<div style="display:flex;align-items:center;justify-content:space-between;'
+            f'padding:10px 14px;background:#faf9f7;border:1px solid #e8e5df;border-radius:10px;'
+            f'margin-bottom:10px;">'
+            f'<span style="font-size:13px;color:{NAVY};font-weight:600;">🏷️ Valor do serviço (Personal Organizer)</span>'
+            f'<span style="font-size:14px;color:#1D6A4A;font-weight:700;">{_fmt_brl(valor_base_atual)}</span>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+        with st.expander("✏️ Editar valor do serviço"):
+            with st.form(key=f"form_editar_valor_exec_{proposta_id}"):
+                novo_valor = st.number_input(
+                    "Valor do serviço (Personal Organizer) — R$:",
+                    min_value=0.0, value=float(valor_base_atual), step=10.0, format="%.2f",
+                    key=f"novo_valor_exec_{proposta_id}")
+                if st.form_submit_button("Salvar valor", type="primary", use_container_width=True):
+                    try:
+                        res = st.session_state.db.update_proposta(proposta_id, valor=novo_valor)
+                        ok = res.get('status', False) if isinstance(res, dict) else bool(res)
+                        if ok:
+                            st.session_state.db.invalidar_cache()
+                            st.success("Valor atualizado!")
+                            st.rerun()
+                        else:
+                            msg = res.get('message', 'Erro ao atualizar valor.') if isinstance(res, dict) else 'Erro ao atualizar valor.'
+                            st.error(msg)
+                    except Exception as e:
+                        st.error(str(e))
 
     try:
         produtos_df     = st.session_state.db.get_produtos_organizadores(proposta_id)
