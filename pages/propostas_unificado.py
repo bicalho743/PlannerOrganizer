@@ -360,7 +360,10 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
             st.session_state[f"confirm_delete_{proposta_id}"] = True
 
     if st.session_state.get(f"confirm_reopen_{proposta_id}", False):
-        st.warning("A proposta voltará para o status 'Em execução'.")
+        if status_atual == STATUS_RECUSADA:
+            st.warning("A proposta recusada voltará para o status 'Em aberto'.")
+        else:
+            st.warning("A proposta voltará para o status 'Em execução'.")
         ro1, ro2, ro3 = st.columns([2, 1, 1])
         with ro2:
             if st.button("Cancelar", key=f"btn_cancel_reopen_{proposta_id}", use_container_width=True):
@@ -372,6 +375,7 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
                     from reabrir_proposta import reabrir_proposta_finalizada
                     res = reabrir_proposta_finalizada(proposta_id)
                     if res.get('status') in ['sucesso', 'sucesso_com_alerta']:
+                        st.session_state.db.invalidar_cache()
                         st.success(res.get('mensagem'))
                         st.session_state['kanban_selected_proposta'] = None
                         st.session_state[f"confirm_reopen_{proposta_id}"] = False
@@ -1475,6 +1479,7 @@ def _tab_acoes(proposta_id, proposta):
                     from reabrir_proposta import reabrir_proposta_finalizada
                     res = reabrir_proposta_finalizada(proposta_id)
                     if res.get('status') in ['sucesso', 'sucesso_com_alerta']:
+                        st.session_state.db.invalidar_cache()
                         st.success(res.get('mensagem'))
                         if res.get('status') == 'sucesso_com_alerta':
                             st.warning(res.get('alerta'))
