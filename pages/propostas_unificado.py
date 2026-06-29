@@ -242,6 +242,9 @@ def _render_open_proposal_actions(proposta_id, proposta):
                     st.error(f"Erro: {mensagem}")
             except Exception as e:
                 st.error(str(e))
+
+        if st.button(" Excluir", key=f"btn_excluir_apr_{proposta_id}", use_container_width=True):
+            st.session_state[f"confirm_delete_{proposta_id}"] = True
     else:
         c1, c2 = st.columns(2)
         with c1:
@@ -292,33 +295,33 @@ def _render_open_proposal_actions(proposta_id, proposta):
             if st.button(" Excluir", key=f"btn_excluir_open_{proposta_id}", use_container_width=True):
                 st.session_state[f"confirm_delete_{proposta_id}"] = True
 
-        if st.session_state.get(f"confirm_delete_{proposta_id}", False):
-            st.warning("Esta ação é permanente e removerá todos os dados relacionados.")
-            dc1, dc2, dc3 = st.columns([2, 1, 1])
-            with dc2:
-                if st.button("Cancelar", key=f"btn_cancel_del_{proposta_id}", use_container_width=True):
+    if st.session_state.get(f"confirm_delete_{proposta_id}", False):
+        st.warning("Esta ação é permanente e removerá todos os dados relacionados.")
+        dc1, dc2, dc3 = st.columns([2, 1, 1])
+        with dc2:
+            if st.button("Cancelar", key=f"btn_cancel_del_{proposta_id}", use_container_width=True):
+                st.session_state[f"confirm_delete_{proposta_id}"] = False
+                st.rerun()
+        with dc3:
+            if st.button("Confirmar", key=f"btn_confirm_del_{proposta_id}", use_container_width=True, type="primary"):
+                try:
+                    from sqlalchemy import text
+                    from utils.database import engine
+                    with engine.connect() as conn:
+                        po_ids = conn.execute(text(f"SELECT id FROM post_organizations WHERE proposta_id = {proposta_id}")).fetchall()
+                        if po_ids:
+                            po_id_list = ",".join(str(r[0]) for r in po_ids)
+                            conn.execute(text(f"DELETE FROM post_organization_actions WHERE post_organization_id IN ({po_id_list})"))
+                        for tbl in ["post_organizations", "vendas", "financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
+                            conn.execute(text(f"DELETE FROM {tbl} WHERE proposta_id = {proposta_id}"))
+                        conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
+                        conn.commit()
+                    st.success(f"Proposta #{proposta_id} excluída.")
+                    st.session_state['kanban_selected_proposta'] = None
                     st.session_state[f"confirm_delete_{proposta_id}"] = False
                     st.rerun()
-            with dc3:
-                if st.button("Confirmar", key=f"btn_confirm_del_{proposta_id}", use_container_width=True, type="primary"):
-                    try:
-                        from sqlalchemy import text
-                        from utils.database import engine
-                        with engine.connect() as conn:
-                            po_ids = conn.execute(text(f"SELECT id FROM post_organizations WHERE proposta_id = {proposta_id}")).fetchall()
-                            if po_ids:
-                                po_id_list = ",".join(str(r[0]) for r in po_ids)
-                                conn.execute(text(f"DELETE FROM post_organization_actions WHERE post_organization_id IN ({po_id_list})"))
-                            for tbl in ["post_organizations", "vendas", "financeiro", "acrescimos_proposta", "produtos_organizadores", "andamento_propostas"]:
-                                conn.execute(text(f"DELETE FROM {tbl} WHERE proposta_id = {proposta_id}"))
-                            conn.execute(text(f"DELETE FROM propostas WHERE id = {proposta_id}"))
-                            conn.commit()
-                        st.success(f"Proposta #{proposta_id} excluída.")
-                        st.session_state['kanban_selected_proposta'] = None
-                        st.session_state[f"confirm_delete_{proposta_id}"] = False
-                        st.rerun()
-                    except Exception as e:
-                        st.error(str(e))
+                except Exception as e:
+                    st.error(str(e))
 
 
 def _render_finalized_proposal_actions(proposta_id, proposta):
