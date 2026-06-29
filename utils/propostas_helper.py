@@ -484,8 +484,8 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
             filename = custom_filename
         else:
             numero_prop = proposta.get('numero', proposta_id)
-            cliente_nome = cliente.get('nome', 'sem_nome').replace(' ', '_').lower()
-            filename = f"pdfs/Proposta_{cliente_nome}_{numero_prop}.pdf"
+            cliente_nome = cliente.get('nome', 'sem_nome').replace(' ', '_')
+            filename = f"pdfs/Fechamento_serviço_{cliente_nome}_{numero_prop}.pdf"
             
         tipo_proposta = proposta.get('tipo_proposta', 'Organização')
         valor_base = float(proposta.get('valor', 0))
