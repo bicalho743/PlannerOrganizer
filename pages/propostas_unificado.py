@@ -1929,22 +1929,11 @@ def show():
                 )
 
                 sel_rows = evento.selection.rows if evento and evento.selection else []
-                sel_pid = id_por_indice[sel_rows[0]] if sel_rows else None
-                if sel_pid is None:
-                    st.session_state['hist_dialog_pid'] = None
-                elif st.session_state.get('hist_dialog_pid') != sel_pid:
-                    st.session_state['hist_dialog_pid'] = sel_pid
-                    _sel_prop = propostas_com_clientes[propostas_com_clientes['id'] == sel_pid]
-                    if not _sel_prop.empty:
-                        _prop_row_h = _sel_prop.iloc[0]
-                        _nome_h = _prop_row_h.get('nome', _prop_row_h.get('cliente_nome', 'Cliente'))
-                        _num_h = _prop_row_h.get('numero', sel_pid)
-
-                        @st.dialog(f"Proposta #{_num_h} — {_nome_h}", width="large")
-                        def _modal_hist():
-                            _render_detail_panel(sel_pid, _prop_row_h, propostas_com_clientes)
-
-                        _modal_hist()
+                sel_pid = id_por_indice[sel_rows[0]] if sel_rows and sel_rows[0] < len(id_por_indice) else None
+                if sel_pid != st.session_state.get('hist_last_sel_pid'):
+                    st.session_state['hist_last_sel_pid'] = sel_pid
+                    st.session_state['kanban_selected_proposta'] = sel_pid
+                    st.rerun()
 
     selected_id = st.session_state.get('kanban_selected_proposta')
     if selected_id is not None:
@@ -1958,6 +1947,10 @@ def show():
                 @st.dialog(f"Proposta #{_num_modal} — {_nome_modal}", width="large")
                 def _modal_detalhes():
                     _render_detail_panel(selected_id, proposta_row, propostas_com_clientes)
+                    st.markdown("---")
+                    if st.button("✖ Fechar", key=f"fechar_modal_{selected_id}", use_container_width=True):
+                        st.session_state['kanban_selected_proposta'] = None
+                        st.rerun()
 
                 _modal_detalhes()
             else:
