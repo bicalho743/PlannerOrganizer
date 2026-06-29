@@ -204,7 +204,7 @@ def gerar_pdf_cliente(dados, output_path, perfil=None):
     c = canvas.Canvas(output_path, pagesize=A4)
     margin = 18*mm
     cw = W - 2*margin
-    _header(c, "Proposta de Serviço", f"#{dados['proposta_id']}", margin, perfil)
+    _header(c, "Fechamento do Serviço", f"#{dados['proposta_id']}", margin, perfil)
     y = _info_cards(c, margin, cw, [
         ("Cliente",  dados.get('cliente', '')),
         ("Tipo",     dados.get('tipo', '')),
