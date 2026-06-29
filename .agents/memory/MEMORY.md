@@ -1,3 +1,4 @@
 - [PDF download/view embutido](pdf-download.md) — "file:// ERR_FAILED" é falha de ABRIR o arquivo baixado dentro de iframe; resolver com viewer inline via Blob, não trocar o download.
 - [PWA service worker](pwa-service-worker.md) — "app não carrega" só em alguns navegadores = SW antigo cacheando shell; fix: kill-switch que faz unregister + caches.delete em inject_pwa.
 - [Streamlit markdown HTML code-block trap](streamlit-markdown-html-codeblock.md) — HTML cru aparece literal em st.markdown quando ternário deixa linha em branco antes de HTML indentado; montar HTML em linha única.
+- [st.dataframe + st.dialog reopen trap](streamlit-dataframe-dialog.md) — abrir dialog ao selecionar linha reabre em loop ao fechar; usar nonce de estado (só abrir quando sel_pid muda).

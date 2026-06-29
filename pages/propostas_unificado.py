@@ -1833,47 +1833,87 @@ def show():
             if hist_df.empty:
                 st.info("Nenhuma proposta encontrada com os filtros selecionados.")
             else:
-                hdr = st.columns([0.6, 1.5, 1.2, 1, 0.8, 0.8, 0.8])
-                hdr_labels = ["Nº", "Cliente", "Tipo", "Valor", "Status", "Data", ""]
-                for i, lbl in enumerate(hdr_labels):
-                    hdr[i].markdown(f"<span style='font-size:0.75rem;color:#64748b;font-weight:700;text-transform:uppercase;'>{lbl}</span>", unsafe_allow_html=True)
+                from utils.proposta_status import normalize as _norm_h_status, label_for as _label_h_status
+                from utils.propostas_helper import (
+                    calcular_receita_liquida,
+                    _construir_catalogo_produtos,
+                    _construir_fornecedores_comissao,
+                )
 
+                _catalogo_hist = _construir_catalogo_produtos(st.session_state.db)
+                _fornecedores_hist = _construir_fornecedores_comissao(st.session_state.db)
+
+                rows = []
+                id_por_indice = []
                 for _, prop in hist_df.iterrows():
                     h_pid = prop['id']
                     h_nome = str(prop.get('nome', prop.get('cliente_nome', 'Cliente')))
                     h_numero = prop.get('numero', h_pid)
-                    h_tipo = str(prop.get('tipo_proposta', prop.get('descricao', '')))[:40]
-                    h_valor = _fmt_brl(_safe_float(prop.get('valor')))
-                    h_status = str(prop.get('status', ''))
-                    h_data = ''
+                    h_tipo = str(prop.get('tipo_proposta', prop.get('descricao', '')))[:60]
+                    h_valor = _safe_float(prop.get('valor'))
+                    h_status = _label_h_status(_norm_h_status(str(prop.get('status', ''))))
+                    h_data = None
                     for col_data in ['data_fim', 'data_inicio', 'data_proposta']:
                         if col_data in prop.index and pd.notna(prop.get(col_data)):
                             try:
-                                h_data = pd.to_datetime(prop[col_data]).strftime('%d/%m/%Y')
+                                h_data = pd.to_datetime(prop[col_data])
                             except Exception:
-                                pass
+                                h_data = None
                             break
+                    try:
+                        h_receita = float(calcular_receita_liquida(
+                            st.session_state.db, int(h_pid),
+                            proposta=prop.to_dict(),
+                            catalogo=_catalogo_hist,
+                            fornecedores_cadastro=_fornecedores_hist,
+                        ).get('receita_liquida', 0.0))
+                    except Exception:
+                        h_receita = 0.0
 
-                    from utils.proposta_status import normalize as _norm_h_status, label_for as _label_h_status, STATUS_FINALIZADA as _ST_H_FI
-                    h_status_canon = _norm_h_status(h_status)
-                    h_badge_cor = "#28a745" if h_status_canon == _ST_H_FI else "#dc3545"
-                    h_status = _label_h_status(h_status_canon)
-                    rc = st.columns([0.6, 1.5, 1.2, 1, 0.8, 0.8, 0.8])
-                    rc[0].markdown(f"**#{h_numero}**")
-                    rc[1].markdown(h_nome)
-                    rc[2].markdown(f"<span style='color:#6c757d;font-size:0.82rem;'>{html_module.escape(h_tipo)}</span>", unsafe_allow_html=True)
-                    rc[3].markdown(f"<span style='font-weight:600;color:#1a5276;'>{h_valor}</span>", unsafe_allow_html=True)
-                    rc[4].markdown(f"<span style='font-size:0.72rem;padding:2px 8px;border-radius:10px;background:{h_badge_cor};color:#fff;'>{h_status}</span>", unsafe_allow_html=True)
-                    rc[5].markdown(f"<span style='color:#999;font-size:0.82rem;'>{h_data}</span>", unsafe_allow_html=True)
-                    is_sel = st.session_state.get('kanban_selected_proposta') == h_pid
-                    h_btn_label = "▲ Fechar" if is_sel else "▼ Ver Detalhes"
-                    if rc[6].button(h_btn_label, key=f"hist_btn_{h_pid}"):
-                        if is_sel:
-                            st.session_state['kanban_selected_proposta'] = None
-                        else:
-                            st.session_state['kanban_selected_proposta'] = h_pid
-                        st.rerun()
-                    st.markdown("<hr style='margin:2px 0;border:none;border-top:1px solid #f1f3f5;'>", unsafe_allow_html=True)
+                    rows.append({
+                        "Nº": f"#{h_numero}",
+                        "Cliente": h_nome,
+                        "Tipo": h_tipo,
+                        "Valor": h_valor,
+                        "Receita Líquida Total": h_receita,
+                        "Status": h_status,
+                        "Data": h_data,
+                    })
+                    id_por_indice.append(h_pid)
+
+                tabela_df = pd.DataFrame(rows)
+                st.caption("Clique no cabeçalho de uma coluna para ordenar. Selecione uma linha para ver os detalhes.")
+                evento = st.dataframe(
+                    tabela_df,
+                    use_container_width=True,
+                    hide_index=True,
+                    on_select="rerun",
+                    selection_mode="single-row",
+                    key="hist_dataframe",
+                    column_config={
+                        "Valor": st.column_config.NumberColumn("Valor", format="R$ %.2f"),
+                        "Receita Líquida Total": st.column_config.NumberColumn("Receita Líquida Total", format="R$ %.2f"),
+                        "Data": st.column_config.DatetimeColumn("Data", format="DD/MM/YYYY"),
+                    },
+                )
+
+                sel_rows = evento.selection.rows if evento and evento.selection else []
+                sel_pid = id_por_indice[sel_rows[0]] if sel_rows else None
+                if sel_pid is None:
+                    st.session_state['hist_dialog_pid'] = None
+                elif st.session_state.get('hist_dialog_pid') != sel_pid:
+                    st.session_state['hist_dialog_pid'] = sel_pid
+                    _sel_prop = propostas_com_clientes[propostas_com_clientes['id'] == sel_pid]
+                    if not _sel_prop.empty:
+                        _prop_row_h = _sel_prop.iloc[0]
+                        _nome_h = _prop_row_h.get('nome', _prop_row_h.get('cliente_nome', 'Cliente'))
+                        _num_h = _prop_row_h.get('numero', sel_pid)
+
+                        @st.dialog(f"Proposta #{_num_h} — {_nome_h}", width="large")
+                        def _modal_hist():
+                            _render_detail_panel(sel_pid, _prop_row_h, propostas_com_clientes)
+
+                        _modal_hist()
 
     selected_id = st.session_state.get('kanban_selected_proposta')
     if selected_id is not None:

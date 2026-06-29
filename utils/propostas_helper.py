@@ -592,6 +592,137 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None, tipo_docum
         traceback.print_exc()
         return False, f"Erro ao gerar PDF cliente: {str(e)}", None
 
+def _construir_catalogo_produtos(db):
+    """Mapa {NOME: {preco_custo, preco_venda}} do catálogo de produtos.
+
+    Útil para carregar o catálogo uma única vez ao calcular a receita líquida de
+    várias propostas (ex.: histórico), evitando consultas repetidas ao banco.
+    """
+    catalogo = {}
+    try:
+        catalogo_df = db.get_produtos()
+        if catalogo_df is not None and not catalogo_df.empty:
+            for _, p in catalogo_df.iterrows():
+                nome_norm = str(p.get('nome', '')).strip().upper()
+                catalogo[nome_norm] = {
+                    'preco_custo': float(p.get('preco_custo', 0) or 0),
+                    'preco_venda': float(p.get('preco_venda', 0) or 0),
+                }
+    except Exception:
+        pass
+    return catalogo
+
+
+def _construir_fornecedores_comissao(db):
+    """Mapa {NOME: percentual_comissao} dos fornecedores cadastrados.
+
+    Carregue uma vez e reutilize ao calcular a receita líquida de várias propostas.
+    """
+    fornecedores_cadastro = {}
+    try:
+        forn_df = db.get_fornecedores()
+        if forn_df is not None and not forn_df.empty:
+            for _, f in forn_df.iterrows():
+                nome_f = str(f.get('descricao', f.get('nome', ''))).strip().upper()
+                pct = float(f.get('percentual_comissao', 0) or 0)
+                fornecedores_cadastro[nome_f] = pct
+    except Exception:
+        pass
+    return fornecedores_cadastro
+
+
+def calcular_receita_liquida(db, proposta_id, proposta=None, acrescimos=None, catalogo=None, fornecedores_cadastro=None):
+    """Calcula a receita líquida total de uma proposta e seus componentes.
+
+    Fonte única de verdade utilizada pelo relatório interno e pelo histórico de
+    propostas. Retorna um dict com os componentes e a chave 'receita_liquida'.
+
+    Fórmula: valor_base + comissões + lucro_produtos + outros - assistentes.
+    """
+    if proposta is None:
+        proposta = {}
+        try:
+            propostas = db.get_propostas()
+            if propostas is not None and not propostas.empty:
+                found = propostas[propostas['id'] == int(proposta_id)]
+                if not found.empty:
+                    proposta = found.iloc[0].to_dict()
+        except Exception:
+            proposta = {}
+    if acrescimos is None:
+        try:
+            acrescimos = db.get_acrescimos_proposta(proposta_id)
+        except Exception:
+            acrescimos = None
+        if acrescimos is None:
+            acrescimos = pd.DataFrame()
+
+    valor_base = float(proposta.get('valor', 0) or 0)
+
+    produtos_org = []
+    try:
+        produtos_df = db.get_produtos_organizadores(proposta_id)
+        if produtos_df is not None and not produtos_df.empty:
+            produtos_org = produtos_df.to_dict('records')
+    except Exception:
+        pass
+
+    if catalogo is None:
+        catalogo = _construir_catalogo_produtos(db)
+
+    total_produtos_venda = 0
+    lucro_produtos = 0
+    for it in produtos_org:
+        nome_prod = str(it.get('nome', it.get('produto_nome', ''))).strip()
+        qtd = float(it.get('quantidade', 1))
+        val_venda = float(it.get('valor_unit', it.get('valor', it.get('preco_unitario', 0))))
+        total_produtos_venda += qtd * val_venda
+        cat = catalogo.get(nome_prod.upper())
+        if cat:
+            lucro_produtos += (cat['preco_venda'] - cat['preco_custo']) * qtd
+
+    if fornecedores_cadastro is None:
+        fornecedores_cadastro = _construir_fornecedores_comissao(db)
+
+    total_fornecedores = 0
+    total_assistentes = 0
+    lista_assistentes = []
+    total_comissoes = 0
+    total_outros = 0
+    if acrescimos is not None and not acrescimos.empty:
+        for _, ac in acrescimos.iterrows():
+            tipo_ac = str(ac.get('tipo', '')).upper()
+            val_ac = float(ac.get('valor', 0) or 0)
+            if tipo_ac == 'FORNECEDOR':
+                total_fornecedores += val_ac
+                nome_forn = str(ac.get('fornecedor', '')).strip().upper()
+                pct_com = fornecedores_cadastro.get(nome_forn, 0)
+                if pct_com > 0:
+                    total_comissoes += val_ac * pct_com / 100
+            elif tipo_ac == 'ASSISTENTE':
+                total_assistentes += val_ac
+                nome_assist = str(ac.get('fornecedor', '') or 'Assistente').strip().title()
+                lista_assistentes.append((nome_assist, val_ac))
+            else:
+                total_outros += val_ac
+
+    total_custo_cliente = valor_base + total_produtos_venda + total_fornecedores + total_outros
+    receita = valor_base + total_comissoes + lucro_produtos + total_outros - total_assistentes
+
+    return {
+        'valor_base': valor_base,
+        'total_produtos_venda': total_produtos_venda,
+        'lucro_produtos': lucro_produtos,
+        'total_fornecedores': total_fornecedores,
+        'total_assistentes': total_assistentes,
+        'lista_assistentes': lista_assistentes,
+        'total_comissoes': total_comissoes,
+        'total_outros': total_outros,
+        'total_custo_cliente': total_custo_cliente,
+        'receita_liquida': receita,
+    }
+
+
 def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
     """
     Gera um PDF de relatório interno para uma proposta finalizada
@@ -660,76 +791,16 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
             cliente_nome = cliente.get('nome', 'sem_nome').replace(' ', '_').lower()
             filename = f"pdfs/Relatorio_Interno_{cliente_nome}_{numero_prop}.pdf"
             
-        valor_base = float(proposta.get('valor', 0))
-
-        produtos_org = []
-        try:
-            produtos_df = db.get_produtos_organizadores(proposta_id)
-            if produtos_df is not None and not produtos_df.empty:
-                produtos_org = produtos_df.to_dict('records')
-        except Exception:
-            pass
-
-        catalogo = {}
-        try:
-            catalogo_df = db.get_produtos()
-            if catalogo_df is not None and not catalogo_df.empty:
-                for _, p in catalogo_df.iterrows():
-                    nome_norm = str(p.get('nome', '')).strip().upper()
-                    catalogo[nome_norm] = {
-                        'preco_custo': float(p.get('preco_custo', 0) or 0),
-                        'preco_venda': float(p.get('preco_venda', 0) or 0),
-                    }
-        except Exception:
-            pass
-
-        total_produtos_venda = 0
-        lucro_produtos = 0
-        for it in produtos_org:
-            nome_prod = str(it.get('nome', it.get('produto_nome', ''))).strip()
-            qtd = float(it.get('quantidade', 1))
-            val_venda = float(it.get('valor_unit', it.get('valor', it.get('preco_unitario', 0))))
-            total_produtos_venda += qtd * val_venda
-            cat = catalogo.get(nome_prod.upper())
-            if cat:
-                lucro_produtos += (cat['preco_venda'] - cat['preco_custo']) * qtd
-            else:
-                lucro_produtos += 0
-
-        fornecedores_cadastro = {}
-        try:
-            forn_df = db.get_fornecedores()
-            if forn_df is not None and not forn_df.empty:
-                for _, f in forn_df.iterrows():
-                    nome_f = str(f.get('descricao', f.get('nome', ''))).strip().upper()
-                    pct = float(f.get('percentual_comissao', 0) or 0)
-                    fornecedores_cadastro[nome_f] = pct
-        except Exception:
-            pass
-
-        total_fornecedores = 0
-        total_assistentes = 0
-        lista_assistentes = []
-        total_comissoes = 0
-        total_outros = 0
-        if not acrescimos.empty:
-            for _, ac in acrescimos.iterrows():
-                tipo_ac = str(ac.get('tipo', '')).upper()
-                val_ac = float(ac.get('valor', 0))
-                if tipo_ac == 'FORNECEDOR':
-                    total_fornecedores += val_ac
-                    nome_forn = str(ac.get('fornecedor', '')).strip().upper()
-                    pct_com = fornecedores_cadastro.get(nome_forn, 0)
-                    if pct_com > 0:
-                        total_comissoes += val_ac * pct_com / 100
-                elif tipo_ac == 'ASSISTENTE':
-                    total_assistentes += val_ac
-                    nome_assist = str(ac.get('fornecedor', '') or 'Assistente').strip().title()
-                    lista_assistentes.append((nome_assist, val_ac))
-                else:
-                    total_outros += val_ac
-
-        total_custo_cliente = valor_base + total_produtos_venda + total_fornecedores + total_outros
+        calc = calcular_receita_liquida(db, proposta_id, proposta=proposta, acrescimos=acrescimos)
+        valor_base = calc['valor_base']
+        total_produtos_venda = calc['total_produtos_venda']
+        lucro_produtos = calc['lucro_produtos']
+        total_fornecedores = calc['total_fornecedores']
+        total_assistentes = calc['total_assistentes']
+        lista_assistentes = calc['lista_assistentes']
+        total_comissoes = calc['total_comissoes']
+        total_outros = calc['total_outros']
+        total_custo_cliente = calc['total_custo_cliente']
 
         itens_custo = [
             ("Personal Organizer", valor_base, False),
@@ -738,7 +809,7 @@ def gerar_pdf_interno_proposta(db, proposta_id, custom_filename=None):
             ("Outros", total_outros, False),
         ]
 
-        receita = valor_base + total_comissoes + lucro_produtos + total_outros - total_assistentes
+        receita = calc['receita_liquida']
 
         itens_receita = [
             ("Personal Organizer", valor_base, False),
