@@ -802,22 +802,31 @@ def _tab_itens(proposta_id, show_finalizar=False, proposta=None):
             f'</div>',
             unsafe_allow_html=True,
         )
-        with st.expander("✏️ Editar valor do serviço"):
+        with st.expander("✏️ Editar serviço"):
             with st.form(key=f"form_editar_valor_exec_{proposta_id}"):
                 novo_valor = st.number_input(
                     "Valor do serviço (Personal Organizer) — R$:",
                     min_value=0.0, value=float(valor_base_atual), step=10.0, format="%.2f",
                     key=f"novo_valor_exec_{proposta_id}")
-                if st.form_submit_button("Salvar valor", type="primary", use_container_width=True):
+                _tipos_opcoes = ["Organização", "Consultoria", "Acompanhamento", "Projeto", "Outro"]
+                _tipo_atual = str(proposta.get('tipo_proposta') or "").strip()
+                if _tipo_atual and _tipo_atual not in _tipos_opcoes:
+                    _tipos_opcoes = [_tipo_atual] + _tipos_opcoes
+                _idx_tipo = _tipos_opcoes.index(_tipo_atual) if _tipo_atual in _tipos_opcoes else 0
+                novo_tipo = st.selectbox(
+                    "Tipo de Proposta:",
+                    _tipos_opcoes, index=_idx_tipo,
+                    key=f"novo_tipo_exec_{proposta_id}")
+                if st.form_submit_button("Salvar alterações", type="primary", use_container_width=True):
                     try:
-                        res = st.session_state.db.update_proposta(proposta_id, valor=novo_valor)
+                        res = st.session_state.db.update_proposta(proposta_id, valor=novo_valor, tipo_proposta=novo_tipo)
                         ok = res.get('status', False) if isinstance(res, dict) else bool(res)
                         if ok:
                             st.session_state.db.invalidar_cache()
-                            st.success("Valor atualizado!")
+                            st.success("Serviço atualizado!")
                             st.rerun()
                         else:
-                            msg = res.get('message', 'Erro ao atualizar valor.') if isinstance(res, dict) else 'Erro ao atualizar valor.'
+                            msg = res.get('message', 'Erro ao atualizar serviço.') if isinstance(res, dict) else 'Erro ao atualizar serviço.'
                             st.error(msg)
                     except Exception as e:
                         st.error(str(e))
