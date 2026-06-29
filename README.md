@@ -176,4 +176,47 @@ As funcionalidades do Web App (Streamlit) encontram reflexo direto nas telas nat
 | **Pós-Organização** | `pages/pos_organizacao.py` | `src/screens/PosOrganizacaoScreen.tsx` | `GET /pos-organizacao`, `GET/PUT /pos-organizacao/acoes` |
 | **Relatórios** | `pages/relatorios.py` | `src/screens/RelatoriosScreen.tsx` | `GET /relatorios` |
 | **PDFs** | `pages/relatorios.py` (Botões de Download) | `src/screens/PDFScreen.tsx` | Geração remota de PDF pelo backend com visualização em webview local. |
-| **Perfil & Planos** | `pages/perfil.py` e `pages/planos.py` | `src/screens/PerfilScreen.tsx` | `GET /perfil` |
+| Perfil & Planos | pages/perfil.py e pages/planos.py | src/screens/PerfilScreen.tsx | GET /perfil |
+
+---
+
+## Guia de Sincronização e Atualização de Ambientes
+
+Para garantir que o ecossistema (Web, API, Replit, Render e Aplicativo Móvel) esteja sempre em perfeita sincronia, o **GitHub deve ser tratado como a única fonte da verdade**.
+
+### 1. Fluxo de Atualização do Web App e API (PlannerOrganizer)
+
+* **Desenvolvimento (Local/Replit) ➔ GitHub:**
+  Sempre comite e envie as alterações para a branch `main`:
+  ```bash
+  git add .
+  git commit -m "Sua mensagem descritiva"
+  git push origin main
+  ```
+* **GitHub ➔ Replit:**
+  Para puxar as novidades do GitHub e atualizar o código rodando no Replit, execute no **Shell do Replit**:
+  ```bash
+  git fetch origin
+  git reset --hard origin/main
+  pkill -f streamlit
+  ```
+  *(O `pkill` força o encerramento do processo em memória do Streamlit para que ele carregue o novo código).*
+* **GitHub ➔ Render (Produção):**
+  O Render atualiza de forma automatizada via **Auto-Deploy** ao receber alterações no GitHub. Se houver falha de cache ou o deploy travar, acesse o Dashboard do Render e clique em **"Manual Deploy" ➔ "Clear Cache and Deploy"**.
+
+### 2. Fluxo de Atualização do Aplicativo Móvel (planner-app)
+
+* **Desenvolvimento Local ➔ GitHub:**
+  No diretório `C:\APLICATIVOS\planner-app`, salve o progresso comitando e empurrando para o GitHub:
+  ```bash
+  git add .
+  git commit -m "Sua mensagem descritiva"
+  git push origin main
+  ```
+* **Atualização do App para Usuários:**
+  1. **Mudanças na API/Regras de Negócio:** Atualize o backend no repositório `PlannerOrganizer` e suba ao Render. O app móvel lerá as novidades da API em produção automaticamente.
+  2. **Mudanças Visuais/Telas/Pacotes no App:** Você precisará gerar um novo build de distribuição com o Expo EAS para enviar à Google Play Store:
+     ```bash
+     cd C:\APLICATIVOS\planner-app
+     eas build --platform android
+     ```
