@@ -206,14 +206,17 @@ def _render_open_proposal_actions(proposta_id, proposta):
     else:
         badge_label, badge_bg = "Em Aberto", "#B7860D"
 
-    st.markdown(f"""
-    <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;
-                background:#faf9f7;border-radius:10px;border:1px solid #e8e5df;margin-bottom:14px;">
-      <span style="background:{badge_bg};color:#fff;font-size:11px;font-weight:700;
-                   padding:3px 10px;border-radius:12px;white-space:nowrap;">{badge_label}</span>
-      <span style="font-size:13px;color:{NAVY};font-weight:600;">{_fmt_brl(valor)}</span>
-      {"<span style='font-size:12px;color:#8B8680;'>" + data_str + "</span>" if data_str else ""}
-    </div>""", unsafe_allow_html=True)
+    data_html = (f"<span style='font-size:12px;color:#8B8680;'>{data_str}</span>" if data_str else "")
+    st.markdown(
+        f'<div style="display:flex;align-items:center;gap:16px;padding:12px 16px;'
+        f'background:#faf9f7;border-radius:10px;border:1px solid #e8e5df;margin-bottom:14px;">'
+        f'<span style="background:{badge_bg};color:#fff;font-size:11px;font-weight:700;'
+        f'padding:3px 10px;border-radius:12px;white-space:nowrap;">{badge_label}</span>'
+        f'<span style="font-size:13px;color:{NAVY};font-weight:600;">{_fmt_brl(valor)}</span>'
+        f'{data_html}'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
 
     if status_atual == STATUS_APROVADA:
         if st.button("▶️ Iniciar Execução", key=f"btn_iniciar_{proposta_id}", use_container_width=True, type="primary"):
@@ -411,8 +414,16 @@ def _excluir_proposta_completa(proposta_id):
         pid = int(proposta_id)
     except (TypeError, ValueError):
         return False, "ID de proposta inválido."
+    usuario_id = st.session_state.get('usuario_id')
     try:
         with engine.connect() as conn:
+            dono = conn.execute(
+                text("SELECT usuario_id FROM propostas WHERE id = :pid"),
+                {"pid": pid}).fetchone()
+            if dono is None:
+                return False, "Proposta não encontrada."
+            if usuario_id is not None and dono[0] is not None and int(dono[0]) != int(usuario_id):
+                return False, "Você não tem permissão para excluir esta proposta."
             po_ids = [r[0] for r in conn.execute(
                 text("SELECT id FROM post_organizations WHERE proposta_id = :pid"),
                 {"pid": pid}).fetchall()]
@@ -636,12 +647,13 @@ def _tab_detalhes(proposta_id, proposta):
                 texto = html_module.escape(str(a.get('observacao') or a.get('descricao') or 'Sem descrição'))
                 data_and = a.get('data')
                 data_str = data_and.strftime('%d/%m/%Y') if pd.notna(data_and) and data_and else '—'
-                cards += f"""
-                <div style="border-left:3px solid {GOLD};background:#fff;border-radius:0 8px 8px 0;
-                            padding:10px 14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);">
-                  <div style="font-size:13px;color:#1C1C1A;">{texto}</div>
-                  <div style="font-size:11px;color:#9a9890;margin-top:4px;"> {data_str}</div>
-                </div>"""
+                cards += (
+                    f'<div style="border-left:3px solid {GOLD};background:#fff;border-radius:0 8px 8px 0;'
+                    f'padding:10px 14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);">'
+                    f'<div style="font-size:13px;color:#1C1C1A;">{texto}</div>'
+                    f'<div style="font-size:11px;color:#9a9890;margin-top:4px;"> {data_str}</div>'
+                    f'</div>'
+                )
             st.markdown(cards, unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Erro ao carregar andamentos: {str(e)}")
@@ -671,19 +683,17 @@ def _tab_produtos(proposta_id):
                 vtot = float(p.get('valor_total', 0))
                 vunit_str = _fmt_brl(vunit)
                 vtot_str  = _fmt_brl(vtot)
-                cards += f"""
-                <div style="border-left:3px solid {GOLD};background:#fff;border-radius:0 8px 8px 0;
-                            padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);
-                            display:flex;justify-content:space-between;align-items:center;">
-                  <div>
-                    <span style="font-weight:600;color:{NAVY};font-size:13px;">{nome}</span>
-                    <span style="font-size:11px;color:#9a9890;margin-left:8px;"> {comodo}</span>
-                  </div>
-                  <div style="text-align:right;white-space:nowrap;">
-                    <span style="font-size:11px;color:#9a9890;">{qty}× {vunit_str}</span><br>
-                    <span style="font-weight:700;color:#1D6A4A;font-size:13px;">{vtot_str}</span>
-                  </div>
-                </div>"""
+                cards += (
+                    f'<div style="border-left:3px solid {GOLD};background:#fff;border-radius:0 8px 8px 0;'
+                    f'padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);'
+                    f'display:flex;justify-content:space-between;align-items:center;">'
+                    f'<div><span style="font-weight:600;color:{NAVY};font-size:13px;">{nome}</span>'
+                    f'<span style="font-size:11px;color:#9a9890;margin-left:8px;"> {comodo}</span></div>'
+                    f'<div style="text-align:right;white-space:nowrap;">'
+                    f'<span style="font-size:11px;color:#9a9890;">{qty}× {vunit_str}</span><br>'
+                    f'<span style="font-weight:700;color:#1D6A4A;font-size:13px;">{vtot_str}</span></div>'
+                    f'</div>'
+                )
             st.markdown(cards, unsafe_allow_html=True)
 
             # Remover produto
@@ -945,16 +955,15 @@ def _acrescimos_cards(acrescimos, cor_borda=GOLD):
         desc = html_module.escape(str(a.get('descricao') or ''))
         val  = float(a.get('valor', 0))
         val_str = _fmt_brl(val)
-        cards += f"""
-        <div style="border-left:3px solid {cor_borda};background:#fff;border-radius:0 8px 8px 0;
-                    padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);
-                    display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <span style="font-weight:600;color:{NAVY};font-size:13px;">{nome}</span>
-            {"<br><span style='font-size:11px;color:#9a9890;'>" + desc + "</span>" if desc and desc != nome else ""}
-          </div>
-          <span style="font-weight:700;color:#1D6A4A;font-size:13px;white-space:nowrap;">{val_str}</span>
-        </div>"""
+        desc_html = (f"<br><span style='font-size:11px;color:#9a9890;'>{desc}</span>" if desc and desc != nome else "")
+        cards += (
+            f'<div style="border-left:3px solid {cor_borda};background:#fff;border-radius:0 8px 8px 0;'
+            f'padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);'
+            f'display:flex;justify-content:space-between;align-items:center;">'
+            f'<div><span style="font-weight:600;color:{NAVY};font-size:13px;">{nome}</span>{desc_html}</div>'
+            f'<span style="font-weight:700;color:#1D6A4A;font-size:13px;white-space:nowrap;">{val_str}</span>'
+            f'</div>'
+        )
     return cards
 
 
@@ -1141,17 +1150,16 @@ def _tab_outros(proposta_id):
                 comodo = html_module.escape(str(a.get('fornecedor') or 'Geral'))
                 val = float(a.get('valor', 0))
                 val_str = _fmt_brl(val)
-                cards += f"""
-                <div style="border-left:3px solid #E07B39;background:#fff;border-radius:0 8px 8px 0;
-                            padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);
-                            display:flex;justify-content:space-between;align-items:center;">
-                  <div>
-                    <span style="font-weight:600;color:{NAVY};font-size:13px;">{nome}</span>
-                    {'<br><span style="font-size:11px;color:#9a9890;">' + sub + '</span>' if sub else ''}
-                    <span style="font-size:11px;color:#9a9890;margin-left:6px;">📍 {comodo}</span>
-                  </div>
-                  <span style="font-weight:700;color:#1D6A4A;font-size:13px;white-space:nowrap;">{val_str}</span>
-                </div>"""
+                sub_html = (f'<br><span style="font-size:11px;color:#9a9890;">{sub}</span>' if sub else '')
+                cards += (
+                    f'<div style="border-left:3px solid #E07B39;background:#fff;border-radius:0 8px 8px 0;'
+                    f'padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);'
+                    f'display:flex;justify-content:space-between;align-items:center;">'
+                    f'<div><span style="font-weight:600;color:{NAVY};font-size:13px;">{nome}</span>{sub_html}'
+                    f'<span style="font-size:11px;color:#9a9890;margin-left:6px;">📍 {comodo}</span></div>'
+                    f'<span style="font-weight:700;color:#1D6A4A;font-size:13px;white-space:nowrap;">{val_str}</span>'
+                    f'</div>'
+                )
             st.markdown(cards, unsafe_allow_html=True)
 
             with st.expander(" Remover item"):
