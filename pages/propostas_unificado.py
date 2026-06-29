@@ -1318,6 +1318,27 @@ def _tab_acoes(proposta_id, proposta):
             c2.metric("Custos totais", _fmt_brl(total_forn + total_asst + total_outr + total_prod))
             c3.metric("Total geral", _fmt_brl(total_geral))
 
+            # Editar valor do serviço durante a execução
+            with st.expander("✏️ Editar valor do serviço"):
+                with st.form(key=f"form_editar_valor_exec_{proposta_id}"):
+                    novo_valor = st.number_input(
+                        "Valor do serviço (Personal Organizer) — R$:",
+                        min_value=0.0, value=float(valor_base), step=10.0, format="%.2f",
+                        key=f"novo_valor_exec_{proposta_id}")
+                    if st.form_submit_button("Salvar valor", type="primary", use_container_width=True):
+                        try:
+                            res = st.session_state.db.update_proposta(proposta_id, valor=novo_valor)
+                            ok = res.get('status', False) if isinstance(res, dict) else bool(res)
+                            if ok:
+                                st.session_state.db.invalidar_cache()
+                                st.success("Valor atualizado!")
+                                st.rerun()
+                            else:
+                                msg = res.get('message', 'Erro ao atualizar valor.') if isinstance(res, dict) else 'Erro ao atualizar valor.'
+                                st.error(msg)
+                        except Exception as e:
+                            st.error(str(e))
+
             # Breakdown em cards
             breakdown = [
                 ("🏷️ Personal Organizer", valor_base, GOLD),
