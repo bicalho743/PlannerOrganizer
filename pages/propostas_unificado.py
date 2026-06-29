@@ -418,26 +418,29 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
 
 
 def _pdf_inline_viewer(pdf_bytes, key, height=720):
-    """Render a PDF inline inside the app using a blob URL.
+    """Render a PDF inline inside the app.
 
-    Avoids the browser's `file://` open path (which fails inside the embedded
-    preview iframe). The PDF is decoded into a Blob in the component's own
-    document, so it renders directly via the browser's PDF viewer.
+    The component runs inside Streamlit's sandboxed `srcdoc` iframe, whose
+    document has an opaque (null) origin. Chrome's built-in PDF viewer refuses
+    to load `blob:null/...` URLs, so we embed the PDF directly as a base64
+    `data:` URI via an `<embed>`/`<object>` element, which renders the PDF
+    plugin reliably in that context. A "open in new tab" link is provided as a
+    fallback in case the browser blocks inline rendering.
     """
     b64 = base64.b64encode(pdf_bytes).decode()
+    data_uri = "data:application/pdf;base64," + b64
     html = (
-        '<div id="pdfwrap_' + key + '" style="width:100%;height:' + str(height) + 'px;"></div>'
-        '<script>(function(){'
-        'var b64="' + b64 + '";'
-        'var bin=atob(b64);var len=bin.length;var bytes=new Uint8Array(len);'
-        'for(var i=0;i<len;i++){bytes[i]=bin.charCodeAt(i);}'
-        'var blob=new Blob([bytes],{type:"application/pdf"});'
-        'var url=URL.createObjectURL(blob);'
-        'var wrap=document.getElementById("pdfwrap_' + key + '");'
-        'var ifr=document.createElement("iframe");'
-        'ifr.src=url;ifr.style.width="100%";ifr.style.height="100%";ifr.style.border="none";'
-        'wrap.appendChild(ifr);'
-        '})();</script>'
+        '<div style="width:100%;height:' + str(height) + 'px;">'
+        '<object data="' + data_uri + '" type="application/pdf" '
+        'style="width:100%;height:100%;border:none;">'
+        '<embed src="' + data_uri + '" type="application/pdf" '
+        'style="width:100%;height:100%;border:none;"/>'
+        '<div style="padding:16px;text-align:center;font-family:sans-serif;">'
+        'Não foi possível exibir o PDF aqui. '
+        '<a href="' + data_uri + '" target="_blank" rel="noopener">Abrir em nova aba</a>'
+        '</div>'
+        '</object>'
+        '</div>'
     )
     components.html(html, height=height + 12)
 
