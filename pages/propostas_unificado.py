@@ -164,8 +164,6 @@ def _render_nova_proposta_form(clientes):
 
 def _render_detail_panel(proposta_id, proposta, propostas_com_clientes):
     """Renders the full detail panel for a selected proposal."""
-    nome_cliente = proposta.get('nome', proposta.get('cliente_nome', 'Cliente'))
-    numero = proposta.get('numero', proposta_id)
     from utils.proposta_status import (
         normalize as _normalize_status,
         STATUS_EM_ABERTO, STATUS_APROVADA, STATUS_RECUSADA,
@@ -175,7 +173,6 @@ def _render_detail_panel(proposta_id, proposta, propostas_com_clientes):
     em_aberto = status_atual == STATUS_EM_ABERTO
     aprovada_parada = status_atual == STATUS_APROVADA
 
-    st.markdown(f"### Proposta #{numero} — {nome_cliente}")
     st.caption(proposta.get('descricao', '')[:120])
 
     finalizada = status_atual in [STATUS_FINALIZADA, STATUS_RECUSADA]
@@ -1478,9 +1475,13 @@ def show():
         return
 
     _metric_css = """<style>
+    html{scroll-behavior:smooth;}
     .kanban-metric{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;text-align:center;}
     .kanban-metric-label{font-size:0.72rem;color:#64748b;margin:0 0 4px 0;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;}
     .kanban-metric-value{font-size:0.95rem;font-weight:700;color:#1a202c;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .kpi-anchor{text-decoration:none;display:block;}
+    .kanban-metric-clickable{cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease;}
+    .kanban-metric-clickable:hover{border-color:#C9A84C;box-shadow:0 2px 8px rgba(201,168,76,0.25);}
     </style>"""
     st.markdown(_metric_css, unsafe_allow_html=True)
 
@@ -1509,18 +1510,27 @@ def show():
     _p_final = propostas_com_clientes[propostas_com_clientes['status'].isin([_ST_FI, _ST_RE])] if not propostas_com_clientes.empty else pd.DataFrame()
 
     mc1, mc2, mc3, mc4 = st.columns(4)
-    for col, label, df in [
-        (mc1, "Em Aberto", _p_aberto),
-        (mc2, "Aprovada", _p_aprovada),
-        (mc3, "Em Execução", _p_exec),
-        (mc4, "Finalizada", _p_final),
+    for col, label, df, clickable in [
+        (mc1, "Em Aberto", _p_aberto, False),
+        (mc2, "Aprovada", _p_aprovada, False),
+        (mc3, "Em Execução", _p_exec, False),
+        (mc4, "Finalizada", _p_final, True),
     ]:
         with col:
-            st.markdown(f"""
-            <div class="kanban-metric">
-                <p class="kanban-metric-label">{label}</p>
-                <p class="kanban-metric-value">{_fmt_brl(_calc_total_propostas(df))}</p>
-            </div>""", unsafe_allow_html=True)
+            _valor_kpi = _fmt_brl(_calc_total_propostas(df))
+            if clickable:
+                st.markdown(f"""
+                <a href="#historico-propostas" class="kpi-anchor" title="Ver no Histórico">
+                <div class="kanban-metric kanban-metric-clickable">
+                    <p class="kanban-metric-label">{label} ↗</p>
+                    <p class="kanban-metric-value">{_valor_kpi}</p>
+                </div></a>""", unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="kanban-metric">
+                    <p class="kanban-metric-label">{label}</p>
+                    <p class="kanban-metric-value">{_valor_kpi}</p>
+                </div>""", unsafe_allow_html=True)
 
     st.markdown("")
 
@@ -1576,9 +1586,8 @@ def show():
     else:
         propostas_finalizadas = pd.DataFrame()
 
-    col_aberto, col_aprovada, col_execucao, col_finalizada = st.columns(4)
+    col_aberto, col_aprovada, col_execucao = st.columns(3)
 
-    MAX_FINALIZADAS_KANBAN = 5
     if not propostas_finalizadas.empty and 'data_fim' in propostas_finalizadas.columns:
         propostas_finalizadas_sorted = propostas_finalizadas.sort_values('data_fim', ascending=False, na_position='last')
     elif not propostas_finalizadas.empty:
@@ -1586,13 +1595,11 @@ def show():
     else:
         propostas_finalizadas_sorted = propostas_finalizadas
     total_finalizadas = len(propostas_finalizadas_sorted)
-    propostas_finalizadas_kanban = propostas_finalizadas_sorted.head(MAX_FINALIZADAS_KANBAN)
 
     COLS_CONFIG = [
         (col_aberto, " Em Aberto", propostas_em_aberto, "#fff3cd"),
         (col_aprovada, "🟢 Aprovada", propostas_aprovadas, "#d4edda"),
         (col_execucao, "🔵 Em Execução", propostas_em_exec, "#cce5ff"),
-        (col_finalizada, " Finalizada", propostas_finalizadas_kanban, "#e2e3e5"),
     ]
 
     kanban_css = """
@@ -1670,10 +1677,7 @@ def show():
 
     for col_idx, (col_widget, col_label, col_df, col_color) in enumerate(COLS_CONFIG):
         with col_widget:
-            if col_idx == 3:
-                header_count = total_finalizadas
-            else:
-                header_count = len(col_df)
+            header_count = len(col_df)
             st.markdown(
                 f'<div class="kanban-col-header" style="background-color:{col_color};">{col_label} ({header_count})</div>',
                 unsafe_allow_html=True
@@ -1729,14 +1733,13 @@ def show():
                                     )
                             except Exception:
                                 st.session_state.pop(f"_kanban_pdf_{pid}", None)
-                if col_idx == 3 and total_finalizadas > MAX_FINALIZADAS_KANBAN:
-                    st.caption(f"Mostrando {MAX_FINALIZADAS_KANBAN} de {total_finalizadas} · veja o Histórico abaixo")
             else:
                 st.caption("Nenhuma proposta nesta etapa.")
 
     if total_finalizadas > 0:
         st.markdown("---")
-        with st.expander(f"Histórico de Propostas ({total_finalizadas})", expanded=False):
+        st.markdown('<div id="historico-propostas"></div>', unsafe_allow_html=True)
+        with st.expander(f"Histórico de Propostas ({total_finalizadas})", expanded=True):
             hist_c1, hist_c2 = st.columns([2, 1])
             with hist_c1:
                 busca_cliente = st.text_input(" Buscar por cliente", key="hist_busca_cliente", placeholder="Nome do cliente...")
@@ -1816,14 +1819,19 @@ def show():
 
     selected_id = st.session_state.get('kanban_selected_proposta')
     if selected_id is not None:
-        st.markdown("---")
         if not propostas_com_clientes.empty:
             proposta_rows = propostas_com_clientes[propostas_com_clientes['id'] == selected_id]
             if not proposta_rows.empty:
                 proposta_row = proposta_rows.iloc[0]
-                _render_detail_panel(selected_id, proposta_row, propostas_com_clientes)
+                _nome_modal = proposta_row.get('nome', proposta_row.get('cliente_nome', 'Cliente'))
+                _num_modal = proposta_row.get('numero', selected_id)
+
+                @st.dialog(f"Proposta #{_num_modal} — {_nome_modal}", width="large")
+                def _modal_detalhes():
+                    _render_detail_panel(selected_id, proposta_row, propostas_com_clientes)
+
+                _modal_detalhes()
             else:
-                st.warning("Proposta não encontrada. Pode ter sido excluída ou alterada.")
                 st.session_state['kanban_selected_proposta'] = None
 
 
