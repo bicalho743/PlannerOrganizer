@@ -232,7 +232,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
         if st.button(" Gerar Proposta", key=f"btn_pdf_proposta_apr_{proposta_id}", use_container_width=True):
             try:
                 from utils.propostas_helper import gerar_pdf_cliente_proposta
-                sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, proposta_id)
+                sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, proposta_id, tipo_documento="proposta")
                 if sucesso and arquivo:
                     with open(arquivo, "rb") as f:
                         st.success("PDF gerado!")
@@ -281,7 +281,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
             if st.button(" Gerar Proposta", key=f"btn_pdf_proposta_{proposta_id}", use_container_width=True):
                 try:
                     from utils.propostas_helper import gerar_pdf_cliente_proposta
-                    sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, proposta_id)
+                    sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, proposta_id, tipo_documento="proposta")
                     if sucesso and arquivo:
                         with open(arquivo, "rb") as f:
                             st.success("PDF gerado!")
@@ -1714,7 +1714,7 @@ def show():
                         if st.button(" Gerar Proposta", key=f"card_pdf_c{col_idx}_{pid}", use_container_width=True):
                             try:
                                 from utils.propostas_helper import gerar_pdf_cliente_proposta
-                                sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, pid)
+                                sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, pid, tipo_documento="proposta")
                                 if sucesso and arquivo:
                                     st.session_state[f"_kanban_pdf_{pid}"] = arquivo
                                     st.rerun()

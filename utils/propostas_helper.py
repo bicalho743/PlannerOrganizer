@@ -419,14 +419,16 @@ def st_gerar_pdf_proposta(proposta_id, custom_filename=None):
         st.error(f"Erro: {str(e)}")
         return False, None
         
-def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
+def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None, tipo_documento="fechamento"):
     """
-    Gera um PDF de relatório para cliente de uma proposta finalizada
-    
+    Gera um PDF para o cliente de uma proposta.
+
     Args:
         db: Conexão com o banco de dados
         proposta_id: ID da proposta
         custom_filename: Nome de arquivo personalizado (opcional)
+        tipo_documento: "fechamento" (Fechamento do Serviço) ou "proposta"
+            (Proposta de Serviço). Controla título do PDF e prefixo do arquivo.
         
     Returns:
         tuple: (sucesso, mensagem, filename)
@@ -479,13 +481,21 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
         if acrescimos is None:
             acrescimos = pd.DataFrame()  # DataFrame vazio se não houver acréscimos
             
+        # Título e prefixo do arquivo conforme o tipo de documento
+        if tipo_documento == "proposta":
+            titulo_doc = "Proposta de Serviço"
+            prefixo_arquivo = "Proposta"
+        else:
+            titulo_doc = "Fechamento do Serviço"
+            prefixo_arquivo = "Fechamento_serviço"
+
         # Nome do arquivo
         if custom_filename:
             filename = custom_filename
         else:
             numero_prop = proposta.get('numero', proposta_id)
             cliente_nome = cliente.get('nome', 'sem_nome').replace(' ', '_')
-            filename = f"pdfs/Fechamento_serviço_{cliente_nome}_{numero_prop}.pdf"
+            filename = f"pdfs/{prefixo_arquivo}_{cliente_nome}_{numero_prop}.pdf"
             
         tipo_proposta = proposta.get('tipo_proposta', 'Organização')
         valor_base = float(proposta.get('valor', 0))
@@ -574,8 +584,8 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None):
             'valor_base': valor_base,
             'valor_adicionais': total_adicionais,
         }
-        gerar_pdf_cliente(dados_pdf, filename)
-        return True, "Relatório do cliente gerado com sucesso", filename
+        gerar_pdf_cliente(dados_pdf, filename, titulo=titulo_doc)
+        return True, f"{titulo_doc} gerado com sucesso", filename
 
     except Exception as e:
         print(f"DEBUG HELPER CRITICAL: Erro ao gerar PDF cliente: {str(e)}")
