@@ -1912,35 +1912,23 @@ def show():
                     })
                     id_por_indice.append(h_pid)
 
-                tabela_df = pd.DataFrame(rows)
-                st.caption("Clique no cabeçalho de uma coluna para ordenar.")
-                st.dataframe(
-                    tabela_df,
-                    use_container_width=True,
-                    hide_index=True,
-                    column_config={
-                        "Valor": st.column_config.NumberColumn("Valor", format="R$ %.2f"),
-                        "Receita Líquida Total": st.column_config.NumberColumn("Receita Líquida Total", format="R$ %.2f"),
-                        "Data": st.column_config.DatetimeColumn("Data", format="DD/MM/YYYY"),
-                    },
-                )
+                larguras = [0.9, 2.2, 1.8, 1.3, 1.5, 1.3, 1.2, 1.0]
+                cab = st.columns(larguras)
+                for c, titulo in zip(cab, ["Nº", "Cliente", "Tipo", "Valor", "Receita Líquida", "Status", "Data", ""]):
+                    c.markdown(f"**{titulo}**")
+                st.markdown("<hr style='margin:0.2rem 0;'>", unsafe_allow_html=True)
 
-                opcoes_hist = {
-                    f"{r['Nº']} — {r['Cliente']}": pid
-                    for r, pid in zip(rows, id_por_indice)
-                }
-                col_sel, col_btn = st.columns([3, 1])
-                with col_sel:
-                    escolha_hist = st.selectbox(
-                        "Selecione uma proposta para ver os detalhes",
-                        options=list(opcoes_hist.keys()),
-                        key="hist_select_proposta",
-                    )
-                with col_btn:
-                    st.write("")
-                    st.write("")
-                    if st.button("📋 Ver detalhes", use_container_width=True, key="hist_ver_detalhes"):
-                        st.session_state['kanban_selected_proposta'] = opcoes_hist.get(escolha_hist)
+                for r, pid in zip(rows, id_por_indice):
+                    cols = st.columns(larguras)
+                    cols[0].write(r['Nº'])
+                    cols[1].write(r['Cliente'])
+                    cols[2].write(r['Tipo'] or "-")
+                    cols[3].write(f"R$ {r['Valor']:.2f}")
+                    cols[4].write(f"R$ {r['Receita Líquida Total']:.2f}")
+                    cols[5].write(r['Status'])
+                    cols[6].write(r['Data'].strftime('%d/%m/%Y') if r['Data'] is not None else "-")
+                    if cols[7].button("📋 Ver", key=f"hist_ver_{pid}", use_container_width=True):
+                        st.session_state['kanban_selected_proposta'] = pid
                         st.rerun()
 
     selected_id = st.session_state.get('kanban_selected_proposta')
