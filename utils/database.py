@@ -3219,14 +3219,24 @@ class Database:
                 proposta_aprovada = False
                 proposta_finalizada = False
 
+                # Detectar aprovação/finalização usando o vocabulário canônico
+                # (status agora é gravado em snake_case minúsculo). Comparar
+                # rótulos legados crus ("Aprovada"/"Concluída") deixaria de
+                # disparar os lançamentos financeiros e a pós-organização.
+                from utils.proposta_status import (
+                    STATUS_APROVADA, STATUS_EM_EXECUCAO, STATUS_FINALIZADA,
+                )
+                status_antigo_canon = _norm_status(proposta.status)
+                status_novo_canon = _norm_status(status) if status is not None else None
+
                 # Verificar mudança de status para "Aprovada"
-                if status is not None and status == "Aprovada" and proposta.status != "Aprovada":
+                if status_novo_canon == STATUS_APROVADA and status_antigo_canon != STATUS_APROVADA:
                     proposta_aprovada = True
                     # Registrar a data de aprovação
                     proposta.data_aprovacao = datetime.now().date()
 
-                # Verificar mudança de status para "Concluída"
-                if status is not None and status == "Concluída" and proposta.status != "Concluída":
+                # Verificar mudança de status para "Finalizada"
+                if status_novo_canon == STATUS_FINALIZADA and status_antigo_canon != STATUS_FINALIZADA:
                     proposta_finalizada = True
                     # Se não foi fornecida uma data_fim, usar a data atual
                     if data_fim is None:
@@ -3257,7 +3267,7 @@ class Database:
                     proposta.data_inicio = data_inicio
                     # Quando a data de início for atualizada, também atualizar a data de início de execução
                     # se a proposta já estiver aprovada ou em execução
-                    if proposta.status in ['Aprovada', 'Em execução', 'Finalizada']:
+                    if _norm_status(proposta.status) in (STATUS_APROVADA, STATUS_EM_EXECUCAO, STATUS_FINALIZADA):
                         proposta.data_inicio_execucao = data_inicio
 
                 if data_fim is not None:
