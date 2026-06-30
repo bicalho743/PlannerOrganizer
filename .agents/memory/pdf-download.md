@@ -26,11 +26,20 @@ carregar" (trava/pesada). Sempre tornar o viewer SOB DEMANDA: gate com
 `st.toggle`/`st.checkbox` e só chamar `components.html` quando ativado.
 
 # Como resolver
-Oferecer VISUALIZAÇÃO inline dentro do app, sem depender de `file://`:
-decodificar os bytes em um Blob no próprio documento do componente e
-renderizar num `<iframe src=blobURL>` via `components.html`. Padrão usado:
-helper `_pdf_inline_viewer()` em `pages/propostas_unificado.py`, exposto num
-expander junto ao `st.download_button`.
+Oferecer VISUALIZAÇÃO inline dentro do app por uma URL REAL servida pelo
+Streamlit (NÃO `data:`/`blob:null`/`file://`). O componente roda num iframe
+`srcdoc` de origem nula; Chrome BLOQUEIA renderizar PDF via `data:`/`blob:null`
+ali (inclusive o link de fallback `data:` não abre em nova aba). Tentar
+`<object>/<embed>` com `data:` URI = tela vazia = "não funciona".
+
+Solução confiável: `enableStaticServing = true` + gravar o PDF em `static/pdfs/`
+→ servido em `/app/static/pdfs/<arquivo>.pdf`. No `components.html`, computar a
+ORIGEM absoluta no cliente (`window.location.ancestorOrigins[0]` ou
+`document.referrer`, pois srcdoc não resolve URL relativa) e carregar a URL
+real num `<iframe>`; o mesmo URL serve para "Abrir em nova aba". Nome de arquivo
+estável por proposta/tipo para sobrescrever (sem acúmulo). Helpers:
+`_serve_pdf_static()` + `_pdf_inline_viewer(static_rel_url, ...)` em
+`pages/propostas_unificado.py`, sob `st.toggle` (carregamento sob demanda).
 
 Alternativa para o usuário: abrir o app numa aba própria do navegador (não
 embutida) — aí o "abrir" do arquivo baixado funciona normalmente.

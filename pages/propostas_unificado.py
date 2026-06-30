@@ -449,32 +449,88 @@ def _excluir_proposta_completa(proposta_id):
         return False, f"Erro ao excluir proposta: {e}"
 
 
-def _pdf_inline_viewer(pdf_bytes, key, height=720):
-    """Render a PDF inline inside the app.
+def _serve_pdf_static(pdf_bytes, report_type, proposta_id):
+    """Write the PDF into the Streamlit static dir and return its served path.
+
+    Streamlit serves files placed under `static/` at `/app/static/<path>`
+    (enableStaticServing = true). Serving the PDF from a real same-origin URL
+    lets the browser render it natively inside an `<iframe>` and open it in a
+    new tab — unlike `data:`/`blob:null` URIs, which Chrome blocks inside the
+    sandboxed component iframe.
+
+    Because anything under `static/` is served publicly with no auth, the
+    filename must NOT be guessable from the proposal id (this app is
+    multi-tenant). We use an unguessable random token, kept per
+    (report_type, proposta_id) in `session_state` so re-runs reuse the same
+    file, and we prune files older than 1h to avoid leaving sensitive PDFs
+    lying around."""
+    import secrets
+    import time as _time
+    rel_dir = os.path.join("static", "pdfs")
+    os.makedirs(rel_dir, exist_ok=True)
+
+    now = _time.time()
+    try:
+        for old in os.listdir(rel_dir):
+            old_path = os.path.join(rel_dir, old)
+            if os.path.isfile(old_path) and now - os.path.getmtime(old_path) > 3600:
+                os.remove(old_path)
+    except Exception:
+        pass
+
+    tokens = st.session_state.setdefault("_pdf_view_tokens", {})
+    map_key = f"{report_type}_{proposta_id}"
+    token = tokens.get(map_key)
+    if not token:
+        token = secrets.token_urlsafe(24)
+        tokens[map_key] = token
+    fname = f"{token}.pdf"
+    with open(os.path.join(rel_dir, fname), "wb") as f:
+        f.write(pdf_bytes)
+    return f"app/static/pdfs/{fname}"
+
+
+def _pdf_inline_viewer(static_rel_url, key, height=720):
+    """Render a PDF inline from a Streamlit-served static URL.
 
     The component runs inside Streamlit's sandboxed `srcdoc` iframe, whose
-    document has an opaque (null) origin. Chrome's built-in PDF viewer refuses
-    to load `blob:null/...` URLs, so we embed the PDF directly as a base64
-    `data:` URI via an `<embed>`/`<object>` element, which renders the PDF
-    plugin reliably in that context. A "open in new tab" link is provided as a
-    fallback in case the browser blocks inline rendering.
+    document has an opaque (null) origin, so relative URLs cannot resolve.
+    We compute the app's absolute origin client-side (via `ancestorOrigins`
+    / `document.referrer`) and load the served PDF in a nested `<iframe>`,
+    which the browser renders natively. An "open in new tab" link points to
+    the same real URL as a fallback."""
+    safe_key = str(key).replace("-", "_")
+    html = """
+    <div id="pdfwrap_KEY" style="width:100%;height:HEIGHTpx;"></div>
+    <div id="pdflink_KEY" style="padding:8px 0;text-align:center;font-family:sans-serif;font-size:13px;"></div>
+    <script>
+    (function(){
+      var rel = "REL";
+      var origin = "";
+      try {
+        if (window.location.ancestorOrigins && window.location.ancestorOrigins.length) {
+          origin = window.location.ancestorOrigins[0];
+        } else if (document.referrer) {
+          origin = new URL(document.referrer).origin;
+        }
+      } catch (e) {}
+      var url = (origin ? origin + "/" : "/") + rel;
+      var wrap = document.getElementById("pdfwrap_KEY");
+      var ifr = document.createElement("iframe");
+      ifr.src = url;
+      ifr.style.width = "100%";
+      ifr.style.height = "100%";
+      ifr.style.border = "none";
+      wrap.appendChild(ifr);
+      document.getElementById("pdflink_KEY").innerHTML =
+        '<a href="' + url + '" target="_blank" rel="noopener">Abrir em nova aba</a>';
+    })();
+    </script>
     """
-    b64 = base64.b64encode(pdf_bytes).decode()
-    data_uri = "data:application/pdf;base64," + b64
-    html = (
-        '<div style="width:100%;height:' + str(height) + 'px;">'
-        '<object data="' + data_uri + '" type="application/pdf" '
-        'style="width:100%;height:100%;border:none;">'
-        '<embed src="' + data_uri + '" type="application/pdf" '
-        'style="width:100%;height:100%;border:none;"/>'
-        '<div style="padding:16px;text-align:center;font-family:sans-serif;">'
-        'Não foi possível exibir o PDF aqui. '
-        '<a href="' + data_uri + '" target="_blank" rel="noopener">Abrir em nova aba</a>'
-        '</div>'
-        '</object>'
-        '</div>'
-    )
-    components.html(html, height=height + 12)
+    html = (html.replace("KEY", safe_key)
+                .replace("HEIGHT", str(height))
+                .replace("REL", static_rel_url))
+    components.html(html, height=height + 48)
 
 
 def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_cliente="Cliente", numero_proposta=None):
@@ -565,7 +621,11 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_
             )
         st.caption(subtitle)
         if st.toggle(" Visualizar no navegador", key=f"view_pdf_{report_type}_{proposta_id}"):
-            _pdf_inline_viewer(pdf_bytes, key=f"{report_type}_{proposta_id}")
+            try:
+                static_url = _serve_pdf_static(pdf_bytes, report_type, proposta_id)
+                _pdf_inline_viewer(static_url, key=f"{report_type}_{proposta_id}")
+            except Exception as e:
+                st.error(f"Não foi possível preparar a visualização: {e}")
     elif error_msg:
         st.markdown(f"""
         <div style="background:{NAVY};border-radius:10px;padding:16px;text-align:center;min-height:80px;
