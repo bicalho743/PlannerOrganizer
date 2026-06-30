@@ -3178,7 +3178,12 @@ class Database:
                 self.session.rollback()
                 return {"status": "error", "message": f"Erro ao atualizar proposta: {str(e)}"}
 
-        return self._safe_query(query)
+        resultado = self._safe_query(query)
+        # Alterar o status (ex.: finalizar pela tela de edição) deve refletir
+        # imediatamente nas telas: invalidar o cache de propostas (#35).
+        if isinstance(resultado, dict) and resultado.get("status") == "success":
+            self.invalidar_cache()
+        return resultado
 
     def atualizar_proposta(self, proposta_id, descricao=None, valor=None, status=None, 
                           tipo_proposta=None, data_inicio=None, data_fim=None, prazo_entrega=None,
@@ -3401,7 +3406,12 @@ class Database:
             except Exception as e:
                 raise Exception(f"Erro ao atualizar proposta: {str(e)}")
 
-        return self._safe_query(query)
+        resultado_final = self._safe_query(query)
+        # Atualizar (inclui finalizar com efeitos colaterais) deve refletir
+        # imediatamente nas telas: invalidar o cache de propostas (#35).
+        if isinstance(resultado_final, dict) and resultado_final.get("status") is True:
+            self.invalidar_cache()
+        return resultado_final
 
     def add_acrescimo_proposta(self, proposta_id, tipo, valor, descricao=None, fornecedor=None, 
                                status_pagamento='Pendente', percentual_comissao=None):
@@ -5299,7 +5309,13 @@ class Database:
                 "message": f"Venda com {len(itens_venda)} itens criada com sucesso"
             }
 
-        return self._safe_query(query)
+        resultado = self._safe_query(query)
+        # Vender finaliza a proposta (status/status_execucao). Invalidar o cache
+        # de propostas para que a finalização apareça imediatamente, sem
+        # depender de um rerun do Streamlit limpar o cache da sessão (#35).
+        if isinstance(resultado, dict) and resultado.get("status") == "sucesso":
+            self.invalidar_cache()
+        return resultado
 
     def _registrar_transacao_venda(self, venda, proposta):
         """Registra transações financeiras para a venda, incluindo comissões de fornecedores"""

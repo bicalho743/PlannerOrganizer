@@ -12,6 +12,22 @@ def get_db_connection():
         raise ValueError("DATABASE_URL não encontrada")
     return psycopg2.connect(db_url)
 
+def _invalidar_cache_app(usuario_id):
+    """Invalida o cache por sessão de get_propostas() (e afins) após a
+    finalização gravada por ESTA conexão direta.
+
+    Sem isso, a tela poderia continuar lendo o estado antigo em cache na mesma
+    sessão até um rerun do Streamlit, fazendo a proposta finalizada "sumir"
+    momentaneamente do filtro de finalizadas (#35)."""
+    if not usuario_id:
+        return
+    try:
+        from utils.database import remove_cache
+        for key in ("cache_clientes", "cache_propostas", "cache_financeiro"):
+            remove_cache(f"{key}_{usuario_id}")
+    except Exception as e:
+        print(f"[finalizar_v2] aviso: falha ao invalidar cache: {e}")
+
 def finalizar_proposta_v2(proposta_id: int) -> dict:
     print(f"[finalizar_v2] iniciando proposta #{proposta_id}")
     conn = get_db_connection()
@@ -51,6 +67,7 @@ def finalizar_proposta_v2(proposta_id: int) -> dict:
         )
         if cur.fetchone()[0] > 0:
             conn.commit()
+            _invalidar_cache_app(usuario_id)
             print(f"[finalizar_v2] proposta #{numero} já tem lançamentos, status finalizado")
             return {"status": True, "mensagem": "Lançamentos já existem"}
 
@@ -185,6 +202,7 @@ def finalizar_proposta_v2(proposta_id: int) -> dict:
             print(f"[finalizar_v2] pós-organização criada id={pos_id}")
 
         conn.commit()
+        _invalidar_cache_app(usuario_id)
         print(f"[finalizar_v2] concluído — {lancamentos} lançamentos gerados")
         return {"status": True, "lancamentos": lancamentos}
 

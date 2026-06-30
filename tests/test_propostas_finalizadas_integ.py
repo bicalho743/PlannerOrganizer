@@ -13,6 +13,8 @@ Estes testes blindam os principais caminhos de finalização:
     - Caso B: venda de proposta (`db.criar_venda_de_proposta`).
     - Caso C: edição pelo dropdown de status (`db.update_proposta`).
     - Caso D: botão "FINALIZAR PROJETO" (`finalizar_proposta_v2`).
+    - Caso E: gate de comissão de fornecedores na geração financeira.
+    - Caso F: finalização via `db.atualizar_proposta` com efeitos colaterais.
 
 Como rodar:
     python -m pytest tests/ -v
@@ -105,16 +107,18 @@ def _buscar_proposta(df, proposta_id):
 def _finalizadas_frescas(db):
     """Lê as propostas finalizadas direto do banco (verdade persistida).
 
-    Dois efeitos garantem leitura fresca:
-    - `session.expire_all()` descarta os objetos do identity map da sessão, para
-      que a releitura traga os valores realmente gravados — necessário quando a
-      finalização ocorre por outra conexão (ex.: `finalizar_proposta_v2`).
-    - `invalidar_cache()` simula o rerun do Streamlit (que limpa o cache por
-      sessão de `get_propostas()`), garantindo que a asserção bata no estado
-      persistido no banco, não em uma leitura em cache.
+    `session.expire_all()` descarta os objetos do identity map da sessão, para
+    que a releitura traga os valores realmente gravados — necessário quando a
+    finalização ocorre por outra conexão (ex.: `finalizar_proposta_v2`).
+
+    De propósito NÃO chama `invalidar_cache()`: a invalidação do cache por
+    sessão de `get_propostas()` é responsabilidade dos próprios caminhos de
+    escrita (`add_proposta`, `criar_venda_de_proposta`, `update_proposta`,
+    `atualizar_proposta`). Assim este helper também guarda a invariante da #35
+    — se um caminho de escrita esquecer de invalidar, a leitura em cache
+    devolve o estado antigo e o teste falha.
     """
     db.session.expire_all()
-    db.invalidar_cache()
     return get_propostas_finalizadas(db)
 
 
@@ -161,6 +165,12 @@ def test_venda_de_proposta_finaliza_e_aparece(db_teste):
         "Proposta em aberto não deveria aparecer como finalizada antes da venda."
     )
 
+    # Popula o cache por sessão de get_propostas() ANTES da venda. Se
+    # criar_venda_de_proposta não invalidar o cache (#35), a releitura traria
+    # o estado antigo (não finalizado) e a asserção abaixo falharia — esta é
+    # exatamente a regressão coberta pela #35.
+    _ = db.get_propostas()
+
     resultado = db.criar_venda_de_proposta(proposta_id)
     assert resultado and resultado.get("status") == "sucesso", (
         f"criar_venda_de_proposta falhou: {resultado}"
@@ -191,6 +201,10 @@ def test_edicao_status_para_finalizada_aparece(db_teste):
         gerar_transacoes_automaticas=False,
     )
     assert proposta_id and proposta_id > 0, "Falha ao criar proposta base"
+
+    # Aquece o cache por sessão antes da escrita: se update_proposta não
+    # invalidar o cache (#35), a releitura traria o estado antigo e falharia.
+    _ = db.get_propostas()
 
     # Caminho real da tela de edição: o dropdown "Finalizada" mapeia para o
     # status canônico e a gravação chama update_proposta(status=...).
@@ -290,3 +304,60 @@ def test_geracao_fornecedores_usa_status_canonico(db_teste):
         "Fornecedores não computados: o gate não reconheceu o status canônico "
         f"'finalizada' com status_execucao desalinhado. Resultado: {resultado}"
     )
+
+
+def test_finalizar_via_atualizar_proposta_com_efeitos_aparece(db_teste):
+    """Caso F (caminho atualizar_proposta com efeitos colaterais pesados):
+    finalizar via `db.atualizar_proposta(status="finalizada",
+    gerar_transacoes_automaticas=True)` dispara lançamentos financeiros,
+    registro de venda de produtos e criação da pós-organização. Mesmo com
+    esses efeitos, a proposta deve permanecer visível no filtro de finalizadas
+    com os dois campos alinhados — é o caminho irmão da #27/#36, antes sem
+    blindagem por teste."""
+    db, usuario_id, cliente_id = db_teste
+
+    pid = db.add_proposta(
+        cliente_id=cliente_id,
+        descricao="Proposta finalizada via atualizar_proposta (efeitos)",
+        valor=4100.0,
+        status=STATUS_EM_ABERTO,
+        gerar_transacoes_automaticas=False,
+    )
+    assert pid and pid > 0, "Falha ao criar proposta base"
+
+    # Produto + fornecedor para exercitar os efeitos colaterais pesados
+    # (_registrar_venda_produtos e o gate de comissão de fornecedores).
+    db.add_produto_organizador(
+        proposta_id=pid,
+        nome="Caixa organizadora",
+        descricao="Item de teste",
+        valor=120.0,
+        quantidade=2,
+        comodo="Cozinha",
+    )
+    db.add_acrescimo_proposta(
+        proposta_id=pid,
+        tipo="FORNECEDOR",
+        valor=300.0,
+        fornecedor="Fornecedor Teste Pytest",
+    )
+
+    # Aquece o cache por sessão antes da escrita: se atualizar_proposta não
+    # invalidar o cache (#35), a releitura traria o estado antigo e falharia.
+    _ = db.get_propostas()
+
+    res = db.atualizar_proposta(
+        int(pid), status=STATUS_FINALIZADA, gerar_transacoes_automaticas=True
+    )
+    assert res.get("status") is True, f"atualizar_proposta falhou: {res}"
+
+    fin = _finalizadas_frescas(db)
+    linha = _buscar_proposta(fin, pid)
+
+    assert linha is not None, (
+        "Proposta finalizada via atualizar_proposta (com efeitos) sumiu do "
+        "filtro de finalizadas — invariante 'dois campos' violada no caminho "
+        "atualizar_proposta."
+    )
+    assert linha["status"] == STATUS_FINALIZADA
+    assert linha["status_execucao"] == EXEC_FINALIZADA
