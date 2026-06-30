@@ -3,3 +3,4 @@
 - [Streamlit markdown HTML code-block trap](streamlit-markdown-html-codeblock.md) — HTML cru aparece literal em st.markdown quando ternário deixa linha em branco antes de HTML indentado; montar HTML em linha única.
 - [st.dataframe seleção vs. ação explícita](streamlit-dataframe-dialog.md) — abrir detalhes por seleção de linha é frágil/confuso; tabela só p/ ver + selectbox+botão "Ver detalhes" → estado compartilhado renderizado a cada run.
 - [Proposta finalizada = dois campos](status-finalizada-dois-campos.md) — telas/kanban de finalizadas fazem AND de status (finalizada) E status_execucao (Finalizada); todo fechamento deve setar AMBOS ou a proposta some.
+- [Cache de propostas vs. finalização](proposta-cache-invalidacao.md) — get_propostas() cacheia por sessão e nem todo write invalida (ex.: criar_venda_de_proposta); leitura pós-escrita pode vir stale até invalidar_cache()/rerun.
