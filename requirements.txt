@@ -36,3 +36,4 @@ requests
 streamlit-extras
 fastapi
 uvicorn
+pytest
