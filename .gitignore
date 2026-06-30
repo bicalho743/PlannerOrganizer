@@ -75,6 +75,9 @@ testar_*.py
 # Suíte de testes (sobrepõe o padrão test_*.py acima)
 !tests/
 !tests/**
+# ...mas nunca versionar artefatos compilados dentro de tests/
+tests/**/__pycache__/
+tests/**/*.pyc
 
 # Outros
 .DS_Store
