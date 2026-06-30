@@ -26,20 +26,26 @@ carregar" (trava/pesada). Sempre tornar o viewer SOB DEMANDA: gate com
 `st.toggle`/`st.checkbox` e só chamar `components.html` quando ativado.
 
 # Como resolver
-Oferecer VISUALIZAÇÃO inline dentro do app por uma URL REAL servida pelo
-Streamlit (NÃO `data:`/`blob:null`/`file://`). O componente roda num iframe
-`srcdoc` de origem nula; Chrome BLOQUEIA renderizar PDF via `data:`/`blob:null`
-ali (inclusive o link de fallback `data:` não abre em nova aba). Tentar
-`<object>/<embed>` com `data:` URI = tela vazia = "não funciona".
+NÃO usar `data:`/`blob:null`/`file://`: o componente roda num iframe `srcdoc`
+de origem nula e o Chrome BLOQUEIA renderizar PDF (plugin nativo) via esses
+esquemas ali — `<object>/<embed>` com `data:` URI = tela vazia = "não funciona",
+e o link de fallback `data:` também não abre em nova aba.
 
-Solução confiável: `enableStaticServing = true` + gravar o PDF em `static/pdfs/`
-→ servido em `/app/static/pdfs/<arquivo>.pdf`. No `components.html`, computar a
-ORIGEM absoluta no cliente (`window.location.ancestorOrigins[0]` ou
-`document.referrer`, pois srcdoc não resolve URL relativa) e carregar a URL
-real num `<iframe>`; o mesmo URL serve para "Abrir em nova aba". Nome de arquivo
-estável por proposta/tipo para sobrescrever (sem acúmulo). Helpers:
-`_serve_pdf_static()` + `_pdf_inline_viewer(static_rel_url, ...)` em
-`pages/propostas_unificado.py`, sob `st.toggle` (carregamento sob demanda).
+Para documentos PRIVADOS (app multi-tenant), NÃO servir de `static/` (é
+público e sem auth; URL adivinhável = vazamento entre usuários). Em vez disso,
+renderizar com **pdf.js** (canvas) a partir dos BYTES embutidos (base64) no
+próprio `components.html`: os bytes só chegam ao navegador do dono logado, nada
+vira arquivo público. "Abrir em nova aba" = `window.open` + render com pdf.js
+na nova aba (sandbox do Streamlit permite popups). Sob `st.toggle` (sob
+demanda). Helper: `_pdf_inline_viewer(pdf_bytes, key, height)` em
+`pages/propostas_unificado.py`. O `st.download_button` (bytes autenticados) já
+cobre o "baixar".
+
+**Armadilha do static serving para libs JS:** `/app/static/...` responde com
+`Content-Type: text/plain` + `X-Content-Type-Options: nosniff`, então o
+navegador RECUSA executar um `.js` servido de `static/` via `<script src>`.
+Por isso pdf.js é carregado do CDN (lib pública; nenhum dado de usuário vai
+ao CDN). Não adianta baixar pdf.js para `static/` e apontar `<script>` pra lá.
 
 Alternativa para o usuário: abrir o app numa aba própria do navegador (não
 embutida) — aí o "abrir" do arquivo baixado funciona normalmente.

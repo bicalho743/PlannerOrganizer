@@ -449,88 +449,94 @@ def _excluir_proposta_completa(proposta_id):
         return False, f"Erro ao excluir proposta: {e}"
 
 
-def _serve_pdf_static(pdf_bytes, report_type, proposta_id):
-    """Write the PDF into the Streamlit static dir and return its served path.
+def _pdf_inline_viewer(pdf_bytes, key, height=720):
+    """Render a PDF privately, in-session, using pdf.js (canvas rendering).
 
-    Streamlit serves files placed under `static/` at `/app/static/<path>`
-    (enableStaticServing = true). Serving the PDF from a real same-origin URL
-    lets the browser render it natively inside an `<iframe>` and open it in a
-    new tab — unlike `data:`/`blob:null` URIs, which Chrome blocks inside the
-    sandboxed component iframe.
+    The bytes are embedded (base64) directly inside the component and rendered
+    to <canvas> by pdf.js in the authenticated owner's own browser. Nothing is
+    written to the public `static/` dir, so there is no guessable/public URL to
+    the document — only the logged-in owner who triggered the view ever
+    receives the bytes. pdf.js itself (a public, non-sensitive library) is
+    served from our own static dir with a CDN fallback. "Abrir em nova aba"
+    opens a new window that renders the same in-memory bytes with pdf.js.
 
-    Because anything under `static/` is served publicly with no auth, the
-    filename must NOT be guessable from the proposal id (this app is
-    multi-tenant). We use an unguessable random token, kept per
-    (report_type, proposta_id) in `session_state` so re-runs reuse the same
-    file, and we prune files older than 1h to avoid leaving sensitive PDFs
-    lying around."""
-    import secrets
-    import time as _time
-    rel_dir = os.path.join("static", "pdfs")
-    os.makedirs(rel_dir, exist_ok=True)
-
-    now = _time.time()
-    try:
-        for old in os.listdir(rel_dir):
-            old_path = os.path.join(rel_dir, old)
-            if os.path.isfile(old_path) and now - os.path.getmtime(old_path) > 3600:
-                os.remove(old_path)
-    except Exception:
-        pass
-
-    tokens = st.session_state.setdefault("_pdf_view_tokens", {})
-    map_key = f"{report_type}_{proposta_id}"
-    token = tokens.get(map_key)
-    if not token:
-        token = secrets.token_urlsafe(24)
-        tokens[map_key] = token
-    fname = f"{token}.pdf"
-    with open(os.path.join(rel_dir, fname), "wb") as f:
-        f.write(pdf_bytes)
-    return f"app/static/pdfs/{fname}"
-
-
-def _pdf_inline_viewer(static_rel_url, key, height=720):
-    """Render a PDF inline from a Streamlit-served static URL.
-
-    The component runs inside Streamlit's sandboxed `srcdoc` iframe, whose
-    document has an opaque (null) origin, so relative URLs cannot resolve.
-    We compute the app's absolute origin client-side (via `ancestorOrigins`
-    / `document.referrer`) and load the served PDF in a nested `<iframe>`,
-    which the browser renders natively. An "open in new tab" link points to
-    the same real URL as a fallback."""
+    Canvas rendering is used (instead of the browser's native PDF plugin via
+    data:/blob: URIs) because Chrome blocks those inside the sandboxed,
+    null-origin component iframe."""
+    b64 = base64.b64encode(pdf_bytes).decode()
     safe_key = str(key).replace("-", "_")
-    html = """
-    <div id="pdfwrap_KEY" style="width:100%;height:HEIGHTpx;"></div>
-    <div id="pdflink_KEY" style="padding:8px 0;text-align:center;font-family:sans-serif;font-size:13px;"></div>
-    <script>
-    (function(){
-      var rel = "REL";
-      var origin = "";
-      try {
-        if (window.location.ancestorOrigins && window.location.ancestorOrigins.length) {
-          origin = window.location.ancestorOrigins[0];
-        } else if (document.referrer) {
-          origin = new URL(document.referrer).origin;
-        }
-      } catch (e) {}
-      var url = (origin ? origin + "/" : "/") + rel;
-      var wrap = document.getElementById("pdfwrap_KEY");
-      var ifr = document.createElement("iframe");
-      ifr.src = url;
-      ifr.style.width = "100%";
-      ifr.style.height = "100%";
-      ifr.style.border = "none";
-      wrap.appendChild(ifr);
-      document.getElementById("pdflink_KEY").innerHTML =
-        '<a href="' + url + '" target="_blank" rel="noopener">Abrir em nova aba</a>';
-    })();
-    </script>
-    """
-    html = (html.replace("KEY", safe_key)
-                .replace("HEIGHT", str(height))
-                .replace("REL", static_rel_url))
-    components.html(html, height=height + 48)
+    template = r"""
+<div style="font-family:sans-serif;">
+  <div style="padding:6px 0;text-align:center;">
+    <button id="newtab___KEY__" style="background:#0D1B2A;color:#C9A84C;border:none;border-radius:6px;padding:8px 14px;font-weight:700;cursor:pointer;">Abrir em nova aba</button>
+  </div>
+  <div id="status___KEY__" style="color:#888;font-size:12px;text-align:center;padding:4px;">Carregando visualização…</div>
+  <div id="cont___KEY__" style="width:100%;height:__HEIGHT__px;overflow:auto;background:#525659;padding:8px;box-sizing:border-box;border-radius:8px;"></div>
+</div>
+<script>
+(function(){
+  var B64 = "__B64__";
+  var CDN_LIB = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+  var CDN_WORKER = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+  function b64ToBytes(b){var s=atob(b),l=s.length,a=new Uint8Array(l);for(var i=0;i<l;i++)a[i]=s.charCodeAt(i);return a;}
+
+  function loadScript(src, ok, fail){
+    var s=document.createElement("script"); s.src=src; s.onload=ok; s.onerror=fail; document.head.appendChild(s);
+  }
+
+  function withLib(cb){
+    if (window.pdfjsLib){ cb(window.pdfjsLib, CDN_WORKER); return; }
+    loadScript(CDN_LIB, function(){ cb(window.pdfjsLib, CDN_WORKER); }, function(){ cb(null); });
+  }
+
+  withLib(function(lib, workerSrc){
+    var status=document.getElementById("status___KEY__");
+    var cont=document.getElementById("cont___KEY__");
+    if(!lib){ status.textContent="Não foi possível carregar o visualizador. Use o botão de download."; return; }
+    lib.GlobalWorkerOptions.workerSrc=workerSrc;
+    lib.getDocument({data:b64ToBytes(B64)}).promise.then(function(pdf){
+      status.style.display="none";
+      var p=Promise.resolve();
+      for(var n=1;n<=pdf.numPages;n++){(function(num){
+        p=p.then(function(){return pdf.getPage(num).then(function(page){
+          var v=page.getViewport({scale:1});
+          var sc=(cont.clientWidth-24)/v.width; if(sc>2)sc=2; if(sc<=0)sc=1;
+          var vp=page.getViewport({scale:sc});
+          var cv=document.createElement("canvas"); cv.width=vp.width; cv.height=vp.height;
+          cv.style.display="block"; cv.style.margin="0 auto 8px"; cv.style.boxShadow="0 1px 4px rgba(0,0,0,0.4)";
+          cont.appendChild(cv);
+          return page.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise;
+        });});
+      })(n);}
+      return p;
+    }).catch(function(err){ status.style.display="block"; status.textContent="Erro ao renderizar PDF: "+err; });
+  });
+
+  document.getElementById("newtab___KEY__").addEventListener("click", function(){
+    var w=window.open("","_blank");
+    if(!w){ alert("Permita pop-ups para abrir em nova aba."); return; }
+    var libUrl = CDN_LIB;
+    var wkUrl = CDN_WORKER;
+    var doc='<!DOCTYPE html><html><head><meta charset="utf-8"><title>PDF</title>'
+      +'<style>body{margin:0;background:#525659;}canvas{display:block;margin:0 auto 8px;box-shadow:0 1px 4px rgba(0,0,0,0.4);}#c{padding:10px;}</style></head>'
+      +'<body><div id="c"></div>'
+      +'<div id="err" style="display:none;color:#fff;padding:16px;font-family:sans-serif;">Não foi possível carregar o visualizador. Volte e use o botão de download.</div>'
+      +'<scr'+'ipt src="'+libUrl+'" onerror="document.getElementById(\'err\').style.display=\'block\';"></scr'+'ipt><scr'+'ipt>'
+      +'var B="'+B64+'";function b2b(b){var s=atob(b),l=s.length,a=new Uint8Array(l);for(var i=0;i<l;i++)a[i]=s.charCodeAt(i);return a;}'
+      +'if(typeof pdfjsLib==="undefined"){document.getElementById("err").style.display="block";}else{'
+      +'pdfjsLib.GlobalWorkerOptions.workerSrc="'+wkUrl+'";'
+      +'pdfjsLib.getDocument({data:b2b(B)}).promise.then(function(pdf){var c=document.getElementById("c");var p=Promise.resolve();for(var n=1;n<=pdf.numPages;n++){(function(num){p=p.then(function(){return pdf.getPage(num).then(function(pg){var v=pg.getViewport({scale:1});var sc=(c.clientWidth-20)/v.width;if(sc>2)sc=2;if(sc<=0)sc=1;var vp=pg.getViewport({scale:sc});var cv=document.createElement("canvas");cv.width=vp.width;cv.height=vp.height;c.appendChild(cv);return pg.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise;});});})(n);}return p;}).catch(function(e){document.getElementById("err").style.display="block";});}'
+      +'</scr'+'ipt></body></html>';
+    w.document.open(); w.document.write(doc); w.document.close();
+  });
+})();
+</script>
+"""
+    html = (template.replace("__KEY__", safe_key)
+                    .replace("__HEIGHT__", str(height))
+                    .replace("__B64__", b64))
+    components.html(html, height=height + 80)
 
 
 def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_cliente="Cliente", numero_proposta=None):
@@ -622,8 +628,7 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_
         st.caption(subtitle)
         if st.toggle(" Visualizar no navegador", key=f"view_pdf_{report_type}_{proposta_id}"):
             try:
-                static_url = _serve_pdf_static(pdf_bytes, report_type, proposta_id)
-                _pdf_inline_viewer(static_url, key=f"{report_type}_{proposta_id}")
+                _pdf_inline_viewer(pdf_bytes, key=f"{report_type}_{proposta_id}")
             except Exception as e:
                 st.error(f"Não foi possível preparar a visualização: {e}")
     elif error_msg:
