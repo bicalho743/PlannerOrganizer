@@ -28,3 +28,14 @@ Nos pontos de escrita (ORM e SQL direto), grave SEMPRE o status canônico
 `status_execucao` explicitamente — assim os dois campos nunca divergem. Esses
 endurecimentos só valem para gravações NOVAS; linhas antigas no banco podem
 continuar híbridas até uma migração de dado.
+
+**Dois tipos de corrupção legada, dois fixes diferentes:** (1) rótulo legado
+DENTRO de um mesmo campo (`status_execucao='Vendida'/'Concluída'`) — resolvido
+por normalização de label (ex.: `migrations/normalizar_status_execucao.sql`);
+(2) desalinhamento CROSS-FIELD (`status='finalizada'` com
+`status_execucao`≠`Finalizada`, ou exec='Finalizada' sem o status principal) —
+a normalização de label NÃO resolve isso. Para cross-field, alinhe o par com a
+regra "finalizada por qualquer sinal → ambos finalizada/Finalizada" e derive os
+demais via `derive_exec_from_status`. Migração one-shot idempotente vive em
+`migrations/alinhar_status_hibrido.py` (audita por usuário + verifica que
+nenhuma finalizada some).
