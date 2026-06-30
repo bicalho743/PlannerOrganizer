@@ -3850,6 +3850,95 @@ class Database:
 
         return self._safe_query(query)
 
+    def excluir_proposta_segura(self, proposta_id, usuario_id):
+        """Exclui uma proposta e seus dados relacionados em cascata, somente se a
+        proposta pertencer ao usuário informado.
+
+        Usa queries parametrizadas (bind params) para evitar SQL injection e garante
+        isolamento multi-tenant: nada é removido se a proposta não for do usuário.
+
+        Returns:
+            (bool, str): sucesso e mensagem.
+        """
+        from sqlalchemy import text
+
+        try:
+            proposta_id = int(proposta_id)
+        except (TypeError, ValueError):
+            return False, "ID de proposta inválido."
+
+        if usuario_id is None or str(usuario_id).strip() == "":
+            return False, "Usuário não identificado. Faça login novamente."
+
+        usuario_id = str(usuario_id)
+
+        def query():
+            # Verifica propriedade da proposta antes de qualquer exclusão
+            dono = self.session.execute(
+                text("SELECT usuario_id FROM propostas WHERE id = :pid"),
+                {"pid": proposta_id}
+            ).fetchone()
+
+            if dono is None:
+                return False, f"Proposta #{proposta_id} não encontrada."
+
+            if dono[0] is None or str(dono[0]) != usuario_id:
+                return False, "Você não tem permissão para excluir esta proposta."
+
+            # Remove ações de pós-organização vinculadas às pós-organizações da proposta
+            self.session.execute(
+                text(
+                    "DELETE FROM post_organization_actions "
+                    "WHERE post_organization_id IN "
+                    "(SELECT id FROM post_organizations WHERE proposta_id = :pid)"
+                ),
+                {"pid": proposta_id}
+            )
+
+            # Remove itens de venda e lançamentos financeiros das vendas geradas
+            # a partir desta proposta antes de excluir as próprias vendas, evitando
+            # falhas de chave estrangeira e lançamentos órfãos.
+            venda_ids = [r[0] for r in self.session.execute(
+                text("SELECT id FROM vendas WHERE proposta_id = :pid"),
+                {"pid": proposta_id}
+            ).fetchall()]
+            if venda_ids:
+                self.session.execute(
+                    text("DELETE FROM itens_venda WHERE venda_id = ANY(:ids)"),
+                    {"ids": venda_ids}
+                )
+                self.session.execute(
+                    text("DELETE FROM financeiro WHERE origem_tipo = 'venda' AND origem_id = ANY(:ids)"),
+                    {"ids": venda_ids}
+                )
+
+            # Remove demais registros relacionados, sempre filtrando pelo proposta_id
+            for tbl in ["post_organizations", "vendas", "financeiro",
+                        "acrescimos_proposta", "produtos_organizadores",
+                        "andamento_propostas"]:
+                self.session.execute(
+                    text(f"DELETE FROM {tbl} WHERE proposta_id = :pid"),
+                    {"pid": proposta_id}
+                )
+
+            # Remove a proposta, reforçando o filtro por usuário
+            self.session.execute(
+                text("DELETE FROM propostas WHERE id = :pid AND usuario_id = :uid"),
+                {"pid": proposta_id, "uid": usuario_id}
+            )
+
+            self.session.commit()
+            return True, f"Proposta #{proposta_id} excluída."
+
+        try:
+            return self._safe_query(query)
+        except Exception as e:
+            try:
+                self.session.rollback()
+            except Exception:
+                pass
+            return False, f"Erro ao excluir proposta: {str(e)}"
+
     def excluir_proposta(self, proposta_id_param):
         """Exclui uma proposta e seus registros relacionados usando o ID da proposta"""
 
