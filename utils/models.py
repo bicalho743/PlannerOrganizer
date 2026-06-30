@@ -220,7 +220,7 @@ class Proposta(Base):
     status_pagamento_base = Column(String, default='Pendente')
     previsao_dias = Column(Integer)  # Dias previstos para execução
     data_inicio_execucao = Column(Date)  # Data de início efetivo da execução
-    status_execucao = Column(String, default='Não iniciada')  # Status da execução: 'Não iniciada', 'Em execução', 'Concluída'
+    status_execucao = Column(String, default='Não iniciada')  # Vocabulário canônico (utils/status_execucao.py): 'Não iniciada', 'Em execução', 'Finalizada', 'Cancelada'
     usuario_id = Column(String, nullable=True)  # ID do usuário proprietário do registro (multi-tenant)
 
     cliente = relationship("Cliente", back_populates="propostas")

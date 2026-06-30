@@ -17,6 +17,7 @@ from streamlit_extras.stylable_container import stylable_container
 from utils.design_tokens import (
     NAVY, NAVY_HOVER, GOLD, GOLD_BUTTON_CSS,
 )
+from utils.status_execucao import EXEC_EM_EXECUCAO, EXEC_FINALIZADA, EXEC_CANCELADA
 
 
 def _safe_float(val, default=0.0):
@@ -134,20 +135,20 @@ def _render_nova_proposta_form(clientes):
 
                     if status_inicial in ["Em execução", "Finalizada"]:
                         proposta_atualizada['data_inicio_execucao'] = data_inicio
-                        proposta_atualizada['status_execucao'] = "Em execução"
+                        proposta_atualizada['status_execucao'] = EXEC_EM_EXECUCAO
 
                     if status_inicial == "Finalizada":
                         if tipo_cadastro == "Cadastro retroativo" and 'data_fim_real' in locals():
                             proposta_atualizada['data_fim'] = data_fim_real
                         else:
                             proposta_atualizada['data_fim'] = data_fim
-                        proposta_atualizada['status_execucao'] = "Concluída"
+                        proposta_atualizada['status_execucao'] = EXEC_FINALIZADA
 
                     if status_inicial in ["Aprovada", "Finalizada"] and tipo_cadastro == "Cadastro retroativo" and 'status_pagamento' in locals():
                         proposta_atualizada['status_pagamento_base'] = status_pagamento
 
                     if status_inicial == "Recusada":
-                        proposta_atualizada['status_execucao'] = "Cancelada"
+                        proposta_atualizada['status_execucao'] = EXEC_CANCELADA
                         proposta_atualizada['data_fim'] = datetime.now().date()
 
                     if proposta_atualizada:
@@ -270,7 +271,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
                     from utils.database import engine
                     with engine.connect() as conn:
                         conn.execute(sa_text(
-                            "UPDATE propostas SET status = 'recusada', status_execucao = 'Cancelada' WHERE id = :pid"
+                            "UPDATE propostas SET status = 'recusada', status_execucao = 'Cancelada' WHERE id = :pid"  # 'Cancelada' canônico (EXEC_CANCELADA)
                         ), {"pid": proposta_id})
                         conn.commit()
                     st.session_state['kanban_selected_proposta'] = None
@@ -1321,7 +1322,7 @@ def _tab_acoes(proposta_id, proposta):
                 try:
                     res = st.session_state.db.update_proposta_status(proposta_id=proposta_id, novo_status=STATUS_RECUSADA)
                     if res.get('status', False):
-                        st.session_state.db.update_proposta(proposta_id, status_execucao="Cancelada", data_fim=datetime.now().date())
+                        st.session_state.db.update_proposta(proposta_id, status_execucao=EXEC_CANCELADA, data_fim=datetime.now().date())
                         st.success("Proposta recusada.")
                         st.session_state['kanban_selected_proposta'] = None
                         st.rerun()
@@ -1615,7 +1616,7 @@ def show():
         com fallback para o campo auxiliar status_execucao (compatibilidade)."""
         m = df['status'] == _ST_EX
         if 'status_execucao' in df.columns:
-            m = m | (df['status_execucao'] == 'Em execução')
+            m = m | (df['status_execucao'] == EXEC_EM_EXECUCAO)
         return m
 
     _p_aberto = propostas_com_clientes[propostas_com_clientes['status'] == _ST_AB] if not propostas_com_clientes.empty else pd.DataFrame()

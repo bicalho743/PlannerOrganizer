@@ -6,6 +6,12 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 import pandas as pd
 from werkzeug.security import generate_password_hash, check_password_hash
+from utils.status_execucao import (
+    normalize as _norm_exec,
+    is_finalizada as _is_exec_finalizada,
+    EXEC_EM_EXECUCAO, EXEC_FINALIZADA,
+)
+from utils.proposta_status import STATUS_FINALIZADA
 
 # Get database URL from environment variable
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -2254,7 +2260,7 @@ class Database:
                 # Sempre usar a data de início da proposta como data de início de execução
                 proposta.data_inicio_execucao = proposta.data_inicio
                 # Campo de fase de execução usado pelo kanban (filtra por 'Em execução')
-                proposta.status_execucao = "Em execução"
+                proposta.status_execucao = EXEC_EM_EXECUCAO
 
             # Salvar as alterações para garantir que tudo esteja atualizado antes de gerar lançamentos
             self.session.flush()
@@ -3127,7 +3133,7 @@ class Database:
                 if data_inicio_execucao is not None:
                     proposta.data_inicio_execucao = data_inicio_execucao
                 if status_execucao is not None:
-                    proposta.status_execucao = status_execucao
+                    proposta.status_execucao = _norm_exec(status_execucao)
 
                 # Processar campos adicionais passados como kwargs
                 for key, value in kwargs.items():
@@ -3232,7 +3238,7 @@ class Database:
                     proposta.data_inicio_execucao = proposta.data_inicio
 
                 if status_execucao is not None:
-                    proposta.status_execucao = status_execucao
+                    proposta.status_execucao = _norm_exec(status_execucao)
 
                 # Salvar as alterações antes de gerar transações
                 self.session.flush()
@@ -5166,8 +5172,9 @@ class Database:
                 # Registrar transação financeira se já não existir
                 self._registrar_transacao_venda(venda, proposta)
 
-                # Atualizar status da proposta para vendida
-                proposta.status_execucao = "Vendida"
+                # Venda concluída: proposta passa a finalizada (vocabulário canônico)
+                proposta.status = STATUS_FINALIZADA
+                proposta.status_execucao = EXEC_FINALIZADA
 
                 return {
                     "status": "sucesso",
@@ -5229,8 +5236,9 @@ class Database:
             # Registrar transação financeira
             self._registrar_transacao_venda(venda, proposta)
 
-            # Atualizar status da proposta
-            proposta.status_execucao = "Vendida"
+            # Venda concluída: proposta passa a finalizada (vocabulário canônico)
+            proposta.status = STATUS_FINALIZADA
+            proposta.status_execucao = EXEC_FINALIZADA
 
             return {
                 "status": "sucesso",
@@ -5748,7 +5756,7 @@ class Database:
                 # 3. Comissões a receber por fornecedor - APENAS para propostas concluídas
                 # Verificar se a proposta está concluída antes de gerar lançamentos para fornecedores
                 gerar_lancamentos_comissao = False
-                if proposta.status == "Concluída" or (hasattr(proposta, 'status_execucao') and proposta.status_execucao == "Concluída"):
+                if proposta.status == "Concluída" or (hasattr(proposta, 'status_execucao') and _is_exec_finalizada(proposta.status_execucao)):
                     gerar_lancamentos_comissao = True
                 else:
                     pass

@@ -48,8 +48,9 @@ def get_propostas_finalizadas(db):
     
     # Filtrar propostas finalizadas (status canônico) ou recusadas
     from utils.proposta_status import STATUS_FINALIZADA, STATUS_RECUSADA
+    from utils.status_execucao import EXEC_FINALIZADA
     propostas_finalizadas = propostas[
-        ((propostas['status'] == STATUS_FINALIZADA) & (propostas['status_execucao'] == 'Finalizada')) |
+        ((propostas['status'] == STATUS_FINALIZADA) & (propostas['status_execucao'] == EXEC_FINALIZADA)) |
         (propostas['status'] == STATUS_RECUSADA)
     ]
     

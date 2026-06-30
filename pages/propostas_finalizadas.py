@@ -31,8 +31,9 @@ def show():
     if not todas_propostas.empty:
         # Aplicar filtro
         from utils.proposta_status import STATUS_FINALIZADA, STATUS_RECUSADA, label_for as _label_status
+        from utils.status_execucao import EXEC_FINALIZADA
         propostas_finalizadas = todas_propostas[
-            ((todas_propostas['status'] == STATUS_FINALIZADA) & (todas_propostas['status_execucao'] == 'Finalizada')) |
+            ((todas_propostas['status'] == STATUS_FINALIZADA) & (todas_propostas['status_execucao'] == EXEC_FINALIZADA)) |
             (todas_propostas['status'] == STATUS_RECUSADA)
         ]
         
