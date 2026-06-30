@@ -239,10 +239,10 @@ def _draw_control_dashboard():
     return d
 
 
-def gerar_manual_sistema():
-    import streamlit as st
-    from utils.auth_guard import require_auth
-    require_auth()
+def gerar_manual_sistema(verificar_auth=True):
+    if verificar_auth:
+        from utils.auth_guard import require_auth
+        require_auth()
     pdf_dir = "pdfs"
     if not os.path.exists(pdf_dir):
         os.makedirs(pdf_dir)

@@ -31,24 +31,6 @@ task = "shell.exec"
 args = "streamlit run gerar_manual.py --server.port 8550 --server.address 0.0.0.0 --server.headless true"
 
 [[workflows.workflow]]
-name = "Deploy ZIP"
-author = 39445503
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run create_deployment_zip.py --server.port 8600 --server.address 0.0.0.0"
-
-[[workflows.workflow]]
-name = "Debug Propostas"
-author = 39445503
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run pages/propostas.py --server.port 5050 --server.address 0.0.0.0"
-
-[[workflows.workflow]]
 name = "Start application"
 author = "agent"
 
