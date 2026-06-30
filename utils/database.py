@@ -5806,7 +5806,7 @@ class Database:
                 # 3. Comissões a receber por fornecedor - APENAS para propostas concluídas
                 # Verificar se a proposta está concluída antes de gerar lançamentos para fornecedores
                 gerar_lancamentos_comissao = False
-                if proposta.status == "Concluída" or (hasattr(proposta, 'status_execucao') and _is_exec_finalizada(proposta.status_execucao)):
+                if _norm_status(proposta.status) == STATUS_FINALIZADA or (hasattr(proposta, 'status_execucao') and _is_exec_finalizada(proposta.status_execucao)):
                     gerar_lancamentos_comissao = True
                 else:
                     pass
