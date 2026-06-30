@@ -1,0 +1,112 @@
+"""
+Testes de integração que garantem a invariante:
+"proposta finalizada = dois campos" (status == "finalizada"
+E status_execucao == "Finalizada"), de modo que propostas finalizadas
+NUNCA sumam do filtro de finalizadas.
+
+Estes testes batem no banco de DESENVOLVIMENTO (DATABASE_URL). Para preservar
+o isolamento multi-tenant, cada teste roda sob um usuario_id de teste único e
+remove (cleanup) tudo o que criou no teardown.
+
+Como rodar:
+    python -m pytest tests/ -v
+"""
+
+import os
+import uuid
+
+import pytest
+
+from utils.database import Database
+from utils.filtro_propostas import get_propostas_finalizadas
+from utils.proposta_status import STATUS_FINALIZADA, STATUS_EM_ABERTO
+from utils.status_execucao import EXEC_FINALIZADA
+
+# Guarda: estes testes escrevem no banco apontado por DATABASE_URL. Só rodam
+# quando a variável está definida (ambiente de desenvolvimento), evitando
+# execução acidental sem banco configurado.
+pytestmark = pytest.mark.skipif(
+    not os.environ.get("DATABASE_URL"),
+    reason="Testes de integração exigem DATABASE_URL (banco de desenvolvimento)",
+)
+
+
+@pytest.fixture
+def db_ctx():
+    """Cria uma Database isolada (usuario_id de teste único) + um cliente de
+    teste, e limpa tudo ao final."""
+    usuario_id = f"test-{uuid.uuid4().hex[:12]}"
+    db = Database(usuario_id=usuario_id)
+    # Garante o isolamento mesmo que o construtor tenha caído em fallback.
+    db.usuario_id = usuario_id
+
+    cliente_id = db.add_cliente(nome="Cliente Teste Pytest")
+    created = {"propostas": [], "cliente_id": cliente_id}
+
+    try:
+        yield db, created
+    finally:
+        for pid in created["propostas"]:
+            try:
+                db.excluir_proposta_segura(pid, usuario_id)
+            except Exception:
+                pass
+        try:
+            db.delete_cliente(cliente_id)
+        except Exception:
+            pass
+        try:
+            db.session.close()
+        except Exception:
+            pass
+
+
+def _finalizadas(db):
+    """Lê o filtro de finalizadas com cache invalidado."""
+    db.invalidar_cache()
+    return get_propostas_finalizadas(db)
+
+
+def test_proposta_criada_finalizada_aparece(db_ctx):
+    """Caso A: proposta criada já finalizada (criação direta) aparece no filtro
+    de finalizadas com os dois campos alinhados."""
+    db, created = db_ctx
+
+    pid = db.add_proposta(
+        cliente_id=created["cliente_id"],
+        descricao="Proposta finalizada por criação direta",
+        valor=1000.0,
+        status=STATUS_FINALIZADA,
+    )
+    created["propostas"].append(pid)
+
+    fin = _finalizadas(db)
+    linha = fin[fin["id"] == pid]
+
+    assert not linha.empty, "Proposta finalizada por criação direta sumiu do filtro de finalizadas"
+    assert linha.iloc[0]["status"] == STATUS_FINALIZADA
+    assert linha.iloc[0]["status_execucao"] == EXEC_FINALIZADA
+
+
+def test_venda_de_proposta_finaliza_e_aparece(db_ctx):
+    """Caso B: vender uma proposta de serviço finaliza-a e ela passa a aparecer
+    no filtro de finalizadas com os dois campos alinhados."""
+    db, created = db_ctx
+
+    pid = db.add_proposta(
+        cliente_id=created["cliente_id"],
+        descricao="Proposta para venda de serviço",
+        valor=2500.0,
+        status=STATUS_EM_ABERTO,
+    )
+    created["propostas"].append(pid)
+
+    resultado = db.criar_venda_de_proposta(pid)
+    assert resultado.get("status") == "sucesso", f"Venda não criada: {resultado}"
+
+    fin = _finalizadas(db)
+    linha = fin[fin["id"] == pid]
+
+    assert not linha.empty, "Proposta finalizada via venda sumiu do filtro de finalizadas"
+    assert linha.iloc[0]["status"] == STATUS_FINALIZADA
+    assert linha.iloc[0]["status_execucao"] == EXEC_FINALIZADA

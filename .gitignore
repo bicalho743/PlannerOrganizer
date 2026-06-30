@@ -72,6 +72,10 @@ limpar_*.py
 verificar_*.py
 testar_*.py
 
+# Suíte de testes (sobrepõe o padrão test_*.py acima)
+!tests/
+!tests/**
+
 # Outros
 .DS_Store
 .idea/
