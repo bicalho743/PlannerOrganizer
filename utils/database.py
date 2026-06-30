@@ -8,10 +8,16 @@ import pandas as pd
 from werkzeug.security import generate_password_hash, check_password_hash
 from utils.status_execucao import (
     normalize as _norm_exec,
+    normalize_strict as _norm_exec_strict,
     is_finalizada as _is_exec_finalizada,
+    derive_exec_from_status as _derive_exec_from_status,
     EXEC_EM_EXECUCAO, EXEC_FINALIZADA,
 )
-from utils.proposta_status import STATUS_FINALIZADA
+from utils.proposta_status import (
+    STATUS_FINALIZADA,
+    normalize as _norm_status,
+    normalize_strict as _norm_status_strict,
+)
 
 # Get database URL from environment variable
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -1137,7 +1143,12 @@ class Database:
             cliente_id_local = int(cliente_id)
             descricao_local = descricao
             valor_local = float(valor)
-            status_local = status
+            # Gravar sempre o status canônico; REJEITA valores fora do
+            # vocabulário (impede status inválido no banco)
+            status_local = _norm_status_strict(status) or status
+            # Derivar a fase de execução para manter os dois campos alinhados
+            # desde a criação (regra "proposta finalizada = dois campos")
+            status_execucao_local = _derive_exec_from_status(status_local)
             tipo_proposta_local = tipo_proposta
 
             # Para datas, vamos garantir que não sejam None antes de usar
@@ -1165,6 +1176,10 @@ class Database:
                 'status': status_local,
                 'usuario_id': self.usuario_id,  # Adicionar o ID do usuário atual
             }
+
+            # Manter status_execucao coerente com o status desde a criação
+            if status_execucao_local is not None:
+                proposta_data['status_execucao'] = status_execucao_local
 
             # Adicionar valores opcionais apenas se não forem None
             if tipo_proposta_local is not None:
@@ -2232,8 +2247,12 @@ class Database:
             # Inicializar data_aprovacao localmente para garantir que existe
             data_aprovacao_local = data_aprovacao
 
-            # Normalizar o status recebido (aceita rótulo legado ou canônico)
-            novo_status_canon = _norm_status(novo_status) or novo_status
+            # Normalizar o status recebido (aceita rótulo legado ou canônico);
+            # REJEITA valores fora do vocabulário para não gravar status inválido
+            try:
+                novo_status_canon = _norm_status_strict(novo_status) or novo_status
+            except ValueError as _ve:
+                return {"status": False, "message": str(_ve)}
 
             # Buscar a proposta por ID
             proposta = self.session.query(Proposta).filter(Proposta.id == proposta_id).first()
@@ -2255,12 +2274,17 @@ class Database:
             if data_aprovacao_local:
                 proposta.data_aprovacao = data_aprovacao_local
 
+            # Manter o campo de fase de execução SEMPRE alinhado ao status
+            # principal (regra "proposta finalizada = dois campos"). Evita
+            # estados híbridos que fazem a proposta sumir das telas.
+            _exec_implicito = _derive_exec_from_status(novo_status_canon)
+            if _exec_implicito is not None:
+                proposta.status_execucao = _exec_implicito
+
             # Definir campos adicionais se o status for "Em execução"
             if novo_status_canon == STATUS_EM_EXECUCAO:
                 # Sempre usar a data de início da proposta como data de início de execução
                 proposta.data_inicio_execucao = proposta.data_inicio
-                # Campo de fase de execução usado pelo kanban (filtra por 'Em execução')
-                proposta.status_execucao = EXEC_EM_EXECUCAO
 
             # Salvar as alterações para garantir que tudo esteja atualizado antes de gerar lançamentos
             self.session.flush()
@@ -3117,7 +3141,15 @@ class Database:
                 if valor is not None:
                     proposta.valor = float(valor)
                 if status is not None:
-                    proposta.status = status
+                    # Gravar sempre o status canônico
+                    status_canon = _norm_status_strict(status) or status
+                    proposta.status = status_canon
+                    # Manter status_execucao alinhado quando não for informado
+                    # explicitamente (regra "proposta finalizada = dois campos")
+                    if status_execucao is None:
+                        _exec_implicito = _derive_exec_from_status(status_canon)
+                        if _exec_implicito is not None:
+                            proposta.status_execucao = _exec_implicito
                 if tipo_proposta is not None:
                     proposta.tipo_proposta = tipo_proposta
                 if data_inicio is not None:
@@ -3133,7 +3165,7 @@ class Database:
                 if data_inicio_execucao is not None:
                     proposta.data_inicio_execucao = data_inicio_execucao
                 if status_execucao is not None:
-                    proposta.status_execucao = _norm_exec(status_execucao)
+                    proposta.status_execucao = _norm_exec_strict(status_execucao)
 
                 # Processar campos adicionais passados como kwargs
                 for key, value in kwargs.items():
@@ -3208,7 +3240,15 @@ class Database:
                     proposta.valor = float(valor)
 
                 if status is not None:
-                    proposta.status = status
+                    # Gravar sempre o status canônico
+                    status_canon = _norm_status_strict(status) or status
+                    proposta.status = status_canon
+                    # Manter status_execucao alinhado quando não for informado
+                    # explicitamente (regra "proposta finalizada = dois campos")
+                    if status_execucao is None:
+                        _exec_implicito = _derive_exec_from_status(status_canon)
+                        if _exec_implicito is not None:
+                            proposta.status_execucao = _exec_implicito
 
                 if tipo_proposta is not None:
                     proposta.tipo_proposta = tipo_proposta
@@ -3238,7 +3278,7 @@ class Database:
                     proposta.data_inicio_execucao = proposta.data_inicio
 
                 if status_execucao is not None:
-                    proposta.status_execucao = _norm_exec(status_execucao)
+                    proposta.status_execucao = _norm_exec_strict(status_execucao)
 
                 # Salvar as alterações antes de gerar transações
                 self.session.flush()

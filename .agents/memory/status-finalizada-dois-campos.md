@@ -21,3 +21,10 @@ campos em conjunto. Vocabulário canônico de `status_execucao` vive em
 `utils/status_execucao.py` (use `normalize()` + constantes `EXEC_*`); o de
 `status` em `utils/proposta_status.py` (`STATUS_*`). Legados mapeados:
 `Concluída`/`Vendida`→`Finalizada`, `Iniciada`→`Em execução`.
+
+Nos pontos de escrita (ORM e SQL direto), grave SEMPRE o status canônico
+(`proposta_status.normalize`) e derive a fase com
+`status_execucao.derive_exec_from_status(status)` quando o caller não passar
+`status_execucao` explicitamente — assim os dois campos nunca divergem. Esses
+endurecimentos só valem para gravações NOVAS; linhas antigas no banco podem
+continuar híbridas até uma migração de dado.

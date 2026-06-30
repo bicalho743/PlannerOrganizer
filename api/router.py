@@ -297,26 +297,36 @@ async def update_proposta(proposta_id: int, body: PropostaUpdate, uid: str = Dep
     try:
         import psycopg2 as _pg2, os as _os
         if body.status:
+            from utils.proposta_status import normalize_strict as _norm_status_strict
+            from utils.status_execucao import derive_exec_from_status as _derive_exec
+            # Gravar sempre o status canônico e manter status_execucao alinhado
+            # (regra "proposta finalizada = dois campos"). REJEITA status fora
+            # do vocabulário para não persistir valor inválido.
+            try:
+                _status_canon = _norm_status_strict(body.status) or body.status
+            except ValueError as _ve:
+                raise HTTPException(status_code=422, detail=str(_ve))
+            _exec_implicito = _derive_exec(_status_canon)
             _conn = _pg2.connect(_os.environ.get("DATABASE_URL"))
             _cur = _conn.cursor()
             try:
                 _cur.execute(
                     "UPDATE propostas SET status = %s WHERE id = %s",
-                    (body.status, proposta_id)
+                    (_status_canon, proposta_id)
                 )
-                if body.status == 'em_execucao':
+                if _status_canon == 'em_execucao':
                     _cur.execute(
                         "UPDATE propostas SET status_execucao = %s, data_inicio_execucao = COALESCE(data_inicio, CURRENT_DATE) WHERE id = %s",
                         ('Em execução', proposta_id)
                     )
-                elif body.status == 'finalizada':
+                elif _exec_implicito is not None:
                     _cur.execute(
                         "UPDATE propostas SET status_execucao = %s WHERE id = %s",
-                        ('Finalizada', proposta_id)
+                        (_exec_implicito, proposta_id)
                     )
                 _conn.commit()
                 rows = _cur.rowcount
-                print(f"[update_proposta] status={body.status} id={proposta_id} rows={rows}")
+                print(f"[update_proposta] status={_status_canon} id={proposta_id} rows={rows}")
             finally:
                 _cur.close()
                 _conn.close()
@@ -329,7 +339,7 @@ async def update_proposta(proposta_id: int, body: PropostaUpdate, uid: str = Dep
             except Exception:
                 pass
             # Lançamento financeiro ao aprovar
-            if body.status == 'aprovada':
+            if _status_canon == 'aprovada':
                 try:
                     import psycopg2 as _pg2b, os as _osb
                     _conn2 = _pg2b.connect(_osb.environ.get("DATABASE_URL"))
@@ -355,7 +365,7 @@ async def update_proposta(proposta_id: int, body: PropostaUpdate, uid: str = Dep
                     print(f"[aprovacao] erro: {_ae}")
 
             # Disparar lançamentos financeiros ao finalizar
-            if body.status == 'finalizada':
+            if _status_canon == 'finalizada':
                 try:
                     from utils.finalizar_proposta_v2 import finalizar_proposta_v2
                     finalizar_proposta_v2(proposta_id)

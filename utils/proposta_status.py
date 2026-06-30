@@ -65,6 +65,24 @@ def normalize(raw):
     return _LEGACY_TO_CANONICAL.get(low, s)
 
 
+def normalize_strict(raw):
+    """Como normalize(), mas REJEITA valores desconhecidos com ValueError.
+
+    Use nos pontos de escrita (ORM/SQL) para impedir que rótulos fora do
+    vocabulário canônico sejam gravados no banco. Retorna None para vazio/None
+    (interpretado como "não atualizar este campo").
+    """
+    canonical = normalize(raw)
+    if canonical is None:
+        return None
+    if canonical not in CANONICAL_STATUSES:
+        raise ValueError(
+            f"Status de proposta inválido: {raw!r}. "
+            f"Valores aceitos: {', '.join(CANONICAL_STATUSES)}"
+        )
+    return canonical
+
+
 def label_for(status):
     """Retorna o rótulo amigável para exibição. Faz normalize() defensivo."""
     if status is None:
