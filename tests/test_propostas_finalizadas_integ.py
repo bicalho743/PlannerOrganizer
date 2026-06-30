@@ -19,7 +19,12 @@ import pytest
 
 from utils.database import Database
 from utils.filtro_propostas import get_propostas_finalizadas
-from utils.proposta_status import STATUS_FINALIZADA, STATUS_EM_ABERTO
+from utils.finalizar_proposta_v2 import finalizar_proposta_v2
+from utils.proposta_status import (
+    STATUS_FINALIZADA,
+    STATUS_EM_ABERTO,
+    STATUS_EM_EXECUCAO,
+)
 from utils.status_execucao import EXEC_FINALIZADA
 
 # Guarda: estes testes escrevem no banco apontado por DATABASE_URL. Só rodam
@@ -62,7 +67,12 @@ def db_ctx():
 
 
 def _finalizadas(db):
-    """Lê o filtro de finalizadas com cache invalidado."""
+    """Lê o filtro de finalizadas com estado/cache invalidados.
+
+    `expire_all()` descarta os objetos do identity map da sessão para que a
+    releitura traga os valores realmente gravados no banco — necessário quando
+    a finalização ocorre por outra conexão (ex.: finalizar_proposta_v2)."""
+    db.session.expire_all()
     db.invalidar_cache()
     return get_propostas_finalizadas(db)
 
@@ -108,5 +118,57 @@ def test_venda_de_proposta_finaliza_e_aparece(db_ctx):
     linha = fin[fin["id"] == pid]
 
     assert not linha.empty, "Proposta finalizada via venda sumiu do filtro de finalizadas"
+    assert linha.iloc[0]["status"] == STATUS_FINALIZADA
+    assert linha.iloc[0]["status_execucao"] == EXEC_FINALIZADA
+
+
+def test_edicao_status_para_finalizada_aparece(db_ctx):
+    """Caso C (tela de edição — dropdown de status): mudar o status para
+    "finalizada" via update_proposta deve manter a proposta visível no filtro
+    de finalizadas, com os dois campos alinhados."""
+    db, created = db_ctx
+
+    pid = db.add_proposta(
+        cliente_id=created["cliente_id"],
+        descricao="Proposta finalizada pela edição (dropdown)",
+        valor=1800.0,
+        status=STATUS_EM_ABERTO,
+    )
+    created["propostas"].append(pid)
+
+    # Caminho real da tela de edição: o dropdown "Finalizada" mapeia para o
+    # status canônico e a gravação chama update_proposta(status=...).
+    res = db.update_proposta(pid, status=STATUS_FINALIZADA)
+    assert res.get("status") == "success", f"Edição não aplicada: {res}"
+
+    fin = _finalizadas(db)
+    linha = fin[fin["id"] == pid]
+
+    assert not linha.empty, "Proposta finalizada pela edição sumiu do filtro de finalizadas"
+    assert linha.iloc[0]["status"] == STATUS_FINALIZADA
+    assert linha.iloc[0]["status_execucao"] == EXEC_FINALIZADA
+
+
+def test_botao_finalizar_projeto_aparece(db_ctx):
+    """Caso D (tela de edição — botão "FINALIZAR PROJETO"): finalizar_proposta_v2
+    deve alinhar os dois campos e manter a proposta visível no filtro de
+    finalizadas."""
+    db, created = db_ctx
+
+    pid = db.add_proposta(
+        cliente_id=created["cliente_id"],
+        descricao="Proposta finalizada pelo botão FINALIZAR PROJETO",
+        valor=3200.0,
+        status=STATUS_EM_EXECUCAO,
+    )
+    created["propostas"].append(pid)
+
+    res = finalizar_proposta_v2(int(pid))
+    assert res.get("status") is True, f"Finalização v2 falhou: {res}"
+
+    fin = _finalizadas(db)
+    linha = fin[fin["id"] == pid]
+
+    assert not linha.empty, "Proposta finalizada pelo botão sumiu do filtro de finalizadas"
     assert linha.iloc[0]["status"] == STATUS_FINALIZADA
     assert linha.iloc[0]["status_execucao"] == EXEC_FINALIZADA
