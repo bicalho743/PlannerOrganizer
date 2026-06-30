@@ -122,6 +122,7 @@ def get_post_organizations(session, usuario_id, status_filter=None):
                 'proposta_numero': proposta_numero,
                 'cliente_id': po.cliente_id,
                 'cliente_nome': cliente_nome,
+                'cliente_telefone': cliente.telefone if cliente else None,
                 'data_final_projeto': po.data_final_projeto,
                 'status': po.status,
                 'created_at': po.created_at,
@@ -172,7 +173,7 @@ def get_post_organization_actions(session, post_organization_id):
         return pd.DataFrame()
 
 
-def update_post_organization_action(session, action_id, status, notes=None):
+def update_post_organization_action(session, action_id, status, notes=None, due_date=None):
     """
     Atualiza uma ação de pós-organização.
     
@@ -181,6 +182,7 @@ def update_post_organization_action(session, action_id, status, notes=None):
         action_id: ID da ação
         status: Novo status ('PENDENTE', 'FEITO', 'CANCELADO')
         notes: Observações (opcional)
+        due_date: Data de vencimento (opcional)
         
     Returns:
         dict com informações da ação atualizada ou None se erro
@@ -196,6 +198,8 @@ def update_post_organization_action(session, action_id, status, notes=None):
         action.status = status
         if notes is not None:
             action.notes = notes
+        if due_date is not None:
+            action.due_date = due_date
         
         if status == 'FEITO':
             action.completed_at = datetime.now()
@@ -325,6 +329,7 @@ def get_pending_post_actions_for_dashboard(session, usuario_id):
                 'action_type': a.action_type,
                 'due_date': a.due_date,
                 'cliente_nome': cliente.nome if cliente else 'N/A',
+                'cliente_telefone': cliente.telefone if cliente else None,
                 'proposta_numero': proposta.numero if proposta else 'N/A',
                 'post_organization_id': a.post_organization_id
             })

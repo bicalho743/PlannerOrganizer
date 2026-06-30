@@ -505,16 +505,7 @@ async def get_pos_organizacao(uid: str = Depends(verify_firebase_token)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@api.get("/pos-organizacao/{pos_id}/acoes")
-async def get_pos_acoes(pos_id: int, uid: str = Depends(verify_firebase_token)):
-    try:
-        db = get_db(uid)
-        acoes = db.get_post_organization_actions(pos_id)
-        return JSONResponse(content=safe_records(acoes))
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
 
 # ── RELATÓRIOS ────────────────────────────────────────────────────────────────
 
@@ -1353,18 +1344,27 @@ async def update_produto(produto_id: int, body: ProdutoCreate, uid: str = Depend
 
 # ── PÓS-ORGANIZAÇÃO DETALHADO ─────────────────────────────────────────────────
 
-class AcaoUpdate(BaseModel):
-    status: str  # FEITO ou PENDENTE
-    notes: Optional[str] = None
-
 @api.get("/pos-organizacao/{pos_id}/acoes")
 async def get_pos_acoes_detail(pos_id: int, uid: str = Depends(verify_firebase_token)):
     try:
         db = get_db(uid)
         acoes = db.get_post_organization_actions(pos_id)
         records = safe_records(acoes)
-        # Buscar templates para enrichment
+        
+        # Enriquecer com dados do template e primeiro nome do cliente
         try:
+            from utils.models import PostOrganization
+            po = db.session.query(PostOrganization).filter(
+                PostOrganization.id == pos_id,
+                PostOrganization.usuario_id == uid
+            ).first()
+            
+            first_name = "cliente"
+            if po and po.cliente:
+                full_name = po.cliente.nome
+                if full_name:
+                    first_name = full_name.split(' ')[0]
+            
             templates = db.get_post_org_templates()
             for r in records:
                 action_type = r.get('action_type', '')
@@ -1373,25 +1373,42 @@ async def get_pos_acoes_detail(pos_id: int, uid: str = Depends(verify_firebase_t
                     r['nome'] = t.get('nome', action_type)
                     r['emoji'] = t.get('emoji', '📌')
                     r['dias_apos'] = t.get('dias_apos', '')
-                    r['texto'] = t.get('texto', '')
+                    raw_text = t.get('texto', '')
+                    r['texto'] = raw_text.replace('{nome}', first_name) if raw_text else ''
+                    r['gratuito'] = t.get('gratuito', False)
+                    r['hint'] = t.get('hint', '')
                 else:
                     r['nome'] = action_type.replace('_', ' ').title()
                     r['emoji'] = '📌'
                     r['dias_apos'] = ''
                     r['texto'] = ''
-        except:
-            pass
+                    r['gratuito'] = False
+                    r['hint'] = ''
+        except Exception as e:
+            print(f"Erro ao enriquecer acoes do pos-organizacao: {e}")
+            
         return JSONResponse(content=records)
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+class AcaoUpdate(BaseModel):
+    status: str  # FEITO ou PENDENTE
+    notes: Optional[str] = None
+    due_date: Optional[str] = None
+
 @api.put("/pos-organizacao/acoes/{acao_id}")
 async def update_pos_acao(acao_id: int, body: AcaoUpdate, uid: str = Depends(verify_firebase_token)):
     try:
         db = get_db(uid)
-        db.update_post_organization_action(action_id=acao_id, status=body.status, notes=body.notes)
+        due_date = None
+        if body.due_date:
+            try:
+                due_date = datetime.strptime(body.due_date, "%Y-%m-%d").date()
+            except ValueError:
+                pass
+        db.update_post_organization_action(action_id=acao_id, status=body.status, notes=body.notes, due_date=due_date)
         return JSONResponse(content={"success": True})
     except HTTPException:
         raise

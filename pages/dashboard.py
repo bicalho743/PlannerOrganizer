@@ -550,6 +550,9 @@ def show():
                 df_alertas = st.session_state.db.get_pending_post_actions_for_dashboard()
                 
                 if not df_alertas.empty:
+                    # Carregar templates para formatar mensagens de WhatsApp
+                    templates = st.session_state.db.get_post_org_templates() or {}
+                    
                     for _, alerta in df_alertas.iterrows():
                         tipo_config = {
                             'agradecimento':   {'icone': '', 'texto': 'Agradecimento',  'cor': '#27ae60', 'dias': 'D+1',  'objetivo': 'Mensagem elegante de encerramento'},
@@ -564,15 +567,33 @@ def show():
                             config = tipo_config.get(at, {'icone': '', 'texto': at.replace('_', ' ').title(), 'cor': '#0D1B2A', 'dias': '', 'objetivo': ''})
                             data_fmt = str(alerta['due_date'])
                         except Exception:
+                            at = 'agradecimento'
                             config = {'icone': '', 'texto': 'Ação', 'cor': '#0D1B2A', 'dias': '', 'objetivo': ''}
                             data_fmt = str(alerta.get('due_date', ''))
 
                         dias_badge = f"<span style='background:rgba(255,255,255,0.25);padding:2px 8px;border-radius:10px;font-size:0.75em;margin-left:8px;font-weight:600;'>{config['dias']}</span>" if config['dias'] else ""
                         objetivo_txt = f"<div style='color:rgba(255,255,255,0.85);font-size:0.8em;font-style:italic;margin-top:2px;'>{config['objetivo']}</div>" if config['objetivo'] else ""
 
+                        # Formatação de texto para WhatsApp
+                        template_info = templates.get(at, {})
+                        texto_template = template_info.get('texto', '')
+                        nome_cliente_primeiro = alerta['cliente_nome'].split(' ')[0] if alerta['cliente_nome'] else 'cliente'
+                        mensagem_whatsapp = texto_template.replace('{nome}', nome_cliente_primeiro) if texto_template else ""
+                        
+                        telefone_limpo = ''
+                        if alerta.get('cliente_telefone'):
+                            import re
+                            telefone_limpo = re.sub(r'\D', '', str(alerta['cliente_telefone']))
+                            if telefone_limpo and not telefone_limpo.startswith('55') and len(telefone_limpo) in (10, 11):
+                                telefone_limpo = '55' + telefone_limpo
+
+                        import urllib.parse
+                        texto_encoded = urllib.parse.quote(mensagem_whatsapp) if mensagem_whatsapp else ''
+                        wa_link = f"https://wa.me/{telefone_limpo}?text={texto_encoded}" if telefone_limpo else ""
+
                         st.markdown(f"""
                         <div style='background-color: {config['cor']}; 
-                              padding: 10px 14px; border-radius: 7px; margin-bottom: 8px;'>
+                               padding: 10px 14px; border-radius: 7px; margin-bottom: 0px;'>
                             <div style='font-weight: bold; color: white; display:flex; align-items:center; flex-wrap:wrap;'>
                                 {config['icone']} {config['texto']}{dias_badge}
                                 <span style='font-weight: normal; color: rgba(255,255,255,0.9); font-size: 0.85em; margin-left:auto;'>
@@ -585,6 +606,27 @@ def show():
                             {objetivo_txt}
                         </div>
                         """, unsafe_allow_html=True)
+
+                        c_wa, c_done, c_delay = st.columns([1.2, 1, 1])
+                        with c_wa:
+                            if wa_link:
+                                st.link_button("💬 WhatsApp", wa_link, use_container_width=True)
+                            else:
+                                st.button("💬 WhatsApp", disabled=True, use_container_width=True, key=f"btn_wa_disabled_{alerta['action_id']}")
+                        with c_done:
+                            if st.button("✅ Concluir", key=f"btn_done_{alerta['action_id']}", use_container_width=True):
+                                st.session_state.db.update_post_organization_action(action_id=alerta['action_id'], status='FEITO')
+                                st.success("Ação concluída!")
+                                st.rerun()
+                        with c_delay:
+                            if st.button("📅 Adiar 3d", key=f"btn_delay_{alerta['action_id']}", use_container_width=True):
+                                from datetime import timedelta
+                                new_due_date = alerta['due_date'] + timedelta(days=3)
+                                st.session_state.db.update_post_organization_action(action_id=alerta['action_id'], status='PENDENTE', due_date=new_due_date)
+                                st.success("Adiado por 3 dias!")
+                                st.rerun()
+
+                        st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
                 else:
                     st.markdown("""
                     <div style='background: #f8f9fa; border: 1px solid #e9ecef; 

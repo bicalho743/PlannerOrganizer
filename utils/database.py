@@ -6281,6 +6281,7 @@ class Database:
                         'proposta_numero': proposta_numero,
                         'cliente_id': po.cliente_id,
                         'cliente_nome': cliente_nome,
+                        'cliente_telefone': cliente.telefone if cliente else None,
                         'data_final_projeto': po.data_final_projeto,
                         'status': po.status,
                         'created_at': po.created_at,
@@ -6332,7 +6333,7 @@ class Database:
 
         return self._safe_query(query)
 
-    def update_post_organization_action(self, action_id, status, notes=None):
+    def update_post_organization_action(self, action_id, status, notes=None, due_date=None):
         """
         Atualiza uma ação de pós-organização.
 
@@ -6340,6 +6341,7 @@ class Database:
             action_id: ID da ação
             status: Novo status ('PENDENTE', 'FEITO', 'CANCELADO')
             notes: Observações (opcional)
+            due_date: Data de vencimento (opcional)
 
         Returns:
             dict com informações da ação atualizada ou None se erro
@@ -6356,6 +6358,8 @@ class Database:
                 action.status = status
                 if notes is not None:
                     action.notes = notes
+                if due_date is not None:
+                    action.due_date = due_date
 
                 if status == 'FEITO':
                     action.completed_at = datetime.now()
@@ -6483,6 +6487,7 @@ class Database:
                         'action_type': a.action_type,
                         'due_date': a.due_date,
                         'cliente_nome': cliente.nome if cliente else 'N/A',
+                        'cliente_telefone': cliente.telefone if cliente else None,
                         'proposta_numero': proposta.numero if proposta else 'N/A',
                         'post_organization_id': a.post_organization_id
                     })
