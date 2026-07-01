@@ -29,9 +29,9 @@ def show():
     from utils.auth_guard import require_auth
     require_auth()
     # Aplicar correção de espaçamento PRIMEIRO
-    apply_spacing_fix()
+#     apply_spacing_fix()
     # Aplicar correção mobile para sidebar
-    apply_mobile_sidebar_fix()
+    # apply_mobile_sidebar_fix()
     # Limita a largura dos cards de acompanhamento (Pós-Organizacao) no dashboard
     st.markdown("<style>.stAlert, div[data-testid='stVerticalBlock'] > div[data-testid='stVerticalBlockBorderWrapper'] { max-width: 760px; margin-left: auto; margin-right: auto; }</style>", unsafe_allow_html=True)
     
