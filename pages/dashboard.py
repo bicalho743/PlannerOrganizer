@@ -32,6 +32,8 @@ def show():
     apply_spacing_fix()
     # Aplicar correção mobile para sidebar
     apply_mobile_sidebar_fix()
+    # Limita a largura dos cards de acompanhamento (Pós-Organizacao) no dashboard
+    st.markdown("<style>.stAlert, div[data-testid='stVerticalBlock'] > div[data-testid='stVerticalBlockBorderWrapper'] { max-width: 760px; margin-left: auto; margin-right: auto; }</style>", unsafe_allow_html=True)
     
     # Removido o título de Dashboard conforme solicitado
 
