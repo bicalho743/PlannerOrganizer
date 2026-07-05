@@ -102,6 +102,33 @@ def apply_page_header(page_title=None, breadcrumb_items=None):
         padding: 0 !important;
     }
 
+    /* Colapsar contêineres invisíveis que geram o espaço entre o cabeçalho
+       e o conteúdo: cada elemento do fluxo recebe 1rem de gap do Streamlit,
+       mesmo com altura zero. Iframes de injeção (height=0) e markdowns que
+       só contêm <style>/<link>/<meta> não devem ocupar fluxo.
+       (display:none não impede a execução dos scripts dos iframes.) */
+    div[data-testid="stElementContainer"]:has(iframe[height="0"]),
+    div.element-container:has(iframe[height="0"]),
+    div[data-testid="stElementContainer"]:has(div[data-testid="stMarkdownContainer"] > style:only-child),
+    div[data-testid="stElementContainer"]:has(div[data-testid="stMarkdownContainer"] link),
+    div[data-testid="stElementContainer"]:has(div[data-testid="stMarkdownContainer"] > p:only-child:empty) {
+        display: none !important;
+    }
+
+    /* Cabeçalho e rodapé são position:fixed — tirar seus contêineres do
+       fluxo (sem display:none, que os esconderia) para não gerarem gap. */
+    div[data-testid="stElementContainer"]:has(.app-header),
+    div[data-testid="stElementContainer"]:has(.footer-container),
+    div[data-testid="stElementContainer"]:has(.user-welcome) {
+        position: absolute !important;
+        top: 0 !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+
     /* Responsividade do cabeçalho */
     @media (max-width: 768px) {
         .app-header {

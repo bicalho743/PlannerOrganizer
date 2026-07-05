@@ -79,6 +79,16 @@ testar_*.py
 tests/**/__pycache__/
 tests/**/*.pyc
 
+# Capacitor / Node (wrapper Android)
+node_modules/
+android/
+/npm
+/npx
+
+# Pastas temporárias de desenvolvimento
+pages_temp/
+utilutils/
+
 # Outros
 .DS_Store
 .idea/
