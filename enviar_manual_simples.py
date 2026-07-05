@@ -11,7 +11,7 @@ if root_dir not in sys.path:
     sys.path.append(root_dir)
 
 # Configurações do Brevo
-BREVO_API_KEY = os.getenv("BREVO_API_KEY", "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")
+BREVO_API_KEY = os.getenv("BREVO_API_KEY")
 BREVO_LIST_ID = os.getenv("BREVO_LIST_ID", "7")
 EMAIL_REMETENTE = "contato@plannerorganizer.com.br" 
 NOME_REMETENTE = "Equipe Planner Organizer"

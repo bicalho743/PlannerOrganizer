@@ -12,9 +12,17 @@ from utils.database import Database
 
 api = FastAPI(title="Planner Organizer API", version="3.0.0")
 
+ALLOWED_ORIGINS = [
+    o.strip() for o in os.environ.get(
+        "CORS_ALLOWED_ORIGINS",
+        "https://plannerorganiza.com.br,https://www.plannerorganiza.com.br,"
+        "https://plannerorganiza-api.onrender.com,http://localhost:8081,http://localhost:19006"
+    ).split(",") if o.strip()
+]
+
 api.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -1444,10 +1452,13 @@ async def update_perfil(body: PerfilUpdate, uid: str = Depends(verify_firebase_t
 # ── WEBHOOK STRIPE ────────────────────────────────────────────────────────────
 
 STRIPE_SECRET_KEY    = os.environ.get("STRIPE_SECRET_KEY", "")
-STRIPE_WEBHOOK_SECRET = "whsec_u2kzOmFd0pRzCtcAjdINjZOOOu5dtuju"
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 
 @api.post("/webhook/stripe")
 async def stripe_webhook(request: Request):
+    if not STRIPE_WEBHOOK_SECRET:
+        print("[webhook] STRIPE_WEBHOOK_SECRET não configurado — evento rejeitado")
+        raise HTTPException(status_code=503, detail="Webhook não configurado")
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature", "")
     try:

@@ -11,8 +11,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # CONFIGURAÇÕES GERAIS DO BREVO
-# A chave usada no exemplo Node.js
-api_key = os.getenv("BREVO_API_KEY", "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")
+api_key = os.getenv("BREVO_API_KEY")
 # Forçar o uso da lista 7, independente do que estiver nas variáveis de ambiente
 lista_brevo_id = "7"  # ID da lista do Brevo onde os e-mails serão armazenados
 EMAIL_REMETENTE = "contato@plannerorganiza.com.br"
