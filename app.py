@@ -593,6 +593,10 @@ try:
 except Exception as e:
     st.error(f"Erro ao carregar página: {str(e)}")
 
+# Marca qual página acabou de renderizar — permite às páginas detectarem
+# "entrada" (navegação) vs. rerun por interação de widget.
+st.session_state["_last_page_rendered"] = st.session_state.get("current_page")
+
 st.sidebar.markdown('<div style="margin:1.5rem 0;"><hr style="border:none;height:1px;background:#E0E0E0;"></div>', unsafe_allow_html=True)
 
 with st.sidebar.expander("Sobre o Sistema"):

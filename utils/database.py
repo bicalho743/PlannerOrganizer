@@ -1407,7 +1407,10 @@ class Database:
 
         # Executar diretamente sem usar o _safe_query para ter mais controle
         try:
-            transacao = self.session.query(Transacao).filter_by(id=transacao_id).first()
+            query_t = self.session.query(Transacao).filter_by(id=transacao_id)
+            if self.usuario_id:
+                query_t = query_t.filter_by(usuario_id=self.usuario_id)
+            transacao = query_t.first()
 
             if transacao:
                 transacao.status = status
@@ -1416,6 +1419,7 @@ class Database:
 
                 # Commit explícito
                 self.session.commit()
+                self.invalidar_cache()
                 return True
 
             return False
@@ -1427,7 +1431,10 @@ class Database:
                       subcategoria=None, classificacao=None, proposta_id=None):
         """Atualiza uma transação existente"""
         def query():
-            transacao = self.session.query(Transacao).filter_by(id=transacao_id).first()
+            query_t = self.session.query(Transacao).filter_by(id=transacao_id)
+            if self.usuario_id:
+                query_t = query_t.filter_by(usuario_id=self.usuario_id)
+            transacao = query_t.first()
             if transacao:
                 transacao.tipo = tipo
                 transacao.descricao = descricao
@@ -1446,7 +1453,10 @@ class Database:
 
                 return True
             return False
-        return self._safe_query(query)
+        resultado = self._safe_query(query)
+        if resultado:
+            self.invalidar_cache()
+        return resultado
 
     def gerar_transacoes_proposta(self, proposta_id):
         """
@@ -1649,12 +1659,18 @@ class Database:
     def delete_transacao(self, transacao_id):
         """Exclui uma transação"""
         def query():
-            transacao = self.session.query(Transacao).filter_by(id=transacao_id).first()
+            query_t = self.session.query(Transacao).filter_by(id=transacao_id)
+            if self.usuario_id:
+                query_t = query_t.filter_by(usuario_id=self.usuario_id)
+            transacao = query_t.first()
             if transacao:
                 self.session.delete(transacao)
                 return True
             return False
-        return self._safe_query(query)
+        resultado = self._safe_query(query)
+        if resultado:
+            self.invalidar_cache()
+        return resultado
 
     def get_contas_receber(self, force_reload=False):
         """

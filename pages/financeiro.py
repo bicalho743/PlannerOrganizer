@@ -168,44 +168,31 @@ def _render_detail_panel(transacao, financeiro_df):
     is_pendente = status == 'Pendente'
 
     if is_pendente:
-        if is_rec:
-            col_act1, col_act2, col_act3, col_space = st.columns([1, 1, 1, 3])
-            with col_act1:
-                if st.button("✅ Receber", key=f"fin_receber_{tid}", use_container_width=True):
-                    st.session_state[f"fin_confirm_receber_{tid}"] = True
-                    st.rerun()
-            with col_act2:
-                if st.button("✏️ Editar", key=f"fin_edit_{tid}", use_container_width=True):
-                    st.session_state["fin_editando"] = tid
-                    st.rerun()
-            with col_act3:
-                if st.button("🗑️ Excluir", key=f"fin_del_{tid}", use_container_width=True):
-                    st.session_state[f"fin_confirm_del_{tid}"] = True
-                    st.rerun()
-        else:
-            col_act1, col_act2, col_act3, col_space = st.columns([1, 1, 1, 3])
-            with col_act1:
-                if st.button("✅ Pagar", key=f"fin_pagar_{tid}", use_container_width=True):
-                    st.session_state[f"fin_confirm_pagar_{tid}"] = True
-                    st.rerun()
-            with col_act2:
-                if st.button("✏️ Editar", key=f"fin_edit_{tid}", use_container_width=True):
-                    st.session_state["fin_editando"] = tid
-                    st.rerun()
-            with col_act3:
-                if st.button("🗑️ Excluir", key=f"fin_del_{tid}", use_container_width=True):
-                    st.session_state[f"fin_confirm_del_{tid}"] = True
-                    st.rerun()
-    else:
-        col_del, col_space = st.columns([1, 5])
-        with col_del:
+        acao_label = "✅ Receber" if is_rec else "✅ Pagar"
+        acao_key = f"fin_receber_{tid}" if is_rec else f"fin_pagar_{tid}"
+        confirm_key = f"fin_confirm_receber_{tid}" if is_rec else f"fin_confirm_pagar_{tid}"
+
+        col_act1, col_act2, col_act3 = st.columns(3)
+        with col_act1:
+            if st.button(acao_label, key=acao_key, use_container_width=True):
+                st.session_state[confirm_key] = True
+                st.rerun()
+        with col_act2:
+            if st.button("✏️ Editar", key=f"fin_edit_{tid}", use_container_width=True):
+                st.session_state["fin_editando"] = tid
+                st.rerun()
+        with col_act3:
             if st.button("🗑️ Excluir", key=f"fin_del_{tid}", use_container_width=True):
                 st.session_state[f"fin_confirm_del_{tid}"] = True
                 st.rerun()
+    else:
+        if st.button("🗑️ Excluir", key=f"fin_del_{tid}", use_container_width=True):
+            st.session_state[f"fin_confirm_del_{tid}"] = True
+            st.rerun()
 
     if st.session_state.get(f"fin_confirm_receber_{tid}", False):
         st.success(f"Confirmar recebimento de **{fmt_brl(valor)}** — {transacao['descricao']}?")
-        c1, c2, _ = st.columns([1, 1, 5])
+        c1, c2 = st.columns(2)
         with c1:
             if st.button("✓ Confirmar", key=f"conf_rec_{tid}", use_container_width=True):
                 try:
@@ -222,7 +209,7 @@ def _render_detail_panel(transacao, financeiro_df):
 
     if st.session_state.get(f"fin_confirm_pagar_{tid}", False):
         st.success(f"Confirmar pagamento de **{fmt_brl(valor)}** — {transacao['descricao']}?")
-        c1, c2, _ = st.columns([1, 1, 5])
+        c1, c2 = st.columns(2)
         with c1:
             if st.button("✓ Confirmar", key=f"conf_pag_{tid}", use_container_width=True):
                 try:
@@ -239,7 +226,7 @@ def _render_detail_panel(transacao, financeiro_df):
 
     if st.session_state.get(f"fin_confirm_del_{tid}", False):
         st.warning(f"Excluir **{transacao['descricao']}** — {fmt_brl(valor)} permanentemente?")
-        c1, c2, _ = st.columns([1, 1, 5])
+        c1, c2 = st.columns(2)
         with c1:
             if st.button("✓ Confirmar", key=f"conf_del_{tid}", use_container_width=True):
                 try:
@@ -398,8 +385,6 @@ def show():
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="fin-page">', unsafe_allow_html=True)
-
     if "db" not in st.session_state:
         st.error("Erro: Conexão com banco de dados não inicializada")
         return
@@ -411,8 +396,17 @@ def show():
     if "fin_nova_transacao_open" not in st.session_state:
         st.session_state["fin_nova_transacao_open"] = False
 
+    # Recarrega do banco apenas ao entrar na página (navegação); reruns por
+    # interação de widget usam o cache — as mutações invalidam o cache no Database.
+    entrou_na_pagina = st.session_state.get("_last_page_rendered") != "Financeiro"
+    if entrou_na_pagina:
+        st.session_state["fin_selecionada"] = None
+        st.session_state.pop("fin_editando", None)
+        for k in [k for k in st.session_state if str(k).startswith("fin_confirm_")]:
+            st.session_state.pop(k, None)
+
     try:
-        financeiro_df = st.session_state.db.get_financeiro(force_reload=True)
+        financeiro_df = st.session_state.db.get_financeiro(force_reload=entrou_na_pagina)
     except Exception as e:
         st.warning(f"Erro ao carregar dados financeiros: {str(e)}")
         financeiro_df = pd.DataFrame()
@@ -469,7 +463,7 @@ def show():
 
     st.markdown("---")
 
-    MAX_CONCLUIDAS = 5
+    CARDS_POR_COLUNA = 6
 
     col_receber, col_pagar, col_concluidas = st.columns(3)
 
@@ -487,8 +481,9 @@ def show():
 
             if not col_df.empty:
                 display_df = col_df.sort_values("data", ascending=False)
-                if col_idx == 2:
-                    display_df = display_df.head(MAX_CONCLUIDAS)
+                mostrar_todas = st.session_state.get(f"fin_show_all_{col_idx}", False)
+                if not mostrar_todas:
+                    display_df = display_df.head(CARDS_POR_COLUNA)
 
                 for _, row in display_df.iterrows():
                     rid = row['id']
@@ -506,28 +501,37 @@ def show():
                         unsafe_allow_html=True
                     )
 
-                    is_selected = st.session_state.get("fin_selecionada") == rid
-                    btn_label = "▲ Fechar" if is_selected else "▼ Ver Detalhes"
-                    if st.button(btn_label, key=f"fin_card_{col_idx}_{rid}", use_container_width=True):
-                        if is_selected:
-                            st.session_state["fin_selecionada"] = None
-                        else:
-                            st.session_state["fin_selecionada"] = rid
+                    if st.button("🔍 Ver Detalhes", key=f"fin_card_{col_idx}_{rid}", use_container_width=True):
+                        st.session_state["fin_selecionada"] = rid
                         st.rerun()
 
-                if col_idx == 2 and count > MAX_CONCLUIDAS:
-                    st.caption(f"Exibindo {MAX_CONCLUIDAS} de {count}")
+                if count > CARDS_POR_COLUNA:
+                    toggle_label = "▲ Mostrar menos" if mostrar_todas else f"▼ Mostrar todas ({count})"
+                    if st.button(toggle_label, key=f"fin_more_{col_idx}", use_container_width=True):
+                        st.session_state[f"fin_show_all_{col_idx}"] = not mostrar_todas
+                        st.rerun()
             else:
                 st.caption("Nenhuma transação.")
 
     selected_id = st.session_state.get("fin_selecionada")
     if selected_id is not None and not financeiro_df.empty:
-        st.markdown("---")
         rows = financeiro_df[financeiro_df['id'] == selected_id]
         if not rows.empty:
-            _render_detail_panel(rows.iloc[0], financeiro_df)
+            transacao_sel = rows.iloc[0]
+
+            @st.dialog("Detalhes da Transação", width="large")
+            def _modal_detalhes():
+                _render_detail_panel(transacao_sel, financeiro_df)
+                st.markdown("---")
+                if st.button("✖ Fechar", key=f"fin_fechar_modal_{selected_id}", use_container_width=True):
+                    st.session_state["fin_selecionada"] = None
+                    st.session_state.pop("fin_editando", None)
+                    for k in [k for k in st.session_state if str(k).startswith("fin_confirm_")]:
+                        st.session_state.pop(k, None)
+                    st.rerun()
+
+            _modal_detalhes()
         else:
-            st.info("Transação não encontrada.")
             st.session_state["fin_selecionada"] = None
 
     st.markdown("---")
@@ -671,5 +675,3 @@ def show():
                 st.plotly_chart(fig2, use_container_width=True)
         else:
             st.info("Não há dados suficientes para gerar análise.")
-
-    st.markdown('</div>', unsafe_allow_html=True)
