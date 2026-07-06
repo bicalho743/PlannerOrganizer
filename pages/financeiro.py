@@ -69,15 +69,19 @@ def _render_nova_transacao_form():
             if origem_tipo == "cliente":
                 origens = st.session_state.db.get_clientes()
                 if not origens.empty:
-                    origem = st.selectbox("Selecione o Cliente", origens['nome'].tolist())
-                    origem_id = origens[origens['nome'] == origem]['id'].iloc[0]
+                    origem = st.selectbox("Selecione o Cliente", origens['nome'].tolist(),
+                                          index=None, placeholder="Selecione um cliente")
+                    if origem:
+                        origem_id = origens[origens['nome'] == origem]['id'].iloc[0]
                 else:
                     st.warning("Nenhum cliente cadastrado")
             else:
                 fornecedores = st.session_state.db.get_fornecedores()
                 if not fornecedores.empty:
-                    origem = st.selectbox("Selecione o Fornecedor", fornecedores['descricao'].tolist())
-                    origem_id = fornecedores[fornecedores['descricao'] == origem]['id'].iloc[0]
+                    origem = st.selectbox("Selecione o Fornecedor", fornecedores['descricao'].tolist(),
+                                          index=None, placeholder="Selecione um fornecedor")
+                    if origem:
+                        origem_id = fornecedores[fornecedores['descricao'] == origem]['id'].iloc[0]
                 else:
                     st.warning("Nenhum fornecedor cadastrado")
 
@@ -85,7 +89,12 @@ def _render_nova_transacao_form():
             submitted = st.form_submit_button("Registrar Receita", type="primary", use_container_width=True)
 
             if submitted:
-                if descricao and valor > 0:
+                origem_label = "um cliente" if origem_tipo == "cliente" else "um fornecedor"
+                if not descricao or valor <= 0:
+                    st.warning("Preencha a descrição e um valor maior que zero.")
+                elif origem_id is None:
+                    st.error(f"Selecione {origem_label} antes de registrar a receita.")
+                else:
                     try:
                         st.session_state.db.add_transacao(
                             tipo="receita", descricao=descricao, valor=valor,
@@ -97,8 +106,6 @@ def _render_nova_transacao_form():
                         st.rerun()
                     except Exception as e:
                         st.error(f"Erro ao registrar receita: {str(e)}")
-                else:
-                    st.warning("Preencha todos os campos corretamente.")
     else:
         with st.form("registro_despesa", clear_on_submit=True):
             descricao = st.text_input("Descrição")

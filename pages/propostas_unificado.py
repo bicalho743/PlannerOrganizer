@@ -42,7 +42,8 @@ def _render_nova_proposta_form(clientes):
 
     with st.form(key="nova_proposta_form"):
         clientes_lista = clientes['nome'].tolist()
-        cliente = st.selectbox("Cliente:", clientes_lista)
+        cliente = st.selectbox("Cliente:", clientes_lista,
+                               index=None, placeholder="Selecione um cliente")
         descricao = st.text_area("Descrição do serviço:", height=100)
         valor = st.number_input("Valor do serviço (R$):", min_value=0.0, format="%.2f")
         prazo = st.number_input("Prazo estimado (dias):", min_value=1, value=15)
@@ -87,7 +88,9 @@ def _render_nova_proposta_form(clientes):
 
         submitted = st.form_submit_button("SALVAR PROPOSTA", type="primary", use_container_width=True)
 
-        if submitted:
+        if submitted and not cliente:
+            st.error("Selecione um cliente antes de salvar a proposta.")
+        elif submitted:
             try:
                 cliente_id = clientes[clientes['nome'] == cliente]['id'].iloc[0]
 
