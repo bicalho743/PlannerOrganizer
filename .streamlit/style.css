@@ -267,34 +267,32 @@ div[data-testid="stMultiSelect"] [data-baseweb="tag"] {
 div[data-testid="stDateInput"] input {
     background-color: #ffffff !important; color: #1e1e1e !important;
 }
-/* Fundo claro em TODOS os níveis internos do controle. A estrutura do
-   BaseWeb muda entre versões do Streamlit; regras rasas (só > div > div)
-   deixavam um div interno com o navy do tema (secondaryBackgroundColor),
-   tornando o valor selecionado ilegível (escuro sobre navy). O menu
-   suspenso é portaled para o <body>, então NÃO é afetado por este seletor. */
+/* Selectbox: o tema (secondaryBackgroundColor #0D1B2A) deixa o controle
+   navy e o override de fundo claro NÃO vencia essa cor (valor ilegível:
+   escuro sobre navy). Solução robusta: parar de brigar com o tema e usar o
+   par navy + TEXTO BRANCO, escopado ao CONTROLE (data-baseweb="select").
+   A label fica FORA do controle e mantém texto escuro sobre a página branca
+   (regra .stSelectbox > label). O menu suspenso é portaled para o <body> e
+   continua branco com texto escuro. */
 div[data-testid="stSelectbox"] [data-baseweb="select"],
+div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
 div[data-testid="stSelectbox"] [data-baseweb="select"] div {
-  background-color: #f8f9fa !important; border-color: #dee2e6 !important;
+  background-color: #0D1B2A !important;
 }
 div[data-testid="stSelectbox"] [data-baseweb="select"] {
-  border: 1px solid #dee2e6 !important;
+  border: 1px solid #C9A84C !important;
 }
-/* Valor selecionado e placeholder: contraste AA (>=4.5:1) sobre fundo claro */
-div[data-testid="stSelectbox"] *,
-div[data-testid="stSelectbox"] span,
-div[data-testid="stSelectbox"] div,
-div[data-testid="stSelectbox"] input,
-div[data-testid="stSelectbox"] [data-baseweb="select"] div[class*="placeholder"],
-div[data-testid="stSelectbox"] [data-baseweb="select"] div[class*="singleValue"],
-div[data-testid="stSelectbox"] [data-baseweb="select"] div[class*="ValueContainer"] {
-  color: #1e1e1e !important;
-  -webkit-text-fill-color: #1e1e1e !important;
+/* Texto do valor/placeholder/input em BRANCO — só dentro do controle */
+div[data-testid="stSelectbox"] [data-baseweb="select"],
+div[data-testid="stSelectbox"] [data-baseweb="select"] * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
   opacity: 1 !important;
 }
-div[data-testid="stSelectbox"] input::placeholder,
-div[data-testid="stSelectbox"] input::-webkit-input-placeholder {
-  color: #4b5563 !important;
-  -webkit-text-fill-color: #4b5563 !important;
+div[data-testid="stSelectbox"] [data-baseweb="select"] input::placeholder,
+div[data-testid="stSelectbox"] [data-baseweb="select"] input::-webkit-input-placeholder {
+  color: #C9A84C !important;
+  -webkit-text-fill-color: #C9A84C !important;
   opacity: 1 !important;
 }
 /* Menu suspenso (popover) de selectbox/multiselect: fundo branco, fonte escura */
