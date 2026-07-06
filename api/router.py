@@ -93,6 +93,7 @@ class ClienteCreate(BaseModel):
     cidade: Optional[str] = None
     bairro: Optional[str] = None
     endereco: Optional[str] = None
+    cpf: Optional[str] = None
     data_aniversario: Optional[str] = None
     origem_cliente: Optional[str] = None
     observacoes: Optional[str] = None
@@ -105,6 +106,7 @@ class ClienteUpdate(BaseModel):
     cidade: Optional[str] = None
     bairro: Optional[str] = None
     endereco: Optional[str] = None
+    cpf: Optional[str] = None
     data_aniversario: Optional[str] = None
     origem_cliente: Optional[str] = None
     observacoes: Optional[str] = None
@@ -258,7 +260,7 @@ async def create_cliente(body: ClienteCreate, uid: str = Depends(verify_firebase
         get_db(uid).add_cliente(
             nome=body.nome, email=body.email, telefone=body.telefone,
             estado=body.estado, cidade=body.cidade, bairro=body.bairro,
-            endereco=body.endereco, data_aniversario=body.data_aniversario,
+            endereco=body.endereco, cpf=body.cpf, data_aniversario=body.data_aniversario,
             origem_cliente=body.origem_cliente, observacoes=body.observacoes
         )
         return JSONResponse(content={"success": True})
@@ -273,7 +275,7 @@ async def update_cliente(cliente_id: int, body: ClienteUpdate, uid: str = Depend
         get_db(uid).update_cliente(
             cliente_id=cliente_id, nome=body.nome, email=body.email,
             telefone=body.telefone, estado=body.estado, cidade=body.cidade,
-            bairro=body.bairro, endereco=body.endereco,
+            bairro=body.bairro, endereco=body.endereco, cpf=body.cpf,
             data_aniversario=body.data_aniversario, origem_cliente=body.origem_cliente,
             observacoes=body.observacoes
         )
