@@ -159,16 +159,33 @@ async def get_dashboard(uid: str = Depends(verify_firebase_token)):
         propostas_df = db.get_propostas()
         financeiro_df = db.get_financeiro()
 
+        from utils.proposta_status import is_ativa
+
         total_clientes = len(clientes_df) if clientes_df is not None and not clientes_df.empty else 0
         propostas_abertas = []
         if propostas_df is not None and not propostas_df.empty and 'status' in propostas_df.columns:
-            abertas = propostas_df[propostas_df['status'].isin(['em_elaboracao', 'aguardando', 'enviada'])]
+            # "Em aberto" = ainda não concluída (em aberto/aprovada/em execução).
+            abertas = propostas_df[propostas_df['status'].apply(is_ativa)]
             propostas_abertas = safe_records(abertas)
 
+        # Saldo = a receber (pendente) − a pagar (pendente): mesma definição da
+        # web e da página Financeiro. Comparação case-insensitive porque o banco
+        # grava 'Receita'/'Despesa' (maiúsculo) e alguns lançamentos minúsculo.
         receita = despesas = 0.0
         if financeiro_df is not None and not financeiro_df.empty and 'tipo' in financeiro_df.columns:
-            receita = float(financeiro_df[financeiro_df['tipo'].isin(['receita','entrada'])]['valor'].sum())
-            despesas = float(financeiro_df[financeiro_df['tipo'].isin(['despesa','saida'])]['valor'].sum())
+            tipo_l = financeiro_df['tipo'].astype(str).str.lower()
+            if 'classificacao' in financeiro_df.columns:
+                classif = financeiro_df['classificacao'].astype(str).str.lower()
+            else:
+                classif = pd.Series([''] * len(financeiro_df), index=financeiro_df.index)
+            if 'status' in financeiro_df.columns:
+                is_pendente = financeiro_df['status'].astype(str).str.lower() == 'pendente'
+            else:
+                is_pendente = pd.Series([True] * len(financeiro_df), index=financeiro_df.index)
+            is_rec = tipo_l.isin(['receita', 'receita_a_receber', 'entrada']) | (classif == 'contas_a_receber')
+            is_desp = tipo_l.isin(['despesa', 'despesa_a_pagar', 'saida']) | (classif == 'contas_a_pagar')
+            receita = float(financeiro_df[is_rec & is_pendente]['valor'].sum())
+            despesas = float(financeiro_df[is_desp & is_pendente]['valor'].sum())
 
         aniversariantes_hoje = []
         aniversariantes_mes = []

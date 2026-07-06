@@ -162,9 +162,10 @@ def show():
                     
             propostas['valor'] = propostas['valor'].apply(clean_valor_dashboard)
             
-            # Contar propostas em aberto (status canônico)
-            from utils.proposta_status import STATUS_EM_ABERTO
-            propostas_em_aberto = len(propostas[propostas['status'] == STATUS_EM_ABERTO])
+            # Contar propostas em aberto = ainda não concluídas (em aberto,
+            # aprovada ou em execução). normalize() trata status legados.
+            from utils.proposta_status import is_ativa
+            propostas_em_aberto = int(propostas['status'].apply(is_ativa).sum())
             
             print(f"DEBUG DASHBOARD: {propostas_em_aberto} propostas em aberto encontradas")
         else:
@@ -275,10 +276,10 @@ def show():
         </div>
         """, unsafe_allow_html=True)
         if not propostas.empty:
-            # Filtrar propostas em aberto (status canônico)
-            from utils.proposta_status import STATUS_EM_ABERTO
+            # Filtrar propostas em aberto = ainda não concluídas.
+            from utils.proposta_status import is_ativa
             propostas_abertas = propostas[
-                propostas['status'] == STATUS_EM_ABERTO
+                propostas['status'].apply(is_ativa)
             ].sort_values('data_inicio', ascending=False)
 
             if not propostas_abertas.empty:

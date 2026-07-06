@@ -91,6 +91,15 @@ def label_for(status):
     return STATUS_LABELS.get(canonical, str(status))
 
 
+# Propostas "ativas" = ainda não concluídas (nem finalizada, nem recusada).
+STATUS_ATIVAS = (STATUS_EM_ABERTO, STATUS_APROVADA, STATUS_EM_EXECUCAO)
+
+
+def is_ativa(status):
+    """True para propostas ainda não concluídas (em aberto, aprovada ou em execução)."""
+    return normalize(status) in STATUS_ATIVAS
+
+
 def is_em_aberto(status):
     return normalize(status) == STATUS_EM_ABERTO
 
