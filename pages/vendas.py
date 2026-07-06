@@ -64,7 +64,7 @@ def _render_nova_venda_form(clientes_df, produtos_df):
             "Produto",
             options=[None] + produtos_df["id"].tolist(),
             format_func=lambda x: "-- Selecione --" if x is None
-                else f"{produtos_df[produtos_df['id']==x]['nome'].iloc[0]} — R$ {produtos_df[produtos_df['id']==x]['preco_venda'].iloc[0]:.2f}",
+                else f"{produtos_df[produtos_df['id']==x]['nome'].iloc[0]} — {_fmt_brl(produtos_df[produtos_df['id']==x]['preco_venda'].iloc[0])}",
             key="nv_produto_id"
         )
     with col2:
@@ -710,8 +710,8 @@ def show():
                     m4.metric("Clientes Únicos", f"{vp['cliente_nome'].nunique():,}")
 
                     disp = analise.copy()
-                    disp["Receita_Total"] = disp["Receita_Total"].apply(lambda x: f"R$ {x:,.2f}")
-                    disp["Ticket_Medio"] = disp["Ticket_Medio"].apply(lambda x: f"R$ {x:.2f}")
+                    disp["Receita_Total"] = disp["Receita_Total"].apply(_fmt_brl)
+                    disp["Ticket_Medio"] = disp["Ticket_Medio"].apply(_fmt_brl)
                     disp.columns = ["Período", "Total Vendas", "Receita Total", "Ticket Médio", "Clientes Únicos"]
                     st.dataframe(disp, use_container_width=True, hide_index=True)
 

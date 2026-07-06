@@ -4,6 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import numpy as np
+from utils.currency_formatter import fmt_brl as _fmt_brl
 
 def show():
     from utils.auth_guard import require_auth
@@ -211,7 +212,7 @@ def show():
 
                 with col2:
                     ticket_medio = propostas['valor'].mean() if 'valor' in propostas.columns else 0
-                    st.metric("Ticket Médio", f"R$ {ticket_medio:.2f}")
+                    st.metric("Ticket Médio", _fmt_brl(ticket_medio))
 
                 with col3:
                     propostas_por_cliente = len(propostas) / len(clientes) if len(clientes) > 0 else 0

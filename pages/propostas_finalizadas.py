@@ -7,6 +7,7 @@ from datetime import datetime
 import time
 from utils.database import Database
 import os
+from utils.currency_formatter import fmt_brl as _fmt_brl
 
 # Importar funções para geração de PDF
 from utils.propostas_helper import st_gerar_pdf_cliente, st_gerar_pdf_interno
@@ -43,14 +44,14 @@ def show():
         if not propostas_finalizadas.empty:
             # Exibir cada proposta em um expander
             for idx, proposta in propostas_finalizadas.iterrows():
-                with st.expander(f"{proposta['numero']} - {proposta['cliente_nome']} - {proposta['descricao']} (R$ {proposta['valor']:.2f})"):
+                with st.expander(f"{proposta['numero']} - {proposta['cliente_nome']} - {proposta['descricao']} ({_fmt_brl(proposta['valor'])})"):
                     col1, col2 = st.columns(2)
                     
                     with col1:
                         st.write(f"**ID:** {proposta['id']}")
                         st.write(f"**Cliente:** {proposta['cliente_nome']}")
                         st.write(f"**Descrição:** {proposta['descricao']}")
-                        st.write(f"**Valor:** R$ {proposta['valor']:.2f}")
+                        st.write(f"**Valor:** {_fmt_brl(proposta['valor'])}")
                         
                     with col2:
                         st.write(f"**Tipo:** {proposta['tipo_proposta']}")

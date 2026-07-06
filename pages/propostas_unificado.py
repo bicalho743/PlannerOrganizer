@@ -775,7 +775,7 @@ def _tab_produtos(proposta_id):
             def format_produto_option(pid):
                 p = produtos_cadastrados.loc[produtos_cadastrados['id'] == pid]
                 if not p.empty:
-                    return f"{p['nome'].iloc[0]} — R$ {float(p['preco_venda'].iloc[0]):.2f}"
+                    return f"{p['nome'].iloc[0]} — {_fmt_brl(float(p['preco_venda'].iloc[0]))}"
                 return "?"
             produto_selecionado_id = st.selectbox("Produto:", options=opcoes_produtos,
                                                    format_func=format_produto_option,
@@ -792,7 +792,7 @@ def _tab_produtos(proposta_id):
                     valor_unitario = st.number_input("Preço (R$):", min_value=0.0, value=preco_padrao, format="%.2f")
                 else:
                     valor_unitario = preco_padrao
-                    st.write(f"Preço: R$ {preco_padrao:.2f}")
+                    st.write(f"Preço: {_fmt_brl(preco_padrao)}")
             if st.form_submit_button("ADICIONAR", type="primary", use_container_width=True):
                 try:
                     st.session_state.db.add_produto_organizador(proposta_id=proposta_id, nome=produto['nome'],
@@ -1246,7 +1246,7 @@ def _tab_outros(proposta_id):
             valor_unitario = st.number_input("Valor unitário (R$):", min_value=0.0, value=0.0, format="%.2f")
             quantidade = st.number_input("Quantidade:", min_value=1, value=1)
             valor_total_calc = valor_unitario * quantidade
-            st.markdown(f'<p style="color:#1D6A4A;font-weight:600;margin-top:22px;">Total: R$ {valor_total_calc:.2f}</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="color:#1D6A4A;font-weight:600;margin-top:22px;">Total: {_fmt_brl(valor_total_calc)}</p>', unsafe_allow_html=True)
         if st.form_submit_button("ADICIONAR", type="primary", use_container_width=True):
             if not nome_item or valor_unitario <= 0:
                 st.error("Preencha o nome e um valor válido.")
@@ -1949,8 +1949,8 @@ def show():
                     cols[0].write(r['Nº'])
                     cols[1].write(r['Cliente'])
                     cols[2].write(r['Tipo'] or "-")
-                    cols[3].write(f"R$ {r['Valor']:.2f}")
-                    cols[4].write(f"R$ {r['Receita Líquida Total']:.2f}")
+                    cols[3].write(_fmt_brl(r['Valor']))
+                    cols[4].write(_fmt_brl(r['Receita Líquida Total']))
                     cols[5].write(r['Status'])
                     cols[6].write(r['Data'].strftime('%d/%m/%Y') if r['Data'] is not None else "-")
                     if cols[7].button("📋 Ver", key=f"hist_ver_{pid}", use_container_width=True):
