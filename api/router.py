@@ -145,6 +145,12 @@ class VendaCreate(BaseModel):
     observacoes: Optional[str] = None
     data_venda: Optional[str] = None
 
+class VendaUpdate(BaseModel):
+    forma_pagamento: Optional[str] = None
+    observacoes: Optional[str] = None
+    status: Optional[str] = None
+    data_venda: Optional[str] = None
+
 # ── STATUS ────────────────────────────────────────────────────────────────────
 
 @api.get("/api/status")
@@ -503,6 +509,49 @@ async def create_venda(body: VendaCreate, uid: str = Depends(verify_firebase_tok
             data_venda=data_venda
         )
         return JSONResponse(content={"success": True, "venda_id": venda_id})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+def _venda_pertence(db, venda_id: int) -> bool:
+    """Confirma que a venda existe e pertence ao usuário atual (guarda anti-IDOR)."""
+    vendas = db.get_vendas()
+    return vendas is not None and not vendas.empty and venda_id in set(vendas['id'].values)
+
+@api.put("/vendas/{venda_id}")
+async def update_venda(venda_id: int, body: VendaUpdate, uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        if not _venda_pertence(db, venda_id):
+            raise HTTPException(status_code=404, detail="Venda não encontrada")
+        data_venda = None
+        if body.data_venda:
+            try:
+                data_venda = datetime.strptime(body.data_venda, '%Y-%m-%d').date()
+            except Exception:
+                data_venda = None
+        db.atualizar_venda(
+            venda_id=venda_id,
+            forma_pagamento=body.forma_pagamento,
+            observacoes=body.observacoes,
+            status=body.status,
+            data_venda=data_venda,
+        )
+        return JSONResponse(content={"success": True})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api.delete("/vendas/{venda_id}")
+async def delete_venda(venda_id: int, uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        if not _venda_pertence(db, venda_id):
+            raise HTTPException(status_code=404, detail="Venda não encontrada")
+        db.excluir_venda(venda_id)
+        return JSONResponse(content={"success": True})
     except HTTPException:
         raise
     except Exception as e:
@@ -1036,26 +1085,27 @@ async def pdf_venda(venda_id: int, uid: str = Depends(verify_firebase_token)):
             if not cli_found.empty:
                 cliente = cli_found.iloc[0].to_dict()
 
-        # Buscar itens da venda via ORM
-        itens_data = []
+        # Itens da venda — mesmo caminho da web (get_itens_venda). A query antiga
+        # usava a classe inexistente VendaItem, cujo ImportError era engolido,
+        # deixando o PDF sem itens. Fallback: itens da proposta de origem.
+        itens_df = pd.DataFrame()
         try:
-            from utils.database import VendaItem
-            session = db.session
-            itens = session.query(VendaItem).filter(VendaItem.venda_id == venda_id).all()
-            for i in itens:
-                nome = i.produto.nome if i.produto else ''
-                qtd = int(i.quantidade)
-                preco = float(i.preco_unitario)
-                itens_data.append({
-                    'produto_nome': nome,
-                    'quantidade': qtd,
-                    'preco_unitario': preco,
-                    'subtotal': qtd * preco,
-                })
-        except Exception:
-            pass
-
-        itens_df = pd.DataFrame(itens_data) if itens_data else pd.DataFrame()
+            itens_df = db.get_itens_venda(venda_id)
+        except Exception as e:
+            print(f"[pdf_venda] erro get_itens_venda: {e}")
+        if itens_df is None or itens_df.empty:
+            pid = venda_row.get('proposta_id')
+            if pid and not pd.isna(pid):
+                try:
+                    po = db.get_produtos_organizadores(proposta_id=int(pid))
+                    if po is not None and not po.empty:
+                        po = po.rename(columns={'nome': 'produto_nome', 'valor': 'preco_unitario'})
+                        po['subtotal'] = po['preco_unitario'] * po['quantidade']
+                        itens_df = po[['produto_nome', 'quantidade', 'preco_unitario', 'subtotal']]
+                except Exception as e:
+                    print(f"[pdf_venda] erro fallback proposta: {e}")
+        if itens_df is None:
+            itens_df = pd.DataFrame()
 
         venda_dados = {
             'id': venda_id,

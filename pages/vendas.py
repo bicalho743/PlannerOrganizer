@@ -625,28 +625,31 @@ def show():
                         unsafe_allow_html=True
                     )
 
-                    is_selected = st.session_state.get("venda_selecionada") == vid
-                    btn_label = "▲ Fechar" if is_selected else "▼ Ver Detalhes"
-                    if st.button(btn_label, key=f"card_btn_{col_idx}_{vid}", use_container_width=True):
-                        if is_selected:
-                            st.session_state["venda_selecionada"] = None
-                        else:
-                            st.session_state["venda_selecionada"] = vid
+                    if st.button("🔍 Ver Detalhes", key=f"card_btn_{col_idx}_{vid}", use_container_width=True):
+                        st.session_state["venda_selecionada"] = vid
                         st.rerun()
             else:
                 st.caption("Nenhuma venda nesta etapa.")
 
-    # Painel de detalhes
+    # Detalhes em modal centralizado (antes abria no rodapé — com muitos cards
+    # parecia que nada acontecia). Mesmo padrão do Financeiro e das Propostas.
     selected_id = st.session_state.get("venda_selecionada")
-    if selected_id is not None:
-        st.markdown("---")
-        if not vendas_df.empty:
-            rows = vendas_df[vendas_df["id"] == selected_id]
-            if not rows.empty:
-                _render_detail_panel(selected_id, rows.iloc[0])
-            else:
-                st.warning("Venda não encontrada.")
-                st.session_state["venda_selecionada"] = None
+    if selected_id is not None and not vendas_df.empty:
+        rows = vendas_df[vendas_df["id"] == selected_id]
+        if not rows.empty:
+            venda_sel = rows.iloc[0]
+
+            @st.dialog("Detalhes da Venda", width="large")
+            def _modal_venda():
+                _render_detail_panel(selected_id, venda_sel)
+                st.markdown("---")
+                if st.button("✖ Fechar", key=f"venda_fechar_modal_{selected_id}", use_container_width=True):
+                    st.session_state["venda_selecionada"] = None
+                    st.rerun()
+
+            _modal_venda()
+        else:
+            st.session_state["venda_selecionada"] = None
 
     # Análise por período (seção colapsável)
     st.markdown("---")
