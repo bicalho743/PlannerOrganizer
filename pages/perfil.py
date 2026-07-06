@@ -2,7 +2,89 @@ import streamlit as st
 import pandas as pd
 import os
 import json
-from datetime import datetime
+from datetime import datetime, date
+
+# Links de checkout do Stripe (mesmos usados no app mobile)
+STRIPE_CHECKOUT_MENSAL = "https://buy.stripe.com/4gMcN5dQC9vX6yVfQO18c01"
+STRIPE_CHECKOUT_ANUAL = "https://buy.stripe.com/8x26oHaEqbE5g9vbAy18c00"
+STRIPE_PORTAL_RETURN_URL = "https://plannerorganiza.com.br"
+
+
+def _is_pro(perfil):
+    """Mesma regra do app mobile: pro/ativo/admin contam como plano ativo."""
+    plano = (perfil.get('plano') or 'gratuito').lower()
+    role = (perfil.get('role') or '').lower()
+    return plano in ('pro', 'ativo', 'admin') or role == 'admin'
+
+
+def _dias_restantes_trial(perfil):
+    """Dias restantes do trial de 7 dias, com base na data de cadastro."""
+    dc = perfil.get('data_cadastro')
+    if isinstance(dc, str):
+        try:
+            dc = datetime.fromisoformat(dc[:10]).date()
+        except Exception:
+            dc = date.today()
+    elif isinstance(dc, datetime):
+        dc = dc.date()
+    elif not isinstance(dc, date):
+        dc = date.today()
+    dias_passados = (date.today() - dc).days
+    return max(0, 7 - dias_passados)
+
+
+def _render_plano_badge(perfil):
+    """Exibe o selo do plano no topo do perfil (paridade visual com o app)."""
+    if _is_pro(perfil):
+        st.markdown(
+            '<div style="display:inline-block;background:#C9A84C;color:#0D1B2A;'
+            'padding:6px 18px;border-radius:20px;font-weight:700;font-size:0.95rem;'
+            'margin-bottom:1rem;">⭐ Plano Pro</div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        dias = _dias_restantes_trial(perfil)
+        if dias > 0:
+            plural = 's' if dias != 1 else ''
+            st.markdown(
+                f'<div style="display:inline-block;background:#1E3A5F;color:#C9A84C;'
+                f'padding:6px 18px;border-radius:20px;font-weight:700;font-size:0.95rem;'
+                f'margin-bottom:1rem;">🕐 Trial — {dias} dia{plural} restante{plural}</div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                '<div style="display:inline-block;background:#C0392B;color:#fff;'
+                'padding:6px 18px;border-radius:20px;font-weight:700;font-size:0.95rem;'
+                'margin-bottom:1rem;">⚠️ Trial expirado</div>',
+                unsafe_allow_html=True,
+            )
+
+
+def _criar_portal_session(email):
+    """
+    Cria uma sessão do Portal do Cliente Stripe para o e-mail informado.
+    Retorna (url, erro). A URL abre a página onde o cliente gerencia a
+    assinatura, cartão e faturas.
+    """
+    secret = os.environ.get("STRIPE_SECRET_KEY", "")
+    if not secret:
+        return None, "STRIPE_SECRET_KEY não configurada no servidor."
+    if not email:
+        return None, "E-mail do usuário não disponível."
+    try:
+        import stripe
+        stripe.api_key = secret
+        clientes = stripe.Customer.list(email=email, limit=1)
+        if not clientes.data:
+            return None, "sem_assinatura"
+        session = stripe.billing_portal.Session.create(
+            customer=clientes.data[0].id,
+            return_url=STRIPE_PORTAL_RETURN_URL,
+        )
+        return session.url, None
+    except Exception as e:
+        return None, str(e)
 
 def carregar_perfil(user_id):
     """
@@ -38,6 +120,10 @@ def carregar_perfil(user_id):
                 'cor_principal': perfil_bd.get('cor_principal', ''),
                 'cor_secundaria': perfil_bd.get('cor_secundaria', ''),
                 'observacoes_relatorio': perfil_bd.get('observacoes_relatorio', ''),
+                'plano': perfil_bd.get('plano', ''),
+                'role': perfil_bd.get('role', ''),
+                'ativo': perfil_bd.get('ativo'),
+                'data_cadastro': perfil_bd.get('data_cadastro'),
                 'ultima_atualizacao': perfil_bd.get('ultimo_login', '').strftime("%d/%m/%Y %H:%M:%S") if perfil_bd.get('ultimo_login') else ''
             }
     except Exception as e:
@@ -156,7 +242,10 @@ def show():
     
     # Carregar perfil existente
     perfil = carregar_perfil(user_id)
-    
+
+    # Selo do plano (paridade visual com o app mobile)
+    _render_plano_badge(perfil)
+
     # Exibir formulário de perfil
     with st.form("form_perfil", clear_on_submit=False):
         st.subheader("Dados Pessoais")
@@ -374,19 +463,45 @@ def show():
     
     # Seção de faturamento e assinatura
     st.subheader("💳 Faturamento e Assinatura")
-    
-    # Link para o portal do cliente Stripe
-    st.markdown("""
-    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #026937;">
-        <h4 style="margin-top: 0; color: #026937;">Portal do Cliente Stripe</h4>
-        <p>Gerencie sua assinatura, atualize seus dados de pagamento e visualize suas faturas.</p>
-        <a href="https://dashboard.stripe.com/billing/portal" target="_blank">
-            <button style="background-color: #026937; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                Acessar Portal do Cliente
-            </button>
-        </a>
-    </div>
-    """, unsafe_allow_html=True)
+
+    if _is_pro(perfil):
+        st.markdown("""
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #026937;">
+            <h4 style="margin-top: 0; color: #026937;">Portal do Cliente Stripe</h4>
+            <p>Gerencie sua assinatura, atualize seus dados de pagamento e visualize suas faturas.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        col_portal, _ = st.columns([1, 2])
+        with col_portal:
+            if st.button("💳 Acessar Portal do Cliente", key="btn_stripe_portal", use_container_width=True):
+                with st.spinner("Abrindo portal..."):
+                    url, erro = _criar_portal_session(perfil.get('email') or user_id)
+                if url:
+                    st.session_state["stripe_portal_url"] = url
+                elif erro == "sem_assinatura":
+                    st.info("Nenhuma assinatura encontrada no Stripe para o seu e-mail. Se você acabou de assinar, aguarde alguns minutos.")
+                elif erro and "configuration" in erro.lower():
+                    st.warning("O Portal do Cliente ainda não foi ativado na conta Stripe. Ative em Settings → Billing → Customer portal no painel do Stripe.")
+                else:
+                    st.error(f"Não foi possível abrir o portal: {erro}")
+
+        if st.session_state.get("stripe_portal_url"):
+            url = st.session_state["stripe_portal_url"]
+            st.link_button("🔗 Abrir Portal do Cliente", url, use_container_width=False)
+            st.caption("Se o botão não abrir automaticamente, clique no link acima.")
+    else:
+        st.markdown("""
+        <div style="background-color: #fff8e6; padding: 15px; border-radius: 5px; border-left: 4px solid #C9A84C;">
+            <h4 style="margin-top: 0; color: #8a6d1a;">Assine o Plano Pro</h4>
+            <p>Desbloqueie todos os recursos do Planner Organizer sem limites.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        col_m, col_a = st.columns(2)
+        with col_m:
+            st.link_button("🚀 Mensal — R$ 29,90/mês", STRIPE_CHECKOUT_MENSAL, use_container_width=True)
+        with col_a:
+            st.link_button("📅 Anual — R$ 297,00 (economia de 2 meses)", STRIPE_CHECKOUT_ANUAL, use_container_width=True)
     
     # Exibir dicas de uso
     with st.expander("📘 Sobre o Perfil", expanded=False):
