@@ -546,10 +546,14 @@ async def get_relatorios(uid: str = Depends(verify_firebase_token)):
         fin_records = safe_records(financeiro)
         vendas_records = safe_records(vendas)
 
+        def _is_receita_tipo(tipo):
+            # Case-insensitive: banco grava 'Receita'/'receita'/'receita_a_receber'
+            return str(tipo or '').lower() in ('receita', 'entrada', 'receita_a_receber')
+
         def get_receita_mes(records, mes, ano):
             total = 0.0
             for r in records:
-                if r.get('tipo') in ['receita', 'entrada']:
+                if _is_receita_tipo(r.get('tipo')):
                     try:
                         data_str = r.get('data') or r.get('data_lancamento', '')
                         if data_str:
@@ -572,7 +576,7 @@ async def get_relatorios(uid: str = Depends(verify_firebase_token)):
         from collections import defaultdict
         cat_totais = defaultdict(float)
         for r in fin_records:
-            if r.get('tipo') in ['receita', 'entrada'] and r.get('categoria'):
+            if _is_receita_tipo(r.get('tipo')) and r.get('categoria'):
                 cat_totais[r['categoria']] += float(r.get('valor', 0) or 0)
         top_categorias = [{'categoria': k, 'total': round(v, 2)} for k, v in sorted(cat_totais.items(), key=lambda x: -x[1])[:5]]
 
