@@ -9,6 +9,13 @@ STRIPE_CHECKOUT_MENSAL = "https://buy.stripe.com/4gMcN5dQC9vX6yVfQO18c01"
 STRIPE_CHECKOUT_ANUAL = "https://buy.stripe.com/8x26oHaEqbE5g9vbAy18c00"
 STRIPE_PORTAL_RETURN_URL = "https://plannerorganiza.com.br"
 
+# Link direto do Portal do Cliente (login por e-mail). Configurável por env
+# para ajuste sem redeploy — o valor abaixo veio do painel do Stripe.
+STRIPE_PORTAL_LINK = os.environ.get(
+    "STRIPE_PORTAL_LINK",
+    "https://billing.stripe.com/p/login/8x26oHaEqbEg5g9vbAy18c00",
+)
+
 
 def _is_pro(perfil):
     """Mesma regra do app mobile: pro/ativo/admin contam como plano ativo."""
@@ -502,7 +509,16 @@ def show():
             st.link_button("🚀 Mensal — R$ 29,90/mês", STRIPE_CHECKOUT_MENSAL, use_container_width=True)
         with col_a:
             st.link_button("📅 Anual — R$ 297,00 (economia de 2 meses)", STRIPE_CHECKOUT_ANUAL, use_container_width=True)
-    
+
+    # Link direto do portal — acesso garantido por e-mail, independente do
+    # que o banco registra como plano ou da configuração da API.
+    st.markdown(
+        f'<p style="font-size:0.85rem;color:#64748b;margin-top:12px;">'
+        f'Já é assinante? <a href="{STRIPE_PORTAL_LINK}" target="_blank">'
+        f'Gerencie sua assinatura pelo portal do cliente</a> (acesso por e-mail).</p>',
+        unsafe_allow_html=True,
+    )
+
     # Exibir dicas de uso
     with st.expander("📘 Sobre o Perfil", expanded=False):
         st.markdown("""
