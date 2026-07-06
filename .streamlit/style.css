@@ -267,9 +267,13 @@ div[data-testid="stMultiSelect"] [data-baseweb="tag"] {
 div[data-testid="stDateInput"] input {
     background-color: #ffffff !important; color: #1e1e1e !important;
 }
+/* Fundo claro em TODOS os níveis internos do controle. A estrutura do
+   BaseWeb muda entre versões do Streamlit; regras rasas (só > div > div)
+   deixavam um div interno com o navy do tema (secondaryBackgroundColor),
+   tornando o valor selecionado ilegível (escuro sobre navy). O menu
+   suspenso é portaled para o <body>, então NÃO é afetado por este seletor. */
 div[data-testid="stSelectbox"] [data-baseweb="select"],
-div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
-div[data-testid="stSelectbox"] [data-baseweb="select"] > div > div {
+div[data-testid="stSelectbox"] [data-baseweb="select"] div {
   background-color: #f8f9fa !important; border-color: #dee2e6 !important;
 }
 div[data-testid="stSelectbox"] [data-baseweb="select"] {
