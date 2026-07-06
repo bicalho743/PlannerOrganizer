@@ -4,6 +4,7 @@ import pandas as pd
 from utils.force_spacing_fix import apply_spacing_fix
 from utils.currency_formatter import format_currency_br, fmt_brl
 from utils.simple_mobile_fix import apply_mobile_sidebar_fix
+from utils.whatsapp_helper import whatsapp_link, whatsapp_button_html
 
 # Função auxiliar para formatar datas com segurança
 def format_date_safe(date_obj, format_str='%d/%m/%Y'):
@@ -32,9 +33,6 @@ def show():
 #     apply_spacing_fix()
     # Aplicar correção mobile para sidebar
     # apply_mobile_sidebar_fix()
-    # Limita a largura dos cards de acompanhamento (Pós-Organizacao) no dashboard
-    st.markdown("<style>.stAlert, div[data-testid='stVerticalBlock'] > div[data-testid='stVerticalBlockBorderWrapper'] { max-width: 760px; margin-left: auto; margin-right: auto; }</style>", unsafe_allow_html=True)
-    
     # Removido o título de Dashboard conforme solicitado
 
     # Add test data button in sidebar if database is empty
@@ -539,8 +537,10 @@ def show():
             
     # Seção unificada de alertas de Pós-Organização
     st.subheader("Alertas Pós-Organização")
-    
-    with st.container():
+
+    # Coluna de 2/3 limita a largura dos cards (empilha em tela cheia no mobile)
+    col_alertas, _esp_alertas = st.columns([2, 1])
+    with col_alertas:
         st.markdown("""
         <div style='background-color: #0D1B2A; padding: 10px; border-radius: 7px; margin-bottom: 15px;'>
             <h4 style='color: #C9A84C; margin: 0; font-size: 1rem;'>📞 Ações Pendentes de Acompanhamento</h4>
@@ -579,19 +579,10 @@ def show():
                         # Formatação de texto para WhatsApp
                         template_info = templates.get(at, {})
                         texto_template = template_info.get('texto', '')
-                        nome_cliente_primeiro = alerta['cliente_nome'].split(' ')[0] if alerta['cliente_nome'] else 'cliente'
+                        nome_cliente_primeiro = str(alerta['cliente_nome']).split(' ')[0] if pd.notna(alerta.get('cliente_nome')) and alerta.get('cliente_nome') else 'cliente'
                         mensagem_whatsapp = texto_template.replace('{nome}', nome_cliente_primeiro) if texto_template else ""
                         
-                        telefone_limpo = ''
-                        if alerta.get('cliente_telefone'):
-                            import re
-                            telefone_limpo = re.sub(r'\D', '', str(alerta['cliente_telefone']))
-                            if telefone_limpo and not telefone_limpo.startswith('55') and len(telefone_limpo) in (10, 11):
-                                telefone_limpo = '55' + telefone_limpo
-
-                        import urllib.parse
-                        texto_encoded = urllib.parse.quote(mensagem_whatsapp) if mensagem_whatsapp else ''
-                        wa_link = f"https://wa.me/{telefone_limpo}?text={texto_encoded}" if telefone_limpo else ""
+                        wa_link = whatsapp_link(alerta.get('cliente_telefone'), mensagem_whatsapp)
 
                         st.markdown(f"""
                         <div style='background-color: {config['cor']}; 
@@ -611,10 +602,7 @@ def show():
 
                         c_wa, c_done, c_delay = st.columns([1.2, 1, 1])
                         with c_wa:
-                            if wa_link:
-                                st.link_button("💬 WhatsApp", wa_link, use_container_width=True)
-                            else:
-                                st.button("💬 WhatsApp", disabled=True, use_container_width=True, key=f"btn_wa_disabled_{alerta['action_id']}")
+                            st.markdown(whatsapp_button_html(wa_link), unsafe_allow_html=True)
                         with c_done:
                             if st.button("✅ Concluir", key=f"btn_done_{alerta['action_id']}", use_container_width=True):
                                 st.session_state.db.update_post_organization_action(action_id=alerta['action_id'], status='FEITO')

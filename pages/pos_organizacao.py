@@ -6,6 +6,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
 from html import escape as html_escape
+from utils.whatsapp_helper import whatsapp_link, whatsapp_button_html
 
 # Templates de fallback caso o banco não retorne
 TEMPLATES_FALLBACK = {
@@ -41,7 +42,11 @@ OBJETIVOS_ETAPA = {
 
 def get_template(templates, action_type):
     """Retorna info do template para o tipo de ação (case-insensitive)."""
-    etapa = (action_type or '').lower().strip()
+    # NaN do pandas é float e "truthy" — normalizar antes de chamar .lower()
+    if action_type is None or (isinstance(action_type, float) and pd.isna(action_type)):
+        etapa = ''
+    else:
+        etapa = str(action_type).lower().strip()
     t = templates.get(etapa) or TEMPLATES_FALLBACK.get(etapa, {})
     texto = t.get('texto') or ''
     dias_apos = t.get('dias_apos', 0)
@@ -170,6 +175,8 @@ def _abrir_detalhes(row):
     st.session_state.pos_org_selecionada_id = row['id']
     st.session_state.pos_org_cliente_nome = row['cliente_nome']
     st.session_state.pos_org_proposta_numero = row['proposta_numero']
+    telefone = row.get('cliente_telefone')
+    st.session_state.pos_org_cliente_telefone = telefone if pd.notna(telefone) else None
     st.session_state.pos_view = 'detalhes'
 
 
@@ -200,7 +207,7 @@ def _view_lista(templates):
         badge_cls = "po-badge-concluido" if is_concluido else "po-badge-ativo"
         badge_txt = "Concluído" if is_concluido else "Ativo"
 
-        if row['proxima_acao']:
+        if pd.notna(row['proxima_acao']) and row['proxima_acao']:
             emoji, nome_acao, _, _, _, _, _ = get_template(templates, row['proxima_acao'])
             proxima = f"{emoji} {nome_acao} &nbsp;·&nbsp; 📅 {formatar_data_br(row['proxima_acao_data'])}"
         else:
@@ -283,7 +290,7 @@ def _view_detalhes(templates):
 
         st.markdown(f'<div class="po-acao-wrap {wrap_cls}"><div class="po-acao-header"><span style="font-size:1.2rem">{emoji}</span><p class="po-acao-title">{nome_acao}</p>{dias_badge}<span class="po-pill {pill_cls}">{pill_txt}</span></div>{objetivo_html}<p class="po-acao-date">📅 Prevista para {formatar_data_br(acao["due_date"])}</p></div>', unsafe_allow_html=True)
 
-        col_check, col_obs, col_sug = st.columns([1, 2.5, 0.5])
+        col_check, col_obs, col_sug, col_wa = st.columns([1, 2, 0.5, 1])
 
         with col_check:
             novo_status = st.checkbox(
@@ -294,7 +301,7 @@ def _view_detalhes(templates):
             )
 
         with col_obs:
-            obs_atual = acao['notes'] if acao['notes'] else ""
+            obs_atual = acao['notes'] if pd.notna(acao['notes']) and acao['notes'] else ""
             nova_obs = st.text_input(
                 "Observação",
                 value=st.session_state.get(f"obs_{acao['id']}", obs_atual),
@@ -308,6 +315,13 @@ def _view_detalhes(templates):
             if texto_template:
                 if st.button("💡", key=f"sug_{acao['id']}", help="Ver sugestão de texto"):
                     st.session_state[f"mostrar_sug_{acao['id']}"] = not st.session_state.get(f"mostrar_sug_{acao['id']}", False)
+
+        with col_wa:
+            if not is_feito and not is_cancelado:
+                primeiro_nome = str(cliente_nome).split(' ')[0] if cliente_nome and cliente_nome != 'N/A' else 'cliente'
+                msg_wa = (texto_template or '').replace('{nome}', primeiro_nome)
+                wa_url = whatsapp_link(st.session_state.get('pos_org_cliente_telefone'), msg_wa)
+                st.markdown(whatsapp_button_html(wa_url), unsafe_allow_html=True)
 
         if hint and st.session_state.get(f"mostrar_hint_{acao['id']}", False):
             st.markdown(f"<p style='font-size:0.78rem;color:#64748b;background:#fef9c3;padding:8px 12px;border-radius:8px;margin:4px 0;'>💛 {hint}</p>", unsafe_allow_html=True)
