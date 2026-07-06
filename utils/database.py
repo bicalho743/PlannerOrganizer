@@ -4808,6 +4808,40 @@ class Database:
 
         return self._safe_query(query)
 
+    def substituir_itens_venda(self, venda_id, itens):
+        """Substitui todos os itens de uma venda e recalcula o total do zero.
+
+        itens: lista de dicts com produto_id, quantidade, preco_unitario e
+        descricao (opcional). Usado pela edição de venda (app/web) para evitar
+        sincronização item-a-item.
+        """
+        def query():
+            self.session.query(ItemVenda).filter_by(venda_id=venda_id).delete()
+            total = 0.0
+            for it in (itens or []):
+                try:
+                    qtd = int(it.get('quantidade') or 0)
+                    preco = float(it.get('preco_unitario') or 0)
+                except (ValueError, TypeError):
+                    continue
+                if qtd <= 0:
+                    continue
+                subtotal = qtd * preco
+                total += subtotal
+                self.session.add(ItemVenda(
+                    venda_id=venda_id,
+                    produto_id=it.get('produto_id'),
+                    descricao=it.get('descricao', '') or '',
+                    quantidade=qtd,
+                    preco_unitario=preco,
+                    subtotal=subtotal,
+                ))
+            venda = self.session.query(Venda).filter_by(id=venda_id).first()
+            if venda:
+                venda.valor_total = total
+            return True
+        return self._safe_query(query)
+
     def update_item_venda(self, item_id, nova_quantidade, novo_preco):
         """Atualiza a quantidade e preço de um item da venda"""
         def query():

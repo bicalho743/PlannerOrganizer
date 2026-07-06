@@ -151,6 +151,9 @@ class VendaUpdate(BaseModel):
     status: Optional[str] = None
     data_venda: Optional[str] = None
 
+class VendaItensUpdate(BaseModel):
+    itens: list
+
 # ── STATUS ────────────────────────────────────────────────────────────────────
 
 @api.get("/api/status")
@@ -551,6 +554,31 @@ async def delete_venda(venda_id: int, uid: str = Depends(verify_firebase_token))
         if not _venda_pertence(db, venda_id):
             raise HTTPException(status_code=404, detail="Venda não encontrada")
         db.excluir_venda(venda_id)
+        return JSONResponse(content={"success": True})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api.get("/vendas/{venda_id}/itens")
+async def get_venda_itens(venda_id: int, uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        if not _venda_pertence(db, venda_id):
+            raise HTTPException(status_code=404, detail="Venda não encontrada")
+        return JSONResponse(content=safe_records(db.get_itens_venda(venda_id)))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api.put("/vendas/{venda_id}/itens")
+async def update_venda_itens(venda_id: int, body: VendaItensUpdate, uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        if not _venda_pertence(db, venda_id):
+            raise HTTPException(status_code=404, detail="Venda não encontrada")
+        db.substituir_itens_venda(venda_id, body.itens)
         return JSONResponse(content={"success": True})
     except HTTPException:
         raise
