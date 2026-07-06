@@ -46,35 +46,40 @@ def show():
                 elif periodo == "Último ano":
                     financeiro = financeiro[financeiro['data'] >= datetime.now() - timedelta(days=365)]
 
-                # Análise por tipo de receita
-                receitas = financeiro[financeiro['tipo'] == 'receita']
+                # Análise por tipo de receita (case-insensitive: banco grava 'Receita')
+                receitas = financeiro[financeiro['tipo'].astype(str).str.lower().isin(['receita', 'receita_a_receber', 'entrada'])].copy()
                 if not receitas.empty:
                     st.subheader("Análise de Receitas")
 
+                    # Rótulo por tipo; cai para a categoria quando tipo_receita é vazio/nulo
+                    # (antes o gráfico mostrava "null" porque tipo_receita costuma ser None).
+                    _tr = receitas['tipo_receita'].astype(str).str.strip() if 'tipo_receita' in receitas.columns else pd.Series([''] * len(receitas), index=receitas.index)
+                    _cat = receitas['categoria'] if 'categoria' in receitas.columns else pd.Series(['Outros'] * len(receitas), index=receitas.index)
+                    receitas['tipo_label'] = _tr.where(~_tr.str.lower().isin(['', 'none', 'nan']), _cat).fillna('Outros').replace('', 'Outros')
+
                     # Gráfico de receitas por tipo
-                    if 'tipo_receita' in receitas.columns:
-                        fig = px.pie(
-                            receitas,
-                            values='valor',
-                            names='tipo_receita',
-                            title='Distribuição de Receitas por Tipo'
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
+                    fig = px.pie(
+                        receitas,
+                        values='valor',
+                        names='tipo_label',
+                        title='Distribuição de Receitas por Tipo'
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
 
-                        # Tendência de receitas por tipo
-                        receitas_mensais = receitas.groupby([
-                            receitas['data'].dt.strftime('%Y-%m'),
-                            'tipo_receita'
-                        ])['valor'].sum().reset_index()
+                    # Tendência de receitas por tipo
+                    receitas_mensais = receitas.groupby([
+                        receitas['data'].dt.strftime('%Y-%m'),
+                        'tipo_label'
+                    ])['valor'].sum().reset_index()
 
-                        fig = px.line(
-                            receitas_mensais,
-                            x='data',
-                            y='valor',
-                            color='tipo_receita',
-                            title='Evolução de Receitas por Tipo'
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
+                    fig = px.line(
+                        receitas_mensais,
+                        x='data',
+                        y='valor',
+                        color='tipo_label',
+                        title='Evolução de Receitas por Tipo'
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
 
                     # Projeção financeira
                     st.subheader("Projeção Financeira")
