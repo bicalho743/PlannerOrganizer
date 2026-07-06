@@ -13,7 +13,7 @@ STRIPE_PORTAL_RETURN_URL = "https://plannerorganiza.com.br"
 # para ajuste sem redeploy — o valor abaixo veio do painel do Stripe.
 STRIPE_PORTAL_LINK = os.environ.get(
     "STRIPE_PORTAL_LINK",
-    "https://billing.stripe.com/p/login/8x26oHaEqbEg5g9vbAy18c00",
+    "https://billing.stripe.com/p/login/8x26oHaEqbE5g9vbAy18c00",
 )
 
 
