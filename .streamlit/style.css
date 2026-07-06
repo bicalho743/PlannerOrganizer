@@ -267,30 +267,21 @@ div[data-testid="stMultiSelect"] [data-baseweb="tag"] {
 div[data-testid="stDateInput"] input {
     background-color: #ffffff !important; color: #1e1e1e !important;
 }
-/* Selectbox: o tema (secondaryBackgroundColor #0D1B2A) deixa o controle
-   navy e o override de fundo claro NÃO vencia essa cor (valor ilegível:
-   escuro sobre navy). Solução robusta: parar de brigar com o tema e usar o
-   par navy + TEXTO BRANCO, escopado ao CONTROLE (data-baseweb="select").
-   A label fica FORA do controle e mantém texto escuro sobre a página branca
-   (regra .stSelectbox > label). O menu suspenso é portaled para o <body> e
-   continua branco com texto escuro. */
-div[data-testid="stSelectbox"] [data-baseweb="select"],
-div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
-div[data-testid="stSelectbox"] [data-baseweb="select"] div {
-  background-color: #0D1B2A !important;
-}
-div[data-testid="stSelectbox"] [data-baseweb="select"] {
-  border: 1px solid #C9A84C !important;
-}
-/* Texto do valor/placeholder/input em BRANCO — só dentro do controle */
-div[data-testid="stSelectbox"] [data-baseweb="select"],
-div[data-testid="stSelectbox"] [data-baseweb="select"] * {
+/* Selectbox: nesta versão do Streamlit o controle NÃO usa data-baseweb="select"
+   (é role="combobox"). Confirmado via DOM: o valor/entrada vinha em texto
+   escuro (rgb(30,30,30)/rgb(38,39,48)) sobre o fundo navy (rgb(13,27,42)) do
+   controle => ilegível. Alvo estável: data-testid="stSelectbox". Deixamos o
+   texto do CONTROLE (o "> div" e tudo dentro dele) BRANCO; a label é <label>
+   filha direta e mantém a cor escura sobre a página branca (.stSelectbox >
+   label). O menu suspenso é portaled para o <body>, então não é afetado. */
+div[data-testid="stSelectbox"] > div,
+div[data-testid="stSelectbox"] > div * {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
   opacity: 1 !important;
 }
-div[data-testid="stSelectbox"] [data-baseweb="select"] input::placeholder,
-div[data-testid="stSelectbox"] [data-baseweb="select"] input::-webkit-input-placeholder {
+div[data-testid="stSelectbox"] > div input::placeholder,
+div[data-testid="stSelectbox"] > div input::-webkit-input-placeholder {
   color: #C9A84C !important;
   -webkit-text-fill-color: #C9A84C !important;
   opacity: 1 !important;
