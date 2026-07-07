@@ -228,10 +228,13 @@ def show():
                     propostas_por_cliente = len(propostas) / len(clientes) if len(clientes) > 0 else 0
                     st.metric("Propostas/Cliente", f"{propostas_por_cliente:.1f}")
 
-                # Análise de origem dos clientes
+                # Análise de origem dos clientes — normalizada para categorias
+                # oficiais (sem duplicata por caixa, sem "0", sem nomes próprios).
                 if 'origem_cliente' in clientes.columns:
                     st.subheader("Origem dos Clientes")
-                    origem_counts = clientes['origem_cliente'].value_counts()
+                    from utils.origem_cliente import origem_para_exibicao
+                    origem_norm = clientes['origem_cliente'].apply(origem_para_exibicao)
+                    origem_counts = origem_norm.value_counts()
                     fig = px.pie(
                         values=origem_counts.values,
                         names=origem_counts.index,

@@ -1,4 +1,5 @@
 from utils.formatadores import formatar_df_clientes, UFS_BRASIL, validar_cpf, formatar_cpf, data_para_ddmmm
+from utils.origem_cliente import ORIGENS_OFICIAIS, normalizar_origem
 import streamlit as st
 from datetime import datetime
 import pandas as pd
@@ -47,7 +48,8 @@ def show():
                     bairro = st.text_input("Bairro")
                     endereco = st.text_input("Endereço")
                     data_aniversario_dt = st.date_input("Data de Aniversário", value=None, format="DD/MM/YYYY")
-                    origem_cliente = st.text_input("Origem do Cliente")
+                    origem_cliente = st.selectbox("Origem do Cliente", ORIGENS_OFICIAIS,
+                                                  index=None, placeholder="Selecione a origem")
 
                 observacoes = st.text_area("Observações")
                 submitted = st.form_submit_button("Cadastrar")
@@ -209,7 +211,10 @@ def show():
                                     nova_data_aniversario = st.text_input("Data de Aniversário (DD/MMM)", 
                                                                          value=cliente_data.get('data_aniversario', ''),
                                                                          help="Ex: 13/abr, 16/jan")
-                                    nova_origem = st.text_input("Origem", value=cliente_data.get('origem_cliente', ''))
+                                    _origem_atual = normalizar_origem(cliente_data.get('origem_cliente'))
+                                    _origem_idx = ORIGENS_OFICIAIS.index(_origem_atual) if _origem_atual in ORIGENS_OFICIAIS else None
+                                    nova_origem = st.selectbox("Origem", ORIGENS_OFICIAIS, index=_origem_idx,
+                                                               placeholder="Selecione a origem")
                                     novas_observacoes = st.text_area("Observações", value=cliente_data.get('observacoes', ''))
                                 
                                 # Botões do formulário
