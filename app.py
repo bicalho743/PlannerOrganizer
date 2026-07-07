@@ -553,11 +553,29 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
     for label, page in MENU_PRINCIPAL.items():
         if st.sidebar.button(label, key=f"main_menu_{page.lower()}", use_container_width=True):
             st.session_state.current_page = page
+            st.session_state.pop('_confirmar_logout', None)  # navegar cancela confirmação pendente
 
-    if st.sidebar.button("Sair do Sistema", key="btn_logout", type="secondary", use_container_width=True):
-        st.session_state.authenticated = False
-        st.session_state.current_page = "Dashboard"
-        st.rerun()
+    # Separação extra entre o menu e o botão de sair (reduz clique acidental
+    # por layout shift logo após o carregamento).
+    st.sidebar.markdown('<div style="margin:14px 0;"><hr style="border:none;height:1px;background:#E0E0E0;"></div>', unsafe_allow_html=True)
+
+    # Logout com confirmação: um clique acidental (por coordenada/overlap logo
+    # após o load) NUNCA encerra a sessão — apenas abre a confirmação.
+    if st.session_state.get('_confirmar_logout', False):
+        st.sidebar.warning("Deseja realmente sair do sistema?")
+        _c1, _c2 = st.sidebar.columns(2)
+        if _c1.button("Sim, sair", key="btn_logout_sim", type="secondary", use_container_width=True):
+            st.session_state.authenticated = False
+            st.session_state.current_page = "Dashboard"
+            st.session_state.pop('_confirmar_logout', None)
+            st.rerun()
+        if _c2.button("Cancelar", key="btn_logout_nao", use_container_width=True):
+            st.session_state.pop('_confirmar_logout', None)
+            st.rerun()
+    else:
+        if st.sidebar.button("Sair do Sistema", key="btn_logout", type="secondary", use_container_width=True):
+            st.session_state._confirmar_logout = True
+            st.rerun()
 
     st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
