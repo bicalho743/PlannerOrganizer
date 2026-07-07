@@ -21,7 +21,16 @@ def _eh_vazio(valor) -> bool:
     except (TypeError, ValueError):
         pass
     texto = str(valor).strip()
-    return texto == "" or texto.lower() in {"none", "nan", "null"}
+    return texto == "" or texto.lower() in {"none", "nan", "null", "undefined", "<na>"}
+
+
+def valor_ou_traco(valor, fallback="—"):
+    """Retorna o valor como string exibível, ou `fallback` quando ausente
+    (None/NaN/vazio/'nan'/'none'/'null'/'undefined'). Use em toda exibição de
+    campo que pode vir nulo, evitando literais de programação para o usuário."""
+    if _eh_vazio(valor):
+        return fallback
+    return str(valor).strip()
 
 
 def corrigir_encoding(texto: str) -> str:

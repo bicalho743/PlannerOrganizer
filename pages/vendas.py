@@ -11,6 +11,7 @@ from utils.design_tokens import (
 
 
 from utils.currency_formatter import fmt_brl as _fmt_brl
+from utils.formatadores import valor_ou_traco
 
 
 def _safe_float(val, default=0.0):
@@ -162,16 +163,16 @@ def _render_nova_venda_form(clientes_df, produtos_df):
 
 
 def _render_detail_panel(venda_id, venda_row):
-    cliente_nome = html_module.escape(str(venda_row.get("cliente_nome", "Cliente")))
-    status       = str(venda_row.get("status") or "—")
+    cliente_nome = html_module.escape(valor_ou_traco(venda_row.get("cliente_nome"), "Cliente"))
+    status       = valor_ou_traco(venda_row.get("status"))
     data_str     = html_module.escape(_fmt_date(venda_row.get("data_venda")))
-    pagamento    = str(venda_row.get("forma_pagamento") or "—")
+    pagamento    = valor_ou_traco(venda_row.get("forma_pagamento"))
     valor_str    = html_module.escape(_fmt_brl(venda_row.get("valor_total", 0)))
-    obs_raw      = str(venda_row.get("observacoes") or "")
-    proposta_desc = str(venda_row.get("proposta_descricao") or "")
+    obs_raw      = valor_ou_traco(venda_row.get("observacoes"), "")
+    proposta_desc = valor_ou_traco(venda_row.get("proposta_descricao"), "")
 
     # linha de metadados compacta
-    meta_parts = [status, data_str]
+    meta_parts = [p for p in [status, data_str] if p and p != "—"]
     if pagamento and pagamento != "—":
         meta_parts.append(pagamento)
     if proposta_desc:
@@ -611,15 +612,16 @@ def show():
                 col_df = col_df.sort_values("data_venda", ascending=False)
                 for _, venda in col_df.iterrows():
                     vid = venda["id"]
-                    cliente = html_module.escape(str(venda.get("cliente_nome", "Cliente")))
-                    pagamento = html_module.escape(str(venda.get("forma_pagamento", "")))
+                    cliente = html_module.escape(valor_ou_traco(venda.get("cliente_nome"), "Cliente"))
+                    pagamento = html_module.escape(valor_ou_traco(venda.get("forma_pagamento"), ""))
                     data_str = html_module.escape(_fmt_date(venda.get("data_venda")))
                     valor_f = html_module.escape(_fmt_brl(venda.get("valor_total", 0)))
+                    sub_html = " · ".join(p for p in [pagamento, data_str] if p)
 
                     st.markdown(
                         f'<div class="kanban-card">'
                         f'<div class="kanban-card-cliente">{cliente}</div>'
-                        f'<div class="kanban-card-sub">{pagamento} · {data_str}</div>'
+                        f'<div class="kanban-card-sub">{sub_html}</div>'
                         f'<div class="kanban-card-valor">{valor_f}</div>'
                         f'</div>',
                         unsafe_allow_html=True

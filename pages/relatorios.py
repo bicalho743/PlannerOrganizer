@@ -216,7 +216,12 @@ def show():
                     st.metric("Total de Clientes", clientes_ativos)
 
                 with col2:
-                    ticket_medio = propostas['valor'].mean() if 'valor' in propostas.columns else 0
+                    # Coerção numérica + descarte de NaN; sem valores válidos => 0
+                    if 'valor' in propostas.columns:
+                        _valores = pd.to_numeric(propostas['valor'], errors='coerce').dropna()
+                        ticket_medio = float(_valores.mean()) if not _valores.empty else 0.0
+                    else:
+                        ticket_medio = 0.0
                     st.metric("Ticket Médio", _fmt_brl(ticket_medio))
 
                 with col3:
