@@ -10,12 +10,9 @@ entrada legada para uma categoria oficial (desconhecido -> 'Outros';
 vazio/nulo -> None, exibido como 'Não informado').
 """
 
-# Opções oficiais oferecidas no cadastro (dropdown). Ajustadas às fontes já
-# usadas no negócio (BNI aparece nos dados reais).
-ORIGENS_OFICIAIS = ["Instagram", "Indicação", "BNI", "Google", "Site", "Outros"]
-
-# Rótulo de exibição quando não há origem definida.
+# Opções oficiais oferecidas no cadastro (dropdown).
 ORIGEM_NAO_INFORMADA = "Não informado"
+ORIGENS_OFICIAIS = ["Cliente", "Internet", "Instagram", "Google", ORIGEM_NAO_INFORMADA]
 
 
 def normalizar_origem(valor):
@@ -23,28 +20,24 @@ def normalizar_origem(valor):
     Converte qualquer entrada (legada ou nova) para uma categoria oficial.
 
     Retorna None para vazio/nulo (o chamador exibe como 'Não informado').
-    Retorna 'Outros' para valores que não casam com nenhuma opção conhecida
-    (ex.: nomes próprios de clientes).
+    Nomes próprios / indicações viram 'Cliente' (indicação de cliente);
+    site/redes/online viram 'Internet'.
     """
     if valor is None:
         return None
     s = str(valor).strip().lower()
     if s in ("", "nan", "none", "null", "undefined", "<na>"):
         return None
+    if s in ("não informado", "nao informado"):
+        return ORIGEM_NAO_INFORMADA
     if "instagram" in s or s == "insta":
         return "Instagram"
-    if "bni" in s:
-        return "BNI"
     if "google" in s:
         return "Google"
-    if "site" in s or "website" in s:
-        return "Site"
-    if "indica" in s or "amig" in s or "conhec" in s or "boca a boca" in s or "boca-a-boca" in s:
-        return "Indicação"
-    if s in (o.lower() for o in ORIGENS_OFICIAIS):
-        # já é uma oficial (com caixa diferente)
-        return next(o for o in ORIGENS_OFICIAIS if o.lower() == s)
-    return "Outros"
+    if any(k in s for k in ("internet", "site", "website", "rede", "facebook", "online")):
+        return "Internet"
+    # indicação de cliente, nomes próprios, BNI e demais fontes de indicação
+    return "Cliente"
 
 
 def origem_para_exibicao(valor):

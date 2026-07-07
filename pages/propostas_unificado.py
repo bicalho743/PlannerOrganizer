@@ -30,6 +30,7 @@ def _safe_float(val, default=0.0):
 
 
 from utils.currency_formatter import fmt_brl as _fmt_brl
+from utils.formatadores import valor_ou_traco
 
 
 def _render_nova_proposta_form(clientes):
@@ -1909,7 +1910,7 @@ def show():
                     h_pid = prop['id']
                     h_nome = str(prop.get('nome', prop.get('cliente_nome', 'Cliente')))
                     h_numero = prop.get('numero', h_pid)
-                    h_tipo = str(prop.get('tipo_proposta', prop.get('descricao', '')))[:60]
+                    h_tipo = valor_ou_traco(prop.get('tipo_proposta'), "Não informado")[:60]
                     h_valor = _safe_float(prop.get('valor'))
                     h_status = _label_h_status(_norm_h_status(str(prop.get('status', ''))))
                     h_data = None
@@ -1951,11 +1952,11 @@ def show():
                     cols = st.columns(larguras)
                     cols[0].write(r['Nº'])
                     cols[1].write(r['Cliente'])
-                    cols[2].write(r['Tipo'] or "-")
+                    cols[2].write(r['Tipo'] or "Não informado")
                     cols[3].write(_fmt_brl(r['Valor']))
                     cols[4].write(_fmt_brl(r['Receita Líquida Total']))
                     cols[5].write(r['Status'])
-                    cols[6].write(r['Data'].strftime('%d/%m/%Y') if r['Data'] is not None else "-")
+                    cols[6].write(r['Data'].strftime('%d/%m/%Y') if r['Data'] is not None else "—")
                     if cols[7].button("📋 Ver", key=f"hist_ver_{pid}", use_container_width=True):
                         st.session_state['kanban_selected_proposta'] = pid
                         st.rerun()
