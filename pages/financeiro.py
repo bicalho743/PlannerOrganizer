@@ -377,7 +377,18 @@ def show():
     }
     .kanban-card-title { font-weight: 600; font-size: 0.82rem; margin-bottom: 1px; color: #1a202c; overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
     .kanban-card-sub { font-size: 0.72rem; color: #6c757d; margin-bottom: 3px; overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
-    .kanban-card-valor { font-size: 0.78rem; font-weight: 600; overflow-wrap: anywhere; word-break: break-word; } .kanban-card { overflow-wrap: anywhere; word-break: break-word; } .kanban-col-header { white-space: normal; overflow-wrap: anywhere; } .kanban-metric-value { overflow-wrap: anywhere; } @media screen and (max-width: 768px) { .kanban-card-title { font-size: 0.9rem; } .kanban-card-sub { font-size: 0.8rem; } .kanban-card-valor { font-size: 0.85rem; } .kanban-metric { padding: 8px 8px; } .kanban-metric-label { font-size: 0.66rem; } .kanban-metric-value { font-size: 0.85rem; } .kanban-col-header { font-size: 0.78rem; } }
+    /* VALORES (dinheiro): nunca quebrar número no meio nem reticenciar.
+       word-break:keep-all + overflow-wrap:normal => quebra no máximo no
+       espaço do "R$" (2 linhas), mantendo "18.616,00" inteiro. */
+    .kanban-card-valor { font-size: 0.78rem; font-weight: 600; overflow-wrap: normal; word-break: keep-all; white-space: normal; overflow: visible; text-overflow: clip; }
+    .kanban-metric-value { overflow-wrap: normal; word-break: keep-all; white-space: normal; overflow: visible; text-overflow: clip; }
+    /* RÓTULOS: quebrar só entre palavras, nunca no meio da palavra. */
+    .kanban-card { overflow-wrap: break-word; word-break: normal; }
+    .kanban-card-title, .kanban-card-sub { overflow-wrap: break-word; word-break: normal; }
+    .kanban-col-header { white-space: normal; overflow-wrap: break-word; word-break: normal; }
+    .kanban-metric-label { overflow-wrap: break-word; word-break: normal; }
+    @media screen and (max-width: 768px) { .kanban-card-title { font-size: 0.9rem; } .kanban-card-sub { font-size: 0.8rem; } .kanban-card-valor { font-size: 0.82rem; } .kanban-metric { padding: 8px 6px; } .kanban-metric-label { font-size: 0.62rem; } .kanban-metric-value { font-size: 0.8rem; } .kanban-col-header { font-size: 0.74rem; } }
+    @media screen and (max-width: 400px) { .kanban-metric-value { font-size: 0.72rem; } }
     .kanban-metric {
         background: #fff; border: 1px solid #e2e8f0;
         border-radius: 10px; padding: 10px 14px; text-align: center;

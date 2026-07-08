@@ -372,8 +372,25 @@ div[data-testid="stDataFrame"] table tbody tr:hover td {
 }
 div[data-testid="stMetric"] {
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    border-radius: 8px; padding: 1.5rem;
+    border-radius: 8px; padding: 1.25rem 1rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef;
+}
+/* st.metric: nunca reticenciar/cortar. Rótulo quebra entre palavras;
+   valor monetário nunca quebra no meio (keep-all). Streamlit por padrão
+   aplica nowrap+ellipsis quando estreito ("Total de Pro..."). */
+div[data-testid="stMetricLabel"], div[data-testid="stMetricLabel"] * {
+    white-space: normal !important; overflow: visible !important;
+    text-overflow: clip !important; overflow-wrap: break-word !important;
+    word-break: normal !important; max-width: 100% !important;
+}
+div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] * {
+    white-space: normal !important; overflow: visible !important;
+    text-overflow: clip !important; overflow-wrap: normal !important;
+    word-break: keep-all !important;
+}
+@media screen and (max-width: 480px) {
+    div[data-testid="stMetricValue"] { font-size: 1.15rem !important; }
+    div[data-testid="stMetric"] { padding: 1rem 0.6rem !important; }
 }
 
 /* ========================================
