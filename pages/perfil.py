@@ -17,27 +17,12 @@ STRIPE_PORTAL_LINK = os.environ.get(
 )
 
 
-def _is_pro(perfil):
-    """Mesma regra do app mobile: pro/ativo/admin contam como plano ativo."""
-    plano = (perfil.get('plano') or 'gratuito').lower()
-    role = (perfil.get('role') or '').lower()
-    return plano in ('pro', 'ativo', 'admin') or role == 'admin'
+from utils.trial import is_pro as _is_pro, dias_restantes_trial as _dias_restantes_util
 
 
 def _dias_restantes_trial(perfil):
-    """Dias restantes do trial de 7 dias, com base na data de cadastro."""
-    dc = perfil.get('data_cadastro')
-    if isinstance(dc, str):
-        try:
-            dc = datetime.fromisoformat(dc[:10]).date()
-        except Exception:
-            dc = date.today()
-    elif isinstance(dc, datetime):
-        dc = dc.date()
-    elif not isinstance(dc, date):
-        dc = date.today()
-    dias_passados = (date.today() - dc).days
-    return max(0, 7 - dias_passados)
+    """Dias restantes do trial de 7 dias (delega para utils.trial)."""
+    return _dias_restantes_util(perfil)
 
 
 def _render_plano_badge(perfil):

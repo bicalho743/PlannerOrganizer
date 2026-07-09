@@ -496,6 +496,62 @@ padding-top: 2rem !important;}
 </style>
 """, unsafe_allow_html=True)
 
+# ══════════════════════════════════════════════════════════
+# GATE DE TRIAL — bloqueia o acesso após 7 dias sem assinatura
+# (espelha o bloqueio do app em app/_layout.tsx)
+# ══════════════════════════════════════════════════════════
+def _render_bloqueio_trial():
+    from pages.perfil import STRIPE_CHECKOUT_MENSAL, STRIPE_CHECKOUT_ANUAL, STRIPE_PORTAL_LINK
+    st.markdown(
+        "<div style='max-width:620px;margin:1.5rem auto 0;text-align:center;'>"
+        "<div style='font-size:56px;'>⏰</div>"
+        "<h1 style='color:#C9A84C;margin:6px 0 4px;'>Seu período de teste encerrou</h1>"
+        "<p style='color:#94a3b8;font-size:1.05rem;margin:0 0 16px;'>Seus 7 dias gratuitos "
+        "terminaram. Assine para continuar — todos os seus dados estão preservados.</p>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "<div style='max-width:620px;margin:0 auto;background:#0D1B2A;border:1px solid #1E3A5F;"
+        "border-radius:12px;padding:16px 22px;color:#fff;line-height:1.9;'>"
+        "✅ Propostas e clientes ilimitados<br>✅ Financeiro completo<br>"
+        "✅ Relatórios e PDFs<br>✅ Pós-organização<br>✅ Suporte prioritário"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+    _esq, _meio, _dir = st.columns([1, 3, 1])
+    with _meio:
+        st.write("")
+        st.link_button("🚀 Assinar Mensal — R$ 29,90/mês", STRIPE_CHECKOUT_MENSAL, use_container_width=True)
+        st.link_button("📅 Assinar Anual — R$ 297,00 (economia de 2 meses)", STRIPE_CHECKOUT_ANUAL, use_container_width=True)
+        st.caption("Após assinar, atualize a página. A liberação pode levar alguns minutos.")
+        st.markdown(
+            f"<p style='text-align:center;font-size:0.85rem;color:#64748b;margin-top:8px;'>"
+            f"Já é assinante? <a href='{STRIPE_PORTAL_LINK}' target='_blank'>"
+            f"Gerencie sua assinatura</a></p>",
+            unsafe_allow_html=True,
+        )
+        if st.button("Sair da conta", key="btn_sair_trial", use_container_width=True):
+            st.session_state.authenticated = False
+            st.session_state.pop('_confirmar_logout', None)
+            st.rerun()
+
+try:
+    from pages.perfil import carregar_perfil
+    from utils.trial import trial_expirado
+    _uid_trial = None
+    if st.session_state.get('usuario_id'):
+        _uid_trial = st.session_state.usuario_id
+    elif isinstance(st.session_state.get('user'), dict) and st.session_state.user.get('localId'):
+        _uid_trial = st.session_state.user['localId']
+    _perfil_trial = carregar_perfil(_uid_trial or '')
+    if trial_expirado(_perfil_trial):
+        _render_bloqueio_trial()
+        st.stop()
+except Exception as _e_trial:
+    # Fail-open: se der erro ao checar, NÃO bloqueia (não trava quem pagou).
+    print(f"[trial] erro ao verificar bloqueio: {_e_trial}")
+
 if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
    ('user' in st.session_state and st.session_state.user and 'localId' in st.session_state.user):
 
