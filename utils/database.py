@@ -4511,27 +4511,33 @@ class Database:
 
             # Adicionar itens
             for item in itens:
-                produto_id = item['produto_id']
-                quantidade = item['quantidade']
+                produto_id = item.get('produto_id')
+                quantidade = item.get('quantidade', 1) or 1
 
-                # Obter produto e verificar estoque
-                produto = self.session.query(Produto).filter_by(id=produto_id).first()
-                if not produto:
-                    raise Exception(f"Produto com ID {produto_id} não encontrado")
+                produto = self.session.query(Produto).filter_by(id=produto_id).first() if produto_id else None
 
-                if produto.estoque < quantidade:
-                    raise Exception(f"Estoque insuficiente para o produto {produto.nome}")
+                # Nome do produto: relação OU descrição/nome enviados pelo cliente.
+                # Grava-se a descrição para o relatório nunca cair em "Produto não
+                # identificado" caso o vínculo com o produto se perca.
+                descricao = (item.get('descricao') or item.get('produto_nome')
+                             or (produto.nome if produto else '') or '')
 
-                # Atualizar estoque
-                produto.estoque -= quantidade
+                # Baixa de estoque só quando o produto existe e há saldo (não
+                # bloqueia a venda se o produto foi removido).
+                if produto is not None and getattr(produto, 'estoque', None) is not None:
+                    if produto.estoque >= quantidade:
+                        produto.estoque -= quantidade
 
-                # Adicionar item
-                preco_unitario = item.get('preco_unitario', produto.preco_venda)
+                preco_unitario = item.get('preco_unitario')
+                if preco_unitario is None:
+                    preco_unitario = produto.preco_venda if produto else 0
+                preco_unitario = float(preco_unitario or 0)
                 subtotal = preco_unitario * quantidade
 
                 item_venda = ItemVenda(
                     venda_id=venda.id,
                     produto_id=produto_id,
+                    descricao=descricao,
                     quantidade=quantidade,
                     preco_unitario=preco_unitario,
                     subtotal=subtotal
@@ -4619,6 +4625,7 @@ class Database:
 
                 item_data = {
                     'id': i.id,
+                    'produto_id': i.produto_id,
                     'produto_nome': produto_nome,
                     'quantidade': i.quantidade,
                     'preco_unitario': round(i.preco_unitario, 2),
