@@ -1636,6 +1636,10 @@ async def stripe_portal(uid: str = Depends(verify_firebase_token)):
     try:
         import stripe as _stripe, psycopg2 as _pg2, os as _os
         _stripe.api_key = _os.environ.get("STRIPE_SECRET_KEY", "")
+        if not _stripe.api_key.startswith("sk_"):
+            raise HTTPException(status_code=500, detail=(
+                "STRIPE_SECRET_KEY inválida no servidor: deve começar com 'sk_' "
+                "(chave secreta), não 'whsec_' (segredo de webhook)."))
         # Buscar email do usuário
         _conn = _pg2.connect(_os.environ.get("DATABASE_URL"))
         _cur = _conn.cursor()

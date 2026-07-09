@@ -77,6 +77,10 @@ def _criar_portal_session(email):
     secret = os.environ.get("STRIPE_SECRET_KEY", "")
     if not secret:
         return None, "STRIPE_SECRET_KEY não configurada no servidor."
+    if not secret.startswith("sk_"):
+        return None, ("STRIPE_SECRET_KEY inválida no servidor: deve começar com 'sk_' "
+                      "(chave secreta da API), não 'whsec_' (segredo de webhook). "
+                      "Corrija a variável de ambiente.")
     if not email:
         return None, "E-mail do usuário não disponível."
     try:
