@@ -200,6 +200,27 @@ def gerar_pdf_interno(dados, output_path, perfil=None):
     _footer(c, margin, perfil)
     c.save()
 
+def _desc_box(c, margin, cw, y, desc):
+    """Caixa 'Descrição do serviço' com QUEBRA de linha e altura dinâmica.
+    Antes usava drawString de linha única em caixa fixa (12mm): descrição
+    longa saía da página e 'sumia'. Retorna o novo y."""
+    from reportlab.lib.utils import simpleSplit
+    texto = str(desc) if str(desc).startswith('-') else f"- {desc}"
+    linhas = simpleSplit(texto, "Helvetica-Bold", 10, cw - 10*mm) or [""]
+    box_h = 8*mm + len(linhas) * 4.8*mm
+    rr(c, margin, y - box_h, cw, box_h, 4, GOLD_LT, GOLD, 0.5)
+    c.setFillColor(colors.HexColor("#7A5C1A"))
+    c.setFont("Helvetica", 9)
+    c.drawString(margin + 5*mm, y - 4*mm, "Descrição do serviço")
+    c.setFillColor(NAVY)
+    c.setFont("Helvetica-Bold", 10)
+    ly = y - 9*mm
+    for ln in linhas:
+        c.drawString(margin + 5*mm, ly, ln)
+        ly -= 4.8*mm
+    return y - (box_h + 10*mm)
+
+
 def gerar_pdf_cliente(dados, output_path, perfil=None, titulo="Fechamento do Serviço"):
     c = canvas.Canvas(output_path, pagesize=A4)
     margin = 18*mm
@@ -213,14 +234,7 @@ def gerar_pdf_cliente(dados, output_path, perfil=None, titulo="Fechamento do Ser
     ])
     desc = dados.get('descricao', '')
     if desc:
-        rr(c, margin, y - 12*mm, cw, 12*mm, 4, GOLD_LT, GOLD, 0.5)
-        c.setFillColor(colors.HexColor("#7A5C1A"))
-        c.setFont("Helvetica", 9)
-        c.drawString(margin + 5*mm, y - 4*mm, "Descrição do serviço")
-        c.setFillColor(NAVY)
-        c.setFont("Helvetica-Bold", 10)
-        c.drawString(margin + 5*mm, y - 9.5*mm, f"- {desc}" if not desc.startswith('-') else desc)
-        y -= 22*mm
+        y = _desc_box(c, margin, cw, y, desc)
     y = _section_title(c, margin, cw, y, "Investimento",
         "Valores do serviço contratado", NAVY)
     y = _table_rows(c, margin, cw, y, dados.get('itens', []))
@@ -342,14 +356,7 @@ def gerar_pdf_proposta_comercial(dados, output_path, perfil=None):
     ])
     desc = dados_copia.get('descricao', '')
     if desc:
-        rr(c, margin, y - 12*mm, cw, 12*mm, 4, GOLD_LT, GOLD, 0.5)
-        c.setFillColor(colors.HexColor("#7A5C1A"))
-        c.setFont("Helvetica", 9)
-        c.drawString(margin + 5*mm, y - 4*mm, "Descrição do serviço")
-        c.setFillColor(NAVY)
-        c.setFont("Helvetica-Bold", 10)
-        c.drawString(margin + 5*mm, y - 9.5*mm, f"- {desc}" if not desc.startswith('-') else desc)
-        y -= 22*mm
+        y = _desc_box(c, margin, cw, y, desc)
     y = _section_title(c, margin, cw, y, "Investimento",
         "Valores do serviço contratado", NAVY)
     y = _table_rows(c, margin, cw, y, dados_copia.get('itens', []))
