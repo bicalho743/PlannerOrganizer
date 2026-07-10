@@ -840,9 +840,16 @@ def _tab_itens(proposta_id, show_finalizar=False, proposta=None):
                     "Tipo de Proposta:",
                     _tipos_opcoes, index=_idx_tipo,
                     key=f"novo_tipo_exec_{proposta_id}")
+                nova_descricao = st.text_area(
+                    "Descrição do serviço (ambientes/itens):",
+                    value=str(proposta.get('descricao') or ''),
+                    height=120,
+                    key=f"nova_descricao_exec_{proposta_id}")
                 if st.form_submit_button("Salvar alterações", type="primary", use_container_width=True):
                     try:
-                        res = st.session_state.db.update_proposta(proposta_id, valor=novo_valor, tipo_proposta=novo_tipo)
+                        res = st.session_state.db.update_proposta(
+                            proposta_id, valor=novo_valor, tipo_proposta=novo_tipo,
+                            descricao=nova_descricao)
                         ok = res.get('status', False) if isinstance(res, dict) else bool(res)
                         if ok:
                             st.session_state.db.invalidar_cache()
