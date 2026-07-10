@@ -500,8 +500,9 @@ padding-top: 2rem !important;}
 # GATE DE TRIAL — bloqueia o acesso após 7 dias sem assinatura
 # (espelha o bloqueio do app em app/_layout.tsx)
 # ══════════════════════════════════════════════════════════
-def _render_bloqueio_trial():
-    from pages.perfil import STRIPE_CHECKOUT_MENSAL, STRIPE_CHECKOUT_ANUAL, STRIPE_PORTAL_LINK
+def _render_bloqueio_trial(perfil=None):
+    from pages.perfil import STRIPE_CHECKOUT_MENSAL, STRIPE_CHECKOUT_ANUAL, STRIPE_PORTAL_LINK, checkout_url
+    _email = (perfil or {}).get('email') or ''
     st.markdown(
         "<div style='max-width:620px;margin:1.5rem auto 0;text-align:center;'>"
         "<div style='font-size:56px;'>⏰</div>"
@@ -522,8 +523,8 @@ def _render_bloqueio_trial():
     _esq, _meio, _dir = st.columns([1, 3, 1])
     with _meio:
         st.write("")
-        st.link_button("🚀 Assinar Mensal — R$ 29,90/mês", STRIPE_CHECKOUT_MENSAL, use_container_width=True)
-        st.link_button("📅 Assinar Anual — R$ 297,00 (economia de 2 meses)", STRIPE_CHECKOUT_ANUAL, use_container_width=True)
+        st.link_button("🚀 Assinar Mensal — R$ 29,90/mês", checkout_url(STRIPE_CHECKOUT_MENSAL, _email), use_container_width=True)
+        st.link_button("📅 Assinar Anual — R$ 297,00 (economia de 2 meses)", checkout_url(STRIPE_CHECKOUT_ANUAL, _email), use_container_width=True)
         st.caption("Após assinar, atualize a página. A liberação pode levar alguns minutos.")
         st.markdown(
             f"<p style='text-align:center;font-size:0.85rem;color:#64748b;margin-top:8px;'>"
@@ -546,7 +547,7 @@ try:
         _uid_trial = st.session_state.user['localId']
     _perfil_trial = carregar_perfil(_uid_trial or '')
     if trial_expirado(_perfil_trial):
-        _render_bloqueio_trial()
+        _render_bloqueio_trial(_perfil_trial)
         st.stop()
 except Exception as _e_trial:
     # Fail-open: se der erro ao checar, NÃO bloqueia (não trava quem pagou).

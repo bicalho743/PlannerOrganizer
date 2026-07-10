@@ -20,6 +20,14 @@ STRIPE_PORTAL_LINK = os.environ.get(
 from utils.trial import is_pro as _is_pro, dias_restantes_trial as _dias_restantes_util
 
 
+def checkout_url(base, email):
+    """Payment Link com o e-mail da conta pré-preenchido, para o pagamento
+    sempre casar com o perfil certo no webhook de ativação."""
+    from urllib.parse import quote
+    email = (email or '').strip()
+    return f"{base}?prefilled_email={quote(email)}" if email else base
+
+
 def _dias_restantes_trial(perfil):
     """Dias restantes do trial de 7 dias (delega para utils.trial)."""
     return _dias_restantes_util(perfil)
@@ -493,11 +501,12 @@ def show():
             <p>Desbloqueie todos os recursos do Planner Organizer sem limites.</p>
         </div>
         """, unsafe_allow_html=True)
+        _email_checkout = perfil.get('email') or user_id
         col_m, col_a = st.columns(2)
         with col_m:
-            st.link_button("🚀 Mensal — R$ 29,90/mês", STRIPE_CHECKOUT_MENSAL, use_container_width=True)
+            st.link_button("🚀 Mensal — R$ 29,90/mês", checkout_url(STRIPE_CHECKOUT_MENSAL, _email_checkout), use_container_width=True)
         with col_a:
-            st.link_button("📅 Anual — R$ 297,00 (economia de 2 meses)", STRIPE_CHECKOUT_ANUAL, use_container_width=True)
+            st.link_button("📅 Anual — R$ 297,00 (economia de 2 meses)", checkout_url(STRIPE_CHECKOUT_ANUAL, _email_checkout), use_container_width=True)
 
     # Link direto do portal — acesso garantido por e-mail, independente do
     # que o banco registra como plano ou da configuração da API.
