@@ -1590,11 +1590,15 @@ async def stripe_webhook(request: Request):
                 _conn = _pg2.connect(_db_url)
                 _cur = _conn.cursor()
                 _cur.execute(
-                    "UPDATE perfis SET plano = 'pro', ativo = TRUE WHERE email = %s",
+                    "UPDATE perfis SET plano = 'pro', ativo = TRUE "
+                    "WHERE LOWER(TRIM(email)) = LOWER(TRIM(%s))",
                     (email,)
                 )
                 _conn.commit()
-                print(f"[webhook] plano ativado para {email} rows={_cur.rowcount}")
+                if _cur.rowcount == 0:
+                    print(f"[webhook] ATENCAO: pagamento de {email} sem perfil correspondente — plano NAO ativado")
+                else:
+                    print(f"[webhook] plano ativado para {email} rows={_cur.rowcount}")
                 _cur.close()
                 _conn.close()
             except Exception as e:
@@ -1613,7 +1617,8 @@ async def stripe_webhook(request: Request):
                     _conn = _pg2.connect(_db_url)
                     _cur = _conn.cursor()
                     _cur.execute(
-                        "UPDATE perfis SET plano = 'cancelado' WHERE email = %s",
+                        "UPDATE perfis SET plano = 'cancelado' "
+                        "WHERE LOWER(TRIM(email)) = LOWER(TRIM(%s))",
                         (email,)
                     )
                     _conn.commit()
