@@ -508,11 +508,27 @@ def _render_bloqueio_trial(perfil=None, uid=None):
 
     st.markdown("""
     <style>
-    .pw-wrap { max-width: 900px; margin: 1rem auto 0; text-align: center; }
+    /* Nesta tela ninguem chama st.sidebar.*() (o gate roda antes do menu ser
+       montado), entao a <section> da sidebar fica vazia mas ainda reserva a
+       largura padrao, descentralizando o conteudo principal. Escondida por
+       completo so aqui — nas demais paginas autenticadas ela continua normal. */
+    section[data-testid="stSidebar"] { display: none !important; }
+    [data-testid="stAppViewContainer"] > .main, div[data-testid="stMain"] {
+        margin-left: 0 !important; width: 100% !important; max-width: 100% !important;
+    }
+    /* Reduz o espaco reservado do topo (header/toolbar ocultos ainda deixam
+       padding no block-container) so nesta tela de bloqueio. */
+    div[data-testid="stMainBlockContainer"], .main .block-container,
+    section.main > div.block-container, [data-testid="stAppViewBlockContainer"] {
+        padding-top: 0.8rem !important;
+    }
+    .pw-wrap { width: 100%; max-width: 900px; margin: 0.5rem auto 0; text-align: center;
+               box-sizing: border-box; }
     .pw-icon { font-size: 50px; }
     .pw-title { color: #C9A84C; font-size: 2rem; font-weight: 800; margin: 8px 0 6px; }
     .pw-sub { color: #94a3b8; font-size: 1.05rem; max-width: 560px; margin: 0 auto 28px; line-height: 1.6; }
-    .pw-cards { display: flex; gap: 20px; justify-content: center; align-items: stretch; flex-wrap: wrap; margin-bottom: 18px; }
+    .pw-cards { width: 100%; display: flex; gap: 20px; justify-content: center; align-items: stretch;
+                flex-wrap: wrap; margin: 0 auto 18px; }
     .pw-card { background: #0D1B2A; border: 1px solid #1E3A5F; border-radius: 16px; padding: 28px 24px 24px;
                width: 260px; text-align: left; position: relative; }
     .pw-card.featured { border: 2px solid #C9A84C; background: linear-gradient(180deg, #132a44 0%, #0D1B2A 60%);
