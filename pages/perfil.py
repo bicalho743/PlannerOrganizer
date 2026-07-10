@@ -468,10 +468,37 @@ def show():
     # Seção de faturamento e assinatura
     st.subheader("💳 Faturamento e Assinatura")
 
+    st.markdown("""
+    <style>
+    .pf-pro { background: linear-gradient(135deg, #0D1B2A 0%, #132a44 100%); border: 1px solid #1E3A5F;
+              border-radius: 14px; padding: 20px 24px; margin-bottom: 4px; }
+    .pf-pro h4 { margin: 0 0 4px; color: #C9A84C; font-size: 1.05rem; }
+    .pf-pro p { margin: 0; color: #cbd5e1; font-size: 0.92rem; }
+    .pf-cards { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin: 10px 0 6px; }
+    .pf-card { background: #0D1B2A; border: 1px solid #1E3A5F; border-radius: 14px; padding: 22px 20px 18px;
+               width: 230px; text-align: left; position: relative; }
+    .pf-card.featured { border: 2px solid #C9A84C; background: linear-gradient(180deg, #132a44 0%, #0D1B2A 60%);
+                         box-shadow: 0 6px 22px rgba(201,168,76,0.22); }
+    .pf-ribbon { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: #C9A84C;
+                 color: #0D1B2A; font-size: 10px; font-weight: 800; letter-spacing: .04em; padding: 3px 12px;
+                 border-radius: 20px; white-space: nowrap; }
+    .pf-plan { color: #fff; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+    .pf-price { color: #fff; font-size: 1.7rem; font-weight: 800; margin: 0; line-height: 1.1; }
+    .pf-price span { font-size: .85rem; font-weight: 500; color: #94a3b8; }
+    .pf-save { display: inline-block; margin-top: 6px; background: rgba(201,168,76,.15); color: #C9A84C;
+               font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 10px; }
+    .pf-cta { display: block; text-align: center; text-decoration: none; padding: 10px 0; border-radius: 8px;
+              font-weight: 700; font-size: 13.5px; margin-top: 14px; }
+    .pf-cta.primary { background: #C9A84C; color: #0D1B2A; }
+    .pf-cta.outline { background: transparent; color: #C9A84C; border: 1.5px solid #C9A84C; }
+    @media (max-width: 560px) { .pf-cards { flex-direction: column; align-items: center; } }
+    </style>
+    """, unsafe_allow_html=True)
+
     if _is_pro(perfil):
         st.markdown("""
-        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #026937;">
-            <h4 style="margin-top: 0; color: #026937;">Portal do Cliente Stripe</h4>
+        <div class="pf-pro">
+            <h4>⭐ Portal do Cliente Stripe</h4>
             <p>Gerencie sua assinatura, atualize seus dados de pagamento e visualize suas faturas.</p>
         </div>
         """, unsafe_allow_html=True)
@@ -495,18 +522,29 @@ def show():
             st.link_button("🔗 Abrir Portal do Cliente", url, use_container_width=False)
             st.caption("Se o botão não abrir automaticamente, clique no link acima.")
     else:
-        st.markdown("""
-        <div style="background-color: #fff8e6; padding: 15px; border-radius: 5px; border-left: 4px solid #C9A84C;">
-            <h4 style="margin-top: 0; color: #8a6d1a;">Assine o Plano Pro</h4>
+        _email_checkout = perfil.get('email') or user_id
+        _url_mensal = checkout_url(STRIPE_CHECKOUT_MENSAL, _email_checkout)
+        _url_anual = checkout_url(STRIPE_CHECKOUT_ANUAL, _email_checkout)
+        st.markdown(f"""
+        <div class="pf-pro" style="margin-bottom:14px;">
+            <h4>🚀 Assine o Plano Pro</h4>
             <p>Desbloqueie todos os recursos do Planner Organizer sem limites.</p>
         </div>
+        <div class="pf-cards">
+            <div class="pf-card">
+                <div class="pf-plan">Mensal</div>
+                <div class="pf-price">R$ 29,90 <span>/mês</span></div>
+                <a class="pf-cta outline" href="{_url_mensal}" target="_blank">Assinar Mensal</a>
+            </div>
+            <div class="pf-card featured">
+                <div class="pf-ribbon">MAIS POPULAR</div>
+                <div class="pf-plan">Anual</div>
+                <div class="pf-price">R$ 297 <span>/ano</span></div>
+                <div class="pf-save">💰 Economize 2 meses</div>
+                <a class="pf-cta primary" href="{_url_anual}" target="_blank">Assinar Anual</a>
+            </div>
+        </div>
         """, unsafe_allow_html=True)
-        _email_checkout = perfil.get('email') or user_id
-        col_m, col_a = st.columns(2)
-        with col_m:
-            st.link_button("🚀 Mensal — R$ 29,90/mês", checkout_url(STRIPE_CHECKOUT_MENSAL, _email_checkout), use_container_width=True)
-        with col_a:
-            st.link_button("📅 Anual — R$ 297,00 (economia de 2 meses)", checkout_url(STRIPE_CHECKOUT_ANUAL, _email_checkout), use_container_width=True)
 
     # Link direto do portal — acesso garantido por e-mail, independente do
     # que o banco registra como plano ou da configuração da API.
