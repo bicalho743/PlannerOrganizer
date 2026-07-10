@@ -33,12 +33,13 @@ def show():
                 password_confirm = st.text_input("Confirme a senha", type="password")
                 
                 st.markdown(
-                    '<p style="color: rgba(245,240,232,0.7); font-size: 0.85rem; margin-bottom: 0.25rem;">'
+                    '<p style="color: rgba(245,240,232,0.7); font-size: 0.85rem; margin-bottom: 0.9rem; line-height: 1.5;">'
                     'Ao criar sua conta, você concorda com nossos '
                     '<a href="?show_termos=true" target="_blank" style="color: #C9A84C; text-decoration: underline;">Termos de Uso</a>'
                     ' e '
                     '<a href="?show_politica=true" target="_blank" style="color: #C9A84C; text-decoration: underline;">Política de Privacidade</a>.'
-                    '</p>',
+                    '</p>'
+                    '<div style="height:6px"></div>',
                     unsafe_allow_html=True
                 )
                 terms_accepted = st.checkbox("Li e aceito os termos de uso e política de privacidade")
@@ -74,6 +75,27 @@ def show():
                                 # Exibir mensagem de erro
                                 st.error(f"Erro ao criar conta: {result['error']}")
             
+            # Criar conta com Google — no Firebase, o login com Google cria a
+            # conta automaticamente na primeira vez (mesmo fluxo do login).
+            st.markdown("""
+            <div style="display:flex;align-items:center;gap:10px;margin:16px 0 6px;">
+              <div style="flex:1;height:1px;background:rgba(245,240,232,0.1)"></div>
+              <span style="font-size:0.72rem;color:rgba(245,240,232,0.3);letter-spacing:0.1em">OU</span>
+              <div style="flex:1;height:1px;background:rgba(245,240,232,0.1)"></div>
+            </div>
+            """, unsafe_allow_html=True)
+            try:
+                from utils.google_auth_component import google_login_button
+                google_login_button()
+                st.markdown(
+                    '<p style="text-align:center;color: rgba(245,240,232,0.45); font-size: 0.78rem; margin-top: 4px;">'
+                    'Ao continuar com o Google, sua conta é criada automaticamente '
+                    'e você concorda com os termos acima.</p>',
+                    unsafe_allow_html=True
+                )
+            except Exception:
+                pass
+
             # Texto centralizado
             st.markdown("""
             <div style="text-align: center; margin-top: 1rem;">

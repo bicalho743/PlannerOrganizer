@@ -90,7 +90,10 @@ class Perfil(Base):
     observacoes_relatorio = Column(String)  # Campo para observações personalizadas do usuário nos relatórios
     role = Column(String, default='user')
     plano = Column(String, default='gratuito')
-    data_cadastro = Column(Date, default=datetime.now().date())
+    # default como callable: avaliado a cada INSERT (data real do cadastro).
+    # Sem o lambda, datetime.now() rodaria uma única vez na importação e todos
+    # os perfis ganhariam a data de boot do servidor — distorcendo o trial.
+    data_cadastro = Column(Date, default=lambda: datetime.now().date())
     ultimo_login = Column(DateTime)
     ativo = Column(Boolean, default=True)
 
