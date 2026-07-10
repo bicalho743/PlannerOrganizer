@@ -503,35 +503,85 @@ padding-top: 2rem !important;}
 def _render_bloqueio_trial(perfil=None):
     from pages.perfil import STRIPE_CHECKOUT_MENSAL, STRIPE_CHECKOUT_ANUAL, STRIPE_PORTAL_LINK, checkout_url
     _email = (perfil or {}).get('email') or ''
-    st.markdown(
-        "<div style='max-width:620px;margin:1.5rem auto 0;text-align:center;'>"
-        "<div style='font-size:56px;'>⏰</div>"
-        "<h1 style='color:#C9A84C;margin:6px 0 4px;'>Seu período de teste encerrou</h1>"
-        "<p style='color:#94a3b8;font-size:1.05rem;margin:0 0 16px;'>Seus 7 dias gratuitos "
-        "terminaram. Assine para continuar — todos os seus dados estão preservados.</p>"
-        "</div>",
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        "<div style='max-width:620px;margin:0 auto;background:#0D1B2A;border:1px solid #1E3A5F;"
-        "border-radius:12px;padding:16px 22px;color:#fff;line-height:1.9;'>"
-        "✅ Propostas e clientes ilimitados<br>✅ Financeiro completo<br>"
-        "✅ Relatórios e PDFs<br>✅ Pós-organização<br>✅ Suporte prioritário"
-        "</div>",
-        unsafe_allow_html=True,
-    )
-    _esq, _meio, _dir = st.columns([1, 3, 1])
+    _url_mensal = checkout_url(STRIPE_CHECKOUT_MENSAL, _email)
+    _url_anual = checkout_url(STRIPE_CHECKOUT_ANUAL, _email)
+
+    st.markdown("""
+    <style>
+    .pw-wrap { max-width: 900px; margin: 1rem auto 0; text-align: center; }
+    .pw-icon { font-size: 50px; }
+    .pw-title { color: #C9A84C; font-size: 2rem; font-weight: 800; margin: 8px 0 6px; }
+    .pw-sub { color: #94a3b8; font-size: 1.05rem; max-width: 560px; margin: 0 auto 28px; line-height: 1.6; }
+    .pw-cards { display: flex; gap: 20px; justify-content: center; align-items: stretch; flex-wrap: wrap; margin-bottom: 18px; }
+    .pw-card { background: #0D1B2A; border: 1px solid #1E3A5F; border-radius: 16px; padding: 28px 24px 24px;
+               width: 260px; text-align: left; position: relative; }
+    .pw-card.featured { border: 2px solid #C9A84C; background: linear-gradient(180deg, #132a44 0%, #0D1B2A 60%);
+                         transform: scale(1.04); box-shadow: 0 8px 30px rgba(201,168,76,0.25); }
+    .pw-ribbon { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: #C9A84C;
+                 color: #0D1B2A; font-size: 11px; font-weight: 800; letter-spacing: .04em; padding: 4px 14px;
+                 border-radius: 20px; white-space: nowrap; }
+    .pw-plan { color: #fff; font-weight: 700; font-size: 15px; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+    .pw-price { color: #fff; font-size: 2.1rem; font-weight: 800; margin: 0; line-height: 1.1; }
+    .pw-price span { font-size: .95rem; font-weight: 500; color: #94a3b8; }
+    .pw-save { display: inline-block; margin-top: 6px; background: rgba(201,168,76,.15); color: #C9A84C;
+               font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 10px; }
+    .pw-features { list-style: none; padding: 0; margin: 18px 0 22px; color: #cbd5e1; font-size: 13.5px; line-height: 2; }
+    .pw-features li:before { content: '✓  '; color: #27AE60; font-weight: 800; }
+    .pw-cta { display: block; text-align: center; text-decoration: none; padding: 12px 0; border-radius: 10px;
+              font-weight: 700; font-size: 14.5px; }
+    .pw-cta:hover { opacity: .88; }
+    .pw-cta.primary { background: #C9A84C; color: #0D1B2A; }
+    .pw-cta.outline { background: transparent; color: #C9A84C; border: 1.5px solid #C9A84C; }
+    .pw-trust { color: #64748b; font-size: 12.5px; margin: 6px 0 18px; }
+    .pw-manage { font-size: .88rem; color: #64748b; }
+    .pw-manage a { color: #9AA5B4; }
+    @media (max-width: 620px) { .pw-cards { flex-direction: column; align-items: center; } .pw-card.featured { transform: none; } }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div class='pw-wrap'>
+      <div class='pw-icon'>⏰</div>
+      <div class='pw-title'>Seu período de teste encerrou</div>
+      <div class='pw-sub'>Seus 7 dias gratuitos terminaram — mas seus clientes, propostas e dados
+        continuam salvos. Assine agora e volte a organizar tudo em segundos.</div>
+      <div class='pw-cards'>
+        <div class='pw-card'>
+          <div class='pw-plan'>Mensal</div>
+          <div class='pw-price'>R$ 29,90 <span>/mês</span></div>
+          <ul class='pw-features'>
+            <li>Propostas e clientes ilimitados</li>
+            <li>Financeiro completo</li>
+            <li>Relatórios e PDFs</li>
+            <li>Pós-organização</li>
+            <li>Suporte prioritário</li>
+          </ul>
+          <a class='pw-cta outline' href='{_url_mensal}' target='_blank'>Assinar Mensal</a>
+        </div>
+        <div class='pw-card featured'>
+          <div class='pw-ribbon'>MAIS POPULAR</div>
+          <div class='pw-plan'>Anual</div>
+          <div class='pw-price'>R$ 297 <span>/ano</span></div>
+          <div class='pw-save'>💰 Economize 2 meses</div>
+          <ul class='pw-features'>
+            <li>Propostas e clientes ilimitados</li>
+            <li>Financeiro completo</li>
+            <li>Relatórios e PDFs</li>
+            <li>Pós-organização</li>
+            <li>Suporte prioritário</li>
+          </ul>
+          <a class='pw-cta primary' href='{_url_anual}' target='_blank'>🚀 Assinar Anual</a>
+        </div>
+      </div>
+      <div class='pw-trust'>🔒 Pagamento seguro via Stripe · Cancele quando quiser · Dados sempre preservados</div>
+      <div class='pw-manage'>Após assinar, atualize a página (a liberação pode levar alguns minutos).<br>
+        Já é assinante? <a href='{STRIPE_PORTAL_LINK}' target='_blank'>Gerencie sua assinatura</a></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.write("")
+    _esq, _meio, _dir = st.columns([2, 1, 2])
     with _meio:
-        st.write("")
-        st.link_button("🚀 Assinar Mensal — R$ 29,90/mês", checkout_url(STRIPE_CHECKOUT_MENSAL, _email), use_container_width=True)
-        st.link_button("📅 Assinar Anual — R$ 297,00 (economia de 2 meses)", checkout_url(STRIPE_CHECKOUT_ANUAL, _email), use_container_width=True)
-        st.caption("Após assinar, atualize a página. A liberação pode levar alguns minutos.")
-        st.markdown(
-            f"<p style='text-align:center;font-size:0.85rem;color:#64748b;margin-top:8px;'>"
-            f"Já é assinante? <a href='{STRIPE_PORTAL_LINK}' target='_blank'>"
-            f"Gerencie sua assinatura</a></p>",
-            unsafe_allow_html=True,
-        )
         if st.button("Sair da conta", key="btn_sair_trial", use_container_width=True):
             st.session_state.authenticated = False
             st.session_state.pop('_confirmar_logout', None)
