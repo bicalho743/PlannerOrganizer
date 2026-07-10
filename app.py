@@ -500,11 +500,11 @@ padding-top: 2rem !important;}
 # GATE DE TRIAL — bloqueia o acesso após 7 dias sem assinatura
 # (espelha o bloqueio do app em app/_layout.tsx)
 # ══════════════════════════════════════════════════════════
-def _render_bloqueio_trial(perfil=None):
+def _render_bloqueio_trial(perfil=None, uid=None):
     from pages.perfil import STRIPE_CHECKOUT_MENSAL, STRIPE_CHECKOUT_ANUAL, STRIPE_PORTAL_LINK, checkout_url
     _email = (perfil or {}).get('email') or ''
-    _url_mensal = checkout_url(STRIPE_CHECKOUT_MENSAL, _email)
-    _url_anual = checkout_url(STRIPE_CHECKOUT_ANUAL, _email)
+    _url_mensal = checkout_url(STRIPE_CHECKOUT_MENSAL, _email, uid)
+    _url_anual = checkout_url(STRIPE_CHECKOUT_ANUAL, _email, uid)
 
     st.markdown("""
     <style>
@@ -597,7 +597,7 @@ try:
         _uid_trial = st.session_state.user['localId']
     _perfil_trial = carregar_perfil(_uid_trial or '')
     if trial_expirado(_perfil_trial):
-        _render_bloqueio_trial(_perfil_trial)
+        _render_bloqueio_trial(_perfil_trial, _uid_trial)
         st.stop()
 except Exception as _e_trial:
     # Fail-open: se der erro ao checar, NÃO bloqueia (não trava quem pagou).

@@ -1577,6 +1577,7 @@ async def stripe_webhook(request: Request):
     if event["type"] == "checkout.session.completed":
         session = event["data"]["object"]
         # StripeObject usa atributo, não dict .get()
+        uid = getattr(session, "client_reference_id", None) or ""
         try:
             email = getattr(session, "customer_email", None) or ""
             if not email:
@@ -1584,21 +1585,36 @@ async def stripe_webhook(request: Request):
                 email = getattr(cd, "email", "") or ""
         except Exception:
             email = ""
-        print(f"[webhook] pagamento confirmado: {email}")
-        if email:
+        print(f"[webhook] pagamento confirmado: uid={uid or '(nenhum)'} email={email}")
+        if uid or email:
             try:
                 _conn = _pg2.connect(_db_url)
                 _cur = _conn.cursor()
-                _cur.execute(
-                    "UPDATE perfis SET plano = 'pro', ativo = TRUE "
-                    "WHERE LOWER(TRIM(email)) = LOWER(TRIM(%s))",
-                    (email,)
-                )
+                rows = 0
+                # 1ª tentativa: client_reference_id (o UID Firebase da conta que
+                # iniciou o checkout — imutável, não editável pelo pagador).
+                # Muito mais confiável que o e-mail, que é texto livre no Stripe
+                # e pode ser digitado diferente do e-mail de login da conta.
+                if uid:
+                    _cur.execute(
+                        "UPDATE perfis SET plano = 'pro', ativo = TRUE WHERE usuario_id = %s",
+                        (uid,)
+                    )
+                    rows = _cur.rowcount
+                # 2ª tentativa (fallback): e-mail, para links antigos sem
+                # client_reference_id ou pagamentos feitos fora do fluxo do app/site.
+                if rows == 0 and email:
+                    _cur.execute(
+                        "UPDATE perfis SET plano = 'pro', ativo = TRUE "
+                        "WHERE LOWER(TRIM(email)) = LOWER(TRIM(%s))",
+                        (email,)
+                    )
+                    rows = _cur.rowcount
                 _conn.commit()
-                if _cur.rowcount == 0:
-                    print(f"[webhook] ATENCAO: pagamento de {email} sem perfil correspondente — plano NAO ativado")
+                if rows == 0:
+                    print(f"[webhook] ATENCAO: pagamento uid={uid or '(nenhum)'} email={email} sem perfil correspondente — plano NAO ativado")
                 else:
-                    print(f"[webhook] plano ativado para {email} rows={_cur.rowcount}")
+                    print(f"[webhook] plano ativado (uid={uid or '(nenhum)'} email={email}) rows={rows}")
                 _cur.close()
                 _conn.close()
             except Exception as e:

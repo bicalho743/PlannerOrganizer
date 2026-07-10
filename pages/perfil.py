@@ -20,12 +20,19 @@ STRIPE_PORTAL_LINK = os.environ.get(
 from utils.trial import is_pro as _is_pro, dias_restantes_trial as _dias_restantes_util
 
 
-def checkout_url(base, email):
-    """Payment Link com o e-mail da conta pré-preenchido, para o pagamento
-    sempre casar com o perfil certo no webhook de ativação."""
+def checkout_url(base, email, uid=None):
+    """Payment Link com e-mail pré-preenchido (edite pelo pagador, é só
+    conveniência) e client_reference_id = UID Firebase (oculto, não editável).
+    O webhook ativa o plano priorizando o UID — assim, mesmo que a pessoa
+    pague com um e-mail diferente do de login, a conta certa é liberada."""
     from urllib.parse import quote
     email = (email or '').strip()
-    return f"{base}?prefilled_email={quote(email)}" if email else base
+    partes = []
+    if email:
+        partes.append(f"prefilled_email={quote(email)}")
+    if uid:
+        partes.append(f"client_reference_id={quote(str(uid))}")
+    return f"{base}?{'&'.join(partes)}" if partes else base
 
 
 def _dias_restantes_trial(perfil):
@@ -243,7 +250,12 @@ def show():
     # Obter dados do usuário atual
     usuario = st.session_state.usuario
     user_id = usuario.get('email', 'usuario_desconhecido')
-    
+
+    # UID Firebase real (não confundir com user_id acima, que aqui é o e-mail) —
+    # usado para o client_reference_id do checkout Stripe.
+    from utils.database import get_usuario_id_from_session
+    _uid_firebase = get_usuario_id_from_session()
+
     # Carregar perfil existente
     perfil = carregar_perfil(user_id)
 
@@ -523,8 +535,8 @@ def show():
             st.caption("Se o botão não abrir automaticamente, clique no link acima.")
     else:
         _email_checkout = perfil.get('email') or user_id
-        _url_mensal = checkout_url(STRIPE_CHECKOUT_MENSAL, _email_checkout)
-        _url_anual = checkout_url(STRIPE_CHECKOUT_ANUAL, _email_checkout)
+        _url_mensal = checkout_url(STRIPE_CHECKOUT_MENSAL, _email_checkout, _uid_firebase)
+        _url_anual = checkout_url(STRIPE_CHECKOUT_ANUAL, _email_checkout, _uid_firebase)
         st.markdown(f"""
         <div class="pf-pro" style="margin-bottom:14px;">
             <h4>🚀 Assine o Plano Pro</h4>
