@@ -584,11 +584,6 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_
                 use_container_width=True,
             )
         st.caption(subtitle)
-        if st.toggle(" Visualizar no navegador", key=f"view_pdf_{report_type}_{proposta_id}"):
-            try:
-                _pdf_inline_viewer(pdf_bytes, key=f"{report_type}_{proposta_id}")
-            except Exception as e:
-                st.error(f"Não foi possível preparar a visualização: {e}")
     elif error_msg:
         st.markdown(f"""
         <div style="background:{NAVY};border-radius:10px;padding:16px;text-align:center;min-height:80px;
