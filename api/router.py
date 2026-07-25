@@ -1243,11 +1243,19 @@ class ProdutoOrganizadorCreate(BaseModel):
     quantidade: int = 1
     comodo: Optional[str] = None
 
+class ProdutoOrganizadorUpdate(BaseModel):
+    valor: Optional[float] = None
+    quantidade: Optional[int] = None
+
 class AcrescimoCreate(BaseModel):
     tipo: str  # fornecedor, assistente, outros
     valor: float
     descricao: Optional[str] = None
     fornecedor: Optional[str] = None
+
+class AcrescimoUpdate(BaseModel):
+    valor: Optional[float] = None
+    descricao: Optional[str] = None
 
 @api.get("/propostas/{proposta_id}/produtos")
 async def get_produtos_proposta(proposta_id: int, uid: str = Depends(verify_firebase_token)):
@@ -1274,6 +1282,34 @@ async def add_produto_proposta(proposta_id: int, body: ProdutoOrganizadorCreate,
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@api.put("/propostas/{proposta_id}/produtos/{produto_id}")
+async def update_produto_proposta(proposta_id: int, produto_id: int, body: ProdutoOrganizadorUpdate, uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        ok = db.update_produto_organizador(produto_id, valor=body.valor, quantidade=body.quantidade)
+        if not ok:
+            raise HTTPException(status_code=404, detail="Produto não encontrado")
+        db.invalidar_cache()
+        return JSONResponse(content={"success": True})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api.delete("/propostas/{proposta_id}/produtos/{produto_id}")
+async def delete_produto_proposta(proposta_id: int, produto_id: int, uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        ok = db.remove_produto_organizador(produto_id)
+        if not ok:
+            raise HTTPException(status_code=404, detail="Produto não encontrado")
+        db.invalidar_cache()
+        return JSONResponse(content={"success": True})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api.get("/propostas/{proposta_id}/acrescimos")
 async def get_acrescimos(proposta_id: int, uid: str = Depends(verify_firebase_token)):
     try:
@@ -1293,6 +1329,34 @@ async def add_acrescimo(proposta_id: int, body: AcrescimoCreate, uid: str = Depe
             proposta_id=proposta_id, tipo=body.tipo, valor=body.valor,
             descricao=body.descricao, fornecedor=body.fornecedor
         )
+        return JSONResponse(content={"success": True})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api.put("/propostas/{proposta_id}/acrescimos/{acrescimo_id}")
+async def update_acrescimo(proposta_id: int, acrescimo_id: int, body: AcrescimoUpdate, uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        ok = db.update_acrescimo_proposta(acrescimo_id, valor=body.valor, descricao=body.descricao)
+        if not ok:
+            raise HTTPException(status_code=404, detail="Acréscimo não encontrado")
+        db.invalidar_cache()
+        return JSONResponse(content={"success": True})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api.delete("/propostas/{proposta_id}/acrescimos/{acrescimo_id}")
+async def delete_acrescimo(proposta_id: int, acrescimo_id: int, uid: str = Depends(verify_firebase_token)):
+    try:
+        db = get_db(uid)
+        ok = db.remove_acrescimo_proposta(acrescimo_id)
+        if not ok:
+            raise HTTPException(status_code=404, detail="Acréscimo não encontrado")
+        db.invalidar_cache()
         return JSONResponse(content={"success": True})
     except HTTPException:
         raise

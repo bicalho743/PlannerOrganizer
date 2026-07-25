@@ -2790,6 +2790,72 @@ class Database:
                 traceback.print_exc()
                 return False
 
+    def update_produto_organizador(self, produto_id, valor=None, quantidade=None):
+        """
+        Atualiza valor unitário e/ou quantidade de um produto da proposta.
+        Mesmo padrão do remove_produto_organizador (SQL direto + fallback ORM).
+
+        Args:
+            produto_id: ID do produto (produtos_organizadores)
+            valor: novo valor unitário (opcional)
+            quantidade: nova quantidade (opcional)
+
+        Returns:
+            bool: True se atualizado com sucesso
+        """
+        campos = []
+        params = []
+        if valor is not None:
+            campos.append("valor = %s")
+            params.append(float(valor))
+        if quantidade is not None:
+            campos.append("quantidade = %s")
+            params.append(int(quantidade))
+        if not campos:
+            return False
+        params.append(produto_id)
+
+        try:
+            import psycopg2, os
+            db_url = os.environ.get('DATABASE_URL')
+            if not db_url:
+                raise ValueError("DATABASE_URL não disponível no ambiente")
+            conn = psycopg2.connect(db_url)
+            cursor = conn.cursor()
+            cursor.execute(
+                f"UPDATE produtos_organizadores SET {', '.join(campos)} WHERE id = %s",
+                tuple(params)
+            )
+            affected = cursor.rowcount
+            conn.commit()
+            cursor.close()
+            conn.close()
+            if affected > 0:
+                print(f"Produto ID {produto_id} atualizado (valor={valor}, quantidade={quantidade})")
+                return True
+            print(f"Nenhum produto encontrado com ID {produto_id}")
+            return False
+        except Exception as e:
+            print(f"Erro ao atualizar produto via SQL direto: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            try:
+                def query():
+                    produto = self.session.query(ProdutoOrganizador).filter_by(id=produto_id).first()
+                    if not produto:
+                        raise ValueError(f"Produto não encontrado com ID {produto_id}")
+                    if valor is not None:
+                        produto.valor = float(valor)
+                    if quantidade is not None:
+                        produto.quantidade = int(quantidade)
+                    self.session.commit()
+                    return True
+                return self._safe_query(query)
+            except Exception as e2:
+                print(f"Erro ao atualizar produto via ORM: {str(e2)}")
+                traceback.print_exc()
+                return False
+
     def add_produto_fornecedor(self, produto_id, fornecedor_id, valor, observacoes=None):
         """Adiciona um fornecedor e seu preço para um produto"""
         def query():

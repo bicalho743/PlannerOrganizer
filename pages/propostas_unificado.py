@@ -706,18 +706,46 @@ def _tab_produtos(proposta_id):
                 )
             st.markdown(cards, unsafe_allow_html=True)
 
-            # Remover produto
-            with st.expander(" Remover produto"):
-                with st.form(key=f"form_remover_produto_{proposta_id}"):
-                    produto_remover_id = st.selectbox(
-                        "Selecione:",
-                        options=produtos_proposta['id'].tolist(),
-                        format_func=lambda x: produtos_proposta.loc[produtos_proposta['id'] == x, 'nome'].iloc[0],
-                        key=f"select_remover_produto_{proposta_id}"
-                    )
-                    if st.form_submit_button("Remover", type="primary", use_container_width=True):
+            # Editar produto (quantidade / valor unitário) — com opção de remover
+            with st.expander("✏️ Editar produto"):
+                produto_edit_id = st.selectbox(
+                    "Selecione o produto:",
+                    options=produtos_proposta['id'].tolist(),
+                    format_func=lambda x: produtos_proposta.loc[produtos_proposta['id'] == x, 'nome'].iloc[0],
+                    key=f"select_editar_produto_{proposta_id}"
+                )
+                _linha = produtos_proposta.loc[produtos_proposta['id'] == produto_edit_id].iloc[0]
+                _qtd_atual = int(_linha.get('quantidade', 1))
+                _valor_atual = float(_linha.get('valor_unit', 0))
+                with st.form(key=f"form_editar_produto_{proposta_id}"):
+                    ce1, ce2 = st.columns(2)
+                    with ce1:
+                        nova_qtd = st.number_input("Quantidade:", min_value=1, value=_qtd_atual,
+                                                   key=f"edit_qtd_produto_{proposta_id}")
+                    with ce2:
+                        novo_valor = st.number_input("Valor unitário (R$):", min_value=0.0,
+                                                     value=_valor_atual, step=1.0, format="%.2f",
+                                                     key=f"edit_valor_produto_{proposta_id}")
+                    st.caption(f"Novo total do item: {_fmt_brl(nova_qtd * novo_valor)}")
+                    cbtn1, cbtn2 = st.columns([3, 1])
+                    with cbtn1:
+                        salvar = st.form_submit_button("Salvar alterações", type="primary", use_container_width=True)
+                    with cbtn2:
+                        remover = st.form_submit_button("Remover", use_container_width=True)
+                    if salvar:
                         try:
-                            if st.session_state.db.remove_produto_organizador(produto_remover_id):
+                            if st.session_state.db.update_produto_organizador(produto_edit_id, valor=novo_valor, quantidade=nova_qtd):
+                                st.session_state.db.invalidar_cache()
+                                st.success("Produto atualizado!")
+                            else:
+                                st.error("Falha ao atualizar.")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(str(e))
+                    if remover:
+                        try:
+                            if st.session_state.db.remove_produto_organizador(produto_edit_id):
+                                st.session_state.db.invalidar_cache()
                                 st.success("Produto removido!")
                             else:
                                 st.error("Falha ao remover.")
