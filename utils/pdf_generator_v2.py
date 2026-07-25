@@ -143,6 +143,64 @@ def _table_rows(c, margin, content_w, start_y, items, row_h=9*mm):
         y -= row_h
     return y
 
+
+def _table_rows_itemizado(c, margin, content_w, start_y, items, row_h=9*mm):
+    """Como _table_rows, mas com cabeçalho e colunas Qtd / Vlr. Unitário
+    quando o item traz quantidade e valor_unit (produtos). Itens sem esses
+    campos (serviço, acréscimos) exibem essas colunas em branco."""
+    muted = colors.HexColor("#6B7280")
+    y = start_y
+    col_prod = margin
+    col_qtd  = margin + content_w * 0.54
+    col_unit = margin + content_w * 0.66
+    col_sub  = margin + content_w - 4*mm
+    # Cabeçalho
+    rr(c, margin, y - row_h + 1.5*mm, content_w, row_h - 1*mm, 3, NAVY)
+    c.setFillColor(WHITE)
+    c.setFont("Helvetica-Bold", 8.5)
+    c.drawString(col_prod + 4*mm, y - 4.5*mm, "Item")
+    c.drawString(col_qtd,  y - 4.5*mm, "Qtd")
+    c.drawString(col_unit, y - 4.5*mm, "Vlr. Unitário")
+    c.drawRightString(col_sub, y - 4.5*mm, "Subtotal")
+    y -= row_h
+    for idx, item in enumerate(items):
+        qtd = None
+        unit = None
+        if isinstance(item, dict):
+            nome = item.get('nome', item.get('descricao', item.get('produto_nome', '')))
+            valor = item.get('total', item.get('valor', item.get('subtotal', 0)))
+            is_neg = item.get('is_neg', False)
+            if item.get('quantidade') is not None and item.get('valor_unit') is not None:
+                try:
+                    qtd = int(float(item.get('quantidade')))
+                    unit = float(item.get('valor_unit'))
+                except Exception:
+                    qtd = unit = None
+        elif isinstance(item, (list, tuple)):
+            nome = item[0]
+            valor = item[1]
+            is_neg = item[2] if len(item) > 2 else False
+        else:
+            nome = str(item)
+            valor = 0
+            is_neg = False
+        bg = GRAY1 if idx % 2 == 0 else WHITE
+        rr(c, margin, y - row_h + 1.5*mm, content_w, row_h - 1*mm, 3, bg)
+        c.setFillColor(DARK)
+        c.setFont("Helvetica", 9.5)
+        c.drawString(col_prod + 4*mm, y - 4.5*mm, str(nome))
+        if qtd is not None and unit is not None:
+            c.setFillColor(muted)
+            c.setFont("Helvetica", 9)
+            c.drawString(col_qtd,  y - 4.5*mm, str(qtd))
+            c.drawString(col_unit, y - 4.5*mm, fmt(unit))
+        c.setFillColor(RED if is_neg else DARK)
+        c.setFont("Helvetica-Bold", 9.5)
+        prefix = "– " if is_neg else ""
+        c.drawRightString(col_sub, y - 4.5*mm, prefix + fmt(valor))
+        y -= row_h
+    return y
+
 def _total_row(c, margin, content_w, y, label, valor, bg, text_color, val_color, row_h=9*mm):
     rr(c, margin, y - row_h + 1*mm, content_w, row_h, 4, bg)
     c.setFillColor(text_color)
@@ -237,7 +295,7 @@ def gerar_pdf_cliente(dados, output_path, perfil=None, titulo="Fechamento do Ser
         y = _desc_box(c, margin, cw, y, desc)
     y = _section_title(c, margin, cw, y, "Investimento",
         "Valores do serviço contratado", NAVY)
-    y = _table_rows(c, margin, cw, y, dados.get('itens', []))
+    y = _table_rows_itemizado(c, margin, cw, y, dados.get('itens', []))
     y = _total_row(c, margin, cw, y, "TOTAL DO INVESTIMENTO",
         dados.get('total', 0), NAVY, WHITE, GOLD)
     obs_texto = (dados.get('observacoes', '') or '').strip()
@@ -359,7 +417,7 @@ def gerar_pdf_proposta_comercial(dados, output_path, perfil=None):
         y = _desc_box(c, margin, cw, y, desc)
     y = _section_title(c, margin, cw, y, "Investimento",
         "Valores do serviço contratado", NAVY)
-    y = _table_rows(c, margin, cw, y, dados_copia.get('itens', []))
+    y = _table_rows_itemizado(c, margin, cw, y, dados_copia.get('itens', []))
     y = _total_row(c, margin, cw, y, "TOTAL DO INVESTIMENTO",
         dados_copia.get('total', 0), NAVY, WHITE, GOLD)
     obs_texto = (dados_copia.get('observacoes', '') or '').strip()

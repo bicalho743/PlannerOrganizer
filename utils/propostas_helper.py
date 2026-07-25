@@ -284,7 +284,7 @@ def gerar_pdf_proposta(db, proposta_id, custom_filename=None):
                 val = float(it.get('valor_unit', it.get('valor', it.get('preco_unitario', 0))))
                 subtotal = qtd * val
                 total_calculado += subtotal
-                itens_tuples.append((f"{nome_it} ({int(qtd)}x)", subtotal, False))
+                itens_tuples.append({'nome': nome_it, 'quantidade': int(qtd), 'valor_unit': val, 'total': subtotal})
             valor_proposta = float(proposta_dict.get('valor', proposta_dict.get('valor_total', total_calculado)))
             dados_pdf = {
                 'proposta_id': proposta_dict.get('id', ''),
@@ -519,7 +519,7 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None, tipo_docum
             val = float(it.get('valor_unit', it.get('valor', it.get('preco_unitario', 0))))
             subtotal = qtd * val
             total_adicionais += subtotal
-            itens_tuples.append((f"{nome_it} ({int(qtd)}x)", subtotal, False))
+            itens_tuples.append({'nome': nome_it, 'quantidade': int(qtd), 'valor_unit': val, 'total': subtotal})
 
         if not acrescimos.empty:
             for _, ac in acrescimos.iterrows():
