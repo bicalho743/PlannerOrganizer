@@ -224,6 +224,19 @@ class Database:
             print(f"Erro ao atualizar schema: {str(e)}")
             return False
 
+    def _ensure_colunas_extras(self):
+        """Migração idempotente de colunas adicionadas depois da criação da
+        tabela (create_all não altera tabelas existentes). Roda uma vez por
+        processo (guardado por _metadata_refreshed)."""
+        try:
+            from sqlalchemy import text as _sa_text
+            with engine.begin() as conn:
+                conn.execute(_sa_text(
+                    "ALTER TABLE propostas ADD COLUMN IF NOT EXISTS sinal DOUBLE PRECISION DEFAULT 0"
+                ))
+        except Exception as e:
+            print(f"[schema] ensure colunas extras: {e}")
+
     def __init__(self, usuario_id=None):
         """
         Inicializa a conexão com o banco de dados e configura o contexto de usuário
@@ -235,6 +248,7 @@ class Database:
         # OTIMIZAÇÃO: Cache metadata refresh para evitar consultas desnecessárias
         if not hasattr(self.__class__, '_metadata_refreshed'):
             self.refresh_schema_metadata()
+            self._ensure_colunas_extras()
             self.__class__._metadata_refreshed = True
 
         try:
@@ -1093,6 +1107,7 @@ class Database:
                             'previsao_dias': previsao_dias,
                             'data_inicio_execucao': p.data_inicio_execucao,
                             'status_execucao': str(p.status_execucao) if p.status_execucao is not None else "",
+                            'sinal': float(p.sinal) if getattr(p, 'sinal', None) is not None else 0.0,
                             'cliente_nome': str(cliente_nome) if cliente_nome is not None else "",
                             'usuario_id': p.usuario_id
                         }

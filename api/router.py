@@ -124,6 +124,7 @@ class PropostaUpdate(BaseModel):
     valor: Optional[float] = None
     status: Optional[str] = None
     ambiente: Optional[str] = None
+    sinal: Optional[float] = None
 
 class TransacaoCreate(BaseModel):
     tipo: str
@@ -407,9 +408,16 @@ async def update_proposta(proposta_id: int, body: PropostaUpdate, uid: str = Dep
                     finalizar_proposta_v2(proposta_id)
                 except Exception as _fe:
                     print(f"[finalizar] erro nao critico: {_fe}")
-        if body.descricao or body.valor:
+        if body.descricao is not None or body.valor is not None or body.sinal is not None:
             db = get_db(uid)
-            db.update_proposta(proposta_id=proposta_id, descricao=body.descricao, valor=body.valor)
+            _campos = {}
+            if body.descricao is not None:
+                _campos['descricao'] = body.descricao
+            if body.valor is not None:
+                _campos['valor'] = body.valor
+            if body.sinal is not None:
+                _campos['sinal'] = body.sinal
+            db.update_proposta(proposta_id=proposta_id, **_campos)
         return JSONResponse(content={"success": True})
     except HTTPException:
         raise

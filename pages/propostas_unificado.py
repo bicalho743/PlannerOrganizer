@@ -839,6 +839,7 @@ def _tab_itens(proposta_id, show_finalizar=False, proposta=None):
 
     if show_finalizar and proposta is not None:
         valor_base_atual = _safe_float(proposta.get('valor'))
+        sinal_atual = _safe_float(proposta.get('sinal'))
         st.markdown(
             f'<div style="display:flex;align-items:center;justify-content:space-between;'
             f'padding:10px 14px;background:#faf9f7;border:1px solid #e8e5df;border-radius:10px;'
@@ -848,12 +849,27 @@ def _tab_itens(proposta_id, show_finalizar=False, proposta=None):
             f'</div>',
             unsafe_allow_html=True,
         )
+        if sinal_atual > 0:
+            st.markdown(
+                f'<div style="display:flex;align-items:center;justify-content:space-between;'
+                f'padding:8px 14px;background:#fff;border:1px solid #e8e5df;border-radius:10px;'
+                f'margin:-4px 0 10px;">'
+                f'<span style="font-size:12px;color:#8B8680;">💰 Sinal / entrada já pago</span>'
+                f'<span style="font-size:13px;color:#B7860D;font-weight:700;">– {_fmt_brl(sinal_atual)}</span>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
         with st.expander("✏️ Editar serviço"):
             with st.form(key=f"form_editar_valor_exec_{proposta_id}"):
                 novo_valor = st.number_input(
                     "Valor do serviço (Personal Organizer) — R$:",
                     min_value=0.0, value=float(valor_base_atual), step=10.0, format="%.2f",
                     key=f"novo_valor_exec_{proposta_id}")
+                novo_sinal = st.number_input(
+                    "Sinal / entrada já pago pelo cliente — R$:",
+                    min_value=0.0, value=float(sinal_atual), step=10.0, format="%.2f",
+                    help="Valor que o cliente pagou ao confirmar o serviço. Será descontado do total no relatório do cliente.",
+                    key=f"novo_sinal_exec_{proposta_id}")
                 _tipos_opcoes = ["Organização", "Consultoria", "Acompanhamento", "Projeto", "Outro"]
                 _tipo_atual = str(proposta.get('tipo_proposta') or "").strip()
                 if _tipo_atual and _tipo_atual not in _tipos_opcoes:
@@ -872,7 +888,7 @@ def _tab_itens(proposta_id, show_finalizar=False, proposta=None):
                     try:
                         res = st.session_state.db.update_proposta(
                             proposta_id, valor=novo_valor, tipo_proposta=novo_tipo,
-                            descricao=nova_descricao)
+                            descricao=nova_descricao, sinal=novo_sinal)
                         ok = res.get('status', False) if isinstance(res, dict) else bool(res)
                         if ok:
                             st.session_state.db.invalidar_cache()

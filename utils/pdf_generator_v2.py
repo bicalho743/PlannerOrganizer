@@ -296,8 +296,19 @@ def gerar_pdf_cliente(dados, output_path, perfil=None, titulo="Fechamento do Ser
     y = _section_title(c, margin, cw, y, "Investimento",
         "Valores do serviço contratado", NAVY)
     y = _table_rows_itemizado(c, margin, cw, y, dados.get('itens', []))
-    y = _total_row(c, margin, cw, y, "TOTAL DO INVESTIMENTO",
-        dados.get('total', 0), NAVY, WHITE, GOLD)
+    _total_invest = dados.get('total', 0) or 0
+    _sinal = float(dados.get('sinal', 0) or 0)
+    if _sinal > 0:
+        y = _total_row(c, margin, cw, y, "TOTAL DO INVESTIMENTO",
+            _total_invest, colors.HexColor("#3D5275"), WHITE, WHITE)
+        y = _table_rows(c, margin, cw, y, [
+            {'descricao': "Sinal / entrada já pago", 'valor': _sinal, 'is_neg': True},
+        ])
+        y = _total_row(c, margin, cw, y, "SALDO A PAGAR",
+            max(_total_invest - _sinal, 0), NAVY, WHITE, GOLD)
+    else:
+        y = _total_row(c, margin, cw, y, "TOTAL DO INVESTIMENTO",
+            _total_invest, NAVY, WHITE, GOLD)
     obs_texto = (dados.get('observacoes', '') or '').strip()
     if not obs_texto:
         obs_texto = (perfil or {}).get('observacoes_relatorio', '') or ''

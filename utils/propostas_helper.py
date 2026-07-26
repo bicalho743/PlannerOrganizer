@@ -294,7 +294,8 @@ def gerar_pdf_proposta(db, proposta_id, custom_filename=None):
                 'status': proposta_dict.get('status', ''),
                 'descricao': proposta_dict.get('descricao', ''),
                 'itens': itens_tuples,
-                'total': valor_proposta
+                'total': valor_proposta,
+                'sinal': float(proposta_dict.get('sinal', 0) or 0),
             }
             pdf_path = gerar_pdf_fechamento(dados_pdf, filename)
             if not pdf_path or not os.path.exists(pdf_path):
@@ -583,6 +584,7 @@ def gerar_pdf_cliente_proposta(db, proposta_id, custom_filename=None, tipo_docum
             'total': total_geral,
             'valor_base': valor_base,
             'valor_adicionais': total_adicionais,
+            'sinal': float(proposta.get('sinal', 0) or 0),
         }
         gerar_pdf_cliente(dados_pdf, filename, titulo=titulo_doc)
         return True, f"{titulo_doc} gerado com sucesso", filename
