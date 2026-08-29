@@ -19,6 +19,32 @@ from utils.design_tokens import (
 )
 from utils.status_execucao import EXEC_EM_EXECUCAO, EXEC_FINALIZADA, EXEC_CANCELADA
 
+# Botão destrutivo (Excluir): contorno vermelho discreto, sem peso de ação
+# segura — evita clique acidental em ação irreversível.
+DESTRUCTIVE_BTN_CSS = """
+button {
+    background: transparent !important;
+    border: 1px solid #E3A9A2 !important;
+    box-shadow: none !important;
+    min-height: 0 !important;
+    padding: 6px 12px !important;
+}
+button:hover { background: #FDECEA !important; border-color: #C0392B !important; }
+button p, button div, button span { color: #C0392B !important; font-weight: 600 !important; font-size: 13px !important; }
+"""
+
+# Link "Fechar" discreto no rodapé do modal (o X do topo já fecha).
+CLOSE_LINK_CSS = """
+button {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    min-height: 0 !important;
+}
+button p, button div, button span { color: #8B8680 !important; font-weight: 500 !important; font-size: 13px !important; }
+button:hover p, button:hover div, button:hover span { color: #4A4A4A !important; }
+"""
+
 
 def _safe_float(val, default=0.0):
     try:
@@ -211,13 +237,13 @@ def _render_open_proposal_actions(proposta_id, proposta):
     else:
         badge_label, badge_bg = "Em Aberto", "#B7860D"
 
-    data_html = (f"<span style='font-size:12px;color:#8B8680;'>{data_str}</span>" if data_str else "")
+    data_html = (f"<span style='font-size:12px;color:#6B6660;'>Início previsto: <strong>{data_str}</strong></span>" if data_str else "")
     st.markdown(
         f'<div style="display:flex;align-items:center;gap:16px;padding:12px 16px;'
         f'background:#faf9f7;border-radius:10px;border:1px solid #e8e5df;margin-bottom:14px;">'
         f'<span style="background:{badge_bg};color:#fff;font-size:11px;font-weight:700;'
         f'padding:3px 10px;border-radius:12px;white-space:nowrap;">{badge_label}</span>'
-        f'<span style="font-size:13px;color:{NAVY};font-weight:600;">{_fmt_brl(valor)}</span>'
+        f'<span style="font-size:14px;color:{NAVY};font-weight:700;">{_fmt_brl(valor)}</span>'
         f'{data_html}'
         f'</div>',
         unsafe_allow_html=True,
@@ -237,7 +263,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
             except Exception as e:
                 st.error(str(e))
 
-        if st.button(" Gerar Proposta", key=f"btn_pdf_proposta_apr_{proposta_id}", use_container_width=True):
+        if st.button("📄 Gerar Proposta", key=f"btn_pdf_proposta_apr_{proposta_id}", use_container_width=True, type="secondary"):
             try:
                 from utils.propostas_helper import gerar_pdf_cliente_proposta
                 sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, proposta_id, tipo_documento="proposta")
@@ -251,8 +277,12 @@ def _render_open_proposal_actions(proposta_id, proposta):
             except Exception as e:
                 st.error(str(e))
 
-        if st.button(" Excluir", key=f"btn_excluir_apr_{proposta_id}", use_container_width=True):
-            st.session_state[f"confirm_delete_{proposta_id}"] = True
+        st.markdown("<hr style='border:none;border-top:1px solid #eee;margin:14px 0 6px;'>", unsafe_allow_html=True)
+        _ex1, _ex2, _ex3 = st.columns([1, 2, 1])
+        with _ex2:
+            with stylable_container(key=f"del_apr_{proposta_id}", css_styles=DESTRUCTIVE_BTN_CSS):
+                if st.button("🗑 Excluir proposta", key=f"btn_excluir_apr_{proposta_id}", use_container_width=True):
+                    st.session_state[f"confirm_delete_{proposta_id}"] = True
     else:
         c1, c2 = st.columns(2)
         with c1:
@@ -284,24 +314,26 @@ def _render_open_proposal_actions(proposta_id, proposta):
                 except Exception as e:
                     st.error(str(e))
 
-        c3, c4 = st.columns(2)
-        with c3:
-            if st.button(" Gerar Proposta", key=f"btn_pdf_proposta_{proposta_id}", use_container_width=True):
-                try:
-                    from utils.propostas_helper import gerar_pdf_cliente_proposta
-                    sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, proposta_id, tipo_documento="proposta")
-                    if sucesso and arquivo:
-                        with open(arquivo, "rb") as f:
-                            st.success("PDF gerado!")
-                            st.download_button("📥 Baixar", f.read(), os.path.basename(arquivo),
-                                               "application/pdf", key=f"dl_proposta_{proposta_id}", use_container_width=True)
-                    else:
-                        st.error(f"Erro: {mensagem}")
-                except Exception as e:
-                    st.error(str(e))
-        with c4:
-            if st.button(" Excluir", key=f"btn_excluir_open_{proposta_id}", use_container_width=True):
-                st.session_state[f"confirm_delete_{proposta_id}"] = True
+        if st.button("📄 Gerar Proposta", key=f"btn_pdf_proposta_{proposta_id}", use_container_width=True, type="secondary"):
+            try:
+                from utils.propostas_helper import gerar_pdf_cliente_proposta
+                sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, proposta_id, tipo_documento="proposta")
+                if sucesso and arquivo:
+                    with open(arquivo, "rb") as f:
+                        st.success("PDF gerado!")
+                        st.download_button("📥 Baixar", f.read(), os.path.basename(arquivo),
+                                           "application/pdf", key=f"dl_proposta_{proposta_id}", use_container_width=True)
+                else:
+                    st.error(f"Erro: {mensagem}")
+            except Exception as e:
+                st.error(str(e))
+
+        st.markdown("<hr style='border:none;border-top:1px solid #eee;margin:14px 0 6px;'>", unsafe_allow_html=True)
+        _ex1o, _ex2o, _ex3o = st.columns([1, 2, 1])
+        with _ex2o:
+            with stylable_container(key=f"del_open_{proposta_id}", css_styles=DESTRUCTIVE_BTN_CSS):
+                if st.button("🗑 Excluir proposta", key=f"btn_excluir_open_{proposta_id}", use_container_width=True):
+                    st.session_state[f"confirm_delete_{proposta_id}"] = True
 
     if st.session_state.get(f"confirm_delete_{proposta_id}", False):
         st.warning("Esta ação é permanente e removerá todos os dados relacionados.")
@@ -365,23 +397,25 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
         st.info("Ao reabrir, a proposta recusada voltará para o status 'Em aberto'.")
     else:
         st.info("Ao reabrir, a proposta voltará para o status 'Em execução'.")
-    ac1, ac2 = st.columns(2)
-    with ac1:
-        if st.button(" Reabrir", key=f"btn_reabrir_fin_{proposta_id}", use_container_width=True):
-            try:
-                from reabrir_proposta import reabrir_proposta_finalizada
-                res = reabrir_proposta_finalizada(proposta_id)
-                if res.get('status') in ['sucesso', 'sucesso_com_alerta']:
-                    st.session_state.db.invalidar_cache()
-                    st.session_state['kanban_selected_proposta'] = None
-                    st.rerun()
-                else:
-                    st.error(res.get('mensagem'))
-            except Exception as e:
-                st.error(str(e))
-    with ac2:
-        if st.button(" Excluir", key=f"btn_excluir_fin_{proposta_id}", use_container_width=True):
-            st.session_state[f"confirm_delete_{proposta_id}"] = True
+    if st.button("↩️ Reabrir proposta", key=f"btn_reabrir_fin_{proposta_id}", use_container_width=True, type="secondary"):
+        try:
+            from reabrir_proposta import reabrir_proposta_finalizada
+            res = reabrir_proposta_finalizada(proposta_id)
+            if res.get('status') in ['sucesso', 'sucesso_com_alerta']:
+                st.session_state.db.invalidar_cache()
+                st.session_state['kanban_selected_proposta'] = None
+                st.rerun()
+            else:
+                st.error(res.get('mensagem'))
+        except Exception as e:
+            st.error(str(e))
+
+    st.markdown("<hr style='border:none;border-top:1px solid #eee;margin:14px 0 6px;'>", unsafe_allow_html=True)
+    _exf1, _exf2, _exf3 = st.columns([1, 2, 1])
+    with _exf2:
+        with stylable_container(key=f"del_fin_{proposta_id}", css_styles=DESTRUCTIVE_BTN_CSS):
+            if st.button("🗑 Excluir proposta", key=f"btn_excluir_fin_{proposta_id}", use_container_width=True):
+                st.session_state[f"confirm_delete_{proposta_id}"] = True
 
     if st.session_state.get(f"confirm_delete_{proposta_id}", False):
         st.warning("Esta ação é permanente e removerá todos os dados relacionados.")
@@ -2019,10 +2053,12 @@ def show():
                 @st.dialog(f"Proposta #{_num_modal} — {_nome_modal}", width="large")
                 def _modal_detalhes():
                     _render_detail_panel(selected_id, proposta_row, propostas_com_clientes)
-                    st.markdown("---")
-                    if st.button("✖ Fechar", key=f"fechar_modal_{selected_id}", use_container_width=True):
-                        st.session_state['kanban_selected_proposta'] = None
-                        st.rerun()
+                    _fc1, _fc2, _fc3 = st.columns([2, 1, 2])
+                    with _fc2:
+                        with stylable_container(key=f"close_link_{selected_id}", css_styles=CLOSE_LINK_CSS):
+                            if st.button("Fechar", key=f"fechar_modal_{selected_id}", use_container_width=True):
+                                st.session_state['kanban_selected_proposta'] = None
+                                st.rerun()
 
                 _modal_detalhes()
             else:
