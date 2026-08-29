@@ -198,6 +198,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
         STATUS_APROVADA, STATUS_EM_EXECUCAO,
     )
     valor = _safe_float(proposta.get('valor'))
+    sinal = _safe_float(proposta.get('sinal'))
     status_atual = _normalize_status(proposta.get('status', '')) or ''
     data_str = ""
     d = proposta.get('data_inicio')
@@ -213,12 +214,14 @@ def _render_open_proposal_actions(proposta_id, proposta):
         badge_label, badge_bg = "Em Aberto", "#B7860D"
 
     data_html = (f"<span style='font-size:12px;color:#6B6660;'>Início previsto: <strong>{data_str}</strong></span>" if data_str else "")
+    sinal_html = (f"<span style='font-size:12px;color:#B7860D;font-weight:600;'>💰 Sinal: {_fmt_brl(sinal)}</span>" if sinal > 0 else "")
     st.markdown(
-        f'<div style="display:flex;align-items:center;gap:16px;padding:12px 16px;'
+        f'<div style="display:flex;align-items:center;gap:16px;padding:12px 16px;flex-wrap:wrap;'
         f'background:#faf9f7;border-radius:10px;border:1px solid #e8e5df;margin-bottom:14px;">'
         f'<span style="background:{badge_bg};color:#fff;font-size:11px;font-weight:700;'
         f'padding:3px 10px;border-radius:12px;white-space:nowrap;">{badge_label}</span>'
         f'<span style="font-size:14px;color:{NAVY};font-weight:700;">{_fmt_brl(valor)}</span>'
+        f'{sinal_html}'
         f'{data_html}'
         f'</div>',
         unsafe_allow_html=True,
@@ -258,10 +261,20 @@ def _render_open_proposal_actions(proposta_id, proposta):
             if botao_excluir("🗑 Excluir proposta", f"btn_excluir_apr_{proposta_id}"):
                 st.session_state[f"confirm_delete_{proposta_id}"] = True
     else:
+        # Sinal/entrada informado no momento da aprovação. Fica salvo na
+        # proposta e aparece depois na execução e no relatório do cliente.
+        sinal_aprovar = st.number_input(
+            "💰 Sinal / entrada pago pelo cliente (R$):",
+            min_value=0.0, value=float(sinal), step=10.0, format="%.2f",
+            key=f"sinal_aprovar_{proposta_id}",
+            help="Valor que o cliente pagou ao confirmar o serviço. Será descontado do total no relatório do cliente.",
+        )
         c1, c2 = st.columns(2)
         with c1:
             if st.button(" Aprovar", key=f"btn_aprovar_{proposta_id}", use_container_width=True, type="primary"):
                 try:
+                    if sinal_aprovar != sinal:
+                        st.session_state.db.update_proposta(proposta_id, sinal=sinal_aprovar)
                     res = st.session_state.db.update_proposta_status(proposta_id=proposta_id,
                           novo_status=STATUS_APROVADA, data_aprovacao=datetime.now().date())
                     if res.get('status', False):
