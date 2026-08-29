@@ -9,6 +9,7 @@ from utils.design_tokens import (
     TEXT_PRIMARY, TEXT_SECONDARY,
 )
 from streamlit_extras.stylable_container import stylable_container
+from utils.ui import botao_excluir
 
 
 def _safe_float(val, default=0.0):
@@ -189,11 +190,11 @@ def _render_detail_panel(transacao, financeiro_df):
                 st.session_state["fin_editando"] = tid
                 st.rerun()
         with col_act3:
-            if st.button("🗑️ Excluir", key=f"fin_del_{tid}", use_container_width=True):
+            if botao_excluir("🗑️ Excluir", f"fin_del_{tid}"):
                 st.session_state[f"fin_confirm_del_{tid}"] = True
                 st.rerun()
     else:
-        if st.button("🗑️ Excluir", key=f"fin_del_{tid}", use_container_width=True):
+        if botao_excluir("🗑️ Excluir", f"fin_del_{tid}"):
             st.session_state[f"fin_confirm_del_{tid}"] = True
             st.rerun()
 
@@ -620,7 +621,7 @@ def show():
                             key="fin_hist_select", label_visibility="collapsed"
                         )
                     with col_del:
-                        if st.button("🗑️ Excluir", key="fin_hist_del", use_container_width=True):
+                        if botao_excluir("🗑️ Excluir", "fin_hist_del"):
                             t_sel = historico.iloc[selected_idx]
                             st.session_state[f"fin_hist_confirm_del_{t_sel['id']}"] = True
                             st.rerun()

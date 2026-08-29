@@ -5,6 +5,7 @@ from datetime import datetime
 import os
 from utils.custom_components import custom_info, custom_warning
 from streamlit_extras.stylable_container import stylable_container
+from utils.ui import botao_excluir
 from utils.design_tokens import (
     NAVY, NAVY_HOVER, GOLD, GOLD_BUTTON_CSS,
 )
@@ -116,7 +117,7 @@ def _render_nova_venda_form(clientes_df, produtos_df):
             c3.write(_fmt_brl(item["preco_unitario"]))
             c4.write(_fmt_brl(item["total"]))
             with c5:
-                if st.button("🗑️", key=f"nv_rm_{i}", help="Remover"):
+                if botao_excluir("🗑️", f"nv_rm_{i}", use_container_width=False, help="Remover"):
                     st.session_state.produtos_venda.pop(i)
                     st.rerun()
 
@@ -267,7 +268,7 @@ def _render_detail_panel(venda_id, venda_row):
             st.session_state[f"editando_venda_{venda_id}"] = not st.session_state.get(f"editando_venda_{venda_id}", False)
             st.rerun()
     with col_del:
-        if st.button("🗑️ Excluir", key=f"det_del_{venda_id}", use_container_width=True):
+        if botao_excluir("🗑️ Excluir", f"det_del_{venda_id}"):
             st.session_state[f"confirmar_excluir_{venda_id}"] = True
             st.rerun()
 
@@ -378,7 +379,7 @@ def _render_detail_panel(venda_id, venda_row):
                                 except Exception as ex:
                                     st.error(str(ex))
                         with ec5:
-                            if st.button("🗑️", key=f"erm_{item['id']}", help="Remover", use_container_width=True):
+                            if botao_excluir("🗑️", f"erm_{item['id']}", help="Remover"):
                                 try:
                                     st.session_state.db.remove_item_venda(item["id"])
                                     st.rerun()

@@ -6,6 +6,7 @@ import pandas as pd
 from utils.importador import importar_cadastros, gerar_template_csv
 from utils.custom_components import custom_info
 from utils.tooltip_helper import create_tooltip, input_with_tooltip
+from utils.ui import botao_excluir
 
 def show():
     from utils.auth_guard import require_auth
@@ -366,7 +367,7 @@ def show():
                                 st.caption(f"🗂️ {qtd_selecionados} cliente(s) selecionado(s) nesta página.")
 
                                 # Botão para confirmar exclusão
-                                if st.button("Excluir Clientes Selecionados", type="primary", key="btn_excluir_multi_clientes"):
+                                if botao_excluir("🗑 Excluir Clientes Selecionados", "btn_excluir_multi_clientes", use_container_width=False):
                                     clientes_selecionados = []
                                     for _, row in selection.iterrows():
                                         if row["Selecionar"] == True:
@@ -550,7 +551,7 @@ def show():
                                 st.rerun()
                         
                         with col2:
-                            if st.button("Excluir Fornecedor", key=f"delete_fornecedor_{fornecedor_id}"):
+                            if botao_excluir("🗑 Excluir Fornecedor", f"delete_fornecedor_{fornecedor_id}", use_container_width=False):
                                 try:
                                     st.session_state.db.delete_fornecedor(fornecedor_id)
                                     st.success(f"Fornecedor ID {fornecedor_id} excluído com sucesso!")
@@ -753,7 +754,7 @@ def show():
                                 st.rerun()
                         
                         with col2:
-                            if st.button("Excluir Parceiro", key=f"delete_parceiro_{parceiro_id}"):
+                            if botao_excluir("🗑 Excluir Parceiro", f"delete_parceiro_{parceiro_id}", use_container_width=False):
                                 try:
                                     st.session_state.db.delete_parceiro(parceiro_id)
                                     st.success(f"Parceiro ID {parceiro_id} excluído com sucesso!")
@@ -934,7 +935,7 @@ def show():
                                 st.rerun()
                         
                         with col2:
-                            if st.button("Excluir Assistente", key=f"delete_assistente_{assistente_id}"):
+                            if botao_excluir("🗑 Excluir Assistente", f"delete_assistente_{assistente_id}", use_container_width=False):
                                 try:
                                     st.session_state.db.delete_assistente(assistente_id)
                                     st.success(f"Assistente ID {assistente_id} excluído com sucesso!")
@@ -1184,7 +1185,7 @@ def show():
                                     st.warning(f"⚠️ Este produto está sendo usado em {vendas_com_produto} venda(s). Não é possível excluir.")
                                 else:
                                     if not st.session_state.get('exclusao_produto_confirmada', False):
-                                        if st.button("Excluir Produto", type="secondary", key="btn_excluir_produto"):
+                                        if botao_excluir("🗑 Excluir Produto", "btn_excluir_produto", use_container_width=False):
                                             st.session_state.exclusao_produto_confirmada = True
                                             st.rerun()
                                     else:

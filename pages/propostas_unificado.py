@@ -18,32 +18,7 @@ from utils.design_tokens import (
     NAVY, NAVY_HOVER, GOLD, GOLD_BUTTON_CSS,
 )
 from utils.status_execucao import EXEC_EM_EXECUCAO, EXEC_FINALIZADA, EXEC_CANCELADA
-
-# Botão destrutivo (Excluir): contorno vermelho discreto, sem peso de ação
-# segura — evita clique acidental em ação irreversível.
-DESTRUCTIVE_BTN_CSS = """
-button {
-    background: transparent !important;
-    border: 1px solid #E3A9A2 !important;
-    box-shadow: none !important;
-    min-height: 0 !important;
-    padding: 6px 12px !important;
-}
-button:hover { background: #FDECEA !important; border-color: #C0392B !important; }
-button p, button div, button span { color: #C0392B !important; font-weight: 600 !important; font-size: 13px !important; }
-"""
-
-# Link "Fechar" discreto no rodapé do modal (o X do topo já fecha).
-CLOSE_LINK_CSS = """
-button {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    min-height: 0 !important;
-}
-button p, button div, button span { color: #8B8680 !important; font-weight: 500 !important; font-size: 13px !important; }
-button:hover p, button:hover div, button:hover span { color: #4A4A4A !important; }
-"""
+from utils.ui import botao_excluir, link_fechar
 
 
 def _safe_float(val, default=0.0):
@@ -280,9 +255,8 @@ def _render_open_proposal_actions(proposta_id, proposta):
         st.markdown("<hr style='border:none;border-top:1px solid #eee;margin:14px 0 6px;'>", unsafe_allow_html=True)
         _ex1, _ex2, _ex3 = st.columns([1, 2, 1])
         with _ex2:
-            with stylable_container(key=f"del_apr_{proposta_id}", css_styles=DESTRUCTIVE_BTN_CSS):
-                if st.button("🗑 Excluir proposta", key=f"btn_excluir_apr_{proposta_id}", use_container_width=True):
-                    st.session_state[f"confirm_delete_{proposta_id}"] = True
+            if botao_excluir("🗑 Excluir proposta", f"btn_excluir_apr_{proposta_id}"):
+                st.session_state[f"confirm_delete_{proposta_id}"] = True
     else:
         c1, c2 = st.columns(2)
         with c1:
@@ -331,9 +305,8 @@ def _render_open_proposal_actions(proposta_id, proposta):
         st.markdown("<hr style='border:none;border-top:1px solid #eee;margin:14px 0 6px;'>", unsafe_allow_html=True)
         _ex1o, _ex2o, _ex3o = st.columns([1, 2, 1])
         with _ex2o:
-            with stylable_container(key=f"del_open_{proposta_id}", css_styles=DESTRUCTIVE_BTN_CSS):
-                if st.button("🗑 Excluir proposta", key=f"btn_excluir_open_{proposta_id}", use_container_width=True):
-                    st.session_state[f"confirm_delete_{proposta_id}"] = True
+            if botao_excluir("🗑 Excluir proposta", f"btn_excluir_open_{proposta_id}"):
+                st.session_state[f"confirm_delete_{proposta_id}"] = True
 
     if st.session_state.get(f"confirm_delete_{proposta_id}", False):
         st.warning("Esta ação é permanente e removerá todos os dados relacionados.")
@@ -413,9 +386,8 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
     st.markdown("<hr style='border:none;border-top:1px solid #eee;margin:14px 0 6px;'>", unsafe_allow_html=True)
     _exf1, _exf2, _exf3 = st.columns([1, 2, 1])
     with _exf2:
-        with stylable_container(key=f"del_fin_{proposta_id}", css_styles=DESTRUCTIVE_BTN_CSS):
-            if st.button("🗑 Excluir proposta", key=f"btn_excluir_fin_{proposta_id}", use_container_width=True):
-                st.session_state[f"confirm_delete_{proposta_id}"] = True
+        if botao_excluir("🗑 Excluir proposta", f"btn_excluir_fin_{proposta_id}"):
+            st.session_state[f"confirm_delete_{proposta_id}"] = True
 
     if st.session_state.get(f"confirm_delete_{proposta_id}", False):
         st.warning("Esta ação é permanente e removerá todos os dados relacionados.")
@@ -765,7 +737,7 @@ def _tab_produtos(proposta_id):
                     with cbtn1:
                         salvar = st.form_submit_button("Salvar alterações", type="primary", use_container_width=True)
                     with cbtn2:
-                        remover = st.form_submit_button("Remover", use_container_width=True)
+                        remover = botao_excluir("🗑 Remover", f"rem_prod_{proposta_id}", is_form=True)
                     if salvar:
                         try:
                             if st.session_state.db.update_produto_organizador(produto_edit_id, valor=novo_valor, quantidade=nova_qtd):
@@ -1134,7 +1106,7 @@ def _tab_fornecedores(proposta_id):
                 with col_r:
                     with st.form(key=f"form_remover_fornecedor_{proposta_id}"):
                         rid = st.selectbox("Remover:", options=ids, format_func=fmt_forn, key=f"sel_rem_forn_{proposta_id}")
-                        if st.form_submit_button(" Remover", use_container_width=True):
+                        if botao_excluir("🗑 Remover", f"rem_forn_{proposta_id}", is_form=True):
                             try:
                                 if st.session_state.db.remove_acrescimo_proposta(rid):
                                     st.success("Removido!"); st.rerun()
@@ -1218,7 +1190,7 @@ def _tab_assistentes(proposta_id):
                 with col_r:
                     with st.form(key=f"form_remover_assistente_{proposta_id}"):
                         rid = st.selectbox("Remover:", options=ids, format_func=fmt_a, key=f"sel_rem_asst_{proposta_id}")
-                        if st.form_submit_button(" Remover", use_container_width=True):
+                        if botao_excluir("🗑 Remover", f"rem_asst_{proposta_id}", is_form=True):
                             try:
                                 if st.session_state.db.remove_acrescimo_proposta(rid):
                                     st.success("Removido!"); st.rerun()
@@ -1301,7 +1273,7 @@ def _tab_outros(proposta_id):
                 with st.form(key=f"form_remover_outros_{proposta_id}"):
                     rid = st.selectbox("Selecione:", options=acrescimos['id'].tolist(),
                                        format_func=lambda x: acrescimos.loc[acrescimos['id'] == x, 'descricao'].iloc[0])
-                    if st.form_submit_button("Remover", use_container_width=True):
+                    if botao_excluir("🗑 Remover", f"rem_outros_{proposta_id}", is_form=True):
                         try:
                             if st.session_state.db.remove_acrescimo_proposta(rid):
                                 st.success("Item removido!"); st.rerun()
@@ -1615,7 +1587,7 @@ def _tab_acoes(proposta_id, proposta):
         if confirmar_exclusao:
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("❌ EXCLUIR PROPOSTA", key=f"btn_excluir_kanban_{proposta_id}", type="secondary", use_container_width=True):
+                if botao_excluir("🗑 EXCLUIR PROPOSTA", f"btn_excluir_kanban_{proposta_id}"):
                     try:
                         usuario_id = st.session_state.get('usuario_id')
                         sucesso, mensagem = st.session_state.db.excluir_proposta_segura(proposta_id, usuario_id)
@@ -2055,10 +2027,9 @@ def show():
                     _render_detail_panel(selected_id, proposta_row, propostas_com_clientes)
                     _fc1, _fc2, _fc3 = st.columns([2, 1, 2])
                     with _fc2:
-                        with stylable_container(key=f"close_link_{selected_id}", css_styles=CLOSE_LINK_CSS):
-                            if st.button("Fechar", key=f"fechar_modal_{selected_id}", use_container_width=True):
-                                st.session_state['kanban_selected_proposta'] = None
-                                st.rerun()
+                        if link_fechar("Fechar", f"fechar_modal_{selected_id}"):
+                            st.session_state['kanban_selected_proposta'] = None
+                            st.rerun()
 
                 _modal_detalhes()
             else:
