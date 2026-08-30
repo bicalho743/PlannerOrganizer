@@ -351,6 +351,7 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
     numero = proposta.get('numero', proposta_id)
     from utils.proposta_status import normalize as _normalize_status, STATUS_RECUSADA
     valor = _safe_float(proposta.get('valor'))
+    sinal = _safe_float(proposta.get('sinal'))
     status_atual = _normalize_status(proposta.get('status', '')) or ''
 
     if status_atual == STATUS_RECUSADA:
@@ -358,12 +359,14 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
     else:
         badge_label, badge_bg = "Finalizada", "#4A4A4A"
 
+    sinal_html = (f"<span style='font-size:12px;color:#B7860D;font-weight:600;'>💰 Sinal: {_fmt_brl(sinal)}</span>" if sinal > 0 else "")
     st.markdown(f"""
-    <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;
+    <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;flex-wrap:wrap;
                 background:#faf9f7;border-radius:10px;border:1px solid #e8e5df;margin-bottom:14px;">
       <span style="background:{badge_bg};color:#fff;font-size:11px;font-weight:700;
                    padding:3px 10px;border-radius:12px;white-space:nowrap;">{badge_label}</span>
-      <span style="font-size:13px;color:{NAVY};font-weight:600;">{_fmt_brl(valor)}</span>
+      <span style="font-size:14px;color:{NAVY};font-weight:700;">{_fmt_brl(valor)}</span>
+      {sinal_html}
     </div>""", unsafe_allow_html=True)
 
     rc1, rc2 = st.columns(2)
