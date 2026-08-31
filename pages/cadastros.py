@@ -6,7 +6,7 @@ import pandas as pd
 from utils.importador import importar_cadastros, gerar_template_csv
 from utils.custom_components import custom_info
 from utils.tooltip_helper import create_tooltip, input_with_tooltip
-from utils.ui import botao_excluir
+from utils.ui import botao_excluir, input_moeda
 
 def show():
     from utils.auth_guard import require_auth
@@ -1054,9 +1054,9 @@ def show():
 
                     col_preco1, col_preco2 = st.columns(2)
                     with col_preco1:
-                        preco_custo = st.number_input("Preço de Custo (R$)", min_value=0.0, format="%.2f")
+                        preco_custo = input_moeda("Preço de Custo (R$)", "preco_custo_novo", value=0.0, step=1.0)
                     with col_preco2:
-                        preco_venda = st.number_input("Preço de Venda (R$)", min_value=0.0, format="%.2f")
+                        preco_venda = input_moeda("Preço de Venda (R$)", "preco_venda_novo", value=0.0, step=1.0)
 
                     estoque = st.number_input("Estoque Inicial", min_value=0, value=0)
                     margem = st.number_input("Margem (%)", min_value=0.0, max_value=100.0, value=50.0, format="%.1f")
@@ -1142,9 +1142,9 @@ def show():
 
                                     col_edit1, col_edit2 = st.columns(2)
                                     with col_edit1:
-                                        preco_custo_edit = st.number_input("Preço de Custo (R$)", value=float(produto_dados.get('preco_custo', 0)), min_value=0.0, format="%.2f")
+                                        preco_custo_edit = input_moeda("Preço de Custo (R$)", f"preco_custo_edit_{produto_dados.get('id')}", value=float(produto_dados.get('preco_custo', 0)), step=1.0)
                                     with col_edit2:
-                                        preco_venda_edit = st.number_input("Preço de Venda (R$)", value=float(produto_dados.get('preco_venda', 0)), min_value=0.0, format="%.2f")
+                                        preco_venda_edit = input_moeda("Preço de Venda (R$)", f"preco_venda_edit_{produto_dados.get('id')}", value=float(produto_dados.get('preco_venda', 0)), step=1.0)
 
                                     estoque_edit = st.number_input("Estoque", value=int(produto_dados.get('estoque', 0)), min_value=0)
 

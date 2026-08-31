@@ -9,7 +9,7 @@ from utils.design_tokens import (
     TEXT_PRIMARY, TEXT_SECONDARY,
 )
 from streamlit_extras.stylable_container import stylable_container
-from utils.ui import botao_excluir
+from utils.ui import botao_excluir, input_moeda
 
 
 def _safe_float(val, default=0.0):
@@ -60,7 +60,7 @@ def _render_nova_transacao_form():
     if tipo == "receita":
         with st.form("registro_receita", clear_on_submit=True):
             descricao = st.text_input("Descrição")
-            valor = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
+            valor = input_moeda("Valor (R$)", "fin_valor_receita", value=0.0, step=10.0)
 
             tipo_receita = st.selectbox("Tipo de Receita", ["organização", "comissão", "venda"])
 
@@ -110,7 +110,7 @@ def _render_nova_transacao_form():
     else:
         with st.form("registro_despesa", clear_on_submit=True):
             descricao = st.text_input("Descrição")
-            valor = st.number_input("Valor (R$)", min_value=0.0, step=0.01)
+            valor = input_moeda("Valor (R$)", "fin_valor_despesa", value=0.0, step=10.0)
             categoria = st.selectbox("Categoria", categorias_despesa)
             submitted = st.form_submit_button("Registrar Despesa", type="primary", use_container_width=True)
 
@@ -264,7 +264,7 @@ def _render_edit_form(transacao):
 
         tipo = st.selectbox("Tipo", ["receita", "despesa"], index=0 if tipo_exibido == "receita" else 1)
         descricao = st.text_input("Descrição", value=transacao['descricao'])
-        valor = st.number_input("Valor (R$)", value=_safe_float(transacao.get('valor')), min_value=0.0, step=0.01)
+        valor = input_moeda("Valor (R$)", f"fin_valor_edit_{tid}", value=_safe_float(transacao.get('valor')), step=10.0)
 
         tipo_receita = None
         if tipo == "receita":

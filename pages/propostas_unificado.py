@@ -933,9 +933,9 @@ def _tab_produtos(proposta_id):
                         nova_qtd = st.number_input("Quantidade:", min_value=1, value=_qtd_atual,
                                                    key=f"edit_qtd_produto_{proposta_id}")
                     with ce2:
-                        novo_valor = st.number_input("Valor unitário (R$):", min_value=0.0,
-                                                     value=_valor_atual, step=1.0, format="%.2f",
-                                                     key=f"edit_valor_produto_{proposta_id}")
+                        novo_valor = input_moeda("Valor unitário (R$):",
+                                                 f"edit_valor_produto_{proposta_id}",
+                                                 value=_valor_atual, step=1.0)
                     st.caption(f"Novo total do item: {_fmt_brl(nova_qtd * novo_valor)}")
                     cbtn1, cbtn2 = st.columns([3, 1])
                     with cbtn1:
@@ -1026,7 +1026,7 @@ def _tab_produtos(proposta_id):
                 preco_padrao = float(produto['preco_venda'])
                 usar_preco_padrao = st.checkbox("Usar preço padrão", value=True)
                 if not usar_preco_padrao:
-                    valor_unitario = st.number_input("Preço (R$):", min_value=0.0, value=preco_padrao, format="%.2f")
+                    valor_unitario = input_moeda("Preço (R$):", f"preco_custom_{proposta_id}", value=preco_padrao, step=1.0)
                 else:
                     valor_unitario = preco_padrao
                     st.write(f"Preço: {_fmt_brl(preco_padrao)}")
@@ -1295,7 +1295,7 @@ def _tab_fornecedores(proposta_id):
                     with st.form(key=f"form_editar_fornecedor_{proposta_id}"):
                         aid = st.selectbox("Editar:", options=ids, format_func=fmt_forn, key=f"sel_edit_forn_{proposta_id}")
                         atual = acrescimos.loc[acrescimos['id'] == aid].iloc[0]
-                        nv = st.number_input("Novo valor (R$):", min_value=0.0, value=float(atual['valor']), format="%.2f", key=f"nv_forn_{proposta_id}")
+                        nv = input_moeda("Novo valor (R$):", f"nv_forn_{proposta_id}", value=float(atual['valor']), step=10.0)
                         nd = st.text_area("Observações:", value=str(atual['descricao'] or ""), height=70, key=f"nd_forn_{proposta_id}")
                         if st.form_submit_button("Salvar", use_container_width=True):
                             try:
@@ -1338,7 +1338,7 @@ def _tab_fornecedores(proposta_id):
                                         format_func=fmt_forn_opt, key=f"select_fornecedor_{proposta_id}")
                 col1, col2 = st.columns(2)
                 with col1:
-                    valor_servico = st.number_input("Valor (R$):", min_value=0.0, value=0.0, format="%.2f", key=f"valor_forn_{proposta_id}")
+                    valor_servico = input_moeda("Valor (R$):", f"valor_forn_{proposta_id}", value=0.0, step=10.0)
                 with col2:
                     observacoes = st.text_area("Observações:", height=70, key=f"obs_forn_{proposta_id}")
                 if st.form_submit_button("ADICIONAR", type="primary", use_container_width=True):
@@ -1379,7 +1379,7 @@ def _tab_assistentes(proposta_id):
                     with st.form(key=f"form_editar_assistente_{proposta_id}"):
                         aid = st.selectbox("Editar:", options=ids, format_func=fmt_a, key=f"sel_edit_asst_{proposta_id}")
                         atual = acrescimos.loc[acrescimos['id'] == aid].iloc[0]
-                        nv = st.number_input("Novo valor (R$):", min_value=0.0, value=float(atual['valor']), format="%.2f", key=f"nv_asst_{proposta_id}")
+                        nv = input_moeda("Novo valor (R$):", f"nv_asst_{proposta_id}", value=float(atual['valor']), step=10.0)
                         nd = st.text_area("Descrição:", value=str(atual['descricao'] or ""), height=70, key=f"nd_asst_{proposta_id}")
                         if st.form_submit_button("Salvar", use_container_width=True):
                             try:
@@ -1419,7 +1419,7 @@ def _tab_assistentes(proposta_id):
                                         format_func=lambda x: assistentes.loc[assistentes['id'] == x, 'nome'].iloc[0])
                 col1, col2 = st.columns(2)
                 with col1:
-                    valor_servico = st.number_input("Valor (R$):", min_value=0.0, value=0.0, format="%.2f")
+                    valor_servico = input_moeda("Valor (R$):", f"valor_asst_add_{proposta_id}", value=0.0, step=10.0)
                 with col2:
                     observacoes = st.text_area("Observações:", height=70)
                 if st.form_submit_button("ADICIONAR", type="primary", use_container_width=True):
@@ -1501,7 +1501,7 @@ def _tab_outros(proposta_id):
             descricao_item = st.text_input("Descrição:")
             comodo_area = st.text_input("Cômodo/Área:")
         with col2:
-            valor_unitario = st.number_input("Valor unitário (R$):", min_value=0.0, value=0.0, format="%.2f")
+            valor_unitario = input_moeda("Valor unitário (R$):", f"vu_outros_{proposta_id}", value=0.0, step=10.0)
             quantidade = st.number_input("Quantidade:", min_value=1, value=1)
             valor_total_calc = valor_unitario * quantidade
             st.markdown(f'<p style="color:#1D6A4A;font-weight:600;margin-top:22px;">Total: {_fmt_brl(valor_total_calc)}</p>', unsafe_allow_html=True)
@@ -1630,10 +1630,9 @@ def _tab_acoes(proposta_id, proposta):
             # Editar valor do serviço durante a execução
             with st.expander("✏️ Editar valor do serviço"):
                 with st.form(key=f"form_editar_valor_exec_{proposta_id}"):
-                    novo_valor = st.number_input(
+                    novo_valor = input_moeda(
                         "Valor do serviço (Personal Organizer) — R$:",
-                        min_value=0.0, value=float(valor_base), step=10.0, format="%.2f",
-                        key=f"novo_valor_exec_{proposta_id}")
+                        f"novo_valor_exec_{proposta_id}", value=float(valor_base), step=10.0)
                     if st.form_submit_button("Salvar valor", type="primary", use_container_width=True):
                         try:
                             res = st.session_state.db.update_proposta(proposta_id, valor=novo_valor)
