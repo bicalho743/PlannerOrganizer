@@ -357,6 +357,36 @@ div[data-testid="stExpander"] button[kind="primary"],
 .streamlit-expanderContent button[kind="primary"] {
     background: linear-gradient(135deg, var(--gold), var(--gold-dark)) !important;
 }
+/* Botão de SUBMIT de formulário dentro de expander: dourado por inteiro.
+   A regra genérica `div[data-testid="stExpander"] button` pintava o miolo de
+   navy por cima do gradiente dourado, criando um botão "de duas cores". */
+div[data-testid="stExpander"] .stFormSubmitButton > button,
+div[data-testid="stExpander"] div[data-testid="stFormSubmitButton"] > button {
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark)) !important;
+    background-color: transparent !important;
+    border: none !important;
+}
+div[data-testid="stExpander"] .stFormSubmitButton > button *,
+div[data-testid="stExpander"] div[data-testid="stFormSubmitButton"] > button * {
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #ffffff !important;
+}
+/* Campo de DATA dentro de expander: fundo claro e texto legível. Em algumas
+   versões do Streamlit o campo de data é um elemento <button> e herdava o
+   navy da regra genérica de botão do expander, ficando ilegível. */
+div[data-testid="stExpander"] div[data-testid="stDateInput"] div[data-baseweb="input"],
+div[data-testid="stExpander"] div[data-testid="stDateInput"] div[data-baseweb="input"] > div,
+div[data-testid="stExpander"] div[data-testid="stDateInput"] input,
+div[data-testid="stExpander"] div[data-testid="stDateInput"] button,
+div[data-testid="stExpander"] div[data-testid="stDateInput"] button * {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+    -webkit-text-fill-color: #212529 !important;
+}
+div[data-testid="stExpander"] div[data-testid="stDateInput"] div[data-baseweb="input"] {
+    border: 1px solid #dee2e6 !important; border-radius: 4px !important;
+}
 button[role="tab"] {
     padding: 0.75rem 1.5rem !important; font-weight: 500 !important;
     background-color: #f8f9fa !important; color: #0D1B2A !important;
