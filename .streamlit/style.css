@@ -527,3 +527,9 @@ body, .main, [data-testid="stAppViewContainer"], .block-container {
     opacity: 1;
     pointer-events: auto;
 }
+/* Ocultar a dica técnica "Press Enter to apply" dos campos de entrada.
+   Mensagem técnica pouco intuitiva para o usuário final; o valor é aplicado
+   normalmente ao confirmar (Enter/Tab). */
+div[data-testid="InputInstructions"] {
+    display: none !important;
+}
