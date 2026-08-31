@@ -18,7 +18,7 @@ from utils.design_tokens import (
     NAVY, NAVY_HOVER, GOLD, GOLD_BUTTON_CSS,
 )
 from utils.status_execucao import EXEC_EM_EXECUCAO, EXEC_FINALIZADA, EXEC_CANCELADA
-from utils.ui import botao_excluir, link_fechar
+from utils.ui import botao_excluir, link_fechar, input_moeda
 
 
 def _safe_float(val, default=0.0):
@@ -47,7 +47,10 @@ def _render_nova_proposta_form(clientes):
         cliente = st.selectbox("Cliente:", clientes_lista,
                                index=None, placeholder="Selecione um cliente")
         descricao = st.text_area("Descrição do serviço:", height=100)
-        valor = st.number_input("Valor do serviço (R$):", min_value=0.0, format="%.2f")
+        valor = input_moeda("Valor do serviço (R$):", "valor_nova_proposta")
+        sinal_nova = input_moeda(
+            "💰 Sinal / entrada já pago (opcional) — R$:", "sinal_nova_proposta", step=10.0,
+            help="Se o cliente já pagou uma entrada ao confirmar, informe aqui. Será descontado do total no relatório do cliente.")
         prazo = st.number_input("Prazo estimado (dias):", min_value=1, value=15)
 
         data_inicio = datetime.now().date()
@@ -156,6 +159,9 @@ def _render_nova_proposta_form(clientes):
                         proposta_atualizada['status_execucao'] = EXEC_CANCELADA
                         proposta_atualizada['data_fim'] = datetime.now().date()
 
+                    if sinal_nova and sinal_nova > 0:
+                        proposta_atualizada['sinal'] = sinal_nova
+
                     if proposta_atualizada:
                         st.session_state.db.update_proposta(novo_numero, **proposta_atualizada)
 
@@ -263,10 +269,9 @@ def _render_open_proposal_actions(proposta_id, proposta):
     else:
         # Sinal/entrada informado no momento da aprovação. Fica salvo na
         # proposta e aparece depois na execução e no relatório do cliente.
-        sinal_aprovar = st.number_input(
+        sinal_aprovar = input_moeda(
             "💰 Sinal / entrada pago pelo cliente (R$):",
-            min_value=0.0, value=float(sinal), step=10.0, format="%.2f",
-            key=f"sinal_aprovar_{proposta_id}",
+            f"sinal_aprovar_{proposta_id}", value=sinal, step=10.0,
             help="Valor que o cliente pagou ao confirmar o serviço. Será descontado do total no relatório do cliente.",
         )
         c1, c2 = st.columns(2)
@@ -883,15 +888,13 @@ def _tab_itens(proposta_id, show_finalizar=False, proposta=None):
             )
         with st.expander("✏️ Editar serviço"):
             with st.form(key=f"form_editar_valor_exec_{proposta_id}"):
-                novo_valor = st.number_input(
+                novo_valor = input_moeda(
                     "Valor do serviço (Personal Organizer) — R$:",
-                    min_value=0.0, value=float(valor_base_atual), step=10.0, format="%.2f",
-                    key=f"novo_valor_exec_{proposta_id}")
-                novo_sinal = st.number_input(
+                    f"novo_valor_exec_{proposta_id}", value=valor_base_atual, step=10.0)
+                novo_sinal = input_moeda(
                     "Sinal / entrada já pago pelo cliente — R$:",
-                    min_value=0.0, value=float(sinal_atual), step=10.0, format="%.2f",
-                    help="Valor que o cliente pagou ao confirmar o serviço. Será descontado do total no relatório do cliente.",
-                    key=f"novo_sinal_exec_{proposta_id}")
+                    f"novo_sinal_exec_{proposta_id}", value=sinal_atual, step=10.0,
+                    help="Valor que o cliente pagou ao confirmar o serviço. Será descontado do total no relatório do cliente.")
                 _tipos_opcoes = ["Organização", "Consultoria", "Acompanhamento", "Projeto", "Outro"]
                 _tipo_atual = str(proposta.get('tipo_proposta') or "").strip()
                 if _tipo_atual and _tipo_atual not in _tipos_opcoes:

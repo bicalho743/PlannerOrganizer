@@ -61,3 +61,27 @@ def link_fechar(label, key, use_container_width=True):
     """Renderiza um link discreto de fechar/cancelar."""
     with stylable_container(key=f"close_{key}", css_styles=CLOSE_LINK_CSS):
         return st.button(label, key=key, use_container_width=use_container_width)
+
+
+def input_moeda(label, key, value=0.0, step=100.0, help=None):
+    """Campo de valor em R$ com digitação natural.
+
+    O `st.number_input` com format="%.2f" e valor 0.0 mostra "0,00" e a
+    digitação vai para depois da vírgula (o número não "entra"). Aqui o campo
+    começa VAZIO (placeholder "0,00") quando não há valor, então cada dígito
+    digitado entra normalmente pela frente. Mostra o valor atual quando > 0
+    (edição). Retorna sempre float (0.0 se vazio).
+    """
+    v = None
+    try:
+        v = float(value) if value not in (None, "") and float(value) > 0 else None
+    except (TypeError, ValueError):
+        v = None
+    r = st.number_input(
+        label, min_value=0.0, value=v, step=step,
+        placeholder="0,00", key=key, help=help,
+    )
+    try:
+        return float(r) if r is not None else 0.0
+    except (TypeError, ValueError):
+        return 0.0

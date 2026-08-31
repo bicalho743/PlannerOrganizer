@@ -264,8 +264,16 @@ div[data-testid="stMultiSelect"] [data-baseweb="select"] {
 div[data-testid="stMultiSelect"] [data-baseweb="tag"] {
     background-color: #0D1B2A !important; color: #ffffff !important;
 }
+/* Date input: em algumas versões do Streamlit o WRAPPER (baseweb input)
+   fica navy e o texto some. Forçar o wrapper + input claros e legíveis. */
+div[data-testid="stDateInput"] div[data-baseweb="input"],
+div[data-testid="stDateInput"] div[data-baseweb="input"] > div,
 div[data-testid="stDateInput"] input {
-    background-color: #ffffff !important; color: #1e1e1e !important;
+    background-color: #f8f9fa !important; color: #212529 !important;
+    -webkit-text-fill-color: #212529 !important;
+}
+div[data-testid="stDateInput"] div[data-baseweb="input"] {
+    border: 1px solid #dee2e6 !important; border-radius: 4px !important;
 }
 /* Selectbox: nesta versão do Streamlit o controle NÃO usa data-baseweb="select"
    (é role="combobox"). Confirmado via DOM: o valor/entrada vinha em texto
