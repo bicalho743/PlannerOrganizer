@@ -200,11 +200,21 @@ def _render_detail_panel(proposta_id, proposta, propostas_com_clientes):
 
 
 def _proposal_status_label(status_norm):
-    """Rótulo amigável + cores para o status (frontend apenas; backend inalterado)."""
-    from utils.proposta_status import STATUS_APROVADA
-    if status_norm == STATUS_APROVADA:
-        return "Aprovada", "#1D6A4A", "#e8f3ee"
-    return "Aguardando aprovação", "#B7860D", "#fdf6e6"
+    """Rótulo amigável + cores (fg, soft-bg) para o status.
+
+    Apenas apresentação no frontend — o backend continua usando o status
+    canônico. Cobre todos os estágios para dar cabeçalho consistente às
+    telas de aberta/aprovada, execução e finalizada/recusada."""
+    from utils.proposta_status import (
+        STATUS_APROVADA, STATUS_EM_EXECUCAO, STATUS_FINALIZADA, STATUS_RECUSADA,
+    )
+    mapa = {
+        STATUS_APROVADA:    ("Aprovada", "#1D6A4A", "#e8f3ee"),
+        STATUS_EM_EXECUCAO: ("Em execução", "#1F6FB2", "#e7f1fa"),
+        STATUS_FINALIZADA:  ("Finalizada", "#4A4A4A", "#eeeeee"),
+        STATUS_RECUSADA:    ("Recusada", "#C0392B", "#fdecea"),
+    }
+    return mapa.get(status_norm, ("Aguardando aprovação", "#B7860D", "#fdf6e6"))
 
 
 def _proposal_meta_header(proposta, status_norm):
@@ -548,20 +558,11 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
     sinal = _safe_float(proposta.get('sinal'))
     status_atual = _normalize_status(proposta.get('status', '')) or ''
 
-    if status_atual == STATUS_RECUSADA:
-        badge_label, badge_bg = "Recusada", "#C0392B"
-    else:
-        badge_label, badge_bg = "Finalizada", "#4A4A4A"
-
-    sinal_html = (f"<span style='font-size:12px;color:#B7860D;font-weight:600;'>💰 Sinal: {_fmt_brl(sinal)}</span>" if sinal > 0 else "")
-    st.markdown(f"""
-    <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;flex-wrap:wrap;
-                background:#faf9f7;border-radius:10px;border:1px solid #e8e5df;margin-bottom:14px;">
-      <span style="background:{badge_bg};color:#fff;font-size:11px;font-weight:700;
-                   padding:3px 10px;border-radius:12px;white-space:nowrap;">{badge_label}</span>
-      <span style="font-size:14px;color:{NAVY};font-weight:700;">{_fmt_brl(valor)}</span>
-      {sinal_html}
-    </div>""", unsafe_allow_html=True)
+    # Cabeçalho e resumo financeiro unificados (mesmo padrão da tela de
+    # aberta/aprovada) para consistência visual entre as etapas.
+    _proposal_meta_header(proposta, status_atual)
+    st.markdown(_resumo_financeiro_rows_html(valor, sinal), unsafe_allow_html=True)
+    st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
 
     rc1, rc2 = st.columns(2)
     with rc1:
@@ -1048,6 +1049,10 @@ def _tab_itens(proposta_id, show_finalizar=False, proposta=None):
     """Itens & Custos com navegação lateral por categoria."""
 
     if show_finalizar and proposta is not None:
+        from utils.proposta_status import normalize as _norm_exec_status
+        # Cabeçalho unificado (badge de status + categoria + início) para
+        # manter consistência com as telas de aberta/aprovada e finalizada.
+        _proposal_meta_header(proposta, _norm_exec_status(proposta.get('status', '')) or '')
         valor_base_atual = _safe_float(proposta.get('valor'))
         sinal_atual = _safe_float(proposta.get('sinal'))
         st.markdown(
