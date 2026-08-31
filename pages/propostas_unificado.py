@@ -458,43 +458,15 @@ def _render_open_proposal_actions(proposta_id, proposta):
                 st.session_state[f"confirm_refuse_{proposta_id}"] = True
                 st.rerun()
         with a2:
+            # Aprovação é ação não destrutiva → clique único (sem confirmação).
             if st.button("✓  Aprovar proposta", key=f"btn_aprovar_{proposta_id}", use_container_width=True, type="primary"):
-                st.session_state[f"sinal_to_approve_{proposta_id}"] = sinal_atual
-                st.session_state[f"confirm_approve_{proposta_id}"] = True
-                st.rerun()
-
-    # ── Ação operacional independente: gerar/baixar PDF ──────────────────
-    _pdf_gerar_baixar(proposta_id, "apr" if aprovada else "open")
-
-    # ── Mais ações (Editar · Duplicar · Excluir) ─────────────────────────
-    _mais_acoes_proposta(proposta_id, proposta)
-
-    # ── Confirmação: Aprovar ─────────────────────────────────────────────
-    if st.session_state.get(f"confirm_approve_{proposta_id}", False):
-        _s = _safe_float(st.session_state.get(f"sinal_to_approve_{proposta_id}"), sinal_atual)
-        _saldo = max(0.0, valor - _s)
-        st.markdown(
-            f'<div style="background:#e8f3ee;border:1px solid #1D6A4A33;border-radius:12px;padding:14px 16px;margin-top:10px;">'
-            f'<div style="font-weight:700;color:{NAVY};margin-bottom:8px;">Aprovar proposta?</div>'
-            f'<div style="font-size:13px;color:#4a4a48;">Valor total: <strong>{_fmt_brl(valor)}</strong><br>'
-            f'Entrada: <strong>{_fmt_brl(_s)}</strong><br>'
-            f'Saldo: <strong>{_fmt_brl(_saldo)}</strong></div></div>',
-            unsafe_allow_html=True)
-        ca1, ca2 = st.columns([1, 1])
-        with ca1:
-            if st.button("Cancelar", key=f"btn_cancel_apr_{proposta_id}", use_container_width=True):
-                st.session_state[f"confirm_approve_{proposta_id}"] = False
-                st.rerun()
-        with ca2:
-            if st.button("✓ Aprovar proposta", key=f"btn_confirm_apr_{proposta_id}", use_container_width=True, type="primary"):
                 try:
-                    if _s != sinal:
-                        st.session_state.db.update_proposta(proposta_id, sinal=_s)
+                    if sinal_atual != sinal:
+                        st.session_state.db.update_proposta(proposta_id, sinal=sinal_atual)
                     res = st.session_state.db.update_proposta_status(
                         proposta_id=proposta_id, novo_status=STATUS_APROVADA,
                         data_aprovacao=datetime.now().date())
                     if res.get('status', False):
-                        st.session_state[f"confirm_approve_{proposta_id}"] = False
                         st.session_state['kanban_selected_proposta'] = None
                         st.session_state.db.invalidar_cache()
                         st.rerun()
@@ -502,6 +474,12 @@ def _render_open_proposal_actions(proposta_id, proposta):
                         st.error(res.get('message', 'Erro ao aprovar.'))
                 except Exception as e:
                     st.error(str(e))
+
+    # ── Ação operacional independente: gerar/baixar PDF ──────────────────
+    _pdf_gerar_baixar(proposta_id, "apr" if aprovada else "open")
+
+    # ── Mais ações (Editar · Duplicar · Excluir) ─────────────────────────
+    _mais_acoes_proposta(proposta_id, proposta)
 
     # ── Confirmação: Recusar ─────────────────────────────────────────────
     if st.session_state.get(f"confirm_refuse_{proposta_id}", False):
