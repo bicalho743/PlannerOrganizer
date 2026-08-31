@@ -372,20 +372,30 @@ div[data-testid="stExpander"] div[data-testid="stFormSubmitButton"] > button * {
     background-color: transparent !important;
     color: #ffffff !important;
 }
-/* Campo de DATA dentro de expander: fundo claro e texto legível. Em algumas
-   versões do Streamlit o campo de data é um elemento <button> e herdava o
-   navy da regra genérica de botão do expander, ficando ilegível. */
-div[data-testid="stExpander"] div[data-testid="stDateInput"] div[data-baseweb="input"],
-div[data-testid="stExpander"] div[data-testid="stDateInput"] div[data-baseweb="input"] > div,
-div[data-testid="stExpander"] div[data-testid="stDateInput"] input,
-div[data-testid="stExpander"] div[data-testid="stDateInput"] button,
-div[data-testid="stExpander"] div[data-testid="stDateInput"] button * {
+/* Campo de DATA — Streamlit moderno (>=1.4x) renderiza o campo como
+   div[data-testid="stDateInputField"] com react-aria DateField. O fundo herda
+   o secondaryBackgroundColor NAVY do tema (config.toml) e o texto herda o
+   textColor escuro => texto escuro sobre navy, ilegível. Forçar claro +
+   texto escuro (também cobre o campo dentro de expander). */
+div[data-testid="stDateInputField"],
+div[data-testid="stDateInputField"] *,
+div[data-testid="stExpander"] div[data-testid="stDateInputField"],
+div[data-testid="stExpander"] div[data-testid="stDateInputField"] * {
     background-color: #f8f9fa !important;
     color: #212529 !important;
     -webkit-text-fill-color: #212529 !important;
 }
-div[data-testid="stExpander"] div[data-testid="stDateInput"] div[data-baseweb="input"] {
+div[data-testid="stDateInputField"] {
     border: 1px solid #dee2e6 !important; border-radius: 4px !important;
+}
+/* Segmento em foco (dia/mês/ano) do campo de data: destaque dourado da marca
+   com texto escuro legível, em vez do azul padrão do react-aria. */
+div[data-testid="stDateInputField"] [data-focused="true"],
+div[data-testid="stDateInputField"] [aria-selected="true"] {
+    background-color: #F3E6C0 !important;
+    color: #1C1C1A !important;
+    -webkit-text-fill-color: #1C1C1A !important;
+    border-radius: 3px !important;
 }
 button[role="tab"] {
     padding: 0.75rem 1.5rem !important; font-weight: 500 !important;
