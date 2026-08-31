@@ -713,101 +713,95 @@ def _pdf_inline_viewer(pdf_bytes, key, height=720):
     components.html(html, height=height + 80)
 
 
-def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_cliente="Cliente", numero_proposta=None):
-    """Render a navy card-styled download button that generates and downloads PDF on click."""
-    pdf_bytes = None
-    file_name = f"Relatorio_{report_type}_{proposta_id}.pdf"
-    error_msg = None
+def _gerar_report_pdf(proposta_id, report_type, nome_cliente="Cliente", numero_proposta=None):
+    """Gera um PDF de relatório e devolve (caminho, nome_arquivo, erro).
 
+    Isolado para ser chamado SOB DEMANDA (no clique), nunca no render — assim
+    abrir o detalhe de uma proposta finalizada não dispara 4 gerações de PDF."""
     try:
         if report_type == "cliente":
             from utils.propostas_helper import gerar_pdf_cliente_proposta
             sucesso, mensagem, filename = gerar_pdf_cliente_proposta(st.session_state.db, proposta_id)
-            if sucesso and filename:
-                with open(filename, "rb") as f:
-                    pdf_bytes = f.read()
-                file_name = os.path.basename(filename)
-            else:
-                error_msg = mensagem
+            return (filename, os.path.basename(filename), None) if (sucesso and filename) else (None, None, mensagem)
         elif report_type == "interno":
             from utils.propostas_helper import gerar_pdf_interno_proposta
             sucesso, mensagem, filename = gerar_pdf_interno_proposta(st.session_state.db, proposta_id)
-            if sucesso and filename:
-                with open(filename, "rb") as f:
-                    pdf_bytes = f.read()
-                file_name = os.path.basename(filename)
-            else:
-                error_msg = mensagem
+            return (filename, os.path.basename(filename), None) if (sucesso and filename) else (None, None, mensagem)
         elif report_type == "fornecedores":
             from utils.propostas_helper import gerar_pdf_fornecedores_proposta
             sucesso, mensagem, filename = gerar_pdf_fornecedores_proposta(st.session_state.db, proposta_id)
-            if sucesso and filename:
-                with open(filename, "rb") as f:
-                    pdf_bytes = f.read()
-                file_name = os.path.basename(filename)
-            else:
-                error_msg = mensagem
+            return (filename, os.path.basename(filename), None) if (sucesso and filename) else (None, None, mensagem)
         elif report_type == "vendas":
-            import time as _t
             from utils.pdf_generator_v2 import gerar_pdf_venda_v2
             produtos = st.session_state.db.get_produtos_organizadores(proposta_id)
             if produtos is None or (hasattr(produtos, 'empty') and produtos.empty):
-                error_msg = "Nenhum produto cadastrado."
-            else:
-                val_col = 'valor_unit' if 'valor_unit' in produtos.columns else 'valor'
-                valor_total = float(produtos[val_col].astype(float).mul(produtos['quantidade'].astype(float)).sum())
-                num_exibir = numero_proposta or proposta_id
-                venda_dados = {'id': num_exibir, 'status': 'Proposta', 'forma_pagamento': 'N/A',
-                               'valor_total': round(valor_total, 2),
-                               'data_venda': datetime.now().strftime('%d/%m/%Y'),
-                               'observacoes': f"Produtos Proposta #{num_exibir} - {nome_cliente}"}
-                rename_map = {'nome': 'produto_nome', val_col: 'preco_unitario'}
-                itens_pdf = produtos.rename(columns=rename_map)[['produto_nome', 'quantidade', 'preco_unitario']].copy()
-                cliente_nome_arq = nome_cliente.replace(' ', '_').lower()
-                fname = f"pdfs/Relatorio_Produtos_{cliente_nome_arq}_{num_exibir}.pdf"
-                os.makedirs("pdfs", exist_ok=True)
-                pdf_path = gerar_pdf_venda_v2(venda_dados, {'nome': nome_cliente}, itens_pdf, fname)
-                if pdf_path and os.path.exists(pdf_path):
-                    with open(pdf_path, "rb") as f:
-                        pdf_bytes = f.read()
-                    file_name = f"Relatorio_Produtos_{cliente_nome_arq}_{num_exibir}.pdf"
-                else:
-                    error_msg = "Erro ao gerar PDF de vendas."
+                return (None, None, "Nenhum produto cadastrado.")
+            val_col = 'valor_unit' if 'valor_unit' in produtos.columns else 'valor'
+            valor_total = float(produtos[val_col].astype(float).mul(produtos['quantidade'].astype(float)).sum())
+            num_exibir = numero_proposta or proposta_id
+            venda_dados = {'id': num_exibir, 'status': 'Proposta', 'forma_pagamento': 'N/A',
+                           'valor_total': round(valor_total, 2),
+                           'data_venda': datetime.now().strftime('%d/%m/%Y'),
+                           'observacoes': f"Produtos Proposta #{num_exibir} - {nome_cliente}"}
+            rename_map = {'nome': 'produto_nome', val_col: 'preco_unitario'}
+            itens_pdf = produtos.rename(columns=rename_map)[['produto_nome', 'quantidade', 'preco_unitario']].copy()
+            cliente_nome_arq = nome_cliente.replace(' ', '_').lower()
+            fname = f"pdfs/Relatorio_Produtos_{cliente_nome_arq}_{num_exibir}.pdf"
+            os.makedirs("pdfs", exist_ok=True)
+            pdf_path = gerar_pdf_venda_v2(venda_dados, {'nome': nome_cliente}, itens_pdf, fname)
+            if pdf_path and os.path.exists(pdf_path):
+                return (pdf_path, f"Relatorio_Produtos_{cliente_nome_arq}_{num_exibir}.pdf", None)
+            return (None, None, "Erro ao gerar PDF de vendas.")
     except Exception as e:
-        error_msg = str(e)
+        return (None, None, str(e))
+    return (None, None, "Tipo de relatório desconhecido.")
 
-    if pdf_bytes:
-        _card_css = (
-            "button {"
-            f"background:{NAVY} !important;border-radius:10px !important;"
-            "padding:16px !important;min-height:80px !important;width:100%% !important;"
-            "border:1px solid transparent !important;transition:all 0.2s !important;"
-            "display:flex !important;flex-direction:column !important;"
-            "align-items:center !important;justify-content:center !important;}"
-            "button:hover {"
-            f"background:{NAVY_HOVER} !important;transform:translateY(-2px) !important;"
-            "box-shadow:0 4px 12px rgba(0,0,0,0.3) !important;}"
-            "button p, button div {"
-            f"color:{GOLD} !important;font-weight:700 !important;font-size:12px !important;}}"
-        ).replace("%%", "%")
+
+def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_cliente="Cliente", numero_proposta=None):
+    """Card de relatório com geração SOB DEMANDA (lazy).
+
+    O PDF só é gerado quando o usuário clica em 'Gerar' — evita gerar todos os
+    relatórios ao abrir o detalhe da proposta (grande ganho de velocidade).
+    Uma vez gerado na sessão, o card passa a oferecer 'Baixar' direto."""
+    state_key = f"_report_pdf_{report_type}_{proposta_id}"
+    _card_css = (
+        "button {"
+        f"background:{NAVY} !important;border-radius:10px !important;"
+        "padding:16px !important;min-height:80px !important;width:100%% !important;"
+        "border:1px solid transparent !important;transition:all 0.2s !important;"
+        "display:flex !important;flex-direction:column !important;"
+        "align-items:center !important;justify-content:center !important;}"
+        "button:hover {"
+        f"background:{NAVY_HOVER} !important;transform:translateY(-2px) !important;"
+        "box-shadow:0 4px 12px rgba(0,0,0,0.3) !important;}"
+        "button p, button div {"
+        f"color:{GOLD} !important;font-weight:700 !important;font-size:12px !important;}}"
+    ).replace("%%", "%")
+
+    saved = st.session_state.get(state_key)
+    if isinstance(saved, dict) and saved.get('path') and os.path.exists(saved['path']):
+        with open(saved['path'], "rb") as f:
+            pdf_bytes = f.read()
         with stylable_container(key=f"dl_card_{report_type}_{proposta_id}", css_styles=_card_css):
             st.download_button(
-                label=f"{title}",
-                data=pdf_bytes,
-                file_name=file_name,
-                mime="application/pdf",
-                key=f"dl_btn_{report_type}_{proposta_id}",
+                label=f"📥 {title}", data=pdf_bytes, file_name=saved['name'],
+                mime="application/pdf", key=f"dl_btn_{report_type}_{proposta_id}",
                 use_container_width=True,
             )
-        st.caption(subtitle)
-    elif error_msg:
-        st.markdown(f"""
-        <div style="background:{NAVY};border-radius:10px;padding:16px;text-align:center;min-height:80px;
-                    display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0.6;">
-          <div style="font-size:22px;">{icon}</div>
-          <div style="color:{GOLD};font-weight:700;font-size:12px;margin-top:4px;">{title}</div>
-          <div style="color:#ff6b6b;font-size:10px;">{error_msg}</div>
-        </div>""", unsafe_allow_html=True)
+        st.caption(f"✅ Pronto — {subtitle}")
+        return
+
+    with stylable_container(key=f"gen_card_{report_type}_{proposta_id}", css_styles=_card_css):
+        gerar = st.button(f"{title}", key=f"gen_btn_{report_type}_{proposta_id}", use_container_width=True)
+    st.caption(subtitle)
+    if gerar:
+        with st.spinner("Gerando relatório…"):
+            path, name, err = _gerar_report_pdf(proposta_id, report_type, nome_cliente, numero_proposta)
+        if path:
+            st.session_state[state_key] = {'path': path, 'name': name}
+            st.rerun()
+        else:
+            st.error(err or "Erro ao gerar relatório.")
 
 
 def _tab_detalhes(proposta_id, proposta):
@@ -2084,6 +2078,10 @@ def show():
                             st.session_state['kanban_selected_proposta'] = None
                         else:
                             st.session_state['kanban_selected_proposta'] = pid
+                            # Feedback imediato: o st.toast sobrevive ao rerun e
+                            # sinaliza que a proposta está abrindo (evita a
+                            # sensação de "nada acontecendo" durante o re-render).
+                            st.toast("Abrindo proposta…", icon="⏳")
                         st.rerun()
 
                     if col_idx in (0, 1):
@@ -2234,8 +2232,10 @@ def show():
                 def _modal_detalhes():
                     # Fechamento pelo X do canto superior direito do próprio
                     # diálogo (nativo do Streamlit) — sem botão "Fechar"
-                    # redundante no rodapé.
-                    _render_detail_panel(selected_id, proposta_row, propostas_com_clientes)
+                    # redundante no rodapé. Spinner dá feedback enquanto o
+                    # painel monta.
+                    with st.spinner("Carregando proposta…"):
+                        _render_detail_panel(selected_id, proposta_row, propostas_com_clientes)
 
                 _modal_detalhes()
             else:
