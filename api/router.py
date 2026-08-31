@@ -118,6 +118,7 @@ class PropostaCreate(BaseModel):
     status: str = 'em_elaboracao'
     tipo_proposta: Optional[str] = None
     ambiente: Optional[str] = None
+    sinal: Optional[float] = None
 
 class PropostaUpdate(BaseModel):
     descricao: Optional[str] = None
@@ -319,10 +320,13 @@ async def get_propostas(uid: str = Depends(verify_firebase_token)):
 @api.post("/propostas")
 async def create_proposta(body: PropostaCreate, uid: str = Depends(verify_firebase_token)):
     try:
-        get_db(uid).add_proposta(
+        db = get_db(uid)
+        novo_id = db.add_proposta(
             cliente_id=body.cliente_id, descricao=body.descricao,
             valor=body.valor, status=body.status, tipo_proposta=body.tipo_proposta
         )
+        if body.sinal and body.sinal > 0 and novo_id:
+            db.update_proposta(novo_id, sinal=body.sinal)
         return JSONResponse(content={"success": True})
     except HTTPException:
         raise
