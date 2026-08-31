@@ -1811,6 +1811,106 @@ def _tab_acoes(proposta_id, proposta):
                     st.rerun()
 
 
+@st.fragment
+def _kanban_board_fragment(propostas_em_aberto, propostas_aprovadas, propostas_em_exec, propostas_com_clientes):
+    """Renderiza o quadro (3 colunas) + o modal de detalhe como um FRAGMENTO.
+
+    Abrir/fechar o detalhe e gerar PDF do card fazem rerun só do fragmento
+    (st.rerun(scope="fragment")): os KPIs e o histórico, que ficam FORA do
+    fragmento, não re-renderizam, deixando a abertura do modal instantânea. As
+    mutações dentro do modal (aprovar/recusar/excluir) continuam com
+    st.rerun() completo para atualizar todo o quadro."""
+    col_aberto, col_aprovada, col_execucao = st.columns(3)
+    COLS_CONFIG = [
+        (col_aberto, " Em Aberto", propostas_em_aberto, "#fff3cd"),
+        (col_aprovada, "🟢 Aprovada", propostas_aprovadas, "#d4edda"),
+        (col_execucao, "🔵 Em Execução", propostas_em_exec, "#cce5ff"),
+    ]
+    for col_idx, (col_widget, col_label, col_df, col_color) in enumerate(COLS_CONFIG):
+        with col_widget:
+            header_count = len(col_df)
+            st.markdown(
+                f'<div class="kanban-col-header" style="background-color:{col_color};">{col_label} ({header_count})</div>',
+                unsafe_allow_html=True
+            )
+            if not col_df.empty:
+                for _, proposta in col_df.iterrows():
+                    pid = proposta['id']
+                    cliente_nome = html_module.escape(str(proposta.get('nome', proposta.get('cliente_nome', 'Cliente'))))
+                    desc = html_module.escape(str(proposta.get('descricao', ''))[:60])
+                    valor_f = html_module.escape(_fmt_brl(_safe_float(proposta.get('valor'))))
+
+                    st.markdown(
+                        f'<div class="kanban-card">'
+                        f'<div class="kanban-card-cliente">{cliente_nome}</div>'
+                        f'<div class="kanban-card-desc">{desc}</div>'
+                        f'<div class="kanban-card-valor">{valor_f}</div>'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+
+                    is_selected = st.session_state.get('kanban_selected_proposta') == pid
+                    btn_label = "▲ Fechar" if is_selected else "▼ Ver Detalhes"
+                    if st.button(btn_label, key=f"card_btn_c{col_idx}_{pid}", use_container_width=True):
+                        if is_selected:
+                            st.session_state['kanban_selected_proposta'] = None
+                        else:
+                            st.session_state['kanban_selected_proposta'] = pid
+                            # Feedback imediato: o st.toast sobrevive ao rerun.
+                            st.toast("Abrindo proposta…", icon="⏳")
+                        st.rerun(scope="fragment")
+
+                    if col_idx in (0, 1):
+                        if st.button(" Gerar Proposta", key=f"card_pdf_c{col_idx}_{pid}", use_container_width=True):
+                            try:
+                                from utils.propostas_helper import gerar_pdf_cliente_proposta
+                                sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, pid, tipo_documento="proposta")
+                                if sucesso and arquivo:
+                                    st.session_state[f"_kanban_pdf_{pid}"] = arquivo
+                                    st.rerun(scope="fragment")
+                                else:
+                                    st.error(f"Erro: {mensagem}")
+                            except Exception as e:
+                                st.error(str(e))
+                        pdf_pronto = st.session_state.get(f"_kanban_pdf_{pid}")
+                        if pdf_pronto:
+                            try:
+                                with open(pdf_pronto, "rb") as _f:
+                                    st.download_button(
+                                        "📥 Baixar",
+                                        _f.read(),
+                                        os.path.basename(pdf_pronto),
+                                        "application/pdf",
+                                        key=f"card_dl_c{col_idx}_{pid}",
+                                        use_container_width=True,
+                                    )
+                            except Exception:
+                                st.session_state.pop(f"_kanban_pdf_{pid}", None)
+            else:
+                st.caption("Nenhuma proposta nesta etapa.")
+
+    # Modal de detalhe (dentro do fragmento para abrir sem rerun completo).
+    selected_id = st.session_state.get('kanban_selected_proposta')
+    if selected_id is not None:
+        if not propostas_com_clientes.empty:
+            proposta_rows = propostas_com_clientes[propostas_com_clientes['id'] == selected_id]
+            if not proposta_rows.empty:
+                proposta_row = proposta_rows.iloc[0]
+                _nome_modal = proposta_row.get('nome', proposta_row.get('cliente_nome', 'Cliente'))
+                _num_modal = proposta_row.get('numero', selected_id)
+
+                @st.dialog(f"Proposta #{_num_modal} — {_nome_modal}", width="large")
+                def _modal_detalhes():
+                    # Fechamento pelo X nativo do diálogo. Spinner dá feedback
+                    # enquanto o painel monta.
+                    with st.spinner("Carregando proposta…"):
+                        _render_detail_panel(selected_id, proposta_row, propostas_com_clientes)
+
+                _modal_detalhes()
+            else:
+                st.session_state['kanban_selected_proposta'] = None
+
+
 def show():
     from utils.auth_guard import require_auth
     require_auth()
@@ -1963,8 +2063,6 @@ def show():
     else:
         propostas_finalizadas = pd.DataFrame()
 
-    col_aberto, col_aprovada, col_execucao = st.columns(3)
-
     if not propostas_finalizadas.empty and 'data_fim' in propostas_finalizadas.columns:
         propostas_finalizadas_sorted = propostas_finalizadas.sort_values('data_fim', ascending=False, na_position='last')
     elif not propostas_finalizadas.empty:
@@ -1972,12 +2070,6 @@ def show():
     else:
         propostas_finalizadas_sorted = propostas_finalizadas
     total_finalizadas = len(propostas_finalizadas_sorted)
-
-    COLS_CONFIG = [
-        (col_aberto, " Em Aberto", propostas_em_aberto, "#fff3cd"),
-        (col_aprovada, "🟢 Aprovada", propostas_aprovadas, "#d4edda"),
-        (col_execucao, "🔵 Em Execução", propostas_em_exec, "#cce5ff"),
-    ]
 
     kanban_css = """
     <style>
@@ -2052,70 +2144,9 @@ def show():
     """
     st.markdown(kanban_css, unsafe_allow_html=True)
 
-    for col_idx, (col_widget, col_label, col_df, col_color) in enumerate(COLS_CONFIG):
-        with col_widget:
-            header_count = len(col_df)
-            st.markdown(
-                f'<div class="kanban-col-header" style="background-color:{col_color};">{col_label} ({header_count})</div>',
-                unsafe_allow_html=True
-            )
-            if not col_df.empty:
-                for _, proposta in col_df.iterrows():
-                    pid = proposta['id']
-                    cliente_nome = html_module.escape(str(proposta.get('nome', proposta.get('cliente_nome', 'Cliente'))))
-                    desc = html_module.escape(str(proposta.get('descricao', ''))[:60])
-                    valor_f = html_module.escape(_fmt_brl(_safe_float(proposta.get('valor'))))
-
-                    st.markdown(
-                        f'<div class="kanban-card">'
-                        f'<div class="kanban-card-cliente">{cliente_nome}</div>'
-                        f'<div class="kanban-card-desc">{desc}</div>'
-                        f'<div class="kanban-card-valor">{valor_f}</div>'
-                        f'</div>',
-                        unsafe_allow_html=True
-                    )
-
-                    is_selected = st.session_state.get('kanban_selected_proposta') == pid
-                    btn_label = "▲ Fechar" if is_selected else "▼ Ver Detalhes"
-                    if st.button(btn_label, key=f"card_btn_c{col_idx}_{pid}", use_container_width=True):
-                        if is_selected:
-                            st.session_state['kanban_selected_proposta'] = None
-                        else:
-                            st.session_state['kanban_selected_proposta'] = pid
-                            # Feedback imediato: o st.toast sobrevive ao rerun e
-                            # sinaliza que a proposta está abrindo (evita a
-                            # sensação de "nada acontecendo" durante o re-render).
-                            st.toast("Abrindo proposta…", icon="⏳")
-                        st.rerun()
-
-                    if col_idx in (0, 1):
-                        if st.button(" Gerar Proposta", key=f"card_pdf_c{col_idx}_{pid}", use_container_width=True):
-                            try:
-                                from utils.propostas_helper import gerar_pdf_cliente_proposta
-                                sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, pid, tipo_documento="proposta")
-                                if sucesso and arquivo:
-                                    st.session_state[f"_kanban_pdf_{pid}"] = arquivo
-                                    st.rerun()
-                                else:
-                                    st.error(f"Erro: {mensagem}")
-                            except Exception as e:
-                                st.error(str(e))
-                        pdf_pronto = st.session_state.get(f"_kanban_pdf_{pid}")
-                        if pdf_pronto:
-                            try:
-                                with open(pdf_pronto, "rb") as _f:
-                                    st.download_button(
-                                        "📥 Baixar",
-                                        _f.read(),
-                                        os.path.basename(pdf_pronto),
-                                        "application/pdf",
-                                        key=f"card_dl_c{col_idx}_{pid}",
-                                        use_container_width=True,
-                                    )
-                            except Exception:
-                                st.session_state.pop(f"_kanban_pdf_{pid}", None)
-            else:
-                st.caption("Nenhuma proposta nesta etapa.")
+    # Quadro + modal isolados num fragmento: abrir o detalhe não re-renderiza
+    # os KPIs nem o histórico (abertura instantânea).
+    _kanban_board_fragment(propostas_em_aberto, propostas_aprovadas, propostas_em_exec, propostas_com_clientes)
 
     if total_finalizadas > 0:
         st.markdown("---")
@@ -2222,28 +2253,6 @@ def show():
                     if cols[7].button("📋 Ver", key=f"hist_ver_{pid}", use_container_width=True):
                         st.session_state['kanban_selected_proposta'] = pid
                         st.rerun()
-
-    selected_id = st.session_state.get('kanban_selected_proposta')
-    if selected_id is not None:
-        if not propostas_com_clientes.empty:
-            proposta_rows = propostas_com_clientes[propostas_com_clientes['id'] == selected_id]
-            if not proposta_rows.empty:
-                proposta_row = proposta_rows.iloc[0]
-                _nome_modal = proposta_row.get('nome', proposta_row.get('cliente_nome', 'Cliente'))
-                _num_modal = proposta_row.get('numero', selected_id)
-
-                @st.dialog(f"Proposta #{_num_modal} — {_nome_modal}", width="large")
-                def _modal_detalhes():
-                    # Fechamento pelo X do canto superior direito do próprio
-                    # diálogo (nativo do Streamlit) — sem botão "Fechar"
-                    # redundante no rodapé. Spinner dá feedback enquanto o
-                    # painel monta.
-                    with st.spinner("Carregando proposta…"):
-                        _render_detail_panel(selected_id, proposta_row, propostas_com_clientes)
-
-                _modal_detalhes()
-            else:
-                st.session_state['kanban_selected_proposta'] = None
 
 
 if __name__ == "__main__":
