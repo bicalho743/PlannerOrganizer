@@ -14,7 +14,7 @@ from utils.status_execucao import (
     EXEC_EM_EXECUCAO, EXEC_FINALIZADA,
 )
 from utils.proposta_status import (
-    STATUS_FINALIZADA,
+       STATUS_FINALIZADA,
     normalize as _norm_status,
     normalize_strict as _norm_status_strict,
 )
@@ -24,11 +24,35 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 if DATABASE_URL is None:
     raise ValueError("DATABASE_URL environment variable is not set")
 
+# Normaliza o esquema para o driver instalado (psycopg2-binary).
+# Evita ModuleNotFoundError quando a URL vem como postgresql+psycopg:// ou postgres://
+for _prefix in ("postgresql+psycopg://", "postgres://"):
+    if DATABASE_URL.startswith(_prefix):
+        DATABASE_URL = "postgresql://" + DATABASE_URL[len(_prefix):]
+        os.environ['DATABASE_URL'] = DATABASE_URL  # psycopg2.connect() em outros módulos lê daqui
+        break
+
 # Ensure proper SSL configuration for PostgreSQL
 try:
     from sqlalchemy.pool import QueuePool
     import time as _time
+# Get database URL from environment variable
+DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL is None:
+    raise ValueError("DATABASE_URL environment variable is not set")
 
+# Normaliza o esquema para o driver instalado (psycopg2-binary).
+# Evita ModuleNotFoundError quando a URL vem como postgresql+psycopg:// ou postgres://
+for _prefix in ("postgresql+psycopg://", "postgres://"):
+    if DATABASE_URL.startswith(_prefix):
+        DATABASE_URL = "postgresql://" + DATABASE_URL[len(_prefix):]
+        os.environ['DATABASE_URL'] = DATABASE_URL  # psycopg2.connect() em outros módulos lê daqui
+        break
+
+# Ensure proper SSL configuration for PostgreSQL
+try:
+    from sqlalchemy.pool import QueuePool
+    import time as _time
     _connect_args = {}
     if 'postgresql' in DATABASE_URL:
         _connect_args = {
