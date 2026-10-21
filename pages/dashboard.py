@@ -1,8 +1,8 @@
 """
 Início — o que a organizadora precisa ver ao abrir o sistema:
-1. os números do mês (recebido, a receber, a pagar, em negociação);
+1. os números do mês (lucro, a receber, a pagar, conversão de propostas);
 2. "Para fazer": tudo que pede uma ação hoje ou nos próximos dias, cada item com o botão da ação;
-3. propostas em andamento e aniversariantes do mês.
+3. funil de propostas, propostas em andamento e aniversariantes do mês.
 Sem dados ainda: um passo a passo para começar.
 """
 import os
@@ -101,7 +101,7 @@ h1.ini-titulo { margin: 0 0 2px !important; padding: 0 !important; font-size: 1.
 .ini-kpi { background: #fff; border: 1px solid #E4E7EC; border-radius: 12px; padding: 16px 18px; }
 .ini-kpi .rot { font-size: 0.72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #667085; }
 .ini-kpi .val { font-size: 1.55rem; font-weight: 700; color: #101828; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
-.ini-kpi .sub { font-size: 0.8rem; color: #667085; }
+.ini-kpi .sub { font-size: 0.8rem; color: #667085; line-height: 1.4; display: block; }
 .ini-kpi.destaque { background: var(--navy); border-color: var(--navy); }
 .ini-kpi.destaque .rot, .ini-kpi.destaque .sub { color: #C8D1DC; }
 .ini-kpi.destaque .val { color: #fff; }
@@ -133,6 +133,13 @@ h1.ini-titulo { margin: 0 0 2px !important; padding: 0 !important; font-size: 1.
 .ini-passo { display: flex; gap: 12px; align-items: center; }
 .ini-passo .n { flex: none; width: 28px; height: 28px; border-radius: 50%; background: #EEF1F6; color: var(--navy);
                 font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.ini-fu { display: grid; grid-template-columns: 84px 1fr 28px auto; gap: 10px; align-items: center; padding: 6px 0; font-size: .88rem; }
+.ini-fu .nm { color: #475467; }
+.ini-fu .bar { height: 10px; background: #F2F4F7; border-radius: 999px; overflow: hidden; }
+.ini-fu .bar i { display: block; height: 100%; background: var(--navy); border-radius: 999px; }
+.ini-fu b { text-align: right; font-variant-numeric: tabular-nums; }
+.ini-fu .ex { color: #067647; font-size: .8rem; font-weight: 600; white-space: nowrap; min-width: 0; }
+.ini-fu-rod { margin-top: 8px; padding-top: 8px; border-top: 1px solid #F2F4F7; font-size: .8rem; color: #667085; }
 @media (max-width: 900px) { .ini-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
 """
@@ -154,6 +161,24 @@ def _item(tag_cls, tag, titulo, detalhe, acao):
                         unsafe_allow_html=True)
         with c_acao:
             acao()
+
+
+def _funil_html(fn):
+    """Etapas do funil com barra proporcional ao número de propostas enviadas."""
+    if not fn["enviadas"]:
+        return '<span style="color:#667085">Nenhuma proposta nos últimos 90 dias.</span>'
+    base = fn["enviadas"]
+    etapas = [("Enviadas", fn["enviadas"], ""),
+              ("Fechadas", fn["fechadas"], fmt_brl(fn["valor_fechado"])),
+              ("Concluídas", fn["concluidas"], "")]
+    html = ""
+    for nome, n, extra in etapas:
+        html += (f'<div class="ini-fu"><span class="nm">{nome}</span>'
+                 f'<span class="bar"><i style="width:{max(n / base * 100, 2 if n else 0):.0f}%"></i></span>'
+                 f'<b>{n}</b><span class="ex">{extra}</span></div>')
+    html += (f'<div class="ini-fu-rod">{fn["aguardando"]} aguardando resposta ({fmt_brl(fn["valor_aguardando"])})'
+             f' · {fn["recusadas"]} recusada(s)</div>')
+    return html
 
 
 def _aniversario(cli, hoje):
@@ -249,25 +274,28 @@ def show():
         desp = fin[_eh(fin, ["despesa", "despesa_a_pagar"], "contas_a_pagar")]
         rec_pend = rec[rec["status"] == "Pendente"]
         desp_pend = desp[desp["status"] == "Pendente"]
-        recebidas = rec[rec["status"].isin(["Recebido", "Aprovado"])]
-        quando_rec = recebidas["drec"].where(recebidas["drec"].notna(), recebidas["d"])
-        recebido_mes = recebidas[quando_rec.apply(lambda d: bool(d) and d.year == hoje.year and d.month == hoje.month)]["valor"].sum()
     else:
         rec_pend = desp_pend = pd.DataFrame(columns=["valor", "d", "descricao"])
-        recebido_mes = 0.0
 
     atras_rec = rec_pend[rec_pend["d"].apply(lambda d: bool(d) and d < hoje)] if not rec_pend.empty else rec_pend
     prox7_pag = desp_pend[desp_pend["d"].apply(lambda d: bool(d) and d <= hoje + timedelta(days=7))] if not desp_pend.empty else desp_pend
 
     # ---------- números do mês ----------
+    from utils.indicadores import movimentos, entrou_gastou, funil
+    entrou, gastou = entrou_gastou(movimentos(fin), hoje.year, hoje.month)
+    lucro = entrou - gastou
+    fn = funil(propostas, hoje)
+    conv = fn["conversao"]
     st.markdown('<div class="ini-kpis">' +
-        _kpi(f"Recebido em {MESES[hoje.month - 1]}", fmt_brl(recebido_mes), "receitas já recebidas", destaque=True) +
+        _kpi(f"Lucro de {MESES[hoje.month - 1]}", fmt_brl(lucro),
+             f"entrou {fmt_brl(entrou)} · gastou {fmt_brl(gastou)}", destaque=True) +
         _kpi("A receber", fmt_brl(rec_pend["valor"].sum()),
              f'<span class="ini-atraso">{len(atras_rec)} em atraso</span>' if len(atras_rec) else f"{len(rec_pend)} lançamento(s) pendente(s)") +
         _kpi("A pagar", fmt_brl(desp_pend["valor"].sum()),
              f"{len(prox7_pag)} vence(m) em até 7 dias" if len(prox7_pag) else f"{len(desp_pend)} conta(s) em aberto") +
-        _kpi("Em negociação", fmt_brl(ativas["valor"].sum() if not ativas.empty else 0),
-             f"{len(ativas)} proposta(s) em andamento") +
+        _kpi("Conversão", f"{conv:.0%}" if conv is not None else "—",
+             f"fechou {fn['fechadas']} de {fn['fechadas'] + fn['recusadas']} respondidas · {fn['dias']} dias"
+             if conv is not None else "nenhuma proposta respondida em 90 dias") +
         '</div>', unsafe_allow_html=True)
 
     col_fazer, col_lado = st.columns([3, 2], gap="large")
@@ -361,7 +389,11 @@ def show():
 
     # ---------- propostas em andamento e aniversariantes ----------
     with col_lado:
-        st.markdown('<div class="ini-secao">Propostas em andamento</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="ini-secao">Funil de propostas · {fn["dias"]} dias</div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown(_funil_html(fn), unsafe_allow_html=True)
+
+        st.markdown('<div class="ini-secao" style="margin-top:18px">Propostas em andamento</div>', unsafe_allow_html=True)
         with st.container(border=True):
             if ativas.empty:
                 st.markdown('<span style="color:#667085">Nenhuma proposta em andamento.</span>', unsafe_allow_html=True)
