@@ -1696,6 +1696,37 @@ async def stripe_webhook(request: Request):
             except Exception as e:
                 print(f"[webhook] erro ao ativar plano: {e}")
 
+    elif event["type"] in ("customer.subscription.updated", "invoice.paid"):
+        # Renovação paga reativa; assinatura que deixou de valer (cancelada no fim do
+        # período, ou sem pagamento depois das novas tentativas do Stripe) bloqueia.
+        obj = event["data"]["object"]
+        if event["type"] == "invoice.paid":
+            novo_plano = "pro"
+        else:
+            status = getattr(obj, "status", "") or ""
+            novo_plano = {"active": "pro", "trialing": "pro", "canceled": "cancelado",
+                          "unpaid": "cancelado", "incomplete_expired": "cancelado"}.get(status)
+        email = getattr(obj, "customer_email", None) or ""
+        customer_id = getattr(obj, "customer", None)
+        if novo_plano and not email and STRIPE_SECRET_KEY and customer_id:
+            try:
+                stripe.api_key = STRIPE_SECRET_KEY
+                email = stripe.Customer.retrieve(customer_id).get("email", "") or ""
+            except Exception as e:
+                print(f"[webhook] erro ao buscar cliente {customer_id}: {e}")
+        if novo_plano and email:
+            try:
+                _conn = _pg2.connect(_db_url)
+                _cur = _conn.cursor()
+                _cur.execute("UPDATE perfis SET plano = %s WHERE LOWER(TRIM(email)) = LOWER(TRIM(%s))",
+                             (novo_plano, email))
+                _conn.commit()
+                print(f"[webhook] {event['type']}: plano={novo_plano} email={email} rows={_cur.rowcount}")
+                _cur.close()
+                _conn.close()
+            except Exception as e:
+                print(f"[webhook] erro ao atualizar plano: {e}")
+
     elif event["type"] == "customer.subscription.deleted":
         sub = event["data"]["object"]
         customer_id = getattr(sub, "customer", None)

@@ -212,7 +212,62 @@ from utils.models import *
 from utils.queries_pos_org import *
 
 
+# ── Isolamento entre contas ───────────────────────────────────────────────────
+# Toda consulta ORM (SELECT, UPDATE, DELETE) nas tabelas abaixo ganha automaticamente
+# "usuario_id = conta logada". Assim um método que busca/edita/exclui por id não alcança
+# registro de outra conta, mesmo que alguém envie um id que não é seu (ex.: pela API do
+# app de celular). Itens de venda, acréscimos e produtos da proposta ficam de fora: há
+# linhas antigas sem usuario_id; eles são alcançados pela venda/proposta, que é filtrada.
+# A conta vem de Database.usuario_id (API e testes) ou, no Streamlit, da sessão.
+# Consultas em SQL puro (text()) não passam por aqui.
+from contextvars import ContextVar
+from sqlalchemy import event
+from sqlalchemy.orm import Session as _SessaoOrm, with_loader_criteria
+
+_conta_atual = ContextVar("planner_conta_atual", default=None)
+MODELOS_POR_CONTA = (Cliente, Proposta, Transacao, Fornecedor, Assistente, Parceiro, Produto, Venda,
+                     AndamentoProposta, PostOrganization, PostOrganizationAction)
+
+
+def conta_atual():
+    uid = _conta_atual.get()
+    if uid:
+        return uid
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        if get_script_run_ctx() is None:
+            return None
+        import streamlit as st
+        return st.session_state.get("usuario_id")
+    except Exception:
+        return None
+
+
+@event.listens_for(_SessaoOrm, "do_orm_execute")
+def _filtrar_pela_conta(estado):
+    if not (estado.is_select or estado.is_update or estado.is_delete):
+        return
+    if estado.execution_options.get("todas_as_contas"):
+        return
+    uid = conta_atual()
+    if not uid:
+        return
+    for modelo in MODELOS_POR_CONTA:
+        estado.statement = estado.statement.options(
+            with_loader_criteria(modelo, lambda cls: cls.usuario_id == uid, include_aliases=True))
+
+
 class Database:
+    # usuario_id também marca a conta do contexto atual (requisição da API, execução do Streamlit)
+    @property
+    def usuario_id(self):
+        return self.__dict__.get("_usuario_id")
+
+    @usuario_id.setter
+    def usuario_id(self, valor):
+        self.__dict__["_usuario_id"] = valor
+        _conta_atual.set(valor)
+
     def refresh_schema_metadata(self):
         """
         Força a atualização dos metadados do esquema do banco de dados.
@@ -808,6 +863,23 @@ class Database:
         set_cache(cache_key, resultado)
         return resultado
 
+    def _proposta_da_conta(self, proposta_id):
+        """A proposta existe e é da conta logada (a consulta passa pelo filtro por conta)."""
+        try:
+            return self.session.query(Proposta.id).filter(Proposta.id == int(proposta_id)).first() is not None
+        except Exception:
+            self.session.rollback()
+            return False
+
+    def _filho_da_conta(self, modelo, registro_id):
+        """Produto/acréscimo cuja proposta é da conta logada (essas tabelas têm linhas antigas sem usuario_id)."""
+        try:
+            return self.session.query(modelo.id).join(Proposta, Proposta.id == modelo.proposta_id) \
+                .filter(modelo.id == int(registro_id)).first() is not None
+        except Exception:
+            self.session.rollback()
+            return False
+
     def get_cliente_by_id(self, cliente_id):
         """
         Busca um cliente pelo ID
@@ -864,55 +936,6 @@ class Database:
 
         return self._safe_query(query)
 
-    def limpar_clientes(self):
-        """Remove todos os registros da tabela de clientes"""
-        def query():
-            # Verifique se existem propostas vinculadas aos clientes
-            propostas_count = self.session.query(func.count()).select_from(Proposta).scalar()
-
-            if propostas_count > 0:
-                # Primeiro limpar as propostas, já que elas têm foreign key para clientes
-                # Remover acréscimos de propostas
-                self.session.query(AcrescimoProposta).delete()
-
-                # Remover produtos associados às propostas
-                for prod_org in self.session.query(ProdutoOrganizador).all():
-                    # Remover fornecedores de produtos
-                    self.session.query(ProdutoFornecedor).filter(
-                        ProdutoFornecedor.produto_id == prod_org.id
-                    ).delete()
-
-                # Agora é seguro remover os produtos
-                self.session.query(ProdutoOrganizador).delete()
-
-                # Remover andamentos de propostas
-                self.session.query(AndamentoProposta).delete()
-
-                # Remover transações financeiras vinculadas a propostas
-                self.session.query(Transacao).filter(
-                    Transacao.origem_tipo == 'proposta'
-                ).delete()
-
-                # Agora podemos remover as propostas
-                self.session.query(Proposta).delete()
-
-            # Remover vendas e itens de venda relacionados a clientes
-            vendas = self.session.query(Venda).all()
-            for venda in vendas:
-                # Remover itens de venda
-                self.session.query(ItemVenda).filter(
-                    ItemVenda.venda_id == venda.id
-                ).delete()
-
-            # Remover vendas
-            self.session.query(Venda).delete()
-
-            # Finalmente, remover os clientes
-            self.session.query(Cliente).delete()
-
-            return True
-
-        return self._safe_query(query)
 
     def add_cliente(self, nome, email=None, telefone=None, estado=None, cidade=None, bairro=None, 
                    endereco=None, cpf=None, data_aniversario=None, origem_cliente=None, observacoes=None):
@@ -944,7 +967,8 @@ class Database:
                 raise ValueError("ID de usuário não definido. Não é possível criar o cliente sem proprietário.")
 
             # Obter o maior ID atual
-            max_id = self.session.query(func.max(Cliente.id)).scalar()
+            # o id é global (todas as contas): o filtro por conta não pode valer aqui
+            max_id = self.session.query(func.max(Cliente.id)).execution_options(todas_as_contas=True).scalar()
 
             # Se não houver clientes, começar do 1
             # Se houver, usar o próximo número na sequência
@@ -1190,7 +1214,8 @@ class Database:
                 raise ValueError("ID de usuário não definido. Não é possível criar a proposta sem proprietário.")
 
             # Gerar próximo número de proposta igual ao ID (criar com ID=1 se for a primeira proposta)
-            ultimo_id = self.session.query(func.max(Proposta.id)).scalar()
+            # o id é global (todas as contas): o filtro por conta não pode valer aqui
+            ultimo_id = self.session.query(func.max(Proposta.id)).execution_options(todas_as_contas=True).scalar()
             proximo_id = 1 if ultimo_id is None else int(ultimo_id) + 1
 
             # Criar dicionário com valores para a proposta
@@ -2491,6 +2516,8 @@ class Database:
             int: ID do produto adicionado
         """
         # Primeiro tentar a adição via SQL direto
+        if not (self._proposta_da_conta(proposta_id)):  # isolamento: só registros da conta logada
+            return False
         produto_id = self.add_produto_via_sql_direto(proposta_id, nome, descricao, valor, quantidade, comodo)
         if produto_id is not None:
             return produto_id
@@ -2711,6 +2738,8 @@ class Database:
         Obtém produtos de uma proposta. Tenta primeiro via SQL direto, e depois via ORM.
         """
         # Primeiro tentar via SQL direto
+        if not (proposta_id is None or self._proposta_da_conta(proposta_id)):  # isolamento: só registros da conta logada
+            return pd.DataFrame()
         df_produtos = self.get_produtos_organizadores_sql_direto(proposta_id)
         if not df_produtos.empty:
             return df_produtos
@@ -2756,6 +2785,8 @@ class Database:
             bool: True se o produto foi removido com sucesso, False caso contrário
         """
         # Primeiro tentar remover via SQL direto para evitar problemas de sessão
+        if not (self._filho_da_conta(ProdutoOrganizador, produto_id)):  # isolamento: só registros da conta logada
+            return False
         try:
             import psycopg2
             import os
@@ -2829,6 +2860,8 @@ class Database:
         Returns:
             bool: True se atualizado com sucesso
         """
+        if not (self._filho_da_conta(ProdutoOrganizador, produto_id)):  # isolamento: só registros da conta logada
+            return False
         campos = []
         params = []
         if valor is not None:
@@ -3541,6 +3574,8 @@ class Database:
         # Log para diagnóstico apenas em modo de depuração avançada
 
         # Converter valores para tipos nativos Python antes da consulta
+        if not (self._proposta_da_conta(proposta_id)):  # isolamento: só registros da conta logada
+            return False
         try:
             proposta_id_int = int(proposta_id)
             valor_float = float(valor) if valor is not None else 0.0
@@ -3648,6 +3683,8 @@ class Database:
             DataFrame com os acréscimos da proposta, ou DataFrame vazio se não houver acréscimos
         """
         # Converter proposta_id para int nativo do Python antes da função query
+        if not (self._proposta_da_conta(proposta_id)):  # isolamento: só registros da conta logada
+            return pd.DataFrame()
         proposta_id = int(proposta_id) if proposta_id is not None else None
 
 
@@ -3696,6 +3733,8 @@ class Database:
         Returns:
             bool: True se o acréscimo foi atualizado com sucesso, False caso contrário
         """
+        if not (self._filho_da_conta(AcrescimoProposta, acrescimo_id)):  # isolamento: só registros da conta logada
+            return False
         try:
             import psycopg2
             import os
@@ -3757,6 +3796,8 @@ class Database:
             bool: True se o acréscimo foi removido com sucesso, False caso contrário
         """
         # Primeiro tentar remover via SQL direto para evitar problemas de sessão
+        if not (self._filho_da_conta(AcrescimoProposta, acrescimo_id)):  # isolamento: só registros da conta logada
+            return False
         try:
             import psycopg2
             import os
@@ -3829,6 +3870,8 @@ class Database:
             DataFrame: Acréscimos do tipo especificado
         """
         # Converter proposta_id para int nativo do Python
+        if not (self._proposta_da_conta(proposta_id)):  # isolamento: só registros da conta logada
+            return pd.DataFrame()
         proposta_id = int(proposta_id) if proposta_id is not None else None
 
 
@@ -3871,35 +3914,6 @@ class Database:
 
         return self._safe_query(query)
 
-    def get_pagamentos_pendentes(self):
-        def query():
-            # Get propostas with pending base payments
-            propostas = self.session.query(Proposta).filter_by(status_pagamento_base='Pendente').all()
-            pendentes = []
-
-            # Add pending base values
-            for p in propostas:
-                pendentes.append({
-                    'cliente': p.cliente.nome,
-                    'proposta': p.numero,
-                    'tipo': 'Valor Base',
-                    'valor': p.valor,
-                    'fornecedor': None
-                })
-
-            # Add pending acrescimos
-            acrescimos = self.session.query(AcrescimoProposta).filter_by(status_pagamento='Pendente').all()
-            for a in acrescimos:
-                pendentes.append({
-                    'cliente': a.proposta.cliente.nome,
-                    'proposta': a.proposta.numero,
-                    'tipo': a.tipo,
-                    'valor': a.valor,
-                    'fornecedor': a.fornecedor
-                })
-
-            return pd.DataFrame(pendentes)
-        return self._safe_query(query)
 
     def update_cliente(self, cliente_id, nome=None, email=None, telefone=None, estado=None, 
                       cidade=None, bairro=None, endereco=None, cpf=None, 
@@ -4280,6 +4294,8 @@ class Database:
         Returns:
             bool: True se removido com sucesso, False se não encontrou o acréscimo
         """
+        if not (self._filho_da_conta(AcrescimoProposta, acrescimo_id)):  # isolamento: só registros da conta logada
+            return False
         def query():
             try:
                 # Converter para int para garantir tipo correto
@@ -4356,6 +4372,8 @@ class Database:
 
     def atualizar_status_pagamento_acrescimo(self, proposta_id, tipo, status):
         """Atualiza o status de pagamento de um acréscimo"""
+        if not (self._proposta_da_conta(proposta_id)):  # isolamento: só registros da conta logada
+            return False
         def query():
             # Usar SQL direto em vez de ORM para evitar problemas com a coluna percentual_comissao
             from sqlalchemy import text
@@ -4434,45 +4452,6 @@ class Database:
 
         return self._safe_query(query)
 
-    def get_historico_pagamentos(self):
-        """Retorna o histórico de pagamentos recebidos"""
-        def query():
-            # Buscar pagamentos de propostas
-            propostas = self.session.query(Proposta).filter_by(status_pagamento_base='Recebido').all()
-            historico = []
-
-            # Adicionar valores base recebidos
-            for p in propostas:
-                historico.append({
-                    'proposta': p.numero,
-                    'cliente': p.cliente.nome,
-                    'tipo': 'Valor Base',
-                    'valor': p.valor,
-                    'data_recebimento': p.data_proposta
-                })
-
-            # Adicionar acréscimos recebidos usando SQL direto em vez de ORM
-            from sqlalchemy import text
-            acrescimos_query = text("""
-                SELECT a.id, a.tipo, a.valor, a.data_cadastro, p.numero as proposta_numero, c.nome as cliente_nome
-                FROM acrescimos_proposta a
-                JOIN propostas p ON a.proposta_id = p.id
-                JOIN clientes c ON p.cliente_id = c.id
-                WHERE a.status_pagamento = 'Recebido'
-            """)
-            acrescimos_result = self.session.execute(acrescimos_query)
-
-            for row in acrescimos_result:
-                historico.append({
-                    'proposta': row.proposta_numero,
-                    'cliente': row.cliente_nome,
-                    'tipo': row.tipo,
-                    'valor': row.valor,
-                    'data_recebimento': row.data_cadastro
-                })
-
-            return pd.DataFrame(historico)
-        return self._safe_query(query)
 
     # Métodos para gerenciamento de produtos
     def add_produto(self, nome, preco_custo, preco_venda, descricao=None, categoria=None, estoque=0):
@@ -5645,53 +5624,6 @@ class Database:
             print(f"ERRO ao adicionar assistente à proposta: {str(e)}")
             raise
 
-    def limpar_propostas(self):
-        """
-        Remove todas as propostas e dados relacionados, reiniciando a sequência de numeração.
-        Mantém os clientes, fornecedores e assistentes intactos.
-
-        Returns:
-            bool: True se a operação foi bem-sucedida, False caso contrário
-        """
-        def query():
-            try:
-                # Deletar tabelas na ordem correta para evitar violação de chave estrangeira
-                # Primeiro os andamentos de proposta
-                self.session.query(AndamentoProposta).delete()
-
-                # Remover produtos associados a propostas
-                self.session.query(ProdutoOrganizador).delete()
-
-                # Remover acréscimos
-                self.session.query(AcrescimoProposta).delete()
-
-                # Remover transações financeiras relacionadas a propostas
-                # (isso é opcional, dependendo da sua estrutura de dados)
-                receitas = self.session.query(Receita).filter(Receita.tipo == "Proposta").all()
-                for receita in receitas:
-                    self.session.delete(receita)
-
-                despesas = self.session.query(Despesa).filter(Despesa.tipo == "Proposta").all()
-                for despesa in despesas:
-                    self.session.delete(despesa)
-
-                # Finalmente, remover as propostas
-                self.session.query(Proposta).delete()
-
-                # Reset da sequência (específico para PostgreSQL)
-                self.session.execute("ALTER SEQUENCE propostas_id_seq RESTART WITH 1;")
-                self.session.execute("ALTER SEQUENCE propostas_numero_seq RESTART WITH 1;")
-
-                # Commit das alterações
-                self.session.commit()
-                return True
-
-            except Exception as e:
-                self.session.rollback()
-                print(f"Erro ao limpar propostas: {str(e)}")
-                raise
-
-        return self._safe_query(query)
 
     def gerar_lancamentos_financeiros_proposta_concluida(self, proposta_id, forcar_geracao=False):
         """
