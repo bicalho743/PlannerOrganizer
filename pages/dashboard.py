@@ -133,6 +133,7 @@ h1.ini-titulo { margin: 0 0 2px !important; padding: 0 !important; font-size: 1.
 .ini-passo { display: flex; gap: 12px; align-items: center; }
 .ini-passo .n { flex: none; width: 28px; height: 28px; border-radius: 50%; background: #EEF1F6; color: var(--navy);
                 font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.ini-passo .n.ok { background: #ECFDF3; color: #067647; }
 .ini-fu { display: grid; grid-template-columns: 84px 1fr 28px auto; gap: 10px; align-items: center; padding: 6px 0; font-size: .88rem; }
 .ini-fu .nm { color: #475467; }
 .ini-fu .bar { height: 10px; background: #F2F4F7; border-radius: 999px; overflow: hidden; }
@@ -193,20 +194,32 @@ def _aniversario(cli, hoje):
     return d if d >= hoje else d.replace(year=hoje.year + 1)
 
 
-def _onboarding():
+def _onboarding(perfil, clientes, propostas):
     st.markdown('<div class="ini-secao">Primeiros passos</div>', unsafe_allow_html=True)
     passos = [
-        ("Complete seu perfil", "Nome da empresa, logo e cores aparecem nas propostas em PDF.", "Perfil", "Abrir perfil"),
-        ("Cadastre sua primeira cliente", "Nome e telefone já bastam para enviar mensagens pelo WhatsApp.", "Clientes", "Cadastrar cliente"),
-        ("Crie a primeira proposta", "Monte o orçamento e gere o PDF para enviar.", "Propostas", "Criar proposta"),
+        ("Coloque sua marca", "Logotipo, cores e contatos saem em todas as propostas em PDF.", "Perfil", "Abrir Perfil e marca",
+         bool(perfil.get("logo"))),
+        ("Cadastre sua primeira cliente", "Nome e telefone já bastam para enviar mensagens pelo WhatsApp.", "Clientes",
+         "Cadastrar cliente", not clientes.empty),
+        ("Crie a primeira proposta", "Monte o orçamento e gere o PDF para enviar.", "Propostas", "Criar proposta",
+         not propostas.empty),
     ]
-    for i, (t, d, pagina, rotulo) in enumerate(passos, 1):
+    for i, (t, d, pagina, rotulo, feito) in enumerate(passos, 1):
         with st.container(border=True):
             c1, c2 = st.columns([5, 2], vertical_alignment="center")
-            c1.markdown(f'<div class="ini-passo"><span class="n">{i}</span><div class="ini-txt"><b>{t}</b>'
+            marca = '<span class="n ok">✓</span>' if feito else f'<span class="n">{i}</span>'
+            c1.markdown(f'<div class="ini-passo">{marca}<div class="ini-txt"><b>{t}</b>'
                         f'<span class="det">{d}</span></div></div>', unsafe_allow_html=True)
-            if c2.button(rotulo, key=f"ini_passo_{i}", use_container_width=True):
+            if not feito and c2.button(rotulo, key=f"ini_passo_{i}", use_container_width=True):
                 _ir(pagina)
+
+
+def _perfil():
+    try:
+        from pages.perfil import carregar_perfil
+        return carregar_perfil() or {}
+    except Exception:
+        return {}
 
 
 def show():
@@ -242,8 +255,9 @@ def show():
     except Exception:
         acoes_pos = pd.DataFrame()
 
+    perfil = _perfil()
     if clientes.empty and propostas.empty:
-        _onboarding()
+        _onboarding(perfil, clientes, propostas)
         # dados de exemplo só em ambiente de demonstração (nunca para quem assina)
         if os.environ.get("MODO_DEMO") == "1" and st.button("Adicionar dados de exemplo", key="btn_add_test_data_dashboard"):
             db.add_test_data()
@@ -297,6 +311,18 @@ def show():
              f"fechou {fn['fechadas']} de {fn['fechadas'] + fn['recusadas']} respondidas · {fn['dias']} dias"
              if conv is not None else "nenhuma proposta respondida em 90 dias") +
         '</div>', unsafe_allow_html=True)
+
+    if not perfil.get("logo") and not st.session_state.get("ini_sem_logo_ok"):
+        with st.container(border=True):
+            c1, c2, c3 = st.columns([6, 2, 1], vertical_alignment="center")
+            c1.markdown('<div class="ini-txt"><b>Suas propostas ainda saem sem o seu logotipo</b>'
+                        '<span class="det">Envie o logo e escolha as cores em Perfil e marca.</span></div>',
+                        unsafe_allow_html=True)
+            if c2.button("Colocar minha marca", key="ini_ir_marca", use_container_width=True):
+                _ir("Perfil")
+            if c3.button("", icon=":material/close:", key="ini_sem_logo_fechar", type="tertiary", help="Agora não"):
+                st.session_state["ini_sem_logo_ok"] = True
+                st.rerun()
 
     col_fazer, col_lado = st.columns([3, 2], gap="large")
 

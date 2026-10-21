@@ -1,8 +1,6 @@
 import streamlit as st
-import pandas as pd
 import os
-import json
-from datetime import datetime, date
+from datetime import datetime
 
 # Links de checkout do Stripe (mesmos usados no app mobile)
 STRIPE_CHECKOUT_MENSAL = "https://buy.stripe.com/4gMcN5dQC9vX6yVfQO18c01"
@@ -16,8 +14,6 @@ STRIPE_PORTAL_LINK = os.environ.get(
     "https://billing.stripe.com/p/login/8x26oHaEqbE5g9vbAy18c00",
 )
 
-
-from utils.trial import is_pro as _is_pro, dias_restantes_trial as _dias_restantes_util
 
 
 def checkout_url(base, email, uid=None):
@@ -33,39 +29,6 @@ def checkout_url(base, email, uid=None):
     if uid:
         partes.append(f"client_reference_id={quote(str(uid))}")
     return f"{base}?{'&'.join(partes)}" if partes else base
-
-
-def _dias_restantes_trial(perfil):
-    """Dias restantes do trial de 7 dias (delega para utils.trial)."""
-    return _dias_restantes_util(perfil)
-
-
-def _render_plano_badge(perfil):
-    """Exibe o selo do plano no topo do perfil (paridade visual com o app)."""
-    if _is_pro(perfil):
-        st.markdown(
-            '<div style="display:inline-block;background:#C9A84C;color:#0D1B2A;'
-            'padding:6px 18px;border-radius:20px;font-weight:700;font-size:0.95rem;'
-            'margin-bottom:1rem;">⭐ Plano Pro</div>',
-            unsafe_allow_html=True,
-        )
-    else:
-        dias = _dias_restantes_trial(perfil)
-        if dias > 0:
-            plural = 's' if dias != 1 else ''
-            st.markdown(
-                f'<div style="display:inline-block;background:#1E3A5F;color:#C9A84C;'
-                f'padding:6px 18px;border-radius:20px;font-weight:700;font-size:0.95rem;'
-                f'margin-bottom:1rem;">🕐 Trial — {dias} dia{plural} restante{plural}</div>',
-                unsafe_allow_html=True,
-            )
-        else:
-            st.markdown(
-                '<div style="display:inline-block;background:#C0392B;color:#fff;'
-                'padding:6px 18px;border-radius:20px;font-weight:700;font-size:0.95rem;'
-                'margin-bottom:1rem;">⚠️ Trial expirado</div>',
-                unsafe_allow_html=True,
-            )
 
 
 def _criar_portal_session(email):
@@ -97,405 +60,209 @@ def _criar_portal_session(email):
     except Exception as e:
         return None, str(e)
 
-def carregar_perfil(user_id):
-    """
-    Carrega os dados do perfil do usuário do banco de dados (com fallback para arquivo JSON)
-    
-    Args:
-        user_id: ID ou email do usuário
-        
-    Returns:
-        dict: Dados do perfil ou dicionário vazio se não existir
-    """
-    try:
-        from utils.database import Database
-        
-        # Tentar carregar do banco de dados primeiro
-        if 'db' in st.session_state:
-            db = st.session_state.db
-        else:
-            db = Database()
-        
-        perfil_bd = db.get_perfil_usuario()
-        
-        if perfil_bd:
-            # Converter dados do banco para o formato esperado
-            return {
-                'nome': perfil_bd.get('nome', ''),
-                'email': perfil_bd.get('email', ''),
-                'telefone': perfil_bd.get('telefone', ''),
-                'empresa': perfil_bd.get('empresa', ''),
-                'instagram': perfil_bd.get('instagram', ''),
-                'website': perfil_bd.get('website', ''),
-                'cargo': perfil_bd.get('cargo', ''),
-                'cor_principal': perfil_bd.get('cor_principal', ''),
-                'cor_secundaria': perfil_bd.get('cor_secundaria', ''),
-                'observacoes_relatorio': perfil_bd.get('observacoes_relatorio', ''),
-                'plano': perfil_bd.get('plano', ''),
-                'role': perfil_bd.get('role', ''),
-                'ativo': perfil_bd.get('ativo'),
-                'data_cadastro': perfil_bd.get('data_cadastro'),
-                'ultima_atualizacao': perfil_bd.get('ultimo_login', '').strftime("%d/%m/%Y %H:%M:%S") if perfil_bd.get('ultimo_login') else ''
-            }
-    except Exception as e:
-        print(f"Erro ao carregar perfil do banco: {str(e)}")
-    
-    # Fallback para arquivo JSON se banco falhar
-    user_id_normalizado = user_id.replace('@', '_at_').replace('.', '_dot_')
-    perfil_path = f"data/perfis/{user_id_normalizado}.json"
-    
-    if os.path.exists(perfil_path):
-        try:
-            with open(perfil_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception as e:
-            st.error(f"Erro ao carregar perfil: {str(e)}")
-            return {}
-    else:
-        return {}
-
-def salvar_perfil(user_id, dados_perfil):
-    """
-    Salva os dados do perfil do usuário no banco de dados
-    
-    Args:
-        user_id: ID ou email do usuário
-        dados_perfil: Dicionário com os dados do perfil
-        
-    Returns:
-        bool: True se o salvamento foi bem-sucedido, False caso contrário
-    """
-    try:
-        from utils.database import Database
-        
-        # Usar o sistema de banco de dados
-        if 'db' in st.session_state:
-            db = st.session_state.db
-        else:
-            db = Database()
-        
-        # Tentar salvar no banco de dados primeiro
-        success = db.salvar_perfil_usuario(dados_perfil)
-        
-        if success:
-            # Manter backup em arquivo JSON como fallback
-            user_id_normalizado = user_id.replace('@', '_at_').replace('.', '_dot_')
-            os.makedirs("data/perfis", exist_ok=True)
-            perfil_path = f"data/perfis/{user_id_normalizado}.json"
-            dados_perfil['ultima_atualizacao'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            
-            with open(perfil_path, 'w', encoding='utf-8') as f:
-                json.dump(dados_perfil, f, ensure_ascii=False, indent=4)
-        
-        return success
-        
-    except Exception as e:
-        # Fallback para arquivo JSON se banco falhar
-        try:
-            user_id_normalizado = user_id.replace('@', '_at_').replace('.', '_dot_')
-            os.makedirs("data/perfis", exist_ok=True)
-            perfil_path = f"data/perfis/{user_id_normalizado}.json"
-            dados_perfil['ultima_atualizacao'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            
-            with open(perfil_path, 'w', encoding='utf-8') as f:
-                json.dump(dados_perfil, f, ensure_ascii=False, indent=4)
-            return True
-        except Exception as e2:
-            st.error(f"Erro ao salvar perfil: {str(e)} | Fallback: {str(e2)}")
-            return False
-
-def show():
-    """
-    Exibe a página de perfil do usuário
-    """
-    from utils.auth_guard import require_auth
-    require_auth()
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Perfil do Usuário</h1>', unsafe_allow_html=True)
-    
-    # Verificar se o usuário está logado
-    print(f"Verificando estado da autenticação no perfil: {st.session_state.keys()}")
-    if "authenticated" in st.session_state:
-        print(f"Estado de autenticação: {st.session_state.authenticated}")
-    
-    if "usuario" in st.session_state:
-        print(f"Dados do usuário na sessão: {st.session_state.usuario}")
-    else:
-        print("Dados do usuário na sessão: Não encontrado")
-        
-    if "user" in st.session_state:
-        print(f"Objeto 'user' na sessão: {type(st.session_state.user)}")
-    
-    # Verificar se o usuário está autenticado
-    if "authenticated" in st.session_state and st.session_state.authenticated:
-        # Se apenas o objeto 'user' existe mas não 'usuario'
-        if "user" in st.session_state and "usuario" not in st.session_state:
-            # Criar objeto 'usuario' com dados mínimos
-            if isinstance(st.session_state.user, dict) and 'email' in st.session_state.user:
-                email = st.session_state.user.get('email')
-                st.session_state.usuario = {
-                    'email': email,
-                    'nome': email.split('@')[0].title(),
-                    'role': 'user'
-                }
-                print(f"Criado objeto 'usuario' a partir de 'user': {st.session_state.usuario}")
-    
-    # Verificação principal
-    if "usuario" not in st.session_state or not st.session_state.usuario:
-        st.warning("Você precisa estar logado para acessar seu perfil.")
-        # Verificar login admin como fallback
-        if "authenticated" in st.session_state and st.session_state.authenticated:
-            st.info("Você está autenticado, mas seus dados de usuário não estão disponíveis. Tente fazer login novamente.")
-        return
-    
-    # Obter dados do usuário atual
-    usuario = st.session_state.usuario
-    user_id = usuario.get('email', 'usuario_desconhecido')
-
-    # UID Firebase real (não confundir com user_id acima, que aqui é o e-mail) —
-    # usado para o client_reference_id do checkout Stripe.
-    from utils.database import get_usuario_id_from_session
-    _uid_firebase = get_usuario_id_from_session()
-
-    # Carregar perfil existente
-    perfil = carregar_perfil(user_id)
-
-    # Selo do plano (paridade visual com o app mobile)
-    _render_plano_badge(perfil)
-
-    # Exibir formulário de perfil
-    with st.form("form_perfil", clear_on_submit=False):
-        st.subheader("Dados Pessoais")
-        
-        # Seção de dados pessoais
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            nome = st.text_input("Nome Completo", 
-                                value=perfil.get('nome', usuario.get('nome', '')))
-            
-            telefone = st.text_input("Telefone", 
-                                    value=perfil.get('telefone', usuario.get('telefone', '')),
-                                    help="Formato: (XX) XXXXX-XXXX")
-        
-        with col2:
-            email = st.text_input("Email", 
-                                value=perfil.get('email', usuario.get('email', '')), 
-                                disabled=True,
-                                help="O email não pode ser alterado pois é usado para autenticação")
-            
-            instagram = st.text_input("Instagram", 
-                                    value=perfil.get('instagram', ''),
-                                    help="Seu perfil do Instagram (sem @)")
-        
-        st.subheader("Dados Profissionais")
-        
-        # Seção de dados da empresa
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            empresa = st.text_input("Nome da Empresa/Negócio", 
-                                   value=perfil.get('empresa', usuario.get('empresa', '')))
-            
-            website = st.text_input("Website", 
-                                   value=perfil.get('website', 'www.plannerorganizer.com.br'),
-                                   help="Seu site ou landing page")
-        
-        with col2:
-            cargo = st.text_input("Cargo/Função", 
-                                 value=perfil.get('cargo', 'Personal Organizer'))
-            
-            cnpj = st.text_input("CNPJ (se houver)", 
-                                value=perfil.get('cnpj', ''),
-                                help="Formato: XX.XXX.XXX/XXXX-XX")
-        
-        # Endereço
-        st.subheader("Endereço Profissional")
-        
-        col1, col2, col3 = st.columns([2, 1, 1])
-        
-        with col1:
-            endereco = st.text_input("Endereço", 
-                                    value=perfil.get('endereco', ''))
-        
-        with col2:
-            numero = st.text_input("Número", 
-                                 value=perfil.get('numero', ''))
-        
-        with col3:
-            complemento = st.text_input("Complemento", 
-                                      value=perfil.get('complemento', ''))
-        
-        col1, col2, col3 = st.columns([2, 1, 1])
-        
-        with col1:
-            bairro = st.text_input("Bairro", 
-                                  value=perfil.get('bairro', ''))
-        
-        with col2:
-            cidade = st.text_input("Cidade", 
-                                  value=perfil.get('cidade', ''))
-        
-        with col3:
-            estado = st.text_input("Estado", 
-                                  value=perfil.get('estado', ''),
-                                  max_chars=2)
-            
-        cep = st.text_input("CEP", 
-                          value=perfil.get('cep', ''),
-                          help="Formato: XXXXX-XXX")
-        
-        # Informações adicionais para relatórios
-        st.subheader("Personalização de Relatórios")
-        
-        mensagem_padrao = st.text_area(
-            "Mensagem de Agradecimento (para incluir nos relatórios)", 
-            value=perfil.get('mensagem_padrao', 'Agradecemos a confiança em nossos serviços.'),
-            help="Esta mensagem aparecerá nos relatórios enviados para clientes"
-        )
-        
-        # Campo para observações personalizadas nos relatórios
-        observacoes_default = """1. Pagamento sinal, na reserva da data, via PIX
+CAMPOS_PERFIL = ("nome", "email", "telefone", "empresa", "instagram", "website", "cargo", "cnpj", "logo",
+                 "cor_principal", "cor_secundaria", "mensagem_padrao", "observacoes_relatorio", "plano", "role",
+                 "ativo", "data_cadastro")
+COR_PRINCIPAL_PADRAO = "#0D1B2A"
+COR_SECUNDARIA_PADRAO = "#C9A84C"
+OBSERVACOES_PADRAO = """1. Pagamento sinal, na reserva da data, via PIX
 2. Os valores apresentados incluem todos os custos.
 3. Não está incluído a organização de documentos.
 4. No caso da proposta incluir treinamento, é necessário a presença de funcionário no período da organização
 5. Não incluido produtos e organizadores, caso o cliente opte por adquirí-los"""
-        
-        observacoes_relatorio = st.text_area(
-            "Observações para Relatórios de Propostas",
-            value=perfil.get('observacoes_relatorio', observacoes_default),
-            height=150,
-            help="Estas observações aparecerão em todos os PDFs de propostas gerados. Uma observação por linha, numeradas automaticamente."
-        )
-        
-        # Seção de personalização de cores para PDFs
-        st.subheader("🎨 Cores Personalizadas para PDFs")
-        st.info("💡 Personalize as cores dos seus relatórios PDF para combinar com sua identidade visual")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            cor_principal = st.color_picker(
-                "Cor Principal", 
-                value=perfil.get('cor_principal', '#0D1B2A'),
-                help="Cor principal para títulos, cabeçalhos e destaque nos PDFs"
-            )
-        
-        with col2:
-            cor_secundaria = st.color_picker(
-                "Cor Secundária", 
-                value=perfil.get('cor_secundaria', '#E8D5A3'),
-                help="Cor secundária para fundos, bordas e elementos complementares nos PDFs"
-            )
-        
-        # Preview das cores
-        st.markdown("**Preview das cores:**")
-        col_preview1, col_preview2 = st.columns(2)
-        
-        with col_preview1:
-            st.markdown(f"""
-            <div style="background-color: {cor_principal}; color: white; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold;">
-                Cor Principal<br>
-                <small style="opacity: 0.8;">{cor_principal}</small>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col_preview2:
-            st.markdown(f"""
-            <div style="background-color: {cor_secundaria}; color: {cor_principal}; padding: 15px; border-radius: 8px; text-align: center; border: 2px solid {cor_principal};">
-                Cor Secundária<br>
-                <small style="opacity: 0.8;">{cor_secundaria}</small>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        botao_salvar = st.form_submit_button("💾 Salvar Perfil")
-        
-        if botao_salvar:
-            # Preparar dados para salvar
-            dados_perfil = {
-                'nome': nome,
-                'email': email,
-                'telefone': telefone,
-                'instagram': instagram,
-                'empresa': empresa,
-                'website': website,
-                'cargo': cargo,
-                'cnpj': cnpj,
-                'endereco': endereco,
-                'numero': numero,
-                'complemento': complemento,
-                'bairro': bairro,
-                'cidade': cidade,
-                'estado': estado,
-                'cep': cep,
-                'mensagem_padrao': mensagem_padrao,
-                'observacoes_relatorio': observacoes_relatorio,
-                'cor_principal': cor_principal,
-                'cor_secundaria': cor_secundaria
-            }
-            
-            # Salvar perfil no banco de dados
-            try:
-                from utils.database import Database
-                
-                # Usar a instância do banco de dados da sessão
-                if 'db' in st.session_state:
-                    db = st.session_state.db
-                    sucesso = db.salvar_perfil_usuario(dados_perfil)
-                else:
-                    # Fallback para arquivo JSON
-                    sucesso = salvar_perfil(user_id, dados_perfil)
-                
-                if sucesso:
-                    st.success("✅ Perfil salvo com sucesso!")
-                    
-                    # CORREÇÃO: Atualizar dados do usuário na sessão SEM sobrescrever outros campos
-                    if 'usuario' in st.session_state and isinstance(st.session_state.usuario, dict):
-                        # Manter todos os dados existentes e apenas adicionar/atualizar os novos
-                        st.session_state.usuario.update({
-                            'nome': nome,
-                            'telefone': telefone,
-                            'empresa': empresa,
-                            'cargo': cargo,
-                            'mensagem_padrao': mensagem_padrao,
-                            'observacoes_relatorio': observacoes_relatorio
-                        })
-                    
-                    # Atualizar também o objeto 'user' se existir
-                    if 'user' in st.session_state and isinstance(st.session_state.user, dict):
-                        st.session_state.user.update({
-                            'nome': nome,
-                            'telefone': telefone,
-                            'empresa': empresa,
-                            'cargo': cargo
-                        })
-                else:
-                    st.error("❌ Erro ao salvar perfil. Tente novamente.")
-            except Exception as e:
-                st.error(f"❌ Erro ao salvar perfil: {str(e)}")
-    
-    # Exibir informações de última atualização
-    if 'ultima_atualizacao' in perfil:
-        st.info(f"📅 Última atualização: {perfil['ultima_atualizacao']}")
-    
-    # Assinatura: tela própria (menu Conta › Plano e cobrança)
+LOGO_MAX_PX = 600
+LOGO_MAX_MB = 5
+
+
+def _db():
+    from utils.database import Database
+    return st.session_state.db if "db" in st.session_state else Database()
+
+
+def carregar_perfil(user_id=None):
+    """Perfil da conta logada (o argumento é mantido por compatibilidade). {} se não houver."""
+    try:
+        perfil = _db().get_perfil_usuario() or {}
+    except Exception as e:
+        print(f"Erro ao carregar perfil do banco: {e}")
+        return {}
+    dados = {k: perfil.get(k) for k in CAMPOS_PERFIL}
+    if perfil.get("ultimo_login"):
+        dados["ultima_atualizacao"] = perfil["ultimo_login"].strftime("%d/%m/%Y %H:%M")
+    return dados
+
+
+def preparar_logo(arquivo):
+    """Reduz o logotipo enviado para no máximo LOGO_MAX_PX e devolve um data URL PNG (ou levanta ValueError)."""
+    import base64
+    import io
+    from PIL import Image, UnidentifiedImageError
+    bruto = arquivo.getvalue()
+    if len(bruto) > LOGO_MAX_MB * 1024 * 1024:
+        raise ValueError(f"A imagem passa de {LOGO_MAX_MB} MB. Envie uma versão menor.")
+    try:
+        img = Image.open(io.BytesIO(bruto))
+        img.load()
+    except (UnidentifiedImageError, OSError):
+        raise ValueError("Não consegui abrir essa imagem. Envie um PNG ou JPG.")
+    img = img.convert("RGBA")
+    img.thumbnail((LOGO_MAX_PX, LOGO_MAX_PX))
+    saida = io.BytesIO()
+    img.save(saida, "PNG", optimize=True)
+    return "data:image/png;base64," + base64.b64encode(saida.getvalue()).decode()
+
+
+def _pdf_exemplo(perfil):
+    """PDF de proposta fictícia com a marca atual, para conferir antes de mandar para clientes."""
+    import tempfile
+    from utils.pdf_generator_v2 import gerar_pdf_cliente
+    dados = {
+        "proposta_id": 1, "cliente": "Cliente exemplo", "tipo": "Organização residencial", "status": "Em Aberto",
+        "periodo": datetime.now().strftime("%d/%m/%Y"), "descricao": "Organização de closet e cozinha",
+        "itens": [{"nome": "Organização de closet", "quantidade": 1, "valor_unit": 1800.0, "valor": 1800.0},
+                  {"nome": "Caixas organizadoras", "quantidade": 6, "valor_unit": 45.0, "valor": 270.0}],
+        "total": 2070.0, "observacoes": perfil.get("observacoes_relatorio") or OBSERVACOES_PADRAO,
+    }
+    with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+        gerar_pdf_cliente(dados, tmp.name, perfil=perfil, titulo="Proposta Comercial")
+        return open(tmp.name, "rb").read()
+
+
+CSS = """
+<style>
+.pm-logo { width: 100%; aspect-ratio: 1 / 1; max-width: 200px; border: 1px dashed #D0D5DD; border-radius: 12px;
+           display: flex; align-items: center; justify-content: center; background: #fff; overflow: hidden; }
+.pm-logo img { max-width: 86%; max-height: 86%; object-fit: contain; }
+.pm-logo span { color: #98A2B3; font-size: .85rem; text-align: center; padding: 12px; }
+.pm-prev { border-radius: 12px; overflow: hidden; border: 1px solid #E4E7EC; margin-top: 4px; }
+.pm-prev .topo { padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.pm-prev .tit { color: #fff; font-weight: 700; font-size: 1.1rem; }
+.pm-prev .lin { font-size: .82rem; margin-top: 4px; }
+.pm-prev .cartao { width: 64px; height: 64px; background: #fff; border-radius: 8px; flex: none;
+                   display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.pm-prev .cartao img { max-width: 84%; max-height: 84%; object-fit: contain; }
+.pm-prev .faixa { height: 4px; }
+.pm-prev .rod { background: #F2F4F7; color: #667085; font-size: .75rem; padding: 8px 20px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+</style>
+"""
+
+
+def _previa_html(p):
+    import html
+    principal = p.get("cor_principal") or COR_PRINCIPAL_PADRAO
+    destaque = p.get("cor_secundaria") or COR_SECUNDARIA_PADRAO
+    nome = html.escape(p.get("nome") or "Seu nome")
+    cargo = html.escape(p.get("cargo") or "Personal Organizer")
+    insta = html.escape(("@" + p["instagram"].lstrip("@")) if p.get("instagram") else "")
+    empresa = html.escape(p.get("empresa") or p.get("nome") or "Sua empresa")
+    contatos = " · ".join(html.escape(x) for x in (p.get("telefone"), insta, p.get("website")) if x)
+    logo = f'<div class="cartao"><img src="{p["logo"]}"></div>' if p.get("logo") else ""
+    return (f'<div class="pm-prev"><div class="topo" style="background:{principal}"><div>'
+            f'<div class="tit">Proposta Comercial</div>'
+            f'<div class="lin" style="color:{destaque}">{" · ".join(x for x in (nome, cargo, insta) if x)}</div></div>{logo}</div>'
+            f'<div class="faixa" style="background:{destaque}"></div>'
+            f'<div class="rod"><span>{empresa}</span><span>{contatos}</span></div></div>')
+
+
+def show():
+    """Perfil e marca: dados que aparecem nos PDFs enviados às clientes."""
+    from utils.auth_guard import require_auth
+    require_auth()
+    usuario = st.session_state.get("usuario") or {}
+    if not isinstance(usuario, dict):
+        usuario = {"email": getattr(usuario, "email", ""), "nome": getattr(usuario, "nome", "")}
+
+    st.markdown(CSS, unsafe_allow_html=True)
+    st.markdown('<h1 class="page-title">Perfil e marca</h1>', unsafe_allow_html=True)
+    st.caption("Seu logotipo, cores e contatos saem em todas as propostas e relatórios em PDF que você envia às clientes.")
+
+    perfil = carregar_perfil()
+    email_conta = perfil.get("email") or usuario.get("email", "")
+
+    if st.session_state.pop("pm_salvo", False):
+        st.success("Perfil salvo. Os próximos PDFs já saem com a sua marca.")
+
+    with st.form("form_perfil", clear_on_submit=False, border=False):
+        col_logo, col_marca = st.columns([1, 2], gap="large")
+        with col_logo:
+            st.markdown("**Logotipo**")
+            if perfil.get("logo"):
+                st.markdown(f'<div class="pm-logo"><img src="{perfil["logo"]}" alt="Logotipo"></div>', unsafe_allow_html=True)
+            else:
+                st.markdown('<div class="pm-logo"><span>Sem logotipo ainda</span></div>', unsafe_allow_html=True)
+            arquivo = st.file_uploader("Enviar logotipo (PNG ou JPG)", type=["png", "jpg", "jpeg"], key="pm_logo_up",
+                                       max_upload_size=LOGO_MAX_MB)
+            remover = st.checkbox("Remover logotipo", key="pm_logo_rm") if perfil.get("logo") else False
+        with col_marca:
+            empresa = st.text_input("Nome da empresa", value=perfil.get("empresa") or usuario.get("empresa", ""),
+                                    placeholder="Ex.: Organiza Tâmara")
+            cnpj = st.text_input("CNPJ (opcional)", value=perfil.get("cnpj") or "", placeholder="00.000.000/0001-00")
+            c1, c2 = st.columns(2)
+            cor_principal = c1.color_picker("Cor principal", value=perfil.get("cor_principal") or COR_PRINCIPAL_PADRAO,
+                                            help="Fundo do cabeçalho e títulos dos PDFs")
+            cor_secundaria = c2.color_picker("Cor de destaque", value=perfil.get("cor_secundaria") or COR_SECUNDARIA_PADRAO,
+                                             help="Faixas, linhas e destaques dos PDFs")
+
+        st.markdown("**Seus contatos**")
+        c1, c2 = st.columns(2)
+        nome = c1.text_input("Nome", value=perfil.get("nome") or usuario.get("nome", ""))
+        cargo = c2.text_input("Cargo", value=perfil.get("cargo") or "Personal Organizer")
+        telefone = c1.text_input("Telefone / WhatsApp", value=perfil.get("telefone") or usuario.get("telefone", ""),
+                                 placeholder="(31) 99999-0000")
+        instagram = c2.text_input("Instagram", value=perfil.get("instagram") or "", placeholder="seuperfil")
+        website = c1.text_input("Site", value=perfil.get("website") or "", placeholder="www.seusite.com.br")
+        c2.text_input("E-mail da conta", value=email_conta, disabled=True,
+                      help="É o e-mail de login; não pode ser alterado aqui.")
+
+        st.markdown("**Textos dos documentos**")
+        mensagem_padrao = st.text_area("Mensagem de agradecimento", value=perfil.get("mensagem_padrao") or
+                                       "Agradecemos a confiança em nossos serviços.", height=80)
+        observacoes_relatorio = st.text_area("Observações das propostas (uma por linha)",
+                                             value=perfil.get("observacoes_relatorio") or OBSERVACOES_PADRAO, height=150)
+
+        salvar = st.form_submit_button("Salvar perfil e marca", type="primary", icon=":material/save:")
+
+    if salvar:
+        dados = {
+            "email": email_conta, "nome": nome.strip(), "cargo": cargo.strip(), "telefone": telefone.strip(),
+            "instagram": instagram.strip().lstrip("@").replace("https://www.instagram.com/", "").strip("/"),
+            "website": website.strip(), "empresa": empresa.strip(), "cnpj": cnpj.strip(),
+            "cor_principal": cor_principal, "cor_secundaria": cor_secundaria,
+            "mensagem_padrao": mensagem_padrao, "observacoes_relatorio": observacoes_relatorio,
+        }
+        try:
+            if arquivo is not None:
+                dados["logo"] = preparar_logo(arquivo)
+            elif remover:
+                dados["logo"] = None
+        except ValueError as e:
+            st.error(str(e))
+            return
+        if not dados["nome"]:
+            st.error("Informe seu nome.")
+            return
+        if _db().salvar_perfil_usuario(dados):
+            if isinstance(st.session_state.get("usuario"), dict):
+                st.session_state.usuario.update({k: dados[k] for k in ("nome", "telefone", "empresa", "cargo")})
+            st.session_state.pop("pm_logo_up", None)
+            st.session_state["pm_salvo"] = True
+            st.rerun()
+        else:
+            st.error("Não foi possível salvar agora. Tente de novo em instantes.")
+
+    st.markdown("**Como fica no PDF**")
+    st.markdown(_previa_html(perfil), unsafe_allow_html=True)
+    st.caption("A prévia mostra o que está salvo. Depois de alterar, clique em Salvar para atualizar.")
+    if st.button("Gerar PDF de exemplo", icon=":material/picture_as_pdf:", key="pm_pdf_exemplo"):
+        try:
+            st.session_state["pm_pdf_bytes"] = _pdf_exemplo(perfil)
+        except Exception as e:
+            st.error(f"Não foi possível gerar o exemplo: {e}")
+    if st.session_state.get("pm_pdf_bytes"):
+        st.download_button("Baixar PDF de exemplo", st.session_state["pm_pdf_bytes"], file_name="proposta-exemplo.pdf",
+                           mime="application/pdf", icon=":material/download:", key="pm_pdf_baixar")
+
     st.divider()
     if st.button("Ver plano e cobrança", icon=":material/credit_card:", key="pf_ir_plano"):
         st.session_state.current_page = "Plano"
         st.rerun()
-
-    # Exibir dicas de uso
-    with st.expander("📘 Sobre o Perfil", expanded=False):
-        st.markdown("""
-        ### Por que preencher seu perfil?
-        
-        As informações do seu perfil serão utilizadas nos relatórios e documentos gerados pelo sistema, como:
-        
-        - **Propostas para clientes**: Seu nome e contatos aparecerão como dados do profissional
-        - **Relatórios financeiros**: O nome da empresa será utilizado nos cabeçalhos
-        - **Documentos PDF**: Todas as informações de contato aparecerão no rodapé dos documentos
-        
-        Mantenha seus dados sempre atualizados para uma experiência profissional completa!
-        """)
-
-if __name__ == "__main__":
-    show()

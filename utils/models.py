@@ -4,7 +4,7 @@ Contém todas as classes declarativas (Perfil, Usuario, Cliente, etc.)
 """
 import os
 from datetime import datetime, timedelta
-from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, func, Index, text, select, DateTime, inspect
+from sqlalchemy import create_engine, Column, Integer, String, Float, Date, ForeignKey, Boolean, func, Index, text, select, DateTime, inspect, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -88,6 +88,8 @@ class Perfil(Base):
     cor_secundaria = Column(String)
     mensagem_padrao = Column(String)  # Campo para mensagem de agradecimento nos relatórios
     observacoes_relatorio = Column(String)  # Campo para observações personalizadas do usuário nos relatórios
+    logo = Column(Text)  # logotipo da organizadora em data URL (PNG/JPEG), usado nos PDFs
+    cnpj = Column(String)
     role = Column(String, default='user')
     plano = Column(String, default='gratuito')
     # default como callable: avaliado a cada INSERT (data real do cadastro).

@@ -677,7 +677,7 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
         ]),
         ("Conta", [
             ("Cadastros", "Cadastros", ":material/inventory_2:"),
-            ("Meu perfil", "Perfil", ":material/person:"),
+            ("Perfil e marca", "Perfil", ":material/palette:"),
             ("Plano e cobrança", "Plano", ":material/credit_card:"),
         ]),
     ]
