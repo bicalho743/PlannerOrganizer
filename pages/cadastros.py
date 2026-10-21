@@ -189,7 +189,7 @@ def show(modo="todos"):
                         # Formulário de edição (se cliente está sendo editado)
                         if st.session_state.get(f'editando_cliente_{cliente_id}', False):
                             st.markdown("---")
-                            st.subheader(f"🔧 Editando Cliente ID: {cliente_id}")
+                            st.subheader(f"Editando Cliente ID: {cliente_id}")
                             
                             cliente_data = st.session_state.get(f'dados_cliente_{cliente_id}', {})
                             
@@ -221,10 +221,10 @@ def show(modo="todos"):
                                 col_save, col_cancel = st.columns(2)
                                 
                                 with col_save:
-                                    salvar_cliente = st.form_submit_button("💾 Salvar Alterações", type="primary")
+                                    salvar_cliente = st.form_submit_button("Salvar Alterações", type="primary")
                                 
                                 with col_cancel:
-                                    cancelar_edicao = st.form_submit_button("❌ Cancelar")
+                                    cancelar_edicao = st.form_submit_button("Cancelar")
                                 
                                 if salvar_cliente:
                                     try:
@@ -246,7 +246,7 @@ def show(modo="todos"):
                                         resultado = st.session_state.db.update_cliente(cliente_id, **dados_atualizacao)
                                         
                                         if resultado:
-                                            st.success("✅ Cliente atualizado com sucesso!")
+                                            st.success("Cliente atualizado com sucesso!")
                                             # Limpar estado de edição
                                             st.session_state[f'editando_cliente_{cliente_id}'] = False
                                             if f'dados_cliente_{cliente_id}' in st.session_state:
@@ -283,7 +283,7 @@ def show(modo="todos"):
                             fcol1, fcol2 = st.columns([3, 1])
                             with fcol1:
                                 termo_busca = st.text_input(
-                                    "🔎 Buscar cliente",
+                                    "Buscar cliente",
                                     key="busca_multi_delete",
                                     placeholder="Filtrar por nome, telefone ou CPF"
                                 )
@@ -363,10 +363,10 @@ def show(modo="todos"):
 
                                 # Contador de selecionados na página
                                 qtd_selecionados = int(selection["Selecionar"].sum()) if "Selecionar" in selection else 0
-                                st.caption(f"🗂️ {qtd_selecionados} cliente(s) selecionado(s) nesta página.")
+                                st.caption(f"{qtd_selecionados} cliente(s) selecionado(s) nesta página.")
 
                                 # Botão para confirmar exclusão
-                                if botao_excluir("🗑 Excluir Clientes Selecionados", "btn_excluir_multi_clientes", use_container_width=False):
+                                if botao_excluir("Excluir Clientes Selecionados", "btn_excluir_multi_clientes", use_container_width=False):
                                     clientes_selecionados = []
                                     for _, row in selection.iterrows():
                                         if row["Selecionar"] == True:
@@ -380,12 +380,12 @@ def show(modo="todos"):
                                         if resultados["sucesso"]:
                                             st.success(f"{len(resultados['sucesso'])} clientes excluídos com sucesso!")
                                             for cliente in resultados["sucesso"]:
-                                                st.info(f"✅ Cliente {cliente['nome']} (ID: {cliente['id']}) excluído com sucesso.")
+                                                st.info(f"Cliente {cliente['nome']} (ID: {cliente['id']}) excluído com sucesso.")
 
                                         if resultados["erro"]:
                                             st.error(f"{len(resultados['erro'])} clientes não puderam ser excluídos:")
                                             for erro in resultados["erro"]:
-                                                st.warning(f"❌ Cliente {erro['nome']} (ID: {erro['id']}): {erro['mensagem']}")
+                                                st.warning(f"Cliente {erro['nome']} (ID: {erro['id']}): {erro['mensagem']}")
 
                                         if resultados["sucesso"]:
                                             st.rerun()
@@ -462,7 +462,7 @@ def show(modo="todos"):
                         # Como sabemos que você é o usuário autenticado e tem clientes com ID correto
                         usuario_id_correto = "37URJQFLe8M1QVbyFfvDhmbQ9aC2"  # Mesmo ID usado nos clientes
                         st.session_state.db.usuario_id = usuario_id_correto
-                        st.info(f"✅ Usando ID correto do usuário: {usuario_id_correto}")
+                        st.info(f"Usando ID correto do usuário: {usuario_id_correto}")
                         
                         st.session_state.db.add_fornecedor(
                             descricao=nome,
@@ -473,11 +473,11 @@ def show(modo="todos"):
                             observacoes=observacoes,
                             percentual_comissao=percentual_comissao
                         )
-                        st.success("✅ Fornecedor cadastrado com sucesso!")
+                        st.success("Fornecedor cadastrado com sucesso!")
                         st.session_state['update_fornecedores'] = True
                     except Exception as e:
-                        st.error(f"❌ Erro ao cadastrar fornecedor: {str(e)}")
-                        st.error(f"🔍 Detalhes técnicos: {type(e).__name__}: {str(e)}")
+                        st.error(f"Erro ao cadastrar fornecedor: {str(e)}")
+                        st.error(f"Detalhes técnicos: {type(e).__name__}: {str(e)}")
 
             # Lista de fornecedores
             st.subheader("Lista de Fornecedores")
@@ -550,7 +550,7 @@ def show(modo="todos"):
                                 st.rerun()
                         
                         with col2:
-                            if botao_excluir("🗑 Excluir Fornecedor", f"delete_fornecedor_{fornecedor_id}", use_container_width=False):
+                            if botao_excluir("Excluir Fornecedor", f"delete_fornecedor_{fornecedor_id}", use_container_width=False):
                                 try:
                                     st.session_state.db.delete_fornecedor(fornecedor_id)
                                     st.success(f"Fornecedor ID {fornecedor_id} excluído com sucesso!")
@@ -753,7 +753,7 @@ def show(modo="todos"):
                                 st.rerun()
                         
                         with col2:
-                            if botao_excluir("🗑 Excluir Parceiro", f"delete_parceiro_{parceiro_id}", use_container_width=False):
+                            if botao_excluir("Excluir Parceiro", f"delete_parceiro_{parceiro_id}", use_container_width=False):
                                 try:
                                     st.session_state.db.delete_parceiro(parceiro_id)
                                     st.success(f"Parceiro ID {parceiro_id} excluído com sucesso!")
@@ -934,7 +934,7 @@ def show(modo="todos"):
                                 st.rerun()
                         
                         with col2:
-                            if botao_excluir("🗑 Excluir Assistente", f"delete_assistente_{assistente_id}", use_container_width=False):
+                            if botao_excluir("Excluir Assistente", f"delete_assistente_{assistente_id}", use_container_width=False):
                                 try:
                                     st.session_state.db.delete_assistente(assistente_id)
                                     st.success(f"Assistente ID {assistente_id} excluído com sucesso!")
@@ -1181,18 +1181,18 @@ def show(modo="todos"):
                                 vendas_com_produto = st.session_state.db.verificar_produto_em_vendas(produto_id)
 
                                 if vendas_com_produto > 0:
-                                    st.warning(f"⚠️ Este produto está sendo usado em {vendas_com_produto} venda(s). Não é possível excluir.")
+                                    st.warning(f"Este produto está sendo usado em {vendas_com_produto} venda(s). Não é possível excluir.")
                                 else:
                                     if not st.session_state.get('exclusao_produto_confirmada', False):
-                                        if botao_excluir("🗑 Excluir Produto", "btn_excluir_produto", use_container_width=False):
+                                        if botao_excluir("Excluir Produto", "btn_excluir_produto", use_container_width=False):
                                             st.session_state.exclusao_produto_confirmada = True
                                             st.rerun()
                                     else:
-                                        st.warning("⚠️ Confirmar exclusão do produto?")
+                                        st.warning("Confirmar exclusão do produto?")
                                         confirm_col1, confirm_col2 = st.columns(2)
 
                                         with confirm_col1:
-                                            if st.button("✓ Confirmar", type="primary", key="btn_confirmar_exclusao_produto"):
+                                            if st.button("Confirmar", type="primary", key="btn_confirmar_exclusao_produto"):
                                                 try:
                                                     st.session_state.db.delete_produto(produto_id)
                                                     st.success("Produto excluído com sucesso!")
@@ -1202,7 +1202,7 @@ def show(modo="todos"):
                                                     st.error(f"Erro ao excluir produto: {str(e)}")
 
                                         with confirm_col2:
-                                            if st.button("✗ Cancelar", use_container_width=True, key="btn_cancelar_exclusao_produto"):
+                                            if st.button("Cancelar", use_container_width=True, key="btn_cancelar_exclusao_produto"):
                                                 st.session_state.exclusao_produto_confirmada = False
                                                 st.rerun()
                     else:

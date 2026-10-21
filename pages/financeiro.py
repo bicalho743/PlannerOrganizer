@@ -265,7 +265,7 @@ def _render_detail_panel(transacao, financeiro_df):
 
     meta_parts = [tipo_label, categoria]
     if data_str:
-        meta_parts.append(f"📅 {data_str}")
+        meta_parts.append(f"{data_str}")
     prop_id = transacao.get('proposta_id')
     if prop_id and not pd.isna(prop_id):
         meta_parts.append(f"Proposta #{int(prop_id)}")
@@ -294,7 +294,7 @@ def _render_detail_panel(transacao, financeiro_df):
     is_pendente = status == 'Pendente'
 
     if is_pendente:
-        acao_label = "✅ Receber" if is_rec else "✅ Pagar"
+        acao_label = "Receber" if is_rec else "Pagar"
         acao_key = f"fin_receber_{tid}" if is_rec else f"fin_pagar_{tid}"
         confirm_key = f"fin_confirm_receber_{tid}" if is_rec else f"fin_confirm_pagar_{tid}"
 
@@ -304,15 +304,15 @@ def _render_detail_panel(transacao, financeiro_df):
                 st.session_state[confirm_key] = True
                 st.rerun()
         with col_act2:
-            if st.button("✏️ Editar", key=f"fin_edit_{tid}", use_container_width=True):
+            if st.button("Editar", key=f"fin_edit_{tid}", use_container_width=True):
                 st.session_state["fin_editando"] = tid
                 st.rerun()
         with col_act3:
-            if botao_excluir("🗑️ Excluir", f"fin_del_{tid}"):
+            if botao_excluir("Excluir", f"fin_del_{tid}"):
                 st.session_state[f"fin_confirm_del_{tid}"] = True
                 st.rerun()
     else:
-        if botao_excluir("🗑️ Excluir", f"fin_del_{tid}"):
+        if botao_excluir("Excluir", f"fin_del_{tid}"):
             st.session_state[f"fin_confirm_del_{tid}"] = True
             st.rerun()
 
@@ -320,7 +320,7 @@ def _render_detail_panel(transacao, financeiro_df):
         st.success(f"Confirmar recebimento de **{fmt_brl(valor)}** — {transacao['descricao']}?")
         c1, c2 = st.columns(2)
         with c1:
-            if st.button("✓ Confirmar", key=f"conf_rec_{tid}", use_container_width=True):
+            if st.button("Confirmar", key=f"conf_rec_{tid}", use_container_width=True):
                 try:
                     st.session_state.db.atualizar_status_transacao(tid, 'Recebido', datetime.now().date())
                     st.session_state.pop(f"fin_confirm_receber_{tid}", None)
@@ -329,7 +329,7 @@ def _render_detail_panel(transacao, financeiro_df):
                 except Exception as e:
                     st.error(f"Erro: {str(e)}")
         with c2:
-            if st.button("✗ Voltar", key=f"cancel_rec_{tid}", use_container_width=True):
+            if st.button("Voltar", key=f"cancel_rec_{tid}", use_container_width=True):
                 st.session_state.pop(f"fin_confirm_receber_{tid}", None)
                 st.rerun()
 
@@ -337,7 +337,7 @@ def _render_detail_panel(transacao, financeiro_df):
         st.success(f"Confirmar pagamento de **{fmt_brl(valor)}** — {transacao['descricao']}?")
         c1, c2 = st.columns(2)
         with c1:
-            if st.button("✓ Confirmar", key=f"conf_pag_{tid}", use_container_width=True):
+            if st.button("Confirmar", key=f"conf_pag_{tid}", use_container_width=True):
                 try:
                     st.session_state.db.atualizar_status_transacao(tid, 'Pago', datetime.now().date())
                     st.session_state.pop(f"fin_confirm_pagar_{tid}", None)
@@ -346,7 +346,7 @@ def _render_detail_panel(transacao, financeiro_df):
                 except Exception as e:
                     st.error(f"Erro: {str(e)}")
         with c2:
-            if st.button("✗ Voltar", key=f"cancel_pag_{tid}", use_container_width=True):
+            if st.button("Voltar", key=f"cancel_pag_{tid}", use_container_width=True):
                 st.session_state.pop(f"fin_confirm_pagar_{tid}", None)
                 st.rerun()
 
@@ -354,7 +354,7 @@ def _render_detail_panel(transacao, financeiro_df):
         st.warning(f"Excluir **{transacao['descricao']}** — {fmt_brl(valor)} permanentemente?")
         c1, c2 = st.columns(2)
         with c1:
-            if st.button("✓ Confirmar", key=f"conf_del_{tid}", use_container_width=True):
+            if st.button("Confirmar", key=f"conf_del_{tid}", use_container_width=True):
                 try:
                     st.session_state.db.delete_transacao(tid)
                     st.session_state.pop(f"fin_confirm_del_{tid}", None)
@@ -363,7 +363,7 @@ def _render_detail_panel(transacao, financeiro_df):
                 except Exception as e:
                     st.error(f"Erro: {str(e)}")
         with c2:
-            if st.button("✗ Voltar", key=f"cancel_del_{tid}", use_container_width=True):
+            if st.button("Voltar", key=f"cancel_del_{tid}", use_container_width=True):
                 st.session_state.pop(f"fin_confirm_del_{tid}", None)
                 st.rerun()
 
@@ -421,9 +421,9 @@ def _render_edit_form(transacao):
 
         col1, col2 = st.columns(2)
         with col1:
-            salvar = st.form_submit_button("💾 Salvar", type="primary", use_container_width=True)
+            salvar = st.form_submit_button("Salvar", type="primary", use_container_width=True)
         with col2:
-            cancelar = st.form_submit_button("❌ Cancelar", use_container_width=True)
+            cancelar = st.form_submit_button("Cancelar", use_container_width=True)
 
     if salvar:
         try:
@@ -588,9 +588,9 @@ def show():
     col_receber, col_pagar, col_concluidas = st.columns(3)
 
     for col_idx, (col_widget, col_label, col_df, col_color, valor_cor) in enumerate([
-        (col_receber, "A Receber", a_receber, "#f5f0e0", "#C9A84C"),
-        (col_pagar, "A Pagar", a_pagar, "#f8d7da", "#E53E3E"),
-        (col_concluidas, "Aprovadas/Pagas", concluidas, "#e2e3e5", "#4A5568"),
+        (col_receber, "A receber", a_receber, "#ECFDF3", "#067647"),
+        (col_pagar, "A pagar", a_pagar, "#FEF3F2", "#B42318"),
+        (col_concluidas, "Recebidas e pagas", concluidas, "#F2F4F7", "#475467"),
     ]):
         with col_widget:
             count = len(col_df)
@@ -640,7 +640,7 @@ def show():
             def _modal_detalhes():
                 _render_detail_panel(transacao_sel, financeiro_df)
                 st.markdown("---")
-                if st.button("✖ Fechar", key=f"fin_fechar_modal_{selected_id}", use_container_width=True):
+                if st.button("Fechar", key=f"fin_fechar_modal_{selected_id}", use_container_width=True):
                     st.session_state["fin_selecionada"] = None
                     st.session_state.pop("fin_editando", None)
                     for k in [k for k in st.session_state if str(k).startswith("fin_confirm_")]:
@@ -653,13 +653,13 @@ def show():
 
     st.markdown("---")
 
-    with st.expander("📜 Histórico Financeiro", expanded=False):
+    with st.expander("Histórico Financeiro", expanded=False):
         historico = financeiro_df[~(financeiro_df['status'] == 'Pendente')].copy() if not financeiro_df.empty else pd.DataFrame()
 
         if not historico.empty:
             h1, h2, h3 = st.columns([2, 1.5, 1.5])
             with h1:
-                busca = st.text_input("🔍 Buscar por descrição", key="fin_hist_busca")
+                busca = st.text_input("Buscar por descrição", key="fin_hist_busca")
             with h2:
                 tipo_filtro = st.multiselect("Tipo", ["receita", "despesa"], key="fin_hist_tipo")
                 tipo_map = {
@@ -719,7 +719,7 @@ def show():
                             key="fin_hist_select", label_visibility="collapsed"
                         )
                     with col_del:
-                        if botao_excluir("🗑️ Excluir", "fin_hist_del"):
+                        if botao_excluir("Excluir", "fin_hist_del"):
                             t_sel = historico.iloc[selected_idx]
                             st.session_state[f"fin_hist_confirm_del_{t_sel['id']}"] = True
                             st.rerun()
@@ -730,7 +730,7 @@ def show():
                             st.warning(f"Excluir **{t_sel['descricao']}** — {fmt_brl(t_sel['valor'])}?")
                             c1, c2, _ = st.columns([1, 1, 5])
                             with c1:
-                                if st.button("✓ Confirmar", key=f"fin_hist_conf_{t_sel['id']}", use_container_width=True):
+                                if st.button("Confirmar", key=f"fin_hist_conf_{t_sel['id']}", use_container_width=True):
                                     try:
                                         st.session_state.db.delete_transacao(t_sel['id'])
                                         st.session_state.pop(f"fin_hist_confirm_del_{t_sel['id']}", None)
@@ -738,7 +738,7 @@ def show():
                                     except Exception as e:
                                         st.error(f"Erro: {str(e)}")
                             with c2:
-                                if st.button("✗ Voltar", key=f"fin_hist_canc_{t_sel['id']}", use_container_width=True):
+                                if st.button("Voltar", key=f"fin_hist_canc_{t_sel['id']}", use_container_width=True):
                                     st.session_state.pop(f"fin_hist_confirm_del_{t_sel['id']}", None)
                                     st.rerun()
             else:

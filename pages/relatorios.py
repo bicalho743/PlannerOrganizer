@@ -9,7 +9,7 @@ from utils.currency_formatter import fmt_brl as _fmt_brl
 def show():
     from utils.auth_guard import require_auth
     require_auth()
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Relatórios Avançados</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="page-title">Relatórios</h1>', unsafe_allow_html=True)
 
     tipo_relatorio = st.selectbox(
         "Selecione o Relatório",

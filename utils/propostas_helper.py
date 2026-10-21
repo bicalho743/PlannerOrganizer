@@ -237,15 +237,6 @@ def gerar_pdf_proposta(db, proposta_id, custom_filename=None):
             print(f"DEBUG PDF ERROR: Erro ao buscar produtos: {str(e)}")
             produtos = []
             
-        # Obter dados do perfil do usuário para o PDF
-        try:
-            # Tentar importar o carregador de perfil
-            from utils.perfil_loader import carregar_perfil_usuario
-            perfil = carregar_perfil_usuario()
-            print(f"DEBUG PDF: Perfil do usuário carregado: {perfil.get('nome', 'N/A')}")
-        except Exception as e:
-            print(f"DEBUG PDF ERROR: Erro ao carregar perfil do usuário: {str(e)}")
-            perfil = {}
             
         # Adicionar dados do perfil à proposta para uso no PDF
         proposta_dict = proposta
@@ -269,7 +260,6 @@ def gerar_pdf_proposta(db, proposta_id, custom_filename=None):
                 print(f"DEBUG PDF: Campo '{campo}' encontrado com valor: {proposta_dict[campo]}")
                 
         # Adicionar valores adicionais
-        proposta_dict['perfil'] = perfil
         proposta_dict['produtos'] = produtos
             
         # Gerar PDF com novo layout
@@ -1083,93 +1073,3 @@ def st_marcar_proposta_como_paga(proposta_id):
     except Exception as e:
         st.error(f"Erro: {str(e)}")
         return False
-def gerar_pdf_venda_proposta(db, proposta_id, custom_filename=None):
-    """
-    Gera um PDF de relatório de produtos/vendas de uma proposta
-    Usa o mesmo layout do relatório de serviço
-    
-    Args:
-        db: Conexão com o banco de dados
-        proposta_id: ID da proposta
-        custom_filename: Nome de arquivo personalizado (opcional)
-        
-    Returns:
-        tuple: (sucesso, mensagem, filename)
-    """
-    print(f"DEBUG HELPER: Gerando PDF Vendas para proposta ID={proposta_id}")
-    
-    try:
-        if not os.path.exists('pdfs'):
-            os.makedirs('pdfs')
-            
-        # Buscar a proposta
-        proposta = None
-        try:
-            propostas = db.get_propostas()
-            if not propostas.empty:
-                proposta_found = propostas[propostas['id'] == int(proposta_id)]
-                if not proposta_found.empty:
-                    proposta = proposta_found.iloc[0].to_dict()
-        except Exception as e:
-            print(f"DEBUG HELPER ERROR: Erro ao buscar proposta: {str(e)}")
-            
-        if proposta is None:
-            return False, f"Proposta ID={proposta_id} não encontrada.", None
-            
-        # Buscar cliente
-        try:
-            clientes = db.get_clientes()
-            cliente = None
-            cliente_id = int(proposta['cliente_id'])
-            
-            if not clientes.empty:
-                cliente_found = clientes[clientes['id'] == cliente_id]
-                if not cliente_found.empty:
-                    cliente = cliente_found.iloc[0].to_dict()
-            
-            if cliente is None:
-                return False, f"Cliente ID={cliente_id} não encontrado.", None
-        except Exception as e:
-            print(f"DEBUG HELPER ERROR: Erro ao buscar cliente: {str(e)}")
-            return False, f"Erro ao buscar cliente: {str(e)}", None
-            
-        # Obter acréscimos (que incluem produtos e fornecedores)
-        acrescimos = db.get_acrescimos_proposta(proposta_id)
-        if acrescimos is None:
-            acrescimos = pd.DataFrame()
-            
-        # Nome do arquivo
-        if custom_filename:
-            filename = custom_filename
-        else:
-            numero_prop = proposta.get('numero', proposta_id)
-            cliente_nome = cliente.get('nome', 'sem_nome').replace(' ', '_').lower()
-            filename = f"pdfs/Relatorio_Produtos_{cliente_nome}_{numero_prop}.pdf"
-            
-        # Usar pdf_generator_v2 que tem layout Navy/Gold
-        from utils.pdf_generator_v2 import gerar_pdf_venda
-        
-        # Preparar itens para a tabela
-        itens_tabela = acrescimos if not acrescimos.empty else pd.DataFrame()
-        
-        venda_dados = {
-            "id": proposta.get('numero', proposta_id),
-            "status": proposta.get('status', 'Concluída'),
-            "forma_pagamento": "N/A",
-            "valor_total": proposta.get('valor', 0),
-            "data_venda": datetime.now().strftime('%d/%m/%Y'),
-            "observacoes": proposta.get('descricao', '')
-        }
-        try:
-            pdf_path = gerar_pdf_venda(venda_dados, cliente, itens_tabela, filename)
-            if not pdf_path or not os.path.exists(pdf_path):
-                return False, "Não foi possível gerar o PDF de vendas.", None
-        except Exception as e:
-            return False, f"Erro ao gerar PDF de vendas: {str(e)}", None
-        
-        return True, "Relatório de vendas/produtos gerado com sucesso", filename
-        
-    except Exception as e:
-        print(f"DEBUG HELPER CRITICAL: Erro ao gerar PDF vendas: {str(e)}")
-        traceback.print_exc()
-        return False, f"Erro ao gerar PDF vendas: {str(e)}", None

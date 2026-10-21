@@ -91,7 +91,7 @@ button[data-testid="collapsedControl"] {
 .app-heading-1 { font-size: var(--font-h1); margin: 0 0 var(--space-md) 0; line-height: 1.1; }
 .app-heading-2 { font-size: var(--font-h2); margin: 0 0 var(--space-sm) 0; line-height: 1.2; }
 .app-heading-3 { font-size: var(--font-h3); margin: 0 0 var(--space-sm) 0; line-height: 1.3; }
-.page-title { font-size: var(--font-h1); font-weight: 700; margin: 0 0 var(--space-md) 0; color: var(--text-primary); }
+h1.page-title, .page-title { font-size: 1.75rem !important; font-weight: 700 !important; line-height: 1.2 !important; margin: 0 0 var(--space-md) 0 !important; padding: 0 !important; color: var(--navy, #0D1B2A) !important; }
 .section-title { font-size: calc(var(--font-h2) - 0.05rem); font-weight: 600; margin-bottom: var(--space-sm); color: var(--text-primary); }
 .app-breadcrumb { margin-bottom: var(--space-md); font-size: var(--font-base); color: var(--text-secondary); }
 .app-breadcrumb::before { content: "•"; display: inline-block; width: 1rem; color: var(--gold); margin-right: 0.5rem; }

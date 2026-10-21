@@ -49,7 +49,7 @@ def _render_nova_proposta_form(clientes):
         descricao = st.text_area("Descrição do serviço:", height=100)
         valor = input_moeda("Valor do serviço (R$):", "valor_nova_proposta")
         sinal_nova = input_moeda(
-            "💰 Sinal / entrada já pago (opcional) — R$:", "sinal_nova_proposta", step=10.0,
+            "Sinal / entrada já pago (opcional) — R$:", "sinal_nova_proposta", step=10.0,
             help="Se o cliente já pagou uma entrada ao confirmar, informe aqui. Será descontado do total no relatório do cliente.")
         prazo = st.number_input("Prazo estimado (dias):", min_value=1, value=15)
 
@@ -265,7 +265,7 @@ def _resumo_proposta_card_html(proposta):
     return (
         '<div style="background:#fff;border:1px solid #e8e5df;border-radius:14px;'
         'padding:20px 22px;height:100%;box-shadow:0 1px 3px rgba(0,0,0,.04);">'
-        f'<div style="font-size:15px;font-weight:700;color:{NAVY};margin-bottom:14px;">📄 Resumo da proposta</div>'
+        f'<div style="font-size:15px;font-weight:700;color:{NAVY};margin-bottom:14px;">Resumo da proposta</div>'
         f'{conteudo}'
         '</div>'
     )
@@ -303,7 +303,7 @@ def _pdf_gerar_baixar(proposta_id, key_sufixo):
     """Ação operacional independente: gera o PDF da proposta (lógica existente)
     e mantém o botão Baixar disponível enquanto o modal ficar aberto."""
     state_key = f"pdf_open_{proposta_id}"
-    if st.button("📄 Gerar proposta", key=f"btn_pdf_proposta_{key_sufixo}_{proposta_id}",
+    if st.button("Gerar proposta", key=f"btn_pdf_proposta_{key_sufixo}_{proposta_id}",
                  use_container_width=True, type="secondary",
                  help="Gera o documento PDF da proposta para entregar ao cliente."):
         try:
@@ -322,9 +322,9 @@ def _pdf_gerar_baixar(proposta_id, key_sufixo):
 
     arquivo = st.session_state.get(state_key)
     if arquivo and os.path.exists(arquivo):
-        st.success("✅ PDF gerado!")
+        st.success("PDF gerado!")
         with open(arquivo, "rb") as f:
-            st.download_button("📥 Baixar", f.read(), os.path.basename(arquivo),
+            st.download_button("Baixar", f.read(), os.path.basename(arquivo),
                                "application/pdf", key=f"dl_proposta_{key_sufixo}_{proposta_id}",
                                use_container_width=True)
 
@@ -334,7 +334,7 @@ def _mais_acoes_proposta(proposta_id, proposta):
     with st.expander("⋮  Mais ações"):
         # ── Editar proposta ──────────────────────────────────────────────
         with st.form(key=f"form_editar_open_{proposta_id}"):
-            st.markdown(f'<div style="font-weight:600;color:{NAVY};font-size:13px;margin-bottom:2px;">✏️ Editar proposta</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="font-weight:600;color:{NAVY};font-size:13px;margin-bottom:2px;">Editar proposta</div>', unsafe_allow_html=True)
             ed_valor = input_moeda("Valor da proposta (R$):", f"ed_valor_{proposta_id}",
                                    value=_safe_float(proposta.get('valor')), step=10.0)
             _tipos = ["Organização", "Consultoria", "Acompanhamento", "Projeto", "Outro"]
@@ -371,7 +371,7 @@ def _mais_acoes_proposta(proposta_id, proposta):
         st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
 
         # ── Duplicar proposta ────────────────────────────────────────────
-        if st.button("📋 Duplicar proposta", key=f"btn_dup_{proposta_id}", use_container_width=True):
+        if st.button("Duplicar proposta", key=f"btn_dup_{proposta_id}", use_container_width=True):
             try:
                 from utils.proposta_status import STATUS_EM_ABERTO
                 novo = st.session_state.db.add_proposta(
@@ -396,7 +396,7 @@ def _mais_acoes_proposta(proposta_id, proposta):
         # ── Excluir proposta (destrutiva, compacta) ──────────────────────
         _de1, _de2 = st.columns([1, 1])
         with _de1:
-            if botao_excluir("🗑 Excluir proposta", f"btn_excluir_open_{proposta_id}"):
+            if botao_excluir("Excluir proposta", f"btn_excluir_open_{proposta_id}"):
                 st.session_state[f"confirm_delete_{proposta_id}"] = True
                 st.rerun()
 
@@ -427,7 +427,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
 
     sinal_atual = sinal
     with col_dir:
-        st.markdown(f'<div style="font-size:15px;font-weight:700;color:{NAVY};margin-bottom:6px;">💰 Resumo financeiro</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="font-size:15px;font-weight:700;color:{NAVY};margin-bottom:6px;">Resumo financeiro</div>', unsafe_allow_html=True)
         if aprovada:
             # Proposta já aprovada: entrada fixada, exibida apenas como resumo.
             st.markdown(_resumo_financeiro_rows_html(valor, sinal), unsafe_allow_html=True)
@@ -440,7 +440,7 @@ def _render_open_proposal_actions(proposta_id, proposta):
                 help="Valor já pago pelo cliente. Será descontado do total no relatório do cliente.",
             )
             if sinal_atual > valor:
-                st.caption("⚠️ A entrada não pode ser maior que o valor total da proposta.")
+                st.caption("A entrada não pode ser maior que o valor total da proposta.")
                 sinal_atual = valor
             st.markdown(_resumo_financeiro_rows_html(valor, sinal_atual), unsafe_allow_html=True)
 
@@ -464,12 +464,12 @@ def _render_open_proposal_actions(proposta_id, proposta):
     else:
         a1, a2 = st.columns([1, 1.3], gap="small")
         with a1:
-            if st.button("✕  Recusar", key=f"btn_recusar_{proposta_id}", use_container_width=True):
+            if st.button("Recusar", key=f"btn_recusar_{proposta_id}", use_container_width=True):
                 st.session_state[f"confirm_refuse_{proposta_id}"] = True
                 st.rerun()
         with a2:
             # Aprovação é ação não destrutiva → clique único (sem confirmação).
-            if st.button("✓  Aprovar proposta", key=f"btn_aprovar_{proposta_id}", use_container_width=True, type="primary"):
+            if st.button("Aprovar proposta", key=f"btn_aprovar_{proposta_id}", use_container_width=True, type="primary"):
                 try:
                     if sinal_atual != sinal:
                         st.session_state.db.update_proposta(proposta_id, sinal=sinal_atual)
@@ -581,7 +581,7 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
         st.info("Ao reabrir, a proposta recusada voltará para o status 'Em aberto'.")
     else:
         st.info("Ao reabrir, a proposta voltará para o status 'Em execução'.")
-    if st.button("↩️ Reabrir proposta", key=f"btn_reabrir_fin_{proposta_id}", use_container_width=True, type="secondary"):
+    if st.button("Reabrir proposta", key=f"btn_reabrir_fin_{proposta_id}", use_container_width=True, type="secondary"):
         try:
             from reabrir_proposta import reabrir_proposta_finalizada
             res = reabrir_proposta_finalizada(proposta_id)
@@ -597,7 +597,7 @@ def _render_finalized_proposal_actions(proposta_id, proposta):
     st.markdown("<hr style='border:none;border-top:1px solid #eee;margin:14px 0 6px;'>", unsafe_allow_html=True)
     _exf1, _exf2, _exf3 = st.columns([1, 2, 1])
     with _exf2:
-        if botao_excluir("🗑 Excluir proposta", f"btn_excluir_fin_{proposta_id}"):
+        if botao_excluir("Excluir proposta", f"btn_excluir_fin_{proposta_id}"):
             st.session_state[f"confirm_delete_{proposta_id}"] = True
 
     if st.session_state.get(f"confirm_delete_{proposta_id}", False):
@@ -786,11 +786,11 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_
             pdf_bytes = f.read()
         with stylable_container(key=f"dl_card_{report_type}_{proposta_id}", css_styles=_card_css):
             st.download_button(
-                label=f"📥 {title}", data=pdf_bytes, file_name=saved['name'],
+                label=f"{title}", data=pdf_bytes, file_name=saved['name'],
                 mime="application/pdf", key=f"dl_btn_{report_type}_{proposta_id}",
                 use_container_width=True,
             )
-        st.caption(f"✅ Pronto — {subtitle}")
+        st.caption(f"Pronto — {subtitle}")
         return
 
     with stylable_container(key=f"gen_card_{report_type}_{proposta_id}", css_styles=_card_css):
@@ -843,7 +843,7 @@ def _tab_detalhes(proposta_id, proposta):
     st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin-bottom:4px;">Novo Andamento</p>', unsafe_allow_html=True)
     with st.form(key=f"form_andamento_{proposta_id}"):
         descricao_andamento = st.text_area("Descrição:", height=90, placeholder="Descreva o que aconteceu nesta etapa…", label_visibility="collapsed")
-        submitted = st.form_submit_button("✔ Registrar Andamento", type="primary", use_container_width=True)
+        submitted = st.form_submit_button("Registrar Andamento", type="primary", use_container_width=True)
         if submitted:
             if descricao_andamento:
                 try:
@@ -863,7 +863,7 @@ def _tab_detalhes(proposta_id, proposta):
     try:
         andamentos = st.session_state.db.get_andamentos_proposta(proposta_id)
         if not andamentos.empty:
-            st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin:16px 0 8px;">🕐 Histórico</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="font-weight:600;color:{NAVY};font-size:14px;margin:16px 0 8px;">Histórico</p>', unsafe_allow_html=True)
             cards = ""
             for _, a in andamentos.iterrows():
                 texto = html_module.escape(str(a.get('observacao') or a.get('descricao') or 'Sem descrição'))
@@ -919,7 +919,7 @@ def _tab_produtos(proposta_id):
             st.markdown(cards, unsafe_allow_html=True)
 
             # Editar produto (quantidade / valor unitário) — com opção de remover
-            with st.expander("✏️ Editar produto"):
+            with st.expander("Editar produto"):
                 produto_edit_id = st.selectbox(
                     "Selecione o produto:",
                     options=produtos_proposta['id'].tolist(),
@@ -943,7 +943,7 @@ def _tab_produtos(proposta_id):
                     with cbtn1:
                         salvar = st.form_submit_button("Salvar alterações", type="primary", use_container_width=True)
                     with cbtn2:
-                        remover = botao_excluir("🗑 Remover", f"rem_prod_{proposta_id}", is_form=True)
+                        remover = botao_excluir("Remover", f"rem_prod_{proposta_id}", is_form=True)
                     if salvar:
                         try:
                             if st.session_state.db.update_produto_organizador(produto_edit_id, valor=novo_valor, quantidade=nova_qtd):
@@ -989,7 +989,7 @@ def _tab_produtos(proposta_id):
                     if pdf_path and os.path.exists(pdf_path):
                         with open(pdf_path, "rb") as f:
                             st.success("PDF gerado!")
-                            st.download_button("📥 Baixar PDF", f.read(), f"Relatorio_Produtos_{_nome_cl_arq}_{_num_prop}.pdf",
+                            st.download_button("Baixar PDF", f.read(), f"Relatorio_Produtos_{_nome_cl_arq}_{_num_prop}.pdf",
                                                "application/pdf", use_container_width=True,
                                                key=f"dl_pdf_venda_proposta_{proposta_id}")
                     else:
@@ -1060,7 +1060,7 @@ def _tab_itens(proposta_id, show_finalizar=False, proposta=None):
             f'<div style="display:flex;align-items:center;justify-content:space-between;'
             f'padding:10px 14px;background:#faf9f7;border:1px solid #e8e5df;border-radius:10px;'
             f'margin-bottom:10px;">'
-            f'<span style="font-size:13px;color:{NAVY};font-weight:600;">🏷️ Valor do serviço (Personal Organizer)</span>'
+            f'<span style="font-size:13px;color:{NAVY};font-weight:600;">Valor do serviço (Personal Organizer)</span>'
             f'<span style="font-size:14px;color:#1D6A4A;font-weight:700;">{_fmt_brl(valor_base_atual)}</span>'
             f'</div>',
             unsafe_allow_html=True,
@@ -1070,12 +1070,12 @@ def _tab_itens(proposta_id, show_finalizar=False, proposta=None):
                 f'<div style="display:flex;align-items:center;justify-content:space-between;'
                 f'padding:8px 14px;background:#fff;border:1px solid #e8e5df;border-radius:10px;'
                 f'margin:-4px 0 10px;">'
-                f'<span style="font-size:12px;color:#8B8680;">💰 Sinal / entrada já pago</span>'
+                f'<span style="font-size:12px;color:#8B8680;">Sinal / entrada já pago</span>'
                 f'<span style="font-size:13px;color:#B7860D;font-weight:700;">– {_fmt_brl(sinal_atual)}</span>'
                 f'</div>',
                 unsafe_allow_html=True,
             )
-        with st.expander("✏️ Editar serviço"):
+        with st.expander("Editar serviço"):
             with st.form(key=f"form_editar_valor_exec_{proposta_id}"):
                 novo_valor = input_moeda(
                     "Valor do serviço (Personal Organizer) — R$:",
@@ -1314,7 +1314,7 @@ def _tab_fornecedores(proposta_id):
                 with col_r:
                     with st.form(key=f"form_remover_fornecedor_{proposta_id}"):
                         rid = st.selectbox("Remover:", options=ids, format_func=fmt_forn, key=f"sel_rem_forn_{proposta_id}")
-                        if botao_excluir("🗑 Remover", f"rem_forn_{proposta_id}", is_form=True):
+                        if botao_excluir("Remover", f"rem_forn_{proposta_id}", is_form=True):
                             try:
                                 if st.session_state.db.remove_acrescimo_proposta(rid):
                                     st.success("Removido!"); st.rerun()
@@ -1398,7 +1398,7 @@ def _tab_assistentes(proposta_id):
                 with col_r:
                     with st.form(key=f"form_remover_assistente_{proposta_id}"):
                         rid = st.selectbox("Remover:", options=ids, format_func=fmt_a, key=f"sel_rem_asst_{proposta_id}")
-                        if botao_excluir("🗑 Remover", f"rem_asst_{proposta_id}", is_form=True):
+                        if botao_excluir("Remover", f"rem_asst_{proposta_id}", is_form=True):
                             try:
                                 if st.session_state.db.remove_acrescimo_proposta(rid):
                                     st.success("Removido!"); st.rerun()
@@ -1471,7 +1471,7 @@ def _tab_outros(proposta_id):
                     f'padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);'
                     f'display:flex;justify-content:space-between;align-items:center;">'
                     f'<div><span style="font-weight:600;color:{NAVY};font-size:13px;">{nome}</span>{sub_html}'
-                    f'<span style="font-size:11px;color:#9a9890;margin-left:6px;">📍 {comodo}</span></div>'
+                    f'<span style="font-size:11px;color:#9a9890;margin-left:6px;">{comodo}</span></div>'
                     f'<span style="font-weight:700;color:#1D6A4A;font-size:13px;white-space:nowrap;">{val_str}</span>'
                     f'</div>'
                 )
@@ -1481,7 +1481,7 @@ def _tab_outros(proposta_id):
                 with st.form(key=f"form_remover_outros_{proposta_id}"):
                     rid = st.selectbox("Selecione:", options=acrescimos['id'].tolist(),
                                        format_func=lambda x: acrescimos.loc[acrescimos['id'] == x, 'descricao'].iloc[0])
-                    if botao_excluir("🗑 Remover", f"rem_outros_{proposta_id}", is_form=True):
+                    if botao_excluir("Remover", f"rem_outros_{proposta_id}", is_form=True):
                         try:
                             if st.session_state.db.remove_acrescimo_proposta(rid):
                                 st.success("Item removido!"); st.rerun()
@@ -1557,7 +1557,7 @@ def _tab_acoes(proposta_id, proposta):
     elif esta_aprovada and not em_execucao and not finalizada:
         _status_badge(" Aprovada — aguardando início", "#1D6A4A")
     elif em_execucao and not finalizada:
-        _status_badge("🔵 Em Execução", "#1565C0")
+        _status_badge("Em Execução", "#1565C0")
     elif finalizada:
         cor_fin = "#4A4A4A" if status_atual == STATUS_FINALIZADA else "#C0392B"
         _status_badge(f" {_label_status(status_atual)}", cor_fin)
@@ -1582,7 +1582,7 @@ def _tab_acoes(proposta_id, proposta):
                 except Exception as e:
                     st.error(str(e))
         with col2:
-            if st.button("❌ Recusar Proposta", use_container_width=True, key=f"btn_recusar_{proposta_id}"):
+            if st.button("Recusar Proposta", use_container_width=True, key=f"btn_recusar_{proposta_id}"):
                 try:
                     res = st.session_state.db.update_proposta_status(proposta_id=proposta_id, novo_status=STATUS_RECUSADA)
                     if res.get('status', False):
@@ -1634,7 +1634,7 @@ def _tab_acoes(proposta_id, proposta):
             c3.metric("Total geral", _fmt_brl(total_geral))
 
             # Editar valor do serviço durante a execução
-            with st.expander("✏️ Editar valor do serviço"):
+            with st.expander("Editar valor do serviço"):
                 with st.form(key=f"form_editar_valor_exec_{proposta_id}"):
                     novo_valor = input_moeda(
                         "Valor do serviço (Personal Organizer) — R$:",
@@ -1655,7 +1655,7 @@ def _tab_acoes(proposta_id, proposta):
 
             # Breakdown em cards
             breakdown = [
-                ("🏷️ Personal Organizer", valor_base, GOLD),
+                ("Personal Organizer", valor_base, GOLD),
                 (" Produtos",           total_prod, "#0F5E6E"),
                 (" Fornecedores",       total_forn, "#0F5E6E"),
                 (" Assistentes",        total_asst, "#6B4EAA"),
@@ -1780,7 +1780,7 @@ def _tab_acoes(proposta_id, proposta):
             if sucesso and arquivo:
                 with open(arquivo, "rb") as f:
                     st.success("PDF gerado!")
-                    st.download_button("📥 Baixar Proposta", f.read(), os.path.basename(arquivo),
+                    st.download_button("Baixar Proposta", f.read(), os.path.basename(arquivo),
                                        "application/pdf", key=f"dl_proposta_{proposta_id}", use_container_width=True)
             else:
                 st.error(f"Erro: {mensagem}")
@@ -1789,12 +1789,12 @@ def _tab_acoes(proposta_id, proposta):
 
     # ── Excluir proposta ──────────────────────────────────────────────────
     with st.expander(" Excluir Proposta", expanded=False):
-        st.warning("⚠️ Esta ação é **permanente** e removerá todos os dados relacionados.")
+        st.warning("Esta ação é **permanente** e removerá todos os dados relacionados.")
         confirmar_exclusao = st.checkbox("Entendo que esta ação não pode ser desfeita", key=f"confirmar_exclusao_{proposta_id}")
         if confirmar_exclusao:
             col1, col2 = st.columns(2)
             with col1:
-                if botao_excluir("🗑 EXCLUIR PROPOSTA", f"btn_excluir_kanban_{proposta_id}"):
+                if botao_excluir("EXCLUIR PROPOSTA", f"btn_excluir_kanban_{proposta_id}"):
                     try:
                         usuario_id = st.session_state.get('usuario_id')
                         sucesso, mensagem = st.session_state.db.excluir_proposta_segura(proposta_id, usuario_id)
@@ -1808,7 +1808,7 @@ def _tab_acoes(proposta_id, proposta):
                     except Exception as e:
                         st.error(str(e))
             with col2:
-                if st.button("🔙 Cancelar", key=f"btn_cancel_excl_{proposta_id}", type="primary", use_container_width=True):
+                if st.button("Cancelar", key=f"btn_cancel_excl_{proposta_id}", type="primary", use_container_width=True):
                     st.rerun()
 
 
@@ -1824,8 +1824,8 @@ def _kanban_board_fragment(propostas_em_aberto, propostas_aprovadas, propostas_e
     col_aberto, col_aprovada, col_execucao = st.columns(3)
     COLS_CONFIG = [
         (col_aberto, " Em Aberto", propostas_em_aberto, "#fff3cd"),
-        (col_aprovada, "🟢 Aprovada", propostas_aprovadas, "#d4edda"),
-        (col_execucao, "🔵 Em Execução", propostas_em_exec, "#cce5ff"),
+        (col_aprovada, "Aprovada", propostas_aprovadas, "#d4edda"),
+        (col_execucao, "Em Execução", propostas_em_exec, "#cce5ff"),
     ]
     for col_idx, (col_widget, col_label, col_df, col_color) in enumerate(COLS_CONFIG):
         with col_widget:
@@ -1876,7 +1876,7 @@ def _kanban_board_fragment(propostas_em_aberto, propostas_aprovadas, propostas_e
                             try:
                                 with open(pdf_pronto, "rb") as _f:
                                     st.download_button(
-                                        "📥 Baixar",
+                                        "Baixar",
                                         _f.read(),
                                         os.path.basename(pdf_pronto),
                                         "application/pdf",
@@ -1913,7 +1913,7 @@ def _kanban_board_fragment(propostas_em_aberto, propostas_aprovadas, propostas_e
 def show():
     from utils.auth_guard import require_auth
     require_auth()
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Propostas</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="page-title">Propostas</h1>', unsafe_allow_html=True)
 
     if not hasattr(st.session_state, 'db'):
         st.error("Erro: Conexão com banco de dados não disponível")
@@ -2249,7 +2249,7 @@ def show():
                     cols[4].write(_fmt_brl(r['Receita Líquida Total']))
                     cols[5].write(r['Status'])
                     cols[6].write(r['Data'].strftime('%d/%m/%Y') if r['Data'] is not None else "—")
-                    if cols[7].button("📋 Ver", key=f"hist_ver_{pid}", use_container_width=True):
+                    if cols[7].button("Ver", key=f"hist_ver_{pid}", use_container_width=True):
                         st.session_state['kanban_selected_proposta'] = pid
                         st.rerun()
 

@@ -145,7 +145,7 @@ def _render_nova_venda_form(clientes_df, produtos_df):
                         observacoes=observacoes,
                         data_venda=data_venda
                     )
-                    st.success(f"✅ Venda #{venda_id} registrada com sucesso!")
+                    st.success(f"Venda #{venda_id} registrada com sucesso!")
                     st.session_state.produtos_venda = []
                     st.session_state.vendas_nova_venda_open = False
                     st.session_state.venda_recente_id = venda_id
@@ -217,7 +217,7 @@ def _render_detail_panel(venda_id, venda_row):
                     Venda #{venda_id}
                     <span class="det-badge">{html_module.escape(status)}</span>
                 </p>
-                <p class="det-meta">👤 {cliente_nome} &nbsp;·&nbsp; {meta_str}</p>
+                <p class="det-meta">{cliente_nome} &nbsp;·&nbsp; {meta_str}</p>
             </div>
             <span class="det-valor">{valor_str}</span>
         </div>
@@ -264,11 +264,11 @@ def _render_detail_panel(venda_id, venda_row):
 
     col_edit, col_del, col_space = st.columns([1, 1, 4])
     with col_edit:
-        if st.button("✏️ Editar", key=f"det_edit_{venda_id}", use_container_width=True):
+        if st.button("Editar", key=f"det_edit_{venda_id}", use_container_width=True):
             st.session_state[f"editando_venda_{venda_id}"] = not st.session_state.get(f"editando_venda_{venda_id}", False)
             st.rerun()
     with col_del:
-        if botao_excluir("🗑️ Excluir", f"det_del_{venda_id}"):
+        if botao_excluir("Excluir", f"det_del_{venda_id}"):
             st.session_state[f"confirmar_excluir_{venda_id}"] = True
             st.rerun()
 
@@ -326,7 +326,7 @@ def _render_detail_panel(venda_id, venda_row):
             ]
             with stylable_container(key=f"dl_venda_{venda_id}", css_styles=_venda_css):
                 st.download_button(
-                    label="📄 Baixar PDF da Venda",
+                    label="Baixar PDF da Venda",
                     data=pdf_bytes,
                     file_name=pdf_file_name,
                     mime="application/pdf",
@@ -338,10 +338,10 @@ def _render_detail_panel(venda_id, venda_row):
 
     # Confirmação de exclusão
     if st.session_state.get(f"confirmar_excluir_{venda_id}", False):
-        st.warning(f"⚠️ Excluir Venda #{venda_id} — {venda_row.get('cliente_nome','')}?")
+        st.warning(f"Excluir Venda #{venda_id} — {venda_row.get('cliente_nome','')}?")
         cc1, cc2, _ = st.columns([1, 1, 4])
         with cc1:
-            if st.button("✓ Confirmar", type="primary", key=f"conf_del_{venda_id}", use_container_width=True):
+            if st.button("Confirmar", type="primary", key=f"conf_del_{venda_id}", use_container_width=True):
                 try:
                     st.session_state.db.excluir_venda(venda_id)
                     st.session_state["venda_selecionada"] = None
@@ -351,13 +351,13 @@ def _render_detail_panel(venda_id, venda_row):
                 except Exception as e:
                     st.error(f"Erro: {str(e)}")
         with cc2:
-            if st.button("✗ Cancelar", key=f"canc_del_{venda_id}", use_container_width=True):
+            if st.button("Cancelar", key=f"canc_del_{venda_id}", use_container_width=True):
                 st.session_state.pop(f"confirmar_excluir_{venda_id}", None)
                 st.rerun()
 
     # Painel de edição de itens
     if st.session_state.get(f"editando_venda_{venda_id}", False):
-        with st.expander("✏️ Editar itens", expanded=True):
+        with st.expander("Editar itens", expanded=True):
             try:
                 itens_atuais = st.session_state.db.get_itens_venda(venda_id)
                 produtos_df  = st.session_state.db.get_produtos()
@@ -403,7 +403,7 @@ def _render_detail_panel(venda_id, venda_row):
                                 preco_default = max(0.01, float(prow["preco_venda"]))
                             novo_preco_add = st.number_input("Preço", min_value=0.01, value=preco_default,
                                                              format="%.2f", key=f"ap_preco_{venda_id}")
-                        if st.form_submit_button("➕ Adicionar produto", type="primary", use_container_width=True):
+                        if st.form_submit_button("Adicionar produto", type="primary", use_container_width=True):
                             if novo_prod != "-- Selecione --":
                                 try:
                                     pid_add = produtos_df[produtos_df["nome"] == novo_prod]["id"].iloc[0]
@@ -414,7 +414,7 @@ def _render_detail_panel(venda_id, venda_row):
 
                 fe1, fe2 = st.columns(2)
                 with fe1:
-                    if st.button("✅ Salvar e fechar", type="primary", use_container_width=True, key=f"fin_edit_{venda_id}"):
+                    if st.button("Salvar e fechar", type="primary", use_container_width=True, key=f"fin_edit_{venda_id}"):
                         try:
                             st.session_state.db.recalcular_valor_total_venda(venda_id)
                             st.session_state[f"editando_venda_{venda_id}"] = False
@@ -480,7 +480,7 @@ def show():
         st.error("Erro: Conexão com banco de dados não inicializada")
         return
 
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Vendas</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="page-title">Vendas</h1>', unsafe_allow_html=True)
 
     if "venda_selecionada" not in st.session_state:
         st.session_state["venda_selecionada"] = None
@@ -510,9 +510,9 @@ def show():
 
     fc1, fc2, fc3 = st.columns(3)
     for col, label, valor in [
-        (fc1, "✅ CONCLUÍDA",  total_concluidas),
-        (fc2, "🟡 PENDENTE",   total_pendentes),
-        (fc3, "⛔ CANCELADA",  total_canceladas),
+        (fc1, "CONCLUÍDA",  total_concluidas),
+        (fc2, "PENDENTE",   total_pendentes),
+        (fc3, "CANCELADA",  total_canceladas),
     ]:
         with col:
             st.markdown(f"""
@@ -526,7 +526,7 @@ def show():
     col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
     with col_btn:
         with stylable_container(key="gold_nova_venda", css_styles=list(GOLD_BUTTON_CSS)):
-            if st.button("✚  Nova Venda", type="primary", use_container_width=True, key="btn_nova_venda_top"):
+            if st.button("Nova Venda", type="primary", use_container_width=True, key="btn_nova_venda_top"):
                 st.session_state["vendas_nova_venda_open"] = not st.session_state["vendas_nova_venda_open"]
                 if not st.session_state["vendas_nova_venda_open"]:
                     st.session_state.produtos_venda = []
@@ -543,10 +543,10 @@ def show():
     # Relatório pós-finalização
     if st.session_state.get("mostrar_gerar_relatorio", False) and st.session_state.get("venda_recente_id"):
         st.markdown("---")
-        st.success("🎉 Venda finalizada! Gere o relatório abaixo.")
+        st.success("Venda finalizada! Gere o relatório abaixo.")
         rc1, rc2 = st.columns(2)
         with rc1:
-            if st.button("📄 GERAR RELATÓRIO", type="primary", use_container_width=True, key="btn_rel_pos"):
+            if st.button("GERAR RELATÓRIO", type="primary", use_container_width=True, key="btn_rel_pos"):
                 try:
                     import time as _time
                     vid = st.session_state.venda_recente_id
@@ -586,7 +586,7 @@ def show():
                 except Exception as e:
                     st.error(f"Erro: {str(e)}")
         with rc2:
-            if st.button("✅ Nova venda", type="secondary", use_container_width=True, key="btn_nova_pos"):
+            if st.button("Nova venda", type="secondary", use_container_width=True, key="btn_nova_pos"):
                 st.session_state.mostrar_gerar_relatorio = False
                 for k in list(st.session_state.keys()):
                     if k.startswith("venda_recente_"):
@@ -598,9 +598,9 @@ def show():
     col_concluida, col_pendente, col_cancelada = st.columns(3)
 
     COLS_CONFIG = [
-        (col_concluida, "✅ Concluída",  vendas_concluidas, "#d4edda"),
-        (col_pendente,  "🟡 Pendente",   vendas_pendentes,  "#fff3cd"),
-        (col_cancelada, "⛔ Cancelada",  vendas_canceladas, "#e2e3e5"),
+        (col_concluida, "Concluída",  vendas_concluidas, "#d4edda"),
+        (col_pendente,  "Pendente",   vendas_pendentes,  "#fff3cd"),
+        (col_cancelada, "Cancelada",  vendas_canceladas, "#e2e3e5"),
     ]
 
     for col_idx, (col_widget, col_label, col_df, col_color) in enumerate(COLS_CONFIG):
@@ -644,7 +644,7 @@ def show():
             def _modal_venda():
                 _render_detail_panel(selected_id, venda_sel)
                 st.markdown("---")
-                if st.button("✖ Fechar", key=f"venda_fechar_modal_{selected_id}", use_container_width=True):
+                if st.button("Fechar", key=f"venda_fechar_modal_{selected_id}", use_container_width=True):
                     st.session_state["venda_selecionada"] = None
                     st.rerun()
 

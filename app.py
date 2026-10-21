@@ -263,9 +263,7 @@ _components.html("""
 
 try:
     from utils.session_persistence import setup_session_persistence
-    from utils.auto_login import check_and_restore_auto_login
     setup_session_persistence()
-    check_and_restore_auto_login()
 except Exception as e:
     logger.warning(f"Erro ao configurar persistência de sessão: {str(e)}")
 
@@ -513,7 +511,7 @@ if not st.session_state.authenticated:
                             st.session_state.db = Database(usuario_id=result['user']['localId'])
                         st.session_state.authenticated = True
                         st.session_state.current_page = "Dashboard"
-                        st.success("✅ Login realizado com sucesso!")
+                        st.success("Login realizado com sucesso!")
                         st.rerun()
                     else:
                         st.error("E-mail ou senha incorretos.")
@@ -550,7 +548,7 @@ if not st.session_state.authenticated:
     # Footer
     st.markdown("""
       <div class="login-footer">
-        <a href="https://promo.plannerorganiza.com.br" target="_blank">← Voltar ao site</a>
+        <a href="https://promo.plannerorganiza.com.br" target="_blank">Voltar ao site</a>
         <span>·</span>
         <a href="?show_termos=true">Termos de uso</a>
         <span>·</span>
@@ -688,7 +686,7 @@ def _render_bloqueio_trial(perfil=None, uid=None):
           <div class='pw-ribbon'>MAIS POPULAR</div>
           <div class='pw-plan'>Anual</div>
           <div class='pw-price'>R$ 297 <span>/ano</span></div>
-          <div class='pw-save'>💰 Economize 2 meses</div>
+          <div class='pw-save'>Economize 2 meses</div>
           <ul class='pw-features'>
             <li>Propostas e clientes ilimitados</li>
             <li>Financeiro completo</li>
@@ -696,10 +694,10 @@ def _render_bloqueio_trial(perfil=None, uid=None):
             <li>Pós-organização</li>
             <li>Suporte prioritário</li>
           </ul>
-          <a class='pw-cta primary' href='{_url_anual}' target='_blank'>🚀 Assinar Anual</a>
+          <a class='pw-cta primary' href='{_url_anual}' target='_blank'>Assinar Anual</a>
         </div>
       </div>
-      <div class='pw-trust'>🔒 Pagamento seguro via Stripe · Cancele quando quiser · Dados sempre preservados</div>
+      <div class='pw-trust'>Pagamento seguro via Stripe · Cancele quando quiser · Dados sempre preservados</div>
       <div class='pw-manage'>Após assinar, atualize a página (a liberação pode levar alguns minutos).<br>
         Já é assinante? <a href='{STRIPE_PORTAL_LINK}' target='_blank'>Gerencie sua assinatura</a></div>
     </div>

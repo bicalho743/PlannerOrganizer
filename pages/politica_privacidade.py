@@ -111,7 +111,7 @@ def show():
                 st.session_state.show_politica = False
                 st.rerun()
     else:
-        if st.button("← Voltar"):
+        if st.button("Voltar"):
             st.session_state.show_politica = False
             st.rerun()
 
