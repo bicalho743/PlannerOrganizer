@@ -8,12 +8,11 @@ seguras — evita clique acidental. Fonte única para todas as páginas.
 import streamlit as st
 from streamlit_extras.stylable_container import stylable_container
 
-# Botão destrutivo: fundo vermelho sólido. O texto herda o branco que o CSS
-# global do app já força em todo botão — visível no vermelho, sem depender de
-# vencer a "briga" de especificidade (que quebrava conforme a versão do
-# Streamlit, deixando o rótulo branco/invisível no contorno). Discreto pelo
-# tamanho pequeno + posição centralizada de quem chama.
+# Botão destrutivo: fundo vermelho sólido e texto branco declarado aqui (o CSS global
+# não força mais branco em todo botão: o secundário é branco com texto escuro).
+# Discreto pelo tamanho pequeno + posição centralizada de quem chama.
 DESTRUCTIVE_BTN_CSS = """
+button, button * { color: #FFFFFF !important; }
 button {
     background: #C0392B !important;
     border: none !important;
@@ -24,8 +23,9 @@ button {
 button:hover { background: #A93226 !important; }
 """
 
-# Link "Fechar/Cancelar" discreto: fundo cinza claro, texto branco (global).
+# Link "Fechar/Cancelar" discreto: fundo cinza, texto branco.
 CLOSE_LINK_CSS = """
+button, button * { color: #FFFFFF !important; }
 button {
     background: #8B8680 !important;
     border: none !important;
