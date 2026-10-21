@@ -9,92 +9,73 @@ project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
+from utils.texto_legal import CONTATO, para_html, mostrar_pagina
+
+TITULO = "Termos e Condições de Uso"
+INTRO = ("Estes termos regem o uso do Planner Organizer, sistema on-line de gestão para profissionais de "
+         "organização (propostas, clientes, vendas, financeiro e relatórios). Ao criar uma conta você declara "
+         "que leu e concorda com eles e com a nossa Política de Privacidade.")
+
+SECOES = [
+    ("1. Conta e acesso", [
+        "A conta é pessoal. Você é responsável pelo sigilo do seu login e pelas ações feitas com ele. "
+        "Avise-nos em " + CONTATO + " se suspeitar de uso indevido.",
+    ], None),
+    ("2. Teste grátis e assinatura", [
+        "Toda conta nova tem 7 dias de teste grátis com todos os recursos. Depois disso o uso continua "
+        "mediante assinatura, mensal ou anual, nos preços exibidos em Plano e cobrança no momento da contratação.",
+        "O pagamento é processado pelo Stripe por cartão de crédito e renovado automaticamente ao fim de cada "
+        "período até que você cancele. Se uma cobrança falhar, o acesso aos recursos pagos pode ser suspenso "
+        "até a regularização.",
+    ], None),
+    ("3. Cancelamento e reembolso", [
+        "Você pode cancelar a qualquer momento pelo portal de cobrança (Plano e cobrança). O cancelamento "
+        "interrompe as próximas renovações; o acesso segue até o fim do período já pago.",
+        "Na primeira contratação, você pode desistir em até 7 dias do pagamento e receber o valor de volta "
+        "(art. 49 do Código de Defesa do Consumidor), escrevendo para " + CONTATO + ".",
+    ], None),
+    ("4. Seus dados e os dados dos seus clientes", [
+        "Os dados que você cadastra (clientes, propostas, fornecedores, valores, logotipo) continuam sendo seus. "
+        "Usamos esses dados só para prestar o serviço, como descrito na Política de Privacidade.",
+        "Ao cadastrar dados de terceiros, como seus clientes, você é a controladora desses dados perante a LGPD "
+        "e deve ter base legal para tratá-los (por exemplo, a execução do contrato com o cliente). "
+        "O Planner Organizer atua como operador, tratando esses dados apenas sob suas instruções.",
+        "Após o cancelamento seus dados ficam guardados para que você possa voltar. Você pode pedir a exclusão "
+        "definitiva a qualquer momento.",
+    ], None),
+    ("5. Uso permitido", [
+        "O sistema deve ser usado para fins lícitos e de acordo com sua finalidade. Não é permitido tentar acessar "
+        "dados de outras contas, sobrecarregar ou burlar a plataforma, nem revender o acesso.",
+    ], None),
+    ("6. Propriedade intelectual", [
+        "O software, o design e a marca Planner Organizer pertencem aos seus desenvolvedores. A assinatura dá "
+        "direito de uso enquanto estiver ativa e não transfere nenhum desses direitos.",
+    ], None),
+    ("7. Disponibilidade e responsabilidade", [
+        "Trabalhamos para manter o sistema disponível e os dados protegidos, mas podem ocorrer interrupções para "
+        "manutenção ou por falhas de terceiros (hospedagem, pagamento, login). Os cálculos e relatórios são "
+        "ferramentas de apoio: valores, impostos e documentos enviados aos seus clientes devem ser conferidos por você.",
+    ], None),
+    ("8. Suspensão", [
+        "Podemos suspender contas que violem estes termos, avisando pelo e-mail cadastrado sempre que possível.",
+    ], None),
+    ("9. Alterações", [
+        "Podemos atualizar estes termos. Mudanças relevantes serão avisadas por e-mail ou no próprio sistema "
+        "com antecedência; continuar usando depois disso significa concordar com a nova versão.",
+    ], None),
+    ("10. Contato e foro", [
+        "Dúvidas: " + CONTATO + ". Fica eleito o foro do domicílio do consumidor, conforme a legislação brasileira.",
+    ], None),
+]
+
+
 def get_termos_conteudo():
-    """Retorna o conteúdo HTML dos termos de uso"""
-    return """
-    <h1>Termos e Condições de Uso</h1>
-    
-    <p>
-    Bem-vindo ao nosso sistema. Ao utilizar esta plataforma, você concorda com os presentes Termos e Condições de Uso. 
-    Leia com atenção antes de prosseguir.
-    </p>
-    
-    <h3>1.1 Aceitação dos Termos</h3>
-    <p>
-    Ao acessar e utilizar este sistema, o usuário declara que leu, entendeu e concorda com os termos aqui descritos. 
-    Caso não concorde, deve se abster de utilizar os serviços.
-    </p>
-    
-    <h3>1.2 Uso da Plataforma</h3>
-    <p>
-    O sistema deve ser utilizado exclusivamente para fins legais e de acordo com sua finalidade. 
-    É proibido o uso indevido, cópia não autorizada, engenharia reversa, ou qualquer ação que 
-    comprometa a integridade da plataforma.
-    </p>
-    
-    <h3>1.3 Propriedade Intelectual</h3>
-    <p>
-    Todos os direitos sobre o sistema, seus códigos, design, funcionalidades e marcas são de 
-    propriedade exclusiva da empresa desenvolvedora. O uso não confere qualquer direito sobre esses ativos.
-    </p>
-    
-    <h3>1.4 Responsabilidades do Usuário</h3>
-    <p>
-    O usuário é responsável por manter seus dados de acesso em sigilo, e por toda atividade realizada com seu login. 
-    A empresa não se responsabiliza por acessos indevidos decorrentes de negligência.
-    </p>
-    
-    <h3>1.5 Suspensão e Cancelamento</h3>
-    <p>
-    Reservamo-nos o direito de suspender ou cancelar o acesso de qualquer usuário que descumpra estes termos, 
-    sem necessidade de aviso prévio.
-    </p>
-    
-    <h3>1.6 Alterações nos Termos</h3>
-    <p>
-    Estes termos poderão ser atualizados periodicamente. O uso contínuo do sistema após alterações 
-    será considerado como aceitação das novas condições.
-    </p>
-    """
+    """HTML dos termos de uso (usado no modal do cadastro)."""
+    return para_html(TITULO, INTRO, SECOES)
 
 def show():
     """Exibe a página de termos de uso"""
-    st.markdown("""
-    <style>
-    [data-testid="collapsedControl"] {display: none;}
-    section[data-testid="stSidebar"] {display: none;}
-    .block-container {
-        max-width: 900px !important;
-        margin: 0 auto !important;
-        padding: 2rem 3rem !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown('<h1 style="color: #C9A84C; font-size: 1.8rem; margin-bottom: 0.5rem;">Termos e Condições de Uso</h1>', unsafe_allow_html=True)
-
-    st.markdown('<p style="color: rgba(245,240,232,0.6); margin-bottom: 2rem;">Bem-vindo ao nosso sistema. Ao utilizar esta plataforma, você concorda com os presentes Termos e Condições de Uso. Leia com atenção antes de prosseguir.</p>', unsafe_allow_html=True)
-
-    secoes = [
-        ("1.1 Aceitação dos Termos",
-         "Ao acessar e utilizar este sistema, o usuário declara que leu, entendeu e concorda com os termos aqui descritos. Caso não concorde, deve se abster de utilizar os serviços."),
-        ("1.2 Uso da Plataforma",
-         "O sistema deve ser utilizado exclusivamente para fins legais e de acordo com sua finalidade. É proibido o uso indevido, cópia não autorizada, engenharia reversa, ou qualquer ação que comprometa a integridade da plataforma."),
-        ("1.3 Propriedade Intelectual",
-         "Todos os direitos sobre o sistema, seus códigos, design, funcionalidades e marcas são de propriedade exclusiva da empresa desenvolvedora. O uso não confere qualquer direito sobre esses ativos."),
-        ("1.4 Responsabilidades do Usuário",
-         "O usuário é responsável por manter seus dados de acesso em sigilo, e por toda atividade realizada com seu login. A empresa não se responsabiliza por acessos indevidos decorrentes de negligência."),
-        ("1.5 Suspensão e Cancelamento",
-         "Reservamo-nos o direito de suspender ou cancelar o acesso de qualquer usuário que descumpra estes termos, sem necessidade de aviso prévio."),
-        ("1.6 Alterações nos Termos",
-         "Estes termos poderão ser atualizados periodicamente. O uso contínuo do sistema após alterações será considerado como aceitação das novas condições."),
-    ]
-
-    for titulo, texto in secoes:
-        st.markdown(f'<h3 style="color: #C9A84C; font-size: 1.1rem; margin-top: 1.5rem;">{titulo}</h3>', unsafe_allow_html=True)
-        st.markdown(f'<p style="color: rgba(245,240,232,0.85); line-height: 1.8; font-size: 0.95rem;">{texto}</p>', unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
+    mostrar_pagina(TITULO, INTRO, SECOES)
 
     if st.session_state.get("creating_account", False):
         col1, col2 = st.columns(2)
