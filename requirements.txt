@@ -1,5 +1,5 @@
 # Core
-streamlit>=1.42.0
+streamlit==1.66.0  # versão testada; o Streamlit remove funções usadas aqui (components.html, use_container_width)
 psycopg2-binary>=2.9.10
 sqlalchemy>=2.0.38,<2.1
 pandas>=2.2.3

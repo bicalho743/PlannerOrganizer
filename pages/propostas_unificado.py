@@ -18,7 +18,7 @@ from utils.design_tokens import (
     NAVY, NAVY_HOVER, GOLD, GOLD_BUTTON_CSS,
 )
 from utils.status_execucao import EXEC_EM_EXECUCAO, EXEC_FINALIZADA, EXEC_CANCELADA
-from utils.ui import botao_excluir, link_fechar, input_moeda
+from utils.ui import botao_excluir, link_fechar, input_moeda, cartao_clicavel
 
 
 def _safe_float(val, default=0.0):
@@ -765,19 +765,20 @@ def _report_card_download(icon, title, subtitle, proposta_id, report_type, nome_
     relatórios ao abrir o detalhe da proposta (grande ganho de velocidade).
     Uma vez gerado na sessão, o card passa a oferecer 'Baixar' direto."""
     state_key = f"_report_pdf_{report_type}_{proposta_id}"
-    _card_css = (
+    # uma regra por item: o stylable_container só prefixa o começo de cada item
+    _card_css = [
         "button {"
         f"background:{NAVY} !important;border-radius:10px !important;"
-        "padding:16px !important;min-height:80px !important;width:100%% !important;"
+        "padding:16px !important;min-height:80px !important;width:100% !important;"
         "border:1px solid transparent !important;transition:all 0.2s !important;"
         "display:flex !important;flex-direction:column !important;"
-        "align-items:center !important;justify-content:center !important;}"
+        "align-items:center !important;justify-content:center !important;}",
         "button:hover {"
         f"background:{NAVY_HOVER} !important;transform:translateY(-2px) !important;"
-        "box-shadow:0 4px 12px rgba(0,0,0,0.3) !important;}"
-        "button p, button div {"
-        f"color:{GOLD} !important;font-weight:700 !important;font-size:12px !important;}}"
-    ).replace("%%", "%")
+        "box-shadow:0 4px 12px rgba(0,0,0,0.3) !important;}",
+        "button :is(p, div) {"
+        f"color:{GOLD} !important;font-weight:700 !important;font-size:12px !important;}}",
+    ]
 
     saved = st.session_state.get(state_key)
     if isinstance(saved, dict) and saved.get('path') and os.path.exists(saved['path']):
@@ -1840,18 +1841,15 @@ def _kanban_board_fragment(propostas_em_aberto, propostas_aprovadas, propostas_e
                     desc = html_module.escape(str(proposta.get('descricao', ''))[:60])
                     valor_f = html_module.escape(_fmt_brl(_safe_float(proposta.get('valor'))))
 
-                    st.markdown(
+                    is_selected = st.session_state.get('kanban_selected_proposta') == pid
+                    if cartao_clicavel(
                         f'<div class="kanban-card">'
                         f'<div class="kanban-card-cliente">{cliente_nome}</div>'
                         f'<div class="kanban-card-desc">{desc}</div>'
                         f'<div class="kanban-card-valor">{valor_f}</div>'
                         f'</div>',
-                        unsafe_allow_html=True
-                    )
-
-                    is_selected = st.session_state.get('kanban_selected_proposta') == pid
-                    btn_label = "▲ Fechar" if is_selected else "▼ Ver Detalhes"
-                    if st.button(btn_label, key=f"card_btn_c{col_idx}_{pid}", use_container_width=True):
+                        key=f"card_btn_c{col_idx}_{pid}", rotulo=f"Abrir proposta de {cliente_nome}",
+                        selecionado=is_selected):
                         if is_selected:
                             st.session_state['kanban_selected_proposta'] = None
                         else:
@@ -1861,7 +1859,8 @@ def _kanban_board_fragment(propostas_em_aberto, propostas_aprovadas, propostas_e
                         st.rerun(scope="fragment")
 
                     if col_idx in (0, 1):
-                        if st.button(" Gerar Proposta", key=f"card_pdf_c{col_idx}_{pid}", use_container_width=True):
+                        if st.button("Gerar PDF", key=f"card_pdf_c{col_idx}_{pid}", type="tertiary",
+                                     icon=":material/picture_as_pdf:", use_container_width=True):
                             try:
                                 from utils.propostas_helper import gerar_pdf_cliente_proposta
                                 sucesso, mensagem, arquivo = gerar_pdf_cliente_proposta(st.session_state.db, pid, tipo_documento="proposta")
@@ -2013,7 +2012,7 @@ def show():
 
     col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
     with col_btn:
-        with stylable_container(key="gold_nova_proposta", css_styles=GOLD_BUTTON_CSS):
+        with stylable_container(key="gold_nova_proposta", css_styles=list(GOLD_BUTTON_CSS)):
             nova_btn = st.button("  Nova Proposta", type="primary", use_container_width=True, key="btn_nova_proposta_top")
             if nova_btn:
                 st.session_state['kanban_nova_proposta_open'] = not st.session_state['kanban_nova_proposta_open']

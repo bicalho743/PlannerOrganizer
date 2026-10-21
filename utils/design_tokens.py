@@ -83,17 +83,14 @@ GOLD_GRADIENT = f"linear-gradient(135deg, {GOLD}, {GOLD_DARK})"
 # Botão da ação principal da tela (Nova proposta, Nova venda, Nova transação).
 # Era dourado com sombra; agora segue o botão primário do sistema (azul-marinho).
 # O nome ficou por compatibilidade com as páginas que o importam.
-GOLD_BUTTON_CSS = f"""
-    button {{
-        background: {NAVY} !important;
-        color: #fff !important;
-        font-weight: 600 !important;
-        border-radius: 8px !important;
-        border: 1px solid {NAVY} !important;
-        box-shadow: none !important;
-    }}
-    button:hover {{ background: {NAVY_HOVER} !important; }}
-"""
+# Lista de blocos: o stylable_container prefixa cada item com a classe do container;
+# num texto único só a primeira regra seria prefixada e o resto valeria para a página toda.
+# Passe uma cópia (list(GOLD_BUTTON_CSS)): o stylable_container acrescenta itens à lista recebida.
+GOLD_BUTTON_CSS = [
+    f"button {{ background: {NAVY} !important; color: #fff !important; font-weight: 600 !important;"
+    f" border-radius: 8px !important; border: 1px solid {NAVY} !important; box-shadow: none !important; }}",
+    f"button:hover {{ background: {NAVY_HOVER} !important; }}",
+]
 
 NAVY_CARD_CSS = f"""
     background:{NAVY};border-radius:10px;padding:16px;text-align:center;min-height:80px;

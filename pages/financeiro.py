@@ -9,7 +9,7 @@ from utils.design_tokens import (
     TEXT_PRIMARY, TEXT_SECONDARY,
 )
 from streamlit_extras.stylable_container import stylable_container
-from utils.ui import botao_excluir, input_moeda
+from utils.ui import botao_excluir, input_moeda, cartao_clicavel
 
 
 def _safe_float(val, default=0.0):
@@ -472,7 +472,7 @@ def show():
 
     col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
     with col_btn:
-        with stylable_container(key="gold_nova_transacao", css_styles=GOLD_BUTTON_CSS):
+        with stylable_container(key="gold_nova_transacao", css_styles=list(GOLD_BUTTON_CSS)):
             if st.button("Nova Transação", type="primary", use_container_width=True, key="btn_nova_transacao"):
                 st.session_state["fin_nova_transacao_open"] = not st.session_state["fin_nova_transacao_open"]
 
@@ -511,16 +511,13 @@ def show():
                     data_s = _fmt_date(row.get('data'))
                     val_f = fmt_brl(_safe_float(row.get('valor')))
 
-                    st.markdown(
+                    if cartao_clicavel(
                         f'<div class="kanban-card">'
                         f'<div class="kanban-card-title">{desc}</div>'
                         f'<div class="kanban-card-sub">{cat} · {data_s}</div>'
                         f'<div class="kanban-card-valor" style="color:{valor_cor};">{val_f}</div>'
                         f'</div>',
-                        unsafe_allow_html=True
-                    )
-
-                    if st.button("🔍 Ver Detalhes", key=f"fin_card_{col_idx}_{rid}", use_container_width=True):
+                        key=f"fin_card_{col_idx}_{rid}", rotulo=f"Abrir {desc}"):
                         st.session_state["fin_selecionada"] = rid
                         st.rerun()
 
