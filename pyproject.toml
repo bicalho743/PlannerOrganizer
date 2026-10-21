@@ -19,7 +19,7 @@ dependencies = [
     "reportlab>=4.3.0",
     "schedule>=1.2.2",
     "sqlalchemy>=2.0.38,<2.1",
-    "streamlit>=1.42.0",
+    "streamlit==1.66.0",
     "stripe>=11.5.0",
     "trafilatura>=2.0.0",
     "twilio>=9.4.4",

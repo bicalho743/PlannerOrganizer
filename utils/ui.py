@@ -6,36 +6,11 @@ irreversível (excluir/remover) nunca deve ter o mesmo peso visual das ações
 seguras — evita clique acidental. Fonte única para todas as páginas.
 """
 import streamlit as st
-from streamlit_extras.stylable_container import stylable_container
 
-# Botão destrutivo: fundo vermelho sólido e texto branco declarado aqui (o CSS global
-# não força mais branco em todo botão: o secundário é branco com texto escuro).
-# Discreto pelo tamanho pequeno + posição centralizada de quem chama.
-DESTRUCTIVE_BTN_CSS = """
-button, button * { color: #FFFFFF !important; }
-button {
-    background: #C0392B !important;
-    border: none !important;
-    box-shadow: none !important;
-    min-height: 0 !important;
-    padding: 8px 14px !important;
-}
-button:hover { background: #A93226 !important; }
-"""
-
-# Link "Fechar/Cancelar" discreto: fundo cinza, texto branco.
-CLOSE_LINK_CSS = """
-button, button * { color: #FFFFFF !important; }
-button {
-    background: #8B8680 !important;
-    border: none !important;
-    box-shadow: none !important;
-    min-height: 0 !important;
-    padding: 7px 14px !important;
-    font-size: 13px !important;
-}
-button:hover { background: #6B6660 !important; }
-"""
+# Botão destrutivo (vermelho) e link de fechar (cinza): o estilo fica em .streamlit/style.css,
+# preso ao container de cada um (classes st-key-del_* e st-key-close_*). Antes era passado ao
+# stylable_container, que só prefixava a PRIMEIRA regra do texto: as seguintes (hover, cor do
+# texto) valiam para todos os botões da página — e pintavam de vermelho as setas dos seletores.
 
 
 def botao_excluir(label, key, use_container_width=True, help=None, is_form=False):
@@ -51,7 +26,7 @@ def botao_excluir(label, key, use_container_width=True, help=None, is_form=False
     Returns:
         bool — True se clicado.
     """
-    with stylable_container(key=f"del_{key}", css_styles=DESTRUCTIVE_BTN_CSS):
+    with st.container(key=f"del_{key}"):
         if is_form:
             return st.form_submit_button(label, use_container_width=use_container_width, help=help)
         return st.button(label, key=key, use_container_width=use_container_width, help=help)
@@ -59,7 +34,7 @@ def botao_excluir(label, key, use_container_width=True, help=None, is_form=False
 
 def link_fechar(label, key, use_container_width=True):
     """Renderiza um link discreto de fechar/cancelar."""
-    with stylable_container(key=f"close_{key}", css_styles=CLOSE_LINK_CSS):
+    with st.container(key=f"close_{key}"):
         return st.button(label, key=key, use_container_width=use_container_width)
 
 
@@ -85,3 +60,18 @@ def input_moeda(label, key, value=0.0, step=100.0, help=None):
         return float(r) if r is not None else 0.0
     except (TypeError, ValueError):
         return 0.0
+
+
+def cartao_clicavel(html_cartao, key, rotulo="Abrir detalhes", selecionado=False):
+    """Cartão (HTML) que abre os detalhes ao ser clicado — no lugar do botão "Ver Detalhes"
+    embaixo de cada cartão. Por cima do cartão fica um botão transparente do tamanho dele
+    (CSS em .streamlit/style.css, classes st-key-kcard_*); o rótulo serve para leitor de tela.
+
+    Returns:
+        bool — True se clicado.
+    """
+    with st.container(key=f"kcard_{key}"):
+        if selecionado:
+            html_cartao = html_cartao.replace('class="kanban-card"', 'class="kanban-card selecionado"', 1)
+        st.markdown(html_cartao, unsafe_allow_html=True)
+        return st.button(rotulo, key=key, use_container_width=True)

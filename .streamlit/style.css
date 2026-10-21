@@ -449,6 +449,43 @@ div[data-testid="stDownloadButton"] * {
     border-bottom: none !important;
 }
 
+/* botões de excluir e de fechar (utils/ui.py: botao_excluir, link_fechar) */
+[class*="st-key-del_"] button[kind], [class*="st-key-del_"] button[data-testid] {
+    background: #C0392B !important; border: none !important; box-shadow: none !important;
+    min-height: 0 !important; padding: 8px 14px !important; color: #FFFFFF !important;
+}
+[class*="st-key-del_"] button[kind]:hover, [class*="st-key-del_"] button[data-testid]:hover { background: #A93226 !important; }
+[class*="st-key-close_"] button[kind], [class*="st-key-close_"] button[data-testid] {
+    background: #8B8680 !important; border: none !important; box-shadow: none !important;
+    min-height: 0 !important; padding: 7px 14px !important; font-size: 13px !important; color: #FFFFFF !important;
+}
+[class*="st-key-close_"] button[kind]:hover, [class*="st-key-close_"] button[data-testid]:hover { background: #6B6660 !important; }
+[class*="st-key-del_"] button *, [class*="st-key-close_"] button * { color: #FFFFFF !important; }
+
+/* ========================================
+   CARTÕES CLICÁVEIS (utils/ui.py: cartao_clicavel)
+   O botão do cartão fica invisível por cima dele: o cartão inteiro é o clique.
+   ======================================== */
+[class*="st-key-kcard_"] { position: relative; gap: 0 !important; }
+[class*="st-key-kcard_"] [data-testid="stElementContainer"]:has(.stButton) {
+    position: absolute !important; inset: 0 !important; z-index: 2; margin: 0 !important; height: auto !important;
+}
+/* seletores reforçados: algumas telas compactam os botões secundários (height:auto) */
+[class*="st-key-kcard_"] [data-testid="stElementContainer"] .stButton,
+[class*="st-key-kcard_"] [data-testid="stElementContainer"] .stButton > *,
+[class*="st-key-kcard_"] [data-testid="stElementContainer"] .stButton button[kind],
+[class*="st-key-kcard_"] [data-testid="stElementContainer"] .stButton button[data-testid] {
+    width: 100% !important; height: 100% !important; min-height: 0 !important; max-height: none !important;
+}
+[class*="st-key-kcard_"] [data-testid="stElementContainer"] .stButton button[kind],
+[class*="st-key-kcard_"] [data-testid="stElementContainer"] .stButton button[data-testid] {
+    opacity: 0 !important; cursor: pointer !important; padding: 0 !important; border: 0 !important;
+}
+[class*="st-key-kcard_"] .kanban-card { transition: border-color .12s ease, box-shadow .12s ease; cursor: pointer; }
+[class*="st-key-kcard_"]:hover .kanban-card { border-color: #98A2B3 !important; box-shadow: 0 2px 8px rgba(16,24,40,.08) !important; }
+[class*="st-key-kcard_"]:has(button:focus-visible) .kanban-card { outline: 2px solid var(--navy); outline-offset: 2px; }
+.kanban-card.selecionado { border-color: var(--navy) !important; box-shadow: inset 3px 0 0 var(--gold) !important; }
+
 /* ========================================
    KANBAN
    ======================================== */

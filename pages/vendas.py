@@ -5,7 +5,7 @@ from datetime import datetime
 import os
 from utils.custom_components import custom_info, custom_warning
 from streamlit_extras.stylable_container import stylable_container
-from utils.ui import botao_excluir
+from utils.ui import botao_excluir, cartao_clicavel
 from utils.design_tokens import (
     NAVY, NAVY_HOVER, GOLD, GOLD_BUTTON_CSS,
 )
@@ -312,17 +312,18 @@ def _render_detail_panel(venda_id, venda_row):
         if pdf_path and os.path.exists(pdf_path):
             with open(pdf_path, "rb") as f:
                 pdf_bytes = f.read()
-            _venda_css = (
+            # uma regra por item: o stylable_container só prefixa o começo de cada item
+            _venda_css = [
                 "button {"
                 f"background:{NAVY} !important;border-radius:10px !important;"
-                "padding:14px 24px !important;width:100%% !important;"
-                "border:1px solid transparent !important;transition:all 0.2s !important;}"
+                "padding:14px 24px !important;width:100% !important;"
+                "border:1px solid transparent !important;transition:all 0.2s !important;}",
                 "button:hover {"
                 f"background:{NAVY_HOVER} !important;transform:translateY(-2px) !important;"
-                "box-shadow:0 4px 12px rgba(0,0,0,0.3) !important;}"
-                "button p, button div {"
-                f"color:{GOLD} !important;font-weight:700 !important;font-size:13px !important;}}"
-            ).replace("%%", "%")
+                "box-shadow:0 4px 12px rgba(0,0,0,0.3) !important;}",
+                "button :is(p, div) {"
+                f"color:{GOLD} !important;font-weight:700 !important;font-size:13px !important;}}",
+            ]
             with stylable_container(key=f"dl_venda_{venda_id}", css_styles=_venda_css):
                 st.download_button(
                     label="📄 Baixar PDF da Venda",
@@ -524,7 +525,7 @@ def show():
 
     col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
     with col_btn:
-        with stylable_container(key="gold_nova_venda", css_styles=GOLD_BUTTON_CSS):
+        with stylable_container(key="gold_nova_venda", css_styles=list(GOLD_BUTTON_CSS)):
             if st.button("✚  Nova Venda", type="primary", use_container_width=True, key="btn_nova_venda_top"):
                 st.session_state["vendas_nova_venda_open"] = not st.session_state["vendas_nova_venda_open"]
                 if not st.session_state["vendas_nova_venda_open"]:
@@ -619,16 +620,13 @@ def show():
                     valor_f = html_module.escape(_fmt_brl(venda.get("valor_total", 0)))
                     sub_html = " · ".join(p for p in [pagamento, data_str] if p)
 
-                    st.markdown(
+                    if cartao_clicavel(
                         f'<div class="kanban-card">'
                         f'<div class="kanban-card-cliente">{cliente}</div>'
                         f'<div class="kanban-card-sub">{sub_html}</div>'
                         f'<div class="kanban-card-valor">{valor_f}</div>'
                         f'</div>',
-                        unsafe_allow_html=True
-                    )
-
-                    if st.button("🔍 Ver Detalhes", key=f"card_btn_{col_idx}_{vid}", use_container_width=True):
+                        key=f"card_btn_{col_idx}_{vid}", rotulo=f"Abrir venda de {cliente}"):
                         st.session_state["venda_selecionada"] = vid
                         st.rerun()
             else:

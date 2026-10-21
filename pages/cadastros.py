@@ -26,28 +26,30 @@ def show(modo="todos"):
     st.markdown(f'<h1 class="page-title">{titulo}</h1>', unsafe_allow_html=True)
 
     def _aba_clientes():
-        cliente_tab1, cliente_tab2 = st.tabs(["Cadastrar/Listar", "Importar"])
+        cliente_tab1, cliente_tab2 = st.tabs(["Clientes", "Importar planilha"])
         
         with cliente_tab1:
-            st.subheader("Cadastro de Clientes")
-            # Form de cadastro de cliente
-            with st.form("cadastro_cliente", clear_on_submit=True):
-                nome = st.text_input("Nome")
-                col1, col2 = st.columns(2)
-                with col1:
-                    telefone = st.text_input("Telefone")
-                    cpf = st.text_input("CPF")
-                    estado = st.selectbox("Estado (UF)", [""] + UFS_BRASIL)
-                    cidade = st.text_input("Cidade")
-                with col2:
-                    bairro = st.text_input("Bairro")
-                    endereco = st.text_input("Endereço")
-                    data_aniversario_dt = st.date_input("Data de Aniversário", value=None, format="DD/MM/YYYY")
-                    origem_cliente = st.selectbox("Origem do Cliente", ORIGENS_OFICIAIS,
-                                                  index=None, placeholder="Selecione a origem")
+            # A lista é o que se usa no dia a dia; o cadastro fica num bloco que abre quando precisa
+            _n_clientes = len(st.session_state.db.get_clientes())
+            with st.expander("Nova cliente", icon=":material/person_add:", expanded=_n_clientes == 0):
+                # Form de cadastro de cliente
+                with st.form("cadastro_cliente", clear_on_submit=True):
+                    nome = st.text_input("Nome")
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        telefone = st.text_input("Telefone")
+                        cpf = st.text_input("CPF")
+                        estado = st.selectbox("Estado (UF)", [""] + UFS_BRASIL)
+                        cidade = st.text_input("Cidade")
+                    with col2:
+                        bairro = st.text_input("Bairro")
+                        endereco = st.text_input("Endereço")
+                        data_aniversario_dt = st.date_input("Data de Aniversário", value=None, format="DD/MM/YYYY")
+                        origem_cliente = st.selectbox("Origem do Cliente", ORIGENS_OFICIAIS,
+                                                      index=None, placeholder="Selecione a origem")
 
-                observacoes = st.text_area("Observações")
-                submitted = st.form_submit_button("Cadastrar")
+                    observacoes = st.text_area("Observações")
+                    submitted = st.form_submit_button("Cadastrar cliente", type="primary")
 
             if submitted:
                 if not nome or not nome.strip():
@@ -77,12 +79,7 @@ def show(modo="todos"):
                     st.error(f"Erro ao cadastrar cliente: {str(e)}")
 
             # Lista de clientes
-            st.subheader("Lista de Clientes")
-            st.caption("Dica: role a tabela horizontalmente para ver todas as colunas (ex.: Endereco, Origem, Observacoes).")
             try:
-                # Botão para forçar atualização da lista
-                if st.button("🔄 Atualizar Lista", help="Clique para recarregar a lista de clientes"):
-                    st.rerun()
 
                 # Sempre busca dados frescos do banco (sem cache)
                 registros = st.session_state.db.get_clientes()
@@ -114,6 +111,14 @@ def show(modo="todos"):
                     df_display.columns = [rename[col] for col in colunas]
 
                     df_display = formatar_df_clientes(df_display)
+                    busca = st.text_input("Buscar cliente", key="busca_clientes", placeholder="Buscar por nome, telefone, cidade ou bairro",
+                                          label_visibility="collapsed")
+                    if busca.strip():
+                        termo = busca.strip().lower()
+                        achou = df_display[["Nome", "Telefone", "Cidade", "Bairro"]].astype(str).apply(
+                            lambda c: c.str.lower().str.contains(termo, regex=False)).any(axis=1)
+                        df_display = df_display[achou]
+                    st.caption(f"{len(df_display)} de {len(registros)} cliente(s) · role a tabela para o lado para ver todas as colunas")
                     tab_view, tab_multi_delete = st.tabs(["Visualizar/Editar", "Excluir Múltiplos"])
                     
                     with tab_view:
