@@ -23,6 +23,10 @@ from utils.proposta_status import (
 DATABASE_URL = os.getenv('DATABASE_URL')
 if DATABASE_URL is None:
     raise ValueError("DATABASE_URL environment variable is not set")
+# Valor colado no painel com espaço ou quebra de linha no fim vira parte do nome do banco
+# ("database ... does not exist"). Limpa aqui; os outros módulos leem de os.environ.
+DATABASE_URL = DATABASE_URL.strip()
+os.environ['DATABASE_URL'] = DATABASE_URL
 
 # Normaliza o esquema para o driver instalado (psycopg2-binary).
 # Evita ModuleNotFoundError quando a URL vem como postgresql+psycopg:// ou postgres://
