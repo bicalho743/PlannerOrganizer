@@ -63,7 +63,7 @@ _components.html("""
     '#mobile-sidebar-fab { display:none !important; }' +
     '#mobile-sidebar-overlay { display:none !important; }' +
     '@media screen and (max-width:768px) {' +
-    '  #mobile-sidebar-fab { display:flex !important; }' +
+    '  #mobile-sidebar-fab.aberto { display:flex !important; }' +
     '  #mobile-sidebar-overlay { display:block !important; }' +
     '}';
   doc.head.appendChild(style);
@@ -108,7 +108,9 @@ _components.html("""
       fab.style.borderColor = 'rgba(255,255,255,0.3)';
       fab.style.color = '#ffffff';
       overlay.classList.add('overlay-visible');
+      fab.classList.add('aberto');
     } else {
+      fab.classList.remove('aberto');
       fab.innerHTML = '\\u2630';
       fab.style.left = '14px';
       fab.style.background = '#0D1B2A';
@@ -153,15 +155,115 @@ _components.html("""
   initObserver();
 
   window.addEventListener('resize', function() { setTimeout(syncState, 200); });
+
+  // ── barra de baixo no celular: Início, Propostas, +, Financeiro, Menu ──
+  var ICONES = {
+    inicio: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+    propostas: '<path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+    financeiro: '<path d="M3 7a2 2 0 0 1 2-2h13v4"/><path d="M3 7v11a2 2 0 0 0 2 2h15V9H5a2 2 0 0 1-2-2z"/><circle cx="16" cy="14.5" r="1.3"/>',
+    menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+    mais: '<path d="M12 5v14M5 12h14"/>'
+  };
+  function svg(nome) {
+    return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+           'stroke-linecap="round" stroke-linejoin="round">' + ICONES[nome] + '</svg>';
+  }
+  var css = doc.createElement('style');
+  css.textContent =
+    '#barra-cel, #barra-cel-folha, #barra-cel-fundo { display:none; }' +
+    '@media screen and (max-width:768px) {' +
+    '  body.tem-barra #barra-cel { display:flex; }' +
+    '  body.tem-barra [data-testid="stMainBlockContainer"], body.tem-barra .block-container { padding-bottom: 96px !important; }' +
+    '  #barra-cel { position:fixed; left:0; right:0; bottom:0; z-index:999990; background:#fff; border-top:1px solid #E4E7EC;' +
+    '    height:64px; padding:0 6px env(safe-area-inset-bottom); box-shadow:0 -2px 10px rgba(16,24,40,.06); align-items:stretch; }' +
+    '  #barra-cel button { flex:1; border:0; background:none; color:#667085; font-family:inherit; font-size:11px; font-weight:600; line-height:1.1; display:flex;' +
+    '    flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:0; cursor:pointer; -webkit-tap-highlight-color:transparent; }' +
+    '  #barra-cel button.ativo { color:#0D1B2A; }' +
+    '  #barra-cel button.mais span.bola { width:46px; height:46px; border-radius:50%; background:#0D1B2A; color:#fff; display:flex;' +
+    '    align-items:center; justify-content:center; margin-top:-18px; box-shadow:0 4px 12px rgba(13,27,42,.3); }' +
+    '  #barra-cel-fundo.aberta { display:block; position:fixed; inset:0; background:rgba(16,24,40,.35); z-index:999991; }' +
+    '  #barra-cel-folha.aberta { display:block; position:fixed; left:12px; right:12px; bottom:76px; z-index:999992; background:#fff;' +
+    '    border-radius:14px; padding:8px; box-shadow:0 12px 32px rgba(16,24,40,.18); }' +
+    '  #barra-cel-folha button { display:flex; width:100%; align-items:center; gap:12px; border:0; background:none; padding:14px 12px;' +
+    '    border-radius:10px; font-family:inherit; font-size:15px; font-weight:600; color:#101828; text-align:left; cursor:pointer; }' +
+    '  #barra-cel-folha button:active { background:#F2F4F7; }' +
+    '  #barra-cel-folha small { display:block; font-weight:400; font-size:12px; color:#667085; margin-top:2px; }' +
+    '}';
+  doc.head.appendChild(css);
+
+  var barra = doc.createElement('nav');
+  barra.id = 'barra-cel';
+  barra.setAttribute('aria-label', 'Navegação');
+  var ABAS = [
+    {id: 'inicio', rot: 'Início', chave: 'main_menu_dashboard'},
+    {id: 'propostas', rot: 'Propostas', chave: 'main_menu_propostas'},
+    {id: 'mais', rot: 'Novo', chave: null},
+    {id: 'financeiro', rot: 'Financeiro', chave: 'main_menu_financeiro'},
+    {id: 'menu', rot: 'Menu', chave: null}
+  ];
+  ABAS.forEach(function(a) {
+    var b = doc.createElement('button');
+    b.type = 'button';
+    b.dataset.aba = a.id;
+    b.setAttribute('aria-label', a.rot);
+    if (a.id === 'mais') { b.className = 'mais'; b.innerHTML = '<span class="bola">' + svg('mais') + '</span>'; }
+    else { b.innerHTML = svg(a.id) + '<span>' + a.rot + '</span>'; }
+    b.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (a.id === 'mais') { alternarFolha(); return; }
+      fecharFolha();
+      if (a.id === 'menu') { if (!isOpen()) clickNativeBtn(); setTimeout(syncState, 100); return; }
+      clicarChave(a.chave);
+    });
+    barra.appendChild(b);
+  });
+  doc.body.appendChild(barra);
+
+  var fundo = doc.createElement('div');
+  fundo.id = 'barra-cel-fundo';
+  fundo.addEventListener('click', fecharFolha);
+  doc.body.appendChild(fundo);
+  var folha = doc.createElement('div');
+  folha.id = 'barra-cel-folha';
+  [['acao_nova_proposta', 'Nova proposta', 'Orçamento para uma cliente'],
+   ['acao_nova_cliente', 'Nova cliente', 'Nome e telefone já bastam'],
+   ['acao_novo_lancamento', 'Novo lançamento', 'Receita ou despesa no financeiro']].forEach(function(o) {
+    var b = doc.createElement('button');
+    b.type = 'button';
+    b.innerHTML = svg('mais') + '<span>' + o[1] + '<small>' + o[2] + '</small></span>';
+    b.addEventListener('click', function() { fecharFolha(); clicarChave(o[0]); });
+    folha.appendChild(b);
+  });
+  doc.body.appendChild(folha);
+
+  function alternarFolha() { var abrir = !folha.classList.contains('aberta'); folha.classList.toggle('aberta', abrir); fundo.classList.toggle('aberta', abrir); }
+  function fecharFolha() { folha.classList.remove('aberta'); fundo.classList.remove('aberta'); }
+  function clicarChave(chave) {
+    var b = doc.querySelector('.st-key-' + chave + ' button');
+    if (b) b.click();
+  }
+  var pendente = false;
+  function syncBarra() {
+    pendente = false;
+    var logado = !!doc.querySelector('.st-key-main_menu_dashboard');
+    doc.body.classList.toggle('tem-barra', logado);
+    ABAS.forEach(function(a) {
+      if (!a.chave) return;
+      var ativo = !!doc.querySelector('.st-key-' + a.chave + ' button[kind="primary"], .st-key-' + a.chave + ' [data-testid="stBaseButton-primary"]');
+      var el = barra.querySelector('[data-aba="' + a.id + '"]');
+      if (el) el.classList.toggle('ativo', ativo);
+    });
+  }
+  new MutationObserver(function() { if (!pendente) { pendente = true; setTimeout(syncBarra, 150); } })
+    .observe(doc.body, {childList: true, subtree: true});
+  syncBarra();
 })();
 </script>
 """, height=0)
 
 try:
     from utils.session_persistence import setup_session_persistence
-    from utils.auto_login import check_and_restore_auto_login
     setup_session_persistence()
-    check_and_restore_auto_login()
 except Exception as e:
     logger.warning(f"Erro ao configurar persistência de sessão: {str(e)}")
 
@@ -409,7 +511,7 @@ if not st.session_state.authenticated:
                             st.session_state.db = Database(usuario_id=result['user']['localId'])
                         st.session_state.authenticated = True
                         st.session_state.current_page = "Dashboard"
-                        st.success("✅ Login realizado com sucesso!")
+                        st.success("Login realizado com sucesso!")
                         st.rerun()
                     else:
                         st.error("E-mail ou senha incorretos.")
@@ -446,7 +548,7 @@ if not st.session_state.authenticated:
     # Footer
     st.markdown("""
       <div class="login-footer">
-        <a href="https://promo.plannerorganiza.com.br" target="_blank">← Voltar ao site</a>
+        <a href="https://promo.plannerorganiza.com.br" target="_blank">Voltar ao site</a>
         <span>·</span>
         <a href="?show_termos=true">Termos de uso</a>
         <span>·</span>
@@ -584,7 +686,7 @@ def _render_bloqueio_trial(perfil=None, uid=None):
           <div class='pw-ribbon'>MAIS POPULAR</div>
           <div class='pw-plan'>Anual</div>
           <div class='pw-price'>R$ 297 <span>/ano</span></div>
-          <div class='pw-save'>💰 Economize 2 meses</div>
+          <div class='pw-save'>Economize 2 meses</div>
           <ul class='pw-features'>
             <li>Propostas e clientes ilimitados</li>
             <li>Financeiro completo</li>
@@ -592,10 +694,10 @@ def _render_bloqueio_trial(perfil=None, uid=None):
             <li>Pós-organização</li>
             <li>Suporte prioritário</li>
           </ul>
-          <a class='pw-cta primary' href='{_url_anual}' target='_blank'>🚀 Assinar Anual</a>
+          <a class='pw-cta primary' href='{_url_anual}' target='_blank'>Assinar Anual</a>
         </div>
       </div>
-      <div class='pw-trust'>🔒 Pagamento seguro via Stripe · Cancele quando quiser · Dados sempre preservados</div>
+      <div class='pw-trust'>Pagamento seguro via Stripe · Cancele quando quiser · Dados sempre preservados</div>
       <div class='pw-manage'>Após assinar, atualize a página (a liberação pode levar alguns minutos).<br>
         Já é assinante? <a href='{STRIPE_PORTAL_LINK}' target='_blank'>Gerencie sua assinatura</a></div>
     </div>
@@ -677,7 +779,7 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
         ]),
         ("Conta", [
             ("Cadastros", "Cadastros", ":material/inventory_2:"),
-            ("Meu perfil", "Perfil", ":material/person:"),
+            ("Perfil e marca", "Perfil", ":material/palette:"),
             ("Plano e cobrança", "Plano", ":material/credit_card:"),
         ]),
     ]
@@ -691,6 +793,16 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
                                  type="primary" if _ativo else "secondary", use_container_width=True):
                 st.session_state.current_page = page
                 st.session_state.pop('_confirmar_logout', None)  # navegar cancela confirmação pendente
+                st.rerun()
+
+    # ações do botão "+" da barra de baixo no celular (botões escondidos, acionados pelo script da barra)
+    with st.sidebar.container(key="acoes_rapidas"):
+        for _chave, _pagina, _flag in (("acao_nova_proposta", "Propostas", "kanban_nova_proposta_open"),
+                                       ("acao_nova_cliente", "Clientes", "abrir_nova_cliente"),
+                                       ("acao_novo_lancamento", "Financeiro", "fin_nova_transacao_open")):
+            if st.button(_chave, key=_chave):
+                st.session_state.current_page = _pagina
+                st.session_state[_flag] = True
                 st.rerun()
 
     st.sidebar.markdown('<div class="sb-sep"></div>', unsafe_allow_html=True)

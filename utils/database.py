@@ -300,6 +300,8 @@ class Database:
                 conn.execute(_sa_text(
                     "ALTER TABLE propostas ADD COLUMN IF NOT EXISTS sinal DOUBLE PRECISION DEFAULT 0"
                 ))
+                conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS logo TEXT"))
+                conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS cnpj VARCHAR"))
         except Exception as e:
             print(f"[schema] ensure colunas extras: {e}")
 
@@ -535,6 +537,8 @@ class Database:
                     perfil.cor_principal = dados_perfil.get('cor_principal', perfil.cor_principal)
                     perfil.cor_secundaria = dados_perfil.get('cor_secundaria', perfil.cor_secundaria)
                     perfil.observacoes_relatorio = dados_perfil.get('observacoes_relatorio', perfil.observacoes_relatorio)
+                    perfil.logo = dados_perfil.get('logo', perfil.logo)
+                    perfil.cnpj = dados_perfil.get('cnpj', perfil.cnpj)
                     perfil.ultimo_login = datetime.now()
                 else:
                     # Criar novo perfil - precisa de email válido
@@ -556,6 +560,8 @@ class Database:
                         cor_principal=dados_perfil.get('cor_principal', ''),
                         cor_secundaria=dados_perfil.get('cor_secundaria', ''),
                         observacoes_relatorio=dados_perfil.get('observacoes_relatorio', ''),
+                        logo=dados_perfil.get('logo'),
+                        cnpj=dados_perfil.get('cnpj', ''),
                         ultimo_login=datetime.now()
                     )
                     self.session.add(perfil)
@@ -597,6 +603,8 @@ class Database:
                         'cor_principal': perfil.cor_principal,
                         'cor_secundaria': perfil.cor_secundaria,
                         'observacoes_relatorio': perfil.observacoes_relatorio,
+                        'logo': perfil.logo,
+                        'cnpj': perfil.cnpj,
                         'role': perfil.role,
                         'plano': perfil.plano,
                         'data_cadastro': perfil.data_cadastro,

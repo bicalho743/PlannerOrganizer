@@ -191,7 +191,7 @@ def _view_lista(templates):
             label_visibility="collapsed"
         )
     with f2:
-        if st.button("🔄 Atualizar", key="btn_refresh_pos", use_container_width=True):
+        if st.button("Atualizar", key="btn_refresh_pos", use_container_width=True):
             st.rerun()
 
     status_filter = None if filtro_status == "Todos" else filtro_status
@@ -211,7 +211,7 @@ def _view_lista(templates):
             emoji, nome_acao, _, _, _, _, _ = get_template(templates, row['proxima_acao'])
             proxima = f"{emoji} {nome_acao} &nbsp;·&nbsp; 📅 {formatar_data_br(row['proxima_acao_data'])}"
         else:
-            proxima = "✅ Todas as ações concluídas"
+            proxima = "Todas as ações concluídas"
 
         col_card, col_btn = st.columns([5, 1])
         with col_card:
@@ -219,7 +219,7 @@ def _view_lista(templates):
             <div class="po-card {extra}">
                 <div class="po-card-header">
                     <div>
-                        <p class="po-cliente">👤 {row['cliente_nome']}</p>
+                        <p class="po-cliente">{row['cliente_nome']}</p>
                         <p class="po-proposta">Proposta #{row['proposta_numero']}</p>
                     </div>
                     <span class="po-badge {badge_cls}">{badge_txt}</span>
@@ -229,7 +229,7 @@ def _view_lista(templates):
             """, unsafe_allow_html=True)
         with col_btn:
             st.markdown("<div style='margin-top:10px'></div>", unsafe_allow_html=True)
-            if st.button("🔍 Ver", key=f"btn_det_{row['id']}", use_container_width=True):
+            if st.button("Ver", key=f"btn_det_{row['id']}", use_container_width=True):
                 _abrir_detalhes(row)
                 st.rerun()
 
@@ -242,7 +242,7 @@ def _view_detalhes(templates):
     # Header
     st.markdown(f"""
     <div class="po-detalhe-header">
-        <h3>👤 {cliente_nome}</h3>
+        <h3>{cliente_nome}</h3>
         <p>Proposta #{proposta_numero} &nbsp;·&nbsp; Ações de Acompanhamento Pós-Serviço</p>
     </div>
     """, unsafe_allow_html=True)
@@ -283,12 +283,12 @@ def _view_detalhes(templates):
 
         wrap_cls = "po-acao-wrap-feito" if is_feito else ("po-acao-wrap-cancelado" if is_cancelado else "")
         pill_cls = "po-pill-feito" if is_feito else ("po-pill-cancelado" if is_cancelado else "po-pill-pendente")
-        pill_txt = "✓ Feito" if is_feito else ("✕ Cancelado" if is_cancelado else "⏳ Pendente")
+        pill_txt = "Feito" if is_feito else ("Cancelado" if is_cancelado else "Pendente")
 
         dias_badge = f"<span style='background:#e2e8f0;color:#475569;padding:2px 8px;border-radius:10px;font-size:0.68rem;font-weight:700;margin-left:6px;'>D+{dias_apos}</span>" if dias_apos else ""
         objetivo_html = f"<p style='font-size:0.75rem;color:#94a3b8;margin:2px 0 0 0;font-style:italic;'>{objetivo}</p>" if objetivo else ""
 
-        st.markdown(f'<div class="po-acao-wrap {wrap_cls}"><div class="po-acao-header"><span style="font-size:1.2rem">{emoji}</span><p class="po-acao-title">{nome_acao}</p>{dias_badge}<span class="po-pill {pill_cls}">{pill_txt}</span></div>{objetivo_html}<p class="po-acao-date">📅 Prevista para {formatar_data_br(acao["due_date"])}</p></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="po-acao-wrap {wrap_cls}"><div class="po-acao-header"><span style="font-size:1.2rem">{emoji}</span><p class="po-acao-title">{nome_acao}</p>{dias_badge}<span class="po-pill {pill_cls}">{pill_txt}</span></div>{objetivo_html}<p class="po-acao-date">Prevista para {formatar_data_br(acao["due_date"])}</p></div>', unsafe_allow_html=True)
 
         col_check, col_obs, col_sug, col_wa = st.columns([1, 2, 0.5, 1])
 
@@ -324,10 +324,10 @@ def _view_detalhes(templates):
                 st.markdown(whatsapp_button_html(wa_url), unsafe_allow_html=True)
 
         if hint and st.session_state.get(f"mostrar_hint_{acao['id']}", False):
-            st.markdown(f"<p style='font-size:0.78rem;color:#64748b;background:#fef9c3;padding:8px 12px;border-radius:8px;margin:4px 0;'>💛 {hint}</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='font-size:0.78rem;color:#64748b;background:#fef9c3;padding:8px 12px;border-radius:8px;margin:4px 0;'>{hint}</p>", unsafe_allow_html=True)
 
         if st.session_state.get(f"mostrar_sug_{acao['id']}", False):
-            gratuito_badge = " <span style='background:#d4edda;color:#155724;padding:1px 6px;border-radius:8px;font-size:0.65rem;font-weight:700;'>✦ Gratuito</span>" if gratuito else ""
+            gratuito_badge = " <span style='background:#d4edda;color:#155724;padding:1px 6px;border-radius:8px;font-size:0.65rem;font-weight:700;'>Gratuito</span>" if gratuito else ""
             st.markdown(f"<div style='background:#f0f4ff;border-left:3px solid #6366f1;padding:10px 14px;border-radius:0 8px 8px 0;margin:4px 0;font-size:0.82rem;color:#334155;'><strong>{emoji} {nome_acao}{gratuito_badge}</strong><br>{msg_personalizada}</div>", unsafe_allow_html=True)
 
         # Salvar mudanças
@@ -351,17 +351,17 @@ def _view_detalhes(templates):
         st.markdown("---")
         st.markdown("""
         <div style='background:#faf9f7;border:1px solid #E8D5A3;border-radius:10px;padding:14px 18px;margin-bottom:12px;'>
-            <p style='font-weight:700;color:#0D1B2A;margin:0 0 4px 0;'>🔄 Retorno Técnico Necessário?</p>
+            <p style='font-weight:700;color:#0D1B2A;margin:0 0 4px 0;'>Retorno Técnico Necessário?</p>
             <p style='font-size:0.85rem;color:#0D1B2A;margin:0;'>O acompanhamento foi concluído. Há necessidade de ajuste ou visita técnica?</p>
         </div>
         """, unsafe_allow_html=True)
 
         c1, c2, _ = st.columns([1.5, 1.5, 4])
         with c1:
-            if st.button("✅ Sim, agendar", key="btn_sim_retorno", use_container_width=True):
+            if st.button("Sim, agendar", key="btn_sim_retorno", use_container_width=True):
                 st.session_state.agendar_retorno = True
         with c2:
-            if st.button("❌ Não precisa", key="btn_nao_retorno", use_container_width=True):
+            if st.button("Não precisa", key="btn_nao_retorno", use_container_width=True):
                 st.session_state.show_retorno_tecnico_modal = False
                 st.rerun()
 
@@ -380,7 +380,7 @@ def _view_detalhes(templates):
                 )
             with col_b:
                 st.markdown("<div style='margin-top:28px'></div>", unsafe_allow_html=True)
-                if st.button("💾 Confirmar", key="btn_confirmar_retorno", use_container_width=True, type="primary"):
+                if st.button("Confirmar", key="btn_confirmar_retorno", use_container_width=True, type="primary"):
                     result = st.session_state.db.add_retorno_tecnico_action(
                         post_organization_id=pos_org_id,
                         due_date=data_retorno
@@ -402,7 +402,7 @@ def show():
         return
 
     st.markdown(CSS, unsafe_allow_html=True)
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Pós-Organização</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="page-title">Pós-organização</h1>', unsafe_allow_html=True)
     _init_state()
 
     # Carrega templates uma vez
