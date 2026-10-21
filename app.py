@@ -36,8 +36,6 @@ if "show_termos" not in st.session_state:
     st.session_state.show_termos = False
 if "show_politica" not in st.session_state:
     st.session_state.show_politica = False
-if "show_planos" not in st.session_state:
-    st.session_state.show_planos = False
 if "show_enviar_manual" not in st.session_state:
     st.session_state.show_enviar_manual = False
 if "show_debug_propostas_finalizadas" not in st.session_state:
@@ -655,6 +653,15 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
         '<div class="sb-marca"><div class="sb-logo">Planner Organizer</div>'
         + (f'<div class="sb-conta">{_empresa_menu or _nome_menu}</div>' if (_empresa_menu or _nome_menu) else '')
         + '</div>', unsafe_allow_html=True)
+    # teste grátis: quantos dias faltam, sempre à vista, com o caminho para assinar
+    try:
+        from utils.trial import is_pro as _is_pro_menu, dias_restantes_trial as _dias_menu
+        if _perfil_menu and not _is_pro_menu(_perfil_menu):
+            _d = _dias_menu(_perfil_menu)
+            st.sidebar.markdown(f'<div class="sb-trial">Teste grátis · <b>{_d} dia{"s" if _d != 1 else ""}</b> restante{"s" if _d != 1 else ""}</div>',
+                                unsafe_allow_html=True)
+    except Exception:
+        pass
 
     MENU_PRINCIPAL = [
         (None, [("Início", "Dashboard", ":material/home:")]),
@@ -671,10 +678,9 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
         ("Conta", [
             ("Cadastros", "Cadastros", ":material/inventory_2:"),
             ("Meu perfil", "Perfil", ":material/person:"),
+            ("Plano e cobrança", "Plano", ":material/credit_card:"),
         ]),
     ]
-    if st.session_state.get('autenticado', False) and getattr(st.session_state.get('usuario', None), 'tipo', '') == 'admin':
-        MENU_PRINCIPAL[-1][1].append(("Administração", "Admin", ":material/admin_panel_settings:"))
 
     for _grupo, _itens in MENU_PRINCIPAL:
         if _grupo:
@@ -753,9 +759,8 @@ try:
         from pages.relatorios import show; show()
     elif st.session_state.current_page == "Perfil":
         from pages.perfil import show; show()
-    elif st.session_state.current_page == "Admin":
-        st.title("Administração")
-        st.info("Módulo de administração em desenvolvimento.")
+    elif st.session_state.current_page == "Plano":
+        from pages.plano import show; show()
 except Exception as e:
     st.error(f"Erro ao carregar página: {str(e)}")
 

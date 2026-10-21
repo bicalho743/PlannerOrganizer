@@ -37,3 +37,4 @@ streamlit-extras
 fastapi
 uvicorn
 pytest
+httpx  # usado pelo TestClient do FastAPI nos testes
