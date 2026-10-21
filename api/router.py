@@ -494,8 +494,9 @@ async def get_vendas(uid: str = Depends(verify_firebase_token)):
         db = get_db(uid)
         vendas = db.get_vendas()
         records = safe_records(vendas)
-        total_pago = sum(float(r.get('valor_total', 0) or 0) for r in records if str(r.get('status', '')).lower() in ['confirmada', 'pago', 'concluida'])
-        total_pendente = sum(float(r.get('valor_total', 0) or 0) for r in records if str(r.get('status', '')).lower() in ['pendente', 'aberto'])
+        # pelo Financeiro de cada venda (get_vendas): o que já entrou e o que falta receber
+        total_pago = sum(float(r.get('recebido', 0) or 0) for r in records if r.get('situacao') != 'Cancelada')
+        total_pendente = sum(float(r.get('a_receber', 0) or 0) for r in records)
         return JSONResponse(content={
             "vendas": records,
             "total_pago": round(total_pago, 2),

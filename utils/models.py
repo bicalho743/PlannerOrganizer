@@ -426,6 +426,10 @@ class ItemVenda(Base):
     subtotal = Column(Float, nullable=False)
     descricao = Column(String(255), nullable=True)  # Campo para armazenar o nome do produto
     usuario_id = Column(String(255), nullable=True)  # Campo para multi-tenant
+    # custo do produto no dia da venda: o lucro da venda não muda se o custo do produto mudar depois
+    custo_unitario = Column(Float, nullable=True)
+    # se a venda baixou o estoque deste item (False quando faltava estoque); só o que foi baixado volta ao estoque
+    baixou_estoque = Column(Boolean, nullable=True)
     
     # Relacionamentos
     venda = relationship("Venda", back_populates="itens")

@@ -302,6 +302,8 @@ class Database:
                 ))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS logo TEXT"))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS cnpj VARCHAR"))
+                conn.execute(_sa_text("ALTER TABLE itens_venda ADD COLUMN IF NOT EXISTS custo_unitario DOUBLE PRECISION"))
+                conn.execute(_sa_text("ALTER TABLE itens_venda ADD COLUMN IF NOT EXISTS baixou_estoque BOOLEAN"))
         except Exception as e:
             print(f"[schema] ensure colunas extras: {e}")
 
@@ -4434,6 +4436,7 @@ class Database:
                     # Se não existir transação, criar uma nova
                     if not transacao_existente:
                         transacao = Transacao(
+                            usuario_id=self.usuario_id,
                             tipo="receita",
                             descricao=f"Pagamento do valor base da proposta #{proposta.numero} - {proposta.descricao}",
                             valor=proposta.valor,
@@ -4475,6 +4478,7 @@ class Database:
                 usuario_id=self.usuario_id  # Adicionar o ID do usuário atual
             )
             self.session.add(produto)
+            self.session.flush()   # sem flush o id ainda é None
             return produto.id
         return self._safe_query(query)
 
@@ -4560,159 +4564,291 @@ class Database:
         return self._safe_query(query)
 
     # Métodos para gerenciamento de vendas
-    def add_venda(self, cliente_id, itens, forma_pagamento=None, observacoes=None, data_venda=None):
+    # ── vendas: estoque, Financeiro e custo andam juntos ────────────────────────────
+    # Regras (testadas em tests/test_vendas_integ.py):
+    # - venda recebida na hora = receita "Recebido" na data da venda; a receber = entrada recebida + parcelas pendentes;
+    # - o Financeiro da venda sempre soma o total da venda: editar itens gera complemento a receber ou devolução;
+    # - o estoque só baixa se houver saldo, e só volta ao estoque o que foi baixado;
+    # - o custo do produto no dia da venda fica gravado no item.
+    CATEGORIA_VENDA = "Vendas"
+    CATEGORIA_DEVOLUCAO = "Devolução de venda"
+
+    @staticmethod
+    def _somar_meses(d, n):
+        import calendar as _cal
+        t = d.year * 12 + (d.month - 1) + n
+        a, m = t // 12, t % 12 + 1
+        return d.replace(year=a, month=m, day=min(d.day, _cal.monthrange(a, m)[1]))
+
+    def _baixar_estoque(self, produto, quantidade):
+        """Baixa o estoque se houver saldo. Devolve True se baixou."""
+        if produto is None or produto.estoque is None:
+            return False
+        if produto.estoque >= quantidade:
+            produto.estoque -= quantidade
+            return True
+        return False
+
+    def _devolver_estoque(self, item, quantidade=None):
+        """Devolve ao estoque o que o item baixou (itens antigos, sem essa informação, contam como baixados)."""
+        if item.baixou_estoque is False or item.produto is None or item.produto.estoque is None:
+            return
+        item.produto.estoque += item.quantidade if quantidade is None else quantidade
+
+    def _transacoes_venda(self, venda_id):
+        q = self.session.query(Transacao).filter(Transacao.origem_id == venda_id, Transacao.origem_tipo == 'venda')
+        if self.usuario_id:
+            q = q.filter(Transacao.usuario_id == self.usuario_id)
+        return q.order_by(Transacao.id).all()
+
+    def _nova_transacao_venda(self, venda, descricao, valor, realizada, data, tipo="receita", categoria=None):
+        receita = tipo == "receita"
+        t = Transacao(
+            tipo=tipo, descricao=descricao, valor=round(float(valor), 2),
+            categoria=categoria or self.CATEGORIA_VENDA, tipo_receita="Venda" if receita else None,
+            origem_id=venda.id, origem_tipo="venda", proposta_id=venda.proposta_id, tipo_conta="PF",
+            status=("Recebido" if receita else "Pago") if realizada else "Pendente",
+            data=data, data_recebimento=data if realizada else None,
+            classificacao=("receita" if realizada else "contas_a_receber") if receita else "contas_a_pagar",
+            usuario_id=self.usuario_id or venda.usuario_id,
+        )
+        self.session.add(t)
+        return t
+
+    def _lancar_receitas_venda(self, venda, descricao, recebido=True, entrada=0.0, parcelas=1, primeiro_vencimento=None):
+        """Receita da venda no Financeiro: recebida na data da venda, ou entrada + parcelas mensais a receber."""
+        total = round(float(venda.valor_total or 0), 2)
+        if total <= 0:
+            return
+        dia = venda.data_venda or datetime.now().date()
+        if recebido:
+            self._nova_transacao_venda(venda, descricao, total, True, dia)
+            return
+        entrada = round(min(max(float(entrada or 0), 0.0), total), 2)
+        if entrada > 0:
+            self._nova_transacao_venda(venda, f"{descricao} (entrada)", entrada, True, dia)
+        resto = round(total - entrada, 2)
+        if resto <= 0:
+            return
+        n = max(1, int(parcelas or 1))
+        base = primeiro_vencimento or dia
+        valor = round(resto / n, 2)
+        for i in range(n):
+            v = valor if i < n - 1 else round(resto - valor * (n - 1), 2)
+            rot = f" (parcela {i + 1}/{n})" if n > 1 else " (a receber)"
+            self._nova_transacao_venda(venda, descricao + rot, v, False, self._somar_meses(base, i))
+
+    def _sincronizar_financeiro_venda(self, venda):
+        """Depois de editar itens: faz o Financeiro da venda somar o total da venda.
+
+        Aumentou: soma no que falta receber (ou cria um complemento a receber). Diminuiu: tira do que falta
+        receber e, se a cliente já pagou mais do que o novo total, lança a devolução a pagar."""
+        if venda is None or venda.status == 'Cancelada':
+            return
+        ts = [t for t in self._transacoes_venda(venda.id)
+              if t.status != 'Cancelado' and t.categoria in (self.CATEGORIA_VENDA, self.CATEGORIA_DEVOLUCAO)]
+        atual = sum((t.valor or 0) if str(t.tipo).startswith('receita') else -(t.valor or 0) for t in ts)
+        diff = round(float(venda.valor_total or 0) - atual, 2)
+        if abs(diff) < 0.005:
+            return
+        hoje = datetime.now().date()
+        pend = sorted([t for t in ts if t.status == 'Pendente' and str(t.tipo).startswith('receita')],
+                      key=lambda t: (t.data or hoje, t.id))
+        dev_pend = [t for t in ts if t.status == 'Pendente' and t.tipo == 'despesa']
+        if diff > 0:
+            for d in dev_pend:   # primeiro desfaz devolução ainda não paga
+                usa = min(d.valor or 0, diff)
+                d.valor, diff = round((d.valor or 0) - usa, 2), round(diff - usa, 2)
+                if d.valor <= 0.004:
+                    d.status = 'Cancelado'
+                if diff <= 0.004:
+                    return
+            if pend:
+                pend[-1].valor = round((pend[-1].valor or 0) + diff, 2)
+            else:
+                self._nova_transacao_venda(venda, f"Venda #{venda.id} (complemento a receber)", diff, False, hoje)
+        else:
+            falta = -diff
+            for t in reversed(pend):
+                usa = min(t.valor or 0, falta)
+                t.valor, falta = round((t.valor or 0) - usa, 2), round(falta - usa, 2)
+                if t.valor <= 0.004:
+                    t.status = 'Cancelado'
+                if falta <= 0.004:
+                    break
+            if falta > 0.004:
+                if dev_pend:
+                    dev_pend[-1].valor = round((dev_pend[-1].valor or 0) + falta, 2)
+                else:
+                    self._nova_transacao_venda(venda, f"Devolução à cliente — venda #{venda.id}", falta, False, hoje,
+                                               tipo="despesa", categoria=self.CATEGORIA_DEVOLUCAO)
+
+    def _cancelar(self, venda, devolver_recebido=True):
+        venda.status = 'Cancelada'
+        for item in venda.itens:
+            self._devolver_estoque(item)
+            item.baixou_estoque = False          # já voltou ao estoque: excluir depois não devolve de novo
+        ts = self._transacoes_venda(venda.id)
+        for t in ts:
+            if t.status == 'Pendente':
+                t.status = 'Cancelado'
+        recebido = round(sum((t.valor or 0) for t in ts if t.status == 'Recebido' and t.categoria == self.CATEGORIA_VENDA)
+                         - sum((t.valor or 0) for t in ts if t.status == 'Pago' and t.categoria == self.CATEGORIA_DEVOLUCAO), 2)
+        if devolver_recebido and recebido > 0.004:
+            self._nova_transacao_venda(venda, f"Devolução à cliente — venda #{venda.id} cancelada", recebido, False,
+                                       datetime.now().date(), tipo="despesa", categoria=self.CATEGORIA_DEVOLUCAO)
+
+    def _venda_do_usuario(self, venda_id):
+        q = self.session.query(Venda).filter(Venda.id == venda_id)
+        if self.usuario_id:
+            q = q.filter(Venda.usuario_id == self.usuario_id)
+        return q.first()
+
+    def _novo_item(self, venda, produto_id, quantidade, preco_unitario=None, descricao=None):
+        produto = self.session.query(Produto).filter_by(id=produto_id).first() if produto_id else None
+        quantidade = int(quantidade or 1) or 1
+        if preco_unitario is None:
+            preco_unitario = produto.preco_venda if produto else 0
+        preco_unitario = float(preco_unitario or 0)
+        item = ItemVenda(
+            venda_id=venda.id, produto_id=produto_id,
+            # o nome fica gravado para o relatório não cair em "Produto não identificado" se o produto sumir
+            descricao=(descricao or (produto.nome if produto else '') or ''),
+            quantidade=quantidade, preco_unitario=preco_unitario, subtotal=round(preco_unitario * quantidade, 2),
+            custo_unitario=(float(produto.preco_custo) if produto and produto.preco_custo is not None else None),
+            baixou_estoque=(self._baixar_estoque(produto, quantidade) if produto else None),
+            usuario_id=self.usuario_id or venda.usuario_id,
+        )
+        self.session.add(item)
+        return item
+
+    def add_venda(self, cliente_id, itens, forma_pagamento=None, observacoes=None, data_venda=None,
+                  recebido=True, entrada=0.0, parcelas=1, primeiro_vencimento=None):
         """
-        Adiciona uma nova venda
+        Registra uma venda de produtos.
 
         Args:
-            cliente_id: ID do cliente
-            itens: Lista de dicionários com produto_id, quantidade e preco_unitario
-            forma_pagamento: Forma de pagamento
-            observacoes: Observações sobre a venda
+            itens: lista de dicts com produto_id, quantidade, preco_unitario (opcional) e descricao (opcional)
+            recebido: True = pago na hora (receita "Recebido" na data da venda); False = a receber
+            entrada: com recebido=False, valor já recebido na data da venda
+            parcelas / primeiro_vencimento: com recebido=False, o restante em parcelas mensais
 
         Returns:
             ID da venda criada
         """
         def query():
-            # Calcular valor total
-            valor_total = 0
-
             venda = Venda(
-                cliente_id=cliente_id,
-                valor_total=0,  # Será atualizado após adicionar os itens
-                forma_pagamento=forma_pagamento,
-                observacoes=observacoes,
-                data_venda=data_venda if data_venda else datetime.now().date(),
-                usuario_id=self.usuario_id  # Adicionar o ID do usuário atual
+                cliente_id=cliente_id, valor_total=0, status="Concluída", forma_pagamento=forma_pagamento,
+                observacoes=observacoes, data_venda=data_venda if data_venda else datetime.now().date(),
+                usuario_id=self.usuario_id,
             )
             self.session.add(venda)
-            self.session.flush()  # Para obter o ID da venda
-
-            # Adicionar itens
-            for item in itens:
-                produto_id = item.get('produto_id')
-                quantidade = item.get('quantidade', 1) or 1
-
-                produto = self.session.query(Produto).filter_by(id=produto_id).first() if produto_id else None
-
-                # Nome do produto: relação OU descrição/nome enviados pelo cliente.
-                # Grava-se a descrição para o relatório nunca cair em "Produto não
-                # identificado" caso o vínculo com o produto se perca.
-                descricao = (item.get('descricao') or item.get('produto_nome')
-                             or (produto.nome if produto else '') or '')
-
-                # Baixa de estoque só quando o produto existe e há saldo (não
-                # bloqueia a venda se o produto foi removido).
-                if produto is not None and getattr(produto, 'estoque', None) is not None:
-                    if produto.estoque >= quantidade:
-                        produto.estoque -= quantidade
-
-                preco_unitario = item.get('preco_unitario')
-                if preco_unitario is None:
-                    preco_unitario = produto.preco_venda if produto else 0
-                preco_unitario = float(preco_unitario or 0)
-                subtotal = preco_unitario * quantidade
-
-                item_venda = ItemVenda(
-                    venda_id=venda.id,
-                    produto_id=produto_id,
-                    descricao=descricao,
-                    quantidade=quantidade,
-                    preco_unitario=preco_unitario,
-                    subtotal=subtotal
-                )
-                self.session.add(item_venda)
-
-                # Atualizar valor total
-                valor_total += subtotal
-
-            # Atualizar valor total da venda
-            venda.valor_total = valor_total
-
-            # Registrar transação financeira
+            self.session.flush()   # id da venda para os itens
+            total = 0.0
+            for it in (itens or []):
+                item = self._novo_item(venda, it.get('produto_id'), it.get('quantidade', 1), it.get('preco_unitario'),
+                                       it.get('descricao') or it.get('produto_nome'))
+                total += item.subtotal
+            venda.valor_total = round(total, 2)
             cliente = self.session.query(Cliente).filter_by(id=cliente_id).first()
             descricao = f"Venda para {cliente.nome}" if cliente else "Venda"
-
-            self.add_transacao(
-                tipo="receita",
-                descricao=descricao,
-                valor=valor_total,
-                categoria="Vendas",
-                origem_id=venda.id,
-                origem_tipo="venda"
-            )
-
+            self._lancar_receitas_venda(venda, descricao, recebido, entrada, parcelas, primeiro_vencimento)
+            self.session.flush()
             return venda.id
-        return self._safe_query(query)
+        resultado = self._safe_query(query)
+        self.invalidar_cache()
+        return resultado
 
     def get_vendas(self):
-        """Retorna todas as vendas realizadas do usuário atual"""
-        def query():
-            # Criar consulta base
-            query = self.session.query(Venda)
+        """Vendas do usuário com a situação do pagamento e o lucro.
 
-            # Adicionar filtro por usuário se disponível
+        Colunas calculadas: recebido, a_receber (pelo Financeiro da venda), custo (custo gravado no item; itens
+        antigos usam o custo atual do produto), lucro, margem e situacao ('Paga', 'A receber' ou 'Cancelada')."""
+        def query():
+            query = self.session.query(Venda)
             if self.usuario_id:
                 query = query.filter(Venda.usuario_id == self.usuario_id)
-
-            # Executar consulta ordenada
             vendas = query.order_by(Venda.data_venda.desc()).all()
-
-            return pd.DataFrame([{
-                'id': v.id,
-                'cliente_id': v.cliente_id,
-                'cliente_nome': v.cliente.nome if v.cliente else "Cliente não encontrado",
-                'valor_total': v.valor_total,
-                'data_venda': v.data_venda,
-                'status': v.status,
-                'forma_pagamento': v.forma_pagamento,
-                'observacoes': v.observacoes,
-                'usuario_id': v.usuario_id,
-                'proposta_id': v.proposta_id,
-                'proposta_numero': (v.proposta.numero if v.proposta else None),
-                'proposta_descricao': (v.proposta.descricao if v.proposta and v.proposta.descricao else None),
-            } for v in vendas])
+            ids = [v.id for v in vendas]
+            fin = {}
+            if ids:
+                qt = self.session.query(Transacao).filter(Transacao.origem_tipo == 'venda', Transacao.origem_id.in_(ids))
+                if self.usuario_id:
+                    qt = qt.filter(Transacao.usuario_id == self.usuario_id)
+                for t in qt.all():
+                    if t.categoria not in (self.CATEGORIA_VENDA, self.CATEGORIA_DEVOLUCAO):
+                        continue   # comissões de fornecedor não são pagamento da venda
+                    o = fin.setdefault(t.origem_id, {"recebido": 0.0, "a_receber": 0.0})
+                    v = float(t.valor or 0)
+                    if str(t.tipo).startswith('receita'):
+                        if t.status == 'Recebido':
+                            o["recebido"] += v
+                        elif t.status == 'Pendente':
+                            o["a_receber"] += v
+                    elif t.status == 'Pago':
+                        o["recebido"] -= v
+            linhas = []
+            for v in vendas:
+                custo, estimado = 0.0, False
+                for i in v.itens:
+                    cu = i.custo_unitario
+                    if cu is None:
+                        cu = i.produto.preco_custo if i.produto and i.produto.preco_custo is not None else None
+                        estimado = True
+                    custo += (cu or 0) * (i.quantidade or 0)
+                f = fin.get(v.id, {"recebido": 0.0, "a_receber": 0.0})
+                total = float(v.valor_total or 0)
+                cancelada = v.status == 'Cancelada'
+                linhas.append({
+                    'id': v.id,
+                    'cliente_id': v.cliente_id,
+                    'cliente_nome': v.cliente.nome if v.cliente else "Cliente não encontrado",
+                    'valor_total': v.valor_total,
+                    'data_venda': v.data_venda,
+                    'status': v.status,
+                    'forma_pagamento': v.forma_pagamento,
+                    'observacoes': v.observacoes,
+                    'usuario_id': v.usuario_id,
+                    'proposta_id': v.proposta_id,
+                    'proposta_numero': (v.proposta.numero if v.proposta else None),
+                    'proposta_descricao': (v.proposta.descricao if v.proposta and v.proposta.descricao else None),
+                    'recebido': round(f["recebido"], 2),
+                    'a_receber': 0.0 if cancelada else round(f["a_receber"], 2),
+                    'custo': round(custo, 2),
+                    'custo_estimado': estimado,
+                    'lucro': round(total - custo, 2),
+                    'margem': round((total - custo) / total, 4) if total else None,
+                    'situacao': 'Cancelada' if cancelada else ('A receber' if f["a_receber"] > 0.004 else 'Paga'),
+                })
+            return pd.DataFrame(linhas)
         return self._safe_query(query)
 
     def get_itens_venda(self, venda_id):
-        """Retorna os itens de uma venda específica"""
+        """Itens de uma venda, com o custo gravado na venda e o lucro do item (None se o custo é desconhecido)."""
         def query():
-            # Fazer join explícito com produtos para garantir que os nomes sejam carregados
-            itens = self.session.query(ItemVenda).join(Produto, ItemVenda.produto_id == Produto.id, isouter=True).filter(ItemVenda.venda_id == venda_id).all()
-
+            itens = (self.session.query(ItemVenda).join(Produto, ItemVenda.produto_id == Produto.id, isouter=True)
+                     .filter(ItemVenda.venda_id == venda_id).order_by(ItemVenda.id).all())
             dados_itens = []
             for i in itens:
-                # Priorizar o nome do produto relacionado, depois a descrição
                 produto_nome = 'Produto não identificado'
-                if i.produto and hasattr(i.produto, 'nome') and i.produto.nome:
+                if i.produto and getattr(i.produto, 'nome', None):
                     produto_nome = i.produto.nome
                 elif i.descricao and i.descricao.strip():
                     produto_nome = i.descricao
-
-                if i.produto:
-                    pass
-
-                # Calcular lucro usando custo real ou estimativa de 40% de margem
-                preco_custo = 0
-                if i.produto and hasattr(i.produto, 'preco_custo') and i.produto.preco_custo and i.produto.preco_custo > 0:
-                    preco_custo = i.produto.preco_custo
-                else:
-                    # Usar margem de 40% como estimativa se não tiver custo definido (60% do preço = custo)
-                    preco_custo = i.preco_unitario * 0.6
-
-                lucro_item = round((i.preco_unitario - preco_custo) * i.quantidade, 2)
-
-                item_data = {
+                custo = i.custo_unitario
+                if custo is None and i.produto and i.produto.preco_custo is not None:
+                    custo = i.produto.preco_custo
+                dados_itens.append({
                     'id': i.id,
                     'produto_id': i.produto_id,
                     'produto_nome': produto_nome,
                     'quantidade': i.quantidade,
                     'preco_unitario': round(i.preco_unitario, 2),
                     'subtotal': round(i.subtotal if i.subtotal else (i.preco_unitario * i.quantidade), 2),
-                    'lucro': lucro_item
-                }
-                dados_itens.append(item_data)
-
+                    'custo_unitario': None if custo is None else round(float(custo), 2),
+                    'lucro': None if custo is None else round((i.preco_unitario - float(custo)) * i.quantidade, 2),
+                    'baixou_estoque': i.baixou_estoque,
+                })
             return pd.DataFrame(dados_itens)
         return self._safe_query(query)
 
@@ -4742,6 +4878,7 @@ class Database:
             subtotal = quantidade * preco_unitario
 
             novo_item = ItemVenda(
+                usuario_id=self.usuario_id,
                 venda_id=venda_id,
                 produto_id=produto_id,
                 descricao=descricao,
@@ -4788,121 +4925,62 @@ class Database:
 
         return self._safe_query(query)
 
-    def excluir_venda(self, venda_id):
-        """Exclui uma venda e seus itens, devolvendo produtos ao estoque"""
-        def query():
-            # Buscar a venda
-            venda = self.session.query(Venda).filter_by(id=venda_id).first()
-            if not venda:
-                raise ValueError(f"Venda com ID {venda_id} não encontrada")
-
-            # Buscar itens da venda para devolver ao estoque
-            itens = self.session.query(ItemVenda).filter_by(venda_id=venda_id).all()
-
-            # Devolver produtos ao estoque
-            for item in itens:
-                if item.produto_id:
-                    produto = self.session.query(Produto).filter_by(id=item.produto_id).first()
-                    if produto and hasattr(produto, 'estoque'):
-                        produto.estoque += item.quantidade
-
-            # Excluir itens da venda
-            for item in itens:
-                self.session.delete(item)
-
-            # Excluir a venda
-            self.session.delete(venda)
-
-            return True
-
-        return self._safe_query(query)
-
     def atualizar_venda(self, venda_id, cliente_id=None, data_venda=None, forma_pagamento=None, observacoes=None, status=None):
-        """Atualiza dados básicos de uma venda"""
+        """Atualiza dados básicos de uma venda. status='Cancelada' cancela de verdade (estoque e Financeiro)."""
         def query():
-            venda = self.session.query(Venda).filter_by(id=venda_id).first()
+            venda = self._venda_do_usuario(venda_id)
             if not venda:
                 raise ValueError(f"Venda com ID {venda_id} não encontrada")
-
-            # Atualizar campos se fornecidos
             if cliente_id is not None:
                 venda.cliente_id = cliente_id
-            if data_venda is not None:
+            if data_venda is not None and data_venda != venda.data_venda:
+                # o que foi recebido na data da venda acompanha a nova data
+                for t in self._transacoes_venda(venda.id):
+                    if t.status == 'Recebido' and t.data == venda.data_venda:
+                        t.data = data_venda
+                        t.data_recebimento = data_venda
                 venda.data_venda = data_venda
             if forma_pagamento is not None:
                 venda.forma_pagamento = forma_pagamento
             if observacoes is not None:
                 venda.observacoes = observacoes
             if status is not None:
-                venda.status = status
-
+                if status == 'Cancelada' and venda.status != 'Cancelada':
+                    self._cancelar(venda, devolver_recebido=True)
+                else:
+                    venda.status = status
             return True
-
-        return self._safe_query(query)
+        resultado = self._safe_query(query)
+        self.invalidar_cache()
+        return resultado
 
     def atualizar_item_venda(self, item_id, quantidade=None, preco_unitario=None):
-        """Atualiza um item específico de uma venda"""
-        def query():
-            item = self.session.query(ItemVenda).filter_by(id=item_id).first()
-            if not item:
-                raise ValueError(f"Item com ID {item_id} não encontrado")
-
-            # Atualizar campos se fornecidos
-            if quantidade is not None:
-                item.quantidade = quantidade
-            if preco_unitario is not None:
-                item.preco_unitario = preco_unitario
-
-            # Recalcular subtotal
-            item.subtotal = item.quantidade * item.preco_unitario
-
-            # Atualizar valor total da venda
-            venda = self.session.query(Venda).filter_by(id=item.venda_id).first()
-            if venda:
-                total_itens = self.session.query(func.sum(ItemVenda.subtotal)).filter_by(venda_id=item.venda_id).scalar() or 0
-                venda.valor_total = total_itens
-
-            return True
-
-        return self._safe_query(query)
+        """Atualiza um item de uma venda (mesma regra de update_item_venda)."""
+        item = self.session.query(ItemVenda).filter_by(id=item_id).first()
+        if not item:
+            raise ValueError(f"Item com ID {item_id} não encontrado")
+        return self.update_item_venda(item_id, item.quantidade if quantidade is None else quantidade,
+                                      item.preco_unitario if preco_unitario is None else preco_unitario)
 
     def remover_item_venda(self, item_id):
-        """Remove um item específico de uma venda"""
-        def query():
-            item = self.session.query(ItemVenda).filter_by(id=item_id).first()
-            if not item:
-                raise ValueError(f"Item com ID {item_id} não encontrado")
-
-            venda_id = item.venda_id
-
-            # Devolver produto ao estoque se aplicável
-            if item.produto_id:
-                produto = self.session.query(Produto).filter_by(id=item.produto_id).first()
-                if produto and hasattr(produto, 'estoque'):
-                    produto.estoque += item.quantidade
-
-            # Remover item
-            self.session.delete(item)
-
-            # Atualizar valor total da venda
-            venda = self.session.query(Venda).filter_by(id=venda_id).first()
-            if venda:
-                total_itens = self.session.query(func.sum(ItemVenda.subtotal)).filter_by(venda_id=venda_id).scalar() or 0
-                venda.valor_total = total_itens or 0
-
-            return True
-
-        return self._safe_query(query)
+        """Remove um item de uma venda (mesma regra de remove_item_venda)."""
+        return self.remove_item_venda(item_id)
 
     def substituir_itens_venda(self, venda_id, itens):
-        """Substitui todos os itens de uma venda e recalcula o total do zero.
+        """Substitui todos os itens de uma venda e recalcula o total do zero (edição pelo app).
 
-        itens: lista de dicts com produto_id, quantidade, preco_unitario e
-        descricao (opcional). Usado pela edição de venda (app/web) para evitar
-        sincronização item-a-item.
-        """
+        itens: lista de dicts com produto_id, quantidade, preco_unitario e descricao (opcional).
+        Devolve ao estoque o que os itens antigos baixaram, baixa os novos e ajusta o Financeiro."""
         def query():
-            self.session.query(ItemVenda).filter_by(venda_id=venda_id).delete()
+            venda = self._venda_do_usuario(venda_id)
+            if not venda:
+                raise ValueError(f"Venda com ID {venda_id} não encontrada")
+            ativa = venda.status != 'Cancelada'
+            for item in list(venda.itens):
+                if ativa:
+                    self._devolver_estoque(item)
+                self.session.delete(item)
+            self.session.flush()
             total = 0.0
             for it in (itens or []):
                 try:
@@ -4912,152 +4990,142 @@ class Database:
                     continue
                 if qtd <= 0:
                     continue
-                subtotal = qtd * preco
-                total += subtotal
-                self.session.add(ItemVenda(
-                    venda_id=venda_id,
-                    produto_id=it.get('produto_id'),
-                    descricao=it.get('descricao', '') or '',
-                    quantidade=qtd,
-                    preco_unitario=preco,
-                    subtotal=subtotal,
-                ))
-            venda = self.session.query(Venda).filter_by(id=venda_id).first()
-            if venda:
-                venda.valor_total = total
+                item = self._novo_item(venda, it.get('produto_id'), qtd, preco, it.get('descricao'))
+                if not ativa and item.baixou_estoque:   # venda cancelada não mexe no estoque
+                    item.produto.estoque += qtd
+                    item.baixou_estoque = False
+                total += item.subtotal
+            venda.valor_total = round(total, 2)
+            self.session.flush()
+            self._sincronizar_financeiro_venda(venda)
             return True
-        return self._safe_query(query)
+        resultado = self._safe_query(query)
+        self.invalidar_cache()
+        return resultado
 
     def update_item_venda(self, item_id, nova_quantidade, novo_preco):
-        """Atualiza a quantidade e preço de um item da venda"""
+        """Atualiza quantidade e preço de um item, ajustando o estoque pela diferença e o Financeiro da venda."""
         def query():
             item = self.session.query(ItemVenda).filter_by(id=item_id).first()
             if not item:
                 raise ValueError(f"Item não encontrado com ID {item_id}")
-
-            # Atualizar valores
-            item.quantidade = nova_quantidade
-            item.preco_unitario = novo_preco
-            item.subtotal = nova_quantidade * novo_preco
-
-            # Atualizar valor total da venda
             venda = item.venda
+            nova = int(nova_quantidade)
+            if venda is not None and venda.status != 'Cancelada' and item.produto is not None and item.produto.estoque is not None:
+                delta = nova - (item.quantidade or 0)
+                if item.baixou_estoque is False:          # não tinha baixado: tenta baixar a quantidade nova
+                    if self._baixar_estoque(item.produto, nova):
+                        item.baixou_estoque = True
+                elif delta > 0:
+                    if not self._baixar_estoque(item.produto, delta):
+                        item.produto.estoque += item.quantidade or 0   # sem saldo para o aumento: o item fica sem baixa
+                        item.baixou_estoque = False
+                elif delta < 0:
+                    item.produto.estoque += -delta
+            item.quantidade = nova
+            item.preco_unitario = float(novo_preco)
+            item.subtotal = round(nova * float(novo_preco), 2)
             if venda:
-                total = sum(i.subtotal for i in venda.itens)
-                venda.valor_total = total
-
+                venda.valor_total = round(sum(i.subtotal for i in venda.itens), 2)
+                self.session.flush()
+                self._sincronizar_financeiro_venda(venda)
             return True
-        return self._safe_query(query)
+        resultado = self._safe_query(query)
+        self.invalidar_cache()
+        return resultado
 
     def remove_item_venda(self, item_id):
-        """Remove um item da venda"""
+        """Remove um item da venda: devolve ao estoque o que ele baixou e ajusta o Financeiro."""
         def query():
             item = self.session.query(ItemVenda).filter_by(id=item_id).first()
             if not item:
                 raise ValueError(f"Item não encontrado com ID {item_id}")
-
-            # Obter a venda antes de remover o item
             venda = item.venda
-
-            # Estornar produto ao estoque se houver
-            if item.produto:
-                item.produto.estoque += item.quantidade
-
-            # Remover o item
+            if venda is not None and venda.status != 'Cancelada':
+                self._devolver_estoque(item)
             self.session.delete(item)
-
-            # Atualizar valor total da venda
             if venda:
-                total = sum(i.subtotal for i in venda.itens if i.id != item_id)
-                venda.valor_total = total
-
+                self.session.flush()
+                venda.valor_total = round(sum(i.subtotal for i in venda.itens if i.id != item_id), 2)
+                self._sincronizar_financeiro_venda(venda)
             return True
-        return self._safe_query(query)
+        resultado = self._safe_query(query)
+        self.invalidar_cache()
+        return resultado
 
     def add_item_venda(self, venda_id, produto_id, quantidade, preco_unitario):
-        """Adiciona um novo item a uma venda existente"""
+        """Adiciona um item a uma venda existente. Sem estoque suficiente, a venda continua e o estoque não baixa."""
         def query():
-            # Verificar se a venda existe
-            venda = self.session.query(Venda).filter_by(id=venda_id).first()
+            venda = self._venda_do_usuario(venda_id)
             if not venda:
                 raise ValueError(f"Venda não encontrada com ID {venda_id}")
-
-            # Verificar se o produto existe
             produto = self.session.query(Produto).filter_by(id=produto_id).first()
             if not produto:
                 raise ValueError(f"Produto não encontrado com ID {produto_id}")
-
-            # Verificar se há estoque suficiente
-            if produto.estoque < quantidade:
-                raise ValueError(f"Estoque insuficiente. Disponível: {produto.estoque}")
-
-            # Calcular subtotal
-            subtotal = quantidade * preco_unitario
-
-            # Criar novo item da venda
-            novo_item = ItemVenda(
-                venda_id=venda_id,
-                produto_id=produto_id,
-                quantidade=quantidade,
-                preco_unitario=preco_unitario,
-                subtotal=subtotal,
-                usuario_id=venda.usuario_id
-            )
-
-            # Adicionar ao banco
-            self.session.add(novo_item)
-
-            # Reduzir estoque
-            produto.estoque -= quantidade
-
-            # Atualizar valor total da venda
-            venda.valor_total = sum(item.subtotal for item in venda.itens) + subtotal
-
+            item = self._novo_item(venda, produto_id, quantidade, preco_unitario)
+            if venda.status == 'Cancelada' and item.baixou_estoque:
+                produto.estoque += item.quantidade
+                item.baixou_estoque = False
+            self.session.flush()
+            venda.valor_total = round(sum(i.subtotal for i in venda.itens), 2)
+            self._sincronizar_financeiro_venda(venda)
             return True
-
-        return self._safe_query(query)
+        resultado = self._safe_query(query)
+        self.invalidar_cache()
+        return resultado
 
     def recalcular_valor_total_venda(self, venda_id):
-        """Recalcula o valor total de uma venda baseado nos seus itens"""
+        """Recalcula o total da venda pelos itens e ajusta o Financeiro da venda."""
         def query():
-            venda = self.session.query(Venda).filter_by(id=venda_id).first()
+            venda = self._venda_do_usuario(venda_id)
             if not venda:
                 raise ValueError(f"Venda não encontrada com ID {venda_id}")
-
-            # Calcular total baseado nos itens atuais
-            total = sum(item.subtotal for item in venda.itens)
-            venda.valor_total = total
-
+            venda.valor_total = round(sum(item.subtotal for item in venda.itens), 2)
+            self._sincronizar_financeiro_venda(venda)
             return True
+        resultado = self._safe_query(query)
+        self.invalidar_cache()
+        return resultado
 
-        return self._safe_query(query)
-
-    def cancelar_venda(self, venda_id):
-        """Cancela uma venda e estorna os produtos para o estoque"""
+    def cancelar_venda(self, venda_id, devolver_recebido=True):
+        """Cancela a venda mantendo o histórico: devolve ao estoque o que foi baixado, cancela o que falta receber
+        e, com devolver_recebido, lança a devolução do que a cliente já pagou (a pagar). False se já cancelada."""
         def query():
-            venda = self.session.query(Venda).filter_by(id=venda_id).first()
+            venda = self._venda_do_usuario(venda_id)
             if not venda or venda.status == 'Cancelada':
                 return False
-
-            venda.status = 'Cancelada'
-
-            # Estornar produtos para o estoque
-            for item in venda.itens:
-                produto = item.produto
-                if produto:
-                    produto.estoque += item.quantidade
-
-            # Cancelar transação financeira relacionada
-            transacao = self.session.query(Transacao).filter_by(
-                origem_id=venda_id,
-                origem_tipo='venda'
-            ).first()
-
-            if transacao:
-                transacao.status = 'Cancelado'
-
+            self._cancelar(venda, devolver_recebido)
             return True
-        return self._safe_query(query)
+        resultado = self._safe_query(query)
+        self.invalidar_cache()
+        return resultado
+
+    def _vendas_antigas_pendentes(self):
+        """Receitas de vendas feitas antes da correção: gravadas como Pendente, sem classificação e com a data
+        do cadastro, embora a venda tenha sido paga na hora."""
+        q = (self.session.query(Transacao, Venda).join(Venda, Venda.id == Transacao.origem_id)
+             .filter(Transacao.origem_tipo == 'venda', Transacao.categoria == self.CATEGORIA_VENDA,
+                     Transacao.tipo == 'receita', Transacao.status == 'Pendente', Transacao.classificacao.is_(None),
+                     Transacao.proposta_id.is_(None), Venda.status != 'Cancelada'))
+        if self.usuario_id:
+            q = q.filter(Transacao.usuario_id == self.usuario_id, Venda.usuario_id == self.usuario_id)
+        return q.all()
+
+    def contar_vendas_antigas_pendentes(self):
+        return self._safe_query(lambda: len(self._vendas_antigas_pendentes()))
+
+    def marcar_vendas_antigas_recebidas(self):
+        """Marca como recebidas, na data da venda, as receitas antigas descritas em _vendas_antigas_pendentes."""
+        def query():
+            n = 0
+            for t, v in self._vendas_antigas_pendentes():
+                dia = v.data_venda or t.data
+                t.status, t.data, t.data_recebimento, t.classificacao = 'Recebido', dia, dia, 'receita'
+                n += 1
+            return n
+        resultado = self._safe_query(query)
+        self.invalidar_cache()
+        return resultado
 
     def excluir_venda_com_sql(self, venda_id):
         """
@@ -5075,8 +5143,7 @@ class Database:
                 # Estornar produtos para o estoque
                 if venda.status != 'Cancelada' and hasattr(venda, 'itens'):
                     for item in venda.itens:
-                        if hasattr(item, 'produto') and item.produto is not None:
-                            item.produto.estoque += item.quantidade
+                        self._devolver_estoque(item)
 
                 # Executar SQL para excluir na ordem correta
                 # 1. Excluir transações financeiras relacionadas
@@ -5131,7 +5198,7 @@ class Database:
                     for item in venda.itens:
                         if hasattr(item, 'produto') and item.produto is not None:
                             if venda.status != 'Cancelada':
-                                item.produto.estoque += item.quantidade
+                                self._devolver_estoque(item)
                         else:
                             pass
                 else:
@@ -5248,6 +5315,7 @@ class Database:
             # 1. Criar a venda normalmente
             # Criar objeto de venda
             venda = Venda(
+                usuario_id=self.usuario_id,
                 cliente_id=cliente_id,
                 data_venda=datetime.now(),
                 status='Concluída',
@@ -5273,6 +5341,7 @@ class Database:
 
                 # Criar item de venda
                 item = ItemVenda(
+                    usuario_id=self.usuario_id,
                     venda_id=venda.id,
                     produto_id=produto_id,
                     quantidade=quantidade,
@@ -5344,6 +5413,7 @@ class Database:
             if not produtos_proposta:
                 # Criar uma venda apenas com o valor da proposta como serviço
                 venda = Venda(
+                    usuario_id=self.usuario_id,
                     cliente_id=proposta.cliente_id,
                     valor_total=proposta.valor,
                     forma_pagamento=forma_pagamento,
@@ -5356,6 +5426,7 @@ class Database:
 
                 # Criar um item virtual para representar o serviço
                 item_venda = ItemVenda(
+                    usuario_id=self.usuario_id,
                     venda_id=venda.id,
                     produto_id=None,  # Sem produto físico
                     quantidade=1,
@@ -5402,6 +5473,7 @@ class Database:
 
             # Criar venda
             venda = Venda(
+                usuario_id=self.usuario_id,
                 cliente_id=proposta.cliente_id,
                 valor_total=valor_total,
                 forma_pagamento=forma_pagamento,
@@ -5420,6 +5492,7 @@ class Database:
                 descricao = produto_org.nome if produto_org else f"Produto ID {item['produto_id']}"
 
                 item_venda = ItemVenda(
+                    usuario_id=self.usuario_id,
                     venda_id=venda.id,
                     produto_id=None,  # Produtos de organização não têm produto_id na tabela produtos
                     quantidade=item["quantidade"],
@@ -5466,6 +5539,7 @@ class Database:
 
         if not transacao_existente:
             transacao = Transacao(
+                usuario_id=self.usuario_id,
                 tipo="receita",
                 descricao=f"Venda da proposta #{proposta.numero} - {proposta.descricao}",
                 valor=venda.valor_total,
@@ -5507,6 +5581,7 @@ class Database:
 
                     # Criar transação de comissão a receber
                     comissao = Transacao(
+                        usuario_id=self.usuario_id,
                         tipo="receita_a_receber",
                         descricao=f"Comissão de {fornecedor.percentual_comissao}% - {fornecedor.fornecedor} - Proposta #{proposta.numero}",
                         valor=valor_comissao,
@@ -5518,7 +5593,7 @@ class Database:
                         proposta_id=proposta.id,
                         tipo_conta="PF",
                         status="Pendente",
-                        data_vencimento=datetime.now().date() + timedelta(days=30),
+                        data=datetime.now().date() + timedelta(days=30),
                         classificacao="receita_a_receber"
                     )
                     self.session.add(comissao)
