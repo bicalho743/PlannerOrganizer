@@ -182,6 +182,11 @@ section[data-testid="stSidebar"] {
    No celular ela fica: o botão ☰ usa o botão nativo dessa faixa para abrir/fechar o menu. */
 @media screen and (min-width: 769px) { [data-testid="stSidebarHeader"] { display: none !important; } }
 section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: 2px !important; }
+/* o Streamlit puxa o texto 1rem para baixo (margem negativa); no menu isso fazia o título do
+   grupo invadir o botão de baixo, e o fundo do botão ao passar o mouse cobria o título */
+section[data-testid="stSidebar"] [data-testid="stMarkdown"],
+section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
+section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] > div { margin-bottom: 0 !important; }
 section[data-testid="stSidebar"] .stMarkdown,
 section[data-testid="stSidebar"] label,
 section[data-testid="stSidebar"] p { color: #344054 !important; }
