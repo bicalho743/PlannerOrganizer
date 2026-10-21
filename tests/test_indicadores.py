@@ -46,3 +46,28 @@ def test_funil_sem_respostas_nao_inventa_taxa():
     props = pd.DataFrame([("em_aberto", 1000, "2026-10-01")], columns=["status", "valor", "data_proposta"])
     assert funil(props, HOJE)["conversao"] is None
     assert funil(pd.DataFrame(), HOJE)["enviadas"] == 0
+
+
+def test_retirada_fica_fora_do_gasto_e_cores_sao_fixas():
+    from utils.indicadores import retirado, cor_categoria, por_categoria, mei
+    fin = _fin([
+        ("Receita", "receita", "Recebido", 4000.0, "2026-10-03", None, "Serviços de organização", "x"),
+        ("Receita", "receita", "Recebido", 1000.0, "2026-10-04", None, "Servicos de organizacao", "y"),
+        ("Despesa", "contas_a_pagar", "Pago", 1500.0, "2026-10-05", None, "Pró-labore / retirada", "salário"),
+        ("Despesa", "contas_a_pagar", "Pago", 86.05, "2026-10-20", None, "Impostos (DAS)", "DAS outubro"),
+    ])
+    mov = movimentos(fin)
+    assert entrou_gastou(mov, 2026, 10) == (5000.0, 86.05)
+    assert retirado(mov, 2026, 10) == 1500.0
+    assert por_categoria(mov, 2026, 10, "entra") == [("Serviços de organização", 5000.0)]
+    assert cor_categoria("Serviços adicionais") != cor_categoria("Serviços de organização")
+    assert cor_categoria("SERVICOS DE ORGANIZACAO") == cor_categoria("Serviços de organização")
+    m = mei(mov, HOJE)
+    assert m["faturado"] == 5000.0 and m["das_pago"] is True and m["projecao"] > 5000
+
+
+def test_mes_so_com_entradas_nao_quebra():
+    from utils.indicadores import retirado
+    mov = movimentos(_fin([("Receita", "receita", "Recebido", 100.0, "2026-10-03", None, "Serviços", "x")]))
+    assert entrou_gastou(mov, 2026, 10) == (100.0, 0.0)
+    assert retirado(mov, 2026, 10) == 0.0

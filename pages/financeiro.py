@@ -10,6 +10,128 @@ from utils.design_tokens import (
 )
 from streamlit_extras.stylable_container import stylable_container
 from utils.ui import botao_excluir, input_moeda, cartao_clicavel
+from utils.indicadores import (movimentos, entrou_gastou, retirado, previsto, por_categoria, mei, cor_categoria,
+                               realizados_no_mes, CATEGORIA_IMPOSTO, CATEGORIA_RETIRADA)
+
+MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto",
+         "setembro", "outubro", "novembro", "dezembro"]
+MES_ABREV = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
+
+CSS_PAINEL = """
+<style>
+.fp-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 4px 0 12px; }
+.fp-kpi { background: #fff; border: 1px solid #E4E7EC; border-radius: 12px; padding: 14px 16px; }
+.fp-kpi .rot { font-size: .72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #667085; }
+.fp-kpi .val { font-size: 1.4rem; font-weight: 700; color: #101828; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
+.fp-kpi .sub { font-size: .8rem; color: #667085; line-height: 1.4; display: block; }
+.fp-kpi.entra .val { color: #067647; }
+.fp-kpi.sai .val { color: #B42318; }
+.fp-kpi.destaque { background: var(--navy); border-color: var(--navy); }
+.fp-kpi.destaque .rot, .fp-kpi.destaque .sub { color: #C8D1DC; }
+.fp-kpi.destaque .val { color: #fff; }
+.fp-prev { background: #F8F9FB; border: 1px solid #E4E7EC; border-radius: 10px; padding: 10px 14px; font-size: .88rem; color: #344054; margin-bottom: 14px; }
+.fp-prev b { font-variant-numeric: tabular-nums; }
+.fp-alerta { background: #FFFAEB; border: 1px solid #FEC84B; border-radius: 10px; padding: 10px 14px; font-size: .88rem; color: #93370D; margin-bottom: 14px; }
+.fp-secao { font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #667085; margin: 2px 0 8px; }
+.fp-cat { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 5px 0; font-size: .86rem; }
+.fp-cat .nm { display: flex; align-items: center; gap: 8px; color: #344054; min-width: 0; }
+.fp-cat .nm span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fp-dot { flex: none; width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.fp-cat .bar { height: 8px; background: #F2F4F7; border-radius: 999px; overflow: hidden; }
+.fp-cat .bar i { display: block; height: 100%; border-radius: 999px; }
+.fp-cat b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fp-vazio { color: #98A2B3; font-size: .86rem; }
+.fp-mei .lin { display: flex; justify-content: space-between; gap: 10px; font-size: .88rem; color: #344054; }
+.fp-mei .trilho { height: 12px; background: #F2F4F7; border-radius: 999px; overflow: hidden; margin: 8px 0 6px; position: relative; }
+.fp-mei .trilho i { display: block; height: 100%; border-radius: 999px; }
+.fp-mei .det { font-size: .8rem; color: #667085; line-height: 1.5; }
+.fp-mei .ok { color: #067647; font-weight: 600; }
+.fp-mei .pend { color: #B54708; font-weight: 600; }
+@media (max-width: 900px) { .fp-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+"""
+
+
+def _kpi(rotulo, valor, sub, cls=""):
+    return (f'<div class="fp-kpi {cls}"><span class="rot">{rotulo}</span>'
+            f'<div class="val">{valor}</div><span class="sub">{sub}</span></div>')
+
+
+def _barras_categoria(itens):
+    if not itens:
+        return '<div class="fp-vazio">Nada neste mês.</div>'
+    topo = itens[0][1] or 1
+    html = ""
+    for nome, valor in itens[:7]:
+        cor = cor_categoria(nome)
+        nome_h = html_module.escape(str(nome))
+        html += (f'<div class="fp-cat"><span class="nm"><i class="fp-dot" style="background:{cor}"></i>'
+                 f'<span title="{nome_h}">{nome_h}</span></span>'
+                 f'<span class="bar"><i style="width:{valor / topo * 100:.0f}%;background:{cor}"></i></span>'
+                 f'<b>{fmt_brl(valor)}</b></div>')
+    return html
+
+
+def _painel_mes(financeiro_df):
+    """Entrou, gastou, sobrou e retiradas do mês escolhido; previsão; categorias; limite do MEI."""
+    hoje = datetime.now().date()
+    opcoes = []
+    a, m = hoje.year, hoje.month
+    for _ in range(12):
+        opcoes.append((a, m))
+        a, m = (a - 1, 12) if m == 1 else (a, m - 1)
+    col_mes, _ = st.columns([1, 3])
+    ano, mes = col_mes.selectbox("Mês", opcoes, format_func=lambda am: f"{MESES[am[1] - 1].capitalize()} de {am[0]}",
+                            key="fin_mes_painel", label_visibility="collapsed")
+    mov = movimentos(financeiro_df.assign(data=financeiro_df["data"].dt.date) if not financeiro_df.empty else financeiro_df)
+    entrou, gastou = entrou_gastou(mov, ano, mes)
+    sobrou = entrou - gastou
+    retirou = retirado(mov, ano, mes)
+    st.markdown(CSS_PAINEL + '<div class="fp-kpis">' +
+                _kpi("Entrou", fmt_brl(entrou), "recebido no mês", "entra") +
+                _kpi("Gastou", fmt_brl(gastou), "despesas pagas da empresa", "sai") +
+                _kpi("Sobrou", fmt_brl(sobrou), "lucro do mês (entrou − gastou)", "destaque") +
+                _kpi("Retirado para você", fmt_brl(retirou),
+                     f"ficou no caixa da empresa: {fmt_brl(sobrou - retirou)}" if retirou
+                     else f"lance como “{CATEGORIA_RETIRADA}”") +
+                '</div>', unsafe_allow_html=True)
+
+    if (ano, mes) == (hoje.year, hoje.month):
+        a_entrar, a_sair = previsto(mov, ano, mes)
+        if a_entrar or a_sair:
+            st.markdown(f'<div class="fp-prev">Previsão até o fim de {MESES[mes - 1]}: ainda entram <b>{fmt_brl(a_entrar)}</b> '
+                        f'e saem <b>{fmt_brl(a_sair)}</b>. Se tudo se confirmar, o mês fecha com '
+                        f'<b>{fmt_brl(sobrou + a_entrar - a_sair)}</b>.</div>', unsafe_allow_html=True)
+    if retirou > sobrou > -1 and retirou:
+        st.markdown(f'<div class="fp-alerta">Você retirou {fmt_brl(retirou - sobrou)} a mais do que a empresa lucrou em '
+                    f'{MESES[mes - 1]}. Separe o dinheiro da empresa do pessoal para o caixa não ficar no vermelho.</div>',
+                    unsafe_allow_html=True)
+
+    c1, c2, c3 = st.columns([1, 1, 1], gap="medium")
+    with c1:
+        st.markdown('<div class="fp-secao">De onde veio</div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown(_barras_categoria(por_categoria(mov, ano, mes, "entra")), unsafe_allow_html=True)
+    with c2:
+        st.markdown('<div class="fp-secao">Para onde foi</div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown(_barras_categoria(por_categoria(mov, ano, mes, "sai")), unsafe_allow_html=True)
+    with c3:
+        info = mei(mov, hoje)
+        st.markdown(f'<div class="fp-secao">Limite do MEI · {info["ano"]}</div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            uso = info["uso"]
+            cor = "#067647" if uso < 0.7 else ("#DC6803" if uso < 0.9 else "#D92D20")
+            proj = info["projecao"]
+            aviso = (f'No ritmo atual o ano fecha em <b>{fmt_brl(proj)}</b>, acima do limite: converse com sua contadora.'
+                     if proj > info["limite"] else f'No ritmo atual o ano fecha em {fmt_brl(proj)}.')
+            das = (f'<span class="ok">DAS de {MES_ABREV[hoje.month - 1]} pago</span>' if info["das_pago"]
+                   else f'<span class="pend">DAS de {fmt_brl(info["das"])} vence dia 20</span>')
+            st.markdown(f'<div class="fp-mei"><div class="lin"><span>Faturado</span>'
+                        f'<b>{fmt_brl(info["faturado"])} de {fmt_brl(info["limite"])}</b></div>'
+                        f'<div class="trilho"><i style="width:{min(uso, 1) * 100:.0f}%;background:{cor}"></i></div>'
+                        f'<div class="det">{uso:.0%} do limite usado. {aviso}<br>{das} · lance como “{CATEGORIA_IMPOSTO}”.</div></div>',
+                        unsafe_allow_html=True)
 
 
 def _safe_float(val, default=0.0):
@@ -53,7 +175,8 @@ def _is_despesa(row):
 
 def _render_nova_transacao_form():
     categorias_receita = ["Serviços de Organização", "Venda de Produtos", "Comissão sobre Fornecedores", "Serviços Adicionais"]
-    categorias_despesa = ["Pagamento Equipe/Assistentes", "Pagamento Parceiros/Fornecedores", "Custos Operacionais", "Custos Administrativos"]
+    categorias_despesa = ["Pagamento Equipe/Assistentes", "Pagamento Parceiros/Fornecedores", "Custos Operacionais",
+                          "Custos Administrativos", CATEGORIA_IMPOSTO, CATEGORIA_RETIRADA]
 
     tipo = st.selectbox("Tipo", ["receita", "despesa"], key="fin_tipo_transacao")
 
@@ -256,7 +379,8 @@ def _render_detail_panel(transacao, financeiro_df):
 def _render_edit_form(transacao):
     tid = transacao['id']
     categorias_receita = ["Serviços de Organização", "Venda de Produtos", "Comissão sobre Fornecedores", "Serviços Adicionais"]
-    categorias_despesa = ["Pagamento Equipe/Assistentes", "Pagamento Parceiros/Fornecedores", "Custos Operacionais", "Custos Administrativos"]
+    categorias_despesa = ["Pagamento Equipe/Assistentes", "Pagamento Parceiros/Fornecedores", "Custos Operacionais",
+                          "Custos Administrativos", CATEGORIA_IMPOSTO, CATEGORIA_RETIRADA]
 
     st.markdown("---")
     with st.form(key=f"edit_form_{tid}"):
@@ -408,7 +532,7 @@ def show():
         st.error("Erro: Conexão com banco de dados não inicializada")
         return
 
-    st.markdown('<h1 style="font-size: 2rem; font-weight: 600; margin-top: 0; padding-top: 0; margin-bottom: 1rem;">Gestão Financeira</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="page-title">Financeiro</h1>', unsafe_allow_html=True)
 
     if "fin_selecionada" not in st.session_state:
         st.session_state["fin_selecionada"] = None
@@ -451,24 +575,8 @@ def show():
     if not financeiro_df.empty:
         concluidas = financeiro_df[financeiro_df['status'].isin(['Aprovado', 'Recebido', 'Pago'])].copy()
 
-    total_receber = a_receber['valor'].apply(_safe_float).sum() if not a_receber.empty else 0.0
-    total_pagar = a_pagar['valor'].apply(_safe_float).sum() if not a_pagar.empty else 0.0
-    saldo = total_receber - total_pagar
+    _painel_mes(financeiro_df)
 
-    mc1, mc2, mc3 = st.columns(3)
-    for col, label, valor, cor in [
-        (mc1, "A Receber", total_receber, "#C9A84C"),
-        (mc2, "A Pagar", total_pagar, "#E53E3E"),
-        (mc3, "Saldo", saldo, "#C9A84C" if saldo >= 0 else "#E53E3E"),
-    ]:
-        with col:
-            st.markdown(f"""
-            <div class="kanban-metric">
-                <p class="kanban-metric-label">{label}</p>
-                <p class="kanban-metric-value" style="color:{cor};">{fmt_brl(valor)}</p>
-            </div>""", unsafe_allow_html=True)
-
-    st.markdown("")
 
     col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
     with col_btn:
@@ -514,7 +622,7 @@ def show():
                     if cartao_clicavel(
                         f'<div class="kanban-card">'
                         f'<div class="kanban-card-title">{desc}</div>'
-                        f'<div class="kanban-card-sub">{cat} · {data_s}</div>'
+                        f'<div class="kanban-card-sub"><i class="fp-dot" style="background:{cor_categoria(cat)};margin-right:6px"></i>{cat} · {data_s}</div>'
                         f'<div class="kanban-card-valor" style="color:{valor_cor};">{val_f}</div>'
                         f'</div>',
                         key=f"fin_card_{col_idx}_{rid}", rotulo=f"Abrir {desc}"):
@@ -645,49 +753,34 @@ def show():
         else:
             st.info("Não há transações no histórico.")
 
-    with st.expander("Análise Financeira", expanded=False):
-        if not financeiro_df.empty:
-            fin_copy = financeiro_df.copy()
-            fin_copy['mes'] = fin_copy['data'].dt.to_period('M').astype(str)
-
-            dados_mensais = fin_copy.groupby(['mes', 'tipo'])['valor'].sum().reset_index()
-            if not dados_mensais.empty:
-                fig1 = px.bar(
-                    dados_mensais, x='mes', y='valor', color='tipo',
-                    color_discrete_map={
-                        'receita': '#38A169', 'despesa': '#E53E3E',
-                        'receita_a_receber': '#68D391', 'despesa_a_pagar': '#FC8181',
-                        'Receita': '#38A169', 'Despesa': '#E53E3E'
-                    },
-                    labels={'valor': 'Valor (R$)', 'mes': 'Mês', 'tipo': 'Tipo'},
-                    barmode='group', height=350
-                )
-                fig1.update_layout(
-                    title="Receitas vs Despesas por Mês",
-                    margin=dict(l=0, r=0, t=40, b=0),
-                    legend=dict(orientation="h", yanchor="bottom", y=1.02),
-                    plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)'
-                )
-                st.plotly_chart(fig1, use_container_width=True)
-
-            dados_cat = fin_copy.groupby(['categoria', 'tipo'])['valor'].sum().reset_index()
-            if not dados_cat.empty:
-                fig2 = px.bar(
-                    dados_cat, x='categoria', y='valor', color='tipo',
-                    color_discrete_map={
-                        'receita': '#38A169', 'despesa': '#E53E3E',
-                        'receita_a_receber': '#68D391', 'despesa_a_pagar': '#FC8181',
-                        'Receita': '#38A169', 'Despesa': '#E53E3E'
-                    },
-                    labels={'valor': 'Valor (R$)', 'categoria': 'Categoria', 'tipo': 'Tipo'},
-                    height=350
-                )
-                fig2.update_layout(
-                    title="Distribuição por Categoria",
-                    margin=dict(l=0, r=0, t=40, b=0),
-                    legend=dict(orientation="h", yanchor="bottom", y=1.02),
-                    plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)'
-                )
-                st.plotly_chart(fig2, use_container_width=True)
-        else:
+    with st.expander("Últimos 6 meses", expanded=False):
+        mov = movimentos(financeiro_df.assign(data=financeiro_df["data"].dt.date) if not financeiro_df.empty else financeiro_df)
+        if mov.empty:
             st.info("Não há dados suficientes para gerar análise.")
+            return
+        hoje = datetime.now().date()
+        linhas, cats = [], []
+        a, m = hoje.year, hoje.month
+        for _ in range(6):
+            entrou, gastou = entrou_gastou(mov, a, m)
+            rotulo = f"{MES_ABREV[m - 1]}/{str(a)[2:]}"
+            linhas += [{"Mês": rotulo, "Tipo": "Entrou", "Valor": entrou}, {"Mês": rotulo, "Tipo": "Gastou", "Valor": gastou}]
+            cats += [{"Mês": rotulo, "Categoria": c, "Valor": v} for c, v in por_categoria(mov, a, m, "sai")]
+            a, m = (a - 1, 12) if m == 1 else (a, m - 1)
+        df_mes = pd.DataFrame(linhas[::-1])
+        fig1 = px.bar(df_mes, x="Mês", y="Valor", color="Tipo", barmode="group", height=320,
+                      color_discrete_map={"Entrou": "#12B76A", "Gastou": "#F04438"},
+                      category_orders={"Mês": list(dict.fromkeys(df_mes["Mês"]))})
+        fig1.update_layout(title="Entrou x gastou", margin=dict(l=0, r=0, t=40, b=0), legend_title_text="",
+                           legend=dict(orientation="h", yanchor="bottom", y=1.02),
+                           plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
+        st.plotly_chart(fig1, use_container_width=True)
+        if cats:
+            df_cat = pd.DataFrame(cats[::-1])
+            fig2 = px.bar(df_cat, x="Mês", y="Valor", color="Categoria", height=340,
+                          color_discrete_map={c: cor_categoria(c) for c in df_cat["Categoria"].unique()},
+                          category_orders={"Mês": list(dict.fromkeys(df_mes["Mês"]))})
+            fig2.update_layout(title="Gastos por categoria", margin=dict(l=0, r=0, t=40, b=0), legend_title_text="",
+                               legend=dict(orientation="h", yanchor="top", y=-0.15),
+                               plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig2, use_container_width=True)
