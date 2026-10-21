@@ -31,7 +31,7 @@ def show(modo="todos"):
         with cliente_tab1:
             # A lista é o que se usa no dia a dia; o cadastro fica num bloco que abre quando precisa
             _n_clientes = len(st.session_state.db.get_clientes())
-            with st.expander("Nova cliente", icon=":material/person_add:", expanded=_n_clientes == 0):
+            with st.expander("Nova cliente", icon=":material/person_add:", expanded=_n_clientes == 0 or st.session_state.pop("abrir_nova_cliente", False)):
                 # Form de cadastro de cliente
                 with st.form("cadastro_cliente", clear_on_submit=True):
                     nome = st.text_input("Nome")

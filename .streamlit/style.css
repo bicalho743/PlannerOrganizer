@@ -542,7 +542,8 @@ body, .main, [data-testid="stAppViewContainer"], .block-container {
         visibility: hidden !important;
     }
 
-    #mobile-sidebar-fab {
+    /* no celular o menu abre pela barra de baixo; o botão redondo só aparece para fechar */
+    #mobile-sidebar-fab.aberto {
         display: flex !important;
     }
 
@@ -605,3 +606,6 @@ body, .main, [data-testid="stAppViewContainer"], .block-container {
 div[data-testid="InputInstructions"] {
     display: none !important;
 }
+
+/* ações do "+" da barra do celular: acionadas por script, nunca visíveis */
+.st-key-acoes_rapidas { display: none !important; }

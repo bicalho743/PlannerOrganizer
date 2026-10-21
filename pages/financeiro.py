@@ -4,11 +4,6 @@ import plotly.express as px
 import html as html_module
 from datetime import datetime, timedelta
 from utils.currency_formatter import fmt_brl
-from utils.design_tokens import (
-    NAVY, GOLD, GOLD_DARK, GOLD_GRADIENT, GOLD_BUTTON_CSS,
-    TEXT_PRIMARY, TEXT_SECONDARY,
-)
-from streamlit_extras.stylable_container import stylable_container
 from utils.ui import botao_excluir, input_moeda, cartao_clicavel
 from utils.indicadores import (movimentos, entrou_gastou, retirado, previsto, por_categoria, mei, cor_categoria,
                                realizados_no_mes, CATEGORIA_IMPOSTO, CATEGORIA_RETIRADA)
@@ -575,18 +570,16 @@ def show():
     if not financeiro_df.empty:
         concluidas = financeiro_df[financeiro_df['status'].isin(['Aprovado', 'Recebido', 'Pago'])].copy()
 
+    col_btn, _ = st.columns([1, 3])
+    with col_btn:
+        if st.button("Novo lançamento", type="primary", icon=":material/add:", use_container_width=True, key="btn_nova_transacao"):
+            st.session_state["fin_nova_transacao_open"] = not st.session_state["fin_nova_transacao_open"]
+    if st.session_state["fin_nova_transacao_open"]:
+        with st.expander("Novo lançamento", expanded=True):
+            _render_nova_transacao_form()
+
     _painel_mes(financeiro_df)
 
-
-    col_esp1, col_btn, col_esp2 = st.columns([1, 3, 1])
-    with col_btn:
-        with stylable_container(key="gold_nova_transacao", css_styles=list(GOLD_BUTTON_CSS)):
-            if st.button("Nova Transação", type="primary", use_container_width=True, key="btn_nova_transacao"):
-                st.session_state["fin_nova_transacao_open"] = not st.session_state["fin_nova_transacao_open"]
-
-    if st.session_state["fin_nova_transacao_open"]:
-        with st.expander("Nova Transação", expanded=True):
-            _render_nova_transacao_form()
 
     st.markdown("---")
 
