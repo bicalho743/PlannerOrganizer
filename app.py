@@ -84,17 +84,18 @@ _components.html("""
     return doc.querySelector('section[data-testid="stSidebar"]');
   }
 
+  // Streamlit antigo marca o menu com aria-expanded; o novo (1.4x+) com data-collapsed.
   function isOpen() {
     var sb = getSidebar();
-    return sb && sb.getAttribute('aria-expanded') === 'true';
+    return !!sb && (sb.getAttribute('aria-expanded') === 'true' || sb.getAttribute('data-collapsed') === 'false');
   }
 
   function clickNativeBtn() {
-    var btns = doc.querySelectorAll(
-      'button[data-testid="collapsedControl"],' +
-      'button[data-testid="stBaseButton-headerNoPadding"]'
-    );
-    for (var i = 0; i < btns.length; i++) { btns[i].click(); return true; }
+    var sel = isOpen()
+      ? '[data-testid="stSidebarCollapseButton"] button,button[data-testid="stBaseButton-headerNoPadding"]'
+      : 'button[data-testid="stExpandSidebarButton"],button[data-testid="collapsedControl"],button[data-testid="stBaseButton-headerNoPadding"]';
+    var btn = doc.querySelector(sel);
+    if (btn) { btn.click(); return true; }
     return false;
   }
 
@@ -126,6 +127,13 @@ _components.html("""
     setTimeout(syncState, 100);
   });
 
+  // celular: escolher uma tela no menu fecha o menu
+  doc.addEventListener('click', function(e) {
+    if (doc.defaultView.innerWidth > 768 || !isOpen()) return;
+    var b = e.target.closest && e.target.closest('[data-testid="stSidebarUserContent"] button');
+    if (b && !/Sair|Sim, sair|Cancelar|Manual/.test(b.innerText)) setTimeout(function() { if (isOpen()) clickNativeBtn(); setTimeout(syncState, 100); }, 250);
+  }, true);
+
   overlay.addEventListener('click', function() {
     if (isOpen()) clickNativeBtn();
     setTimeout(syncState, 100);
@@ -135,7 +143,7 @@ _components.html("""
   function initObserver() {
     var sb = getSidebar();
     if (sb) {
-      new MutationObserver(function() { syncState(); }).observe(sb, {attributes: true, attributeFilter: ['aria-expanded']});
+      new MutationObserver(function() { syncState(); }).observe(sb, {attributes: true, attributeFilter: ['aria-expanded', 'data-collapsed']});
       syncState();
     } else if (initRetries < 10) {
       initRetries++;
@@ -633,24 +641,53 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
     </style>
     """, unsafe_allow_html=True)
 
-    st.sidebar.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
-
     if 'current_page' not in st.session_state:
         st.session_state.current_page = "Dashboard"
 
-    MENU_PRINCIPAL = {
-        "Dashboard": "Dashboard",
-        "Cadastros": "Cadastros",
-        "Propostas": "Propostas",
-        "Vendas": "Vendas",
-        "Financeiro": "Financeiro",
-        "Pós-Organização": "PosOrganizacao",
-        "Relatórios": "Relatórios",
-        "Meu Perfil": "Perfil"
-    }
+    # ── Menu lateral ─────────────────────────────────────────────
+    # Agrupado pelo trabalho do dia a dia: o que é clicável é botão com ícone;
+    # os títulos de grupo são só texto. A tela aberta fica destacada (type="primary").
+    _perfil_menu = globals().get('_perfil_trial') or {}
+    _usuario = st.session_state.get('usuario') or {}
+    _nome_menu = (_usuario.get('nome') if isinstance(_usuario, dict) else getattr(_usuario, 'nome', '')) or _perfil_menu.get('nome') or ''
+    _empresa_menu = _perfil_menu.get('empresa') or ''
+    st.sidebar.markdown(
+        '<div class="sb-marca"><div class="sb-logo">Planner Organizer</div>'
+        + (f'<div class="sb-conta">{_empresa_menu or _nome_menu}</div>' if (_empresa_menu or _nome_menu) else '')
+        + '</div>', unsafe_allow_html=True)
 
+    MENU_PRINCIPAL = [
+        (None, [("Início", "Dashboard", ":material/home:")]),
+        ("Comercial", [
+            ("Clientes", "Clientes", ":material/group:"),
+            ("Propostas", "Propostas", ":material/request_quote:"),
+            ("Vendas", "Vendas", ":material/shopping_bag:"),
+            ("Pós-organização", "PosOrganizacao", ":material/event_repeat:"),
+        ]),
+        ("Financeiro", [
+            ("Financeiro", "Financeiro", ":material/account_balance_wallet:"),
+            ("Relatórios", "Relatórios", ":material/bar_chart:"),
+        ]),
+        ("Conta", [
+            ("Cadastros", "Cadastros", ":material/inventory_2:"),
+            ("Meu perfil", "Perfil", ":material/person:"),
+        ]),
+    ]
     if st.session_state.get('autenticado', False) and getattr(st.session_state.get('usuario', None), 'tipo', '') == 'admin':
-        MENU_PRINCIPAL["Administração"] = "Admin"
+        MENU_PRINCIPAL[-1][1].append(("Administração", "Admin", ":material/admin_panel_settings:"))
+
+    for _grupo, _itens in MENU_PRINCIPAL:
+        if _grupo:
+            st.sidebar.markdown(f'<div class="sb-grupo">{_grupo}</div>', unsafe_allow_html=True)
+        for label, page, icone in _itens:
+            _ativo = st.session_state.current_page == page
+            if st.sidebar.button(label, key=f"main_menu_{page.lower()}", icon=icone,
+                                 type="primary" if _ativo else "secondary", use_container_width=True):
+                st.session_state.current_page = page
+                st.session_state.pop('_confirmar_logout', None)  # navegar cancela confirmação pendente
+                st.rerun()
+
+    st.sidebar.markdown('<div class="sb-sep"></div>', unsafe_allow_html=True)
 
     if 'manual_pdf_bytes' not in st.session_state or st.session_state.manual_pdf_bytes is None:
         try:
@@ -660,30 +697,18 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
                 st.session_state.manual_pdf_bytes = _f.read()
         except Exception:
             st.session_state.manual_pdf_bytes = None
-
     if st.session_state.get('manual_pdf_bytes'):
         st.sidebar.download_button(
-            label="Manual do Sistema",
+            label="Manual do sistema",
             data=st.session_state.manual_pdf_bytes,
             file_name="Manual_Planner_Organizer.pdf",
             mime="application/pdf",
+            icon=":material/menu_book:",
             use_container_width=True,
             key="btn_manual_sidebar"
         )
 
-    st.sidebar.markdown('<div style="margin:4px 0;"><hr style="border:none;height:1px;background:#E0E0E0;"></div>', unsafe_allow_html=True)
-
-    for label, page in MENU_PRINCIPAL.items():
-        if st.sidebar.button(label, key=f"main_menu_{page.lower()}", use_container_width=True):
-            st.session_state.current_page = page
-            st.session_state.pop('_confirmar_logout', None)  # navegar cancela confirmação pendente
-
-    # Separação extra entre o menu e o botão de sair (reduz clique acidental
-    # por layout shift logo após o carregamento).
-    st.sidebar.markdown('<div style="margin:14px 0;"><hr style="border:none;height:1px;background:#E0E0E0;"></div>', unsafe_allow_html=True)
-
-    # Logout com confirmação: um clique acidental (por coordenada/overlap logo
-    # após o load) NUNCA encerra a sessão — apenas abre a confirmação.
+    # Logout com confirmação: um clique acidental NUNCA encerra a sessão — apenas abre a confirmação.
     if st.session_state.get('_confirmar_logout', False):
         st.sidebar.warning("Deseja realmente sair do sistema?")
         _c1, _c2 = st.sidebar.columns(2)
@@ -696,11 +721,9 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
             st.session_state.pop('_confirmar_logout', None)
             st.rerun()
     else:
-        if st.sidebar.button("Sair do Sistema", key="btn_logout", type="secondary", use_container_width=True):
+        if st.sidebar.button("Sair", key="btn_logout", icon=":material/logout:", type="secondary", use_container_width=True):
             st.session_state._confirmar_logout = True
             st.rerun()
-
-    st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
 if st.session_state.authenticated:
     if 'current_page' not in st.session_state or st.session_state.get('show_welcome', True):
@@ -714,8 +737,10 @@ apply_page_footer()
 try:
     if st.session_state.current_page == "Dashboard":
         from pages.dashboard import show; show()
+    elif st.session_state.current_page == "Clientes":
+        from pages.cadastros import show; show(modo="clientes")
     elif st.session_state.current_page == "Cadastros":
-        from pages.cadastros import show; show()
+        from pages.cadastros import show; show(modo="outros")
     elif st.session_state.current_page == "Propostas":
         from pages.propostas_unificado import show; show()
     elif st.session_state.current_page == "Vendas":
@@ -737,22 +762,6 @@ except Exception as e:
 # Marca qual página acabou de renderizar — permite às páginas detectarem
 # "entrada" (navegação) vs. rerun por interação de widget.
 st.session_state["_last_page_rendered"] = st.session_state.get("current_page")
-
-st.sidebar.markdown('<div style="margin:1.5rem 0;"><hr style="border:none;height:1px;background:#E0E0E0;"></div>', unsafe_allow_html=True)
-
-with st.sidebar.expander("Sobre o Sistema"):
-    st.markdown("**Planner Organizer** · Versão 1.0.4")
-    st.markdown("""
-**Módulos:**
-- Dashboard — Métricas, alertas e indicadores
-- Cadastros — Clientes, fornecedores, parceiros
-- Propostas — Ciclo completo com relatórios PDF
-- Vendas — Produtos vendidos por cliente
-- Financeiro — Kanban de receitas e despesas
-- Pós-Organização — Follow-up em 6 etapas
-- Relatórios — Análises e gráficos interativas
-- Perfil — Configurações da conta
-    """)
 
 if "mostrar_termos" not in st.session_state:
     st.session_state.mostrar_termos = False

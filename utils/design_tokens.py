@@ -80,18 +80,19 @@ GLOBAL_CSS_VARS = f"""
 """
 
 GOLD_GRADIENT = f"linear-gradient(135deg, {GOLD}, {GOLD_DARK})"
+# Botão da ação principal da tela (Nova proposta, Nova venda, Nova transação).
+# Era dourado com sombra; agora segue o botão primário do sistema (azul-marinho).
+# O nome ficou por compatibilidade com as páginas que o importam.
 GOLD_BUTTON_CSS = f"""
     button {{
-        background: {GOLD_GRADIENT} !important;
+        background: {NAVY} !important;
         color: #fff !important;
-        font-weight: 700 !important;
-        font-size: 15px !important;
-        padding: 12px 32px !important;
-        border-radius: 10px !important;
-        border: none !important;
-        letter-spacing: 0.02em !important;
-        box-shadow: 0 3px 12px rgba(201,168,76,0.35) !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+        border: 1px solid {NAVY} !important;
+        box-shadow: none !important;
     }}
+    button:hover {{ background: {NAVY_HOVER} !important; }}
 """
 
 NAVY_CARD_CSS = f"""

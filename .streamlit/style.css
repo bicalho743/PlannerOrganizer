@@ -140,25 +140,22 @@ button[data-testid="collapsedControl"] {
 }
 
 /* ========================================
-   SIDEBAR
+   MENU LATERAL — claro, agrupado; a tela aberta fica destacada
    ======================================== */
 section[data-testid="stSidebar"],
 section[data-testid="stSidebar"] > div,
 section[data-testid="stSidebar"] > div > div,
 [data-testid="stSidebarContent"],
 [data-testid="stSidebarUserContent"] {
-    background-color: #0D1B2A !important;
+    background-color: #FFFFFF !important;
 }
-
 section[data-testid="stSidebar"] {
-    background-color: #0D1B2A !important;
-    border-right: 1px solid #4C566A !important;
+    border-right: 1px solid #E4E7EC !important;
     width: 280px !important;
     min-width: 280px !important; max-width: 280px !important;
     z-index: 999999 !important;
     transition: transform 0.3s ease !important;
 }
-
 @media screen and (min-width: 769px) {
     section[data-testid="stSidebar"] {
         display: block !important;
@@ -180,119 +177,139 @@ section[data-testid="stSidebar"] {
         margin-left: 280px !important;
     }
 }
-
-
-section[data-testid="stSidebar"] .stButton > button {
-    width: 100% !important; background: rgba(255,255,255,0.1) !important;
-    color: rgba(255,255,255,0.95) !important;
-    border: 1px solid rgba(255,255,255,0.2) !important;
-    border-radius: 8px !important; padding: 12px 16px !important;
-    margin: 4px 0 !important; font-weight: 500 !important;
-    font-size: 0.875rem !important; transition: all 0.3s ease !important;
-    height: 42px !important; display: flex !important;
-    align-items: center !important; justify-content: center !important;
-}
-section[data-testid="stSidebar"] .stButton > button:hover {
-    background: rgba(255,255,255,0.2) !important;
-    border-color: rgba(255,255,255,0.4) !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
-}
-section[data-testid="stSidebar"] .stButton > button:active,
-section[data-testid="stSidebar"] .stButton > button:focus {
-    background-color: var(--gold) !important;
-    border-color: var(--gold) !important; color: white !important;
-}
+[data-testid="stSidebarUserContent"] { padding: 1.25rem 1rem 1.5rem !important; }
+/* computador: sem a faixa vazia que o Streamlit reserva no topo do menu (o botão de recolher já fica oculto).
+   No celular ela fica: o botão ☰ usa o botão nativo dessa faixa para abrir/fechar o menu. */
+@media screen and (min-width: 769px) { [data-testid="stSidebarHeader"] { display: none !important; } }
+section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: 2px !important; }
+/* o Streamlit puxa o texto 1rem para baixo (margem negativa); no menu isso fazia o título do
+   grupo invadir o botão de baixo, e o fundo do botão ao passar o mouse cobria o título */
+section[data-testid="stSidebar"] [data-testid="stMarkdown"],
+section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
+section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] > div { margin-bottom: 0 !important; }
 section[data-testid="stSidebar"] .stMarkdown,
 section[data-testid="stSidebar"] label,
-section[data-testid="stSidebar"] p { color: white !important; }
+section[data-testid="stSidebar"] p { color: #344054 !important; }
 
-section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent {
-    background-color: rgba(255,255,255,0.95) !important; border-radius: 8px !important;
-    padding: 16px !important; margin: 8px 0 !important;
+/* marca e conta no topo */
+.sb-marca { padding: 0 8px 14px; margin-bottom: 6px; border-bottom: 1px solid #EEF0F3; }
+.sb-logo { font-size: 1.05rem; font-weight: 700; color: var(--navy); letter-spacing: -0.01em; }
+.sb-logo::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px;
+    background: var(--gold); margin-right: 8px; vertical-align: 1px; }
+.sb-conta { font-size: 0.8rem; color: #667085; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* títulos de grupo: texto, não botão */
+.sb-grupo { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase;
+    color: #98A2B3; padding: 16px 10px 6px; cursor: default; user-select: none; }
+.sb-sep { border-top: 1px solid #EEF0F3; margin: 12px 4px 6px; }
+.sb-rodape { font-size: 0.72rem; color: #98A2B3; line-height: 1.6; padding: 14px 10px 0; }
+.sb-rodape a { color: #667085 !important; text-decoration: none; }
+.sb-rodape a:hover { color: var(--navy) !important; text-decoration: underline; }
+
+/* itens do menu (botões e o download do manual) */
+section[data-testid="stSidebar"] .stButton > button,
+section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button {
+    width: 100% !important; height: 38px !important; min-height: 38px !important;
+    background: transparent !important; color: #344054 !important;
+    border: 0 !important; border-radius: 8px !important; box-shadow: none !important;
+    padding: 0 10px !important; margin: 0 !important; transform: none !important;
+    font-weight: 500 !important; font-size: 0.9rem !important;
+    justify-content: flex-start !important; transition: background 0.12s ease !important;
 }
-section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderHeader {
-    color: #ffffff !important; font-weight: 600 !important;
-    background-color: rgba(255,255,255,0.05) !important; border-radius: 6px !important;
+section[data-testid="stSidebar"] .stButton > button > div,
+section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button > div { justify-content: flex-start !important; gap: 10px !important; }
+section[data-testid="stSidebar"] .stButton > button *,
+section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button * {
+    color: inherit !important; font-weight: inherit !important; text-align: left !important;
 }
-section[data-testid="stSidebar"] div[data-testid="stExpander"] .streamlit-expanderContent *,
-section[data-testid="stSidebar"] div[data-testid="stExpander"] [data-testid="stMarkdownContainer"] * {
-    color: #2c3e50 !important; background-color: transparent !important;
+section[data-testid="stSidebar"] .stButton > button [data-testid="stIconMaterial"],
+section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button [data-testid="stIconMaterial"] { color: #667085 !important; font-size: 1.15rem !important; }
+section[data-testid="stSidebar"] .stButton > button:hover,
+section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] > button:hover {
+    background: #F2F4F7 !important; color: #101828 !important; transform: none !important; box-shadow: none !important;
 }
-section[data-testid="stSidebar"] div[data-testid="stExpander"] button {
-    color: #ffffff !important; background-color: #C9A84C !important;
-    border: 1px solid #C9A84C !important; font-weight: 600 !important;
+/* tela aberta */
+section[data-testid="stSidebar"] .stButton > button[kind="primary"],
+section[data-testid="stSidebar"] .stButton > button[data-testid="stBaseButton-primary"] {
+    background: #EEF1F6 !important; color: var(--navy) !important; font-weight: 600 !important;
+    box-shadow: inset 3px 0 0 var(--gold) !important;
 }
+section[data-testid="stSidebar"] .stButton > button[kind="primary"] [data-testid="stIconMaterial"],
+section[data-testid="stSidebar"] .stButton > button[data-testid="stBaseButton-primary"] [data-testid="stIconMaterial"] { color: var(--navy) !important; }
+section[data-testid="stSidebar"] .stButton > button:focus:not(:focus-visible) { outline: none !important; }
 
 /* ========================================
-   BOTÕES PRINCIPAIS
+   BOTÕES — um sistema só:
+   primário (ação principal da tela) = azul-marinho; secundário = branco com borda;
+   terciário = texto. Antes todo botão era azul-escuro ou dourado e nada se destacava.
    ======================================== */
-.main .stButton > button {
-    background-color: #0D1B2A !important; color: white !important;
-    border: 1px solid #0D1B2A !important; font-weight: 500 !important;
-    padding: 0.5rem 1rem !important; border-radius: 6px !important;
-    transition: all 0.3s ease !important; min-height: 38px !important;
+.stButton > button, .stFormSubmitButton > button, div[data-testid="stFormSubmitButton"] > button,
+div[data-testid="stPopover"] > div > button {
+    border-radius: 8px !important; font-weight: 600 !important; min-height: 38px !important;
+    padding: 0.45rem 1rem !important; transform: none !important; box-shadow: none !important;
+    transition: background 0.12s ease, border-color 0.12s ease !important; text-shadow: none !important;
 }
-.main .stButton > button:hover {
-    background-color: #162840 !important; border-color: #162840 !important;
-    transform: translateY(-2px) !important;
+.stButton > button *, .stFormSubmitButton > button *, div[data-testid="stFormSubmitButton"] > button * {
+    color: inherit !important; font-weight: inherit !important;
 }
-.stButton > button, .stButton > button *, .stFormSubmitButton > button,
-.stFormSubmitButton > button *, div[data-testid="stForm"] button,
-div[data-testid="stForm"] button * {
-    color: white !important; font-weight: 600 !important; text-shadow: none !important;
+/* secundário (padrão) */
+button[data-testid="stBaseButton-secondary"], button[kind="secondary"],
+div[data-testid="stPopover"] > div > button {
+    background: #FFFFFF !important; color: #344054 !important; border: 1px solid #D0D5DD !important;
 }
-.stButton > button { background-color: #0D1B2A !important; }
-.stFormSubmitButton > button {
-    background: linear-gradient(135deg, var(--gold), var(--gold-dark)) !important;
+button[data-testid="stBaseButton-secondary"]:hover, button[kind="secondary"]:hover {
+    background: #F9FAFB !important; color: #101828 !important; border-color: #98A2B3 !important;
 }
-button[kind="primary"], button[data-testid="baseButton-primary"] {
-    background: linear-gradient(135deg, var(--gold), var(--gold-dark)) !important;
-    color: white !important; border: none !important; font-weight: 600 !important;
+/* primário: a ação principal (Nova proposta, Salvar, Cadastrar). O botão de enviar um
+   formulário é sempre a ação principal dele, então também fica azul-marinho. */
+button[data-testid="stBaseButton-primary"], button[kind="primary"],
+button[data-testid="stBaseButton-primaryFormSubmit"], button[kind="primaryFormSubmit"],
+button[data-testid="stBaseButton-secondaryFormSubmit"], button[kind="secondaryFormSubmit"] {
+    background: var(--navy) !important; color: #FFFFFF !important; border: 1px solid var(--navy) !important;
 }
-button[kind="secondary"], button[data-testid="baseButton-secondary"] {
-    background-color: var(--navy) !important; color: white !important; border: none !important;
+button[data-testid="stBaseButton-primary"]:hover, button[kind="primary"]:hover,
+button[data-testid="stBaseButton-primaryFormSubmit"]:hover, button[kind="primaryFormSubmit"]:hover,
+button[data-testid="stBaseButton-secondaryFormSubmit"]:hover, button[kind="secondaryFormSubmit"]:hover {
+    background: var(--navy-hover) !important; border-color: var(--navy-hover) !important;
 }
+/* terciário: só texto */
+button[data-testid="stBaseButton-tertiary"], button[kind="tertiary"] {
+    background: transparent !important; color: #475467 !important; border: 0 !important;
+}
+button[data-testid="stBaseButton-tertiary"]:hover, button[kind="tertiary"]:hover { color: var(--navy) !important; text-decoration: underline; }
 
 /* ========================================
-   INPUTS, SELECTBOX, MULTISELECT
+   CAMPOS
    ======================================== */
 div[data-testid="stMultiSelect"] [data-baseweb="select"] > div,
 div[data-testid="stMultiSelect"] [data-baseweb="select"] {
-    background-color: #ffffff !important; color: #1e1e1e !important;
+    background-color: #ffffff !important; color: #101828 !important;
 }
 div[data-testid="stMultiSelect"] [data-baseweb="tag"] {
-    background-color: #0D1B2A !important; color: #ffffff !important;
+    background-color: #EEF1F6 !important; color: var(--navy) !important;
 }
-/* Date input: em algumas versões do Streamlit o WRAPPER (baseweb input)
-   fica navy e o texto some. Forçar o wrapper + input claros e legíveis. */
+div[data-testid="stMultiSelect"] [data-baseweb="tag"] * { color: var(--navy) !important; }
 div[data-testid="stDateInput"] div[data-baseweb="input"],
 div[data-testid="stDateInput"] div[data-baseweb="input"] > div,
 div[data-testid="stDateInput"] input {
-    background-color: #f8f9fa !important; color: #212529 !important;
-    -webkit-text-fill-color: #212529 !important;
+    background-color: #ffffff !important; color: #101828 !important;
+    -webkit-text-fill-color: #101828 !important;
 }
 div[data-testid="stDateInput"] div[data-baseweb="input"] {
-    border: 1px solid #dee2e6 !important; border-radius: 4px !important;
+    border: 1px solid #D0D5DD !important; border-radius: 8px !important;
 }
-/* Selectbox: nesta versão do Streamlit o controle NÃO usa data-baseweb="select"
-   (é role="combobox"). Confirmado via DOM: o valor/entrada vinha em texto
-   escuro (rgb(30,30,30)/rgb(38,39,48)) sobre o fundo navy (rgb(13,27,42)) do
-   controle => ilegível. Alvo estável: data-testid="stSelectbox". Deixamos o
-   texto do CONTROLE (o "> div" e tudo dentro dele) BRANCO; a label é <label>
-   filha direta e mantém a cor escura sobre a página branca (.stSelectbox >
-   label). O menu suspenso é portaled para o <body>, então não é afetado. */
+div[data-testid="stSelectbox"] > div > div {
+    background-color: #ffffff !important; border-color: #D0D5DD !important; border-radius: 8px !important;
+}
 div[data-testid="stSelectbox"] > div,
 div[data-testid="stSelectbox"] > div * {
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
+  color: #101828 !important;
+  -webkit-text-fill-color: #101828 !important;
   opacity: 1 !important;
 }
 div[data-testid="stSelectbox"] > div input::placeholder,
 div[data-testid="stSelectbox"] > div input::-webkit-input-placeholder {
-  color: #C9A84C !important;
-  -webkit-text-fill-color: #C9A84C !important;
-  opacity: 1 !important;
+  color: #98A2B3 !important;
+  -webkit-text-fill-color: #98A2B3 !important;
 }
 /* Menu suspenso (popover) de selectbox/multiselect: fundo branco, fonte escura */
 [data-baseweb="popover"] [data-baseweb="menu"],
@@ -325,14 +342,14 @@ li[role="option"][aria-selected="true"] * {
     color: #1e1e1e !important;
 }
 .stTextInput input, .stTextArea textarea, .stNumberInput input {
-    background-color: #f8f9fa !important; color: #212529 !important;
-    border: 1px solid #dee2e6 !important; border-radius: 4px !important;
+    background-color: #ffffff !important; color: #101828 !important;
+    border: 1px solid #D0D5DD !important; border-radius: 8px !important;
 }
-.stTextInput input:focus, .stTextArea textarea:focus {
-    background-color: #ffffff !important; border-color: #C9A84C !important;
+.stTextInput input:focus, .stTextArea textarea:focus, .stNumberInput input:focus {
+    border-color: var(--navy) !important; box-shadow: 0 0 0 3px rgba(13,27,42,.08) !important;
 }
 label, .stTextInput > label, .stSelectbox > label {
-    color: #1e1e1e !important; font-weight: 600 !important; font-size: 0.875rem !important;
+    color: #344054 !important; font-weight: 500 !important; font-size: 0.875rem !important;
 }
 
 /* ========================================
@@ -349,29 +366,8 @@ div[data-testid="stExpander"] {
     border-radius: 8px !important; margin: 0.5rem 0 !important;
 }
 div[data-testid="stExpander"] * { color: #262730 !important; }
-div[data-testid="stExpander"] button, div[data-testid="stExpander"] button * {
-    color: white !important; font-weight: 600 !important;
-    background-color: #0D1B2A !important; border: none !important;
-}
-div[data-testid="stExpander"] button[kind="primary"],
-.streamlit-expanderContent button[kind="primary"] {
-    background: linear-gradient(135deg, var(--gold), var(--gold-dark)) !important;
-}
-/* Botão de SUBMIT de formulário dentro de expander: dourado por inteiro.
-   A regra genérica `div[data-testid="stExpander"] button` pintava o miolo de
-   navy por cima do gradiente dourado, criando um botão "de duas cores". */
-div[data-testid="stExpander"] .stFormSubmitButton > button,
-div[data-testid="stExpander"] div[data-testid="stFormSubmitButton"] > button {
-    background: linear-gradient(135deg, var(--gold), var(--gold-dark)) !important;
-    background-color: transparent !important;
-    border: none !important;
-}
-div[data-testid="stExpander"] .stFormSubmitButton > button *,
-div[data-testid="stExpander"] div[data-testid="stFormSubmitButton"] > button * {
-    background: transparent !important;
-    background-color: transparent !important;
-    color: #ffffff !important;
-}
+/* cabeçalho do expander é texto, não botão */
+div[data-testid="stExpander"] summary, div[data-testid="stExpander"] summary * { color: #101828 !important; font-weight: 600 !important; }
 /* Campo de DATA — Streamlit moderno (>=1.4x) renderiza o campo como
    div[data-testid="stDateInputField"] com react-aria DateField. O fundo herda
    o secondaryBackgroundColor NAVY do tema (config.toml) e o texto herda o
@@ -381,7 +377,7 @@ div[data-testid="stDateInputField"],
 div[data-testid="stDateInputField"] *,
 div[data-testid="stExpander"] div[data-testid="stDateInputField"],
 div[data-testid="stExpander"] div[data-testid="stDateInputField"] * {
-    background-color: #f8f9fa !important;
+    background-color: #ffffff !important;
     color: #212529 !important;
     -webkit-text-fill-color: #212529 !important;
 }
@@ -398,14 +394,11 @@ div[data-testid="stDateInputField"] [aria-selected="true"] {
     border-radius: 3px !important;
 }
 button[role="tab"] {
-    padding: 0.75rem 1.5rem !important; font-weight: 500 !important;
-    background-color: #f8f9fa !important; color: #0D1B2A !important;
-    border: 1px solid #dee2e6 !important; border-radius: 6px 6px 0 0 !important;
+    padding: 0.6rem 0.9rem !important; font-weight: 500 !important;
+    background: transparent !important; color: #475467 !important; border: 0 !important;
 }
-.stTabs [aria-selected="true"] {
-    font-weight: 600 !important; background-color: #ffffff !important;
-    border-bottom: 2px solid #C9A84C !important;
-}
+button[role="tab"]:hover { color: #101828 !important; }
+.stTabs [aria-selected="true"] { font-weight: 600 !important; color: var(--navy) !important; }
 div[data-testid="stDataFrame"] table th {
     background-color: #0D1B2A !important; color: white !important;
     font-weight: 600 !important; padding: 0.75rem !important;
@@ -484,7 +477,8 @@ body, .main, [data-testid="stAppViewContainer"], .block-container {
         box-shadow: none !important;
     }
 
-    section[data-testid="stSidebar"][aria-expanded="true"] {
+    section[data-testid="stSidebar"][aria-expanded="true"],
+    section[data-testid="stSidebar"][data-collapsed="false"] {
         transform: translateX(0) !important;
         box-shadow: 4px 0 20px rgba(0,0,0,0.5) !important;
     }

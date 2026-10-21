@@ -23,10 +23,10 @@ gatherUsageStats = false
 serverAddress = "0.0.0.0"
 
 [theme]
-primaryColor = "#C9A84C"
+primaryColor = "#0D1B2A"
 backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#0D1B2A"
-textColor = "#262730"
+secondaryBackgroundColor = "#F2F4F7"
+textColor = "#101828"
 font = "sans serif"
 
 [global]

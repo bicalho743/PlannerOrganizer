@@ -8,7 +8,9 @@ from utils.custom_components import custom_info
 from utils.tooltip_helper import create_tooltip, input_with_tooltip
 from utils.ui import botao_excluir, input_moeda
 
-def show():
+def show(modo="todos"):
+    """modo: "clientes" (só a aba de clientes, item próprio no menu), "outros" (fornecedores,
+    parceiros, assistentes e produtos) ou "todos"."""
     from utils.auth_guard import require_auth
     require_auth()
     # UX-4: tabela responsiva com rolagem horizontal visível e cabeçalhos fixos (sticky)
@@ -20,18 +22,10 @@ def show():
         return
 
     # Título com estilo personalizado para ficar mais próximo do topo
-    st.markdown('<h1 class="page-title">Cadastros</h1>', unsafe_allow_html=True)
+    titulo = {"clientes": "Clientes", "outros": "Cadastros"}.get(modo, "Cadastros")
+    st.markdown(f'<h1 class="page-title">{titulo}</h1>', unsafe_allow_html=True)
 
-    # Tabs para diferentes tipos de cadastro
-    tab_cliente, tab_fornecedor, tab_parceiro, tab_assistente, tab_produto = st.tabs([
-        "Clientes",
-        "Fornecedores",
-        "Parceiros",
-        "Assistentes",
-        "Produtos"
-    ])
-
-    with tab_cliente:
+    def _aba_clientes():
         cliente_tab1, cliente_tab2 = st.tabs(["Cadastrar/Listar", "Importar"])
         
         with cliente_tab1:
@@ -427,7 +421,7 @@ def show():
                         else:
                             st.error(mensagem)
 
-    with tab_fornecedor:
+    def _aba_fornecedores():
         fornecedor_tab1, fornecedor_tab2 = st.tabs(["Cadastrar/Listar", "Importar"])
 
         with fornecedor_tab1:
@@ -649,7 +643,7 @@ def show():
                         else:
                             st.error(mensagem)
 
-    with tab_parceiro:
+    def _aba_parceiros():
         parceiro_tab1, parceiro_tab2 = st.tabs(["Cadastrar/Listar", "Importar"])
 
         with parceiro_tab1:
@@ -845,7 +839,7 @@ def show():
                         else:
                             st.error(mensagem)
 
-    with tab_assistente:
+    def _aba_assistentes():
         assistente_tab1, assistente_tab2 = st.tabs(["Cadastrar/Listar", "Importar"])
 
         with assistente_tab1:
@@ -1014,7 +1008,7 @@ def show():
                         st.rerun()
 
     # === Aba de Produtos ===
-    with tab_produto:
+    def _aba_produtos():
         produto_tab1, produto_tab2 = st.tabs(["Cadastrar/Listar", "Importar"])
 
         with produto_tab2:
@@ -1211,5 +1205,19 @@ def show():
 
                 except Exception as e:
                     st.error(f"Erro ao carregar produtos: {str(e)}")
+    # Clientes tem item próprio no menu; os cadastros de apoio ficam juntos em "Cadastros"
+    abas = [("Clientes", _aba_clientes)] if modo == "clientes" else []
+    if modo != "clientes":
+        abas += [("Fornecedores", _aba_fornecedores), ("Parceiros", _aba_parceiros),
+                 ("Assistentes", _aba_assistentes), ("Produtos", _aba_produtos)]
+        if modo == "todos":
+            abas.insert(0, ("Clientes", _aba_clientes))
+    if len(abas) == 1:
+        abas[0][1]()
+    else:
+        for tab, (_, render) in zip(st.tabs([n for n, _ in abas]), abas):
+            with tab:
+                render()
+
     st.markdown('</div>', unsafe_allow_html=True)
 # Removida seção antiga de importação
