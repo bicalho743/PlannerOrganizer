@@ -378,9 +378,12 @@ if not st.session_state.authenticated:
         border-color: rgba(201,168,76,0.6) !important;
         box-shadow: 0 0 0 3px rgba(201,168,76,0.10) !important;
     }
+    /* color-scheme: dark faz o navegador usar o tom escuro no preenchimento automático de senha
+       (Chrome/Edge aplicam cores próprias que o CSS da página não consegue sobrescrever) */
+    [data-testid="stTextInputRootElement"] { color-scheme: dark; }
     [data-testid="stTextInputRootElement"] input,
     [data-testid="stTextInputRootElement"] input:focus {
-        background: transparent !important; border: 0 !important; box-shadow: none !important;
+        background: #16263A !important; border: 0 !important; box-shadow: none !important;
         color: #F5F0E8 !important; -webkit-text-fill-color: #F5F0E8 !important; caret-color: #C9A84C !important;
     }
     /* preenchimento automático do navegador: mantém o fundo escuro e o texto creme */
