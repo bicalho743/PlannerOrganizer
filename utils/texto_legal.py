@@ -27,12 +27,15 @@ def mostrar_pagina(titulo, intro, secoes):
     [data-testid="collapsedControl"] {display: none;}
     section[data-testid="stSidebar"] {display: none;}
     .block-container { max-width: 900px !important; margin: 0 auto !important; padding: 2rem 3rem !important; }
-    .legal h1 { color: #C9A84C; font-size: 1.8rem; margin-bottom: .25rem; }
-    .legal h3 { color: #C9A84C; font-size: 1.1rem; margin-top: 1.5rem; }
-    .legal p, .legal li { color: rgba(245,240,232,0.85); line-height: 1.8; font-size: .95rem; }
+    /* cartão branco da tela de entrada (fundo creme): mesmos tons do login e da landing */
+    .legal h1 { color: #0D1B2A; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 600;
+                font-size: 2rem; margin-bottom: .25rem; }
+    .legal h3 { color: #0D1B2A; font-size: 1.05rem; font-weight: 700; margin-top: 1.5rem;
+                padding-left: 10px; border-left: 3px solid #C9A84C; }
+    .legal p, .legal li { color: #3A4E68; line-height: 1.8; font-size: .95rem; }
     .legal ul { margin-left: 1.5rem; }
-    .legal em { color: rgba(245,240,232,0.55); }
-    .legal a { color: #C9A84C; }
+    .legal em { color: #6B7C94; }
+    .legal a { color: #8A6D12; text-decoration: underline; }
     @media (max-width: 600px) { .block-container { padding: 1.5rem 1rem !important; } }
     </style>
     """, unsafe_allow_html=True)
