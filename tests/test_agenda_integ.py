@@ -102,3 +102,18 @@ def test_regime_padrao_mei_e_troca(ctx):
     finally:
         db.session.query(Perfil).filter_by(usuario_id=db.usuario_id).delete()
         db.session.flush()
+
+
+def test_tutorial_aparece_ate_ser_visto(ctx):
+    from utils.models import Perfil
+    db, _ = ctx
+    assert db.get_tutorial_visto() == "sem perfil"  # conta sem perfil não vê o tutorial (nada para mostrar)
+    db.session.add(Perfil(usuario_id=db.usuario_id, email=f"{db.usuario_id}@teste.local", nome="Teste"))
+    db.session.flush()
+    try:
+        assert db.get_tutorial_visto() is None
+        assert db.marcar_tutorial_visto()
+        assert db.get_tutorial_visto()
+    finally:
+        db.session.query(Perfil).filter_by(usuario_id=db.usuario_id).delete()
+        db.session.flush()

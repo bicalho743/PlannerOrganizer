@@ -841,6 +841,11 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
             key="btn_manual_sidebar"
         )
 
+    if st.sidebar.button("Tutorial rápido", key="btn_tutorial_sidebar", icon=":material/play_circle:",
+                         use_container_width=True):
+        from utils import tour
+        tour.abrir()
+
     # Logout com confirmação: um clique acidental NUNCA encerra a sessão — apenas abre a confirmação.
     if st.session_state.get('_confirmar_logout', False):
         st.sidebar.warning("Deseja realmente sair do sistema?")
@@ -906,6 +911,12 @@ except Exception as e:
 # Marca qual página acabou de renderizar — permite às páginas detectarem
 # "entrada" (navegação) vs. rerun por interação de widget.
 st.session_state["_last_page_rendered"] = st.session_state.get("current_page")
+if st.session_state.get("authenticated"):
+    try:
+        from utils import tour
+        tour.mostrar()  # na primeira entrada da conta, ou pelo botão "Tutorial rápido" do menu
+    except Exception as _e_tour:
+        print(f"[tour] {_e_tour}")
 rastreamento.disparar()
 
 if "mostrar_termos" not in st.session_state:

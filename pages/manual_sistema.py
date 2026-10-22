@@ -312,6 +312,8 @@ def gerar_manual_sistema(verificar_auth=True):
         ['<font color="%s">■</font> Plano e cobrança' % CORES_MODULO["Plano"], "Teste grátis, assinatura e pagamentos."],
     ], [130, 340])
     texto("Cada módulo tem uma cor, que aparece no ícone do menu, no filete sob o título da tela e neste manual.")
+    texto("<b>Tutorial rápido</b>: na primeira entrada, uma janela mostra em 11 passos o que cada parte do menu faz. "
+          "Para rever, clique em <b>Tutorial rápido</b>, no fim do menu.")
     e.append(Spacer(1, 6))
     e.append(_draw_botoes())
     e.append(Spacer(1, 4))

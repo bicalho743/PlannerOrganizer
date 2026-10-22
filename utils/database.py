@@ -304,6 +304,7 @@ class Database:
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS cnpj VARCHAR"))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS precificacao TEXT"))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS regime_tributario TEXT"))
+                conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS tutorial_visto TEXT"))
                 conn.execute(_sa_text("ALTER TABLE itens_venda ADD COLUMN IF NOT EXISTS custo_unitario DOUBLE PRECISION"))
                 conn.execute(_sa_text("ALTER TABLE itens_venda ADD COLUMN IF NOT EXISTS baixou_estoque BOOLEAN"))
                 # Agenda (o create_all não cria tabelas novas: o refresh_schema_metadata troca os modelos pelo reflect)
@@ -609,6 +610,23 @@ class Database:
             if not perfil:
                 return False
             perfil.precificacao = json.dumps(parametros)
+            self.session.flush()
+            return True
+        return self._safe_query(query)
+
+    def get_tutorial_visto(self):
+        """Data em que a conta viu ou pulou o tutorial rápido (None = ainda não viu). Sem perfil, conta como visto."""
+        def query():
+            perfil = self.session.query(Perfil).filter_by(usuario_id=self.usuario_id).first()
+            return perfil.tutorial_visto if perfil else "sem perfil"
+        return self._safe_query(query)
+
+    def marcar_tutorial_visto(self):
+        def query():
+            perfil = self.session.query(Perfil).filter_by(usuario_id=self.usuario_id).first()
+            if not perfil:
+                return False
+            perfil.tutorial_visto = datetime.now().strftime("%Y-%m-%d")
             self.session.flush()
             return True
         return self._safe_query(query)
