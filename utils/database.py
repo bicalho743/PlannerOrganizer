@@ -5127,6 +5127,54 @@ class Database:
         self.invalidar_cache()
         return resultado
 
+    SINAL_TAG = "(Sinal / entrada)"
+
+    def sincronizar_sinal_proposta(self, proposta_id):
+        """Leva o sinal da proposta aprovada para o Financeiro.
+
+        O sinal vira uma receita "Recebido" na data da aprovação e a receita pendente da proposta
+        (criada na aprovação) fica com o saldo: valor − sinal. Sinal zerado apaga o lançamento do
+        sinal. Se a receita da proposta já foi recebida, não mexe em nada (o sinal contaria duas vezes)."""
+        def query():
+            from utils.proposta_status import normalize, STATUS_EM_ABERTO, STATUS_RECUSADA
+            p = self.session.query(Proposta).filter_by(id=int(proposta_id)).first()
+            if not p or normalize(p.status or "") in (STATUS_EM_ABERTO, STATUS_RECUSADA, ""):
+                return False  # só proposta aprovada (ou depois) tem lançamento no Financeiro
+            do_sinal = Transacao.descricao.like(f"%{self.SINAL_TAG}%")
+            base = (self.session.query(Transacao)
+                    .filter(Transacao.proposta_id == p.id, Transacao.tipo.in_(["Receita", "receita_a_receber"]), ~do_sinal)
+                    .order_by(Transacao.id).first())
+            if base is not None and base.status in ("Recebido", "Pago") and float(base.valor or 0) > 0:
+                return False
+            lanc = self.session.query(Transacao).filter(Transacao.proposta_id == p.id, do_sinal).first()
+            valor = float(p.valor or 0)
+            sinal = min(max(float(p.sinal or 0), 0.0), valor)
+            dia = p.data_aprovacao or datetime.now().date()
+            if sinal > 0:
+                if lanc is None:
+                    lanc = Transacao(tipo="Receita", categoria="Serviços de organização",
+                                     subcategoria=p.tipo_proposta or "Organização", tipo_receita="organização",
+                                     origem_id=p.cliente_id, origem_tipo="cliente", tipo_conta="PF",
+                                     proposta_id=p.id, classificacao="receita",
+                                     usuario_id=(base.usuario_id if base is not None else None) or p.usuario_id)
+                    self.session.add(lanc)
+                cliente = self.session.query(Cliente).filter_by(id=p.cliente_id).first()
+                lanc.descricao = f"Proposta #{p.numero} - {cliente.nome if cliente else 'Cliente'} {self.SINAL_TAG}"
+                lanc.valor, lanc.data, lanc.status, lanc.data_recebimento = sinal, dia, "Recebido", dia
+            elif lanc is not None:
+                self.session.delete(lanc)
+            if base is not None:
+                antes = float(base.valor or 0)
+                base.valor = valor - sinal
+                if base.valor <= 0:  # tudo pago no sinal: nada fica a receber
+                    base.status, base.data_recebimento = "Recebido", dia
+                elif antes <= 0 and base.status == "Recebido":  # o sinal diminuiu: volta a haver saldo
+                    base.status, base.data_recebimento = "Pendente", None
+            return True
+        resultado = self._safe_query(query)
+        self.invalidar_cache()
+        return resultado
+
     def excluir_venda_com_sql(self, venda_id):
         """
         Exclui completamente uma venda usando SQL direto para evitar problemas de ORM.

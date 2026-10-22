@@ -520,6 +520,12 @@ div[data-testid="stDownloadButton"] *,
 }
 [class*="st-key-btned_"] .stButton > button:hover { background: #DCE6F3 !important; border-color: #8FA3C0 !important; }
 [class*="st-key-btned_"] .stButton > button * { color: #1F3A60 !important; }
+/* bloco de edição (ex.: "Editar serviço"): cabeçalho no mesmo azul claro */
+[class*="st-key-btned_"] div[data-testid="stExpander"] { border-color: #C7D3E6 !important; overflow: hidden; }
+[class*="st-key-btned_"] div[data-testid="stExpander"] summary { background: #EAF0F8 !important; }
+[class*="st-key-btned_"] div[data-testid="stExpander"] summary:hover { background: #DCE6F3 !important; }
+[class*="st-key-btned_"] div[data-testid="stExpander"] summary,
+[class*="st-key-btned_"] div[data-testid="stExpander"] summary * { color: #1F3A60 !important; }
 
 /* botões de excluir e de fechar (utils/ui.py: botao_excluir, link_fechar) */
 [class*="st-key-del_"] button[kind], [class*="st-key-del_"] button[data-testid] {

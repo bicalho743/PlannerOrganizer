@@ -163,6 +163,8 @@ def _render_nova_proposta_form(clientes):
 
                     if proposta_atualizada:
                         st.session_state.db.update_proposta(novo_numero, **proposta_atualizada)
+                    if gerar_transacoes and sinal_nova and sinal_nova > 0:
+                        st.session_state.db.sincronizar_sinal_proposta(novo_numero)
 
                     st.success(f"Proposta #{novo_numero} criada com sucesso!")
                     st.session_state['kanban_nova_proposta_open'] = False
@@ -462,6 +464,8 @@ def _render_open_proposal_actions(proposta_id, proposta):
                         proposta_id=proposta_id, novo_status=STATUS_APROVADA,
                         data_aprovacao=datetime.now().date())
                     if res.get('status', False):
+                        # sinal vira receita recebida; a pendente da aprovação fica com o saldo
+                        st.session_state.db.sincronizar_sinal_proposta(proposta_id)
                         st.session_state['kanban_selected_proposta'] = None
                         st.session_state.db.invalidar_cache()
                         st.rerun()
@@ -1020,7 +1024,7 @@ def _tab_itens(proposta_id, show_finalizar=False, proposta=None):
                 f'</div>',
                 unsafe_allow_html=True,
             )
-        with st.expander("Editar serviço"):
+        with st.container(key=f"btned_servico_{proposta_id}"), st.expander("Editar serviço", icon=":material/edit:"):
             with st.form(key=f"form_editar_valor_exec_{proposta_id}"):
                 novo_valor = input_moeda(
                     "Valor do serviço (Personal Organizer) — R$:",
@@ -1050,6 +1054,8 @@ def _tab_itens(proposta_id, show_finalizar=False, proposta=None):
                             descricao=nova_descricao, sinal=novo_sinal)
                         ok = res.get('status', False) if isinstance(res, dict) else bool(res)
                         if ok:
+                            # valor/sinal mudaram: ajusta o sinal recebido e o saldo a receber no Financeiro
+                            st.session_state.db.sincronizar_sinal_proposta(proposta_id)
                             st.session_state.db.invalidar_cache()
                             st.success("Serviço atualizado!")
                             st.rerun()
