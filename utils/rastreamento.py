@@ -79,6 +79,20 @@ def disparar():
 </script>""", height=0)
 
 
+CAMPOS_ORIGEM = ("tema", "utm_source", "utm_medium", "utm_campaign", "utm_content")
+
+
+def guardar_origem(query_params):
+    """Guarda na sessão de onde a pessoa veio (tema do anúncio e UTMs que a landing repassa)."""
+    origem = {k: str(query_params.get(k))[:60] for k in CAMPOS_ORIGEM if query_params.get(k)}
+    if origem:
+        st.session_state["_origem_visita"] = origem
+
+
+def origem_da_visita():
+    return dict(st.session_state.get("_origem_visita") or {})
+
+
 def onclick_checkout(plano, valor):
     """Atributo onclick para os links de pagamento (rodam na página principal, onde gtag/fbq estão)."""
     p = f"{{value:{valor},currency:'BRL'}}"

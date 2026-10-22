@@ -305,6 +305,7 @@ class Database:
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS precificacao TEXT"))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS regime_tributario TEXT"))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS tutorial_visto TEXT"))
+                conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS origem_cadastro TEXT"))
                 conn.execute(_sa_text("ALTER TABLE itens_venda ADD COLUMN IF NOT EXISTS custo_unitario DOUBLE PRECISION"))
                 conn.execute(_sa_text("ALTER TABLE itens_venda ADD COLUMN IF NOT EXISTS baixou_estoque BOOLEAN"))
                 # Agenda (o create_all não cria tabelas novas: o refresh_schema_metadata troca os modelos pelo reflect)
@@ -619,6 +620,18 @@ class Database:
         def query():
             perfil = self.session.query(Perfil).filter_by(usuario_id=self.usuario_id).first()
             return perfil.tutorial_visto if perfil else "sem perfil"
+        return self._safe_query(query)
+
+    def salvar_origem_cadastro(self, origem):
+        """Guarda de onde veio a conta (tema/UTMs), só uma vez: a primeira origem vale."""
+        import json
+        def query():
+            perfil = self.session.query(Perfil).filter_by(usuario_id=self.usuario_id).first()
+            if not perfil or perfil.origem_cadastro:
+                return False
+            perfil.origem_cadastro = json.dumps(origem, ensure_ascii=False)
+            self.session.flush()
+            return True
         return self._safe_query(query)
 
     def marcar_tutorial_visto(self):

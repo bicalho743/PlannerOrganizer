@@ -273,6 +273,9 @@ except Exception as e:
 from utils import rastreamento
 rastreamento.instalar()
 
+# tema do anúncio e UTMs (ex.: ?tema=retorno&utm_campaign=retorno) seguem até o cadastro
+rastreamento.guardar_origem(st.query_params)
+
 # Vindo da landing ("Começar grátis"): abre direto o cadastro, com o e-mail que ela já digitou lá
 if (not st.session_state.authenticated and st.query_params.get("cadastro") == "1"
         and not st.session_state.get("_cadastro_aberto")):
@@ -725,7 +728,11 @@ try:
     from datetime import date as _date
     from utils.trial import _data_cadastro_para_date
     if _uid_trial and _data_cadastro_para_date((_perfil_trial or {}).get("data_cadastro")) == _date.today():
-        rastreamento.evento("sign_up", "CompleteRegistration", uma_vez=f"po_cadastro_{_uid_trial}")
+        _origem = rastreamento.origem_da_visita()
+        rastreamento.evento("sign_up", "CompleteRegistration", params=_origem, uma_vez=f"po_cadastro_{_uid_trial}")
+        if _origem and not st.session_state.get("_origem_salva"):
+            st.session_state["_origem_salva"] = True
+            st.session_state.db.salvar_origem_cadastro(_origem)
     rastreamento.compra_se_assinante(_perfil_trial, _uid_trial)
     if trial_expirado(_perfil_trial):
         _render_bloqueio_trial(_perfil_trial, _uid_trial)

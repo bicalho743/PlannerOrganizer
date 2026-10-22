@@ -92,7 +92,8 @@ class Perfil(Base):
     cnpj = Column(String)
     precificacao = Column(Text)  # parâmetros da aba Precificação (JSON)
     regime_tributario = Column(Text)
-    tutorial_visto = Column(Text)  # data em que viu (ou pulou) o tutorial rápido; vazio = mostrar na entrada  # JSON: {"regime": "MEI"|"Simples Nacional"|"Outro", "aliquota": %}
+    tutorial_visto = Column(Text)
+    origem_cadastro = Column(Text)  # JSON com tema do anúncio e UTMs da visita em que a conta foi criada  # data em que viu (ou pulou) o tutorial rápido; vazio = mostrar na entrada  # JSON: {"regime": "MEI"|"Simples Nacional"|"Outro", "aliquota": %}
     role = Column(String, default='user')
     plano = Column(String, default='gratuito')
     # default como callable: avaliado a cada INSERT (data real do cadastro).

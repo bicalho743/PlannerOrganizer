@@ -117,3 +117,20 @@ def test_tutorial_aparece_ate_ser_visto(ctx):
     finally:
         db.session.query(Perfil).filter_by(usuario_id=db.usuario_id).delete()
         db.session.flush()
+
+
+def test_origem_do_cadastro_guarda_a_primeira(ctx):
+    import json
+    from utils.models import Perfil
+    db, _ = ctx
+    db.session.add(Perfil(usuario_id=db.usuario_id, email=f"{db.usuario_id}@teste.local", nome="Teste"))
+    db.session.flush()
+    try:
+        assert db.salvar_origem_cadastro({"tema": "retorno", "utm_source": "instagram"})
+        assert not db.salvar_origem_cadastro({"tema": "mei"})
+        p = db.session.query(Perfil).filter_by(usuario_id=db.usuario_id).first()
+        db.session.refresh(p)
+        assert json.loads(p.origem_cadastro)["tema"] == "retorno"
+    finally:
+        db.session.query(Perfil).filter_by(usuario_id=db.usuario_id).delete()
+        db.session.flush()
