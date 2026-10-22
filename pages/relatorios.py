@@ -429,14 +429,94 @@ def _aba_futuro(mov, propostas, hoje, exp):
     exp["Propostas aguardando"] = ag
 
 
+# Excel já formatado: cabeçalho nas cores da marca, R$ e % nas colunas certas, larguras ajustadas,
+# cabeçalho fixo e filtro em cada aba. As colunas são reconhecidas pelo nome.
+_XL_NOMES = {"valor": "Valor", "valor_fechado": "Valor fechado", "ticket": "Ticket médio", "conversao": "Conversão",
+             "margem": "Margem", "custos": "Custos", "lucro": "Lucro", "recebido": "Recebido", "dias": "Dias parada",
+             "numero": "Proposta", "cliente": "Cliente", "tipo": "Tipo", "mes": "Mês", "enviadas": "Enviadas",
+             "fechadas": "Fechadas", "recusadas": "Recusadas", "em_aberto": "Em aberto", "categoria": "Categoria"}
+_XL_PCT = ("conversão", "margem", "taxa", "%")
+_XL_INTEIRO = ("trabalhos", "clientes", "enviadas", "fechadas", "recusadas", "em aberto", "dias", "qtd")
+
+
+def _xl_formato(coluna, serie):
+    """Formato numérico do Excel pela coluna: %, inteiro ou R$ (o resto dos números é dinheiro)."""
+    if not pd.api.types.is_numeric_dtype(serie) or pd.api.types.is_bool_dtype(serie):
+        return None
+    nome = str(coluna).lower()
+    if any(k in nome for k in _XL_PCT):
+        return "0.0%"
+    if "proposta" in nome:
+        return "0"
+    if any(k in nome for k in _XL_INTEIRO):
+        return "#,##0"
+    return '"R$" #,##0.00;[Red]-"R$" #,##0.00'
+
+
 def _excel(exp, titulo):
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+    from openpyxl.utils import get_column_letter
+    navy, dourado, creme = "0D1B2A", "C9A84C", "F8F6F1"
+    fino = Side(style="thin", color="E4E7EC")
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as xw:
-        pd.DataFrame({"Relatório": [titulo], "Gerado em": [datetime.now().strftime("%d/%m/%Y %H:%M")]}).to_excel(
-            xw, sheet_name="Sobre", index=False)
+        try:
+            from pages.perfil import carregar_perfil
+            perfil = carregar_perfil() or {}
+        except Exception:
+            perfil = {}
+        conta = perfil.get("empresa") or perfil.get("nome") or ""
+        sobre = pd.DataFrame({"": ["Relatório", "Conta", "Gerado em", "Abas"],
+                              " ": [titulo, conta, datetime.now().strftime("%d/%m/%Y %H:%M"),
+                                    ", ".join(n for n, df in exp.items() if isinstance(df, pd.DataFrame) and not df.empty)]})
+        sobre.to_excel(xw, sheet_name="Sobre", index=False, header=False, startrow=2)
+        ws = xw.sheets["Sobre"]
+        ws["A1"] = "Planner Organizer"
+        ws["A1"].font = Font(bold=True, size=16, color=navy)
+        for r in range(3, 7):
+            ws.cell(r, 1).font = Font(bold=True, color="667085")
+        ws.column_dimensions["A"].width, ws.column_dimensions["B"].width = 14, 60
+        ws["B6"].alignment = Alignment(wrap_text=True, vertical="top")
+        ws.sheet_view.showGridLines = False
+
         for nome, df in exp.items():
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                df.to_excel(xw, sheet_name=nome[:31], index=False)
+            if not isinstance(df, pd.DataFrame) or df.empty:
+                continue
+            df = df.rename(columns=lambda c: _XL_NOMES.get(c, str(c).replace("_", " ").capitalize()
+                                                            if "_" in str(c) else c))
+            aba = nome[:31]
+            df.to_excel(xw, sheet_name=aba, index=False, startrow=2)
+            ws = xw.sheets[aba]
+            ncol, nlin = len(df.columns), len(df) + 3
+            ws["A1"] = nome
+            ws["A1"].font = Font(bold=True, size=14, color=navy)
+            ws["A2"] = titulo
+            ws["A2"].font = Font(italic=True, size=9, color="667085")
+            for j, col in enumerate(df.columns, 1):
+                h = ws.cell(3, j)
+                h.font, h.fill = Font(bold=True, color="FFFFFF"), PatternFill("solid", fgColor=navy)
+                h.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+                h.border = Border(bottom=Side(style="medium", color=dourado))
+                fmt = _xl_formato(col, df[col])
+                largura = len(str(col))
+                for i in range(4, nlin + 1):
+                    c = ws.cell(i, j)
+                    if isinstance(c.value, str) and c.value.startswith("="):
+                        c.data_type = "s"  # "= Lucro" é texto, não fórmula (antes aparecia #NAME?)
+                    c.border = Border(bottom=fino)
+                    if fmt:
+                        c.number_format = fmt
+                    elif hasattr(c.value, "year"):
+                        c.number_format = "DD/MM/YYYY"
+                    if i % 2 == 1:
+                        c.fill = PatternFill("solid", fgColor=creme)
+                    largura = max(largura, len(f"{c.value:,.2f}") + 4 if isinstance(c.value, (int, float)) and fmt
+                                  else len(str(c.value or "")))
+                ws.column_dimensions[get_column_letter(j)].width = min(max(largura + 2, 10), 50)
+            ws.row_dimensions[3].height = 22
+            ws.freeze_panes = "A4"
+            ws.auto_filter.ref = f"A3:{get_column_letter(ncol)}{nlin}"
+            ws.sheet_view.showGridLines = False
     return buf.getvalue()
 
 
@@ -493,6 +573,7 @@ def show():
     st.divider()
     try:
         st.download_button("Baixar este relatório em Excel", data=_excel(exp, f"Relatório {rot} (comparado com {rot_comp})"),
+                           icon=":material/table_view:",
                            file_name=f"relatorio_{ini:%Y-%m-%d}_{fim:%Y-%m-%d}.xlsx",
                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="rel_excel")
     except Exception as e:

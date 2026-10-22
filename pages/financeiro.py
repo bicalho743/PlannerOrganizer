@@ -298,8 +298,9 @@ def _render_detail_panel(transacao, financeiro_df):
         acao_key = f"fin_receber_{tid}" if is_rec else f"fin_pagar_{tid}"
         confirm_key = f"fin_confirm_receber_{tid}" if is_rec else f"fin_confirm_pagar_{tid}"
 
-        # receber/pagar é a ação principal; excluir fica menor, à direita
-        col_act1, col_act2, _, col_act3 = st.columns([2, 2, 1, 1.2])
+        # receber/pagar é a ação principal; excluir fica menor, logo ao lado
+        st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+        col_act1, col_act2, col_act3 = st.columns([2, 2, 1.2])
         with col_act1:
             if st.button(acao_label, key=acao_key, type="primary", icon=":material/check:", use_container_width=True):
                 st.session_state[confirm_key] = True
@@ -313,7 +314,8 @@ def _render_detail_panel(transacao, financeiro_df):
                 st.session_state[f"fin_confirm_del_{tid}"] = True
                 st.rerun()
     else:
-        _, col_del = st.columns([4.8, 1.2])
+        st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+        col_del, _ = st.columns([1.2, 4])
         with col_del:
             if botao_excluir("Excluir", f"fin_del_{tid}"):
                 st.session_state[f"fin_confirm_del_{tid}"] = True

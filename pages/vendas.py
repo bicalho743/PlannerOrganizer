@@ -314,8 +314,8 @@ def _render_detail_panel(venda_id, venda_row):
         except Exception as e:
             st.caption(f"Itens: {str(e)}")
 
-    # editar à esquerda; cancelar/excluir (vermelho) menor, à direita — mesmo arranjo do Financeiro
-    col_edit, _, col_canc = st.columns([2, 3, 1.4])
+    # editar e, ao lado, cancelar/excluir (vermelho) menor — mesmo arranjo do Financeiro
+    col_edit, col_canc, _ = st.columns([2, 1.4, 2.6])
     with col_edit:
         if not cancelada and botao_editar("Editar itens", key=f"det_edit_{venda_id}", use_container_width=True):
             st.session_state[f"editando_venda_{venda_id}"] = not st.session_state.get(f"editando_venda_{venda_id}", False)
@@ -601,10 +601,13 @@ def show():
         return df[(d >= i) & (d <= f)] if i else df[d <= f]
 
     vp = _no_periodo(vendas_df, ini, fim)
-    if busca and not vp.empty:
+    # a busca procura em todas as datas: é como se consulta uma venda antiga
+    lista = vendas_df if busca else vp
+    if busca and not lista.empty:
         b = busca.strip().lower()
-        vp = vp[vp["cliente_nome"].astype(str).str.lower().str.contains(b, regex=False)
-                | vp["observacoes"].astype(str).str.lower().str.contains(b, regex=False)]
+        lista = lista[lista["cliente_nome"].astype(str).str.lower().str.contains(b, regex=False)
+                      | lista["observacoes"].astype(str).str.lower().str.contains(b, regex=False)]
+        vp = lista[lista.index.isin(vp.index)]
     ativas = vp[vp["situacao"] != "Cancelada"] if not vp.empty else vp
     comp = pd.DataFrame()
     if ini and not vendas_df.empty:
@@ -682,12 +685,13 @@ def show():
         abertas = abertas[abertas["cliente_nome"].astype(str).str.lower().str.contains(b, regex=False)]
     colunas = st.columns(3)
     for col_idx, ((rotulo, cor), col_widget) in enumerate(zip(SITUACOES, colunas)):
-        col_df = abertas if rotulo == "A receber" else (vp[vp["situacao"] == rotulo] if not vp.empty else vp)
+        col_df = abertas if rotulo == "A receber" else (lista[lista["situacao"] == rotulo] if not lista.empty else lista)
         with col_widget:
             st.markdown(f'<div class="kanban-col-header" style="background-color:{cor};">{rotulo} ({len(col_df)})</div>',
                         unsafe_allow_html=True)
             if col_df.empty:
-                st.caption("Nenhuma venda nesta situação." if rotulo == "A receber" else "Nenhuma venda neste período.")
+                st.caption("Nenhuma venda nesta situação." if rotulo == "A receber"
+                           else ("Nenhuma venda encontrada." if busca else "Nenhuma venda neste período."))
                 continue
             col_df = col_df.sort_values("data_venda", ascending=False)
             limite = 30
@@ -711,6 +715,11 @@ def show():
                     st.rerun()
             if len(col_df) > limite:
                 st.caption(f"e mais {len(col_df) - limite}. Use a busca ou um período menor.")
+    if busca:
+        st.caption(f"Busca em todas as datas por “{busca.strip()}”.")
+    elif nome_periodo != "Tudo":
+        st.caption(f"Pagas e canceladas: {nome_periodo.lower()}. Para vendas mais antigas, busque pelo nome "
+                   "da cliente ou escolha “Tudo” no período. “A receber” mostra todas as vendas em aberto.")
 
     # Detalhes em modal centralizado (mesmo padrão do Financeiro e das Propostas)
     selected_id = st.session_state.get("venda_selecionada")
