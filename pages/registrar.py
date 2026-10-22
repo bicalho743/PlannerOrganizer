@@ -27,7 +27,7 @@ def show():
             # Formulário de cadastro
             with st.form("registration_form", clear_on_submit=False):
                 name = st.text_input("Nome completo")
-                email = st.text_input("Email", help="Será usado para login")
+                email = st.text_input("Email", value=st.session_state.get("_email_cadastro", ""), help="Será usado para login")
                 password = st.text_input("Senha", type="password", 
                                         help="Mínimo de 6 caracteres")
                 password_confirm = st.text_input("Confirme a senha", type="password")

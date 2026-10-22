@@ -10,6 +10,7 @@ import streamlit as st
 from pages.perfil import (STRIPE_CHECKOUT_MENSAL, STRIPE_CHECKOUT_ANUAL, STRIPE_PORTAL_LINK,
                           checkout_url, carregar_perfil, _criar_portal_session)
 from utils.trial import is_pro, dias_restantes_trial, DIAS_TRIAL
+from utils.rastreamento import onclick_checkout
 
 CSS = """
 <style>
@@ -25,6 +26,7 @@ CSS = """
 .pl-card .selo { position: absolute; top: -10px; left: 18px; background: var(--gold); color: var(--navy);
                  font-size: .68rem; font-weight: 700; letter-spacing: .04em; padding: 2px 10px; border-radius: 999px; }
 .pl-card .nome { font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #475467; }
+.pl-fundadora { background: #FBF5E6; border: 1px solid #E3CF97; color: #5C4712; border-radius: 10px; padding: 10px 14px; font-size: .9rem; margin-bottom: 12px; }
 .pl-card .preco { font-size: 1.6rem; font-weight: 700; color: #101828; margin: 4px 0; font-variant-numeric: tabular-nums; }
 .pl-card .preco span { font-size: .85rem; font-weight: 500; color: #667085; }
 .pl-card .obs { font-size: .82rem; color: #475467; min-height: 1.2em; }
@@ -93,19 +95,21 @@ def show():
     url_mensal = checkout_url(STRIPE_CHECKOUT_MENSAL, email, uid)
     url_anual = checkout_url(STRIPE_CHECKOUT_ANUAL, email, uid)
     st.markdown(f"""
+    <div class="pl-fundadora"><b>Preço de fundadora</b> para as 50 primeiras assinantes, garantido enquanto a
+      assinatura estiver ativa. Depois, R$ 39,90/mês e R$ 399/ano.</div>
     <div class="pl-cards">
       <div class="pl-card">
         <div class="nome">Mensal</div>
         <div class="preco">R$ 29,90 <span>/mês</span></div>
         <div class="obs">Cancele quando quiser.</div>
-        <a class="cta secundario" href="{url_mensal}" target="_blank" rel="noopener">Assinar mensal</a>
+        <a class="cta secundario" href="{url_mensal}" target="_blank" rel="noopener" {onclick_checkout('mensal', 29.9)}>Assinar mensal</a>
       </div>
       <div class="pl-card destaque">
         <span class="selo">2 MESES GRÁTIS</span>
         <div class="nome">Anual</div>
         <div class="preco">R$ 297 <span>/ano</span></div>
         <div class="obs">Equivale a R$ 24,75 por mês.</div>
-        <a class="cta primario" href="{url_anual}" target="_blank" rel="noopener">Assinar anual</a>
+        <a class="cta primario" href="{url_anual}" target="_blank" rel="noopener" {onclick_checkout('anual', 297)}>Assinar anual</a>
       </div>
     </div>
     <ul class="pl-lista">

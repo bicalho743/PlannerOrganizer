@@ -268,6 +268,17 @@ try:
 except Exception as e:
     logger.warning(f"Erro ao configurar persistência de sessão: {str(e)}")
 
+# Google Analytics e Pixel da Meta em todas as telas, inclusive a de entrada (utils/rastreamento.py)
+from utils import rastreamento
+rastreamento.instalar()
+
+# Vindo da landing ("Começar grátis"): abre direto o cadastro, com o e-mail que ela já digitou lá
+if (not st.session_state.authenticated and st.query_params.get("cadastro") == "1"
+        and not st.session_state.get("_cadastro_aberto")):
+    st.session_state.login_page = "registrar"
+    st.session_state._cadastro_aberto = True
+    st.session_state._email_cadastro = st.query_params.get("email", "")
+
 # ══════════════════════════════════════════════════════════
 # BLOCO DE LOGIN — visual novo, lógica original preservada
 # ══════════════════════════════════════════════════════════
@@ -667,12 +678,11 @@ def _render_bloqueio_trial(perfil=None, uid=None):
             <li>Financeiro completo</li>
             <li>Relatórios e PDFs</li>
             <li>Pós-organização</li>
-            <li>Suporte prioritário</li>
           </ul>
-          <a class='pw-cta outline' href='{_url_mensal}' target='_blank'>Assinar Mensal</a>
+          <a class='pw-cta outline' href='{_url_mensal}' target='_blank' {rastreamento.onclick_checkout('mensal', 29.9)}>Assinar mensal</a>
         </div>
         <div class='pw-card featured'>
-          <div class='pw-ribbon'>MAIS POPULAR</div>
+          <div class='pw-ribbon'>MELHOR CUSTO-BENEFÍCIO</div>
           <div class='pw-plan'>Anual</div>
           <div class='pw-price'>R$ 297 <span>/ano</span></div>
           <div class='pw-save'>Economize 2 meses</div>
@@ -681,11 +691,12 @@ def _render_bloqueio_trial(perfil=None, uid=None):
             <li>Financeiro completo</li>
             <li>Relatórios e PDFs</li>
             <li>Pós-organização</li>
-            <li>Suporte prioritário</li>
           </ul>
-          <a class='pw-cta primary' href='{_url_anual}' target='_blank'>Assinar Anual</a>
+          <a class='pw-cta primary' href='{_url_anual}' target='_blank' {rastreamento.onclick_checkout('anual', 297)}>Assinar anual</a>
         </div>
       </div>
+      <div class='pw-trust'><b>Preço de fundadora</b> para as 50 primeiras assinantes, garantido enquanto a assinatura
+        estiver ativa. Depois, R$ 39,90/mês e R$ 399/ano.</div>
       <div class='pw-trust'>Pagamento seguro via Stripe · Cancele quando quiser · Dados sempre preservados</div>
       <div class='pw-manage'>Após assinar, atualize a página (a liberação pode levar alguns minutos).<br>
         Já é assinante? <a href='{STRIPE_PORTAL_LINK}' target='_blank'>Gerencie sua assinatura</a></div>
@@ -709,8 +720,15 @@ try:
     elif isinstance(st.session_state.get('user'), dict) and st.session_state.user.get('localId'):
         _uid_trial = st.session_state.user['localId']
     _perfil_trial = carregar_perfil(_uid_trial or '')
+    # conta criada hoje = cadastro (e-mail ou Google); plano ativo pela 1ª vez = compra
+    from datetime import date as _date
+    from utils.trial import _data_cadastro_para_date
+    if _uid_trial and _data_cadastro_para_date((_perfil_trial or {}).get("data_cadastro")) == _date.today():
+        rastreamento.evento("sign_up", "CompleteRegistration", uma_vez=f"po_cadastro_{_uid_trial}")
+    rastreamento.compra_se_assinante(_perfil_trial, _uid_trial)
     if trial_expirado(_perfil_trial):
         _render_bloqueio_trial(_perfil_trial, _uid_trial)
+        rastreamento.disparar()
         st.stop()
 except Exception as _e_trial:
     # Fail-open: se der erro ao checar, NÃO bloqueia (não trava quem pagou).
@@ -880,6 +898,7 @@ except Exception as e:
 # Marca qual página acabou de renderizar — permite às páginas detectarem
 # "entrada" (navegação) vs. rerun por interação de widget.
 st.session_state["_last_page_rendered"] = st.session_state.get("current_page")
+rastreamento.disparar()
 
 if "mostrar_termos" not in st.session_state:
     st.session_state.mostrar_termos = False

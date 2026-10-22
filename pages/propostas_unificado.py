@@ -166,6 +166,14 @@ def _render_nova_proposta_form(clientes):
                     if gerar_transacoes and sinal_nova and sinal_nova > 0:
                         st.session_state.db.sincronizar_sinal_proposta(novo_numero)
 
+                    # ativação: a 1ª proposta da conta vira evento no Analytics e no Pixel (anúncios)
+                    try:
+                        if len(st.session_state.db.get_propostas()) <= 1:
+                            from utils.rastreamento import evento
+                            evento("primeira_proposta", "PrimeiraProposta", meta_custom=True,
+                                   uma_vez=f"po_1a_proposta_{st.session_state.get('usuario_id', '')}")
+                    except Exception as _e_ev:
+                        print(f"[rastreamento] {_e_ev}")
                     st.success(f"Proposta #{novo_numero} criada com sucesso!")
                     st.session_state['kanban_nova_proposta_open'] = False
                     st.rerun()
