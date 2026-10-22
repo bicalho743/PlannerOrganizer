@@ -367,6 +367,30 @@ if not st.session_state.authenticated:
         box-shadow: 0 0 0 3px rgba(201,168,76,0.08) !important;
     }
     .stTextInput > div > div > input::placeholder { color: rgba(245,240,232,0.22) !important; }
+    /* Streamlit 1.66: a caixa em volta do campo (stTextInputRootElement) vinha cinza-clara do tema
+       e o texto creme ficava invisível. O fundo escuro e a borda passam para a caixa. */
+    [data-testid="stTextInputRootElement"] {
+        background: #16263A !important;
+        border: 1px solid rgba(201,168,76,0.28) !important;
+        border-radius: 10px !important;
+    }
+    [data-testid="stTextInputRootElement"]:focus-within {
+        border-color: rgba(201,168,76,0.6) !important;
+        box-shadow: 0 0 0 3px rgba(201,168,76,0.10) !important;
+    }
+    [data-testid="stTextInputRootElement"] input,
+    [data-testid="stTextInputRootElement"] input:focus {
+        background: transparent !important; border: 0 !important; box-shadow: none !important;
+        color: #F5F0E8 !important; -webkit-text-fill-color: #F5F0E8 !important; caret-color: #C9A84C !important;
+    }
+    /* preenchimento automático do navegador: mantém o fundo escuro e o texto creme */
+    [data-testid="stTextInputRootElement"] input:-webkit-autofill {
+        -webkit-box-shadow: 0 0 0 1000px #16263A inset !important;
+        -webkit-text-fill-color: #F5F0E8 !important;
+    }
+    [data-testid="stTextInputRootElement"] button,
+    [data-testid="stTextInputRootElement"] button * { background: transparent !important; color: rgba(245,240,232,0.6) !important; }
+    div[data-testid="InputInstructions"] { display: none !important; }
     .stTextInput label {
         color: rgba(245,240,232,0.55) !important;
         font-size: 0.72rem !important; font-weight: 500 !important;
