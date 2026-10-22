@@ -7,7 +7,7 @@ HTML do modal de cadastro e a página aberta por ?show_termos / ?show_politica.
 import streamlit as st
 
 CONTATO = "contato@plannerorganiza.com.br"
-ATUALIZADO_EM = "21 de outubro de 2026"
+ATUALIZADO_EM = "22 de outubro de 2026"
 
 
 def para_html(titulo, intro, secoes):

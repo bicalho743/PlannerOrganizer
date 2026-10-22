@@ -292,6 +292,9 @@ def gerar_manual_sistema(verificar_auth=True):
         "O Planner Organizer reúne num só lugar o que uma Personal Organizer usa no dia a dia: "
         "agenda, clientes, propostas, vendas de produtos, financeiro, MEI e os retornos depois do serviço. "
         "Este manual segue o menu do sistema, na mesma ordem e com os mesmos nomes."))
+    destaque("<b>Importante:</b> o Planner Organizer organiza o seu negócio, mas <b>não é contador e não substitui "
+             "um</b>. Os números de impostos (DAS, limite do MEI, Simples Nacional, declarações) são estimativas feitas "
+             "com o que você lança. Em caso de dúvida, procure um contador.")
     secao("O menu")
     tabela([
         ["Menu", "Para que serve"],
@@ -387,7 +390,8 @@ def gerar_manual_sistema(verificar_auth=True):
            "<b>hora sugerida</b>, com a sua margem. <b>Salvar meus números</b> guarda tudo para a próxima vez.")
     bullet("<b>Preço de um projeto</b>: marque os ambientes, a complexidade, as assistentes e os custos do projeto. "
            "Aparecem o preço sugerido, o preço mínimo, o sinal e quanto fica para você.")
-    texto("As horas por ambiente são só um ponto de partida: ajuste pela sua experiência.")
+    texto("As horas por ambiente são só um ponto de partida: ajuste pela sua experiência. Para saber quais impostos "
+          "entram na conta e qual alíquota usar, em caso de dúvida, procure um contador.")
 
     # ── VENDAS ─────────────────────────────────────────────────────────
     capitulo("Vendas", "Vendas", "Venda de produtos (caixas, cabides, organizadores), avulsa ou vinda de uma proposta.")
@@ -440,6 +444,8 @@ def gerar_manual_sistema(verificar_auth=True):
            "dados e <b>Excluir</b> pede confirmação.")
     bullet("<b>Histórico financeiro</b> com filtros e <b>Últimos 6 meses</b> com a evolução do que entrou e saiu.")
     secao("Aba MEI")
+    destaque("Tudo o que esta aba mostra é estimativa, para você se organizar. O app não é contador: em caso de "
+             "dúvida sobre impostos, enquadramento ou declarações, procure um contador.")
     bullet("<b>Limite do ano</b>: quanto já foi faturado (só o que foi recebido) dos R$ 81 mil e a projeção para o "
            "ano no ritmo atual.")
     bullet("<b>DAS mês a mês</b>: pago, a vencer, atrasado ou futuro. O DAS de cada mês vence no dia 20 do mês "
@@ -465,7 +471,8 @@ def gerar_manual_sistema(verificar_auth=True):
         ["Próximos meses", "O que entra e sai nos próximos 30 dias e as propostas aguardando resposta."],
     ], [110, 360])
     texto("<b>Baixar este relatório em Excel</b> gera uma planilha já formatada, com uma aba por tabela, valores em "
-          "R$ e percentuais, filtro e cabeçalho fixo, pronta para enviar ao contador.")
+          "R$ e percentuais, filtro e cabeçalho fixo, pronta para enviar ao contador. Os relatórios são gerenciais e não "
+          "substituem a contabilidade da empresa.")
 
     # ── CADASTROS ──────────────────────────────────────────────────────
     capitulo("Cadastros", "Cadastros", "As listas usadas dentro das propostas e vendas. Cada uma pode ser importada de planilha.")
@@ -493,6 +500,8 @@ def gerar_manual_sistema(verificar_auth=True):
     bullet("Sendo MEI, lance o DAS todo mês e confira a aba <b>MEI</b> antes de 31 de maio.")
     bullet("Marque recebimentos e pagamentos no Financeiro para o lucro e o saldo baterem com o banco.")
     bullet("Uma vez por mês, veja os <b>Relatórios</b> e baixe o Excel para o contador.")
+    bullet("Impostos, enquadramento (MEI, Simples) e declarações: o app ajuda a acompanhar, mas a palavra final é "
+           "do contador. Em caso de dúvida, procure um.")
     e.append(Spacer(1, 14))
     texto("Dúvidas ou sugestões: <b>contato@plannerorganiza.com.br</b> ou o WhatsApp do suporte, em "
           "plannerorganiza.com.br.")

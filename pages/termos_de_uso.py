@@ -55,6 +55,9 @@ SECOES = [
         "Trabalhamos para manter o sistema disponível e os dados protegidos, mas podem ocorrer interrupções para "
         "manutenção ou por falhas de terceiros (hospedagem, pagamento, login). Os cálculos e relatórios são "
         "ferramentas de apoio: valores, impostos e documentos enviados aos seus clientes devem ser conferidos por você.",
+        "O Planner Organizer não presta serviço contábil, fiscal ou jurídico e não substitui um contador. Os "
+        "números de impostos (DAS, limite do MEI, Simples Nacional, declarações) são estimativas feitas com o que "
+        "você lança no sistema. Em caso de dúvida, procure um contador.",
     ], None),
     ("8. Suspensão", [
         "Podemos suspender contas que violem estes termos, avisando pelo e-mail cadastrado sempre que possível.",

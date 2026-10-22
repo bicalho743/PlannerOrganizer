@@ -578,3 +578,5 @@ def show():
                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="rel_excel")
     except Exception as e:
         st.caption(f"Não foi possível gerar o Excel: {e}")
+    st.caption("Relatórios gerenciais, pela data em que o dinheiro entrou ou saiu. Não substituem a contabilidade da "
+               "empresa: o Planner Organizer não é contador. Em caso de dúvida, procure um contador.")

@@ -13,6 +13,9 @@ from utils.indicadores import (movimentos, entrou_gastou, retirado, previsto, po
 LINK_PGMEI = "https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/Identificacao"
 LINK_DASN = "https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/dasnsimei.app/Identificacao"
 LINK_PGDASD = "https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/pgdasd2018.app/Identificacao"
+AVISO_CONTADOR = ("<b>O Planner Organizer não é contador e não substitui um.</b> Os valores desta aba são "
+                  "estimativas para você se organizar, calculadas com o que foi lançado no app. Em caso de dúvida, "
+                  "procure um contador.")
 REGIME_ROTULO = {"MEI": "MEI", "Simples Nacional": "Simples Nacional (ME)", "Outro": "Outro regime ou autônoma"}
 
 
@@ -35,6 +38,9 @@ CSS_PAINEL = """
 .fp-prev { background: #F8F9FB; border: 1px solid #E4E7EC; border-radius: 10px; padding: 10px 14px; font-size: .88rem; color: #344054; margin-bottom: 14px; }
 .fp-prev b { font-variant-numeric: tabular-nums; }
 .fp-alerta { background: #FFFAEB; border: 1px solid #FEC84B; border-radius: 10px; padding: 10px 14px; font-size: .88rem; color: #93370D; margin-bottom: 14px; }
+.fp-aviso { display: flex; gap: 8px; align-items: flex-start; background: #F4F6FA; border: 1px solid #D5DCE8;
+            border-radius: 10px; padding: 9px 14px; font-size: .86rem; color: #344054; margin: 4px 0 12px; }
+.fp-aviso b { color: #0D1B2A; }
 .fp-secao { font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #667085; margin: 2px 0 8px; }
 .fp-cat { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 5px 0; font-size: .86rem; }
 .fp-cat .nm { display: flex; align-items: center; gap: 8px; color: #344054; min-width: 0; }
@@ -199,7 +205,8 @@ def _aba_impostos(financeiro_df, regime):
         if st.session_state.db.salvar_regime(escolha, aliquota if escolha == "Simples Nacional" else None):
             st.session_state["fin_abrir_impostos"] = True
             st.rerun()
-    st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+    st.markdown(CSS_PAINEL + f'<div class="fp-aviso"><span>ⓘ</span><span>{AVISO_CONTADOR}</span></div>',
+                unsafe_allow_html=True)
     if escolha == "MEI":
         _aba_mei(financeiro_df)
     elif escolha == "Simples Nacional":
