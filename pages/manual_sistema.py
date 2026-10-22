@@ -343,8 +343,9 @@ def gerar_manual_sistema(verificar_auth=True):
     bullet("<b>Com valor</b>, o compromisso entra sozinho em <b>A receber</b> no Financeiro, na data dele. Mudar o "
            "valor ou a data muda o lançamento; excluir o compromisso tira o que ainda não foi recebido.")
     bullet("Clique no compromisso para <b>Recebi</b>, <b>Editar</b> ou <b>Excluir</b>.")
-    bullet("A agenda também mostra, cada um com sua cor: início e fim dos serviços aprovados ou em execução, "
-           "retornos de pós-organização e contas a receber e a pagar que vencem no período.")
+    bullet("A agenda também mostra, cada um com sua cor: aniversários das clientes (com o símbolo do WhatsApp para "
+           "dar os parabéns), início e fim dos serviços aprovados ou em execução, retornos de pós-organização e "
+           "contas a receber e a pagar que vencem no período.")
     destaque("<b>Assistente de organizer?</b> Cadastre em <b>Clientes</b> as organizers que contratam você e lance "
              "cada diária como compromisso: a agenda e o que você tem a receber ficam no mesmo lugar.")
 

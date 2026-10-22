@@ -111,3 +111,20 @@ def test_simples_mes_sem_receita_nao_fica_atrasado():
     meses = simples_do_ano(movimentos(_fin([])), 2026, date(2026, 5, 25))
     assert meses[0]["situacao"] == "sem receita" and meses[4]["situacao"] == "sem receita"
     assert meses[6]["situacao"] == "futuro"
+
+
+def test_aniversario_da_cliente_entra_na_agenda_com_whatsapp():
+    from utils.agenda import dia_mes_aniversario
+    assert dia_mes_aniversario("05/out") == (5, 10) and dia_mes_aniversario("05/10") == (5, 10)
+    assert dia_mes_aniversario("") is None and dia_mes_aniversario("xx") is None
+    clientes = pd.DataFrame([
+        {"nome": "Ana Paula", "telefone": "(31) 99999-0000", "data_aniversario": "12/nov"},
+        {"nome": "Bia", "telefone": None, "data_aniversario": "13/nov"},
+        {"nome": "Cris", "telefone": "31988887777", "data_aniversario": "20/dez"},
+    ])
+    itens = montar_agenda(INI, FIM, clientes=clientes)
+    assert [(i["data"].day, i["titulo"]) for i in itens] == [(12, "Ana Paula"), (13, "Bia")]
+    assert itens[0]["whatsapp"].startswith("https://wa.me/5531999990000?text=Feliz") and itens[1]["whatsapp"] == ""
+    virada = montar_agenda(date(2026, 12, 28), date(2027, 1, 3),
+                           clientes=pd.DataFrame([{"nome": "Dani", "telefone": "", "data_aniversario": "02/jan"}]))
+    assert virada[0]["data"] == date(2027, 1, 2)

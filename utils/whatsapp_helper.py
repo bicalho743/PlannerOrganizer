@@ -63,3 +63,13 @@ def whatsapp_button_html(url, label="WhatsApp"):
         f'style="{_BTN_BASE}background:#25D366;color:#ffffff;text-decoration:none;">'
         f"{WHATSAPP_SVG} {label}</a>"
     )
+
+
+def whatsapp_icone_html(url, titulo="Enviar pelo WhatsApp"):
+    """Só o símbolo do WhatsApp, pequeno, como link (vazio se não houver telefone)."""
+    if not url:
+        return ""
+    svg = WHATSAPP_SVG.replace('width="15" height="15"', 'width="13" height="13"')
+    return (f'<a href="{url}" target="_blank" rel="noopener" title="{titulo}" aria-label="{titulo}" '
+            f'style="display:inline-flex;align-items:center;color:#25D366;margin-left:6px;vertical-align:-2px;'
+            f'position:relative;z-index:3">{svg}</a>')

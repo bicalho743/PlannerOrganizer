@@ -12,6 +12,7 @@ import streamlit as st
 from utils.agenda import TIPOS, montar_agenda, mes_de, semana_de, totais
 from utils.currency_formatter import fmt_brl
 from utils.ui import botao_editar, botao_excluir, cartao_clicavel, input_moeda
+from utils.whatsapp_helper import whatsapp_icone_html
 
 DIAS = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo"]
 MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto",
@@ -56,6 +57,8 @@ def _html_item(i):
     hora = html_module.escape(i["hora"]) if i["hora"] else "—"
     tit = html_module.escape(str(i["titulo"]))
     sub = html_module.escape(str(i["detalhe"] or ""))
+    if i.get("whatsapp"):
+        sub += whatsapp_icone_html(i["whatsapp"], "Dar parabéns pelo WhatsApp")
     val = ""
     if i["valor"]:
         cor = "#B42318" if i["tipo"] == "pagar" else "#067647"
@@ -200,7 +203,7 @@ def show():
     require_auth()
     st.markdown(CSS, unsafe_allow_html=True)
     st.markdown('<h1 class="page-title">Agenda</h1>', unsafe_allow_html=True)
-    st.markdown('<div class="ag-intro">Seus compromissos e tudo o que tem data no app: serviços, retornos de '
+    st.markdown('<div class="ag-intro">Seus compromissos e tudo o que tem data no app: serviços, aniversários, retornos de '
                 'pós-organização e contas a receber e a pagar.</div>', unsafe_allow_html=True)
     db = st.session_state.db
 
@@ -223,7 +226,8 @@ def show():
     try:
         compromissos = db.get_compromissos()
         itens = montar_agenda(ini, fim, compromissos=compromissos, propostas=db.get_propostas(),
-                              acoes_pos=db.get_acoes_pos_periodo(ini, fim), financeiro=db.get_financeiro())
+                              acoes_pos=db.get_acoes_pos_periodo(ini, fim), financeiro=db.get_financeiro(),
+                              clientes=db.get_clientes())
     except Exception as e:
         print(f"[agenda] {e}")
         st.error("Não consegui carregar a agenda agora. Tente de novo em instantes.")
