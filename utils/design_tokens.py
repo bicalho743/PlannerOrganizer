@@ -31,6 +31,7 @@ CORES_MODULO = {
     "Dashboard": "#B8943D",       # dourado
     "Clientes": "#C05A7B",        # rosa
     "Propostas": "#3D6BB3",       # azul
+    "Precificacao": "#D2693C",    # terracota
     "Vendas": "#0E8A7D",          # verde-azulado
     "PosOrganizacao": "#7356BF",  # lilás
     "Financeiro": "#2F855A",      # verde

@@ -781,6 +781,7 @@ if ('usuario_id' in st.session_state and st.session_state.usuario_id) or \
         ("Comercial", [
             ("Clientes", "Clientes", ":material/group:"),
             ("Propostas", "Propostas", ":material/request_quote:"),
+            ("Precificação", "Precificacao", ":material/calculate:"),
             ("Vendas", "Vendas", ":material/shopping_bag:"),
             ("Pós-organização", "PosOrganizacao", ":material/event_repeat:"),
         ]),
@@ -880,6 +881,8 @@ try:
         from pages.cadastros import show; show(modo="outros")
     elif st.session_state.current_page == "Propostas":
         from pages.propostas_unificado import show; show()
+    elif st.session_state.current_page == "Precificacao":
+        from pages.precificacao import show; show()
     elif st.session_state.current_page == "Vendas":
         from pages.vendas import show; show()
     elif st.session_state.current_page == "Financeiro":

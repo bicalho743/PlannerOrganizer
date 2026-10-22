@@ -302,6 +302,7 @@ class Database:
                 ))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS logo TEXT"))
                 conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS cnpj VARCHAR"))
+                conn.execute(_sa_text("ALTER TABLE perfis ADD COLUMN IF NOT EXISTS precificacao TEXT"))
                 conn.execute(_sa_text("ALTER TABLE itens_venda ADD COLUMN IF NOT EXISTS custo_unitario DOUBLE PRECISION"))
                 conn.execute(_sa_text("ALTER TABLE itens_venda ADD COLUMN IF NOT EXISTS baixou_estoque BOOLEAN"))
         except Exception as e:
@@ -577,6 +578,27 @@ class Database:
                 self.session.rollback()
                 return False
 
+        return self._safe_query(query)
+
+    def get_precificacao(self):
+        """Parâmetros salvos da aba Precificação (dict; vazio se nunca salvou)."""
+        import json
+        def query():
+            perfil = self.session.query(Perfil).filter_by(usuario_id=self.usuario_id).first()
+            try:
+                return json.loads(perfil.precificacao) if perfil and perfil.precificacao else {}
+            except (TypeError, ValueError):
+                return {}
+        return self._safe_query(query) or {}
+
+    def salvar_precificacao(self, parametros):
+        import json
+        def query():
+            perfil = self.session.query(Perfil).filter_by(usuario_id=self.usuario_id).first()
+            if not perfil:
+                return False
+            perfil.precificacao = json.dumps(parametros)
+            return True
         return self._safe_query(query)
 
     def get_perfil_usuario(self):
