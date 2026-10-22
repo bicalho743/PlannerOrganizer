@@ -298,13 +298,14 @@ def _render_detail_panel(transacao, financeiro_df):
         acao_key = f"fin_receber_{tid}" if is_rec else f"fin_pagar_{tid}"
         confirm_key = f"fin_confirm_receber_{tid}" if is_rec else f"fin_confirm_pagar_{tid}"
 
-        col_act1, col_act2, col_act3 = st.columns(3)
+        # receber/pagar é a ação principal; excluir fica menor, à direita
+        col_act1, col_act2, _, col_act3 = st.columns([2, 2, 1, 1.2])
         with col_act1:
-            if st.button(acao_label, key=acao_key, use_container_width=True):
+            if st.button(acao_label, key=acao_key, type="primary", icon=":material/check:", use_container_width=True):
                 st.session_state[confirm_key] = True
                 st.rerun()
         with col_act2:
-            if st.button("Editar", key=f"fin_edit_{tid}", use_container_width=True):
+            if st.button("Editar", key=f"fin_edit_{tid}", icon=":material/edit:", use_container_width=True):
                 st.session_state["fin_editando"] = tid
                 st.rerun()
         with col_act3:
@@ -312,15 +313,17 @@ def _render_detail_panel(transacao, financeiro_df):
                 st.session_state[f"fin_confirm_del_{tid}"] = True
                 st.rerun()
     else:
-        if botao_excluir("Excluir", f"fin_del_{tid}"):
-            st.session_state[f"fin_confirm_del_{tid}"] = True
-            st.rerun()
+        _, col_del = st.columns([4.8, 1.2])
+        with col_del:
+            if botao_excluir("Excluir", f"fin_del_{tid}"):
+                st.session_state[f"fin_confirm_del_{tid}"] = True
+                st.rerun()
 
     if st.session_state.get(f"fin_confirm_receber_{tid}", False):
         st.success(f"Confirmar recebimento de **{fmt_brl(valor)}** — {transacao['descricao']}?")
-        c1, c2 = st.columns(2)
+        c1, c2, _ = st.columns([1, 1, 2])
         with c1:
-            if st.button("Confirmar", key=f"conf_rec_{tid}", use_container_width=True):
+            if st.button("Confirmar", key=f"conf_rec_{tid}", type="primary", use_container_width=True):
                 try:
                     st.session_state.db.atualizar_status_transacao(tid, 'Recebido', datetime.now().date())
                     st.session_state.pop(f"fin_confirm_receber_{tid}", None)
@@ -335,9 +338,9 @@ def _render_detail_panel(transacao, financeiro_df):
 
     if st.session_state.get(f"fin_confirm_pagar_{tid}", False):
         st.success(f"Confirmar pagamento de **{fmt_brl(valor)}** — {transacao['descricao']}?")
-        c1, c2 = st.columns(2)
+        c1, c2, _ = st.columns([1, 1, 2])
         with c1:
-            if st.button("Confirmar", key=f"conf_pag_{tid}", use_container_width=True):
+            if st.button("Confirmar", key=f"conf_pag_{tid}", type="primary", use_container_width=True):
                 try:
                     st.session_state.db.atualizar_status_transacao(tid, 'Pago', datetime.now().date())
                     st.session_state.pop(f"fin_confirm_pagar_{tid}", None)
@@ -352,9 +355,9 @@ def _render_detail_panel(transacao, financeiro_df):
 
     if st.session_state.get(f"fin_confirm_del_{tid}", False):
         st.warning(f"Excluir **{transacao['descricao']}** — {fmt_brl(valor)} permanentemente?")
-        c1, c2 = st.columns(2)
+        c1, c2, _ = st.columns([1, 1, 2])
         with c1:
-            if st.button("Confirmar", key=f"conf_del_{tid}", use_container_width=True):
+            if botao_excluir("Excluir de vez", f"conf_del_{tid}"):
                 try:
                     st.session_state.db.delete_transacao(tid)
                     st.session_state.pop(f"fin_confirm_del_{tid}", None)
@@ -639,8 +642,7 @@ def show():
             @st.dialog("Detalhes da Transação", width="large")
             def _modal_detalhes():
                 _render_detail_panel(transacao_sel, financeiro_df)
-                st.markdown("---")
-                if st.button("Fechar", key=f"fin_fechar_modal_{selected_id}", use_container_width=True):
+                if st.button("Fechar", key=f"fin_fechar_modal_{selected_id}", type="tertiary"):
                     st.session_state["fin_selecionada"] = None
                     st.session_state.pop("fin_editando", None)
                     for k in [k for k in st.session_state if str(k).startswith("fin_confirm_")]:
@@ -730,7 +732,7 @@ def show():
                             st.warning(f"Excluir **{t_sel['descricao']}** — {fmt_brl(t_sel['valor'])}?")
                             c1, c2, _ = st.columns([1, 1, 5])
                             with c1:
-                                if st.button("Confirmar", key=f"fin_hist_conf_{t_sel['id']}", use_container_width=True):
+                                if botao_excluir("Excluir de vez", f"fin_hist_conf_{t_sel['id']}"):
                                     try:
                                         st.session_state.db.delete_transacao(t_sel['id'])
                                         st.session_state.pop(f"fin_hist_confirm_del_{t_sel['id']}", None)
